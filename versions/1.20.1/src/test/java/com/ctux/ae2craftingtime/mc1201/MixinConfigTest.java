@@ -31,5 +31,6 @@ class MixinConfigTest {
 
         assertTrue(mixin.contains("method = \"getEntryDescription\""));
         assertTrue(mixin.contains("TTC: "));
+        assertTrue(mixin.contains("withBold(true)"));
     }
 }

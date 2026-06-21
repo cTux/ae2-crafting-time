@@ -46,6 +46,8 @@ public abstract class CraftConfirmTableRendererMixin {
     private static Component ttcLine(com.ctux.ae2craftingtime.core.ProfileKey key, String eta) {
         var line = Component.literal("TTC: " + eta);
         var color = TtcColorContext.get(key);
-        return color.isPresent() ? line.withStyle(style -> style.withColor(TextColor.fromRgb(color.getAsInt()))) : line;
+        return color.isPresent()
+                ? line.withStyle(style -> style.withColor(TextColor.fromRgb(color.getAsInt())).withBold(true))
+                : line.withStyle(style -> style.withBold(true));
     }
 }
