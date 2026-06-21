@@ -44,6 +44,7 @@ mixin {
 }
 
 sourceSets.main.java.srcDir '../../shared/src/main/java'
+sourceSets.main.java.srcDir '../../shared/src/mc1201/java'
 
 repositories {
     mavenCentral()
