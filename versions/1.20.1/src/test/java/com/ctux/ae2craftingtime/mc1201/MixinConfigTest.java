@@ -15,6 +15,7 @@ class MixinConfigTest {
         var tableIndex = json.indexOf("\"AbstractTableRendererMixin\"");
         var treeIndex = json.indexOf("\"CraftingTreeWidgetMixin\"");
         var confirmIndex = json.indexOf("\"CraftConfirmTableRendererMixin\"");
+        var sortIndex = json.indexOf("\"CraftConfirmScreenMixin\"");
         var serverIndex = json.indexOf("\"mixins\"");
         var cpuIndex = json.indexOf("\"CraftingCpuLogicMixin\"");
 
@@ -22,6 +23,7 @@ class MixinConfigTest {
         assertTrue(tableIndex > clientIndex);
         assertTrue(clientIndex >= 0 && treeIndex > clientIndex);
         assertTrue(confirmIndex > clientIndex);
+        assertTrue(sortIndex > clientIndex);
     }
 
     @Test

@@ -9,6 +9,7 @@
   ],
   "client": [
     "AbstractTableRendererMixin",
+    "CraftConfirmScreenMixin",
     "CraftConfirmTableRendererMixin",
     "CraftingTreeWidgetMixin"
   ],
