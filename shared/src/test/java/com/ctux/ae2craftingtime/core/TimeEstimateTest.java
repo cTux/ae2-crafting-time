@@ -3,6 +3,9 @@ package com.ctux.ae2craftingtime.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.util.List;
+import java.util.OptionalLong;
+
 import org.junit.jupiter.api.Test;
 
 class TimeEstimateTest {
@@ -40,5 +43,12 @@ class TimeEstimateTest {
         var stats = new ProfileStats(0, 0, 0, 0, 0, ProfileUnit.ITEM);
 
         assertFalse(TimeEstimate.format(10, stats).isPresent());
+    }
+
+    @Test
+    void totalCraftEtaUsesSlowestKnownRow() {
+        var total = TimeEstimate.formatTotal(List.of(OptionalLong.of(4), OptionalLong.empty(), OptionalLong.of(9)));
+
+        assertEquals("~9s", total.orElseThrow());
     }
 }

@@ -23,6 +23,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.OptionalLong;
@@ -52,6 +53,26 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
 
         return TtcSort.copySorted(entries, CraftConfirmScreenMixin::ae2craftingtime$seconds, Comparator.naturalOrder(),
                 ae2craftingtime$ttcSortMode == 2);
+    }
+
+    @Inject(method = "drawFG", at = @At("RETURN"), remap = false)
+    private void ae2craftingtime$drawTotalTtc(GuiGraphics guiGraphics, int offsetX, int offsetY, int mouseX, int mouseY,
+            CallbackInfo ci) {
+        var plan = getMenu().getPlan();
+        if (plan == null) {
+            return;
+        }
+
+        var estimates = new ArrayList<OptionalLong>();
+        for (var entry : plan.getEntries()) {
+            estimates.add(ae2craftingtime$seconds(entry));
+        }
+
+        TimeEstimate.formatTotal(estimates).ifPresent(eta -> {
+            var text = Component.literal("Total TTC: " + eta);
+            var font = getMinecraft().font;
+            guiGraphics.drawString(font, text, 109 - font.width(text) / 2, 134, 0x404040, false);
+        });
     }
 
     @Unique

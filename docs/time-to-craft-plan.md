@@ -64,6 +64,12 @@ Only show the line when:
 
 No stats: show nothing and request stats for that output key.
 
+For the whole ordered craft, use the visible plan entries and calculate each
+known row with the same formula. Display the total as the maximum known row ETA,
+not the sum. AE2 can craft independent rows in parallel across CPUs and
+co-processors, so summing every row overstates wall-clock time. If no row has
+known stats, show no total line and request missing stats.
+
 ## Amount Normalization
 
 The estimate must use the same units as profiling throughput.
@@ -114,6 +120,19 @@ Time To Craft: ~000:02:15
 
 Actual AE2 localization may say `From Storage` instead of `Available`. Do not rewrite AE2's existing lines in the first pass. Just append `Time To Craft` after the existing `To Craft` line.
 
+Whole ordered craft estimate:
+
+```text
+Total TTC: ~000:02:15
+Crafting CPU: Automatic
+```
+
+Place `Total TTC` in the bottom status area between the craft-plan grid and the
+`Crafting CPU` selector. Center it on the screen with the same alignment as the
+`Crafting CPU` details below it. Do not put it in the title; the title already
+contains AE2's storage-byte summary. Do not put it in the item grid; the grid
+contains per-row estimates.
+
 Crafting Tree tooltip, if added later:
 
 ```text
@@ -128,6 +147,7 @@ Small tests that matter:
 - `TimeEstimate` formats `0`, `1`, `75`, and large hour values
 - ETA rounds up fractional seconds
 - no ETA when throughput is `0`
+- total craft ETA uses the maximum known row ETA, not the sum
 - packet snapshot roundtrip still carries `amountPerSecond`
 - mixin config keeps AE2/Crafting Tree UI mixins client-only
 
@@ -138,7 +158,8 @@ Small tests that matter:
 3. Add a version-specific normalizer for `AEKey + amount`.
 4. Add client-only mixin for `CraftConfirmTableRenderer#getEntryTooltip`.
 5. In that mixin, append `Time To Craft: ~...` when cached server stats exist, otherwise request stats.
-6. Build all versions.
+6. In the craft-confirm screen mixin, compute `Total TTC` from the rendered plan entries and draw it centered above the `Crafting CPU` selector.
+7. Build all versions.
 
 ## Sources
 

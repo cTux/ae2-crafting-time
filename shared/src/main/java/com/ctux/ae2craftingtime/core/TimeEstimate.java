@@ -18,17 +18,30 @@ public final class TimeEstimate {
             return Optional.empty();
         }
 
-        var seconds = estimate.getAsLong();
+        return Optional.of(formatSeconds(estimate.getAsLong()));
+    }
+
+    public static Optional<String> formatTotal(Iterable<OptionalLong> estimates) {
+        long totalSeconds = 0;
+        for (var estimate : estimates) {
+            if (estimate.isPresent()) {
+                totalSeconds = Math.max(totalSeconds, estimate.getAsLong());
+            }
+        }
+        return totalSeconds == 0 ? Optional.empty() : Optional.of(formatSeconds(totalSeconds));
+    }
+
+    private static String formatSeconds(long seconds) {
         var hours = seconds / 3600;
         var minutes = (seconds % 3600) / 60;
         var remainingSeconds = seconds % 60;
         if (hours > 0) {
-            return Optional.of(String.format("~%d:%02d:%02d", hours, minutes, remainingSeconds));
+            return String.format("~%d:%02d:%02d", hours, minutes, remainingSeconds);
         }
         if (minutes > 0) {
-            return Optional.of(String.format("~%d:%02d", minutes, remainingSeconds));
+            return String.format("~%d:%02d", minutes, remainingSeconds);
         }
-        return Optional.of("~" + seconds + "s");
+        return "~" + seconds + "s";
     }
 
     private TimeEstimate() {
