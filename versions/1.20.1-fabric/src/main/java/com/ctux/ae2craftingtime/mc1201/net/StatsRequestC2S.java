@@ -1,9 +1,12 @@
 package com.ctux.ae2craftingtime.mc1201.net;
 
+import appeng.api.networking.IGrid;
+import appeng.api.networking.security.IActionHost;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.StatsEntry;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.StatsNetwork;
+import appeng.menu.me.crafting.CraftConfirmMenu;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -29,9 +32,19 @@ public record StatsRequestC2S(List<String> keys) {
 
     public void handle(ServerPlayer player) {
         var entries = new ArrayList<StatsEntry>();
+        var networkId = ProfilerBridge.networkId(currentGrid(player));
         for (var key : keys) {
-            ProfilerBridge.stats(new ProfileKey(key)).ifPresent(stats -> entries.add(new StatsEntry(new ProfileKey(key), stats)));
+            ProfilerBridge.stats(new ProfileKey(networkId, key))
+                    .ifPresent(stats -> entries.add(new StatsEntry(new ProfileKey(key), stats)));
         }
         StatsNetwork.sendTo(player, new StatsSnapshotS2C(entries));
+    }
+
+    private static IGrid currentGrid(ServerPlayer player) {
+        if (player.containerMenu instanceof CraftConfirmMenu menu && menu.getTarget() instanceof IActionHost host) {
+            var node = host.getActionableNode();
+            return node == null ? null : node.getGrid();
+        }
+        return null;
     }
 }

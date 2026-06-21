@@ -24,6 +24,10 @@ public final class ClientStatsRequests {
         PacketDistributor.sendToServer(new StatsRequestC2S(List.of(key.outputId())));
     }
 
+    public static void clear() {
+        REQUESTED_AT.clear();
+    }
+
     private ClientStatsRequests() {
     }
 }

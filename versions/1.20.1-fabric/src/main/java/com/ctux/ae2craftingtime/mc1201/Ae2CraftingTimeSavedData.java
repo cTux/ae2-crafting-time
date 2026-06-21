@@ -51,7 +51,7 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
                 samples.add(new PersistedCraftSample(sample.getLong("amount"), sample.getLong("durationTicks")));
             }
             persisted.add(new PersistedOutputSamples(
-                    new ProfileKey(output.getString("key")),
+                    new ProfileKey(output.getString("networkId"), output.getString("key")),
                     ProfileUnit.valueOf(output.getString("unit")),
                     samples));
         }
@@ -62,6 +62,7 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
         var outputTags = new ListTag();
         for (var output : outputs) {
             var tag = new CompoundTag();
+            tag.putString("networkId", output.key().networkId());
             tag.putString("key", output.key().outputId());
             tag.putString("unit", output.unit().name());
             var sampleTags = new ListTag();

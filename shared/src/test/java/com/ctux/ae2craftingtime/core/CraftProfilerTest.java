@@ -125,6 +125,18 @@ class CraftProfilerTest {
     }
 
     @Test
+    void networkIdentityKeepsSameOutputSeparate() {
+        var profiler = new CraftProfiler(10);
+        var networkA = new ProfileKey("net-a", "minecraft:iron_plate");
+        var networkB = new ProfileKey("net-b", "minecraft:iron_plate");
+
+        profiler.start(networkA, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(networkA, 1, 10);
+
+        assertFalse(profiler.stats(networkB).isPresent());
+    }
+
+    @Test
     void waitsForPartialCompletionsBeforeRecordingSample() {
         var profiler = new CraftProfiler(10);
         var fluid = new ProfileKey("minecraft:water");

@@ -17,4 +17,8 @@ public final class ClientStatsCache {
     public Optional<ProfileStats> get(ProfileKey key) {
         return Optional.ofNullable(stats.get(key));
     }
+
+    public void clear() {
+        stats.clear();
+    }
 }

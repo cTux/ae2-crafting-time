@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import appeng.api.networking.IGrid;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.GenericStack;
@@ -9,23 +10,24 @@ import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
 
 import java.util.Optional;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 public final class ProfilerBridge {
     private static final CraftProfiler PROFILER = new CraftProfiler(10);
     private static Ae2CraftingTimeSavedData savedData;
 
-    public static void start(GenericStack output, long tick) {
+    public static void start(String networkId, GenericStack output, long tick) {
         if (output == null || !isEnabled()) {
             return;
         }
-        PROFILER.start(key(output.what()), normalizeAmount(output.what(), output.amount()), unit(output.what()), tick);
+        PROFILER.start(key(networkId, output.what()), normalizeAmount(output.what(), output.amount()), unit(output.what()), tick);
     }
 
-    public static void complete(AEKey what, long amount, long tick) {
+    public static void complete(String networkId, AEKey what, long amount, long tick) {
         if (what == null || !isEnabled()) {
             return;
         }
-        if (PROFILER.complete(key(what), normalizeAmount(what, amount), tick) && savedData != null) {
+        if (PROFILER.complete(key(networkId, what), normalizeAmount(what, amount), tick) && savedData != null) {
             savedData.replaceFrom(PROFILER.snapshotSamples());
         }
     }
@@ -50,6 +52,21 @@ public final class ProfilerBridge {
 
     public static ProfileKey key(AEKey key) {
         return new ProfileKey(key.getId().toString());
+    }
+
+    public static ProfileKey key(String networkId, AEKey key) {
+        return new ProfileKey(networkId, key.getId().toString());
+    }
+
+    public static String networkId(IGrid grid) {
+        if (grid == null || grid.getPivot() == null) {
+            return "";
+        }
+        var pivot = grid.getPivot();
+        if (pivot.getOwner() instanceof BlockEntity blockEntity) {
+            return pivot.getLevel().dimension().location() + ":" + blockEntity.getBlockPos().asLong();
+        }
+        return pivot.getLevel().dimension().location() + ":" + pivot.getOwningPlayerId() + ":" + grid.size();
     }
 
     public static void load(Ae2CraftingTimeSavedData data) {

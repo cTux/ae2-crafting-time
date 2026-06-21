@@ -41,6 +41,8 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
     @Inject(method = "<init>", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$addTtcSortButton(CraftConfirmMenu menu, Inventory playerInventory, Component title,
             ScreenStyle style, CallbackInfo ci) {
+        ClientStats.CACHE.clear();
+        ClientStatsRequests.clear();
         addToLeftToolbar(new TtcSortButton(this::ae2craftingtime$cycleTtcSortMode,
                 () -> ae2craftingtime$ttcSortMode));
     }

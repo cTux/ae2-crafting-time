@@ -27,4 +27,15 @@ class ClientStatsCacheTest {
 
         assertFalse(cache.get(new ProfileKey("minecraft:copper_plate")).isPresent());
     }
+
+    @Test
+    void clearDropsCachedStats() {
+        var cache = new ClientStatsCache();
+        var key = new ProfileKey("minecraft:iron_plate");
+
+        cache.replace(List.of(new StatsEntry(key, new ProfileStats(1, 20, 0.05, 1, 20, ProfileUnit.ITEM))));
+        cache.clear();
+
+        assertFalse(cache.get(key).isPresent());
+    }
 }

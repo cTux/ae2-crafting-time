@@ -32,7 +32,8 @@ public abstract class CraftingCpuLogicMixin {
             KeyCounter[] inputHolder) {
         var pushed = provider.pushPattern(details, inputHolder);
         if (pushed) {
-            ProfilerBridge.start(details.getPrimaryOutput(), cluster.getLevel().getGameTime());
+            ProfilerBridge.start(ProfilerBridge.networkId(cluster.getGrid()), details.getPrimaryOutput(),
+                    cluster.getLevel().getGameTime());
         }
         return pushed;
     }
@@ -47,7 +48,8 @@ public abstract class CraftingCpuLogicMixin {
         var waiting = ((CraftingCpuLogic) (Object) this).getWaitingFor(what);
         var accepted = Math.min(amount, waiting);
         if (accepted > 0) {
-            ProfilerBridge.complete(what, accepted, cluster.getLevel().getGameTime());
+            ProfilerBridge.complete(ProfilerBridge.networkId(cluster.getGrid()), what, accepted,
+                    cluster.getLevel().getGameTime());
         }
     }
 }
