@@ -62,7 +62,6 @@ dependencies {
     minecraft 'net.minecraftforge:forge:1.20.1-47.3.7'
 
     implementation fg.deobf('curse.maven:applied-energistics-2-223794:5565729')
-    compileOnly fg.deobf('curse.maven:ae2-crafting-tree-1086241:7061060')
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
