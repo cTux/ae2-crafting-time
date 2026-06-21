@@ -102,7 +102,7 @@ MVP:
    - start server tick
 2. On `insert`, when an expected output arrives, match it to the oldest pending operation for that output key.
 3. When all expected output amount for that pending operation is observed, record duration.
-4. Send aggregated stats to the client when Crafting Tree opens or refreshes.
+4. Send aggregated stats to the client when Crafting Tree opens or refreshes. The client must not calculate or read local profiler state for multiplayer display.
 
 This measures real external processing delay for machines, not only AE2 scheduling overhead.
 
@@ -141,7 +141,7 @@ Skip charts, overlays, and a separate profiling screen until the basic values ar
 - Version-specific mixins and UI adapters should be isolated under directories like `1.20.1`; putting shared profiling code there would make future ports copy/paste-heavy.
 - Pattern identity by output can merge multiple recipes for the same output.
 - FIFO output matching can be wrong under parallel machines with identical outputs.
-- Client display needs a small server-to-client packet or piggybacking on Crafting Tree's existing summary serialization.
+- Client display needs request/response packets: client requests visible output keys, server replies with aggregate snapshots. Direct client reads from local profiler state are wrong on dedicated servers.
 - Crafting Tree is MIT on CurseForge, but verify repository license before copying code. Depending on it is cleaner than copying.
 
 ## Sources

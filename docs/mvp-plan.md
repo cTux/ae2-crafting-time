@@ -24,6 +24,8 @@ MVP does not try to identify exact machine blocks, exact provider names, or ever
 
 Version-specific code must live under a version directory such as `1.20.1`. Shared profiling logic must stay outside version directories so later Minecraft/AE2 ports reuse it instead of copying it.
 
+In multiplayer, all timing and throughput calculations must be server-owned. The client only requests and renders server-provided aggregate snapshots. See `docs/server-client-stats.md`.
+
 ## Implementation Steps
 
 1. Scaffold minimal Forge 1.20.1 mod.

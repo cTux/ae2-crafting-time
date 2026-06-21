@@ -1,8 +1,10 @@
 .gradle/
+.vscode/
 build/
 **/build/
 run/
 **/run/
 dist/
+**/bin/
 *.class
 *.log
