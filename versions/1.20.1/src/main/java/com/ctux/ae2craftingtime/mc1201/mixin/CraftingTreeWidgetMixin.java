@@ -32,6 +32,8 @@ import java.util.OptionalLong;
 @Pseudo
 public abstract class CraftingTreeWidgetMixin {
     private static final float TEXT_SCALE = 0.45f;
+    private static final int LABEL_BACKGROUND = 0xFFDBDBDB;
+    private static final int LABEL_BORDER = 0xFF000000;
 
     @Shadow
     private int outputX;
@@ -83,12 +85,17 @@ public abstract class CraftingTreeWidgetMixin {
         var pose = guiGraphics.pose();
         var font = Minecraft.getInstance().font;
         var color = TtcColor.forSeconds(seconds, ae2craftingtime$minSeconds, ae2craftingtime$maxSeconds);
-        var textX = (int) ((x + 18) / TEXT_SCALE);
-        var textY = (int) ((y + 23) / TEXT_SCALE);
+        var textX = (int) ((x - 3 + (22 - font.width(text) * TEXT_SCALE) / 2) / TEXT_SCALE);
+        var textY = (int) ((y + 15) / TEXT_SCALE);
+        var stripLeft = (int) ((x - 3) / TEXT_SCALE);
+        var stripTop = (int) ((y + 14) / TEXT_SCALE);
+        var stripRight = (int) ((x + 19) / TEXT_SCALE);
+        var stripBottom = (int) ((y + 20) / TEXT_SCALE);
 
         pose.pushPose();
         pose.scale(TEXT_SCALE, TEXT_SCALE, TEXT_SCALE);
-        guiGraphics.fill(textX - 1, textY - 1, textX + font.width(text) + 1, textY + font.lineHeight, 0xFF000000);
+        guiGraphics.fill(stripLeft, stripTop, stripRight, stripBottom, LABEL_BACKGROUND);
+        guiGraphics.fill(stripLeft, stripTop, stripRight, stripTop + 1, LABEL_BORDER);
         guiGraphics.drawString(font, text, textX, textY, color, false);
         pose.popPose();
     }
