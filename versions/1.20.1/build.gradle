@@ -63,7 +63,13 @@ dependencies {
 
     implementation fg.deobf('curse.maven:applied-energistics-2-223794:5565729')
 
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+test {
+    useJUnitPlatform()
 }
 
 tasks.named('processResources', ProcessResources).configure {

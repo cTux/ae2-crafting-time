@@ -28,6 +28,33 @@ class CraftProfilerTest {
     }
 
     @Test
+    void newProfilerStartsWithoutPersistedSessionStats() {
+        var key = new ProfileKey("minecraft:iron_plate");
+        var oldSession = new CraftProfiler(20);
+        oldSession.start(key, 1, ProfileUnit.ITEM, 1);
+        oldSession.complete(key, 1, 2);
+
+        var newSession = new CraftProfiler(20);
+
+        assertFalse(newSession.stats(key).isPresent());
+    }
+
+    @Test
+    void outputIdentityMergesSamplesFromSameOutput() {
+        var profiler = new CraftProfiler(20);
+        var ironPlate = new ProfileKey("minecraft:iron_plate");
+
+        profiler.start(ironPlate, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(ironPlate, 1, 10);
+        profiler.start(ironPlate, 1, ProfileUnit.ITEM, 100);
+        profiler.complete(ironPlate, 1, 130);
+
+        var stats = profiler.stats(ironPlate).orElseThrow();
+        assertEquals(2, stats.sampleCount());
+        assertEquals(20.0, stats.averageDurationTicks());
+    }
+
+    @Test
     void waitsForPartialCompletionsBeforeRecordingSample() {
         var profiler = new CraftProfiler(20);
         var fluid = new ProfileKey("minecraft:water");
