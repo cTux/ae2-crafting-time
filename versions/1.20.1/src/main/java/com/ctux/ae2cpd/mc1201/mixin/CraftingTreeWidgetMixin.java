@@ -22,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.awt.Point;
 import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Mixin(targets = "com.neuvillette.ae2ct.gui.CraftingTreeWidget", remap = false)
@@ -105,9 +106,9 @@ public abstract class CraftingTreeWidgetMixin {
             return Long.toString(Math.round(value));
         }
         if (value >= 10) {
-            return String.format("%.1f", value);
+            return String.format(Locale.ROOT, "%.1f", value);
         }
-        return String.format("%.2f", value);
+        return String.format(Locale.ROOT, "%.2f", value);
     }
 
     private Object hoveredNode(double mouseX, double mouseY) {
