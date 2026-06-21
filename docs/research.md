@@ -131,6 +131,14 @@ For fluids:
 avg 80t | 250 mB/s
 ```
 
+For the AE2 craft-plan tooltip, reuse the same server stats to append a full-amount estimate after `To Craft`:
+
+```text
+Time To Craft: ~000:02:15
+```
+
+See `docs/time-to-craft-plan.md`.
+
 Only show stats in AE2: Crafting Tree when that mod is present. If Crafting Tree is absent, collect nothing visible and add no fallback screen.
 
 Skip charts, overlays, and a separate profiling screen until the basic values are useful.

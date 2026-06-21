@@ -19,6 +19,7 @@ MVP shows per-node rolling averages in the existing Crafting Tree screen:
 - average duration in ticks and seconds
 - throughput in items/s or mB/s
 - sample count
+- approximate full-plan `Time To Craft` line after AE2's existing `To Craft` line
 
 MVP does not try to identify exact machine blocks, exact provider names, or every parallel operation perfectly.
 
@@ -76,3 +77,4 @@ No custom units, no themes, no history window yet.
 - Profile keys use output identity: every recipe that makes the same output shares one average.
 - Version-specific hooks/UI adapters live under directories like `1.20.1`; shared logic stays version-neutral.
 - Singleplayer support is required and should use the same server-owned stats protocol.
+- `Time To Craft` estimates the full `craftAmount`, not one recipe operation.
