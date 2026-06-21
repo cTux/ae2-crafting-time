@@ -48,8 +48,7 @@ public abstract class CraftingTreeWidgetMixin {
 
     private Object ae2craftingtime$colorRoot;
     private Map<Object, Long> ae2craftingtime$secondsByNode = Map.of();
-    private long ae2craftingtime$minSeconds;
-    private long ae2craftingtime$maxSeconds;
+    private Map<Object, Integer> ae2craftingtime$colorsByNode = Map.of();
 
     @Inject(method = "draw", at = @At("HEAD"), require = 0)
     private void ae2craftingtime$beginFrame(GuiGraphics guiGraphics, int offsetX, int offsetY, int mouseX, int mouseY,
@@ -83,7 +82,7 @@ public abstract class CraftingTreeWidgetMixin {
         var text = TimeEstimate.formatTotal(List.of(OptionalLong.of(seconds))).orElseThrow();
         var pose = guiGraphics.pose();
         var font = Minecraft.getInstance().font;
-        var color = TtcColor.forSeconds(seconds, ae2craftingtime$minSeconds, ae2craftingtime$maxSeconds);
+        var color = ae2craftingtime$colorsByNode.getOrDefault(node, TtcColor.DARK_GREEN);
         var textX = (int) ((x - 3 + (24 - font.width(text) * TEXT_SCALE) / 2) / TEXT_SCALE);
         var textY = (int) ((y + 15) / TEXT_SCALE);
         var stripLeft = (int) ((x - 3) / TEXT_SCALE);
@@ -144,11 +143,41 @@ public abstract class CraftingTreeWidgetMixin {
         var secondsByNode = new IdentityHashMap<Object, Long>();
         ae2craftingtime$totalSeconds(root, secondsByNode);
         ae2craftingtime$secondsByNode = secondsByNode;
-        ae2craftingtime$minSeconds = Long.MAX_VALUE;
-        ae2craftingtime$maxSeconds = Long.MIN_VALUE;
-        for (var seconds : secondsByNode.values()) {
-            ae2craftingtime$minSeconds = Math.min(ae2craftingtime$minSeconds, seconds);
-            ae2craftingtime$maxSeconds = Math.max(ae2craftingtime$maxSeconds, seconds);
+        var colorsByNode = new IdentityHashMap<Object, Integer>();
+        ae2craftingtime$colorSiblingGroup(List.of(root), secondsByNode, colorsByNode);
+        ae2craftingtime$colorChildGroups(root, secondsByNode, colorsByNode);
+        ae2craftingtime$colorsByNode = colorsByNode;
+    }
+
+    private static void ae2craftingtime$colorChildGroups(Object node, Map<Object, Long> secondsByNode,
+            Map<Object, Integer> colorsByNode) {
+        var subNodes = readField(node, "subNodes", List.class);
+        if (subNodes == null) {
+            return;
+        }
+
+        ae2craftingtime$colorSiblingGroup(subNodes, secondsByNode, colorsByNode);
+        for (var subNode : subNodes) {
+            ae2craftingtime$colorChildGroups(subNode, secondsByNode, colorsByNode);
+        }
+    }
+
+    private static void ae2craftingtime$colorSiblingGroup(List<?> nodes, Map<Object, Long> secondsByNode,
+            Map<Object, Integer> colorsByNode) {
+        long minSeconds = Long.MAX_VALUE;
+        long maxSeconds = Long.MIN_VALUE;
+        for (var node : nodes) {
+            var seconds = secondsByNode.get(node);
+            if (seconds != null) {
+                minSeconds = Math.min(minSeconds, seconds);
+                maxSeconds = Math.max(maxSeconds, seconds);
+            }
+        }
+        for (var node : nodes) {
+            var seconds = secondsByNode.get(node);
+            if (seconds != null) {
+                colorsByNode.put(node, TtcColor.forSeconds(seconds, minSeconds, maxSeconds));
+            }
         }
     }
 

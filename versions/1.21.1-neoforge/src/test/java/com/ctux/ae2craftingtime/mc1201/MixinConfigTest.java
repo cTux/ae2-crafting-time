@@ -35,4 +35,13 @@ class MixinConfigTest {
         assertTrue(mixin.contains("TTC: "));
         assertTrue(mixin.contains("withBold(true)"));
     }
+
+    @Test
+    void craftingTreeTtcColorsUseSiblingGroups() throws IOException {
+        var mixin = Files.readString(Path.of(
+                "src/main/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingTreeWidgetMixin.java"));
+
+        assertTrue(mixin.contains("ae2craftingtime$colorSiblingGroup(subNodes"));
+        assertTrue(mixin.contains("ae2craftingtime$colorsByNode"));
+    }
 }
