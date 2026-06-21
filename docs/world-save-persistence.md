@@ -133,7 +133,7 @@ Shared module:
   - `List<PersistedOutputSamples> snapshotSamples()`
   - `void loadSamples(List<PersistedOutputSamples> samples)`
 
-`versions/1.20.1`:
+`versions/1.20.1-forge`:
 
 - `Ae2CraftingTimeSavedData extends SavedData`
 - NBT encode/decode
@@ -169,7 +169,7 @@ If disabled, do not record new samples. Loaded samples can remain in memory, but
 
 ## Risks
 
-- `SavedData` format is version-specific Minecraft code, so keep it under `versions/1.20.1`.
+- `SavedData` format is version-specific Minecraft code, so keep it under `versions/1.20.1-forge`.
 - Persisting only aggregates would lose the latest-10 behavior after restart. Persist samples instead.
 - If output ids disappear because a mod is removed, keep their saved entries harmlessly. They will not be requested by the UI if those items are gone.
 - The save file can grow with every distinct output ever crafted. Each output keeps only 10 samples, so growth is bounded by output variety, not craft count.

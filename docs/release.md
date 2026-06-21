@@ -6,7 +6,7 @@ Do not add a row until the matching Gradle module builds a real jar.
 Current row:
 
 ```text
-1.20.1-forge -> :mc_1_20_1:distMod -> dist/ae2-crafting-time-1.20.1-Forge-<version>.jar
+1.20.1-forge -> :mc_1_20_1_forge:distMod -> dist/ae2-crafting-time-1.20.1-Forge-<version>.jar
 ```
 
 Build every matrix row:

@@ -146,7 +146,7 @@ Skip charts, overlays, and a separate profiling screen until the basic values ar
 ## Risks
 
 - AE2 internals are not stable API. Mixins into `CraftingCpuLogic` and `CraftingPlanSummary` may break across AE2 versions.
-- Version-specific mixins and UI adapters should be isolated under directories like `1.20.1`; putting shared profiling code there would make future ports copy/paste-heavy.
+- Version-specific mixins and UI adapters should be isolated under directories like `1.20.1-forge`; putting shared profiling code there would make future ports copy/paste-heavy.
 - Pattern identity by output can merge multiple recipes for the same output.
 - FIFO output matching can be wrong under parallel machines with identical outputs.
 - Client display needs request/response packets: client requests visible output keys, server replies with aggregate snapshots. Direct client reads from local profiler state are wrong on dedicated servers.

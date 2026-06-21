@@ -159,7 +159,7 @@ Shared module:
 - packet DTOs if they can stay Minecraft-free
 - client display cache if Minecraft-free
 
-`versions/1.20.1`:
+`versions/1.20.1-forge`:
 
 - Forge `SimpleChannel`
 - packet encode/decode/handlers
@@ -171,7 +171,7 @@ Shared module:
 
 1. Add `ClientStatsCache` in shared or version code.
 2. Add `StatsSnapshot` data model.
-3. Add Forge `SimpleChannel` in `versions/1.20.1`.
+3. Add Forge `SimpleChannel` in `versions/1.20.1-forge`.
 4. Add `StatsRequestC2S` and `StatsSnapshotS2C`.
 5. Change Crafting Tree mixin:
    - collect visible output ids

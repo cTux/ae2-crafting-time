@@ -23,7 +23,7 @@ MVP shows per-node rolling averages in the existing Crafting Tree screen:
 
 MVP does not try to identify exact machine blocks, exact provider names, or every parallel operation perfectly.
 
-Version-specific code must live under a version directory such as `1.20.1`. Shared profiling logic must stay outside version directories so later Minecraft/AE2 ports reuse it instead of copying it.
+Version-specific code must live under a version directory such as `1.20.1-forge`. Shared profiling logic must stay outside version directories so later Minecraft/AE2 ports reuse it instead of copying it.
 
 In multiplayer, all timing and throughput calculations must be server-owned. The client only requests and renders server-provided aggregate snapshots. See `docs/server-client-stats.md`.
 
@@ -75,6 +75,6 @@ No custom units, no themes, no history window yet.
 - `enabled = true` gates collection and UI.
 - Stats use the latest 10 completed crafts, and one completed craft is enough to show an estimate.
 - Profile keys use output identity: every recipe that makes the same output shares one average.
-- Version-specific hooks/UI adapters live under directories like `1.20.1`; shared logic stays version-neutral.
+- Version-specific hooks/UI adapters live under directories like `1.20.1-forge`; shared logic stays version-neutral.
 - Singleplayer support is required and should use the same server-owned stats protocol.
 - `Time To Craft` estimates the full `craftAmount`, not one recipe operation.
