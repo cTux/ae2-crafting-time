@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.mc1201.net.StatsRequestC2S;
+import net.neoforged.neoforge.network.PacketDistributor;
 
 import java.util.List;
 import java.util.Map;
@@ -20,7 +21,7 @@ public final class ClientStatsRequests {
 
         REQUESTED_AT.put(key, now);
         // ponytail: one-key requests are simple; batch visible nodes if packet spam shows up.
-        StatsNetwork.CHANNEL.send(new StatsRequestC2S(List.of(key.outputId())), net.minecraftforge.network.PacketDistributor.SERVER.noArg());
+        PacketDistributor.sendToServer(new StatsRequestC2S(List.of(key.outputId())));
     }
 
     private ClientStatsRequests() {

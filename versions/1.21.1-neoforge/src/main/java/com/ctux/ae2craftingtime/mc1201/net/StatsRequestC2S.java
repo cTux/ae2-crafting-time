@@ -5,13 +5,28 @@ import com.ctux.ae2craftingtime.core.StatsEntry;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.StatsNetwork;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public record StatsRequestC2S(List<String> keys) {
+public record StatsRequestC2S(List<String> keys) implements CustomPacketPayload {
+    public static final Type<StatsRequestC2S> TYPE = new Type<>(
+            ResourceLocation.fromNamespaceAndPath("ae2craftingtime", "stats_request"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, StatsRequestC2S> STREAM_CODEC = StreamCodec.ofMember(
+            StatsRequestC2S::encode,
+            StatsRequestC2S::decode);
+
+    @Override
+    public Type<StatsRequestC2S> type() {
+        return TYPE;
+    }
+
     public static void encode(StatsRequestC2S packet, FriendlyByteBuf buffer) {
         buffer.writeVarInt(packet.keys.size());
         for (var key : packet.keys) {
@@ -28,10 +43,9 @@ public record StatsRequestC2S(List<String> keys) {
         return new StatsRequestC2S(keys);
     }
 
-    public static void handle(StatsRequestC2S packet, CustomPayloadEvent.Context context) {
+    public static void handle(StatsRequestC2S packet, IPayloadContext context) {
         context.enqueueWork(() -> {
-            ServerPlayer player = context.getSender();
-            if (player == null) {
+            if (!(context.player() instanceof ServerPlayer player)) {
                 return;
             }
 
@@ -41,6 +55,5 @@ public record StatsRequestC2S(List<String> keys) {
             }
             StatsNetwork.sendTo(player, new StatsSnapshotS2C(entries));
         });
-        context.setPacketHandled(true);
     }
 }

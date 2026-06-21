@@ -6,12 +6,27 @@ import com.ctux.ae2craftingtime.core.ProfileUnit;
 import com.ctux.ae2craftingtime.core.StatsEntry;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.event.network.CustomPayloadEvent;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.ResourceLocation;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public record StatsSnapshotS2C(List<StatsEntry> entries) {
+public record StatsSnapshotS2C(List<StatsEntry> entries) implements CustomPacketPayload {
+    public static final Type<StatsSnapshotS2C> TYPE = new Type<>(
+            ResourceLocation.fromNamespaceAndPath("ae2craftingtime", "stats_snapshot"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, StatsSnapshotS2C> STREAM_CODEC = StreamCodec.ofMember(
+            StatsSnapshotS2C::encode,
+            StatsSnapshotS2C::decode);
+
+    @Override
+    public Type<StatsSnapshotS2C> type() {
+        return TYPE;
+    }
+
     public static void encode(StatsSnapshotS2C packet, FriendlyByteBuf buffer) {
         buffer.writeVarInt(packet.entries.size());
         for (var entry : packet.entries) {
@@ -43,8 +58,7 @@ public record StatsSnapshotS2C(List<StatsEntry> entries) {
         return new StatsSnapshotS2C(entries);
     }
 
-    public static void handle(StatsSnapshotS2C packet, CustomPayloadEvent.Context context) {
+    public static void handle(StatsSnapshotS2C packet, IPayloadContext context) {
         context.enqueueWork(() -> ClientStats.CACHE.replace(packet.entries));
-        context.setPacketHandled(true);
     }
 }

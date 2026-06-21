@@ -1,60 +1,47 @@
-buildscript {
-    repositories {
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-    }
-}
-
 plugins {
-    id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
+    id 'net.neoforged.moddev' version '2.0.141'
 }
-
-apply plugin: 'org.spongepowered.mixin'
 
 base {
-    archivesName = 'ae2-crafting-time-1.21.1-Forge'
+    archivesName = 'ae2-crafting-time-1.21.1-NeoForge'
 }
 
 java {
     toolchain.languageVersion = JavaLanguageVersion.of(21)
 }
 
-minecraft {
-    mappings channel: 'official', version: '1.21.1'
-    copyIdeResources = true
+neoForge {
+    version = '21.1.234'
 
     runs {
-        configureEach {
-            workingDirectory project.file('run')
-            property 'forge.logging.console.level', 'debug'
-            mods {
-                ae2craftingtime {
-                    source sourceSets.main
-                }
-            }
+        client {
+            client()
+        }
+        server {
+            server()
+            programArgument '--nogui'
         }
 
-        client {}
-        server { args '--nogui' }
+        configureEach {
+            gameDirectory = project.file('run')
+            logLevel = org.slf4j.event.Level.DEBUG
+        }
     }
-}
 
-mixin {
-    add sourceSets.main, 'ae2craftingtime.refmap.json'
-    config 'ae2craftingtime.mixins.json'
+    mods {
+        ae2craftingtime {
+            sourceSet sourceSets.main
+        }
+    }
 }
 
 sourceSets.main.java.srcDir '../../shared/src/main/java'
 
+sourceSets.test.compileClasspath += sourceSets.main.compileClasspath
+sourceSets.test.runtimeClasspath += sourceSets.main.runtimeClasspath
+
 repositories {
     mavenCentral()
-    maven {
-        url = 'https://cursemaven.com'
-        content { includeGroup 'curse.maven' }
-    }
     maven {
         name = 'Modmaven'
         url = 'https://modmaven.dev/'
@@ -63,9 +50,7 @@ repositories {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.21.1-52.1.14'
-
-    implementation fg.deobf('appeng:appliedenergistics2:19.0.27')
+    implementation 'appeng:appliedenergistics2:19.0.27'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 
@@ -84,14 +69,14 @@ tasks.named('processResources', ProcessResources).configure {
             mod_license            : 'MIT',
             mod_authors            : 'ctux',
             mod_description        : 'Session-only AE2 autocrafting performance hints for AE2: Crafting Tree.',
-            minecraft_version_range: '[1.21.1,1.21.2)',
-            forge_version_range    : '[52,)',
-            loader_version_range   : '[52,)'
+            minecraft_version_range: '[1.21.1]',
+            neoforge_version_range : '[21.1.1,)',
+            loader_version_range   : '[1,)'
     ]
 
     inputs.properties props
 
-    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+    filesMatching(['META-INF/neoforge.mods.toml', 'pack.mcmeta']) {
         expand props
     }
 }
@@ -114,5 +99,5 @@ tasks.register('distMod', Copy) {
     dependsOn tasks.named('jar')
     from tasks.named('jar').flatMap { it.archiveFile }
     into rootProject.layout.projectDirectory.dir('dist')
-    rename { "ae2-crafting-time-1.21.1-Forge-${project.version}.jar" }
+    rename { "ae2-crafting-time-1.21.1-NeoForge-${project.version}.jar" }
 }
