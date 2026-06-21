@@ -46,9 +46,9 @@ class TimeEstimateTest {
     }
 
     @Test
-    void totalCraftEtaUsesSlowestKnownRow() {
+    void totalCraftEtaAddsKnownRows() {
         var total = TimeEstimate.formatTotal(List.of(OptionalLong.of(4), OptionalLong.empty(), OptionalLong.of(9)));
 
-        assertEquals("~9s", total.orElseThrow());
+        assertEquals("~13s", total.orElseThrow());
     }
 }

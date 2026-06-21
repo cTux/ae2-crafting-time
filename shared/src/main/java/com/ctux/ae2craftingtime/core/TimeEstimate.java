@@ -25,7 +25,7 @@ public final class TimeEstimate {
         long totalSeconds = 0;
         for (var estimate : estimates) {
             if (estimate.isPresent()) {
-                totalSeconds = Math.max(totalSeconds, estimate.getAsLong());
+                totalSeconds += estimate.getAsLong();
             }
         }
         return totalSeconds == 0 ? Optional.empty() : Optional.of(formatSeconds(totalSeconds));
