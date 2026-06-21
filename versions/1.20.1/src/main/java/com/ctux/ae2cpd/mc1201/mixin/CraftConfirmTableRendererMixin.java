@@ -17,9 +17,19 @@ import java.util.List;
 
 @Mixin(CraftConfirmTableRenderer.class)
 public abstract class CraftConfirmTableRendererMixin {
-    @Inject(method = "getEntryTooltip", at = @At("RETURN"), remap = false)
-    private void ae2cpd$appendTimeToCraft(CraftingPlanSummaryEntry entry,
+    @Inject(method = "getEntryDescription", at = @At("RETURN"), remap = false)
+    private void ae2cpd$appendVisibleTimeToCraft(CraftingPlanSummaryEntry entry,
             CallbackInfoReturnable<List<Component>> cir) {
+        ae2cpd$appendTimeToCraft(entry, cir.getReturnValue());
+    }
+
+    @Inject(method = "getEntryTooltip", at = @At("RETURN"), remap = false)
+    private void ae2cpd$appendTooltipTimeToCraft(CraftingPlanSummaryEntry entry,
+            CallbackInfoReturnable<List<Component>> cir) {
+        ae2cpd$appendTimeToCraft(entry, cir.getReturnValue());
+    }
+
+    private static void ae2cpd$appendTimeToCraft(CraftingPlanSummaryEntry entry, List<Component> lines) {
         if (entry.getCraftAmount() <= 0) {
             return;
         }
@@ -27,7 +37,7 @@ public abstract class CraftConfirmTableRendererMixin {
         var key = ProfilerBridge.key(entry.getWhat());
         ClientStats.CACHE.get(key).ifPresentOrElse(stats -> TimeEstimate
                 .format(AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()), stats)
-                .ifPresent(eta -> cir.getReturnValue().add(Component.literal("Time To Craft: " + eta))),
+                .ifPresent(eta -> lines.add(Component.literal("Time To Craft: " + eta))),
                 () -> ClientStatsRequests.request(key));
     }
 }

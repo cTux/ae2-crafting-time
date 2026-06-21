@@ -21,4 +21,13 @@ class MixinConfigTest {
         assertTrue(clientIndex >= 0 && treeIndex > clientIndex);
         assertTrue(confirmIndex > clientIndex);
     }
+
+    @Test
+    void craftPlanTimeEstimateHooksVisibleDescription() throws IOException {
+        var mixin = Files.readString(Path.of(
+                "src/main/java/com/ctux/ae2cpd/mc1201/mixin/CraftConfirmTableRendererMixin.java"));
+
+        assertTrue(mixin.contains("method = \"getEntryDescription\""));
+        assertTrue(mixin.contains("Time To Craft: "));
+    }
 }
