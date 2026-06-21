@@ -1,14 +1,24 @@
 package com.ctux.ae2craftingtime.core;
 
 import java.util.Optional;
+import java.util.OptionalLong;
 
 public final class TimeEstimate {
-    public static Optional<String> format(long amount, ProfileStats stats) {
+    public static OptionalLong seconds(long amount, ProfileStats stats) {
         if (amount <= 0 || stats.amountPerSecond() <= 0) {
+            return OptionalLong.empty();
+        }
+
+        return OptionalLong.of((long) Math.ceil(amount / stats.amountPerSecond()));
+    }
+
+    public static Optional<String> format(long amount, ProfileStats stats) {
+        var estimate = seconds(amount, stats);
+        if (estimate.isEmpty()) {
             return Optional.empty();
         }
 
-        var seconds = (long) Math.ceil(amount / stats.amountPerSecond());
+        var seconds = estimate.getAsLong();
         var hours = seconds / 3600;
         var minutes = (seconds % 3600) / 60;
         var remainingSeconds = seconds % 60;

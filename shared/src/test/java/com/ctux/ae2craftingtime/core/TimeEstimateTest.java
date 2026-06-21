@@ -32,6 +32,7 @@ class TimeEstimateTest {
         var stats = new ProfileStats(1, 20, 100, 100.0, 20, ProfileUnit.ITEM);
 
         assertEquals("~1s", TimeEstimate.format(1, stats).orElseThrow());
+        assertEquals(1, TimeEstimate.seconds(1, stats).orElseThrow());
     }
 
     @Test

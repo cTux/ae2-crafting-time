@@ -12,12 +12,14 @@ class MixinConfigTest {
     void craftingTreeMixinIsClientOnly() throws IOException {
         var json = Files.readString(Path.of("src/main/resources/ae2craftingtime.mixins.json"));
         var clientIndex = json.indexOf("\"client\"");
+        var tableIndex = json.indexOf("\"AbstractTableRendererMixin\"");
         var treeIndex = json.indexOf("\"CraftingTreeWidgetMixin\"");
         var confirmIndex = json.indexOf("\"CraftConfirmTableRendererMixin\"");
         var serverIndex = json.indexOf("\"mixins\"");
         var cpuIndex = json.indexOf("\"CraftingCpuLogicMixin\"");
 
         assertTrue(serverIndex >= 0 && cpuIndex > serverIndex);
+        assertTrue(tableIndex > clientIndex);
         assertTrue(clientIndex >= 0 && treeIndex > clientIndex);
         assertTrue(confirmIndex > clientIndex);
     }
