@@ -123,13 +123,14 @@ Actual AE2 localization may say `From Storage` instead of `Available`. Do not re
 Whole ordered craft estimate:
 
 ```text
-Total TTC: ~000:02:15
 Crafting CPU: Automatic
+Storage: N/A : Co Processors: N/A
+Total TTC: ~000:02:15
 ```
 
-Place `Total TTC` in the bottom status area between the craft-plan grid and the
-`Crafting CPU` selector. Center it on the screen with the same alignment as the
-`Crafting CPU` details below it. Do not put it in the title; the title already
+Place `Total TTC` in the bottom status area immediately after the `Crafting CPU`
+details. Center it on the screen with the same alignment as the CPU status text.
+Do not put it in the title; the title already
 contains AE2's storage-byte summary. Do not put it in the item grid; the grid
 contains per-row estimates.
 
@@ -158,7 +159,7 @@ Small tests that matter:
 3. Add a version-specific normalizer for `AEKey + amount`.
 4. Add client-only mixin for `CraftConfirmTableRenderer#getEntryTooltip`.
 5. In that mixin, append `Time To Craft: ~...` when cached server stats exist, otherwise request stats.
-6. In the craft-confirm screen mixin, compute `Total TTC` from the rendered plan entries and draw it centered above the `Crafting CPU` selector.
+6. In the craft-confirm screen mixin, compute `Total TTC` from the rendered plan entries and draw it centered below the `Crafting CPU` details.
 7. Build all versions.
 
 ## Sources

@@ -71,7 +71,7 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
         TimeEstimate.formatTotal(estimates).ifPresent(eta -> {
             var text = Component.literal("Total TTC: " + eta);
             var font = getMinecraft().font;
-            guiGraphics.drawString(font, text, 109 - font.width(text) / 2, 134, 0x404040, false);
+            guiGraphics.drawString(font, text, 109 - font.width(text) / 2, 178, 0x404040, false);
         });
     }
 
