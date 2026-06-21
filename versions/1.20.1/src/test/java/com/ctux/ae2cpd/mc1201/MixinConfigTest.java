@@ -13,10 +13,12 @@ class MixinConfigTest {
         var json = Files.readString(Path.of("src/main/resources/ae2cpd.mixins.json"));
         var clientIndex = json.indexOf("\"client\"");
         var treeIndex = json.indexOf("\"CraftingTreeWidgetMixin\"");
+        var confirmIndex = json.indexOf("\"CraftConfirmTableRendererMixin\"");
         var serverIndex = json.indexOf("\"mixins\"");
         var cpuIndex = json.indexOf("\"CraftingCpuLogicMixin\"");
 
         assertTrue(serverIndex >= 0 && cpuIndex > serverIndex);
         assertTrue(clientIndex >= 0 && treeIndex > clientIndex);
+        assertTrue(confirmIndex > clientIndex);
     }
 }

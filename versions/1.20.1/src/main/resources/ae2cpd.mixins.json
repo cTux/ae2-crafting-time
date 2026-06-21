@@ -8,6 +8,7 @@
     "CraftingCpuLogicMixin"
   ],
   "client": [
+    "CraftConfirmTableRendererMixin",
     "CraftingTreeWidgetMixin"
   ],
   "injectors": {
