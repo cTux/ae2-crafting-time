@@ -5,10 +5,11 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "ae2cpd.refmap.json",
   "mixins": [
-    "CraftingCpuLogicMixin",
+    "CraftingCpuLogicMixin"
+  ],
+  "client": [
     "CraftingTreeWidgetMixin"
   ],
-  "client": [],
   "injectors": {
     "defaultRequire": 1
   }

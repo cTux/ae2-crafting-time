@@ -35,6 +35,13 @@ public final class ProfilerBridge {
         return current().stats(key(what));
     }
 
+    public static Optional<ProfileStats> stats(ProfileKey key) {
+        if (key == null || !isEnabled()) {
+            return Optional.empty();
+        }
+        return current().stats(key);
+    }
+
     private static boolean isEnabled() {
         return Ae2CpdConfig.ENABLED.get();
     }
@@ -49,7 +56,7 @@ public final class ProfilerBridge {
         return profiler;
     }
 
-    private static ProfileKey key(AEKey key) {
+    public static ProfileKey key(AEKey key) {
         return new ProfileKey(key.getId().toString());
     }
 

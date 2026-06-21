@@ -10,5 +10,6 @@ public final class Ae2CraftPerformanceDebugger {
 
     public Ae2CraftPerformanceDebugger() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Ae2CpdConfig.SPEC);
+        StatsNetwork.register();
     }
 }
