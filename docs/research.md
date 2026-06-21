@@ -6,7 +6,7 @@ Date: 2026-06-21
 
 Build a Minecraft 1.20.1 Forge addon that shows AE2 autocrafting performance hints beside each node in the AE2: Crafting Tree view:
 
-- average craft duration over the latest N observations
+- average craft duration over the latest 10 observations
 - average throughput as items/tick, items/second, mB/tick, mB/second
 - slow or under-parallelized steps
 
@@ -69,7 +69,7 @@ profileKey = sorted inputs + sorted outputs
 
 Example: if one recipe makes `iron_plate` from a hammer and another makes `iron_plate` from a press, output-key identity merges their timings into one average. Full signature would keep those averages separate, but that is out of scope for the first release.
 
-For each key, keep a RAM-only ring buffer of the latest N observations:
+For each key, keep a RAM-only ring buffer of the latest 10 observations:
 
 ```text
 durationTicks
@@ -90,7 +90,7 @@ mbPerTick = average(fluidAmount / durationTicks)
 mbPerSecond = mbPerTick * 20
 ```
 
-Default N: 20. The data is session-only for the first release: restart the server/client and the samples are gone.
+One completed craft is enough to produce an estimate. The data is session-only for the first release: restart the server/client and the samples are gone.
 
 ## Measuring Strategy
 

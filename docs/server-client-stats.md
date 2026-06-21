@@ -46,7 +46,7 @@ Server owns:
 - pending operation matching
 - rolling sample buffers
 - average duration and throughput calculation
-- config values that affect collection: `enabled`, `samples`
+- config value that affects collection: `enabled`
 
 Client owns:
 
@@ -139,7 +139,6 @@ Server config:
 
 ```text
 enabled = true
-samples = 20
 ```
 
 Client config:

@@ -35,7 +35,7 @@ Singleplayer worlds must use the same logical-server flow and work without a sep
 2. Add dependencies for AE2 and AE2: Crafting Tree.
 3. Add server-side profiler store:
    - `Map<ProfileKey, ArrayDeque<Sample>>`
-   - max samples: 20
+   - max samples: 10
    - RAM only; no world save, no file save
 4. Add AE2 mixins:
    - inject after successful `provider.pushPattern(...)` in `CraftingCpuLogic.executeCrafting`
@@ -62,7 +62,6 @@ If that works, UI work is straightforward. If it does not, stop and inspect AE2'
 
 ```text
 enabled = true
-samples = 20
 showInTree = true
 ```
 
@@ -74,6 +73,7 @@ No custom units, no themes, no history window yet.
 - AE2: Crafting Tree is optional.
 - No fallback UI when AE2: Crafting Tree is absent.
 - `enabled = true` gates collection and UI.
+- Stats use the latest 10 completed crafts, and one completed craft is enough to show an estimate.
 - Profile keys use output identity: every recipe that makes the same output shares one average.
 - Version-specific hooks/UI adapters live under directories like `1.20.1`; shared logic stays version-neutral.
 - Singleplayer support is required and should use the same server-owned stats protocol.

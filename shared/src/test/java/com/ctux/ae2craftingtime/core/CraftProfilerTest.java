@@ -28,20 +28,50 @@ class CraftProfilerTest {
     }
 
     @Test
+    void statsExistAfterOneCompletedCraft() {
+        var profiler = new CraftProfiler(10);
+        var ironPlate = new ProfileKey("minecraft:iron_plate");
+
+        profiler.start(ironPlate, 1, ProfileUnit.ITEM, 10);
+        profiler.complete(ironPlate, 1, 30);
+
+        var stats = profiler.stats(ironPlate).orElseThrow();
+
+        assertEquals(1, stats.sampleCount());
+        assertEquals(20.0, stats.averageDurationTicks());
+    }
+
+    @Test
+    void tenSampleWindowDropsOlderCrafts() {
+        var profiler = new CraftProfiler(10);
+        var ironPlate = new ProfileKey("minecraft:iron_plate");
+
+        for (var i = 1; i <= 11; i++) {
+            profiler.start(ironPlate, 1, ProfileUnit.ITEM, 0);
+            profiler.complete(ironPlate, 1, i);
+        }
+
+        var stats = profiler.stats(ironPlate).orElseThrow();
+
+        assertEquals(10, stats.sampleCount());
+        assertEquals(6.5, stats.averageDurationTicks());
+    }
+
+    @Test
     void newProfilerStartsWithoutPersistedSessionStats() {
         var key = new ProfileKey("minecraft:iron_plate");
-        var oldSession = new CraftProfiler(20);
+        var oldSession = new CraftProfiler(10);
         oldSession.start(key, 1, ProfileUnit.ITEM, 1);
         oldSession.complete(key, 1, 2);
 
-        var newSession = new CraftProfiler(20);
+        var newSession = new CraftProfiler(10);
 
         assertFalse(newSession.stats(key).isPresent());
     }
 
     @Test
     void outputIdentityMergesSamplesFromSameOutput() {
-        var profiler = new CraftProfiler(20);
+        var profiler = new CraftProfiler(10);
         var ironPlate = new ProfileKey("minecraft:iron_plate");
 
         profiler.start(ironPlate, 1, ProfileUnit.ITEM, 0);
@@ -56,7 +86,7 @@ class CraftProfilerTest {
 
     @Test
     void waitsForPartialCompletionsBeforeRecordingSample() {
-        var profiler = new CraftProfiler(20);
+        var profiler = new CraftProfiler(10);
         var fluid = new ProfileKey("minecraft:water");
 
         profiler.start(fluid, 1000, ProfileUnit.MILLIBUCKET, 5);
@@ -75,7 +105,7 @@ class CraftProfilerTest {
 
     @Test
     void disabledProfilerIgnoresStartsAndCompletions() {
-        var profiler = new CraftProfiler(20);
+        var profiler = new CraftProfiler(10);
         var key = new ProfileKey("minecraft:gear");
 
         profiler.setEnabled(false);
