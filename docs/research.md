@@ -56,7 +56,7 @@ This is the cheapest display path: add profiling values to the tree node model, 
 Use pattern output key as the MVP identity:
 
 ```text
-profileKey = output AEKey id + output amount
+profileKey = output AEKey id
 ```
 
 This intentionally merges every recipe that makes the same output into one average. For example, all recipes that make `iron_plate` share one `iron_plate` average. This matches Crafting Tree's current cache, which also keys recipes by first output key.
