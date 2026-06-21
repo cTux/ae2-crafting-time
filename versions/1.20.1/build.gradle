@@ -15,7 +15,7 @@ plugins {
 apply plugin: 'org.spongepowered.mixin'
 
 base {
-    archivesName = 'ae2-craft-performance-debugger-1.20.1'
+    archivesName = 'ae2-crafting-time-1.20.1'
 }
 
 minecraft {
@@ -27,7 +27,7 @@ minecraft {
             workingDirectory project.file('run')
             property 'forge.logging.console.level', 'debug'
             mods {
-                ae2cpd {
+                ae2craftingtime {
                     source sourceSets.main
                 }
             }
@@ -39,8 +39,8 @@ minecraft {
 }
 
 mixin {
-    add sourceSets.main, 'ae2cpd.refmap.json'
-    config 'ae2cpd.mixins.json'
+    add sourceSets.main, 'ae2craftingtime.refmap.json'
+    config 'ae2craftingtime.mixins.json'
 }
 
 sourceSets.main.java.srcDir '../../shared/src/main/java'
@@ -74,8 +74,8 @@ test {
 
 tasks.named('processResources', ProcessResources).configure {
     def props = [
-            mod_id                 : 'ae2cpd',
-            mod_name               : 'AE2 Craft Performance Debugger',
+            mod_id                 : 'ae2craftingtime',
+            mod_name               : 'AE2 Crafting Time',
             mod_version            : project.version,
             mod_license            : 'MIT',
             mod_authors            : 'ctux',
@@ -95,7 +95,7 @@ tasks.named('processResources', ProcessResources).configure {
 tasks.named('jar', Jar).configure {
     manifest {
         attributes([
-                'Specification-Title'     : 'ae2cpd',
+                'Specification-Title'     : 'ae2craftingtime',
                 'Specification-Vendor'    : 'ctux',
                 'Specification-Version'   : '1',
                 'Implementation-Title'    : project.name,
@@ -111,5 +111,5 @@ tasks.register('distMod', Copy) {
     dependsOn tasks.named('reobfJar')
     from tasks.named('jar').flatMap { it.archiveFile }
     into rootProject.layout.projectDirectory.dir('dist')
-    rename { "ae2-craft-performance-debugger-1.20.1-${project.version}.jar" }
+    rename { "ae2-crafting-time-1.20.1-${project.version}.jar" }
 }

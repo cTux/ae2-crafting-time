@@ -3,7 +3,7 @@ plugins {
 }
 
 allprojects {
-    group = 'com.ctux.ae2cpd'
+    group = 'com.ctux.ae2craftingtime'
     version = '1.0.0'
 
     repositories {

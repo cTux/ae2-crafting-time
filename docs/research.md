@@ -1,4 +1,4 @@
-# AE2 Craft Performance Debugger Research
+# AE2 Crafting Time Research
 
 Date: 2026-06-21
 

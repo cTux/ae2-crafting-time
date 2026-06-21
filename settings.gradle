@@ -12,7 +12,7 @@ plugins {
     id 'org.gradle.toolchains.foojay-resolver-convention' version '0.7.0'
 }
 
-rootProject.name = 'ae2-craft-performance-debugger'
+rootProject.name = 'ae2-crafting-time'
 
 include ':shared'
 include ':mc_1_20_1'
