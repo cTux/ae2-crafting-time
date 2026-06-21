@@ -3,5 +3,6 @@ build/
 **/build/
 run/
 **/run/
+dist/
 *.class
 *.log

@@ -100,3 +100,10 @@ tasks.named('jar', Jar).configure {
     }
     finalizedBy 'reobfJar'
 }
+
+tasks.register('distMod', Copy) {
+    dependsOn tasks.named('reobfJar')
+    from tasks.named('jar').flatMap { it.archiveFile }
+    into rootProject.layout.projectDirectory.dir('dist')
+    rename { "ae2-craft-performance-debugger-1.20.1-${project.version}.jar" }
+}
