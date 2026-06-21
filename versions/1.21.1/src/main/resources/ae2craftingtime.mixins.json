@@ -1,0 +1,19 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.ctux.ae2craftingtime.mc1201.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "refmap": "ae2craftingtime.refmap.json",
+  "mixins": [
+    "CraftingCpuLogicMixin"
+  ],
+  "client": [
+    "AbstractTableRendererMixin",
+    "CraftConfirmScreenMixin",
+    "CraftConfirmTableRendererMixin",
+    "CraftingTreeWidgetMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

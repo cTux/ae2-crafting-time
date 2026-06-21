@@ -173,7 +173,7 @@ function Publish-CurseForge($entry, [string]$version, [string]$jarPath) {
     }
 }
 
-$matrix = @(Read-Json $MatrixPath @())
+$matrix = Read-Json $MatrixPath @()
 $state = Read-Json $StatePath ([pscustomobject]@{})
 
 Push-Location $root

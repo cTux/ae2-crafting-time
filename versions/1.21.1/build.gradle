@@ -1,0 +1,118 @@
+buildscript {
+    repositories {
+        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
+    }
+}
+
+plugins {
+    id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
+}
+
+apply plugin: 'org.spongepowered.mixin'
+
+base {
+    archivesName = 'ae2-crafting-time-1.21.1-Forge'
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+}
+
+minecraft {
+    mappings channel: 'official', version: '1.21.1'
+    copyIdeResources = true
+
+    runs {
+        configureEach {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                ae2craftingtime {
+                    source sourceSets.main
+                }
+            }
+        }
+
+        client {}
+        server { args '--nogui' }
+    }
+}
+
+mixin {
+    add sourceSets.main, 'ae2craftingtime.refmap.json'
+    config 'ae2craftingtime.mixins.json'
+}
+
+sourceSets.main.java.srcDir '../../shared/src/main/java'
+
+repositories {
+    mavenCentral()
+    maven {
+        url = 'https://cursemaven.com'
+        content { includeGroup 'curse.maven' }
+    }
+    maven {
+        name = 'Modmaven'
+        url = 'https://modmaven.dev/'
+        content { includeGroup 'appeng' }
+    }
+}
+
+dependencies {
+    minecraft 'net.minecraftforge:forge:1.21.1-52.1.14'
+
+    implementation fg.deobf('appeng:appliedenergistics2:19.0.27')
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    def props = [
+            mod_id                 : 'ae2craftingtime',
+            mod_name               : 'AE2 Crafting Time',
+            mod_version            : project.version,
+            mod_license            : 'MIT',
+            mod_authors            : 'ctux',
+            mod_description        : 'Session-only AE2 autocrafting performance hints for AE2: Crafting Tree.',
+            minecraft_version_range: '[1.21.1,1.21.2)',
+            forge_version_range    : '[52,)',
+            loader_version_range   : '[52,)'
+    ]
+
+    inputs.properties props
+
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand props
+    }
+}
+
+tasks.named('jar', Jar).configure {
+    manifest {
+        attributes([
+                'Specification-Title'     : 'ae2craftingtime',
+                'Specification-Vendor'    : 'ctux',
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : project.name,
+                'Implementation-Version'  : project.version,
+                'Implementation-Vendor'   : 'ctux',
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+
+tasks.register('distMod', Copy) {
+    dependsOn tasks.named('jar')
+    from tasks.named('jar').flatMap { it.archiveFile }
+    into rootProject.layout.projectDirectory.dir('dist')
+    rename { "ae2-crafting-time-1.21.1-Forge-${project.version}.jar" }
+}

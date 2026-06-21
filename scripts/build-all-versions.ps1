@@ -12,7 +12,7 @@ if (Test-Path $JavaHome) {
     $env:PATH = "$JavaHome\bin;$env:PATH"
 }
 
-$matrix = @(Get-Content $MatrixPath -Raw | ConvertFrom-Json)
+$matrix = Get-Content $MatrixPath -Raw | ConvertFrom-Json
 $tasks = $matrix | ForEach-Object { ":$($_.module):distMod" }
 
 if (-not $tasks) {
