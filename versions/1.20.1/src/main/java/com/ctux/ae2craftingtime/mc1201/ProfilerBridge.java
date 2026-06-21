@@ -12,6 +12,7 @@ import java.util.Optional;
 
 public final class ProfilerBridge {
     private static final CraftProfiler PROFILER = new CraftProfiler(10);
+    private static Ae2CraftingTimeSavedData savedData;
 
     public static void start(GenericStack output, long tick) {
         if (output == null || !isEnabled()) {
@@ -24,7 +25,9 @@ public final class ProfilerBridge {
         if (what == null || !isEnabled()) {
             return;
         }
-        PROFILER.complete(key(what), normalizeAmount(what, amount), tick);
+        if (PROFILER.complete(key(what), normalizeAmount(what, amount), tick) && savedData != null) {
+            savedData.replaceFrom(PROFILER.snapshotSamples());
+        }
     }
 
     public static Optional<ProfileStats> stats(AEKey what) {
@@ -47,6 +50,11 @@ public final class ProfilerBridge {
 
     public static ProfileKey key(AEKey key) {
         return new ProfileKey(key.getId().toString());
+    }
+
+    public static void load(Ae2CraftingTimeSavedData data) {
+        savedData = data;
+        PROFILER.loadSamples(data.samples());
     }
 
     private static ProfileUnit unit(AEKey key) {

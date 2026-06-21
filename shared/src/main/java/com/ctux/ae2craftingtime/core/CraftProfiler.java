@@ -1,7 +1,9 @@
 package com.ctux.ae2craftingtime.core;
 
 import java.util.ArrayDeque;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -33,16 +35,17 @@ public final class CraftProfiler {
                 .addLast(new PendingCraft(amount, unit, tick));
     }
 
-    public void complete(ProfileKey key, long amount, long tick) {
+    public boolean complete(ProfileKey key, long amount, long tick) {
         if (!enabled || amount <= 0) {
-            return;
+            return false;
         }
 
         var queue = pending.get(key);
         if (queue == null) {
-            return;
+            return false;
         }
 
+        var recorded = false;
         var remaining = amount;
         while (remaining > 0 && !queue.isEmpty()) {
             var craft = queue.peekFirst();
@@ -53,12 +56,15 @@ public final class CraftProfiler {
             if (craft.remainingAmount == 0) {
                 queue.removeFirst();
                 addSample(key, new CraftSample(craft.totalAmount, craft.unit, tick - craft.startedTick));
+                recorded = true;
             }
         }
 
         if (queue.isEmpty()) {
             pending.remove(key);
         }
+
+        return recorded;
     }
 
     public Optional<ProfileStats> stats(ProfileKey key) {
@@ -95,6 +101,32 @@ public final class CraftProfiler {
         queue.addLast(sample);
         while (queue.size() > maxSamples) {
             queue.removeFirst();
+        }
+    }
+
+    public List<PersistedOutputSamples> snapshotSamples() {
+        var snapshot = new ArrayList<PersistedOutputSamples>();
+        for (var entry : samples.entrySet()) {
+            var persisted = new ArrayList<PersistedCraftSample>();
+            ProfileUnit unit = null;
+            for (var sample : entry.getValue()) {
+                unit = sample.unit;
+                persisted.add(new PersistedCraftSample(sample.amount, sample.durationTicks));
+            }
+            if (unit != null && !persisted.isEmpty()) {
+                snapshot.add(new PersistedOutputSamples(entry.getKey(), unit, persisted));
+            }
+        }
+        return snapshot;
+    }
+
+    public void loadSamples(List<PersistedOutputSamples> persisted) {
+        samples.clear();
+        pending.clear();
+        for (var output : persisted) {
+            for (var sample : output.samples()) {
+                addSample(output.key(), new CraftSample(sample.amount(), output.unit(), sample.durationTicks()));
+            }
         }
     }
 

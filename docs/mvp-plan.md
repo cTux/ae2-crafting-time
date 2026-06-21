@@ -36,7 +36,7 @@ Singleplayer worlds must use the same logical-server flow and work without a sep
 3. Add server-side profiler store:
    - `Map<ProfileKey, ArrayDeque<Sample>>`
    - max samples: 10
-   - RAM only; no world save, no file save
+   - saved with Minecraft `SavedData` under `data/ae2-crafting-time.dat`
 4. Add AE2 mixins:
    - inject after successful `provider.pushPattern(...)` in `CraftingCpuLogic.executeCrafting`
    - inject after successful `CraftingCpuLogic.insert(...)` output handling
@@ -69,7 +69,7 @@ No custom units, no themes, no history window yet.
 
 ## Decisions
 
-- Stats are session-only: RAM data, cleared on restart.
+- Stats persist in the world save using Minecraft's default save pipeline.
 - AE2: Crafting Tree is optional.
 - No fallback UI when AE2: Crafting Tree is absent.
 - `enabled = true` gates collection and UI.

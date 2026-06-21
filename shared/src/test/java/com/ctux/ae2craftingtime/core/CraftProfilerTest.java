@@ -3,6 +3,7 @@ package com.ctux.ae2craftingtime.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class CraftProfilerTest {
@@ -53,6 +54,45 @@ class CraftProfilerTest {
 
         var stats = profiler.stats(ironPlate).orElseThrow();
 
+        assertEquals(10, stats.sampleCount());
+        assertEquals(6.5, stats.averageDurationTicks());
+    }
+
+    @Test
+    void exportsAndImportsCompletedSamples() {
+        var key = new ProfileKey("minecraft:iron_plate");
+        var profiler = new CraftProfiler(10);
+        profiler.start(key, 2, ProfileUnit.ITEM, 5);
+        profiler.complete(key, 2, 25);
+
+        var restored = new CraftProfiler(10);
+        restored.loadSamples(profiler.snapshotSamples());
+
+        var stats = restored.stats(key).orElseThrow();
+        assertEquals(1, stats.sampleCount());
+        assertEquals(20.0, stats.averageDurationTicks());
+        assertEquals(0.1, stats.amountPerTick());
+    }
+
+    @Test
+    void importKeepsLatestTenSamples() {
+        var key = new ProfileKey("minecraft:iron_plate");
+        var imported = new CraftProfiler(10);
+
+        imported.loadSamples(List.of(new PersistedOutputSamples(key, ProfileUnit.ITEM, List.of(
+                new PersistedCraftSample(1, 1),
+                new PersistedCraftSample(1, 2),
+                new PersistedCraftSample(1, 3),
+                new PersistedCraftSample(1, 4),
+                new PersistedCraftSample(1, 5),
+                new PersistedCraftSample(1, 6),
+                new PersistedCraftSample(1, 7),
+                new PersistedCraftSample(1, 8),
+                new PersistedCraftSample(1, 9),
+                new PersistedCraftSample(1, 10),
+                new PersistedCraftSample(1, 11)))));
+
+        var stats = imported.stats(key).orElseThrow();
         assertEquals(10, stats.sampleCount());
         assertEquals(6.5, stats.averageDurationTicks());
     }

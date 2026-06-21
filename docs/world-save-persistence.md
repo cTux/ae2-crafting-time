@@ -157,7 +157,7 @@ This rewrites the retained sample snapshot in memory, but the disk write still h
 
 ## Existing Config Impact
 
-Old `session-only` docs become obsolete once this feature lands.
+Docs should state that retained samples persist in the world save.
 
 The runtime should still respect:
 

@@ -90,7 +90,7 @@ mbPerTick = average(fluidAmount / durationTicks)
 mbPerSecond = mbPerTick * 20
 ```
 
-One completed craft is enough to produce an estimate. The data is session-only for the first release: restart the server/client and the samples are gone.
+One completed craft is enough to produce an estimate. Retained samples are saved in the world under `data/ae2-crafting-time.dat`.
 
 ## Measuring Strategy
 
