@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "id": "ae2craftingtime",
+  "version": "${version}",
+  "name": "AE2 Crafting Time",
+  "description": "Session-only AE2 autocrafting performance hints for AE2: Crafting Tree.",
+  "authors": [
+    "ctux"
+  ],
+  "license": "MIT",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "com.ctux.ae2craftingtime.mc1201.Ae2CraftingTime"
+    ],
+    "client": [
+      "com.ctux.ae2craftingtime.mc1201.Ae2CraftingTime"
+    ]
+  },
+  "mixins": [
+    "ae2craftingtime.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.16.0",
+    "fabric-api": "*",
+    "minecraft": "1.20.1",
+    "java": ">=17",
+    "ae2": ">=15.0.0"
+  },
+  "suggests": {
+    "ae2ct": ">=1.20.1-1.1.1"
+  }
+}

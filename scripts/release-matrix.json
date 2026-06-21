@@ -14,6 +14,20 @@
     "changelog": "Automated build."
   },
   {
+    "id": "1.20.1-fabric",
+    "module": "fabric_1_20_1",
+    "loader": "fabric",
+    "loaderName": "Fabric",
+    "minecraftVersion": "1.20.1",
+    "projectDir": "versions/1.20.1-fabric",
+    "artifactBase": "ae2-crafting-time-1.20.1-Fabric",
+    "initialVersion": "1.0.0",
+    "releaseType": "alpha",
+    "modrinthProjectId": "",
+    "curseProjectId": "",
+    "changelog": "Automated build."
+  },
+  {
     "id": "1.21.1-neoforge",
     "module": "mc_1_21_1_neoforge",
     "loader": "neoforge",

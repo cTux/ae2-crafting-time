@@ -1,0 +1,57 @@
+plugins {
+    id 'fabric-loom' version '1.10.5'
+}
+
+base {
+    archivesName = 'ae2-crafting-time-1.20.1-Fabric'
+}
+
+sourceSets.main.java.srcDir '../../shared/src/main/java'
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'Fabric'
+        url = 'https://maven.fabricmc.net/'
+    }
+    maven {
+        name = 'Sponge'
+        url = 'https://repo.spongepowered.org/repository/maven-public/'
+    }
+    maven {
+        name = 'Modmaven'
+        url = 'https://modmaven.dev/'
+        content { includeGroup 'appeng' }
+    }
+}
+
+dependencies {
+    minecraft 'com.mojang:minecraft:1.20.1'
+    mappings loom.officialMojangMappings()
+    modImplementation 'net.fabricmc:fabric-loader:0.16.14'
+    modImplementation 'net.fabricmc.fabric-api:fabric-api:0.92.6+1.20.1'
+    modImplementation 'appeng:appliedenergistics2-fabric:15.0.20'
+
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+
+    annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+tasks.named('processResources', ProcessResources).configure {
+    inputs.property 'version', project.version
+
+    filesMatching('fabric.mod.json') {
+        expand version: project.version
+    }
+}
+
+tasks.register('distMod', Copy) {
+    dependsOn tasks.named('remapJar')
+    from tasks.named('remapJar').flatMap { it.archiveFile }
+    into rootProject.layout.projectDirectory.dir('dist')
+    rename { "ae2-crafting-time-1.20.1-Fabric-${project.version}.jar" }
+}
