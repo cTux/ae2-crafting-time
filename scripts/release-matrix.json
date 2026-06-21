@@ -1,0 +1,16 @@
+[
+  {
+    "id": "1.20.1-forge",
+    "module": "mc_1_20_1",
+    "loader": "forge",
+    "loaderName": "Forge",
+    "minecraftVersion": "1.20.1",
+    "projectDir": "versions/1.20.1",
+    "artifactBase": "ae2-crafting-time-1.20.1-Forge",
+    "initialVersion": "1.0.0",
+    "releaseType": "alpha",
+    "modrinthProjectId": "",
+    "curseProjectId": "",
+    "changelog": "Automated build."
+  }
+]
