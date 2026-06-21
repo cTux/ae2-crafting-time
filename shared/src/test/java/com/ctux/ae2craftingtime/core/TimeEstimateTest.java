@@ -10,11 +10,18 @@ class TimeEstimateTest {
     void formatsRoundedUpEtaForWholeAmount() {
         var stats = new ProfileStats(4, 20, 0.5, 10.0, 20, ProfileUnit.ITEM);
 
-        assertEquals("~000:00:08", TimeEstimate.format(75, stats).orElseThrow());
+        assertEquals("~8s", TimeEstimate.format(75, stats).orElseThrow());
     }
 
     @Test
-    void formatsHoursWithAtLeastThreeDigits() {
+    void formatsMinutesWithoutLeadingHour() {
+        var stats = new ProfileStats(1, 20, 1, 1.0, 20, ProfileUnit.ITEM);
+
+        assertEquals("~1:07", TimeEstimate.format(67, stats).orElseThrow());
+    }
+
+    @Test
+    void formatsHoursWithoutLeadingZeros() {
         var stats = new ProfileStats(1, 20, 1, 1.0, 20, ProfileUnit.ITEM);
 
         assertEquals("~1000:00:00", TimeEstimate.format(3_600_000, stats).orElseThrow());
@@ -24,7 +31,7 @@ class TimeEstimateTest {
     void nonZeroWorkRoundsUpToOneSecond() {
         var stats = new ProfileStats(1, 20, 100, 100.0, 20, ProfileUnit.ITEM);
 
-        assertEquals("~000:00:01", TimeEstimate.format(1, stats).orElseThrow());
+        assertEquals("~1s", TimeEstimate.format(1, stats).orElseThrow());
     }
 
     @Test

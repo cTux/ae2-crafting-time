@@ -28,6 +28,6 @@ class MixinConfigTest {
                 "src/main/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftConfirmTableRendererMixin.java"));
 
         assertTrue(mixin.contains("method = \"getEntryDescription\""));
-        assertTrue(mixin.contains("Time To Craft: "));
+        assertTrue(mixin.contains("TTC: "));
     }
 }

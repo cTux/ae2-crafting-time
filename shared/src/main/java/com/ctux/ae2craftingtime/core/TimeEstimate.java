@@ -12,7 +12,13 @@ public final class TimeEstimate {
         var hours = seconds / 3600;
         var minutes = (seconds % 3600) / 60;
         var remainingSeconds = seconds % 60;
-        return Optional.of(String.format("~%03d:%02d:%02d", hours, minutes, remainingSeconds));
+        if (hours > 0) {
+            return Optional.of(String.format("~%d:%02d:%02d", hours, minutes, remainingSeconds));
+        }
+        if (minutes > 0) {
+            return Optional.of(String.format("~%d:%02d", minutes, remainingSeconds));
+        }
+        return Optional.of("~" + seconds + "s");
     }
 
     private TimeEstimate() {

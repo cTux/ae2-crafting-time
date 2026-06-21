@@ -37,7 +37,7 @@ public abstract class CraftConfirmTableRendererMixin {
         var key = ProfilerBridge.key(entry.getWhat());
         ClientStats.CACHE.get(key).ifPresentOrElse(stats -> TimeEstimate
                 .format(AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()), stats)
-                .ifPresent(eta -> lines.add(Component.literal("Time To Craft: " + eta))),
+                .ifPresent(eta -> lines.add(Component.literal("TTC: " + eta))),
                 () -> ClientStatsRequests.request(key));
     }
 }
