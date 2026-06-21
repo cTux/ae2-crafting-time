@@ -2,10 +2,12 @@ package com.ctux.ae2cpd.mc1201.mixin;
 
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.AEBaseScreen;
+import com.ctux.ae2cpd.core.ProfileKey;
 import com.ctux.ae2cpd.core.ProfileStats;
 import com.ctux.ae2cpd.core.ProfileUnit;
 import com.ctux.ae2cpd.mc1201.Ae2CpdConfig;
-import com.ctux.ae2cpd.mc1201.ProfilerBridge;
+import com.ctux.ae2cpd.mc1201.ClientStats;
+import com.ctux.ae2cpd.mc1201.ClientStatsRequests;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -55,8 +57,10 @@ public abstract class CraftingTreeWidgetMixin {
             return;
         }
 
-        var stats = ProfilerBridge.stats(stack.what());
+        var key = new ProfileKey(stack.what().getId().toString());
+        var stats = ClientStats.CACHE.get(key);
         if (stats.isEmpty()) {
+            ClientStatsRequests.request(key);
             return;
         }
 
@@ -85,7 +89,10 @@ public abstract class CraftingTreeWidgetMixin {
             var node = hoveredNode(mouseX + screen.getGuiLeft(), mouseY + screen.getGuiTop());
             var stack = node == null ? null : readField(node, "stack", GenericStack.class);
             if (stack != null) {
-                ProfilerBridge.stats(stack.what()).ifPresent(stats -> addTooltipLines(lines, stats));
+                var key = new ProfileKey(stack.what().getId().toString());
+                ClientStats.CACHE.get(key).ifPresentOrElse(
+                        stats -> addTooltipLines(lines, stats),
+                        () -> ClientStatsRequests.request(key));
             }
         }
 
