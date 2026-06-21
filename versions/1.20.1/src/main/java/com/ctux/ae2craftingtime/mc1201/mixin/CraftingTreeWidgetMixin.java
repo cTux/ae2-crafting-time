@@ -3,15 +3,15 @@ package com.ctux.ae2craftingtime.mc1201.mixin;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.AEBaseScreen;
 import com.ctux.ae2craftingtime.core.ProfileKey;
-import com.ctux.ae2craftingtime.core.ProfileStats;
-import com.ctux.ae2craftingtime.core.ProfileUnit;
+import com.ctux.ae2craftingtime.core.TimeEstimate;
+import com.ctux.ae2craftingtime.core.TtcColor;
 import com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig;
+import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.FastColor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
@@ -23,13 +23,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.awt.Point;
 import java.lang.reflect.Field;
+import java.util.IdentityHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.OptionalLong;
 
 @Mixin(targets = "com.neuvillette.ae2ct.gui.CraftingTreeWidget", remap = false)
 @Pseudo
 public abstract class CraftingTreeWidgetMixin {
+    private static final float TEXT_SCALE = 0.45f;
+
     @Shadow
     private int outputX;
     @Shadow
@@ -41,6 +44,17 @@ public abstract class CraftingTreeWidgetMixin {
 
     @Shadow
     protected abstract Point getMousePoint(double mouseX, double mouseY);
+
+    private Object ae2craftingtime$colorRoot;
+    private Map<Object, Long> ae2craftingtime$secondsByNode = Map.of();
+    private long ae2craftingtime$minSeconds;
+    private long ae2craftingtime$maxSeconds;
+
+    @Inject(method = "draw", at = @At("HEAD"), require = 0)
+    private void ae2craftingtime$beginFrame(GuiGraphics guiGraphics, int offsetX, int offsetY, int mouseX, int mouseY,
+            CallbackInfo ci) {
+        ae2craftingtime$colorRoot = null;
+    }
 
     @Inject(
             method = "drawNode(Lnet/minecraft/client/gui/GuiGraphics;Lcom/neuvillette/ae2ct/api/CraftingTreeHelper$Node;)V",
@@ -57,23 +71,25 @@ public abstract class CraftingTreeWidgetMixin {
             return;
         }
 
-        var key = new ProfileKey(stack.what().getId().toString());
-        var stats = ClientStats.CACHE.get(key);
-        if (stats.isEmpty()) {
-            ClientStatsRequests.request(key);
+        ae2craftingtime$refreshColors();
+        var seconds = ae2craftingtime$secondsByNode.get(node);
+        if (seconds == null) {
             return;
         }
 
         var x = point.x * spacingX + outputX;
         var y = point.y * spacingY + outputY;
-        var text = format(stats.get());
+        var text = TimeEstimate.formatTotal(List.of(OptionalLong.of(seconds))).orElseThrow();
         var pose = guiGraphics.pose();
         var font = Minecraft.getInstance().font;
-        var color = FastColor.ARGB32.color(255, 30, 90, 30);
+        var color = TtcColor.forSeconds(seconds, ae2craftingtime$minSeconds, ae2craftingtime$maxSeconds);
+        var textX = (int) ((x + 18) / TEXT_SCALE);
+        var textY = (int) ((y + 23) / TEXT_SCALE);
 
         pose.pushPose();
-        pose.scale(0.45f, 0.45f, 0.45f);
-        guiGraphics.drawString(font, text, (int) ((x + 18) / 0.45f), (int) ((y + 23) / 0.45f), color, false);
+        pose.scale(TEXT_SCALE, TEXT_SCALE, TEXT_SCALE);
+        guiGraphics.fill(textX - 1, textY - 1, textX + font.width(text) + 1, textY + font.lineHeight, 0xFF000000);
+        guiGraphics.drawString(font, text, textX, textY, color, false);
         pose.popPose();
     }
 
@@ -89,33 +105,15 @@ public abstract class CraftingTreeWidgetMixin {
             var node = hoveredNode(mouseX + screen.getGuiLeft(), mouseY + screen.getGuiTop());
             var stack = node == null ? null : readField(node, "stack", GenericStack.class);
             if (stack != null) {
-                var key = new ProfileKey(stack.what().getId().toString());
-                ClientStats.CACHE.get(key).ifPresentOrElse(
-                        stats -> addTooltipLines(lines, stats),
-                        () -> ClientStatsRequests.request(key));
+                var seconds = ae2craftingtime$totalSeconds(node);
+                if (seconds.isPresent()) {
+                    TimeEstimate.formatTotal(List.of(seconds))
+                            .ifPresent(eta -> lines.add(Component.literal("TTC: " + eta)));
+                }
             }
         }
 
         screen.drawTooltipWithHeader(guiGraphics, mouseX, mouseY, lines);
-    }
-
-    private static String format(ProfileStats stats) {
-        var duration = Math.round(stats.averageDurationTicks());
-        var rate = stats.amountPerSecond();
-        if (stats.unit() == ProfileUnit.MILLIBUCKET) {
-            return "avg " + duration + "t | " + compact(rate) + " mB/s";
-        }
-        return "avg " + duration + "t | " + compact(rate) + "/s";
-    }
-
-    private static String compact(double value) {
-        if (value >= 100) {
-            return Long.toString(Math.round(value));
-        }
-        if (value >= 10) {
-            return String.format(Locale.ROOT, "%.1f", value);
-        }
-        return String.format(Locale.ROOT, "%.2f", value);
     }
 
     private Object hoveredNode(double mouseX, double mouseY) {
@@ -130,16 +128,77 @@ public abstract class CraftingTreeWidgetMixin {
         return map.get(getMousePoint(mouseX, mouseY));
     }
 
-    private static void addTooltipLines(List<Component> lines, ProfileStats stats) {
-        lines.add(Component.literal("Avg: " + Math.round(stats.averageDurationTicks()) + " ticks / "
-                + compact(stats.averageDurationTicks() / 20.0) + " s"));
-        lines.add(Component.literal("Throughput: " + compact(stats.amountPerSecond()) + unitSuffix(stats)));
-        lines.add(Component.literal("Samples: " + stats.sampleCount()));
-        lines.add(Component.literal("Last: " + stats.lastDurationTicks() + " ticks"));
+    private void ae2craftingtime$refreshColors() {
+        var manager = readField(this, "_nodeManager", Object.class);
+        var root = manager == null ? null : readField(manager, "root", Object.class);
+        if (root == null || root == ae2craftingtime$colorRoot) {
+            return;
+        }
+
+        ae2craftingtime$colorRoot = root;
+        var secondsByNode = new IdentityHashMap<Object, Long>();
+        ae2craftingtime$totalSeconds(root, secondsByNode);
+        ae2craftingtime$secondsByNode = secondsByNode;
+        ae2craftingtime$minSeconds = Long.MAX_VALUE;
+        ae2craftingtime$maxSeconds = Long.MIN_VALUE;
+        for (var seconds : secondsByNode.values()) {
+            ae2craftingtime$minSeconds = Math.min(ae2craftingtime$minSeconds, seconds);
+            ae2craftingtime$maxSeconds = Math.max(ae2craftingtime$maxSeconds, seconds);
+        }
     }
 
-    private static String unitSuffix(ProfileStats stats) {
-        return stats.unit() == ProfileUnit.MILLIBUCKET ? " mB/s" : " items/s";
+    private OptionalLong ae2craftingtime$totalSeconds(Object node) {
+        return ae2craftingtime$totalSeconds(node, new IdentityHashMap<>());
+    }
+
+    private static OptionalLong ae2craftingtime$totalSeconds(Object node, Map<Object, Long> cache) {
+        if (node == null) {
+            return OptionalLong.empty();
+        }
+        var cached = cache.get(node);
+        if (cached != null) {
+            return OptionalLong.of(cached);
+        }
+
+        long total = 0;
+        var self = ae2craftingtime$selfSeconds(node);
+        if (self.isPresent()) {
+            total += self.getAsLong();
+        }
+
+        var subNodes = readField(node, "subNodes", List.class);
+        if (subNodes != null) {
+            for (var subNode : subNodes) {
+                var seconds = ae2craftingtime$totalSeconds(subNode, cache);
+                if (seconds.isPresent()) {
+                    total += seconds.getAsLong();
+                }
+            }
+        }
+
+        if (total == 0) {
+            return OptionalLong.empty();
+        }
+        cache.put(node, total);
+        return OptionalLong.of(total);
+    }
+
+    private static OptionalLong ae2craftingtime$selfSeconds(Object node) {
+        var stack = readField(node, "stack", GenericStack.class);
+        var amountHelper = readField(node, "amountHelper", Object.class);
+        var craftAmount = amountHelper == null ? null : readField(amountHelper, "craftAmount", Long.class);
+        if (stack == null || craftAmount == null || craftAmount <= 0) {
+            return OptionalLong.empty();
+        }
+
+        var key = new ProfileKey(stack.what().getId().toString());
+        var stats = ClientStats.CACHE.get(key);
+        if (stats.isEmpty()) {
+            ClientStatsRequests.request(key);
+            return OptionalLong.empty();
+        }
+
+        return TimeEstimate.seconds(AeKeyAmounts.normalize(stack.what(), craftAmount), stats.get());
     }
 
     private static <T> T readField(Object instance, String name, Class<T> type) {
