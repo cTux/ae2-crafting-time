@@ -23,4 +23,10 @@ if (-not $tasks) {
 }
 
 $gradlew = Join-Path $root "gradlew.bat"
-& $gradlew @tasks
+Push-Location $root
+try {
+    & $gradlew @tasks
+}
+finally {
+    Pop-Location
+}
