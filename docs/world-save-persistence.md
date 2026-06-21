@@ -1,0 +1,201 @@
+# World Save Persistence Research
+
+Date: 2026-06-21
+
+## Request
+
+Persist collected crafting times in the Minecraft world save:
+
+- file path: `./data/ae2-crafting-time.dat`
+- include all collected craft outputs and their crafting time
+- load state from the saved file on world load
+- save through Minecraft/Forge default saving mechanisms
+
+## Feasibility
+
+This is possible and should use Minecraft `SavedData`, not direct file IO.
+
+Forge documents `SavedData` as the standard way to save level data. A `SavedData` instance is loaded or created through `DimensionDataStorage#computeIfAbsent(...)`; the name argument becomes the `.dat` file under that level's `data` folder. Local 1.20.1 bytecode confirms `DimensionDataStorage#getDataFile(name)` writes:
+
+```text
+dataFolder / (name + ".dat")
+```
+
+So the storage id must be:
+
+```text
+ae2-crafting-time
+```
+
+not `ae2-crafting-time.dat`, otherwise Minecraft would write `ae2-crafting-time.dat.dat`.
+
+Attach the data to the overworld storage:
+
+```java
+server.overworld().getDataStorage().computeIfAbsent(factory, "ae2-crafting-time");
+```
+
+That produces:
+
+```text
+<world>/data/ae2-crafting-time.dat
+```
+
+This also covers singleplayer because an integrated server still has the same overworld `ServerLevel` and data storage.
+
+## What To Persist
+
+Persist the retained rolling samples, not only aggregate `ProfileStats`.
+
+Current runtime behavior keeps latest 10 completed crafts per output key. To keep estimates stable after restart, save the same retained samples:
+
+```text
+output id
+unit
+samples:
+  amount
+  durationTicks
+```
+
+Do not persist pending crafts. Pending operations are in-flight runtime state; if the server shuts down mid-craft, those timings are not reliable.
+
+## NBT Shape
+
+Use one top-level version and a list of output entries:
+
+```text
+version: 1
+outputs: [
+  {
+    key: "minecraft:iron_ingot"
+    unit: "item"
+    samples: [
+      { amount: 10, durationTicks: 220 },
+      { amount: 10, durationTicks: 205 }
+    ]
+  },
+  {
+    key: "minecraft:water"
+    unit: "millibucket"
+    samples: [
+      { amount: 1000, durationTicks: 40 }
+    ]
+  }
+]
+```
+
+This is enough to reconstruct averages, throughput, latest duration, `TTC`, and colors.
+
+## Runtime Ownership
+
+Server owns:
+
+- `CraftProfiler`
+- persisted sample data
+- load/save through `SavedData`
+- network snapshots to clients
+
+Client owns:
+
+- display cache only
+- no file access
+- no persistence
+
+## Loading
+
+On server/world load:
+
+1. Get overworld `DimensionDataStorage`.
+2. `computeIfAbsent(Ae2CraftingTimeSavedData.factory(), "ae2-crafting-time")`.
+3. `SavedData.load(...)` decodes NBT into persisted samples.
+4. `ProfilerBridge` installs or hydrates its server profiler from the loaded samples.
+
+Lazy loading is acceptable if it happens before the first craft stat request or craft sample write. The simpler implementation is to initialize once from a server lifecycle event after the overworld exists.
+
+## Saving
+
+Do not manually write files.
+
+`SavedData` is saved by the normal world save pipeline when dirty:
+
+```java
+savedData.setDirty();
+```
+
+Call `setDirty()` whenever a completed craft sample is recorded. Minecraft later calls `SavedData#save(...)`, wraps the returned tag under `data`, adds data version metadata, and writes the compressed NBT file.
+
+## Code Shape
+
+Shared module:
+
+- add a small persisted sample DTO, e.g. `CraftSampleSnapshot`
+- expose profiler import/export methods:
+  - `List<PersistedOutputSamples> snapshotSamples()`
+  - `void loadSamples(List<PersistedOutputSamples> samples)`
+
+`versions/1.20.1`:
+
+- `Ae2CraftingTimeSavedData extends SavedData`
+- NBT encode/decode
+- bridge from `SavedData` to `ProfilerBridge`
+- server lifecycle hook to initialize from overworld storage
+
+## Dirty Tracking
+
+Smallest reliable path:
+
+1. `ProfilerBridge` owns a nullable `Ae2CraftingTimeSavedData`.
+2. On load, saved data hydrates `CraftProfiler`.
+3. When `CraftProfiler.complete(...)` records at least one completed sample, `ProfilerBridge` calls:
+
+```java
+savedData.replaceFrom(profiler.snapshotSamples());
+savedData.setDirty();
+```
+
+This rewrites the retained sample snapshot in memory, but the disk write still happens through Minecraft's normal save. The retained window is only 10 samples per output, so this is simpler than incremental mutation and good enough.
+
+## Existing Config Impact
+
+Old `session-only` docs become obsolete once this feature lands.
+
+The runtime should still respect:
+
+```text
+enabled = true
+```
+
+If disabled, do not record new samples. Loaded samples can remain in memory, but UI should continue to hide stats because existing `ProfilerBridge.stats(...)` already returns empty when disabled.
+
+## Risks
+
+- `SavedData` format is version-specific Minecraft code, so keep it under `versions/1.20.1`.
+- Persisting only aggregates would lose the latest-10 behavior after restart. Persist samples instead.
+- If output ids disappear because a mod is removed, keep their saved entries harmlessly. They will not be requested by the UI if those items are gone.
+- The save file can grow with every distinct output ever crafted. Each output keeps only 10 samples, so growth is bounded by output variety, not craft count.
+
+## Tests
+
+Shared tests:
+
+- profiler exports latest 10 samples for an output
+- profiler imports samples and produces the same `ProfileStats`
+- importing more than 10 samples keeps the latest 10
+
+Version tests:
+
+- saved data writes `version` and `outputs`
+- saved data loads entries into equivalent profiler samples
+- storage id constant is exactly `ae2-crafting-time`
+
+## Recommendation
+
+Use `SavedData` attached to the overworld with id `ae2-crafting-time`. Persist retained samples, not pending crafts and not only aggregate stats. This satisfies the requested `./data/ae2-crafting-time.dat` path while letting Minecraft handle load, dirty tracking, compression, data version wrapping, and save timing.
+
+## Sources
+
+- Forge Saved Data docs: https://docs.minecraftforge.net/en/latest/datastorage/saveddata/
+- Local Minecraft 1.20.1 source/bytecode inspected:
+  - `net.minecraft.world.level.saveddata.SavedData`
+  - `net.minecraft.world.level.storage.DimensionDataStorage`
+  - `net.minecraft.world.level.ForcedChunksSavedData`
