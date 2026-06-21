@@ -51,6 +51,8 @@ class MixinConfigTest {
         assertTrue(tableMixin.contains("getActiveAmount() + entry.getPendingAmount()"));
         assertTrue(tableMixin.contains("TTC: "));
         assertTrue(screenMixin.contains("Total TTC: "));
+        assertTrue(screenMixin.contains("new TtcSortButton"));
+        assertTrue(screenMixin.contains("TtcSort.copySorted"));
     }
 
     @Test

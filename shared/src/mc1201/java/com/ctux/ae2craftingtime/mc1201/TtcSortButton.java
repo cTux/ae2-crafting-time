@@ -26,7 +26,7 @@ public final class TtcSortButton extends IconButton {
 
     @Override
     public List<Component> getTooltipMessage() {
-        return List.of(Component.literal("Sort craft plan by TTC"), Component.literal(label()));
+        return List.of(Component.literal("Sort by TTC"), Component.literal(label()));
     }
 
     private String label() {
