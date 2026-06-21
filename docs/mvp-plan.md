@@ -26,6 +26,8 @@ Version-specific code must live under a version directory such as `1.20.1`. Shar
 
 In multiplayer, all timing and throughput calculations must be server-owned. The client only requests and renders server-provided aggregate snapshots. See `docs/server-client-stats.md`.
 
+Singleplayer worlds must use the same logical-server flow and work without a separate code path.
+
 ## Implementation Steps
 
 1. Scaffold minimal Forge 1.20.1 mod.
@@ -73,3 +75,4 @@ No custom units, no themes, no history window yet.
 - `enabled = true` gates collection and UI.
 - Profile keys use output identity: every recipe that makes the same output shares one average.
 - Version-specific hooks/UI adapters live under directories like `1.20.1`; shared logic stays version-neutral.
+- Singleplayer support is required and should use the same server-owned stats protocol.

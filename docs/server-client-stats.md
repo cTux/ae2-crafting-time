@@ -13,6 +13,8 @@ This matters for dedicated servers:
 - The client may not have the same mod state, world state, or timing data.
 - Client-side calculation would be wrong or empty in multiplayer.
 
+Singleplayer must also work. An integrated singleplayer world still has a logical server, so the mod should use the same server-owned profiler and packet snapshot flow instead of special-casing local client reads.
+
 ## Current Gap
 
 The current implementation has the right collection hook location, but the wrong display data source:
@@ -21,6 +23,8 @@ The current implementation has the right collection hook location, but the wrong
 - Crafting Tree client mixin currently calls `ProfilerBridge.stats(...)` directly.
 
 That works only by accident in a single integrated client/server. On a dedicated server, the client-side `ProfilerBridge` is separate RAM and will not contain server samples.
+
+Do not keep that accidental singleplayer path. Singleplayer should pass through the same request/response path as multiplayer.
 
 ## Target Architecture
 
@@ -122,6 +126,13 @@ No Crafting Tree installed:
 - Server still may collect stats when `enabled = true`, but no UI exists.
 - No fallback screen.
 
+Singleplayer:
+
+- Integrated server collects samples.
+- Local client sends `StatsRequestC2S` to the integrated server.
+- Integrated server replies with `StatsSnapshotS2C`.
+- UI renders exactly as it does on a dedicated server.
+
 ## Config
 
 Server config:
@@ -169,7 +180,8 @@ Shared module:
    - render from `ClientStatsCache`
    - stop calling `ProfilerBridge.stats(...)` on the client
 6. Keep AE2 collection hooks server-side only.
-7. Add one small test for cache replacement and missing keys.
+7. Verify both dedicated server/client and singleplayer integrated server flows.
+8. Add one small test for cache replacement and missing keys.
 
 ## Security / Trust
 

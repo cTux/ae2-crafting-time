@@ -102,7 +102,7 @@ MVP:
    - start server tick
 2. On `insert`, when an expected output arrives, match it to the oldest pending operation for that output key.
 3. When all expected output amount for that pending operation is observed, record duration.
-4. Send aggregated stats to the client when Crafting Tree opens or refreshes. The client must not calculate or read local profiler state for multiplayer display.
+4. Send aggregated stats to the client when Crafting Tree opens or refreshes. The client must not calculate or read local profiler state for multiplayer display. Singleplayer should use the same logical-server request/response path.
 
 This measures real external processing delay for machines, not only AE2 scheduling overhead.
 
