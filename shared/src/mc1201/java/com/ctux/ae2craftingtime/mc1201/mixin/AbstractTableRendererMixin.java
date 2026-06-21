@@ -2,7 +2,9 @@ package com.ctux.ae2craftingtime.mc1201.mixin;
 
 import appeng.client.gui.me.crafting.AbstractTableRenderer;
 import appeng.client.gui.me.crafting.CraftConfirmTableRenderer;
+import appeng.client.gui.me.crafting.CraftingStatusTableRenderer;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
+import appeng.menu.me.crafting.CraftingStatusEntry;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcColor;
@@ -26,7 +28,7 @@ public abstract class AbstractTableRendererMixin {
     @Inject(method = "render", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$beginTtcColors(GuiGraphics guiGraphics, int mouseX, int mouseY,
             List<?> entries, int scrollOffset, CallbackInfo ci) {
-        if (!((Object) this instanceof CraftConfirmTableRenderer)) {
+        if (!ae2craftingtime$hasTtc((Object) this)) {
             return;
         }
 
@@ -36,9 +38,13 @@ public abstract class AbstractTableRendererMixin {
     @Inject(method = "render", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$endTtcColors(GuiGraphics guiGraphics, int mouseX, int mouseY,
             List<?> entries, int scrollOffset, CallbackInfo ci) {
-        if ((Object) this instanceof CraftConfirmTableRenderer) {
+        if (ae2craftingtime$hasTtc((Object) this)) {
             TtcColorContext.clear();
         }
+    }
+
+    private static boolean ae2craftingtime$hasTtc(Object renderer) {
+        return renderer instanceof CraftConfirmTableRenderer || renderer instanceof CraftingStatusTableRenderer;
     }
 
     private static Map<ProfileKey, Integer> colors(List<?> entries) {
@@ -52,7 +58,7 @@ public abstract class AbstractTableRendererMixin {
                 continue;
             }
 
-            var key = ProfilerBridge.key(((CraftingPlanSummaryEntry) entry).getWhat());
+            var key = key(entry);
             var value = seconds.getAsLong();
             secondsByKey.put(key, value);
             min = Math.min(min, value);
@@ -67,17 +73,44 @@ public abstract class AbstractTableRendererMixin {
     }
 
     private static OptionalLong seconds(Object entry) {
-        if (!(entry instanceof CraftingPlanSummaryEntry planEntry) || planEntry.getCraftAmount() <= 0) {
+        if (entry instanceof CraftingPlanSummaryEntry planEntry) {
+            if (planEntry.getCraftAmount() <= 0) {
+                return OptionalLong.empty();
+            }
+
+            var key = ProfilerBridge.key(planEntry.getWhat());
+            var stats = ClientStats.CACHE.get(key);
+            if (stats.isEmpty()) {
+                return OptionalLong.empty();
+            }
+
+            return TimeEstimate.seconds(AeKeyAmounts.normalize(planEntry.getWhat(), planEntry.getCraftAmount()),
+                    stats.get());
+        }
+
+        if (!(entry instanceof CraftingStatusEntry statusEntry)) {
             return OptionalLong.empty();
         }
 
-        var key = ProfilerBridge.key(planEntry.getWhat());
+        var amount = statusEntry.getActiveAmount() + statusEntry.getPendingAmount();
+        if (amount <= 0) {
+            return OptionalLong.empty();
+        }
+
+        var key = ProfilerBridge.key(statusEntry.getWhat());
         var stats = ClientStats.CACHE.get(key);
         if (stats.isEmpty()) {
             return OptionalLong.empty();
         }
 
-        return TimeEstimate.seconds(AeKeyAmounts.normalize(planEntry.getWhat(), planEntry.getCraftAmount()),
+        return TimeEstimate.seconds(AeKeyAmounts.normalize(statusEntry.getWhat(), amount),
                 stats.get());
+    }
+
+    private static ProfileKey key(Object entry) {
+        if (entry instanceof CraftingPlanSummaryEntry planEntry) {
+            return ProfilerBridge.key(planEntry.getWhat());
+        }
+        return ProfilerBridge.key(((CraftingStatusEntry) entry).getWhat());
     }
 }

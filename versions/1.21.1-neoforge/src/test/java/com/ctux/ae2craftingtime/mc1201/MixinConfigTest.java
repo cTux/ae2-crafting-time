@@ -16,6 +16,8 @@ class MixinConfigTest {
         var treeIndex = json.indexOf("\"CraftingTreeWidgetMixin\"");
         var confirmIndex = json.indexOf("\"CraftConfirmTableRendererMixin\"");
         var sortIndex = json.indexOf("\"CraftConfirmScreenMixin\"");
+        var statusScreenIndex = json.indexOf("\"CraftingCPUScreenMixin\"");
+        var statusTableIndex = json.indexOf("\"CraftingStatusTableRendererMixin\"");
         var serverIndex = json.indexOf("\"mixins\"");
         var cpuIndex = json.indexOf("\"CraftingCpuLogicMixin\"");
 
@@ -24,12 +26,14 @@ class MixinConfigTest {
         assertTrue(clientIndex >= 0 && treeIndex > clientIndex);
         assertTrue(confirmIndex > clientIndex);
         assertTrue(sortIndex > clientIndex);
+        assertTrue(statusScreenIndex > clientIndex);
+        assertTrue(statusTableIndex > clientIndex);
     }
 
     @Test
     void craftPlanTimeEstimateHooksVisibleDescription() throws IOException {
         var mixin = Files.readString(Path.of(
-                "src/main/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftConfirmTableRendererMixin.java"));
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftConfirmTableRendererMixin.java"));
 
         assertTrue(mixin.contains("method = \"getEntryDescription\""));
         assertTrue(mixin.contains("TTC: "));
@@ -37,9 +41,22 @@ class MixinConfigTest {
     }
 
     @Test
+    void craftingStatusTimeEstimateHooksVisibleDescription() throws IOException {
+        var tableMixin = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingStatusTableRendererMixin.java"));
+        var screenMixin = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingCPUScreenMixin.java"));
+
+        assertTrue(tableMixin.contains("method = \"getEntryDescription\""));
+        assertTrue(tableMixin.contains("getActiveAmount() + entry.getPendingAmount()"));
+        assertTrue(tableMixin.contains("TTC: "));
+        assertTrue(screenMixin.contains("Total TTC: "));
+    }
+
+    @Test
     void craftingTreeTtcColorsUseSiblingGroups() throws IOException {
         var mixin = Files.readString(Path.of(
-                "src/main/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingTreeWidgetMixin.java"));
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingTreeWidgetMixin.java"));
 
         assertTrue(mixin.contains("ae2craftingtime$colorSiblingGroup(subNodes"));
         assertTrue(mixin.contains("ae2craftingtime$colorsByNode"));

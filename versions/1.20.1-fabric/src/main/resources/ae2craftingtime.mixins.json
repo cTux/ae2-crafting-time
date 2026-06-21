@@ -9,8 +9,10 @@
   ],
   "client": [
     "AbstractTableRendererMixin",
+    "CraftingCPUScreenMixin",
     "CraftConfirmScreenMixin",
     "CraftConfirmTableRendererMixin",
+    "CraftingStatusTableRendererMixin",
     "CraftingTreeWidgetMixin"
   ],
   "injectors": {

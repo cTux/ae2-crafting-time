@@ -19,6 +19,9 @@ if (-not $tasks) {
     throw "No release entries found in $MatrixPath"
 }
 
+$dist = Join-Path $root "dist"
+Remove-Item -Path (Join-Path $dist "*.jar") -Force -ErrorAction SilentlyContinue
+
 $gradlew = Join-Path $root "gradlew.bat"
 Push-Location $root
 try {
