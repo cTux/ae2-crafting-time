@@ -1,0 +1,12 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.ctux.ae2cpd.mc1201.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "ae2cpd.refmap.json",
+  "mixins": [],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
