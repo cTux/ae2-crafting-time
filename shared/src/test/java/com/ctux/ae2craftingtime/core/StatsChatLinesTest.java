@@ -26,11 +26,15 @@ class StatsChatLinesTest {
 
     @Test
     void includesConfidenceWhenEstimateIsLowConfidence() {
-        var stats = new ProfileStats(1, 20, 1, 10.0, 20, ProfileUnit.ITEM, false);
+        var stats = new ProfileStats(5, 208, 0.1, 2.0, 1000, ProfileUnit.ITEM, false,
+                4, 4.0, List.of(10L, 10L, 10L, 10L, 1000L));
 
         var lines = StatsChatLines.lines(new ProfileKey("minecraft:iron_ingot"), 100, stats);
 
-        assertEquals(new StatsChatLines.Line("Confidence", "low"), lines.get(6));
-        assertEquals(new StatsChatLines.Line("TTC", "~10s?"), lines.get(7));
+        assertEquals(new StatsChatLines.Line("Used Samples", "4/5"), lines.get(6));
+        assertEquals(new StatsChatLines.Line("Outlier Filter", "4.00x"), lines.get(7));
+        assertEquals(new StatsChatLines.Line("Durations", "10, 10, 10, 10, 1000 ticks"), lines.get(8));
+        assertEquals(new StatsChatLines.Line("Confidence", "low (outliers filtered)"), lines.get(9));
+        assertEquals(new StatsChatLines.Line("TTC", "~50s?"), lines.get(10));
     }
 }

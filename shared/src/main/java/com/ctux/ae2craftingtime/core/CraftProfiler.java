@@ -85,6 +85,7 @@ public final class CraftProfiler {
         long durationTotal = 0;
         long lastDuration = 0;
         var filtered = filteredSamples(queue, outlierMultiplier);
+        var sampleDurationTicks = new ArrayList<Long>(queue.size());
         long weightedDurationTotal = 0;
         long weightedAmountTotal = 0;
         long weight = 1;
@@ -93,6 +94,7 @@ public final class CraftProfiler {
         for (var sample : queue) {
             durationTotal += sample.durationTicks;
             lastDuration = sample.durationTicks;
+            sampleDurationTicks.add(sample.durationTicks);
             unit = sample.unit;
         }
         for (var sample : filtered) {
@@ -110,7 +112,10 @@ public final class CraftProfiler {
                 amountPerTick * 20.0,
                 lastDuration,
                 unit,
-                queue.size() >= 3 && filtered.size() == queue.size()));
+                queue.size() >= 3 && filtered.size() == queue.size(),
+                filtered.size(),
+                outlierMultiplier,
+                sampleDurationTicks));
     }
 
     private static List<CraftSample> filteredSamples(ArrayDeque<CraftSample> queue, double outlierMultiplier) {

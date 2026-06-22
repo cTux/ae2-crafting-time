@@ -39,6 +39,12 @@ public record StatsSnapshotS2C(List<StatsEntry> entries) implements CustomPacket
             buffer.writeDouble(stats.amountPerSecond());
             buffer.writeVarLong(stats.lastDurationTicks());
             buffer.writeBoolean(stats.reliableEstimate());
+            buffer.writeVarInt(stats.usedSampleCount());
+            buffer.writeDouble(stats.outlierMultiplier());
+            buffer.writeVarInt(stats.sampleDurationTicks().size());
+            for (var duration : stats.sampleDurationTicks()) {
+                buffer.writeVarLong(duration);
+            }
         }
     }
 
@@ -54,8 +60,16 @@ public record StatsSnapshotS2C(List<StatsEntry> entries) implements CustomPacket
             var amountPerSecond = buffer.readDouble();
             var lastDurationTicks = buffer.readVarLong();
             var reliableEstimate = buffer.readBoolean();
+            var usedSampleCount = buffer.readVarInt();
+            var outlierMultiplier = buffer.readDouble();
+            var durationCount = buffer.readVarInt();
+            var sampleDurationTicks = new ArrayList<Long>(durationCount);
+            for (int durationIndex = 0; durationIndex < durationCount; durationIndex++) {
+                sampleDurationTicks.add(buffer.readVarLong());
+            }
             entries.add(new StatsEntry(key, new ProfileStats(sampleCount, averageDurationTicks, amountPerTick,
-                    amountPerSecond, lastDurationTicks, unit, reliableEstimate)));
+                    amountPerSecond, lastDurationTicks, unit, reliableEstimate, usedSampleCount, outlierMultiplier,
+                    sampleDurationTicks)));
         }
         return new StatsSnapshotS2C(entries);
     }
