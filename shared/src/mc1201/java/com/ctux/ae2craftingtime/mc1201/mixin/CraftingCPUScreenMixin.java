@@ -194,9 +194,9 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         }
 
         var key = ProfilerBridge.key(entry.getWhat());
+        ClientStatsRequests.request(key);
         var stats = ClientStats.CACHE.get(key);
         if (stats.isEmpty()) {
-            ClientStatsRequests.request(key);
             return OptionalLong.empty();
         }
 

@@ -45,10 +45,10 @@ public abstract class CraftingStatusTableRendererMixin {
         }
 
         var key = ProfilerBridge.key(entry.getWhat());
-        ClientStats.CACHE.get(key).ifPresentOrElse(stats -> TimeEstimate
+        ClientStatsRequests.request(key);
+        ClientStats.CACHE.get(key).ifPresent(stats -> TimeEstimate
                 .format(AeKeyAmounts.normalize(entry.getWhat(), amount), stats)
-                .ifPresent(eta -> lines.add(ttcLine(key, eta))),
-                () -> ClientStatsRequests.request(key));
+                .ifPresent(eta -> lines.add(ttcLine(key, eta))));
     }
 
     private static Component ttcLine(com.ctux.ae2craftingtime.core.ProfileKey key, String eta) {
