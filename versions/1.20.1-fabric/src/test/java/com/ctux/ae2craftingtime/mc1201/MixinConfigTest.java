@@ -89,13 +89,13 @@ class MixinConfigTest {
 
         assertTrue(confirmMixin.contains("public boolean mouseClicked"));
         assertTrue(statusMixin.contains("public boolean mouseClicked"));
-        assertTrue(confirmMixin.contains("button == 0 && Screen.hasControlDown()"));
-        assertTrue(statusMixin.contains("button == 0 && Screen.hasControlDown()"));
+        assertTrue(confirmMixin.contains("TtcDetailsKeyMapping.matchesMouse(button)"));
+        assertTrue(statusMixin.contains("TtcDetailsKeyMapping.matchesMouse(button)"));
         assertTrue(confirmMixin.contains("getStackUnderMouse(mouseX, mouseY)"));
         assertTrue(statusMixin.contains("getStackUnderMouse(mouseX, mouseY)"));
         assertFalse(confirmMixin.contains("button == 2"));
         assertFalse(statusMixin.contains("button == 2"));
-        assertTrue(treeMixin.contains("button != 0 || !Screen.hasControlDown()"));
+        assertTrue(treeMixin.contains("!TtcDetailsKeyMapping.matchesMouse(button)"));
         assertTrue(confirmTableMixin.contains("Ctrl-Click to see TTC details"));
         assertTrue(statusTableMixin.contains("Ctrl-Click to see TTC details"));
         assertTrue(treeMixin.contains("Ctrl-Click to see TTC details"));

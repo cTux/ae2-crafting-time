@@ -1,7 +1,9 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
@@ -14,7 +16,12 @@ public final class Ae2CraftingTime {
     public Ae2CraftingTime() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Ae2CraftingTimeConfig.SPEC, COMMON_CONFIG_FILE);
         StatsNetwork.register();
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::registerKeyMappings);
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarted);
+    }
+
+    private void registerKeyMappings(RegisterKeyMappingsEvent event) {
+        event.register(TtcDetailsKeyMapping.showDetails());
     }
 
     private void onServerStarted(ServerStartedEvent event) {
