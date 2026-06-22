@@ -8,6 +8,7 @@ import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.TtcColorContext;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
 import org.spongepowered.asm.mixin.Mixin;
@@ -22,16 +23,22 @@ public abstract class CraftingStatusTableRendererMixin {
     @Inject(method = "getEntryDescription", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$appendVisibleTimeToCraft(CraftingStatusEntry entry,
             CallbackInfoReturnable<List<Component>> cir) {
-        ae2craftingtime$appendTimeToCraft(entry, cir.getReturnValue());
+        ae2craftingtime$appendTtc(entry, cir.getReturnValue());
     }
 
     @Inject(method = "getEntryTooltip", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$appendTooltipTimeToCraft(CraftingStatusEntry entry,
             CallbackInfoReturnable<List<Component>> cir) {
-        ae2craftingtime$appendTimeToCraft(entry, cir.getReturnValue());
+        var amount = entry.getActiveAmount() + entry.getPendingAmount();
+        if (amount <= 0) {
+            return;
+        }
+
+        cir.getReturnValue().add(Component.literal("Ctrl-Click to see TTC details").withStyle(ChatFormatting.GRAY));
+        ae2craftingtime$appendTtc(entry, cir.getReturnValue());
     }
 
-    private static void ae2craftingtime$appendTimeToCraft(CraftingStatusEntry entry, List<Component> lines) {
+    private static void ae2craftingtime$appendTtc(CraftingStatusEntry entry, List<Component> lines) {
         var amount = entry.getActiveAmount() + entry.getPendingAmount();
         if (amount <= 0) {
             return;

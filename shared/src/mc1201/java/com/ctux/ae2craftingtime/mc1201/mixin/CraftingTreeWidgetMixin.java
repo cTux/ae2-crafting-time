@@ -12,6 +12,7 @@ import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -55,7 +56,7 @@ public abstract class CraftingTreeWidgetMixin {
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true, require = 0)
     private void ae2craftingtime$clickStats(double mouseX, double mouseY, int button,
             CallbackInfoReturnable<Boolean> cir) {
-        if (button != 2 || !Ae2CraftingTimeConfig.SHOW_IN_TREE.get()) {
+        if (button != 0 || !Screen.hasControlDown() || !Ae2CraftingTimeConfig.SHOW_IN_TREE.get()) {
             return;
         }
 
@@ -123,6 +124,7 @@ public abstract class CraftingTreeWidgetMixin {
             var node = hoveredNode(mouseX + screen.getGuiLeft(), mouseY + screen.getGuiTop());
             var stack = node == null ? null : readField(node, "stack", GenericStack.class);
             if (stack != null) {
+                lines.add(Component.literal("Ctrl-Click to see TTC details"));
                 var seconds = ae2craftingtime$totalSeconds(node);
                 if (seconds.isPresent()) {
                     TimeEstimate.formatTotal(List.of(seconds))
