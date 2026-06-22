@@ -9,8 +9,10 @@ import com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
+import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -20,6 +22,7 @@ import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.awt.Point;
 import java.lang.reflect.Field;
@@ -49,6 +52,18 @@ public abstract class CraftingTreeWidgetMixin {
     private Object ae2craftingtime$colorRoot;
     private Map<Object, Long> ae2craftingtime$secondsByNode = Map.of();
     private Map<Object, Integer> ae2craftingtime$colorsByNode = Map.of();
+
+    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true, require = 0)
+    private void ae2craftingtime$clickStats(double mouseX, double mouseY, int button,
+            CallbackInfoReturnable<Boolean> cir) {
+        if (button != 0 || !Screen.hasShiftDown() || !Ae2CraftingTimeConfig.SHOW_IN_TREE.get()) {
+            return;
+        }
+
+        if (ae2craftingtime$showClickedStats(mouseX, mouseY)) {
+            cir.setReturnValue(true);
+        }
+    }
 
     @Inject(method = "draw", at = @At("HEAD"), require = 0)
     private void ae2craftingtime$beginFrame(GuiGraphics guiGraphics, int offsetX, int offsetY, int mouseX, int mouseY,
@@ -130,6 +145,23 @@ public abstract class CraftingTreeWidgetMixin {
             return null;
         }
         return map.get(getMousePoint(mouseX, mouseY));
+    }
+
+    private boolean ae2craftingtime$showClickedStats(double mouseX, double mouseY) {
+        var node = hoveredNode(mouseX, mouseY);
+        if (node == null && Minecraft.getInstance().screen instanceof AEBaseScreen<?> screen) {
+            node = hoveredNode(mouseX + screen.getGuiLeft(), mouseY + screen.getGuiTop());
+        }
+        var stack = node == null ? null : readField(node, "stack", GenericStack.class);
+        var amountHelper = node == null ? null : readField(node, "amountHelper", Object.class);
+        var craftAmount = amountHelper == null ? null : readField(amountHelper, "craftAmount", Long.class);
+        if (stack == null || craftAmount == null || craftAmount <= 0) {
+            return false;
+        }
+
+        var key = new ProfileKey(stack.what().getId().toString());
+        StatsChatMessages.show(key, AeKeyAmounts.normalize(stack.what(), craftAmount));
+        return true;
     }
 
     private void ae2craftingtime$refreshColors() {

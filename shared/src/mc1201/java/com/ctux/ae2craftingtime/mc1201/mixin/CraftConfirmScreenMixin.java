@@ -4,6 +4,7 @@ import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.client.gui.me.crafting.CraftConfirmTableRenderer;
 import appeng.client.gui.style.ScreenStyle;
+import appeng.client.gui.widgets.Scrollbar;
 import appeng.menu.me.crafting.CraftConfirmMenu;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
@@ -12,11 +13,14 @@ import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -31,7 +35,25 @@ import java.util.OptionalLong;
 @Mixin(CraftConfirmScreen.class)
 public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmMenu> {
     @Unique
+    private static final int AE2CRAFTINGTIME_TABLE_X = 9;
+    @Unique
+    private static final int AE2CRAFTINGTIME_TABLE_Y = 19;
+    @Unique
+    private static final int AE2CRAFTINGTIME_CELL_WIDTH = 67;
+    @Unique
+    private static final int AE2CRAFTINGTIME_CELL_HEIGHT = 22;
+    @Unique
+    private static final int AE2CRAFTINGTIME_CELL_BORDER = 1;
+    @Unique
+    private static final int AE2CRAFTINGTIME_COLS = 3;
+    @Unique
+    private static final int AE2CRAFTINGTIME_ROWS = 5;
+
+    @Unique
     private int ae2craftingtime$ttcSortMode;
+
+    @Shadow(remap = false)
+    private Scrollbar scrollbar;
 
     protected CraftConfirmScreenMixin(CraftConfirmMenu menu, Inventory playerInventory, Component title,
             ScreenStyle style) {
@@ -77,9 +99,58 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
         });
     }
 
+    @Override
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0 && Screen.hasShiftDown() && ae2craftingtime$showClickedStats(mouseX, mouseY)) {
+            return true;
+        }
+        return super.mouseClicked(mouseX, mouseY, button);
+    }
+
     @Unique
     private void ae2craftingtime$cycleTtcSortMode() {
         ae2craftingtime$ttcSortMode = (ae2craftingtime$ttcSortMode + 1) % 3;
+    }
+
+    @Unique
+    private boolean ae2craftingtime$showClickedStats(double mouseX, double mouseY) {
+        var plan = getMenu().getPlan();
+        if (plan == null) {
+            return false;
+        }
+
+        var index = ae2craftingtime$clickedTableIndex(mouseX, mouseY);
+        var entries = ae2craftingtime$sortPlanByTtc(plan.getEntries());
+        if (index < 0 || index >= entries.size()) {
+            return false;
+        }
+
+        var entry = entries.get(index);
+        if (entry.getCraftAmount() <= 0) {
+            return false;
+        }
+
+        var key = ProfilerBridge.key(entry.getWhat());
+        StatsChatMessages.show(key, AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()));
+        return true;
+    }
+
+    @Unique
+    private int ae2craftingtime$clickedTableIndex(double mouseX, double mouseY) {
+        var x = (int) mouseX - getGuiLeft() - AE2CRAFTINGTIME_TABLE_X;
+        var y = (int) mouseY - getGuiTop() - AE2CRAFTINGTIME_TABLE_Y;
+        var pitchX = AE2CRAFTINGTIME_CELL_WIDTH + AE2CRAFTINGTIME_CELL_BORDER;
+        var pitchY = AE2CRAFTINGTIME_CELL_HEIGHT + AE2CRAFTINGTIME_CELL_BORDER;
+        if (x < 0 || y < 0 || x % pitchX >= AE2CRAFTINGTIME_CELL_WIDTH || y % pitchY >= AE2CRAFTINGTIME_CELL_HEIGHT) {
+            return -1;
+        }
+
+        var col = x / pitchX;
+        var row = y / pitchY;
+        if (col >= AE2CRAFTINGTIME_COLS || row >= AE2CRAFTINGTIME_ROWS) {
+            return -1;
+        }
+        return (row + scrollbar.getCurrentScroll()) * AE2CRAFTINGTIME_COLS + col;
     }
 
     @Unique
