@@ -8,15 +8,19 @@ public final class StatsChatLines {
     }
 
     public static List<Line> lines(ProfileKey key, long amount, ProfileStats stats) {
-        return List.of(
-                new Line("Item", key.outputId()),
-                new Line("Amount", amount + " " + unitName(stats)),
-                new Line("Samples", Integer.toString(stats.sampleCount())),
-                new Line("Average", duration(stats.averageDurationTicks())),
-                new Line("Latest", duration(stats.lastDurationTicks())),
-                new Line("Throughput", rate(stats.amountPerTick()) + " " + unitName(stats) + "/t, "
-                        + rate(stats.amountPerSecond()) + " " + unitName(stats) + "/s"),
-                new Line("TTC", TimeEstimate.format(amount, stats).orElse("unknown")));
+        var lines = new java.util.ArrayList<Line>();
+        lines.add(new Line("Item", key.outputId()));
+        lines.add(new Line("Amount", amount + " " + unitName(stats)));
+        lines.add(new Line("Samples", Integer.toString(stats.sampleCount())));
+        lines.add(new Line("Average", duration(stats.averageDurationTicks())));
+        lines.add(new Line("Latest", duration(stats.lastDurationTicks())));
+        lines.add(new Line("Throughput", rate(stats.amountPerTick()) + " " + unitName(stats) + "/t, "
+                + rate(stats.amountPerSecond()) + " " + unitName(stats) + "/s"));
+        if (!stats.reliableEstimate()) {
+            lines.add(new Line("Confidence", "low"));
+        }
+        lines.add(new Line("TTC", TimeEstimate.format(amount, stats).orElse("unknown")));
+        return List.copyOf(lines);
     }
 
     private static String unitName(ProfileStats stats) {

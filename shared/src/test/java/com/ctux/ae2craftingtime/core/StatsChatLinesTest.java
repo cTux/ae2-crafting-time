@@ -23,4 +23,14 @@ class StatsChatLinesTest {
                 new StatsChatLines.Line("TTC", "~3s")),
                 lines);
     }
+
+    @Test
+    void includesConfidenceWhenEstimateIsLowConfidence() {
+        var stats = new ProfileStats(1, 20, 1, 10.0, 20, ProfileUnit.ITEM, false);
+
+        var lines = StatsChatLines.lines(new ProfileKey("minecraft:iron_ingot"), 100, stats);
+
+        assertEquals(new StatsChatLines.Line("Confidence", "low"), lines.get(6));
+        assertEquals(new StatsChatLines.Line("TTC", "~10s?"), lines.get(7));
+    }
 }

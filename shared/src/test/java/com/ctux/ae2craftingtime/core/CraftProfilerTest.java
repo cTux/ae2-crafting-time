@@ -45,6 +45,25 @@ class CraftProfilerTest {
     }
 
     @Test
+    void ignoresExtremeDurationOutliersForThroughput() {
+        var profiler = new CraftProfiler(10);
+        var ironPlate = new ProfileKey("minecraft:iron_plate");
+
+        for (var i = 0; i < 4; i++) {
+            profiler.start(ironPlate, 1, ProfileUnit.ITEM, i * 20L);
+            profiler.complete(ironPlate, 1, i * 20L + 10);
+        }
+        profiler.start(ironPlate, 1, ProfileUnit.ITEM, 100);
+        profiler.complete(ironPlate, 1, 1_100);
+
+        var stats = profiler.stats(ironPlate).orElseThrow();
+
+        assertEquals(5, stats.sampleCount());
+        assertEquals(2.0, stats.amountPerSecond());
+        assertFalse(stats.reliableEstimate());
+    }
+
+    @Test
     void statsExistAfterOneCompletedCraft() {
         var profiler = new CraftProfiler(10);
         var ironPlate = new ProfileKey("minecraft:iron_plate");

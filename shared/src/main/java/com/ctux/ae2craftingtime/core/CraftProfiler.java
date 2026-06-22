@@ -74,8 +74,8 @@ public final class CraftProfiler {
         }
 
         long durationTotal = 0;
-        long amountTotal = 0;
         long lastDuration = 0;
+        var filtered = filteredSamples(queue);
         long weightedDurationTotal = 0;
         long weightedAmountTotal = 0;
         long weight = 1;
@@ -83,12 +83,13 @@ public final class CraftProfiler {
 
         for (var sample : queue) {
             durationTotal += sample.durationTicks;
-            amountTotal += sample.amount;
             lastDuration = sample.durationTicks;
+            unit = sample.unit;
+        }
+        for (var sample : filtered) {
             weightedDurationTotal += sample.durationTicks * weight;
             weightedAmountTotal += sample.amount * weight;
             weight++;
-            unit = sample.unit;
         }
 
         var averageDuration = (double) durationTotal / queue.size();
@@ -99,7 +100,30 @@ public final class CraftProfiler {
                 amountPerTick,
                 amountPerTick * 20.0,
                 lastDuration,
-                unit));
+                unit,
+                queue.size() >= 3 && filtered.size() == queue.size()));
+    }
+
+    private static List<CraftSample> filteredSamples(ArrayDeque<CraftSample> queue) {
+        if (queue.size() < 5) {
+            return List.copyOf(queue);
+        }
+
+        var samples = List.copyOf(queue);
+        var durationsPerUnit = new ArrayList<Double>(samples.size());
+        for (var sample : samples) {
+            durationsPerUnit.add((double) sample.durationTicks / sample.amount);
+        }
+        durationsPerUnit.sort(Double::compare);
+        var median = durationsPerUnit.get(durationsPerUnit.size() / 2);
+        var filtered = new ArrayList<CraftSample>();
+        for (var sample : samples) {
+            var durationPerUnit = (double) sample.durationTicks / sample.amount;
+            if (durationPerUnit >= median / 4.0 && durationPerUnit <= median * 4.0) {
+                filtered.add(sample);
+            }
+        }
+        return filtered.isEmpty() ? samples : filtered;
     }
 
     private void addSample(ProfileKey key, CraftSample sample) {

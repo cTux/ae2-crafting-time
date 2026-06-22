@@ -24,6 +24,7 @@ public record StatsSnapshotS2C(List<StatsEntry> entries) {
             buffer.writeDouble(stats.amountPerTick());
             buffer.writeDouble(stats.amountPerSecond());
             buffer.writeVarLong(stats.lastDurationTicks());
+            buffer.writeBoolean(stats.reliableEstimate());
         }
     }
 
@@ -38,8 +39,9 @@ public record StatsSnapshotS2C(List<StatsEntry> entries) {
             var amountPerTick = buffer.readDouble();
             var amountPerSecond = buffer.readDouble();
             var lastDurationTicks = buffer.readVarLong();
+            var reliableEstimate = buffer.readBoolean();
             entries.add(new StatsEntry(key, new ProfileStats(sampleCount, averageDurationTicks, amountPerTick,
-                    amountPerSecond, lastDurationTicks, unit)));
+                    amountPerSecond, lastDurationTicks, unit, reliableEstimate)));
         }
         return new StatsSnapshotS2C(entries);
     }

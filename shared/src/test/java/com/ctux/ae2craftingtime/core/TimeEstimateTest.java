@@ -39,6 +39,13 @@ class TimeEstimateTest {
     }
 
     @Test
+    void marksLowConfidenceEta() {
+        var stats = new ProfileStats(1, 20, 1, 1.0, 20, ProfileUnit.ITEM, false);
+
+        assertEquals("~10s?", TimeEstimate.format(10, stats).orElseThrow());
+    }
+
+    @Test
     void zeroThroughputHasNoEstimate() {
         var stats = new ProfileStats(0, 0, 0, 0, 0, ProfileUnit.ITEM);
 

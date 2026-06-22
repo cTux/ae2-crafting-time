@@ -18,7 +18,8 @@ public final class TimeEstimate {
             return Optional.empty();
         }
 
-        return Optional.of(formatSeconds(estimate.getAsLong()));
+        var text = formatSeconds(estimate.getAsLong());
+        return Optional.of(stats.reliableEstimate() ? text : text + "?");
     }
 
     public static Optional<String> formatTotal(Iterable<OptionalLong> estimates) {
