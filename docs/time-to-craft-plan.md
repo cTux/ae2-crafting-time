@@ -77,7 +77,8 @@ The estimate must use the same units as profiling throughput.
 Current implementation:
 
 - items: raw amount
-- fluids: mB, converted from AE amount with `AEKey#getAmountPerUnit`
+- bucket-style keys, including AE2 fluids and optional Applied Mekanistics chemicals:
+  mB, converted from AE amount with `AEKey#getAmountPerUnit`
 
 Requirement includes gas/liquid. Lazy correct rule for later key types:
 
@@ -88,7 +89,8 @@ else:
   normalized = amount
 ```
 
-If a gas addon uses a different convention, adjust only the version-specific normalizer.
+Applied Mekanistics support stays optional: the code does not import AppMek classes,
+and Forge/NeoForge metadata only orders after `appmek` when it is installed.
 
 ## Time Format
 

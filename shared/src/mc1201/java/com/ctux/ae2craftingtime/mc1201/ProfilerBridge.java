@@ -2,7 +2,6 @@ package com.ctux.ae2craftingtime.mc1201;
 
 import appeng.api.networking.IGrid;
 import appeng.api.stacks.AEKey;
-import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.GenericStack;
 import com.ctux.ae2craftingtime.core.CraftProfiler;
 import com.ctux.ae2craftingtime.core.ProfileKey;
@@ -87,14 +86,11 @@ public final class ProfilerBridge {
     }
 
     private static ProfileUnit unit(AEKey key) {
-        return key.getType() == AEKeyType.fluids() ? ProfileUnit.MILLIBUCKET : ProfileUnit.ITEM;
+        return key.getAmountPerUnit() > 1 ? ProfileUnit.MILLIBUCKET : ProfileUnit.ITEM;
     }
 
     private static long normalizeAmount(AEKey key, long amount) {
-        if (key.getType() != AEKeyType.fluids()) {
-            return amount;
-        }
-        return amount * 1000L / key.getAmountPerUnit();
+        return AeKeyAmounts.normalize(key, amount);
     }
 
     private ProfilerBridge() {

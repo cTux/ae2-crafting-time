@@ -17,6 +17,7 @@ It currently targets:
 - Sends aggregate stats to clients through request/response packets.
 - Adds `TTC` lines, color hints, totals, and sort controls to AE2 craft-plan/status views.
 - Lets players Ctrl-Alt-click a TTC entry to forget stale stats for that output.
+- Supports Applied Mekanistics chemicals when that optional mod is installed.
 - Reuses shared Java code across loaders where AE2/Minecraft APIs match.
 
 ## Build
