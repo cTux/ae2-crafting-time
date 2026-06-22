@@ -63,11 +63,8 @@ public abstract class MERequesterScreenMixin {
             estimate.label().ifPresent(label -> ae2craftingtime$drawLabel(guiGraphics, rowIndex, label));
         }
 
-        TimeEstimate.formatTotal(estimates).ifPresent(eta -> {
-            var font = Minecraft.getInstance().font;
-            guiGraphics.drawString(font, Component.literal("Total TTC: " + eta), 8,
-                    AE2CRAFTINGTIME_GUI_HEADER_HEIGHT + rowAmount * AE2CRAFTINGTIME_ROW_HEIGHT + 8, 0x404040, false);
-        });
+        TimeEstimate.formatTotal(estimates).ifPresent(eta -> ae2craftingtime$drawLabel(guiGraphics, rowAmount,
+                "Total TTC: " + eta));
     }
 
     @Unique
