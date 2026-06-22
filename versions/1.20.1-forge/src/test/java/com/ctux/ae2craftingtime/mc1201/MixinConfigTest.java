@@ -56,6 +56,15 @@ class MixinConfigTest {
     }
 
     @Test
+    void statusStatsRequestsUseCraftingCpuMenuGrid() throws IOException {
+        var packet = Files.readString(Path.of(
+                "src/main/java/com/ctux/ae2craftingtime/mc1201/net/StatsRequestC2S.java"));
+
+        assertTrue(packet.contains("CraftingCPUMenu"));
+        assertTrue(packet.contains("getDeclaredMethod(\"getGrid\")"));
+    }
+
+    @Test
     void craftingTreeTtcColorsUseSiblingGroups() throws IOException {
         var mixin = Files.readString(Path.of(
                 "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingTreeWidgetMixin.java"));
