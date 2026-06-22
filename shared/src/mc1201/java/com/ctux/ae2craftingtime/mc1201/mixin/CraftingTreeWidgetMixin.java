@@ -12,7 +12,6 @@ import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -56,7 +55,7 @@ public abstract class CraftingTreeWidgetMixin {
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true, require = 0)
     private void ae2craftingtime$clickStats(double mouseX, double mouseY, int button,
             CallbackInfoReturnable<Boolean> cir) {
-        if (button != 0 || !Screen.hasShiftDown() || !Ae2CraftingTimeConfig.SHOW_IN_TREE.get()) {
+        if (button != 2 || !Ae2CraftingTimeConfig.SHOW_IN_TREE.get()) {
             return;
         }
 

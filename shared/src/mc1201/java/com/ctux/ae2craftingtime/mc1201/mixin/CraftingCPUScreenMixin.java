@@ -17,7 +17,6 @@ import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import org.spongepowered.asm.mixin.Mixin;
@@ -103,7 +102,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && Screen.hasShiftDown() && ae2craftingtime$showClickedStats(mouseX, mouseY)) {
+        if (button == 2 && ae2craftingtime$showClickedStats(mouseX, mouseY)) {
             return true;
         }
         return super.mouseClicked(mouseX, mouseY, button);

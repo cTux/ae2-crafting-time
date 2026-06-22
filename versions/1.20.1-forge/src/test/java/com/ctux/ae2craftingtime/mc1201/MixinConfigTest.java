@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -71,5 +72,22 @@ class MixinConfigTest {
 
         assertTrue(mixin.contains("ae2craftingtime$colorSiblingGroup(subNodes"));
         assertTrue(mixin.contains("ae2craftingtime$colorsByNode"));
+    }
+
+    @Test
+    void statsChatUsesMiddleClickWithoutShift() throws IOException {
+        var confirmMixin = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftConfirmScreenMixin.java"));
+        var statusMixin = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingCPUScreenMixin.java"));
+        var treeMixin = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingTreeWidgetMixin.java"));
+
+        assertTrue(confirmMixin.contains("button == 2 && ae2craftingtime$showClickedStats"));
+        assertTrue(statusMixin.contains("button == 2 && ae2craftingtime$showClickedStats"));
+        assertTrue(treeMixin.contains("button != 2 || !Ae2CraftingTimeConfig.SHOW_IN_TREE.get()"));
+        assertFalse(confirmMixin.contains("hasShiftDown"));
+        assertFalse(statusMixin.contains("hasShiftDown"));
+        assertFalse(treeMixin.contains("hasShiftDown"));
     }
 }
