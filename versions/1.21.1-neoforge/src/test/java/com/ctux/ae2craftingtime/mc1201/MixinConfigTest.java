@@ -92,13 +92,15 @@ class MixinConfigTest {
                 "src/main/java/com/ctux/ae2craftingtime/mc1201/Ae2CraftingTimeClientInput.java"));
 
         assertTrue(clientInput.contains("InputEvent.MouseButton.Pre"));
-        assertTrue(clientInput.contains("TtcDetailsClick.tryShow(event.getButton())"));
+        assertTrue(clientInput.contains("TtcDetailsClick.tryHandle(event.getButton())"));
         assertTrue(clickHelper.contains("minecraft.screen instanceof StatsClickHandler"));
-        assertTrue(clickHelper.contains("handler.ae2craftingtime$showClickedStats(mouseX, mouseY)"));
+        assertTrue(clickHelper.contains("handler.ae2craftingtime$handleClickedStats(mouseX, mouseY, button)"));
         assertTrue(confirmMixin.contains("public boolean mouseClicked"));
         assertTrue(statusMixin.contains("public boolean mouseClicked"));
         assertTrue(confirmMixin.contains("TtcDetailsKeyMapping.matchesMouse(button)"));
         assertTrue(statusMixin.contains("TtcDetailsKeyMapping.matchesMouse(button)"));
+        assertTrue(confirmMixin.contains("TtcDetailsKeyMapping.matchesResetMouse(button)"));
+        assertTrue(statusMixin.contains("TtcDetailsKeyMapping.matchesResetMouse(button)"));
         assertTrue(confirmMixin.contains("getStackUnderMouse(mouseX, mouseY)"));
         assertTrue(statusMixin.contains("getStackUnderMouse(mouseX, mouseY)"));
         assertFalse(confirmMixin.contains("button == 2"));
@@ -107,6 +109,9 @@ class MixinConfigTest {
         assertTrue(confirmTableMixin.contains("Ctrl-Click to see TTC details"));
         assertTrue(statusTableMixin.contains("Ctrl-Click to see TTC details"));
         assertTrue(treeMixin.contains("Ctrl-Click to see TTC details"));
+        assertTrue(confirmTableMixin.contains("Ctrl-Alt-Click to forget TTC stats"));
+        assertTrue(statusTableMixin.contains("Ctrl-Alt-Click to forget TTC stats"));
+        assertTrue(treeMixin.contains("Ctrl-Alt-Click to forget TTC stats"));
         assertFalse(confirmMixin.contains("hasShiftDown"));
         assertFalse(statusMixin.contains("hasShiftDown"));
         assertFalse(treeMixin.contains("hasShiftDown"));
@@ -116,7 +121,7 @@ class MixinConfigTest {
     void craftingStatusStatsChatWorksOnAnyCpuScreen() throws IOException {
         var statusMixin = Files.readString(Path.of(
                 "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingCPUScreenMixin.java"));
-        var methodStart = statusMixin.indexOf("public boolean ae2craftingtime$showClickedStats");
+        var methodStart = statusMixin.indexOf("public boolean ae2craftingtime$handleClickedStats");
         var methodEnd = statusMixin.indexOf("@Unique", methodStart);
         var clickMethod = statusMixin.substring(methodStart, methodEnd);
 

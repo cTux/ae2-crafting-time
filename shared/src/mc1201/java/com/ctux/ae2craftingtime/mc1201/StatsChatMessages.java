@@ -28,6 +28,18 @@ public final class StatsChatMessages {
         }
     }
 
+    public static void reset(ProfileKey key) {
+        var player = Minecraft.getInstance().player;
+        if (player == null) {
+            return;
+        }
+
+        ClientStats.CACHE.remove(key);
+        ClientStatsRequests.reset(key);
+        player.displayClientMessage(Component.literal("Forgot TTC stats for " + key.outputId())
+                .withStyle(ChatFormatting.YELLOW), false);
+    }
+
     private StatsChatMessages() {
     }
 }

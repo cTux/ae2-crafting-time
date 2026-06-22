@@ -47,6 +47,17 @@ public final class ProfilerBridge {
         return PROFILER.stats(key);
     }
 
+    public static boolean clearStats(ProfileKey key) {
+        if (key == null || !isEnabled()) {
+            return false;
+        }
+        var cleared = PROFILER.clearSamples(key);
+        if (cleared && savedData != null) {
+            savedData.replaceFrom(PROFILER.snapshotSamples());
+        }
+        return cleared;
+    }
+
     private static boolean isEnabled() {
         return Ae2CraftingTimeConfig.ENABLED.get();
     }

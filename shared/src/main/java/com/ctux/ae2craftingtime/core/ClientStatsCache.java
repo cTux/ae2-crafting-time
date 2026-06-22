@@ -18,6 +18,10 @@ public final class ClientStatsCache {
         return Optional.ofNullable(stats.get(key));
     }
 
+    public void remove(ProfileKey key) {
+        stats.remove(key);
+    }
+
     public void clear() {
         stats.clear();
     }

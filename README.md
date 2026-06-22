@@ -16,6 +16,7 @@ It currently targets:
 - Persists retained samples in the world save as `data/ae2-crafting-time.dat`.
 - Sends aggregate stats to clients through request/response packets.
 - Adds `TTC` lines, color hints, totals, and sort controls to AE2 craft-plan/status views.
+- Lets players Ctrl-Alt-click a TTC entry to forget stale stats for that output.
 - Reuses shared Java code across loaders where AE2/Minecraft APIs match.
 
 ## Build

@@ -77,6 +77,7 @@ Fields:
 ```text
 requestId: int
 keys: list<string> output ids
+reset: boolean
 ```
 
 Rules:
@@ -84,6 +85,7 @@ Rules:
 - Client may request only output ids visible in its current Crafting Tree.
 - Server treats keys as hints, not trusted facts.
 - Server replies with known stats for matching keys and silently omits unknown keys.
+- If `reset` is true, server clears retained samples for those keys in the player's current AE2 network and replies with no stats for them.
 - Rate limit if needed later; not needed for first pass.
 
 ### `StatsSnapshotS2C`

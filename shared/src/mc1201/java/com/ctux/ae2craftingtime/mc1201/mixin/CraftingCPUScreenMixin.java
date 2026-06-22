@@ -68,8 +68,9 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (TtcDetailsClick.tryShow(button) || TtcDetailsKeyMapping.matchesMouse(button)
-                && ae2craftingtime$showClickedStats(mouseX, mouseY)) {
+        if (TtcDetailsClick.tryHandle(button)
+                || (TtcDetailsKeyMapping.matchesMouse(button) || TtcDetailsKeyMapping.matchesResetMouse(button))
+                && ae2craftingtime$handleClickedStats(mouseX, mouseY, button)) {
             return true;
         }
 
@@ -126,7 +127,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
     public abstract void postUpdate(CraftingStatus status);
 
     @Override
-    public boolean ae2craftingtime$showClickedStats(double mouseX, double mouseY) {
+    public boolean ae2craftingtime$handleClickedStats(double mouseX, double mouseY, int button) {
         if (status == null) {
             return false;
         }
@@ -143,6 +144,10 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         }
 
         var key = ProfilerBridge.key(entry.getWhat());
+        if (TtcDetailsKeyMapping.matchesResetMouse(button)) {
+            StatsChatMessages.reset(key);
+            return true;
+        }
         StatsChatMessages.show(key, AeKeyAmounts.normalize(entry.getWhat(), amount));
         return true;
     }

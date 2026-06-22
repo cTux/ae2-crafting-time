@@ -10,7 +10,7 @@ import org.lwjgl.glfw.GLFW;
 public final class Ae2CraftingTimeClientInput {
     @SubscribeEvent
     public static void showTtcDetails(InputEvent.MouseButton.Pre event) {
-        if (event.getAction() == GLFW.GLFW_PRESS && TtcDetailsClick.tryShow(event.getButton())) {
+        if (event.getAction() == GLFW.GLFW_PRESS && TtcDetailsClick.tryHandle(event.getButton())) {
             event.setCanceled(true);
         }
     }

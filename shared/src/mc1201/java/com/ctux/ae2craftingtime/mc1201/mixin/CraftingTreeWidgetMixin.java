@@ -56,11 +56,12 @@ public abstract class CraftingTreeWidgetMixin {
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true, require = 0)
     private void ae2craftingtime$clickStats(double mouseX, double mouseY, int button,
             CallbackInfoReturnable<Boolean> cir) {
-        if (!TtcDetailsKeyMapping.matchesMouse(button) || !Ae2CraftingTimeConfig.SHOW_IN_TREE.get()) {
+        if ((!TtcDetailsKeyMapping.matchesMouse(button) && !TtcDetailsKeyMapping.matchesResetMouse(button))
+                || !Ae2CraftingTimeConfig.SHOW_IN_TREE.get()) {
             return;
         }
 
-        if (ae2craftingtime$showClickedStats(mouseX, mouseY)) {
+        if (ae2craftingtime$handleClickedStats(mouseX, mouseY, button)) {
             cir.setReturnValue(true);
         }
     }
@@ -125,6 +126,7 @@ public abstract class CraftingTreeWidgetMixin {
             var stack = node == null ? null : readField(node, "stack", GenericStack.class);
             if (stack != null) {
                 lines.add(Component.literal("Ctrl-Click to see TTC details"));
+                lines.add(Component.literal("Ctrl-Alt-Click to forget TTC stats"));
                 var seconds = ae2craftingtime$totalSeconds(node);
                 if (seconds.isPresent()) {
                     TimeEstimate.formatTotal(List.of(seconds))
@@ -148,7 +150,7 @@ public abstract class CraftingTreeWidgetMixin {
         return map.get(getMousePoint(mouseX, mouseY));
     }
 
-    private boolean ae2craftingtime$showClickedStats(double mouseX, double mouseY) {
+    private boolean ae2craftingtime$handleClickedStats(double mouseX, double mouseY, int button) {
         var node = hoveredNode(mouseX, mouseY);
         if (node == null && Minecraft.getInstance().screen instanceof AEBaseScreen<?> screen) {
             node = hoveredNode(mouseX + screen.getGuiLeft(), mouseY + screen.getGuiTop());
@@ -161,6 +163,10 @@ public abstract class CraftingTreeWidgetMixin {
         }
 
         var key = new ProfileKey(stack.what().getId().toString());
+        if (TtcDetailsKeyMapping.matchesResetMouse(button)) {
+            StatsChatMessages.reset(key);
+            return true;
+        }
         StatsChatMessages.show(key, AeKeyAmounts.normalize(stack.what(), craftAmount));
         return true;
     }

@@ -17,7 +17,11 @@ public final class TtcDetailsKeyMapping {
     }
 
     public static boolean matchesMouse(int button) {
-        return SHOW_DETAILS.matchesMouse(button) && Screen.hasControlDown();
+        return SHOW_DETAILS.matchesMouse(button) && Screen.hasControlDown() && !Screen.hasAltDown();
+    }
+
+    public static boolean matchesResetMouse(int button) {
+        return SHOW_DETAILS.matchesMouse(button) && Screen.hasControlDown() && Screen.hasAltDown();
     }
 
     private TtcDetailsKeyMapping() {

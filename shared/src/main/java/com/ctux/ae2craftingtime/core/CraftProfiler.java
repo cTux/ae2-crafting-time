@@ -118,6 +118,10 @@ public final class CraftProfiler {
                 sampleDurationTicks));
     }
 
+    public boolean clearSamples(ProfileKey key) {
+        return samples.remove(key) != null;
+    }
+
     private static List<CraftSample> filteredSamples(ArrayDeque<CraftSample> queue, double outlierMultiplier) {
         if (queue.size() < 5) {
             return List.copyOf(queue);

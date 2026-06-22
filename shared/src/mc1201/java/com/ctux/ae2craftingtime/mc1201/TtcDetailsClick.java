@@ -3,8 +3,8 @@ package com.ctux.ae2craftingtime.mc1201;
 import net.minecraft.client.Minecraft;
 
 public final class TtcDetailsClick {
-    public static boolean tryShow(int button) {
-        if (!TtcDetailsKeyMapping.matchesMouse(button)) {
+    public static boolean tryHandle(int button) {
+        if (!TtcDetailsKeyMapping.matchesMouse(button) && !TtcDetailsKeyMapping.matchesResetMouse(button)) {
             return false;
         }
 
@@ -17,7 +17,7 @@ public final class TtcDetailsClick {
         var mouse = minecraft.mouseHandler;
         var mouseX = mouse.xpos() * window.getGuiScaledWidth() / window.getScreenWidth();
         var mouseY = mouse.ypos() * window.getGuiScaledHeight() / window.getScreenHeight();
-        return handler.ae2craftingtime$showClickedStats(mouseX, mouseY);
+        return handler.ae2craftingtime$handleClickedStats(mouseX, mouseY, button);
     }
 
     private TtcDetailsClick() {

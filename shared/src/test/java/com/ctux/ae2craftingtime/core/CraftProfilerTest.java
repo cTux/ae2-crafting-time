@@ -189,6 +189,23 @@ class CraftProfilerTest {
     }
 
     @Test
+    void clearsOnlyRequestedOutputSamples() {
+        var profiler = new CraftProfiler(10);
+        var ironPlate = new ProfileKey("net-a", "minecraft:iron_plate");
+        var copperPlate = new ProfileKey("net-a", "minecraft:copper_plate");
+
+        profiler.start(ironPlate, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(ironPlate, 1, 10);
+        profiler.start(copperPlate, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(copperPlate, 1, 20);
+
+        profiler.clearSamples(ironPlate);
+
+        assertFalse(profiler.stats(ironPlate).isPresent());
+        assertEquals(1, profiler.stats(copperPlate).orElseThrow().sampleCount());
+    }
+
+    @Test
     void waitsForPartialCompletionsBeforeRecordingSample() {
         var profiler = new CraftProfiler(10);
         var fluid = new ProfileKey("minecraft:water");

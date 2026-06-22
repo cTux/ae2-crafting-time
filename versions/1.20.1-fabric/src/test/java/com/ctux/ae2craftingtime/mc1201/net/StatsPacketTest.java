@@ -23,6 +23,16 @@ class StatsPacketTest {
     }
 
     @Test
+    void resetRequestRoundTrips() {
+        var buffer = new FriendlyByteBuf(Unpooled.buffer());
+        var packet = new StatsRequestC2S(List.of("minecraft:iron_plate"), true);
+
+        StatsRequestC2S.encode(packet, buffer);
+
+        assertEquals(packet, StatsRequestC2S.decode(buffer));
+    }
+
+    @Test
     void snapshotRoundTripsServerCalculatedStats() {
         var buffer = new FriendlyByteBuf(Unpooled.buffer());
         var packet = new StatsSnapshotS2C(List.of(new StatsEntry(

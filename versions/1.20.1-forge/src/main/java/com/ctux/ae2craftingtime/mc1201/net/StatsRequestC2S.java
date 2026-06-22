@@ -16,8 +16,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-public record StatsRequestC2S(List<String> keys) {
+public record StatsRequestC2S(List<String> keys, boolean reset) {
+    public StatsRequestC2S(List<String> keys) {
+        this(keys, false);
+    }
+
     public static void encode(StatsRequestC2S packet, FriendlyByteBuf buffer) {
+        buffer.writeBoolean(packet.reset);
         buffer.writeVarInt(packet.keys.size());
         for (var key : packet.keys) {
             buffer.writeUtf(key);
@@ -25,12 +30,13 @@ public record StatsRequestC2S(List<String> keys) {
     }
 
     public static StatsRequestC2S decode(FriendlyByteBuf buffer) {
+        var reset = buffer.readBoolean();
         var size = buffer.readVarInt();
         var keys = new ArrayList<String>(size);
         for (int i = 0; i < size; i++) {
             keys.add(buffer.readUtf());
         }
-        return new StatsRequestC2S(keys);
+        return new StatsRequestC2S(keys, reset);
     }
 
     public static void handle(StatsRequestC2S packet, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -44,7 +50,12 @@ public record StatsRequestC2S(List<String> keys) {
             var entries = new ArrayList<StatsEntry>();
             var networkId = ProfilerBridge.networkId(currentGrid(player));
             for (var key : packet.keys) {
-                ProfilerBridge.stats(new ProfileKey(networkId, key))
+                var profileKey = new ProfileKey(networkId, key);
+                if (packet.reset) {
+                    ProfilerBridge.clearStats(profileKey);
+                    continue;
+                }
+                ProfilerBridge.stats(profileKey)
                         .ifPresent(stats -> entries.add(new StatsEntry(new ProfileKey(key), stats)));
             }
             StatsNetwork.sendTo(player, new StatsSnapshotS2C(entries));

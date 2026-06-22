@@ -35,6 +35,7 @@ public abstract class CraftingStatusTableRendererMixin {
         }
 
         cir.getReturnValue().add(Component.literal("Ctrl-Click to see TTC details").withStyle(ChatFormatting.GRAY));
+        cir.getReturnValue().add(Component.literal("Ctrl-Alt-Click to forget TTC stats").withStyle(ChatFormatting.GRAY));
         ae2craftingtime$appendTtc(entry, cir.getReturnValue());
     }
 
