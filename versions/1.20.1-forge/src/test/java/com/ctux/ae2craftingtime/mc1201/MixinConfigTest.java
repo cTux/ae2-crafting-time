@@ -19,6 +19,7 @@ class MixinConfigTest {
         var sortIndex = json.indexOf("\"CraftConfirmScreenMixin\"");
         var statusScreenIndex = json.indexOf("\"CraftingCPUScreenMixin\"");
         var statusTableIndex = json.indexOf("\"CraftingStatusTableRendererMixin\"");
+        var meRequesterIndex = json.indexOf("\"MERequesterScreenMixin\"");
         var serverIndex = json.indexOf("\"mixins\"");
         var cpuIndex = json.indexOf("\"CraftingCpuLogicMixin\"");
 
@@ -29,6 +30,7 @@ class MixinConfigTest {
         assertTrue(sortIndex > clientIndex);
         assertTrue(statusScreenIndex > clientIndex);
         assertTrue(statusTableIndex > clientIndex);
+        assertTrue(meRequesterIndex > clientIndex);
     }
 
     @Test
@@ -127,5 +129,17 @@ class MixinConfigTest {
 
         assertTrue(clickMethod.contains("if (status == null)"));
         assertFalse(clickMethod.contains("instanceof CraftingStatusScreen"));
+    }
+
+    @Test
+    void meRequesterIntegrationIsOptionalClientOverlay() throws IOException {
+        var mixin = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/MERequesterScreenMixin.java"));
+
+        assertTrue(mixin.contains("@Pseudo"));
+        assertTrue(mixin.contains("targets = \"com.almostreliable.merequester.client.abstraction.AbstractRequesterScreen\""));
+        assertTrue(mixin.contains("TTC "));
+        assertTrue(mixin.contains("Total TTC: "));
+        assertTrue(mixin.contains("getMethod(methodName)"));
     }
 }

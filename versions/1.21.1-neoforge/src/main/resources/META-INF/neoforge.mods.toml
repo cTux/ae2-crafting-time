@@ -44,5 +44,12 @@ versionRange="[1.6.0,)"
 ordering="AFTER"
 side="BOTH"
 
+[[dependencies."${mod_id}"]]
+modId="merequester"
+type="OPTIONAL"
+versionRange="[1.21.1,)"
+ordering="AFTER"
+side="CLIENT"
+
 [[mixins]]
 config="ae2craftingtime.mixins.json"

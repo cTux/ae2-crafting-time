@@ -13,7 +13,8 @@
     "CraftConfirmScreenMixin",
     "CraftConfirmTableRendererMixin",
     "CraftingStatusTableRendererMixin",
-    "CraftingTreeWidgetMixin"
+    "CraftingTreeWidgetMixin",
+    "MERequesterScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1
