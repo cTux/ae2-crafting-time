@@ -43,6 +43,7 @@ Built jars are copied to `dist/`.
 ## Docs
 
 - [Dependencies](DEPENDENCIES.md)
+- [Potential dependency integrations](DEPENDENCIES_POTENTIAL.md)
 - [Working with this project](docs/working-with-project.md)
 - [Release process](docs/release.md)
 - [Research notes](docs/research.md)

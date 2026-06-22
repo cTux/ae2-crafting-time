@@ -23,6 +23,7 @@ Crafting Time.
 | --- | --- | --- | --- |
 | AE2: Crafting Tree (`ae2ct`) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | Forge/Fabric: `>=1.20.1-1.1.1`; NeoForge: `>=1.21.1` | TTC lines and details in AE2: Crafting Tree UI. |
 | Applied Mekanistics (`appmek`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.4.0`; NeoForge: `>=1.6.0` | TTC profiling and display for Applied Mekanistics chemical keys. |
+| ME Requester (`merequester`) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | Forge/Fabric: `>=1.20.1`; NeoForge: `>=1.21.1` | TTC row labels and total TTC hints in ME Requester screens. |
 
 Applied Mekanistics is not declared for the Fabric jar because the supported
 Applied Mekanistics releases for these targets are Forge/NeoForge.
