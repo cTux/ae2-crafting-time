@@ -104,4 +104,16 @@ class MixinConfigTest {
         assertFalse(statusMixin.contains("hasShiftDown"));
         assertFalse(treeMixin.contains("hasShiftDown"));
     }
+
+    @Test
+    void craftingStatusStatsChatWorksOnAnyCpuScreen() throws IOException {
+        var statusMixin = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingCPUScreenMixin.java"));
+        var methodStart = statusMixin.indexOf("public boolean ae2craftingtime$showClickedStats");
+        var methodEnd = statusMixin.indexOf("@Unique", methodStart);
+        var clickMethod = statusMixin.substring(methodStart, methodEnd);
+
+        assertTrue(clickMethod.contains("if (status == null)"));
+        assertFalse(clickMethod.contains("instanceof CraftingStatusScreen"));
+    }
 }

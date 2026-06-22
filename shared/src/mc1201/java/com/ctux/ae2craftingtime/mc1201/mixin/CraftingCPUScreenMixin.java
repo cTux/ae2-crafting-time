@@ -115,7 +115,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
     @Override
     public boolean ae2craftingtime$showClickedStats(double mouseX, double mouseY) {
-        if (!((Object) this instanceof CraftingStatusScreen) || status == null) {
+        if (status == null) {
             return false;
         }
 
