@@ -4,6 +4,7 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.loader.api.FabricLoader;
 
 public final class Ae2CraftingTime implements ModInitializer, ClientModInitializer {
     public static final String MOD_ID = "ae2craftingtime";
@@ -11,6 +12,7 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
 
     @Override
     public void onInitialize() {
+        Ae2CraftingTimeConfig.load(FabricLoader.getInstance().getConfigDir().resolve(COMMON_CONFIG_FILE));
         StatsNetwork.registerServer();
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             var data = server.overworld().getDataStorage()
