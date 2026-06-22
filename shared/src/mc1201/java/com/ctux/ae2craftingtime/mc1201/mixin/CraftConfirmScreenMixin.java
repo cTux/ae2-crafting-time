@@ -15,6 +15,7 @@ import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.StatsClickHandler;
 import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
+import com.ctux.ae2craftingtime.mc1201.TtcDetailsClick;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsKeyMapping;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import net.minecraft.client.gui.GuiGraphics;
@@ -63,7 +64,8 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (TtcDetailsKeyMapping.matchesMouse(button) && ae2craftingtime$showClickedStats(mouseX, mouseY)) {
+        if (TtcDetailsClick.tryShow(button) || TtcDetailsKeyMapping.matchesMouse(button)
+                && ae2craftingtime$showClickedStats(mouseX, mouseY)) {
             return true;
         }
 

@@ -86,7 +86,11 @@ class MixinConfigTest {
                 "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftConfirmTableRendererMixin.java"));
         var statusTableMixin = Files.readString(Path.of(
                 "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingStatusTableRendererMixin.java"));
+        var clickHelper = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/TtcDetailsClick.java"));
 
+        assertTrue(clickHelper.contains("minecraft.screen instanceof StatsClickHandler"));
+        assertTrue(clickHelper.contains("handler.ae2craftingtime$showClickedStats(mouseX, mouseY)"));
         assertTrue(confirmMixin.contains("public boolean mouseClicked"));
         assertTrue(statusMixin.contains("public boolean mouseClicked"));
         assertTrue(confirmMixin.contains("TtcDetailsKeyMapping.matchesMouse(button)"));
