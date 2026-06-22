@@ -14,6 +14,7 @@ class MixinConfigTest {
         var json = Files.readString(Path.of("src/main/resources/ae2craftingtime.mixins.json"));
         var clientIndex = json.indexOf("\"client\"");
         var tableIndex = json.indexOf("\"AbstractTableRendererMixin\"");
+        var baseScreenIndex = json.indexOf("\"AEBaseScreenMixin\"");
         var treeIndex = json.indexOf("\"CraftingTreeWidgetMixin\"");
         var confirmIndex = json.indexOf("\"CraftConfirmTableRendererMixin\"");
         var sortIndex = json.indexOf("\"CraftConfirmScreenMixin\"");
@@ -24,6 +25,7 @@ class MixinConfigTest {
 
         assertTrue(serverIndex >= 0 && cpuIndex > serverIndex);
         assertTrue(tableIndex > clientIndex);
+        assertTrue(baseScreenIndex > clientIndex);
         assertTrue(clientIndex >= 0 && treeIndex > clientIndex);
         assertTrue(confirmIndex > clientIndex);
         assertTrue(sortIndex > clientIndex);
@@ -82,9 +84,13 @@ class MixinConfigTest {
                 "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingCPUScreenMixin.java"));
         var treeMixin = Files.readString(Path.of(
                 "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingTreeWidgetMixin.java"));
+        var baseScreenMixin = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/AEBaseScreenMixin.java"));
 
-        assertTrue(confirmMixin.contains("button == 2 && ae2craftingtime$showClickedStats"));
-        assertTrue(statusMixin.contains("button == 2 && ae2craftingtime$showClickedStats"));
+        assertTrue(baseScreenMixin.contains("method = \"mouseClicked\""));
+        assertTrue(baseScreenMixin.contains("button == 2"));
+        assertFalse(confirmMixin.contains("public boolean mouseClicked"));
+        assertFalse(statusMixin.contains("public boolean mouseClicked"));
         assertTrue(treeMixin.contains("button != 2 || !Ae2CraftingTimeConfig.SHOW_IN_TREE.get()"));
         assertFalse(confirmMixin.contains("hasShiftDown"));
         assertFalse(statusMixin.contains("hasShiftDown"));

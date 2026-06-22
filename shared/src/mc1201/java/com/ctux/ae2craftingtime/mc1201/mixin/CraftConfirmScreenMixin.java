@@ -13,6 +13,7 @@ import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.mc1201.StatsClickHandler;
 import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import net.minecraft.client.gui.GuiGraphics;
@@ -32,7 +33,7 @@ import java.util.List;
 import java.util.OptionalLong;
 
 @Mixin(CraftConfirmScreen.class)
-public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmMenu> {
+public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmMenu> implements StatsClickHandler {
     @Unique
     private static final int AE2CRAFTINGTIME_TABLE_X = 9;
     @Unique
@@ -98,21 +99,13 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
         });
     }
 
-    @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 2 && ae2craftingtime$showClickedStats(mouseX, mouseY)) {
-            return true;
-        }
-        return super.mouseClicked(mouseX, mouseY, button);
-    }
-
     @Unique
     private void ae2craftingtime$cycleTtcSortMode() {
         ae2craftingtime$ttcSortMode = (ae2craftingtime$ttcSortMode + 1) % 3;
     }
 
-    @Unique
-    private boolean ae2craftingtime$showClickedStats(double mouseX, double mouseY) {
+    @Override
+    public boolean ae2craftingtime$showClickedStats(double mouseX, double mouseY) {
         var plan = getMenu().getPlan();
         if (plan == null) {
             return false;
