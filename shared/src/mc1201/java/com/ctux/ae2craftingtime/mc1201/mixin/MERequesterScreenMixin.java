@@ -87,9 +87,6 @@ public abstract class MERequesterScreenMixin {
         if (key.isEmpty() || amount <= 0) {
             return MERequesterEstimate.empty();
         }
-        if (ae2craftingtime$isBlocked(request)) {
-            return new MERequesterEstimate(Optional.of("Blocked"), OptionalLong.empty());
-        }
 
         var profileKey = ProfilerBridge.key(key.get());
         var stats = ClientStats.CACHE.get(profileKey);
@@ -114,18 +111,6 @@ public abstract class MERequesterScreenMixin {
     private static long ae2craftingtime$getLong(Object request, String methodName) {
         var value = ae2craftingtime$invoke(request, methodName);
         return value instanceof Number number ? number.longValue() : 0;
-    }
-
-    @Unique
-    private static boolean ae2craftingtime$isBlocked(Object request) {
-        var status = ae2craftingtime$invoke(request, "getClientStatus");
-        if (!(status instanceof Enum<?> statusEnum)) {
-            return false;
-        }
-        return switch (statusEnum.name()) {
-            case "MISSING", "LINK", "EXPORT" -> true;
-            default -> false;
-        };
     }
 
     @Unique
