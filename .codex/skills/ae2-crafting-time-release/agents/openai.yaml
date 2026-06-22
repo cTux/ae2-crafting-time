@@ -1,0 +1,4 @@
+interface:
+  display_name: "AE2 Crafting Time Release"
+  short_description: "Build and release AE2 Crafting Time jars."
+  default_prompt: "Use this skill when changing release rows, build wrappers, jar names, or deploy scripts."

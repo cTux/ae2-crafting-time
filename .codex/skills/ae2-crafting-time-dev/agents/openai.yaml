@@ -1,0 +1,4 @@
+interface:
+  display_name: "AE2 Crafting Time Dev"
+  short_description: "Work on AE2 Crafting Time code and docs."
+  default_prompt: "Use this skill when changing AE2 Crafting Time features, debugging TTC behavior, or updating docs."

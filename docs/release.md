@@ -3,10 +3,12 @@
 Each supported Minecraft/mod-loader combination is one row in `scripts/release-matrix.json`.
 Do not add a row until the matching Gradle module builds a real jar.
 
-Current row:
+Current rows:
 
 ```text
 1.20.1-forge -> :mc_1_20_1_forge:distMod -> dist/ae2-crafting-time-1.20.1-Forge-<version>.jar
+1.20.1-fabric -> :fabric_1_20_1:distMod -> dist/ae2-crafting-time-1.20.1-Fabric-<version>.jar
+1.21.1-neoforge -> :mc_1_21_1_neoforge:distMod -> dist/ae2-crafting-time-1.21.1-NeoForge-<version>.jar
 ```
 
 Build every matrix row:
