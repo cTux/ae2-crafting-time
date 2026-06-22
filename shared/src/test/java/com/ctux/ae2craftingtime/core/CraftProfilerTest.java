@@ -64,6 +64,23 @@ class CraftProfilerTest {
     }
 
     @Test
+    void outlierMultiplierCanBeTuned() {
+        var profiler = new CraftProfiler(10, 200.0);
+        var ironPlate = new ProfileKey("minecraft:iron_plate");
+
+        for (var i = 0; i < 4; i++) {
+            profiler.start(ironPlate, 1, ProfileUnit.ITEM, i * 20L);
+            profiler.complete(ironPlate, 1, i * 20L + 10);
+        }
+        profiler.start(ironPlate, 1, ProfileUnit.ITEM, 100);
+        profiler.complete(ironPlate, 1, 1_100);
+
+        var stats = profiler.stats(ironPlate).orElseThrow();
+
+        assertEquals(15.0 / 5_100.0 * 20.0, stats.amountPerSecond());
+    }
+
+    @Test
     void statsExistAfterOneCompletedCraft() {
         var profiler = new CraftProfiler(10);
         var ironPlate = new ProfileKey("minecraft:iron_plate");

@@ -14,4 +14,12 @@ class ConfigFilenameTest {
 
         assertTrue(source.contains("\"ae2craftingtime-common.toml\""));
     }
+
+    @Test
+    void exposesAccuracyConfigKnobs() throws IOException {
+        var source = Files.readString(Path.of("src/main/java/com/ctux/ae2craftingtime/mc1201/Ae2CraftingTimeConfig.java"));
+
+        assertTrue(source.contains("MAX_SAMPLES"));
+        assertTrue(source.contains("OUTLIER_MULTIPLIER"));
+    }
 }

@@ -9,15 +9,24 @@ import java.util.Optional;
 
 public final class CraftProfiler {
     private final int maxSamples;
+    private final double outlierMultiplier;
     private final Map<ProfileKey, ArrayDeque<PendingCraft>> pending = new HashMap<>();
     private final Map<ProfileKey, ArrayDeque<CraftSample>> samples = new HashMap<>();
     private boolean enabled = true;
 
     public CraftProfiler(int maxSamples) {
+        this(maxSamples, 4.0);
+    }
+
+    public CraftProfiler(int maxSamples, double outlierMultiplier) {
         if (maxSamples <= 0) {
             throw new IllegalArgumentException("maxSamples must be positive");
         }
+        if (outlierMultiplier < 1.0) {
+            throw new IllegalArgumentException("outlierMultiplier must be at least 1");
+        }
         this.maxSamples = maxSamples;
+        this.outlierMultiplier = outlierMultiplier;
     }
 
     public void setEnabled(boolean enabled) {
@@ -75,7 +84,7 @@ public final class CraftProfiler {
 
         long durationTotal = 0;
         long lastDuration = 0;
-        var filtered = filteredSamples(queue);
+        var filtered = filteredSamples(queue, outlierMultiplier);
         long weightedDurationTotal = 0;
         long weightedAmountTotal = 0;
         long weight = 1;
@@ -104,7 +113,7 @@ public final class CraftProfiler {
                 queue.size() >= 3 && filtered.size() == queue.size()));
     }
 
-    private static List<CraftSample> filteredSamples(ArrayDeque<CraftSample> queue) {
+    private static List<CraftSample> filteredSamples(ArrayDeque<CraftSample> queue, double outlierMultiplier) {
         if (queue.size() < 5) {
             return List.copyOf(queue);
         }
@@ -119,7 +128,7 @@ public final class CraftProfiler {
         var filtered = new ArrayList<CraftSample>();
         for (var sample : samples) {
             var durationPerUnit = (double) sample.durationTicks / sample.amount;
-            if (durationPerUnit >= median / 4.0 && durationPerUnit <= median * 4.0) {
+            if (durationPerUnit >= median / outlierMultiplier && durationPerUnit <= median * outlierMultiplier) {
                 filtered.add(sample);
             }
         }

@@ -13,7 +13,8 @@ import java.util.Optional;
 import net.minecraft.world.level.block.entity.BlockEntity;
 
 public final class ProfilerBridge {
-    private static final CraftProfiler PROFILER = new CraftProfiler(10);
+    private static final CraftProfiler PROFILER = new CraftProfiler(Ae2CraftingTimeConfig.MAX_SAMPLES.get(),
+            Ae2CraftingTimeConfig.OUTLIER_MULTIPLIER.get());
     private static Ae2CraftingTimeSavedData savedData;
 
     public static void start(String networkId, GenericStack output, long tick) {
