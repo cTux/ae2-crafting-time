@@ -121,13 +121,12 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
             return false;
         }
 
-        var index = ae2craftingtime$clickedTableIndex(mouseX, mouseY);
         var entries = ae2craftingtime$sortPlanByTtc(plan.getEntries());
-        if (index < 0 || index >= entries.size()) {
+        var entry = ae2craftingtime$clickedEntry(mouseX, mouseY, entries);
+        if (entry == null) {
             return false;
         }
 
-        var entry = entries.get(index);
         if (entry.getCraftAmount() <= 0) {
             return false;
         }
@@ -135,6 +134,27 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
         var key = ProfilerBridge.key(entry.getWhat());
         StatsChatMessages.show(key, AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()));
         return true;
+    }
+
+    @Unique
+    private CraftingPlanSummaryEntry ae2craftingtime$clickedEntry(double mouseX, double mouseY,
+            List<CraftingPlanSummaryEntry> entries) {
+        var index = ae2craftingtime$clickedTableIndex(mouseX, mouseY);
+        if (index >= 0 && index < entries.size()) {
+            return entries.get(index);
+        }
+
+        var hovered = getStackUnderMouse(mouseX, mouseY);
+        var hoveredKey = hovered == null ? null : ProfilerBridge.key(hovered.stack().what());
+        if (hoveredKey == null) {
+            return null;
+        }
+        for (var entry : entries) {
+            if (hoveredKey.equals(ProfilerBridge.key(entry.getWhat()))) {
+                return entry;
+            }
+        }
+        return null;
     }
 
     @Unique

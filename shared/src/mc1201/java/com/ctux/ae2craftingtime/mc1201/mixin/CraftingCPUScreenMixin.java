@@ -129,13 +129,12 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
             return false;
         }
 
-        var index = ae2craftingtime$clickedTableIndex(mouseX, mouseY);
         var entries = status.getEntries();
-        if (index < 0 || index >= entries.size()) {
+        var entry = ae2craftingtime$clickedEntry(mouseX, mouseY, entries);
+        if (entry == null) {
             return false;
         }
 
-        var entry = entries.get(index);
         var amount = entry.getActiveAmount() + entry.getPendingAmount();
         if (amount <= 0) {
             return false;
@@ -144,6 +143,27 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         var key = ProfilerBridge.key(entry.getWhat());
         StatsChatMessages.show(key, AeKeyAmounts.normalize(entry.getWhat(), amount));
         return true;
+    }
+
+    @Unique
+    private CraftingStatusEntry ae2craftingtime$clickedEntry(double mouseX, double mouseY,
+            List<CraftingStatusEntry> entries) {
+        var index = ae2craftingtime$clickedTableIndex(mouseX, mouseY);
+        if (index >= 0 && index < entries.size()) {
+            return entries.get(index);
+        }
+
+        var hovered = getStackUnderMouse(mouseX, mouseY);
+        var hoveredKey = hovered == null ? null : ProfilerBridge.key(hovered.stack().what());
+        if (hoveredKey == null) {
+            return null;
+        }
+        for (var entry : entries) {
+            if (hoveredKey.equals(ProfilerBridge.key(entry.getWhat()))) {
+                return entry;
+            }
+        }
+        return null;
     }
 
     @Unique

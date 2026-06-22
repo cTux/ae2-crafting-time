@@ -91,6 +91,8 @@ class MixinConfigTest {
         assertTrue(statusMixin.contains("public boolean mouseClicked"));
         assertTrue(confirmMixin.contains("button == 0 && Screen.hasControlDown()"));
         assertTrue(statusMixin.contains("button == 0 && Screen.hasControlDown()"));
+        assertTrue(confirmMixin.contains("getStackUnderMouse(mouseX, mouseY)"));
+        assertTrue(statusMixin.contains("getStackUnderMouse(mouseX, mouseY)"));
         assertFalse(confirmMixin.contains("button == 2"));
         assertFalse(statusMixin.contains("button == 2"));
         assertTrue(treeMixin.contains("button != 0 || !Screen.hasControlDown()"));
