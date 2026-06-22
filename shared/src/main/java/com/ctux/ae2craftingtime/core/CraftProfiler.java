@@ -76,17 +76,23 @@ public final class CraftProfiler {
         long durationTotal = 0;
         long amountTotal = 0;
         long lastDuration = 0;
+        long weightedDurationTotal = 0;
+        long weightedAmountTotal = 0;
+        long weight = 1;
         ProfileUnit unit = null;
 
         for (var sample : queue) {
             durationTotal += sample.durationTicks;
             amountTotal += sample.amount;
             lastDuration = sample.durationTicks;
+            weightedDurationTotal += sample.durationTicks * weight;
+            weightedAmountTotal += sample.amount * weight;
+            weight++;
             unit = sample.unit;
         }
 
         var averageDuration = (double) durationTotal / queue.size();
-        var amountPerTick = durationTotal == 0 ? 0.0 : (double) amountTotal / durationTotal;
+        var amountPerTick = weightedDurationTotal == 0 ? 0.0 : (double) weightedAmountTotal / weightedDurationTotal;
         return Optional.of(new ProfileStats(
                 queue.size(),
                 averageDuration,

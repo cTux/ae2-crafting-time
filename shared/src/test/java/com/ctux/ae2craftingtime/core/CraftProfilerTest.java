@@ -23,9 +23,25 @@ class CraftProfilerTest {
 
         assertEquals(2, stats.sampleCount());
         assertEquals(30.0, stats.averageDurationTicks());
-        assertEquals(1.0 / 30.0, stats.amountPerTick());
-        assertEquals(20.0 / 30.0, stats.amountPerSecond());
+        assertEquals(3.0 / 100.0, stats.amountPerTick());
+        assertEquals(20.0 * 3.0 / 100.0, stats.amountPerSecond());
         assertEquals(40, stats.lastDurationTicks());
+    }
+
+    @Test
+    void weightsRecentSamplesMoreForThroughput() {
+        var profiler = new CraftProfiler(10);
+        var ironPlate = new ProfileKey("minecraft:iron_plate");
+
+        profiler.start(ironPlate, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(ironPlate, 1, 100);
+        profiler.start(ironPlate, 1, ProfileUnit.ITEM, 100);
+        profiler.complete(ironPlate, 1, 110);
+
+        var stats = profiler.stats(ironPlate).orElseThrow();
+
+        assertEquals(3.0 / 120.0, stats.amountPerTick());
+        assertEquals(20.0 * 3.0 / 120.0, stats.amountPerSecond());
     }
 
     @Test
