@@ -8,7 +8,6 @@
     "CraftingCpuLogicMixin"
   ],
   "client": [
-    "AEBaseScreenMixin",
     "AbstractTableRendererMixin",
     "CraftingCPUScreenMixin",
     "CraftConfirmScreenMixin",
