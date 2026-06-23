@@ -39,7 +39,7 @@ class MixinConfigTest {
                 "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftConfirmTableRendererMixin.java"));
 
         assertTrue(mixin.contains("method = \"getEntryDescription\""));
-        assertTrue(mixin.contains("TTC: "));
+        assertTrue(mixin.contains("TtcText.ttc"));
         assertTrue(mixin.contains("withBold(true)"));
     }
 
@@ -52,8 +52,8 @@ class MixinConfigTest {
 
         assertTrue(tableMixin.contains("method = \"getEntryDescription\""));
         assertTrue(tableMixin.contains("getActiveAmount() + entry.getPendingAmount()"));
-        assertTrue(tableMixin.contains("TTC: "));
-        assertTrue(screenMixin.contains("Total TTC: "));
+        assertTrue(tableMixin.contains("TtcText.ttc"));
+        assertTrue(screenMixin.contains("TtcText.totalTtc"));
         assertTrue(screenMixin.contains("new TtcSortButton"));
         assertTrue(screenMixin.contains("TtcSort.copySorted"));
     }
@@ -104,17 +104,17 @@ class MixinConfigTest {
         assertFalse(confirmMixin.contains("button == 2"));
         assertFalse(statusMixin.contains("button == 2"));
         assertTrue(treeMixin.contains("!TtcDetailsKeyMapping.matchesMouse(button)"));
-        assertTrue(confirmTableMixin.contains("Ctrl-Click to see TTC details"));
-        assertTrue(statusTableMixin.contains("Ctrl-Click to see TTC details"));
-        assertTrue(treeMixin.contains("Ctrl-Click to see TTC details"));
-        assertTrue(confirmTableMixin.contains("Ctrl-Alt-Click to forget TTC stats"));
-        assertTrue(statusTableMixin.contains("Ctrl-Alt-Click to forget TTC stats"));
-        assertTrue(treeMixin.contains("Ctrl-Alt-Click to forget TTC stats"));
+        assertTrue(confirmTableMixin.contains("TtcText.detailsHint"));
+        assertTrue(statusTableMixin.contains("TtcText.detailsHint"));
+        assertTrue(treeMixin.contains("TtcText.detailsHint"));
+        assertTrue(confirmTableMixin.contains("TtcText.resetHint"));
+        assertTrue(statusTableMixin.contains("TtcText.resetHint"));
+        assertTrue(treeMixin.contains("TtcText.resetHint"));
         assertTrue(confirmTableMixin.indexOf("ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue())")
-                < confirmTableMixin.indexOf("Ctrl-Click to see TTC details"));
+                < confirmTableMixin.indexOf("TtcText.detailsHint"));
         assertTrue(statusTableMixin.indexOf("ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue())")
-                < statusTableMixin.indexOf("Ctrl-Click to see TTC details"));
-        assertTrue(treeMixin.indexOf("TTC: ") < treeMixin.indexOf("Ctrl-Click to see TTC details"));
+                < statusTableMixin.indexOf("TtcText.detailsHint"));
+        assertTrue(treeMixin.indexOf("TtcText.ttc") < treeMixin.indexOf("TtcText.detailsHint"));
         assertFalse(confirmMixin.contains("hasShiftDown"));
         assertFalse(statusMixin.contains("hasShiftDown"));
         assertFalse(treeMixin.contains("hasShiftDown"));
@@ -139,8 +139,8 @@ class MixinConfigTest {
 
         assertTrue(mixin.contains("@Pseudo"));
         assertTrue(mixin.contains("targets = \"com.almostreliable.merequester.client.abstraction.AbstractRequesterScreen\""));
-        assertTrue(mixin.contains("TTC "));
-        assertTrue(mixin.contains("Total TTC: "));
+        assertTrue(mixin.contains("TtcText.requesterTtc"));
+        assertTrue(mixin.contains("TtcText.totalTtc"));
         assertTrue(mixin.contains("getMethod(methodName)"));
     }
 }

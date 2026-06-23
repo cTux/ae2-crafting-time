@@ -2,13 +2,13 @@ package com.ctux.ae2craftingtime.mc1201.mixin;
 
 import appeng.client.gui.me.crafting.CraftingStatusTableRenderer;
 import appeng.menu.me.crafting.CraftingStatusEntry;
-import com.ctux.ae2craftingtime.core.StatsChatLines;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.TtcColorContext;
+import com.ctux.ae2craftingtime.mc1201.TtcText;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
@@ -36,8 +36,8 @@ public abstract class CraftingStatusTableRendererMixin {
         }
 
         ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue());
-        cir.getReturnValue().add(Component.literal("Ctrl-Click to see TTC details").withStyle(ChatFormatting.GRAY));
-        cir.getReturnValue().add(Component.literal("Ctrl-Alt-Click to forget TTC stats").withStyle(ChatFormatting.GRAY));
+        cir.getReturnValue().add(TtcText.detailsHint().withStyle(ChatFormatting.GRAY));
+        cir.getReturnValue().add(TtcText.resetHint().withStyle(ChatFormatting.GRAY));
     }
 
     private static void ae2craftingtime$appendTtc(CraftingStatusEntry entry, List<Component> lines) {
@@ -59,15 +59,12 @@ public abstract class CraftingStatusTableRendererMixin {
         var normalized = AeKeyAmounts.normalize(entry.getWhat(), amount);
         ClientStatsRequests.request(key);
         ClientStats.CACHE.get(key).ifPresent(stats -> {
-            for (var line : StatsChatLines.lines(entry.getWhat().getDisplayName().getString(), normalized, stats)) {
-                lines.add(Component.literal(line.label() + ": ").withStyle(ChatFormatting.GRAY)
-                        .append(Component.literal(line.value()).withStyle(ChatFormatting.AQUA)));
-            }
+            lines.addAll(TtcText.statsLines(entry.getWhat().getDisplayName().getString(), normalized, stats));
         });
     }
 
     private static Component ttcLine(com.ctux.ae2craftingtime.core.ProfileKey key, String eta) {
-        var line = Component.literal("TTC: " + eta);
+        var line = TtcText.ttc(eta);
         var color = TtcColorContext.get(key);
         return color.isPresent()
                 ? line.withStyle(style -> style.withColor(TextColor.fromRgb(color.getAsInt())).withBold(true))

@@ -18,6 +18,7 @@ import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsClick;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsKeyMapping;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
+import com.ctux.ae2craftingtime.mc1201.TtcText;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -106,7 +107,7 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
         }
 
         TimeEstimate.formatTotal(estimates).ifPresent(eta -> {
-            var text = Component.literal("Total TTC: " + eta);
+            var text = TtcText.totalTtc(eta);
             var font = getMinecraft().font;
             guiGraphics.drawString(font, text, 109 - font.width(text) / 2, 178, 0x404040, false);
         });

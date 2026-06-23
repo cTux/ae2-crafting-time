@@ -68,13 +68,13 @@ public record StatsChatC2S(List<String> messages) implements CustomPacketPayload
             if (!component.getString().isEmpty()) {
                 component.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
             }
-            component.append(component(message));
+            component.append(component(message, messages.size() == 1));
         }
         return component;
     }
 
-    private static Component component(String message) {
-        if (message.startsWith("No cached") || message.startsWith("Reset")) {
+    private static Component component(String message, boolean notice) {
+        if (notice) {
             return Component.literal(message).withStyle(ChatFormatting.YELLOW);
         }
 

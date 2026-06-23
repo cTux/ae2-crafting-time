@@ -11,6 +11,7 @@ import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsKeyMapping;
+import com.ctux.ae2craftingtime.mc1201.TtcText;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -128,10 +129,10 @@ public abstract class CraftingTreeWidgetMixin {
                 var seconds = ae2craftingtime$totalSeconds(node);
                 if (seconds.isPresent()) {
                     TimeEstimate.formatTotal(List.of(seconds))
-                            .ifPresent(eta -> lines.add(Component.literal("TTC: " + eta)));
+                            .ifPresent(eta -> lines.add(TtcText.ttc(eta)));
                 }
-                lines.add(Component.literal("Ctrl-Click to see TTC details"));
-                lines.add(Component.literal("Ctrl-Alt-Click to forget TTC stats"));
+                lines.add(TtcText.detailsHint());
+                lines.add(TtcText.resetHint());
             }
         }
 

@@ -26,14 +26,6 @@ public final class TtcSortButton extends IconButton {
 
     @Override
     public List<Component> getTooltipMessage() {
-        return List.of(Component.literal("Sort by TTC"), Component.literal(label()));
-    }
-
-    private String label() {
-        return switch (mode.getAsInt()) {
-            case 1 -> "TTC: shortest first";
-            case 2 -> "TTC: longest first";
-            default -> "AE2 order";
-        };
+        return List.of(TtcText.sortTitle(), TtcText.sortMode(mode.getAsInt()));
     }
 }

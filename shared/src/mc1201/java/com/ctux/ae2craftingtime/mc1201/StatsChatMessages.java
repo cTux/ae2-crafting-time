@@ -1,7 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.core.ProfileKey;
-import com.ctux.ae2craftingtime.core.StatsChatLines;
 import com.ctux.ae2craftingtime.mc1201.net.StatsChatC2S;
 import net.minecraft.client.Minecraft;
 
@@ -17,11 +16,11 @@ public final class StatsChatMessages {
         var stats = ClientStats.CACHE.get(key);
         if (stats.isEmpty()) {
             ClientStatsRequests.request(key);
-            StatsNetwork.sendToServer(new StatsChatC2S(List.of("No cached TTC stats for " + name + " yet")));
+            StatsNetwork.sendToServer(new StatsChatC2S(List.of(TtcText.noCachedStats(name))));
             return;
         }
 
-        StatsNetwork.sendToServer(new StatsChatC2S(StatsChatLines.compactMessages(name, amount, stats.get())));
+        StatsNetwork.sendToServer(new StatsChatC2S(TtcText.compactMessages(name, amount, stats.get())));
     }
 
     public static void reset(ProfileKey key, String name) {
@@ -32,7 +31,7 @@ public final class StatsChatMessages {
 
         ClientStats.CACHE.remove(key);
         ClientStatsRequests.reset(key);
-        StatsNetwork.sendToServer(new StatsChatC2S(List.of("Reset TTC stats for " + name)));
+        StatsNetwork.sendToServer(new StatsChatC2S(List.of(TtcText.resetStats(name))));
     }
 
     private StatsChatMessages() {

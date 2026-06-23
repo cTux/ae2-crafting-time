@@ -7,6 +7,7 @@ import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.mc1201.TtcText;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -64,11 +65,11 @@ public abstract class MERequesterScreenMixin {
         }
 
         TimeEstimate.formatTotal(estimates).ifPresent(eta -> ae2craftingtime$drawLabel(guiGraphics, rowAmount,
-                "Total TTC: " + eta));
+                TtcText.totalTtc(eta)));
     }
 
     @Unique
-    private static void ae2craftingtime$drawLabel(GuiGraphics guiGraphics, int row, String label) {
+    private static void ae2craftingtime$drawLabel(GuiGraphics guiGraphics, int row, Component label) {
         var font = Minecraft.getInstance().font;
         var y = AE2CRAFTINGTIME_GUI_HEADER_HEIGHT + row * AE2CRAFTINGTIME_ROW_HEIGHT + 5;
         var width = font.width(label);
@@ -89,12 +90,12 @@ public abstract class MERequesterScreenMixin {
         var stats = ClientStats.CACHE.get(profileKey);
         if (stats.isEmpty()) {
             ClientStatsRequests.request(profileKey);
-            return new MERequesterEstimate(Optional.of("No stats"), OptionalLong.empty());
+            return new MERequesterEstimate(Optional.of(TtcText.noStats()), OptionalLong.empty());
         }
 
         var normalized = AeKeyAmounts.normalize(key.get(), amount);
         var seconds = TimeEstimate.seconds(normalized, stats.get());
-        var label = TimeEstimate.format(normalized, stats.get()).map(eta -> "TTC " + eta);
+        var label = TimeEstimate.format(normalized, stats.get()).map(eta -> (Component) TtcText.requesterTtc(eta));
         return new MERequesterEstimate(label, seconds);
     }
 
@@ -121,7 +122,7 @@ public abstract class MERequesterScreenMixin {
     }
 
     @Unique
-    private record MERequesterEstimate(Optional<String> label, OptionalLong seconds) {
+    private record MERequesterEstimate(Optional<Component> label, OptionalLong seconds) {
         private static MERequesterEstimate empty() {
             return new MERequesterEstimate(Optional.empty(), OptionalLong.empty());
         }
