@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201.net;
 
+import com.ctux.ae2craftingtime.core.PlayerMessageRateLimit;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -11,6 +12,8 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public record StatsChatC2S(List<String> messages) {
+    private static final PlayerMessageRateLimit RATE_LIMIT = new PlayerMessageRateLimit();
+
     public StatsChatC2S {
         messages = List.copyOf(messages.subList(0, Math.min(2, messages.size())));
     }
@@ -36,6 +39,9 @@ public record StatsChatC2S(List<String> messages) {
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
             if (player == null || player.getServer() == null) {
+                return;
+            }
+            if (!RATE_LIMIT.allow(player.getUUID(), System.currentTimeMillis())) {
                 return;
             }
             for (var message : packet.messages) {
