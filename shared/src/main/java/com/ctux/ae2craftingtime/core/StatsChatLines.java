@@ -30,10 +30,10 @@ public final class StatsChatLines {
         return List.copyOf(lines);
     }
 
-    public static List<String> compactMessages(ProfileKey key, long amount, ProfileStats stats) {
+    public static List<String> compactMessages(String name, long amount, ProfileStats stats) {
         var unit = unitName(stats);
         var messages = new java.util.ArrayList<String>();
-        messages.add("AE2 TTC " + key.outputId() + " x" + amount + ": "
+        messages.add(name + " x" + amount + ": "
                 + TimeEstimate.format(amount, stats).orElse("unknown"));
 
         var details = stats.sampleCount() + " samples, avg " + seconds(stats.averageDurationTicks())

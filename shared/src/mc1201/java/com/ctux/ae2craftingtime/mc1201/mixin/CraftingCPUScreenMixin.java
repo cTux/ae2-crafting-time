@@ -145,10 +145,11 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
         var key = ProfilerBridge.key(entry.getWhat());
         if (TtcDetailsKeyMapping.matchesResetMouse(button)) {
-            StatsChatMessages.reset(key);
+            StatsChatMessages.reset(key, entry.getWhat().getDisplayName().getString());
             return true;
         }
-        StatsChatMessages.show(key, AeKeyAmounts.normalize(entry.getWhat(), amount));
+        StatsChatMessages.show(key, entry.getWhat().getDisplayName().getString(),
+                AeKeyAmounts.normalize(entry.getWhat(), amount));
         return true;
     }
 

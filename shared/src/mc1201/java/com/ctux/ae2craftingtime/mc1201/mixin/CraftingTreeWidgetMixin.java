@@ -164,10 +164,11 @@ public abstract class CraftingTreeWidgetMixin {
 
         var key = new ProfileKey(stack.what().getId().toString());
         if (TtcDetailsKeyMapping.matchesResetMouse(button)) {
-            StatsChatMessages.reset(key);
+            StatsChatMessages.reset(key, stack.what().getDisplayName().getString());
             return true;
         }
-        StatsChatMessages.show(key, AeKeyAmounts.normalize(stack.what(), craftAmount));
+        StatsChatMessages.show(key, stack.what().getDisplayName().getString(),
+                AeKeyAmounts.normalize(stack.what(), craftAmount));
         return true;
     }
 

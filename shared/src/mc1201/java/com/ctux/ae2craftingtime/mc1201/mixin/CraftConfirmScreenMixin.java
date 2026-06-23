@@ -136,10 +136,11 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
 
         var key = ProfilerBridge.key(entry.getWhat());
         if (TtcDetailsKeyMapping.matchesResetMouse(button)) {
-            StatsChatMessages.reset(key);
+            StatsChatMessages.reset(key, entry.getWhat().getDisplayName().getString());
             return true;
         }
-        StatsChatMessages.show(key, AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()));
+        StatsChatMessages.show(key, entry.getWhat().getDisplayName().getString(),
+                AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()));
         return true;
     }
 
