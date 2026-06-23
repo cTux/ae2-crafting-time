@@ -46,7 +46,7 @@ public record StatsChatC2S(List<String> messages) {
                 return;
             }
             for (var message : packet.messages) {
-                player.getServer().getPlayerList().broadcastSystemMessage(component(message), false);
+                player.getServer().getPlayerList().broadcastSystemMessage(component(message), true);
             }
         });
         context.setPacketHandled(true);

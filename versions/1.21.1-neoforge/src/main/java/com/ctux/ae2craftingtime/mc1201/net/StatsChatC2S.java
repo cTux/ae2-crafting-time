@@ -59,7 +59,7 @@ public record StatsChatC2S(List<String> messages) implements CustomPacketPayload
                 return;
             }
             for (var message : packet.messages) {
-                player.getServer().getPlayerList().broadcastSystemMessage(component(message), false);
+                player.getServer().getPlayerList().broadcastSystemMessage(component(message), true);
             }
         });
     }
