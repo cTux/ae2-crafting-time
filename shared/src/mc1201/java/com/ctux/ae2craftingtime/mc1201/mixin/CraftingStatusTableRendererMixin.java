@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.mc1201.mixin;
 
 import appeng.client.gui.me.crafting.CraftingStatusTableRenderer;
 import appeng.menu.me.crafting.CraftingStatusEntry;
+import com.ctux.ae2craftingtime.core.StatsChatLines;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
@@ -34,9 +35,9 @@ public abstract class CraftingStatusTableRendererMixin {
             return;
         }
 
+        ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue());
         cir.getReturnValue().add(Component.literal("Ctrl-Click to see TTC details").withStyle(ChatFormatting.GRAY));
         cir.getReturnValue().add(Component.literal("Ctrl-Alt-Click to forget TTC stats").withStyle(ChatFormatting.GRAY));
-        ae2craftingtime$appendTtc(entry, cir.getReturnValue());
     }
 
     private static void ae2craftingtime$appendTtc(CraftingStatusEntry entry, List<Component> lines) {
@@ -50,6 +51,19 @@ public abstract class CraftingStatusTableRendererMixin {
         ClientStats.CACHE.get(key).ifPresent(stats -> TimeEstimate
                 .format(AeKeyAmounts.normalize(entry.getWhat(), amount), stats)
                 .ifPresent(eta -> lines.add(ttcLine(key, eta))));
+    }
+
+    private static void ae2craftingtime$appendStatsTooltip(CraftingStatusEntry entry, List<Component> lines) {
+        var amount = entry.getActiveAmount() + entry.getPendingAmount();
+        var key = ProfilerBridge.key(entry.getWhat());
+        var normalized = AeKeyAmounts.normalize(entry.getWhat(), amount);
+        ClientStatsRequests.request(key);
+        ClientStats.CACHE.get(key).ifPresent(stats -> {
+            for (var line : StatsChatLines.lines(key, normalized, stats)) {
+                lines.add(Component.literal(line.label() + ": ").withStyle(ChatFormatting.GRAY)
+                        .append(Component.literal(line.value()).withStyle(ChatFormatting.AQUA)));
+            }
+        });
     }
 
     private static Component ttcLine(com.ctux.ae2craftingtime.core.ProfileKey key, String eta) {

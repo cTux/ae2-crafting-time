@@ -125,13 +125,13 @@ public abstract class CraftingTreeWidgetMixin {
             var node = hoveredNode(mouseX + screen.getGuiLeft(), mouseY + screen.getGuiTop());
             var stack = node == null ? null : readField(node, "stack", GenericStack.class);
             if (stack != null) {
-                lines.add(Component.literal("Ctrl-Click to see TTC details"));
-                lines.add(Component.literal("Ctrl-Alt-Click to forget TTC stats"));
                 var seconds = ae2craftingtime$totalSeconds(node);
                 if (seconds.isPresent()) {
                     TimeEstimate.formatTotal(List.of(seconds))
                             .ifPresent(eta -> lines.add(Component.literal("TTC: " + eta)));
                 }
+                lines.add(Component.literal("Ctrl-Click to see TTC details"));
+                lines.add(Component.literal("Ctrl-Alt-Click to forget TTC stats"));
             }
         }
 

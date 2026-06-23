@@ -110,6 +110,11 @@ class MixinConfigTest {
         assertTrue(confirmTableMixin.contains("Ctrl-Alt-Click to forget TTC stats"));
         assertTrue(statusTableMixin.contains("Ctrl-Alt-Click to forget TTC stats"));
         assertTrue(treeMixin.contains("Ctrl-Alt-Click to forget TTC stats"));
+        assertTrue(confirmTableMixin.indexOf("ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue())")
+                < confirmTableMixin.indexOf("Ctrl-Click to see TTC details"));
+        assertTrue(statusTableMixin.indexOf("ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue())")
+                < statusTableMixin.indexOf("Ctrl-Click to see TTC details"));
+        assertTrue(treeMixin.indexOf("TTC: ") < treeMixin.indexOf("Ctrl-Click to see TTC details"));
         assertFalse(confirmMixin.contains("hasShiftDown"));
         assertFalse(statusMixin.contains("hasShiftDown"));
         assertFalse(treeMixin.contains("hasShiftDown"));

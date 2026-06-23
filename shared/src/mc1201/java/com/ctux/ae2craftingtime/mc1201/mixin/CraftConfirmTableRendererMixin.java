@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.mc1201.mixin;
 
 import appeng.client.gui.me.crafting.CraftConfirmTableRenderer;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
+import com.ctux.ae2craftingtime.core.StatsChatLines;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
@@ -33,9 +34,9 @@ public abstract class CraftConfirmTableRendererMixin {
             return;
         }
 
+        ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue());
         cir.getReturnValue().add(Component.literal("Ctrl-Click to see TTC details").withStyle(ChatFormatting.GRAY));
         cir.getReturnValue().add(Component.literal("Ctrl-Alt-Click to forget TTC stats").withStyle(ChatFormatting.GRAY));
-        ae2craftingtime$appendTtc(entry, cir.getReturnValue());
     }
 
     private static void ae2craftingtime$appendTtc(CraftingPlanSummaryEntry entry, List<Component> lines) {
@@ -48,6 +49,17 @@ public abstract class CraftConfirmTableRendererMixin {
                 .format(AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()), stats)
                 .ifPresent(eta -> lines.add(ttcLine(key, eta))),
                 () -> ClientStatsRequests.request(key));
+    }
+
+    private static void ae2craftingtime$appendStatsTooltip(CraftingPlanSummaryEntry entry, List<Component> lines) {
+        var key = ProfilerBridge.key(entry.getWhat());
+        var amount = AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount());
+        ClientStats.CACHE.get(key).ifPresentOrElse(stats -> {
+            for (var line : StatsChatLines.lines(key, amount, stats)) {
+                lines.add(Component.literal(line.label() + ": ").withStyle(ChatFormatting.GRAY)
+                        .append(Component.literal(line.value()).withStyle(ChatFormatting.AQUA)));
+            }
+        }, () -> ClientStatsRequests.request(key));
     }
 
     private static Component ttcLine(com.ctux.ae2craftingtime.core.ProfileKey key, String eta) {
