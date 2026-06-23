@@ -30,6 +30,25 @@ public final class StatsChatLines {
         return List.copyOf(lines);
     }
 
+    public static List<String> compactMessages(ProfileKey key, long amount, ProfileStats stats) {
+        var unit = unitName(stats);
+        var messages = new java.util.ArrayList<String>();
+        messages.add("AE2 TTC " + key.outputId() + " x" + amount + ": "
+                + TimeEstimate.format(amount, stats).orElse("unknown"));
+
+        var details = stats.sampleCount() + " samples, avg " + seconds(stats.averageDurationTicks())
+                + ", latest " + seconds(stats.lastDurationTicks())
+                + ", " + rate(stats.amountPerSecond()) + " " + unit + "/s";
+        if (stats.usedSampleCount() != stats.sampleCount()) {
+            details += ", used " + stats.usedSampleCount() + "/" + stats.sampleCount();
+        }
+        if (!stats.reliableEstimate()) {
+            details += ", low confidence";
+        }
+        messages.add(details);
+        return List.copyOf(messages);
+    }
+
     private static String unitName(ProfileStats stats) {
         return stats.unit() == ProfileUnit.MILLIBUCKET ? "mB" : "items";
     }
@@ -39,6 +58,10 @@ public final class StatsChatLines {
                 ? String.format(Locale.ROOT, "%.0f", ticks)
                 : String.format(Locale.ROOT, "%.2f", ticks);
         return String.format(Locale.ROOT, "%s ticks (%.2fs)", tickText, ticks / 20.0);
+    }
+
+    private static String seconds(double ticks) {
+        return String.format(Locale.ROOT, "%.2fs", ticks / 20.0);
     }
 
     private static String rate(double value) {

@@ -2,9 +2,7 @@ package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.StatsChatLines;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
-import net.minecraft.network.chat.Component;
 
 public final class StatsChatMessages {
     public static void show(ProfileKey key, long amount) {
@@ -16,15 +14,12 @@ public final class StatsChatMessages {
         var stats = ClientStats.CACHE.get(key);
         if (stats.isEmpty()) {
             ClientStatsRequests.request(key);
-            player.displayClientMessage(Component.literal("No cached crafting stats yet for " + key.outputId())
-                    .withStyle(ChatFormatting.YELLOW), false);
+            player.connection.sendChat("AE2 TTC: no cached stats for " + key.outputId() + " yet");
             return;
         }
 
-        player.displayClientMessage(Component.literal("AE2 Crafting Time").withStyle(ChatFormatting.GOLD), false);
-        for (var line : StatsChatLines.lines(key, amount, stats.get())) {
-            player.displayClientMessage(Component.literal(line.label() + ": ").withStyle(ChatFormatting.GRAY)
-                    .append(Component.literal(line.value()).withStyle(ChatFormatting.AQUA)), false);
+        for (var message : StatsChatLines.compactMessages(key, amount, stats.get())) {
+            player.connection.sendChat(message);
         }
     }
 
@@ -36,8 +31,7 @@ public final class StatsChatMessages {
 
         ClientStats.CACHE.remove(key);
         ClientStatsRequests.reset(key);
-        player.displayClientMessage(Component.literal("Forgot TTC stats for " + key.outputId())
-                .withStyle(ChatFormatting.YELLOW), false);
+        player.connection.sendChat("AE2 TTC reset: " + key.outputId());
     }
 
     private StatsChatMessages() {

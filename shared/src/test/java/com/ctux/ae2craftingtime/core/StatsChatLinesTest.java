@@ -37,4 +37,17 @@ class StatsChatLinesTest {
         assertEquals(new StatsChatLines.Line("Confidence", "low (outliers filtered)"), lines.get(9));
         assertEquals(new StatsChatLines.Line("TTC", "~50s?"), lines.get(10));
     }
+
+    @Test
+    void compactsChatToTwoMessages() {
+        var stats = new ProfileStats(5, 208, 0.1, 2.0, 1000, ProfileUnit.ITEM, false,
+                4, 4.0, List.of(10L, 10L, 10L, 10L, 1000L));
+
+        var messages = StatsChatLines.compactMessages(new ProfileKey("minecraft:iron_ingot"), 100, stats);
+
+        assertEquals(List.of(
+                "AE2 TTC minecraft:iron_ingot x100: ~50s?",
+                "5 samples, avg 10.40s, latest 50.00s, 2.00 items/s, used 4/5, low confidence"),
+                messages);
+    }
 }
