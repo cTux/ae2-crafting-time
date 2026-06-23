@@ -35,9 +35,9 @@
   "text.ae2craftingtime.unit.millibucket": "mB",
   "text.ae2craftingtime.unknown": "unknown",
   "text.ae2craftingtime.value.amount": "%s %s",
-  "text.ae2craftingtime.value.duration": "%s ticks (%.2fs)",
+  "text.ae2craftingtime.value.duration": "%s ticks (%ss)",
   "text.ae2craftingtime.value.durations": "%s ticks",
-  "text.ae2craftingtime.value.seconds": "%.2fs",
+  "text.ae2craftingtime.value.seconds": "%ss",
   "text.ae2craftingtime.value.throughput": "%s %s/t, %s %s/s",
   "text.ae2craftingtime.value.used_samples": "%s/%s"
 }

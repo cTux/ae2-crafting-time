@@ -35,9 +35,9 @@
   "text.ae2craftingtime.unit.millibucket": "мВ",
   "text.ae2craftingtime.unknown": "невідомо",
   "text.ae2craftingtime.value.amount": "%s %s",
-  "text.ae2craftingtime.value.duration": "%s тиків (%.2fс)",
+  "text.ae2craftingtime.value.duration": "%s тиків (%sс)",
   "text.ae2craftingtime.value.durations": "%s тиків",
-  "text.ae2craftingtime.value.seconds": "%.2fс",
+  "text.ae2craftingtime.value.seconds": "%sс",
   "text.ae2craftingtime.value.throughput": "%s %s/т, %s %s/с",
   "text.ae2craftingtime.value.used_samples": "%s/%s"
 }

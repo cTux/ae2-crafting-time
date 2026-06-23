@@ -121,11 +121,15 @@ public final class TtcText {
         var tickText = ticks == Math.rint(ticks)
                 ? String.format(Locale.ROOT, "%.0f", ticks)
                 : String.format(Locale.ROOT, "%.2f", ticks);
-        return I18n.get("text.ae2craftingtime.value.duration", tickText, ticks / 20.0);
+        return I18n.get("text.ae2craftingtime.value.duration", tickText, tickSeconds(ticks));
     }
 
     private static String seconds(double ticks) {
-        return I18n.get("text.ae2craftingtime.value.seconds", ticks / 20.0);
+        return I18n.get("text.ae2craftingtime.value.seconds", tickSeconds(ticks));
+    }
+
+    private static String tickSeconds(double ticks) {
+        return String.format(Locale.ROOT, "%.2f", ticks / 20.0);
     }
 
     private static String rate(double value) {
