@@ -7,9 +7,9 @@ public final class StatsChatLines {
     public record Line(String label, String value) {
     }
 
-    public static List<Line> lines(ProfileKey key, long amount, ProfileStats stats) {
+    public static List<Line> lines(String name, long amount, ProfileStats stats) {
         var lines = new java.util.ArrayList<Line>();
-        lines.add(new Line("Item", key.outputId()));
+        lines.add(new Line("Item", name));
         lines.add(new Line("Amount", amount + " " + unitName(stats)));
         lines.add(new Line("Samples", Integer.toString(stats.sampleCount())));
         lines.add(new Line("Average", duration(stats.averageDurationTicks())));

@@ -55,7 +55,7 @@ public abstract class CraftConfirmTableRendererMixin {
         var key = ProfilerBridge.key(entry.getWhat());
         var amount = AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount());
         ClientStats.CACHE.get(key).ifPresentOrElse(stats -> {
-            for (var line : StatsChatLines.lines(key, amount, stats)) {
+            for (var line : StatsChatLines.lines(entry.getWhat().getDisplayName().getString(), amount, stats)) {
                 lines.add(Component.literal(line.label() + ": ").withStyle(ChatFormatting.GRAY)
                         .append(Component.literal(line.value()).withStyle(ChatFormatting.AQUA)));
             }

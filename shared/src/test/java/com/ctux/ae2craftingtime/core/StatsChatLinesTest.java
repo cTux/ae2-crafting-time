@@ -11,10 +11,10 @@ class StatsChatLinesTest {
     void formatsEveryCachedAggregateStat() {
         var stats = new ProfileStats(3, 41.25, 2.5, 50.0, 80, ProfileUnit.ITEM);
 
-        var lines = StatsChatLines.lines(new ProfileKey("minecraft:iron_ingot"), 125, stats);
+        var lines = StatsChatLines.lines("Iron Ingot", 125, stats);
 
         assertEquals(List.of(
-                new StatsChatLines.Line("Item", "minecraft:iron_ingot"),
+                new StatsChatLines.Line("Item", "Iron Ingot"),
                 new StatsChatLines.Line("Amount", "125 items"),
                 new StatsChatLines.Line("Samples", "3"),
                 new StatsChatLines.Line("Average", "41.25 ticks (2.06s)"),
@@ -29,7 +29,7 @@ class StatsChatLinesTest {
         var stats = new ProfileStats(5, 208, 0.1, 2.0, 1000, ProfileUnit.ITEM, false,
                 4, 4.0, List.of(10L, 10L, 10L, 10L, 1000L));
 
-        var lines = StatsChatLines.lines(new ProfileKey("minecraft:iron_ingot"), 100, stats);
+        var lines = StatsChatLines.lines("Iron Ingot", 100, stats);
 
         assertEquals(new StatsChatLines.Line("Used Samples", "4/5"), lines.get(6));
         assertEquals(new StatsChatLines.Line("Outlier Filter", "4.00x"), lines.get(7));

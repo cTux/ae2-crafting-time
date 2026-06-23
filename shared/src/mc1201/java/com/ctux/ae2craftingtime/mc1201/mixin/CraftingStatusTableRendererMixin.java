@@ -59,7 +59,7 @@ public abstract class CraftingStatusTableRendererMixin {
         var normalized = AeKeyAmounts.normalize(entry.getWhat(), amount);
         ClientStatsRequests.request(key);
         ClientStats.CACHE.get(key).ifPresent(stats -> {
-            for (var line : StatsChatLines.lines(key, normalized, stats)) {
+            for (var line : StatsChatLines.lines(entry.getWhat().getDisplayName().getString(), normalized, stats)) {
                 lines.add(Component.literal(line.label() + ": ").withStyle(ChatFormatting.GRAY)
                         .append(Component.literal(line.value()).withStyle(ChatFormatting.AQUA)));
             }
