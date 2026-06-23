@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.mc1201.net.StatsRequestC2S;
+import com.ctux.ae2craftingtime.mc1201.net.StatsChatC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsSnapshotS2C;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -20,12 +21,18 @@ public final class StatsNetwork {
         var id = 0;
         CHANNEL.registerMessage(id++, StatsRequestC2S.class, StatsRequestC2S::encode, StatsRequestC2S::decode,
                 StatsRequestC2S::handle);
-        CHANNEL.registerMessage(id, StatsSnapshotS2C.class, StatsSnapshotS2C::encode, StatsSnapshotS2C::decode,
+        CHANNEL.registerMessage(id++, StatsSnapshotS2C.class, StatsSnapshotS2C::encode, StatsSnapshotS2C::decode,
                 StatsSnapshotS2C::handle);
+        CHANNEL.registerMessage(id, StatsChatC2S.class, StatsChatC2S::encode, StatsChatC2S::decode,
+                StatsChatC2S::handle);
     }
 
     public static void sendTo(ServerPlayer player, StatsSnapshotS2C packet) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    }
+
+    public static void sendToServer(StatsChatC2S packet) {
+        CHANNEL.sendToServer(packet);
     }
 
     private StatsNetwork() {

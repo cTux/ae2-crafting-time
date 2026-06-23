@@ -44,4 +44,15 @@ class StatsPacketTest {
 
         assertEquals(packet, StatsSnapshotS2C.decode(buffer));
     }
+
+    @Test
+    void chatRoundTripsTwoCompactMessages() {
+        var buffer = new FriendlyByteBuf(Unpooled.buffer());
+        var packet = new StatsChatC2S(List.of("Iron Ingot x1509: ~3:33", "10 samples", "ignored"));
+
+        StatsChatC2S.encode(packet, buffer);
+
+        assertEquals(new StatsChatC2S(List.of("Iron Ingot x1509: ~3:33", "10 samples")),
+                StatsChatC2S.decode(buffer));
+    }
 }
