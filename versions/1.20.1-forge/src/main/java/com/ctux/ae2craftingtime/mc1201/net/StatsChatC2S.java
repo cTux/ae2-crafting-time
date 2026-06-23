@@ -45,11 +45,20 @@ public record StatsChatC2S(List<String> messages) {
             if (!RATE_LIMIT.allow(player.getUUID(), System.currentTimeMillis())) {
                 return;
             }
-            for (var message : packet.messages) {
-                player.getServer().getPlayerList().broadcastSystemMessage(component(message), true);
-            }
+            player.getServer().getPlayerList().broadcastSystemMessage(component(packet.messages), true);
         });
         context.setPacketHandled(true);
+    }
+
+    static Component component(List<String> messages) {
+        var component = Component.empty();
+        for (var message : messages) {
+            if (!component.getString().isEmpty()) {
+                component.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
+            }
+            component.append(component(message));
+        }
+        return component;
     }
 
     private static Component component(String message) {

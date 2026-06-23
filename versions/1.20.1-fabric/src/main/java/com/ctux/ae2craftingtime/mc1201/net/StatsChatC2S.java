@@ -40,9 +40,18 @@ public record StatsChatC2S(List<String> messages) {
         if (!RATE_LIMIT.allow(player.getUUID(), System.currentTimeMillis())) {
             return;
         }
+        player.server.getPlayerList().broadcastSystemMessage(component(messages), true);
+    }
+
+    static Component component(List<String> messages) {
+        var component = Component.empty();
         for (var message : messages) {
-            player.server.getPlayerList().broadcastSystemMessage(component(message), true);
+            if (!component.getString().isEmpty()) {
+                component.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
+            }
+            component.append(component(message));
         }
+        return component;
     }
 
     private static Component component(String message) {

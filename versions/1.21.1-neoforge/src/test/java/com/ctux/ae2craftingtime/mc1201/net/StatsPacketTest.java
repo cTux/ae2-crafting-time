@@ -54,5 +54,6 @@ class StatsPacketTest {
 
         assertEquals(new StatsChatC2S(List.of("Iron Ingot x1509: ~3:33", "10 samples")),
                 StatsChatC2S.decode(buffer));
+        assertEquals("Iron Ingot x1509: ~3:33 | 10 samples", StatsChatC2S.component(packet.messages()).getString());
     }
 }
