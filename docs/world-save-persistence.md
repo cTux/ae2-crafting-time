@@ -47,9 +47,12 @@ This also covers singleplayer because an integrated server still has the same ov
 
 Persist the retained rolling samples, not only aggregate `ProfileStats`.
 
-Current runtime behavior keeps latest 10 completed crafts per output key. To keep estimates stable after restart, save the same retained samples:
+Current runtime behavior keeps retained completed crafts per AE2 network and
+output key. To keep estimates stable after restart, save the same retained
+samples:
 
 ```text
+network id
 output id
 unit
 samples:
@@ -67,6 +70,7 @@ Use one top-level version and a list of output entries:
 version: 1
 outputs: [
   {
+    networkId: "minecraft:overworld:12345"
     key: "minecraft:iron_ingot"
     unit: "item"
     samples: [
@@ -75,6 +79,7 @@ outputs: [
     ]
   },
   {
+    networkId: "minecraft:overworld:12345"
     key: "minecraft:water"
     unit: "millibucket"
     samples: [
@@ -107,7 +112,7 @@ On server/world load:
 
 1. Get overworld `DimensionDataStorage`.
 2. `computeIfAbsent(Ae2CraftingTimeSavedData.factory(), "ae2-crafting-time")`.
-3. `SavedData.load(...)` decodes NBT into persisted samples.
+3. `SavedData.load(...)` decodes NBT into persisted network/output samples.
 4. `ProfilerBridge` installs or hydrates its server profiler from the loaded samples.
 
 Lazy loading is acceptable if it happens before the first craft stat request or craft sample write. The simpler implementation is to initialize once from a server lifecycle event after the overworld exists.

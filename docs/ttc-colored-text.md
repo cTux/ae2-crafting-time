@@ -22,7 +22,7 @@ GuiGraphics.drawString(Font, Component, x, y, defaultColor, false)
 
 Because the renderer passes a Minecraft `Component`, not a plain `String`, a `Component.literal("TTC: ...").withStyle(...)` can carry text color. The current mod already appends `TTC` by adding a `Component` in `CraftConfirmTableRendererMixin`, so the feature can stay in the same UI path.
 
-## Current Gap
+## Design Constraint
 
 The existing `getEntryDescription(...)` mixin sees only one `CraftingPlanSummaryEntry` at a time.
 

@@ -69,7 +69,7 @@ tasks.named('processResources', ProcessResources).configure {
             mod_version            : project.version,
             mod_license            : 'MIT',
             mod_authors            : 'ctux',
-            mod_description        : 'Session-only AE2 autocrafting performance hints for AE2: Crafting Tree.',
+            mod_description        : 'Server-owned AE2 autocrafting time-to-craft hints for AE2 UIs.',
             minecraft_version_range: '[1.21.1]',
             neoforge_version_range : '[21.1.1,)',
             loader_version_range   : '[1,)'

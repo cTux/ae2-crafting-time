@@ -33,7 +33,8 @@ The cheapest AE2-native integration is a client-only mixin into `CraftConfirmTab
 
 AE2: Crafting Tree has its own tooltip in `CraftingTreeWidget#draw`. Middle nodes already show `Crafting: <amount>` from `node.amountHelper.craftAmount`.
 
-First pass should target AE2's craft-plan table because the user asked for the crafting plan and AE2 already has the exact `To Craft` line. Crafting Tree can reuse the same estimate later.
+AE2's craft-plan table and AE2: Crafting Tree both reuse the same server stats
+and estimate helper.
 
 ## Data Source
 
@@ -64,11 +65,9 @@ Only show the line when:
 
 No stats: show nothing and request stats for that output key.
 
-For the whole ordered craft, use the visible plan entries and calculate each
-known row with the same formula. Display the total as the maximum known row ETA,
-not the sum. AE2 can craft independent rows in parallel across CPUs and
-co-processors, so summing every row overstates wall-clock time. If no row has
-known stats, show no total line and request missing stats.
+For the whole ordered craft, use the plan entries and calculate each known row
+with the same formula. Display the total as the sum of known row ETAs. If no row
+has known stats, show no total line and request missing stats.
 
 ## Amount Normalization
 
@@ -94,20 +93,20 @@ and Forge/NeoForge metadata only orders after `appmek` when it is installed.
 
 ## Time Format
 
-Format as fixed `HHH:MM:SS` with `~` prefix:
+Format with a `~` prefix:
 
 ```text
-Time To Craft: ~000:00:01
-Time To Craft: ~000:02:15
-Time To Craft: ~031:04:09
+Time To Craft: ~1s
+Time To Craft: ~2:15
+Time To Craft: ~31:04:09
 ```
 
 Rules:
 
 - round up to nearest second so nonzero work is never shown as `~000:00:00`
-- hours are at least 3 digits
-- minutes and seconds are 2 digits
-- if estimate exceeds `999:59:59`, allow wider hours instead of clamping
+- show seconds-only for values under a minute
+- show `M:SS` for values under an hour
+- show `H:MM:SS` for hour-scale values
 
 ## UI Placement
 
@@ -136,7 +135,7 @@ Do not put it in the title; the title already
 contains AE2's storage-byte summary. Do not put it in the item grid; the grid
 contains per-row estimates.
 
-Crafting Tree tooltip, if added later:
+Crafting Tree tooltip:
 
 ```text
 Crafting: M
@@ -150,7 +149,7 @@ Small tests that matter:
 - `TimeEstimate` formats `0`, `1`, `75`, and large hour values
 - ETA rounds up fractional seconds
 - no ETA when throughput is `0`
-- total craft ETA uses the maximum known row ETA, not the sum
+- total craft ETA sums known row ETAs
 - packet snapshot roundtrip still carries `amountPerSecond`
 - mixin config keeps AE2/Crafting Tree UI mixins client-only
 

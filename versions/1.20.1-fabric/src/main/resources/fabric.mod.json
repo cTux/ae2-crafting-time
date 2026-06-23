@@ -3,7 +3,7 @@
   "id": "ae2craftingtime",
   "version": "${version}",
   "name": "AE2 Crafting Time",
-  "description": "Session-only AE2 autocrafting performance hints for AE2: Crafting Tree.",
+  "description": "Server-owned AE2 autocrafting time-to-craft hints for AE2 UIs.",
   "authors": [
     "ctux"
   ],

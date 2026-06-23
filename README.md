@@ -45,14 +45,13 @@ Built jars are copied to `dist/`.
 - [Dependencies](DEPENDENCIES.md)
 - [Potential dependency integrations](DEPENDENCIES_POTENTIAL.md)
 - [Working with this project](docs/working-with-project.md)
+- [Architecture](docs/architecture.md)
 - [Release process](docs/release.md)
-- [Research notes](docs/research.md)
 - [Server-owned stats design](docs/server-client-stats.md)
 - [World save persistence](docs/world-save-persistence.md)
 - [Time To Craft plan UI](docs/time-to-craft-plan.md)
 - [TTC sorting](docs/ttc-sorting.md)
 - [TTC colored text](docs/ttc-colored-text.md)
-- [MVP plan](docs/mvp-plan.md)
 
 ## Codex Skills
 

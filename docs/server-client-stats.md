@@ -15,16 +15,17 @@ This matters for dedicated servers:
 
 Singleplayer must also work. An integrated singleplayer world still has a logical server, so the mod should use the same server-owned profiler and packet snapshot flow instead of special-casing local client reads.
 
-## Current Gap
+## Current Architecture
 
-The current implementation has the right collection hook location, but the wrong display data source:
+The implementation uses the server-owned path for both dedicated servers and
+singleplayer:
 
-- Server-side AE2 mixin records `start` and `complete` events through `ProfilerBridge`.
-- Crafting Tree client mixin currently calls `ProfilerBridge.stats(...)` directly.
-
-That works only by accident in a single integrated client/server. On a dedicated server, the client-side `ProfilerBridge` is separate RAM and will not contain server samples.
-
-Do not keep that accidental singleplayer path. Singleplayer should pass through the same request/response path as multiplayer.
+- server-side AE2 mixins record `start` and `complete` events through
+  `ProfilerBridge`
+- client UI mixins request visible output ids through `StatsRequestC2S`
+- the server scopes those output ids to the player's current AE2 grid/network
+- `StatsSnapshotS2C` updates `ClientStatsCache`
+- UI code renders only from the client display cache
 
 ## Target Architecture
 
@@ -35,7 +36,7 @@ AE2 server craft hooks
   -> server snapshots matching those keys
   -> StatsSnapshotS2C
   -> client RAM display cache
-  -> Crafting Tree render/tooltip
+  -> AE2 / optional integration render paths
 ```
 
 ## Data Ownership
@@ -52,7 +53,7 @@ Client owns:
 
 - last received display cache
 - UI formatting
-- Crafting Tree node lookup
+- visible output lookup for the currently open screen
 - config value that affects local display only: `showInTree`
 
 Client must not:
@@ -64,27 +65,26 @@ Client must not:
 
 ## Packet Shape
 
-Use Forge `SimpleChannel` for 1.20.1 Forge.
-
-Forge docs describe `SimpleChannel` as the straightforward custom packet system for sending custom data between client and server. The docs also show creating a static channel and registering messages. For server-to-client targeting, Forge/Gemwire notes `PacketDistributor.PLAYER` sends to a specified `ServerPlayer`.
+Each loader module owns its packet glue. Forge uses `SimpleChannel`, Fabric uses
+Fabric networking, and NeoForge uses the NeoForge payload registrar.
 
 ### `StatsRequestC2S`
 
-Sent when Crafting Tree opens or its visible node set changes.
+Sent when a supported UI opens or its visible output set changes.
 
 Fields:
 
 ```text
-requestId: int
 keys: list<string> output ids
 reset: boolean
 ```
 
 Rules:
 
-- Client may request only output ids visible in its current Crafting Tree.
+- Client requests output ids visible in its current AE2 or optional integration UI.
 - Server treats keys as hints, not trusted facts.
-- Server replies with known stats for matching keys and silently omits unknown keys.
+- Server scopes keys to the player's current AE2 grid/network, replies with
+  known stats for matching keys, and silently omits unknown keys.
 - If `reset` is true, server clears retained samples for those keys in the player's current AE2 network and replies with no stats for them.
 - Rate limit if needed later; not needed for first pass.
 
@@ -95,7 +95,6 @@ Sent from server to only the requesting player.
 Fields:
 
 ```text
-requestId: int
 entries:
   key: string
   unit: item | millibucket
@@ -114,15 +113,15 @@ Rules:
 
 ## UI Flow
 
-1. Crafting Tree renders or rebuilds.
+1. An AE2 or optional integration UI renders or rebuilds.
 2. Client collects output ids from currently visible nodes.
 3. Client sends `StatsRequestC2S`.
 4. Server reads stats from server `CraftProfiler`.
 5. Server sends `StatsSnapshotS2C` to that player.
 6. Client stores snapshot in `ClientStatsCache`.
-7. Crafting Tree mixin renders stats from `ClientStatsCache`.
+7. UI mixins render stats from `ClientStatsCache`.
 
-No Crafting Tree installed:
+Optional UI mod not installed:
 
 - Client sends no requests.
 - Server still may collect stats when `enabled = true`, but no UI exists.
@@ -152,7 +151,9 @@ showInTree = true
 
 `showChatMessages` controls the public Ctrl-click TTC detail and reset chat broadcasts. Reset still works when this is false.
 
-For the current Forge common config file, we can keep all three values in one config initially. Semantically, `showInTree` is client display only; later it can move to client config without changing protocol.
+Config storage is loader-specific, but ownership stays the same: `enabled` and
+`showChatMessages` affect server behavior, while `showInTree` affects local
+display only.
 
 ## Version Layout
 
@@ -164,28 +165,13 @@ Shared module:
 - packet DTOs if they can stay Minecraft-free
 - client display cache if Minecraft-free
 
-`versions/1.20.1-forge`:
+`versions/<minecraft>-<loader>`:
 
-- Forge `SimpleChannel`
-- packet encode/decode/handlers
+- loader packet registration and send helpers
+- packet encode/decode/handlers or payload codecs
 - AE2 mixins
-- Crafting Tree UI mixin
+- optional UI mixins
 - AE2 key conversion: `AEKey` to output id
-
-## Implementation Steps
-
-1. Add `ClientStatsCache` in shared or version code.
-2. Add `StatsSnapshot` data model.
-3. Add Forge `SimpleChannel` in `versions/1.20.1-forge`.
-4. Add `StatsRequestC2S` and `StatsSnapshotS2C`.
-5. Change Crafting Tree mixin:
-   - collect visible output ids
-   - send request
-   - render from `ClientStatsCache`
-   - stop calling `ProfilerBridge.stats(...)` on the client
-6. Keep AE2 collection hooks server-side only.
-7. Verify both dedicated server/client and singleplayer integrated server flows.
-8. Add one small test for cache replacement and missing keys.
 
 ## Security / Trust
 
@@ -194,7 +180,7 @@ This data is observational and low risk, but still do the boring safe thing:
 - client requests are hints only
 - server computes all stats
 - server sends only aggregate stats, not pending tasks or machine internals
-- packets should be handled on the correct thread using Forge packet context enqueueing
+- packets should be handled on the correct server/client thread
 
 ## Sources
 

@@ -51,6 +51,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-all-versions
 
 - Server owns profiling, retained samples, persistence, and aggregate stats.
 - Client owns display cache and UI formatting only.
+- Singleplayer and dedicated server-client play use the same logical-server
+  stats request/response flow.
 - Status TTC estimates use `activeAmount + pendingAmount`.
 - Fluid estimates must be checked in normalized units before changing math.
 - If a value looks wrong, inspect saved/runtime samples before editing the estimator.
