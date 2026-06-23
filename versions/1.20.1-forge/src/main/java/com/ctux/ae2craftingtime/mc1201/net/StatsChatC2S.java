@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201.net;
 
 import com.ctux.ae2craftingtime.core.PlayerMessageRateLimit;
+import com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -38,7 +39,7 @@ public record StatsChatC2S(List<String> messages) {
         var context = contextSupplier.get();
         context.enqueueWork(() -> {
             ServerPlayer player = context.getSender();
-            if (player == null || player.getServer() == null) {
+            if (player == null || player.getServer() == null || !Ae2CraftingTimeConfig.SHOW_CHAT_MESSAGES.get()) {
                 return;
             }
             if (!RATE_LIMIT.allow(player.getUUID(), System.currentTimeMillis())) {

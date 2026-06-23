@@ -24,6 +24,7 @@ class ConfigFilenameTest {
 
         assertTrue(source.contains("MAX_SAMPLES"));
         assertTrue(source.contains("OUTLIER_MULTIPLIER"));
+        assertTrue(source.contains("SHOW_CHAT_MESSAGES"));
     }
 
     @Test
@@ -32,6 +33,7 @@ class ConfigFilenameTest {
         Files.writeString(config, """
                 enabled = false
                 showInTree = false
+                showChatMessages = false
                 maxSamples = 25
                 outlierMultiplier = 7.5
                 """);
@@ -40,6 +42,7 @@ class ConfigFilenameTest {
 
         assertFalse(Ae2CraftingTimeConfig.ENABLED.get());
         assertFalse(Ae2CraftingTimeConfig.SHOW_IN_TREE.get());
+        assertFalse(Ae2CraftingTimeConfig.SHOW_CHAT_MESSAGES.get());
         assertEquals(25, Ae2CraftingTimeConfig.MAX_SAMPLES.get());
         assertEquals(7.5, Ae2CraftingTimeConfig.OUTLIER_MULTIPLIER.get());
     }

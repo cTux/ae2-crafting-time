@@ -7,6 +7,7 @@ import java.nio.file.Path;
 public final class Ae2CraftingTimeConfig {
     public static final BooleanValue ENABLED = new BooleanValue(true);
     public static final BooleanValue SHOW_IN_TREE = new BooleanValue(true);
+    public static final BooleanValue SHOW_CHAT_MESSAGES = new BooleanValue(true);
     public static final IntValue MAX_SAMPLES = new IntValue(10);
     public static final DoubleValue OUTLIER_MULTIPLIER = new DoubleValue(4.0);
 
@@ -31,6 +32,7 @@ public final class Ae2CraftingTimeConfig {
         switch (key) {
             case "enabled" -> ENABLED.set(Boolean.parseBoolean(value));
             case "showInTree" -> SHOW_IN_TREE.set(Boolean.parseBoolean(value));
+            case "showChatMessages" -> SHOW_CHAT_MESSAGES.set(Boolean.parseBoolean(value));
             case "maxSamples" -> MAX_SAMPLES.set(parseInt(value, MAX_SAMPLES.get(), 1, 100));
             case "outlierMultiplier" -> OUTLIER_MULTIPLIER.set(parseDouble(value, OUTLIER_MULTIPLIER.get(), 1.0, 1000.0));
             default -> {

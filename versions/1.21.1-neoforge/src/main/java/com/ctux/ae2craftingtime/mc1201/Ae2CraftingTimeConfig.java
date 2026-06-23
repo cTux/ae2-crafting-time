@@ -6,6 +6,7 @@ public final class Ae2CraftingTimeConfig {
     public static final ModConfigSpec SPEC;
     public static final ModConfigSpec.BooleanValue ENABLED;
     public static final ModConfigSpec.BooleanValue SHOW_IN_TREE;
+    public static final ModConfigSpec.BooleanValue SHOW_CHAT_MESSAGES;
     public static final ModConfigSpec.IntValue MAX_SAMPLES;
     public static final ModConfigSpec.DoubleValue OUTLIER_MULTIPLIER;
 
@@ -19,6 +20,10 @@ public final class Ae2CraftingTimeConfig {
         SHOW_IN_TREE = builder
                 .comment("Show stats in AE2: Crafting Tree when that mod is installed.")
                 .define("showInTree", true);
+
+        SHOW_CHAT_MESSAGES = builder
+                .comment("Broadcast Ctrl-click TTC details and reset notices to chat.")
+                .define("showChatMessages", true);
 
         MAX_SAMPLES = builder
                 .comment("Number of recent completed samples retained per crafted output.")

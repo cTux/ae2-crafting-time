@@ -10,7 +10,7 @@ import java.util.List;
 public final class StatsChatMessages {
     public static void show(ProfileKey key, String name, long amount) {
         var player = Minecraft.getInstance().player;
-        if (player == null) {
+        if (player == null || !Ae2CraftingTimeConfig.SHOW_CHAT_MESSAGES.get()) {
             return;
         }
 
@@ -32,6 +32,9 @@ public final class StatsChatMessages {
 
         ClientStats.CACHE.remove(key);
         ClientStatsRequests.reset(key);
+        if (!Ae2CraftingTimeConfig.SHOW_CHAT_MESSAGES.get()) {
+            return;
+        }
         StatsNetwork.sendToServer(new StatsChatC2S(List.of("Reset TTC stats for " + name)));
     }
 

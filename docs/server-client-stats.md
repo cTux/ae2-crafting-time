@@ -141,6 +141,7 @@ Server config:
 
 ```text
 enabled = true
+showChatMessages = true
 ```
 
 Client config:
@@ -148,6 +149,8 @@ Client config:
 ```text
 showInTree = true
 ```
+
+`showChatMessages` controls the public Ctrl-click TTC detail and reset chat broadcasts. Reset still works when this is false.
 
 For the current Forge common config file, we can keep all three values in one config initially. Semantically, `showInTree` is client display only; later it can move to client config without changing protocol.
 

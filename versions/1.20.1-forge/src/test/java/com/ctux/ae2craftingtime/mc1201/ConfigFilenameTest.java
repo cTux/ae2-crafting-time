@@ -21,5 +21,6 @@ class ConfigFilenameTest {
 
         assertTrue(source.contains("\"maxSamples\""));
         assertTrue(source.contains("\"outlierMultiplier\""));
+        assertTrue(source.contains("\"showChatMessages\""));
     }
 }
