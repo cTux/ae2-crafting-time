@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 class MixinConfigTest {
     @Test
     void craftingTreeMixinIsClientOnly() throws IOException {
-        var json = Files.readString(Path.of("src/main/resources/ae2craftingtime.mixins.json"));
+        var json = Files.readString(Path.of("build/resources/main/ae2craftingtime.mixins.json"));
         var clientIndex = json.indexOf("\"client\"");
         var tableIndex = json.indexOf("\"AbstractTableRendererMixin\"");
         var treeIndex = json.indexOf("\"CraftingTreeWidgetMixin\"");
