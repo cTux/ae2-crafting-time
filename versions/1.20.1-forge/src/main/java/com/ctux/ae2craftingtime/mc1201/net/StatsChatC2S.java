@@ -5,7 +5,6 @@ import com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 
@@ -46,12 +45,17 @@ public record StatsChatC2S(List<String> messages) {
             if (!RATE_LIMIT.allow(player.getUUID(), System.currentTimeMillis())) {
                 return;
             }
-            player.getServer().getPlayerList().broadcastChatMessage(
-                    PlayerChatMessage.unsigned(player.getUUID(), message(packet.messages)),
-                    player,
-                    ChatType.bind(ChatType.CHAT, player));
+            sendMessage(player, packet.messages);
         });
         context.setPacketHandled(true);
+    }
+
+    private static void sendMessage(ServerPlayer player, List<String> messages) {
+        var component = component(messages);
+        var chatType = ChatType.bind(ChatType.CHAT, player);
+        for (var recipient : player.getServer().getPlayerList().getPlayers()) {
+            recipient.connection.sendDisguisedChatMessage(component, chatType);
+        }
     }
 
     static Component component(List<String> messages) {
