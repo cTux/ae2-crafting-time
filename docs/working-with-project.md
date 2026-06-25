@@ -19,6 +19,8 @@ Use the printed Gradle project names. The current modules are:
 
 ## Code Boundaries
 
+- Reuse existing shared code, resources, docs, tests, and Gradle wiring as much
+  as possible before adding version-specific copies.
 - Put Minecraft-free logic in `shared/src/main/java`.
 - Put AE2/Minecraft 1.20.1-compatible shared code in `shared/src/mc1201/java`.
 - Put loader-only entrypoints, networking glue, saved-data glue, metadata, and tests under the matching `versions/<minecraft>-<loader>` folder.

@@ -17,6 +17,7 @@ description: Work on AE2 Crafting Time feature, bugfix, docs, and test tasks in 
 
 - Server owns profiling, persistence, and aggregate stats.
 - Client owns display cache and formatting only.
+- Reuse existing shared code, resources, docs, tests, and Gradle wiring as much as possible before adding version-specific copies.
 - Reuse existing TTC helpers before adding new UI paths.
 - Status TTC uses `activeAmount + pendingAmount`.
 - For suspicious fluid TTC, inspect normalized units and saved/runtime samples before changing math.
