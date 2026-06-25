@@ -24,7 +24,7 @@ public abstract class CraftingCpuLogicMixin {
             method = "executeCrafting",
             at = @At(
                     value = "INVOKE",
-                    target = "Lappeng/crafting/inv/ListCraftingInventory;insert(Lappeng/api/stacks/AEKey;JLappeng/api/config/Actionable;)J"),
+                    target = "Lappeng/crafting/inv/ListCraftingInventory;insert(Lappeng/api/stacks/AEKey;JLappeng/api/config/Actionable;)V"),
             remap = false)
     private void ae2craftingtime$profileExpectedOutput(ListCraftingInventory inventory, AEKey what, long amount,
             Actionable type) {
