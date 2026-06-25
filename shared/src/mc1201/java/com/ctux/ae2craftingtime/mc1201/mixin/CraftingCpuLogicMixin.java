@@ -1,11 +1,9 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
 import appeng.api.config.Actionable;
-import appeng.api.crafting.IPatternDetails;
-import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.stacks.AEKey;
-import appeng.api.stacks.KeyCounter;
 import appeng.crafting.execution.CraftingCpuLogic;
+import appeng.crafting.inv.ListCraftingInventory;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import org.spongepowered.asm.mixin.Final;
@@ -26,16 +24,15 @@ public abstract class CraftingCpuLogicMixin {
             method = "executeCrafting",
             at = @At(
                     value = "INVOKE",
-                    target = "Lappeng/api/networking/crafting/ICraftingProvider;pushPattern(Lappeng/api/crafting/IPatternDetails;[Lappeng/api/stacks/KeyCounter;)Z"),
+                    target = "Lappeng/crafting/inv/ListCraftingInventory;insert(Lappeng/api/stacks/AEKey;JLappeng/api/config/Actionable;)J"),
             remap = false)
-    private boolean ae2craftingtime$profileStartedPattern(ICraftingProvider provider, IPatternDetails details,
-            KeyCounter[] inputHolder) {
-        var pushed = provider.pushPattern(details, inputHolder);
-        if (pushed) {
-            ProfilerBridge.start(ProfilerBridge.networkId(cluster.getGrid()), details.getPrimaryOutput(),
+    private void ae2craftingtime$profileExpectedOutput(ListCraftingInventory inventory, AEKey what, long amount,
+            Actionable type) {
+        inventory.insert(what, amount, type);
+        if (type == Actionable.MODULATE && amount > 0) {
+            ProfilerBridge.start(ProfilerBridge.networkId(cluster.getGrid()), what, amount,
                     cluster.getLevel().getGameTime());
         }
-        return pushed;
     }
 
     @Inject(method = "insert", at = @At("HEAD"), remap = false)

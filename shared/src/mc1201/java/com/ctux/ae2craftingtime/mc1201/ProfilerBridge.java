@@ -20,7 +20,14 @@ public final class ProfilerBridge {
         if (output == null || !isEnabled()) {
             return;
         }
-        PROFILER.start(key(networkId, output.what()), normalizeAmount(output.what(), output.amount()), unit(output.what()), tick);
+        start(networkId, output.what(), output.amount(), tick);
+    }
+
+    public static void start(String networkId, AEKey what, long amount, long tick) {
+        if (what == null || amount <= 0 || !isEnabled()) {
+            return;
+        }
+        PROFILER.start(key(networkId, what), normalizeAmount(what, amount), unit(what), tick);
     }
 
     public static void complete(String networkId, AEKey what, long amount, long tick) {
