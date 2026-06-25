@@ -2,9 +2,10 @@ package com.ctux.ae2craftingtime.mc1201.net;
 
 import com.ctux.ae2craftingtime.core.PlayerMessageRateLimit;
 import com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig;
-import net.minecraft.ChatFormatting;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.ChatType;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.PlayerChatMessage;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.ArrayList;
@@ -40,31 +41,17 @@ public record StatsChatC2S(List<String> messages) {
         if (!RATE_LIMIT.allow(player.getUUID(), System.currentTimeMillis())) {
             return;
         }
-        player.server.getPlayerList().broadcastSystemMessage(component(messages), true);
+        player.server.getPlayerList().broadcastChatMessage(
+                PlayerChatMessage.unsigned(player.getUUID(), message(messages)),
+                player,
+                ChatType.bind(ChatType.CHAT, player));
     }
 
     static Component component(List<String> messages) {
-        var component = Component.empty();
-        for (var message : messages) {
-            if (!component.getString().isEmpty()) {
-                component.append(Component.literal(" | ").withStyle(ChatFormatting.DARK_GRAY));
-            }
-            component.append(component(message, messages.size() == 1));
-        }
-        return component;
+        return Component.literal(message(messages));
     }
 
-    private static Component component(String message, boolean notice) {
-        if (notice) {
-            return Component.literal(message).withStyle(ChatFormatting.YELLOW);
-        }
-
-        var colon = message.indexOf(": ");
-        if (colon >= 0) {
-            return Component.literal(message.substring(0, colon)).withStyle(ChatFormatting.GOLD)
-                    .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
-                    .append(Component.literal(message.substring(colon + 2)).withStyle(ChatFormatting.AQUA));
-        }
-        return Component.literal(message).withStyle(ChatFormatting.GRAY);
+    private static String message(List<String> messages) {
+        return String.join(" | ", messages);
     }
 }

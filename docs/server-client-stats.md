@@ -149,7 +149,7 @@ Client config:
 showInTree = true
 ```
 
-`showChatMessages` controls the public Ctrl-click TTC detail and reset chat broadcasts. Reset still works when this is false.
+`showChatMessages` controls the public Ctrl-click TTC detail and reset player chat messages. Reset still works when this is false.
 
 Config storage is loader-specific, but ownership stays the same: `enabled` and
 `showChatMessages` affect server behavior, while `showInTree` affects local
