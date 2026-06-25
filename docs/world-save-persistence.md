@@ -68,7 +68,7 @@ Use one top-level version and a list of output entries:
 version: 1
 outputs: [
   {
-    networkId: ""
+    networkId: "minecraft:overworld|10,64,10"
     key: "minecraft:iron_ingot"
     unit: "item"
     samples: [
@@ -77,7 +77,7 @@ outputs: [
     ]
   },
   {
-    networkId: ""
+    networkId: "minecraft:overworld|10,64,10"
     key: "minecraft:water"
     unit: "millibucket"
     samples: [
@@ -88,8 +88,8 @@ outputs: [
 ```
 
 This is enough to reconstruct averages, throughput, latest duration, `TTC`, and colors.
-The `networkId` field remains in the NBT shape for compatibility with existing
-saves, but runtime loading merges entries by output id.
+Controller-backed networks now persist a concrete `networkId` derived from the
+controller anchor position.
 
 ## Runtime Ownership
 

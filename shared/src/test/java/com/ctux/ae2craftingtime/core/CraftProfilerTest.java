@@ -177,7 +177,7 @@ class CraftProfilerTest {
     }
 
     @Test
-    void globalOutputIdentityIgnoresNetworkId() {
+    void networkScopedIdentityKeepsSamplesSeparate() {
         var profiler = new CraftProfiler(10);
         var networkA = new ProfileKey("net-a", "minecraft:iron_plate");
         var networkB = new ProfileKey("net-b", "minecraft:iron_plate");
@@ -185,11 +185,12 @@ class CraftProfilerTest {
         profiler.start(networkA, 1, ProfileUnit.ITEM, 0);
         profiler.complete(networkA, 1, 10);
 
-        assertEquals(1, profiler.stats(networkB).orElseThrow().sampleCount());
+        assertEquals(1, profiler.stats(networkA).orElseThrow().sampleCount());
+        assertFalse(profiler.stats(networkB).isPresent());
     }
 
     @Test
-    void importMergesLegacyNetworkFragmentsByOutput() {
+    void importKeepsScopedNetworkFragmentsSeparate() {
         var imported = new CraftProfiler(10);
 
         imported.loadSamples(List.of(
@@ -198,10 +199,18 @@ class CraftProfilerTest {
                 new PersistedOutputSamples(new ProfileKey("net-b", "minecraft:iron_plate"), ProfileUnit.ITEM,
                         List.of(new PersistedCraftSample(1, 20)))));
 
-        var stats = imported.stats(new ProfileKey("minecraft:iron_plate")).orElseThrow();
-        assertEquals(2, stats.sampleCount());
-        assertEquals(15.0, stats.averageDurationTicks());
-        assertEquals(new ProfileKey("minecraft:iron_plate"), imported.snapshotSamples().get(0).key());
+        var networkA = imported.stats(new ProfileKey("net-a", "minecraft:iron_plate")).orElseThrow();
+        var networkB = imported.stats(new ProfileKey("net-b", "minecraft:iron_plate")).orElseThrow();
+
+        assertEquals(1, networkA.sampleCount());
+        assertEquals(10.0, networkA.averageDurationTicks());
+        assertEquals(1, networkB.sampleCount());
+        assertEquals(20.0, networkB.averageDurationTicks());
+        assertEquals(List.of(
+                new ProfileKey("net-a", "minecraft:iron_plate"),
+                new ProfileKey("net-b", "minecraft:iron_plate")),
+                imported.snapshotSamples().stream().map(PersistedOutputSamples::key).sorted((a, b) -> a.networkId()
+                        .compareTo(b.networkId())).toList());
     }
 
     @Test

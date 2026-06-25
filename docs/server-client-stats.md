@@ -23,7 +23,7 @@ singleplayer:
 - server-side AE2 mixins record `start` and `complete` events through
   `ProfilerBridge`
 - client UI mixins request visible output ids through `StatsRequestC2S`
-- the server looks up global retained stats for those output ids
+- the server looks up retained stats for the active AE2 network and output ids
 - `StatsSnapshotS2C` updates `ClientStatsCache`
 - UI code renders only from the client display cache
 
@@ -83,7 +83,7 @@ Rules:
 
 - Client requests output ids visible in its current AE2 or optional integration UI.
 - Server treats keys as hints, not trusted facts.
-- Server replies with known global stats for matching keys and silently omits unknown keys.
+- Server replies with known stats for the player's active AE2 network and silently omits unknown keys.
 - If `reset` is true, server clears retained samples for those output keys and replies with no stats for them.
 - Rate limit if needed later; not needed for first pass.
 
@@ -109,7 +109,7 @@ Rules:
 
 - Snapshot is immutable display data.
 - Client drops cache entries for requested keys before applying returned stats.
-- Missing entries therefore mean "no known stats for this output in the current server-scoped context".
+- Missing entries therefore mean "no known stats for this output in the current network-scoped context".
 
 ## UI Flow
 

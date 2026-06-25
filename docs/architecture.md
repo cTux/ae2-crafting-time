@@ -30,7 +30,7 @@ AE2 CraftingCpuLogic mixins on the server
   -> CraftProfiler retained samples
   -> Ae2CraftingTimeSavedData world save snapshot
   -> StatsRequestC2S for visible output ids
-  -> server looks up global stats for those output ids
+  -> server looks up stats for the active AE2 network
   -> StatsSnapshotS2C aggregate entries
   -> ClientStatsCache
   -> AE2 / optional integration UI text
@@ -46,15 +46,14 @@ instead of using a separate client-side profiler.
 
 ## Profile Keys
 
-Runtime and persisted stats are scoped globally by output:
+Runtime and persisted stats are scoped by AE2 network plus output:
 
 ```text
-outputId
+networkId + outputId
 ```
 
-The persisted `networkId` field is kept for save compatibility, but new runtime
-lookups use the global empty network id. Loading old saves merges legacy
-network-fragmented entries by output id.
+For controller-backed networks, `networkId` is derived from the connected
+controller anchor position.
 
 ## UI Surfaces
 

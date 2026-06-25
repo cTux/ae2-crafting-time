@@ -1,13 +1,13 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import appeng.api.networking.IGrid;
+import appeng.blockentity.networking.ControllerBlockEntity;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import com.ctux.ae2craftingtime.core.CraftProfiler;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
-
 import java.util.Optional;
 
 public final class ProfilerBridge {
@@ -76,8 +76,15 @@ public final class ProfilerBridge {
     }
 
     public static String networkId(IGrid grid) {
-        // ponytail: global stats; restore a scoped id only if AE2 exposes a stable grid identity.
-        return "";
+        if (grid == null || grid.getPivot() == null) {
+            return "";
+        }
+        var dimensionId = grid.getPivot().getLevel().dimension().location().toString();
+        var controllerAnchors = new java.util.ArrayList<net.minecraft.core.BlockPos>();
+        for (var controller : grid.getMachines(ControllerBlockEntity.class)) {
+            controllerAnchors.add(controller.getBlockPos());
+        }
+        return GridNetworkIds.fromControllers(dimensionId, controllerAnchors);
     }
 
     public static void load(Ae2CraftingTimeSavedData data) {
