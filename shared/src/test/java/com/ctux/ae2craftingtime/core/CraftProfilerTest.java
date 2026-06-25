@@ -177,7 +177,7 @@ class CraftProfilerTest {
     }
 
     @Test
-    void networkIdentityKeepsSameOutputSeparate() {
+    void globalOutputIdentityIgnoresNetworkId() {
         var profiler = new CraftProfiler(10);
         var networkA = new ProfileKey("net-a", "minecraft:iron_plate");
         var networkB = new ProfileKey("net-b", "minecraft:iron_plate");
@@ -185,7 +185,23 @@ class CraftProfilerTest {
         profiler.start(networkA, 1, ProfileUnit.ITEM, 0);
         profiler.complete(networkA, 1, 10);
 
-        assertFalse(profiler.stats(networkB).isPresent());
+        assertEquals(1, profiler.stats(networkB).orElseThrow().sampleCount());
+    }
+
+    @Test
+    void importMergesLegacyNetworkFragmentsByOutput() {
+        var imported = new CraftProfiler(10);
+
+        imported.loadSamples(List.of(
+                new PersistedOutputSamples(new ProfileKey("net-a", "minecraft:iron_plate"), ProfileUnit.ITEM,
+                        List.of(new PersistedCraftSample(1, 10))),
+                new PersistedOutputSamples(new ProfileKey("net-b", "minecraft:iron_plate"), ProfileUnit.ITEM,
+                        List.of(new PersistedCraftSample(1, 20)))));
+
+        var stats = imported.stats(new ProfileKey("minecraft:iron_plate")).orElseThrow();
+        assertEquals(2, stats.sampleCount());
+        assertEquals(15.0, stats.averageDurationTicks());
+        assertEquals(new ProfileKey("minecraft:iron_plate"), imported.snapshotSamples().get(0).key());
     }
 
     @Test

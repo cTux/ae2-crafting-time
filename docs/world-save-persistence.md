@@ -47,12 +47,10 @@ This also covers singleplayer because an integrated server still has the same ov
 
 Persist the retained rolling samples, not only aggregate `ProfileStats`.
 
-Current runtime behavior keeps retained completed crafts per AE2 network and
-output key. To keep estimates stable after restart, save the same retained
-samples:
+Current runtime behavior keeps retained completed crafts per output key. To keep
+estimates stable after restart, save the same retained samples:
 
 ```text
-network id
 output id
 unit
 samples:
@@ -70,7 +68,7 @@ Use one top-level version and a list of output entries:
 version: 1
 outputs: [
   {
-    networkId: "minecraft:overworld:12345"
+    networkId: ""
     key: "minecraft:iron_ingot"
     unit: "item"
     samples: [
@@ -79,7 +77,7 @@ outputs: [
     ]
   },
   {
-    networkId: "minecraft:overworld:12345"
+    networkId: ""
     key: "minecraft:water"
     unit: "millibucket"
     samples: [
@@ -90,6 +88,8 @@ outputs: [
 ```
 
 This is enough to reconstruct averages, throughput, latest duration, `TTC`, and colors.
+The `networkId` field remains in the NBT shape for compatibility with existing
+saves, but runtime loading merges entries by output id.
 
 ## Runtime Ownership
 

@@ -9,7 +9,6 @@ import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
 
 import java.util.Optional;
-import net.minecraft.world.level.block.entity.BlockEntity;
 
 public final class ProfilerBridge {
     private static final CraftProfiler PROFILER = new CraftProfiler(Ae2CraftingTimeConfig.MAX_SAMPLES.get(),
@@ -77,19 +76,17 @@ public final class ProfilerBridge {
     }
 
     public static String networkId(IGrid grid) {
-        if (grid == null || grid.getPivot() == null) {
-            return "";
-        }
-        var pivot = grid.getPivot();
-        if (pivot.getOwner() instanceof BlockEntity blockEntity) {
-            return pivot.getLevel().dimension().location() + ":" + blockEntity.getBlockPos().asLong();
-        }
-        return pivot.getLevel().dimension().location() + ":" + pivot.getOwningPlayerId() + ":" + grid.size();
+        // ponytail: global stats; restore a scoped id only if AE2 exposes a stable grid identity.
+        return "";
     }
 
     public static void load(Ae2CraftingTimeSavedData data) {
         savedData = data;
         PROFILER.loadSamples(data.samples());
+        var migrated = PROFILER.snapshotSamples();
+        if (!migrated.equals(data.samples())) {
+            savedData.replaceFrom(migrated);
+        }
     }
 
     private static ProfileUnit unit(AEKey key) {

@@ -40,6 +40,7 @@ public final class CraftProfiler {
         if (!enabled || amount <= 0) {
             return;
         }
+        key = globalKey(key);
         pending.computeIfAbsent(key, ignored -> new ArrayDeque<>())
                 .addLast(new PendingCraft(amount, unit, tick));
     }
@@ -48,6 +49,7 @@ public final class CraftProfiler {
         if (!enabled || amount <= 0) {
             return false;
         }
+        key = globalKey(key);
 
         var queue = pending.get(key);
         if (queue == null) {
@@ -77,6 +79,7 @@ public final class CraftProfiler {
     }
 
     public Optional<ProfileStats> stats(ProfileKey key) {
+        key = globalKey(key);
         var queue = samples.get(key);
         if (queue == null || queue.isEmpty()) {
             return Optional.empty();
@@ -119,6 +122,7 @@ public final class CraftProfiler {
     }
 
     public boolean clearSamples(ProfileKey key) {
+        key = globalKey(key);
         return samples.remove(key) != null;
     }
 
@@ -172,10 +176,15 @@ public final class CraftProfiler {
         samples.clear();
         pending.clear();
         for (var output : persisted) {
+            var key = globalKey(output.key());
             for (var sample : output.samples()) {
-                addSample(output.key(), new CraftSample(sample.amount(), output.unit(), sample.durationTicks()));
+                addSample(key, new CraftSample(sample.amount(), output.unit(), sample.durationTicks()));
             }
         }
+    }
+
+    private static ProfileKey globalKey(ProfileKey key) {
+        return new ProfileKey(key.outputId());
     }
 
     private static final class PendingCraft {
