@@ -96,6 +96,7 @@ Fields:
 
 ```text
 entries:
+  requestedKeys: list<string>
   key: string
   unit: item | millibucket
   sampleCount: int
@@ -108,8 +109,8 @@ entries:
 Rules:
 
 - Snapshot is immutable display data.
-- Client replaces cache entries for returned keys.
-- Client may keep old entries briefly, but simplest first pass is "replace on response".
+- Client drops cache entries for requested keys before applying returned stats.
+- Missing entries therefore mean "no known stats for this output in the current server-scoped context".
 
 ## UI Flow
 

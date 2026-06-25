@@ -35,7 +35,7 @@ class StatsPacketTest {
     @Test
     void snapshotRoundTripsServerCalculatedStats() {
         var buffer = new FriendlyByteBuf(Unpooled.buffer());
-        var packet = new StatsSnapshotS2C(List.of(new StatsEntry(
+        var packet = new StatsSnapshotS2C(List.of("minecraft:water", "minecraft:lava"), List.of(new StatsEntry(
                 new ProfileKey("minecraft:water"),
                 new ProfileStats(3, 40.5, 25.0, 500.0, 42, ProfileUnit.MILLIBUCKET, false,
                         2, 4.0, List.of(10L, 20L, 42L)))));

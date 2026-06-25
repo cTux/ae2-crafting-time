@@ -49,7 +49,7 @@ public record StatsRequestC2S(List<String> keys, boolean reset) {
             ProfilerBridge.stats(profileKey)
                     .ifPresent(stats -> entries.add(new StatsEntry(new ProfileKey(key), stats)));
         }
-        StatsNetwork.sendTo(player, new StatsSnapshotS2C(entries));
+        StatsNetwork.sendTo(player, new StatsSnapshotS2C(keys, entries));
     }
 
     private static IGrid currentGrid(ServerPlayer player) {

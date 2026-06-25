@@ -12,8 +12,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-public record StatsSnapshotS2C(List<StatsEntry> entries) {
+public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entries) {
+    public StatsSnapshotS2C(List<StatsEntry> entries) {
+        this(entries.stream().map(entry -> entry.key().outputId()).toList(), entries);
+    }
+
     public static void encode(StatsSnapshotS2C packet, FriendlyByteBuf buffer) {
+        buffer.writeVarInt(packet.requestedKeys.size());
+        for (var key : packet.requestedKeys) {
+            buffer.writeUtf(key);
+        }
         buffer.writeVarInt(packet.entries.size());
         for (var entry : packet.entries) {
             var stats = entry.stats();
@@ -35,6 +43,11 @@ public record StatsSnapshotS2C(List<StatsEntry> entries) {
     }
 
     public static StatsSnapshotS2C decode(FriendlyByteBuf buffer) {
+        var requestedSize = buffer.readVarInt();
+        var requestedKeys = new ArrayList<String>(requestedSize);
+        for (int i = 0; i < requestedSize; i++) {
+            requestedKeys.add(buffer.readUtf());
+        }
         var size = buffer.readVarInt();
         var entries = new ArrayList<StatsEntry>(size);
         for (int i = 0; i < size; i++) {
@@ -57,12 +70,14 @@ public record StatsSnapshotS2C(List<StatsEntry> entries) {
                     amountPerSecond, lastDurationTicks, unit, reliableEstimate, usedSampleCount, outlierMultiplier,
                     sampleDurationTicks)));
         }
-        return new StatsSnapshotS2C(entries);
+        return new StatsSnapshotS2C(requestedKeys, entries);
     }
 
     public static void handle(StatsSnapshotS2C packet, Supplier<NetworkEvent.Context> contextSupplier) {
         var context = contextSupplier.get();
-        context.enqueueWork(() -> ClientStats.CACHE.replace(packet.entries));
+        context.enqueueWork(() -> ClientStats.CACHE.replace(
+                packet.requestedKeys.stream().map(ProfileKey::new).toList(),
+                packet.entries));
         context.setPacketHandled(true);
     }
 }

@@ -14,6 +14,13 @@ public final class ClientStatsCache {
         }
     }
 
+    public void replace(List<ProfileKey> requestedKeys, List<StatsEntry> entries) {
+        for (var key : requestedKeys) {
+            stats.remove(key);
+        }
+        replace(entries);
+    }
+
     public Optional<ProfileStats> get(ProfileKey key) {
         return Optional.ofNullable(stats.get(key));
     }

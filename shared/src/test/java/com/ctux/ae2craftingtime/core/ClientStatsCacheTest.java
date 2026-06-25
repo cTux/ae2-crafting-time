@@ -53,4 +53,19 @@ class ClientStatsCacheTest {
         assertFalse(cache.get(iron).isPresent());
         assertEquals(1, cache.get(copper).orElseThrow().sampleCount());
     }
+
+    @Test
+    void replaceDropsRequestedStatsMissingFromResponse() {
+        var cache = new ClientStatsCache();
+        var iron = new ProfileKey("minecraft:iron_plate");
+        var copper = new ProfileKey("minecraft:copper_plate");
+
+        cache.replace(List.of(
+                new StatsEntry(iron, new ProfileStats(1, 20, 0.05, 1, 20, ProfileUnit.ITEM)),
+                new StatsEntry(copper, new ProfileStats(1, 10, 0.1, 2, 10, ProfileUnit.ITEM))));
+        cache.replace(List.of(iron), List.of());
+
+        assertFalse(cache.get(iron).isPresent());
+        assertEquals(1, cache.get(copper).orElseThrow().sampleCount());
+    }
 }

@@ -15,7 +15,11 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import java.util.ArrayList;
 import java.util.List;
 
-public record StatsSnapshotS2C(List<StatsEntry> entries) implements CustomPacketPayload {
+public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entries) implements CustomPacketPayload {
+    public StatsSnapshotS2C(List<StatsEntry> entries) {
+        this(entries.stream().map(entry -> entry.key().outputId()).toList(), entries);
+    }
+
     public static final Type<StatsSnapshotS2C> TYPE = new Type<>(
             ResourceLocation.fromNamespaceAndPath("ae2craftingtime", "stats_snapshot"));
     public static final StreamCodec<RegistryFriendlyByteBuf, StatsSnapshotS2C> STREAM_CODEC = StreamCodec.ofMember(
@@ -28,6 +32,10 @@ public record StatsSnapshotS2C(List<StatsEntry> entries) implements CustomPacket
     }
 
     public static void encode(StatsSnapshotS2C packet, FriendlyByteBuf buffer) {
+        buffer.writeVarInt(packet.requestedKeys.size());
+        for (var key : packet.requestedKeys) {
+            buffer.writeUtf(key);
+        }
         buffer.writeVarInt(packet.entries.size());
         for (var entry : packet.entries) {
             var stats = entry.stats();
@@ -49,6 +57,11 @@ public record StatsSnapshotS2C(List<StatsEntry> entries) implements CustomPacket
     }
 
     public static StatsSnapshotS2C decode(FriendlyByteBuf buffer) {
+        var requestedSize = buffer.readVarInt();
+        var requestedKeys = new ArrayList<String>(requestedSize);
+        for (int i = 0; i < requestedSize; i++) {
+            requestedKeys.add(buffer.readUtf());
+        }
         var size = buffer.readVarInt();
         var entries = new ArrayList<StatsEntry>(size);
         for (int i = 0; i < size; i++) {
@@ -71,10 +84,12 @@ public record StatsSnapshotS2C(List<StatsEntry> entries) implements CustomPacket
                     amountPerSecond, lastDurationTicks, unit, reliableEstimate, usedSampleCount, outlierMultiplier,
                     sampleDurationTicks)));
         }
-        return new StatsSnapshotS2C(entries);
+        return new StatsSnapshotS2C(requestedKeys, entries);
     }
 
     public static void handle(StatsSnapshotS2C packet, IPayloadContext context) {
-        context.enqueueWork(() -> ClientStats.CACHE.replace(packet.entries));
+        context.enqueueWork(() -> ClientStats.CACHE.replace(
+                packet.requestedKeys.stream().map(ProfileKey::new).toList(),
+                packet.entries));
     }
 }
