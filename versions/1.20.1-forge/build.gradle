@@ -1,40 +1,34 @@
-buildscript {
-    repositories {
-        maven { url = 'https://repo.spongepowered.org/repository/maven-public/' }
-        mavenCentral()
-    }
-    dependencies {
-        classpath 'org.spongepowered:mixingradle:0.7-SNAPSHOT'
-    }
-}
-
 plugins {
-    id 'net.minecraftforge.gradle' version '[6.0.16,6.2)'
+    id 'net.neoforged.moddev.legacyforge' version '2.0.141'
 }
-
-apply plugin: 'org.spongepowered.mixin'
 
 base {
     archivesName = 'ae2-crafting-time-1.20.1-Forge'
 }
 
-minecraft {
-    mappings channel: 'official', version: '1.20.1'
-    copyIdeResources = true
+legacyForge {
+    version = '1.20.1-47.3.7'
+    validateAccessTransformers = true
 
     runs {
-        configureEach {
-            workingDirectory project.file('run')
-            property 'forge.logging.console.level', 'debug'
-            mods {
-                ae2craftingtime {
-                    source sourceSets.main
-                }
-            }
+        client {
+            client()
+        }
+        server {
+            server()
+            programArgument '--nogui'
         }
 
-        client {}
-        server { args '--nogui' }
+        configureEach {
+            gameDirectory = project.file('run')
+            systemProperty 'forge.logging.console.level', 'debug'
+        }
+    }
+
+    mods {
+        ae2craftingtime {
+            sourceSet sourceSets.main
+        }
     }
 }
 
@@ -48,6 +42,9 @@ sourceSets.main.java.srcDir '../../shared/src/mc1201/java'
 sourceSets.main.resources.srcDir '../../shared/src/main/resources'
 sourceSets.main.resources.srcDir '../../shared/src/mc1201/resources'
 sourceSets.test.java.srcDir '../../shared/src/mc1201Test/java'
+
+sourceSets.test.compileClasspath += sourceSets.main.compileClasspath
+sourceSets.test.runtimeClasspath += sourceSets.main.runtimeClasspath
 
 repositories {
     mavenCentral()
@@ -63,9 +60,7 @@ repositories {
 }
 
 dependencies {
-    minecraft 'net.minecraftforge:forge:1.20.1-47.3.7'
-
-    implementation fg.deobf('curse.maven:applied-energistics-2-223794:5565729')
+    implementation 'appeng:appliedenergistics2-forge:15.2.11'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 
@@ -105,16 +100,16 @@ tasks.named('jar', Jar).configure {
                 'Implementation-Title'    : project.name,
                 'Implementation-Version'  : project.version,
                 'Implementation-Vendor'   : 'ctux',
-                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                'MixinConfigs'            : 'ae2craftingtime.mixins.json'
         ])
     }
-    finalizedBy 'reobfJar'
 }
 
 def distModVersion = project.version.toString()
 
 tasks.register('distMod', Copy) {
-    dependsOn tasks.named('reobfJar')
+    dependsOn tasks.named('jar')
     from tasks.named('jar').flatMap { it.archiveFile }
     into rootProject.layout.projectDirectory.dir('dist')
     rename { "ae2-crafting-time-1.20.1-Forge-${distModVersion}.jar" }
