@@ -46,4 +46,26 @@ class ConfigFilenameTest {
         assertEquals(25, Ae2CraftingTimeConfig.MAX_SAMPLES.get());
         assertEquals(7.5, Ae2CraftingTimeConfig.OUTLIER_MULTIPLIER.get());
     }
+
+    @Test
+    void malformedBooleanKeepsExistingValue(@TempDir Path tempDir) throws IOException {
+        var config = tempDir.resolve("ae2craftingtime-common.toml");
+        Files.writeString(config, """
+                enabled = true
+                showInTree = true
+                showChatMessages = true
+                """);
+        Ae2CraftingTimeConfig.load(config);
+
+        Files.writeString(config, """
+                enabled = treu
+                showInTree = maybe
+                showChatMessages = nope
+                """);
+        Ae2CraftingTimeConfig.load(config);
+
+        assertTrue(Ae2CraftingTimeConfig.ENABLED.get());
+        assertTrue(Ae2CraftingTimeConfig.SHOW_IN_TREE.get());
+        assertTrue(Ae2CraftingTimeConfig.SHOW_CHAT_MESSAGES.get());
+    }
 }

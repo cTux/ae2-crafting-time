@@ -30,9 +30,9 @@ public final class Ae2CraftingTimeConfig {
 
     private static void set(String key, String value) {
         switch (key) {
-            case "enabled" -> ENABLED.set(Boolean.parseBoolean(value));
-            case "showInTree" -> SHOW_IN_TREE.set(Boolean.parseBoolean(value));
-            case "showChatMessages" -> SHOW_CHAT_MESSAGES.set(Boolean.parseBoolean(value));
+            case "enabled" -> ENABLED.set(parseBoolean(value, ENABLED.get()));
+            case "showInTree" -> SHOW_IN_TREE.set(parseBoolean(value, SHOW_IN_TREE.get()));
+            case "showChatMessages" -> SHOW_CHAT_MESSAGES.set(parseBoolean(value, SHOW_CHAT_MESSAGES.get()));
             case "maxSamples" -> MAX_SAMPLES.set(parseInt(value, MAX_SAMPLES.get(), 1, 100));
             case "outlierMultiplier" -> OUTLIER_MULTIPLIER.set(parseDouble(value, OUTLIER_MULTIPLIER.get(), 1.0, 1000.0));
             default -> {
@@ -46,6 +46,16 @@ public final class Ae2CraftingTimeConfig {
         } catch (NumberFormatException ignored) {
             return fallback;
         }
+    }
+
+    private static boolean parseBoolean(String value, boolean fallback) {
+        if ("true".equalsIgnoreCase(value)) {
+            return true;
+        }
+        if ("false".equalsIgnoreCase(value)) {
+            return false;
+        }
+        return fallback;
     }
 
     private static double parseDouble(String value, double fallback, double min, double max) {
