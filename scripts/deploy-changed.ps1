@@ -1,6 +1,9 @@
 param(
     [switch]$Deploy,
     [switch]$DryRun,
+    [string]$ReleaseType,
+    [string]$ModrinthProjectId,
+    [string]$CurseProjectId,
     [string]$JavaHome = "C:\Users\cccTu\.gradle\jdks\eclipse_adoptium-17-amd64-windows\jdk-17.0.19+10",
     [string]$MatrixPath = (Join-Path $PSScriptRoot "release-matrix.json"),
     [string]$StatePath = (Join-Path (Split-Path -Parent $PSScriptRoot) ".release-state.json")
@@ -40,6 +43,30 @@ function Assert-ReleaseEntry($entry) {
     if ($entry.releaseType -notin @("alpha", "beta", "release")) {
         throw "$($entry.id) releaseType must be alpha, beta, or release"
     }
+}
+
+function Resolve-ReleaseEntry($entry) {
+    $resolved = [ordered]@{}
+    foreach ($property in $entry.PSObject.Properties) {
+        $resolved[$property.Name] = $property.Value
+    }
+
+    $resolved.releaseType =
+        if ($ReleaseType) { $ReleaseType }
+        elseif ($env:RELEASE_TYPE) { $env:RELEASE_TYPE }
+        else { $resolved.releaseType }
+
+    $resolved.modrinthProjectId =
+        if ($ModrinthProjectId) { $ModrinthProjectId }
+        elseif ($env:MODRINTH_PROJECT_ID) { $env:MODRINTH_PROJECT_ID }
+        else { $resolved.modrinthProjectId }
+
+    $resolved.curseProjectId =
+        if ($CurseProjectId) { $CurseProjectId }
+        elseif ($env:CURSEFORGE_PROJECT_ID) { $env:CURSEFORGE_PROJECT_ID }
+        else { $resolved.curseProjectId }
+
+    return [pscustomobject]$resolved
 }
 
 function Next-PatchVersion([string]$version) {
@@ -179,7 +206,11 @@ $state = Read-Json $StatePath ([pscustomobject]@{})
 Push-Location $root
 try {
     foreach ($entry in $matrix) {
+        $entry = Resolve-ReleaseEntry $entry
         Assert-ReleaseEntry $entry
+        if ($Deploy -and -not ($entry.modrinthProjectId -or $entry.curseProjectId)) {
+            throw "$($entry.id) has no publish target. Set row ids or pass MODRINTH_PROJECT_ID and/or CURSEFORGE_PROJECT_ID."
+        }
         $fingerprint = Get-InputFingerprint $entry
         $previous = Get-StateEntry $state $entry.id
         $currentVersion = if ($previous -and $previous.version) { $previous.version } else { $entry.initialVersion }

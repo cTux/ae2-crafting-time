@@ -26,6 +26,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-changed.ps1
 Upload changed jars:
 
 ```powershell
+$env:RELEASE_TYPE = "release"
+$env:MODRINTH_PROJECT_ID = "..."
+$env:CURSEFORGE_PROJECT_ID = "..."
 $env:MODRINTH_TOKEN = "..."
 $env:CURSEFORGE_TOKEN = "..."
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-changed.ps1 -Deploy
@@ -33,7 +36,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-changed.ps1
 
 `deploy-changed.ps1` fingerprints only jar inputs: root build files, shared main code, and the matrix row's version main code. Test-only edits do not bump or deploy.
 
-Set `modrinthProjectId` and/or `curseProjectId` in the row to enable that platform. Empty project ids skip that platform.
+Release metadata can come from the matrix row or from environment overrides. `RELEASE_TYPE`, `MODRINTH_PROJECT_ID`, and `CURSEFORGE_PROJECT_ID` override the row values for all entries in the current run.
+
+`-Deploy` now fails fast if no publish target resolves for a row instead of silently skipping every upload.
 
 Check the release script:
 
