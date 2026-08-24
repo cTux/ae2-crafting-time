@@ -23,8 +23,11 @@ if (-not $dryRun) {
     if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
         throw "Automatic PR failed: GitHub CLI is not installed"
     }
+    $ErrorActionPreference = "Continue"
     $url = (gh pr view $branch --json url --jq .url 2>$null) -join ""
-    if ($LASTEXITCODE -eq 0) {
+    $prFound = $LASTEXITCODE -eq 0
+    $ErrorActionPreference = "Stop"
+    if ($prFound) {
         Write-Host "PR already open: $url"
         exit 0
     }
@@ -61,7 +64,7 @@ if ($dryRun) {
     exit 0
 }
 
-$bodyPath = New-TemporaryFile
+$bodyPath = [IO.Path]::GetTempFileName()
 try {
     Set-Content -LiteralPath $bodyPath -Value $body -Encoding UTF8
     gh pr create --base $base --head $branch --title $title --body-file $bodyPath
