@@ -64,7 +64,7 @@ if ($dryRun) {
     exit 0
 }
 
-$bodyPath = New-TemporaryFile
+$bodyPath = [IO.Path]::GetTempFileName()
 try {
     Set-Content -LiteralPath $bodyPath -Value $body -Encoding UTF8
     gh pr create --base $base --head $branch --title $title --body-file $bodyPath
