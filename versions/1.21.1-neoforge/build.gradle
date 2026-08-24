@@ -46,6 +46,10 @@ sourceSets.test.runtimeClasspath += sourceSets.main.runtimeClasspath
 repositories {
     mavenCentral()
     maven {
+        url = 'https://cursemaven.com'
+        content { includeGroup 'curse.maven' }
+    }
+    maven {
         name = 'Modmaven'
         url = 'https://modmaven.dev/'
         content { includeGroup 'appeng' }
@@ -53,7 +57,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'appeng:appliedenergistics2:19.0.27'
+    implementation 'curse.maven:applied-energistics-2-223794:7027323'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 

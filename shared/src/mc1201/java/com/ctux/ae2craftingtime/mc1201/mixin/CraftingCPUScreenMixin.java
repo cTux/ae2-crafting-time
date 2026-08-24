@@ -27,6 +27,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Group;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -87,7 +88,19 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         }
     }
 
-    @ModifyArg(method = "postUpdate", at = @At(value = "INVOKE", target = "Lappeng/menu/me/crafting/CraftingStatus;<init>(ZJJJLjava/util/List;)V"), index = 4, remap = false)
+    @Group(name = "sortStatusByTtc", min = 1, max = 1)
+    @ModifyArg(method = "postUpdate", at = @At(value = "INVOKE", target = "Lappeng/menu/me/crafting/CraftingStatus;<init>(ZJJJLjava/util/List;)V"), index = 4, remap = false, require = 0)
+    private List<CraftingStatusEntry> ae2craftingtime$sortStatusByTtcLegacy(List<CraftingStatusEntry> entries) {
+        return ae2craftingtime$sortStatusByTtc(entries);
+    }
+
+    @Group(name = "sortStatusByTtc", min = 1, max = 1)
+    @ModifyArg(method = "postUpdate", at = @At(value = "INVOKE", target = "Lappeng/menu/me/crafting/CraftingStatus;<init>(ZJJJLjava/util/List;Z)V"), index = 4, remap = false, require = 0)
+    private List<CraftingStatusEntry> ae2craftingtime$sortStatusByTtcWithSuspended(List<CraftingStatusEntry> entries) {
+        return ae2craftingtime$sortStatusByTtc(entries);
+    }
+
+    @Unique
     private List<CraftingStatusEntry> ae2craftingtime$sortStatusByTtc(List<CraftingStatusEntry> entries) {
         if (!((Object) this instanceof CraftingStatusScreen) || ae2craftingtime$ttcSortMode == 0) {
             return entries;

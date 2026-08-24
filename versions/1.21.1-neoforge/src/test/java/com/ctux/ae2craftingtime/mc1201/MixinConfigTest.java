@@ -59,6 +59,15 @@ class MixinConfigTest {
     }
 
     @Test
+    void craftingStatusSortSupportsSuspendedStatusConstructor() throws IOException {
+        var screenMixin = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingCPUScreenMixin.java"));
+
+        assertTrue(screenMixin.contains("CraftingStatus;<init>(ZJJJLjava/util/List;Z)V"));
+        assertTrue(screenMixin.contains("@Group(name = \"sortStatusByTtc\", min = 1, max = 1)"));
+    }
+
+    @Test
     void statusStatsRequestsUseCraftingCpuMenuGrid() throws IOException {
         var packet = Files.readString(Path.of(
                 "src/main/java/com/ctux/ae2craftingtime/mc1201/net/StatsRequestC2S.java"));
