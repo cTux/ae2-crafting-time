@@ -23,8 +23,11 @@ if (-not $dryRun) {
     if (-not (Get-Command gh -ErrorAction SilentlyContinue)) {
         throw "Automatic PR failed: GitHub CLI is not installed"
     }
+    $ErrorActionPreference = "Continue"
     $url = (gh pr view $branch --json url --jq .url 2>$null) -join ""
-    if ($LASTEXITCODE -eq 0) {
+    $prFound = $LASTEXITCODE -eq 0
+    $ErrorActionPreference = "Stop"
+    if ($prFound) {
         Write-Host "PR already open: $url"
         exit 0
     }
