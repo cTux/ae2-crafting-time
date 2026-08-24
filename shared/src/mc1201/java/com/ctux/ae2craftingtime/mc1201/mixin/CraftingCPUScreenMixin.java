@@ -20,7 +20,6 @@ import com.ctux.ae2craftingtime.mc1201.TtcDetailsClick;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsKeyMapping;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import org.spongepowered.asm.mixin.Mixin;
@@ -54,6 +53,10 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
     private static final int AE2CRAFTINGTIME_COLS = 3;
     @Unique
     private static final int AE2CRAFTINGTIME_ROWS = 6;
+    @Unique
+    private static final int AE2CRAFTINGTIME_SCREEN_WIDTH = 238;
+    @Unique
+    private static final int AE2CRAFTINGTIME_TITLE_PADDING = 8;
 
     @Unique
     private int ae2craftingtime$ttcSortMode;
@@ -110,11 +113,16 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
                 Comparator.naturalOrder(), ae2craftingtime$ttcSortMode == 2);
     }
 
-    @Inject(method = "drawFG", at = @At("RETURN"), remap = false)
-    private void ae2craftingtime$drawStatusTotalTtc(GuiGraphics guiGraphics, int offsetX, int offsetY, int mouseX,
-            int mouseY, CallbackInfo ci) {
+    @ModifyArg(
+            method = "updateBeforeRender",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lappeng/client/gui/me/crafting/CraftingCPUScreen;setTextContent(Ljava/lang/String;Lnet/minecraft/network/chat/Component;)V"),
+            index = 1,
+            remap = false)
+    private Component ae2craftingtime$appendStatusTotalTtc(Component title) {
         if (!((Object) this instanceof CraftingStatusScreen) || status == null) {
-            return;
+            return title;
         }
 
         var estimates = new ArrayList<OptionalLong>();
@@ -122,11 +130,20 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
             estimates.add(ae2craftingtime$seconds(entry));
         }
 
-        TimeEstimate.formatTotal(estimates).ifPresent(eta -> {
-            var text = TtcText.totalTtc(eta);
-            var font = getMinecraft().font;
-            guiGraphics.drawString(font, text, 109 - font.width(text) / 2, 162, 0x404040, false);
-        });
+        var eta = TimeEstimate.formatTotal(estimates);
+        if (eta.isEmpty()) {
+            return title;
+        }
+
+        var separator = Component.literal("  ");
+        var total = TtcText.ttc(eta.get());
+        var font = getMinecraft().font;
+        var availableWidth = AE2CRAFTINGTIME_SCREEN_WIDTH - AE2CRAFTINGTIME_TITLE_PADDING * 2;
+        if (font.width(title) + font.width(separator) + font.width(total) > availableWidth) {
+            return title;
+        }
+
+        return title.copy().append(separator).append(total);
     }
 
     @Unique

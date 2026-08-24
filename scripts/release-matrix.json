@@ -7,11 +7,11 @@
     "minecraftVersion": "1.20.1",
     "projectDir": "versions/1.20.1-forge",
     "artifactBase": "ae2-crafting-time-1.20.1-Forge",
-    "initialVersion": "1.0.0",
+    "initialVersion": "1.0.1",
     "releaseType": "alpha",
     "modrinthProjectId": "",
     "curseProjectId": "",
-    "changelog": "Automated build."
+    "changelog": "Moves the crafting status total TTC into the header to avoid overlapping action buttons."
   },
   {
     "id": "1.20.1-fabric",
@@ -21,11 +21,11 @@
     "minecraftVersion": "1.20.1",
     "projectDir": "versions/1.20.1-fabric",
     "artifactBase": "ae2-crafting-time-1.20.1-Fabric",
-    "initialVersion": "1.0.0",
+    "initialVersion": "1.0.1",
     "releaseType": "alpha",
     "modrinthProjectId": "",
     "curseProjectId": "",
-    "changelog": "Automated build."
+    "changelog": "Moves the crafting status total TTC into the header to avoid overlapping action buttons."
   },
   {
     "id": "1.21.1-neoforge",
@@ -35,10 +35,10 @@
     "minecraftVersion": "1.21.1",
     "projectDir": "versions/1.21.1-neoforge",
     "artifactBase": "ae2-crafting-time-1.21.1-NeoForge",
-    "initialVersion": "1.0.2",
+    "initialVersion": "1.0.3",
     "releaseType": "release",
     "modrinthProjectId": "",
     "curseProjectId": "1591476",
-    "changelog": "Adds TTC profiling for AdvancedAE crafting CPUs used by ATM10."
+    "changelog": "Moves the crafting status total TTC into the header to avoid overlapping action buttons."
   }
 ]
