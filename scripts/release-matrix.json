@@ -9,7 +9,7 @@
     "artifactBase": "ae2-crafting-time-1.20.1-Forge",
     "initialVersion": "1.0.1",
     "releaseType": "alpha",
-    "modrinthProjectId": "",
+    "modrinthProjectId": "LyDZjvxd",
     "curseProjectId": "1591476",
     "changelog": "Moves the crafting status total TTC into the header to avoid overlapping action buttons."
   },
@@ -23,7 +23,7 @@
     "artifactBase": "ae2-crafting-time-1.20.1-Fabric",
     "initialVersion": "1.0.1",
     "releaseType": "alpha",
-    "modrinthProjectId": "",
+    "modrinthProjectId": "LyDZjvxd",
     "curseProjectId": "1591476",
     "changelog": "Moves the crafting status total TTC into the header to avoid overlapping action buttons."
   },
@@ -37,7 +37,7 @@
     "artifactBase": "ae2-crafting-time-1.21.1-NeoForge",
     "initialVersion": "1.0.3",
     "releaseType": "release",
-    "modrinthProjectId": "",
+    "modrinthProjectId": "LyDZjvxd",
     "curseProjectId": "1591476",
     "changelog": "Moves the crafting status total TTC into the header to avoid overlapping action buttons."
   }

@@ -45,6 +45,12 @@ if ($LASTEXITCODE -ne 0 -or $partialOutput -notmatch 'dry-run GitHub Release: 1\
 if ($partialOutput -notmatch 'dry-run GitHub assets: ae2-crafting-time-1\.20\.1-Forge-1\.0\.1\.jar, ae2-crafting-time-1\.20\.1-Fabric-1\.0\.2\.jar, ae2-crafting-time-1\.21\.1-NeoForge-1\.0\.3\.jar') {
     throw "Partial release did not attach every latest jar to GitHub"
 }
+if ($partialOutput -notmatch 'dry-run Modrinth version: 1\.20\.1-fabric-1\.0\.2') {
+    throw "Partial release did not use a loader-qualified Modrinth version number"
+}
+if ($partialOutput -notmatch 'dry-run CurseForge versions: 1\.20\.1, Fabric, Client, Server') {
+    throw "Partial release did not include CurseForge environment versions"
+}
 Remove-Item -LiteralPath $partialStatePath -Force -ErrorAction SilentlyContinue
 
 $second = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" -StatePath $StatePath

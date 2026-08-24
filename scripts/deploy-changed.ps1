@@ -170,7 +170,7 @@ function Publish-Modrinth($entry, [string]$version, [string]$jarPath, [string]$n
     try {
         @{
             name = "$($entry.artifactBase)-$version"
-            version_number = $version
+            version_number = "$($entry.id)-$version"
             changelog = $notes
             dependencies = @()
             game_versions = @($entry.minecraftVersion)
@@ -185,7 +185,7 @@ function Publish-Modrinth($entry, [string]$version, [string]$jarPath, [string]$n
         } | ConvertTo-Json -Depth 6 | Set-Content -Path $dataPath -Encoding UTF8
 
         Invoke-Curl @(
-            "-sS", "-f",
+            "-sS", "--fail-with-body",
             "-H", "Authorization: $env:MODRINTH_TOKEN",
             "-H", "User-Agent: ctux/ae2-crafting-time-release-script",
             "-F", "data=<$dataPath;type=application/json",
@@ -208,13 +208,13 @@ function Publish-CurseForge($entry, [string]$version, [string]$jarPath, [string]
             changelog = $notes
             changelogType = "text"
             displayName = "$($entry.artifactBase)-$version"
-            gameVersionNames = @($entry.minecraftVersion, $entry.loaderName)
+            gameVersionNames = @($entry.minecraftVersion, $entry.loaderName, "Client", "Server")
             releaseType = $entry.releaseType
             isMarkedForManualRelease = $false
         } | ConvertTo-Json -Depth 6 | Set-Content -Path $metadataPath -Encoding UTF8
 
         Invoke-Curl @(
-            "-sS", "-f",
+            "-sS", "--fail-with-body",
             "-H", "X-Api-Token: $env:CURSEFORGE_TOKEN",
             "-F", "metadata=<$metadataPath;type=application/json",
             "-F", "file=@$jarPath;type=application/java-archive",
@@ -318,6 +318,8 @@ try {
         foreach ($release in $releases) {
             if ($DryRun) {
                 Write-Host "dry-run deploy $($release.entry.id): $($release.jarPath)"
+                Write-Host "dry-run Modrinth version: $($release.entry.id)-$($release.version)"
+                Write-Host "dry-run CurseForge versions: $($release.entry.minecraftVersion), $($release.entry.loaderName), Client, Server"
             }
             else {
                 Publish-Modrinth $release.entry $release.version $release.jarPath $release.changelog
