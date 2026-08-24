@@ -226,7 +226,7 @@ function Publish-CurseForge($entry, [string]$version, [string]$jarPath, [string]
     }
 }
 
-function Publish-GitHubRelease($releases, [string]$sourceCommit) {
+function Publish-GitHubRelease($releases, $jars, [string]$sourceCommit) {
     $stamp = (Get-Date).ToUniversalTime().ToString("yyyyMMdd-HHmmss")
     $tag = "release-$stamp"
     $title = ($releases | ForEach-Object { "$($_.entry.minecraftVersion) $($_.entry.loaderName) $($_.version)" }) -join ", "
@@ -234,6 +234,7 @@ function Publish-GitHubRelease($releases, [string]$sourceCommit) {
 
     if ($DryRun) {
         Write-Host "dry-run GitHub Release: $title"
+        Write-Host "dry-run GitHub assets: $(($jars | ForEach-Object { Split-Path -Leaf $_.jarPath }) -join ', ')"
         Write-Host $notes
         return
     }
@@ -241,7 +242,7 @@ function Publish-GitHubRelease($releases, [string]$sourceCommit) {
     $notesPath = New-TemporaryFile
     try {
         Set-Content -LiteralPath $notesPath -Value $notes -Encoding UTF8
-        $arguments = @("release", "create", $tag) + @($releases.jarPath) + @(
+        $arguments = @("release", "create", $tag) + @($jars.jarPath) + @(
             "--target", $sourceCommit,
             "--title", $title,
             "--notes-file", $notesPath
@@ -267,7 +268,7 @@ try {
     }
 
     $sourceCommit = (Invoke-Git @("rev-parse", "HEAD")) -join ""
-    $releases = @()
+    $plans = @()
     foreach ($entry in $matrix) {
         $entry = Resolve-ReleaseEntry $entry
         Assert-ReleaseEntry $entry
@@ -275,39 +276,41 @@ try {
         $previous = Get-StateEntry $state $entry.id
         $currentVersion = if ($previous -and $previous.version) { $previous.version } else { $entry.initialVersion }
 
-        if ($previous -and $previous.fingerprint -eq $fingerprint) {
+        $changed = -not ($previous -and $previous.fingerprint -eq $fingerprint)
+        if (-not $changed) {
             Write-Host "skip $($entry.id): unchanged at $currentVersion"
-            continue
         }
-        if ($Deploy -and -not $entry.modrinthProjectId) {
+        if ($changed -and $Deploy -and -not $entry.modrinthProjectId) {
             throw "$($entry.id) has no Modrinth project id. Set it in the matrix or MODRINTH_PROJECT_ID."
         }
-        if ($Deploy -and -not $entry.curseProjectId) {
+        if ($changed -and $Deploy -and -not $entry.curseProjectId) {
             throw "$($entry.id) has no CurseForge project id. Set it in the matrix or CURSEFORGE_PROJECT_ID."
         }
 
-        $nextVersion = if ($previous) { Next-PatchVersion $currentVersion } else { $currentVersion }
-        $task = ":$($entry.module):distMod"
-        $jarPath = Join-Path $root "dist\$($entry.artifactBase)-$nextVersion.jar"
-        $notes = Get-EntryChangelog $entry $previous
-
-        Write-Host "build $($entry.id): $nextVersion"
-        if (-not $DryRun) {
-            & $gradlew $task "-PmodVersion=$nextVersion"
-            if ($LASTEXITCODE -ne 0) {
-                throw "Gradle failed for $($entry.id)"
-            }
-            if (-not (Test-Path $jarPath)) {
-                throw "Expected jar was not created: $jarPath"
-            }
-        }
-
-        $releases += [pscustomobject]@{
+        $version = if ($changed -and $previous) { Next-PatchVersion $currentVersion } else { $currentVersion }
+        $plans += [pscustomobject]@{
             entry = $entry
-            version = $nextVersion
+            version = $version
             fingerprint = $fingerprint
-            jarPath = $jarPath
-            changelog = $notes
+            jarPath = Join-Path $root "dist\$($entry.artifactBase)-$version.jar"
+            changelog = if ($changed) { Get-EntryChangelog $entry $previous } else { $null }
+            changed = $changed
+        }
+    }
+
+    $releases = @($plans | Where-Object changed)
+    $builds = if ($Deploy -and $releases.Count -gt 0) { $plans } else { $releases }
+    foreach ($build in $builds) {
+        $label = if ($build.changed) { "build" } else { "build latest" }
+        Write-Host "$label $($build.entry.id): $($build.version)"
+        if (-not $DryRun) {
+            & $gradlew ":$($build.entry.module):distMod" "-PmodVersion=$($build.version)"
+            if ($LASTEXITCODE -ne 0) {
+                throw "Gradle failed for $($build.entry.id)"
+            }
+            if (-not (Test-Path $build.jarPath)) {
+                throw "Expected jar was not created: $($build.jarPath)"
+            }
         }
     }
 
@@ -321,7 +324,7 @@ try {
                 Publish-CurseForge $release.entry $release.version $release.jarPath $release.changelog
             }
         }
-        Publish-GitHubRelease $releases $sourceCommit
+        Publish-GitHubRelease $releases $plans $sourceCommit
     }
 
     if (-not $DryRun) {

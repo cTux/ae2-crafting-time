@@ -35,7 +35,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-changed.ps1
 
 `deploy-changed.ps1` fingerprints only jar inputs: root build files, shared main code, and the matrix row's version main code. Test-only edits do not bump or deploy.
 
-For every affected row, `-Deploy` bumps its patch version, builds the loader-explicit jar, generates that jar's changelog from commits since its previous release, and uploads the jar plus changelog to both Modrinth and CurseForge. It then creates one GitHub Release whose title lists every affected Minecraft/loader version and whose body contains the per-jar changelogs. Finally, it commits `.release-state.json`; the repository's post-commit hook pushes that commit automatically.
+For every affected row, `-Deploy` bumps its patch version, builds the loader-explicit jar, generates that jar's changelog from commits since its previous release, and uploads the jar plus changelog to both Modrinth and CurseForge. It also rebuilds the unchanged rows at their current versions so the GitHub Release always attaches the complete latest supported JAR set. The release title and body list only affected versions and their per-jar changelogs. Finally, it commits `.release-state.json`; the repository's post-commit hook pushes that commit automatically.
 
 Run `scripts/setup-git.ps1` once after cloning. It installs the tracked post-commit hook, which automatically pushes every fix, feature, and release commit. Work on a branch: the hook intentionally refuses to push a detached HEAD.
 
