@@ -1,8 +1,3 @@
 #!/bin/sh
 
-branch=$(git symbolic-ref --quiet --short HEAD) || {
-    echo "Automatic push skipped: detached HEAD." >&2
-    exit 0
-}
-
-git push --set-upstream origin "$branch"
+exec powershell.exe -NoProfile -ExecutionPolicy Bypass -File scripts/after-commit.ps1
