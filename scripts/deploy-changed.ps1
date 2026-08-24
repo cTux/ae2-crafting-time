@@ -4,6 +4,7 @@ param(
     [string]$ReleaseType,
     [string]$ModrinthProjectId,
     [string]$CurseProjectId,
+    [string]$Changelog,
     [string]$JavaHome = "C:\Users\cccTu\.gradle\jdks\eclipse_adoptium-17-amd64-windows\jdk-17.0.19+10",
     [string]$MatrixPath = (Join-Path $PSScriptRoot "release-matrix.json"),
     [string]$StatePath = (Join-Path (Split-Path -Parent $PSScriptRoot) ".release-state.json")
@@ -136,7 +137,32 @@ function Invoke-Curl($arguments) {
     return $output
 }
 
-function Publish-Modrinth($entry, [string]$version, [string]$jarPath) {
+function Invoke-Git($arguments) {
+    $output = & git @arguments
+    if ($LASTEXITCODE -ne 0) {
+        throw "git failed with exit code $LASTEXITCODE"
+    }
+    return $output
+}
+
+function Get-EntryChangelog($entry, $previous) {
+    if ($Changelog) { return $Changelog }
+    if (-not ($previous -and $previous.commit)) { return $entry.changelog }
+
+    $paths = @(
+        "build.gradle",
+        "settings.gradle",
+        "shared/src/main",
+        "shared/src/mc1201",
+        "$($entry.projectDir)/build.gradle",
+        "$($entry.projectDir)/src/main"
+    )
+    $lines = @(Invoke-Git (@("log", "$($previous.commit)..HEAD", "--format=- %s (%h)", "--") + $paths))
+    if ($lines.Count -eq 0) { return $entry.changelog }
+    return $lines -join "`n"
+}
+
+function Publish-Modrinth($entry, [string]$version, [string]$jarPath, [string]$notes) {
     if (-not $entry.modrinthProjectId) { return }
     if (-not $env:MODRINTH_TOKEN) { throw "MODRINTH_TOKEN is required for Modrinth upload" }
 
@@ -145,7 +171,7 @@ function Publish-Modrinth($entry, [string]$version, [string]$jarPath) {
         @{
             name = "$($entry.artifactBase)-$version"
             version_number = $version
-            changelog = $entry.changelog
+            changelog = $notes
             dependencies = @()
             game_versions = @($entry.minecraftVersion)
             version_type = $entry.releaseType
@@ -172,14 +198,14 @@ function Publish-Modrinth($entry, [string]$version, [string]$jarPath) {
     }
 }
 
-function Publish-CurseForge($entry, [string]$version, [string]$jarPath) {
+function Publish-CurseForge($entry, [string]$version, [string]$jarPath, [string]$notes) {
     if (-not $entry.curseProjectId) { return }
     if (-not $env:CURSEFORGE_TOKEN) { throw "CURSEFORGE_TOKEN is required for CurseForge upload" }
 
     $metadataPath = New-TemporaryFile
     try {
         @{
-            changelog = $entry.changelog
+            changelog = $notes
             changelogType = "text"
             displayName = "$($entry.artifactBase)-$version"
             gameVersionNames = @($entry.minecraftVersion, $entry.loaderName)
@@ -200,60 +226,129 @@ function Publish-CurseForge($entry, [string]$version, [string]$jarPath) {
     }
 }
 
+function Publish-GitHubRelease($releases, $jars, [string]$sourceCommit) {
+    $stamp = (Get-Date).ToUniversalTime().ToString("yyyyMMdd-HHmmss")
+    $tag = "release-$stamp"
+    $title = ($releases | ForEach-Object { "$($_.entry.minecraftVersion) $($_.entry.loaderName) $($_.version)" }) -join ", "
+    $notes = ($releases | ForEach-Object { "## $($_.entry.artifactBase)-$($_.version).jar`n`n$($_.changelog)" }) -join "`n`n"
+
+    if ($DryRun) {
+        Write-Host "dry-run GitHub Release: $title"
+        Write-Host "dry-run GitHub assets: $(($jars | ForEach-Object { Split-Path -Leaf $_.jarPath }) -join ', ')"
+        Write-Host $notes
+        return
+    }
+
+    $notesPath = New-TemporaryFile
+    try {
+        Set-Content -LiteralPath $notesPath -Value $notes -Encoding UTF8
+        $arguments = @("release", "create", $tag) + @($jars.jarPath) + @(
+            "--target", $sourceCommit,
+            "--title", $title,
+            "--notes-file", $notesPath
+        )
+        if ($releases.entry.releaseType -contains "alpha" -or $releases.entry.releaseType -contains "beta") {
+            $arguments += "--prerelease"
+        }
+        & gh @arguments
+        if ($LASTEXITCODE -ne 0) { throw "GitHub Release creation failed" }
+    }
+    finally {
+        Remove-Item -LiteralPath $notesPath -Force -ErrorAction SilentlyContinue
+    }
+}
+
 $matrix = Read-Json $MatrixPath @()
 $state = Read-Json $StatePath ([pscustomobject]@{})
 
 Push-Location $root
 try {
+    if ($Deploy -and -not $DryRun -and (git status --porcelain)) {
+        throw "Commit or stash all changes before creating a release"
+    }
+
+    $sourceCommit = (Invoke-Git @("rev-parse", "HEAD")) -join ""
+    $plans = @()
     foreach ($entry in $matrix) {
         $entry = Resolve-ReleaseEntry $entry
         Assert-ReleaseEntry $entry
-        if ($Deploy -and -not ($entry.modrinthProjectId -or $entry.curseProjectId)) {
-            throw "$($entry.id) has no publish target. Set row ids or pass MODRINTH_PROJECT_ID and/or CURSEFORGE_PROJECT_ID."
-        }
         $fingerprint = Get-InputFingerprint $entry
         $previous = Get-StateEntry $state $entry.id
         $currentVersion = if ($previous -and $previous.version) { $previous.version } else { $entry.initialVersion }
 
-        if ($previous -and $previous.fingerprint -eq $fingerprint) {
+        $changed = -not ($previous -and $previous.fingerprint -eq $fingerprint)
+        if (-not $changed) {
             Write-Host "skip $($entry.id): unchanged at $currentVersion"
-            continue
+        }
+        if ($changed -and $Deploy -and -not $entry.modrinthProjectId) {
+            throw "$($entry.id) has no Modrinth project id. Set it in the matrix or MODRINTH_PROJECT_ID."
+        }
+        if ($changed -and $Deploy -and -not $entry.curseProjectId) {
+            throw "$($entry.id) has no CurseForge project id. Set it in the matrix or CURSEFORGE_PROJECT_ID."
         }
 
-        $nextVersion = if ($previous) { Next-PatchVersion $currentVersion } else { $currentVersion }
-        $task = ":$($entry.module):distMod"
-        $jarPath = Join-Path $root "dist\$($entry.artifactBase)-$nextVersion.jar"
+        $version = if ($changed -and $previous) { Next-PatchVersion $currentVersion } else { $currentVersion }
+        $plans += [pscustomobject]@{
+            entry = $entry
+            version = $version
+            fingerprint = $fingerprint
+            jarPath = Join-Path $root "dist\$($entry.artifactBase)-$version.jar"
+            changelog = if ($changed) { Get-EntryChangelog $entry $previous } else { $null }
+            changed = $changed
+        }
+    }
 
-        Write-Host "build $($entry.id): $nextVersion"
+    $releases = @($plans | Where-Object changed)
+    $builds = if ($Deploy -and $releases.Count -gt 0) { $plans } else { $releases }
+    foreach ($build in $builds) {
+        $label = if ($build.changed) { "build" } else { "build latest" }
+        Write-Host "$label $($build.entry.id): $($build.version)"
         if (-not $DryRun) {
-            & $gradlew $task "-PmodVersion=$nextVersion"
+            & $gradlew ":$($build.entry.module):distMod" "-PmodVersion=$($build.version)"
             if ($LASTEXITCODE -ne 0) {
-                throw "Gradle failed for $($entry.id)"
+                throw "Gradle failed for $($build.entry.id)"
             }
-            if (-not (Test-Path $jarPath)) {
-                throw "Expected jar was not created: $jarPath"
+            if (-not (Test-Path $build.jarPath)) {
+                throw "Expected jar was not created: $($build.jarPath)"
             }
         }
+    }
 
-        if ($Deploy) {
+    if ($Deploy -and $releases.Count -gt 0) {
+        foreach ($release in $releases) {
             if ($DryRun) {
-                Write-Host "dry-run deploy $($entry.id): $jarPath"
+                Write-Host "dry-run deploy $($release.entry.id): $($release.jarPath)"
             }
             else {
-                Publish-Modrinth $entry $nextVersion $jarPath
-                Publish-CurseForge $entry $nextVersion $jarPath
+                Publish-Modrinth $release.entry $release.version $release.jarPath $release.changelog
+                Publish-CurseForge $release.entry $release.version $release.jarPath $release.changelog
             }
         }
+        Publish-GitHubRelease $releases $plans $sourceCommit
+    }
 
-        if (-not $DryRun) {
-            Set-StateEntry $state $entry.id ([pscustomobject]@{
-                version = $nextVersion
-                fingerprint = $fingerprint
-                jar = $jarPath.Substring($root.Length + 1).Replace('\', '/')
+    if (-not $DryRun) {
+        foreach ($release in $releases) {
+            Set-StateEntry $state $release.entry.id ([pscustomobject]@{
+                version = $release.version
+                fingerprint = $release.fingerprint
+                jar = $release.jarPath.Substring($root.Length + 1).Replace('\', '/')
+                commit = $sourceCommit
                 updatedAt = (Get-Date).ToUniversalTime().ToString("o")
             })
-            Write-Json $StatePath $state
         }
+        Write-Json $StatePath $state
+    }
+
+    if ($Deploy -and -not $DryRun -and $releases.Count -gt 0) {
+        if (-not $StatePath.StartsWith("$root\", [StringComparison]::OrdinalIgnoreCase)) {
+            throw "Release state must be inside the repository: $StatePath"
+        }
+        $stateRelativePath = $StatePath.Substring($root.Length + 1)
+        Invoke-Git @("add", "--", $stateRelativePath) | Out-Null
+        $versions = ($releases | ForEach-Object { "$($_.entry.id) $($_.version)" }) -join ", "
+        Invoke-Git @("commit", "-m", "chore(release): $versions") | Out-Null
+        Invoke-Git @("push") | Out-Null
     }
 }
 finally {

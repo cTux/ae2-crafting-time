@@ -10,6 +10,11 @@ It currently targets:
 | 1.20.1 | Fabric | `:fabric_1_20_1` |
 | 1.21.1 | NeoForge | `:mc_1_21_1_neoforge` |
 
+## Download
+
+- [Modrinth](https://modrinth.com/mod/ae2-crafting-time)
+- [CurseForge](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-time)
+
 ## Features
 
 - Profiles completed AE2 craft outputs on the logical server.
