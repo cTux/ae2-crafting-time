@@ -6,6 +6,16 @@ $ErrorActionPreference = "Stop"
 
 Remove-Item -LiteralPath $StatePath -Force -ErrorAction SilentlyContinue
 
+$releaseDryRun = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" `
+    -StatePath $StatePath `
+    -Deploy `
+    -DryRun `
+    -ModrinthProjectId test-project `
+    -CurseProjectId 1591476
+if ($LASTEXITCODE -ne 0 -or ($releaseDryRun -join "`n") -notmatch 'dry-run GitHub Release: 1\.20\.1 Forge 1\.0\.1, 1\.20\.1 Fabric 1\.0\.1, 1\.21\.1 NeoForge 1\.0\.3') {
+    throw "Release dry run did not create the expected GitHub Release metadata"
+}
+
 $first = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" -StatePath $StatePath
 if ($LASTEXITCODE -ne 0 -or ($first -join "`n") -notmatch 'build 1\.20\.1-forge: 1\.0\.1') {
     throw "First release run did not build 1.20.1-forge"
