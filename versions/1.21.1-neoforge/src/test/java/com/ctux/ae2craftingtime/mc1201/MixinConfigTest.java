@@ -68,6 +68,18 @@ class MixinConfigTest {
     }
 
     @Test
+    void advancedAeCraftingCpuUsesServerProfiler() throws IOException {
+        var json = Files.readString(Path.of("build/resources/main/ae2craftingtime.mixins.json"));
+        var mixin = Files.readString(Path.of(
+                "src/main/java/com/ctux/ae2craftingtime/mc1201/mixin/AdvancedCraftingCpuLogicMixin.java"));
+
+        assertTrue(json.contains("\"AdvancedCraftingCpuLogicMixin\""));
+        assertTrue(mixin.contains("@Pseudo"));
+        assertTrue(mixin.contains("ProfilerBridge.start"));
+        assertTrue(mixin.contains("ProfilerBridge.complete"));
+    }
+
+    @Test
     void statusStatsRequestsUseCraftingCpuMenuGrid() throws IOException {
         var packet = Files.readString(Path.of(
                 "src/main/java/com/ctux/ae2craftingtime/mc1201/net/StatsRequestC2S.java"));

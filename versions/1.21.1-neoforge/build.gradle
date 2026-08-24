@@ -58,6 +58,7 @@ repositories {
 
 dependencies {
     implementation 'curse.maven:applied-energistics-2-223794:7027323'
+    compileOnly 'curse.maven:advancedae-1084104:8564177'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 

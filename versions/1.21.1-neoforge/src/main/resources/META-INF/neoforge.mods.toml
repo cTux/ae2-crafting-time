@@ -45,6 +45,13 @@ ordering="AFTER"
 side="BOTH"
 
 [[dependencies."${mod_id}"]]
+modId="advanced_ae"
+type="OPTIONAL"
+versionRange="[1.6.12,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies."${mod_id}"]]
 modId="merequester"
 type="OPTIONAL"
 versionRange="[1.21.1,)"
