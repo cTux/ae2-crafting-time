@@ -36,6 +36,7 @@ public abstract class AbstractTableRendererMixin {
                     target = "Lnet/minecraft/client/gui/GuiGraphics;drawString(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIIZ)I",
                     remap = true),
             remap = false)
+    @SuppressWarnings("mapping")
     private int ae2craftingtime$drawTtcWithShadow(GuiGraphics guiGraphics, Font font, Component text,
             int x, int y, int color, boolean shadow) {
         var contents = text.getContents();

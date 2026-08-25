@@ -45,15 +45,15 @@ test {
     useJUnitPlatform()
 }
 
+def distModVersion = project.version.toString()
+
 tasks.named('processResources', ProcessResources).configure {
-    inputs.property 'version', project.version
+    inputs.property 'version', distModVersion
 
     filesMatching('fabric.mod.json') {
-        expand version: project.version
+        expand version: distModVersion
     }
 }
-
-def distModVersion = project.version.toString()
 
 tasks.register('distMod', Copy) {
     dependsOn tasks.named('remapJar')
