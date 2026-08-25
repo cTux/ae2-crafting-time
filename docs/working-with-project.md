@@ -62,6 +62,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-all-versions
   network output from the first dispatch until the output becomes idle.
 - Pending batches are scoped by crafting CPU and cleared when its job finishes
   or its retained stats are reset.
+- Job-accuracy diagnostics compare a submission-time frozen total with successful
+  completion wall/tick time; cancelled jobs are excluded and partial-plan
+  predictions do not contribute to aggregate error metrics.
 - Fluid estimates must be checked in normalized units before changing math.
 - If a value looks wrong, inspect saved/runtime samples before editing the estimator.
 

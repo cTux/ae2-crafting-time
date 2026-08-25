@@ -59,7 +59,8 @@ public abstract class CraftingStatusTableRendererMixin {
         var normalized = AeKeyAmounts.normalize(entry.getWhat(), amount);
         ClientStatsRequests.request(key);
         ClientStats.CACHE.get(key).ifPresent(stats -> {
-            lines.addAll(TtcText.statsLines(entry.getWhat().getDisplayName().getString(), normalized, stats));
+            lines.addAll(TtcText.statsLines(entry.getWhat().getDisplayName().getString(), normalized, stats,
+                    ClientStats.CACHE.accuracy(key)));
         });
     }
 

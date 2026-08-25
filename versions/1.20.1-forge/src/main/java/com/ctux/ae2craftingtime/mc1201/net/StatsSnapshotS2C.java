@@ -4,6 +4,7 @@ import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
 import com.ctux.ae2craftingtime.core.StatsEntry;
+import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraftforge.network.NetworkEvent;
@@ -49,6 +50,8 @@ public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entr
             for (var amount : stats.sampleAmounts()) {
                 buffer.writeVarLong(amount);
             }
+            buffer.writeBoolean(entry.accuracy().isPresent());
+            entry.accuracy().ifPresent(accuracy -> TtcAccuracyPacketCodec.write(buffer, accuracy));
         }
     }
 
@@ -85,9 +88,11 @@ public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entr
             for (int amountIndex = 0; amountIndex < durationCount; amountIndex++) {
                 sampleAmounts.add(buffer.readVarLong());
             }
+            var accuracy = buffer.readBoolean() ? java.util.Optional.of(TtcAccuracyPacketCodec.read(buffer))
+                    : java.util.Optional.<TtcAccuracyStats>empty();
             entries.add(new StatsEntry(key, new ProfileStats(sampleCount, averageDurationTicks, amountPerTick,
                     amountPerSecond, lastDurationTicks, unit, reliableEstimate, usedSampleCount, outlierMultiplier,
-                    sampleDurationTicks, sampleAmounts)));
+                    sampleDurationTicks, sampleAmounts), accuracy));
         }
         return new StatsSnapshotS2C(requestedKeys, entries, networkAmounts);
     }

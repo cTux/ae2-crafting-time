@@ -28,6 +28,7 @@ still has a logical server.
 AE2 CraftingCpuLogic mixins on the server
   -> ProfilerBridge
   -> CraftProfiler retained samples
+  -> frozen job TTC versus successful completion accuracy
   -> Ae2CraftingTimeSavedData world save snapshot
   -> StatsRequestC2S for visible output ids
   -> server looks up stats for the active AE2 network
@@ -39,6 +40,11 @@ AE2 CraftingCpuLogic mixins on the server
 The server owns profiling, retained samples, persistence, resets, and aggregate
 stats. The client owns the display cache, request cooldowns, formatting, sort
 state, and click handling.
+
+Job-accuracy samples are a bounded runtime diagnostic. The prediction is frozen
+only after AE2 accepts a plan, and completion is recorded only when
+`finishJob(true)` runs. They are not persisted and never alter throughput
+samples or displayed TTC calculations.
 
 The client never reads profiler state directly. That rule matters in
 singleplayer too: local UI still requests snapshots from the integrated server

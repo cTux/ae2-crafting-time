@@ -3,6 +3,7 @@ package com.ctux.ae2craftingtime.mc1201;
 import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
+import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
@@ -11,6 +12,7 @@ import net.minecraft.network.chat.MutableComponent;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 public final class TtcText {
     public static MutableComponent ttc(String eta) {
@@ -50,6 +52,11 @@ public final class TtcText {
     }
 
     public static List<Component> statsLines(String name, long amount, ProfileStats stats) {
+        return statsLines(name, amount, stats, Optional.empty());
+    }
+
+    public static List<Component> statsLines(String name, long amount, ProfileStats stats,
+            Optional<TtcAccuracyStats> accuracy) {
         var lines = new ArrayList<Component>();
         lines.add(statsLine("text.ae2craftingtime.stats.item", name));
         lines.add(statsLine("text.ae2craftingtime.stats.amount",
@@ -74,10 +81,19 @@ public final class TtcText {
         }
         lines.add(statsLine("text.ae2craftingtime.stats.ttc",
                 TimeEstimate.format(amount, stats).orElse(I18n.get("text.ae2craftingtime.unknown"))));
+        accuracy.ifPresent(value -> {
+            lines.add(statsLine("text.ae2craftingtime.stats.accuracy", accuracy(value)));
+            lines.add(statsLine("text.ae2craftingtime.stats.latest_accuracy", latestAccuracy(value)));
+        });
         return List.copyOf(lines);
     }
 
     public static List<String> compactMessages(String name, long amount, ProfileStats stats) {
+        return compactMessages(name, amount, stats, Optional.empty());
+    }
+
+    public static List<String> compactMessages(String name, long amount, ProfileStats stats,
+            Optional<TtcAccuracyStats> accuracy) {
         var messages = new ArrayList<String>();
         messages.add(I18n.get("text.ae2craftingtime.chat.summary", name, amount,
                 TimeEstimate.format(amount, stats).orElse(I18n.get("text.ae2craftingtime.unknown"))));
@@ -91,6 +107,9 @@ public final class TtcText {
         }
         if (!stats.reliableEstimate()) {
             details += I18n.get("text.ae2craftingtime.chat.details.low_confidence");
+        }
+        if (accuracy.isPresent()) {
+            details += " | " + accuracy(accuracy.get()) + "; " + latestAccuracy(accuracy.get());
         }
         messages.add(details);
         return List.copyOf(messages);
@@ -152,6 +171,26 @@ public final class TtcText {
             return I18n.get("text.ae2craftingtime.confidence.low_outliers");
         }
         return I18n.get("text.ae2craftingtime.confidence.low");
+    }
+
+    private static String accuracy(TtcAccuracyStats stats) {
+        if (stats.fullyCoveredSampleCount() == 0) {
+            return I18n.get("text.ae2craftingtime.value.accuracy_pending", stats.sampleCount(),
+                    percent(stats.averageCoverage()));
+        }
+        return I18n.get("text.ae2craftingtime.value.accuracy", stats.fullyCoveredSampleCount(), stats.sampleCount(),
+                rate(stats.meanAbsolutePercentageError()), rate(stats.meanActualToPredictedRatio()),
+                String.format(Locale.ROOT, "%+.2f", stats.meanSignedErrorSeconds()), percent(stats.averageCoverage()));
+    }
+
+    private static String latestAccuracy(TtcAccuracyStats stats) {
+        return I18n.get("text.ae2craftingtime.value.latest_accuracy", stats.lastPredictedSeconds(),
+                rate(stats.lastActualWallSeconds()), rate(stats.lastActualTickSeconds()), stats.lastKnownRows(),
+                stats.lastTotalRows());
+    }
+
+    private static String percent(double ratio) {
+        return rate(ratio * 100.0);
     }
 
     private TtcText() {
