@@ -36,12 +36,22 @@ public abstract class AbstractTableRendererMixin {
                     target = "Lnet/minecraft/client/gui/GuiGraphics;drawString(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIIZ)I",
                     remap = true),
             remap = false)
-    private int ae2craftingtime$drawTtcWithShadow(GuiGraphics guiGraphics, Font font, Component text,
+    private int ae2craftingtime$drawTtcWithOutline(GuiGraphics guiGraphics, Font font, Component text,
             int x, int y, int color, boolean shadow) {
         var contents = text.getContents();
         var isTtc = contents instanceof TranslatableContents translatable
                 && translatable.getKey().equals("text.ae2craftingtime.ttc");
-        return guiGraphics.drawString(font, text, x, y, color, shadow || isTtc);
+        if (!isTtc) {
+            return guiGraphics.drawString(font, text, x, y, color, shadow);
+        }
+
+        var outline = text.copy().withStyle(style -> style.withColor(0xFFFFFF));
+        guiGraphics.drawString(font, outline, x - 1, y, color, false);
+        guiGraphics.drawString(font, outline, x + 1, y, color, false);
+        guiGraphics.drawString(font, outline, x, y - 1, color, false);
+        guiGraphics.drawString(font, outline, x, y + 1, color, false);
+        guiGraphics.drawString(font, outline, x + 1, y + 1, color, false);
+        return guiGraphics.drawString(font, text, x, y, color, false);
     }
 
     @Inject(method = "render", at = @At("HEAD"), remap = false)
