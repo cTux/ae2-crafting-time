@@ -152,7 +152,7 @@ function Set-StateEntry($state, [string]$id, $value) {
 function Invoke-Curl($arguments) {
     $output = & curl.exe @arguments
     if ($LASTEXITCODE -ne 0) {
-        throw "curl failed with exit code $LASTEXITCODE"
+        throw "curl failed with exit code $LASTEXITCODE`: $($output -join "`n")"
     }
     return $output
 }
