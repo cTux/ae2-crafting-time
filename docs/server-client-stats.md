@@ -46,6 +46,7 @@ Server owns:
 - `CraftProfiler`
 - pending operation matching
 - rolling sample buffers
+- concurrent production-window aggregation
 - average duration and throughput calculation
 - config value that affects collection: `enabled`
 
@@ -103,11 +104,19 @@ entries:
   amountPerTick: double
   amountPerSecond: double
   lastDurationTicks: long
+  sampleDurationTicks: list<long>
+  sampleAmounts: list<long>
 ```
 
 Rules:
 
 - Snapshot is immutable display data.
+- A sample describes one continuous production window for an output across all
+  crafting CPUs on the AE2 network, not one individual pattern push. This makes
+  its amount-per-time rate include parallel batches.
+- Pending pattern outputs are still matched per crafting CPU. Finishing or
+  cancelling a CPU job discards its unmatched pending outputs so they cannot
+  inflate a future sample.
 - Client drops cache entries for requested keys before applying returned stats.
 - Missing entries therefore mean "no known stats for this output in the current network-scoped context".
 

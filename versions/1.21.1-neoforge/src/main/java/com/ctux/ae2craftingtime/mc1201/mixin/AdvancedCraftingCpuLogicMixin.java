@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
 @Mixin(targets = "net.pedroksl.advanced_ae.common.logic.AdvCraftingCPULogic", remap = false)
@@ -32,7 +33,7 @@ public abstract class AdvancedCraftingCpuLogicMixin {
             Actionable type) {
         inventory.insert(what, amount, type);
         if (type == Actionable.MODULATE && amount > 0) {
-            ProfilerBridge.start(ProfilerBridge.networkId(cpu.getGrid()), what, amount,
+            ProfilerBridge.start(ProfilerBridge.networkId(cpu.getGrid()), cpu, what, amount,
                     cpu.getLevel().getGameTime());
         }
     }
@@ -47,8 +48,13 @@ public abstract class AdvancedCraftingCpuLogicMixin {
         var waiting = ((AdvCraftingCPULogic) (Object) this).getWaitingFor(what);
         var accepted = Math.min(amount, waiting);
         if (accepted > 0) {
-            ProfilerBridge.complete(ProfilerBridge.networkId(cpu.getGrid()), what, accepted,
+            ProfilerBridge.complete(ProfilerBridge.networkId(cpu.getGrid()), cpu, what, accepted,
                     cpu.getLevel().getGameTime());
         }
+    }
+
+    @Inject(method = "finishJob", at = @At("HEAD"), remap = false, require = 0)
+    private void ae2craftingtime$clearPendingOutputs(boolean success, CallbackInfo ci) {
+        ProfilerBridge.clearPending(cpu);
     }
 }

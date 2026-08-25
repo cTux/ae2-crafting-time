@@ -56,6 +56,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-all-versions
 - Singleplayer and dedicated server-client play use the same logical-server
   stats request/response flow.
 - Status TTC estimates use `activeAmount + pendingAmount`.
+- Throughput samples aggregate all concurrent crafting-CPU batches for the same
+  network output from the first dispatch until the output becomes idle.
+- Pending batches are scoped by crafting CPU and cleared when its job finishes
+  or its retained stats are reset.
 - Fluid estimates must be checked in normalized units before changing math.
 - If a value looks wrong, inspect saved/runtime samples before editing the estimator.
 

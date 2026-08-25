@@ -23,19 +23,31 @@ public final class ProfilerBridge {
     }
 
     public static void start(String networkId, AEKey what, long amount, long tick) {
+        start(networkId, ProfilerBridge.class, what, amount, tick);
+    }
+
+    public static void start(String networkId, Object scope, AEKey what, long amount, long tick) {
         if (what == null || amount <= 0 || !isEnabled()) {
             return;
         }
-        PROFILER.start(key(networkId, what), normalizeAmount(what, amount), unit(what), tick);
+        PROFILER.start(key(networkId, what), scope, normalizeAmount(what, amount), unit(what), tick);
     }
 
     public static void complete(String networkId, AEKey what, long amount, long tick) {
+        complete(networkId, ProfilerBridge.class, what, amount, tick);
+    }
+
+    public static void complete(String networkId, Object scope, AEKey what, long amount, long tick) {
         if (what == null || !isEnabled()) {
             return;
         }
-        if (PROFILER.complete(key(networkId, what), normalizeAmount(what, amount), tick) && savedData != null) {
+        if (PROFILER.complete(key(networkId, what), scope, normalizeAmount(what, amount), tick) && savedData != null) {
             savedData.replaceFrom(PROFILER.snapshotSamples());
         }
+    }
+
+    public static void clearPending(Object scope) {
+        PROFILER.clearPending(scope);
     }
 
     public static Optional<ProfileStats> stats(AEKey what) {

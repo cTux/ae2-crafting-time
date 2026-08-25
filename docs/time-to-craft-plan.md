@@ -48,6 +48,10 @@ Do not calculate timing on the client.
 
 The current server snapshot already carries `amountPerSecond`, so no new packet type is required.
 
+`amountPerSecond` is derived from continuous production windows that combine
+concurrent batches for the same network output. Individual pattern latency is
+not treated as if every parallel batch ran sequentially.
+
 ## Estimate Formula
 
 For each craft-plan entry:

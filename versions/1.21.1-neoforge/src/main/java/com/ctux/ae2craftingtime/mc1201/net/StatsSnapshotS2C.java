@@ -53,6 +53,9 @@ public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entr
             for (var duration : stats.sampleDurationTicks()) {
                 buffer.writeVarLong(duration);
             }
+            for (var amount : stats.sampleAmounts()) {
+                buffer.writeVarLong(amount);
+            }
         }
     }
 
@@ -80,9 +83,13 @@ public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entr
             for (int durationIndex = 0; durationIndex < durationCount; durationIndex++) {
                 sampleDurationTicks.add(buffer.readVarLong());
             }
+            var sampleAmounts = new ArrayList<Long>(durationCount);
+            for (int amountIndex = 0; amountIndex < durationCount; amountIndex++) {
+                sampleAmounts.add(buffer.readVarLong());
+            }
             entries.add(new StatsEntry(key, new ProfileStats(sampleCount, averageDurationTicks, amountPerTick,
                     amountPerSecond, lastDurationTicks, unit, reliableEstimate, usedSampleCount, outlierMultiplier,
-                    sampleDurationTicks)));
+                    sampleDurationTicks, sampleAmounts)));
         }
         return new StatsSnapshotS2C(requestedKeys, entries);
     }
