@@ -13,6 +13,10 @@ description: Work on AE2 Crafting Time build, release, distribution, and deploym
 4. Keep jar names loader-explicit.
 5. Do not add a matrix row until the matching module builds a real jar.
 6. Run the release script self-check after script or matrix edits.
+7. For a normal release, start from a clean branch based on `origin/master`, run one `-Deploy -DryRun`, then one real `-Deploy`. Do not pre-run `build-all-versions.ps1`; deploy already builds the complete GitHub asset set.
+8. On Windows, if tokens are absent from the process, load `MODRINTH_TOKEN` and `CURSEFORGE_TOKEN` from user scope with `[Environment]::GetEnvironmentVariable(..., "User")`. Never print token values.
+9. After deploy, verify GitHub assets and Modrinth versions, confirm CurseForge accepted each upload, merge the hook-created release PR, and verify `origin/master` has the next patch `modVersion`.
+10. Before retrying a failed upload, inspect the printed platform error and confirm no partial version, GitHub release, local state, or version bump was created.
 
 ## Files
 
@@ -24,9 +28,16 @@ description: Work on AE2 Crafting Time build, release, distribution, and deploym
 
 ## Checks
 
+After changing the deploy script or matrix:
+
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-deploy-changed.ps1
+```
+
+After changing Gradle release tasks or artifact naming:
+
+```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-all-versions.ps1
 ```
 
-For upload work, require `MODRINTH_TOKEN` and/or `CURSEFORGE_TOKEN` only when `-Deploy` is requested.
+For upload work, require both `MODRINTH_TOKEN` and `CURSEFORGE_TOKEN` only for a real `-Deploy`. Read the copy-paste Windows fast path in `docs/release.md` before deploying.

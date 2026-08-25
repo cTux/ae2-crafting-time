@@ -27,14 +27,42 @@ Build only changed jars at the current development version:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-changed.ps1
 ```
 
-Release changed jars to Modrinth, CurseForge, and GitHub:
+## Fast release and deploy
+
+Start from a clean branch based on `origin/master`. The real deploy builds every
+JAR needed by the GitHub Release, so do not run `build-all-versions.ps1` first.
+
+Windows user environment variables are not automatically added to an already
+running Codex process. Load the existing user-scoped secrets into the current
+PowerShell process without printing them, run the cheap dry run, then deploy:
 
 ```powershell
+$env:MODRINTH_TOKEN = [Environment]::GetEnvironmentVariable("MODRINTH_TOKEN", "User")
+$env:CURSEFORGE_TOKEN = [Environment]::GetEnvironmentVariable("CURSEFORGE_TOKEN", "User")
+if ([string]::IsNullOrWhiteSpace($env:MODRINTH_TOKEN)) { throw "MODRINTH_TOKEN is missing at user scope" }
+if ([string]::IsNullOrWhiteSpace($env:CURSEFORGE_TOKEN)) { throw "CURSEFORGE_TOKEN is missing at user scope" }
 $env:RELEASE_TYPE = "release"
-$env:MODRINTH_TOKEN = "..."
-$env:CURSEFORGE_TOKEN = "..."
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-changed.ps1 -Deploy -DryRun
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-changed.ps1 -Deploy
 ```
+
+The dry run validates the release plan without building or uploading. The real
+deploy builds changed rows at `modVersion`, rebuilds unchanged rows at their
+latest released versions for the complete GitHub asset set, uploads changed
+rows, creates the GitHub Release, bumps `modVersion`, commits the release state,
+and pushes the branch.
+
+After it succeeds:
+
+1. Verify the GitHub Release contains one loader-explicit JAR for every matrix row.
+2. Verify each new Modrinth version is listed with the expected loader and game version.
+3. Confirm CurseForge accepted every upload. Public visibility can lag, and the author upload token may not be authorized for the public files read endpoint.
+4. Merge the hook-created release PR and verify `origin/master` contains the next patch `modVersion`.
+
+If an upload fails, use the response body printed by the script. Before retrying,
+check the affected platform, GitHub releases, `.release-state.json`, and the
+working tree for partial completion; retry only when the rejected version was
+not created.
 
 `deploy-changed.ps1` fingerprints only jar inputs: root build files, shared main code, and the matrix row's version main code. Test-only edits do not build or deploy.
 
@@ -46,7 +74,7 @@ Release metadata can come from the matrix row or from environment overrides. `RE
 
 `-Deploy` fails fast unless both platform project ids resolve for every affected row. The current Modrinth and CurseForge project ids are stored per row in the release matrix.
 
-Check the release script:
+Check the release script after changing `deploy-changed.ps1` or the release matrix:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\test-deploy-changed.ps1
