@@ -4,7 +4,7 @@ plugins {
 
 allprojects {
     group = 'com.ctux.ae2craftingtime'
-    version = findProperty('modVersion') ?: '1.0.0'
+    version = providers.gradleProperty('modVersion').get()
 
     repositories {
         mavenCentral()
