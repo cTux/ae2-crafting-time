@@ -31,7 +31,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.OptionalLong;
@@ -125,12 +124,8 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
             return title;
         }
 
-        var estimates = new ArrayList<OptionalLong>();
-        for (var entry : status.getEntries()) {
-            estimates.add(ae2craftingtime$seconds(entry));
-        }
-
-        var eta = TimeEstimate.formatTotal(estimates);
+        var eta = TimeEstimate.formatTotal(List.of(TimeEstimate.progressSeconds(
+                status.getElapsedTime(), status.getStartItemCount(), status.getRemainingItemCount())));
         if (eta.isEmpty()) {
             return title;
         }

@@ -73,6 +73,10 @@ For the whole ordered craft, use the plan entries and calculate each known row
 with the same formula. Display the total as the sum of known row ETAs. If no row
 has known stats, show no total line and request missing stats.
 
+The running crafting-status screen is different: its total uses AE2's elapsed
+time and overall completed-work progress. It must not sum status rows because
+independent rows and crafting CPUs can run concurrently.
+
 ## Amount Normalization
 
 The estimate must use the same units as profiling throughput.
