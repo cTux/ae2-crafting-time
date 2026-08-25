@@ -154,7 +154,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
         ae2craftingtime$titleTtc = total;
         ae2craftingtime$titleTtcX = AE2CRAFTINGTIME_TITLE_PADDING + font.width(title) + font.width(separator);
-        return title.copy().append(separator).append(total);
+        return title;
     }
 
     @Inject(method = "drawFG", at = @At("RETURN"), remap = false)

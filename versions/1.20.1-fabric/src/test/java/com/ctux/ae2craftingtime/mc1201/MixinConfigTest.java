@@ -56,6 +56,7 @@ class MixinConfigTest {
         assertTrue(screenMixin.contains("method = \"updateBeforeRender\""));
         assertTrue(screenMixin.contains("TtcText.ttc"));
         assertTrue(screenMixin.contains("AE2CRAFTINGTIME_SCREEN_WIDTH"));
+        assertFalse(screenMixin.contains("append(separator).append(total)"));
         assertFalse(screenMixin.contains("drawString(font, text, 109 - font.width(text) / 2, 162"));
         assertTrue(screenMixin.contains("new TtcSortButton"));
         assertTrue(screenMixin.contains("TtcSort.copySorted"));
