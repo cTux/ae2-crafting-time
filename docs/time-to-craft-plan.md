@@ -155,6 +155,11 @@ text, centered below the node with Minecraft text shadow. The tree reserves
 extra vertical spacing for the badge so it does not cover the node amount or
 connector lines.
 
+ME Requester uses the same compact dark badge and text shadow. Row TTC badges
+are centered over the request status lines and colored by relative duration;
+the total badge stays inside the requester header instead of extending beyond
+the screen.
+
 ## Tests
 
 Small tests that matter:

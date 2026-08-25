@@ -174,6 +174,11 @@ class MixinConfigTest {
         assertTrue(mixin.contains("targets = \"com.almostreliable.merequester.client.abstraction.AbstractRequesterScreen\""));
         assertTrue(mixin.contains("TtcText.requesterTtc"));
         assertTrue(mixin.contains("TtcText.totalTtc"));
+        assertTrue(mixin.contains("AE2CRAFTINGTIME_STATUS_X = 47"));
+        assertTrue(mixin.contains("AE2CRAFTINGTIME_STATUS_WIDTH = 118"));
+        assertTrue(mixin.contains("AE2CRAFTINGTIME_LABEL_BACKGROUND = 0xD0202028"));
+        assertTrue(mixin.contains("TtcColor.forSeconds"));
+        assertTrue(mixin.contains("color, true"));
         assertTrue(mixin.contains("getMethod(methodName)"));
     }
 }
