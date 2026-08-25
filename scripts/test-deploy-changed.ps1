@@ -34,6 +34,10 @@ if (($first -join "`n") -notmatch 'build 1\.21\.1-neoforge: 1\.0\.4') {
 if (($first -join "`n") -notmatch 'build 1\.20\.1-fabric: 1\.0\.4') {
     throw "First release run did not build 1.20.1-fabric"
 }
+$stateBytes = [IO.File]::ReadAllBytes($StatePath)
+if ($stateBytes.Length -ge 3 -and $stateBytes[0] -eq 0xEF -and $stateBytes[1] -eq 0xBB -and $stateBytes[2] -eq 0xBF) {
+    throw "Release JSON must be UTF-8 without a BOM"
+}
 
 $partialStatePath = "$StatePath.partial"
 Copy-Item -LiteralPath $StatePath -Destination $partialStatePath -Force

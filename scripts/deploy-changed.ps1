@@ -29,7 +29,7 @@ function Read-Json($path, $fallback) {
 }
 
 function Write-Json($path, $value) {
-    $value | ConvertTo-Json -Depth 8 | Set-Content -Path $path -Encoding UTF8
+    [IO.File]::WriteAllText($path, ($value | ConvertTo-Json -Depth 8), (New-Object Text.UTF8Encoding($false)))
 }
 
 function Assert-ReleaseEntry($entry) {
@@ -192,7 +192,7 @@ function Publish-Modrinth($entry, [string]$version, [string]$jarPath, [string]$n
 
     $dataPath = New-TemporaryFile
     try {
-        @{
+        $data = @{
             name = [IO.Path]::GetFileNameWithoutExtension((Get-ArtifactFileName $entry $version))
             version_number = "$($entry.id)-$version"
             changelog = $notes
@@ -206,7 +206,8 @@ function Publish-Modrinth($entry, [string]$version, [string]$jarPath, [string]$n
             project_id = $entry.modrinthProjectId
             file_parts = @("file")
             primary_file = "file"
-        } | ConvertTo-Json -Depth 6 | Set-Content -Path $dataPath -Encoding UTF8
+        }
+        Write-Json $dataPath $data
 
         Invoke-Curl @(
             "-sS", "--fail-with-body",
@@ -228,14 +229,15 @@ function Publish-CurseForge($entry, [string]$version, [string]$jarPath, [string]
 
     $metadataPath = New-TemporaryFile
     try {
-        @{
+        $metadata = @{
             changelog = $notes
             changelogType = "text"
             displayName = [IO.Path]::GetFileNameWithoutExtension((Get-ArtifactFileName $entry $version))
             gameVersionNames = @($entry.minecraftVersion, $entry.loaderName, "Client", "Server")
             releaseType = $entry.releaseType
             isMarkedForManualRelease = $false
-        } | ConvertTo-Json -Depth 6 | Set-Content -Path $metadataPath -Encoding UTF8
+        }
+        Write-Json $metadataPath $metadata
 
         Invoke-Curl @(
             "-sS", "--fail-with-body",
