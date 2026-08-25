@@ -109,5 +109,5 @@ tasks.register('distMod', Copy) {
     dependsOn tasks.named('jar')
     from tasks.named('jar').flatMap { it.archiveFile }
     into rootProject.layout.projectDirectory.dir('dist')
-    rename { "ae2-crafting-time-${distModVersion}-neoforge_1.21.1.jar" }
+    rename { "ae2-crafting-time-${distModVersion}-neoforge-1.21.1.jar" }
 }

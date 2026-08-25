@@ -79,7 +79,7 @@ function Next-PatchVersion([string]$version) {
 }
 
 function Get-ArtifactFileName($entry, [string]$version) {
-    return "$($entry.modName)-$version-$($entry.loader)_$($entry.minecraftVersion).jar"
+    return "$($entry.modName)-$version-$($entry.loader)-$($entry.minecraftVersion).jar"
 }
 
 function Get-DevelopmentVersion([string]$path) {
