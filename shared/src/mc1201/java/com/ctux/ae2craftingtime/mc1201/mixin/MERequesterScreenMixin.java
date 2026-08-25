@@ -3,6 +3,7 @@ package com.ctux.ae2craftingtime.mc1201.mixin;
 import appeng.api.stacks.AEKey;
 import appeng.client.gui.widgets.Scrollbar;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
+import com.ctux.ae2craftingtime.core.TtcColor;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
@@ -29,13 +30,25 @@ import java.util.OptionalLong;
 @Mixin(targets = "com.almostreliable.merequester.client.abstraction.AbstractRequesterScreen", remap = false)
 public abstract class MERequesterScreenMixin {
     @Unique
-    private static final int AE2CRAFTINGTIME_GUI_WIDTH = 195;
+    private static final float AE2CRAFTINGTIME_TEXT_SCALE = 0.5f;
     @Unique
-    private static final int AE2CRAFTINGTIME_GUI_HEADER_HEIGHT = 20;
+    private static final int AE2CRAFTINGTIME_LABEL_BACKGROUND = 0xD0202028;
     @Unique
-    private static final int AE2CRAFTINGTIME_ROW_HEIGHT = 19;
+    private static final int AE2CRAFTINGTIME_LABEL_PADDING_X = 2;
     @Unique
-    private static final int AE2CRAFTINGTIME_TTC_X = AE2CRAFTINGTIME_GUI_WIDTH + 4;
+    private static final int AE2CRAFTINGTIME_LABEL_HEIGHT = 7;
+    @Unique
+    private static final int AE2CRAFTINGTIME_STATUS_X = 47;
+    @Unique
+    private static final int AE2CRAFTINGTIME_STATUS_WIDTH = 118;
+
+    @Shadow
+    @Final
+    private static int GUI_HEADER_HEIGHT;
+
+    @Shadow
+    @Final
+    private static int ROW_HEIGHT;
 
     @Shadow
     @Final
@@ -55,27 +68,56 @@ public abstract class MERequesterScreenMixin {
             return;
         }
 
-        var estimates = new ArrayList<OptionalLong>();
+        var estimates = new ArrayList<MERequesterEstimate>();
         var scroll = scrollbar.getCurrentScroll();
         for (var row = 0; row < rowAmount && scroll + row < lines.size(); row++) {
-            var estimate = ae2craftingtime$estimate(lines.get(scroll + row));
-            var rowIndex = row;
-            estimates.add(estimate.seconds());
-            estimate.label().ifPresent(label -> ae2craftingtime$drawLabel(guiGraphics, rowIndex, label));
+            estimates.add(ae2craftingtime$estimate(lines.get(scroll + row)));
         }
 
-        TimeEstimate.formatTotal(estimates).ifPresent(eta -> ae2craftingtime$drawLabel(guiGraphics, rowAmount,
-                TtcText.totalTtc(eta)));
+        var knownSeconds = estimates.stream().flatMapToLong(estimate -> estimate.seconds().stream()).toArray();
+        var minSeconds = knownSeconds.length == 0 ? 0 : java.util.Arrays.stream(knownSeconds).min().orElseThrow();
+        var maxSeconds = knownSeconds.length == 0 ? 0 : java.util.Arrays.stream(knownSeconds).max().orElseThrow();
+        for (var row = 0; row < estimates.size(); row++) {
+            var estimate = estimates.get(row);
+            var color = estimate.seconds().isPresent()
+                    ? TtcColor.forSeconds(estimate.seconds().getAsLong(), minSeconds, maxSeconds)
+                    : 0xE0E0E0;
+            var rowIndex = row;
+            estimate.label().ifPresent(label -> ae2craftingtime$drawRowBadge(guiGraphics, rowIndex, label, color));
+        }
+
+        TimeEstimate.formatTotal(estimates.stream().map(MERequesterEstimate::seconds).toList())
+                .ifPresent(eta -> ae2craftingtime$drawBadge(guiGraphics, 160, 6, TtcText.totalTtc(eta), 0xE0E0E0));
     }
 
     @Unique
-    private static void ae2craftingtime$drawLabel(GuiGraphics guiGraphics, int row, Component label) {
+    private static void ae2craftingtime$drawRowBadge(GuiGraphics guiGraphics, int row, Component label, int color) {
+        var x = AE2CRAFTINGTIME_STATUS_X + AE2CRAFTINGTIME_STATUS_WIDTH / 2;
+        var y = GUI_HEADER_HEIGHT + row * ROW_HEIGHT + 12;
+        ae2craftingtime$drawBadge(guiGraphics, x, y, label, color);
+    }
+
+    @Unique
+    private static void ae2craftingtime$drawBadge(GuiGraphics guiGraphics, int centerX, int top, Component label,
+            int color) {
         var font = Minecraft.getInstance().font;
-        var y = AE2CRAFTINGTIME_GUI_HEADER_HEIGHT + row * AE2CRAFTINGTIME_ROW_HEIGHT + 5;
-        var width = font.width(label);
-        guiGraphics.fill(AE2CRAFTINGTIME_TTC_X - 2, y - 1, AE2CRAFTINGTIME_TTC_X + width + 2, y + 9,
-                0xA0000000);
-        guiGraphics.drawString(font, label, AE2CRAFTINGTIME_TTC_X, y, 0xE0E0E0, false);
+        var scaledTextWidth = font.width(label) * AE2CRAFTINGTIME_TEXT_SCALE;
+        var labelWidth = (int) Math.ceil(scaledTextWidth) + AE2CRAFTINGTIME_LABEL_PADDING_X * 2;
+        var labelLeft = centerX - labelWidth / 2.0f;
+        var textX = (int) ((centerX - scaledTextWidth / 2) / AE2CRAFTINGTIME_TEXT_SCALE);
+        var textY = (int) ((top + 1) / AE2CRAFTINGTIME_TEXT_SCALE);
+        var pose = guiGraphics.pose();
+
+        pose.pushPose();
+        pose.scale(AE2CRAFTINGTIME_TEXT_SCALE, AE2CRAFTINGTIME_TEXT_SCALE, AE2CRAFTINGTIME_TEXT_SCALE);
+        guiGraphics.fill(
+                (int) Math.floor(labelLeft / AE2CRAFTINGTIME_TEXT_SCALE),
+                (int) Math.floor((double) top / AE2CRAFTINGTIME_TEXT_SCALE),
+                (int) Math.ceil((labelLeft + labelWidth) / AE2CRAFTINGTIME_TEXT_SCALE),
+                (int) Math.ceil((double) (top + AE2CRAFTINGTIME_LABEL_HEIGHT) / AE2CRAFTINGTIME_TEXT_SCALE),
+                AE2CRAFTINGTIME_LABEL_BACKGROUND);
+        guiGraphics.drawString(font, label, textX, textY, color, true);
+        pose.popPose();
     }
 
     @Unique
