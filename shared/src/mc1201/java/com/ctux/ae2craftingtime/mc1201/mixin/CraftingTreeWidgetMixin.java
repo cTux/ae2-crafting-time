@@ -35,8 +35,12 @@ import java.util.OptionalLong;
 @Mixin(targets = "com.neuvillette.ae2ct.gui.CraftingTreeWidget", remap = false)
 @Pseudo
 public abstract class CraftingTreeWidgetMixin {
-    private static final float TEXT_SCALE = 0.45f;
-    private static final int LABEL_BACKGROUND = 0xFFDBDBDB;
+    private static final float TEXT_SCALE = 0.5f;
+    private static final int LABEL_BACKGROUND = 0xD0202028;
+    private static final int EXTRA_SPACING_Y = 8;
+    private static final int LABEL_PADDING_X = 2;
+    private static final int LABEL_TOP_OFFSET = 20;
+    private static final int LABEL_HEIGHT = 7;
 
     @Shadow
     private int outputX;
@@ -51,6 +55,7 @@ public abstract class CraftingTreeWidgetMixin {
     protected abstract Point getMousePoint(double mouseX, double mouseY);
 
     private Object ae2craftingtime$colorRoot;
+    private int ae2craftingtime$baseSpacingY;
     private Map<Object, Long> ae2craftingtime$secondsByNode = Map.of();
     private Map<Object, Integer> ae2craftingtime$colorsByNode = Map.of();
 
@@ -70,6 +75,11 @@ public abstract class CraftingTreeWidgetMixin {
     @Inject(method = "draw", at = @At("HEAD"), require = 0)
     private void ae2craftingtime$beginFrame(GuiGraphics guiGraphics, int offsetX, int offsetY, int mouseX, int mouseY,
             CallbackInfo ci) {
+        if (ae2craftingtime$baseSpacingY == 0) {
+            ae2craftingtime$baseSpacingY = spacingY;
+        }
+        spacingY = ae2craftingtime$baseSpacingY
+                + (Ae2CraftingTimeConfig.SHOW_IN_TREE.get() ? EXTRA_SPACING_Y : 0);
         ae2craftingtime$colorRoot = null;
     }
 
@@ -100,17 +110,21 @@ public abstract class CraftingTreeWidgetMixin {
         var pose = guiGraphics.pose();
         var font = Minecraft.getInstance().font;
         var color = ae2craftingtime$colorsByNode.getOrDefault(node, TtcColor.GREEN);
-        var textX = (int) ((x - 3 + (24 - font.width(text) * TEXT_SCALE) / 2) / TEXT_SCALE);
-        var textY = (int) ((y + 15) / TEXT_SCALE);
-        var stripLeft = (int) ((x - 3) / TEXT_SCALE);
-        var stripTop = (int) ((y + 14) / TEXT_SCALE);
-        var stripRight = (int) ((x + 21) / TEXT_SCALE);
-        var stripBottom = (int) ((y + 20) / TEXT_SCALE);
+        var scaledTextWidth = font.width(text) * TEXT_SCALE;
+        var labelWidth = (int) Math.ceil(scaledTextWidth) + LABEL_PADDING_X * 2;
+        var labelLeft = x + 8 - labelWidth / 2.0f;
+        var labelTop = y + LABEL_TOP_OFFSET;
+        var textX = (int) ((x + 8 - scaledTextWidth / 2) / TEXT_SCALE);
+        var textY = (int) ((labelTop + 1) / TEXT_SCALE);
+        var stripLeft = (int) Math.floor(labelLeft / TEXT_SCALE);
+        var stripTop = (int) Math.floor(labelTop / TEXT_SCALE);
+        var stripRight = (int) Math.ceil((labelLeft + labelWidth) / TEXT_SCALE);
+        var stripBottom = (int) Math.ceil((labelTop + LABEL_HEIGHT) / TEXT_SCALE);
 
         pose.pushPose();
         pose.scale(TEXT_SCALE, TEXT_SCALE, TEXT_SCALE);
         guiGraphics.fill(stripLeft, stripTop, stripRight, stripBottom, LABEL_BACKGROUND);
-        guiGraphics.drawString(font, text, textX, textY, color, false);
+        guiGraphics.drawString(font, text, textX, textY, color, true);
         pose.popPose();
     }
 

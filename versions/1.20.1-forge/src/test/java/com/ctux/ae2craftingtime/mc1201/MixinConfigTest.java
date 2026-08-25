@@ -77,6 +77,11 @@ class MixinConfigTest {
 
         assertTrue(mixin.contains("ae2craftingtime$colorSiblingGroup(subNodes"));
         assertTrue(mixin.contains("ae2craftingtime$colorsByNode"));
+        assertTrue(mixin.contains("LABEL_BACKGROUND = 0xD0202028"));
+        assertTrue(mixin.contains("EXTRA_SPACING_Y = 8"));
+        assertTrue(mixin.contains("font.width(text) * TEXT_SCALE"));
+        assertTrue(mixin.contains("color, true"));
+        assertFalse(mixin.contains("LABEL_BACKGROUND = 0xFFDBDBDB"));
     }
 
     @Test
