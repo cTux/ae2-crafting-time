@@ -129,13 +129,17 @@ public abstract class MERequesterScreenMixin {
         }
 
         var profileKey = ProfilerBridge.key(key.get());
+        ClientStatsRequests.request(profileKey);
+        var networkAmount = ClientStats.networkAmount(profileKey);
+        if (networkAmount.isEmpty() || amount <= networkAmount.getAsLong()) {
+            return MERequesterEstimate.empty();
+        }
         var stats = ClientStats.CACHE.get(profileKey);
         if (stats.isEmpty()) {
-            ClientStatsRequests.request(profileKey);
             return new MERequesterEstimate(Optional.of(TtcText.noStats()), OptionalLong.empty());
         }
 
-        var normalized = AeKeyAmounts.normalize(key.get(), amount);
+        var normalized = AeKeyAmounts.normalize(key.get(), amount - networkAmount.getAsLong());
         var seconds = TimeEstimate.seconds(normalized, stats.get());
         var label = TimeEstimate.format(normalized, stats.get()).map(eta -> (Component) TtcText.requesterTtc(eta));
         return new MERequesterEstimate(label, seconds);

@@ -158,7 +158,9 @@ connector lines.
 ME Requester uses the same compact dark badge and text shadow. Row TTC badges
 are centered over the request status lines and colored by relative duration;
 the total badge stays inside the requester header instead of extending beyond
-the screen.
+the screen. Its row estimate uses only the current network shortfall:
+`normalize(max(0, wanted amount - network amount)) / amountPerSecond`. A row
+whose wanted amount is already available does not show a TTC badge.
 
 ## Tests
 

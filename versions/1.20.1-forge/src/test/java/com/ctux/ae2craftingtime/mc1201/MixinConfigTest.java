@@ -157,6 +157,8 @@ class MixinConfigTest {
         assertTrue(mixin.contains("AE2CRAFTINGTIME_STATUS_WIDTH = 118"));
         assertTrue(mixin.contains("AE2CRAFTINGTIME_LABEL_BACKGROUND = 0xD0202028"));
         assertTrue(mixin.contains("TtcColor.forSeconds"));
+        assertTrue(mixin.contains("amount <= networkAmount.getAsLong()"));
+        assertTrue(mixin.contains("amount - networkAmount.getAsLong()"));
         assertTrue(mixin.contains("color, true"));
         assertTrue(mixin.contains("getMethod(methodName)"));
     }
