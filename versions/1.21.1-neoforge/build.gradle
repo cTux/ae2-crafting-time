@@ -11,7 +11,7 @@ java {
 }
 
 neoForge {
-    version = '21.1.234'
+    version = '21.1.248'
 
     runs {
         client {

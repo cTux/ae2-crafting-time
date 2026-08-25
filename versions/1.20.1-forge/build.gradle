@@ -7,7 +7,7 @@ base {
 }
 
 legacyForge {
-    version = '1.20.1-47.3.7'
+    version = '1.20.1-47.4.23'
     validateAccessTransformers = true
 
     runs {
@@ -60,7 +60,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'appeng:appliedenergistics2-forge:15.2.11'
+    implementation 'appeng:appliedenergistics2-forge:15.4.10'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 
