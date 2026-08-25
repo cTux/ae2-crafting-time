@@ -150,6 +150,11 @@ Crafting: M
 Time To Craft: ~000:02:15
 ```
 
+Visible Crafting Tree TTC badges use a compact dark background sized to their
+text, centered below the node with Minecraft text shadow. The tree reserves
+extra vertical spacing for the badge so it does not cover the node amount or
+connector lines.
+
 ## Tests
 
 Small tests that matter:
