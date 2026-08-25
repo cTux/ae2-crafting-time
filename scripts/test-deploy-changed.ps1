@@ -52,7 +52,7 @@ $partialOutput = $partial -join "`n"
 if ($LASTEXITCODE -ne 0 -or $partialOutput -notmatch 'dry-run GitHub Release: 1\.20\.1 Fabric 1\.0\.5') {
     throw "Partial release did not publish only the affected jar at the development version"
 }
-if ($partialOutput -notmatch 'dry-run GitHub assets: ae2-crafting-time-1\.20\.1-Forge-1\.0\.4\.jar, ae2-crafting-time-1\.20\.1-Fabric-1\.0\.5\.jar, ae2-crafting-time-1\.21\.1-NeoForge-1\.0\.4\.jar') {
+if ($partialOutput -notmatch 'dry-run GitHub assets: ae2-crafting-time-1\.0\.4-forge-1\.20\.1\.jar, ae2-crafting-time-1\.0\.5-fabric-1\.20\.1\.jar, ae2-crafting-time-1\.0\.4-neoforge-1\.21\.1\.jar') {
     throw "Partial release did not attach every latest jar to GitHub"
 }
 if ($partialOutput -notmatch 'dry-run Modrinth version: 1\.20\.1-fabric-1\.0\.5') {

@@ -33,7 +33,7 @@ function Write-Json($path, $value) {
 }
 
 function Assert-ReleaseEntry($entry) {
-    $required = @("id", "module", "loader", "loaderName", "minecraftVersion", "projectDir", "artifactBase", "initialVersion", "releaseType")
+    $required = @("id", "module", "loader", "loaderName", "minecraftVersion", "projectDir", "modName", "initialVersion", "releaseType")
     foreach ($name in $required) {
         if (-not $entry.$name) {
             throw "Release entry is missing '$name'"
@@ -76,6 +76,10 @@ function Next-PatchVersion([string]$version) {
         throw "Version '$version' is not x.y.z"
     }
     return "$($Matches[1]).$($Matches[2]).$([int]$Matches[3] + 1)"
+}
+
+function Get-ArtifactFileName($entry, [string]$version) {
+    return "$($entry.modName)-$version-$($entry.loader)-$($entry.minecraftVersion).jar"
 }
 
 function Get-DevelopmentVersion([string]$path) {
@@ -189,7 +193,7 @@ function Publish-Modrinth($entry, [string]$version, [string]$jarPath, [string]$n
     $dataPath = New-TemporaryFile
     try {
         @{
-            name = "$($entry.artifactBase)-$version"
+            name = [IO.Path]::GetFileNameWithoutExtension((Get-ArtifactFileName $entry $version))
             version_number = "$($entry.id)-$version"
             changelog = $notes
             dependencies = @()
@@ -227,7 +231,7 @@ function Publish-CurseForge($entry, [string]$version, [string]$jarPath, [string]
         @{
             changelog = $notes
             changelogType = "text"
-            displayName = "$($entry.artifactBase)-$version"
+            displayName = [IO.Path]::GetFileNameWithoutExtension((Get-ArtifactFileName $entry $version))
             gameVersionNames = @($entry.minecraftVersion, $entry.loaderName, "Client", "Server")
             releaseType = $entry.releaseType
             isMarkedForManualRelease = $false
@@ -250,7 +254,7 @@ function Publish-GitHubRelease($releases, $jars, [string]$sourceCommit) {
     $stamp = (Get-Date).ToUniversalTime().ToString("yyyyMMdd-HHmmss")
     $tag = "release-$stamp"
     $title = ($releases | ForEach-Object { "$($_.entry.minecraftVersion) $($_.entry.loaderName) $($_.version)" }) -join ", "
-    $notes = ($releases | ForEach-Object { "## $($_.entry.artifactBase)-$($_.version).jar`n`n$($_.changelog)" }) -join "`n`n"
+    $notes = ($releases | ForEach-Object { "## $(Get-ArtifactFileName $_.entry $_.version)`n`n$($_.changelog)" }) -join "`n`n"
 
     if ($DryRun) {
         Write-Host "dry-run GitHub Release: $title"
@@ -316,7 +320,7 @@ try {
             entry = $entry
             version = $version
             fingerprint = $fingerprint
-            jarPath = Join-Path $root "dist\$($entry.artifactBase)-$version.jar"
+            jarPath = Join-Path $root "dist\$(Get-ArtifactFileName $entry $version)"
             changelog = if ($changed) { Get-EntryChangelog $entry $previous } else { $null }
             changed = $changed
         }
