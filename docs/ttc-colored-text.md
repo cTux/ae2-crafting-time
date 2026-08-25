@@ -4,10 +4,11 @@ Date: 2026-06-21
 
 ## Request
 
-Color the `TTC` text in the AE2 crafting plan from dark green to dark red:
+Color the `TTC` text in the AE2 crafting plan from bright green to bright red:
 
-- fastest craft in the visible crafting plan list: dark green
-- slowest craft in the visible crafting plan list: dark red
+- fastest craft in the visible crafting plan list: bright green
+- middle of the range: bright yellow
+- slowest craft in the visible crafting plan list: bright red
 - entries between them: interpolated color
 
 ## Feasibility
@@ -50,11 +51,12 @@ No server changes are needed. The server already sends the aggregate stats requi
 
 ## Color Scale
 
-Use two fixed RGB endpoints:
+Use three fixed RGB stops:
 
 ```text
-fastest: #006400 dark green
-slowest: #8B0000 dark red
+fastest: #55FF55 green
+middle: #FFFF55 yellow
+slowest: #FF5555 red
 ```
 
 For an entry:
@@ -63,15 +65,14 @@ For an entry:
 ratio = (seconds - minSeconds) / (maxSeconds - minSeconds)
 ```
 
-Then linearly interpolate RGB:
+Then linearly interpolate RGB from green to yellow for the first half and from
+yellow to red for the second half.
 
 ```text
-red   = green.red   + ratio * (red.red   - green.red)
-green = green.green + ratio * (red.green - green.green)
-blue  = green.blue  + ratio * (red.blue  - green.blue)
+channel = from.channel + ratio * (to.channel - from.channel)
 ```
 
-If `minSeconds == maxSeconds`, use dark green for every `TTC` line. There is no useful relative spread when every known entry has the same estimate.
+If `minSeconds == maxSeconds`, use green for every `TTC` line. There is no useful relative spread when every known entry has the same estimate.
 
 ## Missing Stats
 
@@ -100,7 +101,7 @@ This avoids parsing strings like `~1:07` back into seconds.
 
 - AE2 `AbstractTableRenderer` is shared by multiple craft-plan tables. The render-scope mixin must guard on `this instanceof CraftConfirmTableRenderer`.
 - The color range is based on the currently rendered list passed by AE2. If the list includes off-screen rows, colors represent the whole current plan list. If AE2 passes only visible rows after scrolling, colors represent visible rows. Local bytecode shows `render(..., List<T>, scrollOffset)` receives the full list and applies `scrollOffset` internally, so the expected behavior is whole current plan list.
-- Dark red/dark green can be low contrast on some resource packs. If that becomes a real issue, add a config later; do not add it now.
+- Bright TTC colors use Minecraft's native dark text shadow for contrast without a heavy outline.
 
 ## Tests
 

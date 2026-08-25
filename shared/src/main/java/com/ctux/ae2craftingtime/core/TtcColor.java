@@ -1,18 +1,18 @@
 package com.ctux.ae2craftingtime.core;
 
 public final class TtcColor {
-    public static final int DARK_GREEN = 0x006400;
-    public static final int DARK_YELLOW = 0x8B8000;
-    public static final int DARK_RED = 0x8B0000;
+    public static final int GREEN = 0x55FF55;
+    public static final int YELLOW = 0xFFFF55;
+    public static final int RED = 0xFF5555;
 
     public static int forSeconds(long seconds, long minSeconds, long maxSeconds) {
         if (maxSeconds <= minSeconds) {
-            return DARK_GREEN;
+            return GREEN;
         }
         var ratio = Math.max(0, Math.min(1, (double) (seconds - minSeconds) / (maxSeconds - minSeconds)));
         return ratio <= 0.5
-                ? interpolate(DARK_GREEN, DARK_YELLOW, ratio * 2)
-                : interpolate(DARK_YELLOW, DARK_RED, (ratio - 0.5) * 2);
+                ? interpolate(GREEN, YELLOW, ratio * 2)
+                : interpolate(YELLOW, RED, (ratio - 0.5) * 2);
     }
 
     private static int interpolate(int from, int to, double ratio) {
