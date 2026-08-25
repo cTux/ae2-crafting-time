@@ -67,8 +67,7 @@ public final class TtcText {
         }
         if (!stats.sampleDurationTicks().isEmpty()) {
             lines.add(statsLine("text.ae2craftingtime.stats.outlier_filter", rate(stats.outlierMultiplier()) + "x"));
-            lines.add(statsLine("text.ae2craftingtime.stats.durations",
-                    I18n.get("text.ae2craftingtime.value.durations", durations(stats.sampleDurationTicks()))));
+            lines.add(statsLine("text.ae2craftingtime.stats.windows", windows(stats)));
         }
         if (!stats.reliableEstimate()) {
             lines.add(statsLine("text.ae2craftingtime.stats.confidence", confidence(stats)));
@@ -136,10 +135,11 @@ public final class TtcText {
         return String.format(Locale.ROOT, "%.2f", value);
     }
 
-    private static String durations(List<Long> ticks) {
+    private static String windows(ProfileStats stats) {
         var values = new ArrayList<String>();
-        for (var tick : ticks) {
-            values.add(Long.toString(tick));
+        for (var i = 0; i < stats.sampleDurationTicks().size(); i++) {
+            values.add(I18n.get("text.ae2craftingtime.value.window", stats.sampleAmounts().get(i), unitName(stats),
+                    stats.sampleDurationTicks().get(i)));
         }
         return String.join(", ", values);
     }

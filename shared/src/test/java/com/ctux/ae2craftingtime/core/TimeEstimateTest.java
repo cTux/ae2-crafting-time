@@ -58,4 +58,17 @@ class TimeEstimateTest {
 
         assertEquals("~13s", total.orElseThrow());
     }
+
+    @Test
+    void runningJobEtaUsesObservedOverallProgress() {
+        var estimate = TimeEstimate.progressSeconds(10_000_000_000L, 100, 75);
+
+        assertEquals(30, estimate.orElseThrow());
+    }
+
+    @Test
+    void runningJobEtaWaitsForCompletedWork() {
+        assertFalse(TimeEstimate.progressSeconds(10_000_000_000L, 100, 100).isPresent());
+        assertFalse(TimeEstimate.progressSeconds(10_000_000_000L, 100, 0).isPresent());
+    }
 }

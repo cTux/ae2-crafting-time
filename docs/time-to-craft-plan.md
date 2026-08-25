@@ -48,6 +48,10 @@ Do not calculate timing on the client.
 
 The current server snapshot already carries `amountPerSecond`, so no new packet type is required.
 
+`amountPerSecond` is derived from continuous production windows that combine
+concurrent batches for the same network output. Individual pattern latency is
+not treated as if every parallel batch ran sequentially.
+
 ## Estimate Formula
 
 For each craft-plan entry:
@@ -68,6 +72,10 @@ No stats: show nothing and request stats for that output key.
 For the whole ordered craft, use the plan entries and calculate each known row
 with the same formula. Display the total as the sum of known row ETAs. If no row
 has known stats, show no total line and request missing stats.
+
+The running crafting-status screen is different: its total uses AE2's elapsed
+time and overall completed-work progress. It must not sum status rows because
+independent rows and crafting CPUs can run concurrently.
 
 ## Amount Normalization
 

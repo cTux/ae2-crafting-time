@@ -12,9 +12,11 @@ public record ProfileStats(
         boolean reliableEstimate,
         int usedSampleCount,
         double outlierMultiplier,
-        List<Long> sampleDurationTicks) {
+        List<Long> sampleDurationTicks,
+        List<Long> sampleAmounts) {
     public ProfileStats {
         sampleDurationTicks = List.copyOf(sampleDurationTicks);
+        sampleAmounts = List.copyOf(sampleAmounts);
     }
 
     public ProfileStats(int sampleCount, double averageDurationTicks, double amountPerTick, double amountPerSecond,
@@ -25,6 +27,6 @@ public record ProfileStats(
     public ProfileStats(int sampleCount, double averageDurationTicks, double amountPerTick, double amountPerSecond,
             long lastDurationTicks, ProfileUnit unit, boolean reliableEstimate) {
         this(sampleCount, averageDurationTicks, amountPerTick, amountPerSecond, lastDurationTicks, unit,
-                reliableEstimate, sampleCount, 4.0, List.of());
+                reliableEstimate, sampleCount, 4.0, List.of(), List.of());
     }
 }

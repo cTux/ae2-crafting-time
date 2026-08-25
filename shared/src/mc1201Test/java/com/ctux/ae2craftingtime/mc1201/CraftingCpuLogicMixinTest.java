@@ -15,5 +15,7 @@ class CraftingCpuLogicMixinTest {
 
         assertTrue(mixin.contains(
                 "ListCraftingInventory;insert(Lappeng/api/stacks/AEKey;JLappeng/api/config/Actionable;)V"));
+        assertTrue(mixin.contains("method = \"finishJob\""));
+        assertTrue(mixin.contains("ProfilerBridge.clearPending(cluster)"));
     }
 }

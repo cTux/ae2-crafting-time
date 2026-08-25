@@ -250,6 +250,84 @@ class CraftProfilerTest {
     }
 
     @Test
+    void combinesParallelCpuBatchesIntoNetworkThroughput() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_ingot");
+        var cpuA = new Object();
+        var cpuB = new Object();
+
+        profiler.start(key, cpuA, 64, ProfileUnit.ITEM, 0);
+        profiler.start(key, cpuB, 64, ProfileUnit.ITEM, 0);
+        profiler.complete(key, cpuA, 64, 20);
+
+        assertFalse(profiler.stats(key).isPresent());
+
+        profiler.complete(key, cpuB, 64, 20);
+
+        var stats = profiler.stats(key).orElseThrow();
+        assertEquals(128.0, stats.amountPerSecond());
+        assertEquals(List.of(128L), stats.sampleAmounts());
+        assertEquals(List.of(20L), stats.sampleDurationTicks());
+    }
+
+    @Test
+    void combinesOneReturnAcrossSeveralDispatchedBatches() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_ingot");
+        var cpu = new Object();
+
+        profiler.start(key, cpu, 32, ProfileUnit.ITEM, 0);
+        profiler.start(key, cpu, 32, ProfileUnit.ITEM, 0);
+        profiler.complete(key, cpu, 64, 20);
+
+        var stats = profiler.stats(key).orElseThrow();
+        assertEquals(64.0, stats.amountPerSecond());
+        assertEquals(List.of(64L), stats.sampleAmounts());
+    }
+
+    @Test
+    void cancelledCpuDoesNotPoisonFutureSamples() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_ingot");
+        var cancelledCpu = new Object();
+        var nextCpu = new Object();
+
+        profiler.start(key, cancelledCpu, 64, ProfileUnit.ITEM, 0);
+        profiler.clearPending(cancelledCpu);
+        profiler.start(key, nextCpu, 64, ProfileUnit.ITEM, 1_000);
+        profiler.complete(key, nextCpu, 64, 1_020);
+
+        var stats = profiler.stats(key).orElseThrow();
+        assertEquals(20.0, stats.averageDurationTicks());
+        assertEquals(64.0, stats.amountPerSecond());
+    }
+
+    @Test
+    void sameTickBatchUsesOneTickMinimum() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_ingot");
+
+        profiler.start(key, 64, ProfileUnit.ITEM, 10);
+        profiler.complete(key, 64, 10);
+
+        var stats = profiler.stats(key).orElseThrow();
+        assertEquals(1.0, stats.averageDurationTicks());
+        assertEquals(1_280.0, stats.amountPerSecond());
+    }
+
+    @Test
+    void clearingSamplesAlsoClearsPendingWork() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_ingot");
+
+        profiler.start(key, 64, ProfileUnit.ITEM, 0);
+        profiler.clearSamples(key);
+        profiler.complete(key, 64, 1_000);
+
+        assertFalse(profiler.stats(key).isPresent());
+    }
+
+    @Test
     void disabledProfilerIgnoresStartsAndCompletions() {
         var profiler = new CraftProfiler(10);
         var key = new ProfileKey("minecraft:gear");
