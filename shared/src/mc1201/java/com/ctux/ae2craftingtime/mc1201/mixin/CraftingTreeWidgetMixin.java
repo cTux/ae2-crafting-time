@@ -99,7 +99,7 @@ public abstract class CraftingTreeWidgetMixin {
         var text = TimeEstimate.formatTotal(List.of(OptionalLong.of(seconds))).orElseThrow();
         var pose = guiGraphics.pose();
         var font = Minecraft.getInstance().font;
-        var color = ae2craftingtime$colorsByNode.getOrDefault(node, TtcColor.DARK_GREEN);
+        var color = ae2craftingtime$colorsByNode.getOrDefault(node, TtcColor.GREEN);
         var textX = (int) ((x - 3 + (24 - font.width(text) * TEXT_SCALE) / 2) / TEXT_SCALE);
         var textY = (int) ((y + 15) / TEXT_SCALE);
         var stripLeft = (int) ((x - 3) / TEXT_SCALE);

@@ -17,7 +17,11 @@ Build every matrix row:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-all-versions.ps1
 ```
 
-Build only changed jars and bump only those patch versions:
+Normal builds use the tracked `modVersion` in `gradle.properties`. That is the
+next release version, so every commit and every loader-explicit jar uses the
+same development version.
+
+Build only changed jars at the current development version:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-changed.ps1
@@ -32,9 +36,9 @@ $env:CURSEFORGE_TOKEN = "..."
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-changed.ps1 -Deploy
 ```
 
-`deploy-changed.ps1` fingerprints only jar inputs: root build files, shared main code, and the matrix row's version main code. Test-only edits do not bump or deploy.
+`deploy-changed.ps1` fingerprints only jar inputs: root build files, shared main code, and the matrix row's version main code. Test-only edits do not build or deploy.
 
-For every affected row, `-Deploy` bumps its patch version, builds the loader-explicit jar, generates that jar's changelog from commits since its previous release, and uploads the jar plus changelog to both Modrinth and CurseForge. Modrinth version numbers include the matrix row id because version numbers must be unique across the whole project. CurseForge uploads include the project's Client and Server environment versions. It also rebuilds the unchanged rows at their current versions so the GitHub Release always attaches the complete latest supported JAR set. The release title and body list only affected versions and their per-jar changelogs. Finally, it commits `.release-state.json`; the repository's post-commit hook pushes that commit and creates the branch PR when needed.
+For every affected row, `-Deploy` publishes the current `modVersion`, builds the loader-explicit jar, generates that jar's changelog from commits since its previous release, and uploads the jar plus changelog to both Modrinth and CurseForge. Modrinth version numbers include the matrix row id because version numbers must be unique across the whole project. CurseForge uploads include the project's Client and Server environment versions. It also rebuilds the unchanged rows at their current released versions so the GitHub Release always attaches the complete latest supported JAR set. The release title and body list only affected versions and their per-jar changelogs. After every successful deploy, it bumps `modVersion` to the next patch and commits `gradle.properties` together with `.release-state.json`; every later commit and normal build then belongs to that new version. The repository's post-commit hook pushes that commit and creates the branch PR when needed.
 
 Run `scripts/setup-git.ps1` once after cloning. It installs the tracked post-commit hook, which automatically pushes every fix, feature, and release commit and creates one PR per branch. Existing PRs are reused, so later commits update them without duplicates. Work on a branch: the hook intentionally refuses to push a detached HEAD. GitHub CLI must be installed and authenticated for PR creation.
 

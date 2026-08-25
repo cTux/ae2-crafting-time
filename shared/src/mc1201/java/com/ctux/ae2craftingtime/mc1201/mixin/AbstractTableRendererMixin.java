@@ -12,10 +12,14 @@ import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.TtcColorContext;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.HashMap;
@@ -25,6 +29,21 @@ import java.util.OptionalLong;
 
 @Mixin(AbstractTableRenderer.class)
 public abstract class AbstractTableRendererMixin {
+    @Redirect(
+            method = "render",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/gui/GuiGraphics;drawString(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIIZ)I",
+                    remap = true),
+            remap = false)
+    private int ae2craftingtime$drawTtcWithShadow(GuiGraphics guiGraphics, Font font, Component text,
+            int x, int y, int color, boolean shadow) {
+        var contents = text.getContents();
+        var isTtc = contents instanceof TranslatableContents translatable
+                && translatable.getKey().equals("text.ae2craftingtime.ttc");
+        return guiGraphics.drawString(font, text, x, y, color, shadow || isTtc);
+    }
+
     @Inject(method = "render", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$beginTtcColors(GuiGraphics guiGraphics, int mouseX, int mouseY,
             List<?> entries, int scrollOffset, CallbackInfo ci) {

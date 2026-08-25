@@ -5,18 +5,18 @@ import org.junit.jupiter.api.Test;
 
 class TtcColorTest {
     @Test
-    void mapsFastestToDarkGreenAndSlowestToDarkRed() {
-        assertEquals(TtcColor.DARK_GREEN, TtcColor.forSeconds(10, 10, 30));
-        assertEquals(TtcColor.DARK_RED, TtcColor.forSeconds(30, 10, 30));
+    void mapsFastestToGreenAndSlowestToRed() {
+        assertEquals(TtcColor.GREEN, TtcColor.forSeconds(10, 10, 30));
+        assertEquals(TtcColor.RED, TtcColor.forSeconds(30, 10, 30));
     }
 
     @Test
-    void equalRangeUsesDarkGreen() {
-        assertEquals(TtcColor.DARK_GREEN, TtcColor.forSeconds(10, 10, 10));
+    void equalRangeUsesGreen() {
+        assertEquals(TtcColor.GREEN, TtcColor.forSeconds(10, 10, 10));
     }
 
     @Test
-    void middleValueUsesDarkYellow() {
-        assertEquals(TtcColor.DARK_YELLOW, TtcColor.forSeconds(20, 10, 30));
+    void middleValueUsesYellow() {
+        assertEquals(TtcColor.YELLOW, TtcColor.forSeconds(20, 10, 30));
     }
 }

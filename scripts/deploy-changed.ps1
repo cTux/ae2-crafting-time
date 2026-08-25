@@ -7,7 +7,8 @@ param(
     [string]$Changelog,
     [string]$JavaHome = "C:\Users\cccTu\.gradle\jdks\eclipse_adoptium-17-amd64-windows\jdk-17.0.19+10",
     [string]$MatrixPath = (Join-Path $PSScriptRoot "release-matrix.json"),
-    [string]$StatePath = (Join-Path (Split-Path -Parent $PSScriptRoot) ".release-state.json")
+    [string]$StatePath = (Join-Path (Split-Path -Parent $PSScriptRoot) ".release-state.json"),
+    [string]$VersionPath = (Join-Path (Split-Path -Parent $PSScriptRoot) "gradle.properties")
 )
 
 $ErrorActionPreference = "Stop"
@@ -75,6 +76,25 @@ function Next-PatchVersion([string]$version) {
         throw "Version '$version' is not x.y.z"
     }
     return "$($Matches[1]).$($Matches[2]).$([int]$Matches[3] + 1)"
+}
+
+function Get-DevelopmentVersion([string]$path) {
+    if (-not (Test-Path $path)) {
+        throw "Version file does not exist: $path"
+    }
+    foreach ($line in Get-Content -LiteralPath $path) {
+        if ($line -match '^modVersion=(\d+\.\d+\.\d+)$') {
+            return $Matches[1]
+        }
+    }
+    throw "Version file must contain modVersion=x.y.z: $path"
+}
+
+function Set-DevelopmentVersion([string]$path, [string]$version) {
+    $updated = foreach ($line in Get-Content -LiteralPath $path) {
+        if ($line -match '^modVersion=') { "modVersion=$version" } else { $line }
+    }
+    $updated | Set-Content -LiteralPath $path -Encoding UTF8
 }
 
 function Get-InputFingerprint($entry) {
@@ -260,6 +280,7 @@ function Publish-GitHubRelease($releases, $jars, [string]$sourceCommit) {
 
 $matrix = Read-Json $MatrixPath @()
 $state = Read-Json $StatePath ([pscustomobject]@{})
+$developmentVersion = Get-DevelopmentVersion $VersionPath
 
 Push-Location $root
 try {
@@ -287,7 +308,10 @@ try {
             throw "$($entry.id) has no CurseForge project id. Set it in the matrix or CURSEFORGE_PROJECT_ID."
         }
 
-        $version = if ($changed -and $previous) { Next-PatchVersion $currentVersion } else { $currentVersion }
+        if ($changed -and $previous -and [Version]$developmentVersion -le [Version]$currentVersion) {
+            throw "Development version $developmentVersion must be newer than released $($entry.id) $currentVersion"
+        }
+        $version = if ($changed) { $developmentVersion } else { $currentVersion }
         $plans += [pscustomobject]@{
             entry = $entry
             version = $version
@@ -329,6 +353,16 @@ try {
         Publish-GitHubRelease $releases $plans $sourceCommit
     }
 
+    if ($Deploy -and $releases.Count -gt 0) {
+        $nextDevelopmentVersion = Next-PatchVersion $developmentVersion
+        if ($DryRun) {
+            Write-Host "dry-run next development version: $nextDevelopmentVersion"
+        }
+        else {
+            Set-DevelopmentVersion $VersionPath $nextDevelopmentVersion
+        }
+    }
+
     if (-not $DryRun) {
         foreach ($release in $releases) {
             Set-StateEntry $state $release.entry.id ([pscustomobject]@{
@@ -346,8 +380,12 @@ try {
         if (-not $StatePath.StartsWith("$root\", [StringComparison]::OrdinalIgnoreCase)) {
             throw "Release state must be inside the repository: $StatePath"
         }
+        if (-not $VersionPath.StartsWith("$root\", [StringComparison]::OrdinalIgnoreCase)) {
+            throw "Version file must be inside the repository: $VersionPath"
+        }
         $stateRelativePath = $StatePath.Substring($root.Length + 1)
-        Invoke-Git @("add", "--", $stateRelativePath) | Out-Null
+        $versionRelativePath = $VersionPath.Substring($root.Length + 1)
+        Invoke-Git @("add", "--", $stateRelativePath, $versionRelativePath) | Out-Null
         $versions = ($releases | ForEach-Object { "$($_.entry.id) $($_.version)" }) -join ", "
         Invoke-Git @("commit", "-m", "chore(release): $versions") | Out-Null
         Invoke-Git @("push") | Out-Null
