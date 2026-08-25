@@ -14,10 +14,12 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entries) implements CustomPacketPayload {
+public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entries,
+        Map<String, Long> networkAmounts) implements CustomPacketPayload {
     public StatsSnapshotS2C(List<StatsEntry> entries) {
-        this(entries.stream().map(entry -> entry.key().outputId()).toList(), entries);
+        this(entries.stream().map(entry -> entry.key().outputId()).toList(), entries, Map.of());
     }
 
     public static final Type<StatsSnapshotS2C> TYPE = new Type<>(
@@ -36,6 +38,11 @@ public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entr
         for (var key : packet.requestedKeys) {
             buffer.writeUtf(key);
         }
+        buffer.writeVarInt(packet.networkAmounts.size());
+        packet.networkAmounts.forEach((key, amount) -> {
+            buffer.writeUtf(key);
+            buffer.writeVarLong(amount);
+        });
         buffer.writeVarInt(packet.entries.size());
         for (var entry : packet.entries) {
             var stats = entry.stats();
@@ -65,6 +72,11 @@ public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entr
         for (int i = 0; i < requestedSize; i++) {
             requestedKeys.add(buffer.readUtf());
         }
+        var networkAmountSize = buffer.readVarInt();
+        var networkAmounts = new java.util.HashMap<String, Long>(networkAmountSize);
+        for (int i = 0; i < networkAmountSize; i++) {
+            networkAmounts.put(buffer.readUtf(), buffer.readVarLong());
+        }
         var size = buffer.readVarInt();
         var entries = new ArrayList<StatsEntry>(size);
         for (int i = 0; i < size; i++) {
@@ -91,12 +103,13 @@ public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entr
                     amountPerSecond, lastDurationTicks, unit, reliableEstimate, usedSampleCount, outlierMultiplier,
                     sampleDurationTicks, sampleAmounts)));
         }
-        return new StatsSnapshotS2C(requestedKeys, entries);
+        return new StatsSnapshotS2C(requestedKeys, entries, networkAmounts);
     }
 
     public static void handle(StatsSnapshotS2C packet, IPayloadContext context) {
-        context.enqueueWork(() -> ClientStats.CACHE.replace(
-                packet.requestedKeys.stream().map(ProfileKey::new).toList(),
-                packet.entries));
+        context.enqueueWork(() -> {
+            ClientStats.CACHE.replace(packet.requestedKeys.stream().map(ProfileKey::new).toList(), packet.entries);
+            ClientStats.replaceNetworkAmounts(packet.requestedKeys, packet.networkAmounts);
+        });
     }
 }

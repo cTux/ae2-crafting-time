@@ -17,7 +17,9 @@ import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public record StatsRequestC2S(List<String> keys, boolean reset) implements CustomPacketPayload {
     public StatsRequestC2S(List<String> keys) {
@@ -60,7 +62,8 @@ public record StatsRequestC2S(List<String> keys, boolean reset) implements Custo
             }
 
             var entries = new ArrayList<StatsEntry>();
-            var networkId = ProfilerBridge.networkId(currentGrid(player));
+            var grid = currentGrid(player);
+            var networkId = ProfilerBridge.networkId(grid);
             for (var key : packet.keys) {
                 var profileKey = new ProfileKey(networkId, key);
                 if (packet.reset) {
@@ -70,8 +73,23 @@ public record StatsRequestC2S(List<String> keys, boolean reset) implements Custo
                 ProfilerBridge.stats(profileKey)
                         .ifPresent(stats -> entries.add(new StatsEntry(new ProfileKey(key), stats)));
             }
-            StatsNetwork.sendTo(player, new StatsSnapshotS2C(packet.keys, entries));
+            StatsNetwork.sendTo(player, new StatsSnapshotS2C(packet.keys, entries, networkAmounts(grid, packet.keys)));
         });
+    }
+
+    private static Map<String, Long> networkAmounts(IGrid grid, List<String> keys) {
+        var amounts = new HashMap<String, Long>();
+        if (grid == null) {
+            return amounts;
+        }
+        keys.forEach(key -> amounts.put(key, 0L));
+        for (var entry : grid.getStorageService().getInventory().getAvailableStacks()) {
+            var id = entry.getKey().getId().toString();
+            if (keys.contains(id)) {
+                amounts.merge(id, entry.getLongValue(), Long::sum);
+            }
+        }
+        return amounts;
     }
 
     private static IGrid currentGrid(ServerPlayer player) {
