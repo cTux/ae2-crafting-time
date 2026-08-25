@@ -20,7 +20,9 @@ import com.ctux.ae2craftingtime.mc1201.TtcDetailsClick;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsKeyMapping;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.world.entity.player.Inventory;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -56,9 +58,19 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
     private static final int AE2CRAFTINGTIME_SCREEN_WIDTH = 238;
     @Unique
     private static final int AE2CRAFTINGTIME_TITLE_PADDING = 8;
+    @Unique
+    private static final int AE2CRAFTINGTIME_TITLE_TOP = 7;
+    @Unique
+    private static final int AE2CRAFTINGTIME_TITLE_TTC_BACKGROUND = 0xD0202028;
+    @Unique
+    private static final int AE2CRAFTINGTIME_TITLE_TTC_COLOR = 0xE0E0E0;
 
     @Unique
     private int ae2craftingtime$ttcSortMode;
+    @Unique
+    private Component ae2craftingtime$titleTtc;
+    @Unique
+    private int ae2craftingtime$titleTtcX;
 
     @Shadow(remap = false)
     private CraftingStatus status;
@@ -120,6 +132,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
             index = 1,
             remap = false)
     private Component ae2craftingtime$appendStatusTotalTtc(Component title) {
+        ae2craftingtime$titleTtc = null;
         if (!((Object) this instanceof CraftingStatusScreen) || status == null) {
             return title;
         }
@@ -131,14 +144,33 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         }
 
         var separator = Component.literal("  ");
-        var total = TtcText.ttc(eta.get());
+        var total = TtcText.ttc(eta.get())
+                .withStyle(style -> style.withColor(TextColor.fromRgb(AE2CRAFTINGTIME_TITLE_TTC_COLOR)));
         var font = getMinecraft().font;
         var availableWidth = AE2CRAFTINGTIME_SCREEN_WIDTH - AE2CRAFTINGTIME_TITLE_PADDING * 2;
         if (font.width(title) + font.width(separator) + font.width(total) > availableWidth) {
             return title;
         }
 
+        ae2craftingtime$titleTtc = total;
+        ae2craftingtime$titleTtcX = AE2CRAFTINGTIME_TITLE_PADDING + font.width(title) + font.width(separator);
         return title.copy().append(separator).append(total);
+    }
+
+    @Inject(method = "drawFG", at = @At("RETURN"), remap = false)
+    private void ae2craftingtime$drawTitleTtcBadge(GuiGraphics guiGraphics, int offsetX, int offsetY, int mouseX,
+            int mouseY, CallbackInfo ci) {
+        if (ae2craftingtime$titleTtc == null) {
+            return;
+        }
+
+        var font = getMinecraft().font;
+        var textWidth = font.width(ae2craftingtime$titleTtc);
+        guiGraphics.fill(ae2craftingtime$titleTtcX - 3, AE2CRAFTINGTIME_TITLE_TOP - 1,
+                ae2craftingtime$titleTtcX + textWidth + 3, AE2CRAFTINGTIME_TITLE_TOP + font.lineHeight + 1,
+                AE2CRAFTINGTIME_TITLE_TTC_BACKGROUND);
+        guiGraphics.drawString(font, ae2craftingtime$titleTtc, ae2craftingtime$titleTtcX,
+                AE2CRAFTINGTIME_TITLE_TOP, AE2CRAFTINGTIME_TITLE_TTC_COLOR, true);
     }
 
     @Unique
