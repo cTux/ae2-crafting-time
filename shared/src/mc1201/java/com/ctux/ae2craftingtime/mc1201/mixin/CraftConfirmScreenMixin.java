@@ -51,6 +51,10 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
     private static final int AE2CRAFTINGTIME_COLS = 3;
     @Unique
     private static final int AE2CRAFTINGTIME_ROWS = 5;
+    @Unique
+    private static final int AE2CRAFTINGTIME_TOTAL_BACKGROUND = 0xD0202028;
+    @Unique
+    private static final int AE2CRAFTINGTIME_TOTAL_COLOR = 0xE0E0E0;
 
     @Unique
     private int ae2craftingtime$ttcSortMode;
@@ -109,7 +113,10 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
         TimeEstimate.formatTotal(estimates).ifPresent(eta -> {
             var text = TtcText.totalTtc(eta);
             var font = getMinecraft().font;
-            guiGraphics.drawString(font, text, 109 - font.width(text) / 2, 178, 0x404040, false);
+            var textX = 109 - font.width(text) / 2;
+            guiGraphics.fill(textX - 3, 177, textX + font.width(text) + 3, 188,
+                    AE2CRAFTINGTIME_TOTAL_BACKGROUND);
+            guiGraphics.drawString(font, text, textX, 178, AE2CRAFTINGTIME_TOTAL_COLOR, true);
         });
     }
 
