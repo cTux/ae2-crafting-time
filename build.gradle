@@ -21,6 +21,13 @@ subprojects {
             options.encoding = 'UTF-8'
         }
 
+        tasks.withType(Jar).configureEach {
+            from(rootProject.file('LICENSE')) {
+                into 'META-INF'
+                rename { 'LICENSE_ae2-crafting-time' }
+            }
+        }
+
         dependencies {
             testRuntimeOnly 'org.junit.platform:junit-platform-launcher:1.10.2'
         }
