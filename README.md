@@ -19,6 +19,7 @@ It currently targets:
 
 - Profiles completed AE2 craft outputs on the logical server.
 - Compares frozen total TTC predictions with successful jobs' real completion time.
+- Marks delayed crafting-status outputs and suggests evidence-based throughput improvements.
 - Persists retained samples in the world save as `data/ae2-crafting-time.dat`.
 - Sends aggregate stats to clients through request/response packets.
 - Adds `TTC` lines, color hints, totals, and sort controls to AE2 craft-plan/status views.

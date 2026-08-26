@@ -29,6 +29,10 @@ public final class ClientStatsCache {
         return Optional.ofNullable(stats.get(key)).flatMap(StatsEntry::accuracy);
     }
 
+    public Optional<StallDiagnostic> stall(ProfileKey key) {
+        return Optional.ofNullable(stats.get(key)).flatMap(StatsEntry::stall);
+    }
+
     public void remove(ProfileKey key) {
         stats.remove(key);
     }

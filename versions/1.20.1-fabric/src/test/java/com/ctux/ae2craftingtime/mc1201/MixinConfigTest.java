@@ -10,6 +10,14 @@ import org.junit.jupiter.api.Test;
 
 class MixinConfigTest {
     @Test
+    void stallPacketUsesNewSnapshotChannel() throws IOException {
+        var source = Files.readString(Path.of(
+                "src/main/java/com/ctux/ae2craftingtime/mc1201/StatsNetwork.java"));
+
+        assertTrue(source.contains("stats_snapshot_v3"));
+    }
+
+    @Test
     void craftingTreeMixinIsClientOnly() throws IOException {
         var json = Files.readString(Path.of("build/resources/main/ae2craftingtime.mixins.json"));
         var clientIndex = json.indexOf("\"client\"");
@@ -66,9 +74,12 @@ class MixinConfigTest {
     void statusStatsRequestsUseCraftingCpuMenuGrid() throws IOException {
         var packet = Files.readString(Path.of(
                 "src/main/java/com/ctux/ae2craftingtime/mc1201/net/StatsRequestC2S.java"));
+        var context = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/StatsRequestContext.java"));
 
-        assertTrue(packet.contains("CraftingCPUMenu"));
-        assertTrue(packet.contains("getDeclaredMethod(\"getGrid\")"));
+        assertTrue(packet.contains("StatsRequestContext.current(player)"));
+        assertTrue(context.contains("getDeclaredMethod(\"getGrid\")"));
+        assertTrue(context.contains("getDeclaredField(\"cpu\")"));
     }
 
     @Test

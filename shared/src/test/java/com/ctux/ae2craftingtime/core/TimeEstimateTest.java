@@ -10,6 +10,12 @@ import org.junit.jupiter.api.Test;
 
 class TimeEstimateTest {
     @Test
+    void formatsDiagnosticTickDurations() {
+        assertEquals("~12s", TimeEstimate.formatTicks(240));
+        assertEquals("~1:01", TimeEstimate.formatTicks(1_201));
+    }
+
+    @Test
     void formatsRoundedUpEtaForWholeAmount() {
         var stats = new ProfileStats(4, 20, 0.5, 10.0, 20, ProfileUnit.ITEM);
 

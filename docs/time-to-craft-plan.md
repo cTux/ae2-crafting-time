@@ -101,6 +101,34 @@ The detailed TTC tooltip and Ctrl-click chat diagnostics show:
 - average coverage
 - latest predicted, wall-clock, nominal tick, and row-coverage values
 
+## Delayed Craft Diagnostics
+
+The running crafting-status screen replaces a delayed row's visible estimate
+with `TTC: DELAYED`. Its tooltip keeps the estimate and shows no-progress time,
+the learned typical duration, AE2 active/scheduled amounts, recent parallel-slot
+use, and up to two possible improvements.
+
+An active output is delayed only when both conditions hold:
+
+- no accepted output for at least 30 seconds
+- no accepted output for at least twice its learned average production-window duration
+
+Partial output resets the timer. Diagnostics are scoped to the selected crafting
+CPU and are not persisted.
+
+Recommendations are evidence-bounded:
+
+- if scheduled work remains and AE2's recent dispatch budget has room, suggest
+  parallel Pattern Providers or machines
+- if scheduled work remains and the dispatch budget is saturated, suggest
+  Crafting Co-Processors
+- always suggest speeding up the active machine once its output is delayed
+
+AE2 co-processors limit pattern pushes across a rolling three-tick window. They
+are not occupied for the lifetime of an external machine operation, so the UI
+calls this `Parallel slots: X/Y recently used` instead of claiming persistent
+processor occupancy.
+
 ## Amount Normalization
 
 The estimate must use the same units as profiling throughput.

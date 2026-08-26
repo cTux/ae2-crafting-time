@@ -48,9 +48,15 @@ public abstract class CraftingStatusTableRendererMixin {
 
         var key = ProfilerBridge.key(entry.getWhat());
         ClientStatsRequests.request(key);
-        ClientStats.CACHE.get(key).ifPresent(stats -> TimeEstimate
-                .format(AeKeyAmounts.normalize(entry.getWhat(), amount), stats)
-                .ifPresent(eta -> lines.add(ttcLine(key, eta))));
+        ClientStats.CACHE.get(key).ifPresent(stats -> {
+            var stall = ClientStats.CACHE.stall(key);
+            if (stall.isPresent()) {
+                lines.add(delayedTtcLine());
+                return;
+            }
+            TimeEstimate.format(AeKeyAmounts.normalize(entry.getWhat(), amount), stats)
+                    .ifPresent(eta -> lines.add(ttcLine(key, eta)));
+        });
     }
 
     private static void ae2craftingtime$appendStatsTooltip(CraftingStatusEntry entry, List<Component> lines) {
@@ -59,9 +65,20 @@ public abstract class CraftingStatusTableRendererMixin {
         var normalized = AeKeyAmounts.normalize(entry.getWhat(), amount);
         ClientStatsRequests.request(key);
         ClientStats.CACHE.get(key).ifPresent(stats -> {
-            lines.addAll(TtcText.statsLines(entry.getWhat().getDisplayName().getString(), normalized, stats,
-                    ClientStats.CACHE.accuracy(key)));
+            var stall = ClientStats.CACHE.stall(key);
+            if (stall.isPresent()) {
+                lines.addAll(TtcText.stallLines(entry.getWhat().getDisplayName().getString(), normalized,
+                        entry.getActiveAmount(), entry.getPendingAmount(), stats, stall.get()));
+            } else {
+                lines.addAll(TtcText.statsLines(entry.getWhat().getDisplayName().getString(), normalized, stats,
+                        ClientStats.CACHE.accuracy(key)));
+            }
         });
+    }
+
+    private static Component delayedTtcLine() {
+        return TtcText.ttcDelayed()
+                .withStyle(style -> style.withColor(TextColor.fromRgb(0xFF5555)).withBold(true));
     }
 
     private static Component ttcLine(com.ctux.ae2craftingtime.core.ProfileKey key, String eta) {

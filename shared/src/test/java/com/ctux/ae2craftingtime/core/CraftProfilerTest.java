@@ -338,4 +338,58 @@ class CraftProfilerTest {
 
         assertFalse(profiler.stats(key).isPresent());
     }
+
+    @Test
+    void reportsDelayedPendingOutputAfterMinimumAndTypicalThresholds() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_plate");
+        var cpu = new Object();
+
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(key, cpu, 1, 200);
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 300);
+        profiler.updateCapacity(cpu, 1, 4, 300);
+
+        assertFalse(profiler.stall(key, cpu, 899).isPresent());
+        profiler.updateCapacity(cpu, 1, 4, 900);
+        var diagnostic = profiler.stall(key, cpu, 900).orElseThrow();
+
+        assertEquals(600, diagnostic.idleTicks());
+        assertEquals(200.0, diagnostic.typicalDurationTicks());
+        assertEquals(1, diagnostic.activeBatches());
+        assertEquals(1, diagnostic.usedParallelSlots());
+        assertEquals(4, diagnostic.totalParallelSlots());
+    }
+
+    @Test
+    void partialOutputResetsTheDelayClock() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_plate");
+        var cpu = new Object();
+
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(key, cpu, 1, 20);
+        profiler.start(key, cpu, 10, ProfileUnit.ITEM, 100);
+        profiler.complete(key, cpu, 1, 650);
+
+        assertFalse(profiler.stall(key, cpu, 700).isPresent());
+        assertEquals(600, profiler.stall(key, cpu, 1_250).orElseThrow().idleTicks());
+    }
+
+    @Test
+    void staleCapacityIsNotPresentedAsCurrent() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_plate");
+        var cpu = new Object();
+
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(key, cpu, 1, 20);
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 100);
+        profiler.updateCapacity(cpu, 4, 4, 100);
+
+        var diagnostic = profiler.stall(key, cpu, 700).orElseThrow();
+
+        assertEquals(0, diagnostic.usedParallelSlots());
+        assertEquals(0, diagnostic.totalParallelSlots());
+    }
 }

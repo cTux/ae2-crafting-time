@@ -65,6 +65,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-all-versions
 - Job-accuracy diagnostics compare a submission-time frozen total with successful
   completion wall/tick time; cancelled jobs are excluded and partial-plan
   predictions do not contribute to aggregate error metrics.
+- Delayed-output diagnostics require a 30-second minimum and twice the learned
+  production-window duration. Partial output resets the no-progress timer.
+- AE2 co-processors increase the rolling pattern-dispatch budget; describe it as
+  recently used parallel slots, not as machines that stay busy until output returns.
 - Fluid estimates must be checked in normalized units before changing math.
 - If a value looks wrong, inspect saved/runtime samples before editing the estimator.
 

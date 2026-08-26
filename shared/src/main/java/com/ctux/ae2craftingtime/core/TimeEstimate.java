@@ -42,6 +42,10 @@ public final class TimeEstimate {
         return totalSeconds == 0 ? Optional.empty() : Optional.of(formatSeconds(totalSeconds));
     }
 
+    public static String formatTicks(double ticks) {
+        return formatSeconds((long) Math.ceil(Math.max(0, ticks) / 20.0));
+    }
+
     private static String formatSeconds(long seconds) {
         var hours = seconds / 3600;
         var minutes = (seconds % 3600) / 60;

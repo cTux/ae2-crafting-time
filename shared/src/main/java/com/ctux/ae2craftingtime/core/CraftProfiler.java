@@ -13,6 +13,8 @@ public final class CraftProfiler {
     private final double outlierMultiplier;
     private static final Object DEFAULT_SCOPE = new Object();
     private final Map<Object, Map<ProfileKey, ArrayDeque<PendingCraft>>> pending = new IdentityHashMap<>();
+    private final Map<Object, Map<ProfileKey, Long>> lastProgressTicks = new IdentityHashMap<>();
+    private final Map<Object, CapacityState> capacities = new IdentityHashMap<>();
     private final Map<ProfileKey, BusyWindow> busyWindows = new HashMap<>();
     private final Map<ProfileKey, ArrayDeque<CraftSample>> samples = new HashMap<>();
     private boolean enabled = true;
@@ -36,6 +38,8 @@ public final class CraftProfiler {
         this.enabled = enabled;
         if (!enabled) {
             pending.clear();
+            lastProgressTicks.clear();
+            capacities.clear();
             busyWindows.clear();
         }
     }
@@ -51,6 +55,7 @@ public final class CraftProfiler {
         pending.computeIfAbsent(scope, ignored -> new HashMap<>())
                 .computeIfAbsent(key, ignored -> new ArrayDeque<>())
                 .addLast(new PendingCraft(amount, unit, tick));
+        lastProgressTicks.computeIfAbsent(scope, ignored -> new HashMap<>()).putIfAbsent(key, tick);
         busyWindows.computeIfAbsent(key, ignored -> new BusyWindow(unit, tick));
     }
 
@@ -85,9 +90,12 @@ public final class CraftProfiler {
 
         if (queue.isEmpty()) {
             scopedPending.remove(key);
+            removeLastProgress(scope, key);
             if (scopedPending.isEmpty()) {
                 pending.remove(scope);
             }
+        } else {
+            lastProgressTicks.computeIfAbsent(scope, ignored -> new HashMap<>()).put(key, tick);
         }
 
         if (hasPending(key)) {
@@ -105,12 +113,46 @@ public final class CraftProfiler {
 
     public void clearPending(Object scope) {
         var removed = pending.remove(scope);
+        lastProgressTicks.remove(scope);
+        capacities.remove(scope);
         if (removed == null) {
             return;
         }
         for (var key : removed.keySet()) {
             rebuildBusyWindow(key);
         }
+    }
+
+    public void updateCapacity(Object scope, int usedParallelSlots, int totalParallelSlots, long tick) {
+        if (!enabled || scope == null || totalParallelSlots <= 0) {
+            return;
+        }
+        capacities.put(scope, new CapacityState(
+                Math.max(0, Math.min(usedParallelSlots, totalParallelSlots)), totalParallelSlots, tick));
+    }
+
+    public Optional<StallDiagnostic> stall(ProfileKey key, Object scope, long tick) {
+        var scopedPending = pending.get(scope);
+        var queue = scopedPending == null ? null : scopedPending.get(key);
+        var scopedProgress = lastProgressTicks.get(scope);
+        var lastProgress = scopedProgress == null ? null : scopedProgress.get(key);
+        var stats = stats(key);
+        if (queue == null || queue.isEmpty() || lastProgress == null || stats.isEmpty()) {
+            return Optional.empty();
+        }
+
+        var idleTicks = Math.max(0, tick - lastProgress);
+        var typicalTicks = stats.get().averageDurationTicks();
+        var delayedAfter = Math.max(600L, (long) Math.ceil(typicalTicks * 2.0));
+        if (idleTicks < delayedAfter) {
+            return Optional.empty();
+        }
+
+        var capacity = capacities.get(scope);
+        var capacityIsFresh = capacity != null && tick - capacity.tick <= 20;
+        return Optional.of(new StallDiagnostic(idleTicks, typicalTicks, queue.size(),
+                capacityIsFresh ? capacity.usedParallelSlots : 0,
+                capacityIsFresh ? capacity.totalParallelSlots : 0));
     }
 
     public Optional<ProfileStats> stats(ProfileKey key) {
@@ -163,6 +205,8 @@ public final class CraftProfiler {
         busyWindows.remove(key);
         pending.values().forEach(scoped -> scoped.remove(key));
         pending.values().removeIf(Map::isEmpty);
+        lastProgressTicks.values().forEach(scoped -> scoped.remove(key));
+        lastProgressTicks.values().removeIf(Map::isEmpty);
         return cleared;
     }
 
@@ -215,6 +259,8 @@ public final class CraftProfiler {
     public void loadSamples(List<PersistedOutputSamples> persisted) {
         samples.clear();
         pending.clear();
+        lastProgressTicks.clear();
+        capacities.clear();
         busyWindows.clear();
         for (var output : persisted) {
             for (var sample : output.samples()) {
@@ -237,6 +283,17 @@ public final class CraftProfiler {
 
     private boolean hasPending(ProfileKey key) {
         return pending.values().stream().anyMatch(scoped -> scoped.containsKey(key));
+    }
+
+    private void removeLastProgress(Object scope, ProfileKey key) {
+        var scoped = lastProgressTicks.get(scope);
+        if (scoped == null) {
+            return;
+        }
+        scoped.remove(key);
+        if (scoped.isEmpty()) {
+            lastProgressTicks.remove(scope);
+        }
     }
 
     private void rebuildBusyWindow(ProfileKey key) {
@@ -271,5 +328,8 @@ public final class CraftProfiler {
     }
 
     private record CraftSample(long amount, ProfileUnit unit, long durationTicks) {
+    }
+
+    private record CapacityState(int usedParallelSlots, int totalParallelSlots, long tick) {
     }
 }
