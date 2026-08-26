@@ -98,7 +98,7 @@ function Set-DevelopmentVersion([string]$path, [string]$version) {
     $updated = foreach ($line in Get-Content -LiteralPath $path) {
         if ($line -match '^modVersion=') { "modVersion=$version" } else { $line }
     }
-    $updated | Set-Content -LiteralPath $path -Encoding UTF8
+    [IO.File]::WriteAllText($path, (($updated -join [Environment]::NewLine) + [Environment]::NewLine), (New-Object Text.UTF8Encoding($false)))
 }
 
 function Get-InputFingerprint($entry) {
