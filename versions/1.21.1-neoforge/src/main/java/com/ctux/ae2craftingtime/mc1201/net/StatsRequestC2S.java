@@ -70,8 +70,7 @@ public record StatsRequestC2S(List<String> keys, boolean reset) implements Custo
                     ProfilerBridge.clearStats(profileKey);
                     continue;
                 }
-                ProfilerBridge.stats(profileKey)
-                        .ifPresent(stats -> entries.add(new StatsEntry(new ProfileKey(key), stats)));
+                ProfilerBridge.entry(profileKey, new ProfileKey(key)).ifPresent(entries::add);
             }
             StatsNetwork.sendTo(player, new StatsSnapshotS2C(packet.keys, entries, networkAmounts(grid, packet.keys)));
         });

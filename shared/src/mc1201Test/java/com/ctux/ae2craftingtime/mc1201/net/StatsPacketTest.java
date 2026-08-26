@@ -6,6 +6,7 @@ import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
 import com.ctux.ae2craftingtime.core.StatsEntry;
+import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
 import io.netty.buffer.Unpooled;
 import java.util.List;
 import java.util.Map;
@@ -36,10 +37,14 @@ class StatsPacketTest {
     @Test
     void snapshotRoundTripsServerCalculatedStats() {
         var buffer = new FriendlyByteBuf(Unpooled.buffer());
-        var packet = new StatsSnapshotS2C(List.of("minecraft:water", "minecraft:lava"), List.of(new StatsEntry(
-                new ProfileKey("minecraft:water"),
-                new ProfileStats(3, 40.5, 25.0, 500.0, 42, ProfileUnit.MILLIBUCKET, false,
-                        2, 4.0, List.of(10L, 20L, 42L), List.of(250L, 500L, 1000L)))),
+        var packet = new StatsSnapshotS2C(List.of("minecraft:water", "minecraft:lava"), List.of(
+                new StatsEntry(new ProfileKey("minecraft:water"),
+                        new ProfileStats(3, 40.5, 25.0, 500.0, 42, ProfileUnit.MILLIBUCKET, false,
+                                2, 4.0, List.of(10L, 20L, 42L), List.of(250L, 500L, 1000L)),
+                        java.util.Optional.of(new TtcAccuracyStats(4, 3, 0.9, 2.5, 12.5, 1.1,
+                                30, 33.0, 31.0, 4, 4))),
+                new StatsEntry(new ProfileKey("minecraft:lava"),
+                        new ProfileStats(1, 20, 50, 1000, 20, ProfileUnit.MILLIBUCKET))),
                 Map.of("minecraft:water", 8_000L, "minecraft:lava", 0L));
 
         StatsSnapshotS2C.encode(packet, buffer);

@@ -6,11 +6,11 @@ import java.util.Map;
 import java.util.Optional;
 
 public final class ClientStatsCache {
-    private final Map<ProfileKey, ProfileStats> stats = new HashMap<>();
+    private final Map<ProfileKey, StatsEntry> stats = new HashMap<>();
 
     public void replace(List<StatsEntry> entries) {
         for (var entry : entries) {
-            stats.put(entry.key(), entry.stats());
+            stats.put(entry.key(), entry);
         }
     }
 
@@ -22,7 +22,11 @@ public final class ClientStatsCache {
     }
 
     public Optional<ProfileStats> get(ProfileKey key) {
-        return Optional.ofNullable(stats.get(key));
+        return Optional.ofNullable(stats.get(key)).map(StatsEntry::stats);
+    }
+
+    public Optional<TtcAccuracyStats> accuracy(ProfileKey key) {
+        return Optional.ofNullable(stats.get(key)).flatMap(StatsEntry::accuracy);
     }
 
     public void remove(ProfileKey key) {

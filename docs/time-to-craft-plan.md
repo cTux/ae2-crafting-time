@@ -77,6 +77,30 @@ The running crafting-status screen is different: its total uses AE2's elapsed
 time and overall completed-work progress. It must not sum status rows because
 independent rows and crafting CPUs can run concurrently.
 
+## Prediction Accuracy
+
+When AE2 accepts a job, the server freezes the same total TTC that the craft
+plan displays: the sum of estimates for rows with known throughput. It also
+records how many crafted-output rows had estimates. On successful completion,
+the server compares that frozen prediction with both nominal tick time and
+monotonic wall-clock time. Cancelled jobs, jobs restored after a restart, and
+jobs with no prediction are excluded.
+
+Accuracy is retained in a rolling runtime window keyed by network and final
+output. Aggregate error metrics use only fully covered plans so missing row
+statistics cannot make TTC appear systematically optimistic. Average and latest
+coverage are still shown for partial predictions. These measurements are
+diagnostic only and do not feed back into per-output throughput or TTC math.
+
+The detailed TTC tooltip and Ctrl-click chat diagnostics show:
+
+- fully covered jobs / recorded jobs
+- mean absolute percentage error (MAPE)
+- mean actual wall time / predicted TTC ratio
+- mean signed error (`actual - predicted`)
+- average coverage
+- latest predicted, wall-clock, nominal tick, and row-coverage values
+
 ## Amount Normalization
 
 The estimate must use the same units as profiling throughput.

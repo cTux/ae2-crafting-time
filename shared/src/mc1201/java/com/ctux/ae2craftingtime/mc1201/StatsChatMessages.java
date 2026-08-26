@@ -20,7 +20,8 @@ public final class StatsChatMessages {
             return;
         }
 
-        StatsNetwork.sendToServer(new StatsChatC2S(TtcText.compactMessages(name, amount, stats.get())));
+        StatsNetwork.sendToServer(new StatsChatC2S(TtcText.compactMessages(name, amount, stats.get(),
+                ClientStats.CACHE.accuracy(key))));
     }
 
     public static void reset(ProfileKey key, String name) {

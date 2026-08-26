@@ -1,6 +1,11 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
 import appeng.api.config.Actionable;
+import appeng.api.networking.IGrid;
+import appeng.api.networking.crafting.ICraftingPlan;
+import appeng.api.networking.crafting.ICraftingRequester;
+import appeng.api.networking.crafting.ICraftingSubmitResult;
+import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.crafting.execution.CraftingCpuLogic;
 import appeng.crafting.inv.ListCraftingInventory;
@@ -53,6 +58,15 @@ public abstract class CraftingCpuLogicMixin {
 
     @Inject(method = "finishJob", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$clearPendingOutputs(boolean success, CallbackInfo ci) {
-        ProfilerBridge.clearPending(cluster);
+        ProfilerBridge.finishJob(cluster, success, cluster.getLevel().getGameTime(), System.nanoTime());
+    }
+
+    @Inject(method = "trySubmitJob", at = @At("RETURN"), remap = false)
+    private void ae2craftingtime$startJobAccuracy(IGrid grid, ICraftingPlan plan, IActionSource source,
+            ICraftingRequester requester, CallbackInfoReturnable<ICraftingSubmitResult> cir) {
+        if (cir.getReturnValue().successful()) {
+            ProfilerBridge.startJob(ProfilerBridge.networkId(grid), cluster, plan, cluster.getLevel().getGameTime(),
+                    System.nanoTime());
+        }
     }
 }

@@ -49,8 +49,7 @@ public record StatsRequestC2S(List<String> keys, boolean reset) {
                 ProfilerBridge.clearStats(profileKey);
                 continue;
             }
-            ProfilerBridge.stats(profileKey)
-                    .ifPresent(stats -> entries.add(new StatsEntry(new ProfileKey(key), stats)));
+            ProfilerBridge.entry(profileKey, new ProfileKey(key)).ifPresent(entries::add);
         }
         StatsNetwork.sendTo(player, new StatsSnapshotS2C(keys, entries, networkAmounts(grid, keys)));
     }
