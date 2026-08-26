@@ -33,7 +33,7 @@ function Write-Json($path, $value) {
 }
 
 function Assert-ReleaseEntry($entry) {
-    $required = @("id", "module", "loader", "loaderName", "minecraftVersion", "projectDir", "modName", "initialVersion", "releaseType")
+    $required = @("id", "module", "loader", "loaderName", "minecraftVersion", "projectDir", "modName", "initialVersion", "releaseType", "modrinthDependencies")
     foreach ($name in $required) {
         if (-not $entry.$name) {
             throw "Release entry is missing '$name'"
@@ -44,6 +44,11 @@ function Assert-ReleaseEntry($entry) {
     }
     if ($entry.releaseType -notin @("alpha", "beta", "release")) {
         throw "$($entry.id) releaseType must be alpha, beta, or release"
+    }
+    foreach ($dependency in @($entry.modrinthDependencies)) {
+        if (-not $dependency.project_id -or $dependency.dependency_type -notin @("required", "optional", "incompatible", "embedded")) {
+            throw "$($entry.id) has invalid Modrinth dependency metadata"
+        }
     }
 }
 
@@ -242,7 +247,7 @@ function Publish-Modrinth($entry, [string]$version, [string]$jarPath, [string]$n
             name = [IO.Path]::GetFileNameWithoutExtension((Get-ArtifactFileName $entry $version))
             version_number = "$($entry.id)-$version"
             changelog = $notes
-            dependencies = @()
+            dependencies = @($entry.modrinthDependencies)
             game_versions = @($entry.minecraftVersion)
             version_type = $entry.releaseType
             loaders = @($entry.loader)
@@ -395,6 +400,7 @@ try {
             if ($DryRun) {
                 Write-Host "dry-run deploy $($release.entry.id): $($release.jarPath)"
                 Write-Host "dry-run Modrinth version: $($release.entry.id)-$($release.version)"
+                Write-Host "dry-run Modrinth dependencies: $((@($release.entry.modrinthDependencies) | ForEach-Object { "$($_.project_id):$($_.dependency_type)" }) -join ', ')"
                 Write-Host "dry-run CurseForge versions: $($release.entry.minecraftVersion), $($release.entry.loaderName), Client, Server"
             }
             else {

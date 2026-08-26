@@ -90,6 +90,11 @@ Run `scripts/setup-git.ps1` once after cloning. It installs the tracked post-com
 
 Release metadata can come from the matrix row or from environment overrides. `RELEASE_TYPE`, `MODRINTH_PROJECT_ID`, and `CURSEFORGE_PROJECT_ID` override the row values for all entries in the current run. `MODRINTH_TOKEN` and `CURSEFORGE_TOKEN` are required only for a real `-Deploy`; GitHub CLI must also be authenticated.
 
+Each matrix row also declares its required and optional Modrinth projects in
+`modrinthDependencies`. The deploy script validates and uploads that list with
+every new version; keep it consistent with `DEPENDENCIES.md` and the loader's
+mod metadata.
+
 `-Deploy` fails fast unless both platform project ids resolve for every affected row. The current Modrinth and CurseForge project ids are stored per row in the release matrix.
 
 Check the release script after changing `deploy-changed.ps1` or the release matrix:
