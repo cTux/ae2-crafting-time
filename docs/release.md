@@ -58,6 +58,18 @@ latest released versions for the complete GitHub asset set, uploads changed
 rows, creates the GitHub Release, bumps `modVersion`, commits the release state,
 and pushes the branch.
 
+## Release notes and names
+
+- Write changelogs for players, not as raw commit logs. Use clear sentences
+  grouped under `ADDED`, `FIXED`, `IMPROVED`, `DELETED`, or `CHANGED`; omit empty
+  categories.
+- Conventional commit subjects are converted into those categories and stripped
+  of commit types, scopes, and hashes. A manual `-Changelog` must already use the
+  same `### CATEGORY` Markdown headings.
+- Name the GitHub Release with only the mod version, for example `1.0.5`. Put
+  loader, Minecraft version, artifact, and categorized changelog details in the
+  release body.
+
 After it succeeds:
 
 1. Verify the GitHub Release contains one loader-explicit JAR for every matrix row.

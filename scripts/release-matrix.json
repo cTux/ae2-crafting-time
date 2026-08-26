@@ -11,7 +11,7 @@
     "releaseType": "alpha",
     "modrinthProjectId": "LyDZjvxd",
     "curseProjectId": "1591476",
-    "changelog": "Moves the crafting status total TTC into the header to avoid overlapping action buttons."
+    "changelog": "### FIXED\n\n- Moved the crafting status total TTC into the header to avoid overlapping action buttons."
   },
   {
     "id": "1.20.1-fabric",
@@ -25,7 +25,7 @@
     "releaseType": "alpha",
     "modrinthProjectId": "LyDZjvxd",
     "curseProjectId": "1591476",
-    "changelog": "Moves the crafting status total TTC into the header to avoid overlapping action buttons."
+    "changelog": "### FIXED\n\n- Moved the crafting status total TTC into the header to avoid overlapping action buttons."
   },
   {
     "id": "1.21.1-neoforge",
@@ -39,6 +39,6 @@
     "releaseType": "release",
     "modrinthProjectId": "LyDZjvxd",
     "curseProjectId": "1591476",
-    "changelog": "Moves the crafting status total TTC into the header to avoid overlapping action buttons."
+    "changelog": "### FIXED\n\n- Moved the crafting status total TTC into the header to avoid overlapping action buttons."
   }
 ]
