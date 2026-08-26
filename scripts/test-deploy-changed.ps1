@@ -24,6 +24,15 @@ if (($releaseDryRun -join "`n") -notmatch '### FIXED\s+- Moved the crafting stat
 if (($releaseDryRun -join "`n") -notmatch 'dry-run next development version: 1\.0\.5') {
     throw "Release dry run did not advance the development version"
 }
+if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, E6BFl96N:optional') {
+    throw "Release dry run did not include Forge Modrinth dependencies"
+}
+if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: P7dR8mSH:required, XxWD5pD3:required, a1RwDz90:optional, E6BFl96N:optional') {
+    throw "Release dry run did not include Fabric Modrinth dependencies"
+}
+if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, rxYaglEe:optional, E6BFl96N:optional') {
+    throw "Release dry run did not include NeoForge Modrinth dependencies"
+}
 
 $first = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" `
     -StatePath $StatePath `

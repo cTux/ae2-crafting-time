@@ -3,6 +3,7 @@
 AE2 Crafting Time is an Applied Energistics 2 autocrafting diagnostics mod. It
 records real crafting performance on the server to help players find slow or
 stalled crafts, understand bottlenecks, and estimate when crafting will finish.
+It is an unofficial addon and is not endorsed by the Applied Energistics 2 team.
 
 It currently targets:
 
@@ -72,6 +73,17 @@ Local project skills live in `.codex/skills/`:
 
 - `ae2-crafting-time-dev`: use for feature work, TTC UI changes, profiling bugs, packets, persistence, and docs.
 - `ae2-crafting-time-release`: use for release matrix rows, build wrappers, jar names, deploy scripts, and release checks.
+
+## Development Disclosure
+
+This project is designed, directed, tested, and reviewed by cTux with substantial
+generative-AI assistance for code, documentation, translations, release notes,
+and publishing. It does not use generative AI at runtime and ships no
+AI-generated visual assets.
+
+## License
+
+AE2 Crafting Time is available under the [MIT License](LICENSE).
 
 ## Repo Layout
 
