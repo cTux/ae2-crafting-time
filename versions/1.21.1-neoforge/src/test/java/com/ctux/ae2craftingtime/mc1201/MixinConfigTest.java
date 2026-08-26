@@ -71,6 +71,15 @@ class MixinConfigTest {
     }
 
     @Test
+    void allAe2CraftingTimeTableTextUsesShadow() throws IOException {
+        var mixin = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/AbstractTableRendererMixin.java"));
+
+        assertTrue(mixin.contains("startsWith(\"text.ae2craftingtime.\")"));
+        assertTrue(mixin.contains("shadow || isAe2CraftingTime"));
+    }
+
+    @Test
     void craftingStatusSortSupportsSuspendedStatusConstructor() throws IOException {
         var screenMixin = Files.readString(Path.of(
                 "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingCPUScreenMixin.java"));

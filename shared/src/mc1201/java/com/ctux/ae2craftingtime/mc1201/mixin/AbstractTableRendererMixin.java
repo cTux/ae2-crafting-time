@@ -37,12 +37,12 @@ public abstract class AbstractTableRendererMixin {
                     remap = true),
             remap = false)
     @SuppressWarnings("mapping")
-    private int ae2craftingtime$drawTtcWithShadow(GuiGraphics guiGraphics, Font font, Component text,
+    private int ae2craftingtime$drawTextWithShadow(GuiGraphics guiGraphics, Font font, Component text,
             int x, int y, int color, boolean shadow) {
         var contents = text.getContents();
-        var isTtc = contents instanceof TranslatableContents translatable
-                && translatable.getKey().equals("text.ae2craftingtime.ttc");
-        return guiGraphics.drawString(font, text, x, y, color, shadow || isTtc);
+        var isAe2CraftingTime = contents instanceof TranslatableContents translatable
+                && translatable.getKey().startsWith("text.ae2craftingtime.");
+        return guiGraphics.drawString(font, text, x, y, color, shadow || isAe2CraftingTime);
     }
 
     @Inject(method = "render", at = @At("HEAD"), remap = false)
