@@ -11,6 +11,9 @@ Persist collected crafting times in the Minecraft world save:
 - load state from the saved file on world load
 - save through Minecraft/Forge default saving mechanisms
 
+This history preserves the learned throughput used by TTC estimates and
+slow-craft diagnostics across restarts.
+
 ## Feasibility
 
 This is possible and should use Minecraft `SavedData`, not direct file IO.

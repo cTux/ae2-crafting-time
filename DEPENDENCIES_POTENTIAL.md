@@ -1,7 +1,8 @@
 # Potential Dependency Integrations
 
-These are candidate optional integrations for future TTC work. Do not add them
-to loader metadata until there is code that uses them.
+These are candidate optional integrations for extending crafting-time, delay,
+and bottleneck diagnostics. Do not add them to loader metadata until there is
+code that uses them.
 
 ## Best Next Targets
 

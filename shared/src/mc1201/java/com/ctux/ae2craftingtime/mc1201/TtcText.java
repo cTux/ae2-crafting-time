@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
+import com.ctux.ae2craftingtime.core.StallDiagnostic;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
 import net.minecraft.ChatFormatting;
@@ -17,6 +18,10 @@ import java.util.Optional;
 public final class TtcText {
     public static MutableComponent ttc(String eta) {
         return Component.translatable("text.ae2craftingtime.ttc", eta);
+    }
+
+    public static MutableComponent ttcDelayed() {
+        return Component.translatable("text.ae2craftingtime.ttc_delayed");
     }
 
     public static MutableComponent totalTtc(String eta) {
@@ -88,6 +93,33 @@ public final class TtcText {
         return List.copyOf(lines);
     }
 
+    public static List<Component> stallLines(String name, long amount, long activeAmount, long scheduledAmount,
+            ProfileStats stats, StallDiagnostic stall) {
+        var lines = new ArrayList<Component>();
+        lines.add(Component.literal(name).withStyle(ChatFormatting.WHITE, ChatFormatting.BOLD));
+        var eta = TimeEstimate.format(amount, stats).orElse(I18n.get("text.ae2craftingtime.unknown"));
+        lines.add(statsLine("text.ae2craftingtime.stats.ttc",
+                I18n.get("text.ae2craftingtime.value.delayed_ttc", eta)));
+        lines.add(statsLine("text.ae2craftingtime.stall.no_output",
+                I18n.get("text.ae2craftingtime.value.whole_seconds", secondsRounded(stall.idleTicks()))));
+        lines.add(statsLine("text.ae2craftingtime.stall.typical",
+                TimeEstimate.formatTicks(stall.typicalDurationTicks())));
+        lines.add(statsLine("text.ae2craftingtime.stall.state",
+                I18n.get("text.ae2craftingtime.value.stall_state", activeAmount, scheduledAmount)));
+        if (stall.totalParallelSlots() > 0) {
+            lines.add(statsLine("text.ae2craftingtime.stall.parallel_slots",
+                    I18n.get("text.ae2craftingtime.value.parallel_slots", stall.usedParallelSlots(),
+                            stall.totalParallelSlots())));
+        }
+        lines.add(Component.empty());
+        lines.add(Component.translatable("text.ae2craftingtime.stall.improvements")
+                .withStyle(ChatFormatting.GOLD));
+        for (var hint : stall.hints(scheduledAmount)) {
+            appendHint(lines, hint, stall);
+        }
+        return List.copyOf(lines);
+    }
+
     public static List<String> compactMessages(String name, long amount, ProfileStats stats) {
         return compactMessages(name, amount, stats, Optional.empty());
     }
@@ -148,6 +180,39 @@ public final class TtcText {
 
     private static String tickSeconds(double ticks) {
         return String.format(Locale.ROOT, "%.2f", ticks / 20.0);
+    }
+
+    private static long secondsRounded(long ticks) {
+        return (long) Math.ceil(ticks / 20.0);
+    }
+
+    private static void appendHint(List<Component> lines, StallDiagnostic.Hint hint, StallDiagnostic stall) {
+        switch (hint) {
+            case ADD_PARALLEL_PROVIDERS -> {
+                lines.add(Component.translatable("text.ae2craftingtime.stall.hint.parallel")
+                        .withStyle(ChatFormatting.YELLOW));
+                var available = Math.max(0, stall.totalParallelSlots() - stall.usedParallelSlots());
+                var reasonKey = stall.activeBatches() == 1
+                        ? "text.ae2craftingtime.stall.reason.parallel_one"
+                        : "text.ae2craftingtime.stall.reason.parallel_many";
+                lines.add(Component.translatable(reasonKey, available, stall.activeBatches())
+                        .withStyle(ChatFormatting.GRAY));
+            }
+            case SPEED_UP_MACHINE -> {
+                lines.add(Component.translatable("text.ae2craftingtime.stall.hint.speed")
+                        .withStyle(ChatFormatting.YELLOW));
+                var slowdown = stall.typicalDurationTicks() <= 0 ? 1.0
+                        : stall.idleTicks() / stall.typicalDurationTicks();
+                lines.add(Component.translatable("text.ae2craftingtime.stall.reason.speed", rate(slowdown))
+                        .withStyle(ChatFormatting.GRAY));
+            }
+            case ADD_CRAFTING_CO_PROCESSORS -> {
+                lines.add(Component.translatable("text.ae2craftingtime.stall.hint.co_processors")
+                        .withStyle(ChatFormatting.YELLOW));
+                lines.add(Component.translatable("text.ae2craftingtime.stall.reason.co_processors",
+                        stall.totalParallelSlots()).withStyle(ChatFormatting.GRAY));
+            }
+        }
     }
 
     private static String rate(double value) {

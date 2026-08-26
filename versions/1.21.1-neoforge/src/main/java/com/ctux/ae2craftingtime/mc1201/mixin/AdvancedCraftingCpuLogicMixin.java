@@ -8,6 +8,8 @@ import appeng.api.networking.crafting.ICraftingSubmitResult;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.crafting.inv.ListCraftingInventory;
+import appeng.api.networking.energy.IEnergyService;
+import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPU;
 import net.pedroksl.advanced_ae.common.logic.AdvCraftingCPULogic;
@@ -27,6 +29,10 @@ public abstract class AdvancedCraftingCpuLogicMixin {
     @Shadow
     @Final
     private AdvCraftingCPU cpu;
+
+    @Shadow
+    @Final
+    private int[] usedOps;
 
     @Redirect(
             method = "executeCrafting",
@@ -70,5 +76,13 @@ public abstract class AdvancedCraftingCpuLogicMixin {
             ProfilerBridge.startJob(ProfilerBridge.networkId(grid), cpu, plan, cpu.getLevel().getGameTime(),
                     System.nanoTime());
         }
+    }
+
+    @Inject(method = "tickCraftingLogic", at = @At("RETURN"), remap = false, require = 0)
+    private void ae2craftingtime$trackParallelCapacity(IEnergyService energyService,
+            CraftingService craftingService, CallbackInfo ci) {
+        var totalSlots = cpu.getCoProcessors() + 1;
+        var usedSlots = Math.min(totalSlots, usedOps[0] + usedOps[1] + usedOps[2]);
+        ProfilerBridge.updateCapacity(cpu, usedSlots, totalSlots, cpu.getLevel().getGameTime());
     }
 }

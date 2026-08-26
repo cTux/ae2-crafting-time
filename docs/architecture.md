@@ -1,9 +1,10 @@
 # Architecture
 
-AE2 Crafting Time profiles AE2 autocrafting on the logical server and renders
-server-provided time-to-craft snapshots in client UIs. The same flow is used for
-singleplayer and dedicated server-client play; an integrated singleplayer world
-still has a logical server.
+AE2 Crafting Time diagnoses slow or stalled AE2 autocrafting by profiling real
+throughput on the logical server. Client UIs render server-provided crafting-time
+estimates, delay warnings, prediction accuracy, and evidence-bounded bottleneck
+clues. The same flow is used for singleplayer and dedicated server-client play;
+an integrated singleplayer world still has a logical server.
 
 ## Supported Targets
 
@@ -29,6 +30,7 @@ AE2 CraftingCpuLogic mixins on the server
   -> ProfilerBridge
   -> CraftProfiler retained samples
   -> frozen job TTC versus successful completion accuracy
+  -> delayed-output diagnostics and recent parallel-dispatch capacity
   -> Ae2CraftingTimeSavedData world save snapshot
   -> StatsRequestC2S for visible output ids
   -> server looks up stats for the active AE2 network
@@ -45,6 +47,13 @@ Job-accuracy samples are a bounded runtime diagnostic. The prediction is frozen
 only after AE2 accepts a plan, and completion is recorded only when
 `finishJob(true)` runs. They are not persisted and never alter throughput
 samples or displayed TTC calculations.
+
+Stall diagnostics are also runtime-only. For the selected crafting CPU, the
+server tracks the last accepted output and AE2's rolling pattern-dispatch use.
+An output is delayed after at least 30 seconds without progress and at least
+twice its learned average production-window duration. Partial output resets the
+timer. The client only renders the server snapshot alongside AE2's active and
+scheduled amounts.
 
 The client never reads profiler state directly. That rule matters in
 singleplayer too: local UI still requests snapshots from the integrated server

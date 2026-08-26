@@ -6,6 +6,9 @@ Date: 2026-06-21
 
 Add sorting inside the AE2 crafting plan by the visible `TTC` value.
 
+Sorting helps players bring the slowest predicted steps together when looking
+for crafting bottlenecks; it does not diagnose the cause by itself.
+
 ## Feasibility
 
 This is possible, but not by adding `TTC` to AE2's existing terminal `Sort By`

@@ -1,13 +1,11 @@
 package com.ctux.ae2craftingtime.mc1201.net;
 
 import appeng.api.networking.IGrid;
-import appeng.api.networking.security.IActionHost;
-import appeng.menu.AEBaseMenu;
-import appeng.menu.me.crafting.CraftingCPUMenu;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.StatsEntry;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.StatsNetwork;
+import com.ctux.ae2craftingtime.mc1201.StatsRequestContext;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -41,7 +39,8 @@ public record StatsRequestC2S(List<String> keys, boolean reset) {
 
     public void handle(ServerPlayer player) {
         var entries = new ArrayList<StatsEntry>();
-        var grid = currentGrid(player);
+        var requestContext = StatsRequestContext.current(player);
+        var grid = requestContext.grid();
         var networkId = ProfilerBridge.networkId(grid);
         for (var key : keys) {
             var profileKey = new ProfileKey(networkId, key);
@@ -49,7 +48,8 @@ public record StatsRequestC2S(List<String> keys, boolean reset) {
                 ProfilerBridge.clearStats(profileKey);
                 continue;
             }
-            ProfilerBridge.entry(profileKey, new ProfileKey(key)).ifPresent(entries::add);
+            ProfilerBridge.entry(profileKey, new ProfileKey(key), requestContext.craftingCpu(),
+                    player.level().getGameTime()).ifPresent(entries::add);
         }
         StatsNetwork.sendTo(player, new StatsSnapshotS2C(keys, entries, networkAmounts(grid, keys)));
     }
@@ -69,24 +69,4 @@ public record StatsRequestC2S(List<String> keys, boolean reset) {
         return amounts;
     }
 
-    private static IGrid currentGrid(ServerPlayer player) {
-        if (player.containerMenu instanceof CraftingCPUMenu menu) {
-            return craftingCpuGrid(menu);
-        }
-        if (player.containerMenu instanceof AEBaseMenu menu && menu.getTarget() instanceof IActionHost host) {
-            var node = host.getActionableNode();
-            return node == null ? null : node.getGrid();
-        }
-        return null;
-    }
-
-    private static IGrid craftingCpuGrid(CraftingCPUMenu menu) {
-        try {
-            var method = CraftingCPUMenu.class.getDeclaredMethod("getGrid");
-            method.setAccessible(true);
-            return (IGrid) method.invoke(menu);
-        } catch (ReflectiveOperationException e) {
-            return null;
-        }
-    }
 }

@@ -113,8 +113,19 @@ public final class ProfilerBridge {
         return ACCURACY.stats(key);
     }
 
+    public static void updateCapacity(Object scope, int usedParallelSlots, int totalParallelSlots, long tick) {
+        if (isEnabled()) {
+            PROFILER.updateCapacity(scope, usedParallelSlots, totalParallelSlots, tick);
+        }
+    }
+
     public static Optional<StatsEntry> entry(ProfileKey lookupKey, ProfileKey displayKey) {
-        return stats(lookupKey).map(stats -> new StatsEntry(displayKey, stats, accuracy(lookupKey)));
+        return entry(lookupKey, displayKey, null, 0);
+    }
+
+    public static Optional<StatsEntry> entry(ProfileKey lookupKey, ProfileKey displayKey, Object scope, long tick) {
+        return stats(lookupKey).map(stats -> new StatsEntry(displayKey, stats, accuracy(lookupKey),
+                scope == null ? Optional.empty() : PROFILER.stall(lookupKey, scope, tick)));
     }
 
     public static boolean clearStats(ProfileKey key) {

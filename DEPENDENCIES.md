@@ -1,7 +1,9 @@
 # Dependencies
 
 AE2 Crafting Time is shipped as separate jars per Minecraft loader. Use the jar
-that matches the loader and Minecraft version in your instance.
+that matches the loader and Minecraft version in your instance. Optional
+integrations extend its crafting-time and bottleneck diagnostics into other AE2
+crafting UIs and resource types.
 
 ## Strict Dependencies
 

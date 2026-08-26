@@ -9,4 +9,6 @@
 - In a managed Codex environment, check `gh auth status` and user-scoped release-token presence with the same elevated sandbox permissions as the real deploy. Treat an in-sandbox authentication or token failure as non-authoritative, and do not report missing credentials until the elevated check also fails. Load the tokens and run the real deploy in the same elevated PowerShell invocation.
 - Write Modrinth and CurseForge multipart JSON only through the BOM-free `Write-Json` helper. Never use Windows PowerShell's `Set-Content -Encoding UTF8` for upload metadata because it adds a UTF-8 BOM; keep the no-BOM regression check in `test-deploy-changed.ps1`.
 - Run `deploy-changed.ps1 -Deploy -DryRun` immediately before the real deploy. Run `test-deploy-changed.ps1` only when release automation or the matrix changed.
+- Write every changelog as clear player-facing sentences grouped under `ADDED`, `FIXED`, `IMPROVED`, `DELETED`, or `CHANGED`, omitting empty categories. Never publish raw commit logs as release notes.
+- Name GitHub Releases with only the mod version, such as `1.0.5`; keep loader, Minecraft version, artifact, and changelog details in the release body.
 - A release is complete only after platform readback and after the hook-created release PR is merged, leaving `origin/master` on the next `modVersion`.

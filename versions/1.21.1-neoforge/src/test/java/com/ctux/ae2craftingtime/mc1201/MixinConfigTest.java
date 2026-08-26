@@ -10,6 +10,14 @@ import org.junit.jupiter.api.Test;
 
 class MixinConfigTest {
     @Test
+    void stallPacketBumpsPayloadRegistrar() throws IOException {
+        var source = Files.readString(Path.of(
+                "src/main/java/com/ctux/ae2craftingtime/mc1201/StatsNetwork.java"));
+
+        assertTrue(source.contains("event.registrar(\"3\")"));
+    }
+
+    @Test
     void craftingTreeMixinIsClientOnly() throws IOException {
         var json = Files.readString(Path.of("build/resources/main/ae2craftingtime.mixins.json"));
         var clientIndex = json.indexOf("\"client\"");
@@ -63,6 +71,15 @@ class MixinConfigTest {
     }
 
     @Test
+    void allAe2CraftingTimeTableTextUsesShadow() throws IOException {
+        var mixin = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/AbstractTableRendererMixin.java"));
+
+        assertTrue(mixin.contains("startsWith(\"text.ae2craftingtime.\")"));
+        assertTrue(mixin.contains("shadow || isAe2CraftingTime"));
+    }
+
+    @Test
     void craftingStatusSortSupportsSuspendedStatusConstructor() throws IOException {
         var screenMixin = Files.readString(Path.of(
                 "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingCPUScreenMixin.java"));
@@ -76,20 +93,26 @@ class MixinConfigTest {
         var json = Files.readString(Path.of("build/resources/main/ae2craftingtime.mixins.json"));
         var mixin = Files.readString(Path.of(
                 "src/main/java/com/ctux/ae2craftingtime/mc1201/mixin/AdvancedCraftingCpuLogicMixin.java"));
+        var context = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/StatsRequestContext.java"));
 
         assertTrue(json.contains("\"AdvancedCraftingCpuLogicMixin\""));
         assertTrue(mixin.contains("@Pseudo"));
         assertTrue(mixin.contains("ProfilerBridge.start"));
         assertTrue(mixin.contains("ProfilerBridge.complete"));
+        assertTrue(context.contains("advancedAE$advCpu"));
     }
 
     @Test
     void statusStatsRequestsUseCraftingCpuMenuGrid() throws IOException {
         var packet = Files.readString(Path.of(
                 "src/main/java/com/ctux/ae2craftingtime/mc1201/net/StatsRequestC2S.java"));
+        var context = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/StatsRequestContext.java"));
 
-        assertTrue(packet.contains("CraftingCPUMenu"));
-        assertTrue(packet.contains("getDeclaredMethod(\"getGrid\")"));
+        assertTrue(packet.contains("StatsRequestContext.current(player)"));
+        assertTrue(context.contains("getDeclaredMethod(\"getGrid\")"));
+        assertTrue(context.contains("craftingCpu(menu, \"cpu\")"));
     }
 
     @Test

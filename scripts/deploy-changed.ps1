@@ -169,9 +169,55 @@ function Invoke-Git($arguments) {
     return $output
 }
 
+function Format-Changelog($subjects) {
+    $groups = [ordered]@{
+        ADDED = @()
+        FIXED = @()
+        IMPROVED = @()
+        DELETED = @()
+        CHANGED = @()
+    }
+
+    foreach ($subject in $subjects) {
+        $type = ""
+        $text = $subject.Trim()
+        if ($text -match '^(?<type>[a-z]+)(?:\([^)]+\))?!?:\s*(?<text>.+)$') {
+            $type = $Matches.type
+            $text = $Matches.text.Trim()
+        }
+        $category = if ($text -match '^(?i:delete|drop|remove)\b') {
+            "DELETED"
+        }
+        else {
+            switch ($type) {
+                "feat" { "ADDED" }
+                "fix" { "FIXED" }
+                "perf" { "IMPROVED" }
+                default { "CHANGED" }
+            }
+        }
+        if ($text) {
+            $text = $text.Substring(0, 1).ToUpperInvariant() + $text.Substring(1)
+            if ($text -notmatch '[.!?]$') { $text += "." }
+            $groups[$category] += "- $text"
+        }
+    }
+
+    return (($groups.Keys | Where-Object { $groups[$_].Count -gt 0 } | ForEach-Object {
+        "### $_`n`n$($groups[$_] -join "`n")"
+    }) -join "`n`n")
+}
+
+function Assert-Changelog([string]$text) {
+    if ($text -notmatch '(?m)^### (ADDED|FIXED|IMPROVED|DELETED|CHANGED)$') {
+        throw "Changelog must use human-readable ### ADDED, FIXED, IMPROVED, DELETED, or CHANGED categories"
+    }
+    return $text
+}
+
 function Get-EntryChangelog($entry, $previous) {
-    if ($Changelog) { return $Changelog }
-    if (-not ($previous -and $previous.commit)) { return $entry.changelog }
+    if ($Changelog) { return Assert-Changelog $Changelog }
+    if (-not ($previous -and $previous.commit)) { return Assert-Changelog $entry.changelog }
 
     $paths = @(
         "build.gradle",
@@ -181,9 +227,9 @@ function Get-EntryChangelog($entry, $previous) {
         "$($entry.projectDir)/build.gradle",
         "$($entry.projectDir)/src/main"
     )
-    $lines = @(Invoke-Git (@("log", "$($previous.commit)..HEAD", "--format=- %s (%h)", "--") + $paths))
-    if ($lines.Count -eq 0) { return $entry.changelog }
-    return $lines -join "`n"
+    $subjects = @(Invoke-Git (@("log", "$($previous.commit)..HEAD", "--format=%s", "--") + $paths))
+    if ($subjects.Count -eq 0) { return Assert-Changelog $entry.changelog }
+    return Format-Changelog $subjects
 }
 
 function Publish-Modrinth($entry, [string]$version, [string]$jarPath, [string]$notes) {
@@ -255,7 +301,7 @@ function Publish-CurseForge($entry, [string]$version, [string]$jarPath, [string]
 function Publish-GitHubRelease($releases, $jars, [string]$sourceCommit) {
     $stamp = (Get-Date).ToUniversalTime().ToString("yyyyMMdd-HHmmss")
     $tag = "release-$stamp"
-    $title = ($releases | ForEach-Object { "$($_.entry.minecraftVersion) $($_.entry.loaderName) $($_.version)" }) -join ", "
+    $title = $releases[0].version
     $notes = ($releases | ForEach-Object { "## $(Get-ArtifactFileName $_.entry $_.version)`n`n$($_.changelog)" }) -join "`n`n"
 
     if ($DryRun) {

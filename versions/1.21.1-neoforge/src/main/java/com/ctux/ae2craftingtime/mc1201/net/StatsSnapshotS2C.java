@@ -66,6 +66,8 @@ public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entr
             }
             buffer.writeBoolean(entry.accuracy().isPresent());
             entry.accuracy().ifPresent(accuracy -> TtcAccuracyPacketCodec.write(buffer, accuracy));
+            buffer.writeBoolean(entry.stall().isPresent());
+            entry.stall().ifPresent(stall -> StallDiagnosticPacketCodec.write(buffer, stall));
         }
     }
 
@@ -104,9 +106,11 @@ public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entr
             }
             var accuracy = buffer.readBoolean() ? java.util.Optional.of(TtcAccuracyPacketCodec.read(buffer))
                     : java.util.Optional.<TtcAccuracyStats>empty();
+            var stall = buffer.readBoolean() ? java.util.Optional.of(StallDiagnosticPacketCodec.read(buffer))
+                    : java.util.Optional.<com.ctux.ae2craftingtime.core.StallDiagnostic>empty();
             entries.add(new StatsEntry(key, new ProfileStats(sampleCount, averageDurationTicks, amountPerTick,
                     amountPerSecond, lastDurationTicks, unit, reliableEstimate, usedSampleCount, outlierMultiplier,
-                    sampleDurationTicks, sampleAmounts), accuracy));
+                    sampleDurationTicks, sampleAmounts), accuracy, stall));
         }
         return new StatsSnapshotS2C(requestedKeys, entries, networkAmounts);
     }

@@ -17,6 +17,8 @@ description: Work on AE2 Crafting Time build, release, distribution, and deploym
 8. On Windows, if tokens are absent from the process, load `MODRINTH_TOKEN` and `CURSEFORGE_TOKEN` from user scope with `[Environment]::GetEnvironmentVariable(..., "User")`. Never print token values.
 9. After deploy, verify GitHub assets and Modrinth versions, confirm CurseForge accepted each upload, merge the hook-created release PR, and verify `origin/master` has the next patch `modVersion`.
 10. Before retrying a failed upload, inspect the printed platform error and confirm no partial version, GitHub release, local state, or version bump was created.
+11. Keep changelogs player-facing and grouped under `ADDED`, `FIXED`, `IMPROVED`, `DELETED`, or `CHANGED`; omit empty categories and never publish raw commit logs.
+12. Name GitHub Releases with only the mod version, such as `1.0.5`; keep loader, Minecraft version, artifact, and changelog details in the body.
 
 ## Files
 

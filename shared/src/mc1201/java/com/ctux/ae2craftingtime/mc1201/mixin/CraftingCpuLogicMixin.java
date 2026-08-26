@@ -9,7 +9,9 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.crafting.execution.CraftingCpuLogic;
 import appeng.crafting.inv.ListCraftingInventory;
+import appeng.api.networking.energy.IEnergyService;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
+import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,6 +27,10 @@ public abstract class CraftingCpuLogicMixin {
     @Shadow(remap = false)
     @Final
     private CraftingCPUCluster cluster;
+
+    @Shadow(remap = false)
+    @Final
+    private int[] usedOps;
 
     @Redirect(
             method = "executeCrafting",
@@ -59,6 +65,14 @@ public abstract class CraftingCpuLogicMixin {
     @Inject(method = "finishJob", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$clearPendingOutputs(boolean success, CallbackInfo ci) {
         ProfilerBridge.finishJob(cluster, success, cluster.getLevel().getGameTime(), System.nanoTime());
+    }
+
+    @Inject(method = "tickCraftingLogic", at = @At("RETURN"), remap = false)
+    private void ae2craftingtime$trackParallelCapacity(IEnergyService energyService,
+            CraftingService craftingService, CallbackInfo ci) {
+        var totalSlots = cluster.getCoProcessors() + 1;
+        var usedSlots = Math.min(totalSlots, usedOps[0] + usedOps[1] + usedOps[2]);
+        ProfilerBridge.updateCapacity(cluster, usedSlots, totalSlots, cluster.getLevel().getGameTime());
     }
 
     @Inject(method = "trySubmitJob", at = @At("RETURN"), remap = false)

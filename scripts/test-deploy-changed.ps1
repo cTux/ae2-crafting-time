@@ -15,8 +15,11 @@ $releaseDryRun = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScrip
     -DryRun `
     -ModrinthProjectId test-project `
     -CurseProjectId 1591476
-if ($LASTEXITCODE -ne 0 -or ($releaseDryRun -join "`n") -notmatch 'dry-run GitHub Release: 1\.20\.1 Forge 1\.0\.4, 1\.20\.1 Fabric 1\.0\.4, 1\.21\.1 NeoForge 1\.0\.4') {
+if ($LASTEXITCODE -ne 0 -or ($releaseDryRun -join "`n") -notmatch 'dry-run GitHub Release: 1\.0\.4') {
     throw "Release dry run did not create the expected GitHub Release metadata"
+}
+if (($releaseDryRun -join "`n") -notmatch '### FIXED\s+- Moved the crafting status total TTC into the header to avoid overlapping action buttons\.') {
+    throw "Release dry run did not create a categorized human-readable changelog"
 }
 if (($releaseDryRun -join "`n") -notmatch 'dry-run next development version: 1\.0\.5') {
     throw "Release dry run did not advance the development version"
@@ -43,6 +46,7 @@ $partialStatePath = "$StatePath.partial"
 Copy-Item -LiteralPath $StatePath -Destination $partialStatePath -Force
 $partialState = Get-Content -LiteralPath $partialStatePath -Raw | ConvertFrom-Json
 $partialState.'1.20.1-fabric'.fingerprint = "changed"
+$partialState.'1.20.1-fabric'.commit = (& git rev-list --max-parents=0 HEAD).Trim()
 $partialState | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $partialStatePath -Encoding UTF8
 Set-Content -LiteralPath $versionPath -Value "modVersion=1.0.5" -Encoding UTF8
 $partial = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" `
@@ -53,7 +57,7 @@ $partial = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\
     -ModrinthProjectId test-project `
     -CurseProjectId 1591476
 $partialOutput = $partial -join "`n"
-if ($LASTEXITCODE -ne 0 -or $partialOutput -notmatch 'dry-run GitHub Release: 1\.20\.1 Fabric 1\.0\.5') {
+if ($LASTEXITCODE -ne 0 -or $partialOutput -notmatch 'dry-run GitHub Release: 1\.0\.5') {
     throw "Partial release did not publish only the affected jar at the development version"
 }
 if ($partialOutput -notmatch 'dry-run GitHub assets: ae2-crafting-time-1\.0\.4-forge-1\.20\.1\.jar, ae2-crafting-time-1\.0\.5-fabric-1\.20\.1\.jar, ae2-crafting-time-1\.0\.4-neoforge-1\.21\.1\.jar') {
@@ -64,6 +68,9 @@ if ($partialOutput -notmatch 'dry-run Modrinth version: 1\.20\.1-fabric-1\.0\.5'
 }
 if ($partialOutput -notmatch 'dry-run CurseForge versions: 1\.20\.1, Fabric, Client, Server') {
     throw "Partial release did not include CurseForge environment versions"
+}
+if ($partialOutput -notmatch '### ADDED' -or $partialOutput -notmatch '### FIXED' -or $partialOutput -match '(?m)^- (feat|fix)(\([^)]+\))?!?:') {
+    throw "Generated changelog did not categorize and humanize conventional commits"
 }
 Remove-Item -LiteralPath $partialStatePath -Force -ErrorAction SilentlyContinue
 

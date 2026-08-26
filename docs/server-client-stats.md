@@ -4,7 +4,9 @@ Date: 2026-06-21
 
 ## Requirement
 
-All craft timing and throughput calculations happen on the Minecraft server. The client only renders performance stats that the server sends.
+All craft timing, throughput, delay, prediction-accuracy, and bottleneck
+diagnostics happen on the Minecraft server. The client only renders diagnostics
+that the server sends.
 
 This matters for dedicated servers:
 
@@ -106,6 +108,13 @@ entries:
   lastDurationTicks: long
   sampleDurationTicks: list<long>
   sampleAmounts: list<long>
+  stall: optional {
+    idleTicks: long
+    typicalDurationTicks: double
+    activeBatches: int
+    usedParallelSlots: int
+    totalParallelSlots: int
+  }
 ```
 
 Rules:
@@ -117,6 +126,8 @@ Rules:
 - Pending pattern outputs are still matched per crafting CPU. Finishing or
   cancelling a CPU job discards its unmatched pending outputs so they cannot
   inflate a future sample.
+- A stall diagnostic is included only for the selected crafting CPU after its
+  no-progress threshold is reached. It is runtime-only and never persisted.
 - Client drops cache entries for requested keys before applying returned stats.
 - Missing entries therefore mean "no known stats for this output in the current network-scoped context".
 
