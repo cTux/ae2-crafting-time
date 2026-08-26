@@ -29,8 +29,13 @@ public record StatsRequestContext(IGrid grid, Object craftingCpu) {
     }
 
     private static Object craftingCpu(CraftingCPUMenu menu) {
+        var cpu = craftingCpu(menu, "cpu");
+        return cpu != null ? cpu : craftingCpu(menu, "advancedAE$advCpu");
+    }
+
+    private static Object craftingCpu(CraftingCPUMenu menu, String fieldName) {
         try {
-            var field = CraftingCPUMenu.class.getDeclaredField("cpu");
+            var field = CraftingCPUMenu.class.getDeclaredField(fieldName);
             field.setAccessible(true);
             return field.get(menu);
         } catch (ReflectiveOperationException e) {

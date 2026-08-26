@@ -84,11 +84,14 @@ class MixinConfigTest {
         var json = Files.readString(Path.of("build/resources/main/ae2craftingtime.mixins.json"));
         var mixin = Files.readString(Path.of(
                 "src/main/java/com/ctux/ae2craftingtime/mc1201/mixin/AdvancedCraftingCpuLogicMixin.java"));
+        var context = Files.readString(Path.of(
+                "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/StatsRequestContext.java"));
 
         assertTrue(json.contains("\"AdvancedCraftingCpuLogicMixin\""));
         assertTrue(mixin.contains("@Pseudo"));
         assertTrue(mixin.contains("ProfilerBridge.start"));
         assertTrue(mixin.contains("ProfilerBridge.complete"));
+        assertTrue(context.contains("advancedAE$advCpu"));
     }
 
     @Test
@@ -100,7 +103,7 @@ class MixinConfigTest {
 
         assertTrue(packet.contains("StatsRequestContext.current(player)"));
         assertTrue(context.contains("getDeclaredMethod(\"getGrid\")"));
-        assertTrue(context.contains("getDeclaredField(\"cpu\")"));
+        assertTrue(context.contains("craftingCpu(menu, \"cpu\")"));
     }
 
     @Test

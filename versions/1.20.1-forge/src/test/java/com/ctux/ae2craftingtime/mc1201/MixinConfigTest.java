@@ -79,7 +79,7 @@ class MixinConfigTest {
 
         assertTrue(packet.contains("StatsRequestContext.current(player)"));
         assertTrue(context.contains("getDeclaredMethod(\"getGrid\")"));
-        assertTrue(context.contains("getDeclaredField(\"cpu\")"));
+        assertTrue(context.contains("craftingCpu(menu, \"cpu\")"));
     }
 
     @Test
