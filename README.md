@@ -1,6 +1,8 @@
 # AE2 Crafting Time
 
-AE2 Crafting Time is a Minecraft mod that records Applied Energistics 2 autocrafting performance on the server and shows time-to-craft hints in AE2 crafting UIs.
+AE2 Crafting Time is an Applied Energistics 2 autocrafting diagnostics mod. It
+records real crafting performance on the server to help players find slow or
+stalled crafts, understand bottlenecks, and estimate when crafting will finish.
 
 It currently targets:
 
@@ -17,9 +19,13 @@ It currently targets:
 
 ## Features
 
-- Profiles completed AE2 craft outputs on the logical server.
-- Compares frozen total TTC predictions with successful jobs' real completion time.
-- Marks delayed crafting-status outputs and suggests evidence-based throughput improvements.
+- Profiles completed AE2 craft outputs to learn real throughput and crafting time.
+- Estimates per-output and whole-job time to craft (`TTC`).
+- Detects delayed outputs with no accepted progress.
+- Shows evidence-bounded bottleneck clues for machine speed, Pattern Provider
+  parallelism, and Crafting Co-Processor dispatch capacity.
+- Compares frozen TTC predictions with successful jobs' real completion time and
+  reports prediction accuracy and plan coverage.
 - Persists retained samples in the world save as `data/ae2-crafting-time.dat`.
 - Sends aggregate stats to clients through request/response packets.
 - Adds `TTC` lines, color hints, totals, and sort controls to AE2 craft-plan/status views.

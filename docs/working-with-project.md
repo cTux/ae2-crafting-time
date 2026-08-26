@@ -1,5 +1,12 @@
 # Working With This Project
 
+## Project Purpose
+
+AE2 Crafting Time diagnoses slow or stalled AE2 autocrafting. Its server-owned
+performance history supports TTC estimates, delay detection, prediction-accuracy
+checks, and evidence-bounded bottleneck clues for machine throughput, Pattern
+Provider parallelism, and Crafting Co-Processor dispatch capacity.
+
 ## First Checks
 
 Start from the repo root:

@@ -11,6 +11,9 @@ Color the `TTC` text in the AE2 crafting plan from bright green to bright red:
 - slowest craft in the visible crafting plan list: bright red
 - entries between them: interpolated color
 
+The color scale makes the slowest predicted steps stand out as potential
+bottlenecks; it is a relative visual clue, not a root-cause claim.
+
 ## Feasibility
 
 This is possible.

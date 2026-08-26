@@ -4,7 +4,9 @@ Date: 2026-06-21
 
 ## Requirement
 
-All craft timing and throughput calculations happen on the Minecraft server. The client only renders performance stats that the server sends.
+All craft timing, throughput, delay, prediction-accuracy, and bottleneck
+diagnostics happen on the Minecraft server. The client only renders diagnostics
+that the server sends.
 
 This matters for dedicated servers:
 

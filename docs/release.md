@@ -1,5 +1,8 @@
 # Release
 
+Releases package the mod's AE2 crafting-time, delay, and bottleneck diagnostics
+for every supported loader.
+
 Each supported Minecraft/mod-loader combination is one row in `scripts/release-matrix.json`.
 Do not add a row until the matching Gradle module builds a real jar.
 

@@ -6,6 +6,10 @@ Date: 2026-06-21
 
 Show an approximate time to finish the whole planned amount for each item, liquid, gas, or other AE key in the craft plan.
 
+TTC is one part of the mod's broader diagnostics: learned throughput powers the
+estimate, while running-job views also expose delays, prediction accuracy, and
+bottleneck clues.
+
 Tooltip shape:
 
 ```text

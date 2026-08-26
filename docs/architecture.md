@@ -1,9 +1,10 @@
 # Architecture
 
-AE2 Crafting Time profiles AE2 autocrafting on the logical server and renders
-server-provided time-to-craft snapshots in client UIs. The same flow is used for
-singleplayer and dedicated server-client play; an integrated singleplayer world
-still has a logical server.
+AE2 Crafting Time diagnoses slow or stalled AE2 autocrafting by profiling real
+throughput on the logical server. Client UIs render server-provided crafting-time
+estimates, delay warnings, prediction accuracy, and evidence-bounded bottleneck
+clues. The same flow is used for singleplayer and dedicated server-client play;
+an integrated singleplayer world still has a logical server.
 
 ## Supported Targets
 
