@@ -1,19 +1,28 @@
 ---
 name: launch-prism-test-modpack
-description: Launch, verify, and close the installed ATM10 test modpack through Prism Launcher's CLI for AE2 Crafting Time tests. Use when a test requires checking that the Minecraft client loads; do not use UI automation merely to press Prism's Launch button.
+description: Install Prism modpacks through Prism's UI with Computer Use, then launch, verify, and close them through Prism's CLI for AE2 Crafting Time tests. Use when a test requires installing a pack or checking that its Minecraft client loads.
 ---
 
 # Launch Prism Test Modpack
 
-Launch the existing Prism instance from PowerShell:
+## Install A Modpack
+
+- Install missing modpacks through Prism Launcher's UI with Computer Use.
+- Do not use Prism's `--import` CLI option to install a modpack; it opens an interactive import dialog and does not complete the installation unattended.
+- After installation, resolve the instance folder ID from `E:\games\mc-instances` or the installed instance's `instance.cfg`; do not guess it from the display name.
+
+## Launch And Check A Modpack
+
+Launch every installed instance through Prism's CLI, never by clicking the UI Launch button:
 
 ```powershell
 $prism = 'C:\Users\cccTu\AppData\Local\Programs\PrismLauncher\prismlauncher.exe'
-& $prism --launch 'All the Mods 10 - ATM10'
+$instanceId = 'All the Mods 10 - ATM10'
+& $prism --launch $instanceId
 ```
 
-- Use the instance folder ID `All the Mods 10 - ATM10`, not a display-name guess. Its configured root is `E:\games\mc-instances`.
-- Use shell/process inspection for launching and startup verification. Do not invoke `computer-use` or click through Prism's UI unless the user specifically asks for UI interaction.
+- Use `All the Mods 10 - ATM10` for the installed ATM10 test instance. Its configured root is `E:\games\mc-instances`.
+- Use shell/process inspection for launching and startup verification. Use Computer Use only for modpack installation, not for launching or checking startup.
 - When the request authorizes installing a test build, remove existing enabled `ae2-crafting-time-*.jar` files from the instance's `minecraft\mods`, copy in the new loader-compatible JAR, and verify exactly one enabled AE2 Crafting Time JAR remains. Replace previous versions directly; do not create backups.
 - Before launching, check whether this instance is already running and capture the new Minecraft process identity; do not start a duplicate client.
 - A successful Prism process start is not proof that Minecraft loaded. Verify the newest populated `minecraft\logs\latest.log` under the instance and, when relevant, wait for the title-screen/startup completion marker or the requested test state.
