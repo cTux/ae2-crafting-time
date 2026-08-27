@@ -23,4 +23,13 @@ class ConfigFilenameTest {
         assertTrue(source.contains("\"outlierMultiplier\""));
         assertTrue(source.contains("\"showChatMessages\""));
     }
+
+    @Test
+    void suppliesRuntimeDependenciesAcceptedByNeoForge() throws IOException {
+        var build = Files.readString(Path.of("build.gradle"));
+        var metadata = Files.readString(Path.of("build/resources/main/META-INF/neoforge.mods.toml"));
+
+        assertTrue(build.contains("runtimeOnly 'org.appliedenergistics:guideme:"));
+        assertTrue(metadata.contains("versionRange=\"[1.0.1,)\""));
+    }
 }

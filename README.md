@@ -1,5 +1,15 @@
 # AE2 Crafting Time
 
+[![Tests](https://github.com/cTux/ae2-crafting-time/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/cTux/ae2-crafting-time/actions/workflows/test.yml)
+[![Coverage](https://codecov.io/gh/cTux/ae2-crafting-time/graph/badge.svg)](https://codecov.io/gh/cTux/ae2-crafting-time)
+[![Modrinth downloads](https://img.shields.io/modrinth/dt/LyDZjvxd?logo=modrinth&label=Modrinth%20downloads)](https://modrinth.com/mod/ae2-crafting-time)
+[![CurseForge downloads](https://img.shields.io/curseforge/dt/1591476?logo=curseforge&label=CurseForge%20downloads)](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-time)
+[![Issues fixed](https://img.shields.io/github/issues-closed/cTux/ae2-crafting-time?logo=github&label=issues%20fixed)](https://github.com/cTux/ae2-crafting-time/issues?q=is%3Aissue%20is%3Aclosed)
+[![Open issues](https://img.shields.io/github/issues/cTux/ae2-crafting-time?logo=github)](https://github.com/cTux/ae2-crafting-time/issues)
+[![Discussions](https://img.shields.io/badge/GitHub-Discussions-8250df?logo=github)](https://github.com/cTux/ae2-crafting-time/discussions)
+[![Latest release](https://img.shields.io/github/v/release/cTux/ae2-crafting-time?logo=github)](https://github.com/cTux/ae2-crafting-time/releases/latest)
+[![License](https://img.shields.io/github/license/cTux/ae2-crafting-time)](LICENSE)
+
 AE2 Crafting Time is an Applied Energistics 2 autocrafting diagnostics mod. It
 records real crafting performance on the server to help players find slow or
 stalled crafts, understand bottlenecks, and estimate when crafting will finish.
@@ -40,9 +50,10 @@ It currently targets:
 Use Java 17 for 1.20.1 modules. The 1.21.1 NeoForge module declares Java 21.
 
 ```powershell
-.\gradlew.bat test
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-all-versions.ps1
 ```
+
+Tests run in GitHub Actions for every pull request.
 
 Built jars are copied to `dist/`.
 

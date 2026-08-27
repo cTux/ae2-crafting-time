@@ -35,20 +35,9 @@ Use the printed Gradle project names. The current modules are:
 
 ## Normal Development
 
-Run the smallest check that covers the touched code:
-
-```powershell
-.\gradlew.bat :shared:test
-.\gradlew.bat :mc_1_20_1_forge:test
-.\gradlew.bat :fabric_1_20_1:test
-.\gradlew.bat :mc_1_21_1_neoforge:test
-```
-
-For cross-loader shared changes, run:
-
-```powershell
-.\gradlew.bat test
-```
+Commit each fix or feature so the post-commit hook opens or updates its PR. Tests
+run only in the required GitHub Actions check; do not run them locally before
+creating the PR.
 
 For jar output, run:
 
