@@ -12,3 +12,4 @@ UI time measures the active Prism selection flow from **Add Instance** to **OK**
 | 6 | Modrinth | Better MC [FABRIC] BMC2 v40 | 1.20.1 | Fabric | 50.7s | 94.2s | Installed | Skip opening the version picker when the closed label already provides exact release and Minecraft version; render latency caused this measured regression. |
 | 7 | CurseForge | Valhelsia 6 6.2.3 | 1.20.1 | Forge | 78.6s | 112.9s | Installed | Reject an incompatible series from its result description and choose a compatible neighboring series without another search. |
 | 8 | CurseForge | DeceasedCraft 5.10.17 | 1.20.1 | Forge | 55.1s | 364.5s | Installed after 2 manual files | Activate each **Open Missing** browser tab once, then wait for Prism's green **All mods found** state before **OK**. |
+| 9 | CurseForge | Enigmatica 10 1.31.0 | 1.21.1 | NeoForge | 65.1s | 124.6s | Installed | Match the exact visible project title because search may rank an older related series first. |
