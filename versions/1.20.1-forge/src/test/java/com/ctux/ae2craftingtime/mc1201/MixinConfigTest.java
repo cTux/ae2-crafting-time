@@ -42,6 +42,15 @@ class MixinConfigTest {
     }
 
     @Test
+    void refmapMatchesConfig() throws IOException {
+        var config = Files.readString(Path.of("build/resources/main/ae2craftingtime.mixins.json"));
+        var refmap = Files.readString(Path.of("build/mixin/ae2craftingtime.refmap.json"));
+
+        assertTrue(config.contains("\"refmap\": \"ae2craftingtime.refmap.json\""));
+        assertTrue(refmap.contains("AbstractTableRendererMixin"));
+    }
+
+    @Test
     void craftPlanTimeEstimateHooksVisibleDescription() throws IOException {
         var mixin = Files.readString(Path.of(
                 "../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftConfirmTableRendererMixin.java"));

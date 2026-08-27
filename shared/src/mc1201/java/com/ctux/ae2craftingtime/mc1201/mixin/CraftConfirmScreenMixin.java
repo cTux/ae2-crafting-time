@@ -87,7 +87,15 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
                 () -> ae2craftingtime$ttcSortMode));
     }
 
-    @ModifyArg(method = "drawFG", at = @At(value = "INVOKE", target = "Lappeng/client/gui/me/crafting/CraftConfirmTableRenderer;render(Lnet/minecraft/client/gui/GuiGraphics;IILjava/util/List;I)V"), index = 3, remap = false)
+    @SuppressWarnings("mapping")
+    @ModifyArg(
+            method = "drawFG",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lappeng/client/gui/me/crafting/CraftConfirmTableRenderer;render(Lnet/minecraft/client/gui/GuiGraphics;IILjava/util/List;I)V",
+                    remap = true),
+            index = 3,
+            remap = false)
     private List<CraftingPlanSummaryEntry> ae2craftingtime$sortPlanByTtc(List<CraftingPlanSummaryEntry> entries) {
         if (ae2craftingtime$ttcSortMode == 0) {
             return entries;

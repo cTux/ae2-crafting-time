@@ -128,11 +128,14 @@ public abstract class CraftingTreeWidgetMixin {
         pose.popPose();
     }
 
+    @SuppressWarnings("mapping")
     @Redirect(
             method = "draw",
             at = @At(
                     value = "INVOKE",
-                    target = "Lappeng/client/gui/AEBaseScreen;drawTooltipWithHeader(Lnet/minecraft/client/gui/GuiGraphics;IILjava/util/List;)V"),
+                    target = "Lappeng/client/gui/AEBaseScreen;drawTooltipWithHeader(Lnet/minecraft/client/gui/GuiGraphics;IILjava/util/List;)V",
+                    remap = true),
+            remap = false,
             require = 0)
     private void ae2craftingtime$appendTooltipStats(AEBaseScreen<?> screen, GuiGraphics guiGraphics, int mouseX, int mouseY,
             List<Component> lines) {
