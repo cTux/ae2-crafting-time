@@ -14,3 +14,4 @@ UI time measures the active Prism selection flow from **Add Instance** to **OK**
 | 8 | CurseForge | DeceasedCraft 5.10.17 | 1.20.1 | Forge | 55.1s | 364.5s | Installed after 2 manual files | Activate each **Open Missing** browser tab once, then wait for Prism's green **All mods found** state before **OK**. |
 | 9 | CurseForge | Enigmatica 10 1.31.0 | 1.21.1 | NeoForge | 65.1s | 124.6s | Installed | Match the exact visible project title because search may rank an older related series first. |
 | 10 | Modrinth | Vanilla Perfected 1.20.1 Full Release | 1.20.1 | Fabric | 140.5s | 198.0s | Installed | Treat every version row independently because the history interleaves Minecraft versions and release channels. |
+| 11 | Modrinth | BigChadGuys Plus 2.11.0 | 1.20.1 | Fabric | 95.8s | 145.6s | Installed | For a unique exact search result, skip sorting and filters when the closed release label already matches. |
