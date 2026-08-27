@@ -1,9 +1,20 @@
 ---
 name: launch-prism-test-modpack
-description: Quickly install one or many exact Prism modpack releases through Prism's UI with Computer Use, then launch, verify, and close them through Prism's CLI for AE2 Crafting Time tests. Use for modpack installation campaigns or Minecraft client load checks.
+description: Take a modpack name, install its compatible release through Prism, add the matching AE2 Crafting Time build, then launch, verify, diagnose, and close it. Use for modpack installation campaigns or Minecraft client load checks.
 ---
 
 # Launch Prism Test Modpack
+
+## End-to-End Contract
+
+Given a modpack name, complete this whole workflow unless the user narrows it:
+
+1. Resolve the exact CurseForge or Modrinth project and a release supported by a row in `scripts/release-matrix.json`. Record the canonical pack title, provider, pack release, Minecraft version, and loader. If the name matches multiple projects, use the requested provider/version when supplied; otherwise use the exact canonical-title match and report ambiguity instead of silently choosing a similarly named pack.
+2. Reuse an exact existing instance or install the release through Prism into the **Codex** group. Installation is complete only when the instance appears in `E:\games\mc-instances`.
+3. Read `instance.cfg` and `mmc-pack.json` from that installed instance. Confirm its managed pack identity, Minecraft version, and loader match the resolved release.
+4. Select the `scripts/release-matrix.json` row matching that Minecraft version and loader. Unless the user supplied an exact JAR, build that row from the current worktree once per campaign and copy its `dist\ae2-crafting-time-<modVersion>-<loader>-<minecraftVersion>.jar` into `minecraft\mods`. Stop as unsupported if no matrix row matches; never substitute another loader or Minecraft version.
+5. Launch the instance through Prism's CLI, inspect the new logs/crash report, decide whether it reached the title screen with AE2 Crafting Time loaded, diagnose any failure, and close the exact captured Minecraft process even when it crashed but remained open.
+6. Report the requested name, resolved title/release, instance ID, Minecraft version, loader, copied JAR, result, and failure reason when applicable.
 
 ## Install Modpacks Quickly
 
@@ -51,9 +62,11 @@ $instanceId = 'All the Mods 10 - ATM10'
 - Use `All the Mods 10 - ATM10` for the installed ATM10 test instance. Its configured root is `E:\games\mc-instances`.
 - Use shell/process inspection for launching and startup verification. Use Computer Use only for modpack installation, not for launching or checking startup.
 - When the request authorizes installing a test build, remove existing enabled `ae2-crafting-time-*.jar` files from the instance's `minecraft\mods`, copy in the new loader-compatible JAR, and verify exactly one enabled AE2 Crafting Time JAR remains. Replace previous versions directly; do not create backups.
+- Derive the artifact name from the selected release-matrix row and the current `modVersion`; do not pick a JAR merely because its filename contains the game version. Build each required matrix row once and reuse that verified artifact across compatible instances in the same campaign.
 - Before launching, check whether this instance is already running and capture the new Minecraft process identity; do not start a duplicate client.
-- A successful Prism process start is not proof that Minecraft loaded. Verify the newest populated `minecraft\logs\latest.log` under the instance and, when relevant, wait for the title-screen/startup completion marker or the requested test state.
+- A successful Prism process start is not proof that Minecraft loaded. Verify the newest populated `minecraft\logs\latest.log` belongs to this launch, confirms AE2 Crafting Time was discovered/loaded, and reaches the title-screen/startup-completion marker. Also inspect the newest crash report when the process exits or stalls. Ordinary warnings are not failure by themselves; a fatal exception, crash report, unresolved dependency/module error, or exit before startup completion is failure.
 - For a load-only smoke test, close the exact launched Minecraft process after the success marker and confirm it exited. First call that process's `CloseMainWindow()` and wait up to 30 seconds; if it remains alive, force-stop only that captured PID. Never leave the client running or kill processes broadly by names such as `java` or `javaw`.
+- Apply the same close sequence after a failed or crashed launch if the captured process is still alive. Confirm no process tied to that exact instance remains before continuing.
 - If the requested test goes beyond loading, close the client only after reaching the requested state and collecting the required evidence.
 - Do not modify the instance, install a JAR, select an account, join a server/world, or perform gameplay unless the current request authorizes it.
 - Launching a desktop process may require elevated execution in a managed environment; request that permission for the CLI command when required.
