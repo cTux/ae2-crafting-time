@@ -59,5 +59,23 @@
       { "project_id": "E6BFl96N", "dependency_type": "optional" }
     ],
     "changelog": "### FIXED\n\n- Moved the crafting status total TTC into the header to avoid overlapping action buttons."
+  },
+  {
+    "id": "26.1.2-neoforge",
+    "module": "mc_26_1_2_neoforge",
+    "loader": "neoforge",
+    "loaderName": "NeoForge",
+    "minecraftVersion": "26.1.2",
+    "projectDir": "versions/26.1.2-neoforge",
+    "modName": "ae2-crafting-time",
+    "initialVersion": "1.0.9",
+    "releaseType": "beta",
+    "modrinthProjectId": "LyDZjvxd",
+    "curseProjectId": "1591476",
+    "modrinthDependencies": [
+      { "project_id": "XxWD5pD3", "dependency_type": "required" },
+      { "project_id": "rxYaglEe", "dependency_type": "optional" }
+    ],
+    "changelog": "### ADDED\n\n- Added NeoForge support for Minecraft 26.1.2 and Applied Energistics 2 26.1.10-beta."
   }
 ]

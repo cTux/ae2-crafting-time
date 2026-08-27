@@ -1,0 +1,216 @@
+package com.ctux.ae2craftingtime.mc1201.mixin;
+
+import appeng.client.gui.AEBaseScreen;
+import appeng.client.gui.me.crafting.CraftConfirmScreen;
+import appeng.client.gui.me.crafting.CraftConfirmTableRenderer;
+import appeng.client.gui.style.ScreenStyle;
+import appeng.client.gui.widgets.Scrollbar;
+import appeng.menu.me.crafting.CraftConfirmMenu;
+import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
+import com.ctux.ae2craftingtime.core.TimeEstimate;
+import com.ctux.ae2craftingtime.core.TtcSort;
+import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
+import com.ctux.ae2craftingtime.mc1201.ClientStats;
+import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
+import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.mc1201.StatsClickHandler;
+import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
+import com.ctux.ae2craftingtime.mc1201.TtcDetailsClick;
+import com.ctux.ae2craftingtime.mc1201.TtcDetailsKeyMapping;
+import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
+import com.ctux.ae2craftingtime.mc1201.TtcText;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.player.Inventory;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.OptionalLong;
+
+@Mixin(CraftConfirmScreen.class)
+public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmMenu> implements StatsClickHandler {
+    @Unique
+    private static final int AE2CRAFTINGTIME_TABLE_X = 9;
+    @Unique
+    private static final int AE2CRAFTINGTIME_TABLE_Y = 19;
+    @Unique
+    private static final int AE2CRAFTINGTIME_CELL_WIDTH = 67;
+    @Unique
+    private static final int AE2CRAFTINGTIME_CELL_HEIGHT = 22;
+    @Unique
+    private static final int AE2CRAFTINGTIME_CELL_BORDER = 1;
+    @Unique
+    private static final int AE2CRAFTINGTIME_COLS = 3;
+    @Unique
+    private static final int AE2CRAFTINGTIME_ROWS = 5;
+    @Unique
+    private static final int AE2CRAFTINGTIME_TOTAL_BACKGROUND = 0xD0202028;
+    @Unique
+    private static final int AE2CRAFTINGTIME_TOTAL_COLOR = 0xE0E0E0;
+
+    @Unique
+    private int ae2craftingtime$ttcSortMode;
+
+    @Shadow(remap = false)
+    private Scrollbar scrollbar;
+
+    protected CraftConfirmScreenMixin(CraftConfirmMenu menu, Inventory playerInventory, Component title,
+            ScreenStyle style) {
+        super(menu, playerInventory, title, style);
+    }
+
+    @Override
+    public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (TtcDetailsClick.tryHandle(event)) {
+            return true;
+        }
+
+        return super.mouseClicked(event, doubleClick);
+    }
+
+    @Inject(method = "<init>", at = @At("RETURN"), remap = false)
+    private void ae2craftingtime$addTtcSortButton(CraftConfirmMenu menu, Inventory playerInventory, Component title,
+            ScreenStyle style, CallbackInfo ci) {
+        ClientStats.CACHE.clear();
+        ClientStatsRequests.clear();
+        addToLeftToolbar(new TtcSortButton(this::ae2craftingtime$cycleTtcSortMode,
+                () -> ae2craftingtime$ttcSortMode));
+    }
+
+    @SuppressWarnings("mapping")
+    @ModifyArg(
+            method = "drawFG",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lappeng/client/gui/me/crafting/CraftConfirmTableRenderer;render(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILjava/util/List;I)V",
+                    remap = true),
+            index = 3,
+            remap = false)
+    private List<CraftingPlanSummaryEntry> ae2craftingtime$sortPlanByTtc(List<CraftingPlanSummaryEntry> entries) {
+        if (ae2craftingtime$ttcSortMode == 0) {
+            return entries;
+        }
+
+        return TtcSort.copySorted(entries, CraftConfirmScreenMixin::ae2craftingtime$seconds, Comparator.naturalOrder(),
+                ae2craftingtime$ttcSortMode == 2);
+    }
+
+    @Inject(method = "drawFG", at = @At("RETURN"), remap = false)
+    private void ae2craftingtime$drawTotalTtc(GuiGraphicsExtractor guiGraphics, int offsetX, int offsetY, int mouseX, int mouseY,
+            CallbackInfo ci) {
+        var plan = getMenu().getPlan();
+        if (plan == null) {
+            return;
+        }
+
+        var estimates = new ArrayList<OptionalLong>();
+        for (var entry : plan.getEntries()) {
+            estimates.add(ae2craftingtime$seconds(entry));
+        }
+
+        TimeEstimate.formatTotal(estimates).ifPresent(eta -> {
+            var text = TtcText.totalTtc(eta);
+            var font = getMinecraft().font;
+            var textX = 109 - font.width(text) / 2;
+            guiGraphics.fill(textX - 3, 177, textX + font.width(text) + 3, 188,
+                    AE2CRAFTINGTIME_TOTAL_BACKGROUND);
+            guiGraphics.text(font, text, textX, 178, AE2CRAFTINGTIME_TOTAL_COLOR, true);
+        });
+    }
+
+    @Unique
+    private void ae2craftingtime$cycleTtcSortMode() {
+        ae2craftingtime$ttcSortMode = (ae2craftingtime$ttcSortMode + 1) % 3;
+    }
+
+    @Override
+    public boolean ae2craftingtime$handleClickedStats(double mouseX, double mouseY, int button, boolean reset) {
+        var plan = getMenu().getPlan();
+        if (plan == null) {
+            return false;
+        }
+
+        var entries = ae2craftingtime$sortPlanByTtc(plan.getEntries());
+        var entry = ae2craftingtime$clickedEntry(mouseX, mouseY, entries);
+        if (entry == null) {
+            return false;
+        }
+
+        if (entry.getCraftAmount() <= 0) {
+            return false;
+        }
+
+        var key = ProfilerBridge.key(entry.getWhat());
+        if (reset) {
+            StatsChatMessages.reset(key, entry.getWhat().getDisplayName().getString());
+            return true;
+        }
+        StatsChatMessages.show(key, entry.getWhat().getDisplayName().getString(),
+                AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()));
+        return true;
+    }
+
+    @Unique
+    private CraftingPlanSummaryEntry ae2craftingtime$clickedEntry(double mouseX, double mouseY,
+            List<CraftingPlanSummaryEntry> entries) {
+        var index = ae2craftingtime$clickedTableIndex(mouseX, mouseY);
+        if (index >= 0 && index < entries.size()) {
+            return entries.get(index);
+        }
+
+        var hovered = getStackUnderMouse(mouseX, mouseY);
+        var hoveredKey = hovered == null ? null : ProfilerBridge.key(hovered.stack().what());
+        if (hoveredKey == null) {
+            return null;
+        }
+        for (var entry : entries) {
+            if (hoveredKey.equals(ProfilerBridge.key(entry.getWhat()))) {
+                return entry;
+            }
+        }
+        return null;
+    }
+
+    @Unique
+    private int ae2craftingtime$clickedTableIndex(double mouseX, double mouseY) {
+        var x = (int) mouseX - getGuiLeft() - AE2CRAFTINGTIME_TABLE_X;
+        var y = (int) mouseY - getGuiTop() - AE2CRAFTINGTIME_TABLE_Y;
+        var pitchX = AE2CRAFTINGTIME_CELL_WIDTH + AE2CRAFTINGTIME_CELL_BORDER;
+        var pitchY = AE2CRAFTINGTIME_CELL_HEIGHT + AE2CRAFTINGTIME_CELL_BORDER;
+        if (x < 0 || y < 0 || x % pitchX >= AE2CRAFTINGTIME_CELL_WIDTH || y % pitchY >= AE2CRAFTINGTIME_CELL_HEIGHT) {
+            return -1;
+        }
+
+        var col = x / pitchX;
+        var row = y / pitchY;
+        if (col >= AE2CRAFTINGTIME_COLS || row >= AE2CRAFTINGTIME_ROWS) {
+            return -1;
+        }
+        return (row + scrollbar.getCurrentScroll()) * AE2CRAFTINGTIME_COLS + col;
+    }
+
+    @Unique
+    private static OptionalLong ae2craftingtime$seconds(CraftingPlanSummaryEntry entry) {
+        if (entry.getCraftAmount() <= 0) {
+            return OptionalLong.empty();
+        }
+
+        var key = ProfilerBridge.key(entry.getWhat());
+        var stats = ClientStats.CACHE.get(key);
+        if (stats.isEmpty()) {
+            ClientStatsRequests.request(key);
+            return OptionalLong.empty();
+        }
+
+        return TimeEstimate.seconds(AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()), stats.get());
+    }
+}

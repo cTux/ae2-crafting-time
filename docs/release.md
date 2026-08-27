@@ -12,6 +12,7 @@ Current rows:
 1.20.1-forge -> :mc_1_20_1_forge:distMod -> dist/ae2-crafting-time-<version>-forge-1.20.1.jar
 1.20.1-fabric -> :fabric_1_20_1:distMod -> dist/ae2-crafting-time-<version>-fabric-1.20.1.jar
 1.21.1-neoforge -> :mc_1_21_1_neoforge:distMod -> dist/ae2-crafting-time-<version>-neoforge-1.21.1.jar
+26.1.2-neoforge -> :mc_26_1_2_neoforge:distMod -> dist/ae2-crafting-time-<version>-neoforge-26.1.2.jar
 ```
 
 Every uploaded file follows `<mod-name>-<loader-specific-mod-version>-<mod-loader>-<minecraft-version>.jar`.

@@ -1,0 +1,80 @@
+package com.ctux.ae2craftingtime.mc1201.net;
+
+import com.ctux.ae2craftingtime.core.PlayerMessageRateLimit;
+import com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.ChatType;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
+import net.minecraft.resources.Identifier;
+import net.minecraft.server.level.ServerPlayer;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
+
+import java.util.ArrayList;
+import java.util.List;
+
+public record StatsChatC2S(List<String> messages) implements CustomPacketPayload {
+    private static final PlayerMessageRateLimit RATE_LIMIT = new PlayerMessageRateLimit();
+
+    public StatsChatC2S {
+        messages = List.copyOf(messages.subList(0, Math.min(2, messages.size())));
+    }
+
+    public static final Type<StatsChatC2S> TYPE = new Type<>(
+            Identifier.fromNamespaceAndPath("ae2craftingtime", "stats_chat"));
+    public static final StreamCodec<RegistryFriendlyByteBuf, StatsChatC2S> STREAM_CODEC = StreamCodec.ofMember(
+            StatsChatC2S::encode,
+            StatsChatC2S::decode);
+
+    @Override
+    public Type<StatsChatC2S> type() {
+        return TYPE;
+    }
+
+    public static void encode(StatsChatC2S packet, FriendlyByteBuf buffer) {
+        buffer.writeVarInt(packet.messages.size());
+        for (var message : packet.messages) {
+            buffer.writeUtf(message);
+        }
+    }
+
+    public static StatsChatC2S decode(FriendlyByteBuf buffer) {
+        var size = buffer.readVarInt();
+        var messages = new ArrayList<String>(size);
+        for (int i = 0; i < size; i++) {
+            messages.add(buffer.readUtf());
+        }
+        return new StatsChatC2S(messages);
+    }
+
+    public static void handle(StatsChatC2S packet, IPayloadContext context) {
+        context.enqueueWork(() -> {
+            if (!(context.player() instanceof ServerPlayer player) || player.level().getServer() == null
+                    || !Ae2CraftingTimeConfig.SHOW_CHAT_MESSAGES.get()) {
+                return;
+            }
+            if (!RATE_LIMIT.allow(player.getUUID(), System.currentTimeMillis())) {
+                return;
+            }
+            sendMessage(player, packet.messages);
+        });
+    }
+
+    private static void sendMessage(ServerPlayer player, List<String> messages) {
+        var component = component(messages);
+        var chatType = ChatType.bind(ChatType.CHAT, player);
+        for (var recipient : player.level().getServer().getPlayerList().getPlayers()) {
+            recipient.connection.sendDisguisedChatMessage(component, chatType);
+        }
+    }
+
+    static Component component(List<String> messages) {
+        return Component.literal(message(messages));
+    }
+
+    private static String message(List<String> messages) {
+        return String.join(" | ", messages);
+    }
+}

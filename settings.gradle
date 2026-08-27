@@ -33,3 +33,5 @@ include ':mc_1_20_1_forge'
 project(':mc_1_20_1_forge').projectDir = file('versions/1.20.1-forge')
 include ':mc_1_21_1_neoforge'
 project(':mc_1_21_1_neoforge').projectDir = file('versions/1.21.1-neoforge')
+include ':mc_26_1_2_neoforge'
+project(':mc_26_1_2_neoforge').projectDir = file('versions/26.1.2-neoforge')

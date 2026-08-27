@@ -22,6 +22,7 @@ It currently targets:
 | 1.20.1 | Forge | `:mc_1_20_1_forge` |
 | 1.20.1 | Fabric | `:fabric_1_20_1` |
 | 1.21.1 | NeoForge | `:mc_1_21_1_neoforge` |
+| 26.1.2 | NeoForge | `:mc_26_1_2_neoforge` |
 
 ## Download
 
@@ -47,7 +48,8 @@ It currently targets:
 
 ## Build
 
-Use Java 17 for 1.20.1 modules. The 1.21.1 NeoForge module declares Java 21.
+Use Java 17 for 1.20.1 modules, Java 21 for 1.21.1 NeoForge, and Java 25 for
+26.1.2 NeoForge. Gradle provisions the declared toolchains.
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-all-versions.ps1
@@ -63,7 +65,11 @@ Built jars are copied to `dist/`.
 .\run-1.20.1-forge.bat
 .\run-1.20.1-fabric.bat
 .\run-1.21.1-neoforge.bat
+.\run-26.1.2-neoforge.bat
 ```
+
+Each run script resolves every compatible optional integration, its required
+dependencies, and JEI before starting the development client with this mod.
 
 ## Docs
 
@@ -101,9 +107,11 @@ AE2 Crafting Time is available under the [MIT License](LICENSE).
 ```text
 shared/src/main/java       Pure Java profiling, estimates, cache, and helpers
 shared/src/mc1201/java     Shared AE2/Minecraft-facing code for current supported loaders
+shared/src/mc2612/java     Minecraft 26.1.2 and AE2 26 API boundary
 versions/1.20.1-forge      Forge module
 versions/1.20.1-fabric     Fabric module
 versions/1.21.1-neoforge   NeoForge module
+versions/26.1.2-neoforge   Minecraft 26.1.2 NeoForge module
 scripts/                   Build and release automation
 docs/                      Design, workflow, and release notes
 ```

@@ -22,6 +22,7 @@ Use the printed Gradle project names. The current modules are:
 :fabric_1_20_1
 :mc_1_20_1_forge
 :mc_1_21_1_neoforge
+:mc_26_1_2_neoforge
 ```
 
 ## Code Boundaries
@@ -30,6 +31,7 @@ Use the printed Gradle project names. The current modules are:
   as possible before adding version-specific copies.
 - Put Minecraft-free logic in `shared/src/main/java`.
 - Put AE2/Minecraft 1.20.1-compatible shared code in `shared/src/mc1201/java`.
+- Put Minecraft 26.1.2/AE2 26 API ports in `shared/src/mc2612/java`.
 - Put loader-only entrypoints, networking glue, saved-data glue, metadata, and tests under the matching `versions/<minecraft>-<loader>` folder.
 - Keep `scripts/release-matrix.json` as the source of truth for build/release rows.
 
