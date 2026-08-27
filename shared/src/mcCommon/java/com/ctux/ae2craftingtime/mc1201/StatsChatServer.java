@@ -94,10 +94,7 @@ public final class StatsChatServer {
     }
 
     private static void broadcast(ServerPlayer player, Component message) {
-        var server = player.getServer();
-        if (server == null) {
-            return;
-        }
+        var server = player.level().getServer();
         var chatType = ChatType.bind(ChatType.CHAT, player);
         for (var recipient : server.getPlayerList().getPlayers()) {
             recipient.connection.sendDisguisedChatMessage(message, chatType);
