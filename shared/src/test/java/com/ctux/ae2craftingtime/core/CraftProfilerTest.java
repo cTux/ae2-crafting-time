@@ -214,6 +214,21 @@ class CraftProfilerTest {
     }
 
     @Test
+    void importSkipsInvalidSamples() {
+        var key = new ProfileKey("net-a", "minecraft:iron_plate");
+        var profiler = new CraftProfiler(10);
+
+        profiler.loadSamples(List.of(new PersistedOutputSamples(key, ProfileUnit.ITEM, List.of(
+                new PersistedCraftSample(0, 10),
+                new PersistedCraftSample(1, 0),
+                new PersistedCraftSample(2, 20)))));
+
+        var stats = profiler.stats(key).orElseThrow();
+        assertEquals(1, stats.sampleCount());
+        assertEquals(20.0, stats.averageDurationTicks());
+    }
+
+    @Test
     void clearsOnlyRequestedOutputSamples() {
         var profiler = new CraftProfiler(10);
         var ironPlate = new ProfileKey("net-a", "minecraft:iron_plate");

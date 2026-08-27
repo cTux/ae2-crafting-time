@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.core.PersistedCraftSample;
 import com.ctux.ae2craftingtime.core.PersistedOutputSamples;
+import com.ctux.ae2craftingtime.core.PacketLimits;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
 import java.util.ArrayList;
@@ -15,18 +16,32 @@ final class PersistedSamplesTag {
     static List<PersistedOutputSamples> readOutputs(ListTag outputs) {
         var persisted = new ArrayList<PersistedOutputSamples>();
         for (var outputTag : outputs) {
-            var output = (CompoundTag) outputTag;
+            if (!(outputTag instanceof CompoundTag output)) {
+                continue;
+            }
+            String outputId;
+            ProfileUnit unit;
+            try {
+                outputId = PacketLimits.checkedOutputId(output.getStringOr("key", ""));
+                unit = ProfileUnit.valueOf(output.getStringOr("unit", ""));
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
             var sampleTags = output.getListOrEmpty("samples");
             var samples = new ArrayList<PersistedCraftSample>();
             for (var sampleTag : sampleTags) {
-                var sample = (CompoundTag) sampleTag;
-                samples.add(new PersistedCraftSample(
-                        sample.getLongOr("amount", 0), sample.getLongOr("durationTicks", 0)));
+                if (sampleTag instanceof CompoundTag sample) {
+                    var amount = sample.getLongOr("amount", 0);
+                    var duration = sample.getLongOr("durationTicks", 0);
+                    if (amount > 0 && duration > 0) {
+                        samples.add(new PersistedCraftSample(amount, duration));
+                    }
+                }
             }
-            persisted.add(new PersistedOutputSamples(
-                    new ProfileKey(output.getStringOr("networkId", ""), output.getStringOr("key", "")),
-                    ProfileUnit.valueOf(output.getStringOr("unit", ProfileUnit.ITEM.name())),
-                    samples));
+            if (!samples.isEmpty()) {
+                persisted.add(new PersistedOutputSamples(
+                        new ProfileKey(output.getStringOr("networkId", ""), outputId), unit, samples));
+            }
         }
         return persisted;
     }

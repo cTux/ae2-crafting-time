@@ -14,7 +14,9 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
 
     public static Ae2CraftingTimeSavedData load(CompoundTag tag) {
         var data = new Ae2CraftingTimeSavedData();
-        data.samples = PersistedSamplesTag.readOutputs(tag.getList("outputs", Tag.TAG_COMPOUND));
+        if (!tag.contains("version", Tag.TAG_INT) || tag.getInt("version") == PersistedSamplesTag.VERSION) {
+            data.samples = PersistedSamplesTag.readOutputs(tag.getList("outputs", Tag.TAG_COMPOUND));
+        }
         return data;
     }
 

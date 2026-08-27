@@ -18,11 +18,6 @@ public final class ClientStatsRequests {
         StatsNetwork.CHANNEL.sendToServer(new StatsRequestC2S(List.of(key.outputId())));
     }
 
-    public static void reset(ProfileKey key) {
-        COOLDOWN.clear();
-        StatsNetwork.CHANNEL.sendToServer(new StatsRequestC2S(List.of(key.outputId()), true));
-    }
-
     public static void clear() {
         COOLDOWN.clear();
     }

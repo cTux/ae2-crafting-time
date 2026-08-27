@@ -1,42 +1,26 @@
 package com.ctux.ae2craftingtime.mc1201.net;
 
-import appeng.api.networking.IGrid;
-import com.ctux.ae2craftingtime.core.ProfileKey;
-import com.ctux.ae2craftingtime.core.StatsEntry;
-import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.core.PacketLimits;
 import com.ctux.ae2craftingtime.mc1201.StatsNetwork;
-import com.ctux.ae2craftingtime.mc1201.StatsRequestContext;
+import com.ctux.ae2craftingtime.mc1201.StatsRequestHandler;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Supplier;
 
-public record StatsRequestC2S(List<String> keys, boolean reset) {
-    public StatsRequestC2S(List<String> keys) {
-        this(keys, false);
+public record StatsRequestC2S(List<String> keys) {
+    public StatsRequestC2S {
+        keys = PacketLimits.checkedKeys(keys);
     }
 
     public static void encode(StatsRequestC2S packet, FriendlyByteBuf buffer) {
-        buffer.writeBoolean(packet.reset);
-        buffer.writeVarInt(packet.keys.size());
-        for (var key : packet.keys) {
-            buffer.writeUtf(key);
-        }
+        StatsPacketCodec.writeKeys(buffer, packet.keys);
     }
 
     public static StatsRequestC2S decode(FriendlyByteBuf buffer) {
-        var reset = buffer.readBoolean();
-        var size = buffer.readVarInt();
-        var keys = new ArrayList<String>(size);
-        for (int i = 0; i < size; i++) {
-            keys.add(buffer.readUtf());
-        }
-        return new StatsRequestC2S(keys, reset);
+        return new StatsRequestC2S(StatsPacketCodec.readKeys(buffer, "keys"));
     }
 
     public static void handle(StatsRequestC2S packet, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -46,38 +30,12 @@ public record StatsRequestC2S(List<String> keys, boolean reset) {
             if (player == null) {
                 return;
             }
-
-            var entries = new ArrayList<StatsEntry>();
-            var requestContext = StatsRequestContext.current(player);
-            var grid = requestContext.grid();
-            var networkId = ProfilerBridge.networkId(grid);
-            for (var key : packet.keys) {
-                var profileKey = new ProfileKey(networkId, key);
-                if (packet.reset) {
-                    ProfilerBridge.clearStats(profileKey);
-                    continue;
-                }
-                ProfilerBridge.entry(profileKey, new ProfileKey(key), requestContext.craftingCpu(),
-                        player.level().getGameTime()).ifPresent(entries::add);
+            var response = StatsRequestHandler.collect(player, packet.keys);
+            if (response != null) {
+                StatsNetwork.sendTo(player,
+                        new StatsSnapshotS2C(packet.keys, response.entries(), response.networkAmounts()));
             }
-            StatsNetwork.sendTo(player, new StatsSnapshotS2C(packet.keys, entries, networkAmounts(grid, packet.keys)));
         });
         context.setPacketHandled(true);
     }
-
-    private static Map<String, Long> networkAmounts(IGrid grid, List<String> keys) {
-        var amounts = new HashMap<String, Long>();
-        if (grid == null) {
-            return amounts;
-        }
-        keys.forEach(key -> amounts.put(key, 0L));
-        for (var entry : grid.getStorageService().getInventory().getAvailableStacks()) {
-            var id = entry.getKey().getId().toString();
-            if (keys.contains(id)) {
-                amounts.merge(id, entry.getLongValue(), Long::sum);
-            }
-        }
-        return amounts;
-    }
-
 }

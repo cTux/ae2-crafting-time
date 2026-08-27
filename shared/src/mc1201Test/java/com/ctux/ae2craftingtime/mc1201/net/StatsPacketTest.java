@@ -1,12 +1,15 @@
 package com.ctux.ae2craftingtime.mc1201.net;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.ctux.ae2craftingtime.core.PacketLimits;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
 import com.ctux.ae2craftingtime.core.StallDiagnostic;
 import com.ctux.ae2craftingtime.core.StatsEntry;
+import com.ctux.ae2craftingtime.core.StatsChatAction;
 import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
 import io.netty.buffer.Unpooled;
 import java.util.List;
@@ -26,13 +29,11 @@ class StatsPacketTest {
     }
 
     @Test
-    void resetRequestRoundTrips() {
+    void requestRejectsOversizedCollectionBeforeAllocation() {
         var buffer = new FriendlyByteBuf(Unpooled.buffer());
-        var packet = new StatsRequestC2S(List.of("minecraft:iron_plate"), true);
+        buffer.writeVarInt(PacketLimits.MAX_KEYS + 1);
 
-        StatsRequestC2S.encode(packet, buffer);
-
-        assertEquals(packet, StatsRequestC2S.decode(buffer));
+        assertThrows(IllegalArgumentException.class, () -> StatsRequestC2S.decode(buffer));
     }
 
     @Test
@@ -55,14 +56,22 @@ class StatsPacketTest {
     }
 
     @Test
-    void chatRoundTripsTwoCompactMessages() {
+    void chatRoundTripsServerValidatedIntent() {
         var buffer = new FriendlyByteBuf(Unpooled.buffer());
-        var packet = new StatsChatC2S(List.of("Iron Ingot x1509: ~3:33", "10 samples", "ignored"));
+        var packet = new StatsChatC2S("minecraft:iron_ingot", 1509, StatsChatAction.SHOW);
 
         StatsChatC2S.encode(packet, buffer);
 
-        assertEquals(new StatsChatC2S(List.of("Iron Ingot x1509: ~3:33", "10 samples")),
-                StatsChatC2S.decode(buffer));
-        assertEquals("Iron Ingot x1509: ~3:33 | 10 samples", StatsChatC2S.component(packet.messages()).getString());
+        assertEquals(packet, StatsChatC2S.decode(buffer));
+        assertThrows(IllegalArgumentException.class,
+                () -> new StatsChatC2S("arbitrary chat text", 1, StatsChatAction.SHOW));
+    }
+
+    @Test
+    void snapshotRejectsOversizedCollectionBeforeAllocation() {
+        var buffer = new FriendlyByteBuf(Unpooled.buffer());
+        buffer.writeVarInt(PacketLimits.MAX_KEYS + 1);
+
+        assertThrows(IllegalArgumentException.class, () -> StatsSnapshotS2C.decode(buffer));
     }
 }
