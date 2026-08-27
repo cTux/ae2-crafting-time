@@ -1,14 +1,21 @@
 ---
 name: launch-prism-test-modpack
-description: Install Prism modpacks through Prism's UI with Computer Use, then launch, verify, and close them through Prism's CLI for AE2 Crafting Time tests. Use when a test requires installing a pack or checking that its Minecraft client loads.
+description: Quickly install one or many exact Prism modpack releases through Prism's UI with Computer Use, then launch, verify, and close them through Prism's CLI for AE2 Crafting Time tests. Use for modpack installation campaigns or Minecraft client load checks.
 ---
 
 # Launch Prism Test Modpack
 
-## Install A Modpack
+## Install Modpacks Quickly
 
-- Install missing modpacks through Prism Launcher's UI with Computer Use.
+- Inventory `E:\games\mc-instances` first. Reuse an existing managed instance when `instance.cfg` confirms the same pack and exact version through `ManagedPackID`, `ManagedPackVersionID`, and `ManagedPackVersionName`; also confirm Minecraft and loader in `mmc-pack.json`.
+- Resolve the requested project and exact release before opening Prism. For Modrinth, keep the project ID, version ID, title, version number, Minecraft version, and loader so the UI pass is only search, select, verify, install.
+- For a batch, install a small pack first to prove Prism and the provider are working, then process the remaining packs sequentially. Do not launch clients while Prism is installing another pack.
+- Install missing modpacks through Prism Launcher's UI with Computer Use. Open **Add Instance**, select the provider, search the exact title, select the exact project, verify the displayed release/version, then install.
 - Do not use Prism's `--import` CLI option to install a modpack; it opens an interactive import dialog and does not complete the installation unattended.
+- Prism's **New Instance** dialog can appear as a child capture alongside the main-window capture. Use the screenshot whose dimensions and contents match the dialog; coordinates are screenshot-local. Do not reuse coordinates or screenshot IDs after any UI change.
+- With Windows DPI scaling, accessibility element clicks can report out-of-bounds geometry. Prefer a fresh screenshot-backed click for the provider, search field, result, and **OK**. Before typing, visually confirm the search field's caret or active underline; its accessibility `focused_element` can remain stale on the group field.
+- Treat `N out of N complete` as download completion, not installation completion. Success is when the progress dialog closes and the new instance appears in Prism.
+- If Prism reports `Modrinth::GetProjects` or another final metadata failure after its internal retries, retry once. If it repeats or remains at 100% without progress, abort that install, record it as blocked, and continue the batch; do not loop or redownload indefinitely.
 - After installation, resolve the instance folder ID from `E:\games\mc-instances` or the installed instance's `instance.cfg`; do not guess it from the display name.
 
 ## Launch And Check A Modpack
