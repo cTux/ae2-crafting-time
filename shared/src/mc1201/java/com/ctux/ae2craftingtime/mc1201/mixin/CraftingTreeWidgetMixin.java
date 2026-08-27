@@ -128,6 +128,7 @@ public abstract class CraftingTreeWidgetMixin {
         pose.popPose();
     }
 
+    @SuppressWarnings("mapping")
     @Redirect(
             method = "draw",
             at = @At(

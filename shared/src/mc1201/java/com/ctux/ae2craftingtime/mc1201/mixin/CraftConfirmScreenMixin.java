@@ -87,6 +87,7 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
                 () -> ae2craftingtime$ttcSortMode));
     }
 
+    @SuppressWarnings("mapping")
     @ModifyArg(
             method = "drawFG",
             at = @At(

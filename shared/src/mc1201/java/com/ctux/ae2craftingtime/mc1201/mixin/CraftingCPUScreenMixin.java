@@ -124,6 +124,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
                 Comparator.naturalOrder(), ae2craftingtime$ttcSortMode == 2);
     }
 
+    @SuppressWarnings("mapping")
     @ModifyArg(
             method = "updateBeforeRender",
             at = @At(

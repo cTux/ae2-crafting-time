@@ -42,12 +42,12 @@ class MixinConfigTest {
     }
 
     @Test
-    void fabricRefmapMatchesConfigAndMapsMinecraftDescriptors() throws IOException {
+    void refmapMatchesConfigAndMapsMinecraftDescriptors() throws IOException {
         var config = Files.readString(Path.of("build/resources/main/ae2craftingtime.mixins.json"));
         var refmap = Files.readString(Path.of(
-                "build/classes/java/main/ae2-crafting-time-1.20.1-Fabric-refmap.json"));
+                "build/classes/java/main/ae2craftingtime.refmap.json"));
 
-        assertTrue(config.contains("\"refmap\": \"ae2-crafting-time-1.20.1-Fabric-refmap.json\""));
+        assertTrue(config.contains("\"refmap\": \"ae2craftingtime.refmap.json\""));
         assertTrue(refmap.contains("CraftingCPUScreenMixin"));
         assertTrue(refmap.contains("CraftConfirmScreenMixin"));
         assertTrue(refmap.contains("CraftingTreeWidgetMixin"));
