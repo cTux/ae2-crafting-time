@@ -27,6 +27,13 @@ subprojects {
             options.encoding = 'UTF-8'
         }
 
+        tasks.withType(Test).configureEach {
+            testLogging {
+                events 'failed'
+                exceptionFormat = 'full'
+            }
+        }
+
         tasks.withType(Jar).configureEach {
             from(rootProject.file('LICENSE')) {
                 into 'META-INF'
