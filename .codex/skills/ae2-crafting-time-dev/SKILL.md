@@ -1,36 +1,50 @@
 ---
 name: ae2-crafting-time-dev
-description: Work on AE2 Crafting Time feature, bugfix, docs, and test tasks in this repository. Use when changing TTC UI, AE2 profiling, server/client stats packets, world-save persistence, shared source layout, loader modules, or project documentation.
+description: Develop, debug, test, document, port, or maintain any part of AE2 Crafting Time. Use for core profiling and TTC logic, AE2 or Minecraft integration, mixins, packets, persistence, loader modules, optional-mod UI, configs, resources, Gradle wiring, scripts, release automation, and project docs. Also load ae2-crafting-time-release for distribution or publishing work.
 ---
 
-# AE2 Crafting Time Dev
+# AE2 Crafting Time Development
 
-## Workflow
+## Start Here
 
-1. Read `README.md` and `docs/working-with-project.md` for current layout and commands.
-2. For feature or bug work, read the closest docs file under `docs/` before editing code.
-3. Keep pure Java logic in `shared/src/main/java`; keep AE2/Minecraft-facing shared code in `shared/src/mc1201/java`.
-4. Keep loader-only glue under the matching `versions/<minecraft>-<loader>` module.
-5. Run the smallest Gradle check that covers the touched code.
+1. Read `AGENTS.md`, `README.md`, and `docs/working-with-project.md`.
+2. Read [references/code-map.md](references/code-map.md), then the closest feature document under `docs/`.
+3. Trace the real path end to end and inspect every caller plus each supported-version counterpart before editing.
+4. Reuse an existing helper, source set, packet codec, resource, test pattern, or loader adapter before adding code.
+5. Read [references/testing-and-change-workflow.md](references/testing-and-change-workflow.md) before changing anything.
 
-## Project Rules
+## Non-Negotiable Design Rules
 
-- Server owns profiling, persistence, and aggregate stats.
-- Client owns display cache and formatting only.
-- Reuse existing shared code, resources, docs, tests, and Gradle wiring as much as possible before adding version-specific copies.
-- Reuse existing TTC helpers before adding new UI paths.
-- Status TTC uses `activeAmount + pendingAmount`.
-- For suspicious fluid TTC, inspect normalized units and saved/runtime samples before changing math.
-- Verify actual Gradle project names with `.\gradlew.bat projects` before using module tasks.
+- Server owns profiling, retained samples, persistence, resets, accuracy, stalls, and aggregate stats. Client owns requests, cache, formatting, sort state, and input only.
+- Put every calculation, branch, parser, validation rule, and state transition that can be Minecraft-free in `shared/src/main/java`.
+- Keep AE2/Minecraft and loader code as thin, branchless adapters wherever possible.
+- Reuse `mcCommon` across every target, `mc1201` across 1.20.1/1.21.1, `mc2612` for 26.1.2, and `neoforge` only for both NeoForge targets. Add loader copies only when APIs require them.
+- Preserve the `networkId + outputId` profile identity, normalized item/fluid units, bounded packets, server-side trust decisions, and exact world-save compatibility.
+- Keep craft-plan and crafting-status UI behavior consistent unless the underlying semantics differ. Append through AE2 paths instead of replacing renderers.
+- Keep optional integrations optional: string-target mixins or compile-only dependencies must not make absent mods required.
+- Update English and Ukrainian translation keys together and keep loader metadata, mixin lists, dependencies, docs, and code truthful to one another.
 
-## Checks
+## 100% Coverage Rule
 
-Use one of:
+Every new or changed executable behavior must have 100% line and branch coverage.
 
-```powershell
-.\gradlew.bat :shared:test
-.\gradlew.bat :mc_1_20_1_forge:test
-.\gradlew.bat :fabric_1_20_1:test
-.\gradlew.bat :mc_1_21_1_neoforge:test
-.\gradlew.bat test
-```
+- Move decisions into covered pure-Java code and test every branch, boundary, invalid input, and state transition.
+- Do not add uncovered decisions to mixins, packet registration, SavedData, entrypoints, or loader glue. If direct coverage is impractical, extract the decision into `shared` and leave only delegation in the adapter.
+- Add packet round-trip, NBT round-trip, and structural/resource checks in the nearest shared or loader test source set when those boundaries change.
+- Cover every changed PowerShell branch with the closest deterministic script self-test; release automation belongs in `test-deploy-changed.ps1`.
+- Do not weaken JaCoCo, exclude changed logic, delete meaningful assertions, or claim 100% from test counts. The PR CI coverage gate is authoritative.
+- Documentation-only and static-resource-only changes need relevant validation, not fake unit tests.
+
+## Change Boundaries
+
+- Use the smallest shared root-cause fix; do not patch sibling callers individually.
+- Treat wire layouts and persisted NBT as compatibility boundaries. Update every affected loader together and version the format/protocol when compatibility changes.
+- Treat `scripts/release-matrix.json` as the supported-target source of truth.
+- For matrix rows, dist tasks, jar naming, deployment, or publishing, also load `ae2-crafting-time-release` and follow `docs/release.md`.
+
+## Completion
+
+- Work on a branch and make each fix or feature one conventional commit.
+- Do not run repository tests locally before the hook creates the PR. Let required GitHub CI run `test` and `jacocoTestReport`.
+- A code change is incomplete until CI or the required post-PR self-check proves all tests pass and every changed executable line and branch is covered.
+- Read back the PR, its required checks, and the complete diff. Report warnings or untestable boundaries honestly.
