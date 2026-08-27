@@ -40,6 +40,9 @@ subprojects {
 
         tasks.named('jacocoTestReport', JacocoReport).configure {
             dependsOn tasks.named('test')
+            classDirectories.setFrom(files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: '**/mixin/**')
+            }))
             reports {
                 xml.required = true
             }

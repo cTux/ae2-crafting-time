@@ -14,5 +14,8 @@ class RequestCooldownTest {
         assertTrue(cooldown.markIfAllowed(key, 10_000));
         assertFalse(cooldown.markIfAllowed(key, 10_999));
         assertTrue(cooldown.markIfAllowed(key, 11_000));
+
+        cooldown.clear();
+        assertTrue(cooldown.markIfAllowed(key, 11_001));
     }
 }

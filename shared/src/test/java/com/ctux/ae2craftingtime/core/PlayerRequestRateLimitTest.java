@@ -17,4 +17,16 @@ class PlayerRequestRateLimitTest {
         assertFalse(limit.allow(player, 1, 1501));
         assertTrue(limit.allow(player, 1, 2000));
     }
+
+    @Test
+    void rejectsInvalidCountsAndChargesEmptyRequests() {
+        var limit = new PlayerRequestRateLimit();
+        var player = UUID.randomUUID();
+
+        assertFalse(limit.allow(player, -1, 0));
+        assertFalse(limit.allow(player, PlayerRequestRateLimit.MAX_KEYS_PER_SECOND + 1, 0));
+        assertTrue(limit.allow(player, 0, 0));
+        assertTrue(limit.allow(player, PlayerRequestRateLimit.MAX_KEYS_PER_SECOND - 1, 0));
+        assertFalse(limit.allow(player, 0, 0));
+    }
 }

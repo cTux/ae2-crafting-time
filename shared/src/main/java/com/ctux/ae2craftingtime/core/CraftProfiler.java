@@ -263,7 +263,7 @@ public final class CraftProfiler {
         capacities.clear();
         busyWindows.clear();
         for (var output : persisted) {
-            if (output == null || output.key() == null || output.unit() == null || output.samples() == null) {
+            if (output == null || output.key() == null || output.unit() == null) {
                 continue;
             }
             for (var sample : output.samples()) {

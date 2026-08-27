@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -67,5 +68,21 @@ class ClientStatsCacheTest {
 
         assertFalse(cache.get(iron).isPresent());
         assertEquals(1, cache.get(copper).orElseThrow().sampleCount());
+    }
+
+    @Test
+    void exposesOptionalDiagnostics() {
+        var key = new ProfileKey("minecraft:iron_plate");
+        var accuracy = new TtcAccuracyStats(1, 1, 1, 0, 0, 1, 10, 10, 10, 1, 1);
+        var stall = new StallDiagnostic(600, 20, 1, 0, 0);
+        var cache = new ClientStatsCache();
+
+        cache.replace(List.of(new StatsEntry(key,
+                new ProfileStats(1, 20, 0.05, 1, 20, ProfileUnit.ITEM), Optional.of(accuracy), Optional.of(stall))));
+
+        assertEquals(accuracy, cache.accuracy(key).orElseThrow());
+        assertEquals(stall, cache.stall(key).orElseThrow());
+        assertFalse(cache.accuracy(new ProfileKey("minecraft:missing")).isPresent());
+        assertFalse(cache.stall(new ProfileKey("minecraft:missing")).isPresent());
     }
 }

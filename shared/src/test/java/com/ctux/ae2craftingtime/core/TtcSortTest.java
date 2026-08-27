@@ -29,6 +29,15 @@ class TtcSortTest {
         assertEquals(List.of("slow", "fast", "unknown"), sorted.stream().map(Entry::name).toList());
     }
 
+    @Test
+    void equalKnownTimesUseFallbackOrder() {
+        var entries = List.of(entry("b", OptionalLong.of(2)), entry("a", OptionalLong.of(2)));
+
+        var sorted = TtcSort.copySorted(entries, Entry::seconds, Comparator.comparing(Entry::name), false);
+
+        assertEquals(List.of("a", "b"), sorted.stream().map(Entry::name).toList());
+    }
+
     private static Entry entry(String name, OptionalLong seconds) {
         return new Entry(name, seconds);
     }
