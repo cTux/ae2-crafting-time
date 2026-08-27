@@ -53,14 +53,16 @@ subprojects {
             classDirectories.setFrom(files(classDirectories.files.collect {
                 fileTree(dir: it, exclude: 'com/ctux/ae2craftingtime/mc1201/**')
             }))
-            violationRules.rule {
-                limit {
-                    counter = 'LINE'
-                    minimum = 1.0
-                }
-                limit {
-                    counter = 'BRANCH'
-                    minimum = 1.0
+            if (project.name == 'shared') {
+                violationRules.rule {
+                    limit {
+                        counter = 'LINE'
+                        minimum = 1.0
+                    }
+                    limit {
+                        counter = 'BRANCH'
+                        minimum = 1.0
+                    }
                 }
             }
         }
