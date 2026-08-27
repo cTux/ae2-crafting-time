@@ -15,6 +15,8 @@ records real crafting performance on the server to help players find slow or
 stalled crafts, understand bottlenecks, and estimate when crafting will finish.
 It is an unofficial addon and is not endorsed by the Applied Energistics 2 team.
 
+![Crafting status TTC bottleneck diagnostics](docs/images/crafting-status-ttc-bottleneck-diagnostics.png)
+
 It currently targets:
 
 | Minecraft | Loader | Gradle module |
