@@ -2,11 +2,20 @@ package com.ctux.ae2craftingtime.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class CraftProfilerTest {
+    @Test
+    void rejectsInvalidConfiguration() {
+        assertThrows(IllegalArgumentException.class, () -> new CraftProfiler(0));
+        assertThrows(IllegalArgumentException.class, () -> new CraftProfiler(1, 0.5));
+    }
+
     @Test
     void averagesLatestSamplesForSameOutputKey() {
         var profiler = new CraftProfiler(2);
@@ -49,16 +58,18 @@ class CraftProfilerTest {
         var profiler = new CraftProfiler(10);
         var ironPlate = new ProfileKey("minecraft:iron_plate");
 
+        profiler.start(ironPlate, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(ironPlate, 1, 1);
         for (var i = 0; i < 4; i++) {
-            profiler.start(ironPlate, 1, ProfileUnit.ITEM, i * 20L);
-            profiler.complete(ironPlate, 1, i * 20L + 10);
+            profiler.start(ironPlate, 1, ProfileUnit.ITEM, 20 + i * 20L);
+            profiler.complete(ironPlate, 1, 30 + i * 20L);
         }
-        profiler.start(ironPlate, 1, ProfileUnit.ITEM, 100);
-        profiler.complete(ironPlate, 1, 1_100);
+        profiler.start(ironPlate, 1, ProfileUnit.ITEM, 120);
+        profiler.complete(ironPlate, 1, 1_120);
 
         var stats = profiler.stats(ironPlate).orElseThrow();
 
-        assertEquals(5, stats.sampleCount());
+        assertEquals(6, stats.sampleCount());
         assertEquals(2.0, stats.amountPerSecond());
         assertFalse(stats.reliableEstimate());
     }
@@ -229,6 +240,20 @@ class CraftProfilerTest {
     }
 
     @Test
+    void importSkipsInvalidOutputs() {
+        var key = new ProfileKey("minecraft:iron_plate");
+        var profiler = new CraftProfiler(10);
+
+        profiler.loadSamples(Arrays.asList(
+                null,
+                new PersistedOutputSamples(null, ProfileUnit.ITEM, List.of(new PersistedCraftSample(1, 1))),
+                new PersistedOutputSamples(key, null, List.of(new PersistedCraftSample(1, 1))),
+                new PersistedOutputSamples(key, ProfileUnit.ITEM, List.of(new PersistedCraftSample(2, 20)))));
+
+        assertEquals(1, profiler.stats(key).orElseThrow().sampleCount());
+    }
+
+    @Test
     void clearsOnlyRequestedOutputSamples() {
         var profiler = new CraftProfiler(10);
         var ironPlate = new ProfileKey("net-a", "minecraft:iron_plate");
@@ -348,10 +373,81 @@ class CraftProfilerTest {
         var key = new ProfileKey("minecraft:gear");
 
         profiler.setEnabled(false);
+        profiler.updateCapacity(new Object(), 1, 1, 0);
         profiler.start(key, 1, ProfileUnit.ITEM, 1);
         profiler.complete(key, 1, 10);
 
         assertFalse(profiler.stats(key).isPresent());
+        profiler.setEnabled(true);
+    }
+
+    @Test
+    void ignoresInvalidOrUnmatchedRuntimeEvents() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:gear");
+        var scope = new Object();
+
+        profiler.start(key, scope, 0, ProfileUnit.ITEM, 0);
+        assertFalse(profiler.complete(key, scope, 0, 1));
+        assertFalse(profiler.complete(key, scope, 1, 1));
+        profiler.clearPending(scope);
+        assertFalse(profiler.clearSamples(key));
+        assertFalse(profiler.stall(key, scope, 1_000).isPresent());
+        profiler.start(key, scope, 1, ProfileUnit.ITEM, 0);
+        assertFalse(profiler.stall(key, scope, 1_000).isPresent());
+        profiler.updateCapacity(null, 1, 1, 0);
+        profiler.updateCapacity(scope, 1, 0, 0);
+    }
+
+    @Test
+    void clearingOneCpuRebuildsTheSharedBusyWindow() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:gear");
+        var cancelled = new Object();
+        var retained = new Object();
+        var unrelated = new Object();
+        var otherKey = new ProfileKey("minecraft:plate");
+
+        profiler.start(key, cancelled, 1, ProfileUnit.ITEM, 0);
+        profiler.start(key, retained, 1, ProfileUnit.ITEM, 10);
+        profiler.start(key, retained, 1, ProfileUnit.ITEM, 0);
+        profiler.start(key, retained, 1, ProfileUnit.ITEM, 20);
+        profiler.start(otherKey, unrelated, 1, ProfileUnit.ITEM, 0);
+        profiler.clearPending(cancelled);
+        assertTrue(profiler.complete(key, retained, 3, 30));
+
+        var stats = profiler.stats(key).orElseThrow();
+        assertEquals(30.0, stats.averageDurationTicks());
+    }
+
+    @Test
+    void completingOneOutputKeepsOtherWorkInTheSameScope() {
+        var profiler = new CraftProfiler(10);
+        var scope = new Object();
+        var gear = new ProfileKey("minecraft:gear");
+        var plate = new ProfileKey("minecraft:plate");
+
+        profiler.start(gear, scope, 1, ProfileUnit.ITEM, 0);
+        profiler.start(plate, scope, 1, ProfileUnit.ITEM, 0);
+
+        assertTrue(profiler.complete(gear, scope, 2, 20));
+        assertTrue(profiler.complete(plate, scope, 1, 20));
+    }
+
+    @Test
+    void capacityUsageIsClampedToItsValidRange() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:gear");
+        var scope = new Object();
+
+        profiler.start(key, scope, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(key, scope, 1, 20);
+        profiler.start(key, scope, 1, ProfileUnit.ITEM, 100);
+        profiler.updateCapacity(scope, 10, 4, 700);
+
+        assertEquals(4, profiler.stall(key, scope, 700).orElseThrow().usedParallelSlots());
+        profiler.updateCapacity(scope, -1, 4, 700);
+        assertEquals(0, profiler.stall(key, scope, 700).orElseThrow().usedParallelSlots());
     }
 
     @Test

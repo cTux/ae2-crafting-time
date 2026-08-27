@@ -30,4 +30,11 @@ class StallDiagnosticTest {
 
         assertEquals(List.of(StallDiagnostic.Hint.SPEED_UP_MACHINE), diagnostic.hints(0));
     }
+
+    @Test
+    void onlySuggestsMachineSpeedWithoutCapacityData() {
+        var diagnostic = new StallDiagnostic(960, 240, 1, 0, 0);
+
+        assertEquals(List.of(StallDiagnostic.Hint.SPEED_UP_MACHINE), diagnostic.hints(7));
+    }
 }

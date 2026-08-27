@@ -2,10 +2,16 @@ package com.ctux.ae2craftingtime.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.junit.jupiter.api.Test;
 
 class TtcAccuracyTrackerTest {
+    @Test
+    void rejectsInvalidSampleLimit() {
+        assertThrows(IllegalArgumentException.class, () -> new TtcAccuracyTracker(0));
+    }
+
     @Test
     void comparesFrozenPredictionWithCompletedWallAndTickTime() {
         var tracker = new TtcAccuracyTracker(10);
@@ -43,6 +49,27 @@ class TtcAccuracyTrackerTest {
     }
 
     @Test
+    void ignoresInvalidJobsAndCompletionTimes() {
+        var tracker = new TtcAccuracyTracker(10);
+        var output = new ProfileKey("minecraft:gear");
+
+        tracker.start(null, new Object(), 1, 1, 1, 0, 0);
+        tracker.start(output, null, 1, 1, 1, 0, 0);
+        tracker.start(output, new Object(), 0, 1, 1, 0, 0);
+        tracker.start(output, new Object(), 1, 0, 1, 0, 0);
+        tracker.start(output, new Object(), 1, 2, 1, 0, 0);
+        assertFalse(tracker.finish(new Object(), true, 1, 1));
+
+        var reversedTick = new Object();
+        tracker.start(output, reversedTick, 1, 1, 1, 10, 10);
+        assertFalse(tracker.finish(reversedTick, true, 9, 11));
+        var reversedClock = new Object();
+        tracker.start(output, reversedClock, 1, 1, 1, 10, 10);
+        assertFalse(tracker.finish(reversedClock, true, 11, 10));
+        assertFalse(tracker.stats(output).isPresent());
+    }
+
+    @Test
     void aggregatesAccuracyOnlyForFullyCoveredPlans() {
         var tracker = new TtcAccuracyTracker(10);
         var output = new ProfileKey("minecraft:gear");
@@ -59,6 +86,22 @@ class TtcAccuracyTrackerTest {
         assertEquals(1, stats.fullyCoveredSampleCount());
         assertEquals(0.75, stats.averageCoverage());
         assertEquals(10.0, stats.meanSignedErrorSeconds());
+    }
+
+    @Test
+    void reportsCoverageWithoutAccuracyForPartialPlans() {
+        var tracker = new TtcAccuracyTracker(10);
+        var output = new ProfileKey("minecraft:gear");
+        var scope = new Object();
+
+        tracker.start(output, scope, 10, 1, 2, 0, 1);
+        tracker.finish(scope, true, 20, 20_000_000_001L);
+
+        var stats = tracker.stats(output).orElseThrow();
+        assertEquals(0, stats.fullyCoveredSampleCount());
+        assertEquals(0, stats.meanSignedErrorSeconds());
+        assertEquals(0, stats.meanAbsolutePercentageError());
+        assertEquals(0, stats.meanActualToPredictedRatio());
     }
 
     @Test
@@ -87,5 +130,22 @@ class TtcAccuracyTrackerTest {
         tracker.clear();
 
         assertFalse(tracker.stats(output).isPresent());
+    }
+
+    @Test
+    void clearsOnlyRequestedOutputAndItsPendingJobs() {
+        var tracker = new TtcAccuracyTracker(10);
+        var cleared = new ProfileKey("minecraft:gear");
+        var retained = new ProfileKey("minecraft:plate");
+        var completed = new Object();
+        var pending = new Object();
+        tracker.start(retained, completed, 1, 1, 1, 0, 1);
+        tracker.finish(completed, true, 20, 1_000_000_001L);
+        tracker.start(cleared, pending, 1, 1, 1, 0, 1);
+
+        tracker.clear(cleared);
+
+        assertFalse(tracker.finish(pending, true, 20, 1_000_000_001L));
+        assertEquals(1, tracker.stats(retained).orElseThrow().sampleCount());
     }
 }

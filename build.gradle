@@ -39,9 +39,31 @@ subprojects {
         }
 
         tasks.named('jacocoTestReport', JacocoReport).configure {
-            dependsOn tasks.named('test')
+            dependsOn tasks.named('jacocoTestCoverageVerification')
+            classDirectories.setFrom(files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: 'com/ctux/ae2craftingtime/mc1201/**')
+            }))
             reports {
                 xml.required = true
+            }
+        }
+
+        tasks.named('jacocoTestCoverageVerification', JacocoCoverageVerification).configure {
+            dependsOn tasks.named('test')
+            classDirectories.setFrom(files(classDirectories.files.collect {
+                fileTree(dir: it, exclude: 'com/ctux/ae2craftingtime/mc1201/**')
+            }))
+            if (project.name == 'shared') {
+                violationRules.rule {
+                    limit {
+                        counter = 'LINE'
+                        minimum = 1.0
+                    }
+                    limit {
+                        counter = 'BRANCH'
+                        minimum = 1.0
+                    }
+                }
             }
         }
     }

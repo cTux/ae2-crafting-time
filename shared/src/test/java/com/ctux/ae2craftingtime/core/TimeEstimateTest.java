@@ -56,6 +56,7 @@ class TimeEstimateTest {
         var stats = new ProfileStats(0, 0, 0, 0, 0, ProfileUnit.ITEM);
 
         assertFalse(TimeEstimate.format(10, stats).isPresent());
+        assertFalse(TimeEstimate.seconds(0, stats).isPresent());
     }
 
     @Test
@@ -63,6 +64,7 @@ class TimeEstimateTest {
         var total = TimeEstimate.formatTotal(List.of(OptionalLong.of(4), OptionalLong.empty(), OptionalLong.of(9)));
 
         assertEquals("~13s", total.orElseThrow());
+        assertFalse(TimeEstimate.formatTotal(List.of(OptionalLong.empty())).isPresent());
     }
 
     @Test
@@ -74,7 +76,13 @@ class TimeEstimateTest {
 
     @Test
     void runningJobEtaWaitsForCompletedWork() {
+        assertFalse(TimeEstimate.progressSeconds(0, 100, 50).isPresent());
         assertFalse(TimeEstimate.progressSeconds(10_000_000_000L, 100, 100).isPresent());
         assertFalse(TimeEstimate.progressSeconds(10_000_000_000L, 100, 0).isPresent());
+    }
+
+    @Test
+    void negativeTicksFormatAsZero() {
+        assertEquals("~0s", TimeEstimate.formatTicks(-1));
     }
 }
