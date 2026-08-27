@@ -12,7 +12,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 public final class StatsNetwork {
     private static final String PROTOCOL = "5";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-            ResourceLocation.fromNamespaceAndPath(Ae2CraftingTime.MOD_ID, "main"),
+            new ResourceLocation(Ae2CraftingTime.MOD_ID, "main"),
             () -> PROTOCOL,
             PROTOCOL::equals,
             PROTOCOL::equals);
