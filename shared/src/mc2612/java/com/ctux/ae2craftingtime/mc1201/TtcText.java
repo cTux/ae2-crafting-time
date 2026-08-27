@@ -1,0 +1,263 @@
+package com.ctux.ae2craftingtime.mc1201;
+
+import com.ctux.ae2craftingtime.core.ProfileStats;
+import com.ctux.ae2craftingtime.core.ProfileUnit;
+import com.ctux.ae2craftingtime.core.StallDiagnostic;
+import com.ctux.ae2craftingtime.core.TimeEstimate;
+import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+
+public final class TtcText {
+    public static MutableComponent ttc(String eta) {
+        return Component.translatable("text.ae2craftingtime.ttc", eta);
+    }
+
+    public static MutableComponent ttcDelayed() {
+        return Component.translatable("text.ae2craftingtime.ttc_delayed");
+    }
+
+    public static MutableComponent totalTtc(String eta) {
+        return Component.translatable("text.ae2craftingtime.total_ttc", eta);
+    }
+
+    public static MutableComponent requesterTtc(String eta) {
+        return Component.translatable("text.ae2craftingtime.requester_ttc", eta);
+    }
+
+    public static MutableComponent noStats() {
+        return Component.translatable("text.ae2craftingtime.no_stats");
+    }
+
+    public static MutableComponent detailsHint() {
+        return Component.translatable("text.ae2craftingtime.details_hint");
+    }
+
+    public static MutableComponent resetHint() {
+        return Component.translatable("text.ae2craftingtime.reset_hint");
+    }
+
+    public static MutableComponent sortTitle() {
+        return Component.translatable("text.ae2craftingtime.sort.title");
+    }
+
+    public static MutableComponent sortMode(int mode) {
+        return Component.translatable(switch (mode) {
+            case 1 -> "text.ae2craftingtime.sort.shortest";
+            case 2 -> "text.ae2craftingtime.sort.longest";
+            default -> "text.ae2craftingtime.sort.ae2";
+        });
+    }
+
+    public static List<Component> statsLines(String name, long amount, ProfileStats stats) {
+        return statsLines(name, amount, stats, Optional.empty());
+    }
+
+    public static List<Component> statsLines(String name, long amount, ProfileStats stats,
+            Optional<TtcAccuracyStats> accuracy) {
+        var lines = new ArrayList<Component>();
+        lines.add(statsLine("text.ae2craftingtime.stats.item", name));
+        lines.add(statsLine("text.ae2craftingtime.stats.amount",
+                I18n.get("text.ae2craftingtime.value.amount", amount, unitName(stats))));
+        lines.add(statsLine("text.ae2craftingtime.stats.samples", Integer.toString(stats.sampleCount())));
+        lines.add(statsLine("text.ae2craftingtime.stats.average", duration(stats.averageDurationTicks())));
+        lines.add(statsLine("text.ae2craftingtime.stats.latest", duration(stats.lastDurationTicks())));
+        lines.add(statsLine("text.ae2craftingtime.stats.throughput",
+                I18n.get("text.ae2craftingtime.value.throughput", rate(stats.amountPerTick()), unitName(stats),
+                        rate(stats.amountPerSecond()), unitName(stats))));
+        if (stats.usedSampleCount() != stats.sampleCount()) {
+            lines.add(statsLine("text.ae2craftingtime.stats.used_samples",
+                    I18n.get("text.ae2craftingtime.value.used_samples", stats.usedSampleCount(),
+                            stats.sampleCount())));
+        }
+        if (!stats.sampleDurationTicks().isEmpty()) {
+            lines.add(statsLine("text.ae2craftingtime.stats.outlier_filter", rate(stats.outlierMultiplier()) + "x"));
+            lines.add(statsLine("text.ae2craftingtime.stats.windows", windows(stats)));
+        }
+        if (!stats.reliableEstimate()) {
+            lines.add(statsLine("text.ae2craftingtime.stats.confidence", confidence(stats)));
+        }
+        lines.add(statsLine("text.ae2craftingtime.stats.ttc",
+                TimeEstimate.format(amount, stats).orElse(I18n.get("text.ae2craftingtime.unknown"))));
+        accuracy.ifPresent(value -> {
+            lines.add(statsLine("text.ae2craftingtime.stats.accuracy", accuracy(value)));
+            lines.add(statsLine("text.ae2craftingtime.stats.latest_accuracy", latestAccuracy(value)));
+        });
+        return List.copyOf(lines);
+    }
+
+    public static List<Component> stallLines(String name, long amount, long activeAmount, long scheduledAmount,
+            ProfileStats stats, StallDiagnostic stall) {
+        var lines = new ArrayList<Component>();
+        lines.add(Component.literal(name).withStyle(ChatFormatting.WHITE, ChatFormatting.BOLD));
+        var eta = TimeEstimate.format(amount, stats).orElse(I18n.get("text.ae2craftingtime.unknown"));
+        lines.add(statsLine("text.ae2craftingtime.stats.ttc",
+                I18n.get("text.ae2craftingtime.value.delayed_ttc", eta)));
+        lines.add(statsLine("text.ae2craftingtime.stall.no_output",
+                I18n.get("text.ae2craftingtime.value.whole_seconds", secondsRounded(stall.idleTicks()))));
+        lines.add(statsLine("text.ae2craftingtime.stall.typical",
+                TimeEstimate.formatTicks(stall.typicalDurationTicks())));
+        lines.add(statsLine("text.ae2craftingtime.stall.state",
+                I18n.get("text.ae2craftingtime.value.stall_state", activeAmount, scheduledAmount)));
+        if (stall.totalParallelSlots() > 0) {
+            lines.add(statsLine("text.ae2craftingtime.stall.parallel_slots",
+                    I18n.get("text.ae2craftingtime.value.parallel_slots", stall.usedParallelSlots(),
+                            stall.totalParallelSlots())));
+        }
+        lines.add(Component.empty());
+        lines.add(Component.translatable("text.ae2craftingtime.stall.improvements")
+                .withStyle(ChatFormatting.GOLD));
+        for (var hint : stall.hints(scheduledAmount)) {
+            appendHint(lines, hint, stall);
+        }
+        return List.copyOf(lines);
+    }
+
+    public static List<String> compactMessages(String name, long amount, ProfileStats stats) {
+        return compactMessages(name, amount, stats, Optional.empty());
+    }
+
+    public static List<String> compactMessages(String name, long amount, ProfileStats stats,
+            Optional<TtcAccuracyStats> accuracy) {
+        var messages = new ArrayList<String>();
+        messages.add(I18n.get("text.ae2craftingtime.chat.summary", name, amount,
+                TimeEstimate.format(amount, stats).orElse(I18n.get("text.ae2craftingtime.unknown"))));
+
+        var details = I18n.get("text.ae2craftingtime.chat.details", stats.sampleCount(),
+                seconds(stats.averageDurationTicks()), seconds(stats.lastDurationTicks()),
+                rate(stats.amountPerSecond()), unitName(stats));
+        if (stats.usedSampleCount() != stats.sampleCount()) {
+            details += I18n.get("text.ae2craftingtime.chat.details.used", stats.usedSampleCount(),
+                    stats.sampleCount());
+        }
+        if (!stats.reliableEstimate()) {
+            details += I18n.get("text.ae2craftingtime.chat.details.low_confidence");
+        }
+        if (accuracy.isPresent()) {
+            details += " | " + accuracy(accuracy.get()) + "; " + latestAccuracy(accuracy.get());
+        }
+        messages.add(details);
+        return List.copyOf(messages);
+    }
+
+    public static String noCachedStats(String name) {
+        return I18n.get("text.ae2craftingtime.chat.no_cached", name);
+    }
+
+    public static String resetStats(String name) {
+        return I18n.get("text.ae2craftingtime.chat.reset", name);
+    }
+
+    private static Component statsLine(String labelKey, String value) {
+        return Component.translatable(labelKey).withStyle(ChatFormatting.GRAY)
+                .append(Component.literal(": ").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(value).withStyle(ChatFormatting.AQUA));
+    }
+
+    private static String unitName(ProfileStats stats) {
+        return I18n.get(stats.unit() == ProfileUnit.MILLIBUCKET
+                ? "text.ae2craftingtime.unit.millibucket"
+                : "text.ae2craftingtime.unit.item");
+    }
+
+    private static String duration(double ticks) {
+        var tickText = ticks == Math.rint(ticks)
+                ? String.format(Locale.ROOT, "%.0f", ticks)
+                : String.format(Locale.ROOT, "%.2f", ticks);
+        return I18n.get("text.ae2craftingtime.value.duration", tickText, tickSeconds(ticks));
+    }
+
+    private static String seconds(double ticks) {
+        return I18n.get("text.ae2craftingtime.value.seconds", tickSeconds(ticks));
+    }
+
+    private static String tickSeconds(double ticks) {
+        return String.format(Locale.ROOT, "%.2f", ticks / 20.0);
+    }
+
+    private static long secondsRounded(long ticks) {
+        return (long) Math.ceil(ticks / 20.0);
+    }
+
+    private static void appendHint(List<Component> lines, StallDiagnostic.Hint hint, StallDiagnostic stall) {
+        switch (hint) {
+            case ADD_PARALLEL_PROVIDERS -> {
+                lines.add(Component.translatable("text.ae2craftingtime.stall.hint.parallel")
+                        .withStyle(ChatFormatting.YELLOW));
+                var available = Math.max(0, stall.totalParallelSlots() - stall.usedParallelSlots());
+                var reasonKey = stall.activeBatches() == 1
+                        ? "text.ae2craftingtime.stall.reason.parallel_one"
+                        : "text.ae2craftingtime.stall.reason.parallel_many";
+                lines.add(Component.translatable(reasonKey, available, stall.activeBatches())
+                        .withStyle(ChatFormatting.GRAY));
+            }
+            case SPEED_UP_MACHINE -> {
+                lines.add(Component.translatable("text.ae2craftingtime.stall.hint.speed")
+                        .withStyle(ChatFormatting.YELLOW));
+                var slowdown = stall.typicalDurationTicks() <= 0 ? 1.0
+                        : stall.idleTicks() / stall.typicalDurationTicks();
+                lines.add(Component.translatable("text.ae2craftingtime.stall.reason.speed", rate(slowdown))
+                        .withStyle(ChatFormatting.GRAY));
+            }
+            case ADD_CRAFTING_CO_PROCESSORS -> {
+                lines.add(Component.translatable("text.ae2craftingtime.stall.hint.co_processors")
+                        .withStyle(ChatFormatting.YELLOW));
+                lines.add(Component.translatable("text.ae2craftingtime.stall.reason.co_processors",
+                        stall.totalParallelSlots()).withStyle(ChatFormatting.GRAY));
+            }
+        }
+    }
+
+    private static String rate(double value) {
+        return String.format(Locale.ROOT, "%.2f", value);
+    }
+
+    private static String windows(ProfileStats stats) {
+        var values = new ArrayList<String>();
+        for (var i = 0; i < stats.sampleDurationTicks().size(); i++) {
+            values.add(I18n.get("text.ae2craftingtime.value.window", stats.sampleAmounts().get(i), unitName(stats),
+                    stats.sampleDurationTicks().get(i)));
+        }
+        return String.join(", ", values);
+    }
+
+    private static String confidence(ProfileStats stats) {
+        if (stats.sampleCount() < 3) {
+            return I18n.get("text.ae2craftingtime.confidence.low_samples");
+        }
+        if (stats.usedSampleCount() != stats.sampleCount()) {
+            return I18n.get("text.ae2craftingtime.confidence.low_outliers");
+        }
+        return I18n.get("text.ae2craftingtime.confidence.low");
+    }
+
+    private static String accuracy(TtcAccuracyStats stats) {
+        if (stats.fullyCoveredSampleCount() == 0) {
+            return I18n.get("text.ae2craftingtime.value.accuracy_pending", stats.sampleCount(),
+                    percent(stats.averageCoverage()));
+        }
+        return I18n.get("text.ae2craftingtime.value.accuracy", stats.fullyCoveredSampleCount(), stats.sampleCount(),
+                rate(stats.meanAbsolutePercentageError()), rate(stats.meanActualToPredictedRatio()),
+                String.format(Locale.ROOT, "%+.2f", stats.meanSignedErrorSeconds()), percent(stats.averageCoverage()));
+    }
+
+    private static String latestAccuracy(TtcAccuracyStats stats) {
+        return I18n.get("text.ae2craftingtime.value.latest_accuracy", stats.lastPredictedSeconds(),
+                rate(stats.lastActualWallSeconds()), rate(stats.lastActualTickSeconds()), stats.lastKnownRows(),
+                stats.lastTotalRows());
+    }
+
+    private static String percent(double ratio) {
+        return rate(ratio * 100.0);
+    }
+
+    private TtcText() {
+    }
+}

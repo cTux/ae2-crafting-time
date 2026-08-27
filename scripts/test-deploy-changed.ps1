@@ -33,6 +33,9 @@ if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: P7dR8m
 if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, rxYaglEe:optional, E6BFl96N:optional') {
     throw "Release dry run did not include NeoForge Modrinth dependencies"
 }
+if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5pD3:required, rxYaglEe:optional') {
+    throw "Release dry run did not include 26.1.2 NeoForge Modrinth dependencies"
+}
 
 $first = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" `
     -StatePath $StatePath `
@@ -45,6 +48,9 @@ if (($first -join "`n") -notmatch 'build 1\.21\.1-neoforge: 1\.0\.4') {
 }
 if (($first -join "`n") -notmatch 'build 1\.20\.1-fabric: 1\.0\.4') {
     throw "First release run did not build 1.20.1-fabric"
+}
+if (($first -join "`n") -notmatch 'build 26\.1\.2-neoforge: 1\.0\.4') {
+    throw "First release run did not build 26.1.2-neoforge"
 }
 $stateBytes = [IO.File]::ReadAllBytes($StatePath)
 if ($stateBytes.Length -ge 3 -and $stateBytes[0] -eq 0xEF -and $stateBytes[1] -eq 0xBB -and $stateBytes[2] -eq 0xBF) {
@@ -69,7 +75,7 @@ $partialOutput = $partial -join "`n"
 if ($LASTEXITCODE -ne 0 -or $partialOutput -notmatch 'dry-run GitHub Release: 1\.0\.5') {
     throw "Partial release did not publish only the affected jar at the development version"
 }
-if ($partialOutput -notmatch 'dry-run GitHub assets: ae2-crafting-time-1\.0\.4-forge-1\.20\.1\.jar, ae2-crafting-time-1\.0\.5-fabric-1\.20\.1\.jar, ae2-crafting-time-1\.0\.4-neoforge-1\.21\.1\.jar') {
+if ($partialOutput -notmatch 'dry-run GitHub assets: ae2-crafting-time-1\.0\.4-forge-1\.20\.1\.jar, ae2-crafting-time-1\.0\.5-fabric-1\.20\.1\.jar, ae2-crafting-time-1\.0\.4-neoforge-1\.21\.1\.jar, ae2-crafting-time-1\.0\.4-neoforge-26\.1\.2\.jar') {
     throw "Partial release did not attach every latest jar to GitHub"
 }
 if ($partialOutput -notmatch 'dry-run Modrinth version: 1\.20\.1-fabric-1\.0\.5') {
@@ -94,6 +100,9 @@ if (($second -join "`n") -notmatch 'skip 1\.21\.1-neoforge: unchanged at 1\.0\.4
 }
 if (($second -join "`n") -notmatch 'skip 1\.20\.1-fabric: unchanged at 1\.0\.4') {
     throw "Second release run did not skip unchanged 1.20.1-fabric"
+}
+if (($second -join "`n") -notmatch 'skip 26\.1\.2-neoforge: unchanged at 1\.0\.4') {
+    throw "Second release run did not skip unchanged 26.1.2-neoforge"
 }
 
 Remove-Item -LiteralPath $StatePath -Force -ErrorAction SilentlyContinue

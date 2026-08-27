@@ -1,0 +1,136 @@
+package com.ctux.ae2craftingtime.mc1201.mixin;
+
+import appeng.client.gui.me.crafting.AbstractTableRenderer;
+import appeng.client.gui.me.crafting.CraftConfirmTableRenderer;
+import appeng.client.gui.me.crafting.CraftingStatusTableRenderer;
+import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
+import appeng.menu.me.crafting.CraftingStatusEntry;
+import com.ctux.ae2craftingtime.core.ProfileKey;
+import com.ctux.ae2craftingtime.core.TimeEstimate;
+import com.ctux.ae2craftingtime.core.TtcColor;
+import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
+import com.ctux.ae2craftingtime.mc1201.ClientStats;
+import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.mc1201.TtcColorContext;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.OptionalLong;
+
+@Mixin(AbstractTableRenderer.class)
+public abstract class AbstractTableRendererMixin {
+    @Redirect(
+            method = "render",
+            at = @At(
+                    value = "INVOKE",
+                    target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;text(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIIZ)V",
+                    remap = true),
+            remap = false)
+    @SuppressWarnings("mapping")
+    private void ae2craftingtime$drawTextWithShadow(GuiGraphicsExtractor guiGraphics, Font font, Component text,
+            int x, int y, int color, boolean shadow) {
+        var contents = text.getContents();
+        var isAe2CraftingTime = contents instanceof TranslatableContents translatable
+                && translatable.getKey().startsWith("text.ae2craftingtime.");
+        guiGraphics.text(font, text, x, y, color, shadow || isAe2CraftingTime);
+    }
+
+    @Inject(method = "render", at = @At("HEAD"), remap = false)
+    private void ae2craftingtime$beginTtcColors(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY,
+            List<?> entries, int scrollOffset, CallbackInfo ci) {
+        if (!ae2craftingtime$hasTtc((Object) this)) {
+            return;
+        }
+
+        TtcColorContext.set(colors(entries));
+    }
+
+    @Inject(method = "render", at = @At("RETURN"), remap = false)
+    private void ae2craftingtime$endTtcColors(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY,
+            List<?> entries, int scrollOffset, CallbackInfo ci) {
+        if (ae2craftingtime$hasTtc((Object) this)) {
+            TtcColorContext.clear();
+        }
+    }
+
+    private static boolean ae2craftingtime$hasTtc(Object renderer) {
+        return renderer instanceof CraftConfirmTableRenderer || renderer instanceof CraftingStatusTableRenderer;
+    }
+
+    private static Map<ProfileKey, Integer> colors(List<?> entries) {
+        var secondsByKey = new HashMap<ProfileKey, Long>();
+        var min = Long.MAX_VALUE;
+        var max = Long.MIN_VALUE;
+
+        for (var entry : entries) {
+            var seconds = seconds(entry);
+            if (seconds.isEmpty()) {
+                continue;
+            }
+
+            var key = key(entry);
+            var value = seconds.getAsLong();
+            secondsByKey.put(key, value);
+            min = Math.min(min, value);
+            max = Math.max(max, value);
+        }
+
+        var colors = new HashMap<ProfileKey, Integer>();
+        for (var entry : secondsByKey.entrySet()) {
+            colors.put(entry.getKey(), TtcColor.forSeconds(entry.getValue(), min, max));
+        }
+        return colors;
+    }
+
+    private static OptionalLong seconds(Object entry) {
+        if (entry instanceof CraftingPlanSummaryEntry planEntry) {
+            if (planEntry.getCraftAmount() <= 0) {
+                return OptionalLong.empty();
+            }
+
+            var key = ProfilerBridge.key(planEntry.getWhat());
+            var stats = ClientStats.CACHE.get(key);
+            if (stats.isEmpty()) {
+                return OptionalLong.empty();
+            }
+
+            return TimeEstimate.seconds(AeKeyAmounts.normalize(planEntry.getWhat(), planEntry.getCraftAmount()),
+                    stats.get());
+        }
+
+        if (!(entry instanceof CraftingStatusEntry statusEntry)) {
+            return OptionalLong.empty();
+        }
+
+        var amount = statusEntry.getActiveAmount() + statusEntry.getPendingAmount();
+        if (amount <= 0) {
+            return OptionalLong.empty();
+        }
+
+        var key = ProfilerBridge.key(statusEntry.getWhat());
+        var stats = ClientStats.CACHE.get(key);
+        if (stats.isEmpty()) {
+            return OptionalLong.empty();
+        }
+
+        return TimeEstimate.seconds(AeKeyAmounts.normalize(statusEntry.getWhat(), amount),
+                stats.get());
+    }
+
+    private static ProfileKey key(Object entry) {
+        if (entry instanceof CraftingPlanSummaryEntry planEntry) {
+            return ProfilerBridge.key(planEntry.getWhat());
+        }
+        return ProfilerBridge.key(((CraftingStatusEntry) entry).getWhat());
+    }
+}
