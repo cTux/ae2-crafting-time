@@ -12,10 +12,10 @@ for its JAR.
 
 | Target jar | Required dependencies |
 | --- | --- |
-| `1.20.1 Forge` | Minecraft `[1.20.1,1.21)`, Forge `[47,)`, Applied Energistics 2 `[15.0.0,16.0.0)` |
-| `1.20.1 Fabric` | Minecraft `1.20.1`, Fabric Loader `>=0.16.0`, Fabric API, Java `>=17`, Applied Energistics 2 `>=15.0.0` |
-| `1.21.1 NeoForge` | Minecraft `[1.21.1]`, NeoForge `[21.1.1,)`, Applied Energistics 2 `[19.0.0,20.0.0)` |
-| `26.1.2 NeoForge` | Minecraft `[26.1.2]`, NeoForge `[26.1.2.99,)`, Java `>=25`, Applied Energistics 2 `[26.1.10-beta,27.0.0)` |
+| `1.20.1 Forge` | Minecraft `[1.20.1,1.21)`, Forge `[47.1.3,)`, Applied Energistics 2 `[15.0.10,16.0.0)` |
+| `1.20.1 Fabric` | Minecraft `1.20.1`, Fabric Loader `>=0.14.21`, Fabric API `>=0.83.1`, Java `>=17`, Applied Energistics 2 `>=15.0.10 <16.0.0` |
+| `1.21.1 NeoForge` | Minecraft `[1.21.1]`, NeoForge `[21.1.1,)`, Applied Energistics 2 `[19.0.24,20.0.0)` |
+| `26.1.2 NeoForge` | Minecraft `[26.1.2]`, NeoForge `[26.1.2.71,)`, Java `>=25`, Applied Energistics 2 `[26.1.10-beta,27.0.0)` |
 
 ## Optional Dependencies
 

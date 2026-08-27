@@ -26,7 +26,7 @@ side = "BOTH"
 [[dependencies."${mod_id}"]]
 modId = "ae2"
 mandatory = true
-versionRange = "[15.0.0,16.0.0)"
+versionRange = "[15.0.10,16.0.0)"
 ordering = "AFTER"
 side = "BOTH"
 

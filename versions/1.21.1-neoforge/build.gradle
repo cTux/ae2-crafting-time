@@ -11,7 +11,7 @@ java {
 }
 
 neoForge {
-    version = '21.1.247'
+    version = '21.1.1'
 
     runs {
         client {
@@ -59,8 +59,8 @@ repositories {
 }
 
 dependencies {
-    implementation 'curse.maven:applied-energistics-2-223794:7027323'
-    runtimeOnly 'org.appliedenergistics:guideme:21.1.17'
+    implementation 'appeng:appliedenergistics2:19.0.24'
+    runtimeOnly 'org.appliedenergistics:guideme:21.1.0'
     compileOnly 'curse.maven:advancedae-1084104:8564177'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
