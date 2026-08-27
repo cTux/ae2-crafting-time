@@ -50,9 +50,10 @@ It currently targets:
 Use Java 17 for 1.20.1 modules. The 1.21.1 NeoForge module declares Java 21.
 
 ```powershell
-.\gradlew.bat test
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-all-versions.ps1
 ```
+
+Tests run in GitHub Actions for every pull request.
 
 Built jars are copied to `dist/`.
 
