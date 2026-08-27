@@ -238,7 +238,7 @@ class CraftProfilerTest {
     }
 
     @Test
-    void importSkipsInvalidOutputsAndNullSamples() {
+    void importSkipsInvalidOutputs() {
         var key = new ProfileKey("minecraft:iron_plate");
         var profiler = new CraftProfiler(10);
 
@@ -246,8 +246,7 @@ class CraftProfilerTest {
                 null,
                 new PersistedOutputSamples(null, ProfileUnit.ITEM, List.of(new PersistedCraftSample(1, 1))),
                 new PersistedOutputSamples(key, null, List.of(new PersistedCraftSample(1, 1))),
-                new PersistedOutputSamples(key, ProfileUnit.ITEM,
-                        Arrays.asList(null, new PersistedCraftSample(2, 20)))));
+                new PersistedOutputSamples(key, ProfileUnit.ITEM, List.of(new PersistedCraftSample(2, 20)))));
 
         assertEquals(1, profiler.stats(key).orElseThrow().sampleCount());
     }

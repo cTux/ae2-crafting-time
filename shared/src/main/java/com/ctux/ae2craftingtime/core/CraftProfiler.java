@@ -267,7 +267,7 @@ public final class CraftProfiler {
                 continue;
             }
             for (var sample : output.samples()) {
-                if (sample != null && sample.amount() > 0 && sample.durationTicks() > 0) {
+                if (sample.amount() > 0 && sample.durationTicks() > 0) {
                     addSample(output.key(), new CraftSample(sample.amount(), output.unit(), sample.durationTicks()));
                 }
             }
