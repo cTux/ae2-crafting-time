@@ -15,3 +15,4 @@ UI time measures the active Prism selection flow from **Add Instance** to **OK**
 | 9 | CurseForge | Enigmatica 10 1.31.0 | 1.21.1 | NeoForge | 65.1s | 124.6s | Installed | Match the exact visible project title because search may rank an older related series first. |
 | 10 | Modrinth | Vanilla Perfected 1.20.1 Full Release | 1.20.1 | Fabric | 140.5s | 198.0s | Installed | Treat every version row independently because the history interleaves Minecraft versions and release channels. |
 | 11 | Modrinth | BigChadGuys Plus 2.11.0 | 1.20.1 | Fabric | 95.8s | 145.6s | Installed | For a unique exact search result, skip sorting and filters when the closed release label already matches. |
+| 12 | CurseForge | Monifactory Beta 0.13.7 | 1.20.1 | NeoForge | 178.5s | 277.4s | Installed; optional mods defaulted off | Switch providers without retyping because Prism preserves the query; accept optional-mod defaults when none were requested. |
