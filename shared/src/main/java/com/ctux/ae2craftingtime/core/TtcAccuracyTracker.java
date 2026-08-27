@@ -43,7 +43,7 @@ public final class TtcAccuracyTracker {
 
     public Optional<TtcAccuracyStats> stats(ProfileKey key) {
         var queue = samples.get(key);
-        if (queue == null || queue.isEmpty()) {
+        if (queue == null) {
             return Optional.empty();
         }
 
@@ -88,7 +88,7 @@ public final class TtcAccuracyTracker {
     private record AccuracySample(long predictedSeconds, double actualTickSeconds, double actualWallSeconds,
             int knownRows, int totalRows) {
         private double coverage() {
-            return totalRows == 0 ? 0 : (double) knownRows / totalRows;
+            return (double) knownRows / totalRows;
         }
     }
 }

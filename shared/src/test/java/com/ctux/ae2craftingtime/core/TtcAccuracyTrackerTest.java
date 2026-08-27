@@ -89,6 +89,22 @@ class TtcAccuracyTrackerTest {
     }
 
     @Test
+    void reportsCoverageWithoutAccuracyForPartialPlans() {
+        var tracker = new TtcAccuracyTracker(10);
+        var output = new ProfileKey("minecraft:gear");
+        var scope = new Object();
+
+        tracker.start(output, scope, 10, 1, 2, 0, 1);
+        tracker.finish(scope, true, 20, 20_000_000_001L);
+
+        var stats = tracker.stats(output).orElseThrow();
+        assertEquals(0, stats.fullyCoveredSampleCount());
+        assertEquals(0, stats.meanSignedErrorSeconds());
+        assertEquals(0, stats.meanAbsolutePercentageError());
+        assertEquals(0, stats.meanActualToPredictedRatio());
+    }
+
+    @Test
     void keepsOnlyLatestSamples() {
         var tracker = new TtcAccuracyTracker(2);
         var output = new ProfileKey("minecraft:gear");

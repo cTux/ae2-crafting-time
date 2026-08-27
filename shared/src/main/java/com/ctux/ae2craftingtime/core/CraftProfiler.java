@@ -95,7 +95,7 @@ public final class CraftProfiler {
                 pending.remove(scope);
             }
         } else {
-            lastProgressTicks.computeIfAbsent(scope, ignored -> new HashMap<>()).put(key, tick);
+            lastProgressTicks.get(scope).put(key, tick);
         }
 
         if (hasPending(key)) {
@@ -103,9 +103,6 @@ public final class CraftProfiler {
         }
 
         busyWindows.remove(key);
-        if (window.completedAmount <= 0) {
-            return false;
-        }
         addSample(key, new CraftSample(window.completedAmount, window.unit,
                 Math.max(1, tick - window.startedTick)));
         return true;
@@ -134,13 +131,12 @@ public final class CraftProfiler {
     public Optional<StallDiagnostic> stall(ProfileKey key, Object scope, long tick) {
         var scopedPending = pending.get(scope);
         var queue = scopedPending == null ? null : scopedPending.get(key);
-        var scopedProgress = lastProgressTicks.get(scope);
-        var lastProgress = scopedProgress == null ? null : scopedProgress.get(key);
         var stats = stats(key);
-        if (queue == null || queue.isEmpty() || lastProgress == null || stats.isEmpty()) {
+        if (queue == null || stats.isEmpty()) {
             return Optional.empty();
         }
 
+        var lastProgress = lastProgressTicks.get(scope).get(key);
         var idleTicks = Math.max(0, tick - lastProgress);
         var typicalTicks = stats.get().averageDurationTicks();
         var delayedAfter = Math.max(600L, (long) Math.ceil(typicalTicks * 2.0));
@@ -157,7 +153,7 @@ public final class CraftProfiler {
 
     public Optional<ProfileStats> stats(ProfileKey key) {
         var queue = samples.get(key);
-        if (queue == null || queue.isEmpty()) {
+        if (queue == null) {
             return Optional.empty();
         }
 
@@ -185,7 +181,7 @@ public final class CraftProfiler {
         }
 
         var averageDuration = (double) durationTotal / queue.size();
-        var amountPerTick = weightedDurationTotal == 0 ? 0.0 : (double) weightedAmountTotal / weightedDurationTotal;
+        var amountPerTick = (double) weightedAmountTotal / weightedDurationTotal;
         return Optional.of(new ProfileStats(
                 queue.size(),
                 averageDuration,
@@ -229,7 +225,7 @@ public final class CraftProfiler {
                 filtered.add(sample);
             }
         }
-        return filtered.isEmpty() ? samples : filtered;
+        return filtered;
     }
 
     private void addSample(ProfileKey key, CraftSample sample) {
@@ -249,9 +245,7 @@ public final class CraftProfiler {
                 unit = sample.unit;
                 persisted.add(new PersistedCraftSample(sample.amount, sample.durationTicks));
             }
-            if (unit != null && !persisted.isEmpty()) {
-                snapshot.add(new PersistedOutputSamples(entry.getKey(), unit, persisted));
-            }
+            snapshot.add(new PersistedOutputSamples(entry.getKey(), unit, persisted));
         }
         return snapshot;
     }
@@ -292,9 +286,6 @@ public final class CraftProfiler {
 
     private void removeLastProgress(Object scope, ProfileKey key) {
         var scoped = lastProgressTicks.get(scope);
-        if (scoped == null) {
-            return;
-        }
         scoped.remove(key);
         if (scoped.isEmpty()) {
             lastProgressTicks.remove(scope);
