@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201.net;
 
 import com.ctux.ae2craftingtime.core.ProfileKey;
+import com.ctux.ae2craftingtime.core.PacketLimits;
 import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
 import com.ctux.ae2craftingtime.core.StatsEntry;
@@ -37,17 +38,17 @@ public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entr
     public static void encode(StatsSnapshotS2C packet, FriendlyByteBuf buffer) {
         buffer.writeVarInt(packet.requestedKeys.size());
         for (var key : packet.requestedKeys) {
-            buffer.writeUtf(key);
+            buffer.writeUtf(key, PacketLimits.MAX_OUTPUT_ID_LENGTH);
         }
         buffer.writeVarInt(packet.networkAmounts.size());
         packet.networkAmounts.forEach((key, amount) -> {
-            buffer.writeUtf(key);
+            buffer.writeUtf(key, PacketLimits.MAX_OUTPUT_ID_LENGTH);
             buffer.writeVarLong(amount);
         });
         buffer.writeVarInt(packet.entries.size());
         for (var entry : packet.entries) {
             var stats = entry.stats();
-            buffer.writeUtf(entry.key().outputId());
+            buffer.writeUtf(entry.key().outputId(), PacketLimits.MAX_OUTPUT_ID_LENGTH);
             buffer.writeEnum(stats.unit());
             buffer.writeVarInt(stats.sampleCount());
             buffer.writeDouble(stats.averageDurationTicks());
@@ -72,20 +73,21 @@ public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entr
     }
 
     public static StatsSnapshotS2C decode(FriendlyByteBuf buffer) {
-        var requestedSize = buffer.readVarInt();
+        var requestedSize = PacketLimits.checkedSize(buffer.readVarInt(), PacketLimits.MAX_KEYS, "requested keys");
         var requestedKeys = new ArrayList<String>(requestedSize);
         for (int i = 0; i < requestedSize; i++) {
-            requestedKeys.add(buffer.readUtf());
+            requestedKeys.add(buffer.readUtf(PacketLimits.MAX_OUTPUT_ID_LENGTH));
         }
-        var networkAmountSize = buffer.readVarInt();
+        var networkAmountSize = PacketLimits.checkedSize(buffer.readVarInt(), PacketLimits.MAX_KEYS,
+                "network amounts");
         var networkAmounts = new java.util.HashMap<String, Long>(networkAmountSize);
         for (int i = 0; i < networkAmountSize; i++) {
-            networkAmounts.put(buffer.readUtf(), buffer.readVarLong());
+            networkAmounts.put(buffer.readUtf(PacketLimits.MAX_OUTPUT_ID_LENGTH), buffer.readVarLong());
         }
-        var size = buffer.readVarInt();
+        var size = PacketLimits.checkedSize(buffer.readVarInt(), PacketLimits.MAX_KEYS, "entries");
         var entries = new ArrayList<StatsEntry>(size);
         for (int i = 0; i < size; i++) {
-            var key = new ProfileKey(buffer.readUtf());
+            var key = new ProfileKey(buffer.readUtf(PacketLimits.MAX_OUTPUT_ID_LENGTH));
             var unit = buffer.readEnum(ProfileUnit.class);
             var sampleCount = buffer.readVarInt();
             var averageDurationTicks = buffer.readDouble();
@@ -95,7 +97,7 @@ public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entr
             var reliableEstimate = buffer.readBoolean();
             var usedSampleCount = buffer.readVarInt();
             var outlierMultiplier = buffer.readDouble();
-            var durationCount = buffer.readVarInt();
+            var durationCount = PacketLimits.checkedSize(buffer.readVarInt(), PacketLimits.MAX_SAMPLES, "samples");
             var sampleDurationTicks = new ArrayList<Long>(durationCount);
             for (int durationIndex = 0; durationIndex < durationCount; durationIndex++) {
                 sampleDurationTicks.add(buffer.readVarLong());

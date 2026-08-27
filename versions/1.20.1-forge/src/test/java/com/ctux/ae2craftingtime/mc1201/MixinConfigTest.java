@@ -14,7 +14,7 @@ class MixinConfigTest {
         var source = Files.readString(Path.of(
                 "src/main/java/com/ctux/ae2craftingtime/mc1201/StatsNetwork.java"));
 
-        assertTrue(source.contains("PROTOCOL = \"4\""));
+        assertTrue(source.contains("PROTOCOL = \"5\""));
     }
 
     @Test

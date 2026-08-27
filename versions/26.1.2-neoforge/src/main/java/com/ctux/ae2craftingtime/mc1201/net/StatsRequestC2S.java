@@ -2,6 +2,8 @@ package com.ctux.ae2craftingtime.mc1201.net;
 
 import appeng.api.networking.IGrid;
 import com.ctux.ae2craftingtime.core.ProfileKey;
+import com.ctux.ae2craftingtime.core.PacketLimits;
+import com.ctux.ae2craftingtime.core.PlayerRequestRateLimit;
 import com.ctux.ae2craftingtime.core.StatsEntry;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.StatsNetwork;
@@ -16,12 +18,15 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
-public record StatsRequestC2S(List<String> keys, boolean reset) implements CustomPacketPayload {
-    public StatsRequestC2S(List<String> keys) {
-        this(keys, false);
+public record StatsRequestC2S(List<String> keys) implements CustomPacketPayload {
+    private static final PlayerRequestRateLimit RATE_LIMIT = new PlayerRequestRateLimit();
+
+    public StatsRequestC2S {
+        keys = PacketLimits.checkedKeys(keys);
     }
 
     public static final Type<StatsRequestC2S> TYPE = new Type<>(
@@ -36,26 +41,25 @@ public record StatsRequestC2S(List<String> keys, boolean reset) implements Custo
     }
 
     public static void encode(StatsRequestC2S packet, FriendlyByteBuf buffer) {
-        buffer.writeBoolean(packet.reset);
         buffer.writeVarInt(packet.keys.size());
         for (var key : packet.keys) {
-            buffer.writeUtf(key);
+            buffer.writeUtf(key, PacketLimits.MAX_OUTPUT_ID_LENGTH);
         }
     }
 
     public static StatsRequestC2S decode(FriendlyByteBuf buffer) {
-        var reset = buffer.readBoolean();
-        var size = buffer.readVarInt();
+        var size = PacketLimits.checkedSize(buffer.readVarInt(), PacketLimits.MAX_KEYS, "keys");
         var keys = new ArrayList<String>(size);
         for (int i = 0; i < size; i++) {
-            keys.add(buffer.readUtf());
+            keys.add(buffer.readUtf(PacketLimits.MAX_OUTPUT_ID_LENGTH));
         }
-        return new StatsRequestC2S(keys, reset);
+        return new StatsRequestC2S(keys);
     }
 
     public static void handle(StatsRequestC2S packet, IPayloadContext context) {
         context.enqueueWork(() -> {
-            if (!(context.player() instanceof ServerPlayer player)) {
+            if (!(context.player() instanceof ServerPlayer player)
+                    || !RATE_LIMIT.allow(player.getUUID(), packet.keys.size(), System.currentTimeMillis())) {
                 return;
             }
 
@@ -65,10 +69,6 @@ public record StatsRequestC2S(List<String> keys, boolean reset) implements Custo
             var networkId = ProfilerBridge.networkId(grid);
             for (var key : packet.keys) {
                 var profileKey = new ProfileKey(networkId, key);
-                if (packet.reset) {
-                    ProfilerBridge.clearStats(profileKey);
-                    continue;
-                }
                 ProfilerBridge.entry(profileKey, new ProfileKey(key), requestContext.craftingCpu(),
                         player.level().getGameTime()).ifPresent(entries::add);
             }
@@ -81,10 +81,11 @@ public record StatsRequestC2S(List<String> keys, boolean reset) implements Custo
         if (grid == null) {
             return amounts;
         }
+        var requested = new HashSet<>(keys);
         keys.forEach(key -> amounts.put(key, 0L));
         for (var entry : grid.getStorageService().getInventory().getAvailableStacks()) {
             var id = entry.getKey().getId().toString();
-            if (keys.contains(id)) {
+            if (requested.contains(id)) {
                 amounts.merge(id, entry.getLongValue(), Long::sum);
             }
         }

@@ -19,11 +19,6 @@ public final class ClientStatsRequests {
         PacketDistributor.sendToServer(new StatsRequestC2S(List.of(key.outputId())));
     }
 
-    public static void reset(ProfileKey key) {
-        COOLDOWN.clear();
-        PacketDistributor.sendToServer(new StatsRequestC2S(List.of(key.outputId()), true));
-    }
-
     public static void clear() {
         COOLDOWN.clear();
     }

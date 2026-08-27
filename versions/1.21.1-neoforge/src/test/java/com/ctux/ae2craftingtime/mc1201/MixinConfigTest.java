@@ -14,7 +14,7 @@ class MixinConfigTest {
         var source = Files.readString(Path.of(
                 "src/main/java/com/ctux/ae2craftingtime/mc1201/StatsNetwork.java"));
 
-        assertTrue(source.contains("event.registrar(\"3\")"));
+        assertTrue(source.contains("event.registrar(\"4\")"));
     }
 
     @Test

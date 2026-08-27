@@ -15,6 +15,8 @@ class MixinConfigTest {
                 "src/main/java/com/ctux/ae2craftingtime/mc1201/StatsNetwork.java"));
 
         assertTrue(source.contains("stats_snapshot_v3"));
+        assertTrue(source.contains("stats_request_v2"));
+        assertTrue(source.contains("stats_chat_v2"));
     }
 
     @Test

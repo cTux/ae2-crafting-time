@@ -79,16 +79,22 @@ Fields:
 
 ```text
 keys: list<string> output ids
-reset: boolean
 ```
 
 Rules:
 
 - Client requests output ids visible in its current AE2 or optional integration UI.
 - Server treats keys as hints, not trusted facts.
+- Requests are capped at 256 output ids and 512 ids per player per second.
 - Server replies with known stats for the player's active AE2 network and silently omits unknown keys.
-- If `reset` is true, server clears retained samples for those output keys and replies with no stats for them.
-- Rate limit if needed later; not needed for first pass.
+
+### `StatsChatC2S`
+
+Carries only a bounded output id, amount, and `SHOW` or `RESET` action. The
+server resolves the player's current AE2 network, reads or clears authoritative
+stats, formats the translatable message, and broadcasts it. Clients never send
+chat text for the server to relay. A reset is accepted only when that output has
+retained stats on the player's current network.
 
 ### `StatsSnapshotS2C`
 
@@ -198,6 +204,8 @@ Shared module:
 This data is observational and low risk, but still do the boring safe thing:
 
 - client requests are hints only
+- every collection and string is bounded while decoding, before allocation
+- clients send structured chat actions, never server-relayed text
 - server computes all stats
 - server sends only aggregate stats, not pending tasks or machine internals
 - packets should be handled on the correct server/client thread
