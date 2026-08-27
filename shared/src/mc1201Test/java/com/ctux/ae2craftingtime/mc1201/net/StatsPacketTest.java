@@ -65,12 +65,60 @@ class StatsPacketTest {
         assertEquals(packet, StatsChatC2S.decode(buffer));
         assertThrows(IllegalArgumentException.class,
                 () -> new StatsChatC2S("arbitrary chat text", 1, StatsChatAction.SHOW));
+        assertThrows(IllegalArgumentException.class,
+                () -> new StatsChatC2S("minecraft:iron_ingot", -1, StatsChatAction.SHOW));
     }
 
     @Test
-    void snapshotRejectsOversizedCollectionBeforeAllocation() {
+    void snapshotConvenienceConstructorDerivesRequestedKeys() {
+        var entries = List.of(new StatsEntry(new ProfileKey("minecraft:iron_ingot"),
+                new ProfileStats(1, 20, 1, 20, 20, ProfileUnit.ITEM)));
+
+        var packet = new StatsSnapshotS2C(entries);
+
+        assertEquals(List.of("minecraft:iron_ingot"), packet.requestedKeys());
+        assertEquals(entries, packet.entries());
+        assertEquals(Map.of(), packet.networkAmounts());
+    }
+
+    @Test
+    void snapshotRejectsOversizedCollectionsBeforeAllocation() {
+        var oversizedKeys = new FriendlyByteBuf(Unpooled.buffer());
+        oversizedKeys.writeVarInt(PacketLimits.MAX_KEYS + 1);
+
+        assertThrows(IllegalArgumentException.class, () -> StatsSnapshotS2C.decode(oversizedKeys));
+
+        var oversizedAmounts = new FriendlyByteBuf(Unpooled.buffer());
+        oversizedAmounts.writeVarInt(0);
+        oversizedAmounts.writeVarInt(PacketLimits.MAX_KEYS + 1);
+
+        assertThrows(IllegalArgumentException.class, () -> StatsSnapshotS2C.decode(oversizedAmounts));
+
+        var oversizedEntries = new FriendlyByteBuf(Unpooled.buffer());
+        oversizedEntries.writeVarInt(0);
+        oversizedEntries.writeVarInt(0);
+        oversizedEntries.writeVarInt(PacketLimits.MAX_KEYS + 1);
+
+        assertThrows(IllegalArgumentException.class, () -> StatsSnapshotS2C.decode(oversizedEntries));
+    }
+
+    @Test
+    void snapshotRejectsOversizedSampleHistoryBeforeAllocation() {
         var buffer = new FriendlyByteBuf(Unpooled.buffer());
-        buffer.writeVarInt(PacketLimits.MAX_KEYS + 1);
+        buffer.writeVarInt(0);
+        buffer.writeVarInt(0);
+        buffer.writeVarInt(1);
+        buffer.writeUtf("minecraft:iron_ingot");
+        buffer.writeEnum(ProfileUnit.ITEM);
+        buffer.writeVarInt(1);
+        buffer.writeDouble(20);
+        buffer.writeDouble(1);
+        buffer.writeDouble(20);
+        buffer.writeVarLong(20);
+        buffer.writeBoolean(true);
+        buffer.writeVarInt(1);
+        buffer.writeDouble(4);
+        buffer.writeVarInt(PacketLimits.MAX_SAMPLES + 1);
 
         assertThrows(IllegalArgumentException.class, () -> StatsSnapshotS2C.decode(buffer));
     }
