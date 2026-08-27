@@ -13,6 +13,7 @@ loom {
 }
 
 sourceSets.main.java.srcDir '../../shared/src/main/java'
+sourceSets.main.java.srcDir '../../shared/src/mcCommon/java'
 sourceSets.main.java.srcDir '../../shared/src/mc1201/java'
 sourceSets.main.resources.srcDir '../../shared/src/main/resources'
 sourceSets.main.resources.srcDir '../../shared/src/mc1201/resources'

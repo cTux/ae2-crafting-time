@@ -18,8 +18,10 @@ an integrated singleplayer world still has a logical server.
 
 - `shared/src/main/java`: Minecraft-free profiling, estimates, DTOs, cache, and
   helpers.
-- `shared/src/mc1201/java`: AE2/Minecraft-facing code that is shared by the
-  current loader targets.
+- `shared/src/mcCommon/java`: AE2/Minecraft-facing code shared by every target.
+- `shared/src/mc1201/java`: Minecraft 1.20.1/1.21.1 API boundary.
+- `shared/src/mc2612/java`: Minecraft 26.1.2/AE2 26 API boundary.
+- `shared/src/neoforge/java`: code shared by both NeoForge targets.
 - `versions/<minecraft>-<loader>`: loader entrypoints, packet glue, config,
   saved-data glue, metadata, and loader tests.
 

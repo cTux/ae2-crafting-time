@@ -36,6 +36,8 @@ neoForge {
 }
 
 sourceSets.main.java.srcDir '../../shared/src/main/java'
+sourceSets.main.java.srcDir '../../shared/src/mcCommon/java'
+sourceSets.main.java.srcDir '../../shared/src/neoforge/java'
 sourceSets.main.java.srcDir '../../shared/src/mc2612/java'
 sourceSets.main.resources.srcDir '../../shared/src/main/resources'
 

@@ -108,8 +108,10 @@ AE2 Crafting Time is available under the [MIT License](LICENSE).
 
 ```text
 shared/src/main/java       Pure Java profiling, estimates, cache, and helpers
-shared/src/mc1201/java     Shared AE2/Minecraft-facing code for current supported loaders
+shared/src/mcCommon/java   AE2/Minecraft code shared by every supported version
+shared/src/mc1201/java     Minecraft 1.20.1/1.21.1 API boundary
 shared/src/mc2612/java     Minecraft 26.1.2 and AE2 26 API boundary
+shared/src/neoforge/java   Code shared by both NeoForge versions
 versions/1.20.1-forge      Forge module
 versions/1.20.1-fabric     Fabric module
 versions/1.21.1-neoforge   NeoForge module
