@@ -10,3 +10,4 @@ UI time measures the active Prism selection flow from **Add Instance** to **OK**
 | 4 | Modrinth | Cobblemon Official Modpack 1.7.3 | 1.21.1 | Fabric | 51.6s | 94.0s | Installed | Select an exact project already visible in the initial catalog and verify the default release's first row. |
 | 5 | Modrinth | COBBLEVERSE 1.7.42 | 1.21.1 | Fabric | 37.4s | 70.2s | Installed | Verify the populated name and version after selection because result rows can shift as artwork loads. |
 | 6 | Modrinth | Better MC [FABRIC] BMC2 v40 | 1.20.1 | Fabric | 50.7s | 94.2s | Installed | Skip opening the version picker when the closed label already provides exact release and Minecraft version; render latency caused this measured regression. |
+| 7 | CurseForge | Valhelsia 6 6.2.3 | 1.20.1 | Forge | 78.6s | 112.9s | Installed | Reject an incompatible series from its result description and choose a compatible neighboring series without another search. |
