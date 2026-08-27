@@ -20,7 +20,7 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v6
-      - run: bash ./gradlew test jacocoTestReport
+      - run: bash ./gradlew test jacocoTestReport --info
       - uses: codecov/codecov-action@v7
         with:
           use_oidc: true
