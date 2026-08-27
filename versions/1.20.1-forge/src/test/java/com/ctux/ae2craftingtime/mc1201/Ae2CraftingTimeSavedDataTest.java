@@ -29,4 +29,12 @@ class Ae2CraftingTimeSavedDataTest {
 
         assertEquals(data.samples(), loaded.samples());
     }
+
+    @Test
+    void ignoresUnsupportedSaveVersion() {
+        var tag = new CompoundTag();
+        tag.putInt("version", PersistedSamplesTag.VERSION + 1);
+
+        assertEquals(List.of(), Ae2CraftingTimeSavedData.load(tag).samples());
+    }
 }

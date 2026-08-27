@@ -263,8 +263,13 @@ public final class CraftProfiler {
         capacities.clear();
         busyWindows.clear();
         for (var output : persisted) {
+            if (output == null || output.key() == null || output.unit() == null || output.samples() == null) {
+                continue;
+            }
             for (var sample : output.samples()) {
-                addSample(output.key(), new CraftSample(sample.amount(), output.unit(), sample.durationTicks()));
+                if (sample != null && sample.amount() > 0 && sample.durationTicks() > 0) {
+                    addSample(output.key(), new CraftSample(sample.amount(), output.unit(), sample.durationTicks()));
+                }
             }
         }
     }
