@@ -3,7 +3,7 @@
   "minVersion": "0.8",
   "package": "com.ctux.ae2craftingtime.mc1201.mixin",
   "compatibilityLevel": "JAVA_17",
-  "refmap": "ae2craftingtime.refmap.json",
+  "refmap": "ae2-crafting-time-1.20.1-Fabric-refmap.json",
   "mixins": [
     "CraftingCpuLogicMixin"
   ],

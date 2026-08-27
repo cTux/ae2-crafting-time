@@ -128,7 +128,8 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
             method = "updateBeforeRender",
             at = @At(
                     value = "INVOKE",
-                    target = "Lappeng/client/gui/me/crafting/CraftingCPUScreen;setTextContent(Ljava/lang/String;Lnet/minecraft/network/chat/Component;)V"),
+                    target = "Lappeng/client/gui/me/crafting/CraftingCPUScreen;setTextContent(Ljava/lang/String;Lnet/minecraft/network/chat/Component;)V",
+                    remap = true),
             index = 1,
             remap = false)
     private Component ae2craftingtime$appendStatusTotalTtc(Component title) {
