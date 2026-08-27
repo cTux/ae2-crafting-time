@@ -24,6 +24,15 @@ body:
     validations:
       required: true
 
+  - type: input
+    id: modpack-name
+    attributes:
+      label: Modpack name
+      description: If this is a CurseForge or Modrinth modpack, enter its name. Leave blank for custom modpacks.
+      placeholder: "Example: All the Mods 10"
+    validations:
+      required: false
+
   - type: textarea
     id: problem
     attributes:
@@ -42,6 +51,15 @@ body:
         3.
     validations:
       required: true
+
+  - type: upload
+    id: world-file
+    attributes:
+      label: Zipped world file
+      description: Drag in a zipped copy of the affected world, if available.
+    validations:
+      required: false
+      accept: ".zip"
 
   - type: textarea
     id: logs
