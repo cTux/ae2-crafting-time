@@ -29,7 +29,7 @@ subprojects {
 
         tasks.withType(Test).configureEach {
             testLogging {
-                events 'failed'
+                events 'started', 'failed'
                 exceptionFormat = 'full'
             }
         }
