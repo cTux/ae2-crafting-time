@@ -31,9 +31,10 @@ clear. The age is a voice target, not something to mention in the text.
   headings that sound natural instead of formal report language.
 - **Skills:** use concise imperative instructions. Keep every `must`, `never`,
   permission boundary, and stopping condition intact.
-- **Changelogs:** tell players what changed for them. Use complete sentences
-  under `ADDED`, `FIXED`, `IMPROVED`, `DELETED`, or `CHANGED`, and skip empty
-  sections.
+- **Changelogs:** include only player-visible features, fixes, and behavior
+  changes. Leave out implementation details, tests, refactors, tooling, and
+  build or release work. Use complete sentences under `ADDED`, `FIXED`,
+  `IMPROVED`, `DELETED`, or `CHANGED`, and skip empty sections.
 - **Translations:** write natural UI text for that locale, keep it short, and
   preserve every placeholder and control name. Update English and Ukrainian
   together.
