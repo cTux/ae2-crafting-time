@@ -171,7 +171,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
                 ae2craftingtime$titleTtcX + textWidth + 3, AE2CRAFTINGTIME_TITLE_TOP + font.lineHeight + 1,
                 AE2CRAFTINGTIME_TITLE_TTC_BACKGROUND);
         guiGraphics.text(font, ae2craftingtime$titleTtc, ae2craftingtime$titleTtcX,
-                AE2CRAFTINGTIME_TITLE_TOP, AE2CRAFTINGTIME_TITLE_TTC_COLOR, true);
+                AE2CRAFTINGTIME_TITLE_TOP, 0xFF000000 | AE2CRAFTINGTIME_TITLE_TTC_COLOR, true);
     }
 
     @Unique
