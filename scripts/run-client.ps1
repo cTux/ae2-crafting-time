@@ -15,24 +15,28 @@ $profiles = @{
         Module = "mc_1_20_1_forge"; Game = "1.20.1"; Loader = "forge"
         LoaderMetadata = "https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml"
         LoaderPrefix = "1.20.1-"
+        LoaderProperty = "runtimeForge1201Version"; Ae2Property = "runtimeAe2Forge1201Version"
         Projects = @("Ck4E7v7R", "a1RwDz90", "IiATswDj", "E6BFl96N", "u6dRKJwZ")
     }
     "1.20.1-fabric" = [pscustomobject]@{
         Module = "fabric_1_20_1"; Game = "1.20.1"; Loader = "fabric"
         LoaderMetadata = "https://maven.fabricmc.net/net/fabricmc/fabric-loader/maven-metadata.xml"
         LoaderPrefix = ""
+        LoaderProperty = "runtimeFabricLoader1201Version"; Ae2Property = "runtimeAe2Fabric1201Version"
         Projects = @("E6BFl96N", "u6dRKJwZ")
     }
     "1.21.1-neoforge" = [pscustomobject]@{
         Module = "mc_1_21_1_neoforge"; Game = "1.21.1"; Loader = "neoforge"
         LoaderMetadata = "https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml"
         LoaderPrefix = "21.1."
+        LoaderProperty = "runtimeNeoForge1211Version"; Ae2Property = "runtimeAe2NeoForge1211Version"
         Projects = @("Ck4E7v7R", "a1RwDz90", "IiATswDj", "rxYaglEe", "E6BFl96N", "u6dRKJwZ")
     }
     "26.1.2-neoforge" = [pscustomobject]@{
         Module = "mc_26_1_2_neoforge"; Game = "26.1.2"; Loader = "neoforge"
         LoaderMetadata = "https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml"
         LoaderPrefix = "26.1.2."
+        LoaderProperty = "runtimeNeoForge2612Version"; Ae2Property = "runtimeAe2NeoForge2612Version"
         Projects = @("Ck4E7v7R", "rxYaglEe", "u6dRKJwZ")
     }
 }
@@ -117,14 +121,15 @@ foreach ($projectId in $profile.Projects) { Install-Project $projectId }
 
 $loaderVersion = Get-LatestMavenVersion $profile.LoaderMetadata $profile.LoaderPrefix
 $ae2Version = Get-CompatibleVersion "XxWD5pD3" ""
-$runtimeArgs = @("-PruntimeLatest", "-PruntimeLoaderVersion=$loaderVersion", "-PruntimeAe2Version=$($ae2Version.version_number)")
+$runtimeArgs = @("-P$($profile.LoaderProperty)=$loaderVersion", "-P$($profile.Ae2Property)=$($ae2Version.version_number)")
 Write-Host "runtime loader $loaderVersion"
 Write-Host "runtime ae2 $($ae2Version.version_number)"
 if ($Target -eq "1.20.1-fabric") {
     $fabricApiVersion = Get-CompatibleVersion "P7dR8mSH" ""
-    $runtimeArgs += "-PruntimeFabricApiVersion=$($fabricApiVersion.version_number)"
+    $runtimeArgs += "-PruntimeFabricApi1201Version=$($fabricApiVersion.version_number)"
     Write-Host "runtime fabric-api $($fabricApiVersion.version_number)"
 }
+if ($Target -eq "1.21.1-neoforge") { $runtimeArgs += "-PruntimeLatestNeoForge1211" }
 
 if ($Target -eq "1.20.1-forge") {
     foreach ($filename in $managed) {
