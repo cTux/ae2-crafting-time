@@ -58,9 +58,6 @@ public final class TtcText {
 
     public static List<Component> statsLines(ProfileStats stats, Optional<TtcAccuracyStats> accuracy) {
         var lines = new ArrayList<Component>();
-        lines.add(statsLine("text.ae2craftingtime.stats.samples", Integer.toString(stats.sampleCount())));
-        lines.add(statsLine("text.ae2craftingtime.stats.average", duration(stats.averageDurationTicks())));
-        lines.add(statsLine("text.ae2craftingtime.stats.latest", duration(stats.lastDurationTicks())));
         lines.add(statsLine("text.ae2craftingtime.stats.throughput",
                 I18n.get("text.ae2craftingtime.value.throughput", rate(stats.amountPerTick()), unitName(stats),
                         rate(stats.amountPerSecond()), unitName(stats))));
@@ -70,8 +67,8 @@ public final class TtcText {
                             stats.sampleCount())));
         }
         if (!stats.sampleDurationTicks().isEmpty()) {
-            lines.add(statsLine("text.ae2craftingtime.stats.outlier_filter", rate(stats.outlierMultiplier()) + "x"));
-            lines.add(statsLine("text.ae2craftingtime.stats.windows", windows(stats)));
+            lines.add(statsLine("text.ae2craftingtime.stats.samples",
+                    windows(stats) + " (" + stats.sampleCount() + ")"));
         }
         if (!stats.reliableEstimate()) {
             lines.add(statsLine("text.ae2craftingtime.stats.confidence", confidence(stats)));
@@ -155,13 +152,6 @@ public final class TtcText {
         return I18n.get(stats.unit() == ProfileUnit.MILLIBUCKET
                 ? "text.ae2craftingtime.unit.millibucket"
                 : "text.ae2craftingtime.unit.item");
-    }
-
-    private static String duration(double ticks) {
-        var tickText = ticks == Math.rint(ticks)
-                ? String.format(Locale.ROOT, "%.0f", ticks)
-                : String.format(Locale.ROOT, "%.2f", ticks);
-        return I18n.get("text.ae2craftingtime.value.duration", tickText, tickSeconds(ticks));
     }
 
     private static String seconds(double ticks) {
