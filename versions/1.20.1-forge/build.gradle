@@ -69,7 +69,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'appeng:appliedenergistics2-forge:15.0.10'
+    modImplementation 'appeng:appliedenergistics2-forge:15.0.10'
     fileTree('run/resolved-mods') { include '*.jar' }.each {
         add('modImplementation', "runmods:${it.name - '.jar'}:1")
     }
