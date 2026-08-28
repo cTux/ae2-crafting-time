@@ -44,7 +44,8 @@ Every new or changed executable behavior must have 100% line and branch coverage
 - Use the smallest shared root-cause fix; do not patch sibling callers individually.
 - Treat wire layouts and persisted NBT as compatibility boundaries. Update every affected loader together and version the format/protocol when compatibility changes.
 - Treat `scripts/release-matrix.json` as the supported-target source of truth.
-- Keep build dependencies and loader metadata at the minimum supported versions; keep `run-*.bat` clients on the latest versions available for their exact Minecraft and loader row.
+- Keep build dependencies and loader metadata at the minimum supported versions.
+- Let each `run-*.bat` client use the newest versions available for its exact Minecraft and loader target.
 - For matrix rows, dist tasks, jar naming, deployment, or publishing, also load `ae2-crafting-time-release` and follow `docs/release.md`.
 
 ## Completion
