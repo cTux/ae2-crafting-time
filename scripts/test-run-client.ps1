@@ -47,15 +47,17 @@ function Assert-Line([string]$text, [string]$expected) {
 
 try {
     $cases = @(
-        @("1.20.1-forge", "runtime loader 1.20.1-99", "runtime ae2 15.99.0"),
-        @("1.20.1-fabric", "runtime loader 0.99.0", "runtime fabric-api 0.99.0+1.20.1"),
-        @("1.21.1-neoforge", "runtime loader 21.1.99", "runtime ae2 19.99.0"),
-        @("26.1.2-neoforge", "runtime loader 26.1.2.99", "runtime ae2 26.99.0-beta")
+        @("1.20.1-forge", "runtime loader 1.20.1-99", "runtime ae2 15.99.0", $null),
+        @("1.20.1-fabric", "runtime loader 0.99.0", "runtime fabric-api 0.99.0+1.20.1", $null),
+        @("1.21.1-neoforge", "runtime loader 21.1.99", "runtime ae2 19.99.0",
+            "runtime ae2 group org.appliedenergistics"),
+        @("26.1.2-neoforge", "runtime loader 26.1.2.99", "runtime ae2 26.99.0-beta", $null)
     )
     foreach ($case in $cases) {
         $output = (& $script -Target $case[0] -Root $temp -ResolveOnly 6>&1 | Out-String)
         Assert-Line $output $case[1]
         Assert-Line $output $case[2]
+        if ($case[3]) { Assert-Line $output $case[3] }
     }
     Remove-Item -LiteralPath (Join-Path $temp "versions\1.20.1-forge\run\resolved-mods\Ck4E7v7R.jar") -Force
     $global:Ae2CtBadDownload = $true

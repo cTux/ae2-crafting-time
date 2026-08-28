@@ -129,7 +129,11 @@ if ($Target -eq "1.20.1-fabric") {
     $runtimeArgs += "-PruntimeFabricApi1201Version=$($fabricApiVersion.version_number)"
     Write-Host "runtime fabric-api $($fabricApiVersion.version_number)"
 }
-if ($Target -eq "1.21.1-neoforge") { $runtimeArgs += "-PruntimeLatestNeoForge1211" }
+if ($Target -eq "1.21.1-neoforge") {
+    $runtimeArgs += "-PruntimeAe2NeoForge1211Group=org.appliedenergistics"
+    $runtimeArgs += "-PruntimeLatestNeoForge1211"
+    Write-Host "runtime ae2 group org.appliedenergistics"
+}
 
 if ($Target -eq "1.20.1-forge") {
     foreach ($filename in $managed) {
