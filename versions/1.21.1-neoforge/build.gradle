@@ -61,7 +61,7 @@ repositories {
 dependencies {
     implementation 'appeng:appliedenergistics2:19.0.24'
     runtimeOnly 'org.appliedenergistics:guideme:21.1.0'
-    compileOnly 'curse.maven:advancedae-1084104:8564177'
+    compileOnly 'curse.maven:advancedae-1084104:7849217'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 

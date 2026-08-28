@@ -47,7 +47,7 @@ side="BOTH"
 [[dependencies."${mod_id}"]]
 modId="advanced_ae"
 type="OPTIONAL"
-versionRange="[1.6.12,)"
+versionRange="[1.6.11,)"
 ordering="AFTER"
 side="BOTH"
 
