@@ -19,7 +19,9 @@ When a campaign needs a locally built mod JAR, copy it directly into the matchin
 
 Do not use the Computer Use plugin and do not automate the visible VMware host window. Control the guest through VMware's built-in VNC server.
 
-Before changing VNC settings, confirm the VM is powered off with `vmrun -T ws list`. While it is off, configure only:
+Run `vmrun -T ws list` first. If it includes the exact VMX above, reuse that VM without editing its VMX, starting a duplicate, shutting it down, or restarting it.
+
+Only when the VM is off, ensure it has this localhost-only VNC configuration before starting it:
 
 ```text
 RemoteDisplay.vnc.enabled = "TRUE"
@@ -27,7 +29,7 @@ RemoteDisplay.vnc.ip = "127.0.0.1"
 RemoteDisplay.vnc.port = "5905"
 ```
 
-Binding to `127.0.0.1` is required because this endpoint has no password. Start the VM headlessly:
+Binding to `127.0.0.1` is required because this endpoint has no password. Start the VM headlessly only when it was absent from `vmrun -T ws list`:
 
 ```powershell
 & 'C:\Program Files\VMware\VMware Workstation\vmrun.exe' -T ws start 'F:\VMs\Codex-Windows11\Codex-Windows11.vmx' nogui
@@ -62,10 +64,4 @@ Observed baseline on 2026-08-28: `All the Mods 10 - ATM10` resolved to CurseForg
 
 ## End Direct Control
 
-Close guest applications, soft-stop only this VM, and wait until `vmrun -T ws list` reports no running VM before editing the VMX. Restore:
-
-```text
-RemoteDisplay.vnc.enabled = "FALSE"
-```
-
-Remove the temporary `RemoteDisplay.vnc.ip` and `RemoteDisplay.vnc.port` lines. Do not leave an unauthenticated VNC endpoint enabled after the campaign.
+Close the Minecraft and Prism windows opened by the campaign, then leave the VM running. Do not call `vmrun stop`, shut down Windows, restart the VM, disable VNC, or remove its localhost VNC settings after a test campaign.

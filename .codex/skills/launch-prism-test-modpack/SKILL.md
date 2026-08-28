@@ -19,6 +19,7 @@ Given a modpack name, complete this whole workflow unless the user narrows it:
 ## Install Modpacks Quickly
 
 - For this workstation's dedicated test VM, read [references/codex-vm.md](references/codex-vm.md) before taking action. Operate Prism through VMware's localhost-only VNC endpoint and the bundled helper; do not use the Computer Use plugin or automate the host VMware window.
+- Reuse the Codex VM when it is already running. Start it only when `vmrun -T ws list` does not include its VMX, and never shut down or restart the VM after a test campaign.
 - Inventory `E:\games\mc-instances` on the host first; Prism sees it in the guest at `\\vmware-host\Shared Folders\mc-instances`. Reuse an existing managed instance when `instance.cfg` confirms the same pack and exact version through `ManagedPackID`, `ManagedPackVersionID`, and `ManagedPackVersionName`; also confirm Minecraft and loader in `mmc-pack.json`.
 - Resolve the requested project and exact release before opening Prism. For Modrinth, keep the project ID, version ID, title, version number, Minecraft version, and loader so the UI pass is only search, select, verify, install.
 - For a batch, install a small pack first to prove Prism and the provider are working, then process the remaining packs sequentially. Do not launch clients while Prism is installing another pack.
