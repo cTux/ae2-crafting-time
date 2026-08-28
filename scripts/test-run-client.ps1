@@ -8,7 +8,7 @@ try { $hash = ([BitConverter]::ToString($sha512.ComputeHash($bytes)) -replace "-
 function Invoke-WebRequest {
     param([switch]$UseBasicParsing, [string]$Uri, [string]$OutFile)
     if ($OutFile) {
-        [IO.File]::WriteAllBytes($OutFile, $bytes)
+        [IO.File]::WriteAllBytes($OutFile, $(if ($script:BadDownload) { [byte[]](0) } else { $bytes }))
         return
     }
     $versions = if ($Uri -like "*minecraftforge*") { @("1.20.1-1", "1.20.1-99") } elseif ($Uri -like "*fabric-loader*") { @("0.1.0", "0.99.0") } else { @("21.1.1", "21.1.99", "26.1.2.1", "26.1.2.99") }
@@ -56,6 +56,16 @@ try {
         $output = (& $script -Target $case[0] -Root $temp -ResolveOnly 6>&1 | Out-String)
         Assert-Line $output $case[1]
         Assert-Line $output $case[2]
+    }
+    Remove-Item -LiteralPath (Join-Path $temp "versions\1.20.1-forge\run\resolved-mods\guideme.jar") -Force
+    $script:BadDownload = $true
+    try {
+        & $script -Target "1.20.1-forge" -Root $temp -ResolveOnly 6>&1 | Out-Null
+        throw "Expected a hash mismatch"
+    } catch {
+        if ($_.Exception.Message -notlike "Hash mismatch for *") { throw }
+    } finally {
+        $script:BadDownload = $false
     }
     Write-Host "run-client checks passed"
 } finally {

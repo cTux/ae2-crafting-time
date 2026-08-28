@@ -74,14 +74,21 @@ function Get-LatestMavenVersion([string]$url, [string]$prefix) {
     return $versions[-1]
 }
 
+function Get-Sha512([string]$path) {
+    $algorithm = [Security.Cryptography.SHA512]::Create()
+    $stream = [IO.File]::OpenRead($path)
+    try { return (([BitConverter]::ToString($algorithm.ComputeHash($stream)) -replace "-", "").ToLowerInvariant()) }
+    finally { $stream.Dispose(); $algorithm.Dispose() }
+}
+
 function Install-File($file) {
     $destination = Join-Path $mods $file.filename
     $expected = $file.hashes.sha512
     if (-not (Test-Path -LiteralPath $destination) -or
-            (Get-FileHash -LiteralPath $destination -Algorithm SHA512).Hash.ToLowerInvariant() -ne $expected) {
+            (Get-Sha512 $destination) -ne $expected) {
         $download = "$destination.download"
         Invoke-WebRequest -UseBasicParsing -Uri $file.url -OutFile $download
-        if ((Get-FileHash -LiteralPath $download -Algorithm SHA512).Hash.ToLowerInvariant() -ne $expected) {
+        if ((Get-Sha512 $download) -ne $expected) {
             Remove-Item -LiteralPath $download -Force
             throw "Hash mismatch for $($file.filename)"
         }
