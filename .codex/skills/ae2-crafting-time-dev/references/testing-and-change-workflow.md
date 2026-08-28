@@ -57,8 +57,17 @@ For packets, NBT, mixins, translations, config, or dependency changes, compare e
 
 1. Review `git diff --check`, the complete diff, and untracked files. Skill validation and static inspection are allowed before the PR; repository test execution is not.
 2. Commit one fix or feature using a conventional title. The tracked post-commit hook pushes and creates or updates the PR.
-3. Read the PR back and wait for required GitHub checks. The authoritative workflow runs `./gradlew test jacocoTestReport`; JaCoCo verifies 100% line and branch coverage for shared logic and Codecov upload must succeed. After the PR exists, run any required PowerShell self-test for changed scripts.
-4. If CI fails, inspect the exact failure, add the smallest root-cause correction and regression coverage, commit it separately, and let the hook update the PR.
-5. Before handoff, read the final PR diff and check results. Report only observed passes, remaining warnings, excluded adapter boundaries, and uncommitted leftovers.
+3. Read the PR back and report the current required-check state. Do not wait for
+   GitHub checks to finish unless the user explicitly asks you to wait. The
+   authoritative workflow runs `./gradlew test jacocoTestReport`; JaCoCo verifies
+   100% line and branch coverage for shared logic and Codecov upload must
+   succeed. After the PR exists, run any required PowerShell self-test for
+   changed scripts.
+4. If a check has already failed, inspect the exact failure, add the smallest
+   root-cause correction and regression coverage, commit it separately, and let
+   the hook update the PR.
+5. Before handoff, read the final PR diff and current check state. Report only
+   observed passes, failures, pending checks, remaining warnings, excluded
+   adapter boundaries, and uncommitted leftovers.
 
 Do not merge, publish, deploy, or change release state unless the user separately authorizes that operation.

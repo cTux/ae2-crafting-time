@@ -53,5 +53,9 @@ Every new or changed executable behavior must have 100% line and branch coverage
 
 - Work on a branch and make each fix or feature one conventional commit.
 - Do not run repository tests locally before the hook creates the PR. Let required GitHub CI run `test` and `jacocoTestReport`.
-- A code change is incomplete until CI or the required post-PR self-check proves all tests pass and every changed executable line and branch is covered.
-- Read back the PR, its required checks, and the complete diff. Report warnings or untestable boundaries honestly.
+- Run required post-PR self-checks before handoff. Required GitHub CI remains
+  authoritative but may still be pending.
+- After pushing, read back the PR, complete diff, and current required-check
+  state. Report the task done without waiting for CI unless the user explicitly
+  asks you to wait. Call unfinished checks pending or in progress; never report
+  them as passed.
