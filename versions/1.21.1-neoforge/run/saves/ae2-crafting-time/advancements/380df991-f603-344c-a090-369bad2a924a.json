@@ -305,12 +305,6 @@
     },
     "done": true
   },
-  "mekanism:factory": {
-    "criteria": {
-      "factory": "2026-08-28 15:01:09 +0300"
-    },
-    "done": true
-  },
   "advanced_ae:recipes/misc/smallappupgrade": {
     "criteria": {
       "hasItem": "2026-08-28 14:59:35 +0300"
@@ -320,6 +314,12 @@
   "advanced_ae:recipes/misc/advpartenc": {
     "criteria": {
       "hasItem": "2026-08-28 14:59:35 +0300"
+    },
+    "done": true
+  },
+  "mekanism:factory": {
+    "criteria": {
+      "factory": "2026-08-28 15:01:09 +0300"
     },
     "done": true
   },
