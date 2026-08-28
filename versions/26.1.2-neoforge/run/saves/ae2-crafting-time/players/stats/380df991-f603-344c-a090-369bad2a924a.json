@@ -1,0 +1,28 @@
+{
+  "stats": {
+    "minecraft:used": {
+      "ae2:crafting_terminal": 1,
+      "ae2:controller": 1,
+      "ae2:drive": 2,
+      "ae2:processing_pattern": 1,
+      "ae2:64k_crafting_storage": 1,
+      "ae2:fluix_glass_cable": 4,
+      "ae2:pattern_encoding_terminal": 3,
+      "ae2:creative_energy_cell": 1,
+      "ae2:inscriber": 1,
+      "ae2:pattern_provider": 1
+    },
+    "minecraft:custom": {
+      "minecraft:time_since_rest": 25565,
+      "minecraft:items_inserted": 828,
+      "minecraft:items_extracted": 64,
+      "minecraft:walk_one_cm": 7333,
+      "minecraft:total_world_time": 21379,
+      "minecraft:leave_game": 3,
+      "minecraft:sneak_time": 6,
+      "minecraft:play_time": 20330,
+      "minecraft:time_since_death": 20330
+    }
+  },
+  "DataVersion": 4790
+}

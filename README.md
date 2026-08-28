@@ -83,8 +83,9 @@ Use the script for the version and loader you want to test:
 .\run-26.1.2-neoforge.bat
 ```
 
-Each script resolves compatible optional integrations, their required
-dependencies, and JEI before launching the development client.
+Normal builds compile against the minimum supported loader and AE2 versions.
+Each run script uses the newest loader, AE2, optional integrations, required
+dependencies, and JEI available for that Minecraft and loader target.
 
 ## Documentation
 

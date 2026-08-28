@@ -11,7 +11,7 @@ java {
 }
 
 neoForge {
-    version = '26.1.2.99'
+    version = providers.gradleProperty('runtimeNeoForge2612Version').getOrElse('26.1.2.71')
 
     runs {
         client {
@@ -51,7 +51,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.appliedenergistics:appliedenergistics2:26.1.10-beta'
+    implementation "org.appliedenergistics:appliedenergistics2:${providers.gradleProperty('runtimeAe2NeoForge2612Version').getOrElse('26.1.10-beta')}"
     compileOnly 'maven.modrinth:advancedae:26.1.7'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
@@ -72,7 +72,7 @@ tasks.named('processResources', ProcessResources).configure {
             mod_authors            : 'ctux',
             mod_description        : 'Shows when AE2 autocrafting should finish and helps you spot delays and bottlenecks.',
             minecraft_version_range: '[26.1.2]',
-            neoforge_version_range : '[26.1.2.99,)',
+            neoforge_version_range : '[26.1.2.71,)',
             loader_version_range   : '[1,)'
     ]
 

@@ -44,11 +44,18 @@ Every new or changed executable behavior must have 100% line and branch coverage
 - Use the smallest shared root-cause fix; do not patch sibling callers individually.
 - Treat wire layouts and persisted NBT as compatibility boundaries. Update every affected loader together and version the format/protocol when compatibility changes.
 - Treat `scripts/release-matrix.json` as the supported-target source of truth.
+- Keep build dependencies and loader metadata at the minimum supported versions.
+- Let each `run-*.bat` client use the newest versions available for its exact Minecraft and loader target.
+- Verify the newest dependency's full Maven coordinate instead of assuming it still uses the minimum version's group and artifact.
 - For matrix rows, dist tasks, jar naming, deployment, or publishing, also load `ae2-crafting-time-release` and follow `docs/release.md`.
 
 ## Completion
 
 - Work on a branch and make each fix or feature one conventional commit.
 - Do not run repository tests locally before the hook creates the PR. Let required GitHub CI run `test` and `jacocoTestReport`.
-- A code change is incomplete until CI or the required post-PR self-check proves all tests pass and every changed executable line and branch is covered.
-- Read back the PR, its required checks, and the complete diff. Report warnings or untestable boundaries honestly.
+- Run required post-PR self-checks before handoff. Required GitHub CI remains
+  authoritative but may still be pending.
+- After pushing, read back the PR, complete diff, and current required-check
+  state. Report the task done without waiting for CI unless the user explicitly
+  asks you to wait. Call unfinished checks pending or in progress; never report
+  them as passed.

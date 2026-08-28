@@ -4,6 +4,11 @@ build/
 **/build/
 run/
 **/run/
+!versions/*/run/
+versions/*/run/*
+!versions/*/run/options.txt
+!versions/*/run/saves/
+!versions/*/run/saves/**
 dist/
 **/bin/
 **/logs/

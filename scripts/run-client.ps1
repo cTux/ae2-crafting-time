@@ -3,6 +3,7 @@ param(
     [ValidateSet("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")]
     [string]$Target,
     [switch]$ResolveOnly,
+    [string]$Root,
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$GradleArgs
 )
@@ -12,26 +13,38 @@ $api = "https://api.modrinth.com/v2"
 $profiles = @{
     "1.20.1-forge" = [pscustomobject]@{
         Module = "mc_1_20_1_forge"; Game = "1.20.1"; Loader = "forge"
+        LoaderMetadata = "https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml"
+        LoaderPrefix = "1.20.1-"
+        LoaderProperty = "runtimeForge1201Version"; Ae2Property = "runtimeAe2Forge1201Version"
         Projects = @("Ck4E7v7R", "a1RwDz90", "IiATswDj", "E6BFl96N", "u6dRKJwZ")
     }
     "1.20.1-fabric" = [pscustomobject]@{
         Module = "fabric_1_20_1"; Game = "1.20.1"; Loader = "fabric"
+        LoaderMetadata = "https://maven.fabricmc.net/net/fabricmc/fabric-loader/maven-metadata.xml"
+        LoaderPrefix = ""
+        LoaderProperty = "runtimeFabricLoader1201Version"; Ae2Property = "runtimeAe2Fabric1201Version"
         Projects = @("E6BFl96N", "u6dRKJwZ")
     }
     "1.21.1-neoforge" = [pscustomobject]@{
         Module = "mc_1_21_1_neoforge"; Game = "1.21.1"; Loader = "neoforge"
+        LoaderMetadata = "https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml"
+        LoaderPrefix = "21.1."
+        LoaderProperty = "runtimeNeoForge1211Version"; Ae2Property = "runtimeAe2NeoForge1211Version"
         Projects = @("Ck4E7v7R", "a1RwDz90", "IiATswDj", "rxYaglEe", "E6BFl96N", "u6dRKJwZ")
     }
     "26.1.2-neoforge" = [pscustomobject]@{
         Module = "mc_26_1_2_neoforge"; Game = "26.1.2"; Loader = "neoforge"
-        Projects = @("rxYaglEe", "u6dRKJwZ")
+        LoaderMetadata = "https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml"
+        LoaderPrefix = "26.1.2."
+        LoaderProperty = "runtimeNeoForge2612Version"; Ae2Property = "runtimeAe2NeoForge2612Version"
+        Projects = @("Ck4E7v7R", "rxYaglEe", "u6dRKJwZ")
     }
 }
 $provided = [Collections.Generic.HashSet[string]]::new([string[]]@("XxWD5pD3", "P7dR8mSH"))
 $visited = [Collections.Generic.HashSet[string]]::new()
 $managed = [Collections.Generic.List[string]]::new()
 $profile = $profiles[$Target]
-$root = Split-Path -Parent $PSScriptRoot
+$root = if ($Root) { $Root } else { Split-Path -Parent $PSScriptRoot }
 $run = Join-Path $root "versions\$Target\run"
 $mods = Join-Path $run $(if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" })
 $manifest = Join-Path $mods ".ae2-crafting-time-run-mods.json"
@@ -54,20 +67,32 @@ function Get-CompatibleVersion([string]$projectId, [string]$versionId) {
     }
     $game = [uri]::EscapeDataString("[`"$($profile.Game)`"]")
     $loader = [uri]::EscapeDataString("[`"$($profile.Loader)`"]")
-    $versions = @(Invoke-RestMethod -Uri "$api/project/$projectId/version?game_versions=$game&loaders=$loader")
-    $release = $versions | Where-Object version_type -eq "release" | Select-Object -First 1
-    if ($release) { return $release }
-    return $versions | Select-Object -First 1
+    $versions = Invoke-RestMethod -Uri "$api/project/$projectId/version?game_versions=$game&loaders=$loader"
+    return $versions[0]
+}
+
+function Get-LatestMavenVersion([string]$url, [string]$prefix) {
+    [xml]$metadata = (Invoke-WebRequest -UseBasicParsing -Uri $url).Content
+    $versions = @($metadata.metadata.versioning.versions.version | Where-Object { $_ -like "$prefix*" })
+    if ($versions.Count -eq 0) { throw "No Maven version starts with $prefix at $url" }
+    return $versions[-1]
+}
+
+function Get-Sha512([string]$path) {
+    $algorithm = [Security.Cryptography.SHA512]::Create()
+    $stream = [IO.File]::OpenRead($path)
+    try { return (([BitConverter]::ToString($algorithm.ComputeHash($stream)) -replace "-", "").ToLowerInvariant()) }
+    finally { $stream.Dispose(); $algorithm.Dispose() }
 }
 
 function Install-File($file) {
     $destination = Join-Path $mods $file.filename
     $expected = $file.hashes.sha512
     if (-not (Test-Path -LiteralPath $destination) -or
-            (Get-FileHash -LiteralPath $destination -Algorithm SHA512).Hash.ToLowerInvariant() -ne $expected) {
+            (Get-Sha512 $destination) -ne $expected) {
         $download = "$destination.download"
         Invoke-WebRequest -UseBasicParsing -Uri $file.url -OutFile $download
-        if ((Get-FileHash -LiteralPath $download -Algorithm SHA512).Hash.ToLowerInvariant() -ne $expected) {
+        if ((Get-Sha512 $download) -ne $expected) {
             Remove-Item -LiteralPath $download -Force
             throw "Hash mismatch for $($file.filename)"
         }
@@ -94,6 +119,22 @@ function Install-Project([string]$projectId, [string]$versionId = "") {
 
 foreach ($projectId in $profile.Projects) { Install-Project $projectId }
 
+$loaderVersion = Get-LatestMavenVersion $profile.LoaderMetadata $profile.LoaderPrefix
+$ae2Version = Get-CompatibleVersion "XxWD5pD3" ""
+$runtimeArgs = @("-P$($profile.LoaderProperty)=$loaderVersion", "-P$($profile.Ae2Property)=$($ae2Version.version_number)")
+Write-Host "runtime loader $loaderVersion"
+Write-Host "runtime ae2 $($ae2Version.version_number)"
+if ($Target -eq "1.20.1-fabric") {
+    $fabricApiVersion = Get-CompatibleVersion "P7dR8mSH" ""
+    $runtimeArgs += "-PruntimeFabricApi1201Version=$($fabricApiVersion.version_number)"
+    Write-Host "runtime fabric-api $($fabricApiVersion.version_number)"
+}
+if ($Target -eq "1.21.1-neoforge") {
+    $runtimeArgs += "-PruntimeAe2NeoForge1211Group=org.appliedenergistics"
+    $runtimeArgs += "-PruntimeLatestNeoForge1211"
+    Write-Host "runtime ae2 group org.appliedenergistics"
+}
+
 if ($Target -eq "1.20.1-forge") {
     foreach ($filename in $managed) {
         Remove-Item -LiteralPath (Join-Path $legacyMods $filename) -Force -ErrorAction SilentlyContinue
@@ -115,6 +156,6 @@ foreach ($pattern in @("ae2ct-*.jar", "jei-*.jar")) {
 Write-Host "mod AE2 Crafting Time (Gradle source set :$($profile.Module))"
 
 if (-not $ResolveOnly) {
-    & (Join-Path $root "gradlew.bat") ":$($profile.Module):runClient" @GradleArgs
+    & (Join-Path $root "gradlew.bat") ":$($profile.Module):runClient" @runtimeArgs @GradleArgs
     exit $LASTEXITCODE
 }

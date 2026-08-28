@@ -55,7 +55,7 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
     @Unique
     private static final int AE2CRAFTINGTIME_TOTAL_BACKGROUND = 0xD0202028;
     @Unique
-    private static final int AE2CRAFTINGTIME_TOTAL_COLOR = 0xE0E0E0;
+    private static final int AE2CRAFTINGTIME_TOTAL_COLOR = 0xFFE0E0E0;
 
     @Unique
     private int ae2craftingtime$ttcSortMode;

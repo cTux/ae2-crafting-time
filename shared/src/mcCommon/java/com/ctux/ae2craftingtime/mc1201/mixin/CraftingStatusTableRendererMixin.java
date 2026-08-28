@@ -70,8 +70,7 @@ public abstract class CraftingStatusTableRendererMixin {
                 lines.addAll(TtcText.stallLines(entry.getWhat().getDisplayName().getString(), normalized,
                         entry.getActiveAmount(), entry.getPendingAmount(), stats, stall.get()));
             } else {
-                lines.addAll(TtcText.statsLines(entry.getWhat().getDisplayName().getString(), normalized, stats,
-                        ClientStats.CACHE.accuracy(key)));
+                lines.addAll(TtcText.statsLines(stats, ClientStats.CACHE.accuracy(key)));
             }
         });
     }

@@ -56,16 +56,8 @@ public final class TtcText {
         });
     }
 
-    public static List<Component> statsLines(String name, long amount, ProfileStats stats) {
-        return statsLines(name, amount, stats, Optional.empty());
-    }
-
-    public static List<Component> statsLines(String name, long amount, ProfileStats stats,
-            Optional<TtcAccuracyStats> accuracy) {
+    public static List<Component> statsLines(ProfileStats stats, Optional<TtcAccuracyStats> accuracy) {
         var lines = new ArrayList<Component>();
-        lines.add(statsLine("text.ae2craftingtime.stats.item", name));
-        lines.add(statsLine("text.ae2craftingtime.stats.amount",
-                I18n.get("text.ae2craftingtime.value.amount", amount, unitName(stats))));
         lines.add(statsLine("text.ae2craftingtime.stats.samples", Integer.toString(stats.sampleCount())));
         lines.add(statsLine("text.ae2craftingtime.stats.average", duration(stats.averageDurationTicks())));
         lines.add(statsLine("text.ae2craftingtime.stats.latest", duration(stats.lastDurationTicks())));
@@ -84,8 +76,6 @@ public final class TtcText {
         if (!stats.reliableEstimate()) {
             lines.add(statsLine("text.ae2craftingtime.stats.confidence", confidence(stats)));
         }
-        lines.add(statsLine("text.ae2craftingtime.stats.ttc",
-                TimeEstimate.format(amount, stats).orElse(I18n.get("text.ae2craftingtime.unknown"))));
         accuracy.ifPresent(value -> {
             lines.add(statsLine("text.ae2craftingtime.stats.accuracy", accuracy(value)));
             lines.add(statsLine("text.ae2craftingtime.stats.latest_accuracy", latestAccuracy(value)));

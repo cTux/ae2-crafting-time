@@ -11,7 +11,7 @@ java {
 }
 
 neoForge {
-    version = '21.1.247'
+    version = providers.gradleProperty('runtimeNeoForge1211Version').getOrElse('21.1.1')
 
     runs {
         client {
@@ -59,9 +59,12 @@ repositories {
 }
 
 dependencies {
-    implementation 'curse.maven:applied-energistics-2-223794:7027323'
-    runtimeOnly 'org.appliedenergistics:guideme:21.1.17'
-    compileOnly 'curse.maven:advancedae-1084104:8564177'
+    def ae2Group = providers.gradleProperty('runtimeAe2NeoForge1211Group').getOrElse('appeng')
+    implementation "${ae2Group}:appliedenergistics2:${providers.gradleProperty('runtimeAe2NeoForge1211Version').getOrElse('19.0.24')}"
+    if (!providers.gradleProperty('runtimeLatestNeoForge1211').isPresent()) {
+        runtimeOnly 'org.appliedenergistics:guideme:21.1.0'
+    }
+    compileOnly 'curse.maven:advancedae-1084104:7849217'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 
