@@ -11,7 +11,7 @@ java {
 }
 
 neoForge {
-    version = '21.1.1'
+    version = providers.gradleProperty('runtimeLoaderVersion').getOrElse('21.1.1')
 
     runs {
         client {
@@ -59,8 +59,10 @@ repositories {
 }
 
 dependencies {
-    implementation 'appeng:appliedenergistics2:19.0.24'
-    runtimeOnly 'org.appliedenergistics:guideme:21.1.0'
+    implementation "appeng:appliedenergistics2:${providers.gradleProperty('runtimeAe2Version').getOrElse('19.0.24')}"
+    if (!providers.gradleProperty('runtimeLatest').isPresent()) {
+        runtimeOnly 'org.appliedenergistics:guideme:21.1.0'
+    }
     compileOnly 'curse.maven:advancedae-1084104:7849217'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'

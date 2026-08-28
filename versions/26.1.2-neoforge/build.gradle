@@ -11,7 +11,7 @@ java {
 }
 
 neoForge {
-    version = '26.1.2.71'
+    version = providers.gradleProperty('runtimeLoaderVersion').getOrElse('26.1.2.71')
 
     runs {
         client {
@@ -51,7 +51,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'org.appliedenergistics:appliedenergistics2:26.1.10-beta'
+    implementation "org.appliedenergistics:appliedenergistics2:${providers.gradleProperty('runtimeAe2Version').getOrElse('26.1.10-beta')}"
     compileOnly 'maven.modrinth:advancedae:26.1.7'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
