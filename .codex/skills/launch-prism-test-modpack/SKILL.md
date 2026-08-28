@@ -1,26 +1,32 @@
 ---
 name: launch-prism-test-modpack
-description: Take a modpack name, install its compatible release through Prism, add the matching AE2 Crafting Time build, then launch, verify, diagnose, and close it. Use for modpack installation campaigns or Minecraft client load checks.
+description: Check AE2 Crafting Time against Minecraft versions or explicitly named modpacks. Use Prism in the Codex VM only for a specific requested modpack; when no modpack is named, run the repository's applicable run-*.bat launchers instead.
 ---
 
 # Launch Prism Test Modpack
 
+## Choose The Check Path
+
+- When the user explicitly names one or more modpacks to check, use the Prism workflow below in the Codex VM. Load the global `use-codex-vm` skill for VM lifecycle and direct-control instructions.
+- When the user does not name a specific modpack, do not use Prism or the VM. Run the applicable repository-root `run-*.bat` files sequentially to check the requested Minecraft/loader versions; for a broad all-version check, run every `run-*.bat` file. Verify each client reaches startup without an AE2 Crafting Time failure, close that exact client, then continue.
+- Do not reinterpret a generic request such as checking supported versions, dependencies, builds, or compatibility as a request to test the installed Prism modpack inventory.
+
 ## End-to-End Contract
 
-Given a modpack name, complete this whole workflow unless the user narrows it:
+Given a specific modpack name, complete this whole workflow unless the user narrows it:
 
 1. Resolve the exact CurseForge or Modrinth project and a release supported by a row in `scripts/release-matrix.json`. Record the canonical pack title, provider, pack release, Minecraft version, and loader. If the name matches multiple projects, use the requested provider/version when supplied; otherwise use the exact canonical-title match and report ambiguity instead of silently choosing a similarly named pack.
 2. Reuse an exact existing instance or install the release through Prism into the **Codex** group. In the dedicated test VM, installation is complete only when Prism shows the instance and its **Folder** action opens the guest instance directory.
-3. Read `instance.cfg` and `mmc-pack.json` from that installed instance. Confirm its managed pack identity, Minecraft version, and loader match the resolved release.
+3. Read `instance.cfg` and `mmc-pack.json` from that installed instance. Confirm its managed pack identity, Minecraft version, and loader match the resolved release, then inspect enabled mod JAR metadata, including nested JAR-in-JAR archives, for mod ID `ae2`. AE2 is mandatory: when it is absent, do not copy or launch AE2 Crafting Time; remove that instance from the Codex test inventory and report it as ineligible rather than failed. Never infer AE2 presence from filenames alone.
 4. Select the `scripts/release-matrix.json` row matching that Minecraft version and loader. Unless the user supplied an exact JAR, build that row from the current worktree once per campaign and copy its `dist\ae2-crafting-time-<modVersion>-<loader>-<minecraftVersion>.jar` into `minecraft\mods`. Stop as unsupported if no matrix row matches; never substitute another loader or Minecraft version.
 5. Launch the instance through Prism inside the test VM, inspect Prism's console and the game window, decide whether it reached the title screen with AE2 Crafting Time loaded, diagnose any failure, and close the exact guest game window even when it crashed but remained open.
 6. Report the requested name, resolved title/release, instance ID, Minecraft version, loader, copied JAR, result, and failure reason when applicable.
 
 ## Install Modpacks Quickly
 
-- For this workstation's dedicated test VM, read [references/codex-vm.md](references/codex-vm.md) before taking action. Operate Prism through VMware's localhost-only VNC endpoint and the bundled helper; do not use the Computer Use plugin or automate the host VMware window.
-- Reuse the Codex VM when it is already running. Start it only when `vmrun -T ws list` does not include its VMX, and never shut down or restart the VM after a test campaign.
+- Use the global `use-codex-vm` skill to start or reuse the dedicated VM and operate it through VNC. This skill owns only the Prism and modpack workflow.
 - Inventory `E:\games\mc-instances` on the host first; Prism sees it in the guest at `\\vmware-host\Shared Folders\mc-instances`. Reuse an existing managed instance when `instance.cfg` confirms the same pack and exact version through `ManagedPackID`, `ManagedPackVersionID`, and `ManagedPackVersionName`; also confirm Minecraft and loader in `mmc-pack.json`.
+- Keep that shared folder as Prism's normal instance root, but do not launch Minecraft from the VMware shared filesystem: Java watch-service registration fails there with `java.io.IOException: Incorrect function`. For a test campaign, copy only the eligible instances to a temporary guest-local NTFS instance root, point Prism there, launch sequentially, sync logs and crash reports back to the shared folder, then restore Prism's shared instance root and remove the marked temporary copy.
 - Resolve the requested project and exact release before opening Prism. For Modrinth, keep the project ID, version ID, title, version number, Minecraft version, and loader so the UI pass is only search, select, verify, install.
 - For a batch, install a small pack first to prove Prism and the provider are working, then process the remaining packs sequentially. Do not launch clients while Prism is installing another pack.
 - Install missing modpacks through Prism Launcher's UI in the guest. Open **Add Instance**, verify **Group** is **Codex**, select the provider, search the exact title, select the exact project, verify the displayed release/version, then install. Prism normally preserves the last-used group, so do not open the group selector when it already says **Codex**. If a fresh Prism profile has no groups, finish the install, select the instance, choose **Change Group**, enter `Codex`, and verify the instance moves under that heading.
@@ -43,7 +49,6 @@ Given a modpack name, complete this whole workflow unless the user narrows it:
 - If a candidate remains absent after one exact-title or punctuation correction, do not restart **Add Instance** or count it as an install iteration. Replace the query with the next compatible candidate in the same provider dialog and keep the existing timer.
 - If **Select Optional Mods** appears and the request did not specify optional features, keep the pack author's default checked state and click **OK**; do not enable everything.
 - Do not use Prism's `--import` CLI option to install a modpack; it opens an interactive import dialog and does not complete the installation unattended.
-- Capture a fresh VM framebuffer after every state-changing input. Coordinates belong to that framebuffer only; do not reuse them after a dialog, window, resolution, or focus change. If a Qt click only moves the pointer or focuses a control, recapture and retry it once instead of issuing an unobserved click sequence.
 - Treat `N out of N complete` as download completion, not installation completion. Success is when the progress dialog closes and the new instance appears in Prism.
 - If Prism reports `Modrinth::GetProjects` or another final metadata failure after its internal retries, retry once. If it repeats or remains at 100% without progress, abort that install, record it as blocked, and continue the batch; do not loop or redownload indefinitely.
 - After installation, use Prism's **Folder** action and verify that the opened guest directory contains `instance.cfg`, `mmc-pack.json`, `flame`, and `minecraft`; do not guess the folder ID from the display name.
@@ -54,7 +59,8 @@ For empirical UI timing and observed failure paths, read [references/installatio
 
 Launch every installed instance from its selected Prism entry inside the dedicated test VM.
 
-- Use the selected instance under `E:\games\mc-instances` on the host and its matching shared guest path; do not assume a previously tested pack is still installed.
+- Use the selected instance under `E:\games\mc-instances` on the host and its matching staged guest-local NTFS copy for the launch; do not assume a previously tested pack is still installed.
+- Before building or copying a test JAR, inspect enabled mod JAR metadata, including nested JAR-in-JAR archives, for mod ID `ae2`. If AE2 is absent, remove the instance and skip the launch; a dependency error caused by testing an AE2-free pack is invalid test evidence.
 - Keep Prism's console visible while the client starts. A successful Prism action is not proof that Minecraft loaded: verify AE2 Crafting Time in the console/log output and the title screen in the guest framebuffer.
 - When the request authorizes installing a test build, remove existing enabled `ae2-crafting-time-*.jar` files from the instance's `minecraft\mods`, copy in the new loader-compatible JAR, and verify exactly one enabled AE2 Crafting Time JAR remains. Replace previous versions directly; do not create backups.
 - Derive the artifact name from the selected release-matrix row and the current `modVersion`; do not pick a JAR merely because its filename contains the game version. Build each required matrix row once and reuse that verified artifact across compatible instances in the same campaign.
