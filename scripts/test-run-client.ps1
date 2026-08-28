@@ -57,7 +57,7 @@ try {
         Assert-Line $output $case[1]
         Assert-Line $output $case[2]
     }
-    Remove-Item -LiteralPath (Join-Path $temp "versions\1.20.1-forge\run\resolved-mods\guideme.jar") -Force
+    Remove-Item -LiteralPath (Join-Path $temp "versions\1.20.1-forge\run\resolved-mods\Ck4E7v7R.jar") -Force
     $script:BadDownload = $true
     try {
         & $script -Target "1.20.1-forge" -Root $temp -ResolveOnly 6>&1 | Out-Null
