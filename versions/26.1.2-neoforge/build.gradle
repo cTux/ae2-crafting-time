@@ -70,7 +70,7 @@ tasks.named('processResources', ProcessResources).configure {
             mod_version            : project.version,
             mod_license            : 'MIT',
             mod_authors            : 'ctux',
-            mod_description        : 'Server-owned diagnostics for AE2 crafting time, delays, and bottlenecks.',
+            mod_description        : 'Shows when AE2 autocrafting should finish and helps you spot delays and bottlenecks.',
             minecraft_version_range: '[26.1.2]',
             neoforge_version_range : '[26.1.2.99,)',
             loader_version_range   : '[1,)'

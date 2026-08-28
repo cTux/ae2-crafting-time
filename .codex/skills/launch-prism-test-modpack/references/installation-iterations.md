@@ -1,6 +1,8 @@
 # Installation Iterations
 
-UI time measures the active Prism selection flow from **Add Instance** to **OK** and excludes downloads. Total time includes download and Prism finalization.
+These are real runs, not target numbers. UI time covers the active Prism flow
+from **Add Instance** to **OK** and leaves out downloads. Total time includes
+the download and Prism's final setup.
 
 | # | Provider | Pack | Minecraft | Loader | UI time | Total time | Result | Improvement |
 |---:|---|---|---|---|---:|---:|---|---|

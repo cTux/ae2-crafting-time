@@ -14,23 +14,23 @@ public final class Ae2CraftingTimeConfig {
         var builder = new ForgeConfigSpec.Builder();
 
         ENABLED = builder
-                .comment("Collect and display AE2 craft performance samples.")
+                .comment("Track and show real AE2 crafting performance.")
                 .define("enabled", true);
 
         SHOW_IN_TREE = builder
-                .comment("Show stats in AE2: Crafting Tree when that mod is installed.")
+                .comment("Show TTC stats in AE2: Crafting Tree when it is installed.")
                 .define("showInTree", true);
 
         SHOW_CHAT_MESSAGES = builder
-                .comment("Broadcast Ctrl-click TTC details and reset notices to chat.")
+                .comment("Post Ctrl-click TTC details and reset notices in chat.")
                 .define("showChatMessages", true);
 
         MAX_SAMPLES = builder
-                .comment("Number of recent completed samples retained per crafted output.")
+                .comment("How many recent samples to keep for each crafted output.")
                 .defineInRange("maxSamples", 10, 1, 100);
 
         OUTLIER_MULTIPLIER = builder
-                .comment("Ignore throughput samples slower or faster than median by this multiplier.")
+                .comment("Ignore samples this many times slower or faster than the median.")
                 .defineInRange("outlierMultiplier", 4.0, 1.0, 1000.0);
 
         SPEC = builder.build();

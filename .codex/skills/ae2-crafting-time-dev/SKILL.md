@@ -9,9 +9,11 @@ description: Develop, debug, test, document, port, or maintain any part of AE2 C
 
 1. Read `AGENTS.md`, `README.md`, and `docs/working-with-project.md`.
 2. Read [references/code-map.md](references/code-map.md), then the closest feature document under `docs/`.
-3. Trace the real path end to end and inspect every caller plus each supported-version counterpart before editing.
-4. Reuse an existing helper, source set, packet codec, resource, test pattern, or loader adapter before adding code.
-5. Read [references/testing-and-change-workflow.md](references/testing-and-change-workflow.md) before changing anything.
+3. When the task changes repo-owned text, read
+   [the writing skill](../ae2-crafting-time-writing/SKILL.md) before editing it.
+4. Trace the real path end to end and inspect every caller plus each supported-version counterpart before editing.
+5. Reuse an existing helper, source set, packet codec, resource, test pattern, or loader adapter before adding code.
+6. Read [references/testing-and-change-workflow.md](references/testing-and-change-workflow.md) before changing anything.
 
 ## Non-Negotiable Design Rules
 
@@ -23,6 +25,8 @@ description: Develop, debug, test, document, port, or maintain any part of AE2 C
 - Keep craft-plan and crafting-status UI behavior consistent unless the underlying semantics differ. Append through AE2 paths instead of replacing renderers.
 - Keep optional integrations optional: string-target mixins or compile-only dependencies must not make absent mods required.
 - Update English and Ukrainian translation keys together and keep loader metadata, mixin lists, dependencies, docs, and code truthful to one another.
+- Keep docs, skills, changelogs, translations, and metadata in the casual,
+  direct project voice. Never trade technical accuracy for personality.
 
 ## 100% Coverage Rule
 

@@ -3,7 +3,7 @@
   "id": "ae2craftingtime",
   "version": "${version}",
   "name": "AE2 Crafting Time",
-  "description": "Server-owned diagnostics for AE2 crafting time, delays, and bottlenecks.",
+  "description": "Shows when AE2 autocrafting should finish and helps you spot delays and bottlenecks.",
   "authors": [
     "ctux"
   ],

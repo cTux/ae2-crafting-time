@@ -1,10 +1,10 @@
 # Architecture
 
-AE2 Crafting Time diagnoses slow or stalled AE2 autocrafting by profiling real
-throughput on the logical server. Client UIs render server-provided crafting-time
-estimates, delay warnings, prediction accuracy, and evidence-bounded bottleneck
-clues. The same flow is used for singleplayer and dedicated server-client play;
-an integrated singleplayer world still has a logical server.
+AE2 Crafting Time watches real autocrafting throughput on the logical server so
+it can explain slow or stalled jobs. The client only displays what the server
+sends: TTC estimates, delay warnings, prediction accuracy, and bottleneck clues
+supported by the available data. Singleplayer uses the same path because an
+integrated world still has a logical server.
 
 ## Supported Targets
 
@@ -13,6 +13,7 @@ an integrated singleplayer world still has a logical server.
 | 1.20.1 | Forge | `:mc_1_20_1_forge` |
 | 1.20.1 | Fabric | `:fabric_1_20_1` |
 | 1.21.1 | NeoForge | `:mc_1_21_1_neoforge` |
+| 26.1.2 | NeoForge | `:mc_26_1_2_neoforge` |
 
 ## Code Boundaries
 
@@ -25,7 +26,7 @@ an integrated singleplayer world still has a logical server.
 - `versions/<minecraft>-<loader>`: loader entrypoints, packet glue, config,
   saved-data glue, metadata, and loader tests.
 
-## Runtime Flow
+## How It Runs
 
 ```text
 AE2 CraftingCpuLogic mixins on the server
@@ -87,8 +88,8 @@ Optional integrations add UI only when the target mod is installed:
 - ME Requester: row labels and total TTC hints
 - Applied Mekanistics: chemical key normalization and display
 
-No fallback profiling screen exists. If an optional UI mod is absent, that
-integration simply does not render.
+There is no fallback profiling screen. If an optional UI mod is missing, its
+integration simply stays out of the way.
 
 ## Persistence
 

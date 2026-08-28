@@ -1,23 +1,25 @@
-# Server-Owned Stats Design
+# Why Crafting Stats Stay On The Server
 
 Date: 2026-06-21
 
-## Requirement
+## The Rule
 
-All craft timing, throughput, delay, prediction-accuracy, and bottleneck
-diagnostics happen on the Minecraft server. The client only renders diagnostics
-that the server sends.
+The Minecraft server owns all craft timing, throughput, delay, prediction
+accuracy, and bottleneck diagnostics. The client only shows the snapshot it
+receives.
 
-This matters for dedicated servers:
+That matters on dedicated servers because:
 
 - AE2 craft execution runs on the server.
 - The server sees the real tick clock, pattern pushes, and completed outputs.
 - The client may not have the same mod state, world state, or timing data.
 - Client-side calculation would be wrong or empty in multiplayer.
 
-Singleplayer must also work. An integrated singleplayer world still has a logical server, so the mod should use the same server-owned profiler and packet snapshot flow instead of special-casing local client reads.
+Singleplayer follows the same rule. An integrated world still has a logical
+server, so there is no separate shortcut that reads profiler data from the
+client.
 
-## Current Architecture
+## How It Works Today
 
 The implementation uses the server-owned path for both dedicated servers and
 singleplayer:
@@ -29,7 +31,7 @@ singleplayer:
 - `StatsSnapshotS2C` updates `ClientStatsCache`
 - UI code renders only from the client display cache
 
-## Target Architecture
+## The Data Flow
 
 ```text
 AE2 server craft hooks
@@ -201,7 +203,8 @@ Shared module:
 
 ## Security / Trust
 
-This data is observational and low risk, but still do the boring safe thing:
+This is observational data and the risk is low, but the boring safety rules
+still apply:
 
 - client requests are hints only
 - every collection and string is bounded while decoding, before allocation

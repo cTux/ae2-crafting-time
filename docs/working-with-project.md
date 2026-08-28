@@ -2,12 +2,12 @@
 
 ## Project Purpose
 
-AE2 Crafting Time diagnoses slow or stalled AE2 autocrafting. Its server-owned
-performance history supports TTC estimates, delay detection, prediction-accuracy
-checks, and evidence-bounded bottleneck clues for machine throughput, Pattern
-Provider parallelism, and Crafting Co-Processor dispatch capacity.
+AE2 Crafting Time helps players understand slow or stalled AE2 autocrafting.
+The server keeps the performance history used for TTC estimates, delay checks,
+prediction accuracy, and bottleneck clues around machines, Pattern Providers,
+and Crafting Co-Processors.
 
-## First Checks
+## Start Here
 
 Start from the repo root:
 
@@ -37,13 +37,13 @@ Use the printed Gradle project names. The current modules are:
 - Put loader-only entrypoints, networking glue, saved-data glue, metadata, and tests under the matching `versions/<minecraft>-<loader>` folder.
 - Keep `scripts/release-matrix.json` as the source of truth for build/release rows.
 
-## Normal Development
+## Everyday Development
 
 Commit each fix or feature so the post-commit hook opens or updates its PR. Tests
 run only in the required GitHub Actions check; do not run them locally before
 creating the PR.
 
-For jar output, run:
+When you need the JARs, run:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-all-versions.ps1

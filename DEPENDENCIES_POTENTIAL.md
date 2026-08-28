@@ -1,12 +1,11 @@
 # Potential Dependency Integrations
 
-These are candidate optional integrations for extending crafting-time, delay,
-and bottleneck diagnostics. Do not add them to loader metadata until there is
-code that uses them.
+These are optional integrations that could be useful later. They are ideas, not
+promises. Do not add one to loader metadata until real code uses it.
 
 ## Best Next Targets
 
-| Mod | Current target fit | Potential integration | Profit |
+| Mod | Current target fit | Possible integration | Why it helps |
 | --- | --- | --- | --- |
 | [Extended AE](https://modrinth.com/mod/extended-ae) | `1.20.1 Forge`, `1.21.1 NeoForge` | Add TTC/bottleneck hints around extended pattern providers, extended molecular assemblers, and assembler matrix crafts. | Helps players see whether a slow craft is provider-slot pressure, assembler throughput, or missing historical stats. |
 | [MEGA Cells](https://modrinth.com/mod/mega) | `1.21.1 NeoForge`; check `1.20.1` per release source before coding | Detect MEGA Crafting CPUs, co-processors, and MEGA pattern providers when rendering craft status. | Makes TTC more honest for large CPU setups and high-parallel craft chains. |
@@ -28,6 +27,6 @@ code that uses them.
 
 ## Selection Rule
 
-Prefer integrations that reuse existing `ClientStats`, `TimeEstimate`, and
-`AeKeyAmounts` paths. Add compile-time dependencies only when a screen or key
-type cannot be reached through AE2 APIs or a string-target optional mixin.
+Prefer integrations that can reuse `ClientStats`, `TimeEstimate`, and
+`AeKeyAmounts`. Add a compile-time dependency only when AE2 APIs or an optional
+string-target mixin cannot reach the screen or key type.

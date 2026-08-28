@@ -1,4 +1,4 @@
 interface:
   display_name: "AE2 Crafting Time Dev"
-  short_description: "Develop AE2 Crafting Time with 100% coverage."
-  default_prompt: "Use this skill to develop any part of AE2 Crafting Time while preserving 100% line and branch coverage for changed executable behavior."
+  short_description: "Build AE2 Crafting Time without cutting corners."
+  default_prompt: "Use this skill to work on AE2 Crafting Time while keeping changed behavior fully covered and project writing natural."
