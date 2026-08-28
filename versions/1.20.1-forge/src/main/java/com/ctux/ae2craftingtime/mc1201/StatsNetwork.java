@@ -9,12 +9,11 @@ import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.PacketDistributor;
 import net.minecraftforge.network.simple.SimpleChannel;
 
-import java.util.Objects;
-
+@SuppressWarnings("deprecation")
 public final class StatsNetwork {
     private static final String PROTOCOL = "5";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
-            Objects.requireNonNull(ResourceLocation.tryBuild(Ae2CraftingTime.MOD_ID, "main")),
+            new ResourceLocation(Ae2CraftingTime.MOD_ID, "main"),
             () -> PROTOCOL,
             PROTOCOL::equals,
             PROTOCOL::equals);
