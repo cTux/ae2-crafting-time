@@ -63,10 +63,8 @@ function Get-CompatibleVersion([string]$projectId, [string]$versionId) {
     }
     $game = [uri]::EscapeDataString("[`"$($profile.Game)`"]")
     $loader = [uri]::EscapeDataString("[`"$($profile.Loader)`"]")
-    $versions = @(Invoke-RestMethod -Uri "$api/project/$projectId/version?game_versions=$game&loaders=$loader")
-    $release = $versions | Where-Object version_type -eq "release" | Select-Object -First 1
-    if ($release) { return $release }
-    return $versions | Select-Object -First 1
+    $versions = Invoke-RestMethod -Uri "$api/project/$projectId/version?game_versions=$game&loaders=$loader"
+    return $versions[0]
 }
 
 function Get-LatestMavenVersion([string]$url, [string]$prefix) {

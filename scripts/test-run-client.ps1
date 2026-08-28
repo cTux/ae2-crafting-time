@@ -33,11 +33,16 @@ function Invoke-RestMethod {
         version_number = $version
         dependencies = @([pscustomobject]@{ project_id = "XxWD5pD3"; version_id = ""; dependency_type = "required" })
         files = @($file)
+    }, [pscustomobject]@{
+        version_type = "release"
+        version_number = "0.0.1"
+        dependencies = @()
+        files = @($file)
     })
 }
 
-function Assert-Contains([string]$text, [string]$expected) {
-    if (-not $text.Contains($expected)) { throw "Missing '$expected' in:`n$text" }
+function Assert-Line([string]$text, [string]$expected) {
+    if ($expected -notin ($text -split "`r?`n")) { throw "Missing exact line '$expected' in:`n$text" }
 }
 
 try {
@@ -49,8 +54,8 @@ try {
     )
     foreach ($case in $cases) {
         $output = (& $script -Target $case[0] -Root $temp -ResolveOnly 6>&1 | Out-String)
-        Assert-Contains $output $case[1]
-        Assert-Contains $output $case[2]
+        Assert-Line $output $case[1]
+        Assert-Line $output $case[2]
     }
     Write-Host "run-client checks passed"
 } finally {
