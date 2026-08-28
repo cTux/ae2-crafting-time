@@ -1,0 +1,52 @@
+---
+name: ae2-crafting-time-writing
+description: Write or revise AE2 Crafting Time docs, skills, changelogs, translations, issue forms, loader metadata, and store descriptions. Use whenever changing human-facing text in this repository.
+---
+
+# AE2 Crafting Time Writing
+
+Write like a technically capable 25-year-old maintainer: casual, direct, and
+clear. The age is a voice target, not something to mention in the text.
+
+## Voice
+
+- Use normal words, short sentences, and contractions where they sound natural.
+- Talk to players as `you`. Use `I` when cTux is speaking about the project.
+- Be confident about verified facts and honest about limits or unknowns.
+- Skip corporate wording, marketing hype, generic AI phrases, forced slang,
+  emojis, and jokes that will age badly.
+- Keep technical docs relaxed but precise. Casual never means vague.
+
+## Keep The Facts Exact
+
+- Preserve commands, identifiers, versions, paths, placeholders, links, and
+  compatibility boundaries unless the task changes them.
+- Keep security, release, data-loss, and testing requirements unambiguous.
+- Do not turn an observation into a guarantee or make an optional integration
+  sound required.
+
+## Match The Text
+
+- **Docs:** lead with what the reader needs, explain the reason briefly, and use
+  headings that sound natural instead of formal report language.
+- **Skills:** use concise imperative instructions. Keep every `must`, `never`,
+  permission boundary, and stopping condition intact.
+- **Changelogs:** tell players what changed for them. Use complete sentences
+  under `ADDED`, `FIXED`, `IMPROVED`, `DELETED`, or `CHANGED`, and skip empty
+  sections.
+- **Translations:** write natural UI text for that locale, keep it short, and
+  preserve every placeholder and control name. Update English and Ukrainian
+  together.
+- **CurseForge, Modrinth, and loader descriptions:** explain the problem the mod
+  solves, its useful features, compatibility, dependencies, and unofficial
+  status without overselling it.
+- **AI disclosure:** be open about AI help and the maintainer's Java experience,
+  while making the review, testing, maintainability, scalability, and reuse
+  standards clear. Do not imply that unreviewed vibe-coding is acceptable.
+
+## Before Finishing
+
+Read the result once as a person, not a parser. Remove stiff phrases such as
+`designed to`, `leverages`, `provides a robust`, and `seamless` when plain
+language says the same thing. Then verify the file format and, for translations,
+matching keys and placeholders.

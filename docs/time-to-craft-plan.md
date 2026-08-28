@@ -1,10 +1,11 @@
-# Time To Craft Line Research
+# Time To Craft Lines
 
 Date: 2026-06-21
 
-## Requirement
+## Goal
 
-Show an approximate time to finish the whole planned amount for each item, liquid, gas, or other AE key in the craft plan.
+Show roughly how long the full planned amount will take for each item, liquid,
+gas, or other AE key in the craft plan.
 
 TTC is one part of the mod's broader diagnostics: learned throughput powers the
 estimate, while running-job views also expose delays, prediction accuracy, and
@@ -20,7 +21,7 @@ Time To Craft: ~000:00:00
 
 This is not "time for one craft operation". It is estimated time for the full `To Craft` amount shown for that row or node.
 
-## Existing AE2 UI
+## Where It Fits In AE2
 
 AE2 `CraftConfirmTableRenderer` already builds row text and tooltip text from `CraftingPlanSummaryEntry`:
 
@@ -31,7 +32,9 @@ AE2 `CraftConfirmTableRenderer` already builds row text and tooltip text from `C
 
 `CraftingPlanSummaryEntry` carries `what`, `missingAmount`, `storedAmount`, and `craftAmount`.
 
-The cheapest AE2-native integration is a client-only mixin into `CraftConfirmTableRenderer#getEntryTooltip` that appends the new line immediately after AE2 adds `To Craft`.
+The smallest AE2-native integration is a client-only mixin into
+`CraftConfirmTableRenderer#getEntryTooltip`. It adds the new line right after
+AE2 adds `To Craft`.
 
 ## Crafting Tree
 
@@ -143,7 +146,8 @@ Current implementation:
 - bucket-style keys, including AE2 fluids and optional Applied Mekanistics chemicals:
   mB, converted from AE amount with `AEKey#getAmountPerUnit`
 
-Requirement includes gas/liquid. Lazy correct rule for later key types:
+Gas and liquid support uses the same normalization rule. For later key types,
+keep the rule simple:
 
 ```text
 if amountPerUnit > 1:

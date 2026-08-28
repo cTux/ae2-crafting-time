@@ -1,6 +1,6 @@
 # Release
 
-Releases package the mod's AE2 crafting-time, delay, and bottleneck diagnostics
+Each release packages the same AE2 crafting-time, delay, and bottleneck tools
 for every supported loader.
 
 Each supported Minecraft/mod-loader combination is one row in `scripts/release-matrix.json`.
@@ -34,7 +34,7 @@ Build only changed jars at the current development version:
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-changed.ps1
 ```
 
-## Fast release and deploy
+## Release And Deploy
 
 Start from a clean branch based on `origin/master`. The real deploy builds every
 JAR needed by the GitHub Release, so do not run `build-all-versions.ps1` first.
@@ -53,7 +53,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-changed.ps1
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-changed.ps1 -Deploy
 ```
 
-The dry run validates the release plan without building or uploading. The real
+The dry run checks the plan without building or uploading anything. The real
 deploy builds changed rows at `modVersion`, rebuilds unchanged rows at their
 latest released versions for the complete GitHub asset set, uploads changed
 rows, creates the GitHub Release, bumps `modVersion`, commits the release state,
@@ -61,12 +61,19 @@ and pushes the branch.
 
 ## Release notes and names
 
-- Write changelogs for players, not as raw commit logs. Use clear sentences
-  grouped under `ADDED`, `FIXED`, `IMPROVED`, `DELETED`, or `CHANGED`; omit empty
+- Read [the project writing skill](../.codex/skills/ae2-crafting-time-writing/SKILL.md)
+  before writing anything that will appear on GitHub, Modrinth, or CurseForge.
+- Write changelogs for players, not as raw commit logs. Use natural sentences
+  grouped under `ADDED`, `FIXED`, `IMPROVED`, `DELETED`, or `CHANGED`; skip empty
   categories.
 - Conventional commit subjects are converted into those categories and stripped
   of commit types, scopes, and hashes. A manual `-Changelog` must already use the
   same `### CATEGORY` Markdown headings.
+- Read the relevant commit subjects before the dry run. If automatic conversion
+  would still sound like a commit log, prepare a manual `-Changelog` in the
+  project voice.
+- Keep platform descriptions casual and useful. Explain what the mod helps with,
+  mention compatibility that matters, and leave out hype or generic AI wording.
 - Name the GitHub Release with only the mod version, for example `1.0.5`. Put
   loader, Minecraft version, artifact, and categorized changelog details in the
   release body.
@@ -78,9 +85,9 @@ After it succeeds:
 3. Confirm CurseForge accepted every upload. Public visibility can lag, and the author upload token may not be authorized for the public files read endpoint.
 4. Merge the hook-created release PR and verify `origin/master` contains the next patch `modVersion`.
 
-If an upload fails, use the response body printed by the script. Before retrying,
-check the affected platform, GitHub releases, `.release-state.json`, and the
-working tree for partial completion; retry only when the rejected version was
+If an upload fails, start with the response body printed by the script. Before
+retrying, check the platform, GitHub Releases, `.release-state.json`, and the
+working tree for partial completion. Retry only when the rejected version was
 not created.
 
 `deploy-changed.ps1` fingerprints only jar inputs: root build files, shared main code, and the matrix row's version main code. Test-only edits do not build or deploy.

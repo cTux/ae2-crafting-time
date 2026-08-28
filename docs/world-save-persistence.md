@@ -1,8 +1,8 @@
-# World Save Persistence Research
+# Saving Crafting History With The World
 
 Date: 2026-06-21
 
-## Request
+## Goal
 
 Persist collected crafting times in the Minecraft world save:
 
@@ -14,9 +14,10 @@ Persist collected crafting times in the Minecraft world save:
 This history preserves the learned throughput used by TTC estimates and
 slow-craft diagnostics across restarts.
 
-## Feasibility
+## Does It Fit?
 
-This is possible and should use Minecraft `SavedData`, not direct file IO.
+Yes. Minecraft's `SavedData` already handles this, so direct file IO would only
+add work and risk.
 
 Forge documents `SavedData` as the standard way to save level data. A `SavedData` instance is loaded or created through `DimensionDataStorage#computeIfAbsent(...)`; the name argument becomes the `.dat` file under that level's `data` folder. Local 1.20.1 bytecode confirms `DimensionDataStorage#getDataFile(name)` writes:
 
@@ -118,7 +119,9 @@ On server/world load:
 3. `SavedData.load(...)` decodes NBT into persisted network/output samples.
 4. `ProfilerBridge` installs or hydrates its server profiler from the loaded samples.
 
-Lazy loading is acceptable if it happens before the first craft stat request or craft sample write. The simpler implementation is to initialize once from a server lifecycle event after the overworld exists.
+Lazy loading is fine as long as it happens before the first stats request or
+sample write. The simpler option is to initialize once from a server lifecycle
+event after the overworld exists.
 
 ## Saving
 
@@ -196,7 +199,7 @@ Version tests:
 - saved data loads entries into equivalent profiler samples
 - storage id constant is exactly `ae2-crafting-time`
 
-## Recommendation
+## Chosen Approach
 
 Use `SavedData` attached to the overworld with id `ae2-crafting-time`. Persist retained samples, not pending crafts and not only aggregate stats. This satisfies the requested `./data/ae2-crafting-time.dat` path while letting Minecraft handle load, dirty tracking, compression, data version wrapping, and save timing.
 

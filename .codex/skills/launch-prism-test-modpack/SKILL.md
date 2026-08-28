@@ -1,19 +1,19 @@
 ---
 name: launch-prism-test-modpack
-description: Check AE2 Crafting Time against Minecraft versions or explicitly named modpacks. Use Prism in the Codex VM only for a specific requested modpack; when no modpack is named, run the repository's applicable run-*.bat launchers instead.
+description: Check AE2 Crafting Time against supported Minecraft versions or named modpacks. Use Prism in the Codex VM only when the user names a modpack; otherwise use the repository's run-*.bat launchers.
 ---
 
-# Launch Prism Test Modpack
+# Test AE2 Crafting Time In A Modpack
 
-## Choose The Check Path
+## Pick The Right Path
 
-- When the user explicitly names one or more modpacks to check, use the Prism workflow below in the Codex VM. Load the global `use-codex-vm` skill for VM lifecycle and direct-control instructions.
+- When the user names one or more modpacks, use the Prism workflow below in the Codex VM. Load the global `use-codex-vm` skill for VM lifecycle and direct-control instructions.
 - When the user does not name a specific modpack, do not use Prism or the VM. Run the applicable repository-root `run-*.bat` files sequentially to check the requested Minecraft/loader versions; for a broad all-version check, run every `run-*.bat` file. Verify each client reaches startup without an AE2 Crafting Time failure, close that exact client, then continue.
 - Do not reinterpret a generic request such as checking supported versions, dependencies, builds, or compatibility as a request to test the installed Prism modpack inventory.
 
-## End-to-End Contract
+## What A Complete Check Includes
 
-Given a specific modpack name, complete this whole workflow unless the user narrows it:
+For a named modpack, finish this whole workflow unless the user asks for less:
 
 1. Resolve the exact CurseForge or Modrinth project and a release supported by a row in `scripts/release-matrix.json`. Record the canonical pack title, provider, pack release, Minecraft version, and loader. If the name matches multiple projects, use the requested provider/version when supplied; otherwise use the exact canonical-title match and report ambiguity instead of silently choosing a similarly named pack.
 2. Reuse an exact existing instance or install the release through Prism into the **Codex** group. In the dedicated test VM, installation is complete only when Prism shows the instance and its **Folder** action opens the guest instance directory.
@@ -22,7 +22,7 @@ Given a specific modpack name, complete this whole workflow unless the user narr
 5. Launch the instance through Prism inside the test VM, inspect Prism's console and the game window, decide whether it reached the title screen with AE2 Crafting Time loaded, diagnose any failure, and close the exact guest game window even when it crashed but remained open.
 6. Report the requested name, resolved title/release, instance ID, Minecraft version, loader, copied JAR, result, and failure reason when applicable.
 
-## Install Modpacks Quickly
+## Install A Modpack
 
 - Use the global `use-codex-vm` skill to start or reuse the dedicated VM and operate it through VNC. This skill owns only the Prism and modpack workflow.
 - Inventory `E:\games\mc-instances` on the host first; Prism sees it in the guest at `\\vmware-host\Shared Folders\mc-instances`. Reuse an existing managed instance when `instance.cfg` confirms the same pack and exact version through `ManagedPackID`, `ManagedPackVersionID`, and `ManagedPackVersionName`; also confirm Minecraft and loader in `mmc-pack.json`.
@@ -53,9 +53,10 @@ Given a specific modpack name, complete this whole workflow unless the user narr
 - If Prism reports `Modrinth::GetProjects` or another final metadata failure after its internal retries, retry once. If it repeats or remains at 100% without progress, abort that install, record it as blocked, and continue the batch; do not loop or redownload indefinitely.
 - After installation, use Prism's **Folder** action and verify that the opened guest directory contains `instance.cfg`, `mmc-pack.json`, `flame`, and `minecraft`; do not guess the folder ID from the display name.
 
-For empirical UI timing and observed failure paths, read [references/installation-iterations.md](references/installation-iterations.md) when optimizing this workflow.
+When you are trying to speed up this workflow, read the measured UI timings and
+real failure paths in [references/installation-iterations.md](references/installation-iterations.md).
 
-## Launch And Check A Modpack
+## Launch And Check It
 
 Launch every installed instance from its selected Prism entry inside the dedicated test VM.
 

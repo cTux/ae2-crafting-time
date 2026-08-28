@@ -1,4 +1,4 @@
-# Testing and Change Workflow
+# Testing And Change Workflow
 
 ## Before Editing
 
@@ -7,7 +7,8 @@
 3. Decide the highest shared source set that can own the behavior. Pure logic belongs in `shared/src/main/java`.
 4. Define the test cases before code: success, every branch, boundaries, invalid inputs, empty/missing state, reset/cancellation, and version/serialization failure where applicable.
 
-Do not run Gradle tests before the first conventional commit creates the PR. This repository intentionally uses required GitHub checks as the first test run.
+Do not run Gradle tests before the first conventional commit creates the PR.
+This repo deliberately uses the required GitHub checks as the first test run.
 
 ## 100% Coverage Contract
 
@@ -25,7 +26,9 @@ For every executable change:
 - If necessary adapter behavior cannot be measured directly, add the closest boundary test and report the coverage limitation; do not call the work complete or claim 100% until the logic is covered.
 - Never lower thresholds, broaden exclusions, mark code generated, or add meaningless execution-only tests to make the number pass.
 
-No fake tests are needed for prose or static data. Instead validate the affected invariant: JSON/TOML shape, matching locale keys/placeholders, mixin side/list membership, dependency truth, link/path correctness, or release-matrix consistency.
+Do not add fake tests for prose or static data. Check the thing that can really
+break instead: JSON/TOML shape, matching locale keys and placeholders, mixin
+membership, dependency truth, links and paths, or release-matrix consistency.
 
 ## Existing Test Homes
 

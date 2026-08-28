@@ -1,0 +1,4 @@
+interface:
+  display_name: "AE2 Crafting Time Writing"
+  short_description: "Keep project writing casual, clear, and accurate."
+  default_prompt: "Use this skill to write AE2 Crafting Time text in the project's casual, technically precise voice."

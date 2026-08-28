@@ -1,6 +1,7 @@
 # Code Map and Runtime Invariants
 
-Use this map to find the existing path before writing code. Recheck current files because supported targets and upstream APIs can change.
+Start here before adding code. Find the path that already owns the behavior,
+then recheck the current files because supported targets and upstream APIs move.
 
 ## Source Layers
 
@@ -18,7 +19,7 @@ Use this map to find the existing path before writing code. Recheck current file
 
 Current Gradle projects are `:shared`, `:fabric_1_20_1`, `:mc_1_20_1_forge`, `:mc_1_21_1_neoforge`, and `:mc_26_1_2_neoforge`. Java toolchains are 17, 17, 21, and 25 for the four game targets.
 
-## Pure-Java Core
+## The Pure-Java Core
 
 - `CraftProfiler` owns pending work per CPU identity, network-wide busy windows, retained samples, weighted throughput, outlier filtering, stall timing, capacity freshness, import/export, and reset behavior.
 - `TtcAccuracyTracker` freezes accepted-plan estimates and records successful completion accuracy. Cancelled, invalid, and partially covered jobs must not pollute fully covered accuracy.
@@ -27,7 +28,7 @@ Current Gradle projects are `:shared`, `:fabric_1_20_1`, `:mc_1_20_1_forge`, `:m
 - `PacketLimits`, `PlayerRequestRateLimit`, `PlayerMessageRateLimit`, and `RequestCooldown` enforce trust and traffic bounds.
 - `ProfileKey`, `ProfileStats`, `StatsEntry`, persistence records, accuracy records, `StallDiagnostic`, and enums are immutable boundary values; preserve defensive copies.
 
-## Server-to-Client Flow
+## Server-To-Client Flow
 
 ```text
 CraftingCpuLogic or AdvancedAE mixin

@@ -18,7 +18,7 @@ $releaseDryRun = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScrip
 if ($LASTEXITCODE -ne 0 -or ($releaseDryRun -join "`n") -notmatch 'dry-run GitHub Release: 1\.0\.4') {
     throw "Release dry run did not create the expected GitHub Release metadata"
 }
-if (($releaseDryRun -join "`n") -notmatch '### FIXED\s+- Moved the crafting status total TTC into the header to avoid overlapping action buttons\.') {
+if (($releaseDryRun -join "`n") -notmatch '### FIXED\s+- The total TTC now sits in the crafting status header, so it no longer overlaps the action buttons\.') {
     throw "Release dry run did not create a categorized human-readable changelog"
 }
 if (($releaseDryRun -join "`n") -notmatch 'dry-run next development version: 1\.0\.5') {

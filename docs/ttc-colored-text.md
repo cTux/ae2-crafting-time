@@ -1,8 +1,8 @@
-# Colored TTC Research
+# TTC Colors
 
 Date: 2026-06-21
 
-## Request
+## Goal
 
 Color the `TTC` text in the AE2 crafting plan from bright green to bright red:
 
@@ -14,9 +14,9 @@ Color the `TTC` text in the AE2 crafting plan from bright green to bright red:
 The color scale makes the slowest predicted steps stand out as potential
 bottlenecks; it is a relative visual clue, not a root-cause claim.
 
-## Feasibility
+## Does It Fit?
 
-This is possible.
+Yes. AE2 already renders the right kind of component for this.
 
 AE2 `CraftConfirmTableRenderer` returns visible cell lines as `List<Component>` from `getEntryDescription(...)`. `AbstractTableRenderer.render(...)` draws those lines with:
 
@@ -32,7 +32,7 @@ The existing `getEntryDescription(...)` mixin sees only one `CraftingPlanSummary
 
 To color by "fastest and slowest in the crafting plan list", the code must know the full list being rendered. That list is available in AE2 `AbstractTableRenderer.render(..., List<T> entries, int scrollOffset)`, not in the per-entry description method.
 
-## Proposed Design
+## Approach
 
 Use a render-scope color context.
 
@@ -85,7 +85,7 @@ If an entry has no cached server stats yet:
 - render no `TTC` line until stats exist
 - exclude it from min/max color calculation
 
-This avoids lying with a default color.
+That way an unknown estimate never gets a made-up color.
 
 ## Helper Change
 
@@ -119,6 +119,7 @@ Version-side tests can stay cheap:
 - assert the craft plan mixin still hooks `getEntryDescription`
 - assert the render-scope mixin is client-only in `ae2craftingtime.mixins.json`
 
-## Recommendation
+## Chosen Approach
 
-Implement it with a tiny shared color helper and one client-only render-scope mixin. Do not add server packets, config, or a new UI setting for the first pass.
+Use one small shared color helper and one client-only render-scope mixin. There
+is no need for another packet, config option, or UI setting.

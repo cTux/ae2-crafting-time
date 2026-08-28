@@ -10,14 +10,18 @@
 [![Latest release](https://img.shields.io/github/v/release/cTux/ae2-crafting-time?logo=github)](https://github.com/cTux/ae2-crafting-time/releases/latest)
 [![License](https://img.shields.io/github/license/cTux/ae2-crafting-time)](LICENSE)
 
-AE2 Crafting Time is an Applied Energistics 2 autocrafting diagnostics mod. It
-records real crafting performance on the server to help players find slow or
-stalled crafts, understand bottlenecks, and estimate when crafting will finish.
-It is an unofficial addon and is not endorsed by the Applied Energistics 2 team.
+AE2 Crafting Time is an unofficial Applied Energistics 2 addon that helps you
+figure out why an autocrafting job is taking forever—or why it looks stuck.
+
+It tracks how crafts actually perform on the server, then uses that data to
+estimate completion times, highlight possible bottlenecks, and point out crafts
+that have stopped making progress.
+
+It is not affiliated with or endorsed by the Applied Energistics 2 team.
 
 ![Crafting status TTC bottleneck diagnostics](docs/images/crafting-status-ttc-bottleneck-diagnostics.png)
 
-It currently targets:
+## Supported Versions
 
 | Minecraft | Loader | Gradle module |
 | --- | --- | --- |
@@ -28,40 +32,49 @@ It currently targets:
 
 ## Download
 
+You can grab the latest version from:
+
 - [Modrinth](https://modrinth.com/mod/ae2-crafting-time)
 - [CurseForge](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-time)
 
-## Features
+## What It Does
 
-- Profiles completed AE2 craft outputs to learn real throughput and crafting time.
-- Estimates per-output and whole-job time to craft (`TTC`).
-- Detects delayed outputs with no accepted progress.
-- Shows evidence-bounded bottleneck clues for machine speed, Pattern Provider
+- Learns how long different AE2 craft outputs actually take.
+- Shows the estimated time to craft (`TTC`) for individual outputs and entire jobs.
+- Warns you when an output has gone too long without making progress.
+- Gives evidence-based bottleneck hints for machine speed, Pattern Provider
   parallelism, and Crafting Co-Processor dispatch capacity.
-- Compares frozen TTC predictions with successful jobs' real completion time and
-  reports prediction accuracy and plan coverage.
-- Persists retained samples in the world save as `data/ae2-crafting-time.dat`.
-- Sends aggregate stats to clients through request/response packets.
-- Adds `TTC` lines, color hints, totals, and sort controls to AE2 craft-plan/status views.
-- Lets players Ctrl-Alt-click a TTC entry to forget stale stats for that output.
-- Supports Applied Mekanistics chemicals when that optional mod is installed.
-- Shows ME Requester row and total TTC hints when that optional mod is installed.
-- Reuses shared Java code across loaders where AE2/Minecraft APIs match.
+- Compares its original TTC prediction with the actual completion time of
+  successful jobs.
+- Reports prediction accuracy and how much of the crafting plan it could estimate.
+- Keeps retained performance samples in
+  `data/ae2-crafting-time.dat` inside the world save.
+- Sends only aggregate crafting stats to connected clients.
+- Adds TTC details, colors, totals, and sorting controls to AE2 crafting screens.
+- Lets you Ctrl-Alt-click a TTC entry to forget outdated stats for that output.
+- Supports Applied Mekanistics chemicals when the mod is installed.
+- Adds TTC hints to ME Requester rows and totals when the mod is installed.
+- Shares as much code as possible between supported Minecraft versions and loaders.
 
-## Build
+## Building It
 
-Use Java 17 for 1.20.1 modules, Java 21 for 1.21.1 NeoForge, and Java 25 for
-26.1.2 NeoForge. Gradle provisions the declared toolchains.
+The project uses Java 17 for Minecraft 1.20.1, Java 21 for Minecraft 1.21.1
+NeoForge, and Java 25 for Minecraft 26.1.2 NeoForge. Gradle handles the declared
+toolchains.
+
+To build every supported version:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-all-versions.ps1
 ```
 
-Tests run in GitHub Actions for every pull request.
+Pull requests are tested through GitHub Actions.
 
-Built jars are copied to `dist/`.
+When the build finishes, the JARs are copied to `dist/`.
 
-## Run
+## Running a Development Client
+
+Use the script for the version and loader you want to test:
 
 ```powershell
 .\run-1.20.1-forge.bat
@@ -70,10 +83,12 @@ Built jars are copied to `dist/`.
 .\run-26.1.2-neoforge.bat
 ```
 
-Each run script resolves every compatible optional integration, its required
-dependencies, and JEI before starting the development client with this mod.
+Each script resolves compatible optional integrations, their required
+dependencies, and JEI before launching the development client.
 
-## Docs
+## Documentation
+
+If you want the more technical details, start here:
 
 - [Dependencies](DEPENDENCIES.md)
 - [Potential dependency integrations](DEPENDENCIES_POTENTIAL.md)
@@ -88,16 +103,22 @@ dependencies, and JEI before starting the development client with this mod.
 
 ## Codex Skills
 
-Local project skills live in `.codex/skills/`:
+The project-specific Codex skills live in `.codex/skills/`:
 
 - `ae2-crafting-time-dev`: use for feature work, TTC UI changes, profiling bugs, packets, persistence, and docs.
 - `ae2-crafting-time-release`: use for release matrix rows, build wrappers, jar names, deploy scripts, and release checks.
+- `ae2-crafting-time-writing`: use for docs, skills, changelogs, translations,
+  issue forms, and store or loader descriptions.
 
 ## Development Disclosure
 
-This project is designed, directed, tested, and reviewed by cTux with substantial
-generative-AI assistance for code, documentation, translations, release notes,
-and publishing. It does not use generative AI at runtime and ships no
+Yes, AI helps me write this mod. I'm not really a Java guy, if you know what I
+mean, but I have enough engineering experience to keep it from turning into
+vibe-coded spaghetti. I direct and review the work, and I expect the code to be
+tested, maintainable, scalable, and reusable. I hope that makes it clear where
+AI fits into the project.
+
+The mod does not use generative AI while running and does not include
 AI-generated visual assets.
 
 ## License

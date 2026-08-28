@@ -1,14 +1,14 @@
 # Dependencies
 
-AE2 Crafting Time is shipped as separate jars per Minecraft loader. Use the jar
-that matches the loader and Minecraft version in your instance. Optional
-integrations extend its crafting-time and bottleneck diagnostics into other AE2
-crafting UIs and resource types.
+AE2 Crafting Time ships a separate JAR for each supported Minecraft version and
+loader. Pick the one that matches your instance. Optional integrations bring
+the same TTC and bottleneck hints into a few other AE2 screens and resource
+types.
 
 ## Strict Dependencies
 
-These dependencies are required. The mod will not load without the matching row
-for its target jar.
+These are required. The mod will not load unless your instance matches the row
+for its JAR.
 
 | Target jar | Required dependencies |
 | --- | --- |
@@ -19,8 +19,8 @@ for its target jar.
 
 ## Optional Dependencies
 
-These dependencies are detected when present. They are not required to load AE2
-Crafting Time.
+These are picked up automatically when installed. You do not need them to run
+AE2 Crafting Time.
 
 | Dependency | Targets | Version range | What it enables |
 | --- | --- | --- | --- |
@@ -34,5 +34,5 @@ Applied Mekanistics releases for these targets are Forge/NeoForge.
 
 ## Build Tools
 
-Building the project requires Java 17 for the 1.20.1 modules, Java 21 for the
-1.21.1 NeoForge module, and Java 25 for the 26.1.2 NeoForge module.
+If you are building the project yourself, the 1.20.1 modules use Java 17, the
+1.21.1 NeoForge module uses Java 21, and the 26.1.2 NeoForge module uses Java 25.

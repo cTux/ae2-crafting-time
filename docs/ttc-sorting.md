@@ -1,17 +1,17 @@
-# Craft Plan TTC Sorting Research
+# Sorting The Craft Plan By TTC
 
 Date: 2026-06-21
 
-## Request
+## Goal
 
 Add sorting inside the AE2 crafting plan by the visible `TTC` value.
 
 Sorting helps players bring the slowest predicted steps together when looking
 for crafting bottlenecks; it does not diagnose the cause by itself.
 
-## Feasibility
+## Does It Fit?
 
-This is possible, but not by adding `TTC` to AE2's existing terminal `Sort By`
+Yes, but `TTC` should not be added to AE2's existing terminal `Sort By`
 setting.
 
 The screenshot tooltip (`Sort By` / `Number of Items`) is AE2 terminal sorting.
@@ -36,7 +36,7 @@ CraftConfirmTableRenderer.render(..., entries, scrollbar.getCurrentScroll())
 `Collections.sort(...)`, and `CraftingPlanSummaryEntry.compareTo(...)` uses AE2's
 private comparator. The mod should not replace that server-side summary order.
 
-## Recommended Design
+## Approach
 
 Keep TTC sorting client-only and sort a copy immediately before rendering the
 craft plan table.
@@ -62,7 +62,7 @@ keeps the existing scrollbar behavior.
 
 ## UI Scope
 
-Smallest useful UI:
+The useful minimum is:
 
 ```text
 AE2 order -> TTC shortest first -> TTC longest first
@@ -107,8 +107,8 @@ Smallest useful checks:
 
 No server test is needed because this is display-only.
 
-## Recommendation
+## Chosen Approach
 
-Implement a local craft-plan sort mode and sort a copied list at render time.
-Skip enum patching, server-side sorting, packets, config files, and terminal-wide
-settings.
+Keep the sort mode local to the craft plan and sort a copied list at render
+time. Skip enum patching, server-side sorting, new packets, config files, and
+terminal-wide settings.
