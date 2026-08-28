@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+for c in jq curl git; do
+  command -v "$c" >/dev/null 2>&1 || {
+    echo "Required command '$c' not found. Install it (e.g. 'sudo apt-get install $c') and retry." >&2
+    exit 1
+  }
+done
+
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 script="$script_dir/deploy-changed.sh"
 root_dir="$(cd "$script_dir/.." && pwd)"

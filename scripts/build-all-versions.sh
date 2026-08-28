@@ -1,6 +1,13 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+for c in jq; do
+  command -v "$c" >/dev/null 2>&1 || {
+    echo "Required command '$c' not found. Install it (e.g. 'sudo apt-get install $c') and retry." >&2
+    exit 1
+  }
+done
+
 java_home="${1:-}"
 matrix_path="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/release-matrix.json"
 if [ $# -ge 2 ]; then
