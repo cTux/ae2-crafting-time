@@ -46,6 +46,7 @@ Every new or changed executable behavior must have 100% line and branch coverage
 - Treat `scripts/release-matrix.json` as the supported-target source of truth.
 - Keep build dependencies and loader metadata at the minimum supported versions.
 - Let each `run-*.bat` client use the newest versions available for its exact Minecraft and loader target.
+- Verify the newest dependency's full Maven coordinate instead of assuming it still uses the minimum version's group and artifact.
 - For matrix rows, dist tasks, jar naming, deployment, or publishing, also load `ae2-crafting-time-release` and follow `docs/release.md`.
 
 ## Completion
