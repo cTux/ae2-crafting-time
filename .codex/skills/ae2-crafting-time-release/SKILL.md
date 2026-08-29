@@ -24,9 +24,10 @@ description: Work on AE2 Crafting Time build, release, distribution, and deploym
     automatic conversion would still sound like a commit log, prepare a manual
     categorized `-Changelog` in the project voice.
 13. Write changelogs as natural player-facing sentences grouped under `ADDED`, `FIXED`, `IMPROVED`, `DELETED`, or `CHANGED`. Omit empty categories and never publish raw commit logs.
-14. Keep CurseForge and Modrinth descriptions casual and useful: say what the mod helps with, name important compatibility details, and skip hype. When a task changes either live description, read the published page back before calling it done.
-15. Name GitHub Releases with only the mod version, such as `1.0.5`; keep loader, Minecraft version, artifact, and changelog details in the body.
-16. In the final report, immediately after the completed-work list, list every
+14. When a change applies to every supported version, open the changelog with an `All versions:` line that lists those common changes first. After the common block, list any atomic changes for a specific version under that version's label (for example `1.20.1:`) only when such per-version changes exist.
+15. Keep CurseForge and Modrinth descriptions casual and useful: say what the mod helps with, name important compatibility details, and skip hype. When a task changes either live description, read the published page back before calling it done.
+16. Name GitHub Releases with only the mod version, such as `1.0.5`; keep loader, Minecraft version, artifact, and changelog details in the body.
+17. In the final report, immediately after the completed-work list, list every
     versioned JAR deployed to CurseForge or Modrinth with its changelog. When
     both services received the same JAR and changelog, list the file once, name
     both services, and show the changelog once. Split entries only when the
