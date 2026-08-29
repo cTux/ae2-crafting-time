@@ -54,8 +54,10 @@ You can grab the latest version from:
 - Adds time, colors, totals, and sort buttons to the AE2 crafting screens, so the
   info is easy to read at a glance.
 - Lets you Ctrl-Alt-click an entry to erase old, wrong stats for that item.
-- Works with Applied Mekanism chemicals, and adds time hints to ME Requester rows
-  and totals, when those mods are installed.
+- Works with Applied Mekanistics chemicals, and adds time hints to ME Requester
+  rows and totals, when those mods are installed.
+- Only shares summary stats with other players on the server — never your items
+  or your base.
 - Keeps what it learned inside your world, so it stays smart after you quit and
   come back.
 
