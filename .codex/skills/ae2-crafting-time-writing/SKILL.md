@@ -34,7 +34,10 @@ clear. The age is a voice target, not something to mention in the text.
 - **Changelogs:** include only player-visible features, fixes, and behavior
   changes. Leave out implementation details, tests, refactors, tooling, and
   build or release work. Use complete sentences under `ADDED`, `FIXED`,
-  `IMPROVED`, `DELETED`, or `CHANGED`, and skip empty sections.
+  `IMPROVED`, `DELETED`, or `CHANGED`, and skip empty sections. When a change
+  affects every supported version, lead with an `All versions:` block, then add a
+  per-version block only for version-specific changes; both blocks use the same
+  categories. See the release skill rule 14 for the exact shape.
 - **Translations:** write natural UI text for that locale, keep it short, and
   preserve every placeholder and control name. Update English and Ukrainian
   together.
