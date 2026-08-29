@@ -51,9 +51,9 @@ need TTC text display or key normalization so stats stay honest.
 | AppliedE TPS Fix (`appliede`) | EMC_KEY | key | [CF](https://www.curseforge.com/minecraft/mc-mods/appliede-tps-fix) | Not started | #82 |
 | Applied Flux (`appflux`) | STORAGE_CELL / energy KEY | key + display | [CF](https://www.curseforge.com/minecraft/mc-mods/applied-flux) / [MR](https://modrinth.com/mod/appflux) | Not started | #83 |
 | Modern AE2 Additions (`modern_ae2_additions`) | QOL (AE Additions) | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/modern-ae2-additions) / [MR](https://modrinth.com/mod/modern-ae2-additions) | Not started | #84 |
-| Applied Mekanistics (`appliedmekanistics`) | CHEMICAL_KEY | key + display | [CF](https://www.curseforge.com/minecraft/mc-mods/applied-mekanistics) / [MR](https://modrinth.com/mod/applied-mekanistics) | Implemented | #68 |
-| AE2: Crafting Tree (`ae2craftingtree`) | CRAFTING_UI | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-tree) | Implemented | #69 |
-| ME Requester (`merequester`) | QOL / requester | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/merequester) / [MR](https://modrinth.com/mod/merequester) | Implemented | #70 |
+| Applied Mekanistics (`appmek`) | CHEMICAL_KEY | key + display | [CF](https://www.curseforge.com/minecraft/mc-mods/applied-mekanistics) / [MR](https://modrinth.com/mod/applied-mekanistics) | Implemented (see top table) | #68 |
+| AE2: Crafting Tree (`ae2ct`) | CRAFTING_UI | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-tree) | Implemented (see top table) | #69 |
+| ME Requester (`merequester`) | QOL / requester | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/merequester) / [MR](https://modrinth.com/mod/merequester) | Implemented (see top table) | #70 |
 | AE2 Import Export Card (`ae2importexportcard`) | QOL | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/ae2-import-export-card) / [MR](https://modrinth.com/mod/ae2-import-export-card) | Not started | #85 |
 | AE2 Network Analyser (`ae2networkanalyser`) | QOL (visual tool) | Likely none | [CF](https://www.curseforge.com/minecraft/mc-mods/ae2-network-analyser) | Not started | #86 |
 | AEInfinityBooster (`aeinfinitybooster`) | QOL (range) | Likely none | [CF](https://www.curseforge.com/minecraft/mc-mods/aeinfinitybooster) / [MR](https://modrinth.com/mod/aeinfinitybooster) | Not started | #87 |
