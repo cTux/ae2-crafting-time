@@ -65,8 +65,8 @@ In scope for persistence:
    dynamically created CPUs naturally share one id. The player name is display-only.
    See `collection.md`.
 3. **Lookup fallback:** `(networkId, cpuId, outputId)` falls through to
-   `(networkId, "", outputId)` when the CPU has too few samples. This avoids
-   blank estimates for rarely used CPUs.
+   `(networkId, "", outputId)` when the CPU's data is not a `reliableEstimate()`
+   (`CraftProfiler.java:192`). This avoids blank estimates for rarely used CPUs.
 4. **Chosen CPU pins everything:** when the player selects a CPU in the Crafting
    Plan window, every stat shown there — per-row TTC, Total TTC, accuracy, stall
    diagnostics, and the Ctrl-click detail/chat — is relative to that CPU
@@ -96,5 +96,5 @@ honest. Full reasoning is in `estimation.md`.
 - `collection.md` — how `cpuId` is derived and wired at craft start, and how the
   grid's CPU list reaches the client.
 - `estimation.md` — Crafting Plan window behavior: pinned-CPU stats, `*` marker,
-  min-across-CPUs headline, fallback chain, accuracy.
+  auto-select headline, fallback chain, accuracy.
 - `implementation-plan.md` — ordered tasks, file map, and tests.

@@ -155,7 +155,7 @@ client read `cpuId` only when the flag is `true`.
 
 ## Per-CPU summary section
 
-To let the client compute the min-across-CPUs headline and the per-CPU breakdown
+To let the client compute the auto-select headline and the per-CPU breakdown
 without fetching every CPU's raw samples, the server appends a compact
 `cpuSummaries` list to the snapshot (gated by the same `cpuAware` flag). For the
 craft-plan request the server already has the grid, so it enumerates
@@ -166,17 +166,20 @@ includes the CPU-specific `ProfileStats` **aggregate** (omit the raw
 ```text
 cpuAware: true
 cpuSummaries: [
-  { cpuId: "4", name: "Alpha", coProcessors: 4,
+  { cpuId: "4", name: "Alpha", coProcessors: 4, availableStorage: 32768,
     outputs: { "minecraft:iron_ingot": <aggregate ProfileStats> } },
-  { cpuId: "1", name: "Beta",  coProcessors: 1,
+  { cpuId: "1", name: "Beta",  coProcessors: 1, availableStorage: 8192,
     outputs: { "minecraft:iron_ingot": <aggregate ProfileStats> } }
 ]
 entries: [ ... full samples for the displayed CPU (network or pinned) ... ]
 ```
 
 The client owns the plan amounts, so it multiplies each CPU's per-output
-`amountPerSecond` by the row amount to build that CPU's Total TTC, then takes the
-minimum. Raw samples are sent only for the *displayed* CPU (the existing `entries`
+`amountPerSecond` by the row amount to build that CPU's Total TTC. `availableStorage`
+(bytes, from `ICraftingCPU.getAvailableStorage()`) lets the client reproduce AE2's
+auto-select: the headline is the smallest CPU whose `availableStorage` fits the
+plan's byte total, and the fastest-CPU TTC is shown as a note (`estimation.md`).
+Raw samples are sent only for the *displayed* CPU (the existing `entries`
 section) so the detail/chat view stays fully detailed. CPU counts are small, and
 dropping raw samples from the summary keeps the packet within `PacketLimits`.
 
@@ -291,11 +294,16 @@ migrate; the `accuracy` list is additive under `version: 2`.
 
 ## Risks
 
-- A moved CPU changes its block anchor, so its old samples become unreachable by
-  `cpuId`. The network-level fallback still serves estimates, so this is a quiet
-  degradation, not a break. Renaming a CPU is safe because the name is display-only.
-- Two CPUs at the same block position is impossible in one network, so the anchor
-  is unique within `networkId`.
+- `cpuId` is config-derived (co-processor count, optional machine hash), so moving
+  or renaming a CPU does **not** change its id and old samples stay reachable. Only
+  a *rebuilt* CPU with a different co-processor count stops matching its prior
+  samples; the network-level fallback still serves estimates, so this is a quiet
+  degradation, not a break. The player name is display-only and irrelevant to the id.
+- Two distinct CPUs can legitimately share a `cpuId` (same co-processor count,
+  different attached machines, machine hash omitted). That is the over-merge case
+  from `collection.md`/`estimation.md`: the blended accuracy drops and the UI
+  surfaces the "differently performant machines" tooltip. Adding the machine hash
+  separates them when it matters.
 - The save file grows per (network, cpu, output) tuple instead of (network,
   output). Bounded by distinct CPUs times distinct outputs, still small.
 - Keep `version: 1` decoding around; removing it would corrupt old worlds on

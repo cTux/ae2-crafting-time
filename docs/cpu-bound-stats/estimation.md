@@ -15,9 +15,10 @@ detail/chat views) once CPU-bound stats exist.
    the relevant CPU has no measured data of its own and a network-level fallback was
    used, or when no CPU is selected at all. The UI must explain `*` as
    "depends on CPU".
-3. **Unchosen headline = minimum across CPUs.** With no CPU selected, Total TTC is
-   the smallest per-CPU TTC (the fastest CPU that has data), shown with a per-CPU
-   breakdown.
+3. **Unchosen headline targets the auto-selected CPU.** With no CPU selected, the
+   Total TTC is the TTC of the CPU AE2 would auto-pick (smallest whose
+   `getAvailableStorage()` fits the plan), shown with a per-CPU breakdown; the
+   fastest-CPU TTC is shown as a note.
 
 ## No CPU selected (automatic)
 
@@ -50,8 +51,11 @@ Behavior:
     Gamma (4 co-proc) ~4:40*
   ```
 
-  Dedupe by `cpuId` (same co-processor count collapses to one line). `*` on a CPU
-  entry means that CPU used a network fallback for at least one row.
+  List each CPU **by name** (so `Alpha` and `Gamma` stay on separate lines even
+  when both are `cpuId: "4"`). Multiple named CPUs sharing a `cpuId` are exactly the
+  over-merge case: mark them with the *"your setup has differently performant
+  machines"* tooltip rather than collapsing them. `*` on a CPU entry means that CPU
+  used a network fallback for at least one row.
 - If a CPU has zero usable data, it is omitted from the breakdown but still
   contributes its network-fallback total to the auto-select/min computation.
 - **Over-merge signal:** if a `cpuId` aggregates CPUs that actually perform

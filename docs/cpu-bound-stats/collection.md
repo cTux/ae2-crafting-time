@@ -118,7 +118,7 @@ network-level rate (see `estimation.md`).
 
 ## Server must expose the network's CPUs
 
-The per-CPU breakdown and the min-across-CPUs headline require the client to know
+The per-CPU breakdown and the auto-select headline require the client to know
 every CPU on the plan's grid. The server already has the grid in
 `StatsRequestHandler.collect` (`StatsRequestHandler.java:27`), so enumerate it:
 
@@ -127,10 +127,12 @@ var crafting = context.grid() == null ? null : context.grid().getCraftingService
 var cpuList = crafting == null ? List.<ICraftingCPU>of() : crafting.getCpus();
 ```
 
-For each CPU build `(cpuId, name, coProcessors)` and, for each requested output,
-the CPU-specific aggregate `ProfileStats`. Hand that to the snapshot as the
-`cpuSummaries` section (`data-model.md`). Use `ICraftingCPU.getName()` /
-`getCoProcessors()` for display, and `ProfilerBridge.cpuId(cpu)` for the key.
+For each CPU build `(cpuId, name, coProcessors, availableStorage)` and, for each
+requested output, the CPU-specific aggregate `ProfileStats`. Hand that to the
+snapshot as the `cpuSummaries` section (`data-model.md`). Use
+`ICraftingCPU.getName()` / `getCoProcessors()` / `getAvailableStorage()` for
+display, and `ProfilerBridge.cpuId(cpu)` for the key. `availableStorage` is what the
+client needs to reproduce AE2's auto-select (`estimation.md`).
 This is the same cluster object that `trySubmitJob` runs on, so the derived `cpuId`
 matches what is recorded at craft time.
 

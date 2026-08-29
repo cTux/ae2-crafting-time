@@ -146,8 +146,9 @@ File: `shared/src/mc1201/.../mixin/CraftConfirmScreenMixin.java`, `TtcText.java`
   via `resolveStats`. **Headline = the CPU AE2 would auto-select** (smallest whose
   `getAvailableStorage()` fits the plan); render `Total TTC: ~...*` with the
   "depends on CPU" legend. Show the **fastest-CPU TTC as a note** (the minimum
-  across CPUs). Render the per-CPU breakdown as **multi-line text** (dedupe by
-  `cpuId`), not one crowded line.
+  across CPUs). Render the per-CPU breakdown as **multi-line text**, one line per
+  CPU name (do not collapse by `cpuId`; shared-id CPUs get the over-merge tooltip),
+  not one crowded line.
 - **Pinned:** switch every stat to the selected CPU via `resolveStats`. No `*`
   when that CPU has its own data for all rows; `*` + legend when any row fell back.
   Hide the breakdown list while pinned.
