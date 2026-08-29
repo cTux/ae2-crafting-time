@@ -121,8 +121,7 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
             var font = getMinecraft().font;
             var textX = 109 - font.width(text) / 2;
             var totalWidth = font.width(text);
-            TtcBadge.fillSmoothRoundRect(guiGraphics, textX - 3, 177, textX + totalWidth + 3, 188, 4,
-                    TtcBadge.BACKGROUND);
+            TtcBadge.fillRect(guiGraphics, textX - 3, 177, textX + totalWidth + 3, 188, TtcBadge.BACKGROUND);
             guiGraphics.text(font, text, textX, 178, AE2CRAFTINGTIME_TOTAL_COLOR, true);
         });
     }

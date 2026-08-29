@@ -171,7 +171,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         var top = AE2CRAFTINGTIME_TITLE_TOP - 2;
         var right = ae2craftingtime$titleTtcX + textWidth + 4;
         var bottom = AE2CRAFTINGTIME_TITLE_TOP + font.lineHeight + 2;
-        TtcBadge.fillSmoothRoundRect(guiGraphics, left, top, right, bottom, 4, TtcBadge.BACKGROUND);
+        TtcBadge.fillRect(guiGraphics, left, top, right, bottom, TtcBadge.BACKGROUND);
         guiGraphics.drawString(font, ae2craftingtime$titleTtc, ae2craftingtime$titleTtcX,
                 AE2CRAFTINGTIME_TITLE_TOP, AE2CRAFTINGTIME_TITLE_TTC_COLOR, true);
     }

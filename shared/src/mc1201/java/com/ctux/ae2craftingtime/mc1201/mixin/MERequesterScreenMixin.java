@@ -113,7 +113,7 @@ public abstract class MERequesterScreenMixin {
         var badgeTop = (int) Math.floor((double) top / AE2CRAFTINGTIME_TEXT_SCALE);
         var badgeRight = (int) Math.ceil((labelLeft + labelWidth) / AE2CRAFTINGTIME_TEXT_SCALE);
         var badgeBottom = (int) Math.ceil((double) (top + AE2CRAFTINGTIME_LABEL_HEIGHT) / AE2CRAFTINGTIME_TEXT_SCALE);
-        TtcBadge.fillSmoothRoundRect(guiGraphics, badgeLeft, badgeTop, badgeRight, badgeBottom, 3, TtcBadge.BACKGROUND);
+        TtcBadge.fillRect(guiGraphics, badgeLeft, badgeTop, badgeRight, badgeBottom, TtcBadge.BACKGROUND);
         guiGraphics.drawString(font, label, textX, textY, color, true);
         pose.popPose();
     }
