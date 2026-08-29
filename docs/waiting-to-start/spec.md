@@ -27,6 +27,8 @@ This covers [discussion #65](https://github.com/cTux/ae2-crafting-time/discussio
 - Show the waiting line even when the output has no retained throughput samples.
 - Refresh the displayed whole-second value through the existing one-second stats
   request cycle.
+- Before the first stats response arrives, keep the current behavior and show no
+  waiting line. The first response may show `0s`.
 - Give the waiting line its own neutral style. It does not join the green-to-red
   TTC color scale.
 - Treat a waiting row as unknown in shortest/longest TTC sorting because it has
@@ -69,7 +71,8 @@ a separate job-level state.
 
 ## Acceptance criteria
 
-- A pending-only row starts at `0s` and increases without reopening the screen.
+- The first stats response for a pending-only row may show `0s`, then the value
+  increases without reopening the screen.
 - Reopening the screen keeps the server-owned elapsed value.
 - A row with old throughput samples still shows waiting before its first
   dispatch.

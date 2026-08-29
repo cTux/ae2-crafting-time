@@ -37,10 +37,14 @@ acceptedAtTick
 outputsStillWaitingForFirstDispatch: Set<ProfileKey>
 ```
 
-Reuse the crafted-output collection already built in `ProfilerBridge.startJob`.
-Register its network-scoped keys after AE2 accepts the job. `CraftProfiler.start`
-removes the dispatched key from that CPU's waiting set before recording the
-existing pending batch.
+This is a separate runtime structure beside `pending`; it is not folded into
+retained `samples` or `StatsEntry`. Its outer key is CPU identity, while its
+output set keeps the existing network-scoped `ProfileKey` identity.
+
+Inside `ProfilerBridge.startJob`, reuse the local `craftedAmounts` collection
+and register its network-scoped keys before the method returns. Do not expose or
+rebuild the collection. `CraftProfiler.start` removes the dispatched key from
+that CPU's waiting set before recording the existing pending batch.
 
 Expose a query that returns `max(0, currentTick - acceptedAtTick)` only while the
 key remains in the selected CPU's set. `clearPending`, `setEnabled(false)`, and
@@ -85,6 +89,9 @@ change. No persisted-data version changes because waiting state is never saved.
 
 `ClientStats` replaces waiting values for all requested keys just as it replaces
 network amounts. Omitted values remove stale state.
+
+The client shows no waiting line before its first response. The existing
+one-second request cycle fills the cache, after which the line updates normally.
 
 `CraftingStatusTableRendererMixin` uses this order:
 

@@ -6,8 +6,9 @@ use required CI as the first Gradle test run.
 ## Phase 1: Track the first dispatch
 
 1. Add the per-CPU accepted tick and waiting-output set to `CraftProfiler`.
-2. Reuse the crafted output keys collected by `ProfilerBridge.startJob` to begin
-   waiting state for standard AE2 and AdvancedAE jobs.
+2. Inside `ProfilerBridge.startJob`, pass the keys from its local
+   `craftedAmounts` collection directly into `CraftProfiler` to begin waiting
+   state for standard AE2 and AdvancedAE jobs.
 3. Remove one output from waiting state in the existing
    `ProfilerBridge.start` path.
 4. Clear waiting state with existing finish, cancellation, disable, and load
