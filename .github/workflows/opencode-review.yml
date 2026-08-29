@@ -35,7 +35,7 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "issue_comment" ]; then
             pr="${{ github.event.issue.number }}"
-            ref="$(gh pr view "$pr" --json headRefName --jq .headRefName)"
+            ref="$(gh pr view "$pr" --repo "$GITHUB_REPOSITORY" --json headRefName --jq .headRefName)"
           else
             ref="${{ github.event.pull_request.head.ref }}"
           fi
