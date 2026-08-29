@@ -145,10 +145,10 @@ File: `shared/src/mc1201/.../mixin/CraftConfirmScreenMixin.java`, `TtcText.java`
 - **Unchosen:** compute each CPU's Total TTC from `cpuSummaries` + plan row amounts
   via `resolveStats`. **Headline = the CPU AE2 would auto-select** (smallest whose
   `getAvailableStorage()` fits the plan); render `Total TTC: ~...*` with the
-  "depends on CPU" legend. Show the **fastest-CPU TTC as a note** (the minimum
-  across CPUs). Render the per-CPU breakdown as **multi-line text**, one line per
-  CPU name (do not collapse by `cpuId`; shared-id CPUs get the over-merge tooltip),
-  not one crowded line.
+  "depends on CPU" legend. Render the per-CPU breakdown as **multi-line text**, one
+  line per CPU name (do not collapse by `cpuId`; shared-id CPUs get the over-merge
+  tooltip), not one crowded line — the fastest CPU is visible there, no separate
+  note.
 - **Pinned:** switch every stat to the selected CPU via `resolveStats`. No `*`
   when that CPU has its own data for all rows; `*` + legend when any row fell back.
   Hide the breakdown list while pinned.
@@ -191,8 +191,9 @@ persists both and `finishJob` marks the saved data dirty.
 - Run `scripts/setup-git.ps1` once if not already done (AGENTS.md).
 - Build all versions, then exercise in a Prism/VM world with two CPUs of different
   co-processor counts to confirm: the unchosen headline targets the auto-selected
-  (smallest-fitting) CPU with `*` and a fastest-CPU note, the per-CPU breakdown is
-  multi-line, and the over-merge tooltip appears when same-co-proc CPUs differ;
+  (smallest-fitting) CPU with `*` and a multi-line per-CPU breakdown (the fastest
+  CPU visible there), and the over-merge tooltip appears when same-co-proc CPUs
+  differ;
   selecting a CPU pins every stat to it (no `*` when it has its own data, `*` when
   it falls back); and old saves load without data loss.
 - No local test run required before the PR; the post-commit hook opens the PR and
@@ -203,6 +204,7 @@ persists both and `finishJob` marks the saved data dirty.
 - This is a data-format change (save `version: 2`, packet `cpuAware` flag +
   `cpuSummaries`). Keep `version: 1` decode forever so downgrades and partial saves
   stay safe.
-- Changelog under `IMPROVED`: Crafting Plan now shows the fastest-CPU Time To Craft
-  with a per-CPU breakdown; selecting a CPU shows that CPU's own times, marked with
-  `*` ("depends on CPU") when it lacks measured data. No raw commit logs.
+- Changelog under `IMPROVED`: Crafting Plan now shows the auto-selected (smallest-
+  fitting) CPU Time To Craft with a per-CPU breakdown; selecting a CPU shows that
+  CPU's own times, marked with `*` ("depends on CPU") when it lacks measured data.
+  No raw commit logs.

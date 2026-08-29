@@ -17,8 +17,8 @@ detail/chat views) once CPU-bound stats exist.
    "depends on CPU".
 3. **Unchosen headline targets the auto-selected CPU.** With no CPU selected, the
    Total TTC is the TTC of the CPU AE2 would auto-pick (smallest whose
-   `getAvailableStorage()` fits the plan), shown with a per-CPU breakdown; the
-   fastest-CPU TTC is shown as a note.
+   `getAvailableStorage()` fits the plan), shown with a per-CPU breakdown (the
+   fastest CPU is visible there).
 
 ## No CPU selected (automatic)
 
@@ -37,18 +37,12 @@ Behavior:
   storage order) rather than a literal "smallest storage"; the client computes the
   plan's total bytes via AE2's stack-byte helper to compare against
   `availableStorage`.
-- Show the **fastest-CPU TTC as a note** (the minimum across CPUs), so the player
-  sees the best case too:
+- Show the per-CPU breakdown as **multi-line text** (not one crowded line) so it
+  never overflows the screen width; the fastest CPU is already visible there, so no
+  separate "fastest" note is needed:
 
   ```text
   Total TTC: ~000:03:10*   (depends on CPU)
-  Fastest CPU: ~000:02:15
-  ```
-
-- Show the per-CPU breakdown as **multi-line text** (not one crowded line) so it
-  never overflows the screen width:
-
-  ```text
   Per CPU:
     Alpha (4 co-proc) ~2:15*
     Beta (1 co-proc) ~3:10*

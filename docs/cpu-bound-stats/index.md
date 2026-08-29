@@ -77,8 +77,8 @@ In scope for persistence:
    `*` as "depends on CPU" (`estimation.md`).
 6. **Headline when unchosen targets the auto-selected CPU:** with no CPU selected,
    the Total TTC is the TTC of the CPU AE2 would auto-pick (smallest that fits the
-   plan); the fastest-CPU TTC is shown as a note. A per-CPU breakdown list is also
-   shown. See `estimation.md`.
+   plan). A per-CPU breakdown list (multi-line, one line per CPU) is also shown, so
+   the fastest CPU is visible there without a separate note. See `estimation.md`.
 7. **Migration:** old saves deserialize with `cpuId = ""` and stay valid. Packets
    without `cpuId` are read as `""` through a version guard. See `data-model.md`.
 

@@ -178,8 +178,8 @@ The client owns the plan amounts, so it multiplies each CPU's per-output
 `amountPerSecond` by the row amount to build that CPU's Total TTC. `availableStorage`
 (bytes, from `ICraftingCPU.getAvailableStorage()`) lets the client reproduce AE2's
 auto-select: the headline is the smallest CPU whose `availableStorage` fits the
-plan's byte total, and the fastest-CPU TTC is shown as a note (`estimation.md`).
-Raw samples are sent only for the *displayed* CPU (the existing `entries`
+plan's byte total; the fastest CPU is visible in the per-CPU breakdown
+(`estimation.md`). Raw samples are sent only for the *displayed* CPU (the existing `entries`
 section) so the detail/chat view stays fully detailed. CPU counts are small, and
 dropping raw samples from the summary keeps the packet within `PacketLimits`.
 
