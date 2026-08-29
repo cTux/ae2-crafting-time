@@ -1,0 +1,54 @@
+name: OpenCode PR Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: read
+
+concurrency:
+  group: opencode-review-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: >-
+      (github.event_name == 'pull_request' &&
+       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.pull_request.author_association)) ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request != null &&
+       (contains(github.event.comment.body, '/oc review') ||
+        contains(github.event.comment.body, '/opencode review') ||
+        contains(github.event.comment.body, '/oc review-pr') ||
+        contains(github.event.comment.body, '/opencode review-pr')))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Resolve PR head ref
+        id: ref
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ github.event_name }}" = "issue_comment" ]; then
+            pr="${{ github.event.issue.number }}"
+            ref="$(gh pr view "$pr" --json headRefName --jq .headRefName)"
+          else
+            ref="${{ github.event.pull_request.head.ref }}"
+          fi
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+          ref: ${{ steps.ref.outputs.ref }}
+      - uses: anomalyco/opencode/github@dc4449df0d52199704ea4989a5a993ebbc605612 # v1.18.25
+        env:
+          OPENCODE_API_KEY: ${{ secrets.OPENCODE_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: opencode/hy3-free
+          use_github_token: true
+          prompt: /review-pr

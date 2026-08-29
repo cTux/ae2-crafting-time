@@ -34,66 +34,44 @@ It is not affiliated with or endorsed by the Applied Energistics 2 team.
 
 You can grab the latest version from:
 
+- [Latest release](https://github.com/cTux/ae2-crafting-time/releases/latest)
 - [Modrinth](https://modrinth.com/mod/ae2-crafting-time)
 - [CurseForge](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-time)
 
 ## What It Does
 
-- Learns how long different AE2 craft outputs actually take.
-- Shows the estimated time to craft (`TTC`) for individual outputs and entire jobs.
-- Warns you when an output has gone too long without making progress.
-- Gives evidence-based bottleneck hints for machine speed, Pattern Provider
-  parallelism, and Crafting Co-Processor dispatch capacity.
-- Compares its original TTC prediction with the actual completion time of
-  successful jobs.
-- Reports prediction accuracy and how much of the crafting plan it could estimate.
-- Keeps retained performance samples in
-  `data/ae2-crafting-time.dat` inside the world save.
-- Sends only aggregate crafting stats to connected clients.
-- Adds TTC details, colors, totals, and sorting controls to AE2 crafting screens.
-- Lets you Ctrl-Alt-click a TTC entry to forget outdated stats for that output.
-- Supports Applied Mekanistics chemicals when the mod is installed.
-- Adds TTC hints to ME Requester rows and totals when the mod is installed.
-- Shares as much code as possible between supported Minecraft versions and loaders.
-
-## Building It
-
-The project uses Java 17 for Minecraft 1.20.1, Java 21 for Minecraft 1.21.1
-NeoForge, and Java 25 for Minecraft 26.1.2 NeoForge. Gradle handles the declared
-toolchains.
-
-To build every supported version:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-all-versions.ps1
-```
-
-Pull requests are tested through GitHub Actions.
-
-When the build finishes, the JARs are copied to `dist/`.
-
-## Running a Development Client
-
-Use the script for the version and loader you want to test:
-
-```powershell
-.\run-1.20.1-forge.bat
-.\run-1.20.1-fabric.bat
-.\run-1.21.1-neoforge.bat
-.\run-26.1.2-neoforge.bat
-```
-
-Normal builds compile against the minimum supported loader and AE2 versions.
-Each run script uses the newest loader, AE2, optional integrations, required
-dependencies, and JEI available for that Minecraft and loader target.
+- Remembers how long your crafts really take, so its time guesses get better the
+  more you play.
+- Tells you how long a craft will take — for one item or a whole job — right on
+  the AE2 screens, so you know when to come back.
+- Alerts you when a craft has stalled, so you can fix it instead of waiting
+  forever.
+- Shows what's slowing you down — like a machine that's too slow, too few
+  Pattern Providers, or not enough Crafting Co-Processors — and how to speed it
+  up.
+- Shows how close its time guesses were after a craft finishes, so you can trust
+  the numbers.
+- Adds time, colors, totals, and sort buttons to the AE2 crafting screens, so the
+  info is easy to read at a glance.
+- Lets you Ctrl-Alt-click an entry to erase old, wrong stats for that item.
+- Works with Applied Mekanistics chemicals, and adds time hints to ME Requester
+  rows and totals, when those mods are installed.
+- Only shares summary stats with other players on the server — never your items
+  or your base.
+- Keeps what it learned inside your world, so it stays smart after you quit and
+  come back.
 
 ## Documentation
 
 If you want the more technical details, start here:
 
+- [Building It](docs/building.md)
+- [Running a Development Client](docs/dev-client.md)
+- [Repo Layout](docs/repo-layout.md)
+- [Working with this project](docs/working-with-project.md)
+- [Codex Skills](docs/codex-skills.md)
 - [Dependencies](DEPENDENCIES.md)
 - [Potential dependency integrations](DEPENDENCIES_POTENTIAL.md)
-- [Working with this project](docs/working-with-project.md)
 - [Architecture](docs/architecture.md)
 - [Release process](docs/release.md)
 - [Server-owned stats design](docs/server-client-stats.md)
@@ -101,15 +79,6 @@ If you want the more technical details, start here:
 - [Time To Craft plan UI](docs/time-to-craft-plan.md)
 - [TTC sorting](docs/ttc-sorting.md)
 - [TTC colored text](docs/ttc-colored-text.md)
-
-## Codex Skills
-
-The project-specific Codex skills live in `.codex/skills/`:
-
-- `ae2-crafting-time-dev`: use for feature work, TTC UI changes, profiling bugs, packets, persistence, and docs.
-- `ae2-crafting-time-release`: use for release matrix rows, build wrappers, jar names, deploy scripts, and release checks.
-- `ae2-crafting-time-writing`: use for docs, skills, changelogs, translations,
-  issue forms, and store or loader descriptions.
 
 ## Development Disclosure
 
@@ -125,19 +94,3 @@ AI-generated visual assets.
 ## License
 
 AE2 Crafting Time is available under the [MIT License](LICENSE).
-
-## Repo Layout
-
-```text
-shared/src/main/java       Pure Java profiling, estimates, cache, and helpers
-shared/src/mcCommon/java   AE2/Minecraft code shared by every supported version
-shared/src/mc1201/java     Minecraft 1.20.1/1.21.1 API boundary
-shared/src/mc2612/java     Minecraft 26.1.2 and AE2 26 API boundary
-shared/src/neoforge/java   Code shared by both NeoForge versions
-versions/1.20.1-forge      Forge module
-versions/1.20.1-fabric     Fabric module
-versions/1.21.1-neoforge   NeoForge module
-versions/26.1.2-neoforge   Minecraft 26.1.2 NeoForge module
-scripts/                   Build and release automation
-docs/                      Design, workflow, and release notes
-```
