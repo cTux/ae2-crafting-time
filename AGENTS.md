@@ -1,6 +1,7 @@
 # Repository workflow
 
 - Complete each fix or feature as a separate conventional commit. Let the post-commit hook open or update the PR, then rely on its required CI checks; do not run tests locally before creating the PR.
+- Every PR gets an automatic OpenCode review from `.github/workflows/opencode-review.yml` (`opencode/hy3-free`, `prompt: /review-pr`), posting inline findings via `GITHUB_TOKEN`. Re-run it on demand with a `/oc review` comment. It needs the `OPENCODE_API_KEY` repo secret.
 - Run `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-git.ps1` once per clone. The tracked post-commit hook pushes every commit and creates the branch PR automatically.
 - Work on a branch. Do not commit fixes or features on a detached HEAD.
 - Use `.codex/skills/ae2-crafting-time-writing/SKILL.md` for every repo-owned
