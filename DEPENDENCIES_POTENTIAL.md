@@ -5,10 +5,14 @@ promises. Do not add one to loader metadata until real code uses it.
 
 ## Best Next Targets
 
-| Mod | Current target fit | 1.20.1 Forge | 1.20.1 Fabric | 1.21.1 NeoForge | 26.1 NeoForge | Possible integration | Why it helps |
+Yes / No in the version columns means the mod publishes a release for that loader and
+Minecraft version on Modrinth (availability), not that an integration exists yet. The
+`Current target fit` column lists where an integration is worth building next.
+
+| Mod | Current target fit | 1.20.1 Forge | 1.20.1 Fabric | 1.21.1 NeoForge | 26.1.2 NeoForge | Possible integration | Why it helps |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | [Extended AE](https://modrinth.com/mod/extended-ae) | `1.20.1 Forge`, `1.21.1 NeoForge` | Yes | Yes | Yes | Yes | Add TTC/bottleneck hints around extended pattern providers, extended molecular assemblers, and assembler matrix crafts. | Helps players see whether a slow craft is provider-slot pressure, assembler throughput, or missing historical stats. |
-| [MEGA Cells](https://modrinth.com/mod/mega) | `1.21.1 NeoForge`; check `1.20.1` per release source before coding | Yes | Yes | Yes | No | Detect MEGA Crafting CPUs, co-processors, and MEGA pattern providers when rendering craft status. | Makes TTC more honest for large CPU setups and high-parallel craft chains. |
+| [MEGA Cells](https://modrinth.com/mod/mega) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | Yes | Yes | Yes | No | Detect MEGA Crafting CPUs, co-processors, and MEGA pattern providers when rendering craft status. | Makes TTC more honest for large CPU setups and high-parallel craft chains. |
 | [AdvancedAE](https://modrinth.com/mod/advancedae) | `1.20.1 Forge`, `1.21.1 NeoForge` | Yes | No | Yes | Yes | Add special handling for Quantum Computer / advanced autocrafting screens and status displays. | Avoids misleading ETA when AdvancedAE changes the normal AE2 CPU/concurrency model. |
 | [AE2 Wireless Terminals](https://modrinth.com/mod/applied-energistics-2-wireless-terminals) | `1.20.1 Forge`, `1.21.1 NeoForge` | Yes | Yes | Yes | Yes | Mirror TTC details into wireless crafting, pattern, and fluid terminals if they bypass AE2 base screens. | Keeps TTC visible in the screens players actually use remotely. |
 | [AE Additions](https://modrinth.com/mod/ae-additions) | `1.20.1 Forge`, `1.21.1 NeoForge` | Yes | No | Yes | No | Check mixed item/fluid/chemical storage cells and wireless transceiver flows for key normalization or UI gaps. | Reduces confusing TTC for mixed resource networks and non-standard AE key paths. |
