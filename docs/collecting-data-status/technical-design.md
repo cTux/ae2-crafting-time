@@ -24,7 +24,8 @@ Resolve each row in this order:
 1. If its craft amount is not positive, append nothing.
 2. Request its stats through `ClientStatsRequests`.
 3. If no cached stats exist, append the collecting-data line.
-4. If the status row has a stall diagnostic, append the delayed line.
+4. If the status row has a stall diagnostic, append the delayed line and stop.
+   Do not append an estimate for the same row.
 5. If `TimeEstimate.format(...)` returns text, append the normal TTC line.
 6. If stats exist but cannot produce a usable estimate, append the
    collecting-data line instead of leaving the row blank.

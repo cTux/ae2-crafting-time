@@ -8,7 +8,8 @@ rollout.
 1. Add `text.ae2craftingtime.collecting_data` to English and Ukrainian.
 2. Add `TtcText.ttcCollectingData()` using the existing
    `text.ae2craftingtime.ttc` wrapper.
-3. Extend `TtcTextTest` to check the outer TTC key and nested collecting-data
+3. Apply `ChatFormatting.GRAY` while keeping the existing bold TTC treatment.
+4. Extend `TtcTextTest` to check the outer TTC key and nested collecting-data
    value.
 
 Done when the new component follows the current TTC styling path without a new
