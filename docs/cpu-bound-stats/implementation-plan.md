@@ -45,6 +45,8 @@ Part of `cpu-bound-stats/`. Keep each step small and covered.
 ## 6. Update the packet and client cache
 
 - Carry `cpuSpecific` with each resolved `StatsEntry`.
+- Expose that marker from `ClientStatsCache` with the cached entry instead of a
+  second client-side scope map.
 - Update the shared codec and all loader wrappers together.
 - Bump the Forge channel protocol version.
 - Extend packet round-trip, malformed-size, and boundary tests.

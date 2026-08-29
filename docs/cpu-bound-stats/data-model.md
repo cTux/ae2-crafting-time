@@ -96,6 +96,6 @@ Clients and servers must use the same mod protocol for this release.
 
 ## Reset behavior
 
-Ctrl-Alt-click in a selected-CPU view clears that CPU's retained samples for the
-output. Automatic clears the network bucket. It must not silently erase every
-CPU's history.
+Ctrl-Alt-click clears the retained samples that produced the visible TTC: the CPU
+bucket for a CPU-specific entry, or the network bucket for Automatic and fallback
+entries. It must not silently erase both buckets or every CPU's history.
