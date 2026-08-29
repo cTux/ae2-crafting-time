@@ -230,6 +230,64 @@ When a CPU is known, the accuracy key and stall diagnostic are built from the sa
 the "all stats relative to the chosen CPU" rule consistent for the detail/chat
 views. The network-level keys remain the fallback through the same helper.
 
+Accuracy is **persisted** per CPU via the `accuracy` list above, so it survives
+restarts. Stall diagnostics stay runtime-only: they describe the currently delayed
+in-flight output on a selected CPU, which is not a learned historical value and has
+no meaning after a restart.
+
+## Persisting accuracy, not just samples
+
+Craft samples are not the only learned data. `TtcAccuracyTracker` keeps a rolling
+window of `AccuracySample` per `ProfileKey` (`TtcAccuracyTracker.java:12`). To honor
+"per-CPU accuracy survives restarts", persist that window too, keyed by the same
+cpu-aware `ProfileKey`.
+
+Add a parallel persisted structure next to `PersistedOutputSamples`:
+
+```java
+public record PersistedAccuracySample(
+        long predictedSeconds, double actualTickSeconds,
+        double actualWallSeconds, int knownRows, int totalRows) { }
+
+public record PersistedAccuracySamples(ProfileKey key, List<PersistedAccuracySample> samples) { }
+```
+
+NBT (same `version: 2` document, new top-level `accuracy` list; read optionally so
+old `version: 2` saves without it still load):
+
+```text
+version: 2
+outputs: [ ... existing samples with cpuId ... ]
+accuracy: [
+  {
+    networkId: "minecraft:overworld|10,64,10"
+    cpuId: "12,64,10#2"
+    key: "minecraft:iron_ingot"
+    samples: [
+      { predictedSeconds: 135, actualTickSeconds: 138.0, actualWallSeconds: 142.5,
+        knownRows: 4, totalRows: 4 }
+    ]
+  }
+]
+```
+
+Wire it through `ProfilerBridge`:
+
+- `TtcAccuracyTracker` gains `snapshotAccuracy()` and `loadAccuracy(List<PersistedAccuracySamples>)`,
+  mirroring `snapshotSamples` / `loadSamples` in `CraftProfiler`.
+- `ProfilerBridge.load(...)` calls both `PROFILER.loadSamples(...)` and
+  `ACCURACY.loadAccuracy(...)`; the re-snapshot/migrate step already in
+  `ProfilerBridge.load` (`ProfilerBridge.java:167`) covers accuracy too.
+- On `ACCURACY.finish(...)` (a completed job), `ProfilerBridge` calls
+  `savedData.replaceFrom(profiler.snapshotSamples(), accuracy.snapshotAccuracy())`
+  and `savedData.setDirty()`, exactly like the existing sample-dirty path
+  (`ProfilerBridge.java:51-54, 138-141`).
+- CPU identifiers are already carried by `ProfileKey`, so accuracy and samples load
+  back into the correct `(networkId, cpuId, outputId)` bucket with no extra mapping.
+
+No old accuracy data exists (it was never persisted before), so there is nothing to
+migrate; the `accuracy` list is additive under `version: 2`.
+
 ## Risks
 
 - A moved CPU changes its block anchor, so its old samples become unreachable by

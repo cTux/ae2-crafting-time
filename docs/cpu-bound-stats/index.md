@@ -43,7 +43,16 @@ Out of scope:
 - Changing how throughput itself is measured (continuous production windows stay).
 - Per-CPU capacity already tracked via `updateCapacity` is not folded into the
   rate math in this pass; it stays a diagnostic.
-- Persisting per-CPU accuracy or stall diagnostics (they stay runtime-only).
+- Using accuracy or stall to feed back into throughput or TTC math. They remain
+  diagnostic only, but the learned data is still persisted (see below).
+
+In scope for persistence:
+
+- Craft samples **and** accuracy samples are both saved per `(networkId, cpuId,
+  outputId)` and reloaded on world load, so per-CPU throughput and per-CPU accuracy
+  survive restarts. CPU identifiers travel inside `ProfileKey`, so no data is lost
+  when the world reloads. Stall diagnostics stay runtime-only because they describe
+  the currently delayed in-flight output, not a learned historical value.
 
 ## Key decisions
 

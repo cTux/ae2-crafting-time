@@ -84,8 +84,10 @@ When a CPU is selected (the CraftConfirmScreen CPU selector), the UI switches to
   (`CraftConfirmScreenMixin.java:203-216`).
 - The running Crafting Status screen (per-active-CPU) is unchanged; it already
   scopes to the selected CPU.
-- Accuracy and stall stay **diagnostic only** and never feed back into throughput or
-  TTC math (`time-to-craft-plan.md`, Prediction Accuracy).
+- Accuracy and stall stay **diagnostic only** — they never feed back into throughput
+  or TTC math (`time-to-craft-plan.md`, Prediction Accuracy). Diagnostic only does
+  not mean runtime-only: per-CPU accuracy is persisted and reloads after a restart
+  (`data-model.md`, Persisting accuracy).
 
 ## Accuracy tracking
 
@@ -93,7 +95,8 @@ Keep the existing network-level accuracy as the default key, but record `cpuId`
 into the accuracy key from `startJob` (`collection.md`) so per-CPU accuracy exists.
 When a CPU is pinned, the detail/chat shows that CPU's accuracy; otherwise it shows
 network-level accuracy with a `*` if the pinned CPU had none. The MAPE / ratio
-metrics are unchanged.
+metrics are unchanged. Per-CPU accuracy is persisted (`data-model.md`) and survives
+restarts, so the detail/chat reflects historical accuracy for that exact CPU.
 
 ## Files touched
 

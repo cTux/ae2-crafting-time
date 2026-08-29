@@ -58,20 +58,26 @@ Tests: with two samples on a CPU-specific key and ten on the network key, the
 fallback returns the network stats; with four on the CPU key, it returns the CPU
 stats.
 
-## Task 5 — Persistence: `version: 2` + `cpuId`
+## Task 5 — Persistence: `version: 2` + `cpuId` + accuracy
 
-Files: each `Ae2CraftingTimeSavedData` (`versions/*/...`), shared DTOs unchanged
-(`PersistedOutputSamples` already wraps `ProfileKey`).
+Files: each `Ae2CraftingTimeSavedData` (`versions/*/...`), shared DTOs.
 
 - Bump top-level save `version` to `2`.
 - Encode `cpuId` per output (absent/empty for old).
 - Decode `version: 1` with `cpuId = ""`; decode `version: 2` reading `cpuId`.
-- `ProfilerBridge.load` already re-snapshots and rewrites; the first save migrates
-  the file to `version: 2`.
+- Persist accuracy too: add a top-level `accuracy` list of
+  `PersistedAccuracySamples` keyed by the same cpu-aware `ProfileKey` (read
+  optionally so `version: 2` saves without it still load).
+- `ProfilerBridge.load` re-snapshots and rewrites both samples and accuracy; the
+  first save migrates the file to `version: 2` (`ProfilerBridge.java:167`).
+- On `ACCURACY.finish(...)`, `ProfilerBridge` marks the saved data dirty and writes
+  both snapshots (`ProfilerBridge.java:51-54, 138-141`).
 
 Tests: existing `Ae2CraftingTimeSavedDataTest` extended — roundtrip of a
-`cpuId`-bearing entry; loading a synthetic `version: 1` blob yields `cpuId = ""`
-and equivalent stats; storage id stays exactly `ae2-crafting-time`.
+`cpuId`-bearing sample entry **and** a `cpuId`-bearing accuracy entry; loading a
+synthetic `version: 1` blob yields `cpuId = ""` and equivalent stats; storage id
+stays exactly `ae2-crafting-time`; accuracy reloads into the correct
+`(networkId, cpuId, outputId)` bucket.
 
 ## Task 6 — Packet codec
 
@@ -136,17 +142,25 @@ File: `shared/src/mc1201/.../mixin/CraftConfirmScreenMixin.java`, `TtcText.java`
 Tests: shared tests cover `CpuStatsResult` fallback and the `TtcText` `*`/legend
 formatting; client UI verified in a Prism/VM world per `working-with-project.md`.
 
-## Task 10 — Accuracy and stall keyed by CPU
+## Task 10 — Accuracy and stall keyed by CPU, accuracy persisted
 
-File: `TtcAccuracyTracker.java`, `ProfilerBridge.java`
+File: `TtcAccuracyTracker.java`, `ProfilerBridge.java`, `Ae2CraftingTimeSavedData`
+(per version)
 
 - Record `cpuId` into the accuracy key from `startJob` (`collection.md`).
-- Scope stall diagnostics to the CPU when known.
+- Scope stall diagnostics to the CPU when known (stall stays runtime-only; it
+  describes the in-flight delayed output, not a learned value).
 - Expose per-CPU accuracy with network-level fallback; keep accuracy diagnostic-only
   (no feedback into throughput).
+- Add `TtcAccuracyTracker.snapshotAccuracy()` / `loadAccuracy(...)` and persist the
+  result in the `accuracy` list so per-CPU accuracy survives restarts
+  (`data-model.md`, Persisting accuracy). `ProfilerBridge.load` hydrates accuracy
+  alongside samples.
 
 Tests: `TtcAccuracyTrackerTest` — accuracy stored under cpu-specific key; fallback
-returns network accuracy when CPU has none; stall diagnostic keys by CPU.
+returns network accuracy when CPU has none; stall diagnostic keys by CPU;
+`Ae2CraftingTimeSavedData` roundtrips a cpu-specific accuracy entry and reloads it
+into the same `(networkId, cpuId, outputId)` key.
 
 ## Build and verify
 
