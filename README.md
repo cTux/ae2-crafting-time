@@ -40,22 +40,24 @@ You can grab the latest version from:
 
 ## What It Does
 
-- Learns how long different AE2 craft outputs actually take.
-- Shows the estimated time to craft (`TTC`) for individual outputs and entire jobs.
-- Warns you when an output has gone too long without making progress.
-- Gives evidence-based bottleneck hints for machine speed, Pattern Provider
-  parallelism, and Crafting Co-Processor dispatch capacity.
-- Compares its original TTC prediction with the actual completion time of
-  successful jobs.
-- Reports prediction accuracy and how much of the crafting plan it could estimate.
-- Keeps retained performance samples in
-  `data/ae2-crafting-time.dat` inside the world save.
-- Sends only aggregate crafting stats to connected clients.
-- Adds TTC details, colors, totals, and sorting controls to AE2 crafting screens.
-- Lets you Ctrl-Alt-click a TTC entry to forget outdated stats for that output.
-- Supports Applied Mekanistics chemicals when the mod is installed.
-- Adds TTC hints to ME Requester rows and totals when the mod is installed.
-- Shares as much code as possible between supported Minecraft versions and loaders.
+- Remembers how long your crafts really take, so its time guesses get better the
+  more you play.
+- Tells you how long a craft will take — for one item or a whole job — right on
+  the AE2 screens, so you know when to come back.
+- Alerts you when a craft has stalled, so you can fix it instead of waiting
+  forever.
+- Shows what's slowing you down — like a machine that's too slow, too few
+  Pattern Providers, or not enough Crafting Co-Processors — and how to speed it
+  up.
+- Shows how close its time guesses were after a craft finishes, so you can trust
+  the numbers.
+- Adds time, colors, totals, and sort buttons to the AE2 crafting screens, so the
+  info is easy to read at a glance.
+- Lets you Ctrl-Alt-click an entry to erase old, wrong stats for that item.
+- Works with Applied Mekanism chemicals, and adds time hints to ME Requester rows
+  and totals, when those mods are installed.
+- Keeps what it learned inside your world, so it stays smart after you quit and
+  come back.
 
 ## Documentation
 
