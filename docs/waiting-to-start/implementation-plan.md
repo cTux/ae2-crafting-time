@@ -22,9 +22,12 @@ use required CI as the first Gradle test run.
    requiring retained stats.
 2. Extend `StatsPacketCodec.Snapshot` and all four `StatsSnapshotS2C` records
    with the waiting map.
-3. Replace requested waiting values in `ClientStats`; omitted keys must clear
+3. Bump the Forge channel protocol from `5` to `6`, the Fabric snapshot payload
+   ID from `stats_snapshot_v3` to `stats_snapshot_v4`, and both NeoForge
+   registrar versions from `4` to `5`.
+4. Replace requested waiting values in `ClientStats`; omitted keys must clear
    old values.
-4. Extend packet and cache tests for round trips, empty values, stale removal,
+5. Extend packet and cache tests for round trips, empty values, stale removal,
    negative durations, oversized maps, and long output IDs.
 
 Changing the snapshot layout affects every supported loader, so complete these

@@ -71,8 +71,15 @@ entries, keep output IDs within `MAX_OUTPUT_ID_LENGTH`, and reject negative tick
 values before storing them.
 
 The four loader packet records must change together because this changes the
-wire layout. No persisted-data version changes because waiting state is never
-saved.
+wire layout. Bump every affected compatibility boundary in the same commit:
+
+- 1.20.1 Forge channel protocol: `5` to `6`;
+- 1.20.1 Fabric snapshot payload ID: `stats_snapshot_v3` to
+  `stats_snapshot_v4`;
+- 1.21.1 and 26.1.2 NeoForge registrar version: `4` to `5`.
+
+The Fabric request and chat IDs stay unchanged because their layouts do not
+change. No persisted-data version changes because waiting state is never saved.
 
 ## Client behavior
 
@@ -119,6 +126,8 @@ job finishes or is cancelled
 - A stale client value disappears on the next response because replacement is
   scoped by requested keys.
 - Game-tick rollback clamps the displayed duration to zero.
+- Mixed client/server versions fail the loader's protocol or payload
+  compatibility boundary instead of decoding the changed snapshot layout.
 
 ## Sources checked
 
