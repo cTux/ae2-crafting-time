@@ -61,7 +61,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
     @Unique
     private static final int AE2CRAFTINGTIME_TITLE_TOP = 7;
     @Unique
-    private static final int AE2CRAFTINGTIME_TITLE_TTC_BACKGROUND = 0xD0202028;
+    private static final int AE2CRAFTINGTIME_TITLE_TTC_BACKGROUND = 0xB0000000;
     @Unique
     private static final int AE2CRAFTINGTIME_TITLE_TTC_COLOR = 0xE0E0E0;
 
@@ -135,7 +135,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
             remap = false)
     private Component ae2craftingtime$appendStatusTotalTtc(Component title) {
         ae2craftingtime$titleTtc = null;
-        if (!((Object) this instanceof CraftingStatusScreen) || status == null) {
+        if (status == null) {
             return title;
         }
 
@@ -168,9 +168,16 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
         var font = getMinecraft().font;
         var textWidth = font.width(ae2craftingtime$titleTtc);
-        guiGraphics.fill(ae2craftingtime$titleTtcX - 3, AE2CRAFTINGTIME_TITLE_TOP - 1,
-                ae2craftingtime$titleTtcX + textWidth + 3, AE2CRAFTINGTIME_TITLE_TOP + font.lineHeight + 1,
-                AE2CRAFTINGTIME_TITLE_TTC_BACKGROUND);
+        var left = ae2craftingtime$titleTtcX - 4;
+        var top = AE2CRAFTINGTIME_TITLE_TOP - 2;
+        var right = ae2craftingtime$titleTtcX + textWidth + 4;
+        var bottom = AE2CRAFTINGTIME_TITLE_TOP + font.lineHeight + 2;
+        var radius = 4;
+        for (var y = top; y < bottom; y++) {
+            var dy = Math.min(y - top, bottom - 1 - y);
+            var inset = dy < radius ? radius - dy : 0;
+            guiGraphics.fill(left + inset, y, right - inset, y + 1, AE2CRAFTINGTIME_TITLE_TTC_BACKGROUND);
+        }
         guiGraphics.drawString(font, ae2craftingtime$titleTtc, ae2craftingtime$titleTtcX,
                 AE2CRAFTINGTIME_TITLE_TOP, AE2CRAFTINGTIME_TITLE_TTC_COLOR, true);
     }
