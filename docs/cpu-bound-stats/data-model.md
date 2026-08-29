@@ -86,7 +86,8 @@ requested outputs and their bounded retained sample data.
 This is a coordinated wire-layout change:
 
 - Update the shared codec and all four loader packet wrappers together.
-- Bump the Forge `SimpleChannel` protocol version.
+- Bump the Forge `SimpleChannel` protocol version, which is the only explicit
+  channel-version field in the current loader adapters.
 - Add round-trip and malformed/bounded packet coverage.
 - Do not add a leading `cpuAware` flag and call it backward compatible. An old
   reader cannot discover a new leading field without already knowing the new

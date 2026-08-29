@@ -35,9 +35,9 @@ Out of scope:
 
 1. `ProfileKey` becomes `(networkId, cpuId, outputId)`. Empty `cpuId` means the
    network-wide bucket.
-2. `cpuId` identifies one durable CPU instance. A standard AE2 CPU uses a stable
-   cluster anchor. AdvancedAE uses its persisted CPU UUID. Unknown CPU types do
-   not get a made-up id; they keep network-only stats.
+2. `cpuId` identifies one durable CPU instance. A standard AE2 CPU uses its
+   persisted core block as an anchor. AdvancedAE uses its persisted CPU UUID.
+   Unknown CPU types do not get a made-up id; they keep network-only stats.
 3. CPU and network samples are recorded together. This keeps the fallback fresh
    on new worlds and preserves the current network-wide production-window math.
 4. Only an explicitly selected CPU enables CPU-specific lookup. Automatic uses

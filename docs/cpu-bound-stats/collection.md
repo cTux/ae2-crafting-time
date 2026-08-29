@@ -7,16 +7,17 @@ Part of `cpu-bound-stats/`. See `index.md` and `data-model.md`.
 The craft hooks already receive the CPU object as `scope`. Derive a durable id
 from the concrete CPU type:
 
-- Standard `CraftingCPUCluster`: use its dimension and stable cluster anchor,
-  such as `getBoundsMin()`, formatted as
+- Standard `CraftingCPUCluster`: use the block position owned by its core grid
+  node, formatted as
   `ae2:<dimension>:<x>,<y>,<z>`.
 - AdvancedAE `AdvCraftingCPU`: expose its persisted `uniqueId` through a
   version-checked optional accessor and format it as `advancedae:<uuid>`.
 - Unknown or unsupported CPU type: return empty and record network-only data.
 
-Moving or rebuilding a standard CPU gives it a new identity. That is correct: it
-is a new physical CPU, and the network fallback covers it while it learns.
-Renaming a CPU does not change its identity.
+Moving the CPU or removing its persisted core block gives it a new identity. That
+is correct: it is a new physical anchor, and the network fallback covers it while
+it learns. Renaming or expanding the CPU keeps its identity while AE2 preserves
+the core block.
 
 Do not use:
 
@@ -55,10 +56,12 @@ must clear only the requested key and rebuild any affected busy window as today.
 
 ## Resolve the selected CPU on the server
 
-`StatsRequestContext` already resolves the active grid and a CPU on the crafting
-status screen. Extend it for server-side `CraftConfirmMenu`:
+`StatsRequestContext` resolves a CPU today only on the single-CPU crafting status
+screen. Extend it for server-side `CraftConfirmMenu`:
 
 - Read its private `selectedCpu` through the smallest version-specific accessor.
+  This field exists in each currently supported AE2 runtime artifact; recheck it
+  when updating AE2.
 - Keep grid discovery through the menu's actionable target.
 - Return `null` for Automatic.
 

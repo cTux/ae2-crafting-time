@@ -10,7 +10,7 @@ Part of `cpu-bound-stats/`. Keep each step small and covered.
 
 ## 2. Derive durable CPU ids
 
-- Add the smallest standard-AE2 adapter for the cluster anchor.
+- Add the smallest standard-AE2 adapter for the persisted core block anchor.
 - Add version-checked optional AdvancedAE UUID accessors where supported.
 - Return empty for null and unknown CPU types.
 - Cover stable formatting and graceful fallback without reflection-heavy generic
@@ -48,7 +48,8 @@ Part of `cpu-bound-stats/`. Keep each step small and covered.
 - Expose that marker from `ClientStatsCache` with the cached entry instead of a
   second client-side scope map.
 - Update the shared codec and all loader wrappers together.
-- Bump the Forge channel protocol version.
+- Bump the Forge channel protocol version; the other loaders have no equivalent
+  version field in their current adapters.
 - Extend packet round-trip, malformed-size, and boundary tests.
 - Invalidate visible plan requests after the CPU selector cycles.
 
