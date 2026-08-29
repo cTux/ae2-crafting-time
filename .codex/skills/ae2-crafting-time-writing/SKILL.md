@@ -44,6 +44,10 @@ clear. The age is a voice target, not something to mention in the text.
 - **AI disclosure:** be open about AI help and the maintainer's Java experience,
   while making the review, testing, maintainability, scalability, and reuse
   standards clear. Do not imply that unreviewed vibe-coding is acceptable.
+- **PR descriptions:** write the `What?`, `Why?`, and `Where?` sections as plain
+  human-readable text a curious 10-year-old could follow. Use short sentences and
+  everyday words, and explain unfamiliar technical terms the first time they
+  appear. Never paste commit messages, diffs, or logs as the explanation.
 
 ## Before Finishing
 
