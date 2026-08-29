@@ -58,10 +58,12 @@ In scope for persistence:
 
 1. **Key shape:** `ProfileKey(networkId, cpuId, outputId)` where `cpuId` defaults
    to `""` meaning "network-level / any CPU". Old and new samples coexist.
-2. **CPU identity:** `cpuId` is `"<x>,<y>,<z>#<index>"` — the CPU's world block
-   coordinates plus its 0-based index in `grid.getCraftingService().getCpus()`.
-   Coordinates give a stable, location-meaningful id; the index makes it unique and
-   orderable. The player name is display-only. See `collection.md`.
+2. **CPU identity:** `cpuId` is a config-derived id, starting with the CPU's
+   co-processor count (e.g. `"4"`), optionally extended with a hash of its attached
+   crafting machines. It is **not** the block coordinates or the `getCpus()` index,
+   so it stays stable across restarts, moves, and renames, and identical
+   dynamically created CPUs naturally share one id. The player name is display-only.
+   See `collection.md`.
 3. **Lookup fallback:** `(networkId, cpuId, outputId)` falls through to
    `(networkId, "", outputId)` when the CPU has too few samples. This avoids
    blank estimates for rarely used CPUs.
@@ -73,9 +75,10 @@ In scope for persistence:
    no measured data of its own (so a network-level fallback was used, or no CPU is
    selected at all), the value is rendered as `TTC: ~1:23:34*` and the UI explains
    `*` as "depends on CPU" (`estimation.md`).
-6. **Headline when unchosen is the minimum:** with no CPU selected, the Total TTC
-   is the smallest TTC across the network's CPUs (fastest CPU that has data), with
-   a per-CPU breakdown list. See `estimation.md`.
+6. **Headline when unchosen targets the auto-selected CPU:** with no CPU selected,
+   the Total TTC is the TTC of the CPU AE2 would auto-pick (smallest that fits the
+   plan); the fastest-CPU TTC is shown as a note. A per-CPU breakdown list is also
+   shown. See `estimation.md`.
 7. **Migration:** old saves deserialize with `cpuId = ""` and stay valid. Packets
    without `cpuId` are read as `""` through a version guard. See `data-model.md`.
 

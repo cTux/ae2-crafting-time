@@ -22,15 +22,18 @@ one-arg constructors produce `cpuId = ""`; `isCpuSpecific` reflects state.
 File: `shared/src/.../mc1201/ProfilerBridge.java` (and a tiny shared helper if the
 anchor extraction needs MC types).
 
-- Add `cpuId(IGrid grid, Object cpu)` returning `"<x>,<y>,<z>#<index>"`: the CPU's
-  world block anchor plus its 0-based index in `grid.getCraftingService().getCpus()`
-  (`collection.md`). Return `""` for null / unrecognized shape / missing grid.
-- `cpuAnchorPos` handles `CraftingCPUCluster` and `AdvCraftingCPU` (reflection for
-  the Advanced AE shape, mirroring `StatsRequestContext.optionalAdvancedCpu`).
-- `cpuListIndex` walks `getCpus()` to find the match position, or `-1`.
+- Add `cpuId(Object cpu)` returning a config-derived id: the CPU's co-processor
+  count as a string, optionally extended with a hash of its attached machines
+  (`"<coProcessors>"` or `"<coProcessors>-<machineHash>"`). Return `""` for null /
+  unrecognized shape (`collection.md`).
+- `cpuCoProcessors` reads `ICraftingCPU.getCoProcessors()` (reflection for
+  `AdvCraftingCPU`, mirroring `StatsRequestContext.optionalAdvancedCpu`).
+- `cpuMachineHash` walks the CPU's attached pattern providers / driven machines and
+  hashes a stable descriptor; return `""` when impractical.
 
-Tests: unit test with fake CPU objects — known anchor + index returns
-`"12,64,10#2"`; null returns `""`; unknown type returns `""`.
+Tests: unit test with fake CPU objects — 4 co-processors returns `"4"`; 4
+co-processors plus a machine hash returns `"4-a1b2"`; null returns `""`; unknown
+type returns `""`.
 
 ## Task 3 — Pass cpuId through profiling
 
@@ -39,24 +42,28 @@ Files: `ProfilerBridge.java`, `CraftingCpuLogicMixin.java`,
 
 - Add `key(networkId, cpuId, what)` overload.
 - In `start`, `complete`, and `startJob`, build the cpu-aware key from
-  `cpuId(grid, scope)`, where `grid` is `cluster.getGrid()` / `cpu.getGrid()`.
-- In `startJob`, pass `cpuId(grid, scope)` into `ACCURACY.start(...)`.
+  `cpuId(scope)` (the CPU object already exposes co-processor count).
+- In `startJob`, pass `cpuId(scope)` into `ACCURACY.start(...)`.
 
 Tests: `CraftProfilerTest` — `start`/`complete` with a cpuId scope stores the
 sample under the cpu-specific key; `stats` for `cpuId = ""` is separate; the
 IdentityHashMap scope behavior is unchanged.
 
-## Task 4 — Lookup fallback
+## Task 4 — Lookup fallback (`resolveStats`)
 
 File: `shared/src/.../mc1201/ProfilerBridge.java`
 
-- Add `stats(networkId, cpuId, what)` that prefers the cpu-specific key when it has
-  `>= 3` samples, else falls back to `cpuId = ""`.
+- Add `resolveStats(networkId, cpuId, what)` that prefers the cpu-specific key when
+  `reliableEstimate()` holds, else falls back to `cpuId = ""`, returning a
+  `CpuStatsResult(stats, cpuSpecific)` so the UI can render `*` (`data-model.md`).
+- Reuse `ProfileStats.reliableEstimate()` as the single fallback decision; do not
+  introduce a separate sample-count threshold.
 - Mirror the fallback in the accuracy lookup.
 
-Tests: with two samples on a CPU-specific key and ten on the network key, the
-fallback returns the network stats; with four on the CPU key, it returns the CPU
-stats.
+Tests: `CraftProfilerTest` — with two samples on a CPU-specific key and ten on the
+network key, `resolveStats` returns the network stats with `cpuSpecific = false`;
+with a reliable (>=3, no-outlier) CPU key, it returns the CPU stats with
+`cpuSpecific = true`.
 
 ## Task 5 — Persistence: `version: 2` + `cpuId` + accuracy
 
@@ -103,8 +110,9 @@ File: `shared/src/mcCommon/.../StatsRequestHandler.java`
 - In `collect`, read `context.grid().getCraftingService().getCpus()`
   (`collection.md`).
 - For each CPU and each requested output, build the CPU-specific aggregate
-  `ProfileStats` via `ProfilerBridge.stats(networkId, cpuId, outputId)` (raw samples
-  stripped for the wire).
+  `ProfileStats` via `ProfilerBridge.stats(new ProfileKey(networkId, cpuId(cpu), outputId))`
+  (raw samples stripped for the wire). `cpuId(cpu)` is the config-derived helper
+  (`collection.md`), no grid argument needed.
 - Attach the `cpuSummaries` list to the response/snapshot.
 
 Tests: `StatsRequestHandlerTest` — response includes one summary per grid CPU;
@@ -118,6 +126,10 @@ Files: `shared/src/mcCommon/.../StatsRequestContext.java`, a new
 
 - `StatsRequestContext.current` must also read the selected CPU from
   `CraftConfirmMenu` (the `cpuCycler` selection), not only `CraftingCPUMenu`.
+- **Confirm the grid is reachable** from `CraftConfirmMenu`: it extends `AEBaseMenu`
+  whose `getTarget()` is an `IActionHost`, so the grid comes from the actionable
+  node. Add a `CraftConfirmMenu` accessor mirroring `CraftingCPUMenuAccessor`
+  (grid + chosen `cpu`) and assert the grid is non-null in a test.
 - When that CPU is present, `ProfilerBridge.entry(...)` keys by
   `(networkId, cpuId, outputId)` and returns cpu-specific `entries` (with raw
   samples) so the detail/chat views honor rule 1.
@@ -126,21 +138,27 @@ Files: `shared/src/mcCommon/.../StatsRequestContext.java`, a new
 Tests: `StatsRequestContextTest` — opening a CraftConfirmMenu with a selected CPU
 yields that CPU in the context; `CpuStatsResult.cpuSpecific` is `false` on fallback.
 
-## Task 9 — Crafting Plan window: min headline, breakdown, `*` marker
+## Task 9 — Crafting Plan window: auto-select headline, breakdown, `*` marker
 
 File: `shared/src/mc1201/.../mixin/CraftConfirmScreenMixin.java`, `TtcText.java`
 
-- **Unchosen:** compute each CPU's Total TTC from `cpuSummaries` + plan row amounts;
-  headline = minimum; render `Total TTC: ~...*` plus the per-CPU breakdown
-  `CPU Alpha ~..* · CPU Beta ~..*`. Show the "depends on CPU" legend.
-- **Pinned:** switch every stat to the selected CPU via the fallback lookup. No `*`
+- **Unchosen:** compute each CPU's Total TTC from `cpuSummaries` + plan row amounts
+  via `resolveStats`. **Headline = the CPU AE2 would auto-select** (smallest whose
+  `getAvailableStorage()` fits the plan); render `Total TTC: ~...*` with the
+  "depends on CPU" legend. Show the **fastest-CPU TTC as a note** (the minimum
+  across CPUs). Render the per-CPU breakdown as **multi-line text** (dedupe by
+  `cpuId`), not one crowded line.
+- **Pinned:** switch every stat to the selected CPU via `resolveStats`. No `*`
   when that CPU has its own data for all rows; `*` + legend when any row fell back.
   Hide the breakdown list while pinned.
-- Add `TtcText.totalTtcCpuDependent(...)`, `TtcText.cpuDependentLegend()`, and the
-  matching translation keys.
+- **Over-merge signal:** when a `cpuId`'s accuracy is low (blended dissimilar
+  CPUs), append a tooltip line *"your setup has differently performant machines"*.
+- Add `TtcText.totalTtcCpuDependent(...)`, `TtcText.cpuDependentLegend()`,
+  `TtcText.differentMachinesHint()`, and the matching translation keys.
 
-Tests: shared tests cover `CpuStatsResult` fallback and the `TtcText` `*`/legend
-formatting; client UI verified in a Prism/VM world per `working-with-project.md`.
+Tests: shared tests cover `CpuStatsResult` fallback, the `TtcText` `*`/legend
+formatting, and the `differentMachinesHint` text; client UI verified in a Prism/VM
+world per `working-with-project.md`.
 
 ## Task 10 — Accuracy and stall keyed by CPU, accuracy persisted
 
@@ -156,20 +174,26 @@ File: `TtcAccuracyTracker.java`, `ProfilerBridge.java`, `Ae2CraftingTimeSavedDat
   result in the `accuracy` list so per-CPU accuracy survives restarts
   (`data-model.md`, Persisting accuracy). `ProfilerBridge.load` hydrates accuracy
   alongside samples.
+- **Accuracy dirty trigger:** add a `replaceFrom(List<PersistedOutputSamples>,
+  List<PersistedAccuracySamples>)` overload and call it from `finishJob` (in
+  `ProfilerBridge`, on `ACCURACY.finish(...)` success) so completed-job accuracy is
+  persisted, mirroring the existing sample-dirty path.
 
 Tests: `TtcAccuracyTrackerTest` — accuracy stored under cpu-specific key; fallback
 returns network accuracy when CPU has none; stall diagnostic keys by CPU;
 `Ae2CraftingTimeSavedData` roundtrips a cpu-specific accuracy entry and reloads it
-into the same `(networkId, cpuId, outputId)` key.
+into the same `(networkId, cpuId, outputId)` key; `replaceFrom(samples, accuracy)`
+persists both and `finishJob` marks the saved data dirty.
 
 ## Build and verify
 
 - Run `scripts/setup-git.ps1` once if not already done (AGENTS.md).
 - Build all versions, then exercise in a Prism/VM world with two CPUs of different
-  co-processor counts to confirm: the unchosen headline shows the minimum per-CPU
-  TTC with a `*` and the per-CPU breakdown; selecting a CPU pins every stat to it
-  (no `*` when it has its own data, `*` when it falls back); and old saves load
-  without data loss.
+  co-processor counts to confirm: the unchosen headline targets the auto-selected
+  (smallest-fitting) CPU with `*` and a fastest-CPU note, the per-CPU breakdown is
+  multi-line, and the over-merge tooltip appears when same-co-proc CPUs differ;
+  selecting a CPU pins every stat to it (no `*` when it has its own data, `*` when
+  it falls back); and old saves load without data loss.
 - No local test run required before the PR; the post-commit hook opens the PR and
   CI runs checks (AGENTS.md).
 

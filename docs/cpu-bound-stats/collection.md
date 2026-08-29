@@ -21,52 +21,58 @@ stable `cpuId` from it.
 
 ## Deriving a stable cpuId
 
-The identifier combines the CPU's world coordinates with its index in the grid's
-`getCpus()` list:
+The identifier is **config-derived**, not location-derived:
 
-- `CraftingCPUCluster` / `AdvCraftingCPU` expose their blocks. Take the anchor
-  block position (the cluster's main block) and format it as `"x,y,z"`.
-- Take the CPU's position in `grid.getCraftingService().getCpus()` iteration order
-  as the index (0-based). This index is stable within a session and gives a short,
-  network-unique ordinal.
-- The full `cpuId` is `"<x>,<y>,<z>#<index>"`, e.g. `"12,64,10#2"`.
-- The player-facing name from `ICraftingCPU.getName()` is used only for display in
-  the Crafting Plan window, never as the key.
+- The dominant factor in AE2 crafting speed is the CPU's co-processor count
+  (parallel throughput), so the base `cpuId` is that count as a string, e.g.
+  `"4"`.
+- Optionally extend it with a hash of the CPU's attached crafting machines (pattern
+  providers / the machines they drive). This separates same-co-proc CPUs that feed
+  genuinely different machines.
+- The full `cpuId` is `"<coProcessors>"` or `"<coProcessors>-<machineHash>"`,
+  e.g. `"4"` or `"4-a1b2"`.
+- The player-facing name from `ICraftingCPU.getName()` is display-only.
 
-Coordinates make the id meaningful and location-stable; the index makes it unique
-and orderable even when coordinates are hard to read. Coordinates alone are already
-unique within a `networkId` (two CPUs cannot share a block), so the index is a
-secondary discriminator, not the sole one.
+Why not coordinates or the `getCpus()` index: the `cpuId` is the key we persist
+learned data under, so it must be stable across restarts. Coordinates change when a
+CPU is moved and the `getCpus()` index can reorder between sessions, both of which
+would orphan saved per-CPU samples and accuracy. Co-processor count is intrinsic to
+the CPU and survives restart, move, and rename. It also matches the reason
+CPU-bound stats exist: networks with differently-sized CPUs get separated exactly
+where throughput differs, and identical dynamically created CPUs (e.g. a quantum
+crafter that spawns bit-identical CPUs) collapse to one id and aggregate correctly.
 
 Add a small helper in `ProfilerBridge`:
 
 ```java
-public static String cpuId(IGrid grid, Object cpu) {
+public static String cpuId(Object cpu) {
     if (cpu == null) {
         return "";
     }
-    var pos = cpuAnchorPos(cpu); // dimension-independent "x,y,z" of the CPU block
-    if (pos == null) {
+    var coProcessors = cpuCoProcessors(cpu);   // ICraftingCPU.getCoProcessors()
+    if (coProcessors < 0) {
         return "";
     }
-    var index = cpuListIndex(grid, cpu); // position in getCpus(), or -1
-    return index < 0 ? pos : pos + "#" + index;
+    var machineHash = cpuMachineHash(cpu);      // attached machines, or "" if none
+    return machineHash.isEmpty() ? Integer.toString(coProcessors)
+            : coProcessors + "-" + machineHash;
 }
 ```
 
-`cpuAnchorPos` inspects `CraftingCPUCluster` and `AdvCraftingCPU` (the latter via
-the existing reflection pattern used for `optionalAdvancedCpu` in
-`StatsRequestContext.java:25`). `cpuListIndex` walks
-`grid.getCraftingService().getCpus()` and returns the match position for `cpu`, or
-`-1` if the grid is unavailable. If neither shape is recognized or the index is
-missing, return the bare coordinates (or `""`) so the sample still lands in a
-resolvable key instead of failing.
+`cpuCoProcessors` reads `ICraftingCPU.getCoProcessors()` (works for
+`CraftingCPUCluster`; for `AdvCraftingCPU` use the reflection pattern from
+`StatsRequestContext.optionalAdvancedCpu`). `cpuMachineHash` walks the CPU's
+attached pattern providers / driven machines and hashes a stable descriptor; return
+`""` when that is impractical so the id degrades to just the co-processor count. If
+the CPU shape is unrecognized, return `""` so the sample lands in network-level
+storage instead of failing.
 
-Stability note: coordinates are restart-stable; the `getCpus()` index may shift if
-the CPU set or its iteration order changes between sessions, which would orphan old
-per-CPU samples for that CPU. The network-level (`cpuId = ""`) fallback keeps
-estimates working after such a shift, so this is a quiet degradation, not a break.
-Prefer coordinates as the human-meaningful part; treat the index as a tie-breaker.
+Over-merge note: two same-co-proc CPUs feeding different machines will share an id
+if the machine hash is omitted, blending rates that differ. That is acceptable
+because the measured accuracy for that shared id drops, and the UI surfaces it (see
+`estimation.md`): a low-accuracy id gets a tooltip like "your setup has
+differently performant machines". Adding `cpuMachineHash` removes the ambiguity
+when it matters.
 
 ## Wiring cpuId into the profiler
 
@@ -83,16 +89,16 @@ PROFILER.start(key(networkId, cpuId(scope), what), scope, normalizeAmount(what, 
 
 `key(networkId, cpuId, what)` is the new three-arg overload from `data-model.md`.
 Do the same for `complete` and `startJob`. The `scope` object is unchanged; it
-keeps doing its existing job for pending/capacity/stall. The mixin already has
-`cluster.getGrid()` (or `cpu.getGrid()`), so pass that grid into `cpuId(grid, scope)`
-to compute the coordinates + `getCpus()` index.
+keeps doing its existing job for pending/capacity/stall. The CPU object already
+exposes co-processor count, so pass it into `cpuId(scope)` to build the
+config-derived id.
 
 `startJob` currently keys accuracy by the final output only
 (`ProfilerBridge.java:86`). Capture the CPU there too so per-CPU accuracy is
 possible:
 
 ```java
-ACCURACY.start(key(networkId, cpuId(grid, scope), plan.finalOutput().what()), scope,
+ACCURACY.start(key(networkId, cpuId(scope), plan.finalOutput().what()), scope,
         predictedSeconds, knownRows, totalRows, tick, nanoTime);
 ```
 
@@ -100,7 +106,9 @@ ACCURACY.start(key(networkId, cpuId(grid, scope), plan.finalOutput().what()), sc
 
 The Crafting Plan window needs the same `cpuId` for the CPU the player selects.
 Add a `CraftConfirmMenu` accessor mirroring `CraftingCPUMenuAccessor` (grid + chosen
-`cpu`). Derive `cpuId` from that object with the same `ProfilerBridge.cpuId(grid, cpu)`
+`cpu`). Confirm the grid is reachable from `CraftConfirmMenu` (it extends
+`AEBaseMenu` whose target is an `IActionHost`, so `getTarget()` yields the grid).
+Derive `cpuId` from that object with the same `ProfilerBridge.cpuId(cpu)`
 helper, then request/look up stats with the cpu-aware key and the network-level
 fallback. The server's `cpuSummaries` already carry the matching `cpuId` strings, so
 the pinned view reuses the same identifier recorded at craft time.
@@ -122,7 +130,7 @@ var cpuList = crafting == null ? List.<ICraftingCPU>of() : crafting.getCpus();
 For each CPU build `(cpuId, name, coProcessors)` and, for each requested output,
 the CPU-specific aggregate `ProfileStats`. Hand that to the snapshot as the
 `cpuSummaries` section (`data-model.md`). Use `ICraftingCPU.getName()` /
-`getCoProcessors()` for display, and `ProfilerBridge.cpuId(grid, cpu)` for the key.
+`getCoProcessors()` for display, and `ProfilerBridge.cpuId(cpu)` for the key.
 This is the same cluster object that `trySubmitJob` runs on, so the derived `cpuId`
 matches what is recorded at craft time.
 

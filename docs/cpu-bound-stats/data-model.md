@@ -11,9 +11,9 @@ Today the key is `ProfileKey(networkId, outputId)`:
 public record ProfileKey(String networkId, String outputId) { ... }
 ```
 
-Add an optional `cpuId` that is `""` for network-level samples. Its shape is
-`"<x>,<y>,<z>#<index>"` — the CPU's world block coordinates plus its 0-based index
-in `grid.getCraftingService().getCpus()` (see `collection.md`):
+Add an optional `cpuId` that is `""` for network-level samples. Its shape is a
+config-derived id, starting with the CPU's co-processor count and optionally a hash
+of its attached machines, e.g. `"4"` or `"4-a1b2"` (see `collection.md`):
 
 ```java
 public record ProfileKey(String networkId, String cpuId, String outputId) {
@@ -106,7 +106,7 @@ outputs: [
   },
   {
     networkId: "minecraft:overworld|10,64,10"
-    cpuId: "12,64,10#2"           # specific CPU: block coords + getCpus() index
+    cpuId: "4"                     # specific CPU: 4 co-processors
     key: "minecraft:iron_ingot"
     unit: "item"
     samples: [ { amount: 10, durationTicks: 180 } ]
@@ -166,9 +166,9 @@ includes the CPU-specific `ProfileStats` **aggregate** (omit the raw
 ```text
 cpuAware: true
 cpuSummaries: [
-  { cpuId: "12,64,10#2", name: "Alpha", coProcessors: 4,
+  { cpuId: "4", name: "Alpha", coProcessors: 4,
     outputs: { "minecraft:iron_ingot": <aggregate ProfileStats> } },
-  { cpuId: "20,64,10#0", name: "Beta",  coProcessors: 1,
+  { cpuId: "1", name: "Beta",  coProcessors: 1,
     outputs: { "minecraft:iron_ingot": <aggregate ProfileStats> } }
 ]
 entries: [ ... full samples for the displayed CPU (network or pinned) ... ]
@@ -198,17 +198,20 @@ throw. Keep the `version == 1` branch reading the old shape.
 
 ## Lookup fallback
 
-Add a helper that resolves stats with CPU preference but falls back to
-network-level, and **reports whether it fell back** so the UI can render the `*`
-"depends on CPU" marker (`estimation.md`):
+Add a helper, named `resolveStats`, that resolves stats with CPU preference but
+falls back to network-level, and **reports whether it fell back** so the UI can
+render the `*` "depends on CPU" marker (`estimation.md`). Use `reliableEstimate()`
+as the single fallback decision — do not introduce a separate sample-count
+threshold, since `ProfileStats.reliableEstimate()` already encodes the same rule
+(`CraftProfiler.java:192`):
 
 ```java
 public record CpuStatsResult(ProfileStats stats, boolean cpuSpecific) { }
 
-public static CpuStatsResult stats(String networkId, String cpuId, AEKey what) {
+public static CpuStatsResult resolveStats(String networkId, String cpuId, AEKey what) {
     if (cpuId != null && !cpuId.isEmpty()) {
         var specific = stats(new ProfileKey(networkId, cpuId, what.getId().toString()));
-        if (specific.isPresent() && specific.get().sampleCount() >= MIN_CPU_SAMPLES) {
+        if (specific.isPresent() && specific.get().reliableEstimate()) {
             return new CpuStatsResult(specific.get(), true);
         }
     }
@@ -217,11 +220,9 @@ public static CpuStatsResult stats(String networkId, String cpuId, AEKey what) {
 }
 ```
 
-`MIN_CPU_SAMPLES` is the same `3` threshold already used for `reliableEstimate`
-(`CraftProfiler.java:192`). Below that, the CPU-specific sample is too thin and we
-use the network blend, which is exactly when the `*` marker belongs. The accuracy
-tracker uses the same resolution rule. When `cpuId` is empty (no CPU selected), the
-result is always `cpuSpecific = false`, so the headline shows `*`.
+When `cpuId` is empty (no CPU selected), the result is always
+`cpuSpecific = false`, so the headline shows `*`. The accuracy tracker uses the same
+`resolveStats` resolution rule.
 
 ## Accuracy and stall are CPU-scoped too
 
@@ -261,7 +262,7 @@ outputs: [ ... existing samples with cpuId ... ]
 accuracy: [
   {
     networkId: "minecraft:overworld|10,64,10"
-    cpuId: "12,64,10#2"
+    cpuId: "4"
     key: "minecraft:iron_ingot"
     samples: [
       { predictedSeconds: 135, actualTickSeconds: 138.0, actualWallSeconds: 142.5,

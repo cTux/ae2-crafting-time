@@ -21,26 +21,45 @@ detail/chat views) once CPU-bound stats exist.
 
 ## No CPU selected (automatic)
 
-The plan is about to be auto-submitted to a fitting CPU, so we do not know which
-one will run. Behavior:
+The plan is about to be auto-submitted, and AE2 will pick a fitting CPU itself.
+Behavior:
 
 - The server sends `cpuSummaries` for every CPU on the grid (`data-model.md`).
 - The client computes each CPU's Total TTC from its per-output `amountPerSecond`
-  and the plan row amounts, using only that CPU's own stats. A row with no
-  CPU-specific data for that CPU falls back to the network rate and marks that
-  CPU's total as a fallback.
-- **Headline Total TTC = the minimum of the per-CPU totals.** Show it with `*` and
-  the legend "depends on CPU", because no specific CPU is locked in.
-- Show the per-CPU breakdown so the spread is visible:
+  and the plan row amounts, using only that CPU's own stats (`resolveStats`). A row
+  with no CPU-specific data for that CPU falls back to the network rate and marks
+  that CPU's total as a fallback.
+- **Headline Total TTC = the TTC of the CPU AE2 would auto-select**, i.e. the
+  smallest CPU whose `getAvailableStorage()` fits the plan. Show it with `*` and the
+  legend "depends on CPU", because no specific CPU is locked in by the player.
+- Show the **fastest-CPU TTC as a note** (the minimum across CPUs), so the player
+  sees the best case too:
 
   ```text
-  Total TTC: ~000:02:15*   (depends on CPU)
-  CPU Alpha ~2:15* · CPU Beta ~3:10* · CPU Gamma ~4:40*
+  Total TTC: ~000:03:10*   (depends on CPU)
+  Fastest CPU: ~000:02:15
   ```
 
-  `*` on a CPU entry means that CPU used a network fallback for at least one row.
+- Show the per-CPU breakdown as **multi-line text** (not one crowded line) so it
+  never overflows the screen width:
+
+  ```text
+  Per CPU:
+    Alpha (4 co-proc) ~2:15*
+    Beta (1 co-proc) ~3:10*
+    Gamma (4 co-proc) ~4:40*
+  ```
+
+  Dedupe by `cpuId` (same co-processor count collapses to one line). `*` on a CPU
+  entry means that CPU used a network fallback for at least one row.
 - If a CPU has zero usable data, it is omitted from the breakdown but still
-  contributes its network-fallback total to the minimum.
+  contributes its network-fallback total to the auto-select/min computation.
+- **Over-merge signal:** if a `cpuId` aggregates CPUs that actually perform
+  differently (same co-processor count, different attached machines, and the
+  machine hash was omitted), its blended accuracy drops. When an id's accuracy is
+  low, append a tooltip line: *"your setup has differently performant machines"*.
+  This tells the player why the estimate is uncertain without blaming a specific
+  CPU.
 
 ## Player selects a CPU
 
@@ -97,6 +116,11 @@ When a CPU is pinned, the detail/chat shows that CPU's accuracy; otherwise it sh
 network-level accuracy with a `*` if the pinned CPU had none. The MAPE / ratio
 metrics are unchanged. Per-CPU accuracy is persisted (`data-model.md`) and survives
 restarts, so the detail/chat reflects historical accuracy for that exact CPU.
+
+A low per-CPU accuracy is also the over-merge signal: when the same `cpuId`
+blends CPUs with different real throughput, show the *"your setup has differently
+performant machines"* tooltip (see the unchosen section). Resolve stats through
+`resolveStats` (`data-model.md`) so the `*` marker and the fallback use one rule.
 
 ## Files touched
 
