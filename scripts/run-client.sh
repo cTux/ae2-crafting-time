@@ -39,7 +39,7 @@ case "$Target" in
     Module="mc_1_20_1_forge"; Game="1.20.1"; Loader="forge"
     LoaderMetadata="https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml"
     LoaderPrefix="1.20.1-"; LoaderProperty="runtimeForge1201Version"; Ae2Property="runtimeAe2Forge1201Version"
-    Projects=("Ck4E7v7R" "a1RwDz90" "IiATswDj" "E6BFl96N" "u6dRKJwZ")
+    Projects=("Ck4E7v7R" "IiATswDj" "E6BFl96N" "u6dRKJwZ")
     ;;
   1.20.1-fabric)
     Module="fabric_1_20_1"; Game="1.20.1"; Loader="fabric"
