@@ -2,7 +2,10 @@
 
 - Complete each fix or feature as a separate conventional commit. Let the post-commit hook open or update the PR, then rely on its required CI checks; do not run tests locally before creating the PR.
 - Run `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\setup-git.ps1` once per clone. The tracked post-commit hook pushes every commit and creates the branch PR automatically.
-- Work on a branch. Do not commit fixes or features on a detached HEAD.
+- Work on a branch. Do not commit fixes or features on a detached HEAD. Branch from
+  `origin/master`, not another in-flight feature branch, or the auto-PR hook will
+  drag in unrelated commits. For branch-base and commit-message pitfalls, use
+  `.codex/skills/ae2-crafting-time-pr/SKILL.md`.
 - Use `.codex/skills/ae2-crafting-time-writing/SKILL.md` for every repo-owned
   document, skill, changelog, translation, issue form, and player-facing text
   field. Keep the voice casual, direct, and technically precise.

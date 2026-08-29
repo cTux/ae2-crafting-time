@@ -1,0 +1,4 @@
+interface:
+  display_name: "AE2 Crafting Time PR Workflow"
+  short_description: "Open, rebase, and recover pull requests without unrelated commits."
+  default_prompt: "Use this skill before creating, rebasing, or fixing a pull request in this repo."
