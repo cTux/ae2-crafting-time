@@ -18,6 +18,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -41,14 +42,16 @@ public abstract class AbstractTableRendererMixin {
     private int ae2craftingtime$drawTextWithShadow(GuiGraphics guiGraphics, Font font, Component text,
             int x, int y, int color, boolean shadow) {
         var contents = text.getContents();
-        var isAe2CraftingTime = contents instanceof TranslatableContents translatable
-                && translatable.getKey().startsWith("text.ae2craftingtime.");
-        if (isAe2CraftingTime && ae2craftingtime$isTtcLine(translatable)) {
-            var width = font.width(text);
-            TtcBadge.fillSmoothRoundRect(guiGraphics, x - 3, y - 1, x + width + 3, y + font.lineHeight + 1, 3,
-                    TtcBadge.BACKGROUND);
+        if (contents instanceof TranslatableContents translatable) {
+            var isAe2CraftingTime = translatable.getKey().startsWith("text.ae2craftingtime.");
+            if (isAe2CraftingTime && ae2craftingtime$isTtcLine(translatable)) {
+                var width = font.width(text);
+                TtcBadge.fillSmoothRoundRect(guiGraphics, x - 3, y - 1, x + width + 3, y + font.lineHeight + 1, 3,
+                        TtcBadge.BACKGROUND);
+            }
+            return guiGraphics.drawString(font, text, x, y, color, shadow || isAe2CraftingTime);
         }
-        return guiGraphics.drawString(font, text, x, y, color, shadow || isAe2CraftingTime);
+        return guiGraphics.drawString(font, text, x, y, color, shadow);
     }
 
     @Unique
