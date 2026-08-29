@@ -7,7 +7,10 @@ promises. Do not add one to loader metadata until real code uses it.
 
 Yes / No in the version columns means the mod publishes a release for that loader and
 Minecraft version on Modrinth (availability), not that an integration exists yet. The
-`Current target fit` column lists where an integration is worth building next.
+`Current target fit` column lists where an integration is worth building next. The
+`26.1.2 NeoForge` cells were each confirmed against the live Modrinth version list
+(AdvancedAE, Extended AE, and AE2 Wireless Terminals all publish `26.1.2` NeoForge
+builds there), not just the older lines.
 
 | Mod | Current target fit | 1.20.1 Forge | 1.20.1 Fabric | 1.21.1 NeoForge | 26.1.2 NeoForge | Possible integration | Why it helps |
 | --- | --- | --- | --- | --- | --- | --- | --- |
