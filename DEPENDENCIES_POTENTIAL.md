@@ -25,6 +25,52 @@ promises. Do not add one to loader metadata until real code uses it.
 | Applied Mekanistics (`appmek`) | Normalized TTC support for chemical-style AE keys. |
 | ME Requester (`merequester`) | Row TTC labels and total TTC overlay in ME Requester screens. |
 
+## Project Infinity 0.1 (modpack) AE2 addon coverage
+
+Full AE2-addon inventory for the **Project Infinity 0.1** modpack (Forge
+1.20.1, by BOLT_M4G1C). This is the authoritative list the integration issues
+track. Addons marked `CUSTOM_CPU` ship their own crafting-CPU logic and are the
+ones that currently break TTC start/stop detection (see issue #24); the others
+need TTC text display or key normalization so stats stay honest.
+
+| Mod | Category | Integration | Links | Status | Issue |
+| --- | --- | --- | --- | --- | --- |
+| AdvancedAE (`advanced_ae`) | CUSTOM_CPU (Quantum Computer) | CPU detection mixin | [CF](https://www.curseforge.com/minecraft/mc-mods/advancedae) / [MR](https://modrinth.com/mod/advancedae) | Implemented (verify) | #67 |
+| Neo ECO AE (`neoecoae`) | CUSTOM_CPU (C4/C6/C9 + F4/F6/F9) | CPU detection mixin | [CF](https://www.curseforge.com/minecraft/mc-mods/neo-eco-ae-extension) / [MR](https://modrinth.com/mod/neoecoae) | Not started | #66 |
+| OmniSequence: Transfinite (`molecular_manipulator`) | CUSTOM_CPU (Omni-Computation Core) | Gate AE2 `CraftingCpuLogic` hooks on Omni ownership | [CF](https://www.curseforge.com/minecraft/mc-mods/omnisequence-transfinite) | Not started | #71 |
+| AE2 Lightning Tech (`ae2lightningtech`) | CUSTOM_CPU (Tianshu Array + Matter Warping Matrix) | CPU detection mixin | [CF](https://www.curseforge.com/minecraft/mc-mods/ae2-lightning-tech) / [MR](https://modrinth.com/mod/ae2-lightning-tech) | Not started | #72 |
+| ExtendedAE (`extendedae`) | ASSEMBLER + PROVIDER | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/ex-pattern-provider) | Not started | #73 |
+| ExtendedAE-Plus (`extendedaeplus`) | PROVIDER / QOL | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/extendedae-plus) / [MR](https://modrinth.com/mod/extendedae-plus) | Not started | #74 |
+| BloodMagic AE2 Addition (`bmaddon`) | PROVIDER (Ara Vitae Assembler) | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/bmaddon) / [MR](https://modrinth.com/mod/bmaddon) | Not started | #75 |
+| Crazy AE2 Addons (`crazyae2addons`) | PROVIDER / QOL | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/crazy-ae2-addons) / [MR](https://modrinth.com/mod/crazy-ae2-addons) | Not started | #76 |
+| AE2 WCWT (`ae2wcwt`) | WIRELESS_TERMINAL | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/ae2-wcwt) / [MR](https://modrinth.com/mod/ae2-wcwt) | Not started | #77 |
+| AE2 Wireless Terminals (`wireless_terminals`) | WIRELESS_TERMINAL | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/applied-energistics-2-wireless-terminals) / [MR](https://modrinth.com/mod/applied-energistics-2-wireless-terminals) | Not started | #78 |
+| MEGA Cells (`megacells`) | STORAGE_CELL / KEY | key + display | [CF](https://www.curseforge.com/minecraft/mc-mods/mega-cells) / [MR](https://modrinth.com/mod/mega) | Not started | #79 |
+| OMNI Cells (`omnicells`) | STORAGE_CELL | key + display | [CF](https://www.curseforge.com/minecraft/mc-mods/omni-cells) | Not started | #80 |
+| ProjectCell (`projectcell`) | STORAGE_CELL / EMC_KEY | key + display | [CF](https://www.curseforge.com/minecraft/mc-mods/projectcell) / [MR](https://modrinth.com/mod/projectcell) | Not started | #81 |
+| AppliedE TPS Fix (`appliede`) | EMC_KEY | key | [CF](https://www.curseforge.com/minecraft/mc-mods/appliede-tps-fix) | Not started | #82 |
+| Applied Flux (`appflux`) | STORAGE_CELL / energy KEY | key + display | [CF](https://www.curseforge.com/minecraft/mc-mods/applied-flux) / [MR](https://modrinth.com/mod/appflux) | Not started | #83 |
+| Modern AE2 Additions (`modern_ae2_additions`) | QOL (AE Additions) | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/modern-ae2-additions) / [MR](https://modrinth.com/mod/modern-ae2-additions) | Not started | #84 |
+| Applied Mekanistics (`appmek`) | CHEMICAL_KEY | key + display | [CF](https://www.curseforge.com/minecraft/mc-mods/applied-mekanistics) / [MR](https://modrinth.com/mod/applied-mekanistics) | Implemented (see top table) | #68 |
+| AE2: Crafting Tree (`ae2ct`) | CRAFTING_UI | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-tree) | Implemented (see top table) | #69 |
+| ME Requester (`merequester`) | QOL / requester | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/merequester) / [MR](https://modrinth.com/mod/merequester) | Implemented (see top table) | #70 |
+| AE2 Import Export Card (`ae2importexportcard`) | QOL | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/ae2-import-export-card) / [MR](https://modrinth.com/mod/ae2-import-export-card) | Not started | #85 |
+| AE2 Network Analyser (`ae2networkanalyser`) | QOL (visual tool) | Likely none | [CF](https://www.curseforge.com/minecraft/mc-mods/ae2-network-analyser) | Not started | #86 |
+| AEInfinityBooster (`aeinfinitybooster`) | QOL (range) | Likely none | [CF](https://www.curseforge.com/minecraft/mc-mods/aeinfinitybooster) / [MR](https://modrinth.com/mod/aeinfinitybooster) | Not started | #87 |
+| Applied Botanics (Fork) (`appliedbotanics`) | QOL (Botania) | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/applied-botanics-fork) | Not started | #88 |
+| Advanced Peripherals (`advancedperipherals`) | QOL (ME Bridge) | TTC display | [CF](https://www.curseforge.com/minecraft/mc-mods/advanced-peripherals) / [MR](https://modrinth.com/mod/advancedperipherals) | Not started | #89 |
+
+### CPU-detection mixin summary (the #24 fix path)
+- Target AE2's `CraftingCpuLogic` (already mixed) for any addon that reuses it.
+- Add a `@Pseudo` mixin per addon that ships its own logic, mirroring
+  `AdvancedCraftingCpuLogicMixin` and calling `ProfilerBridge.start` /
+  `complete` / `startJob` / `finishJob` / `updateCapacity`:
+  - NeoEco: `cn.dancingsnow.neoecoae.api.me.ECOCraftingCPULogic`
+  - AE2 Lightning Tech: `com.moakiee.ae2lt.crafting.timewheel.Ae2LtTimeWheelCraftingCpuLogic`
+  - OmniSequence: gates the existing `CraftingCpuLogic` hooks (no new class).
+- `grid`/`level`/`gameTime` come from the addon's `ICraftingCPU` object
+  (`getGrid()` / `getLevel()` / `level.getGameTime()`).
+
 ## Selection Rule
 
 Prefer integrations that can reuse `ClientStats`, `TimeEstimate`, and
