@@ -34,6 +34,7 @@ It is not affiliated with or endorsed by the Applied Energistics 2 team.
 
 You can grab the latest version from:
 
+- [Latest release](https://github.com/cTux/ae2-crafting-time/releases/latest)
 - [Modrinth](https://modrinth.com/mod/ae2-crafting-time)
 - [CurseForge](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-time)
 
@@ -56,44 +57,17 @@ You can grab the latest version from:
 - Adds TTC hints to ME Requester rows and totals when the mod is installed.
 - Shares as much code as possible between supported Minecraft versions and loaders.
 
-## Building It
-
-The project uses Java 17 for Minecraft 1.20.1, Java 21 for Minecraft 1.21.1
-NeoForge, and Java 25 for Minecraft 26.1.2 NeoForge. Gradle handles the declared
-toolchains.
-
-To build every supported version:
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-all-versions.ps1
-```
-
-Pull requests are tested through GitHub Actions.
-
-When the build finishes, the JARs are copied to `dist/`.
-
-## Running a Development Client
-
-Use the script for the version and loader you want to test:
-
-```powershell
-.\run-1.20.1-forge.bat
-.\run-1.20.1-fabric.bat
-.\run-1.21.1-neoforge.bat
-.\run-26.1.2-neoforge.bat
-```
-
-Normal builds compile against the minimum supported loader and AE2 versions.
-Each run script uses the newest loader, AE2, optional integrations, required
-dependencies, and JEI available for that Minecraft and loader target.
-
 ## Documentation
 
 If you want the more technical details, start here:
 
+- [Building It](docs/building.md)
+- [Running a Development Client](docs/dev-client.md)
+- [Repo Layout](docs/repo-layout.md)
+- [Working with this project](docs/working-with-project.md)
+- [Codex Skills](docs/codex-skills.md)
 - [Dependencies](DEPENDENCIES.md)
 - [Potential dependency integrations](DEPENDENCIES_POTENTIAL.md)
-- [Working with this project](docs/working-with-project.md)
 - [Architecture](docs/architecture.md)
 - [Release process](docs/release.md)
 - [Server-owned stats design](docs/server-client-stats.md)
@@ -101,15 +75,6 @@ If you want the more technical details, start here:
 - [Time To Craft plan UI](docs/time-to-craft-plan.md)
 - [TTC sorting](docs/ttc-sorting.md)
 - [TTC colored text](docs/ttc-colored-text.md)
-
-## Codex Skills
-
-The project-specific Codex skills live in `.codex/skills/`:
-
-- `ae2-crafting-time-dev`: use for feature work, TTC UI changes, profiling bugs, packets, persistence, and docs.
-- `ae2-crafting-time-release`: use for release matrix rows, build wrappers, jar names, deploy scripts, and release checks.
-- `ae2-crafting-time-writing`: use for docs, skills, changelogs, translations,
-  issue forms, and store or loader descriptions.
 
 ## Development Disclosure
 
@@ -125,19 +90,3 @@ AI-generated visual assets.
 ## License
 
 AE2 Crafting Time is available under the [MIT License](LICENSE).
-
-## Repo Layout
-
-```text
-shared/src/main/java       Pure Java profiling, estimates, cache, and helpers
-shared/src/mcCommon/java   AE2/Minecraft code shared by every supported version
-shared/src/mc1201/java     Minecraft 1.20.1/1.21.1 API boundary
-shared/src/mc2612/java     Minecraft 26.1.2 and AE2 26 API boundary
-shared/src/neoforge/java   Code shared by both NeoForge versions
-versions/1.20.1-forge      Forge module
-versions/1.20.1-fabric     Fabric module
-versions/1.21.1-neoforge   NeoForge module
-versions/26.1.2-neoforge   Minecraft 26.1.2 NeoForge module
-scripts/                   Build and release automation
-docs/                      Design, workflow, and release notes
-```
