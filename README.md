@@ -74,6 +74,7 @@ If you want the more technical details, start here:
 - [Potential dependency integrations](DEPENDENCIES_POTENTIAL.md)
 - [Known Issues](KNOWN_ISSUES.md)
 - [Architecture](docs/architecture.md)
+- [AE2 addon integration](docs/ae2-addon-integration/spec.md)
 - [Release process](docs/release.md)
 - [Server-owned stats design](docs/server-client-stats.md)
 - [World save persistence](docs/world-save-persistence.md)

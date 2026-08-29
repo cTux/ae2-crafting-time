@@ -44,6 +44,14 @@ CraftingCpuLogic or AdvancedAE mixin
 
 `CraftingCpuLogicMixin` and `AdvancedCraftingCpuLogicMixin` capture expected output, accepted output, job finish, accepted plan, and recent parallel-slot use. `ProfilerBridge` normalizes AE keys, scopes data by network, hydrates SavedData, marks snapshots dirty, and combines profiler, accuracy, and stall data into `StatsEntry`.
 
+For addon CPUs, check each execution method instead of treating
+`ICraftingCPU` discovery as profiling coverage. `ICraftingCPU` exposes status
+and capacity, but not pattern dispatch, accepted output, grid, or level. AE2's
+concrete `CraftingService` also stores `CraftingCPUCluster` objects, so a
+service mixin can observe only the CPUs the service actually exposes. Keep the
+inherited `CraftingCpuLogic` hooks as the broad path, then add one optional
+adapter only for a proven custom or overridden crafting loop.
+
 `StatsRequestContext` resolves the active AE2 grid and selected standard or AdvancedAE CPU. `StatsRequestHandler` treats requested IDs as hints, resolves authoritative network data, and returns only aggregate entries plus current stored amounts. Network adapters must enqueue handling on the correct side/thread.
 
 ## Profiling Semantics

@@ -1,36 +1,40 @@
 # Potential Dependency Integrations
 
-AE2 addons either reuse AE2 base classes (covered by general hooks) or ship
-their own CPU logic and/or custom UI (needs targeted work). The approach below
-collapses ~25 planned integrations into a few general hooks plus a small residue
-of custom UI mixins, so we stop adding one integration per addon.
+Start with AE2's own CPU, key, and UI contracts. Add addon-specific code only
+when source inspection proves that an addon bypasses them. This covers the
+largest useful group with the fewest optional mixins, while keeping the gaps
+honest.
+
+The full requirements and rollout are in [the addon integration spec],
+[technical design], and [implementation plan].
 
 ## Chosen approach
 
 | # | Approach | What changes | Addons covered |
 | --- | --- | --- | --- |
-| 0 | Base CPU mixin (inheritance) | Already in `CraftingCpuLogicMixin`; verify each CUSTOM_CPU addon extends AE2 `CraftingCpuLogic`. No new code. | Any CUSTOM_CPU that subclasses AE2 logic |
-| 1 | Universal job hook | **New** `CraftingServiceMixin` (mcCommon/neoforge) on `submitJob` + CPU registry. Captures job start/finish + every `ICraftingCPU` for basic TTC, zero per-addon code. | All CPUs (vanilla + every CUSTOM_CPU) |
-| 2 | Optional per-addon CPU mixin (fidelity) | Mirror `AdvancedCraftingCpuLogicMixin`, call `ProfilerBridge.start/complete/startJob/finishJob/updateCapacity`. Only where full bottleneck detail is wanted. | AdvancedAE (done), NeoEco, OmniSequence, AE2 Lightning Tech |
-| 3 | Generic KeyType handler | Centralize AEKey normalization in `AeKeyAmounts`/`ProfilerBridge.key` at the `AEKey`/`KeyType` boundary. | MEGA Cells, OMNI Cells, ProjectCell, AppliedE, Applied Flux, Applied Mekanistics |
-| 4 | Generic table/UI mixin | `AbstractTableRendererMixin` (exists) + optional `AEBaseScreenMixin` for addon terminals reusing AE2 widgets. | ExtendedAE, ExtendedAE-Plus, BM Addon, Crazy AE2, Modern AE2 Additions, AE Additions, Applied Botanics |
-| 5 | Bespoke UI mixin | Per-addon `@Pseudo` mixin (existing pattern). | ae2ct, ME Requester, Wireless Terminals (WCWT, Wireless Terminals), AE2 Import Export Card |
+| 0 | AE2 CPU execution hook | Already in `CraftingCpuLogicMixin`. Covers inherited AE2 methods; an override bypasses only the method it replaces. | Vanilla AE2 and addons that reuse its execution logic, including OmniSequence after conflict-safe verification |
+| 1 | AE2 service observation | **Planned**, after a proof-of-coverage spike. Observe `CraftingService.submitJob`, `getCpus`, and busy-state changes. This can cover job lifecycle only for CPUs the service actually exposes; it cannot produce output-throughput samples by itself. | AE2 service-visible CPUs |
+| 2 | Small custom CPU adapter | Mirror `AdvancedCraftingCpuLogicMixin` only for a custom or overridden crafting loop. Call the existing `ProfilerBridge` methods at the real dispatch, insertion, finish, and capacity points. | AdvancedAE (done), NeoEco, AE2 Lightning Tech |
+| 3 | Native `AEKey` contract | `AeKeyAmounts` already normalizes every `AEKey` through `getAmountPerUnit()`. Verify a new key type before adding code; use `AEKeyType`, not addon class checks. | MEGA Cells, OMNI Cells, ProjectCell, AppliedE TPS Fix, Applied Flux, Applied Mekanistics |
+| 4 | AE2 table/UI hook | `AbstractTableRendererMixin` already covers screens that reuse AE2's table renderer. Add a shared `AEBaseScreen` hook only if one common method can expose TTC without screen-specific assumptions. | ExtendedAE, ExtendedAE-Plus, BM Addon, Crazy AE2, Modern AE2 Additions, Applied Botanics, AE2 Import Export Card, AE2 Things, Expanded AE |
+| 5 | Bespoke UI or API mixin | Per-addon `@Pseudo` mixin (existing pattern). | ae2ct, ME Requester, AE2 WCWT, AE2 Wireless Terminals, AE2 Import Export Card, Advanced Peripherals |
 
-A Mixin plugin / auto-discovery of `ICraftingCPU` subclasses is intentionally
-skipped: it cannot derive each addon's crafting-loop method, so it only repeats
-layer 0 without removing layer-2 work.
+A Mixin plugin or automatic `ICraftingCPU` subclass discovery is intentionally
+skipped. `ICraftingCPU` exposes status, capacity, and cancellation, but not the
+dispatch and accepted-output events needed for throughput samples. Discovery
+therefore cannot replace layer 2.
 
 ## Candidate addons
 
 | Mod | Category | Approach | Issue | Links | Status |
 | --- | --- | --- | --- | --- | --- |
-| AdvancedAE | CUSTOM_CPU (Quantum Computer) | 0+1+2 | #67 | [CF][advancedae-cf] / [MR][advancedae-mr] | Implemented (verify) |
+| AdvancedAE | CUSTOM_CPU (Quantum Computer) | 2 | #67 | [CF][advancedae-cf] / [MR][advancedae-mr] | Implemented (verify) |
 | NeoEco AE | CUSTOM_CPU (C4/C6/C9 + F4/F6/F9) | 1+2 | #66 | [CF][neoecoae-cf] / [MR][neoecoae-mr] | Not started |
-| OmniSequence: Transfinite | CUSTOM_CPU (Omni-Computation Core) | 0+1 (gate existing hooks) | #71 | [CF][omnisequence-cf] | Not started |
+| OmniSequence: Transfinite | CUSTOM_CPU (Omni-Computation Core) | 0 (conflict-safe verification) | #71 | [CF][omnisequence-cf] | Not started |
 | AE2 Lightning Tech | CUSTOM_CPU (Tianshu + Matter Warping) | 1+2 | #72 | [CF][ae2lt-cf] / [MR][ae2lt-mr] | Not started |
 | ExtendedAE | ASSEMBLER + PROVIDER | 4 | #73 | [CF][extendedae-cf] | Not started |
 | ExtendedAE-Plus | PROVIDER / QOL | 4 | #74 | [CF][extendedaeplus-cf] / [MR][extendedaeplus-mr] | Not started |
-| BloodMagic AE2 Addition | PROVIDER (Ara Vitae Assembler) | 4 | #75 | [CF][bmaddon-cf] / [MR][bmaddon-mr] | Not started |
+| BM Addon | PROVIDER (Ara Vitae Assembler) | 4 | #75 | [CF][bmaddon-cf] / [MR][bmaddon-mr] | Not started |
 | Crazy AE2 Addons | PROVIDER / QOL | 4 | #76 | [CF][crazyae2-cf] / [MR][crazyae2-mr] | Not started |
 | AE2 WCWT | WIRELESS_TERMINAL | 5 | #77 | [CF][ae2wcwt-cf] / [MR][ae2wcwt-mr] | Not started |
 | AE2 Wireless Terminals | WIRELESS_TERMINAL | 5 | #78 | [CF][wireless-cf] / [MR][wireless-mr] | Not started |
@@ -47,27 +51,35 @@ layer 0 without removing layer-2 work.
 | AE2 Network Analyser | QOL (visual tool) | none | #86 | [CF][ae2na-cf] | Not started |
 | AEInfinityBooster | QOL (range) | none | #87 | [CF][aeinfinity-cf] / [MR][aeinfinity-mr] | Not started |
 | Applied Botanics (Fork) | QOL (Botania) | 4 | #88 | [CF][appliedbotanics-cf] | Not started |
-| Advanced Peripherals | QOL (ME Bridge) | 4/5 | #89 | [CF][advancedperipherals-cf] / [MR][advancedperipherals-mr] | Not started |
+| Advanced Peripherals | QOL (ME Bridge) | 5 (peripheral API, if useful) | #89 | [CF][advancedperipherals-cf] / [MR][advancedperipherals-mr] | Not started |
 | AE2 Things | QOL (Inscriber / Crystal Growth) | 4/5 | — | [MR][ae2things-mr] | Not started |
 | Expanded AE | PROVIDER / QOL | 4 | — | [CF][expandedae-cf] / [MR][expandedae-mr] | Not started |
 
 ## CPU-detection mixin summary (#24 fix path)
 
-- Layer 0/1 already covers addons that reuse AE2 `CraftingCpuLogic` or submit
-  through the grid `CraftingService`.
+- Layer 0 covers inherited `CraftingCpuLogic` methods. Layer 1 is separate
+  because a service-visible CPU may implement its own execution logic. The
+  service can observe submission and busy-state changes, but layer 2 is still
+  required for accurate output throughput when the addon bypasses layer 0.
 - Only add a `@Pseudo` layer-2 mixin per addon that ships its own logic and
   overrides the hooked methods, mirroring `AdvancedCraftingCpuLogicMixin`:
   - NeoEco: `cn.dancingsnow.neoecoae.api.me.ECOCraftingCPULogic`
   - AE2 Lightning Tech: `com.moakiee.ae2lt.crafting.timewheel.Ae2LtTimeWheelCraftingCpuLogic`
-  - OmniSequence: gates the existing `CraftingCpuLogic` hooks (no new class).
-- `grid`/`level`/`gameTime` come from the addon's `ICraftingCPU` object
-  (`getGrid()` / `getLevel()` / `level.getGameTime()`).
+- OmniSequence reuses `CraftingCpuLogic`, so it stays in layer 0. Its own
+  redirect on `executeCrafting` must not collide with ours.
+- `getGrid()` and `getLevel()` are concrete CPU methods, not part of
+  `ICraftingCPU`. A layer-2 adapter may use them only after checking the addon
+  class that supplies them.
 
 ## Selection rule
 
 Prefer integrations that reuse `ClientStats`, `TimeEstimate`, and
 `AeKeyAmounts`. Add a compile-time dependency only when AE2 APIs or an optional
 string-target mixin cannot reach the screen or key type.
+
+[the addon integration spec]: docs/ae2-addon-integration/spec.md
+[technical design]: docs/ae2-addon-integration/technical-design.md
+[implementation plan]: docs/ae2-addon-integration/implementation-plan.md
 
 [advancedae-cf]: https://www.curseforge.com/minecraft/mc-mods/advancedae
 [advancedae-mr]: https://modrinth.com/mod/advancedae
