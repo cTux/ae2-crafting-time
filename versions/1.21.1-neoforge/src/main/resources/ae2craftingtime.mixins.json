@@ -15,6 +15,7 @@
     "CraftConfirmTableRendererMixin",
     "CraftingStatusTableRendererMixin",
     "CraftingTreeWidgetMixin",
+    "CraftingTreeNewWidgetMixin",
     "MERequesterScreenMixin"
   ],
   "injectors": {
