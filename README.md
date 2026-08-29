@@ -81,6 +81,7 @@ If you want the more technical details, start here:
 - [Time To Craft plan UI](docs/time-to-craft-plan.md)
 - [TTC sorting](docs/ttc-sorting.md)
 - [TTC colored text](docs/ttc-colored-text.md)
+- [Waiting to start status](docs/waiting-to-start/spec.md)
 
 ## Development Disclosure
 
