@@ -72,6 +72,7 @@ If you want the more technical details, start here:
 - [Codex Skills](docs/codex-skills.md)
 - [Dependencies](DEPENDENCIES.md)
 - [Potential dependency integrations](DEPENDENCIES_POTENTIAL.md)
+- [Known Issues](KNOWN_ISSUES.md)
 - [Architecture](docs/architecture.md)
 - [Release process](docs/release.md)
 - [Server-owned stats design](docs/server-client-stats.md)
