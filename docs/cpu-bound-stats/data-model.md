@@ -145,10 +145,10 @@ the same version in a play session, so a plain field add is acceptable. Still ga
 it behind a small protocol marker so a mismatched client does not silently
 misread. Options:
 
-- Add one `boolean cpuAware` flag at the front of the snapshot, written by the
-  server and read by the client; when `false`, client code reads the old
-  three-field key shape. This keeps the door open for older client builds during
-  testing.
+  - Add one `boolean cpuAware` flag at the front of the snapshot, written by the
+    server and read by the client; when `false`, client code reads the legacy shape
+    written today (`networkId` + `outputId`), with `cpuId` defaulting to `""`. This
+    keeps the door open for older client builds during testing.
 
 Keep the flag simple: write `true` always from the new server, and have the new
 client read `cpuId` only when the flag is `true`.

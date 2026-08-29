@@ -54,8 +54,9 @@ Behavior:
   List each CPU **by name** (so `Alpha` and `Gamma` stay on separate lines even
   when both are `cpuId: "4"`). Multiple named CPUs sharing a `cpuId` are exactly the
   over-merge case: mark them with the *"your setup has differently performant
-  machines"* tooltip rather than collapsing them. `*` on a CPU entry means that CPU
-  used a network fallback for at least one row.
+  machines"* tooltip rather than collapsing them. In unchosen mode every entry
+  carries `*` because no CPU is pinned (rule 2); the network-fallback nuance only
+  toggles `*` in **pinned** mode, when a selected CPU lacks data for a row.
 - If a CPU has zero usable data, it is omitted from the breakdown but still
   contributes its network-fallback total to the auto-select/min computation.
 - **Over-merge signal:** if a `cpuId` aggregates CPUs that actually perform
