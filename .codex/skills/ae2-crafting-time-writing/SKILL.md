@@ -34,7 +34,10 @@ clear. The age is a voice target, not something to mention in the text.
 - **Changelogs:** include only player-visible features, fixes, and behavior
   changes. Leave out implementation details, tests, refactors, tooling, and
   build or release work. Use complete sentences under `ADDED`, `FIXED`,
-  `IMPROVED`, `DELETED`, or `CHANGED`, and skip empty sections.
+  `IMPROVED`, `DELETED`, or `CHANGED`, and skip empty sections. When a change
+  affects every supported version, lead with an `All versions:` block, then add a
+  per-version block only for version-specific changes; both blocks use the same
+  categories. See the release skill rule 14 for the exact shape.
 - **Translations:** write natural UI text for that locale, keep it short, and
   preserve every placeholder and control name. Update English and Ukrainian
   together.
@@ -44,6 +47,10 @@ clear. The age is a voice target, not something to mention in the text.
 - **AI disclosure:** be open about AI help and the maintainer's Java experience,
   while making the review, testing, maintainability, scalability, and reuse
   standards clear. Do not imply that unreviewed vibe-coding is acceptable.
+- **PR descriptions:** write the `What?`, `Why?`, and `Where?` sections as plain
+  human-readable text a curious 10-year-old could follow. Use short sentences and
+  everyday words, and explain unfamiliar technical terms the first time they
+  appear. Never paste commit messages, diffs, or logs as the explanation.
 
 ## Before Finishing
 
