@@ -11,6 +11,7 @@ import com.ctux.ae2craftingtime.core.TtcColor;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.mc1201.TtcBadge;
 import com.ctux.ae2craftingtime.mc1201.TtcColorContext;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -42,7 +43,18 @@ public abstract class AbstractTableRendererMixin {
         var contents = text.getContents();
         var isAe2CraftingTime = contents instanceof TranslatableContents translatable
                 && translatable.getKey().startsWith("text.ae2craftingtime.");
+        if (isAe2CraftingTime && ae2craftingtime$isTtcLine(translatable)) {
+            var width = font.width(text);
+            TtcBadge.fillSmoothRoundRect(guiGraphics, x - 3, y - 1, x + width + 3, y + font.lineHeight + 1, 3,
+                    TtcBadge.BACKGROUND);
+        }
         return guiGraphics.drawString(font, text, x, y, color, shadow || isAe2CraftingTime);
+    }
+
+    @Unique
+    private static boolean ae2craftingtime$isTtcLine(TranslatableContents translatable) {
+        var key = translatable.getKey();
+        return key.equals("text.ae2craftingtime.ttc") || key.equals("text.ae2craftingtime.ttc_delayed");
     }
 
     @Inject(method = "render", at = @At("HEAD"), remap = false)
