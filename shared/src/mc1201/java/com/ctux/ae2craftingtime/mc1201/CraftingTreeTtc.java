@@ -20,7 +20,7 @@ import java.util.function.Function;
 public final class CraftingTreeTtc {
     public static final float TEXT_SCALE = 0.5f;
     public static final int LABEL_PADDING_X = 2;
-    public static final int LABEL_TOP_OFFSET = 20;
+    public static final int LABEL_TOP_OFFSET = 19;
     public static final int LABEL_HEIGHT = 7;
 
     private CraftingTreeTtc() {
