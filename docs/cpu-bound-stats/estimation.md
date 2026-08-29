@@ -33,6 +33,10 @@ Behavior:
 - **Headline Total TTC = the TTC of the CPU AE2 would auto-select**, i.e. the
   smallest CPU whose `getAvailableStorage()` fits the plan. Show it with `*` and the
   legend "depends on CPU", because no specific CPU is locked in by the player.
+  *Implementation note:* mirror AE2's exact auto-select tie-break (co-processor vs
+  storage order) rather than a literal "smallest storage"; the client computes the
+  plan's total bytes via AE2's stack-byte helper to compare against
+  `availableStorage`.
 - Show the **fastest-CPU TTC as a note** (the minimum across CPUs), so the player
   sees the best case too:
 

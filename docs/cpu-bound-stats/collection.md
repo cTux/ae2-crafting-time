@@ -112,6 +112,11 @@ Derive `cpuId` from that object with the same `ProfilerBridge.cpuId(cpu)`
 helper, then request/look up stats with the cpu-aware key and the network-level
 fallback. The server's `cpuSummaries` already carry the matching `cpuId` strings, so
 the pinned view reuses the same identifier recorded at craft time.
+*Implementation note:* source the chosen CPU from `CraftConfirmMenu` (the menu holds
+the selection, like `CraftingCPUMenuAccessor.ae2craftingtime$getCpu()`), not the
+screen's `cpuCycler` widget; confirm the exact menu accessor method name.
+`cpuMachineHash` is best-effort and may return `""` when attached machines are not
+derivable, degrading the id to the co-processor count.
 
 For the "no CPU chosen yet" case, `cpuId` is `""` and the lookup uses the
 network-level rate (see `estimation.md`).
