@@ -15,6 +15,7 @@ import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.StatsClickHandler;
 import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
+import com.ctux.ae2craftingtime.mc1201.TtcBadge;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsClick;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsKeyMapping;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
@@ -52,8 +53,6 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
     private static final int AE2CRAFTINGTIME_COLS = 3;
     @Unique
     private static final int AE2CRAFTINGTIME_ROWS = 5;
-    @Unique
-    private static final int AE2CRAFTINGTIME_TOTAL_BACKGROUND = 0xD0202028;
     @Unique
     private static final int AE2CRAFTINGTIME_TOTAL_COLOR = 0xFFE0E0E0;
 
@@ -121,8 +120,8 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
             var text = TtcText.totalTtc(eta);
             var font = getMinecraft().font;
             var textX = 109 - font.width(text) / 2;
-            guiGraphics.fill(textX - 3, 177, textX + font.width(text) + 3, 188,
-                    AE2CRAFTINGTIME_TOTAL_BACKGROUND);
+            var totalWidth = font.width(text);
+            TtcBadge.fillRect(guiGraphics, textX - 3, 177, textX + totalWidth + 3, 188, TtcBadge.BACKGROUND);
             guiGraphics.text(font, text, textX, 178, AE2CRAFTINGTIME_TOTAL_COLOR, true);
         });
     }

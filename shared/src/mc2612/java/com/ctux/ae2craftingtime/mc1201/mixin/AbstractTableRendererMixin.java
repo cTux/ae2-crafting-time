@@ -11,12 +11,14 @@ import com.ctux.ae2craftingtime.core.TtcColor;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.mc1201.TtcBadge;
 import com.ctux.ae2craftingtime.mc1201.TtcColorContext;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -40,9 +42,23 @@ public abstract class AbstractTableRendererMixin {
     private void ae2craftingtime$drawTextWithShadow(GuiGraphicsExtractor guiGraphics, Font font, Component text,
             int x, int y, int color, boolean shadow) {
         var contents = text.getContents();
-        var isAe2CraftingTime = contents instanceof TranslatableContents translatable
-                && translatable.getKey().startsWith("text.ae2craftingtime.");
-        guiGraphics.text(font, text, x, y, color, shadow || isAe2CraftingTime);
+        if (contents instanceof TranslatableContents translatable) {
+            var isAe2CraftingTime = translatable.getKey().startsWith("text.ae2craftingtime.");
+            if (isAe2CraftingTime && ae2craftingtime$isTtcLine(translatable)) {
+                var width = font.width(text);
+                TtcBadge.fillRect(guiGraphics, x - 3, y - 1, x + width + 3, y + font.lineHeight + 1,
+                        TtcBadge.BACKGROUND);
+            }
+            guiGraphics.text(font, text, x, y, color, shadow || isAe2CraftingTime);
+            return;
+        }
+        guiGraphics.text(font, text, x, y, color, shadow);
+    }
+
+    @Unique
+    private static boolean ae2craftingtime$isTtcLine(TranslatableContents translatable) {
+        var key = translatable.getKey();
+        return key.equals("text.ae2craftingtime.ttc") || key.equals("text.ae2craftingtime.ttc_delayed");
     }
 
     @Inject(method = "render", at = @At("HEAD"), remap = false)
