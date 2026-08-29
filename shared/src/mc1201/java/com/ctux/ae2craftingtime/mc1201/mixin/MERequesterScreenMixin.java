@@ -8,6 +8,7 @@ import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.mc1201.TtcBadge;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -31,8 +32,6 @@ import java.util.OptionalLong;
 public abstract class MERequesterScreenMixin {
     @Unique
     private static final float AE2CRAFTINGTIME_TEXT_SCALE = 0.5f;
-    @Unique
-    private static final int AE2CRAFTINGTIME_LABEL_BACKGROUND = 0xD0202028;
     @Unique
     private static final int AE2CRAFTINGTIME_LABEL_PADDING_X = 2;
     @Unique
@@ -110,12 +109,11 @@ public abstract class MERequesterScreenMixin {
 
         pose.pushPose();
         pose.scale(AE2CRAFTINGTIME_TEXT_SCALE, AE2CRAFTINGTIME_TEXT_SCALE, AE2CRAFTINGTIME_TEXT_SCALE);
-        guiGraphics.fill(
-                (int) Math.floor(labelLeft / AE2CRAFTINGTIME_TEXT_SCALE),
-                (int) Math.floor((double) top / AE2CRAFTINGTIME_TEXT_SCALE),
-                (int) Math.ceil((labelLeft + labelWidth) / AE2CRAFTINGTIME_TEXT_SCALE),
-                (int) Math.ceil((double) (top + AE2CRAFTINGTIME_LABEL_HEIGHT) / AE2CRAFTINGTIME_TEXT_SCALE),
-                AE2CRAFTINGTIME_LABEL_BACKGROUND);
+        var badgeLeft = (int) Math.floor(labelLeft / AE2CRAFTINGTIME_TEXT_SCALE);
+        var badgeTop = (int) Math.floor((double) top / AE2CRAFTINGTIME_TEXT_SCALE);
+        var badgeRight = (int) Math.ceil((labelLeft + labelWidth) / AE2CRAFTINGTIME_TEXT_SCALE);
+        var badgeBottom = (int) Math.ceil((double) (top + AE2CRAFTINGTIME_LABEL_HEIGHT) / AE2CRAFTINGTIME_TEXT_SCALE);
+        TtcBadge.fillSmoothRoundRect(guiGraphics, badgeLeft, badgeTop, badgeRight, badgeBottom, 3, TtcBadge.BACKGROUND);
         guiGraphics.drawString(font, label, textX, textY, color, true);
         pose.popPose();
     }
