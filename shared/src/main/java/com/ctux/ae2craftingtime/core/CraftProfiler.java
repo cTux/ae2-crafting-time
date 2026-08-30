@@ -15,6 +15,7 @@ public final class CraftProfiler {
     private final int maxSamples;
     private final double outlierMultiplier;
     private static final Object DEFAULT_SCOPE = new Object();
+    private static final long MIN_DELAY_TICKS = 200L;
     private final Map<Object, Map<ProfileKey, ArrayDeque<PendingCraft>>> pending = new IdentityHashMap<>();
     private final Map<Object, Map<ProfileKey, Long>> lastProgressTicks = new IdentityHashMap<>();
     private final Map<Object, CapacityState> capacities = new IdentityHashMap<>();
@@ -174,7 +175,7 @@ public final class CraftProfiler {
         var lastProgress = lastProgressTicks.get(scope).get(key);
         var idleTicks = Math.max(0, tick - lastProgress);
         var typicalTicks = stats.get().averageDurationTicks();
-        var delayedAfter = Math.max(200L, (long) Math.ceil(typicalTicks * 2.0));
+        var delayedAfter = Math.max(MIN_DELAY_TICKS, (long) Math.ceil(typicalTicks * 2.0));
         if (idleTicks < delayedAfter) {
             return Optional.empty();
         }
