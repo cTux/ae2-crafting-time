@@ -82,6 +82,7 @@ try {
         if (-not $process.WaitForExit(10000)) { & taskkill.exe /PID $process.Id /T /F | Out-Null }
         throw "UI-smoke client exceeded $($timeout.TotalMinutes) minutes"
     }
+    $process.Refresh()
     if ($process.ExitCode -ne 0) { throw "UI-smoke launcher exited with $($process.ExitCode)" }
 
     $resultPath = Join-Path $evidence "result.json"
