@@ -51,7 +51,7 @@ narratorHotkey:true
 resourcePacks:[]
 incompatibleResourcePacks:[]
 lastServer:
-lang:uk_ua
+lang:en_us
 chatVisibility:0
 chatOpacity:1.0
 chatLineSpacing:0.0
@@ -156,6 +156,7 @@ key_key.jei.toggleEditMode:key.keyboard.unknown
 key_key.jei.toggleHideIngredient:key.mouse.left:CONTROL
 key_key.jei.toggleWildcardHideIngredient:key.mouse.right:CONTROL
 key_key.jei.recipeBack:key.keyboard.backspace
+key_key.jei.recipeForward:key.keyboard.unknown
 key_key.jei.previousRecipePage:key.keyboard.page.up
 key_key.jei.nextRecipePage:key.keyboard.page.down
 key_key.jei.pauseRecipeCycling:key.keyboard.left.shift
