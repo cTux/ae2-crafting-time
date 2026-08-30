@@ -96,6 +96,8 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
     private void ae2craftingtime$addStatusTtcSortButton(T menu, Inventory playerInventory, Component title,
             ScreenStyle style, CallbackInfo ci) {
         if ((Object) this instanceof CraftingStatusScreen) {
+            ClientStats.CACHE.clearWaiting();
+            ClientStatsRequests.clear();
             addToLeftToolbar(new TtcSortButton(this::ae2craftingtime$cycleTtcSortMode,
                     () -> ae2craftingtime$ttcSortMode));
         }

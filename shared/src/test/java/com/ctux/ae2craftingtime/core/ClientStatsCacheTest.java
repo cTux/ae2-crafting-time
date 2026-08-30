@@ -101,6 +101,9 @@ class ClientStatsCacheTest {
         cache.remove(copper);
         assertFalse(cache.waitingTicks(copper).isPresent());
         cache.replaceWaiting(List.of(iron), Map.of(iron, 60L));
+        cache.clearWaiting();
+        assertFalse(cache.waitingTicks(iron).isPresent());
+        cache.replaceWaiting(List.of(iron), Map.of(iron, 80L));
         cache.clear();
         assertFalse(cache.waitingTicks(iron).isPresent());
     }

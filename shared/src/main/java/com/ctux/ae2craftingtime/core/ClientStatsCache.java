@@ -45,6 +45,10 @@ public final class ClientStatsCache {
         waitingTicks.putAll(values);
     }
 
+    public void clearWaiting() {
+        waitingTicks.clear();
+    }
+
     public void remove(ProfileKey key) {
         stats.remove(key);
         waitingTicks.remove(key);
@@ -52,6 +56,6 @@ public final class ClientStatsCache {
 
     public void clear() {
         stats.clear();
-        waitingTicks.clear();
+        clearWaiting();
     }
 }
