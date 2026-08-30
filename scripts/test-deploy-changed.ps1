@@ -37,6 +37,21 @@ if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5p
     throw "Release dry run did not include 26.1.2 NeoForge Modrinth dependencies"
 }
 
+$sharedChangelog = "### CHANGED`n`n- Shared release note."
+$groupedDryRun = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" `
+    -StatePath $StatePath `
+    -VersionPath $versionPath `
+    -Deploy `
+    -DryRun `
+    -ModrinthProjectId test-project `
+    -CurseProjectId 1591476 `
+    -Changelog $sharedChangelog
+$groupedOutput = $groupedDryRun -join "`n"
+if ($LASTEXITCODE -ne 0 -or $groupedOutput -notmatch '## All versions' -or
+    ([regex]::Matches($groupedOutput, [regex]::Escape('- Shared release note.')).Count -ne 1)) {
+    throw "GitHub Release did not group a shared changelog once for all versions"
+}
+
 $first = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" `
     -StatePath $StatePath `
     -VersionPath $versionPath
