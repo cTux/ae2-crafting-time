@@ -44,7 +44,7 @@ The common file is `ae2craftingtime-common.toml` on every loader.
 | Key | Default | Range | Behavior |
 | --- | --- | --- | --- |
 | `enabled` | `true` | boolean | Enables profiling and server-owned stats. |
-| `showInTree` | `true` | boolean | Enables AE2: Crafting Tree badges, tooltips, spacing, and clicks. |
+| `showInTree` | `true` | boolean | Enables AE2: Crafting Tree badges, tooltips, spacing, and clicks on pre-26 targets. |
 | `showChatMessages` | `true` | boolean | Enables public Ctrl-click details and reset notices. Reset still happens when false. |
 | `maxSamples` | `10` | 1-100 | Sets the retained throughput and runtime accuracy window per output. |
 | `outlierMultiplier` | `4.0` | 1.0-1000.0 | Sets the median-relative throughput outlier boundary. |
@@ -84,8 +84,8 @@ max(0, requested amount - stored network amount)
 
 - Core AE2 screens work on every supported target.
 - Missing optional mods must not stop startup or change core behavior.
-- Optional UI reflection/mixin failures return no optional label instead of
-  crashing the screen.
+- A missing optional mod leaves its string-target mixin inactive. A missing
+  reflected field or method omits that optional UI result.
 - English and Ukrainian keys and placeholders stay matched.
 - UI additions must not cover AE2 buttons, titles, item icons, table cells, or
   optional-mod content at supported GUI scales.

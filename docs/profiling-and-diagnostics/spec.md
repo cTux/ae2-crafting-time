@@ -74,6 +74,7 @@ as the world runs without pretending that an estimate is exact.
   not change aggregate error metrics.
 - Delay state starts at the combined threshold, resets on progress, and uses
   only fresh parallel-capacity evidence.
-- Reset, cancellation, load, and save boundaries leave no stale runtime state.
+- Reset, cancellation, and load clear their documented runtime state. Saved
+  output contains only completed throughput samples.
 
 See [technical-design.md](technical-design.md) for ownership and code flow.

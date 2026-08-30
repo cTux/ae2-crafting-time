@@ -81,7 +81,8 @@ Both adapters:
 - add tooltip/control hints; and
 - route details/reset clicks through the common server action.
 
-Reflection failures return `null` and omit the affected optional UI result.
+Missing reflected fields, methods, or failed reflective calls return `null` and
+omit the affected optional UI result.
 
 ### ME Requester
 
