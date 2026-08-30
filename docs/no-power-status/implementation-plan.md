@@ -1,0 +1,25 @@
+# No Power Status Implementation Plan
+
+1. Reuse or add the shared `CraftingBlockReason` state, snapshot transport,
+   compatibility bumps, client cache, and row resolver from the `NO PROVIDER`
+   plan. Do not add a second packet field or second protocol bump.
+2. Extend the standard AE2 execution mixin around the simulated energy check,
+   preserving its exact amount and threshold behavior.
+3. Add the equivalent optional AdvancedAE hook only where verified.
+4. Report `NO_POWER` for each positive output of the blocked pattern with the
+   selected CPU scope and current game tick.
+5. Add `NO POWER`, its explanation, and its suggestion to English and
+   Ukrainian. Update translation-key checks.
+6. Render the warning and tooltip through the shared crafting-row resolver and
+   exclude it from TTC sorting and color.
+7. Cover insufficient, exact, and excess power boundaries; expiration;
+   precedence with `NO PROVIDER`; CPU switching; and absent stats.
+8. After the hook-created PR exists, run the development skill's required
+   shared and four-target checks. Verify GitHub CI separately.
+9. In development clients, drain and restore AE2 network energy while keeping
+   the CPU active, then separately starve only an external machine to prove it
+   does not trigger the status.
+
+Complete when every acceptance criterion in `spec.md` has automated or recorded
+cross-version evidence, all required checks pass, and no repository-owned
+warning remains.
