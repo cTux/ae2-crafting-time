@@ -14,8 +14,6 @@ script="$script_dir/run-client.sh"
 temp="$(mktemp -d)"
 bin_dir="$(mktemp -d)"
 trap 'rm -rf "$temp" "$bin_dir"' EXIT
-mkdir -p "$temp/scripts"
-cp "$script_dir/release-matrix.json" "$temp/scripts/release-matrix.json"
 
 sha="$(printf 'test mod' | sha512sum | awk '{print $1}')"
 
@@ -119,7 +117,7 @@ assert_line() {
 }
 
 cases=(
-  "1.20.1-forge|runtime loader 1.20.1-99|runtime ae2 15.99.0"
+  "1.20.1-forge|runtime loader 1.20.1-99|runtime ae2 15.99.0|mod udZtKfzP.jar|mod ArHeh5Fz.jar"
   "1.20.1-fabric|runtime loader 0.99.0|runtime fabric-api 0.99.0+1.20.1"
   "1.21.1-neoforge|runtime loader 21.1.99|runtime ae2 19.99.0|runtime ae2 group org.appliedenergistics"
   "26.1.2-neoforge|runtime loader 26.1.2.99|runtime ae2 26.99.0-beta"
@@ -135,15 +133,11 @@ for case in "${cases[@]}"; do
   if [ -n "${parts[3]:-}" ]; then
     assert_line "$output" "${parts[3]}"
   fi
-done
-unset IFS
-
-for projectId in udZtKfzP ArHeh5Fz; do
-  if [ ! -f "$temp/versions/1.20.1-forge/run/resolved-mods/$projectId.jar" ]; then
-    echo "Forge run client did not install optional project $projectId" >&2
-    exit 1
+  if [ -n "${parts[4]:-}" ]; then
+    assert_line "$output" "${parts[4]}"
   fi
 done
+unset IFS
 
 managed_dir="$temp/versions/1.20.1-forge/run/resolved-mods"
 rm -f "$managed_dir/Ck4E7v7R.jar"

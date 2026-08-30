@@ -45,9 +45,9 @@ $run = Join-Path $root "versions\$Target\run"
 $mods = Join-Path $run $(if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" })
 $manifest = Join-Path $mods ".ae2-crafting-time-run-mods.json"
 New-Item -ItemType Directory -Path $mods -Force | Out-Null
-$matrixEntry = Get-Content -LiteralPath (Join-Path $root "scripts\release-matrix.json") -Raw |
-    ConvertFrom-Json | Where-Object id -eq $Target
-$projects = @($matrixEntry.modrinthDependencies | Where-Object dependency_type -eq "optional" |
+$matrixEntry = Get-Content -LiteralPath (Join-Path $PSScriptRoot "release-matrix.json") -Raw |
+    ConvertFrom-Json | Where-Object { $_.id -eq $Target }
+$projects = @($matrixEntry.modrinthDependencies | Where-Object { $_.dependency_type -eq "optional" } |
         Select-Object -ExpandProperty project_id)
 if ($profile.Loader -ne "fabric") { $projects += "Ck4E7v7R" }
 $projects += "u6dRKJwZ"

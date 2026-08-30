@@ -46,26 +46,21 @@ function Assert-Line([string]$text, [string]$expected) {
 }
 
 try {
-    New-Item -ItemType Directory -Path (Join-Path $temp "scripts") -Force | Out-Null
-    Copy-Item -LiteralPath (Join-Path $PSScriptRoot "release-matrix.json") `
-        -Destination (Join-Path $temp "scripts\release-matrix.json")
     $cases = @(
-        @("1.20.1-forge", "runtime loader 1.20.1-99", "runtime ae2 15.99.0", $null),
-        @("1.20.1-fabric", "runtime loader 0.99.0", "runtime fabric-api 0.99.0+1.20.1", $null),
+        @("1.20.1-forge", "runtime loader 1.20.1-99", "runtime ae2 15.99.0", $null,
+            "mod udZtKfzP.jar", "mod ArHeh5Fz.jar"),
+        @("1.20.1-fabric", "runtime loader 0.99.0", "runtime fabric-api 0.99.0+1.20.1", $null, $null, $null),
         @("1.21.1-neoforge", "runtime loader 21.1.99", "runtime ae2 19.99.0",
-            "runtime ae2 group org.appliedenergistics"),
-        @("26.1.2-neoforge", "runtime loader 26.1.2.99", "runtime ae2 26.99.0-beta", $null)
+            "runtime ae2 group org.appliedenergistics", $null, $null),
+        @("26.1.2-neoforge", "runtime loader 26.1.2.99", "runtime ae2 26.99.0-beta", $null, $null, $null)
     )
     foreach ($case in $cases) {
         $output = (& $script -Target $case[0] -Root $temp -ResolveOnly 6>&1 | Out-String)
         Assert-Line $output $case[1]
         Assert-Line $output $case[2]
         if ($case[3]) { Assert-Line $output $case[3] }
-    }
-    foreach ($projectId in @("udZtKfzP", "ArHeh5Fz")) {
-        if (-not (Test-Path -LiteralPath (Join-Path $temp "versions\1.20.1-forge\run\resolved-mods\$projectId.jar"))) {
-            throw "Forge run client did not install optional project $projectId"
-        }
+        if ($case[4]) { Assert-Line $output $case[4] }
+        if ($case[5]) { Assert-Line $output $case[5] }
     }
     Remove-Item -LiteralPath (Join-Path $temp "versions\1.20.1-forge\run\resolved-mods\Ck4E7v7R.jar") -Force
     $global:Ae2CtBadDownload = $true
