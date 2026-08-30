@@ -47,8 +47,12 @@ $manifest = Join-Path $mods ".ae2-crafting-time-run-mods.json"
 New-Item -ItemType Directory -Path $mods -Force | Out-Null
 $matrixEntry = Get-Content -LiteralPath (Join-Path $PSScriptRoot "release-matrix.json") -Raw |
     ConvertFrom-Json | Where-Object { $_.id -eq $Target }
-$projects = @($matrixEntry.modrinthDependencies | Where-Object { $_.dependency_type -eq "optional" } |
-        Select-Object -ExpandProperty project_id)
+$optionalDependencies = @($matrixEntry.modrinthDependencies | Where-Object { $_.dependency_type -eq "optional" })
+$projects = @($optionalDependencies | Select-Object -ExpandProperty project_id)
+$versionPins = @{}
+foreach ($dependency in $optionalDependencies) {
+    if ($dependency.version_number) { $versionPins[$dependency.project_id] = $dependency.version_number }
+}
 if ($profile.Loader -ne "fabric") { $projects += "Ck4E7v7R" }
 $projects += "u6dRKJwZ"
 
@@ -63,13 +67,18 @@ if ($Target -eq "1.20.1-forge") {
     }
 }
 
-function Get-CompatibleVersion([string]$projectId, [string]$versionId) {
+function Get-CompatibleVersion([string]$projectId, [string]$versionId, [string]$versionNumber = "") {
     if ($versionId) {
         return Invoke-RestMethod -Uri "$api/version/$versionId"
     }
     $game = [uri]::EscapeDataString("[`"$($profile.Game)`"]")
     $loader = [uri]::EscapeDataString("[`"$($profile.Loader)`"]")
     $versions = Invoke-RestMethod -Uri "$api/project/$projectId/version?game_versions=$game&loaders=$loader"
+    if ($versionNumber) {
+        $version = $versions | Where-Object { $_.version_number -eq $versionNumber } | Select-Object -First 1
+        if (-not $version) { throw "No $($profile.Game) $($profile.Loader) version $versionNumber for Modrinth project $projectId" }
+        return $version
+    }
     return $versions[0]
 }
 
@@ -104,9 +113,9 @@ function Install-File($file) {
     Write-Host "mod $($file.filename)"
 }
 
-function Install-Project([string]$projectId, [string]$versionId = "") {
+function Install-Project([string]$projectId, [string]$versionId = "", [string]$versionNumber = "") {
     if ($provided.Contains($projectId) -or -not $visited.Add($projectId)) { return }
-    $version = Get-CompatibleVersion $projectId $versionId
+    $version = Get-CompatibleVersion $projectId $versionId $versionNumber
     if (-not $version) {
         throw "No $($profile.Game) $($profile.Loader) version for Modrinth project $projectId"
     }
@@ -119,7 +128,7 @@ function Install-Project([string]$projectId, [string]$versionId = "") {
     Install-File $file
 }
 
-foreach ($projectId in $projects) { Install-Project $projectId }
+foreach ($projectId in $projects) { Install-Project $projectId "" $versionPins[$projectId] }
 
 $loaderVersion = Get-LatestMavenVersion $profile.LoaderMetadata $profile.LoaderPrefix
 $ae2Version = Get-CompatibleVersion "XxWD5pD3" ""

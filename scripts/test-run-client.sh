@@ -56,6 +56,9 @@ esac
 
 project="$(printf '%s' "$url" | sed -E 's#.*/project/([^/]+)/version.*#\1#')"
 version="1.0.0"
+older_version="0.0.1"
+filename="$project.jar"
+older_filename="$project.jar"
 vtype="release"
 case "$project" in
   XxWD5pD3)
@@ -65,6 +68,9 @@ case "$project" in
       *) version="15.99.0";;
     esac;;
   P7dR8mSH) version="0.99.0+1.20.1";;
+  udZtKfzP)
+    version="20.4.2"; older_version="20.4.1"
+    filename="$project-20.4.2.jar"; older_filename="$project-20.4.1.jar";;
 esac
 
 sha="${AE2CT_TEST_SHA512:-}"
@@ -79,7 +85,7 @@ cat <<JSON
     ],
     "files": [
       {
-        "filename": "$project.jar",
+        "filename": "$filename",
         "hashes": { "sha512": "$sha" },
         "url": "https://example.invalid/$project.jar",
         "primary": true
@@ -88,11 +94,11 @@ cat <<JSON
   },
   {
     "version_type": "release",
-    "version_number": "0.0.1",
+    "version_number": "$older_version",
     "dependencies": [],
     "files": [
       {
-        "filename": "$project.jar",
+        "filename": "$older_filename",
         "hashes": { "sha512": "$sha" },
         "url": "https://example.invalid/$project.jar",
         "primary": true
@@ -117,7 +123,7 @@ assert_line() {
 }
 
 cases=(
-  "1.20.1-forge|runtime loader 1.20.1-99|runtime ae2 15.99.0|mod udZtKfzP.jar|mod ArHeh5Fz.jar"
+  "1.20.1-forge|runtime loader 1.20.1-99|runtime ae2 15.99.0|mod udZtKfzP-20.4.1.jar|mod ArHeh5Fz.jar"
   "1.20.1-fabric|runtime loader 0.99.0|runtime fabric-api 0.99.0+1.20.1"
   "1.21.1-neoforge|runtime loader 21.1.99|runtime ae2 19.99.0|runtime ae2 group org.appliedenergistics"
   "26.1.2-neoforge|runtime loader 26.1.2.99|runtime ae2 26.99.0-beta"

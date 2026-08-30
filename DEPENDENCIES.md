@@ -28,7 +28,7 @@ AE2 Crafting Time.
 | Applied Mekanistics (`appmek`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.4.0`; NeoForge: `>=1.6.0` | TTC profiling and display for Applied Mekanistics chemical keys. |
 | AdvancedAE (`advanced_ae`) | `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.21.1: `>=1.6.11`; 26.1.2: `>=26.1.7` | TTC profiling for AdvancedAE crafting CPUs, including the Quantum Computer. |
 | ME Requester (`merequester`) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | Forge/Fabric: `>=1.20.1`; NeoForge: `>=1.21.1` | TTC row labels and total TTC hints in ME Requester screens. |
-| Neo ECO AE Extension (`neoecoae`) | `1.20.1 Forge` | `>=20.4.2` | TTC profiling for C-series ECO crafting CPUs, including normal, FastPath, and GTLCore dispatch. |
+| Neo ECO AE Extension (`neoecoae`) | `1.20.1 Forge` | `>=20.4.1 <20.4.2` | TTC profiling for C-series ECO crafting CPUs, including normal, FastPath, and GTLCore dispatch. Version 20.4.2 has an upstream AE2 mixin crash. |
 | AE2 Lightning Tech (`ae2lightningtech`) | `1.20.1 Forge` | `>=2.1.0-beta.2` | TTC profiling for Tianshu time-wheel crafting CPUs. |
 
 Applied Mekanistics is not declared for the Fabric jar because the supported

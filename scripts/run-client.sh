@@ -75,10 +75,10 @@ fi
 manifest="$mods/.ae2-crafting-time-run-mods.json"
 mkdir -p "$mods"
 mapfile -t Projects < <(jq -r --arg target "$Target" \
-  '.[] | select(.id==$target) | .modrinthDependencies[] | select(.dependency_type=="optional") | .project_id' \
+  '.[] | select(.id==$target) | .modrinthDependencies[] | select(.dependency_type=="optional") | "\(.project_id)\t\(.version_number // \"\")"' \
   "$script_dir/release-matrix.json")
-if [ "$Loader" != "fabric" ]; then Projects+=("Ck4E7v7R"); fi
-Projects+=("u6dRKJwZ")
+if [ "$Loader" != "fabric" ]; then Projects+=($'Ck4E7v7R\t'); fi
+Projects+=($'u6dRKJwZ\t')
 
 if [ "$Target" = "1.20.1-forge" ]; then
   legacyMods="$run/mods"
@@ -96,13 +96,18 @@ declare -A visited=()
 declare -a managed=()
 
 get_compatible_version() {
-  local projectId="$1" versionId="${2:-}"
+  local projectId="$1" versionId="${2:-}" versionNumber="${3:-}"
   if [ -n "$versionId" ]; then
     curl -fsS "$api/version/$versionId"
   else
     local game_enc="%5B%22$Game%22%5D"
     local loader_enc="%5B%22$Loader%22%5D"
-    curl -fsS "$api/project/$projectId/version?game_versions=$game_enc&loaders=$loader_enc" | jq -c '.[0]'
+    if [ -n "$versionNumber" ]; then
+      curl -fsS "$api/project/$projectId/version?game_versions=$game_enc&loaders=$loader_enc" \
+        | jq -c --arg version "$versionNumber" 'map(select(.version_number==$version))[0]'
+    else
+      curl -fsS "$api/project/$projectId/version?game_versions=$game_enc&loaders=$loader_enc" | jq -c '.[0]'
+    fi
   fi
 }
 
@@ -141,7 +146,7 @@ install_file() {
 }
 
 install_project() {
-  local projectId="$1" versionId="${2:-}"
+  local projectId="$1" versionId="${2:-}" versionNumber="${3:-}"
   local is_provided=0
   for p in "${provided[@]}"; do
     [ "$p" = "$projectId" ] && is_provided=1
@@ -150,7 +155,7 @@ install_project() {
   if [ -n "${visited[$projectId]:-}" ]; then return; fi
   visited[$projectId]=1
 
-  local version_json; version_json="$(get_compatible_version "$projectId" "$versionId")"
+  local version_json; version_json="$(get_compatible_version "$projectId" "$versionId" "$versionNumber")"
   if [ -z "$version_json" ] || [ "$version_json" = "null" ]; then
     echo "No $Game $Loader version for Modrinth project $projectId" >&2
     exit 1
@@ -171,8 +176,9 @@ install_project() {
   install_file "$file_json"
 }
 
-for projectId in "${Projects[@]}"; do
-  install_project "$projectId"
+for project in "${Projects[@]}"; do
+  IFS=$'\t' read -r projectId versionNumber <<< "$project"
+  install_project "$projectId" "" "$versionNumber"
 done
 
 loaderVersion="$(get_latest_maven_version "$LoaderMetadata" "$LoaderPrefix")"
