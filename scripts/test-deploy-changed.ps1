@@ -47,8 +47,9 @@ $groupedDryRun = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScrip
     -CurseProjectId 1591476 `
     -Changelog $sharedChangelog
 $groupedOutput = $groupedDryRun -join "`n"
-if ($LASTEXITCODE -ne 0 -or $groupedOutput -notmatch '## All versions' -or
-    ([regex]::Matches($groupedOutput, [regex]::Escape('- Shared release note.')).Count -ne 1)) {
+$groupedGitHubOutput = [regex]::Match($groupedOutput, '(?s)dry-run GitHub Release:.*').Value
+if ($LASTEXITCODE -ne 0 -or $groupedGitHubOutput -notmatch '## All versions' -or
+    ([regex]::Matches($groupedGitHubOutput, [regex]::Escape('- Shared release note.')).Count -ne 1)) {
     throw "GitHub Release did not group a shared changelog once for all versions"
 }
 
