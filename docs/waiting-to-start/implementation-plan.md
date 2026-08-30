@@ -37,7 +37,7 @@ steps in the same commit.
 ## Phase 3: Render the state
 
 1. Add English and Ukrainian translations for
-   `TTC: Waiting to start: %ss`.
+   `Waiting to start: %ss`.
 2. Add the smallest `TtcText` formatter for completed whole seconds.
 3. In `CraftingStatusTableRendererMixin`, render waiting before delayed and
    estimated TTC, guarded by the current AE2 active/pending amounts.
