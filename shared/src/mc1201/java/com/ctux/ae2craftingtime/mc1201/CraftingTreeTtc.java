@@ -19,9 +19,8 @@ import java.util.function.Function;
 
 public final class CraftingTreeTtc {
     public static final float TEXT_SCALE = 0.5f;
-    public static final int LABEL_PADDING_X = 2;
+    public static final int LABEL_PADDING = 2;
     public static final int LABEL_TOP_OFFSET = 19;
-    public static final int LABEL_HEIGHT = 7;
 
     private CraftingTreeTtc() {
     }
@@ -35,22 +34,22 @@ public final class CraftingTreeTtc {
 
         var font = Minecraft.getInstance().font;
         var scaledTextWidth = font.width(text) * TEXT_SCALE;
-        var labelWidth = (int) Math.ceil(scaledTextWidth) + LABEL_PADDING_X * 2;
+        var labelWidth = (int) Math.ceil(scaledTextWidth) + LABEL_PADDING * 2;
+        var labelHeight = (int) Math.ceil(font.lineHeight * TEXT_SCALE) + LABEL_PADDING * 2;
         var x = point.x * spacingX + outputX;
         var y = point.y * spacingY + outputY;
         var labelLeft = x + 8 - labelWidth / 2.0f;
         var labelTop = y + LABEL_TOP_OFFSET;
         var textX = (int) ((x + 8 - scaledTextWidth / 2) / TEXT_SCALE);
-        var textY = (int) ((labelTop + 1) / TEXT_SCALE);
-        var stripLeft = (int) Math.floor(labelLeft / TEXT_SCALE);
-        var stripTop = (int) Math.floor(labelTop / TEXT_SCALE);
-        var stripRight = (int) Math.ceil((labelLeft + labelWidth) / TEXT_SCALE);
-        var stripBottom = (int) Math.ceil((labelTop + LABEL_HEIGHT) / TEXT_SCALE);
+        var textY = (int) ((labelTop + LABEL_PADDING) / TEXT_SCALE);
+
+        TtcBadge.fillRoundedRect(guiGraphics, (int) Math.floor(labelLeft), (int) Math.floor(labelTop),
+                (int) Math.ceil(labelLeft + labelWidth), (int) Math.ceil(labelTop + labelHeight),
+                TtcBadge.BACKGROUND);
 
         var pose = guiGraphics.pose();
         pose.pushPose();
         pose.scale(TEXT_SCALE, TEXT_SCALE, TEXT_SCALE);
-        TtcBadge.fillRect(guiGraphics, stripLeft, stripTop, stripRight, stripBottom, TtcBadge.BACKGROUND);
         guiGraphics.drawString(font, text, textX, textY, color, true);
         pose.popPose();
     }

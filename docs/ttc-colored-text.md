@@ -24,7 +24,7 @@ AE2 `CraftConfirmTableRenderer` returns visible cell lines as `List<Component>` 
 GuiGraphics.drawString(Font, Component, x, y, defaultColor, false)
 ```
 
-Because the renderer passes a Minecraft `Component`, not a plain `String`, a `Component.literal("TTC: ...").withStyle(...)` can carry text color. The current mod already appends `TTC` by adding a `Component` in `CraftConfirmTableRendererMixin`, so the feature can stay in the same UI path.
+Because the renderer passes a Minecraft `Component`, not a plain `String`, a `Component.literal("~12s").withStyle(...)` can carry text color. The current mod already appends the estimate by adding a `Component` in `CraftConfirmTableRendererMixin`, so the feature can stay in the same UI path.
 
 ## Design Constraint
 
@@ -45,7 +45,7 @@ Use a render-scope color context.
 7. Existing `CraftConfirmTableRendererMixin` reads the color for the entry and appends:
 
 ```java
-Component.literal("TTC: " + eta).withStyle(style -> style.withColor(color))
+Component.literal(eta).withStyle(style -> style.withColor(color))
 ```
 
 8. Clear the context at render return.

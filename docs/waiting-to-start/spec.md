@@ -8,7 +8,7 @@ for its first pattern dispatch.
 Example:
 
 ```text
-TTC: Waiting to start: 12s
+Waiting to start: 12s
 ```
 
 This covers [discussion #65](https://github.com/cTux/ae2-crafting-time/discussions/65).

@@ -111,7 +111,7 @@ The detailed TTC tooltip and Ctrl-click chat diagnostics show:
 ## Delayed Craft Diagnostics
 
 The running crafting-status screen replaces a delayed row's visible estimate
-with `TTC: DELAYED`. Its tooltip keeps the estimate and shows no-progress time,
+with `DELAYED`. Its tooltip keeps the estimate and shows no-progress time,
 the learned typical duration, AE2 active/scheduled amounts, recent parallel-slot
 use, and up to two possible improvements.
 
@@ -194,10 +194,10 @@ Whole ordered craft estimate:
 ```text
 Crafting CPU: Automatic
 Storage: N/A : Co Processors: N/A
-Total TTC: ~000:02:15
+TTC: ~000:02:15
 ```
 
-Place `Total TTC` in the bottom status area immediately after the `Crafting CPU`
+Place the total `TTC` in the bottom status area immediately after the `Crafting CPU`
 details. Center it on the screen with the same alignment as the CPU status text.
 Do not put it in the title; the title already
 contains AE2's storage-byte summary. Do not put it in the item grid; the grid
@@ -210,13 +210,13 @@ Crafting: M
 Time To Craft: ~000:02:15
 ```
 
-Visible Crafting Tree TTC badges use a compact dark background sized to their
-text, centered below the node with Minecraft text shadow. The tree reserves
+Visible Crafting Tree TTC badges use a compact dark background with two pixels
+of padding and four-pixel rounded corners, centered below the node with Minecraft text shadow. The tree reserves
 extra vertical spacing for the badge so it does not cover the node amount or
 connector lines.
 
 ME Requester uses the same compact dark badge and text shadow. Row TTC badges
-are centered over the request status lines and colored by relative duration;
+start at the left edge of the request status lines and are colored by relative duration;
 the total badge stays inside the requester header instead of extending beyond
 the screen. Its row estimate uses only the current network shortfall:
 `normalize(max(0, wanted amount - network amount)) / amountPerSecond`. A row
