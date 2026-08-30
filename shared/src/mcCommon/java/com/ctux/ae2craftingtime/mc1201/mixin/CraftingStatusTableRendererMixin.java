@@ -48,6 +48,14 @@ public abstract class CraftingStatusTableRendererMixin {
 
         var key = ProfilerBridge.key(entry.getWhat());
         ClientStatsRequests.request(key);
+        if (entry.getActiveAmount() == 0 && entry.getPendingAmount() > 0) {
+            var waiting = ClientStats.CACHE.waitingTicks(key);
+            if (waiting.isPresent()) {
+                lines.add(TtcText.waiting(waiting.getAsLong())
+                        .withStyle(style -> style.withColor(TextColor.fromRgb(0xE0E0E0)).withBold(true)));
+                return;
+            }
+        }
         ClientStats.CACHE.get(key).ifPresent(stats -> {
             var stall = ClientStats.CACHE.stall(key);
             if (stall.isPresent()) {

@@ -4,9 +4,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 public final class ClientStatsCache {
     private final Map<ProfileKey, StatsEntry> stats = new HashMap<>();
+    private final Map<ProfileKey, Long> waitingTicks = new HashMap<>();
 
     public void replace(List<StatsEntry> entries) {
         for (var entry : entries) {
@@ -33,11 +35,23 @@ public final class ClientStatsCache {
         return Optional.ofNullable(stats.get(key)).flatMap(StatsEntry::stall);
     }
 
+    public OptionalLong waitingTicks(ProfileKey key) {
+        var ticks = waitingTicks.get(key);
+        return ticks == null ? OptionalLong.empty() : OptionalLong.of(ticks);
+    }
+
+    public void replaceWaiting(List<ProfileKey> requestedKeys, Map<ProfileKey, Long> values) {
+        requestedKeys.forEach(waitingTicks::remove);
+        waitingTicks.putAll(values);
+    }
+
     public void remove(ProfileKey key) {
         stats.remove(key);
+        waitingTicks.remove(key);
     }
 
     public void clear() {
         stats.clear();
+        waitingTicks.clear();
     }
 }

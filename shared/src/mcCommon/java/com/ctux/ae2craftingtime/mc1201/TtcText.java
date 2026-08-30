@@ -24,6 +24,10 @@ public final class TtcText {
         return Component.translatable("text.ae2craftingtime.ttc_delayed");
     }
 
+    public static MutableComponent waiting(long ticks) {
+        return Component.translatable("text.ae2craftingtime.waiting", Math.max(0, ticks) / 20);
+    }
+
     public static MutableComponent totalTtc(String eta) {
         return Component.translatable("text.ae2craftingtime.total_ttc", eta);
     }

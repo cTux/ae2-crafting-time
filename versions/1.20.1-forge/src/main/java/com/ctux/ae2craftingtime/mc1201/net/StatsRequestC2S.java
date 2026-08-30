@@ -33,7 +33,8 @@ public record StatsRequestC2S(List<String> keys) {
             var response = StatsRequestHandler.collect(player, packet.keys);
             if (response != null) {
                 StatsNetwork.sendTo(player,
-                        new StatsSnapshotS2C(packet.keys, response.entries(), response.networkAmounts()));
+                        new StatsSnapshotS2C(packet.keys, response.entries(), response.networkAmounts(),
+                                response.waitingTicks()));
             }
         });
         context.setPacketHandled(true);

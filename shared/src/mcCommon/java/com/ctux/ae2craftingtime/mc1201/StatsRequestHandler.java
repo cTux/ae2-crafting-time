@@ -23,13 +23,18 @@ public final class StatsRequestHandler {
             return null;
         }
         var entries = new ArrayList<StatsEntry>();
+        var waitingTicks = new HashMap<String, Long>();
         var context = StatsRequestContext.current(player);
         var networkId = ProfilerBridge.networkId(context.grid());
+        var gameTick = player.level().getGameTime();
         for (var key : keys) {
-            ProfilerBridge.entry(new ProfileKey(networkId, key), new ProfileKey(key), context.craftingCpu(),
-                    player.level().getGameTime()).ifPresent(entries::add);
+            var profileKey = new ProfileKey(networkId, key);
+            ProfilerBridge.entry(profileKey, new ProfileKey(key), context.craftingCpu(), gameTick)
+                    .ifPresent(entries::add);
+            ProfilerBridge.waitingTicks(profileKey, context.craftingCpu(), gameTick)
+                    .ifPresent(value -> waitingTicks.put(key, value));
         }
-        return new Response(entries, networkAmounts(context.grid(), keys));
+        return new Response(entries, networkAmounts(context.grid(), keys), waitingTicks);
     }
 
     private static Map<String, Long> networkAmounts(IGrid grid, List<String> keys) {
@@ -48,6 +53,7 @@ public final class StatsRequestHandler {
         return amounts;
     }
 
-    public record Response(List<StatsEntry> entries, Map<String, Long> networkAmounts) {
+    public record Response(List<StatsEntry> entries, Map<String, Long> networkAmounts,
+            Map<String, Long> waitingTicks) {
     }
 }

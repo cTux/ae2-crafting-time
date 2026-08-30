@@ -24,7 +24,8 @@ public record StatsRequestC2S(List<String> keys) {
     public void handle(ServerPlayer player) {
         var response = StatsRequestHandler.collect(player, keys);
         if (response != null) {
-            StatsNetwork.sendTo(player, new StatsSnapshotS2C(keys, response.entries(), response.networkAmounts()));
+            StatsNetwork.sendTo(player, new StatsSnapshotS2C(keys, response.entries(), response.networkAmounts(),
+                    response.waitingTicks()));
         }
     }
 

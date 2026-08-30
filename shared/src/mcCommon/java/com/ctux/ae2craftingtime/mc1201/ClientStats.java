@@ -24,6 +24,12 @@ public final class ClientStats {
         amounts.forEach((key, amount) -> NETWORK_AMOUNTS.put(new ProfileKey(key), amount));
     }
 
+    public static void replaceWaitingTicks(List<String> requestedKeys, Map<String, Long> values) {
+        var waiting = new HashMap<ProfileKey, Long>();
+        values.forEach((key, ticks) -> waiting.put(new ProfileKey(key), ticks));
+        CACHE.replaceWaiting(requestedKeys.stream().map(ProfileKey::new).toList(), waiting);
+    }
+
     private ClientStats() {
     }
 }
