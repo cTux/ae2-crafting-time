@@ -40,7 +40,7 @@ function Invoke-Case([string]$mode, [switch]$Latest, [bool]$shouldPass) {
     $env:AE2CT_UI_SMOKE_TEST_MODE = $mode
     $arguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $scripts "run-ui-smoke.ps1"))
     if ($Latest) { $arguments += "-Latest" }
-    & powershell.exe @arguments 2>&1 | Out-Null
+    & powershell.exe @arguments > $null 2> $null
     $passed = $LASTEXITCODE -eq 0
     if ($passed -ne $shouldPass) { throw "Unexpected runner result for '$mode' latest=$Latest" }
 }
