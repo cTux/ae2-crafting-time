@@ -13,8 +13,8 @@ any addon required.
 
 - Crafts run by compatible addon CPUs contribute the same throughput samples as
   normal AE2 CPUs.
-- TTC and stall details stay available in addon screens that reuse AE2's table
-  renderer.
+- TTC and stall details stay available in addon screens that reuse AE2's
+  craft-confirm or crafting-status table renderer behavior.
 - New `AEKey` types use their AE2 unit size without a hard-coded addon list.
 - Unsupported custom crafting loops fail safely. They must not create misleading
   samples or crash when the addon is absent.
@@ -46,10 +46,12 @@ any addon required.
 
 ### UI
 
-1. Reuse the existing table renderer, text, color, sorting, cache, and request
-   helpers.
-2. Count an addon screen as generally covered only when it inherits the exact
-   AE2 method that owns the hook.
+1. Reuse the existing craft-confirm and crafting-status renderer hooks, text,
+   color, sorting, cache, and request helpers.
+2. Count an addon screen as generally covered only when it uses those concrete
+   renderers or inherits the exact `getEntryDescription` and `getEntryTooltip`
+   methods that own the TTC hooks. Reusing only `AbstractTableRenderer` is not
+   enough.
 3. Add a common `AEBaseScreen` hook only if one AE2 method supplies enough row or
    tooltip context without addon-specific reflection.
 4. Keep a bespoke screen mixin as the last option.
@@ -80,8 +82,8 @@ An addon is marked covered only when all relevant checks pass:
 - Its CPU path is classified as inherited AE2 execution, service-only
   lifecycle, or custom execution.
 - Its key types preserve correct identity and normalized amounts.
-- Its screen either reaches an existing AE2 hook or has a tested optional
-  fallback.
+- Its screen either reaches an existing concrete AE2 renderer hook or has a
+  tested optional fallback.
 - The addon is absent without mixin errors.
 - The supported target rows that publish the addon pass CI and an in-game craft
   that starts, produces output, finishes, and shows TTC.

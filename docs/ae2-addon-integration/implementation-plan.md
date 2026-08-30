@@ -59,9 +59,11 @@ specific, reproduced contract gap.
 
 ## Phase 5: Reuse AE2 UI seams
 
-1. Check whether each candidate screen inherits AE2's table renderer methods.
-2. Verify inherited screens through `AbstractTableRendererMixin` without new
-   code.
+1. Check whether each candidate screen uses `CraftConfirmTableRenderer` or
+   `CraftingStatusTableRenderer`, or inherits their hooked description and
+   tooltip methods.
+2. Verify those concrete renderer paths without new code. Do not count reuse of
+   `AbstractTableRenderer` alone as TTC support.
 3. Look for one stable `AEBaseScreen` method only after the table path is ruled
    out.
 4. Add a bespoke `@Pseudo` mixin only for a fully custom screen or API, starting
