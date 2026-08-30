@@ -39,7 +39,7 @@ Add one method to `TtcText`, named for example `ttcCollectingData()`. It should
 build the existing outer TTC component with a new translated value:
 
 ```text
-text.ae2craftingtime.ttc = "TTC: %s"
+text.ae2craftingtime.ttc = "%s"
 text.ae2craftingtime.collecting_data = "Collecting data"
 ```
 
@@ -67,7 +67,7 @@ adding another explanation line would repeat the visible state.
 
 `CraftingStatusTableRendererMixin.ae2craftingtime$appendTtc(...)` already owns
 the running row line. Keep its `activeAmount + pendingAmount` calculation and
-guard. Preserve the priority of `TTC: DELAYED`, then use the placeholder only
+guard. Preserve the priority of `DELAYED`, then use the placeholder only
 when no formatted estimate is available.
 
 The tooltip remains unchanged until real stats exist. A fake throughput or

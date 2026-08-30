@@ -111,7 +111,7 @@ The detailed TTC tooltip and Ctrl-click chat diagnostics show:
 ## Delayed Craft Diagnostics
 
 The running crafting-status screen replaces a delayed row's visible estimate
-with `TTC: DELAYED`. Its tooltip keeps the estimate and shows no-progress time,
+with `DELAYED`. Its tooltip keeps the estimate and shows no-progress time,
 the learned typical duration, AE2 active/scheduled amounts, recent parallel-slot
 use, and up to two possible improvements.
 
@@ -210,8 +210,8 @@ Crafting: M
 Time To Craft: ~000:02:15
 ```
 
-Visible Crafting Tree TTC badges use a compact dark background sized to their
-text, centered below the node with Minecraft text shadow. The tree reserves
+Visible Crafting Tree TTC badges use a compact dark background with two pixels
+of padding and rounded corners, centered below the node with Minecraft text shadow. The tree reserves
 extra vertical spacing for the badge so it does not cover the node amount or
 connector lines.
 

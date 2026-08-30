@@ -32,7 +32,7 @@ Update `CraftingStatusTableRendererMixin.ae2craftingtime$appendTtc(...)`:
 
 1. Keep the `activeAmount + pendingAmount > 0` guard.
 2. Keep requesting stats through the existing cooldown.
-3. Keep `TTC: DELAYED` above every other display state.
+3. Keep `DELAYED` above every other display state.
 4. Append the normal formatted estimate when available.
 5. Otherwise append the neutral collecting-data line.
 
@@ -60,7 +60,7 @@ In a matching development client, check:
 2. A never-crafted running row shows the same state.
 3. One completed sample changes it to a low-confidence estimate ending in `?`.
 4. Three clean samples remove `?`.
-5. A delayed row still shows `TTC: DELAYED`.
+5. A delayed row still shows `DELAYED`.
 6. Clearing the stats returns the row to collecting data.
 7. Stored-only, missing-only, completed, and zero-work rows get no new line.
 8. English and Ukrainian labels stay inside the table cell and do not cover the

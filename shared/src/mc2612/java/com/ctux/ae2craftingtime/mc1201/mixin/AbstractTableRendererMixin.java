@@ -46,7 +46,7 @@ public abstract class AbstractTableRendererMixin {
             var isAe2CraftingTime = translatable.getKey().startsWith("text.ae2craftingtime.");
             if (isAe2CraftingTime && ae2craftingtime$isTtcLine(translatable)) {
                 var width = font.width(text);
-                TtcBadge.fillRect(guiGraphics, x - 3, y - 1, x + width + 3, y + font.lineHeight + 1,
+                TtcBadge.fillRoundedRect(guiGraphics, x - 2, y - 2, x + width + 2, y + font.lineHeight + 2,
                         TtcBadge.BACKGROUND);
             }
             guiGraphics.text(font, text, x, y, color, shadow || isAe2CraftingTime);

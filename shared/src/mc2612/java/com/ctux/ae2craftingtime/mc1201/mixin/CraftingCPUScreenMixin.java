@@ -166,11 +166,9 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
         var font = getMinecraft().font;
         var textWidth = font.width(ae2craftingtime$titleTtc);
-        var left = ae2craftingtime$titleTtcX - 4;
-        var top = AE2CRAFTINGTIME_TITLE_TOP - 2;
-        var right = ae2craftingtime$titleTtcX + textWidth + 4;
-        var bottom = AE2CRAFTINGTIME_TITLE_TOP + font.lineHeight + 2;
-        TtcBadge.fillRect(guiGraphics, left, top, right, bottom, TtcBadge.BACKGROUND);
+        TtcBadge.fillRoundedRect(guiGraphics, ae2craftingtime$titleTtcX - 2, AE2CRAFTINGTIME_TITLE_TOP - 2,
+                ae2craftingtime$titleTtcX + textWidth + 2, AE2CRAFTINGTIME_TITLE_TOP + font.lineHeight + 2,
+                TtcBadge.BACKGROUND);
         guiGraphics.text(font, ae2craftingtime$titleTtc, ae2craftingtime$titleTtcX,
                 AE2CRAFTINGTIME_TITLE_TOP, 0xFF000000 | AE2CRAFTINGTIME_TITLE_TTC_COLOR, true);
     }

@@ -33,9 +33,7 @@ public abstract class MERequesterScreenMixin {
     @Unique
     private static final float AE2CRAFTINGTIME_TEXT_SCALE = 0.5f;
     @Unique
-    private static final int AE2CRAFTINGTIME_LABEL_PADDING_X = 2;
-    @Unique
-    private static final int AE2CRAFTINGTIME_LABEL_HEIGHT = 7;
+    private static final int AE2CRAFTINGTIME_LABEL_PADDING = 2;
     @Unique
     private static final int AE2CRAFTINGTIME_STATUS_X = 47;
     @Unique
@@ -101,19 +99,18 @@ public abstract class MERequesterScreenMixin {
             int color) {
         var font = Minecraft.getInstance().font;
         var scaledTextWidth = font.width(label) * AE2CRAFTINGTIME_TEXT_SCALE;
-        var labelWidth = (int) Math.ceil(scaledTextWidth) + AE2CRAFTINGTIME_LABEL_PADDING_X * 2;
+        var labelWidth = (int) Math.ceil(scaledTextWidth) + AE2CRAFTINGTIME_LABEL_PADDING * 2;
+        var labelHeight = (int) Math.ceil(font.lineHeight * AE2CRAFTINGTIME_TEXT_SCALE)
+                + AE2CRAFTINGTIME_LABEL_PADDING * 2;
         var labelLeft = centerX - labelWidth / 2.0f;
         var textX = (int) ((centerX - scaledTextWidth / 2) / AE2CRAFTINGTIME_TEXT_SCALE);
-        var textY = (int) ((top + 1) / AE2CRAFTINGTIME_TEXT_SCALE);
+        var textY = (int) ((top + AE2CRAFTINGTIME_LABEL_PADDING) / AE2CRAFTINGTIME_TEXT_SCALE);
         var pose = guiGraphics.pose();
 
+        TtcBadge.fillRoundedRect(guiGraphics, (int) Math.floor(labelLeft), top,
+                (int) Math.ceil(labelLeft + labelWidth), top + labelHeight, TtcBadge.BACKGROUND);
         pose.pushPose();
         pose.scale(AE2CRAFTINGTIME_TEXT_SCALE, AE2CRAFTINGTIME_TEXT_SCALE, AE2CRAFTINGTIME_TEXT_SCALE);
-        var badgeLeft = (int) Math.floor(labelLeft / AE2CRAFTINGTIME_TEXT_SCALE);
-        var badgeTop = (int) Math.floor((double) top / AE2CRAFTINGTIME_TEXT_SCALE);
-        var badgeRight = (int) Math.ceil((labelLeft + labelWidth) / AE2CRAFTINGTIME_TEXT_SCALE);
-        var badgeBottom = (int) Math.ceil((double) (top + AE2CRAFTINGTIME_LABEL_HEIGHT) / AE2CRAFTINGTIME_TEXT_SCALE);
-        TtcBadge.fillRect(guiGraphics, badgeLeft, badgeTop, badgeRight, badgeBottom, TtcBadge.BACKGROUND);
         guiGraphics.drawString(font, label, textX, textY, color, true);
         pose.popPose();
     }

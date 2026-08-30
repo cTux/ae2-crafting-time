@@ -37,9 +37,9 @@ windows:
 | State | Visible line |
 | --- | --- |
 | No usable stats are cached | `TTC: Collecting data` |
-| A usable but low-confidence estimate exists | Existing estimate with `?`, such as `TTC: ~12s?` |
-| A reliable estimate exists | Existing estimate, such as `TTC: ~12s` |
-| The running craft is delayed | Existing `TTC: DELAYED` warning |
+| A usable but low-confidence estimate exists | Existing estimate with `?`, such as `~12s?` |
+| A reliable estimate exists | Existing estimate, such as `~12s` |
+| The running craft is delayed | Existing `DELAYED` warning |
 
 `Collecting data` describes the absence of usable historical data. It is not a
 network loading spinner and does not promise that the current craft will create
@@ -83,7 +83,7 @@ profiled production window.
 - A status row with no active or pending work shows no TTC line.
 - One and two valid samples show the existing estimate with `?`.
 - Three valid, unfiltered samples show the estimate without `?`.
-- A delayed running output shows `TTC: DELAYED`, not the placeholder.
+- A delayed running output shows `DELAYED`, not the placeholder.
 - Clearing retained stats changes the row back to the placeholder.
 - English and Ukrainian contain the same translation keys.
 - The label does not overlap the item icon or a neighboring cell.
