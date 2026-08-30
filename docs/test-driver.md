@@ -7,13 +7,13 @@ AE2 Crafting Time JAR and never replaces it.
 The first artifact is:
 
 ```text
-ae2-crafting-time-1.0.12-forge-1.20.1-test-driver.jar
+ae2-crafting-time-1.0.13-forge-1.20.1-test-driver.jar
 ```
 
 It tests this production artifact:
 
 ```text
-ae2-crafting-time-1.0.12-forge-1.20.1.jar
+ae2-crafting-time-1.0.13-forge-1.20.1.jar
 ```
 
 The driver version in the filename identifies the exact production mod contract
@@ -22,7 +22,7 @@ unless that combination is explicitly allowed.
 
 This document defines the intended driver. The artifact does not exist yet.
 
-See [Automated UI Testing](automated-ui-testing.md) for the complete client and
+See [Automated UI Testing](automated-ui-testing/spec.md) for the complete client and
 optional-dependency checklist that drives it.
 
 ## Keep it outside the production JAR
@@ -172,7 +172,7 @@ The driver writes one atomic JSON result. A partial file is never a pass.
 
 ```json
 {
-  "driver": "ae2-crafting-time-1.0.12-forge-1.20.1-test-driver.jar",
+  "driver": "ae2-crafting-time-1.0.13-forge-1.20.1-test-driver.jar",
   "target": "1.20.1-forge",
   "profile": "compatible",
   "scenario": "craft-plan",
@@ -206,7 +206,7 @@ and loader bootstraps only where registration differs.
 
 ## First artifact acceptance
 
-`ae2-crafting-time-1.0.12-forge-1.20.1-test-driver.jar` is ready when it:
+`ae2-crafting-time-1.0.13-forge-1.20.1-test-driver.jar` is ready when it:
 
 - refuses the wrong AE2 Crafting Time version;
 - stays inactive without the explicit test option;
