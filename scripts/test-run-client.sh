@@ -69,8 +69,8 @@ case "$project" in
     esac;;
   P7dR8mSH) version="0.99.0+1.20.1";;
   udZtKfzP)
-    version="20.4.2"; older_version="20.4.1"
-    filename="$project-20.4.2.jar"; older_filename="$project-20.4.1.jar";;
+    version="20.4.2"; older_version="20.3.0"
+    filename="$project-20.4.2.jar"; older_filename="$project-20.3.0.jar";;
 esac
 
 sha="${AE2CT_TEST_SHA512:-}"
@@ -123,7 +123,7 @@ assert_line() {
 }
 
 cases=(
-  "1.20.1-forge|runtime loader 1.20.1-99|runtime ae2 15.99.0|mod udZtKfzP-20.4.1.jar|mod ArHeh5Fz.jar"
+  "1.20.1-forge|runtime loader 1.20.1-99|runtime ae2 15.99.0|mod udZtKfzP-20.3.0.jar|mod ArHeh5Fz.jar"
   "1.20.1-fabric|runtime loader 0.99.0|runtime fabric-api 0.99.0+1.20.1"
   "1.21.1-neoforge|runtime loader 21.1.99|runtime ae2 19.99.0|runtime ae2 group org.appliedenergistics"
   "26.1.2-neoforge|runtime loader 26.1.2.99|runtime ae2 26.99.0-beta"

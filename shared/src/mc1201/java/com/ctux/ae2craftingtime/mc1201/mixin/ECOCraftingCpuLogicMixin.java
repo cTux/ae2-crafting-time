@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -53,14 +54,18 @@ public abstract class ECOCraftingCpuLogicMixin {
     }
 
     @Inject(method = "executeCrafting", at = @At("HEAD"), remap = false)
-    private void ae2craftingtime$beginExpectedOutputs(int maxPatterns, CraftingService craftingService,
-            IEnergyService energyService, net.minecraft.world.level.Level level, CallbackInfoReturnable<Integer> cir) {
+    private void ae2craftingtime$beginExpectedOutputs(CallbackInfoReturnable<Integer> cir) {
         AddonCpuProfilingContext.enter(ProfilerBridge.networkId(ae2craftingtime$grid), this, ae2craftingtime$tick());
     }
 
+    @ModifyVariable(method = "executeCrafting", at = @At("HEAD"), argsOnly = true, ordinal = 0, remap = false)
+    private int ae2craftingtime$captureCapacity(int maxPatterns) {
+        ae2craftingtime$totalSlots = Math.max(ae2craftingtime$totalSlots, maxPatterns);
+        return maxPatterns;
+    }
+
     @Redirect(
-            method = "recordPushedPattern(Lappeng/crafting/execution/ExecutingCraftingJob;"
-                    + "Lcn/dancingsnow/neoecoae/impl/crafting/fastpath/ECOExtractedPatternExecution;JZ)V",
+            method = "recordPushedPattern",
             at = @At(
                     value = "INVOKE",
                     target = "Lappeng/crafting/inv/ListCraftingInventory;insert(Lappeng/api/stacks/AEKey;"
@@ -76,10 +81,8 @@ public abstract class ECOCraftingCpuLogicMixin {
     }
 
     @Inject(method = "executeCrafting", at = @At("RETURN"), remap = false)
-    private void ae2craftingtime$finishExpectedOutputs(int maxPatterns, CraftingService craftingService,
-            IEnergyService energyService, net.minecraft.world.level.Level level, CallbackInfoReturnable<Integer> cir) {
+    private void ae2craftingtime$finishExpectedOutputs(CallbackInfoReturnable<Integer> cir) {
         ae2craftingtime$usedSlots = Math.min(Integer.MAX_VALUE, ae2craftingtime$usedSlots + cir.getReturnValue());
-        ae2craftingtime$totalSlots = Math.max(ae2craftingtime$totalSlots, maxPatterns);
         AddonCpuProfilingContext.exit();
     }
 

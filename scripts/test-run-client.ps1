@@ -29,7 +29,7 @@ function Invoke-RestMethod {
         primary = $true
     }
     $olderFile = [pscustomobject]@{
-        filename = $(if ($project -eq "udZtKfzP") { "$project-20.4.1.jar" } else { "$project.jar" })
+        filename = $(if ($project -eq "udZtKfzP") { "$project-20.3.0.jar" } else { "$project.jar" })
         hashes = [pscustomobject]@{ sha512 = $hash }
         url = "https://example.invalid/$project.jar"
         primary = $true
@@ -41,7 +41,7 @@ function Invoke-RestMethod {
         files = @($file)
     }, [pscustomobject]@{
         version_type = "release"
-        version_number = $(if ($project -eq "udZtKfzP") { "20.4.1" } else { "0.0.1" })
+        version_number = $(if ($project -eq "udZtKfzP") { "20.3.0" } else { "0.0.1" })
         dependencies = @()
         files = @($olderFile)
     })
@@ -54,7 +54,7 @@ function Assert-Line([string]$text, [string]$expected) {
 try {
     $cases = @(
         @("1.20.1-forge", "runtime loader 1.20.1-99", "runtime ae2 15.99.0", $null,
-            "mod udZtKfzP-20.4.1.jar", "mod ArHeh5Fz.jar"),
+            "mod udZtKfzP-20.3.0.jar", "mod ArHeh5Fz.jar"),
         @("1.20.1-fabric", "runtime loader 0.99.0", "runtime fabric-api 0.99.0+1.20.1", $null, $null, $null),
         @("1.21.1-neoforge", "runtime loader 21.1.99", "runtime ae2 19.99.0",
             "runtime ae2 group org.appliedenergistics", $null, $null),
