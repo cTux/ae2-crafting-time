@@ -14,8 +14,9 @@ eligible AE2 row
                                     no  -> show Collecting data
 ```
 
-For the running Crafting Status table, the existing delayed warning still wins
-when stats include a stall diagnostic.
+For the running Crafting Status table, the existing waiting status wins before
+stats are considered. The delayed warning still wins over an estimate or the
+placeholder when stats include a stall diagnostic.
 
 ## State order
 
@@ -23,11 +24,13 @@ Resolve each row in this order:
 
 1. If its craft amount is not positive, append nothing.
 2. Request its stats through `ClientStatsRequests`.
-3. If no cached stats exist, append the collecting-data line.
-4. If the status row has a stall diagnostic, append the delayed line and stop.
+3. If the status row is waiting for its first dispatch, append the waiting line
+   and stop.
+4. If no cached stats exist, append the collecting-data line.
+5. If the status row has a stall diagnostic, append the delayed line and stop.
    Do not append an estimate for the same row.
-5. If `TimeEstimate.format(...)` returns text, append the normal TTC line.
-6. If stats exist but cannot produce a usable estimate, append the
+6. If `TimeEstimate.format(...)` returns text, append the normal TTC line.
+7. If stats exist but cannot produce a usable estimate, append the
    collecting-data line instead of leaving the row blank.
 
 This keeps invalid or incomplete historical data honest without introducing a
@@ -67,8 +70,8 @@ adding another explanation line would repeat the visible state.
 
 `CraftingStatusTableRendererMixin.ae2craftingtime$appendTtc(...)` already owns
 the running row line. Keep its `activeAmount + pendingAmount` calculation and
-guard. Preserve the priority of `DELAYED`, then use the placeholder only
-when no formatted estimate is available.
+guard. Preserve the priority of `Waiting`, then `DELAYED`, then use the
+placeholder only when no formatted estimate is available.
 
 The tooltip remains unchanged until real stats exist. A fake throughput or
 sample count would be misleading.
@@ -112,6 +115,8 @@ meaning. The English discussion wording remains the preferred text.
 
 - Extend `TtcTextTest` to prove the placeholder keeps the outer TTC translation
   key and contains the collecting-data translation component.
+- During diff review, verify that the existing `Waiting` branch stays above the
+  placeholder branch.
 - Parse both locale JSON files and compare keys through the repository's
   existing static checks or the smallest equivalent check.
 - Let required GitHub CI run the shared and four target test rows after the
