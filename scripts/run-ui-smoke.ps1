@@ -117,7 +117,8 @@ try {
     if (-not (Test-Path -LiteralPath $latestLog)) { throw "Missing launched client log" }
     Copy-Item -LiteralPath $latestLog -Destination (Join-Path $evidence "latest.log")
     $fatal = Select-String -LiteralPath $latestLog -Pattern @(
-        'Exception caught from mod bus', 'Mixin apply failed', 'MixinTransformerError',
+        'Exception caught from mod bus', 'Mixin apply failed ae2craftingtime.mixins.json',
+        'Mixin apply failed ae2craftingtime_test_driver.mixins.json', 'MixinTransformerError',
         'Failed to load resource', 'The game crashed whilst', 'There is no mod with modId',
         "Reference map 'ae2craftingtime_test_driver.refmap.json'"
     ) -SimpleMatch

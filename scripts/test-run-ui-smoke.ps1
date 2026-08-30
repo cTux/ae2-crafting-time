@@ -33,7 +33,7 @@ if ($env:AE2CT_UI_SMOKE_TEST_MODE -ne "missing-screenshot") {
     Set-Content -LiteralPath (Join-Path $DriverOutputDirectory "craft-plan-tooltip.png") -Value "png"
 }
 @($driver) | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $RuntimeDirectory "resolved-mods\.ae2-crafting-time-run-mods.json") -Encoding UTF8
-Set-Content -LiteralPath (Join-Path $RuntimeDirectory "logs\latest.log") -Value $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "fatal") { "Mixin apply failed" } else { "clean" })
+Set-Content -LiteralPath (Join-Path $RuntimeDirectory "logs\latest.log") -Value $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "fatal") { "Mixin apply failed ae2craftingtime.mixins.json" } else { "clean" })
 '@, [Text.UTF8Encoding]::new($false))
 
 function Invoke-Case([string]$mode, [switch]$Latest, [bool]$shouldPass) {
