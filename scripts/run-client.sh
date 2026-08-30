@@ -39,25 +39,21 @@ case "$Target" in
     Module="mc_1_20_1_forge"; Game="1.20.1"; Loader="forge"
     LoaderMetadata="https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml"
     LoaderPrefix="1.20.1-"; LoaderProperty="runtimeForge1201Version"; Ae2Property="runtimeAe2Forge1201Version"
-    Projects=("Ck4E7v7R" "IiATswDj" "E6BFl96N" "u6dRKJwZ")
     ;;
   1.20.1-fabric)
     Module="fabric_1_20_1"; Game="1.20.1"; Loader="fabric"
     LoaderMetadata="https://maven.fabricmc.net/net/fabricmc/fabric-loader/maven-metadata.xml"
     LoaderPrefix=""; LoaderProperty="runtimeFabricLoader1201Version"; Ae2Property="runtimeAe2Fabric1201Version"
-    Projects=("E6BFl96N" "u6dRKJwZ")
     ;;
   1.21.1-neoforge)
     Module="mc_1_21_1_neoforge"; Game="1.21.1"; Loader="neoforge"
     LoaderMetadata="https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml"
     LoaderPrefix="21.1."; LoaderProperty="runtimeNeoForge1211Version"; Ae2Property="runtimeAe2NeoForge1211Version"
-    Projects=("Ck4E7v7R" "a1RwDz90" "IiATswDj" "rxYaglEe" "E6BFl96N" "u6dRKJwZ")
     ;;
   26.1.2-neoforge)
     Module="mc_26_1_2_neoforge"; Game="26.1.2"; Loader="neoforge"
     LoaderMetadata="https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml"
     LoaderPrefix="26.1.2."; LoaderProperty="runtimeNeoForge2612Version"; Ae2Property="runtimeAe2NeoForge2612Version"
-    Projects=("Ck4E7v7R" "rxYaglEe" "u6dRKJwZ")
     ;;
 esac
 
@@ -78,6 +74,11 @@ else
 fi
 manifest="$mods/.ae2-crafting-time-run-mods.json"
 mkdir -p "$mods"
+mapfile -t Projects < <(jq -r --arg target "$Target" \
+  '.[] | select(.id==$target) | .modrinthDependencies[] | select(.dependency_type=="optional") | .project_id' \
+  "$root/scripts/release-matrix.json")
+if [ "$Loader" != "fabric" ]; then Projects+=("Ck4E7v7R"); fi
+Projects+=("u6dRKJwZ")
 
 if [ "$Target" = "1.20.1-forge" ]; then
   legacyMods="$run/mods"

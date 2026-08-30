@@ -16,28 +16,24 @@ $profiles = @{
         LoaderMetadata = "https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml"
         LoaderPrefix = "1.20.1-"
         LoaderProperty = "runtimeForge1201Version"; Ae2Property = "runtimeAe2Forge1201Version"
-        Projects = @("Ck4E7v7R", "IiATswDj", "E6BFl96N", "u6dRKJwZ")
     }
     "1.20.1-fabric" = [pscustomobject]@{
         Module = "fabric_1_20_1"; Game = "1.20.1"; Loader = "fabric"
         LoaderMetadata = "https://maven.fabricmc.net/net/fabricmc/fabric-loader/maven-metadata.xml"
         LoaderPrefix = ""
         LoaderProperty = "runtimeFabricLoader1201Version"; Ae2Property = "runtimeAe2Fabric1201Version"
-        Projects = @("E6BFl96N", "u6dRKJwZ")
     }
     "1.21.1-neoforge" = [pscustomobject]@{
         Module = "mc_1_21_1_neoforge"; Game = "1.21.1"; Loader = "neoforge"
         LoaderMetadata = "https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml"
         LoaderPrefix = "21.1."
         LoaderProperty = "runtimeNeoForge1211Version"; Ae2Property = "runtimeAe2NeoForge1211Version"
-        Projects = @("Ck4E7v7R", "a1RwDz90", "IiATswDj", "rxYaglEe", "E6BFl96N", "u6dRKJwZ")
     }
     "26.1.2-neoforge" = [pscustomobject]@{
         Module = "mc_26_1_2_neoforge"; Game = "26.1.2"; Loader = "neoforge"
         LoaderMetadata = "https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml"
         LoaderPrefix = "26.1.2."
         LoaderProperty = "runtimeNeoForge2612Version"; Ae2Property = "runtimeAe2NeoForge2612Version"
-        Projects = @("Ck4E7v7R", "rxYaglEe", "u6dRKJwZ")
     }
 }
 $provided = [Collections.Generic.HashSet[string]]::new([string[]]@("XxWD5pD3", "P7dR8mSH"))
@@ -49,6 +45,12 @@ $run = Join-Path $root "versions\$Target\run"
 $mods = Join-Path $run $(if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" })
 $manifest = Join-Path $mods ".ae2-crafting-time-run-mods.json"
 New-Item -ItemType Directory -Path $mods -Force | Out-Null
+$matrixEntry = Get-Content -LiteralPath (Join-Path $root "scripts\release-matrix.json") -Raw |
+    ConvertFrom-Json | Where-Object id -eq $Target
+$projects = @($matrixEntry.modrinthDependencies | Where-Object dependency_type -eq "optional" |
+        Select-Object -ExpandProperty project_id)
+if ($profile.Loader -ne "fabric") { $projects += "Ck4E7v7R" }
+$projects += "u6dRKJwZ"
 
 if ($Target -eq "1.20.1-forge") {
     $legacyMods = Join-Path $run "mods"
@@ -117,7 +119,7 @@ function Install-Project([string]$projectId, [string]$versionId = "") {
     Install-File $file
 }
 
-foreach ($projectId in $profile.Projects) { Install-Project $projectId }
+foreach ($projectId in $projects) { Install-Project $projectId }
 
 $loaderVersion = Get-LatestMavenVersion $profile.LoaderMetadata $profile.LoaderPrefix
 $ae2Version = Get-CompatibleVersion "XxWD5pD3" ""

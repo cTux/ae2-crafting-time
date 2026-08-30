@@ -24,7 +24,7 @@ if (($releaseDryRun -join "`n") -notmatch '### FIXED\s+- The total TTC now sits 
 if (($releaseDryRun -join "`n") -notmatch 'dry-run next development version: 1\.0\.5') {
     throw "Release dry run did not advance the development version"
 }
-if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, E6BFl96N:optional') {
+if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, E6BFl96N:optional, udZtKfzP:optional, ArHeh5Fz:optional') {
     throw "Release dry run did not include Forge Modrinth dependencies"
 }
 if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: P7dR8mSH:required, XxWD5pD3:required, a1RwDz90:optional, E6BFl96N:optional') {

@@ -14,6 +14,8 @@ script="$script_dir/run-client.sh"
 temp="$(mktemp -d)"
 bin_dir="$(mktemp -d)"
 trap 'rm -rf "$temp" "$bin_dir"' EXIT
+mkdir -p "$temp/scripts"
+cp "$script_dir/release-matrix.json" "$temp/scripts/release-matrix.json"
 
 sha="$(printf 'test mod' | sha512sum | awk '{print $1}')"
 
@@ -135,6 +137,13 @@ for case in "${cases[@]}"; do
   fi
 done
 unset IFS
+
+for projectId in udZtKfzP ArHeh5Fz; do
+  if [ ! -f "$temp/versions/1.20.1-forge/run/resolved-mods/$projectId.jar" ]; then
+    echo "Forge run client did not install optional project $projectId" >&2
+    exit 1
+  fi
+done
 
 managed_dir="$temp/versions/1.20.1-forge/run/resolved-mods"
 rm -f "$managed_dir/Ck4E7v7R.jar"

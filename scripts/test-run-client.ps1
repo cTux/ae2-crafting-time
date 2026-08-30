@@ -46,6 +46,9 @@ function Assert-Line([string]$text, [string]$expected) {
 }
 
 try {
+    New-Item -ItemType Directory -Path (Join-Path $temp "scripts") -Force | Out-Null
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot "release-matrix.json") `
+        -Destination (Join-Path $temp "scripts\release-matrix.json")
     $cases = @(
         @("1.20.1-forge", "runtime loader 1.20.1-99", "runtime ae2 15.99.0", $null),
         @("1.20.1-fabric", "runtime loader 0.99.0", "runtime fabric-api 0.99.0+1.20.1", $null),
@@ -58,6 +61,11 @@ try {
         Assert-Line $output $case[1]
         Assert-Line $output $case[2]
         if ($case[3]) { Assert-Line $output $case[3] }
+    }
+    foreach ($projectId in @("udZtKfzP", "ArHeh5Fz")) {
+        if (-not (Test-Path -LiteralPath (Join-Path $temp "versions\1.20.1-forge\run\resolved-mods\$projectId.jar"))) {
+            throw "Forge run client did not install optional project $projectId"
+        }
     }
     Remove-Item -LiteralPath (Join-Path $temp "versions\1.20.1-forge\run\resolved-mods\Ck4E7v7R.jar") -Force
     $global:Ae2CtBadDownload = $true

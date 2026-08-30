@@ -29,9 +29,9 @@ therefore cannot replace layer 2.
 | Mod | Category | Approach | Issue | Links | Status |
 | --- | --- | --- | --- | --- | --- |
 | AdvancedAE | CUSTOM_CPU (Quantum Computer) | 2 | #67 | [CF][advancedae-cf] / [MR][advancedae-mr] | Implemented (verify) |
-| NeoEco AE | CUSTOM_CPU (C4/C6/C9 + F4/F6/F9) | 1+2 | #66 | [CF][neoecoae-cf] / [MR][neoecoae-mr] | Not started |
+| NeoEco AE | CUSTOM_CPU (C4/C6/C9 + F4/F6/F9) | 2 | #66 | [CF][neoecoae-cf] / [MR][neoecoae-mr] | Implemented (verify) |
 | OmniSequence: Transfinite | CUSTOM_CPU (Omni-Computation Core) | 0 (conflict-safe verification) | #71 | [CF][omnisequence-cf] | Not started |
-| AE2 Lightning Tech | CUSTOM_CPU (Tianshu + Matter Warping) | 1+2 | #72 | [CF][ae2lt-cf] / [MR][ae2lt-mr] | Not started |
+| AE2 Lightning Tech | CUSTOM_CPU (Tianshu + Matter Warping) | 2 | #72 | [CF][ae2lt-cf] / [MR][ae2lt-mr] | Implemented (verify) |
 | ExtendedAE | ASSEMBLER + PROVIDER | 4 | #73 | [CF][extendedae-cf] | Not started |
 | ExtendedAE-Plus | PROVIDER / QOL | 4 | #74 | [CF][extendedaeplus-cf] / [MR][extendedaeplus-mr] | Not started |
 | BM Addon | PROVIDER (Ara Vitae Assembler) | 4 | #75 | [CF][bmaddon-cf] / [MR][bmaddon-mr] | Not started |
