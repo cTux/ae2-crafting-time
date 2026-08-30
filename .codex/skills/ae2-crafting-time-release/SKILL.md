@@ -25,7 +25,11 @@ description: Build or release AE2 Crafting Time distributions. Use for release-m
 9. Before the dry run, read the relevant commit subjects as player copy. If
     automatic conversion would still sound like a commit log, prepare a manual
     categorized `-Changelog` in the project voice.
-10. In the final report, immediately after the completed-work list, list every
+10. After the dry run, get explicit user approval for the exact GitHub Release
+    title and body and for every affected versioned JAR's changelog shown on
+    CurseForge and Modrinth. Do not upload until all text is approved; rerun the
+    preview and approval if the text or affected JAR set changes.
+11. In the final report, immediately after the completed-work list, list every
     versioned JAR deployed to CurseForge or Modrinth with its changelog. When
     both services received the same JAR and changelog, list the file once, name
     both services, and show the changelog once. Split entries only when the

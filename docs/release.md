@@ -50,14 +50,24 @@ if ([string]::IsNullOrWhiteSpace($env:MODRINTH_TOKEN)) { throw "MODRINTH_TOKEN i
 if ([string]::IsNullOrWhiteSpace($env:CURSEFORGE_TOKEN)) { throw "CURSEFORGE_TOKEN is missing at user scope" }
 $env:RELEASE_TYPE = "release"
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-changed.ps1 -Deploy -DryRun
+```
+
+The dry run checks the plan without building or uploading anything. Before the
+real deploy, show the user its exact GitHub Release title and body and each
+affected versioned JAR's exact changelog for CurseForge and Modrinth. Get
+explicit approval for both groups of text. Do not upload before approval. If
+the text or affected JAR set changes, rerun the dry run and get approval again.
+
+After approval, run the real deploy without changing the release inputs:
+
+```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\deploy-changed.ps1 -Deploy
 ```
 
-The dry run checks the plan without building or uploading anything. The real
-deploy builds changed rows at `modVersion`, rebuilds unchanged rows at their
-latest released versions for the complete GitHub asset set, uploads changed
-rows, creates the GitHub Release, bumps `modVersion`, commits the release state,
-and pushes the branch.
+The real deploy builds changed rows at `modVersion`, rebuilds unchanged rows at
+their latest released versions for the complete GitHub asset set, uploads
+changed rows, creates the GitHub Release, bumps `modVersion`, commits the
+release state, and pushes the branch.
 
 ## Release notes and names
 
