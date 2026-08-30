@@ -8,7 +8,7 @@ visual evidence, and closes only the client it started. Starting Minecraft
 successfully is not a UI pass.
 
 The runner and companion test driver do not exist yet. See
-[AE2 Crafting Time Test Driver](../test-driver.md) for the development-only mod
+[AE2 Crafting Time Test Driver](../test-driver/spec.md) for the development-only mod
 that observes and controls the client.
 
 Tracking issue: [#124](https://github.com/cTux/ae2-crafting-time/issues/124).

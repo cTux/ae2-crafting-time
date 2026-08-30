@@ -1,0 +1,221 @@
+# AE2 Crafting Time Test Driver Spec
+
+## Goal
+
+Provide a development-only companion mod that drives and observes a real
+Minecraft client for repeatable AE2 Crafting Time UI smoke tests. It runs beside
+the production mod and never replaces or ships inside it.
+
+The first deliverable covers one vertical slice: the standard AE2 Crafting Plan
+screen on Minecraft 1.20.1 Forge.
+
+This covers [issue #126](https://github.com/cTux/ae2-crafting-time/issues/126).
+
+## Artifact contract
+
+The driver artifact name is derived from the project version:
+
+```text
+ae2-crafting-time-<mod-version>-forge-1.20.1-test-driver.jar
+```
+
+It tests exactly:
+
+```text
+ae2-crafting-time-<mod-version>-forge-1.20.1.jar
+```
+
+The driver has its own mod ID, `ae2craftingtime_test_driver`, and refuses to
+load with a different AE2 Crafting Time version. It accepts every AE2 version
+allowed by the matching production mod so the same driver can run the
+compatible and latest development profiles.
+
+The driver artifact is written under `build/test-driver`, never `dist`. It does
+not embed production AE2 Crafting Time classes. Player JARs and published
+artifacts must not contain driver classes, resources, metadata, or dependencies.
+
+## Development client installation
+
+`scripts-run/run-1.20.1-forge.bat` builds and installs the matching driver JAR
+in its development client's managed mod directory before starting Minecraft:
+
+```text
+versions/1.20.1-forge/run/resolved-mods/
+  ae2-crafting-time-<mod-version>-forge-1.20.1-test-driver.jar
+```
+
+`scripts-run/run-1.20.1-forge-latest.bat` does the same under `run-latest`.
+The paired shell launchers have the same behavior. Each launch replaces a stale
+driver copy and fails before Minecraft starts if the matching driver cannot be
+built or installed.
+
+The installed driver remains inert during an ordinary development-client run.
+Only the explicit test-driver launch option starts a scenario or MCP endpoint.
+Installation in these managed development clients does not copy it to `dist`
+or make it a published mod artifact.
+
+This feature does not exist yet.
+
+See [Automated UI Testing](../automated-ui-testing/spec.md) for the eventual
+cross-target and optional-dependency suite.
+
+## Automatic Crafting Plan scenario
+
+The runner copies the tracked Forge 1.20.1 fixture world, starts the client with
+the driver explicitly enabled, and runs this sequence:
+
+1. Enter the disposable fixture world.
+2. Open its known AE2 terminal.
+3. Select its known craftable output.
+4. Wait for `CraftConfirmScreen` and stable plan data.
+5. Check TTC rows, total TTC, badge geometry, and the sort button.
+6. Cycle AE2 order, shortest first, and longest first through the real button.
+7. Hover the known row and check its final tooltip.
+8. Save base and tooltip screenshots and an atomic semantic result.
+9. Close the exact client cleanly.
+
+The fixture supplies retained samples so this scenario checks rendered TTC,
+not the separate `Collecting data` state. A fixed resolution, GUI scale,
+language, fixture, and cursor position make the screenshots comparable.
+
+The driver observes the final AE2 screen, renderer, widget, tooltip, and
+framebuffer state after normal production hooks have run. A production method
+reporting that it executed is not evidence that its output reached the screen.
+Translation keys and output IDs are semantic identity; rendered English text is
+report evidence, not the assertion key.
+
+## Interactive diagnosis
+
+Interactive mode runs the same scenario but pauses at the failed or completed
+step and exposes a loopback MCP endpoint. The first artifact provides only:
+
+```text
+minecraft_get_state
+minecraft_get_screen
+minecraft_get_ui_snapshot
+minecraft_take_screenshot
+minecraft_get_logs
+minecraft_quit
+```
+
+The first five tools observe the launched client without changing its world.
+`minecraft_quit` performs only a normal client shutdown. Synthetic click,
+hover, key, command, and world-editing tools are deferred until a later
+scenario proves they are needed.
+
+The endpoint:
+
+- listens only on `127.0.0.1` and only in explicit interactive mode;
+- requires a fresh per-run secret that is not placed in command-line logs,
+  result files, or screenshots;
+- accepts one controller at a time;
+- uses a fixed tool allowlist and bounded arguments, requests, responses, and
+  timeouts;
+- stops when Minecraft exits; and
+- never exposes arbitrary Java calls, shell execution, Minecraft commands, or
+  filesystem access.
+
+Client state is read only on the Minecraft client thread. Integrated-server
+state is read only on the server thread. Endpoint work is queued to the owning
+thread and fails on a bounded timeout.
+
+## Fixture safety
+
+The driver may act only when all of these are true:
+
+- the explicit test-driver launch option is present;
+- the connection is singleplayer;
+- the opened world is the runner-created disposable copy; and
+- the world contains the expected test-fixture marker and scenario data.
+
+It refuses multiplayer, an unmarked world, the tracked source fixture, or a
+world opened without test-driver mode. After a timeout it records failure and
+stops taking scenario actions. The runner owns copying and deleting the
+disposable world; the driver changes only the running copy.
+
+## Layout checks
+
+Semantic observations include screen-relative rectangles for visible rows,
+text, badges, item cells, AE2 buttons, and the test target widget. A required
+rectangle fails when it is outside the GUI or overlaps an owned control or item
+cell. Screenshots remain the human-readable evidence for clipping, spacing,
+color, and unexpected visual changes.
+
+The first slice does not use full-frame golden-image comparison. Add a cropped
+golden comparison only after a stable region has a demonstrated regression that
+semantic bounds do not catch.
+
+## Result contract
+
+The driver writes `result.json` atomically in the scenario output directory. A
+temporary or incomplete file is never a pass.
+
+```json
+{
+  "schema": 1,
+  "complete": true,
+  "driver": "ae2-crafting-time-1.0.13-forge-1.20.1-test-driver.jar",
+  "target": "1.20.1-forge",
+  "profile": "compatible",
+  "scenario": "craft-plan",
+  "result": "PASS",
+  "checks": {
+    "screen": true,
+    "ttc-row": true,
+    "total-ttc": true,
+    "sort-cycle": true,
+    "tooltip": true,
+    "layout": true
+  },
+  "screenshots": ["craft-plan.png", "craft-plan-tooltip.png"]
+}
+```
+
+The runner independently checks the schema, completion flag, exact driver name,
+target, profile, scenario, required check set, screenshot existence, clean
+client exit, and fatal log entries. Missing or invalid output is a failure.
+
+## Compatibility
+
+- First artifact: Minecraft 1.20.1, Forge, Java 17, standard AE2 Crafting Plan.
+- Run it against both the compatible and latest AE2 profiles already owned by
+  `scripts/run-client-versions.json`.
+- Do not create a cross-loader abstraction for this slice. Reuse code only when
+  a second supported target proves the shared boundary.
+- The driver may compile against production classes but may not alter the
+  production packet protocol, saved-data format, runtime behavior, or JAR.
+
+## Not included
+
+- Crafting Status or submitted-craft checks.
+- Optional-addon screens or behavior.
+- Fabric, NeoForge, dedicated-server, or multiplayer support.
+- General-purpose UI automation, arbitrary world setup, or remote control.
+- Pixel-perfect full-frame comparisons.
+- Publishing the driver on GitHub, CurseForge, or Modrinth.
+- A new production config option, packet, API, or test hook.
+
+## Acceptance criteria
+
+- The dedicated build task creates only the version-matched driver under
+  `build/test-driver`.
+- The Forge 1.20.1 compatible and latest development launchers install that
+  exact driver in their selected `resolved-mods` directory, remove stale driver
+  versions, and stop if installation fails.
+- Forge refuses a driver paired with the wrong AE2 Crafting Time version.
+- The driver remains inactive without the explicit test option and refuses
+  multiplayer, the tracked fixture, and unmarked worlds.
+- One command copies the fixture, runs the compatible Crafting Plan scenario,
+  validates the result and logs, saves two screenshots, closes the exact
+  client, and returns zero only on a complete pass.
+- The same command can select the latest profile without weakening a compatible
+  profile failure.
+- The scenario proves the real screen, TTC row, total, three sort modes,
+  tooltip, badge bounds, and non-overlap rules from final UI observations.
+- Interactive mode exposes only the six bounded tools above and rejects missing
+  authentication, a second controller, oversized input, and unknown tools.
+- Client and server access stays on the owning game thread and times out rather
+  than blocking indefinitely.
+- `dist` and every production JAR remain free of driver artifacts and classes.
+- Automated tests cover result validation, state transitions, safety refusals,
+  endpoint limits, and artifact isolation.
