@@ -9,9 +9,8 @@ public final class TtcBadge {
     }
 
     public static void fillRoundedRect(GuiGraphics guiGraphics, int x1, int y1, int x2, int y2, int color) {
-        guiGraphics.fill(x1 + 4, y1, x2 - 4, y2, color);
-        guiGraphics.fill(x1 + 2, y1 + 1, x2 - 2, y2 - 1, color);
-        guiGraphics.fill(x1 + 1, y1 + 2, x2 - 1, y2 - 2, color);
-        guiGraphics.fill(x1, y1 + 4, x2, y2 - 4, color);
+        guiGraphics.fill(x1 + 2, y1, x2 - 2, y2, color);
+        guiGraphics.fill(x1 + 1, y1 + 1, x2 - 1, y2 - 1, color);
+        guiGraphics.fill(x1, y1 + 2, x2, y2 - 2, color);
     }
 }
