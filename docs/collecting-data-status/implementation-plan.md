@@ -32,9 +32,10 @@ Update `CraftingStatusTableRendererMixin.ae2craftingtime$appendTtc(...)`:
 
 1. Keep the `activeAmount + pendingAmount > 0` guard.
 2. Keep requesting stats through the existing cooldown.
-3. Keep `DELAYED` above every other display state.
-4. Append the normal formatted estimate when available.
-5. Otherwise append the neutral collecting-data line.
+3. Keep `Waiting` above every other display state.
+4. Keep `DELAYED` above the estimate and placeholder states.
+5. Append the normal formatted estimate when available.
+6. Otherwise append the neutral collecting-data line.
 
 Do not add placeholder tooltip statistics.
 
@@ -61,9 +62,10 @@ In a matching development client, check:
 3. One completed sample changes it to a low-confidence estimate ending in `?`.
 4. Three clean samples remove `?`.
 5. A delayed row still shows `DELAYED`.
-6. Clearing the stats returns the row to collecting data.
-7. Stored-only, missing-only, completed, and zero-work rows get no new line.
-8. English and Ukrainian labels stay inside the table cell and do not cover the
+6. A pending-only row waiting for its first dispatch still shows `Waiting`.
+7. Clearing the stats returns the row to collecting data when it is not waiting.
+8. Stored-only, missing-only, completed, and zero-work rows get no new line.
+9. English and Ukrainian labels stay inside the table cell and do not cover the
    item icon or adjacent cells.
 
 If the label does not fit, shorten only the translated value. Add renderer
