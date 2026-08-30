@@ -56,15 +56,16 @@ public abstract class CraftingStatusTableRendererMixin {
                 return;
             }
         }
-        ClientStats.CACHE.get(key).ifPresent(stats -> {
+        ClientStats.CACHE.get(key).ifPresentOrElse(stats -> {
             var stall = ClientStats.CACHE.stall(key);
             if (stall.isPresent()) {
                 lines.add(delayedTtcLine());
                 return;
             }
             TimeEstimate.format(AeKeyAmounts.normalize(entry.getWhat(), amount), stats)
-                    .ifPresent(eta -> lines.add(ttcLine(key, eta)));
-        });
+                    .ifPresentOrElse(eta -> lines.add(ttcLine(key, eta)),
+                            () -> lines.add(TtcText.ttcCollectingData()));
+        }, () -> lines.add(TtcText.ttcCollectingData()));
     }
 
     private static void ae2craftingtime$appendStatsTooltip(CraftingStatusEntry entry, List<Component> lines) {

@@ -45,10 +45,12 @@ public abstract class CraftConfirmTableRendererMixin {
         }
 
         var key = ProfilerBridge.key(entry.getWhat());
+        ClientStatsRequests.request(key);
         ClientStats.CACHE.get(key).ifPresentOrElse(stats -> TimeEstimate
                 .format(AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()), stats)
-                .ifPresent(eta -> lines.add(ttcLine(key, eta))),
-                () -> ClientStatsRequests.request(key));
+                .ifPresentOrElse(eta -> lines.add(ttcLine(key, eta)),
+                        () -> lines.add(TtcText.ttcCollectingData())),
+                () -> lines.add(TtcText.ttcCollectingData()));
     }
 
     private static void ae2craftingtime$appendStatsTooltip(CraftingPlanSummaryEntry entry, List<Component> lines) {

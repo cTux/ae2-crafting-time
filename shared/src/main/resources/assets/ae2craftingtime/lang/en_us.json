@@ -27,6 +27,7 @@
   "text.ae2craftingtime.total_ttc": "TTC: %s",
   "text.ae2craftingtime.ttc": "%s",
   "text.ae2craftingtime.ttc_delayed": "DELAYED",
+  "text.ae2craftingtime.collecting_data": "Collecting data",
   "text.ae2craftingtime.waiting": "Waiting",
   "text.ae2craftingtime.unit.item": "items",
   "text.ae2craftingtime.unit.millibucket": "mB",
