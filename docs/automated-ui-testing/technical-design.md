@@ -50,7 +50,7 @@ Test-driver JARs are written to `build/test-driver` with the production contract
 in the filename, for example:
 
 ```text
-ae2-crafting-time-1.0.12-forge-1.20.1-test-driver.jar
+ae2-crafting-time-1.0.13-forge-1.20.1-test-driver.jar
 ```
 
 `distMod`, release scripts, normalized-JAR checks, and deploy discovery continue
@@ -74,6 +74,10 @@ failing exit. `-Latest` selects diagnostic profiles and preserves failures as
 `DIAGNOSTIC_FAILURE`. `-Scenario` narrows local diagnosis; the default selects
 every implemented required scenario.
 
+The runner passes `--no-daemon` to Gradle. This gives each client run its own
+Gradle JVM instead of handing work to an existing daemon whose process tree the
+runner does not own.
+
 For each selected target, the runner:
 
 1. Validates matrix parity and coverage declarations.
@@ -83,15 +87,19 @@ For each selected target, the runner:
 5. Validates the source world marker, copies it under a unique disposable name,
    and records a pre-run fixture tree hash.
 6. Places only the matching driver JAR in the selected runtime mod directory.
-7. Starts the existing `runClient` path with explicit driver mode, result path,
-   disposable world name, and scenario.
+7. Starts the existing `runClient` path with `--no-daemon` and Gradle project
+   properties `uiSmokeEnabled`, `uiSmokeResultPath`, `uiSmokeWorld`, and
+   `uiSmokeScenario`, plus `uiSmokeTokenPath` only for interactive runs.
 8. Tracks the Gradle process and every descendant created after launch.
 9. Validates the atomic result and required evidence after exit.
 10. Removes the driver JAR and disposable world, then verifies the source fixture
     hash is unchanged.
 
-The launcher gains only the arguments needed to pass driver mode through to
-Gradle. Dependency resolution and compatible/latest behavior remain in
+Each target build forwards those project properties to its client run as the
+JVM system properties `ae2ct.uiSmoke.enabled`, `ae2ct.uiSmoke.resultPath`,
+`ae2ct.uiSmoke.world`, `ae2ct.uiSmoke.scenario`, and optionally
+`ae2ct.uiSmoke.tokenPath`. The token itself never appears on the command line.
+Dependency resolution and compatible/latest behavior remain in
 `run-client.ps1`. This satisfies **A1**, **A2**, **A3**, **A6**, and **A7** with
 one orchestration path.
 
@@ -159,8 +167,8 @@ The driver writes `result.json.tmp`, closes it, then atomically renames it to
 ```json
 {
   "schema": 1,
-  "driver": "ae2-crafting-time-1.0.12-forge-1.20.1-test-driver.jar",
-  "production": "ae2-crafting-time-1.0.12-forge-1.20.1.jar",
+  "driver": "ae2-crafting-time-1.0.13-forge-1.20.1-test-driver.jar",
+  "production": "ae2-crafting-time-1.0.13-forge-1.20.1.jar",
   "target": "1.20.1-forge",
   "profile": "compatible",
   "scenario": "craft-plan",
@@ -211,7 +219,8 @@ generic world edit, or multiplayer tool is exposed.
 - An omitted behavior is `NOT_APPLICABLE` only when the coverage declaration
   records why.
 - After the clean-exit timeout, the runner terminates only descendants of its
-  recorded Gradle launch process and records that cleanup as a failure.
+  recorded no-daemon Gradle launch process and records that cleanup as a
+  failure.
 - Cleanup runs in `finally`; it removes only the exact driver JAR, disposable
   world, and token file created for that run.
 
