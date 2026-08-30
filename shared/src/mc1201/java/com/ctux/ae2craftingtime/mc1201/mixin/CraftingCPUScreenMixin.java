@@ -96,6 +96,8 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
     private void ae2craftingtime$addStatusTtcSortButton(T menu, Inventory playerInventory, Component title,
             ScreenStyle style, CallbackInfo ci) {
         if ((Object) this instanceof CraftingStatusScreen) {
+            ClientStats.CACHE.clearWaiting();
+            ClientStatsRequests.clear();
             addToLeftToolbar(new TtcSortButton(this::ae2craftingtime$cycleTtcSortMode,
                     () -> ae2craftingtime$ttcSortMode));
         }
@@ -260,6 +262,10 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
         var key = ProfilerBridge.key(entry.getWhat());
         ClientStatsRequests.request(key);
+        if (entry.getActiveAmount() == 0 && entry.getPendingAmount() > 0
+                && ClientStats.CACHE.waitingTicks(key).isPresent()) {
+            return OptionalLong.empty();
+        }
         var stats = ClientStats.CACHE.get(key);
         if (stats.isEmpty()) {
             return OptionalLong.empty();

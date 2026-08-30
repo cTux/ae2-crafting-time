@@ -13,7 +13,8 @@
     "CraftingCPUScreenMixin",
     "CraftConfirmScreenMixin",
     "CraftConfirmTableRendererMixin",
-    "CraftingStatusTableRendererMixin"
+    "CraftingStatusTableRendererMixin",
+    "CraftingStatusMenuMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -62,7 +62,7 @@ adapter only for a proven custom or overridden crafting loop.
 - Retain only the configured latest sample window. Throughput is recent-weighted and rejects extreme duration-per-unit outliers using the configured multiplier.
 - Item amounts stay in items. Fluid/chemical-style keys use normalized millibuckets through `AeKeyAmounts`; inspect normalization and saved/runtime samples before changing TTC math.
 - Same-tick work has a one-tick minimum. Invalid, disabled, unmatched, or nonpositive events do not create samples.
-- Stall output requires retained stats and pending work, then at least 600 idle ticks and twice the learned typical duration. Partial output restarts the idle clock; parallel capacity expires after 20 ticks.
+- Stall output requires retained stats and pending work, then at least 200 idle ticks and twice the learned typical duration. Partial output restarts the idle clock; parallel capacity expires after 20 ticks.
 - Capacity means recently used pattern-dispatch slots. Do not describe co-processors as machines remaining busy until outputs return.
 
 ## TTC and UI Semantics

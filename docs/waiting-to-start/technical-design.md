@@ -91,7 +91,9 @@ change. No persisted-data version changes because waiting state is never saved.
 network amounts. Omitted values remove stale state.
 
 The client shows no waiting line before its first response. The existing
-one-second request cycle fills the cache, after which the line updates normally.
+one-second request cycle fills and refreshes the cache. Opening the screen or
+switching the selected CPU clears cached waiting state and the request cooldown
+so the next visible rows request fresh state immediately.
 
 `CraftingStatusTableRendererMixin` uses this order:
 
@@ -101,10 +103,10 @@ one-second request cycle fills the cache, after which the line updates normally.
 3. Otherwise, render the existing estimated TTC when stats exist.
 4. Otherwise, add no TTC line.
 
-Format waiting duration as completed whole seconds with no `~` prefix because
-it is measured time, not an estimate. Add a small `TtcText` method and English
-and Ukrainian translation keys. Reuse the existing dark row badge; add the new
-translation key to its key check.
+Format waiting as the one-word label `Waiting` in English and `Очікування` in
+Ukrainian. The elapsed ticks remain in the snapshot as the server-owned state
+value but are not shown. Add a small `TtcText` method, reuse the existing dark
+row badge, and add the new translation key to its key check.
 
 The status sort and color calculations return no estimate for a cached waiting
 row. Plan rows and other screens keep their current behavior.
@@ -132,7 +134,9 @@ job finishes or is cancelled
 - A missing selected CPU returns no waiting state.
 - A stale client value disappears on the next response because replacement is
   scoped by requested keys.
-- Game-tick rollback clamps the displayed duration to zero.
+- Opening the screen or switching the selected CPU clears cached waiting state
+  before requesting the new context.
+- Game-tick rollback clamps the transmitted duration to zero.
 - Mixed client/server versions fail the loader's protocol or payload
   compatibility boundary instead of decoding the changed snapshot layout.
 
@@ -142,7 +146,8 @@ job finishes or is cancelled
   opened 2026-08-29; it had no comments when checked on 2026-08-30.
 - Repository code: `CraftProfiler`, `ProfilerBridge`, `StatsRequestHandler`,
   `StatsPacketCodec`, `ClientStats`, `CraftingCpuLogicMixin`,
-  `AdvancedCraftingCpuLogicMixin`, `CraftingStatusTableRendererMixin`, and both
-  supported `CraftingCPUScreenMixin` implementations.
+  `AdvancedCraftingCpuLogicMixin`, `CraftingStatusMenuMixin`,
+  `CraftingStatusTableRendererMixin`, and both supported
+  `CraftingCPUScreenMixin` implementations.
 - Local supported AE2 artifacts: `CraftingCpuLogic`, `CraftingStatus`, and
   `CraftingStatusEntry` from AE2 15.0.10, 19.0.24, and 26.1.10-beta.

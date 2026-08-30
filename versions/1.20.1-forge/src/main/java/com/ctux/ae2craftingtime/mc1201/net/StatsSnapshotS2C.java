@@ -11,19 +11,21 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entries,
-        Map<String, Long> networkAmounts) {
+        Map<String, Long> networkAmounts, Map<String, Long> waitingTicks) {
     public StatsSnapshotS2C(List<StatsEntry> entries) {
-        this(entries.stream().map(entry -> entry.key().outputId()).toList(), entries, Map.of());
+        this(entries.stream().map(entry -> entry.key().outputId()).toList(), entries, Map.of(), Map.of());
     }
 
     public static void encode(StatsSnapshotS2C packet, FriendlyByteBuf buffer) {
         StatsPacketCodec.writeSnapshot(buffer,
-                new StatsPacketCodec.Snapshot(packet.requestedKeys, packet.entries, packet.networkAmounts));
+                new StatsPacketCodec.Snapshot(packet.requestedKeys, packet.entries, packet.networkAmounts,
+                        packet.waitingTicks));
     }
 
     public static StatsSnapshotS2C decode(FriendlyByteBuf buffer) {
         var snapshot = StatsPacketCodec.readSnapshot(buffer);
-        return new StatsSnapshotS2C(snapshot.requestedKeys(), snapshot.entries(), snapshot.networkAmounts());
+        return new StatsSnapshotS2C(snapshot.requestedKeys(), snapshot.entries(), snapshot.networkAmounts(),
+                snapshot.waitingTicks());
     }
 
     public static void handle(StatsSnapshotS2C packet, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -31,6 +33,7 @@ public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entr
         context.enqueueWork(() -> {
             ClientStats.CACHE.replace(packet.requestedKeys.stream().map(ProfileKey::new).toList(), packet.entries);
             ClientStats.replaceNetworkAmounts(packet.requestedKeys, packet.networkAmounts);
+            ClientStats.replaceWaitingTicks(packet.requestedKeys, packet.waitingTicks);
         });
         context.setPacketHandled(true);
     }

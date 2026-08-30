@@ -39,6 +39,11 @@ public final class StatsPacketCodec {
             buffer.writeUtf(key, PacketLimits.MAX_OUTPUT_ID_LENGTH);
             buffer.writeVarLong(amount);
         });
+        buffer.writeVarInt(snapshot.waitingTicks().size());
+        snapshot.waitingTicks().forEach((key, ticks) -> {
+            buffer.writeUtf(key, PacketLimits.MAX_OUTPUT_ID_LENGTH);
+            buffer.writeVarLong(ticks);
+        });
         buffer.writeVarInt(snapshot.entries().size());
         for (var entry : snapshot.entries()) {
             var stats = entry.stats();
@@ -68,6 +73,16 @@ public final class StatsPacketCodec {
         var networkAmounts = new HashMap<String, Long>(amountSize);
         for (int i = 0; i < amountSize; i++) {
             networkAmounts.put(buffer.readUtf(PacketLimits.MAX_OUTPUT_ID_LENGTH), buffer.readVarLong());
+        }
+        var waitingSize = PacketLimits.checkedSize(buffer.readVarInt(), PacketLimits.MAX_KEYS, "waiting ticks");
+        var waitingTicks = new HashMap<String, Long>(waitingSize);
+        for (int i = 0; i < waitingSize; i++) {
+            var key = PacketLimits.checkedOutputId(buffer.readUtf(PacketLimits.MAX_OUTPUT_ID_LENGTH));
+            var ticks = buffer.readVarLong();
+            if (ticks < 0) {
+                throw new IllegalArgumentException("waiting ticks must not be negative");
+            }
+            waitingTicks.put(key, ticks);
         }
         var size = PacketLimits.checkedSize(buffer.readVarInt(), PacketLimits.MAX_KEYS, "entries");
         var entries = new ArrayList<StatsEntry>(size);
@@ -101,9 +116,10 @@ public final class StatsPacketCodec {
                     amountPerSecond, lastDurationTicks, unit, reliableEstimate, usedSampleCount, outlierMultiplier,
                     durations, amounts), accuracy, stall));
         }
-        return new Snapshot(requestedKeys, entries, networkAmounts);
+        return new Snapshot(requestedKeys, entries, networkAmounts, waitingTicks);
     }
 
-    public record Snapshot(List<String> requestedKeys, List<StatsEntry> entries, Map<String, Long> networkAmounts) {
+    public record Snapshot(List<String> requestedKeys, List<StatsEntry> entries, Map<String, Long> networkAmounts,
+            Map<String, Long> waitingTicks) {
     }
 }

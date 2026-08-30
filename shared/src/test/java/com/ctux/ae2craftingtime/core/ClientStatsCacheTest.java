@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -84,5 +85,26 @@ class ClientStatsCacheTest {
         assertEquals(stall, cache.stall(key).orElseThrow());
         assertFalse(cache.accuracy(new ProfileKey("minecraft:missing")).isPresent());
         assertFalse(cache.stall(new ProfileKey("minecraft:missing")).isPresent());
+    }
+
+    @Test
+    void waitingValuesReplaceOnlyRequestedKeysAndClearWithTheCache() {
+        var cache = new ClientStatsCache();
+        var iron = new ProfileKey("minecraft:iron_plate");
+        var copper = new ProfileKey("minecraft:copper_plate");
+
+        cache.replaceWaiting(List.of(iron, copper), Map.of(iron, 20L, copper, 40L));
+        cache.replaceWaiting(List.of(iron), Map.of());
+
+        assertFalse(cache.waitingTicks(iron).isPresent());
+        assertEquals(40L, cache.waitingTicks(copper).orElseThrow());
+        cache.remove(copper);
+        assertFalse(cache.waitingTicks(copper).isPresent());
+        cache.replaceWaiting(List.of(iron), Map.of(iron, 60L));
+        cache.clearWaiting();
+        assertFalse(cache.waitingTicks(iron).isPresent());
+        cache.replaceWaiting(List.of(iron), Map.of(iron, 80L));
+        cache.clear();
+        assertFalse(cache.waitingTicks(iron).isPresent());
     }
 }

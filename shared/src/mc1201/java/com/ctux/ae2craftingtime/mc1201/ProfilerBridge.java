@@ -14,7 +14,9 @@ import com.ctux.ae2craftingtime.core.StatsEntry;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
 import com.ctux.ae2craftingtime.core.TtcAccuracyTracker;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 public final class ProfilerBridge {
     private static final CraftProfiler PROFILER = new CraftProfiler(Ae2CraftingTimeConfig.MAX_SAMPLES.get(),
@@ -69,12 +71,15 @@ public final class ProfilerBridge {
         long predictedSeconds = 0;
         int knownRows = 0;
         int totalRows = 0;
+        var waitingKeys = new HashSet<ProfileKey>();
         for (var crafted : craftedAmounts) {
             if (crafted.getLongValue() <= 0) {
                 continue;
             }
             totalRows++;
-            var stats = PROFILER.stats(key(networkId, crafted.getKey()));
+            var key = key(networkId, crafted.getKey());
+            waitingKeys.add(key);
+            var stats = PROFILER.stats(key);
             var estimate = stats.isEmpty() ? java.util.OptionalLong.empty()
                     : TimeEstimate.seconds(normalizeAmount(crafted.getKey(), crafted.getLongValue()), stats.get());
             if (estimate.isPresent()) {
@@ -83,6 +88,7 @@ public final class ProfilerBridge {
             }
         }
 
+        PROFILER.startWaiting(scope, waitingKeys, tick);
         ACCURACY.start(key(networkId, plan.finalOutput().what()), scope, predictedSeconds, knownRows, totalRows, tick,
                 nanoTime);
     }
@@ -113,6 +119,10 @@ public final class ProfilerBridge {
         return ACCURACY.stats(key);
     }
 
+    public static OptionalLong waitingTicks(ProfileKey key, Object scope, long tick) {
+        return key == null || !isEnabled() ? OptionalLong.empty() : PROFILER.waitingTicks(key, scope, tick);
+    }
+
     public static void updateCapacity(Object scope, int usedParallelSlots, int totalParallelSlots, long tick) {
         if (isEnabled()) {
             PROFILER.updateCapacity(scope, usedParallelSlots, totalParallelSlots, tick);
@@ -141,7 +151,9 @@ public final class ProfilerBridge {
     }
 
     private static boolean isEnabled() {
-        return Ae2CraftingTimeConfig.ENABLED.get();
+        var enabled = Ae2CraftingTimeConfig.ENABLED.get();
+        PROFILER.setEnabled(enabled);
+        return enabled;
     }
 
     public static ProfileKey key(AEKey key) {

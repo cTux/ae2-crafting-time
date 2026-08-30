@@ -3,18 +3,23 @@ package com.ctux.ae2craftingtime.core;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
+import java.util.Set;
 
 public final class CraftProfiler {
     private final int maxSamples;
     private final double outlierMultiplier;
     private static final Object DEFAULT_SCOPE = new Object();
+    private static final long MIN_DELAY_TICKS = 200L;
     private final Map<Object, Map<ProfileKey, ArrayDeque<PendingCraft>>> pending = new IdentityHashMap<>();
     private final Map<Object, Map<ProfileKey, Long>> lastProgressTicks = new IdentityHashMap<>();
     private final Map<Object, CapacityState> capacities = new IdentityHashMap<>();
+    private final Map<Object, WaitingState> waiting = new IdentityHashMap<>();
     private final Map<ProfileKey, BusyWindow> busyWindows = new HashMap<>();
     private final Map<ProfileKey, ArrayDeque<CraftSample>> samples = new HashMap<>();
     private boolean enabled = true;
@@ -40,8 +45,34 @@ public final class CraftProfiler {
             pending.clear();
             lastProgressTicks.clear();
             capacities.clear();
+            waiting.clear();
             busyWindows.clear();
         }
+    }
+
+    public void startWaiting(Object scope, Iterable<ProfileKey> keys, long tick) {
+        if (!enabled || scope == null || keys == null) {
+            return;
+        }
+
+        var waitingKeys = new HashSet<ProfileKey>();
+        for (var key : keys) {
+            if (key != null) {
+                waitingKeys.add(key);
+            }
+        }
+        if (waitingKeys.isEmpty()) {
+            waiting.remove(scope);
+        } else {
+            waiting.put(scope, new WaitingState(tick, waitingKeys));
+        }
+    }
+
+    public OptionalLong waitingTicks(ProfileKey key, Object scope, long tick) {
+        var state = waiting.get(scope);
+        return key != null && state != null && state.keys.contains(key)
+                ? OptionalLong.of(Math.max(0, tick - state.acceptedAtTick))
+                : OptionalLong.empty();
     }
 
     public void start(ProfileKey key, long amount, ProfileUnit unit, long tick) {
@@ -51,6 +82,10 @@ public final class CraftProfiler {
     public void start(ProfileKey key, Object scope, long amount, ProfileUnit unit, long tick) {
         if (!enabled || amount <= 0) {
             return;
+        }
+        var waitingState = waiting.get(scope);
+        if (waitingState != null && waitingState.keys.remove(key) && waitingState.keys.isEmpty()) {
+            waiting.remove(scope);
         }
         pending.computeIfAbsent(scope, ignored -> new HashMap<>())
                 .computeIfAbsent(key, ignored -> new ArrayDeque<>())
@@ -112,6 +147,7 @@ public final class CraftProfiler {
         var removed = pending.remove(scope);
         lastProgressTicks.remove(scope);
         capacities.remove(scope);
+        waiting.remove(scope);
         if (removed == null) {
             return;
         }
@@ -139,7 +175,7 @@ public final class CraftProfiler {
         var lastProgress = lastProgressTicks.get(scope).get(key);
         var idleTicks = Math.max(0, tick - lastProgress);
         var typicalTicks = stats.get().averageDurationTicks();
-        var delayedAfter = Math.max(600L, (long) Math.ceil(typicalTicks * 2.0));
+        var delayedAfter = Math.max(MIN_DELAY_TICKS, (long) Math.ceil(typicalTicks * 2.0));
         if (idleTicks < delayedAfter) {
             return Optional.empty();
         }
@@ -255,6 +291,7 @@ public final class CraftProfiler {
         pending.clear();
         lastProgressTicks.clear();
         capacities.clear();
+        waiting.clear();
         busyWindows.clear();
         for (var output : persisted) {
             if (output == null || output.key() == null || output.unit() == null) {
@@ -327,5 +364,8 @@ public final class CraftProfiler {
     }
 
     private record CapacityState(int usedParallelSlots, int totalParallelSlots, long tick) {
+    }
+
+    private record WaitingState(long acceptedAtTick, Set<ProfileKey> keys) {
     }
 }

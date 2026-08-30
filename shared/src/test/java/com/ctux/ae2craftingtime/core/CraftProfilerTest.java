@@ -451,7 +451,7 @@ class CraftProfilerTest {
     }
 
     @Test
-    void reportsDelayedPendingOutputAfterMinimumAndTypicalThresholds() {
+    void reportsDelayedPendingOutputAfterTypicalThreshold() {
         var profiler = new CraftProfiler(10);
         var key = new ProfileKey("minecraft:iron_plate");
         var cpu = new Object();
@@ -461,15 +461,29 @@ class CraftProfilerTest {
         profiler.start(key, cpu, 1, ProfileUnit.ITEM, 300);
         profiler.updateCapacity(cpu, 1, 4, 300);
 
-        assertFalse(profiler.stall(key, cpu, 899).isPresent());
-        profiler.updateCapacity(cpu, 1, 4, 900);
-        var diagnostic = profiler.stall(key, cpu, 900).orElseThrow();
+        assertFalse(profiler.stall(key, cpu, 699).isPresent());
+        profiler.updateCapacity(cpu, 1, 4, 700);
+        var diagnostic = profiler.stall(key, cpu, 700).orElseThrow();
 
-        assertEquals(600, diagnostic.idleTicks());
+        assertEquals(400, diagnostic.idleTicks());
         assertEquals(200.0, diagnostic.typicalDurationTicks());
         assertEquals(1, diagnostic.activeBatches());
         assertEquals(1, diagnostic.usedParallelSlots());
         assertEquals(4, diagnostic.totalParallelSlots());
+    }
+
+    @Test
+    void reportsDelayedPendingOutputAtTenSecondMinimum() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_plate");
+        var cpu = new Object();
+
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(key, cpu, 1, 20);
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 100);
+
+        assertFalse(profiler.stall(key, cpu, 299).isPresent());
+        assertEquals(200, profiler.stall(key, cpu, 300).orElseThrow().idleTicks());
     }
 
     @Test
@@ -483,8 +497,8 @@ class CraftProfilerTest {
         profiler.start(key, cpu, 10, ProfileUnit.ITEM, 100);
         profiler.complete(key, cpu, 1, 650);
 
-        assertFalse(profiler.stall(key, cpu, 700).isPresent());
-        assertEquals(600, profiler.stall(key, cpu, 1_250).orElseThrow().idleTicks());
+        assertFalse(profiler.stall(key, cpu, 849).isPresent());
+        assertEquals(200, profiler.stall(key, cpu, 850).orElseThrow().idleTicks());
     }
 
     @Test
@@ -498,9 +512,74 @@ class CraftProfilerTest {
         profiler.start(key, cpu, 1, ProfileUnit.ITEM, 100);
         profiler.updateCapacity(cpu, 4, 4, 100);
 
-        var diagnostic = profiler.stall(key, cpu, 700).orElseThrow();
+        var diagnostic = profiler.stall(key, cpu, 300).orElseThrow();
 
         assertEquals(0, diagnostic.usedParallelSlots());
         assertEquals(0, diagnostic.totalParallelSlots());
+    }
+
+    @Test
+    void tracksWaitingTimeUntilEachOutputsFirstDispatch() {
+        var profiler = new CraftProfiler(10);
+        var cpu = new Object();
+        var iron = new ProfileKey("minecraft:iron_plate");
+        var copper = new ProfileKey("minecraft:copper_plate");
+        var unrelated = new ProfileKey("minecraft:gear");
+
+        profiler.startWaiting(cpu, List.of(iron, copper), 100);
+
+        assertEquals(0, profiler.waitingTicks(iron, cpu, 90).orElseThrow());
+        assertEquals(20, profiler.waitingTicks(iron, cpu, 120).orElseThrow());
+        assertFalse(profiler.waitingTicks(null, cpu, 120).isPresent());
+        assertFalse(profiler.waitingTicks(unrelated, cpu, 120).isPresent());
+        assertFalse(profiler.waitingTicks(iron, new Object(), 120).isPresent());
+
+        profiler.start(unrelated, cpu, 1, ProfileUnit.ITEM, 121);
+        assertTrue(profiler.waitingTicks(iron, cpu, 121).isPresent());
+        profiler.start(iron, cpu, 1, ProfileUnit.ITEM, 122);
+        assertFalse(profiler.waitingTicks(iron, cpu, 122).isPresent());
+        assertTrue(profiler.waitingTicks(copper, cpu, 122).isPresent());
+        profiler.start(copper, cpu, 1, ProfileUnit.ITEM, 123);
+        profiler.start(copper, cpu, 1, ProfileUnit.ITEM, 124);
+        assertFalse(profiler.waitingTicks(copper, cpu, 124).isPresent());
+    }
+
+    @Test
+    void replacesAndClearsWaitingRuntimeState() {
+        var profiler = new CraftProfiler(10);
+        var cpu = new Object();
+        var iron = new ProfileKey("minecraft:iron_plate");
+        var copper = new ProfileKey("minecraft:copper_plate");
+
+        profiler.startWaiting(cpu, List.of(iron), 10);
+        profiler.startWaiting(cpu, List.of(copper), 20);
+        assertFalse(profiler.waitingTicks(iron, cpu, 30).isPresent());
+        assertEquals(10, profiler.waitingTicks(copper, cpu, 30).orElseThrow());
+
+        profiler.clearPending(cpu);
+        assertFalse(profiler.waitingTicks(copper, cpu, 30).isPresent());
+        profiler.startWaiting(cpu, List.of(iron), 40);
+        profiler.loadSamples(List.of());
+        assertFalse(profiler.waitingTicks(iron, cpu, 50).isPresent());
+        profiler.startWaiting(cpu, List.of(iron), 60);
+        profiler.setEnabled(false);
+        assertFalse(profiler.waitingTicks(iron, cpu, 70).isPresent());
+    }
+
+    @Test
+    void ignoresInvalidWaitingRegistrationsAndDropsEmptyReplacement() {
+        var profiler = new CraftProfiler(10);
+        var cpu = new Object();
+        var key = new ProfileKey("minecraft:iron_plate");
+
+        profiler.startWaiting(null, List.of(key), 0);
+        profiler.startWaiting(cpu, null, 0);
+        profiler.startWaiting(cpu, Arrays.asList(null, key), 0);
+        assertTrue(profiler.waitingTicks(key, cpu, 0).isPresent());
+        profiler.startWaiting(cpu, Arrays.asList((ProfileKey) null), 1);
+        assertFalse(profiler.waitingTicks(key, cpu, 1).isPresent());
+        profiler.setEnabled(false);
+        profiler.startWaiting(cpu, List.of(key), 2);
+        assertFalse(profiler.waitingTicks(key, cpu, 2).isPresent());
     }
 }
