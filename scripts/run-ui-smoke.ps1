@@ -76,13 +76,13 @@ $env:AE2CT_TEST_DRIVER_TOKEN = if ($Interactive) {
 try {
     $process = Start-Process -FilePath "powershell.exe" -ArgumentList $arguments -PassThru -WindowStyle Hidden `
         -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+    $null = $process.Handle
     $timeout = if ($Interactive) { [TimeSpan]::FromMinutes(30) } else { [TimeSpan]::FromMinutes(8) }
     if (-not $process.WaitForExit([int]$timeout.TotalMilliseconds)) {
         $null = $process.CloseMainWindow()
         if (-not $process.WaitForExit(10000)) { & taskkill.exe /PID $process.Id /T /F | Out-Null }
         throw "UI-smoke client exceeded $($timeout.TotalMinutes) minutes"
     }
-    $process.Refresh()
     if ($process.ExitCode -ne 0) { throw "UI-smoke launcher exited with $($process.ExitCode)" }
 
     $resultPath = Join-Path $evidence "result.json"
