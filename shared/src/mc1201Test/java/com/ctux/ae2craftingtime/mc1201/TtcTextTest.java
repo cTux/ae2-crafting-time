@@ -7,6 +7,9 @@ import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import org.junit.jupiter.api.Test;
 
@@ -16,6 +19,20 @@ class TtcTextTest {
         var contents = (TranslatableContents) TtcText.waiting().getContents();
         assertEquals("text.ae2craftingtime.waiting", contents.getKey());
         assertEquals(0, contents.getArgs().length);
+    }
+
+    @Test
+    void collectingDataUsesTtcWrapperAndCollectingDataKey() {
+        var collectingData = TtcText.ttcCollectingData();
+        var contents = (TranslatableContents) collectingData.getContents();
+        assertEquals("text.ae2craftingtime.ttc", contents.getKey());
+        assertEquals(1, contents.getArgs().length);
+
+        var nestedContents = (TranslatableContents) ((Component) contents.getArgs()[0]).getContents();
+        assertEquals("text.ae2craftingtime.collecting_data", nestedContents.getKey());
+
+        assertTrue(collectingData.getStyle().isBold());
+        assertEquals(TextColor.fromLegacyFormat(ChatFormatting.GRAY), collectingData.getStyle().getColor());
     }
 
     @Test

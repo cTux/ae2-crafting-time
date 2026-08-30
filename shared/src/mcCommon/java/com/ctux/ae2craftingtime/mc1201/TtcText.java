@@ -28,6 +28,12 @@ public final class TtcText {
         return Component.translatable("text.ae2craftingtime.waiting");
     }
 
+    public static MutableComponent ttcCollectingData() {
+        return Component.translatable("text.ae2craftingtime.ttc",
+                Component.translatable("text.ae2craftingtime.collecting_data"))
+                .withStyle(ChatFormatting.GRAY, ChatFormatting.BOLD);
+    }
+
     public static MutableComponent totalTtc(String eta) {
         return Component.translatable("text.ae2craftingtime.total_ttc", eta);
     }
