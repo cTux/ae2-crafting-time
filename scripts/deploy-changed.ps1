@@ -5,6 +5,7 @@ param(
     [string]$ModrinthProjectId,
     [string]$CurseProjectId,
     [string]$Changelog,
+    [string]$ChangelogPath,
     [string]$JavaHome = "C:\Users\cccTu\.gradle\jdks\eclipse_adoptium-17-amd64-windows\jdk-17.0.19+10",
     [string]$MatrixPath = (Join-Path $PSScriptRoot "release-matrix.json"),
     [string]$StatePath = (Join-Path (Split-Path -Parent $PSScriptRoot) ".release-state.json"),
@@ -220,21 +221,42 @@ function Assert-Changelog([string]$text) {
     return $text
 }
 
-function Get-EntryChangelog($entry, $previous) {
-    if ($Changelog) { return Assert-Changelog $Changelog }
-    if (-not ($previous -and $previous.commit)) { return Assert-Changelog $entry.changelog }
+function Get-EntryChangelogs($entry, $previous) {
+    if ($scopedChangelogs) {
+        $common = Get-StateEntry $scopedChangelogs "all"
+        $specific = Get-StateEntry $scopedChangelogs $entry.id
+        if (-not $common -and -not $specific) {
+            throw "Scoped changelog has no 'all' or '$($entry.id)' entry"
+        }
+        $common = if ($common) { Assert-Changelog $common } else { $null }
+        $specific = if ($specific) { Assert-Changelog $specific } else { $null }
+        return [pscustomobject]@{
+            common = $common
+            specific = $specific
+            platform = (@($common, $specific) | Where-Object { $_ }) -join "`n`n"
+        }
+    }
 
-    $paths = @(
-        "build.gradle",
-        "settings.gradle",
-        "shared/src/main",
-        "shared/src/mc1201",
-        "$($entry.projectDir)/build.gradle",
-        "$($entry.projectDir)/src/main"
-    )
-    $subjects = @(Invoke-Git (@("log", "$($previous.commit)..HEAD", "--format=%s", "--") + $paths))
-    if ($subjects.Count -eq 0) { return Assert-Changelog $entry.changelog }
-    return Format-Changelog $subjects
+    $notes = if ($Changelog) {
+        Assert-Changelog $Changelog
+    }
+    elseif (-not ($previous -and $previous.commit)) {
+        Assert-Changelog $entry.changelog
+    }
+    else {
+        $paths = @(
+            "build.gradle",
+            "settings.gradle",
+            "shared/src/main",
+            "shared/src/mc1201",
+            "$($entry.projectDir)/build.gradle",
+            "$($entry.projectDir)/src/main"
+        )
+        $subjects = @(Invoke-Git (@("log", "$($previous.commit)..HEAD", "--format=%s", "--") + $paths))
+        if ($subjects.Count -eq 0) { Assert-Changelog $entry.changelog } else { Format-Changelog $subjects }
+    }
+
+    return [pscustomobject]@{ common = $null; specific = $null; platform = $notes }
 }
 
 function Publish-Modrinth($entry, [string]$version, [string]$jarPath, [string]$notes) {
@@ -307,15 +329,28 @@ function Publish-GitHubRelease($releases, $jars, [string]$sourceCommit) {
     $stamp = (Get-Date).ToUniversalTime().ToString("yyyyMMdd-HHmmss")
     $tag = "release-$stamp"
     $title = $releases[0].version
-    $notes = ($releases | Group-Object changelog | ForEach-Object {
-        $heading = if ($_.Count -eq $releases.Count) {
-            "All versions"
+    if ($scopedChangelogs) {
+        $sections = @()
+        if ($releases[0].commonChangelog) {
+            $sections += "## All versions`n`n$($releases[0].commonChangelog)"
         }
-        else {
-            ($_.Group | ForEach-Object { "$($_.entry.loaderName) $($_.entry.minecraftVersion)" }) -join ", "
-        }
-        "## $heading`n`n$($_.Name)"
-    }) -join "`n`n"
+        $sections += @($releases | Where-Object specificChangelog | Group-Object specificChangelog | ForEach-Object {
+            $heading = ($_.Group | ForEach-Object { "$($_.entry.loaderName) $($_.entry.minecraftVersion)" }) -join ", "
+            "## $heading`n`n$($_.Name)"
+        })
+        $notes = $sections -join "`n`n"
+    }
+    else {
+        $notes = ($releases | Group-Object changelog | ForEach-Object {
+            $heading = if ($_.Count -eq $releases.Count) {
+                "All versions"
+            }
+            else {
+                ($_.Group | ForEach-Object { "$($_.entry.loaderName) $($_.entry.minecraftVersion)" }) -join ", "
+            }
+            "## $heading`n`n$($_.Name)"
+        }) -join "`n`n"
+    }
 
     if ($DryRun) {
         Write-Host "dry-run GitHub Release: $title"
@@ -346,6 +381,20 @@ function Publish-GitHubRelease($releases, $jars, [string]$sourceCommit) {
 $matrix = Read-Json $MatrixPath @()
 $state = Read-Json $StatePath ([pscustomobject]@{})
 $developmentVersion = Get-DevelopmentVersion $VersionPath
+if ($Changelog -and $ChangelogPath) {
+    throw "Use either -Changelog or -ChangelogPath, not both"
+}
+$scopedChangelogs = if ($ChangelogPath) {
+    if (-not (Test-Path -LiteralPath $ChangelogPath)) { throw "Changelog file does not exist: $ChangelogPath" }
+    Read-Json $ChangelogPath ([pscustomobject]@{})
+}
+else { $null }
+if ($scopedChangelogs) {
+    $validKeys = @("all") + @($matrix.id)
+    foreach ($key in $scopedChangelogs.PSObject.Properties.Name) {
+        if ($key -notin $validKeys) { throw "Unknown scoped changelog entry: $key" }
+    }
+}
 
 Push-Location $root
 try {
@@ -377,12 +426,15 @@ try {
             throw "Development version $developmentVersion must be newer than released $($entry.id) $currentVersion"
         }
         $version = if ($changed) { $developmentVersion } else { $currentVersion }
+        $changelogs = if ($changed) { Get-EntryChangelogs $entry $previous } else { $null }
         $plans += [pscustomobject]@{
             entry = $entry
             version = $version
             fingerprint = $fingerprint
             jarPath = Join-Path $root "dist\$(Get-ArtifactFileName $entry $version)"
-            changelog = if ($changed) { Get-EntryChangelog $entry $previous } else { $null }
+            changelog = if ($changed) { $changelogs.platform } else { $null }
+            commonChangelog = if ($changed) { $changelogs.common } else { $null }
+            specificChangelog = if ($changed) { $changelogs.specific } else { $null }
             changed = $changed
         }
     }
@@ -410,6 +462,8 @@ try {
                 Write-Host "dry-run Modrinth version: $($release.entry.id)-$($release.version)"
                 Write-Host "dry-run Modrinth dependencies: $((@($release.entry.modrinthDependencies) | ForEach-Object { "$($_.project_id):$($_.dependency_type)" }) -join ', ')"
                 Write-Host "dry-run CurseForge versions: $($release.entry.minecraftVersion), $($release.entry.loaderName), Client, Server"
+                Write-Host "dry-run changelog $($release.entry.id):"
+                Write-Host $release.changelog
             }
             else {
                 Publish-Modrinth $release.entry $release.version $release.jarPath $release.changelog

@@ -24,7 +24,10 @@ description: Build or release AE2 Crafting Time distributions. Use for release-m
    failure as non-authoritative and never print token values.
 9. Before the dry run, read the relevant commit subjects as player copy. If
     automatic conversion would still sound like a commit log, prepare a manual
-    categorized `-Changelog` in the project voice.
+    categorized changelog in the project voice. Use `-Changelog` only when every
+    affected row has the same notes. Otherwise use `-ChangelogPath` with common
+    notes under `all` and row-specific notes under exact release-matrix ids;
+    never send a loader- or Minecraft-specific note to an unrelated JAR.
 10. After the dry run, get explicit user approval for the exact GitHub Release
     title and body and for every affected versioned JAR's changelog shown on
     CurseForge and Modrinth. Do not upload until all text is approved; rerun the

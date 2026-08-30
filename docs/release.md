@@ -79,6 +79,11 @@ release state, and pushes the branch.
 - Conventional commit subjects are converted into those categories and stripped
   of commit types, scopes, and hashes. A manual `-Changelog` must already use the
   same `### CATEGORY` Markdown headings.
+- Use `-Changelog` only when every affected matrix row has the same notes. If any
+  note applies to only some rows, pass `-ChangelogPath` with a JSON object whose
+  `all` value contains common Markdown and whose matrix-row keys contain only
+  their specific Markdown. The dry run prints each JAR's final platform
+  changelog and keeps row-specific notes out of unrelated uploads.
 - Read the relevant commit subjects before the dry run. If automatic conversion
   would still sound like a commit log, prepare a manual `-Changelog` in the
   project voice.
@@ -102,7 +107,7 @@ not created.
 
 `deploy-changed.ps1` fingerprints only jar inputs: root build files, shared main code, and the matrix row's version main code. Test-only edits do not build or deploy.
 
-For every affected row, `-Deploy` publishes the current `modVersion`, builds the loader-explicit jar, generates that jar's changelog from commits since its previous release, and uploads the jar plus changelog to both Modrinth and CurseForge. Modrinth version numbers include the matrix row id because version numbers must be unique across the whole project. CurseForge uploads include the project's Client and Server environment versions. It also rebuilds the unchanged rows at their current released versions so the GitHub Release always attaches the complete latest supported JAR set. The release title and body list only affected versions and their per-jar changelogs. After every successful deploy, it bumps `modVersion` to the next patch and commits `gradle.properties` together with `.release-state.json`; every later commit and normal build then belongs to that new version. The repository's post-commit hook pushes that commit and creates the branch PR when needed.
+For every affected row, `-Deploy` publishes the current `modVersion`, builds the loader-explicit jar, generates that jar's changelog from commits since its previous release, and uploads the jar plus changelog to both Modrinth and CurseForge. A scoped manual changelog adds `all` notes to every affected row and adds each matrix-row entry only to that row; the GitHub body prints the common block once and each row-specific block under its loader and Minecraft version. Modrinth version numbers include the matrix row id because version numbers must be unique across the whole project. CurseForge uploads include the project's Client and Server environment versions. It also rebuilds the unchanged rows at their current released versions so the GitHub Release always attaches the complete latest supported JAR set. The release title and body list only affected versions and their per-jar changelogs. After every successful deploy, it bumps `modVersion` to the next patch and commits `gradle.properties` together with `.release-state.json`; every later commit and normal build then belongs to that new version. The repository's post-commit hook pushes that commit and creates the branch PR when needed.
 
 Run `scripts/setup-git.ps1` once after cloning. It installs the tracked post-commit hook, which automatically pushes every fix, feature, and release commit and creates one PR per branch. Existing PRs are reused, so later commits update them without duplicates. Work on a branch: the hook intentionally refuses to push a detached HEAD. GitHub CLI must be installed and authenticated for PR creation.
 
