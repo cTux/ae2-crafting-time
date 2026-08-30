@@ -75,7 +75,7 @@ fi
 manifest="$mods/.ae2-crafting-time-run-mods.json"
 mkdir -p "$mods"
 mapfile -t Projects < <(jq -r --arg target "$Target" \
-  '.[] | select(.id==$target) | .modrinthDependencies[] | select(.dependency_type=="optional") | "\(.project_id)\t\(.version_number // \"\")"' \
+  '.[] | select(.id==$target) | .runModrinthDependencies[] | "\(.project_id)\t\(.version_number // "")"' \
   "$script_dir/release-matrix.json")
 if [ "$Loader" != "fabric" ]; then Projects+=($'Ck4E7v7R\t'); fi
 Projects+=($'u6dRKJwZ\t')

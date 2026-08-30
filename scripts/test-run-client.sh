@@ -129,6 +129,15 @@ cases=(
   "26.1.2-neoforge|runtime loader 26.1.2.99|runtime ae2 26.99.0-beta"
 )
 
+expected_projects() {
+  case "$1" in
+    1.20.1-forge) echo "a1RwDz90 IiATswDj E6BFl96N udZtKfzP ArHeh5Fz rxYaglEe JiOqfoFM xr109llC qPydPwtX anaGQD2Q 4inoel9g pNabrMMw jjuIRIVr RYE1pYyr IZPmgTLT oMgZ004U 5G4fpXXj qelfSMnn VQhDBNs8 SOw6jD6x ayN3DZKb";;
+    1.20.1-fabric) echo "E6BFl96N JiOqfoFM pNabrMMw jjuIRIVr veunMwU3";;
+    1.21.1-neoforge) echo "a1RwDz90 IiATswDj rxYaglEe E6BFl96N udZtKfzP ArHeh5Fz JiOqfoFM xr109llC qPydPwtX 4inoel9g pNabrMMw jjuIRIVr RYE1pYyr IZPmgTLT oMgZ004U qelfSMnn VQhDBNs8 SOw6jD6x ayN3DZKb";;
+    26.1.2-neoforge) echo "rxYaglEe ArHeh5Fz JiOqfoFM qPydPwtX pNabrMMw RYE1pYyr oMgZ004U qelfSMnn VQhDBNs8";;
+  esac
+}
+
 IFS='|'
 for case in "${cases[@]}"; do
   read -ra parts <<< "$case"
@@ -141,6 +150,32 @@ for case in "${cases[@]}"; do
   fi
   if [ -n "${parts[4]:-}" ]; then
     assert_line "$output" "${parts[4]}"
+  fi
+  IFS=' ' read -ra target_projects <<< "$(expected_projects "$target")"
+  for project in "${target_projects[@]}"; do
+    if [ "$target" = "1.20.1-forge" ] && [ "$project" = "udZtKfzP" ]; then
+      assert_line "$output" "mod udZtKfzP-20.3.0.jar"
+    elif [ "$project" = "udZtKfzP" ]; then
+      assert_line "$output" "mod udZtKfzP-20.4.2.jar"
+    else
+      assert_line "$output" "mod $project.jar"
+    fi
+  done
+  if [ "$target" = "1.20.1-forge" ]; then
+    mods_dir="$temp/versions/$target/run/resolved-mods"
+  else
+    mods_dir="$temp/versions/$target/run/mods"
+  fi
+  expected_count="$(expected_projects "$target" | wc -w)"
+  if [ "$target" = "1.20.1-fabric" ]; then
+    expected_count=$((expected_count + 1))
+  else
+    expected_count=$((expected_count + 2))
+  fi
+  actual_count="$(jq 'length' "$mods_dir/.ae2-crafting-time-run-mods.json")"
+  if [ "$actual_count" -ne "$expected_count" ]; then
+    echo "Unexpected managed-mod count for $target: $actual_count" >&2
+    exit 1
   fi
 done
 unset IFS

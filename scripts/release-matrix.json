@@ -19,6 +19,29 @@
       { "project_id": "udZtKfzP", "dependency_type": "optional", "version_number": "20.3.0" },
       { "project_id": "ArHeh5Fz", "dependency_type": "optional" }
     ],
+    "runModrinthDependencies": [
+      { "project_id": "a1RwDz90" },
+      { "project_id": "IiATswDj" },
+      { "project_id": "E6BFl96N" },
+      { "project_id": "udZtKfzP", "version_number": "20.3.0" },
+      { "project_id": "ArHeh5Fz" },
+      { "project_id": "rxYaglEe" },
+      { "project_id": "JiOqfoFM" },
+      { "project_id": "xr109llC" },
+      { "project_id": "qPydPwtX" },
+      { "project_id": "anaGQD2Q" },
+      { "project_id": "4inoel9g" },
+      { "project_id": "pNabrMMw" },
+      { "project_id": "jjuIRIVr" },
+      { "project_id": "RYE1pYyr" },
+      { "project_id": "IZPmgTLT" },
+      { "project_id": "oMgZ004U" },
+      { "project_id": "5G4fpXXj" },
+      { "project_id": "qelfSMnn" },
+      { "project_id": "VQhDBNs8" },
+      { "project_id": "SOw6jD6x" },
+      { "project_id": "ayN3DZKb" }
+    ],
     "changelog": "### FIXED\n\n- The total TTC now sits in the crafting status header, so it no longer overlaps the action buttons."
   },
   {
@@ -38,6 +61,13 @@
       { "project_id": "XxWD5pD3", "dependency_type": "required" },
       { "project_id": "a1RwDz90", "dependency_type": "optional" },
       { "project_id": "E6BFl96N", "dependency_type": "optional" }
+    ],
+    "runModrinthDependencies": [
+      { "project_id": "E6BFl96N" },
+      { "project_id": "JiOqfoFM" },
+      { "project_id": "pNabrMMw" },
+      { "project_id": "jjuIRIVr" },
+      { "project_id": "veunMwU3" }
     ],
     "changelog": "### FIXED\n\n- The total TTC now sits in the crafting status header, so it no longer overlaps the action buttons."
   },
@@ -60,6 +90,27 @@
       { "project_id": "rxYaglEe", "dependency_type": "optional" },
       { "project_id": "E6BFl96N", "dependency_type": "optional" }
     ],
+    "runModrinthDependencies": [
+      { "project_id": "a1RwDz90" },
+      { "project_id": "IiATswDj" },
+      { "project_id": "rxYaglEe" },
+      { "project_id": "E6BFl96N" },
+      { "project_id": "udZtKfzP" },
+      { "project_id": "ArHeh5Fz" },
+      { "project_id": "JiOqfoFM" },
+      { "project_id": "xr109llC" },
+      { "project_id": "qPydPwtX" },
+      { "project_id": "4inoel9g" },
+      { "project_id": "pNabrMMw" },
+      { "project_id": "jjuIRIVr" },
+      { "project_id": "RYE1pYyr" },
+      { "project_id": "IZPmgTLT" },
+      { "project_id": "oMgZ004U" },
+      { "project_id": "qelfSMnn" },
+      { "project_id": "VQhDBNs8" },
+      { "project_id": "SOw6jD6x" },
+      { "project_id": "ayN3DZKb" }
+    ],
     "changelog": "### FIXED\n\n- The total TTC now sits in the crafting status header, so it no longer overlaps the action buttons."
   },
   {
@@ -77,6 +128,17 @@
     "modrinthDependencies": [
       { "project_id": "XxWD5pD3", "dependency_type": "required" },
       { "project_id": "rxYaglEe", "dependency_type": "optional" }
+    ],
+    "runModrinthDependencies": [
+      { "project_id": "rxYaglEe" },
+      { "project_id": "ArHeh5Fz" },
+      { "project_id": "JiOqfoFM" },
+      { "project_id": "qPydPwtX" },
+      { "project_id": "pNabrMMw" },
+      { "project_id": "RYE1pYyr" },
+      { "project_id": "oMgZ004U" },
+      { "project_id": "qelfSMnn" },
+      { "project_id": "VQhDBNs8" }
     ],
     "changelog": "### ADDED\n\n- You can now use AE2 Crafting Time with NeoForge on Minecraft 26.1.2 and Applied Energistics 2 26.1.10-beta."
   }

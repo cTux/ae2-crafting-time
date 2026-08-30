@@ -45,12 +45,12 @@ $run = Join-Path $root "versions\$Target\run"
 $mods = Join-Path $run $(if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" })
 $manifest = Join-Path $mods ".ae2-crafting-time-run-mods.json"
 New-Item -ItemType Directory -Path $mods -Force | Out-Null
-$matrixEntry = Get-Content -LiteralPath (Join-Path $PSScriptRoot "release-matrix.json") -Raw |
-    ConvertFrom-Json | Where-Object { $_.id -eq $Target }
-$optionalDependencies = @($matrixEntry.modrinthDependencies | Where-Object { $_.dependency_type -eq "optional" })
-$projects = @($optionalDependencies | Select-Object -ExpandProperty project_id)
+$matrix = Get-Content -LiteralPath (Join-Path $PSScriptRoot "release-matrix.json") -Raw | ConvertFrom-Json
+$matrixEntry = $matrix | Where-Object { $_.id -eq $Target }
+$runDependencies = @($matrixEntry.runModrinthDependencies)
+$projects = @($runDependencies | Select-Object -ExpandProperty project_id)
 $versionPins = @{}
-foreach ($dependency in $optionalDependencies) {
+foreach ($dependency in $runDependencies) {
     if ($dependency.version_number) { $versionPins[$dependency.project_id] = $dependency.version_number }
 }
 if ($profile.Loader -ne "fabric") { $projects += "Ck4E7v7R" }
