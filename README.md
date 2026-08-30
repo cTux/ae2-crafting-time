@@ -69,6 +69,8 @@ If you want the more technical details, start here:
 
 - [Building It](docs/building.md)
 - [Running a Development Client](docs/dev-client.md)
+- [Automated UI testing](docs/automated-ui-testing.md)
+- [UI test-driver mod](docs/test-driver.md)
 - [Repo Layout](docs/repo-layout.md)
 - [Working with this project](docs/working-with-project.md)
 - [Codex Skills](docs/codex-skills.md)
