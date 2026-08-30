@@ -25,14 +25,14 @@ When the player selects a named CPU:
 - Fall back row by row to the network rate.
 - Show no `*` on a row backed by that CPU's own reliable history.
 - Show `*` on a fallback row.
-- Show `*` on Total TTC when any included row fell back.
+- Show `*` on the total `TTC` when any included row fell back.
 - Omit unknown rows from the total exactly as today.
 
 Example:
 
 ```text
 Crafting CPU: Alpha
-Total TTC: ~000:02:15*
+TTC: ~000:02:15*
 * depends on CPU (some rows use network history)
 ```
 

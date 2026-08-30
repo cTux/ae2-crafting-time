@@ -28,10 +28,6 @@ public final class TtcText {
         return Component.translatable("text.ae2craftingtime.total_ttc", eta);
     }
 
-    public static MutableComponent requesterTtc(String eta) {
-        return Component.translatable("text.ae2craftingtime.requester_ttc", eta);
-    }
-
     public static MutableComponent noStats() {
         return Component.translatable("text.ae2craftingtime.no_stats");
     }

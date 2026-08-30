@@ -194,10 +194,10 @@ Whole ordered craft estimate:
 ```text
 Crafting CPU: Automatic
 Storage: N/A : Co Processors: N/A
-Total TTC: ~000:02:15
+TTC: ~000:02:15
 ```
 
-Place `Total TTC` in the bottom status area immediately after the `Crafting CPU`
+Place the total `TTC` in the bottom status area immediately after the `Crafting CPU`
 details. Center it on the screen with the same alignment as the CPU status text.
 Do not put it in the title; the title already
 contains AE2's storage-byte summary. Do not put it in the item grid; the grid

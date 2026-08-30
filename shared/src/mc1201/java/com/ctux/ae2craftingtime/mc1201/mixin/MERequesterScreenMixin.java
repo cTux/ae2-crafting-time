@@ -36,9 +36,6 @@ public abstract class MERequesterScreenMixin {
     private static final int AE2CRAFTINGTIME_LABEL_PADDING = 2;
     @Unique
     private static final int AE2CRAFTINGTIME_STATUS_X = 47;
-    @Unique
-    private static final int AE2CRAFTINGTIME_STATUS_WIDTH = 118;
-
     @Shadow
     @Final
     private static int GUI_HEADER_HEIGHT;
@@ -84,26 +81,26 @@ public abstract class MERequesterScreenMixin {
         }
 
         TimeEstimate.formatTotal(estimates.stream().map(MERequesterEstimate::seconds).toList())
-                .ifPresent(eta -> ae2craftingtime$drawBadge(guiGraphics, 160, 6, TtcText.totalTtc(eta), 0xE0E0E0));
+                .ifPresent(eta -> ae2craftingtime$drawBadge(guiGraphics, 160, 6, TtcText.totalTtc(eta), 0xE0E0E0,
+                        0.5f));
     }
 
     @Unique
     private static void ae2craftingtime$drawRowBadge(GuiGraphics guiGraphics, int row, Component label, int color) {
-        var x = AE2CRAFTINGTIME_STATUS_X + AE2CRAFTINGTIME_STATUS_WIDTH / 2;
         var y = GUI_HEADER_HEIGHT + row * ROW_HEIGHT + 12;
-        ae2craftingtime$drawBadge(guiGraphics, x, y, label, color);
+        ae2craftingtime$drawBadge(guiGraphics, AE2CRAFTINGTIME_STATUS_X, y, label, color, 0.0f);
     }
 
     @Unique
-    private static void ae2craftingtime$drawBadge(GuiGraphics guiGraphics, int centerX, int top, Component label,
-            int color) {
+    private static void ae2craftingtime$drawBadge(GuiGraphics guiGraphics, int anchorX, int top, Component label,
+            int color, float horizontalAlignment) {
         var font = Minecraft.getInstance().font;
         var scaledTextWidth = font.width(label) * AE2CRAFTINGTIME_TEXT_SCALE;
         var labelWidth = (int) Math.ceil(scaledTextWidth) + AE2CRAFTINGTIME_LABEL_PADDING * 2;
         var labelHeight = (int) Math.ceil(font.lineHeight * AE2CRAFTINGTIME_TEXT_SCALE)
                 + AE2CRAFTINGTIME_LABEL_PADDING * 2;
-        var labelLeft = centerX - labelWidth / 2.0f;
-        var textX = (int) ((centerX - scaledTextWidth / 2) / AE2CRAFTINGTIME_TEXT_SCALE);
+        var labelLeft = anchorX - labelWidth * horizontalAlignment;
+        var textX = (int) ((labelLeft + AE2CRAFTINGTIME_LABEL_PADDING) / AE2CRAFTINGTIME_TEXT_SCALE);
         var textY = (int) ((top + AE2CRAFTINGTIME_LABEL_PADDING) / AE2CRAFTINGTIME_TEXT_SCALE);
         var pose = guiGraphics.pose();
 
@@ -136,7 +133,7 @@ public abstract class MERequesterScreenMixin {
 
         var normalized = AeKeyAmounts.normalize(key.get(), amount - networkAmount.getAsLong());
         var seconds = TimeEstimate.seconds(normalized, stats.get());
-        var label = TimeEstimate.format(normalized, stats.get()).map(eta -> (Component) TtcText.requesterTtc(eta));
+        var label = TimeEstimate.format(normalized, stats.get()).map(eta -> (Component) TtcText.ttc(eta));
         return new MERequesterEstimate(label, seconds);
     }
 

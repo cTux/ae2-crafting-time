@@ -56,7 +56,7 @@ Part of `cpu-bound-stats/`. Keep each step small and covered.
 ## 7. Render the marker
 
 - Reuse one `TtcText` path for the `*` suffix and legend.
-- Apply it to rows, sorting inputs, Total TTC, and details from the same resolved
+- Apply it to rows, sorting inputs, the total TTC, and details from the same resolved
   cache entry.
 - Add matching English and Ukrainian translations.
 - Keep the 1.20.1/1.21.1 and 26.1.2 screen implementations aligned.
