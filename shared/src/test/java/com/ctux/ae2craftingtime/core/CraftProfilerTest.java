@@ -311,6 +311,29 @@ class CraftProfilerTest {
     }
 
     @Test
+    void previewsProgressBeforeContinuousProductionBecomesIdle() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_ingot");
+        var cpu = new Object();
+
+        assertFalse(profiler.inProgressStats(key, 0).isPresent());
+        profiler.start(key, cpu, 3, ProfileUnit.ITEM, 0);
+        assertFalse(profiler.inProgressStats(key, 0).isPresent());
+        profiler.complete(key, cpu, 1, 20);
+
+        assertFalse(profiler.stats(key).isPresent());
+        var preview = profiler.inProgressStats(key, 20).orElseThrow();
+        assertEquals(1.0, preview.amountPerSecond());
+        assertFalse(preview.reliableEstimate());
+        assertTrue(profiler.snapshotSamples().isEmpty());
+
+        var sameTickKey = new ProfileKey("minecraft:copper_ingot");
+        profiler.start(sameTickKey, cpu, 2, ProfileUnit.ITEM, 20);
+        profiler.complete(sameTickKey, cpu, 1, 20);
+        assertEquals(20.0, profiler.inProgressStats(sameTickKey, 20).orElseThrow().amountPerSecond());
+    }
+
+    @Test
     void combinesOneReturnAcrossSeveralDispatchedBatches() {
         var profiler = new CraftProfiler(10);
         var key = new ProfileKey("minecraft:iron_ingot");

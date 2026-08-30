@@ -78,7 +78,11 @@ sample count would be misleading.
 
 ## Unchanged boundaries
 
-- `CraftProfiler` keeps collecting and retaining samples on the server.
+- `CraftProfiler` keeps collecting and retaining completed samples on the
+  server. If no retained sample exists, `ProfilerBridge.entry(...)` may expose
+  completed progress from the current busy window as a non-persisted,
+  low-confidence preview. The normal one-second client request loop replaces
+  `Collecting` as soon as that preview exists.
 - `ProfileStats.reliableEstimate()` stays true only with at least three samples
   and no filtered outlier.
 - `TimeEstimate` keeps formatting low-confidence estimates with `?`.
