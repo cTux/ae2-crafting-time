@@ -1,0 +1,939 @@
+{
+  "ae2wtlib:recipes/magnet_card": {
+    "criteria": {
+      "has_wct": "2026-08-30 18:51:30 +0300"
+    },
+    "done": true
+  },
+  "ae2wtlib:recipes/wireless_universal_terminal/upgrade_pattern_access": {
+    "criteria": {
+      "has_wit": "2026-08-30 18:51:30 +0300"
+    },
+    "done": true
+  },
+  "minecraft:recipes/decorations/crafting_table": {
+    "criteria": {
+      "unlock_right_away": "2026-08-30 18:51:30 +0300"
+    },
+    "done": true
+  },
+  "mekanism:root": {
+    "criteria": {
+      "automatic": "2026-08-30 18:51:30 +0300"
+    },
+    "done": true
+  },
+  "ae2wtlib:recipes/wireless_pattern_encoding_terminal": {
+    "criteria": {
+      "has_wt": "2026-08-30 18:51:30 +0300"
+    },
+    "done": true
+  },
+  "ae2wtlib:recipes/wireless_universal_terminal/upgrade_pattern_encoding": {
+    "criteria": {
+      "has_wpt": "2026-08-30 18:51:30 +0300"
+    },
+    "done": true
+  },
+  "ae2wtlib:recipes/wireless_universal_terminal/ce": {
+    "criteria": {
+      "has_wpt": "2026-08-30 18:51:30 +0300",
+      "has_wct": "2026-08-30 18:51:30 +0300"
+    },
+    "done": true
+  },
+  "ae2wtlib:recipes/wireless_universal_terminal/ca": {
+    "criteria": {
+      "has_wit": "2026-08-30 18:51:30 +0300",
+      "has_wct": "2026-08-30 18:51:30 +0300"
+    },
+    "done": true
+  },
+  "ae2wtlib:recipes/wireless_universal_terminal/upgrade_crafting": {
+    "criteria": {
+      "has_wct": "2026-08-30 18:51:30 +0300"
+    },
+    "done": true
+  },
+  "ae2wtlib:recipes/wireless_universal_terminal/ae": {
+    "criteria": {
+      "has_wit": "2026-08-30 18:51:30 +0300",
+      "has_wpt": "2026-08-30 18:51:30 +0300"
+    },
+    "done": true
+  },
+  "ae2wtlib:recipes/wireless_pattern_access_terminal": {
+    "criteria": {
+      "has_wt": "2026-08-30 18:51:30 +0300"
+    },
+    "done": true
+  },
+  "ae2wtlib:recipes/quantum_bridge_card": {
+    "criteria": {
+      "has_wit": "2026-08-30 18:51:30 +0300",
+      "has_wpt": "2026-08-30 18:51:30 +0300",
+      "has_wct": "2026-08-30 18:51:30 +0300"
+    },
+    "done": true
+  },
+  "minecraft:adventure/adventuring_time": {
+    "criteria": {
+      "minecraft:plains": "2026-08-30 18:51:34 +0300"
+    },
+    "done": false
+  },
+  "ae2:recipes/misc/network/blocks/pattern_providers_interface_part": {
+    "criteria": {
+      "has_pattern_provider": "2026-08-30 18:53:01 +0300"
+    },
+    "done": true
+  },
+  "advanced_ae:recipes/misc/advpatpropart": {
+    "criteria": {
+      "hasItem": "2026-08-30 18:53:01 +0300"
+    },
+    "done": true
+  },
+  "advanced_ae:recipes/misc/smalladvpatpro": {
+    "criteria": {
+      "hasItem": "2026-08-30 18:53:01 +0300"
+    },
+    "done": true
+  },
+  "advanced_ae:recipes/misc/advpatpro2": {
+    "criteria": {
+      "hasItem": "2026-08-30 18:53:01 +0300"
+    },
+    "done": true
+  },
+  "extendedae_plus:recipes/misc/network_pattern_controller": {
+    "criteria": {
+      "has_pattern_provider": "2026-08-30 18:53:01 +0300"
+    },
+    "done": true
+  },
+  "megacells:recipes/misc/network/mega_pattern_provider": {
+    "criteria": {
+      "has_pattern_provider": "2026-08-30 18:53:01 +0300"
+    },
+    "done": true
+  },
+  "advanced_ae:recipes/misc/smalladvpatpro2": {
+    "criteria": {
+      "hasItem": "2026-08-30 18:53:01 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/parts/terminals_pattern_access": {
+    "criteria": {
+      "has_pattern_provider": "2026-08-30 18:53:01 +0300"
+    },
+    "done": true
+  },
+  "advanced_ae:recipes/misc/smalladvpatpropart": {
+    "criteria": {
+      "hasItem": "2026-08-30 18:53:01 +0300"
+    },
+    "done": true
+  },
+  "crazyae2addons:recipes/misc/recipe_fabricator": {
+    "criteria": {
+      "has_controller": "2026-08-30 18:53:06 +0300"
+    },
+    "done": true
+  },
+  "crazyae2addons:recipes/misc/redstone_terminal": {
+    "criteria": {
+      "has_controller": "2026-08-30 18:53:06 +0300"
+    },
+    "done": true
+  },
+  "crazyae2addons:recipes/misc/resource_tracking_terminal": {
+    "criteria": {
+      "has_controller": "2026-08-30 18:53:06 +0300"
+    },
+    "done": true
+  },
+  "crazyae2addons:recipes/misc/wireless_emitter_terminal": {
+    "criteria": {
+      "has_controller": "2026-08-30 18:53:06 +0300"
+    },
+    "done": true
+  },
+  "crazyae2addons:recipes/misc/tag_view_cell": {
+    "criteria": {
+      "has_controller": "2026-08-30 18:53:06 +0300"
+    },
+    "done": true
+  },
+  "crazyae2addons:recipes/misc/analog_card": {
+    "criteria": {
+      "has_controller": "2026-08-30 18:53:06 +0300"
+    },
+    "done": true
+  },
+  "crazyae2addons:recipes/misc/round_robin_item_p2p_tunnel": {
+    "criteria": {
+      "has_controller": "2026-08-30 18:53:06 +0300"
+    },
+    "done": true
+  },
+  "crazyae2addons:recipes/misc/crazy_upgrade": {
+    "criteria": {
+      "has_controller": "2026-08-30 18:53:06 +0300"
+    },
+    "done": true
+  },
+  "crazyae2addons:recipes/misc/round_robin_fluid_p2p_tunnel": {
+    "criteria": {
+      "has_controller": "2026-08-30 18:53:06 +0300"
+    },
+    "done": true
+  },
+  "crazyae2addons:recipes/misc/display": {
+    "criteria": {
+      "has_controller": "2026-08-30 18:53:06 +0300"
+    },
+    "done": true
+  },
+  "crazyae2addons:recipes/misc/wireless_notification_terminal": {
+    "criteria": {
+      "has_controller": "2026-08-30 18:53:06 +0300"
+    },
+    "done": true
+  },
+  "crazyae2addons:recipes/misc/emitter_terminal": {
+    "criteria": {
+      "has_controller": "2026-08-30 18:53:06 +0300"
+    },
+    "done": true
+  },
+  "crazyae2addons:recipes/misc/wireless_redstone_terminal": {
+    "criteria": {
+      "has_controller": "2026-08-30 18:53:06 +0300"
+    },
+    "done": true
+  },
+  "ae2:main/controller": {
+    "criteria": {
+      "certus": "2026-08-30 18:53:06 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/blocks/io_port": {
+    "criteria": {
+      "has_drive": "2026-08-30 18:53:09 +0300"
+    },
+    "done": true
+  },
+  "ae2:main/crafting_terminal": {
+    "criteria": {
+      "certus": "2026-08-30 18:53:37 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/wireless_crafting_terminal": {
+    "criteria": {
+      "has_terminal": "2026-08-30 18:53:37 +0300"
+    },
+    "done": true
+  },
+  "expatternprovider:recipes/misc/ex_crafting_terminal": {
+    "criteria": {
+      "has_item": "2026-08-30 18:53:37 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/parts/terminals_pattern_encoding": {
+    "criteria": {
+      "has_crafting_terminal": "2026-08-30 18:53:37 +0300"
+    },
+    "done": true
+  },
+  "ae2:main/pattern_encoding_terminal": {
+    "criteria": {
+      "certus": "2026-08-30 18:53:52 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/crafting/patterns_blank": {
+    "criteria": {
+      "has_pattern_encoding_terminal": "2026-08-30 18:53:52 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_blue": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_green": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_lime": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_light_blue": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_black": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_brown": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_pink": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "minecraft:recipes/decorations/chest": {
+    "criteria": {
+      "has_lots_of_items": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "megacells:recipes/misc/network/cell_dock": {
+    "criteria": {
+      "has_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_light_gray": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/blocks/crystal_processing_growth_accelerator": {
+    "criteria": {
+      "has_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_purple": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_orange": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/covered_fluix": {
+    "criteria": {
+      "has_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/blocks/storage_chest": {
+    "criteria": {
+      "has_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_gray": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_fluix_clean": {
+    "criteria": {
+      "has_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_red": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_yellow": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:main/glass_cable": {
+    "criteria": {
+      "certus": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_white": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_cyan": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/blocks/spatial_io_pylon": {
+    "criteria": {
+      "has_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/glass_magenta": {
+    "criteria": {
+      "has_fluix_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/parts/toggle_bus": {
+    "criteria": {
+      "has_glass_cable": "2026-08-30 18:55:47 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_fluix_clean": {
+    "criteria": {
+      "has_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_red": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_light_gray": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_white": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_lime": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_blue": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_pink": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/blocks/quantum_ring": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_brown": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_cyan": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_black": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_green": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_magenta": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_yellow": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_light_blue": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_purple": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_orange": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_gray": {
+    "criteria": {
+      "has_fluix_smart_dense_cable": "2026-08-30 18:55:57 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_white": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_red": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_gray": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_purple": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_lime": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_light_gray": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_from_smart": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_blue": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_magenta": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_cyan": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_fluix_clean": {
+    "criteria": {
+      "has_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_pink": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_orange": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_green": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_yellow": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_black": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_brown": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_light_blue": {
+    "criteria": {
+      "has_fluix_smart_cable": "2026-08-30 18:56:04 +0300"
+    },
+    "done": true
+  },
+  "mekanism:factory": {
+    "criteria": {
+      "factory": "2026-08-30 18:59:21 +0300"
+    },
+    "done": true
+  },
+  "ae2:main/network1": {
+    "criteria": {
+      "cable": "2026-08-30 18:59:59 +0300"
+    },
+    "done": true
+  },
+  "mae2:recipes/misc/network/crafting/16x_crafting_accelerator": {
+    "criteria": {
+      "has_acceleration_unit": "2026-08-30 19:03:19 +0300"
+    },
+    "done": true
+  },
+  "extendedae_plus:recipes/misc/network/crafting/4x_crafting_accelerator": {
+    "criteria": {
+      "has_accelerator": "2026-08-30 19:03:19 +0300"
+    },
+    "done": true
+  },
+  "extendedae_plus:recipes/misc/network/crafting/256x_crafting_accelerator": {
+    "criteria": {
+      "has_accelerator": "2026-08-30 19:03:19 +0300"
+    },
+    "done": true
+  },
+  "extendedae_plus:recipes/misc/network/crafting/64x_crafting_accelerator": {
+    "criteria": {
+      "has_accelerator": "2026-08-30 19:03:19 +0300"
+    },
+    "done": true
+  },
+  "extendedae_plus:recipes/misc/network/crafting/16x_crafting_accelerator": {
+    "criteria": {
+      "has_accelerator": "2026-08-30 19:03:19 +0300"
+    },
+    "done": true
+  },
+  "mae2:recipes/misc/network/crafting/256x_crafting_accelerator": {
+    "criteria": {
+      "has_acceleration_unit": "2026-08-30 19:03:19 +0300"
+    },
+    "done": true
+  },
+  "mae2:recipes/misc/network/crafting/4x_crafting_accelerator": {
+    "criteria": {
+      "has_acceleration_unit": "2026-08-30 19:03:19 +0300"
+    },
+    "done": true
+  },
+  "mae2:recipes/misc/network/crafting/64x_crafting_accelerator": {
+    "criteria": {
+      "has_acceleration_unit": "2026-08-30 19:03:19 +0300"
+    },
+    "done": true
+  },
+  "advanced_ae:recipes/misc/smallappupgrade": {
+    "criteria": {
+      "hasItem": "2026-08-30 19:06:32 +0300"
+    },
+    "done": true
+  },
+  "advanced_ae:recipes/misc/advpartenc": {
+    "criteria": {
+      "hasItem": "2026-08-30 19:06:32 +0300"
+    },
+    "done": true
+  },
+  "expatternprovider:recipes/misc/water_cell": {
+    "criteria": {
+      "has_item": "2026-08-30 19:07:31 +0300"
+    },
+    "done": true
+  },
+  "expatternprovider:recipes/misc/cobblestone_cell": {
+    "criteria": {
+      "has_item": "2026-08-30 19:07:31 +0300"
+    },
+    "done": true
+  },
+  "ae2lt:main/thunderstorm_generator": {
+    "criteria": {
+      "obtain_infinite_extreme_high_voltage": "2026-08-30 19:07:38 +0300",
+      "obtain_infinite_high_voltage": "2026-08-30 19:07:37 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/eco_fluid_cell_housing": {
+    "criteria": {
+      "has_redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "minecraft:recipes/redstone/redstone_torch": {
+    "criteria": {
+      "has_redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "minecraft:recipes/tools/clock": {
+    "criteria": {
+      "has_redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "appmek:recipes/misc/chemical_cell_housing": {
+    "criteria": {
+      "has_dusts/redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "projecte:recipes/misc/medium_covalence_dust": {
+    "criteria": {
+      "has_redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "minecraft:recipes/redstone/note_block": {
+    "criteria": {
+      "has_redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "minecraft:recipes/redstone/target": {
+    "criteria": {
+      "has_redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/eco_item_cell_housing": {
+    "criteria": {
+      "has_redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cells/fluid_cell_housing": {
+    "criteria": {
+      "has_dusts/redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "minecraft:recipes/tools/compass": {
+    "criteria": {
+      "has_redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/smart_fluix": {
+    "criteria": {
+      "has_dusts/redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "computercraft:recipes/redstone/computer_normal": {
+    "criteria": {
+      "has_redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/eco_chemical_cell_housing": {
+    "criteria": {
+      "has_redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cells/item_cell_housing": {
+    "criteria": {
+      "has_dusts/redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "minecraft:recipes/redstone/dropper": {
+    "criteria": {
+      "has_redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "minecraft:recipes/redstone/redstone_block": {
+    "criteria": {
+      "has_redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "ae2:recipes/misc/network/cables/dense_smart_fluix": {
+    "criteria": {
+      "has_dusts/redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "minecraft:recipes/redstone/piston": {
+    "criteria": {
+      "has_redstone": "2026-08-30 19:13:30 +0300"
+    },
+    "done": true
+  },
+  "mekanism:materials": {
+    "criteria": {
+      "material": "2026-08-30 19:13:44 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/crafting_parallel_core_l6": {
+    "criteria": {
+      "has_crafting_parallel_core_l4": "2026-08-30 23:16:16 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/computation_parallel_core_l6": {
+    "criteria": {
+      "has_computation_parallel_core_l4": "2026-08-30 23:16:22 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/computation_transmitter": {
+    "criteria": {
+      "has_computation_casing": "2026-08-30 23:19:23 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/computation_parallel_core_l4": {
+    "criteria": {
+      "has_computation_casing": "2026-08-30 23:19:23 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/computation_interface": {
+    "criteria": {
+      "has_computation_casing": "2026-08-30 23:19:23 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/computation_drive": {
+    "criteria": {
+      "has_computation_casing": "2026-08-30 23:19:23 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/computation_cooling_controller_l4": {
+    "criteria": {
+      "has_computation_casing": "2026-08-30 23:19:23 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/computation_threading_core_l4": {
+    "criteria": {
+      "has_computation_casing": "2026-08-30 23:19:23 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/crafting_worker": {
+    "criteria": {
+      "has_crafting_vent": "2026-08-30 23:21:51 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/crafting_pattern_bus": {
+    "criteria": {
+      "has_crafting_casing": "2026-08-30 23:23:44 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/crafting_interface": {
+    "criteria": {
+      "has_crafting_casing": "2026-08-30 23:23:44 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/crafting_vent": {
+    "criteria": {
+      "has_crafting_casing": "2026-08-30 23:23:44 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/input_hatch": {
+    "criteria": {
+      "has_crafting_casing": "2026-08-30 23:23:44 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/output_hatch": {
+    "criteria": {
+      "has_crafting_casing": "2026-08-30 23:23:44 +0300"
+    },
+    "done": true
+  },
+  "neoecoae:recipes/misc/crafting_parallel_core_l4": {
+    "criteria": {
+      "has_crafting_casing": "2026-08-30 23:23:44 +0300"
+    },
+    "done": true
+  },
+  "extendedae_plus:recipes/misc/entity_speed_card_2x": {
+    "criteria": {
+      "has_speed_card": "2026-08-30 23:34:22 +0300"
+    },
+    "done": true
+  },
+  "expandedae:recipes/misc/crafting/greater_accel_card": {
+    "criteria": {
+      "has_speed_card": "2026-08-30 23:34:22 +0300"
+    },
+    "done": true
+  },
+  "DataVersion": 3465
+}

@@ -117,3 +117,32 @@ must be checked:
 | 1.20.1 Fabric | `mcCommon` + `mc1201` | No NeoForge-only addon classes |
 | 1.21.1 NeoForge | `mcCommon` + `mc1201` + `neoforge` | AE2 19 signatures |
 | 26.1.2 NeoForge | `mcCommon` + `mc2612` + `neoforge` | AE2 26/Minecraft identifier changes and fewer optional UI integrations |
+
+## Development-client profiles
+
+`scripts/run-client-versions.json` is the source of truth for development
+clients. Each target records:
+
+- the projects installed in both profiles, plus any compatible-profile
+  exclusion and its reproduced reason;
+- the compatible loader, AE2, and Fabric API versions;
+- exact compatible Modrinth version IDs for every top-level and transitive
+  project in the locked graph;
+- SHA-512-locked compatible and latest files for CurseForge-only dependencies.
+
+Ordinary wrappers select `compatible`. The resolver rejects a compatible graph
+when a required project has no lock entry, so a supposedly stable client cannot
+silently pull a newer library. Latest wrappers select `latest`, ignore every
+version lock, and resolve current target-compatible files from Modrinth and the
+loader Maven metadata. CurseForge-only latest files are updated explicitly in
+the same matrix because no anonymous version API is available.
+
+Compatible clients keep the existing `versions/<target>/run` directory. Latest
+clients use `versions/<target>/run-latest`. Gradle receives the selected game
+directory so Forge's resolved-mod repository and every loader's world and
+config state stay aligned with the chosen profile.
+
+The release matrix remains authoritative for published targets and platform
+dependency metadata. A regression check requires the run-client matrix to have
+exactly the same target IDs, but development candidates do not become published
+optional dependencies merely by appearing in a run profile.

@@ -3,7 +3,7 @@
 ## Why this exists
 
 [Discussion #64](https://github.com/cTux/ae2-crafting-time/discussions/64)
-asks the crafting windows to show `Collecting data` before an estimate is
+asks the crafting windows to show `Collecting` before an estimate is
 available. Right now a new player sees no TTC line at all, so the mod can look
 inactive while it is learning that craft.
 
@@ -14,8 +14,10 @@ an edge case.
 
 ## What the code does today
 
-- `CraftProfiler.stats(...)` returns stats after the first completed production
-  sample.
+- `CraftProfiler.stats(...)` returns retained stats after the first completed
+  production sample. While the first continuous production window is still
+  active, completed output within that window can provide a live low-confidence
+  preview without becoming a retained sample.
 - Three clean samples make an estimate reliable. One or two samples still show
   an estimate, but `TimeEstimate.format(...)` adds `?` to mark low confidence.
 - The Crafting Plan and Crafting Status table mixins request stats when the
@@ -39,14 +41,13 @@ windows, the first matching state wins:
 | --- | --- |
 | The running craft is waiting for its first dispatch | Existing `Waiting` status |
 | The running craft is delayed | Existing `DELAYED` warning |
-| No usable stats are cached | `Collecting data` |
+| No usable stats are cached | `Collecting` |
 | A usable but low-confidence estimate exists | Existing estimate with `?`, such as `~12s?` |
 | A reliable estimate exists | Existing estimate, such as `~12s` |
 
-`Collecting data` describes the absence of usable historical data. It is not a
-network loading spinner and does not promise that the current craft will create
-a sample. The line can remain visible for an output that never completes a
-profiled production window.
+`Collecting` describes the absence of usable historical or live production
+data. It is not a network loading spinner and does not promise that the current
+craft will make progress.
 
 ## Requirements
 
@@ -54,6 +55,8 @@ profiled production window.
    without waiting for a server response.
 2. Keep requesting stats through the existing one-second request cooldown.
 3. Replace the placeholder automatically when cached stats produce an estimate.
+   For a first continuous production window, completed output must make a live
+   low-confidence estimate available before the whole order becomes idle.
 4. Keep the existing low-confidence `?`, three-sample reliability rule, outlier
    handling, colors, sorting, totals, and `Waiting` and `DELAYED` priorities
    unchanged.
@@ -81,7 +84,9 @@ profiled production window.
 
 ## Acceptance checks
 
-- A fresh output shows `Collecting data` in both standard crafting tables.
+- A fresh output shows `Collecting` in both standard crafting tables.
+- A fresh running output changes from `Collecting` to a low-confidence estimate
+  after its first completed output, without waiting for the next order.
 - A stored-only or missing-only plan row shows no TTC line.
 - A status row with no active or pending work shows no TTC line.
 - One and two valid samples show the existing estimate with `?`.

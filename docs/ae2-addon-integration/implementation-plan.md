@@ -3,6 +3,22 @@
 Implement one verified layer at a time. Each executable change gets its own
 conventional commit and required CI run.
 
+## Development client matrix
+
+1. Keep one compatible lock and one dynamic latest mode for every supported
+   target.
+2. Put the shared project list and every compatible version in
+   `scripts/run-client-versions.json`; do not duplicate dependency lists in
+   wrappers.
+3. Reject missing compatible transitive pins and keep latest resolution errors
+   visible.
+4. Keep latest worlds, configs, and managed mods under `run-latest`.
+5. Cover PowerShell and Bash selection, pins, dynamic versions, target
+   isolation, cleanup, and invalid profile data with deterministic checks.
+
+Done when all eight wrappers route to the correct profile and both resolver
+implementations produce the same target-specific graph.
+
 ## Phase 1: Prove existing native coverage
 
 1. For every candidate CPU, inspect whether each hooked

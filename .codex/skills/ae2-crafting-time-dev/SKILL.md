@@ -50,7 +50,12 @@ Every new or changed executable behavior must have 100% line and branch coverage
   affected loader together and version the format or protocol when needed.
 - Treat `scripts/release-matrix.json` as the supported-target source of truth.
 - Keep build dependencies and loader metadata at the minimum supported versions.
-- Let each `run-*.bat` client use the newest versions available for its exact Minecraft and loader target.
+- Keep ordinary `run-*` clients on the pinned compatible graph and use
+  `run-*-latest` clients for the newest available versions. Update both through
+  `scripts/run-client-versions.json`.
+- When a reproduced third-party conflict makes the full graph impossible,
+  record the compatible-profile exclusion and reason in that matrix, but keep
+  the project in the latest diagnostic client.
 - Verify a newest dependency's full Maven coordinate instead of assuming it
   still uses the minimum version's group and artifact.
 - For matrix rows, dist tasks, jar naming, deployment, or publishing, use

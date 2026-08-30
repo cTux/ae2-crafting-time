@@ -134,8 +134,9 @@ public final class ProfilerBridge {
     }
 
     public static Optional<StatsEntry> entry(ProfileKey lookupKey, ProfileKey displayKey, Object scope, long tick) {
-        return stats(lookupKey).map(stats -> new StatsEntry(displayKey, stats, accuracy(lookupKey),
-                scope == null ? Optional.empty() : PROFILER.stall(lookupKey, scope, tick)));
+        return stats(lookupKey).or(() -> PROFILER.inProgressStats(lookupKey, tick))
+                .map(stats -> new StatsEntry(displayKey, stats, accuracy(lookupKey),
+                        scope == null ? Optional.empty() : PROFILER.stall(lookupKey, scope, tick)));
     }
 
     public static boolean clearStats(ProfileKey key) {

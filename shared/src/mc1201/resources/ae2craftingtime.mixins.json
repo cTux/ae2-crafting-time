@@ -5,8 +5,10 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "ae2craftingtime.refmap.json",
   "mixins": [
+    "Ae2LtTimeWheelCraftingCpuLogicMixin",
     "CraftingCPUMenuAccessor",
-    "CraftingCpuLogicMixin"
+    "CraftingCpuLogicMixin",
+    "ECOCraftingCpuLogicMixin"
   ],
   "client": [
     "AbstractTableRendererMixin",

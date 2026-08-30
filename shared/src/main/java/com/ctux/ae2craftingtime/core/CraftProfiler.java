@@ -232,6 +232,28 @@ public final class CraftProfiler {
                 sampleAmounts));
     }
 
+    public Optional<ProfileStats> inProgressStats(ProfileKey key, long tick) {
+        var window = busyWindows.get(key);
+        if (window == null || window.completedAmount <= 0) {
+            return Optional.empty();
+        }
+
+        var duration = Math.max(1, tick - window.startedTick);
+        var amountPerTick = (double) window.completedAmount / duration;
+        return Optional.of(new ProfileStats(
+                1,
+                duration,
+                amountPerTick,
+                amountPerTick * 20.0,
+                duration,
+                window.unit,
+                false,
+                1,
+                outlierMultiplier,
+                List.of(duration),
+                List.of(window.completedAmount)));
+    }
+
     public boolean clearSamples(ProfileKey key) {
         var cleared = samples.remove(key) != null;
         busyWindows.remove(key);

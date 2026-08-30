@@ -29,6 +29,12 @@ This split keeps cancellation safe while still measuring real network-wide
 parallel throughput. `finishJob(...)` clears the CPU scope and rebuilds any
 affected network window from work that other CPUs still own.
 
+Before the first window closes, a stats request may preview its completed amount
+over its elapsed ticks. This lets a running status row leave `Collecting`
+without waiting for the next order. The preview is always low confidence and is
+never retained or persisted; the normal completed window remains the only
+throughput sample.
+
 ## Throughput Calculation
 
 Each retained sample stores normalized amount, unit, and duration ticks. The

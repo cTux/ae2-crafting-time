@@ -12,14 +12,18 @@ api="https://api.modrinth.com/v2"
 
 Target=""
 ResolveOnly=0
+Latest=0
 Root=""
+VersionMatrix=""
 declare -a GradleArgs=()
 
 while [ $# -gt 0 ]; do
   case "$1" in
     -Target) Target="$2"; shift 2;;
+    -Latest) Latest=1; shift;;
     -ResolveOnly) ResolveOnly=1; shift;;
     -Root) Root="$2"; shift 2;;
+    -VersionMatrix) VersionMatrix="$2"; shift 2;;
     *) GradleArgs+=("$1"); shift;;
   esac
 done
@@ -39,25 +43,21 @@ case "$Target" in
     Module="mc_1_20_1_forge"; Game="1.20.1"; Loader="forge"
     LoaderMetadata="https://maven.minecraftforge.net/net/minecraftforge/forge/maven-metadata.xml"
     LoaderPrefix="1.20.1-"; LoaderProperty="runtimeForge1201Version"; Ae2Property="runtimeAe2Forge1201Version"
-    Projects=("Ck4E7v7R" "IiATswDj" "E6BFl96N" "u6dRKJwZ")
     ;;
   1.20.1-fabric)
     Module="fabric_1_20_1"; Game="1.20.1"; Loader="fabric"
     LoaderMetadata="https://maven.fabricmc.net/net/fabricmc/fabric-loader/maven-metadata.xml"
     LoaderPrefix=""; LoaderProperty="runtimeFabricLoader1201Version"; Ae2Property="runtimeAe2Fabric1201Version"
-    Projects=("E6BFl96N" "u6dRKJwZ")
     ;;
   1.21.1-neoforge)
     Module="mc_1_21_1_neoforge"; Game="1.21.1"; Loader="neoforge"
     LoaderMetadata="https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml"
     LoaderPrefix="21.1."; LoaderProperty="runtimeNeoForge1211Version"; Ae2Property="runtimeAe2NeoForge1211Version"
-    Projects=("Ck4E7v7R" "a1RwDz90" "IiATswDj" "rxYaglEe" "E6BFl96N" "u6dRKJwZ")
     ;;
   26.1.2-neoforge)
     Module="mc_26_1_2_neoforge"; Game="26.1.2"; Loader="neoforge"
     LoaderMetadata="https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml"
     LoaderPrefix="26.1.2."; LoaderProperty="runtimeNeoForge2612Version"; Ae2Property="runtimeAe2NeoForge2612Version"
-    Projects=("Ck4E7v7R" "rxYaglEe" "u6dRKJwZ")
     ;;
 esac
 
@@ -70,7 +70,8 @@ else
   root="$Root"
 fi
 
-run="$root/versions/$Target/run"
+if [ "$Latest" -eq 1 ]; then run_name="run-latest"; else run_name="run"; fi
+run="$root/versions/$Target/$run_name"
 if [ "$Target" = "1.20.1-forge" ]; then
   mods="$run/resolved-mods"
 else
@@ -78,6 +79,13 @@ else
 fi
 manifest="$mods/.ae2-crafting-time-run-mods.json"
 mkdir -p "$mods"
+if [ -n "$VersionMatrix" ]; then matrix="$VersionMatrix"; else matrix="$script_dir/run-client-versions.json"; fi
+if [ "$Latest" -eq 1 ]; then project_filter='.projects[]'; else project_filter='.projects[] | select(.compatible != false)'; fi
+mapfile -t Projects < <(jq -r --arg target "$Target" ".[] | select(.id==\$target) | $project_filter | .project_id" "$matrix")
+declare -A VersionPins=()
+while IFS=$'\t' read -r project_id version_id; do
+  VersionPins[$project_id]="$version_id"
+done < <(jq -r --arg target "$Target" '.[] | select(.id==$target) | .compatible.versions[] | "\(.project_id)\t\(.version_id)"' "$matrix")
 
 if [ "$Target" = "1.20.1-forge" ]; then
   legacyMods="$run/mods"
@@ -94,14 +102,18 @@ fi
 declare -A visited=()
 declare -a managed=()
 
-get_compatible_version() {
-  local projectId="$1" versionId="${2:-}"
-  if [ -n "$versionId" ]; then
-    curl -fsS "$api/version/$versionId"
-  else
-    local game_enc="%5B%22$Game%22%5D"
-    local loader_enc="%5B%22$Loader%22%5D"
+get_project_version() {
+  local projectId="$1"
+  if [ "$Latest" -eq 1 ]; then
+    local game_enc="%5B%22$Game%22%5D" loader_enc="%5B%22$Loader%22%5D"
     curl -fsS "$api/project/$projectId/version?game_versions=$game_enc&loaders=$loader_enc" | jq -c '.[0]'
+  else
+    local versionId="${VersionPins[$projectId]:-}"
+    if [ -z "$versionId" ]; then
+      echo "Missing compatible version for Modrinth project $projectId" >&2
+      exit 1
+    fi
+    curl -fsS "$api/version/$versionId"
   fi
 }
 
@@ -140,7 +152,7 @@ install_file() {
 }
 
 install_project() {
-  local projectId="$1" versionId="${2:-}"
+  local projectId="$1"
   local is_provided=0
   for p in "${provided[@]}"; do
     [ "$p" = "$projectId" ] && is_provided=1
@@ -149,7 +161,7 @@ install_project() {
   if [ -n "${visited[$projectId]:-}" ]; then return; fi
   visited[$projectId]=1
 
-  local version_json; version_json="$(get_compatible_version "$projectId" "$versionId")"
+  local version_json; version_json="$(get_project_version "$projectId")"
   if [ -z "$version_json" ] || [ "$version_json" = "null" ]; then
     echo "No $Game $Loader version for Modrinth project $projectId" >&2
     exit 1
@@ -159,7 +171,7 @@ install_project() {
   while IFS=$'\t' read -r dpid dvid; do
     [ -z "$dpid" ] && continue
     [ "$dvid" = "null" ] && dvid=""
-    install_project "$dpid" "$dvid"
+    install_project "$dpid"
   done <<< "$deps"
 
   local file_json; file_json="$(echo "$version_json" | jq -c '(.files[] | select(.primary==true)) // .files[0]')"
@@ -170,19 +182,38 @@ install_project() {
   install_file "$file_json"
 }
 
-for projectId in "${Projects[@]}"; do
-  install_project "$projectId"
-done
+for projectId in "${Projects[@]}"; do install_project "$projectId"; done
+while IFS= read -r dependency; do
+  [ -z "$dependency" ] && continue
+  if [ "$Latest" -eq 1 ]; then file="$(echo "$dependency" | jq -c '.latest')"; else file="$(echo "$dependency" | jq -c '.compatible')"; fi
+  file_id="$(echo "$file" | jq -r '.file_id')"
+  filename="$(echo "$file" | jq -r '.filename')"
+  group="${file_id:0:4}"; rest="${file_id:4}"
+  file="$(echo "$file" | jq -c --arg url "https://mediafilez.forgecdn.net/files/$group/$rest/$filename" '. + {url:$url, hashes:{sha512:.sha512}}')"
+  install_file "$file"
+done < <(jq -c --arg target "$Target" '.[] | select(.id==$target) | .curseforge[]?' "$matrix")
 
-loaderVersion="$(get_latest_maven_version "$LoaderMetadata" "$LoaderPrefix")"
-ae2Version_json="$(get_compatible_version "XxWD5pD3" "")"
+if [ "$Latest" -eq 1 ]; then
+  loaderVersion="$(get_latest_maven_version "$LoaderMetadata" "$LoaderPrefix")"
+  ae2Version_json="$(curl -fsS "$api/project/XxWD5pD3/version?game_versions=%5B%22$Game%22%5D&loaders=%5B%22$Loader%22%5D" | jq -c '.[0]')"
+else
+  loaderVersion="$(jq -r --arg target "$Target" '.[] | select(.id==$target) | .compatible.loader_version' "$matrix")"
+  ae2VersionId="$(jq -r --arg target "$Target" '.[] | select(.id==$target) | .compatible.ae2_version_id' "$matrix")"
+  ae2Version_json="$(curl -fsS "$api/version/$ae2VersionId")"
+fi
 ae2Version="$(echo "$ae2Version_json" | jq -r '.version_number')"
-runtimeArgs=("-P$LoaderProperty=$loaderVersion" "-P$Ae2Property=$ae2Version")
+runtimeArgs=("-P$LoaderProperty=$loaderVersion" "-P$Ae2Property=$ae2Version" "-PruntimeRunDirectory=$run_name")
+if [ "$Latest" -eq 1 ]; then echo "profile latest"; else echo "profile compatible"; fi
 echo "runtime loader $loaderVersion"
 echo "runtime ae2 $ae2Version"
 
 if [ "$Target" = "1.20.1-fabric" ]; then
-  fabricApiVersion_json="$(get_compatible_version "P7dR8mSH" "")"
+  if [ "$Latest" -eq 1 ]; then
+    fabricApiVersion_json="$(curl -fsS "$api/project/P7dR8mSH/version?game_versions=%5B%22$Game%22%5D&loaders=%5B%22$Loader%22%5D" | jq -c '.[0]')"
+  else
+    fabricApiVersionId="$(jq -r --arg target "$Target" '.[] | select(.id==$target) | .compatible.fabric_api_version_id' "$matrix")"
+    fabricApiVersion_json="$(curl -fsS "$api/version/$fabricApiVersionId")"
+  fi
   fabricApiVersion="$(echo "$fabricApiVersion_json" | jq -r '.version_number')"
   runtimeArgs+=("-PruntimeFabricApi1201Version=$fabricApiVersion")
   echo "runtime fabric-api $fabricApiVersion"
