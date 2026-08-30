@@ -1,10 +1,11 @@
-# Sorting The Craft Plan By TTC
+# Sorting Crafting Rows By TTC
 
 Date: 2026-06-21
 
 ## Goal
 
-Add sorting inside the AE2 crafting plan by the visible `TTC` value.
+Add sorting inside the AE2 Crafting Plan and Crafting Status screens by the
+visible `TTC` value.
 
 Sorting helps players bring the slowest predicted steps together when looking
 for crafting bottlenecks; it does not diagnose the cause by itself.
@@ -38,11 +39,11 @@ private comparator. The mod should not replace that server-side summary order.
 
 ## Approach
 
-Keep TTC sorting client-only and sort a copy immediately before rendering the
-craft plan table.
+Keep TTC sorting client-only and sort a copy immediately before rendering or
+storing each screen's row list.
 
-1. Add a small client-only sort mode state for `CraftConfirmScreen`.
-2. Intercept the `entries` argument passed to `CraftConfirmTableRenderer.render`.
+1. Add a small client-only sort mode state to each supported crafting screen.
+2. Intercept the Crafting Plan render list and the Crafting Status update list.
 3. If TTC sorting is off, return the original list.
 4. If TTC sorting is on, copy the list and sort the copy by estimated seconds.
 5. Use the same calculation as the existing visible `TTC` line:
@@ -68,7 +69,10 @@ The useful minimum is:
 AE2 order -> TTC shortest first -> TTC longest first
 ```
 
-Use one local button on the craft-confirm screen. Do not extend AE2's
+Both the Crafting Plan and Crafting Status screens start in `TTC longest first`
+mode. The mode is local to the open screen and is not saved as a config value.
+
+Use one local button on each screen. Do not extend AE2's
 `Settings.SORT_BY`; enum extension is brittle and would affect terminal screens
 outside this feature.
 
@@ -90,10 +94,9 @@ After stats arrive, the next render can reorder the copied list.
 ## Interaction With Colored TTC
 
 The current colored TTC implementation already scans the full list in
-`AbstractTableRendererMixin`. Sorting before `CraftConfirmTableRenderer.render`
+`AbstractTableRendererMixin`. Sorting before each table receives its entries
 means that color calculation receives the displayed order. The color range still
-uses min/max seconds across the current plan list, so no extra color code is
-needed.
+uses min/max seconds across the current list, so no extra color code is needed.
 
 ## Tests
 
@@ -109,6 +112,6 @@ No server test is needed because this is display-only.
 
 ## Chosen Approach
 
-Keep the sort mode local to the craft plan and sort a copied list at render
-time. Skip enum patching, server-side sorting, new packets, config files, and
-terminal-wide settings.
+Keep the sort mode local to each crafting screen and sort a copied list at its
+existing client boundary. Skip enum patching, server-side sorting, new packets,
+config files, and terminal-wide settings.

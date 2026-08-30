@@ -4,7 +4,8 @@ Date: 2026-06-21
 
 ## Goal
 
-Color the `TTC` text in the AE2 crafting plan from bright green to bright red:
+Color the `TTC` text in the AE2 Crafting Plan and Crafting Status tables from
+bright green to bright red:
 
 - fastest craft in the visible crafting plan list: bright green
 - middle of the range: bright yellow
@@ -37,8 +38,10 @@ To color by "fastest and slowest in the crafting plan list", the code must know 
 Use a render-scope color context.
 
 1. Inject into `AbstractTableRenderer.render(...)` at method head.
-2. If `this` is a `CraftConfirmTableRenderer`, scan the passed `entries`.
-3. For each `CraftingPlanSummaryEntry` with `craftAmount > 0`, look up server-synced stats in `ClientStats.CACHE`.
+2. If `this` is a `CraftConfirmTableRenderer` or
+   `CraftingStatusTableRenderer`, scan the passed `entries`.
+3. For each eligible plan or status entry, look up server-synced stats in
+   `ClientStats.CACHE`. Status uses `activeAmount + pendingAmount`.
 4. Convert stats and craft amount into estimated seconds.
 5. Compute `minSeconds` and `maxSeconds` for the current render list.
 6. Store `ProfileKey -> color` in a short-lived client-side context.
@@ -102,7 +105,8 @@ This avoids parsing strings like `~1:07` back into seconds.
 
 ## Risks
 
-- AE2 `AbstractTableRenderer` is shared by multiple craft-plan tables. The render-scope mixin must guard on `this instanceof CraftConfirmTableRenderer`.
+- AE2 `AbstractTableRenderer` is shared by multiple tables. The render-scope
+  mixin must guard on the craft-confirm and crafting-status renderer types.
 - The color range is based on the currently rendered list passed by AE2. If the list includes off-screen rows, colors represent the whole current plan list. If AE2 passes only visible rows after scrolling, colors represent visible rows. Local bytecode shows `render(..., List<T>, scrollOffset)` receives the full list and applies `scrollOffset` internally, so the expected behavior is whole current plan list.
 - Bright TTC colors use Minecraft's native dark text shadow for contrast without a heavy outline.
 
