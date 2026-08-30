@@ -307,7 +307,15 @@ function Publish-GitHubRelease($releases, $jars, [string]$sourceCommit) {
     $stamp = (Get-Date).ToUniversalTime().ToString("yyyyMMdd-HHmmss")
     $tag = "release-$stamp"
     $title = $releases[0].version
-    $notes = ($releases | ForEach-Object { "## $(Get-ArtifactFileName $_.entry $_.version)`n`n$($_.changelog)" }) -join "`n`n"
+    $notes = ($releases | Group-Object changelog | ForEach-Object {
+        $heading = if ($_.Count -eq $releases.Count) {
+            "All versions"
+        }
+        else {
+            ($_.Group | ForEach-Object { "$($_.entry.loaderName) $($_.entry.minecraftVersion)" }) -join ", "
+        }
+        "## $heading`n`n$($_.Name)"
+    }) -join "`n`n"
 
     if ($DryRun) {
         Write-Host "dry-run GitHub Release: $title"
