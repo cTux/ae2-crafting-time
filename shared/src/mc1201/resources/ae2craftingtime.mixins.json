@@ -8,8 +8,7 @@
     "Ae2LtTimeWheelCraftingCpuLogicMixin",
     "CraftingCPUMenuAccessor",
     "CraftingCpuLogicMixin",
-    "ECOCraftingCpuLogicMixin",
-    "NeoEcoGtlPatternBufferDispatcherMixin"
+    "ECOCraftingCpuLogicMixin"
   ],
   "client": [
     "AbstractTableRendererMixin",
