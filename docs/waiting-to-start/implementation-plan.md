@@ -44,7 +44,9 @@ steps in the same commit.
 4. Reuse the existing dark TTC badge and give waiting text one neutral color.
 5. Exclude waiting rows from status TTC color and sort estimates in both API
    source sets.
-6. Add text and structural/resource tests for the translation keys, badge key,
+6. Clear cached waiting state when the status screen opens or its selected CPU
+   changes, then request fresh state immediately.
+7. Add text and structural/resource tests for the translation keys, badge key,
    renderer precedence, and mixin membership.
 
 ## Phase 4: Verify behavior
@@ -55,10 +57,12 @@ After the hook-created PR exists:
 2. Check the full warning/error sweep and fix repository-owned warnings.
 3. In a development client, start a job whose dependency cannot dispatch yet.
 4. Verify the waiting state survives closing and reopening the status screen.
-5. Unblock the dependency and verify the first dispatch permanently replaces
+5. Switch to another CPU and verify the previous CPU's waiting state does not
+   appear there.
+6. Unblock the dependency and verify the first dispatch permanently replaces
    waiting with normal TTC behavior.
-6. Create a later between-batch gap and verify waiting does not return.
-7. Repeat finish and cancellation checks, then verify AdvancedAE on its
+7. Create a later between-batch gap and verify waiting does not return.
+8. Repeat finish and cancellation checks, then verify AdvancedAE on its
    supported NeoForge rows.
 
 Done means CI is green, every changed branch is covered, packet limits still

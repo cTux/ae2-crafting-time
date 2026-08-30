@@ -28,6 +28,8 @@ This covers [discussion #65](https://github.com/cTux/ae2-crafting-time/discussio
 - Refresh the waiting state through the existing one-second stats request cycle.
 - Before the first stats response arrives, keep the current behavior and show no
   waiting line. The first matching response may show `Waiting`.
+- Switching the selected crafting CPU clears the old waiting line until the
+  first matching response for the new CPU arrives.
 - Give the waiting line its own neutral style. It does not join the green-to-red
   TTC color scale.
 - Treat a waiting row as unknown in shortest/longest TTC sorting because it has
@@ -73,6 +75,8 @@ separate job-level state.
 - The first matching stats response for a pending-only row shows `Waiting`.
 - Reopening the screen restores the server-owned waiting state after its first
   matching response.
+- Switching CPUs clears waiting state cached for the previous CPU before the
+  new CPU's rows request fresh state.
 - A row with old throughput samples still shows waiting before its first
   dispatch.
 - A row without throughput samples also shows waiting.
