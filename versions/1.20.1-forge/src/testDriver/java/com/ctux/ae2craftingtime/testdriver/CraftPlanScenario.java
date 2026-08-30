@@ -6,6 +6,7 @@ import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import com.ctux.ae2craftingtime.testdriver.mixin.CraftAmountScreenAccessor;
 import com.ctux.ae2craftingtime.testdriver.mixin.MEStorageScreenAccessor;
+import com.ctux.ae2craftingtime.testdriver.mixin.MouseHandlerAccessor;
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
@@ -15,7 +16,6 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import org.lwjgl.glfw.GLFW;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -262,8 +262,11 @@ public final class CraftPlanScenario {
     }
 
     private void moveMouse(int guiX, int guiY) {
-        GLFW.glfwSetCursorPos(minecraft.getWindow().getWindow(), guiX * minecraft.getWindow().getGuiScale(),
-                guiY * minecraft.getWindow().getGuiScale());
+        var window = minecraft.getWindow();
+        var rawX = guiX * (double) window.getScreenWidth() / window.getGuiScaledWidth();
+        var rawY = guiY * (double) window.getScreenHeight() / window.getGuiScaledHeight();
+        ((MouseHandlerAccessor) minecraft.mouseHandler).ae2craftingtime_test_driver$move(
+                window.getWindow(), rawX, rawY);
     }
 
     private void screenshot(String name) throws IOException {

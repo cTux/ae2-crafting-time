@@ -10,7 +10,8 @@
     "CraftAmountScreenAccessor",
     "CraftConfirmTableRendererMixin",
     "GuiGraphicsMixin",
-    "MEStorageScreenAccessor"
+    "MEStorageScreenAccessor",
+    "MouseHandlerAccessor"
   ],
   "injectors": {
     "defaultRequire": 1
