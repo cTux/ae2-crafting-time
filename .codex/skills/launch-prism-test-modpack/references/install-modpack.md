@@ -44,5 +44,3 @@ Read this only when the exact managed instance is absent.
 - Use Prism's **Folder** action and verify `instance.cfg`, `mmc-pack.json`,
   `flame`, and `minecraft`. Do not guess a folder from the display name.
 - Do not use Prism's `--import` CLI option; it leaves an interactive dialog.
-- When optimizing a large batch or diagnosing known UI failures, read
-  [installation-iterations.md](installation-iterations.md).

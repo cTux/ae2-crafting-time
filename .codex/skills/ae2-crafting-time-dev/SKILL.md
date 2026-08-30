@@ -35,21 +35,24 @@ description: Develop, debug, test, or port AE2 Crafting Time code and resources.
 
 Every new or changed executable behavior must have 100% line and branch coverage.
 
-- Move decisions into covered pure-Java code and test every branch, boundary, invalid input, and state transition.
-- Do not add uncovered decisions to mixins, packet registration, SavedData, entrypoints, or loader glue. If direct coverage is impractical, extract the decision into `shared` and leave only delegation in the adapter.
-- Add packet round-trip, NBT round-trip, and structural/resource checks in the nearest shared or loader test source set when those boundaries change.
-- Cover every changed PowerShell branch with the closest deterministic script self-test; release automation belongs in `test-deploy-changed.ps1`.
-- Do not weaken JaCoCo, exclude changed logic, delete meaningful assertions, or claim 100% from test counts. The PR CI coverage gate is authoritative.
-- Documentation-only and static-resource-only changes need relevant validation, not fake unit tests.
+- Put decisions in covered pure-Java code and leave Minecraft/loader adapters as
+  delegation plus API conversion.
+- Test changed boundaries through the nearest packet, NBT, resource, or script
+  self-check described in the testing reference.
+- Never weaken JaCoCo, exclusions, assertions, or other gates. Documentation and
+  static resources need relevant validation, not fake unit tests.
 
 ## Change Boundaries
 
-- Use the smallest shared root-cause fix; do not patch sibling callers individually.
-- Treat wire layouts and persisted NBT as compatibility boundaries. Update every affected loader together and version the format/protocol when compatibility changes.
+- Use the smallest shared root-cause fix; do not patch sibling callers
+  individually.
+- Treat wire layouts and persisted NBT as compatibility boundaries. Update every
+  affected loader together and version the format or protocol when needed.
 - Treat `scripts/release-matrix.json` as the supported-target source of truth.
 - Keep build dependencies and loader metadata at the minimum supported versions.
 - Let each `run-*.bat` client use the newest versions available for its exact Minecraft and loader target.
-- Verify the newest dependency's full Maven coordinate instead of assuming it still uses the minimum version's group and artifact.
+- Verify a newest dependency's full Maven coordinate instead of assuming it
+  still uses the minimum version's group and artifact.
 - For matrix rows, dist tasks, jar naming, deployment, or publishing, use
   `ae2-crafting-time-release` instead of this skill.
 
