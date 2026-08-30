@@ -211,12 +211,12 @@ Time To Craft: ~000:02:15
 ```
 
 Visible Crafting Tree TTC badges use a compact dark background with two pixels
-of padding and rounded corners, centered below the node with Minecraft text shadow. The tree reserves
+of padding and four-pixel rounded corners, centered below the node with Minecraft text shadow. The tree reserves
 extra vertical spacing for the badge so it does not cover the node amount or
 connector lines.
 
 ME Requester uses the same compact dark badge and text shadow. Row TTC badges
-are centered over the request status lines and colored by relative duration;
+start at the left edge of the request status lines and are colored by relative duration;
 the total badge stays inside the requester header instead of extending beyond
 the screen. Its row estimate uses only the current network shortfall:
 `normalize(max(0, wanted amount - network amount)) / amountPerSecond`. A row
