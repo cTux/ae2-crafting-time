@@ -57,7 +57,8 @@ public abstract class AbstractTableRendererMixin {
     @Unique
     private static boolean ae2craftingtime$isTtcLine(TranslatableContents translatable) {
         var key = translatable.getKey();
-        return key.equals("text.ae2craftingtime.ttc") || key.equals("text.ae2craftingtime.ttc_delayed");
+        return key.equals("text.ae2craftingtime.ttc") || key.equals("text.ae2craftingtime.ttc_delayed")
+                || key.equals("text.ae2craftingtime.waiting");
     }
 
     @Inject(method = "render", at = @At("HEAD"), remap = false)
@@ -133,6 +134,10 @@ public abstract class AbstractTableRendererMixin {
         }
 
         var key = ProfilerBridge.key(statusEntry.getWhat());
+        if (statusEntry.getActiveAmount() == 0 && statusEntry.getPendingAmount() > 0
+                && ClientStats.CACHE.waitingTicks(key).isPresent()) {
+            return OptionalLong.empty();
+        }
         var stats = ClientStats.CACHE.get(key);
         if (stats.isEmpty()) {
             return OptionalLong.empty();

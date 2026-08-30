@@ -4,9 +4,9 @@ Date: 2026-06-21
 
 ## The Rule
 
-The Minecraft server owns all craft timing, throughput, delay, prediction
-accuracy, and bottleneck diagnostics. The client only shows the snapshot it
-receives.
+The Minecraft server owns all craft timing, throughput, first-dispatch waiting
+state, delay, prediction accuracy, and bottleneck diagnostics. The client only
+shows the snapshot it receives.
 
 That matters on dedicated servers because:
 
@@ -26,6 +26,8 @@ singleplayer:
 
 - server-side AE2 mixins record `start` and `complete` events through
   `ProfilerBridge`
+- accepted jobs register their crafted outputs until each output's first
+  pattern dispatch
 - client UI mixins request visible output ids through `StatsRequestC2S`
 - the server looks up retained stats for the active AE2 network and output ids
 - `StatsSnapshotS2C` updates `ClientStatsCache`
@@ -51,6 +53,7 @@ Server owns:
 - pending operation matching
 - rolling sample buffers
 - concurrent production-window aggregation
+- per-CPU first-dispatch waiting state
 - average duration and throughput calculation
 - config value that affects collection: `enabled`
 
@@ -105,8 +108,10 @@ Sent from server to only the requesting player.
 Fields:
 
 ```text
-entries:
-  requestedKeys: list<string>
+requestedKeys: list<string>
+networkAmounts: map<string, long>
+waitingTicks: map<string, nonnegative long>
+entries: list {
   key: string
   unit: item | millibucket
   sampleCount: int
@@ -123,6 +128,7 @@ entries:
     usedParallelSlots: int
     totalParallelSlots: int
   }
+}
 ```
 
 Rules:
@@ -136,15 +142,20 @@ Rules:
   inflate a future sample.
 - A stall diagnostic is included only for the selected crafting CPU after its
   no-progress threshold is reached. It is runtime-only and never persisted.
+- Waiting ticks are included for requested outputs that the selected crafting
+  CPU has not dispatched yet, even when those outputs have no retained stats.
+  The map is bounded to 256 output ids and is never persisted.
 - Client drops cache entries for requested keys before applying returned stats.
-- Missing entries therefore mean "no known stats for this output in the current network-scoped context".
+- Missing stats or waiting values therefore remove old client state instead of
+  leaving stale values behind.
 
 ## UI Flow
 
 1. An AE2 or optional integration UI renders or rebuilds.
 2. Client collects output ids from currently visible nodes.
 3. Client sends `StatsRequestC2S`.
-4. Server reads stats from server `CraftProfiler`.
+4. Server reads stats and first-dispatch waiting time from server
+   `CraftProfiler`.
 5. Server sends `StatsSnapshotS2C` to that player.
 6. Client stores snapshot in `ClientStatsCache`.
 7. UI mixins render stats from `ClientStatsCache`.

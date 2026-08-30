@@ -3,8 +3,9 @@
 AE2 Crafting Time watches real autocrafting throughput on the logical server so
 it can explain slow or stalled jobs. The client only displays what the server
 sends: TTC estimates, delay warnings, prediction accuracy, and bottleneck clues
-supported by the available data. Singleplayer uses the same path because an
-integrated world still has a logical server.
+supported by the available data, plus whether scheduled outputs are waiting
+for their first dispatch. Singleplayer uses the same path because an integrated
+world still has a logical server.
 
 ## Supported Targets
 
@@ -32,6 +33,7 @@ integrated world still has a logical server.
 AE2 CraftingCpuLogic mixins on the server
   -> ProfilerBridge
   -> CraftProfiler retained samples
+  -> per-CPU first-dispatch waiting timers
   -> frozen job TTC versus successful completion accuracy
   -> delayed-output diagnostics and recent parallel-dispatch capacity
   -> Ae2CraftingTimeSavedData world save snapshot
@@ -53,10 +55,16 @@ samples or displayed TTC calculations.
 
 Stall diagnostics are also runtime-only. For the selected crafting CPU, the
 server tracks the last accepted output and AE2's rolling pattern-dispatch use.
-An output is delayed after at least 30 seconds without progress and at least
+An output is delayed after at least 10 seconds without progress and at least
 twice its learned average production-window duration. Partial output resets the
 timer. The client only renders the server snapshot alongside AE2's active and
 scheduled amounts.
+
+First-dispatch waiting state is runtime-only too. The server registers every
+crafted output when AE2 accepts a job, removes each output after its first
+pattern dispatch, and sends elapsed waiting ticks for requested rows. This lets
+the client distinguish work that has never started from a later gap between
+batches.
 
 The client never reads profiler state directly. That rule matters in
 singleplayer too: local UI still requests snapshots from the integrated server
@@ -79,8 +87,8 @@ The core AE2 screens are always available when AE2 is present:
 
 - craft-confirm plan row TTC lines, color hints, total TTC, sort button, and TTC
   details/reset clicks
-- crafting status row TTC lines, total TTC, sort button, and TTC details/reset
-  clicks
+- crafting status waiting and TTC lines, total TTC, sort button, and TTC
+  details/reset clicks
 
 Optional integrations add UI only when the target mod is installed:
 
@@ -100,4 +108,5 @@ Retained samples are saved through Minecraft `SavedData` as:
 ```
 
 The saved payload stores `version`, `networkId`, `key`, `unit`, and retained
-`samples`. Pending crafts are runtime-only and are not persisted.
+`samples`. Pending crafts and first-dispatch waiting state are runtime-only and
+are not persisted.

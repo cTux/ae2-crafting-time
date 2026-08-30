@@ -36,15 +36,17 @@ steps in the same commit.
 
 ## Phase 3: Render the state
 
-1. Add English and Ukrainian translations for
-   `Waiting to start: %ss`.
-2. Add the smallest `TtcText` formatter for completed whole seconds.
+1. Add the one-word English and Ukrainian translations `Waiting` and
+   `Очікування`.
+2. Add the smallest `TtcText` formatter for the label.
 3. In `CraftingStatusTableRendererMixin`, render waiting before delayed and
    estimated TTC, guarded by the current AE2 active/pending amounts.
 4. Reuse the existing dark TTC badge and give waiting text one neutral color.
 5. Exclude waiting rows from status TTC color and sort estimates in both API
    source sets.
-6. Add text and structural/resource tests for the translation keys, badge key,
+6. Clear cached waiting state when the status screen opens or its selected CPU
+   changes, then request fresh state immediately.
+7. Add text and structural/resource tests for the translation keys, badge key,
    renderer precedence, and mixin membership.
 
 ## Phase 4: Verify behavior
@@ -54,11 +56,13 @@ After the hook-created PR exists:
 1. Let required CI run every supported Gradle row and the coverage gate.
 2. Check the full warning/error sweep and fix repository-owned warnings.
 3. In a development client, start a job whose dependency cannot dispatch yet.
-4. Verify the counter survives closing and reopening the status screen.
-5. Unblock the dependency and verify the first dispatch permanently replaces
+4. Verify the waiting state survives closing and reopening the status screen.
+5. Switch to another CPU and verify the previous CPU's waiting state does not
+   appear there.
+6. Unblock the dependency and verify the first dispatch permanently replaces
    waiting with normal TTC behavior.
-6. Create a later between-batch gap and verify waiting does not return.
-7. Repeat finish and cancellation checks, then verify AdvancedAE on its
+7. Create a later between-batch gap and verify waiting does not return.
+8. Repeat finish and cancellation checks, then verify AdvancedAE on its
    supported NeoForge rows.
 
 Done means CI is green, every changed branch is covered, packet limits still

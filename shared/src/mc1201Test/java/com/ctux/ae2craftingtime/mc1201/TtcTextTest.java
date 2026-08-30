@@ -7,9 +7,17 @@ import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
 import java.util.List;
 import java.util.Optional;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import org.junit.jupiter.api.Test;
 
 class TtcTextTest {
+    @Test
+    void waitingUsesTranslationWithoutArguments() {
+        var contents = (TranslatableContents) TtcText.waiting().getContents();
+        assertEquals("text.ae2craftingtime.waiting", contents.getKey());
+        assertEquals(0, contents.getArgs().length);
+    }
+
     @Test
     void statsLinesOnlyShowProductionRateWithoutRecordedSamples() {
         var stats = new ProfileStats(4, 646.5, 0.01, 0.18, 109, ProfileUnit.ITEM);

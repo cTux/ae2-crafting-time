@@ -48,7 +48,8 @@ class StatsPacketTest {
                         java.util.Optional.of(new StallDiagnostic(960, 240, 1, 1, 4))),
                 new StatsEntry(new ProfileKey("minecraft:lava"),
                         new ProfileStats(1, 20, 50, 1000, 20, ProfileUnit.MILLIBUCKET))),
-                Map.of("minecraft:water", 8_000L, "minecraft:lava", 0L));
+                Map.of("minecraft:water", 8_000L, "minecraft:lava", 0L),
+                Map.of("minecraft:water", 40L));
 
         StatsSnapshotS2C.encode(packet, buffer);
 
@@ -79,6 +80,7 @@ class StatsPacketTest {
         assertEquals(List.of("minecraft:iron_ingot"), packet.requestedKeys());
         assertEquals(entries, packet.entries());
         assertEquals(Map.of(), packet.networkAmounts());
+        assertEquals(Map.of(), packet.waitingTicks());
     }
 
     @Test
@@ -97,14 +99,43 @@ class StatsPacketTest {
         var oversizedEntries = new FriendlyByteBuf(Unpooled.buffer());
         oversizedEntries.writeVarInt(0);
         oversizedEntries.writeVarInt(0);
+        oversizedEntries.writeVarInt(0);
         oversizedEntries.writeVarInt(PacketLimits.MAX_KEYS + 1);
 
         assertThrows(IllegalArgumentException.class, () -> StatsSnapshotS2C.decode(oversizedEntries));
+
+        var oversizedWaiting = new FriendlyByteBuf(Unpooled.buffer());
+        oversizedWaiting.writeVarInt(0);
+        oversizedWaiting.writeVarInt(0);
+        oversizedWaiting.writeVarInt(PacketLimits.MAX_KEYS + 1);
+
+        assertThrows(IllegalArgumentException.class, () -> StatsSnapshotS2C.decode(oversizedWaiting));
+    }
+
+    @Test
+    void snapshotRejectsInvalidWaitingValues() {
+        var negative = new FriendlyByteBuf(Unpooled.buffer());
+        negative.writeVarInt(0);
+        negative.writeVarInt(0);
+        negative.writeVarInt(1);
+        negative.writeUtf("minecraft:iron_ingot");
+        negative.writeVarLong(-1);
+
+        assertThrows(IllegalArgumentException.class, () -> StatsSnapshotS2C.decode(negative));
+
+        var longId = new FriendlyByteBuf(Unpooled.buffer());
+        longId.writeVarInt(0);
+        longId.writeVarInt(0);
+        longId.writeVarInt(1);
+        longId.writeUtf("minecraft:" + "a".repeat(PacketLimits.MAX_OUTPUT_ID_LENGTH));
+
+        assertThrows(RuntimeException.class, () -> StatsSnapshotS2C.decode(longId));
     }
 
     @Test
     void snapshotRejectsOversizedSampleHistoryBeforeAllocation() {
         var buffer = new FriendlyByteBuf(Unpooled.buffer());
+        buffer.writeVarInt(0);
         buffer.writeVarInt(0);
         buffer.writeVarInt(0);
         buffer.writeVarInt(1);

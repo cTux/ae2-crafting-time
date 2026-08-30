@@ -44,6 +44,8 @@ You can grab the latest version from:
   more you play.
 - Tells you how long a craft will take — for one item or a whole job — right on
   the AE2 screens, so you know when to come back.
+- Marks scheduled work as waiting until its first pattern dispatch, so you can
+  tell that it hasn't started yet.
 - Alerts you when a craft has stalled, so you can fix it instead of waiting
   forever.
 - Shows what's slowing you down — like a machine that's too slow, too few
@@ -74,6 +76,9 @@ If you want the more technical details, start here:
 - [Potential dependency integrations](DEPENDENCIES_POTENTIAL.md)
 - [Known Issues](KNOWN_ISSUES.md)
 - [Architecture](docs/architecture.md)
+- [Feature documentation map](docs/feature-coverage.md)
+- [Profiling and diagnostics](docs/profiling-and-diagnostics/spec.md)
+- [Player controls and integrations](docs/player-controls-and-integrations/spec.md)
 - [AE2 addon integration](docs/ae2-addon-integration/spec.md)
 - [Release process](docs/release.md)
 - [Server-owned stats design](docs/server-client-stats.md)

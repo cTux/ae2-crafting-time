@@ -117,7 +117,7 @@ use, and up to two possible improvements.
 
 An active output is delayed only when both conditions hold:
 
-- no accepted output for at least 30 seconds
+- no accepted output for at least 10 seconds
 - no accepted output for at least twice its learned average production-window duration
 
 Partial output resets the timer. Diagnostics are scoped to the selected crafting

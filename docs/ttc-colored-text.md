@@ -4,11 +4,12 @@ Date: 2026-06-21
 
 ## Goal
 
-Color the `TTC` text in the AE2 crafting plan from bright green to bright red:
+Color the `TTC` text in the AE2 Crafting Plan and Crafting Status tables from
+bright green to bright red:
 
-- fastest craft in the visible crafting plan list: bright green
+- fastest craft in the current table list: bright green
 - middle of the range: bright yellow
-- slowest craft in the visible crafting plan list: bright red
+- slowest craft in the current table list: bright red
 - entries between them: interpolated color
 
 The color scale makes the slowest predicted steps stand out as potential
@@ -18,34 +19,45 @@ bottlenecks; it is a relative visual clue, not a root-cause claim.
 
 Yes. AE2 already renders the right kind of component for this.
 
-AE2 `CraftConfirmTableRenderer` returns visible cell lines as `List<Component>` from `getEntryDescription(...)`. `AbstractTableRenderer.render(...)` draws those lines with:
+AE2's craft-confirm and crafting-status table renderers return visible cell
+lines as `List<Component>` from `getEntryDescription(...)`.
+`AbstractTableRenderer.render(...)` draws those lines with:
 
 ```text
 GuiGraphics.drawString(Font, Component, x, y, defaultColor, false)
 ```
 
-Because the renderer passes a Minecraft `Component`, not a plain `String`, a `Component.literal("~12s").withStyle(...)` can carry text color. The current mod already appends the estimate by adding a `Component` in `CraftConfirmTableRendererMixin`, so the feature can stay in the same UI path.
+Because the renderer passes a Minecraft `Component`, not a plain `String`, a
+styled TTC component can carry its own text color. The plan and status mixins
+already append estimates through this path.
 
 ## Design Constraint
 
-The existing `getEntryDescription(...)` mixin sees only one `CraftingPlanSummaryEntry` at a time.
+Each `getEntryDescription(...)` mixin sees only one plan or status entry at a
+time.
 
-To color by "fastest and slowest in the crafting plan list", the code must know the full list being rendered. That list is available in AE2 `AbstractTableRenderer.render(..., List<T> entries, int scrollOffset)`, not in the per-entry description method.
+To color by the fastest and slowest entries, the code must know the full list
+being rendered. That list is available in AE2
+`AbstractTableRenderer.render(..., List<T> entries, int scrollOffset)`, not in
+the per-entry description method.
 
 ## Approach
 
 Use a render-scope color context.
 
 1. Inject into `AbstractTableRenderer.render(...)` at method head.
-2. If `this` is a `CraftConfirmTableRenderer`, scan the passed `entries`.
-3. For each `CraftingPlanSummaryEntry` with `craftAmount > 0`, look up server-synced stats in `ClientStats.CACHE`.
-4. Convert stats and craft amount into estimated seconds.
+2. If `this` is a `CraftConfirmTableRenderer` or
+   `CraftingStatusTableRenderer`, scan the passed `entries`.
+3. For each eligible plan or status entry, look up server-synced stats in
+   `ClientStats.CACHE`. Status uses `activeAmount + pendingAmount`.
+4. Convert stats and the plan or status amount into estimated seconds.
 5. Compute `minSeconds` and `maxSeconds` for the current render list.
 6. Store `ProfileKey -> color` in a short-lived client-side context.
-7. Existing `CraftConfirmTableRendererMixin` reads the color for the entry and appends:
+7. The plan or status renderer mixin reads the color for its entry and appends a
+   styled TTC component.
 
 ```java
-Component.literal(eta).withStyle(style -> style.withColor(color))
+TtcText.ttc(eta).withStyle(style -> style.withColor(color))
 ```
 
 8. Clear the context at render return.
@@ -87,23 +99,25 @@ If an entry has no cached server stats yet:
 
 That way an unknown estimate never gets a made-up color.
 
-## Helper Change
+## Shared Helper
 
-`TimeEstimate` currently returns only formatted text. Coloring needs the raw estimated seconds too.
-
-Smallest change:
+Coloring uses raw estimated seconds from the same helper as visible TTC text:
 
 ```text
 TimeEstimate.seconds(amount, stats) -> OptionalLong
 TimeEstimate.format(amount, stats) -> uses seconds(...)
 ```
 
-This avoids parsing strings like `~1:07` back into seconds.
+This avoids parsing strings like `~1:07` back into seconds or duplicating TTC
+math in a renderer.
 
 ## Risks
 
-- AE2 `AbstractTableRenderer` is shared by multiple craft-plan tables. The render-scope mixin must guard on `this instanceof CraftConfirmTableRenderer`.
-- The color range is based on the currently rendered list passed by AE2. If the list includes off-screen rows, colors represent the whole current plan list. If AE2 passes only visible rows after scrolling, colors represent visible rows. Local bytecode shows `render(..., List<T>, scrollOffset)` receives the full list and applies `scrollOffset` internally, so the expected behavior is whole current plan list.
+- AE2 `AbstractTableRenderer` is shared by multiple tables. The render-scope
+  mixin must guard on the craft-confirm and crafting-status renderer types.
+- The color range is based on the full current list passed by AE2. The renderer
+  applies `scrollOffset` after receiving that list, so scrolling does not change
+  the range.
 - Bright TTC colors use Minecraft's native dark text shadow for contrast without a heavy outline.
 
 ## Tests
@@ -111,12 +125,13 @@ This avoids parsing strings like `~1:07` back into seconds.
 Add small shared tests for:
 
 - `TimeEstimate.seconds(...)` returns one second for nonzero sub-second work.
-- color interpolation returns dark green at min, dark red at max, and a middle color between them.
-- equal min/max returns dark green.
+- color interpolation returns bright green at min, bright red at max, and a
+  middle color between them.
+- equal min/max returns bright green.
 
 Version-side tests can stay cheap:
 
-- assert the craft plan mixin still hooks `getEntryDescription`
+- assert both TTC table mixins still hook `getEntryDescription`
 - assert the render-scope mixin is client-only in `ae2craftingtime.mixins.json`
 
 ## Chosen Approach
