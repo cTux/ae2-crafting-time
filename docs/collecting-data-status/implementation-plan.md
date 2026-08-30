@@ -57,7 +57,7 @@ published rows.
 
 In a matching development client, check:
 
-1. A never-crafted plan row immediately shows `Collecting data`.
+1. A never-crafted plan row immediately shows `Collecting`.
 2. A never-crafted running row shows the same state.
 3. One completed sample changes it to a low-confidence estimate ending in `?`.
 4. Three clean samples remove `?`.

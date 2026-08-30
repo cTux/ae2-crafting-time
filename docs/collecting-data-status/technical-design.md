@@ -11,7 +11,7 @@ The client already knows everything needed to choose the row text:
 eligible AE2 row
   -> request existing server stats
   -> cached stats produce an estimate? yes -> show existing TTC
-                                    no  -> show Collecting data
+                                    no  -> show Collecting
 ```
 
 For the running Crafting Status table, the existing waiting status wins before
@@ -43,7 +43,7 @@ build the existing outer TTC component with a new translated value:
 
 ```text
 text.ae2craftingtime.ttc = "%s"
-text.ae2craftingtime.collecting_data = "Collecting data"
+text.ae2craftingtime.collecting_data = "Collecting"
 ```
 
 The resulting component still has `text.ae2craftingtime.ttc` as its outer

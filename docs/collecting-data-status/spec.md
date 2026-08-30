@@ -3,7 +3,7 @@
 ## Why this exists
 
 [Discussion #64](https://github.com/cTux/ae2-crafting-time/discussions/64)
-asks the crafting windows to show `Collecting data` before an estimate is
+asks the crafting windows to show `Collecting` before an estimate is
 available. Right now a new player sees no TTC line at all, so the mod can look
 inactive while it is learning that craft.
 
@@ -39,11 +39,11 @@ windows, the first matching state wins:
 | --- | --- |
 | The running craft is waiting for its first dispatch | Existing `Waiting` status |
 | The running craft is delayed | Existing `DELAYED` warning |
-| No usable stats are cached | `Collecting data` |
+| No usable stats are cached | `Collecting` |
 | A usable but low-confidence estimate exists | Existing estimate with `?`, such as `~12s?` |
 | A reliable estimate exists | Existing estimate, such as `~12s` |
 
-`Collecting data` describes the absence of usable historical data. It is not a
+`Collecting` describes the absence of usable historical data. It is not a
 network loading spinner and does not promise that the current craft will create
 a sample. The line can remain visible for an output that never completes a
 profiled production window.
@@ -81,7 +81,7 @@ profiled production window.
 
 ## Acceptance checks
 
-- A fresh output shows `Collecting data` in both standard crafting tables.
+- A fresh output shows `Collecting` in both standard crafting tables.
 - A stored-only or missing-only plan row shows no TTC line.
 - A status row with no active or pending work shows no TTC line.
 - One and two valid samples show the existing estimate with `?`.
