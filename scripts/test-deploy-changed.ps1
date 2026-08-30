@@ -47,9 +47,37 @@ $groupedDryRun = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScrip
     -CurseProjectId 1591476 `
     -Changelog $sharedChangelog
 $groupedOutput = $groupedDryRun -join "`n"
-if ($LASTEXITCODE -ne 0 -or $groupedOutput -notmatch '## All versions' -or
-    ([regex]::Matches($groupedOutput, [regex]::Escape('- Shared release note.')).Count -ne 1)) {
+$groupedGitHubOutput = [regex]::Match($groupedOutput, '(?s)dry-run GitHub Release:.*').Value
+if ($LASTEXITCODE -ne 0 -or $groupedGitHubOutput -notmatch '## All versions' -or
+    ([regex]::Matches($groupedGitHubOutput, [regex]::Escape('- Shared release note.')).Count -ne 1)) {
     throw "GitHub Release did not group a shared changelog once for all versions"
+}
+
+$scopedChangelogPath = "$StatePath.changelog.json"
+[ordered]@{
+    all = "### IMPROVED`n`n- Shared release note."
+    '1.21.1-neoforge' = "### FIXED`n`n- NeoForge 1.21.1-only note."
+} | ConvertTo-Json | Set-Content -LiteralPath $scopedChangelogPath -Encoding UTF8
+$scopedDryRun = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" `
+    -StatePath $StatePath `
+    -VersionPath $versionPath `
+    -Deploy `
+    -DryRun `
+    -ModrinthProjectId test-project `
+    -CurseProjectId 1591476 `
+    -ChangelogPath $scopedChangelogPath
+$scopedOutput = $scopedDryRun -join "`n"
+$fabricChangelog = [regex]::Match($scopedOutput,
+    '(?s)dry-run changelog 1\.20\.1-fabric:\s*(?<notes>.*?)(?=dry-run deploy 1\.21\.1-neoforge:)').Groups['notes'].Value
+$neoForgeChangelog = [regex]::Match($scopedOutput,
+    '(?s)dry-run changelog 1\.21\.1-neoforge:\s*(?<notes>.*?)(?=dry-run deploy 26\.1\.2-neoforge:)').Groups['notes'].Value
+if ($LASTEXITCODE -ne 0 -or $fabricChangelog -notmatch 'Shared release note' -or
+    $fabricChangelog -match 'NeoForge 1\.21\.1-only note' -or
+    $neoForgeChangelog -notmatch 'Shared release note' -or
+    $neoForgeChangelog -notmatch 'NeoForge 1\.21\.1-only note' -or
+    $scopedOutput -notmatch '## NeoForge 1\.21\.1' -or
+    ([regex]::Matches($scopedOutput, [regex]::Escape('- NeoForge 1.21.1-only note.')).Count -ne 2)) {
+    throw "Scoped changelog leaked a version-specific note or built the wrong GitHub sections"
 }
 
 $first = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" `
@@ -122,4 +150,5 @@ if (($second -join "`n") -notmatch 'skip 26\.1\.2-neoforge: unchanged at 1\.0\.4
 
 Remove-Item -LiteralPath $StatePath -Force -ErrorAction SilentlyContinue
 Remove-Item -LiteralPath $versionPath -Force -ErrorAction SilentlyContinue
+Remove-Item -LiteralPath $scopedChangelogPath -Force -ErrorAction SilentlyContinue
 Write-Host "release script check passed"
