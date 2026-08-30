@@ -42,8 +42,10 @@ JAR checks must reject test-driver artifacts and test-driver classes in player
 JARs.
 
 The driver has its own mod ID, for example `ae2craftingtime_test_driver`, and
-requires the exact Minecraft, loader, AE2, and AE2 Crafting Time combination it
-tests. It must not embed production AE2 Crafting Time classes.
+requires the exact Minecraft, loader, and AE2 Crafting Time version it tests. It
+accepts any AE2 version allowed by that production JAR so the same driver can
+exercise both compatible and latest profiles. It must not embed production AE2
+Crafting Time classes.
 
 ## Two modes
 
