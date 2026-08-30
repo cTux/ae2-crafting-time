@@ -22,7 +22,7 @@ unless that combination is explicitly allowed.
 
 This document defines the intended driver. The artifact does not exist yet.
 
-See [Automated UI Testing](automated-ui-testing.md) for the complete client and
+See [Automated UI Testing](automated-ui-testing/spec.md) for the complete client and
 optional-dependency checklist that drives it.
 
 ## Keep it outside the production JAR
