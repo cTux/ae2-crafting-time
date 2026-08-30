@@ -216,6 +216,10 @@ def reobfTestDriverJar = obfuscation.reobfuscate(testDriverUnmappedJar, sourceSe
     destinationDirectory = rootProject.layout.buildDirectory.dir('test-driver')
 }
 
+tasks.named('reobfJar') {
+    mustRunAfter tasks.named('compileTestDriverJava')
+}
+
 tasks.named('testDriverJar') {
     group = 'build'
     description = 'Builds the isolated Forge 1.20.1 UI test-driver mod.'
