@@ -88,6 +88,9 @@ try {
     $resultPath = Join-Path $evidence "result.json"
     if (-not (Test-Path -LiteralPath $resultPath -PathType Leaf)) { throw "Missing atomic result.json" }
     $result = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json
+    if ($result.result -eq "FAIL" -and $result.failure) {
+        throw "UI-smoke driver failed: step=$($result.failure.step) code=$($result.failure.code) expected=$($result.failure.expected) observed=$($result.failure.observed)"
+    }
     $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
         Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
     $driverName = "ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"
@@ -115,7 +118,8 @@ try {
     Copy-Item -LiteralPath $latestLog -Destination (Join-Path $evidence "latest.log")
     $fatal = Select-String -LiteralPath $latestLog -Pattern @(
         'Exception caught from mod bus', 'Mixin apply failed', 'MixinTransformerError',
-        'Failed to load resource', 'The game crashed whilst', 'There is no mod with modId'
+        'Failed to load resource', 'The game crashed whilst', 'There is no mod with modId',
+        "Reference map 'ae2craftingtime_test_driver.refmap.json'"
     ) -SimpleMatch
     if ($fatal) { throw "Fatal loader, mixin, resource, or crash signature in latest.log" }
     Write-Host "UI smoke passed: $evidence"

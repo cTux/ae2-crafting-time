@@ -184,7 +184,9 @@ tasks.register('distMod', Copy) {
 
 def testDriverFileName = "ae2-crafting-time-${project.version}-forge-1.20.1-test-driver.jar"
 def testDriverUnmappedJar = tasks.register('testDriverUnmappedJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    dependsOn tasks.named('compileTestDriverJava')
     from sourceSets.testDriver.output
+    from layout.buildDirectory.file('mixin/ae2craftingtime_test_driver.refmap.json')
     configurations = [project.configurations.testDriverLibraries]
     archiveFileName = testDriverFileName
     destinationDirectory = layout.buildDirectory.dir('test-driver-unmapped')

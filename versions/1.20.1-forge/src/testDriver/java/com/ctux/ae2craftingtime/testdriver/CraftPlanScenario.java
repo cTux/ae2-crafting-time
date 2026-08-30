@@ -131,7 +131,7 @@ public final class CraftPlanScenario {
         if (entry == null) {
             return;
         }
-        ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$click(entry, 0, ClickType.PICKUP);
+        ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$click(entry, 2, ClickType.CLONE);
         advance(ScenarioState.PLAN_OPEN);
     }
 
