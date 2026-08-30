@@ -7,6 +7,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.config.ModConfig;
 
 @Mod(Ae2CraftingTime.MOD_ID)
+@SuppressWarnings("removal")
 public final class Ae2CraftingTime {
     public static final String MOD_ID = "ae2craftingtime";
     public static final String COMMON_CONFIG_FILE = "ae2craftingtime-common.toml";
