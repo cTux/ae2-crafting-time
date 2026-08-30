@@ -56,7 +56,7 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
     private static final int AE2CRAFTINGTIME_TOTAL_COLOR = 0xE0E0E0;
 
     @Unique
-    private int ae2craftingtime$ttcSortMode;
+    private int ae2craftingtime$ttcSortMode = 2;
 
     @Shadow(remap = false)
     private Scrollbar scrollbar;

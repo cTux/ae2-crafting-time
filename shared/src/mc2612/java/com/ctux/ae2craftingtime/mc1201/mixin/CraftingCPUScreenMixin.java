@@ -66,7 +66,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
     private static final int AE2CRAFTINGTIME_TITLE_TTC_COLOR = 0xE0E0E0;
 
     @Unique
-    private int ae2craftingtime$ttcSortMode;
+    private int ae2craftingtime$ttcSortMode = 2;
     @Unique
     private Component ae2craftingtime$titleTtc;
     @Unique
