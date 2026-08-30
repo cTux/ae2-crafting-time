@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implement Planned Feature"
+  short_description: "Delegate implementation, then review every change"
+  default_prompt: "Use $implement-planned-feature to implement this approved feature plan through a decision-free coding sub-agent."
