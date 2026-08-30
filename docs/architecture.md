@@ -55,7 +55,7 @@ samples or displayed TTC calculations.
 
 Stall diagnostics are also runtime-only. For the selected crafting CPU, the
 server tracks the last accepted output and AE2's rolling pattern-dispatch use.
-An output is delayed after at least 30 seconds without progress and at least
+An output is delayed after at least 10 seconds without progress and at least
 twice its learned average production-window duration. Partial output resets the
 timer. The client only renders the server snapshot alongside AE2's active and
 scheduled amounts.

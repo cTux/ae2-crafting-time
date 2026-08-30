@@ -174,7 +174,7 @@ public final class CraftProfiler {
         var lastProgress = lastProgressTicks.get(scope).get(key);
         var idleTicks = Math.max(0, tick - lastProgress);
         var typicalTicks = stats.get().averageDurationTicks();
-        var delayedAfter = Math.max(600L, (long) Math.ceil(typicalTicks * 2.0));
+        var delayedAfter = Math.max(200L, (long) Math.ceil(typicalTicks * 2.0));
         if (idleTicks < delayedAfter) {
             return Optional.empty();
         }
