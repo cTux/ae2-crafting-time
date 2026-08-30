@@ -66,6 +66,28 @@ any addon required.
 - Do not add loader metadata or a compile dependency until real code needs it.
 - Every executable branch added later needs full line and branch coverage.
 
+### Development clients
+
+- Provide one compatible and one latest client for every supported Minecraft
+  and loader row.
+- Ordinary `run-*` scripts use a fully pinned dependency graph. Its loader,
+  AE2, API, addon, library, and tool versions are the lowest full-stack set
+  currently known to start and support the planned checks together. It is a
+  curated compatibility baseline, not each project's oldest published file.
+- `run-*-latest` scripts ignore the compatible pins and resolve the newest
+  loader, AE2, optional addon, required library, and test tool available for
+  the exact Minecraft and loader target. They are diagnostic clients and may
+  fail when an upstream release is incompatible.
+- A project may be marked incompatible with the ordinary profile only after a
+  reproduced full-stack conflict. It remains in the latest profile with the
+  reason recorded in the matrix.
+- Keep both profiles in one version matrix. Updating a compatible pin or the
+  candidate list must update PowerShell and Bash clients together.
+- Keep latest client game data separate from the compatible sandbox so a
+  broken dependency cannot rewrite its world, config, or managed mod set.
+- A candidate installed for compatibility testing is not automatically a
+  supported integration.
+
 ## Not included
 
 - Guessing addon crafting methods from discovered `ICraftingCPU` classes.
@@ -87,3 +109,7 @@ An addon is marked covered only when all relevant checks pass:
 - The addon is absent without mixin errors.
 - The supported target rows that publish the addon pass CI and an in-game craft
   that starts, produces output, finishes, and shows TTC.
+- Every ordinary run script resolves only its pinned compatible graph, while
+  every matching `-latest` script resolves current versions without fallback.
+- The four ordinary clients and four latest clients use separate managed mod
+  directories, and resolution failures remain visible to the caller.

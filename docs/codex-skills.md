@@ -10,4 +10,4 @@ The project-specific Codex skills live in `.codex/skills/`:
 - `plan-new-feature`: use before implementation to create a reviewed GitHub
   issue, specification, technical design, and implementation plan.
 - `implement-planned-feature`: use when those approved artifacts are complete;
-  it delegates decision-free coding to GPT-5.3 Codex Spark and reviews the diff.
+  the main agent implements and reviews the change.

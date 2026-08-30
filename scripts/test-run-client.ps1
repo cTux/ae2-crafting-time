@@ -1,9 +1,33 @@
 $ErrorActionPreference = "Stop"
 $script = Join-Path $PSScriptRoot "run-client.ps1"
+$matrix = Get-Content -LiteralPath (Join-Path $PSScriptRoot "run-client-versions.json") -Raw | ConvertFrom-Json
 $temp = Join-Path ([IO.Path]::GetTempPath()) ("ae2ct-run-client-" + [guid]::NewGuid().ToString("N"))
 $bytes = [Text.Encoding]::UTF8.GetBytes("test mod")
 $sha512 = [Security.Cryptography.SHA512]::Create()
 try { $hash = ([BitConverter]::ToString($sha512.ComputeHash($bytes)) -replace "-", "").ToLowerInvariant() } finally { $sha512.Dispose() }
+New-Item -ItemType Directory -Path $temp -Force | Out-Null
+$testMatrix = Join-Path $temp "run-client-versions.json"
+foreach ($entry in $matrix) {
+    foreach ($dependency in @($entry.curseforge | Where-Object { $_ })) {
+        $dependency.compatible.sha512 = $hash
+        $dependency.latest.sha512 = $hash
+    }
+}
+[IO.File]::WriteAllText($testMatrix, ($matrix | ConvertTo-Json -Depth 20), [Text.UTF8Encoding]::new($false))
+
+$global:Ae2CtVersions = @{}
+$releaseTargets = @((Get-Content -LiteralPath (Join-Path $PSScriptRoot "release-matrix.json") -Raw | ConvertFrom-Json).id)
+if (Compare-Object $releaseTargets @($matrix.id)) { throw "Run-client and release target matrices differ" }
+foreach ($entry in $matrix) {
+    if (@($entry.projects.project_id | Group-Object | Where-Object Count -gt 1).Count) { throw "Duplicate projects in $($entry.id)" }
+    if (@($entry.compatible.versions.project_id | Group-Object | Where-Object Count -gt 1).Count) { throw "Duplicate compatible locks in $($entry.id)" }
+    foreach ($project in @($entry.projects | Where-Object { $_.compatible -ne $false }).project_id) {
+        if ($project -notin $entry.compatible.versions.project_id) { throw "Missing compatible lock for $project in $($entry.id)" }
+    }
+    foreach ($version in @($entry.compatible.versions)) { $global:Ae2CtVersions[$version.version_id] = @($version.project_id, $version.version) }
+    $global:Ae2CtVersions[$entry.compatible.ae2_version_id] = @("XxWD5pD3", $entry.compatible.ae2_version)
+    if ($entry.compatible.fabric_api_version_id) { $global:Ae2CtVersions[$entry.compatible.fabric_api_version_id] = @("P7dR8mSH", $entry.compatible.fabric_api_version) }
+}
 
 function Invoke-WebRequest {
     param([switch]$UseBasicParsing, [string]$Uri, [string]$OutFile)
@@ -11,40 +35,32 @@ function Invoke-WebRequest {
         [IO.File]::WriteAllBytes($OutFile, $(if ($global:Ae2CtBadDownload) { [byte[]](0) } else { $bytes }))
         return
     }
-    $versions = if ($Uri -like "*minecraftforge*") { @("1.20.1-1", "1.20.1-99") } elseif ($Uri -like "*fabric-loader*") { @("0.1.0", "0.99.0") } else { @("21.1.1", "21.1.99", "26.1.2.1", "26.1.2.99") }
-    return [pscustomobject]@{ Content = "<metadata><versioning><versions>$($versions.ForEach({ "<version>$_</version>" }) -join '')</versions></versioning></metadata>" }
+    $versions = if ($Uri -like "*minecraftforge*") { @("1.20.1-1", "1.20.1-99") } elseif ($Uri -like "*fabric-loader*") { @("0.1.0", "0.99.0") } else { @("21.1.1", "21.1.99", "26.1.2.1", "26.1.2.100") }
+    [pscustomobject]@{ Content = "<metadata><versioning><versions>$($versions.ForEach({ "<version>$_</version>" }) -join '')</versions></versioning></metadata>" }
+}
+
+function New-TestVersion([string]$project, [string]$version) {
+    [pscustomobject]@{
+        id = "$project-$version"; version_number = $version
+        dependencies = @([pscustomobject]@{ project_id = "XxWD5pD3"; version_id = "old-pin"; dependency_type = "required" })
+        files = @([pscustomobject]@{ filename = "$project.jar"; hashes = [pscustomobject]@{ sha512 = $hash }; url = "https://example.invalid/$project.jar"; primary = $true })
+    }
 }
 
 function Invoke-RestMethod {
     param([string]$Uri)
+    $versionId = [regex]::Match($Uri, "/version/([^/?]+)").Groups[1].Value
+    if ($versionId) {
+        $record = $global:Ae2CtVersions[$versionId]
+        if (-not $record) { throw "Unknown mocked version $versionId" }
+        return New-TestVersion $record[0] $record[1]
+    }
     $project = [regex]::Match($Uri, "/project/([^/]+)/version").Groups[1].Value
     $decoded = [uri]::UnescapeDataString($Uri)
     $version = if ($project -eq "XxWD5pD3") {
         if ($decoded -like '*26.1.2*') { "26.99.0-beta" } elseif ($decoded -like '*1.21.1*') { "19.99.0" } else { "15.99.0" }
-    } elseif ($project -eq "P7dR8mSH") { "0.99.0+1.20.1" } elseif ($project -eq "udZtKfzP") { "20.4.2" } else { "1.0.0" }
-    $file = [pscustomobject]@{
-        filename = $(if ($project -eq "udZtKfzP") { "$project-20.4.2.jar" } else { "$project.jar" })
-        hashes = [pscustomobject]@{ sha512 = $hash }
-        url = "https://example.invalid/$project.jar"
-        primary = $true
-    }
-    $olderFile = [pscustomobject]@{
-        filename = $(if ($project -eq "udZtKfzP") { "$project-20.3.0.jar" } else { "$project.jar" })
-        hashes = [pscustomobject]@{ sha512 = $hash }
-        url = "https://example.invalid/$project.jar"
-        primary = $true
-    }
-    return @([pscustomobject]@{
-        version_type = if ($decoded -like '*26.1.2*') { "beta" } else { "release" }
-        version_number = $version
-        dependencies = @([pscustomobject]@{ project_id = "XxWD5pD3"; version_id = ""; dependency_type = "required" })
-        files = @($file)
-    }, [pscustomobject]@{
-        version_type = "release"
-        version_number = $(if ($project -eq "udZtKfzP") { "20.3.0" } else { "0.0.1" })
-        dependencies = @()
-        files = @($olderFile)
-    })
+    } elseif ($project -eq "P7dR8mSH") { "0.99.0+1.20.1" } else { "latest" }
+    return @(New-TestVersion $project $version)
 }
 
 function Assert-Line([string]$text, [string]$expected) {
@@ -52,59 +68,38 @@ function Assert-Line([string]$text, [string]$expected) {
 }
 
 try {
-    $expectedProjects = @{
-        "1.20.1-forge" = @("a1RwDz90", "IiATswDj", "E6BFl96N", "udZtKfzP", "ArHeh5Fz", "rxYaglEe", "JiOqfoFM", "xr109llC", "qPydPwtX", "anaGQD2Q", "4inoel9g", "pNabrMMw", "jjuIRIVr", "RYE1pYyr", "IZPmgTLT", "oMgZ004U", "5G4fpXXj", "qelfSMnn", "VQhDBNs8", "SOw6jD6x", "ayN3DZKb")
-        "1.20.1-fabric" = @("E6BFl96N", "JiOqfoFM", "pNabrMMw", "jjuIRIVr", "veunMwU3")
-        "1.21.1-neoforge" = @("a1RwDz90", "IiATswDj", "rxYaglEe", "E6BFl96N", "udZtKfzP", "ArHeh5Fz", "JiOqfoFM", "xr109llC", "qPydPwtX", "4inoel9g", "pNabrMMw", "jjuIRIVr", "RYE1pYyr", "IZPmgTLT", "oMgZ004U", "qelfSMnn", "VQhDBNs8", "SOw6jD6x", "ayN3DZKb")
-        "26.1.2-neoforge" = @("rxYaglEe", "ArHeh5Fz", "JiOqfoFM", "qPydPwtX", "pNabrMMw", "RYE1pYyr", "oMgZ004U", "qelfSMnn", "VQhDBNs8")
+    foreach ($entry in $matrix) {
+        $output = (& $script -Target $entry.id -Root $temp -VersionMatrix $testMatrix -ResolveOnly 6>&1 | Out-String)
+        Assert-Line $output "profile compatible"
+        Assert-Line $output "runtime loader $($entry.compatible.loader_version)"
+        Assert-Line $output "runtime ae2 $($entry.compatible.ae2_version)"
+        if ($entry.compatible.fabric_api_version) { Assert-Line $output "runtime fabric-api $($entry.compatible.fabric_api_version)" }
+        $compatibleProjects = @($entry.projects | Where-Object { $_.compatible -ne $false })
+        foreach ($project in $compatibleProjects.project_id) { Assert-Line $output "mod $project.jar" }
+        $mods = Join-Path $temp "versions\$($entry.id)\run\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
+        $manifest = @(Get-Content -LiteralPath (Join-Path $mods ".ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json)
+        $curseCount = @($entry.curseforge | Where-Object { $_ }).Count
+        if ($manifest.Count -ne $compatibleProjects.Count + $curseCount) { throw "Unexpected compatible managed-mod count for $($entry.id)" }
+
+        $output = (& $script -Target $entry.id -Root $temp -VersionMatrix $testMatrix -Latest -ResolveOnly 6>&1 | Out-String)
+        Assert-Line $output "profile latest"
+        foreach ($project in $entry.projects.project_id) { Assert-Line $output "mod $project.jar" }
+        $latestMods = Join-Path $temp "versions\$($entry.id)\run-latest\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
+        if (-not (Test-Path -LiteralPath (Join-Path $latestMods ".ae2-crafting-time-run-mods.json"))) { throw "Missing latest manifest for $($entry.id)" }
     }
-    $cases = @(
-        @("1.20.1-forge", "runtime loader 1.20.1-99", "runtime ae2 15.99.0", $null,
-            "mod udZtKfzP-20.3.0.jar", "mod ArHeh5Fz.jar"),
-        @("1.20.1-fabric", "runtime loader 0.99.0", "runtime fabric-api 0.99.0+1.20.1", $null, $null, $null),
-        @("1.21.1-neoforge", "runtime loader 21.1.99", "runtime ae2 19.99.0",
-            "runtime ae2 group org.appliedenergistics", $null, $null),
-        @("26.1.2-neoforge", "runtime loader 26.1.2.99", "runtime ae2 26.99.0-beta", $null, $null, $null)
-    )
-    foreach ($case in $cases) {
-        $output = (& $script -Target $case[0] -Root $temp -ResolveOnly 6>&1 | Out-String)
-        Assert-Line $output $case[1]
-        Assert-Line $output $case[2]
-        if ($case[3]) { Assert-Line $output $case[3] }
-        if ($case[4]) { Assert-Line $output $case[4] }
-        if ($case[5]) { Assert-Line $output $case[5] }
-        foreach ($project in $expectedProjects[$case[0]]) {
-            Assert-Line $output $(if ($project -eq "udZtKfzP" -and $case[0] -eq "1.20.1-forge") {
-                "mod udZtKfzP-20.3.0.jar"
-            } elseif ($project -eq "udZtKfzP") {
-                "mod udZtKfzP-20.4.2.jar"
-            } else {
-                "mod $project.jar"
-            })
-        }
-        $modsDirectory = Join-Path $temp "versions\$($case[0])\run\$(if ($case[0] -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
-        $manifest = Get-Content -LiteralPath (Join-Path $modsDirectory ".ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
-        $manifestCount = @($manifest | ForEach-Object { $_ }).Count
-        $builtIns = if ($case[0] -eq "1.20.1-fabric") { 1 } else { 2 }
-        if ($manifestCount -ne $expectedProjects[$case[0]].Count + $builtIns) {
-            throw "Unexpected managed-mod count for $($case[0]): $manifestCount"
-        }
-    }
-    Remove-Item -LiteralPath (Join-Path $temp "versions\1.20.1-forge\run\resolved-mods\Ck4E7v7R.jar") -Force
+
+    $badFile = Join-Path $temp "versions\1.20.1-forge\run\resolved-mods\a1RwDz90.jar"
+    Remove-Item -LiteralPath $badFile -Force
     $global:Ae2CtBadDownload = $true
     try {
-        & $script -Target "1.20.1-forge" -Root $temp -ResolveOnly 6>&1 | Out-Null
+        & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -ResolveOnly 6>&1 | Out-Null
         throw "Expected a hash mismatch"
     } catch {
         if ($_.Exception.Message -notlike "Hash mismatch for *") { throw }
-    } finally {
-        $global:Ae2CtBadDownload = $false
-    }
+    } finally { $global:Ae2CtBadDownload = $false }
     Write-Host "run-client checks passed"
 } finally {
     $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
     $resolvedTemp = [IO.Path]::GetFullPath($temp)
-    if ($resolvedTemp.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $resolvedTemp)) {
-        Remove-Item -LiteralPath $resolvedTemp -Recurse -Force
-    }
+    if ($resolvedTemp.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $resolvedTemp)) { Remove-Item -LiteralPath $resolvedTemp -Recurse -Force }
 }

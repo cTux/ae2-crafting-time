@@ -10,6 +10,8 @@ java {
     toolchain.languageVersion = JavaLanguageVersion.of(25)
 }
 
+def runtimeRunDirectory = providers.gradleProperty('runtimeRunDirectory').getOrElse('run')
+
 neoForge {
     version = providers.gradleProperty('runtimeNeoForge2612Version').getOrElse('26.1.2.71')
 
@@ -23,7 +25,7 @@ neoForge {
         }
 
         configureEach {
-            gameDirectory = project.file('run')
+            gameDirectory = project.file(runtimeRunDirectory)
             logLevel = org.slf4j.event.Level.DEBUG
         }
     }
