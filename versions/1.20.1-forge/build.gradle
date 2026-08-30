@@ -1,5 +1,6 @@
 plugins {
     id 'net.neoforged.moddev.legacyforge' version '2.0.141'
+    id 'com.gradleup.shadow' version '8.3.8'
 }
 
 base {
@@ -18,6 +19,16 @@ legacyForge {
     runs {
         client {
             client()
+            ['scenario', 'profile', 'world', 'output', 'interactive'].each { name ->
+                def property = providers.gradleProperty("testDriver${name.capitalize()}")
+                if (property.isPresent()) {
+                    systemProperty "ae2craftingtime.test.${name}", property.get()
+                }
+            }
+            if (providers.gradleProperty('testDriverWorld').isPresent()) {
+                programArgument '--quickPlaySingleplayer'
+                programArgument providers.gradleProperty('testDriverWorld').get()
+            }
         }
         server {
             server()
@@ -37,8 +48,22 @@ legacyForge {
     }
 }
 
+sourceSets {
+    testDriver
+}
+
+java.registerFeature('testDriver') {
+    usingSourceSet(sourceSets.testDriver)
+}
+
+sourceSets.testDriver.compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+sourceSets.testDriver.runtimeClasspath += sourceSets.testDriver.output + sourceSets.testDriver.compileClasspath
+sourceSets.test.compileClasspath += sourceSets.testDriver.output
+sourceSets.test.runtimeClasspath += sourceSets.testDriver.output
+
 mixin {
     add sourceSets.main, 'ae2craftingtime.refmap.json'
+    add sourceSets.testDriver, 'ae2craftingtime_test_driver.refmap.json'
     config 'ae2craftingtime.mixins.json'
     config 'ae2craftingtime-advancedae.mixins.json'
 }
@@ -83,6 +108,17 @@ dependencies {
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    testDriverAnnotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+}
+
+configurations {
+    testDriverLibraries
+    testDriverImplementation.extendsFrom testDriverLibraries
+}
+
+dependencies {
+    testDriverLibraries 'io.modelcontextprotocol.sdk:mcp:2.0.1'
+    testDriverLibraries 'org.apache.tomcat.embed:tomcat-embed-core:11.0.10'
 }
 
 test {
@@ -104,6 +140,19 @@ tasks.named('processResources', ProcessResources).configure {
 
     inputs.properties props
 
+    filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
+        expand props
+    }
+}
+
+tasks.named('processTestDriverResources', ProcessResources).configure {
+    def props = [
+            mod_version            : project.version,
+            minecraft_version_range: '[1.20.1,1.21)',
+            forge_version_range    : '[47.1.3,)',
+            loader_version_range   : '[47,)'
+    ]
+    inputs.properties props
     filesMatching(['META-INF/mods.toml', 'pack.mcmeta']) {
         expand props
     }
@@ -131,4 +180,70 @@ tasks.register('distMod', Copy) {
     from tasks.named('reobfJar')
     into rootProject.layout.projectDirectory.dir('dist')
     rename { "ae2-crafting-time-${distModVersion}-forge-1.20.1.jar" }
+}
+
+def testDriverFileName = "ae2-crafting-time-${project.version}-forge-1.20.1-test-driver.jar"
+def testDriverUnmappedJar = tasks.register('testDriverUnmappedJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+    from sourceSets.testDriver.output
+    configurations = [project.configurations.testDriverLibraries]
+    archiveFileName = testDriverFileName
+    destinationDirectory = layout.buildDirectory.dir('test-driver-unmapped')
+    mergeServiceFiles()
+    manifest {
+        attributes 'MixinConfigs': 'ae2craftingtime_test_driver.mixins.json'
+    }
+    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/versions/**',
+            'module-info.class', 'org/slf4j/**'
+    relocate 'io.modelcontextprotocol', 'com.ctux.ae2craftingtime.testdriver.lib.mcp'
+    relocate 'reactor', 'com.ctux.ae2craftingtime.testdriver.lib.reactor'
+    relocate 'com.fasterxml.jackson', 'com.ctux.ae2craftingtime.testdriver.lib.jackson'
+    relocate 'tools.jackson', 'com.ctux.ae2craftingtime.testdriver.lib.jackson3'
+    relocate 'com.networknt', 'com.ctux.ae2craftingtime.testdriver.lib.jsonschema'
+    relocate 'com.ethlo', 'com.ctux.ae2craftingtime.testdriver.lib.ethlo'
+    relocate 'org.snakeyaml', 'com.ctux.ae2craftingtime.testdriver.lib.snakeyaml'
+    relocate 'org.reactivestreams', 'com.ctux.ae2craftingtime.testdriver.lib.reactivestreams'
+    relocate 'org.apache.catalina', 'com.ctux.ae2craftingtime.testdriver.lib.tomcat'
+    relocate 'org.apache.coyote', 'com.ctux.ae2craftingtime.testdriver.lib.tomcat_coyote'
+    relocate 'org.apache.tomcat', 'com.ctux.ae2craftingtime.testdriver.lib.tomcat_api'
+    relocate 'org.apache.juli', 'com.ctux.ae2craftingtime.testdriver.lib.tomcat_logging'
+    relocate 'jakarta.servlet', 'com.ctux.ae2craftingtime.testdriver.lib.servlet'
+    relocate 'jakarta.security', 'com.ctux.ae2craftingtime.testdriver.lib.security'
+    relocate 'jakarta.annotation', 'com.ctux.ae2craftingtime.testdriver.lib.annotation'
+}
+
+def reobfTestDriverJar = obfuscation.reobfuscate(testDriverUnmappedJar, sourceSets.testDriver) {
+    archiveFileName = testDriverFileName
+    destinationDirectory = rootProject.layout.buildDirectory.dir('test-driver')
+}
+
+tasks.named('testDriverJar') {
+    group = 'build'
+    description = 'Builds the isolated Forge 1.20.1 UI test-driver mod.'
+    dependsOn reobfTestDriverJar
+}
+
+tasks.register('checkTestDriverArtifacts') {
+    group = 'verification'
+    dependsOn tasks.named('reobfJar'), reobfTestDriverJar
+    doLast {
+        def production = tasks.named('reobfJar').get().archiveFile.get().asFile
+        def driver = reobfTestDriverJar.get().archiveFile.get().asFile
+        def productionEntries = zipTree(production).files.collect { it.path.replace('\\', '/') }
+        def driverEntries = zipTree(driver).files.collect { it.path.replace('\\', '/') }
+        def forbiddenProduction = ['testdriver/', 'ae2craftingtime_test_driver', 'modelcontextprotocol']
+        if (productionEntries.any { entry -> forbiddenProduction.any { entry.contains(it) } }) {
+            throw new GradleException("Production JAR contains test-driver content: ${production}")
+        }
+        if (driverEntries.any { it.contains('/mc1201/Ae2CraftingTime.class') }) {
+            throw new GradleException("Test-driver JAR embeds production classes: ${driver}")
+        }
+        if (!driverEntries.any { it.endsWith('/testdriver/TestDriverMod.class') }
+                || !driverEntries.any { it.endsWith('META-INF/mods.toml') }) {
+            throw new GradleException("Test-driver JAR is incomplete: ${driver}")
+        }
+    }
+}
+
+tasks.named('test') {
+    dependsOn tasks.named('checkTestDriverArtifacts')
 }

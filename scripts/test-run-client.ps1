@@ -6,6 +6,16 @@ $bytes = [Text.Encoding]::UTF8.GetBytes("test mod")
 $sha512 = [Security.Cryptography.SHA512]::Create()
 try { $hash = ([BitConverter]::ToString($sha512.ComputeHash($bytes)) -replace "-", "").ToLowerInvariant() } finally { $sha512.Dispose() }
 New-Item -ItemType Directory -Path $temp -Force | Out-Null
+$modVersion = ((Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) "gradle.properties")) |
+    Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
+[IO.File]::WriteAllText((Join-Path $temp "gradle.properties"), "modVersion=$modVersion`n", [Text.UTF8Encoding]::new($false))
+[IO.File]::WriteAllText((Join-Path $temp "gradlew.bat"), @"
+@echo off
+if defined AE2CT_DRIVER_BUILD_FAIL exit /b 9
+if not exist "%~dp0build\test-driver" mkdir "%~dp0build\test-driver"
+>"%~dp0build\test-driver\ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar" echo driver
+exit /b 0
+"@, [Text.UTF8Encoding]::new($false))
 $testMatrix = Join-Path $temp "run-client-versions.json"
 foreach ($entry in $matrix) {
     foreach ($dependency in @($entry.curseforge | Where-Object { $_ })) {
@@ -69,6 +79,11 @@ function Assert-Line([string]$text, [string]$expected) {
 
 try {
     foreach ($entry in $matrix) {
+        if ($entry.id -eq "1.20.1-forge") {
+            $stale = Join-Path $temp "versions\1.20.1-forge\run\resolved-mods\ae2-crafting-time-old-forge-1.20.1-test-driver.jar"
+            New-Item -ItemType Directory -Path (Split-Path -Parent $stale) -Force | Out-Null
+            Set-Content -LiteralPath $stale -Value "stale"
+        }
         $output = (& $script -Target $entry.id -Root $temp -VersionMatrix $testMatrix -ResolveOnly 6>&1 | Out-String)
         Assert-Line $output "profile compatible"
         Assert-Line $output "runtime loader $($entry.compatible.loader_version)"
@@ -79,7 +94,15 @@ try {
         $mods = Join-Path $temp "versions\$($entry.id)\run\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
         $manifest = @(Get-Content -LiteralPath (Join-Path $mods ".ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json)
         $curseCount = @($entry.curseforge | Where-Object { $_ }).Count
-        if ($manifest.Count -ne $compatibleProjects.Count + $curseCount) { throw "Unexpected compatible managed-mod count for $($entry.id)" }
+        $driverCount = if ($entry.id -eq "1.20.1-forge") { 1 } else { 0 }
+        if ($manifest.Count -ne $compatibleProjects.Count + $curseCount + $driverCount) { throw "Unexpected compatible managed-mod count for $($entry.id)" }
+        if ($entry.id -eq "1.20.1-forge") {
+            $driverName = "ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"
+            if ($driverName -notin $manifest -or -not (Test-Path -LiteralPath (Join-Path $mods $driverName))) { throw "Missing compatible driver" }
+            if (Test-Path -LiteralPath $stale) { throw "Stale driver was not removed" }
+        } elseif (Get-ChildItem -LiteralPath $mods -Filter "*test-driver.jar" -File -ErrorAction SilentlyContinue) {
+            throw "Driver leaked into $($entry.id)"
+        }
 
         $output = (& $script -Target $entry.id -Root $temp -VersionMatrix $testMatrix -Latest -ResolveOnly 6>&1 | Out-String)
         Assert-Line $output "profile latest"
@@ -87,6 +110,20 @@ try {
         $latestMods = Join-Path $temp "versions\$($entry.id)\run-latest\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
         if (-not (Test-Path -LiteralPath (Join-Path $latestMods ".ae2-crafting-time-run-mods.json"))) { throw "Missing latest manifest for $($entry.id)" }
     }
+
+    $customRuntime = Join-Path $temp "custom-runtime"
+    & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -RuntimeDirectory $customRuntime -ResolveOnly 6>&1 | Out-Null
+    if (-not (Test-Path -LiteralPath (Join-Path $customRuntime "resolved-mods\ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"))) {
+        throw "Custom runtime directory did not receive the driver"
+    }
+
+    $env:AE2CT_DRIVER_BUILD_FAIL = "1"
+    try {
+        & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -ResolveOnly 6>&1 | Out-Null
+        throw "Expected a test-driver build failure"
+    } catch {
+        if ($_.Exception.Message -ne "Test-driver build failed") { throw }
+    } finally { Remove-Item Env:\AE2CT_DRIVER_BUILD_FAIL -ErrorAction SilentlyContinue }
 
     $badFile = Join-Path $temp "versions\1.20.1-forge\run\resolved-mods\a1RwDz90.jar"
     Remove-Item -LiteralPath $badFile -Force
