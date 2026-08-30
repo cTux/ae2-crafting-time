@@ -3,7 +3,7 @@
 AE2 Crafting Time watches real autocrafting throughput on the logical server so
 it can explain slow or stalled jobs. The client only displays what the server
 sends: TTC estimates, delay warnings, prediction accuracy, and bottleneck clues
-supported by the available data, plus how long scheduled outputs have waited
+supported by the available data, plus whether scheduled outputs are waiting
 for their first dispatch. Singleplayer uses the same path because an integrated
 world still has a logical server.
 

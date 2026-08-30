@@ -51,7 +51,7 @@ public abstract class CraftingStatusTableRendererMixin {
         if (entry.getActiveAmount() == 0 && entry.getPendingAmount() > 0) {
             var waiting = ClientStats.CACHE.waitingTicks(key);
             if (waiting.isPresent()) {
-                lines.add(TtcText.waiting(waiting.getAsLong())
+                lines.add(TtcText.waiting()
                         .withStyle(style -> style.withColor(TextColor.fromRgb(0xE0E0E0)).withBold(true)));
                 return;
             }

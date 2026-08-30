@@ -2,13 +2,13 @@
 
 ## Goal
 
-In AE2's crafting-status screen, show how long a scheduled output has waited
-for its first pattern dispatch.
+In AE2's crafting-status screen, show when a scheduled output is waiting for
+its first pattern dispatch.
 
 Example:
 
 ```text
-Waiting to start: 12s
+Waiting
 ```
 
 This covers [discussion #65](https://github.com/cTux/ae2-crafting-time/discussions/65).
@@ -25,10 +25,9 @@ This covers [discussion #65](https://github.com/cTux/ae2-crafting-time/discussio
 - After the first dispatch, show the existing TTC or delayed state when its
   current rules apply.
 - Show the waiting line even when the output has no retained throughput samples.
-- Refresh the displayed whole-second value through the existing one-second stats
-  request cycle.
+- Refresh the waiting state through the existing one-second stats request cycle.
 - Before the first stats response arrives, keep the current behavior and show no
-  waiting line. The first response may show `0s`.
+  waiting line. The first matching response may show `Waiting`.
 - Give the waiting line its own neutral style. It does not join the green-to-red
   TTC color scale.
 - Treat a waiting row as unknown in shortest/longest TTC sorting because it has
@@ -43,13 +42,13 @@ This covers [discussion #65](https://github.com/cTux/ae2-crafting-time/discussio
 3. No pattern producing that output has been dispatched by that CPU yet.
 4. AE2 reports `activeAmount == 0` and `pendingAmount > 0` for the row.
 
-The duration is the nonnegative number of completed seconds since job
-acceptance. A newly accepted job may show `0s`.
+The server keeps the nonnegative elapsed tick count as the waiting-state value,
+but the UI intentionally shows only the one-word label.
 
 The state is runtime-only. Clear it when the job finishes, is cancelled, the
 profiler is disabled, or runtime state is reloaded. Do not save it to world NBT.
-A suspended job still accumulates waiting time; AE2 already shows suspension as
-a separate job-level state.
+A suspended job keeps its waiting state; AE2 already shows suspension as a
+separate job-level state.
 
 ## Compatibility
 
@@ -71,9 +70,9 @@ a separate job-level state.
 
 ## Acceptance criteria
 
-- The first stats response for a pending-only row may show `0s`, then the value
-  increases without reopening the screen.
-- Reopening the screen keeps the server-owned elapsed value.
+- The first matching stats response for a pending-only row shows `Waiting`.
+- Reopening the screen restores the server-owned waiting state after its first
+  matching response.
 - A row with old throughput samples still shows waiting before its first
   dispatch.
 - A row without throughput samples also shows waiting.

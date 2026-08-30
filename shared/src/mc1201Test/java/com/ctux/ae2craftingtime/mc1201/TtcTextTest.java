@@ -12,16 +12,10 @@ import org.junit.jupiter.api.Test;
 
 class TtcTextTest {
     @Test
-    void waitingTimeUsesCompletedWholeSeconds() {
-        assertWaitingSeconds(-1, 0L);
-        assertWaitingSeconds(19, 0L);
-        assertWaitingSeconds(20, 1L);
-    }
-
-    private static void assertWaitingSeconds(long ticks, long seconds) {
-        var contents = (TranslatableContents) TtcText.waiting(ticks).getContents();
+    void waitingUsesTranslationWithoutArguments() {
+        var contents = (TranslatableContents) TtcText.waiting().getContents();
         assertEquals("text.ae2craftingtime.waiting", contents.getKey());
-        assertEquals(seconds, contents.getArgs()[0]);
+        assertEquals(0, contents.getArgs().length);
     }
 
     @Test

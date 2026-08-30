@@ -36,9 +36,9 @@ steps in the same commit.
 
 ## Phase 3: Render the state
 
-1. Add English and Ukrainian translations for
-   `Waiting to start: %ss`.
-2. Add the smallest `TtcText` formatter for completed whole seconds.
+1. Add the one-word English and Ukrainian translations `Waiting` and
+   `Очікування`.
+2. Add the smallest `TtcText` formatter for the label.
 3. In `CraftingStatusTableRendererMixin`, render waiting before delayed and
    estimated TTC, guarded by the current AE2 active/pending amounts.
 4. Reuse the existing dark TTC badge and give waiting text one neutral color.
@@ -54,7 +54,7 @@ After the hook-created PR exists:
 1. Let required CI run every supported Gradle row and the coverage gate.
 2. Check the full warning/error sweep and fix repository-owned warnings.
 3. In a development client, start a job whose dependency cannot dispatch yet.
-4. Verify the counter survives closing and reopening the status screen.
+4. Verify the waiting state survives closing and reopening the status screen.
 5. Unblock the dependency and verify the first dispatch permanently replaces
    waiting with normal TTC behavior.
 6. Create a later between-batch gap and verify waiting does not return.

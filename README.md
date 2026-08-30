@@ -44,8 +44,8 @@ You can grab the latest version from:
   more you play.
 - Tells you how long a craft will take — for one item or a whole job — right on
   the AE2 screens, so you know when to come back.
-- Shows how long scheduled work has waited for its first pattern dispatch, so
-  you can tell that it hasn't started yet.
+- Marks scheduled work as waiting until its first pattern dispatch, so you can
+  tell that it hasn't started yet.
 - Alerts you when a craft has stalled, so you can fix it instead of waiting
   forever.
 - Shows what's slowing you down — like a machine that's too slow, too few
