@@ -67,7 +67,7 @@ if ($Target -eq "1.20.1-forge") {
     $legacyMods = Join-Path $run "mods"
     $oldManifest = Join-Path $legacyMods ".ae2-crafting-time-run-mods.json"
     if (Test-Path -LiteralPath $oldManifest) {
-        foreach ($filename in @(Get-Content -LiteralPath $oldManifest -Raw | ConvertFrom-Json)) {
+        foreach ($filename in (Get-Content -LiteralPath $oldManifest -Raw | ConvertFrom-Json)) {
             Remove-Item -LiteralPath (Join-Path $legacyMods ([IO.Path]::GetFileName($filename))) -Force -ErrorAction SilentlyContinue
         }
         Remove-Item -LiteralPath $oldManifest -Force
@@ -199,7 +199,7 @@ if ($Target -eq "1.20.1-forge") {
     }
 }
 
-$previous = if (Test-Path -LiteralPath $manifest) { @(Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json) } else { @() }
+$previous = if (Test-Path -LiteralPath $manifest) { Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json } else { @() }
 foreach ($filename in $previous) {
     if ($managed -notcontains $filename) {
         Remove-Item -LiteralPath (Join-Path $mods ([IO.Path]::GetFileName($filename))) -Force -ErrorAction SilentlyContinue

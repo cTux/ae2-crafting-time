@@ -92,7 +92,7 @@ try {
         $compatibleProjects = @($entry.projects | Where-Object { $_.compatible -ne $false })
         foreach ($project in $compatibleProjects.project_id) { Assert-Line $output "mod $project.jar" }
         $mods = Join-Path $temp "versions\$($entry.id)\run\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
-        $manifest = @(Get-Content -LiteralPath (Join-Path $mods ".ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json)
+        $manifest = Get-Content -LiteralPath (Join-Path $mods ".ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
         $curseCount = @($entry.curseforge | Where-Object { $_ }).Count
         $driverCount = if ($entry.id -eq "1.20.1-forge") { 1 } else { 0 }
         if ($manifest.Count -ne $compatibleProjects.Count + $curseCount + $driverCount) { throw "Unexpected compatible managed-mod count for $($entry.id)" }

@@ -106,7 +106,7 @@ try {
     }
     $manifest = Join-Path $runtime "resolved-mods\.ae2-crafting-time-run-mods.json"
     if (-not (Test-Path -LiteralPath $manifest)) { throw "Missing managed dependency manifest" }
-    $managed = @(Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json)
+    $managed = Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json
     if ($driverName -notin $managed) { throw "Managed dependency manifest omits $driverName" }
     Copy-Item -LiteralPath $manifest -Destination (Join-Path $evidence "resolved-mods.json")
     $latestLog = Join-Path $runtime "logs\latest.log"
