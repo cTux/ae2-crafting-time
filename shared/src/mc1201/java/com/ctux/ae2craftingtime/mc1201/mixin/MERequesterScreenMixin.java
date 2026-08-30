@@ -87,7 +87,7 @@ public abstract class MERequesterScreenMixin {
 
     @Unique
     private static void ae2craftingtime$drawRowBadge(GuiGraphics guiGraphics, int row, Component label, int color) {
-        var y = GUI_HEADER_HEIGHT + row * ROW_HEIGHT + 12;
+        var y = GUI_HEADER_HEIGHT + row * ROW_HEIGHT + 11;
         ae2craftingtime$drawBadge(guiGraphics, AE2CRAFTINGTIME_STATUS_X, y, label, color, 0.0f);
     }
 
