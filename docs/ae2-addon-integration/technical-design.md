@@ -65,9 +65,14 @@ version and migration if a real collision is found.
 
 ### 4. AE2 UI paths
 
-`AbstractTableRendererMixin` is the broadest safe UI seam because it receives
-the rows already used by AE2 crafting plan and status tables. A subclass that
-inherits those methods is covered automatically.
+`CraftConfirmTableRendererMixin` and `CraftingStatusTableRendererMixin` are the
+behavior seams. They append TTC and tooltip details through
+`getEntryDescription` and `getEntryTooltip`. An addon is covered automatically
+only when it uses those concrete renderers or a subclass inherits those hooked
+methods.
+
+`AbstractTableRendererMixin` decorates TTC lines and calculates row colors. It
+does not add TTC to a custom renderer by itself.
 
 An `AEBaseScreen` mixin is not assumed to exist. Add it only if source review
 finds one stable method across supported AE2 versions that supplies the key,
@@ -111,4 +116,4 @@ must be checked:
 | 1.20.1 Forge | `mcCommon` + `mc1201` | Legacy AE2 15 signatures and optional Forge addons |
 | 1.20.1 Fabric | `mcCommon` + `mc1201` | No NeoForge-only addon classes |
 | 1.21.1 NeoForge | `mcCommon` + `mc1201` + `neoforge` | AE2 19 signatures |
-| 26.1.2 NeoForge | `mcCommon` + `mc2612` | AE2 26/Minecraft identifier changes and fewer optional UI integrations |
+| 26.1.2 NeoForge | `mcCommon` + `mc2612` + `neoforge` | AE2 26/Minecraft identifier changes and fewer optional UI integrations |
