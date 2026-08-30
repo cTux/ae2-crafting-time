@@ -1,6 +1,6 @@
 ---
 name: ae2-crafting-time-dev
-description: Develop, debug, test, or port AE2 Crafting Time code and resources. Use the writing skill for docs-only work and the release skill for distribution or publishing.
+description: Develop, debug, test, or port AE2 Crafting Time code and resources. Use `implement-planned-feature` for a decision-complete new feature, writing for docs-only work, and release for publishing.
 ---
 
 # AE2 Crafting Time Development

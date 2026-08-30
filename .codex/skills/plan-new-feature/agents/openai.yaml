@@ -1,0 +1,4 @@
+interface:
+  display_name: "Plan New Feature"
+  short_description: "Create a reviewed issue, spec, and design"
+  default_prompt: "Use $plan-new-feature to plan this AE2 Crafting Time feature before implementation."
