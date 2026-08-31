@@ -50,14 +50,15 @@ Gate: English and Ukrainian pass structural parity and link checks.
 
 ## 5. Add The Smallest Structural Check
 
-- Add one focused test that validates the guide definition, bilingual page
-  parity, navigation, relative links, item ids, and required content headings.
+- Add `checkGuideResources` to the root `build.gradle` and make the root `test`
+  task depend on it. Validate the guide definition, bilingual page parity,
+  navigation, relative links, item ids, and required content headings.
 - Extend existing resource/JAR checks only where needed to prove both modern
   distributions contain the guide.
-- Do not add a new parser or test framework; use existing JUnit and standard
-  Java file/JSON support already present in the build.
+- Use Gradle's built-in Groovy `JsonSlurper` and line-oriented text checks. Do
+  not add a parser dependency or test framework.
 
-Gate: the test fails for a missing translation page, broken link, invalid
+Gate: the task fails for a missing translation page, broken link, invalid
 navigation target, or absent required topic.
 
 ## 6. Verify In Game

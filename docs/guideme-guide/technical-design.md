@@ -99,7 +99,10 @@ as a failure.
 
 ## Validation
 
-A small repository test scans the guide resources and verifies:
+The root `build.gradle` owns a `checkGuideResources` task, and the root `test`
+task depends on it so the existing CI command runs it. The task uses Groovy's
+built-in `JsonSlurper` for the guide definition and line-oriented checks for
+frontmatter and Markdown links. It scans the guide resources and verifies:
 
 - the definition and start page exist;
 - English and Ukrainian page paths match;
