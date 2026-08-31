@@ -46,7 +46,7 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 | Applied Botanics (Fork) (candidate) | — | — | — | — | — | — | — | — |
 | Advanced Peripherals (candidate) | `1.20.1-0.7.48r` | No | — | — | `1.21.1-0.8.0a` | No | — | — |
 | AE2 Things (candidate) | — | — | `1.3.2` | No | — | — | — | — |
-| Expanded AE (candidate) | `1.2.2` | No | — | — | `2.1.1` | No | — | — |
+| Expanded AE (candidate) | Incompatible; not pinned | No | — | — | Incompatible; not pinned | No | — | — |
 
 The supported targets and declared dependencies come from
 [`scripts/release-matrix.json`](../scripts/release-matrix.json), loader metadata,
