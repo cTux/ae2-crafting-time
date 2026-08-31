@@ -21,10 +21,11 @@ function Get-WorkspaceId([string]$path) {
 }
 
 function Find-Java17([string]$requested) {
-    $candidate = $requested
-    if (-not $candidate) {
-        $candidate = Get-ChildItem -LiteralPath "C:\Program Files\Eclipse Adoptium" -Directory -Filter "jdk-17*" `
-            -ErrorAction SilentlyContinue | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName
+    $candidate = if ($requested) { $requested } else {
+        @(
+            Get-ChildItem -LiteralPath "C:\Program Files\Eclipse Adoptium" -Directory -Filter "jdk-17*" -ErrorAction SilentlyContinue
+            Get-ChildItem -LiteralPath (Join-Path $env:USERPROFILE ".gradle\jdks") -Directory -Recurse -Filter "jdk-17*" -ErrorAction SilentlyContinue
+        ) | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName
     }
     $java = if ($candidate) { Join-Path $candidate "bin\java.exe" } else { "" }
     if (-not $java -or -not (Test-Path -LiteralPath $java -PathType Leaf)) { throw "CodexVM JDK 17 was not found" }

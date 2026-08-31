@@ -12,12 +12,8 @@ New-Item -ItemType Directory -Path $ReportDirectory -Force | Out-Null
     ConvertTo-Json | Set-Content -LiteralPath (Join-Path $ReportDirectory "wrapper-result.json") -Encoding UTF8
 '@, [Text.UTF8Encoding]::new($false))
 
-$javaHome = Get-ChildItem -LiteralPath "C:\Program Files\Eclipse Adoptium" -Directory -Filter "jdk-17*" `
-    -ErrorAction SilentlyContinue | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName
-if (-not $javaHome) { throw "JDK 17 is required for the CodexVM wrapper check" }
-
 try {
-    & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -JavaHome $javaHome -Latest -Interactive
+    & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Latest -Interactive
     $resultPath = Join-Path $source "build\ui-smoke\1.20.1-forge\latest\wrapper-result.json"
     $result = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json
     if (-not $result.latest -or -not $result.interactive -or $result.scenario -ne "craft-plan") {
@@ -27,7 +23,7 @@ try {
     $cacheMarker = Join-Path $stage "build\cache-marker.txt"
     New-Item -ItemType Directory -Path (Split-Path -Parent $cacheMarker) -Force | Out-Null
     Set-Content -LiteralPath $cacheMarker -Value "keep"
-    & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -JavaHome $javaHome
+    & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage
     if (-not (Test-Path -LiteralPath $cacheMarker)) { throw "Stable staging discarded the guest build cache" }
     Write-Host "run-ui-smoke-codexvm checks passed"
 } finally {
