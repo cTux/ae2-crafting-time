@@ -1,5 +1,10 @@
 # Running a Development Client
 
+Run UI and startup checks inside CodexVM. The VM's read/write `projects` share
+contains this checkout; keep `-RuntimeDirectory` on guest-local NTFS so Minecraft
+does not use VMware's shared filesystem for its live runtime. Each client has an
+8 GiB maximum heap. Maximize the exact Minecraft window before a visual check.
+
 Use an ordinary script for the pinned compatible sandbox:
 
 ```powershell
@@ -36,6 +41,13 @@ Update every client in one place: `scripts/run-client-versions.json`. Change
 profile resolves Modrinth and loader releases at launch. CurseForge-only files
 have explicit `compatible` and `latest` records because CurseForge has no
 anonymous version API; update their file IDs, names, and hashes in the matrix.
+
+The same matrix is the known-issues list. Keep incompatible candidates in
+`projects`, set `compatible` to `false`, and record the concrete `reason`.
+When issues exist, add `issue_url` for this repository and
+`upstream_issue_url` for the dependency. Promote a latest version into
+`compatible` only after the whole target starts and its requested smoke checks
+pass together.
 
 `1.21.1-neoforge` excludes ExtendedAE-Plus only from the compatible profile:
 all of its available releases collide with Expanded AE's Applied Flux mixin.

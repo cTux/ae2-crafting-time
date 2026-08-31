@@ -15,11 +15,9 @@ import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
 import java.util.Arrays;
 import java.util.Objects;
 
-final class AdvancedAeFixture {
-    private AdvancedAeFixture() {
-    }
-
-    static Placement place(ServerPlayer player, FixtureMarker marker) {
+final class AdvancedAeFixture extends AddonCpuFixture<AdvancedAeFixture.Placement> {
+    @Override
+    protected Placement place(ServerPlayer player, FixtureMarker marker) {
         if (player == null) {
             throw new IllegalStateException("fixture player is unavailable");
         }
@@ -59,7 +57,8 @@ final class AdvancedAeFixture {
         throw new IllegalStateException("no empty vertical connection beside the fixture AE2 grid for AdvancedAE CPU");
     }
 
-    static boolean finish(ServerPlayer player, Placement placement) {
+    @Override
+    protected boolean finish(ServerPlayer player, Placement placement) {
         if (player == null) {
             throw new IllegalStateException("fixture player is unavailable");
         }
@@ -95,7 +94,8 @@ final class AdvancedAeFixture {
         return true;
     }
 
-    static ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {
+    @Override
+    protected ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {
         if (player == null
                 || !(player.serverLevel().getBlockEntity(placement.core()) instanceof AdvCraftingBlockEntity core)
                 || core.getCluster() == null) {

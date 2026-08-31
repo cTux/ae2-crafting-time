@@ -1,7 +1,7 @@
 param(
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidateSet("craft-plan", "neoeco-cpu", "advancedae-cpu")][string]$Scenario = "craft-plan"
+    [ValidatePattern("^(craft-plan|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan"
 )
 
 $ErrorActionPreference = "Stop"

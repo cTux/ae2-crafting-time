@@ -8,8 +8,7 @@ public record DriverOptions(String scenario, String profile, String world, Path 
         if (scenario.isEmpty()) {
             return null;
         }
-        if (!scenario.equals("craft-plan") && !scenario.equals("neoeco-cpu")
-                && !scenario.equals("advancedae-cpu")) {
+        if (!AddonCpuFixture.supports(scenario)) {
             throw new IllegalArgumentException("unsupported test-driver scenario: " + scenario);
         }
         var profile = required("ae2craftingtime.test.profile");

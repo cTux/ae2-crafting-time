@@ -4,6 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.event.ScreenEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import org.lwjgl.glfw.GLFW;
 
 public final class TestDriverRuntime implements AutoCloseable {
     private final Minecraft minecraft = Minecraft.getInstance();
@@ -11,6 +12,7 @@ public final class TestDriverRuntime implements AutoCloseable {
     private final InteractiveMcpServer endpoint;
 
     public TestDriverRuntime(DriverOptions options, String driverFile) throws Exception {
+        minecraft.execute(() -> GLFW.glfwMaximizeWindow(minecraft.getWindow().getWindow()));
         scenario = new CraftPlanScenario(minecraft, options, driverFile);
         endpoint = options.interactive() ? new InteractiveMcpServer(minecraft, scenario, options) : null;
     }
