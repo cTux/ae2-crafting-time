@@ -88,11 +88,11 @@ final class AdvancedAeFixture {
             throw new IllegalStateException("AdvancedAE quantum core did not form");
         }
         if (!(level.getBlockEntity(placement.anchor()) instanceof IInWorldGridNodeHost host)
-                || !(level.getBlockEntity(placement.connection()) instanceof IInWorldGridNodeHost computer)) {
+                || !(level.getBlockEntity(placement.connection()) instanceof AdvCraftingBlockEntity computer)) {
             throw new IllegalStateException("AdvancedAE quantum computer connection is unavailable");
         }
         var hostNode = host.getGridNode(placement.direction());
-        var computerNode = computer.getGridNode(placement.direction().getOpposite());
+        var computerNode = computer.getGridNode();
         if (hostNode == null || computerNode == null) {
             throw new IllegalStateException("AdvancedAE quantum computer connection nodes are unavailable");
         }
