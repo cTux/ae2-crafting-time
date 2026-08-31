@@ -19,7 +19,7 @@ public record DriverResult(
         Failure failure) {
     public static final List<String> CRAFT_PLAN_CHECKS = List.of(
             "screen", "ttc-row", "total-ttc", "sort-cycle", "tooltip", "layout");
-    public static final List<String> NEOECO_CPU_CHECKS = List.of(
+    public static final List<String> ADDON_CPU_CHECKS = List.of(
             "cpu-selected", "profile-sample", "ttc-after-sample");
 
     public DriverResult {
@@ -31,7 +31,7 @@ public record DriverResult(
     }
 
     public static List<String> requiredChecks(String scenario) {
-        return scenario.equals("neoeco-cpu") ? NEOECO_CPU_CHECKS : CRAFT_PLAN_CHECKS;
+        return scenario.equals("craft-plan") ? CRAFT_PLAN_CHECKS : ADDON_CPU_CHECKS;
     }
 
     public record Failure(String step, String code, String expected, String observed) {
