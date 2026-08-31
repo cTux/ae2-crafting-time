@@ -30,13 +30,26 @@ Run 1.20.1 clients on JDK 17 and both NeoForge clients on JDK 21. The 26.1.2
 project selects its installed JDK 25 toolchain; do not start the multi-project
 build on JDK 25.
 
+## Dependency audits
+
+Treat `scripts/run-client-versions.json` as the candidate inventory and known
+issues list. Verify newest releases from official loader or project metadata,
+then run the latest profile. Keep an incompatible project in the latest set;
+exclude it only from `compatible` with a concrete `reason` and any `issue_url`
+or `upstream_issue_url`.
+
+Promote versions into `compatible` only after the complete target graph starts
+and the requested smoke checks pass. Create or comment on upstream or local
+issues only when the user requests it; include reproduction evidence and link
+the two issues when both exist.
+
 ## Timing Report
 
 Start a wall-clock timer before the first smoke-test action. Record actual phase
 start and end timestamps from the host, status file, and logs. End every
 smoke-test report with this table and a total row:
 
-| Part of the smoke UI test | Time | Why it took that long |
+| Part of the smoke UI testing task | Time | Why it took that long |
 |---|---:|---|
 
 Include each material phase: VM setup, client staging or dependency resolution,

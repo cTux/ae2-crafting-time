@@ -51,7 +51,7 @@ phase from actual timestamps, including setup, installation or staging, launch,
 UI verification, retries, evidence collection, and cleanup. End every smoke-test
 report with this table and a total row:
 
-| Part of the smoke UI test | Time | Why it took that long |
+| Part of the smoke UI testing task | Time | Why it took that long |
 |---|---:|---|
 
 Use concrete causes from the run, such as VM boot, pack download, mod loading,
