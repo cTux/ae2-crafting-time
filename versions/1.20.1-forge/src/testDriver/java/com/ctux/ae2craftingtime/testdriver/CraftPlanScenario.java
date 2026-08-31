@@ -50,7 +50,7 @@ public final class CraftPlanScenario {
     private CompletableFuture<String> cpuCheck;
     private CompletableFuture<Integer> sampleCheck;
     private CompletableFuture<NeoEcoFixture.Placement> fixturePlacement;
-    private CompletableFuture<BlockPos> advancedAePlacement;
+    private CompletableFuture<AdvancedAeFixture.Placement> advancedAePlacement;
     private CompletableFuture<Void> fixtureSetup;
 
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {

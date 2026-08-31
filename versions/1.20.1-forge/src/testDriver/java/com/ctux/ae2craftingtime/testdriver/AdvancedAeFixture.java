@@ -16,7 +16,7 @@ final class AdvancedAeFixture {
     private AdvancedAeFixture() {
     }
 
-    static BlockPos place(ServerPlayer player, FixtureMarker marker) {
+    static Placement place(ServerPlayer player, FixtureMarker marker) {
         if (player == null) {
             throw new IllegalStateException("fixture player is unavailable");
         }
@@ -33,29 +33,39 @@ final class AdvancedAeFixture {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("fixture terminal grid is unavailable"));
         var core = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryBuild("advanced_ae", "quantum_core"));
-        if (core == null) {
-            throw new IllegalStateException("AdvancedAE quantum core is unavailable");
+        var structure = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryBuild("advanced_ae", "quantum_structure"));
+        if (core == null || structure == null) {
+            throw new IllegalStateException("AdvancedAE quantum computer blocks are unavailable");
         }
         for (BlockPos anchor : BlockPos.betweenClosed(terminal.offset(-12, -4, -12), terminal.offset(12, 4, 12))) {
             if (!(level.getBlockEntity(anchor) instanceof IInWorldGridNodeHost host)) {
                 continue;
             }
-            for (var direction : new Direction[] { Direction.UP, Direction.DOWN }) {
+            for (var direction : Direction.values()) {
                 var node = host.getGridNode(direction);
-                var target = anchor.relative(direction);
-                if (node != null && node.getGrid() == grid && level.getBlockState(target).isAir()) {
-                    level.setBlockAndUpdate(target, core.defaultBlockState());
-                    return target;
+                var min = minimum(anchor, direction);
+                if (node != null && node.getGrid() == grid
+                        && BlockPos.betweenClosedStream(min, min.offset(2, 2, 2))
+                                .allMatch(pos -> level.getBlockState(pos).isAir())) {
+                    for (BlockPos pos : BlockPos.betweenClosed(min, min.offset(2, 2, 2))) {
+                        if (!pos.equals(min.offset(1, 1, 1))) {
+                            level.setBlockAndUpdate(pos, structure.defaultBlockState());
+                        }
+                    }
+                    var corePosition = min.offset(1, 1, 1);
+                    level.setBlockAndUpdate(corePosition, core.defaultBlockState());
+                    return new Placement(corePosition);
                 }
             }
         }
-        throw new IllegalStateException("no empty vertical connection beside the fixture AE2 grid for AdvancedAE CPU");
+        throw new IllegalStateException("no empty space beside the fixture AE2 grid for AdvancedAE CPU");
     }
 
-    static void finish(ServerPlayer player, BlockPos position) {
+    static void finish(ServerPlayer player, Placement placement) {
         if (player == null) {
             throw new IllegalStateException("fixture player is unavailable");
         }
+        var position = placement.core();
         if (!(player.serverLevel().getBlockEntity(position) instanceof AdvCraftingBlockEntity blockEntity)) {
             throw new IllegalStateException("AdvancedAE quantum core block entity was not placed");
         }
@@ -65,5 +75,19 @@ final class AdvancedAeFixture {
         if (!blockEntity.isFormed()) {
             throw new IllegalStateException("AdvancedAE quantum core did not form");
         }
+    }
+
+    record Placement(BlockPos core) {
+    }
+
+    private static BlockPos minimum(BlockPos anchor, Direction direction) {
+        return switch (direction) {
+            case EAST -> anchor.offset(1, -1, -1);
+            case WEST -> anchor.offset(-3, -1, -1);
+            case UP -> anchor.offset(-1, 1, -1);
+            case DOWN -> anchor.offset(-1, -3, -1);
+            case SOUTH -> anchor.offset(-1, -1, 1);
+            case NORTH -> anchor.offset(-1, -1, -3);
+        };
     }
 }
