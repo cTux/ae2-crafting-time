@@ -4,7 +4,6 @@ import cn.dancingsnow.neoecoae.all.NEMultiBlocks;
 import cn.dancingsnow.neoecoae.blocks.entity.computation.ECOComputationDriveBlockEntity;
 import cn.dancingsnow.neoecoae.multiblock.definition.MultiBlockContext;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -12,6 +11,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,7 +40,11 @@ final class NeoEcoFixture {
                 .orElseThrow(() -> new IllegalStateException("no empty space beside fixture terminal for NeoEco CPU"));
 
         context.blocks.forEach((pos, state) -> level.setBlockAndUpdate(pos, state));
-        var cell = new ItemStack(BuiltInRegistries.ITEM.get(new ResourceLocation("neoecoae", "eco_computation_cell_l9")));
+        var cellItem = ForgeRegistries.ITEMS.getValue(new ResourceLocation("neoecoae", "eco_computation_cell_l9"));
+        if (cellItem == null) {
+            throw new IllegalStateException("NeoEco L9 computation cell is unavailable");
+        }
+        var cell = new ItemStack(cellItem);
         context.blocks.keySet().stream()
                 .map(level::getBlockEntity)
                 .filter(ECOComputationDriveBlockEntity.class::isInstance)
