@@ -86,8 +86,7 @@ public final class CraftPlanScenario {
                 }
             }
         } catch (Exception error) {
-            fail("exception", state.name(),
-                    error.getClass().getSimpleName() + ": " + ReportText.safe(error.getMessage()));
+            fail("exception", state.name(), ReportText.failure(error));
         }
     }
 

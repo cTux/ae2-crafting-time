@@ -164,6 +164,14 @@ class TestDriverCoreTest {
         assertEquals("", ReportText.safe(null));
     }
 
+    @Test
+    void reportTextIncludesNestedFailure() {
+        var error = new java.util.concurrent.CompletionException(new IllegalStateException("fixture failed"));
+
+        assertEquals("CompletionException: java.lang.IllegalStateException: fixture failed <- IllegalStateException: fixture failed",
+                ReportText.failure(error));
+    }
+
     private static LinkedHashMap<String, Boolean> checks(boolean value) {
         var checks = new LinkedHashMap<String, Boolean>();
         DriverResult.requiredChecks("craft-plan").forEach(key -> checks.put(key, value));
