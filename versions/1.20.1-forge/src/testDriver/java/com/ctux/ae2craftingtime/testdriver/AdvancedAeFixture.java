@@ -65,7 +65,7 @@ final class AdvancedAeFixture {
         throw new IllegalStateException("no empty space beside the fixture AE2 grid for AdvancedAE CPU");
     }
 
-    static void finish(ServerPlayer player, Placement placement) {
+    static boolean finish(ServerPlayer player, Placement placement) {
         if (player == null) {
             throw new IllegalStateException("fixture player is unavailable");
         }
@@ -94,11 +94,12 @@ final class AdvancedAeFixture {
         var hostNode = host.getGridNode(placement.direction());
         var computerNode = computer.getGridNode();
         if (hostNode == null || computerNode == null) {
-            throw new IllegalStateException("AdvancedAE quantum computer connection nodes are unavailable");
+            return false;
         }
         if (hostNode.getGrid() != computerNode.getGrid()) {
             GridHelper.createConnection(hostNode, computerNode);
         }
+        return true;
     }
 
     static ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {

@@ -52,6 +52,7 @@ public final class CraftPlanScenario {
     private CompletableFuture<NeoEcoFixture.Placement> fixturePlacement;
     private CompletableFuture<AdvancedAeFixture.Placement> advancedAePlacement;
     private CompletableFuture<Void> fixtureSetup;
+    private CompletableFuture<Boolean> advancedAeSetup;
 
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         this.minecraft = minecraft;
@@ -145,14 +146,17 @@ public final class CraftPlanScenario {
             if (!advancedAePlacement.isDone()) {
                 return;
             }
-            if (fixtureSetup == null) {
-                fixtureSetup = server.submit(() -> AdvancedAeFixture.finish(
+            if (advancedAeSetup == null) {
+                advancedAeSetup = server.submit(() -> AdvancedAeFixture.finish(
                         server.getPlayerList().getPlayer(playerId), advancedAePlacement.join()));
             }
-            if (!fixtureSetup.isDone()) {
+            if (!advancedAeSetup.isDone()) {
                 return;
             }
-            fixtureSetup.join();
+            if (!advancedAeSetup.join()) {
+                advancedAeSetup = null;
+                return;
+            }
         }
         advance(ScenarioState.WORLD_READY);
     }
