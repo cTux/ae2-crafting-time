@@ -1,29 +1,17 @@
 ---
 name: launch-prism-test-modpack
-description: Audit dependencies or run AE2 Crafting Time client, UI, version-matrix, and named-modpack smoke tests in CodexVM. Do not use for build-only verification.
+description: Install or smoke-test a named AE2 modpack through Prism in CodexVM. Use when the user asks to test a modpack; do not use for prepared repository clients such as 1.20.1-forge.
 ---
 
-# Test AE2 Crafting Time Clients
+# Test A Named Modpack In Prism
 
 ## Always use CodexVM
 
 - Load `use-codex-vm` before every Minecraft launch or visual check. Reuse the
   running VM and its read/write `projects` share; do not add a duplicate share.
-- Read the repository through `\\vmware-host\Shared Folders`. For Forge 1.20.1
-  UI smoke, dispatch `scripts/invoke-ui-smoke-codexvm.ps1`; it incrementally
-  stages into stable guest-local NTFS and keeps the Gradle and runtime caches.
-  For other launches, stage the checkout and live runtime on guest-local NTFS.
-  Loom writes below the checkout and fails on VMware shared-folder rename and
-  watch semantics. Pass a guest-local `-RuntimeDirectory` to the staged
-  repository launchers.
-- Clients use the repository's 8 GiB heap setting. Maximize the exact Minecraft
-  window through VNC before visual inspection. Test-driver scenarios maximize
-  themselves, but still verify the resulting window.
-- Run Gradle on JDK 17 for the 1.20.1 targets and JDK 21 for both NeoForge
-  targets. The 26.1.2 project selects its installed JDK 25 toolchain itself;
-  starting the multi-project Gradle build on JDK 25 breaks Fabric configuration.
-- Run clients sequentially. Confirm the exact client stopped before continuing;
-  never kill Java processes broadly.
+- Maximize the exact Minecraft window through VNC before visual inspection. Run
+  clients sequentially and confirm the tested client stopped; never kill Java
+  processes broadly.
 
 ## Route
 
@@ -32,34 +20,9 @@ description: Audit dependencies or run AE2 Crafting Time client, UI, version-mat
   [install-modpack.md](references/install-modpack.md) only when an exact eligible
   instance is missing. Then read
   [launch-and-verify.md](references/launch-and-verify.md).
-- For a supported target, run its `scripts-run/run-*.bat` launcher inside the
-  VM. Use the matching `-latest` launcher only for the latest profile. For an
-  all-version sweep, run all four supported targets and report each separately.
-- For Forge 1.20.1 test-driver UI work, run
-  `scripts/invoke-ui-smoke-codexvm.ps1` with the requested `-Scenario`,
-  `-Latest`, or `-Interactive` option. Prefer its default OpenSSH transport;
-  use `-Transport Vmrun` to verify the VMware path. Read `status.json` and the
-  launcher logs from the profile's shared `build/ui-smoke` directory instead
-  of polling VNC. The status owns the exact launched PID; use the same command
-  with `-Stop` when it must be terminated.
-- Use VNC only to provision the transports, confirm no duplicate client is
-  open, and inspect the maximized Minecraft result. Do not poll terminal output
-  or build progress through screenshots.
-- Do not reinterpret a build, dependency, or generic compatibility request as a
-  request to test installed modpacks.
-
-## Dependency audits
-
-Treat `scripts/run-client-versions.json` as both the candidate inventory and
-known-issues list. Verify newest releases from official loader or project
-metadata, then run the latest profile. Keep an incompatible project in the
-latest set; exclude it only from `compatible` with a concrete `reason` and any
-`issue_url` or `upstream_issue_url`.
-
-Promote versions into `compatible` only after the complete target graph starts
-and the requested smoke checks pass. Create or comment on upstream or local
-issues only when the user requests it; include reproduction evidence and link
-the two issues when both exist.
+- Do not use this skill for a prepared repository target. A request such as
+  `smoke UI test for 1.20.1-forge` uses `run-ae2-client-smoke` and must not open
+  Prism.
 
 ## Named Modpack Contract
 
@@ -81,10 +44,25 @@ the two issues when both exist.
 6. Report the requested and resolved pack names, release, instance ID, Minecraft
    version, loader, copied JAR, result, and failure reason.
 
+## Timing Report
+
+Start a wall-clock timer before the first smoke-test action. Record each material
+phase from actual timestamps, including setup, installation or staging, launch,
+UI verification, retries, evidence collection, and cleanup. End every smoke-test
+report with this table and a total row:
+
+| Part of the smoke UI test | Time | Why it took that long |
+|---|---:|---|
+
+Use concrete causes from the run, such as VM boot, pack download, mod loading,
+world startup, UI assertions, or a failed attempt. Keep a successful retry's
+runtime separate from total task time. Mark an unavailable duration as
+`not measured`; do not estimate it.
+
 ## Boundaries
 
-- Do not place a live Minecraft runtime on VMware's shared filesystem; stage it
-  on guest-local NTFS and sync evidence back afterward.
+- Do not place a live Minecraft runtime on VMware's shared filesystem; use the
+  guest-local staging described in the references.
 - Do not install a JAR, select an account, join a world or server, or perform
   gameplay unless the request authorizes it.
 - Never substitute another loader or Minecraft version, infer mod presence from
