@@ -74,7 +74,7 @@ final class AdvancedAeFixture {
             throw new IllegalStateException("AdvancedAE quantum core block entity was not placed");
         }
         if (!blockEntity.isFormed()) {
-            if (blockEntity.getGridNode() == null) {
+            if (!blockEntity.getMainNode().isReady()) {
                 return false;
             }
             var calculator = new AdvCraftingCPUCalculator(blockEntity);
