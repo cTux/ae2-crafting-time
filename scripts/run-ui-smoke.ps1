@@ -1,7 +1,7 @@
 param(
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidateSet("craft-plan", "neoeco-cpu")][string]$Scenario = "craft-plan"
+    [ValidateSet("craft-plan", "neoeco-cpu", "advancedae-cpu")][string]$Scenario = "craft-plan"
 )
 
 $ErrorActionPreference = "Stop"
@@ -106,7 +106,7 @@ try {
     $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
         Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
     $driverName = "ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"
-    $requiredChecks = if ($Scenario -eq "neoeco-cpu") {
+    $requiredChecks = if ($Scenario -ne "craft-plan") {
         @("cpu-selected", "profile-sample", "ttc-after-sample")
     } else {
         @("screen", "ttc-row", "total-ttc", "sort-cycle", "tooltip", "layout")
@@ -119,8 +119,8 @@ try {
     $actualChecks = @($result.checks.psobject.Properties.Name)
     if (Compare-Object $requiredChecks $actualChecks -SyncWindow 0) { throw "Invalid UI-smoke check set" }
     foreach ($check in $requiredChecks) { if (-not $result.checks.$check) { throw "Failed UI-smoke check: $check" } }
-    $requiredScreenshots = if ($Scenario -eq "neoeco-cpu") {
-        @("neoeco-profiled-plan.png")
+    $requiredScreenshots = if ($Scenario -ne "craft-plan") {
+        @("$($Scenario -replace '-cpu$', '')-profiled-plan.png")
     } else {
         @("craft-plan.png", "craft-plan-tooltip.png")
     }

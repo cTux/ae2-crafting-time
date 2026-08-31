@@ -50,7 +50,9 @@ public final class CraftPlanScenario {
     private CompletableFuture<String> cpuCheck;
     private CompletableFuture<Integer> sampleCheck;
     private CompletableFuture<NeoEcoFixture.Placement> fixturePlacement;
+    private CompletableFuture<AdvancedAeFixture.Placement> advancedAePlacement;
     private CompletableFuture<Void> fixtureSetup;
+    private CompletableFuture<Boolean> advancedAeSetup;
 
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         this.minecraft = minecraft;
@@ -74,10 +76,10 @@ public final class CraftPlanScenario {
                 case TERMINAL_OPEN -> selectTarget();
                 case PLAN_OPEN -> openPlan();
                 case PLAN_STABLE -> stabilizePlan();
-                case NEOECO_CPU_SELECTED -> submitNeoEcoCraft();
-                case NEOECO_CRAFT_SUBMITTED -> awaitNeoEcoSample();
-                case NEOECO_SAMPLE_RECORDED -> selectTarget(ScenarioState.NEOECO_PLAN_OPEN);
-                case NEOECO_PLAN_OPEN -> verifyNeoEcoTtc();
+                case ADDON_CPU_SELECTED -> submitAddonCraft();
+                case ADDON_CRAFT_SUBMITTED -> awaitAddonSample();
+                case ADDON_SAMPLE_RECORDED -> selectTarget(ScenarioState.ADDON_PLAN_OPEN);
+                case ADDON_PLAN_OPEN -> verifyAddonTtc();
                 case BASE_CHECKED -> cycleSorts();
                 case SORTS_CHECKED -> checkTooltip();
                 case TOOLTIP_CHECKED -> writePass();
@@ -134,6 +136,27 @@ public final class CraftPlanScenario {
                 return;
             }
             fixtureSetup.join();
+        } else if (options.scenario().equals("advancedae-cpu")) {
+            var server = minecraft.getSingleplayerServer();
+            var playerId = minecraft.player.getUUID();
+            if (advancedAePlacement == null) {
+                advancedAePlacement = server.submit(() -> AdvancedAeFixture.place(
+                        server.getPlayerList().getPlayer(playerId), marker));
+            }
+            if (!advancedAePlacement.isDone()) {
+                return;
+            }
+            if (advancedAeSetup == null) {
+                advancedAeSetup = server.submit(() -> AdvancedAeFixture.finish(
+                        server.getPlayerList().getPlayer(playerId), advancedAePlacement.join()));
+            }
+            if (!advancedAeSetup.isDone()) {
+                return;
+            }
+            if (!advancedAeSetup.join()) {
+                advancedAeSetup = null;
+                return;
+            }
         }
         advance(ScenarioState.WORLD_READY);
     }
@@ -190,8 +213,8 @@ public final class CraftPlanScenario {
         if (!stable(snapshot)) {
             return;
         }
-        if (options.scenario().equals("neoeco-cpu")) {
-            selectNeoEcoCpu();
+        if (!options.scenario().equals("craft-plan")) {
+            selectAddonCpu();
             return;
         }
         orders.add(ids(snapshot));
@@ -207,7 +230,7 @@ public final class CraftPlanScenario {
         advance(ScenarioState.BASE_CHECKED);
     }
 
-    private void selectNeoEcoCpu() {
+    private void selectAddonCpu() {
         if (!(minecraft.screen instanceof CraftConfirmScreen)) {
             return;
         }
@@ -221,36 +244,41 @@ public final class CraftPlanScenario {
                 }
                 var context = StatsRequestContext.current(player);
                 var accessor = (CraftConfirmMenuAccessor) menu;
-                var attempts = context.grid().getCraftingService().getCpus().size() + 1;
-                for (int i = 0; i < attempts; i++) {
-                    var cpu = accessor.ae2craftingtime_test_driver$selectedCpu();
-                    if (cpu != null
-                            && cpu.getClass().getName().equals("cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU")) {
-                        var id = ProfilerBridge.networkId(context.grid());
-                        ProfilerBridge.clearStats(new ProfileKey(id, marker.outputId()));
-                        return id;
-                    }
-                    menu.cycleSelectedCPU(true);
+                var cpu = options.scenario().equals("advancedae-cpu")
+                        ? AdvancedAeFixture.cpu(player, advancedAePlacement.join(), context.grid())
+                        : context.grid().getCraftingService().getCpus().stream()
+                                .filter(candidate -> candidate.getClass().getName()
+                                        .equals("cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU"))
+                                .findFirst().orElse(null);
+                if (cpu != null) {
+                    accessor.ae2craftingtime_test_driver$selectedCpu(cpu);
+                    var id = ProfilerBridge.networkId(context.grid());
+                    ProfilerBridge.clearStats(new ProfileKey(id, marker.outputId()));
+                    return id;
                 }
-                throw new IllegalStateException("NeoEco CPU is not available in the fixture network");
+                return null;
             });
         }
         if (!cpuCheck.isDone()) {
             return;
         }
         networkId = cpuCheck.join();
+        if (networkId == null) {
+            cpuCheck = null;
+            return;
+        }
         checks.put("cpu-selected", true);
-        advance(ScenarioState.NEOECO_CPU_SELECTED);
+        advance(ScenarioState.ADDON_CPU_SELECTED);
     }
 
-    private void submitNeoEcoCraft() {
+    private void submitAddonCraft() {
         if (minecraft.screen instanceof CraftConfirmScreen screen) {
             screen.getMenu().startJob();
-            advance(ScenarioState.NEOECO_CRAFT_SUBMITTED);
+            advance(ScenarioState.ADDON_CRAFT_SUBMITTED);
         }
     }
 
-    private void awaitNeoEcoSample() {
+    private void awaitAddonSample() {
         if (sampleCheck == null) {
             var server = minecraft.getSingleplayerServer();
             sampleCheck = server.submit(() -> ProfilerBridge.stats(new ProfileKey(networkId, marker.outputId()))
@@ -265,10 +293,10 @@ public final class CraftPlanScenario {
         }
         checks.put("profile-sample", true);
         stableRows.reset();
-        advance(ScenarioState.NEOECO_SAMPLE_RECORDED);
+        advance(ScenarioState.ADDON_SAMPLE_RECORDED);
     }
 
-    private void verifyNeoEcoTtc() throws IOException {
+    private void verifyAddonTtc() throws IOException {
         if (minecraft.screen instanceof CraftAmountScreen amount) {
             ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next().onPress();
             return;
@@ -281,7 +309,7 @@ public final class CraftPlanScenario {
                 .filter(row -> row.outputId().equals(marker.outputId()))
                 .flatMap(row -> row.description().stream())
                 .anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")));
-        screenshot("neoeco-profiled-plan.png");
+        screenshot(options.scenario().replace("-cpu", "") + "-profiled-plan.png");
         writePass();
     }
 

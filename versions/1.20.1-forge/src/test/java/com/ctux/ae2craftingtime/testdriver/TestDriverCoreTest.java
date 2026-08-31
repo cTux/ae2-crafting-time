@@ -52,11 +52,11 @@ class TestDriverCoreTest {
         for (int i = 0; i < path.size() - 1; i++) {
             assertTrue(ScenarioFlow.allows(path.get(i), path.get(i + 1)));
         }
-        var neoEcoPath = List.of(ScenarioState.PLAN_STABLE, ScenarioState.NEOECO_CPU_SELECTED,
-                ScenarioState.NEOECO_CRAFT_SUBMITTED, ScenarioState.NEOECO_SAMPLE_RECORDED,
-                ScenarioState.NEOECO_PLAN_OPEN, ScenarioState.RESULT_WRITTEN);
-        for (int i = 0; i < neoEcoPath.size() - 1; i++) {
-            assertTrue(ScenarioFlow.allows(neoEcoPath.get(i), neoEcoPath.get(i + 1)));
+        var addonPath = List.of(ScenarioState.PLAN_STABLE, ScenarioState.ADDON_CPU_SELECTED,
+                ScenarioState.ADDON_CRAFT_SUBMITTED, ScenarioState.ADDON_SAMPLE_RECORDED,
+                ScenarioState.ADDON_PLAN_OPEN, ScenarioState.RESULT_WRITTEN);
+        for (int i = 0; i < addonPath.size() - 1; i++) {
+            assertTrue(ScenarioFlow.allows(addonPath.get(i), addonPath.get(i + 1)));
         }
         assertTrue(ScenarioFlow.allows(ScenarioState.PLAN_STABLE, ScenarioState.FAILED));
         assertFalse(ScenarioFlow.allows(ScenarioState.PLAN_STABLE, ScenarioState.TOOLTIP_CHECKED));
@@ -123,6 +123,8 @@ class TestDriverCoreTest {
                 "1.20.1-forge", "compatible", "craft-plan", "PASS", checks, List.of(), null));
         assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("neoeco-cpu"));
+        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+                DriverResult.requiredChecks("advancedae-cpu"));
         var file = temporary.resolve("not-a-directory");
         Files.writeString(file, "x");
         assertThrows(Exception.class, () -> AtomicResultWriter.write(file, result));
