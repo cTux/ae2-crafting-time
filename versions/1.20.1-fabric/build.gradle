@@ -10,7 +10,10 @@ def runtimeRunDirectory = providers.gradleProperty('runtimeRunDirectory').getOrE
 
 loom {
     runs {
-        client { runDir runtimeRunDirectory }
+        client {
+            runDir runtimeRunDirectory
+            vmArg '-Xmx8G'
+        }
         server { runDir runtimeRunDirectory }
     }
     mixin {

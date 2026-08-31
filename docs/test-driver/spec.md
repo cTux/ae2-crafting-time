@@ -6,8 +6,10 @@ Provide a development-only companion mod that drives and observes a real
 Minecraft client for repeatable AE2 Crafting Time UI smoke tests. It runs beside
 the production mod and never replaces or ships inside it.
 
-The first deliverable covers one vertical slice: the standard AE2 Crafting Plan
-screen on Minecraft 1.20.1 Forge.
+The driver covers the standard AE2 Crafting Plan screen and add-on crafting CPU
+scenarios on Minecraft 1.20.1 Forge. New optional-mod scenarios must plug into
+the shared add-on fixture flow without adding another branch to the UI state
+machine.
 
 This covers [issue #126](https://github.com/cTux/ae2-crafting-time/issues/126).
 
@@ -54,8 +56,6 @@ Only the explicit test-driver launch option starts a scenario or MCP endpoint.
 Installation in these managed development clients does not copy it to `dist`
 or make it a published mod artifact.
 
-This feature does not exist yet.
-
 See [Automated UI Testing](../automated-ui-testing/spec.md) for the eventual
 cross-target and optional-dependency suite.
 
@@ -83,6 +83,17 @@ framebuffer state after normal production hooks have run. A production method
 reporting that it executed is not evidence that its output reached the screen.
 Translation keys and output IDs are semantic identity; rendered English text is
 report evidence, not the assertion key.
+
+## Optional add-on CPU scenarios
+
+An add-on CPU scenario uses the same disposable world, UI flow, profiler checks,
+result schema, and runner. Its fixture owns only the add-on-specific placement,
+formation, and CPU selection. Scenario names end in `-cpu`; the runner derives
+the standard add-on checks and screenshot name from that convention.
+
+Adding an optional mod requires one fixture implementation, one registry entry,
+and a driver-only compile dependency. It must not add a production dependency,
+make the optional mod mandatory, or require a new runner branch.
 
 ## Interactive diagnosis
 
@@ -178,6 +189,7 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 ## Compatibility
 
 - First artifact: Minecraft 1.20.1, Forge, Java 17, standard AE2 Crafting Plan.
+- Optional add-on CPU fixtures currently cover AdvancedAE and NeoEco AE.
 - Run it against both the compatible and latest AE2 profiles already owned by
   `scripts/run-client-versions.json`.
 - Do not create a cross-loader abstraction for this slice. Reuse code only when
@@ -188,7 +200,7 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 ## Not included
 
 - Crafting Status or submitted-craft checks.
-- Optional-addon screens or behavior.
+- Optional-addon behavior outside the registered CPU fixture contract.
 - Fabric, NeoForge, dedicated-server, or multiplayer support.
 - General-purpose UI automation, arbitrary world setup, or remote control.
 - Pixel-perfect full-frame comparisons.
@@ -212,6 +224,8 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
   profile failure.
 - The scenario proves the real screen, TTC row, total, three sort modes,
   tooltip, badge bounds, and non-overlap rules from final UI observations.
+- A registered add-on CPU scenario reuses the common setup, selection, sample,
+  result, and screenshot flow without changing the runner's scenario allowlist.
 - Interactive mode exposes only the six bounded tools above and rejects missing
   authentication, a second controller, oversized input, and unknown tools.
 - Client and server access stays on the owning game thread and times out rather

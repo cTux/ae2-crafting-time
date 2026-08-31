@@ -15,7 +15,9 @@ description: Develop, debug, test, or port AE2 Crafting Time code and resources.
    [references/testing-and-change-workflow.md](references/testing-and-change-workflow.md).
 4. When the task changes repo-owned text, read
    [the writing skill](../ae2-crafting-time-writing/SKILL.md) before editing it.
-5. Trace the real path end to end. Reuse an existing helper, source set, packet
+5. For test-driver implementation or extension, use
+   [the test-driver skill](../ae2-crafting-time-test-driver/SKILL.md).
+6. Trace the real path end to end. Reuse an existing helper, source set, packet
    codec, resource, test pattern, or loader adapter before adding code.
 
 ## Non-Negotiable Design Rules

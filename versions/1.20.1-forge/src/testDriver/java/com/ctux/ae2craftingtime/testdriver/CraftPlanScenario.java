@@ -35,6 +35,7 @@ public final class CraftPlanScenario {
     private final Minecraft minecraft;
     private final DriverOptions options;
     private final String driverFile;
+    private final AddonCpuFixture<?> addonFixture;
     private final StableFrames<List<String>> stableRows = new StableFrames<>(3);
     private final LinkedHashMap<String, Boolean> checks = new LinkedHashMap<>();
     private final List<String> screenshots = new ArrayList<>();
@@ -49,15 +50,12 @@ public final class CraftPlanScenario {
     private String networkId;
     private CompletableFuture<String> cpuCheck;
     private CompletableFuture<Integer> sampleCheck;
-    private CompletableFuture<NeoEcoFixture.Placement> fixturePlacement;
-    private CompletableFuture<AdvancedAeFixture.Placement> advancedAePlacement;
-    private CompletableFuture<Void> fixtureSetup;
-    private CompletableFuture<Boolean> advancedAeSetup;
 
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         this.minecraft = minecraft;
         this.options = options;
         this.driverFile = driverFile;
+        addonFixture = AddonCpuFixture.create(options.scenario());
         DriverResult.requiredChecks(options.scenario()).forEach(key -> checks.put(key, false));
     }
 
@@ -118,45 +116,8 @@ public final class CraftPlanScenario {
         if (!marker.disposableWorldId().equals(options.world())) {
             throw new IllegalArgumentException("fixture world ID mismatch");
         }
-        if (options.scenario().equals("neoeco-cpu")) {
-            var server = minecraft.getSingleplayerServer();
-            var playerId = minecraft.player.getUUID();
-            if (fixturePlacement == null) {
-                fixturePlacement = server.submit(() -> NeoEcoFixture.place(
-                        server.getPlayerList().getPlayer(playerId), marker));
-            }
-            if (!fixturePlacement.isDone()) {
-                return;
-            }
-            if (fixtureSetup == null) {
-                fixtureSetup = server.submit(() -> NeoEcoFixture.finish(
-                        server.getPlayerList().getPlayer(playerId), fixturePlacement.join()));
-            }
-            if (!fixtureSetup.isDone()) {
-                return;
-            }
-            fixtureSetup.join();
-        } else if (options.scenario().equals("advancedae-cpu")) {
-            var server = minecraft.getSingleplayerServer();
-            var playerId = minecraft.player.getUUID();
-            if (advancedAePlacement == null) {
-                advancedAePlacement = server.submit(() -> AdvancedAeFixture.place(
-                        server.getPlayerList().getPlayer(playerId), marker));
-            }
-            if (!advancedAePlacement.isDone()) {
-                return;
-            }
-            if (advancedAeSetup == null) {
-                advancedAeSetup = server.submit(() -> AdvancedAeFixture.finish(
-                        server.getPlayerList().getPlayer(playerId), advancedAePlacement.join()));
-            }
-            if (!advancedAeSetup.isDone()) {
-                return;
-            }
-            if (!advancedAeSetup.join()) {
-                advancedAeSetup = null;
-                return;
-            }
+        if (addonFixture != null && !addonFixture.setup(minecraft, marker)) {
+            return;
         }
         advance(ScenarioState.WORLD_READY);
     }
@@ -244,12 +205,7 @@ public final class CraftPlanScenario {
                 }
                 var context = StatsRequestContext.current(player);
                 var accessor = (CraftConfirmMenuAccessor) menu;
-                var cpu = options.scenario().equals("advancedae-cpu")
-                        ? AdvancedAeFixture.cpu(player, advancedAePlacement.join(), context.grid())
-                        : context.grid().getCraftingService().getCpus().stream()
-                                .filter(candidate -> candidate.getClass().getName()
-                                        .equals("cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU"))
-                                .findFirst().orElse(null);
+                var cpu = addonFixture.cpu(player, context.grid());
                 if (cpu != null) {
                     accessor.ae2craftingtime_test_driver$selectedCpu(cpu);
                     var id = ProfilerBridge.networkId(context.grid());

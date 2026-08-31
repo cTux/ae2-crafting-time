@@ -20,12 +20,12 @@ $profile = if ($Latest) { "latest" } else { "compatible" }
 $driver = "ae2-crafting-time-1.0.13-forge-1.20.1-test-driver.jar"
 New-Item -ItemType Directory -Path $DriverOutputDirectory, (Join-Path $RuntimeDirectory "resolved-mods"),
     (Join-Path $RuntimeDirectory "logs") -Force | Out-Null
-$checks = if ($DriverScenario -eq "neoeco-cpu") {
+$checks = if ($DriverScenario -ne "craft-plan") {
     [ordered]@{ 'cpu-selected'=$true; 'profile-sample'=$true; 'ttc-after-sample'=$true }
 } else {
     [ordered]@{ screen=$true; 'ttc-row'=$true; 'total-ttc'=$true; 'sort-cycle'=$true; tooltip=$true; layout=$true }
 }
-$screenshots = if ($DriverScenario -eq "neoeco-cpu") { @("neoeco-profiled-plan.png") } else { @("craft-plan.png", "craft-plan-tooltip.png") }
+$screenshots = if ($DriverScenario -ne "craft-plan") { @("$(($DriverScenario -replace '-cpu$', ''))-profiled-plan.png") } else { @("craft-plan.png", "craft-plan-tooltip.png") }
 $result = [ordered]@{
     schema = $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "schema") { 2 } else { 1 })
     complete = $true; driver = $driver; target = "1.20.1-forge"; profile = $profile
@@ -45,7 +45,7 @@ Set-Content -LiteralPath (Join-Path $RuntimeDirectory "logs\latest.log") -Value 
 '@, [Text.UTF8Encoding]::new($false))
 
 function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive,
-        [ValidateSet("craft-plan", "neoeco-cpu")][string]$Scenario = "craft-plan", [bool]$shouldPass) {
+        [string]$Scenario = "craft-plan", [bool]$shouldPass) {
     $env:AE2CT_UI_SMOKE_TEST_MODE = $mode
     $arguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $scripts "run-ui-smoke.ps1"))
     if ($Latest) { $arguments += "-Latest" }
@@ -66,6 +66,7 @@ try {
     Invoke-Case "pass" -shouldPass $true
     Invoke-Case "pass" -Latest -shouldPass $true
     Invoke-Case "pass" -Scenario "neoeco-cpu" -shouldPass $true
+    Invoke-Case "pass" -Scenario "future-addon-cpu" -shouldPass $true
     if (-not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\evidence\result.json")) -or
             -not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\latest\evidence\result.json"))) {
         throw "Compatible and latest evidence was not separated"

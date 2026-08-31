@@ -158,6 +158,13 @@ coordinates from the actual widget or item bounds, and calls the screen's normal
 input path on the client thread. Sort modes are changed only by clicking the
 real `TtcSortButton`.
 
+`AddonCpuFixture` owns the shared asynchronous place/finish/select lifecycle.
+Its registry maps each `*-cpu` scenario to one driver-only implementation.
+AdvancedAE and NeoEco AE contain only their mod-specific fixture code. A new
+optional dependency extends that registry and adds a `testDriverCompileOnly`
+dependency when it is not already on the inherited compile classpath; it does
+not change `CraftPlanScenario` or `run-ui-smoke.ps1`.
+
 Plan data is stable after the same screen and ordered output IDs are observed
 for three consecutive rendered frames. A new screen, changed row order, or
 changed plan restarts the count.
@@ -274,6 +281,12 @@ naturally, but do not create shared source sets or loader interfaces yet.
 When a second target is approved, move only already-identical code into a shared
 test-driver source set. Screen adapters remain at the Minecraft/AE2 API
 boundary, and loader bootstraps remain in their version modules.
+
+Client UI checks run inside CodexVM. The checkout is read from VMware's
+read/write `projects` share, while each Minecraft runtime stays on guest-local
+NTFS. Development clients receive an 8 GiB maximum heap. Test-driver launches
+maximize their GLFW window before the scenario starts; other UI checks maximize
+the exact client through the VM display before inspection.
 
 ## Alternatives rejected
 

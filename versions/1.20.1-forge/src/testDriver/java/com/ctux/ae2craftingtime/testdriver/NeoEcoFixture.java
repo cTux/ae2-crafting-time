@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IInWorldGridNodeHost;
+import appeng.api.networking.crafting.ICraftingCPU;
 import cn.dancingsnow.neoecoae.all.NEMultiBlocks;
 import cn.dancingsnow.neoecoae.blocks.entity.NEBlockEntity;
 import cn.dancingsnow.neoecoae.blocks.entity.computation.ECOComputationDriveBlockEntity;
@@ -24,13 +25,11 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
 
-final class NeoEcoFixture {
+final class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
     private static final BlockPos INTERFACE_OFFSET = new BlockPos(2, 1, 1);
 
-    private NeoEcoFixture() {
-    }
-
-    static Placement place(ServerPlayer player, FixtureMarker marker) {
+    @Override
+    protected Placement place(ServerPlayer player, FixtureMarker marker) {
         if (player == null) {
             throw new IllegalStateException("fixture player is unavailable");
         }
@@ -42,7 +41,8 @@ final class NeoEcoFixture {
         return new Placement(List.copyOf(context.blocks.keySet()));
     }
 
-    static void finish(ServerPlayer player, Placement placement) {
+    @Override
+    protected boolean finish(ServerPlayer player, Placement placement) {
         if (player == null) {
             throw new IllegalStateException("fixture player is unavailable");
         }
@@ -86,6 +86,15 @@ final class NeoEcoFixture {
                 .filter(ECOComputationDriveBlockEntity.class::isInstance)
                 .map(ECOComputationDriveBlockEntity.class::cast)
                 .forEach(drive -> drive.setCellStack(cell));
+        return true;
+    }
+
+    @Override
+    protected ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {
+        return grid.getCraftingService().getCpus().stream()
+                .filter(candidate -> candidate.getClass().getName()
+                        .equals("cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU"))
+                .findFirst().orElse(null);
     }
 
     record Placement(List<BlockPos> blocks) {

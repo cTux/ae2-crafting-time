@@ -19,6 +19,7 @@ legacyForge {
     runs {
         client {
             client()
+            jvmArgument '-Xmx8G'
             ['scenario', 'profile', 'world', 'output', 'interactive'].each { name ->
                 def property = providers.gradleProperty("testDriver${name.capitalize()}")
                 if (property.isPresent()) {
