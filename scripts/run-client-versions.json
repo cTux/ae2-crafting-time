@@ -9,7 +9,7 @@
       { "name": "AE2 Lightning Tech", "project_id": "ArHeh5Fz" },
       { "name": "AdvancedAE", "project_id": "rxYaglEe" },
       { "name": "ExtendedAE", "project_id": "JiOqfoFM" },
-      { "name": "ExtendedAE-Plus", "project_id": "xr109llC" },
+      { "name": "ExtendedAE-Plus", "project_id": "xr109llC", "compatible": false, "reason": "Its pattern-provider mixin conflicts with Expanded AE's Applied Flux compatibility mixin." },
       { "name": "BM Addon", "project_id": "qPydPwtX" },
       { "name": "Crazy AE2 Addons", "project_id": "anaGQD2Q" },
       { "name": "AE2 WCWT", "project_id": "4inoel9g" },

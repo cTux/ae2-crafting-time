@@ -17,15 +17,21 @@ public record DriverResult(
         Map<String, Boolean> checks,
         List<String> screenshots,
         Failure failure) {
-    public static final List<String> REQUIRED_CHECKS = List.of(
+    public static final List<String> CRAFT_PLAN_CHECKS = List.of(
             "screen", "ttc-row", "total-ttc", "sort-cycle", "tooltip", "layout");
+    public static final List<String> NEOECO_CPU_CHECKS = List.of(
+            "cpu-selected", "profile-sample", "ttc-after-sample");
 
     public DriverResult {
         checks = Collections.unmodifiableMap(new LinkedHashMap<>(checks));
         screenshots = List.copyOf(screenshots);
-        if (!checks.keySet().equals(Set.copyOf(REQUIRED_CHECKS))) {
+        if (!checks.keySet().equals(Set.copyOf(requiredChecks(scenario)))) {
             throw new IllegalArgumentException("result must contain exactly the required checks");
         }
+    }
+
+    public static List<String> requiredChecks(String scenario) {
+        return scenario.equals("neoeco-cpu") ? NEOECO_CPU_CHECKS : CRAFT_PLAN_CHECKS;
     }
 
     public record Failure(String step, String code, String expected, String observed) {

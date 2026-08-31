@@ -4,7 +4,11 @@ import appeng.client.gui.me.common.MEStorageScreen;
 import appeng.client.gui.me.crafting.CraftAmountScreen;
 import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
+import com.ctux.ae2craftingtime.core.ProfileKey;
+import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.mc1201.StatsRequestContext;
 import com.ctux.ae2craftingtime.testdriver.mixin.CraftAmountScreenAccessor;
+import com.ctux.ae2craftingtime.testdriver.mixin.CraftConfirmMenuAccessor;
 import com.ctux.ae2craftingtime.testdriver.mixin.MEStorageScreenAccessor;
 import com.ctux.ae2craftingtime.testdriver.mixin.MouseHandlerAccessor;
 import com.mojang.blaze3d.platform.NativeImage;
@@ -23,6 +27,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public final class CraftPlanScenario {
     private static final Duration STEP_TIMEOUT = Duration.ofSeconds(30);
@@ -41,12 +46,17 @@ public final class CraftPlanScenario {
     private int sortStage;
     private long lastFrame = -1;
     private DriverResult.Failure failure;
+    private String networkId;
+    private CompletableFuture<String> cpuCheck;
+    private CompletableFuture<Integer> sampleCheck;
+    private CompletableFuture<NeoEcoFixture.Placement> fixturePlacement;
+    private CompletableFuture<Void> fixtureSetup;
 
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         this.minecraft = minecraft;
         this.options = options;
         this.driverFile = driverFile;
-        DriverResult.REQUIRED_CHECKS.forEach(key -> checks.put(key, false));
+        DriverResult.requiredChecks(options.scenario()).forEach(key -> checks.put(key, false));
     }
 
     public void tick() {
@@ -64,6 +74,10 @@ public final class CraftPlanScenario {
                 case TERMINAL_OPEN -> selectTarget();
                 case PLAN_OPEN -> openPlan();
                 case PLAN_STABLE -> stabilizePlan();
+                case NEOECO_CPU_SELECTED -> submitNeoEcoCraft();
+                case NEOECO_CRAFT_SUBMITTED -> awaitNeoEcoSample();
+                case NEOECO_SAMPLE_RECORDED -> selectTarget(ScenarioState.NEOECO_PLAN_OPEN);
+                case NEOECO_PLAN_OPEN -> verifyNeoEcoTtc();
                 case BASE_CHECKED -> cycleSorts();
                 case SORTS_CHECKED -> checkTooltip();
                 case TOOLTIP_CHECKED -> writePass();
@@ -72,8 +86,7 @@ public final class CraftPlanScenario {
                 }
             }
         } catch (Exception error) {
-            fail("exception", state.name(),
-                    error.getClass().getSimpleName() + ": " + ReportText.safe(error.getMessage()));
+            fail("exception", state.name(), ReportText.failure(error));
         }
     }
 
@@ -103,6 +116,25 @@ public final class CraftPlanScenario {
         if (!marker.disposableWorldId().equals(options.world())) {
             throw new IllegalArgumentException("fixture world ID mismatch");
         }
+        if (options.scenario().equals("neoeco-cpu")) {
+            var server = minecraft.getSingleplayerServer();
+            var playerId = minecraft.player.getUUID();
+            if (fixturePlacement == null) {
+                fixturePlacement = server.submit(() -> NeoEcoFixture.place(
+                        server.getPlayerList().getPlayer(playerId), marker));
+            }
+            if (!fixturePlacement.isDone()) {
+                return;
+            }
+            if (fixtureSetup == null) {
+                fixtureSetup = server.submit(() -> NeoEcoFixture.finish(
+                        server.getPlayerList().getPlayer(playerId), fixturePlacement.join()));
+            }
+            if (!fixtureSetup.isDone()) {
+                return;
+            }
+            fixtureSetup.join();
+        }
         advance(ScenarioState.WORLD_READY);
     }
 
@@ -120,6 +152,10 @@ public final class CraftPlanScenario {
     }
 
     private void selectTarget() {
+        selectTarget(ScenarioState.PLAN_OPEN);
+    }
+
+    private void selectTarget(ScenarioState next) {
         if (!(minecraft.screen instanceof MEStorageScreen<?> screen)) {
             return;
         }
@@ -132,7 +168,7 @@ public final class CraftPlanScenario {
             return;
         }
         ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$click(entry, 2, ClickType.CLONE);
-        advance(ScenarioState.PLAN_OPEN);
+        advance(next);
     }
 
     private void openPlan() {
@@ -154,6 +190,10 @@ public final class CraftPlanScenario {
         if (!stable(snapshot)) {
             return;
         }
+        if (options.scenario().equals("neoeco-cpu")) {
+            selectNeoEcoCpu();
+            return;
+        }
         orders.add(ids(snapshot));
         knownOrders.add(knownIds(snapshot));
         checks.put("screen", snapshot.screen().equals(CraftConfirmScreen.class.getName()));
@@ -165,6 +205,84 @@ public final class CraftPlanScenario {
         screenshot("craft-plan.png");
         clickSort(snapshot);
         advance(ScenarioState.BASE_CHECKED);
+    }
+
+    private void selectNeoEcoCpu() {
+        if (!(minecraft.screen instanceof CraftConfirmScreen)) {
+            return;
+        }
+        if (cpuCheck == null) {
+            var server = minecraft.getSingleplayerServer();
+            var playerId = minecraft.player.getUUID();
+            cpuCheck = server.submit(() -> {
+                var player = server.getPlayerList().getPlayer(playerId);
+                if (player == null || !(player.containerMenu instanceof appeng.menu.me.crafting.CraftConfirmMenu menu)) {
+                    throw new IllegalStateException("server Crafting Plan menu is unavailable");
+                }
+                var context = StatsRequestContext.current(player);
+                var accessor = (CraftConfirmMenuAccessor) menu;
+                var attempts = context.grid().getCraftingService().getCpus().size() + 1;
+                for (int i = 0; i < attempts; i++) {
+                    var cpu = accessor.ae2craftingtime_test_driver$selectedCpu();
+                    if (cpu != null
+                            && cpu.getClass().getName().equals("cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU")) {
+                        var id = ProfilerBridge.networkId(context.grid());
+                        ProfilerBridge.clearStats(new ProfileKey(id, marker.outputId()));
+                        return id;
+                    }
+                    menu.cycleSelectedCPU(true);
+                }
+                throw new IllegalStateException("NeoEco CPU is not available in the fixture network");
+            });
+        }
+        if (!cpuCheck.isDone()) {
+            return;
+        }
+        networkId = cpuCheck.join();
+        checks.put("cpu-selected", true);
+        advance(ScenarioState.NEOECO_CPU_SELECTED);
+    }
+
+    private void submitNeoEcoCraft() {
+        if (minecraft.screen instanceof CraftConfirmScreen screen) {
+            screen.getMenu().startJob();
+            advance(ScenarioState.NEOECO_CRAFT_SUBMITTED);
+        }
+    }
+
+    private void awaitNeoEcoSample() {
+        if (sampleCheck == null) {
+            var server = minecraft.getSingleplayerServer();
+            sampleCheck = server.submit(() -> ProfilerBridge.stats(new ProfileKey(networkId, marker.outputId()))
+                    .map(stats -> stats.sampleCount()).orElse(0));
+        }
+        if (!sampleCheck.isDone()) {
+            return;
+        }
+        if (sampleCheck.join() == 0) {
+            sampleCheck = null;
+            return;
+        }
+        checks.put("profile-sample", true);
+        stableRows.reset();
+        advance(ScenarioState.NEOECO_SAMPLE_RECORDED);
+    }
+
+    private void verifyNeoEcoTtc() throws IOException {
+        if (minecraft.screen instanceof CraftAmountScreen amount) {
+            ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next().onPress();
+            return;
+        }
+        var snapshot = UiObservationStore.latest();
+        if (!(minecraft.screen instanceof CraftConfirmScreen) || snapshot == null || !stable(snapshot)) {
+            return;
+        }
+        checks.put("ttc-after-sample", snapshot.rows().stream()
+                .filter(row -> row.outputId().equals(marker.outputId()))
+                .flatMap(row -> row.description().stream())
+                .anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")));
+        screenshot("neoeco-profiled-plan.png");
+        writePass();
     }
 
     private void cycleSorts() {

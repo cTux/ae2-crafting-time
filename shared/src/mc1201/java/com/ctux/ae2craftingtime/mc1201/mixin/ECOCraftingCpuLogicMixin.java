@@ -60,7 +60,8 @@ public abstract class ECOCraftingCpuLogicMixin {
     }
 
     @Redirect(
-            method = "recordPushedPattern",
+            method = "recordPushedPattern(Lcn/dancingsnow/neoecoae/api/me/"
+                    + "ECOCraftingCPULogic$PendingPatternAccounting;)V",
             at = @At(
                     value = "INVOKE",
                     target = "Lappeng/crafting/inv/ListCraftingInventory;insert(Lappeng/api/stacks/AEKey;"
