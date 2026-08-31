@@ -73,7 +73,8 @@ final class NeoEcoFixture {
                     + calculator.checkMultiblockScale(min, max) + ", structure="
                     + calculator.verifyInternalStructure(level, min, max) + ", invalid=" + invalid);
         }
-        var cellItem = ForgeRegistries.ITEMS.getValue(new ResourceLocation("neoecoae", "eco_computation_cell_l9"));
+        var cellItem = ForgeRegistries.ITEMS.getValue(
+                Objects.requireNonNull(ResourceLocation.tryBuild("neoecoae", "eco_computation_cell_l9")));
         if (cellItem == null) {
             throw new IllegalStateException("NeoEco L9 computation cell is unavailable");
         }
