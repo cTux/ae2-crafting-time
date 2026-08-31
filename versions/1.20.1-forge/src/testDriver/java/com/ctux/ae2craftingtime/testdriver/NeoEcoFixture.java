@@ -53,9 +53,25 @@ final class NeoEcoFixture {
                 .map(ECOComputationSystemBlockEntity.class::cast)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("NeoEco computation controller was not placed"));
+        var min = new BlockPos(
+                placement.blocks.stream().mapToInt(BlockPos::getX).min().orElseThrow(),
+                placement.blocks.stream().mapToInt(BlockPos::getY).min().orElseThrow(),
+                placement.blocks.stream().mapToInt(BlockPos::getZ).min().orElseThrow());
+        var max = new BlockPos(
+                placement.blocks.stream().mapToInt(BlockPos::getX).max().orElseThrow(),
+                placement.blocks.stream().mapToInt(BlockPos::getY).max().orElseThrow(),
+                placement.blocks.stream().mapToInt(BlockPos::getZ).max().orElseThrow());
         controller.rebuildMultiblock();
         if (!controller.isFormed()) {
-            throw new IllegalStateException("NeoEco computation fixture did not form");
+            var calculator = controller.getCalculator();
+            var invalid = placement.blocks.stream()
+                    .filter(pos -> !calculator.isValidBlockEntity(level.getBlockEntity(pos)))
+                    .findFirst()
+                    .map(pos -> pos + "=" + level.getBlockState(pos).getBlock())
+                    .orElse("none");
+            throw new IllegalStateException("NeoEco computation fixture did not form: scale="
+                    + calculator.checkMultiblockScale(min, max) + ", structure="
+                    + calculator.verifyInternalStructure(level, min, max) + ", invalid=" + invalid);
         }
         var cellItem = ForgeRegistries.ITEMS.getValue(new ResourceLocation("neoecoae", "eco_computation_cell_l9"));
         if (cellItem == null) {
