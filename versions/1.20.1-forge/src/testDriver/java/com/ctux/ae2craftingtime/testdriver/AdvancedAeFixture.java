@@ -1,15 +1,14 @@
 package com.ctux.ae2craftingtime.testdriver;
 
+import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IInWorldGridNodeHost;
-import appeng.api.networking.GridHelper;
 import appeng.api.networking.crafting.ICraftingCPU;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.registries.ForgeRegistries;
-import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPUCalculator;
 import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
 
 import java.util.Arrays;
@@ -36,66 +35,44 @@ final class AdvancedAeFixture {
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("fixture terminal grid is unavailable"));
         var core = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryBuild("advanced_ae", "quantum_core"));
-        var structure = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryBuild("advanced_ae", "quantum_structure"));
-        if (core == null || structure == null) {
-            throw new IllegalStateException("AdvancedAE quantum computer blocks are unavailable");
+        if (core == null) {
+            throw new IllegalStateException("AdvancedAE quantum core is unavailable");
         }
         for (BlockPos anchor : BlockPos.betweenClosed(terminal.offset(-12, -4, -12), terminal.offset(12, 4, 12))) {
             if (!(level.getBlockEntity(anchor) instanceof IInWorldGridNodeHost host)) {
                 continue;
             }
-            for (var direction : Direction.values()) {
+            for (var direction : new Direction[] { Direction.UP, Direction.DOWN }) {
                 var node = host.getGridNode(direction);
-                var min = minimum(anchor, direction);
-                if (node != null && node.getGrid() == grid
-                        && BlockPos.betweenClosedStream(min, min.offset(2, 2, 2))
-                                .allMatch(pos -> level.getBlockState(pos).isAir())) {
-                    for (BlockPos pos : BlockPos.betweenClosed(min, min.offset(2, 2, 2))) {
-                        if (!pos.equals(min.offset(1, 1, 1))) {
-                            level.setBlockAndUpdate(pos, structure.defaultBlockState());
-                        }
-                    }
-                    var corePosition = min.offset(1, 1, 1);
-                    level.setBlockAndUpdate(corePosition, core.defaultBlockState());
-                    return new Placement(min, min.offset(2, 2, 2), corePosition, anchor.immutable(), direction);
+                var position = anchor.relative(direction);
+                if (node != null && node.getGrid() == grid && level.getBlockState(position).isAir()) {
+                    level.setBlockAndUpdate(position, core.defaultBlockState());
+                    return new Placement(position, anchor.immutable(), direction);
                 }
             }
         }
-        throw new IllegalStateException("no empty space beside the fixture AE2 grid for AdvancedAE CPU");
+        throw new IllegalStateException("no empty vertical connection beside the fixture AE2 grid for AdvancedAE CPU");
     }
 
     static boolean finish(ServerPlayer player, Placement placement) {
         if (player == null) {
             throw new IllegalStateException("fixture player is unavailable");
         }
-        var position = placement.core();
         var level = player.serverLevel();
-        if (!(level.getBlockEntity(position) instanceof AdvCraftingBlockEntity blockEntity)) {
-            throw new IllegalStateException("AdvancedAE quantum core block entity was not placed");
-        }
-        if (!blockEntity.isFormed()) {
-            if (!blockEntity.getMainNode().isReady()) {
-                return false;
-            }
-            var calculator = new AdvCraftingCPUCalculator(blockEntity);
-            if (!calculator.checkMultiblockScale(placement.min(), placement.max())
-                    || !calculator.verifyInternalStructure(level, placement.min(), placement.max())) {
-                throw new IllegalStateException("AdvancedAE quantum computer fixture is invalid");
-            }
-            calculator.updateBlockEntities(
-                    calculator.createCluster(level, placement.min(), placement.max()),
-                    level, placement.min(), placement.max());
-        }
-        if (!(level.getBlockEntity(placement.anchor()) instanceof IInWorldGridNodeHost host)) {
-            throw new IllegalStateException("AdvancedAE quantum computer connection is unavailable");
-        }
-        var hostNode = host.getGridNode(placement.direction());
-        var computerNode = blockEntity.getCluster().getNode();
-        if (hostNode == null || computerNode == null) {
+        if (!(level.getBlockEntity(placement.core()) instanceof AdvCraftingBlockEntity core)
+                || !core.isFormed()) {
             return false;
         }
-        if (hostNode.getGrid() != computerNode.getGrid()) {
-            GridHelper.createConnection(hostNode, computerNode);
+        if (!(level.getBlockEntity(placement.anchor()) instanceof IInWorldGridNodeHost host)) {
+            throw new IllegalStateException("AdvancedAE quantum core connection is unavailable");
+        }
+        var hostNode = host.getGridNode(placement.direction());
+        var coreNode = core.getGridNode(placement.direction().getOpposite());
+        if (hostNode == null || coreNode == null) {
+            return false;
+        }
+        if (hostNode.getGrid() != coreNode.getGrid()) {
+            GridHelper.createConnection(hostNode, coreNode);
         }
         return true;
     }
@@ -110,17 +87,6 @@ final class AdvancedAeFixture {
         return cpu.isActive() && cpu.getGrid() == grid ? cpu : null;
     }
 
-    record Placement(BlockPos min, BlockPos max, BlockPos core, BlockPos anchor, Direction direction) {
-    }
-
-    private static BlockPos minimum(BlockPos anchor, Direction direction) {
-        return switch (direction) {
-            case EAST -> anchor.offset(1, -1, -1);
-            case WEST -> anchor.offset(-3, -1, -1);
-            case UP -> anchor.offset(-1, 1, -1);
-            case DOWN -> anchor.offset(-1, -3, -1);
-            case SOUTH -> anchor.offset(-1, -1, 1);
-            case NORTH -> anchor.offset(-1, -1, -3);
-        };
+    record Placement(BlockPos core, BlockPos anchor, Direction direction) {
     }
 }
