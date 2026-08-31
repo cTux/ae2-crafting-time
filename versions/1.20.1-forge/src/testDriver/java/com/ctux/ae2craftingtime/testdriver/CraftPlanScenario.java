@@ -183,8 +183,6 @@ public final class CraftPlanScenario {
         checks.put("screen", snapshot.screen().equals(CraftConfirmScreen.class.getName()));
         checks.put("ttc-row", snapshot.rows().stream().filter(row -> row.outputId().equals(marker.outputId()))
                 .flatMap(row -> row.description().stream()).anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")));
-        checks.put("total-ttc", snapshot.text().stream()
-                .anyMatch(text -> text.key().equals("text.ae2craftingtime.total_ttc")));
         checks.put("layout", !snapshot.badges().isEmpty() && LayoutValidator.validate(snapshot).isEmpty());
         screenshot("craft-plan.png");
         clickSort(snapshot);
@@ -300,6 +298,8 @@ public final class CraftPlanScenario {
         }
         checks.put("tooltip", snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.details_hint"))
                 && snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.reset_hint")));
+        checks.put("total-ttc", snapshot.text().stream()
+                .anyMatch(text -> text.key().equals("text.ae2craftingtime.total_ttc")));
         screenshot("craft-plan-tooltip.png");
         advance(ScenarioState.TOOLTIP_CHECKED);
     }
