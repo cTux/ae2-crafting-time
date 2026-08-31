@@ -4,6 +4,7 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.IInWorldGridNodeHost;
 import cn.dancingsnow.neoecoae.all.NEMultiBlocks;
 import cn.dancingsnow.neoecoae.blocks.entity.computation.ECOComputationDriveBlockEntity;
+import cn.dancingsnow.neoecoae.blocks.entity.computation.ECOComputationSystemBlockEntity;
 import cn.dancingsnow.neoecoae.multiblock.definition.MultiBlockContext;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -38,6 +39,16 @@ final class NeoEcoFixture {
         var context = findSpace(level, terminal);
 
         context.blocks.forEach((pos, state) -> level.setBlockAndUpdate(pos, state));
+        var controller = context.blocks.keySet().stream()
+                .map(level::getBlockEntity)
+                .filter(ECOComputationSystemBlockEntity.class::isInstance)
+                .map(ECOComputationSystemBlockEntity.class::cast)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("NeoEco computation controller was not placed"));
+        controller.rebuildMultiblock();
+        if (!controller.isFormed()) {
+            throw new IllegalStateException("NeoEco computation fixture did not form");
+        }
         var cellItem = ForgeRegistries.ITEMS.getValue(new ResourceLocation("neoecoae", "eco_computation_cell_l9"));
         if (cellItem == null) {
             throw new IllegalStateException("NeoEco L9 computation cell is unavailable");
