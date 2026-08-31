@@ -3,8 +3,8 @@ package com.ctux.ae2craftingtime.testdriver;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IInWorldGridNodeHost;
 import cn.dancingsnow.neoecoae.all.NEMultiBlocks;
+import cn.dancingsnow.neoecoae.blocks.entity.NEBlockEntity;
 import cn.dancingsnow.neoecoae.blocks.entity.computation.ECOComputationDriveBlockEntity;
-import cn.dancingsnow.neoecoae.blocks.entity.computation.ECOComputationSystemBlockEntity;
 import cn.dancingsnow.neoecoae.multiblock.definition.MultiBlockContext;
 import cn.dancingsnow.neoecoae.multiblock.placement.MultiBlockRotation;
 import net.minecraft.core.BlockPos;
@@ -49,8 +49,10 @@ final class NeoEcoFixture {
         var level = player.serverLevel();
         var controller = placement.blocks.stream()
                 .map(level::getBlockEntity)
-                .filter(ECOComputationSystemBlockEntity.class::isInstance)
-                .map(ECOComputationSystemBlockEntity.class::cast)
+                .filter(NEBlockEntity.class::isInstance)
+                .map(blockEntity -> (NEBlockEntity<?, ?>) blockEntity)
+                .filter(blockEntity -> blockEntity.getClass().getName()
+                        .equals("cn.dancingsnow.neoecoae.blocks.entity.computation.ECOComputationSystemBlockEntity"))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("NeoEco computation controller was not placed"));
         var min = new BlockPos(
