@@ -87,10 +87,11 @@ jobs:
             | join("\n")
           ' <<<"$release_json")
 
-          jq -n \
-            --arg content "**AE2 Crafting Time $release_name**\n$release_url\n\n**JAR downloads**\n$jars" \
-            '{content: $content}' |
-            curl --fail-with-body --retry 3 \
+          printf -v content \
+            '**AE2 Crafting Time %s**\n%s\n\n**JAR downloads**\n%s' \
+            "$release_name" "$release_url" "$jars"
+          jq -n --arg content "$content" '{content: $content}' |
+            curl --fail-with-body \
               -H "Content-Type: application/json" \
               --data-binary @- \
               "$DISCORD_WEBHOOK_URL"
