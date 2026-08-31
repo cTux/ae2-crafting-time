@@ -16,7 +16,7 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Minecraft (required) | `1.20.1` | Yes (base) | `1.20.1` | No | `1.21.1` | No | `26.1.2` | No |
 | Java (required) | `17` | Yes (base) | `17` | No | `21` | No | `25` | No |
-| Forge (required) | `47.4.0` | Yes (base) | — | — | — | — | — | — |
+| Forge (required) | `47.4.10` | Yes (base) | — | — | — | — | — | — |
 | Fabric Loader (required) | — | — | `0.19.4` | No | — | — | — | — |
 | Fabric API (required) | — | — | `0.92.11+1.20.1` | No | — | — | — | — |
 | NeoForge (required) | — | — | — | — | `21.1.238` | No | `26.1.2.99` | No |
@@ -27,7 +27,7 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 | ME Requester (optional; candidate) | `1.20.1-1.2.1+forge` | No | `1.20.1-1.1.4+fabric` | No | `1.21.1-1.4.3+neoforge` | No | — | — |
 | NeoEco AE (optional; candidate) | `20.3.0` | Yes (scenario) | — | — | `21.1.1` | No | — | — |
 | AE2 Lightning Tech (optional; candidate) | `2.1.0-beta.2-forge.1.20.1` | No | — | — | `2.1.0-beta.2` | No | `1.0.1alpha-26.1.2neoforge` | No |
-| OmniSequence: Transfinite (candidate) | — | — | — | — | — | — | — | — |
+| OmniSequence: Transfinite (optional; candidate) | `1.3.9-forge` | Yes (scenario) | — | — | `1.3.9-hotfix` | No | — | — |
 | ExtendedAE (candidate) | `1.20-1.4.18-forge` | No | `1.20-1.0.2-fabric` | No | `1.21-2.2.35-neoforge` | No | `26.1-1.0.3-neoforge` | No |
 | ExtendedAE-Plus (candidate) | `1.6.2` (incompatible) | No | — | — | Incompatible; not pinned | No | — | — |
 | BM Addon (candidate) | `1.0.4` | No | — | — | `BMAddon1.21.1-beta1` | No | `beta3` | No |

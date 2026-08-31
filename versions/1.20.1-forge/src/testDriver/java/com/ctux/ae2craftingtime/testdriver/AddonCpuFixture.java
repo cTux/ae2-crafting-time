@@ -11,7 +11,8 @@ import java.util.concurrent.CompletableFuture;
 abstract class AddonCpuFixture<P> {
     private static final Map<String, String> FIXTURES = Map.of(
             "advancedae-cpu", "com.ctux.ae2craftingtime.testdriver.AdvancedAeFixture",
-            "neoeco-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture");
+            "neoeco-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture",
+            "omnisequence-cpu", "com.ctux.ae2craftingtime.testdriver.OmniSequenceFixture");
 
     private CompletableFuture<P> placementFuture;
     private CompletableFuture<Boolean> setupFuture;

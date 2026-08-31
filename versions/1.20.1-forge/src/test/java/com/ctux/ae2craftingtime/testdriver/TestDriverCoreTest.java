@@ -27,6 +27,7 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("craft-plan"));
         assertTrue(AddonCpuFixture.supports("advancedae-cpu"));
         assertTrue(AddonCpuFixture.supports("neoeco-cpu"));
+        assertTrue(AddonCpuFixture.supports("omnisequence-cpu"));
         assertFalse(AddonCpuFixture.supports("missing-cpu"));
         assertNull(AddonCpuFixture.create("craft-plan"));
         assertThrows(IllegalArgumentException.class, () -> AddonCpuFixture.create("missing-cpu"));
