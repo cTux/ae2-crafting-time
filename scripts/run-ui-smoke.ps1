@@ -74,7 +74,8 @@ if ($Interactive) {
     }
     if (-not $previousToken) {
         $bytes = [byte[]]::new(32)
-        [Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+        $rng = [Security.Cryptography.RandomNumberGenerator]::Create()
+        try { $rng.GetBytes($bytes) } finally { $rng.Dispose() }
         $env:AE2CT_TEST_DRIVER_TOKEN = ([BitConverter]::ToString($bytes) -replace '-', '').ToLowerInvariant()
     }
 } else {

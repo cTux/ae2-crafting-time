@@ -46,25 +46,27 @@ function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive, [bool
     $preference = $ErrorActionPreference
     try {
         $ErrorActionPreference = "Continue"
-        & powershell.exe @arguments > $null 2> $null
+        $output = & powershell.exe @arguments 2>&1
         $passed = $LASTEXITCODE -eq 0
     } finally { $ErrorActionPreference = $preference }
-    if ($passed -ne $shouldPass) { throw "Unexpected runner result for '$mode' latest=$Latest" }
+    if ($passed -ne $shouldPass) {
+        throw "Unexpected runner result for '$mode' latest=$Latest`: $($output -join [Environment]::NewLine)"
+    }
 }
 
 try {
     Invoke-Case "pass" -shouldPass $true
     Invoke-Case "pass" -Latest -shouldPass $true
+    if (-not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\evidence\result.json")) -or
+            -not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\latest\evidence\result.json"))) {
+        throw "Compatible and latest evidence was not separated"
+    }
     Invoke-Case "pass" -Interactive -shouldPass $true
     $env:AE2CT_TEST_DRIVER_TOKEN = 'b' * 64
     Invoke-Case "interactive-token" -Interactive -shouldPass $true
     $env:AE2CT_TEST_DRIVER_TOKEN = 'invalid'
     Invoke-Case "pass" -Interactive -shouldPass $false
     Remove-Item Env:\AE2CT_TEST_DRIVER_TOKEN
-    if (-not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\evidence\result.json")) -or
-            -not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\latest\evidence\result.json"))) {
-        throw "Compatible and latest evidence was not separated"
-    }
     Invoke-Case "schema" -shouldPass $false
     Invoke-Case "missing-screenshot" -shouldPass $false
     Invoke-Case "fatal" -shouldPass $false
