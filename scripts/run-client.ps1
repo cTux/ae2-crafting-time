@@ -6,6 +6,11 @@ param(
     [switch]$ResolveOnly,
     [string]$Root,
     [string]$VersionMatrix,
+    [string]$RuntimeDirectory,
+    [string]$DriverScenario,
+    [string]$DriverOutputDirectory,
+    [string]$DriverWorld,
+    [switch]$Interactive,
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$GradleArgs
 )
@@ -44,7 +49,7 @@ $managed = [Collections.Generic.List[string]]::new()
 $profile = $profiles[$Target]
 $root = if ($Root) { $Root } else { Split-Path -Parent $PSScriptRoot }
 $runName = if ($Latest) { "run-latest" } else { "run" }
-$run = Join-Path $root "versions\$Target\$runName"
+$run = if ($RuntimeDirectory) { [IO.Path]::GetFullPath($RuntimeDirectory) } else { Join-Path $root "versions\$Target\$runName" }
 $mods = Join-Path $run $(if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" })
 $manifest = Join-Path $mods ".ae2-crafting-time-run-mods.json"
 New-Item -ItemType Directory -Path $mods -Force | Out-Null
@@ -62,7 +67,7 @@ if ($Target -eq "1.20.1-forge") {
     $legacyMods = Join-Path $run "mods"
     $oldManifest = Join-Path $legacyMods ".ae2-crafting-time-run-mods.json"
     if (Test-Path -LiteralPath $oldManifest) {
-        foreach ($filename in @(Get-Content -LiteralPath $oldManifest -Raw | ConvertFrom-Json)) {
+        foreach ($filename in (Get-Content -LiteralPath $oldManifest -Raw | ConvertFrom-Json)) {
             Remove-Item -LiteralPath (Join-Path $legacyMods ([IO.Path]::GetFileName($filename))) -Force -ErrorAction SilentlyContinue
         }
         Remove-Item -LiteralPath $oldManifest -Force
@@ -152,7 +157,7 @@ if ($Latest) {
 if (-not $Latest -and $ae2Version.version_number -ne $matrixEntry.compatible.ae2_version) {
     throw "AE2 version lock mismatch for $Target"
 }
-$runtimeArgs = @("-P$($profile.LoaderProperty)=$loaderVersion", "-P$($profile.Ae2Property)=$($ae2Version.version_number)", "-PruntimeRunDirectory=$runName")
+$runtimeArgs = @("-P$($profile.LoaderProperty)=$loaderVersion", "-P$($profile.Ae2Property)=$($ae2Version.version_number)", "-PruntimeRunDirectory=$run")
 Write-Host "profile $(if ($Latest) { 'latest' } else { 'compatible' })"
 Write-Host "runtime loader $loaderVersion"
 Write-Host "runtime ae2 $($ae2Version.version_number)"
@@ -177,13 +182,24 @@ if ($Target -eq "1.21.1-neoforge") {
     Write-Host "runtime ae2 group org.appliedenergistics"
 }
 
+if ($DriverScenario) {
+    if ($Target -ne "1.20.1-forge" -or -not $DriverOutputDirectory -or -not $DriverWorld) {
+        throw "Test-driver scenarios require Forge 1.20.1, an output directory, and a disposable world"
+    }
+    $runtimeArgs += "-PtestDriverScenario=$DriverScenario"
+    $runtimeArgs += "-PtestDriverProfile=$(if ($Latest) { 'latest' } else { 'compatible' })"
+    $runtimeArgs += "-PtestDriverOutput=$([IO.Path]::GetFullPath($DriverOutputDirectory))"
+    $runtimeArgs += "-PtestDriverWorld=$DriverWorld"
+    if ($Interactive) { $runtimeArgs += "-PtestDriverInteractive=true" }
+}
+
 if ($Target -eq "1.20.1-forge") {
     foreach ($filename in $managed) {
         Remove-Item -LiteralPath (Join-Path $legacyMods $filename) -Force -ErrorAction SilentlyContinue
     }
 }
 
-$previous = if (Test-Path -LiteralPath $manifest) { @(Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json) } else { @() }
+$previous = if (Test-Path -LiteralPath $manifest) { Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json } else { @() }
 foreach ($filename in $previous) {
     if ($managed -notcontains $filename) {
         Remove-Item -LiteralPath (Join-Path $mods ([IO.Path]::GetFileName($filename))) -Force -ErrorAction SilentlyContinue
@@ -193,6 +209,24 @@ foreach ($pattern in @("ae2ct-*.jar", "jei-*.jar")) {
     Get-ChildItem -Path (Join-Path $mods $pattern) -File -ErrorAction SilentlyContinue |
         Where-Object Name -NotIn $managed |
         Remove-Item -Force
+}
+
+if ($Target -eq "1.20.1-forge") {
+    $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
+        Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
+    if (-not $modVersion) { throw "Missing modVersion in gradle.properties" }
+    $driverName = "ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"
+    & (Join-Path $root "gradlew.bat") ":$($profile.Module):testDriverJar" @runtimeArgs @GradleArgs
+    if ($LASTEXITCODE -ne 0) { throw "Test-driver build failed" }
+    $driverArtifact = Join-Path $root "build\test-driver\$driverName"
+    if (-not (Test-Path -LiteralPath $driverArtifact -PathType Leaf)) {
+        throw "Missing exact test-driver artifact $driverArtifact"
+    }
+    Get-ChildItem -LiteralPath $mods -Filter "ae2-crafting-time-*-forge-1.20.1-test-driver.jar" -File |
+        Where-Object Name -ne $driverName | Remove-Item -Force
+    Copy-Item -LiteralPath $driverArtifact -Destination (Join-Path $mods $driverName) -Force
+    $managed.Add($driverName)
+    Write-Host "mod $driverName"
 }
 [IO.File]::WriteAllText($manifest, ($managed | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
 Write-Host "mod AE2 Crafting Time (Gradle source set :$($profile.Module))"

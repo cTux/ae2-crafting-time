@@ -15,6 +15,11 @@ ResolveOnly=0
 Latest=0
 Root=""
 VersionMatrix=""
+RuntimeDirectory=""
+DriverScenario=""
+DriverOutputDirectory=""
+DriverWorld=""
+Interactive=0
 declare -a GradleArgs=()
 
 while [ $# -gt 0 ]; do
@@ -24,6 +29,11 @@ while [ $# -gt 0 ]; do
     -ResolveOnly) ResolveOnly=1; shift;;
     -Root) Root="$2"; shift 2;;
     -VersionMatrix) VersionMatrix="$2"; shift 2;;
+    -RuntimeDirectory) RuntimeDirectory="$2"; shift 2;;
+    -DriverScenario) DriverScenario="$2"; shift 2;;
+    -DriverOutputDirectory) DriverOutputDirectory="$2"; shift 2;;
+    -DriverWorld) DriverWorld="$2"; shift 2;;
+    -Interactive) Interactive=1; shift;;
     *) GradleArgs+=("$1"); shift;;
   esac
 done
@@ -71,7 +81,7 @@ else
 fi
 
 if [ "$Latest" -eq 1 ]; then run_name="run-latest"; else run_name="run"; fi
-run="$root/versions/$Target/$run_name"
+if [ -n "$RuntimeDirectory" ]; then mkdir -p "$RuntimeDirectory"; run="$(cd "$RuntimeDirectory" && pwd)"; else run="$root/versions/$Target/$run_name"; fi
 if [ "$Target" = "1.20.1-forge" ]; then
   mods="$run/resolved-mods"
 else
@@ -202,7 +212,7 @@ else
   ae2Version_json="$(curl -fsS "$api/version/$ae2VersionId")"
 fi
 ae2Version="$(echo "$ae2Version_json" | jq -r '.version_number')"
-runtimeArgs=("-P$LoaderProperty=$loaderVersion" "-P$Ae2Property=$ae2Version" "-PruntimeRunDirectory=$run_name")
+runtimeArgs=("-P$LoaderProperty=$loaderVersion" "-P$Ae2Property=$ae2Version" "-PruntimeRunDirectory=$run")
 if [ "$Latest" -eq 1 ]; then echo "profile latest"; else echo "profile compatible"; fi
 echo "runtime loader $loaderVersion"
 echo "runtime ae2 $ae2Version"
@@ -222,6 +232,16 @@ if [ "$Target" = "1.21.1-neoforge" ]; then
   runtimeArgs+=("-PruntimeAe2NeoForge1211Group=org.appliedenergistics")
   runtimeArgs+=("-PruntimeLatestNeoForge1211")
   echo "runtime ae2 group org.appliedenergistics"
+fi
+if [ -n "$DriverScenario" ]; then
+  if [ "$Target" != "1.20.1-forge" ] || [ -z "$DriverOutputDirectory" ] || [ -z "$DriverWorld" ]; then
+    echo "Test-driver scenarios require Forge 1.20.1, an output directory, and a disposable world" >&2
+    exit 1
+  fi
+  if [ "$Latest" -eq 1 ]; then driver_profile="latest"; else driver_profile="compatible"; fi
+  runtimeArgs+=("-PtestDriverScenario=$DriverScenario" "-PtestDriverProfile=$driver_profile"
+    "-PtestDriverOutput=$DriverOutputDirectory" "-PtestDriverWorld=$DriverWorld")
+  [ "$Interactive" -eq 1 ] && runtimeArgs+=("-PtestDriverInteractive=true")
 fi
 
 if [ "$Target" = "1.20.1-forge" ]; then
@@ -258,6 +278,22 @@ for pattern in "ae2ct-*.jar" "jei-*.jar"; do
     fi
   done
 done
+
+if [ "$Target" = "1.20.1-forge" ]; then
+  mod_version="$(sed -n 's/^modVersion=//p' "$root/gradle.properties" | head -n 1)"
+  [ -n "$mod_version" ] || { echo "Missing modVersion in gradle.properties" >&2; exit 1; }
+  driver_name="ae2-crafting-time-$mod_version-forge-1.20.1-test-driver.jar"
+  "$root/gradlew" ":$Module:testDriverJar" "${runtimeArgs[@]}" "${GradleArgs[@]}"
+  driver_artifact="$root/build/test-driver/$driver_name"
+  [ -f "$driver_artifact" ] || { echo "Missing exact test-driver artifact $driver_artifact" >&2; exit 1; }
+  for file in "$mods"/ae2-crafting-time-*-forge-1.20.1-test-driver.jar; do
+    [ -e "$file" ] || continue
+    [ "$(basename "$file")" = "$driver_name" ] || rm -f "$file"
+  done
+  cp -f "$driver_artifact" "$mods/$driver_name"
+  managed+=("$driver_name")
+  echo "mod $driver_name"
+fi
 
 if [ "${#managed[@]}" -eq 0 ]; then
   echo "[]" > "$manifest"
