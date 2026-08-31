@@ -8,5 +8,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 @Mixin(CraftConfirmMenu.class)
 public interface CraftConfirmMenuAccessor {
     @Accessor(value = "selectedCpu", remap = false)
-    ICraftingCPU ae2craftingtime_test_driver$selectedCpu();
+    void ae2craftingtime_test_driver$selectedCpu(ICraftingCPU cpu);
 }

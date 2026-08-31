@@ -240,15 +240,14 @@ public final class CraftPlanScenario {
                 }
                 var context = StatsRequestContext.current(player);
                 var accessor = (CraftConfirmMenuAccessor) menu;
-                var attempts = context.grid().getCraftingService().getCpus().size() + 1;
-                for (int i = 0; i < attempts; i++) {
-                    var cpu = accessor.ae2craftingtime_test_driver$selectedCpu();
-                    if (cpu != null && cpu.getClass().getName().equals(expectedCpuClass())) {
-                        var id = ProfilerBridge.networkId(context.grid());
-                        ProfilerBridge.clearStats(new ProfileKey(id, marker.outputId()));
-                        return id;
-                    }
-                    menu.cycleSelectedCPU(true);
+                var cpu = context.grid().getCraftingService().getCpus().stream()
+                        .filter(candidate -> candidate.getClass().getName().equals(expectedCpuClass()))
+                        .findFirst().orElse(null);
+                if (cpu != null) {
+                    accessor.ae2craftingtime_test_driver$selectedCpu(cpu);
+                    var id = ProfilerBridge.networkId(context.grid());
+                    ProfilerBridge.clearStats(new ProfileKey(id, marker.outputId()));
+                    return id;
                 }
                 return null;
             });
