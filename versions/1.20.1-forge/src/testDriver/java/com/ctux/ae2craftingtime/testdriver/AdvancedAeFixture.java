@@ -60,7 +60,7 @@ final class AdvancedAeFixture {
             throw new IllegalStateException("AdvancedAE quantum core block entity was not placed");
         }
         if (!blockEntity.isFormed()) {
-            blockEntity.onReady();
+            blockEntity.updateMultiBlock(position);
         }
         if (!blockEntity.isFormed()) {
             throw new IllegalStateException("AdvancedAE quantum core did not form");
