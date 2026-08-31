@@ -9,6 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPUCalculator;
 import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
 
 import java.util.Arrays;
@@ -59,8 +60,13 @@ final class AdvancedAeFixture {
             throw new IllegalStateException("fixture player is unavailable");
         }
         var level = player.serverLevel();
-        if (!(level.getBlockEntity(placement.core()) instanceof AdvCraftingBlockEntity core)
-                || !core.isFormed()) {
+        if (!(level.getBlockEntity(placement.core()) instanceof AdvCraftingBlockEntity core)) {
+            throw new IllegalStateException("AdvancedAE quantum core was not placed");
+        }
+        if (!core.isFormed() && core.getMainNode().isReady()) {
+            new AdvCraftingCPUCalculator(core).calculateMultiblock(level, placement.core());
+        }
+        if (!core.isFormed()) {
             return false;
         }
         if (!(level.getBlockEntity(placement.anchor()) instanceof IInWorldGridNodeHost host)) {
