@@ -30,7 +30,7 @@ final class NeoEcoFixture {
     private NeoEcoFixture() {
     }
 
-    static void prepare(ServerPlayer player, FixtureMarker marker) {
+    static Placement place(ServerPlayer player, FixtureMarker marker) {
         if (player == null) {
             throw new IllegalStateException("fixture player is unavailable");
         }
@@ -39,7 +39,15 @@ final class NeoEcoFixture {
         var context = findSpace(level, terminal);
 
         context.blocks.forEach((pos, state) -> level.setBlockAndUpdate(pos, state));
-        var controller = context.blocks.keySet().stream()
+        return new Placement(List.copyOf(context.blocks.keySet()));
+    }
+
+    static void finish(ServerPlayer player, Placement placement) {
+        if (player == null) {
+            throw new IllegalStateException("fixture player is unavailable");
+        }
+        var level = player.serverLevel();
+        var controller = placement.blocks.stream()
                 .map(level::getBlockEntity)
                 .filter(ECOComputationSystemBlockEntity.class::isInstance)
                 .map(ECOComputationSystemBlockEntity.class::cast)
@@ -54,11 +62,14 @@ final class NeoEcoFixture {
             throw new IllegalStateException("NeoEco L9 computation cell is unavailable");
         }
         var cell = new ItemStack(cellItem);
-        context.blocks.keySet().stream()
+        placement.blocks.stream()
                 .map(level::getBlockEntity)
                 .filter(ECOComputationDriveBlockEntity.class::isInstance)
                 .map(ECOComputationDriveBlockEntity.class::cast)
                 .forEach(drive -> drive.setCellStack(cell));
+    }
+
+    record Placement(List<BlockPos> blocks) {
     }
 
     private static BlueprintContext findSpace(Level level, BlockPos terminal) {

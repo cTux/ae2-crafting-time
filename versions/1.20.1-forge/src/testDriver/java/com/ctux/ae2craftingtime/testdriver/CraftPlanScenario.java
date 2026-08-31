@@ -49,6 +49,7 @@ public final class CraftPlanScenario {
     private String networkId;
     private CompletableFuture<String> cpuCheck;
     private CompletableFuture<Integer> sampleCheck;
+    private CompletableFuture<NeoEcoFixture.Placement> fixturePlacement;
     private CompletableFuture<Void> fixtureSetup;
 
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
@@ -117,10 +118,18 @@ public final class CraftPlanScenario {
             throw new IllegalArgumentException("fixture world ID mismatch");
         }
         if (options.scenario().equals("neoeco-cpu")) {
+            var server = minecraft.getSingleplayerServer();
+            var playerId = minecraft.player.getUUID();
+            if (fixturePlacement == null) {
+                fixturePlacement = server.submit(() -> NeoEcoFixture.place(
+                        server.getPlayerList().getPlayer(playerId), marker));
+            }
+            if (!fixturePlacement.isDone()) {
+                return;
+            }
             if (fixtureSetup == null) {
-                var playerId = minecraft.player.getUUID();
-                fixtureSetup = minecraft.getSingleplayerServer().submit(() -> NeoEcoFixture.prepare(
-                        minecraft.getSingleplayerServer().getPlayerList().getPlayer(playerId), marker));
+                fixtureSetup = server.submit(() -> NeoEcoFixture.finish(
+                        server.getPlayerList().getPlayer(playerId), fixturePlacement.join()));
             }
             if (!fixtureSetup.isDone()) {
                 return;
