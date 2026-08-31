@@ -5,6 +5,32 @@ contains this checkout; keep `-RuntimeDirectory` on guest-local NTFS so Minecraf
 does not use VMware's shared filesystem for its live runtime. Each client has an
 8 GiB maximum heap. Maximize the exact Minecraft window before a visual check.
 
+For the fast Forge 1.20.1 UI smoke, run this on the host:
+
+```powershell
+.\scripts\invoke-ui-smoke-codexvm.ps1
+```
+
+It uses OpenSSH by default. Add `-Transport Vmrun` to use VMware guest
+execution, or `-Stop` to terminate only the PID tree recorded by the current
+run. Both transports dispatch into the logged-in Codex desktop so Minecraft is
+still visible. The guest checkout, Gradle output, resolved mods, and runtime
+stay warm under `C:\Users\Public\Documents\AE2CraftingTimeSmoke`; only per-run evidence and
+the disposable world are replaced.
+
+Progress does not require VNC. Read `status.json`, `launcher.stdout.log`, and
+`launcher.stderr.log` under
+`build\ui-smoke\1.20.1-forge\<profile>`. The status records the phase, exact
+PID, Java home, result, and evidence path. Use VNC only for the final maximized
+Minecraft visual check.
+
+Provision a fresh VM once by running `prepare-codexvm-ui-smoke.ps1` on the host,
+then run `setup-codexvm-ui-smoke.ps1` in an elevated guest PowerShell with the
+one-time JSON path printed by the host command. The guest deletes that JSON
+after installing OpenSSH, adding the dedicated `CodexSmoke` vmrun account, and
+installing the host public key. The reusable vmrun credential is encrypted for
+the current host user and is never stored in the repository.
+
 Use an ordinary script for the pinned compatible sandbox:
 
 ```powershell
