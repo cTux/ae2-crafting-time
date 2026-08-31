@@ -147,6 +147,10 @@ public final class CraftPlanScenario {
 
     private void stabilizePlan() throws IOException {
         var snapshot = UiObservationStore.latest();
+        if (snapshot == null || snapshot.rows().stream().noneMatch(row -> row.outputId().equals(marker.outputId()))) {
+            stableRows.reset();
+            return;
+        }
         if (!stable(snapshot)) {
             return;
         }
