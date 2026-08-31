@@ -9,8 +9,9 @@ $configurationPath = Join-Path $root "build\codexvm-ui-smoke-provision.json"
 
 if (-not (Test-Path -LiteralPath $SshKeyPath -PathType Leaf)) {
     New-Item -ItemType Directory -Path (Split-Path -Parent $SshKeyPath) -Force | Out-Null
-    & ssh-keygen.exe -q -t ed25519 -N "" -f $SshKeyPath
-    if ($LASTEXITCODE -ne 0) { throw "Failed to create the CodexVM SSH key" }
+    $keygen = Start-Process -FilePath "ssh-keygen.exe" -ArgumentList `
+        "-q -t ed25519 -N `"`" -f `"$SshKeyPath`"" -Wait -PassThru -NoNewWindow
+    if ($keygen.ExitCode -ne 0) { throw "Failed to create the CodexVM SSH key" }
 }
 
 $alphabet = "abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%"
