@@ -11,8 +11,8 @@ craft has an error, and locate a known problem machine.
 ## Vortex Hub
 
 - The Vortex Hub is a placeable block and item.
-- Placement binds it to the placing player's UUID. Automated placement without
-  a real player does not create a usable Hub.
+- Placement binds it to the placing player's UUID. Placement without a player
+  does not create a usable Hub.
 - It joins an adjacent ME network as a normal active AE2 device, including the
   network's channel and power rules.
 - It has no inventory or menu. Using it does nothing.
@@ -47,8 +47,8 @@ craft has an error, and locate a known problem machine.
   to red within one second.
 - `Waiting` and `Collecting data` are not errors and leave the lights purple.
 - The red state returns to purple within one second after the last error clears.
-- The light is an emissive block texture with ordinary Minecraft luminance;
-  colored dynamic lighting is not required.
+- The colored lens texture uses ordinary fixed Minecraft block luminance;
+  colored dynamic lighting and a custom emissive renderer are not required.
 - A row uses the existing TTC status priority and formatting. If several
   constituent outputs are blocked, the highest-priority visible error is the
   job status.
@@ -99,7 +99,8 @@ craft has an error, and locate a known problem machine.
   identity.
 - Include standard AE2 CPUs and already-supported addon CPUs when they belong
   to a crafting service exposed by a connected Hub; addon absence remains safe.
-- Use English and Ukrainian names, messages, statuses, and empty states.
+- Use English and Ukrainian block names, messages, statuses, and empty states.
+  The proper name `Tim Craftsman` remains unchanged in every locale.
 - Bound snapshot rows, identifiers, and strings at every packet boundary.
 
 ## Not Included

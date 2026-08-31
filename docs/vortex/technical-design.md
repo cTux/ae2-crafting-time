@@ -20,9 +20,10 @@ registration seams.
 Register two blocks, their block items, two block-entity types, and one Vortex
 menu. Do not register a new NPC entity: use a tagged vanilla villager for Tim.
 
-Both block entities store `owner: UUID`. A placement callback accepts only the
-placing server player and writes that UUID. Item stacks carry no ownership.
-The Vortex block entity also stores `tim: UUID` and its horizontal facing.
+Both block entities store `owner: UUID`. A placement callback requires a
+non-null placing player and writes that UUID; placement paths with no player do
+not create a usable bound block. Item stacks carry no ownership. The Vortex
+block entity also stores `tim: UUID` and its horizontal facing.
 
 The Hub owns an AE2 managed grid node created through the supported
 `GridHelper`/managed-node API for its source layer. It exposes no inventory or
@@ -74,10 +75,11 @@ different order. Total job TTC is the sum of usable remaining-output estimates,
 matching the existing crafting-status total rather than estimating only the
 final output.
 
-A row identity is valid only within one open Vortex menu and combines the
-deduplicated grid identity and CPU identity behind an opaque positive integer.
-Sort rows deterministically by error presence, localized output name, then row
-identity so one-second refreshes do not visibly shuffle unchanged jobs.
+A row identity is valid only within one open Vortex menu. The menu keeps an
+identity map from each live CPU object to an opaque, increasing positive
+integer, retaining existing ids and dropping completed CPUs on refresh. Render
+rows by that id so unchanged jobs do not shuffle; do not sort server-side by
+localized display text.
 
 ## Menu, Packets, And Validation
 
@@ -88,10 +90,10 @@ private system feedback and no menu.
 Add these packets to every loader transport:
 
 - `VortexSnapshotRequestC2S(containerId)`;
-- `VortexSnapshotS2C(containerId, rows, hasError)`;
+- `VortexSnapshotS2C(containerId, rows)`;
 - `LocateVortexProblemC2S(containerId, rowId)`;
-- `VortexProblemTargetS2C(containerId, rowId, result, dimensionId?, blockPos?,
-  expiresAt?)`, where the bounded result is `TARGET`, `NO_TARGET`, or `STALE`.
+- `VortexProblemTargetS2C(containerId, rowId, result, dimensionId?, blockPos?)`,
+  where the bounded result is `TARGET`, `NO_TARGET`, or `STALE`.
 
 Reuse the existing per-player request rate limiter and one-second request
 cadence. Limit a snapshot to `PacketLimits.MAX_KEYS` rows, validate collection
@@ -120,16 +122,18 @@ the block entity that AE2 actually selected or invoked for that pattern. Clear
 it on progress, job finish/cancel, profiler disable, runtime reload, provider
 unload, or replacement by newer verified evidence.
 
-`DELAYED` can expose its last verified processing machine while that machine
-still exists. Other error states expose a target only when their own server
-observation identifies one. `NO PROVIDER` always has none. The collector never
-uses the Hub, CPU, nearest provider, or storage as a substitute.
+`DELAYED` can expose its last verified Pattern Provider or addon-owned provider
+block while that block still exists. Do not call it the downstream processing
+machine unless the dispatch hook identifies that machine directly. Other error
+states expose a target only when their own server observation identifies one.
+`NO PROVIDER` always has none. The collector never uses the Hub, CPU, nearest
+provider, or storage as a substitute.
 
 On a successful locate response, close the client screen, show dimension and
-coordinates in private system text, and retain one client-only target for 30
-seconds. Render an outline only when the current dimension matches and the
-target chunk is loaded. Dimension change, expiry, disconnect, or target
-replacement clears the outline.
+coordinates in private system text, and start a client-local 30-second expiry
+when the response arrives. Render an outline only when the current dimension
+matches and the target chunk is loaded. Dimension change, expiry, disconnect,
+or target replacement clears the outline.
 
 ## Vortex Lights
 
@@ -138,24 +142,24 @@ queries the shared owner snapshot cache once per second and updates `ERROR`
 only when the value changes. The cache is populated once per owner/tick, so
 multiple Vortex blocks do not repeat grid enumeration.
 
-Block models select purple or red emissive textures from `ERROR`. Use one
-ordinary fixed luminance value for both states; vanilla does not provide
-colored light. The server-owned property makes the appearance consistent even
-when no UI is open.
+Block models select purple or red lens textures from `ERROR`. Use one ordinary
+fixed luminance value for both states; vanilla does not provide colored light,
+and no custom emissive renderer is needed. The server-owned property makes the
+appearance consistent even when no UI is open.
 
 ## Tim Lifecycle
 
 Spawn a vanilla villager one block in front of the Vortex center and tag it
 with the Vortex owner, dimension, and position in persistent entity data. Set
-its custom name to `Tim Craftsman`, make the name visible, and enable no-AI,
-silent, persistent, and invulnerable flags.
+its untranslated custom name to `Tim Craftsman`, make the name visible, and
+enable no-AI, no-gravity, silent, persistent, and invulnerable flags.
 
 Once per second while loaded, the Vortex validates its saved Tim UUID. Missing
 Tim is recreated and duplicates pointing to the same Vortex are discarded. A
-lightweight server tick resets the survivor to the anchor position with zero
-velocity so pistons, water, and collisions cannot move him. Block removal
-discards the linked Tim. On entity load, a Tim whose linked Vortex no longer
-exists discards itself.
+lightweight server tick enables no-physics and resets the survivor to the anchor
+position with zero velocity so an obstructed anchor, pistons, water, and entity
+collisions cannot move or harm him. Block removal discards the linked Tim. On
+entity load, a Tim whose linked Vortex no longer exists discards itself.
 
 Cancel interaction with only tagged Tim villagers through Fabric's entity-use
 callback and the Forge/NeoForge entity-interact events. Return no GUI, trade,

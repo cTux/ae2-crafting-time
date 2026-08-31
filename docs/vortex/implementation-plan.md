@@ -8,7 +8,8 @@ running the required verification.
 1. Register Vortex Hub and Vortex blocks, block items, block entities, the
    Vortex menu, creative-tab entries, loot tables, block states, models,
    textures, and English/Ukrainian names on all four targets.
-2. Persist owner UUIDs from real player placement; keep dropped items unbound.
+2. Persist owner UUIDs from placement with a non-null player; keep dropped
+   items unbound and leave non-player placement unusable.
 3. Give the Hub an AE2 managed grid node with normal power/channel behavior and
    no use interaction or inventory.
 4. Add loader and shared tests for registration, placement ownership, NBT
@@ -47,8 +48,8 @@ running the required verification.
 
 ## Phase 4: Add Error Lights And Location
 
-1. Add the Vortex `ERROR` state and purple/red emissive model variants with one
-   fixed vanilla luminance value.
+1. Add the Vortex `ERROR` state and purple/red lens model variants with one
+   fixed vanilla luminance value and no custom renderer.
 2. Drive it from the cached owner snapshot once per second and test normal,
    each error status, multiple Vortex blocks, and last-error recovery.
 3. Capture only verified dispatch-machine positions in existing CPU-scoped
@@ -63,8 +64,9 @@ running the required verification.
 
 1. Spawn and tag one vanilla villager at each Vortex anchor with the required
    name and vanilla flags; do not add an entity type or renderer.
-2. Reconcile the linked UUID once per second, re-anchor position/velocity every
-   server tick, remove duplicates and orphans, and discard Tim with the block.
+2. Reconcile the linked UUID once per second; enforce no-physics and re-anchor
+   position/velocity every server tick; remove duplicates and orphans; discard
+   Tim with the block.
 3. Cancel interaction with tagged Tim only through each loader's native event;
    leave ordinary villagers unchanged.
 4. Test placement, chunk reload, missing/duplicate/orphan recovery, block
