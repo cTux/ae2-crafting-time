@@ -298,7 +298,7 @@ public final class CraftPlanScenario {
     private String expectedCpuClass() {
         return options.scenario().equals("neoeco-cpu")
                 ? "cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU"
-                : "net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPU";
+                : "net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPUCluster";
     }
 
     private void cycleSorts() {
