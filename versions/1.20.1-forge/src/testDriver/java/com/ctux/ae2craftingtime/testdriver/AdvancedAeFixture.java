@@ -80,7 +80,7 @@ final class AdvancedAeFixture {
             throw new IllegalStateException("AdvancedAE quantum core connection is unavailable");
         }
         var hostNode = host.getGridNode(placement.direction());
-        var coreNode = core.getGridNode(placement.direction().getOpposite());
+        var coreNode = core.getMainNode().getNode();
         if (hostNode == null || coreNode == null) {
             return false;
         }
