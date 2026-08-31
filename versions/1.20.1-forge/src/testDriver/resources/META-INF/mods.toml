@@ -1,0 +1,31 @@
+modLoader = "javafml"
+loaderVersion = "${loader_version_range}"
+license = "MIT"
+
+[[mods]]
+modId = "ae2craftingtime_test_driver"
+version = "${mod_version}"
+displayName = "AE2 Crafting Time Test Driver"
+authors = "ctux"
+description = '''Development-only Forge UI smoke-test driver.'''
+
+[[dependencies.ae2craftingtime_test_driver]]
+modId = "forge"
+mandatory = true
+versionRange = "${forge_version_range}"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.ae2craftingtime_test_driver]]
+modId = "minecraft"
+mandatory = true
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "CLIENT"
+
+[[dependencies.ae2craftingtime_test_driver]]
+modId = "ae2craftingtime"
+mandatory = true
+versionRange = "[${mod_version}]"
+ordering = "AFTER"
+side = "CLIENT"

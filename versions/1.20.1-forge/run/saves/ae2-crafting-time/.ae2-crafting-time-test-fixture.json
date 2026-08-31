@@ -1,0 +1,13 @@
+{
+  "schema": 1,
+  "scenario": "craft-plan",
+  "sourceFixtureId": "ae2-crafting-time",
+  "disposableWorldId": "SOURCE_ONLY",
+  "terminal": {
+    "x": -13,
+    "y": -59,
+    "z": 5,
+    "face": "SOUTH"
+  },
+  "outputId": "minecraft:furnace"
+}
