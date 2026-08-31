@@ -140,9 +140,9 @@ STARTING
   -> TERMINAL_OPEN
   -> PLAN_OPEN
   -> PLAN_STABLE
-  -> BASE_CHECKED
-  -> SORTS_CHECKED
-  -> TOOLTIP_CHECKED
+  -> BASE_CHECKED -> SORTS_CHECKED -> TOOLTIP_CHECKED
+  |  ADDON_CPU_SELECTED -> ADDON_CRAFT_SUBMITTED
+  |  -> ADDON_SAMPLE_RECORDED -> ADDON_PLAN_OPEN
   -> RESULT_WRITTEN
   -> QUIT_REQUESTED
 ```
@@ -244,9 +244,10 @@ destination. It flushes and atomically renames the file to `result.json`; an
 unsupported or failed atomic move is a scenario failure, never a pass.
 
 `schema` is `1`, `complete` is true only after every required check and
-screenshot write completes, and `checks` contains exactly the six keys in the
-spec. Failures add a structured object with step, code, expected, and observed
-values. Secrets, absolute user paths, and arbitrary log text are excluded.
+screenshot write completes, and `checks` contains exactly the required set for
+the selected scenario. Failures add a structured object with step, code,
+expected, and observed values. Secrets, absolute user paths, and arbitrary log
+text are excluded.
 
 After the client exits, `run-ui-smoke.ps1` independently validates the JSON,
 required files, production/driver version pair, and exit code. It copies the

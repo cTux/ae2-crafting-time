@@ -12,7 +12,7 @@ public final class TestDriverRuntime implements AutoCloseable {
     private final InteractiveMcpServer endpoint;
 
     public TestDriverRuntime(DriverOptions options, String driverFile) throws Exception {
-        GLFW.glfwMaximizeWindow(minecraft.getWindow().getWindow());
+        minecraft.execute(() -> GLFW.glfwMaximizeWindow(minecraft.getWindow().getWindow()));
         scenario = new CraftPlanScenario(minecraft, options, driverFile);
         endpoint = options.interactive() ? new InteractiveMcpServer(minecraft, scenario, options) : null;
     }

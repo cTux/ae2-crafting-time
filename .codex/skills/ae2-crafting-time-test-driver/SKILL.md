@@ -12,7 +12,8 @@ existing fixture closest to the requested scenario.
 
 - Name it `<mod>-cpu`.
 - Extend `AddonCpuFixture` with only the mod-specific placement, formation, and
-  CPU lookup. Register its constructor in `AddonCpuFixture.FIXTURES`.
+  CPU lookup. Register its class name in `AddonCpuFixture.FIXTURES` so other
+  optional fixture classes are not loaded.
 - Add the optional mod to `testDriverCompileOnly` unless the inherited main
   compile classpath already supplies it. Keep production metadata, runtime, and
   artifacts independent of the fixture.
