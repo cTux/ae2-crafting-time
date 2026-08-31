@@ -9,9 +9,11 @@ description: Audit dependencies or run AE2 Crafting Time client, UI, version-mat
 
 - Load `use-codex-vm` before every Minecraft launch or visual check. Reuse the
   running VM and its read/write `projects` share; do not add a duplicate share.
-- Keep the live Minecraft runtime on guest-local NTFS. The repository may be
-  read from `\\vmware-host\Shared Folders\projects`; pass a guest-local
-  `-RuntimeDirectory` to repository launchers.
+- Read the repository through `\\vmware-host\Shared Folders`, then stage the
+  checkout and live Minecraft runtime on guest-local NTFS before launching.
+  Loom writes below the checkout and fails on VMware shared-folder rename and
+  watch semantics. Pass a guest-local `-RuntimeDirectory` to the staged
+  repository launchers.
 - Clients use the repository's 8 GiB heap setting. Maximize the exact Minecraft
   window through VNC before visual inspection. Test-driver scenarios maximize
   themselves, but still verify the resulting window.

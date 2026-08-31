@@ -50,7 +50,6 @@ $profile = $profiles[$Target]
 $root = if ($Root) { $Root } else { Split-Path -Parent $PSScriptRoot }
 $runName = if ($Latest) { "run-latest" } else { "run" }
 $run = if ($RuntimeDirectory) { [IO.Path]::GetFullPath($RuntimeDirectory) } else { Join-Path $root "versions\$Target\$runName" }
-$projectCacheArgs = if ($RuntimeDirectory) { @("--project-cache-dir", (Join-Path $run ".gradle-project-cache")) } else { @() }
 $mods = Join-Path $run $(if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" })
 $manifest = Join-Path $mods ".ae2-crafting-time-run-mods.json"
 New-Item -ItemType Directory -Path $mods -Force | Out-Null
@@ -217,7 +216,7 @@ if ($Target -eq "1.20.1-forge") {
         Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
     if (-not $modVersion) { throw "Missing modVersion in gradle.properties" }
     $driverName = "ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"
-    & (Join-Path $root "gradlew.bat") ":$($profile.Module):testDriverJar" @runtimeArgs @projectCacheArgs @GradleArgs
+    & (Join-Path $root "gradlew.bat") ":$($profile.Module):testDriverJar" @runtimeArgs @GradleArgs
     if ($LASTEXITCODE -ne 0) { throw "Test-driver build failed" }
     $driverArtifact = Join-Path $root "build\test-driver\$driverName"
     if (-not (Test-Path -LiteralPath $driverArtifact -PathType Leaf)) {
@@ -233,6 +232,6 @@ if ($Target -eq "1.20.1-forge") {
 Write-Host "mod AE2 Crafting Time (Gradle source set :$($profile.Module))"
 
 if (-not $ResolveOnly) {
-    & (Join-Path $root "gradlew.bat") ":$($profile.Module):runClient" @runtimeArgs @projectCacheArgs @GradleArgs
+    & (Join-Path $root "gradlew.bat") ":$($profile.Module):runClient" @runtimeArgs @GradleArgs
     exit $LASTEXITCODE
 }
