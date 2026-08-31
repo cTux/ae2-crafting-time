@@ -74,7 +74,8 @@ final class AdvancedAeFixture {
             new AdvCraftingCPUCalculator(core).calculateMultiblock(level, placement.core());
         }
         if (!core.isFormed()) {
-            return false;
+            throw new IllegalStateException("AdvancedAE quantum core did not form after rescan; node ready="
+                    + core.getMainNode().isReady());
         }
         if (!(level.getBlockEntity(placement.anchor()) instanceof IInWorldGridNodeHost host)) {
             throw new IllegalStateException("AdvancedAE quantum core connection is unavailable");
@@ -82,7 +83,8 @@ final class AdvancedAeFixture {
         var hostNode = host.getGridNode(placement.direction());
         var coreNode = core.getMainNode().getNode();
         if (hostNode == null || coreNode == null) {
-            return false;
+            throw new IllegalStateException("AdvancedAE connection nodes are unavailable; host=" + (hostNode != null)
+                    + " core=" + (coreNode != null));
         }
         if (hostNode.getGrid() != coreNode.getGrid()) {
             GridHelper.createConnection(hostNode, coreNode);
