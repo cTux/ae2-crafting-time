@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IInWorldGridNodeHost;
+import appeng.api.networking.GridHelper;
 import appeng.api.networking.crafting.ICraftingCPU;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -56,7 +57,8 @@ final class AdvancedAeFixture {
                     }
                     var corePosition = min.offset(1, 1, 1);
                     level.setBlockAndUpdate(corePosition, core.defaultBlockState());
-                    return new Placement(min, min.offset(2, 2, 2), corePosition);
+                    return new Placement(min, min.offset(2, 2, 2), corePosition,
+                            anchor.immutable(), anchor.relative(direction), direction);
                 }
             }
         }
@@ -85,6 +87,18 @@ final class AdvancedAeFixture {
         if (!blockEntity.isFormed()) {
             throw new IllegalStateException("AdvancedAE quantum core did not form");
         }
+        if (!(level.getBlockEntity(placement.anchor()) instanceof IInWorldGridNodeHost host)
+                || !(level.getBlockEntity(placement.connection()) instanceof IInWorldGridNodeHost computer)) {
+            throw new IllegalStateException("AdvancedAE quantum computer connection is unavailable");
+        }
+        var hostNode = host.getGridNode(placement.direction());
+        var computerNode = computer.getGridNode(placement.direction().getOpposite());
+        if (hostNode == null || computerNode == null) {
+            throw new IllegalStateException("AdvancedAE quantum computer connection nodes are unavailable");
+        }
+        if (hostNode.getGrid() != computerNode.getGrid()) {
+            GridHelper.createConnection(hostNode, computerNode);
+        }
     }
 
     static ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {
@@ -97,7 +111,8 @@ final class AdvancedAeFixture {
         return cpu.isActive() && cpu.getGrid() == grid ? cpu : null;
     }
 
-    record Placement(BlockPos min, BlockPos max, BlockPos core) {
+    record Placement(BlockPos min, BlockPos max, BlockPos core, BlockPos anchor, BlockPos connection,
+            Direction direction) {
     }
 
     private static BlockPos minimum(BlockPos anchor, Direction direction) {
