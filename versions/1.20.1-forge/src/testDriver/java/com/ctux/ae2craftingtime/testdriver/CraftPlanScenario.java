@@ -240,9 +240,12 @@ public final class CraftPlanScenario {
                 }
                 var context = StatsRequestContext.current(player);
                 var accessor = (CraftConfirmMenuAccessor) menu;
-                var cpu = context.grid().getCraftingService().getCpus().stream()
-                        .filter(candidate -> candidate.getClass().getName().equals(expectedCpuClass()))
-                        .findFirst().orElse(null);
+                var cpu = options.scenario().equals("advancedae-cpu")
+                        ? AdvancedAeFixture.cpu(player, advancedAePlacement.join(), context.grid())
+                        : context.grid().getCraftingService().getCpus().stream()
+                                .filter(candidate -> candidate.getClass().getName()
+                                        .equals("cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU"))
+                                .findFirst().orElse(null);
                 if (cpu != null) {
                     accessor.ae2craftingtime_test_driver$selectedCpu(cpu);
                     var id = ProfilerBridge.networkId(context.grid());
@@ -304,12 +307,6 @@ public final class CraftPlanScenario {
                 .anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")));
         screenshot(options.scenario().replace("-cpu", "") + "-profiled-plan.png");
         writePass();
-    }
-
-    private String expectedCpuClass() {
-        return options.scenario().equals("neoeco-cpu")
-                ? "cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU"
-                : "net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPU";
     }
 
     private void cycleSorts() {

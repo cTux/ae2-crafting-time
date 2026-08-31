@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IInWorldGridNodeHost;
+import appeng.api.networking.crafting.ICraftingCPU;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -84,6 +85,16 @@ final class AdvancedAeFixture {
         if (!blockEntity.isFormed()) {
             throw new IllegalStateException("AdvancedAE quantum core did not form");
         }
+    }
+
+    static ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {
+        if (player == null
+                || !(player.serverLevel().getBlockEntity(placement.core()) instanceof AdvCraftingBlockEntity core)
+                || core.getCluster() == null) {
+            return null;
+        }
+        var cpu = core.getCluster().getRemainingCapacityCPU();
+        return cpu.isActive() && cpu.getGrid() == grid ? cpu : null;
     }
 
     record Placement(BlockPos min, BlockPos max, BlockPos core) {
