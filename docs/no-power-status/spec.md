@@ -1,0 +1,61 @@
+# No Power Status
+
+Issue: [#121](https://github.com/cTux/ae2-crafting-time/issues/121)
+
+## Goal
+
+Show `NO POWER` on a crafting-status row when an active AE2 network cannot
+supply the energy required to dispatch the next batch of that pattern.
+
+## Player behavior
+
+- Show `NO POWER` only after AE2's real simulated energy extraction returns
+  less than the current pattern dispatch requires.
+- Describe AE2 network energy. Do not imply that Crafting CPU byte storage or
+  the external processing machine's FE/RF buffer is the problem.
+- Do not label an inactive CPU `NO POWER`; inactivity can also mean a broken
+  multiblock, lost channel, or network split.
+- Allow the status while earlier batches of the same output remain active.
+- Refresh through the existing one-second status request cycle and remove a
+  resolved status within one refresh.
+- Render bold red `NO POWER` / `Немає енергії`.
+- Add these tooltip lines:
+  - `The ME network can't power the next pattern dispatch.`
+  - `Increase network power generation or stored energy.`
+- Give `NO PROVIDER` priority when both blockers affect patterns contributing
+  to the same output row. Otherwise `NO POWER` wins over `Waiting`, `DELAYED`,
+  TTC, and `Collecting data`.
+
+## Compatibility
+
+- Support every row in `scripts/release-matrix.json`.
+- Keep the logical server authoritative in singleplayer and multiplayer.
+- Reuse the shared blocker transport planned with `NO PROVIDER` so the packet
+  layout changes only once.
+- Apply the same lifecycle to standard AE2 and supported AdvancedAE CPUs where
+  the exact energy-check seam exists.
+- Update English and Ukrainian together.
+
+## Not included
+
+- Diagnosing the external machine's energy, speed, or recipe state.
+- Calling every inactive or offline CPU a power failure.
+- Measuring which energy cell, controller, or generator is responsible.
+- Automatic power changes, a config option, or a new screen.
+- Craft-plan, Crafting Tree, or ME Requester badges.
+- Persistence across world reloads.
+
+## Acceptance criteria
+
+- An active network whose available AE energy is below the next dispatch cost
+  shows `NO POWER` for the affected scheduled output after the next refresh.
+- Supplying enough AE energy removes the status within one refresh and allows
+  the normal dispatch path to continue unchanged.
+- External-machine FE/RF shortage alone never produces `NO POWER`.
+- An inactive CPU alone never produces `NO POWER`.
+- `NO PROVIDER` wins deterministically if both blockers contribute to one row.
+- Finish, cancellation, disable, and runtime reload clear the state.
+- The visible status and tooltip fit and read naturally in English and
+  Ukrainian on every supported target.
+- New executable branches and packet boundaries have full line and branch
+  coverage.
