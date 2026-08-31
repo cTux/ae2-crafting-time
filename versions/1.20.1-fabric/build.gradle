@@ -6,15 +6,15 @@ base {
     archivesName = 'ae2-crafting-time-1.20.1-Fabric'
 }
 
-def runtimeRunDirectory = providers.gradleProperty('runtimeRunDirectory').getOrElse('run')
+def runtimeRunDirectory = project.relativePath(providers.gradleProperty('runtimeRunDirectory').getOrElse('run'))
 
 loom {
     runs {
         client {
-            runDir project.file(runtimeRunDirectory)
+            runDir runtimeRunDirectory
             vmArg '-Xmx8G'
         }
-        server { runDir project.file(runtimeRunDirectory) }
+        server { runDir runtimeRunDirectory }
     }
     mixin {
         defaultRefmapName = 'ae2craftingtime.refmap.json'
