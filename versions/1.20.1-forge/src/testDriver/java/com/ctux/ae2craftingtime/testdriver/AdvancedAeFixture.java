@@ -55,7 +55,7 @@ final class AdvancedAeFixture {
                     }
                     var corePosition = min.offset(1, 1, 1);
                     level.setBlockAndUpdate(corePosition, core.defaultBlockState());
-                    return new Placement(corePosition);
+                    return new Placement(min, min.offset(2, 2, 2), corePosition);
                 }
             }
         }
@@ -67,18 +67,26 @@ final class AdvancedAeFixture {
             throw new IllegalStateException("fixture player is unavailable");
         }
         var position = placement.core();
-        if (!(player.serverLevel().getBlockEntity(position) instanceof AdvCraftingBlockEntity blockEntity)) {
+        var level = player.serverLevel();
+        if (!(level.getBlockEntity(position) instanceof AdvCraftingBlockEntity blockEntity)) {
             throw new IllegalStateException("AdvancedAE quantum core block entity was not placed");
         }
         if (!blockEntity.isFormed()) {
-            new AdvCraftingCPUCalculator(blockEntity).calculateMultiblock(player.serverLevel(), position);
+            var calculator = new AdvCraftingCPUCalculator(blockEntity);
+            if (!calculator.checkMultiblockScale(placement.min(), placement.max())
+                    || !calculator.verifyInternalStructure(level, placement.min(), placement.max())) {
+                throw new IllegalStateException("AdvancedAE quantum computer fixture is invalid");
+            }
+            calculator.updateBlockEntities(
+                    calculator.createCluster(level, placement.min(), placement.max()),
+                    level, placement.min(), placement.max());
         }
         if (!blockEntity.isFormed()) {
             throw new IllegalStateException("AdvancedAE quantum core did not form");
         }
     }
 
-    record Placement(BlockPos core) {
+    record Placement(BlockPos min, BlockPos max, BlockPos core) {
     }
 
     private static BlockPos minimum(BlockPos anchor, Direction direction) {
