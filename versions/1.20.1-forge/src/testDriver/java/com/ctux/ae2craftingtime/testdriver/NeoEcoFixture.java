@@ -6,6 +6,7 @@ import cn.dancingsnow.neoecoae.all.NEMultiBlocks;
 import cn.dancingsnow.neoecoae.blocks.entity.computation.ECOComputationDriveBlockEntity;
 import cn.dancingsnow.neoecoae.blocks.entity.computation.ECOComputationSystemBlockEntity;
 import cn.dancingsnow.neoecoae.multiblock.definition.MultiBlockContext;
+import cn.dancingsnow.neoecoae.multiblock.placement.MultiBlockRotation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -13,7 +14,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -108,10 +108,11 @@ final class NeoEcoFixture {
                 if (node == null || node.getGrid() != grid) {
                     continue;
                 }
-                for (Rotation rotation : Rotation.values()) {
-                    var interfaceOffset = INTERFACE_OFFSET.rotate(rotation);
+                for (Direction facing : List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)) {
+                    var interfaceOffset = MultiBlockRotation.localToWorld(
+                            INTERFACE_OFFSET, BlockPos.ZERO, facing);
                     var candidate = blueprint(
-                            level, anchor.relative(direction).subtract(interfaceOffset), rotation);
+                            level, anchor.relative(direction).subtract(interfaceOffset), facing);
                     if (candidate.blocks.keySet().stream().allMatch(pos -> level.getBlockState(pos).isAir())) {
                         return candidate;
                     }
@@ -121,29 +122,29 @@ final class NeoEcoFixture {
         throw new IllegalStateException("no empty space beside the fixture AE2 grid for NeoEco CPU");
     }
 
-    private static BlueprintContext blueprint(Level level, BlockPos origin, Rotation rotation) {
-        var context = new BlueprintContext(level, origin, rotation);
+    private static BlueprintContext blueprint(Level level, BlockPos controllerPos, Direction facing) {
+        var context = new BlueprintContext(level, controllerPos, facing);
         NEMultiBlocks.COMPUTATION_SYSTEM_L9.createLevel(context);
         return context;
     }
 
     private static final class BlueprintContext extends MultiBlockContext {
         private final Level level;
-        private final BlockPos origin;
-        private final Rotation rotation;
+        private final BlockPos controllerPos;
+        private final Direction facing;
         private final LinkedHashMap<BlockPos, BlockState> blocks = new LinkedHashMap<>();
 
-        private BlueprintContext(Level level, BlockPos origin, Rotation rotation) {
+        private BlueprintContext(Level level, BlockPos controllerPos, Direction facing) {
             this.level = level;
-            this.origin = origin;
-            this.rotation = rotation;
+            this.controllerPos = controllerPos;
+            this.facing = facing;
             repeats = 1;
         }
 
         @Override
         public void setBlock(BlockPos pos, BlockState blockState) {
-            var target = origin.offset(pos.rotate(rotation));
-            blocks.put(target, blockState.rotate(level, target, rotation));
+            var target = MultiBlockRotation.localToWorld(pos, controllerPos, facing);
+            blocks.put(target, MultiBlockRotation.rotateState(blockState, facing));
         }
 
         @Override
