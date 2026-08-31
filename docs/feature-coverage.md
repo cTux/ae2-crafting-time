@@ -34,5 +34,6 @@ These documents are proposals, not claims about the current JARs:
 - [Collecting Data status](collecting-data-status/spec.md)
 - [Waiting To Start status](waiting-to-start/spec.md)
 - [CPU-bound craft-time stats](cpu-bound-stats/index.md)
+- [AE2 Ponder guides](ae2-ponder-guides/spec.md)
 - the remaining addon integration layers described by the
   [AE2 addon integration plan](ae2-addon-integration/implementation-plan.md)
