@@ -7,6 +7,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -44,6 +45,15 @@ final class AdvancedAeFixture {
                 var target = anchor.relative(direction);
                 if (node != null && node.getGrid() == grid && level.getBlockState(target).isAir()) {
                     level.setBlockAndUpdate(target, core.defaultBlockState());
+                    if (!(level.getBlockEntity(target) instanceof AdvCraftingBlockEntity blockEntity)) {
+                        throw new IllegalStateException("AdvancedAE quantum core block entity was not placed");
+                    }
+                    if (!blockEntity.isFormed()) {
+                        blockEntity.onReady();
+                    }
+                    if (!blockEntity.isFormed()) {
+                        throw new IllegalStateException("AdvancedAE quantum core did not form");
+                    }
                     return;
                 }
             }
