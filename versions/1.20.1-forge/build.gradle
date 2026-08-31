@@ -219,7 +219,7 @@ def reobfTestDriverJar = obfuscation.reobfuscate(testDriverUnmappedJar, sourceSe
 }
 
 tasks.named('reobfJar') {
-    mustRunAfter tasks.named('compileTestDriverJava')
+    dependsOn tasks.named('compileTestDriverJava')
 }
 
 tasks.named('testDriverJar') {
