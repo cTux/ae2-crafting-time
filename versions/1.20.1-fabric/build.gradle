@@ -11,10 +11,10 @@ def runtimeRunDirectory = providers.gradleProperty('runtimeRunDirectory').getOrE
 loom {
     runs {
         client {
-            runDir runtimeRunDirectory
+            runDir project.file(runtimeRunDirectory)
             vmArg '-Xmx8G'
         }
-        server { runDir runtimeRunDirectory }
+        server { runDir project.file(runtimeRunDirectory) }
     }
     mixin {
         defaultRefmapName = 'ae2craftingtime.refmap.json'
