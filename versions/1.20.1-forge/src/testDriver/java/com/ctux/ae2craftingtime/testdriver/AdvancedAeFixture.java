@@ -52,7 +52,7 @@ final class AdvancedAeFixture {
                         throw new IllegalStateException("AdvancedAE quantum core placement produced "
                                 + ForgeRegistries.BLOCKS.getKey(level.getBlockState(position).getBlock()));
                     }
-                    return new Placement(position, anchor.immutable());
+                    return new Placement(position, terminal);
                 }
             }
         }
@@ -80,11 +80,11 @@ final class AdvancedAeFixture {
             throw new IllegalStateException("AdvancedAE quantum core did not form after rescan; node ready="
                     + core.getMainNode().isReady());
         }
-        if (!(level.getBlockEntity(placement.anchor()) instanceof IInWorldGridNodeHost host)) {
-            throw new IllegalStateException("AdvancedAE fixture host is unavailable");
+        if (!(level.getBlockEntity(placement.terminal()) instanceof IInWorldGridNodeHost host)) {
+            throw new IllegalStateException("AdvancedAE fixture terminal is unavailable");
         }
         var hostNode = Arrays.stream(Direction.values()).map(host::getGridNode).filter(Objects::nonNull)
-                .findFirst().orElseThrow(() -> new IllegalStateException("AdvancedAE fixture host node is unavailable"));
+                .findFirst().orElseThrow(() -> new IllegalStateException("AdvancedAE fixture terminal node is unavailable"));
         var coreNode = core.getMainNode().getNode();
         if (coreNode == null) {
             throw new IllegalStateException("AdvancedAE core node is unavailable");
@@ -112,6 +112,6 @@ final class AdvancedAeFixture {
         return cpu;
     }
 
-    record Placement(BlockPos core, BlockPos anchor) {
+    record Placement(BlockPos core, BlockPos terminal) {
     }
 }
