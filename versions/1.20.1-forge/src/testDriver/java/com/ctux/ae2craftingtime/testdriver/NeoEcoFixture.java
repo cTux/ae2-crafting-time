@@ -104,7 +104,8 @@ final class NeoEcoFixture {
 
         @Override
         public void setBlock(BlockPos pos, BlockState blockState) {
-            blocks.put(origin.offset(pos.rotate(rotation)), blockState.rotate(rotation));
+            var target = origin.offset(pos.rotate(rotation));
+            blocks.put(target, blockState.rotate(level, target, rotation));
         }
 
         @Override
