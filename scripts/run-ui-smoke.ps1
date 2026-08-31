@@ -116,19 +116,20 @@ if ($Interactive) {
 }
 
 try {
-    $process = Start-Process -FilePath "powershell.exe" -ArgumentList $arguments -PassThru -WindowStyle Hidden `
-        -RedirectStandardOutput $stdout -RedirectStandardError $stderr
-    $null = $process.Handle
-    Write-Status "running"
-    $timeout = if ($Interactive) { [TimeSpan]::FromMinutes(30) } else { [TimeSpan]::FromMinutes(8) }
-    if (-not $process.WaitForExit([int]$timeout.TotalMilliseconds)) {
-        $null = $process.CloseMainWindow()
-        if (-not $process.WaitForExit(10000)) { & taskkill.exe /PID $process.Id /T /F | Out-Null }
-        throw "UI-smoke client exceeded $($timeout.TotalMinutes) minutes"
-    }
-    if ($process.ExitCode -ne 0) {
-        throw "UI-smoke $profile-profile setup/startup failed with launcher exit $($process.ExitCode); see $stderr"
-    }
+    try {
+        $process = Start-Process -FilePath "powershell.exe" -ArgumentList $arguments -PassThru -WindowStyle Hidden `
+            -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+        $null = $process.Handle
+        Write-Status "running"
+        $timeout = if ($Interactive) { [TimeSpan]::FromMinutes(30) } else { [TimeSpan]::FromMinutes(8) }
+        if (-not $process.WaitForExit([int]$timeout.TotalMilliseconds)) {
+            $null = $process.CloseMainWindow()
+            if (-not $process.WaitForExit(10000)) { & taskkill.exe /PID $process.Id /T /F | Out-Null }
+            throw "UI-smoke client exceeded $($timeout.TotalMinutes) minutes"
+        }
+        if ($process.ExitCode -ne 0) {
+            throw "UI-smoke $profile-profile setup/startup failed with launcher exit $($process.ExitCode); see $stderr"
+        }
 
     $resultPath = Join-Path $evidence "result.json"
     if (-not (Test-Path -LiteralPath $resultPath -PathType Leaf)) { throw "Missing atomic result.json" }
@@ -176,7 +177,13 @@ try {
         'Failed to load resource', 'The game crashed whilst', 'There is no mod with modId',
         "Reference map 'ae2craftingtime_test_driver.refmap.json'"
     ) -SimpleMatch
-    if ($fatal) { throw "Fatal loader, mixin, resource, or crash signature in latest.log" }
+        if ($fatal) { throw "Fatal loader, mixin, resource, or crash signature in latest.log" }
+    } finally {
+        if ($previousToken) { $env:AE2CT_TEST_DRIVER_TOKEN = $previousToken }
+        else { Remove-Item Env:\AE2CT_TEST_DRIVER_TOKEN -ErrorAction SilentlyContinue }
+        if (Test-Path -LiteralPath $worldCopy) { Remove-Item -LiteralPath $worldCopy -Recurse -Force }
+        if ((Get-TreeHash $source) -ne $sourceHash) { throw "Tracked source fixture changed during UI smoke" }
+    }
     Sync-Evidence
     Write-Status "passed" "UI smoke passed" $process.ExitCode
     Write-Host "UI smoke passed: $evidence"
@@ -185,9 +192,4 @@ try {
     $exitCode = if ($process -and $process.HasExited) { [Nullable[int]]$process.ExitCode } else { $null }
     Write-Status "failed" $_.Exception.Message $exitCode
     throw
-} finally {
-    if ($previousToken) { $env:AE2CT_TEST_DRIVER_TOKEN = $previousToken }
-    else { Remove-Item Env:\AE2CT_TEST_DRIVER_TOKEN -ErrorAction SilentlyContinue }
-    if (Test-Path -LiteralPath $worldCopy) { Remove-Item -LiteralPath $worldCopy -Recurse -Force }
-    if ((Get-TreeHash $source) -ne $sourceHash) { throw "Tracked source fixture changed during UI smoke" }
 }

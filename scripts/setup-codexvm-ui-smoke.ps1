@@ -21,7 +21,10 @@ try {
     $capability = Get-WindowsCapability -Online -Name "OpenSSH.Server*"
     if ($capability.State -ne "Installed") { Add-WindowsCapability -Online -Name $capability.Name | Out-Null }
     $authorizedKeys = Join-Path $env:ProgramData "ssh\administrators_authorized_keys"
-    [IO.File]::WriteAllText($authorizedKeys, "$($configuration.authorizedKey)`r`n", [Text.UTF8Encoding]::new($false))
+    $existingKeys = if (Test-Path -LiteralPath $authorizedKeys) { Get-Content -LiteralPath $authorizedKeys } else { @() }
+    if ($configuration.authorizedKey -notin $existingKeys) {
+        [IO.File]::AppendAllText($authorizedKeys, "$($configuration.authorizedKey)`r`n", [Text.UTF8Encoding]::new($false))
+    }
     & icacls.exe $authorizedKeys /inheritance:r /grant "Administrators:F" /grant "SYSTEM:F" | Out-Null
     Set-Service -Name sshd -StartupType Automatic
     Start-Service -Name sshd

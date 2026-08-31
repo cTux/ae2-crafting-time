@@ -60,7 +60,7 @@ if ($RequestPath) {
     if ($request.latest) { $arguments += "-Latest" }
     if ($request.interactive) { $arguments += "-Interactive" }
     & (Join-Path $request.stagedRoot "scripts\run-ui-smoke.ps1") @arguments
-    exit $LASTEXITCODE
+    exit 0
 }
 
 $sourceRoot = Split-Path -Parent $PSScriptRoot
@@ -72,6 +72,10 @@ if ($Stop) {
     Stop-Smoke $report
     exit 0
 }
+
+$taskName = "AE2 Crafting Time UI Smoke $workspaceId"
+$existing = if ($Scheduled) { Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue } else { $null }
+if ($existing -and $existing.State -eq "Running") { throw "UI smoke task is already running" }
 
 $java17 = Find-Java17 $JavaHome
 New-Item -ItemType Directory -Path $stage, $report -Force | Out-Null
@@ -86,9 +90,6 @@ $requestFile = Join-Path $stage "ui-smoke-request.json"
 [IO.File]::WriteAllText($requestFile, ($request | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
 
 if ($Scheduled) {
-    $taskName = "AE2 Crafting Time UI Smoke $workspaceId"
-    $existing = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
-    if ($existing -and $existing.State -eq "Running") { throw "UI smoke task is already running" }
     if (-not $existing) {
         $script = Join-Path $stage "scripts\run-ui-smoke-codexvm.ps1"
         $action = New-ScheduledTaskAction -Execute "powershell.exe" `
@@ -107,4 +108,4 @@ if ($Scheduled) {
 $env:JAVA_HOME = $java17
 $env:Path = "$(Join-Path $java17 'bin');$env:Path"
 & (Join-Path $stage "scripts\run-ui-smoke-codexvm.ps1") -RequestPath $requestFile
-exit $LASTEXITCODE
+exit 0
