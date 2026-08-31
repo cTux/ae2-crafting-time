@@ -67,11 +67,19 @@ $arguments = @(
 if ($Latest) { $arguments += "-Latest" }
 if ($Interactive) { $arguments += "-Interactive" }
 
-$env:AE2CT_TEST_DRIVER_TOKEN = if ($Interactive) {
-    $bytes = [byte[]]::new(32)
-    [Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
-    ([BitConverter]::ToString($bytes) -replace '-', '').ToLowerInvariant()
-} else { $null }
+$previousToken = $env:AE2CT_TEST_DRIVER_TOKEN
+if ($Interactive) {
+    if ($previousToken -and $previousToken -notmatch '^[a-f0-9]{64}$') {
+        throw "AE2CT_TEST_DRIVER_TOKEN must be 256-bit lowercase hex"
+    }
+    if (-not $previousToken) {
+        $bytes = [byte[]]::new(32)
+        [Security.Cryptography.RandomNumberGenerator]::Fill($bytes)
+        $env:AE2CT_TEST_DRIVER_TOKEN = ([BitConverter]::ToString($bytes) -replace '-', '').ToLowerInvariant()
+    }
+} else {
+    Remove-Item Env:\AE2CT_TEST_DRIVER_TOKEN -ErrorAction SilentlyContinue
+}
 
 try {
     $process = Start-Process -FilePath "powershell.exe" -ArgumentList $arguments -PassThru -WindowStyle Hidden `
@@ -127,7 +135,8 @@ try {
     if ($fatal) { throw "Fatal loader, mixin, resource, or crash signature in latest.log" }
     Write-Host "UI smoke passed: $evidence"
 } finally {
-    Remove-Item Env:\AE2CT_TEST_DRIVER_TOKEN -ErrorAction SilentlyContinue
+    if ($previousToken) { $env:AE2CT_TEST_DRIVER_TOKEN = $previousToken }
+    else { Remove-Item Env:\AE2CT_TEST_DRIVER_TOKEN -ErrorAction SilentlyContinue }
     if (Test-Path -LiteralPath $worldCopy) { Remove-Item -LiteralPath $worldCopy -Recurse -Force }
     if ((Get-TreeHash $source) -ne $sourceHash) { throw "Tracked source fixture changed during UI smoke" }
 }

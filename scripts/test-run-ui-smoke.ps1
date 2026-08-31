@@ -32,14 +32,17 @@ Set-Content -LiteralPath (Join-Path $DriverOutputDirectory "craft-plan.png") -Va
 if ($env:AE2CT_UI_SMOKE_TEST_MODE -ne "missing-screenshot") {
     Set-Content -LiteralPath (Join-Path $DriverOutputDirectory "craft-plan-tooltip.png") -Value "png"
 }
+if ($Interactive -and $env:AE2CT_UI_SMOKE_TEST_MODE -eq "interactive-token" -and
+        $env:AE2CT_TEST_DRIVER_TOKEN -ne ('b' * 64)) { exit 7 }
 @($driver) | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $RuntimeDirectory "resolved-mods\.ae2-crafting-time-run-mods.json") -Encoding UTF8
 Set-Content -LiteralPath (Join-Path $RuntimeDirectory "logs\latest.log") -Value $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "fatal") { "Mixin apply failed ae2craftingtime.mixins.json" } else { "clean" })
 '@, [Text.UTF8Encoding]::new($false))
 
-function Invoke-Case([string]$mode, [switch]$Latest, [bool]$shouldPass) {
+function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive, [bool]$shouldPass) {
     $env:AE2CT_UI_SMOKE_TEST_MODE = $mode
     $arguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $scripts "run-ui-smoke.ps1"))
     if ($Latest) { $arguments += "-Latest" }
+    if ($Interactive) { $arguments += "-Interactive" }
     $preference = $ErrorActionPreference
     try {
         $ErrorActionPreference = "Continue"
@@ -52,6 +55,12 @@ function Invoke-Case([string]$mode, [switch]$Latest, [bool]$shouldPass) {
 try {
     Invoke-Case "pass" -shouldPass $true
     Invoke-Case "pass" -Latest -shouldPass $true
+    Invoke-Case "pass" -Interactive -shouldPass $true
+    $env:AE2CT_TEST_DRIVER_TOKEN = 'b' * 64
+    Invoke-Case "interactive-token" -Interactive -shouldPass $true
+    $env:AE2CT_TEST_DRIVER_TOKEN = 'invalid'
+    Invoke-Case "pass" -Interactive -shouldPass $false
+    Remove-Item Env:\AE2CT_TEST_DRIVER_TOKEN
     if (-not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\evidence\result.json")) -or
             -not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\latest\evidence\result.json"))) {
         throw "Compatible and latest evidence was not separated"
