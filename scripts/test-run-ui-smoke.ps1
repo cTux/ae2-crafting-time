@@ -16,6 +16,7 @@ param(
     [string]$DriverOutputDirectory, [string]$DriverWorld, [switch]$Latest,
     [switch]$Interactive, [Parameter(ValueFromRemainingArguments = $true)][string[]]$Rest
 )
+if ([IO.Path]::GetFullPath((Get-Location).Path) -ne [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))) { exit 8 }
 $profile = if ($Latest) { "latest" } else { "compatible" }
 $driver = "ae2-crafting-time-1.0.13-forge-1.20.1-test-driver.jar"
 New-Item -ItemType Directory -Path $DriverOutputDirectory, (Join-Path $RuntimeDirectory "resolved-mods"),

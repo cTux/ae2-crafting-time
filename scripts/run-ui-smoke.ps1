@@ -118,6 +118,7 @@ if ($Interactive) {
 try {
     try {
         $process = Start-Process -FilePath "powershell.exe" -ArgumentList $arguments -PassThru -WindowStyle Hidden `
+            -WorkingDirectory $root `
             -RedirectStandardOutput $stdout -RedirectStandardError $stderr
         $null = $process.Handle
         Write-Status "running"
