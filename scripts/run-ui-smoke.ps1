@@ -83,7 +83,9 @@ try {
         if (-not $process.WaitForExit(10000)) { & taskkill.exe /PID $process.Id /T /F | Out-Null }
         throw "UI-smoke client exceeded $($timeout.TotalMinutes) minutes"
     }
-    if ($process.ExitCode -ne 0) { throw "UI-smoke launcher exited with $($process.ExitCode)" }
+    if ($process.ExitCode -ne 0) {
+        throw "UI-smoke $profile-profile setup/startup failed with launcher exit $($process.ExitCode); see $stderr"
+    }
 
     $resultPath = Join-Path $evidence "result.json"
     if (-not (Test-Path -LiteralPath $resultPath -PathType Leaf)) { throw "Missing atomic result.json" }
