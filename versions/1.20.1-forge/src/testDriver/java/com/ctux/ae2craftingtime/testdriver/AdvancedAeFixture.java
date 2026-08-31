@@ -98,7 +98,14 @@ final class AdvancedAeFixture {
             return null;
         }
         var cpu = core.getCluster().getRemainingCapacityCPU();
-        return cpu.isActive() && cpu.getGrid() == grid ? cpu : null;
+        if (!cpu.isActive() || cpu.getGrid() != grid) {
+            throw new IllegalStateException("AdvancedAE CPU is not selectable; active=" + cpu.isActive()
+                    + " sameGrid=" + (cpu.getGrid() == grid)
+                    + " nodeActive=" + core.getMainNode().isActive()
+                    + " nodeOnline=" + core.getMainNode().isOnline()
+                    + " nodePowered=" + core.getMainNode().isPowered());
+        }
+        return cpu;
     }
 
     record Placement(BlockPos core, IGridNode hostNode) {
