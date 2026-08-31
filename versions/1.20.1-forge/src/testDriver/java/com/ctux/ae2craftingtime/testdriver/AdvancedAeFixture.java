@@ -57,8 +57,7 @@ final class AdvancedAeFixture {
                     }
                     var corePosition = min.offset(1, 1, 1);
                     level.setBlockAndUpdate(corePosition, core.defaultBlockState());
-                    return new Placement(min, min.offset(2, 2, 2), corePosition,
-                            anchor.immutable(), anchor.relative(direction), direction);
+                    return new Placement(min, min.offset(2, 2, 2), corePosition, anchor.immutable(), direction);
                 }
             }
         }
@@ -87,12 +86,11 @@ final class AdvancedAeFixture {
         if (!blockEntity.isFormed()) {
             throw new IllegalStateException("AdvancedAE quantum core did not form");
         }
-        if (!(level.getBlockEntity(placement.anchor()) instanceof IInWorldGridNodeHost host)
-                || !(level.getBlockEntity(placement.connection()) instanceof AdvCraftingBlockEntity computer)) {
+        if (!(level.getBlockEntity(placement.anchor()) instanceof IInWorldGridNodeHost host)) {
             throw new IllegalStateException("AdvancedAE quantum computer connection is unavailable");
         }
         var hostNode = host.getGridNode(placement.direction());
-        var computerNode = computer.getGridNode();
+        var computerNode = blockEntity.getCluster().getNode();
         if (hostNode == null || computerNode == null) {
             return false;
         }
@@ -112,8 +110,7 @@ final class AdvancedAeFixture {
         return cpu.isActive() && cpu.getGrid() == grid ? cpu : null;
     }
 
-    record Placement(BlockPos min, BlockPos max, BlockPos core, BlockPos anchor, BlockPos connection,
-            Direction direction) {
+    record Placement(BlockPos min, BlockPos max, BlockPos core, BlockPos anchor, Direction direction) {
     }
 
     private static BlockPos minimum(BlockPos anchor, Direction direction) {
