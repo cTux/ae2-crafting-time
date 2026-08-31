@@ -2,7 +2,6 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGrid;
-import appeng.api.networking.IGridNode;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.crafting.ICraftingCPU;
 import net.minecraft.core.BlockPos;
@@ -53,7 +52,7 @@ final class AdvancedAeFixture {
                         throw new IllegalStateException("AdvancedAE quantum core placement produced "
                                 + ForgeRegistries.BLOCKS.getKey(level.getBlockState(position).getBlock()));
                     }
-                    return new Placement(position, node);
+                    return new Placement(position, anchor.immutable());
                 }
             }
         }
@@ -81,12 +80,17 @@ final class AdvancedAeFixture {
             throw new IllegalStateException("AdvancedAE quantum core did not form after rescan; node ready="
                     + core.getMainNode().isReady());
         }
+        if (!(level.getBlockEntity(placement.anchor()) instanceof IInWorldGridNodeHost host)) {
+            throw new IllegalStateException("AdvancedAE fixture host is unavailable");
+        }
+        var hostNode = Arrays.stream(Direction.values()).map(host::getGridNode).filter(Objects::nonNull)
+                .findFirst().orElseThrow(() -> new IllegalStateException("AdvancedAE fixture host node is unavailable"));
         var coreNode = core.getMainNode().getNode();
         if (coreNode == null) {
             throw new IllegalStateException("AdvancedAE core node is unavailable");
         }
-        if (placement.hostNode().getGrid() != coreNode.getGrid()) {
-            GridHelper.createConnection(placement.hostNode(), coreNode);
+        if (hostNode.getGrid() != coreNode.getGrid()) {
+            GridHelper.createConnection(hostNode, coreNode);
         }
         return true;
     }
@@ -108,6 +112,6 @@ final class AdvancedAeFixture {
         return cpu;
     }
 
-    record Placement(BlockPos core, IGridNode hostNode) {
+    record Placement(BlockPos core, BlockPos anchor) {
     }
 }
