@@ -20,17 +20,23 @@ $profile = if ($Latest) { "latest" } else { "compatible" }
 $driver = "ae2-crafting-time-1.0.13-forge-1.20.1-test-driver.jar"
 New-Item -ItemType Directory -Path $DriverOutputDirectory, (Join-Path $RuntimeDirectory "resolved-mods"),
     (Join-Path $RuntimeDirectory "logs") -Force | Out-Null
-$checks = [ordered]@{ screen=$true; 'ttc-row'=$true; 'total-ttc'=$true; 'sort-cycle'=$true; tooltip=$true; layout=$true }
+$checks = if ($DriverScenario -eq "neoeco-cpu") {
+    [ordered]@{ 'cpu-selected'=$true; 'profile-sample'=$true; 'ttc-after-sample'=$true }
+} else {
+    [ordered]@{ screen=$true; 'ttc-row'=$true; 'total-ttc'=$true; 'sort-cycle'=$true; tooltip=$true; layout=$true }
+}
+$screenshots = if ($DriverScenario -eq "neoeco-cpu") { @("neoeco-profiled-plan.png") } else { @("craft-plan.png", "craft-plan-tooltip.png") }
 $result = [ordered]@{
     schema = $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "schema") { 2 } else { 1 })
     complete = $true; driver = $driver; target = "1.20.1-forge"; profile = $profile
-    scenario = "craft-plan"; result = "PASS"; checks = $checks
-    screenshots = @("craft-plan.png", "craft-plan-tooltip.png")
+    scenario = $DriverScenario; result = "PASS"; checks = $checks
+    screenshots = $screenshots
 }
 $result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $DriverOutputDirectory "result.json") -Encoding UTF8
-Set-Content -LiteralPath (Join-Path $DriverOutputDirectory "craft-plan.png") -Value "png"
-if ($env:AE2CT_UI_SMOKE_TEST_MODE -ne "missing-screenshot") {
-    Set-Content -LiteralPath (Join-Path $DriverOutputDirectory "craft-plan-tooltip.png") -Value "png"
+foreach ($screenshot in $screenshots) {
+    if ($env:AE2CT_UI_SMOKE_TEST_MODE -ne "missing-screenshot" -or $screenshot -ne $screenshots[-1]) {
+        Set-Content -LiteralPath (Join-Path $DriverOutputDirectory $screenshot) -Value "png"
+    }
 }
 if ($Interactive -and $env:AE2CT_UI_SMOKE_TEST_MODE -eq "interactive-token" -and
         $env:AE2CT_TEST_DRIVER_TOKEN -ne ('b' * 64)) { exit 7 }
@@ -38,11 +44,13 @@ if ($Interactive -and $env:AE2CT_UI_SMOKE_TEST_MODE -eq "interactive-token" -and
 Set-Content -LiteralPath (Join-Path $RuntimeDirectory "logs\latest.log") -Value $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "fatal") { "Mixin apply failed ae2craftingtime.mixins.json" } else { "clean" })
 '@, [Text.UTF8Encoding]::new($false))
 
-function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive, [bool]$shouldPass) {
+function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive,
+        [ValidateSet("craft-plan", "neoeco-cpu")][string]$Scenario = "craft-plan", [bool]$shouldPass) {
     $env:AE2CT_UI_SMOKE_TEST_MODE = $mode
     $arguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $scripts "run-ui-smoke.ps1"))
     if ($Latest) { $arguments += "-Latest" }
     if ($Interactive) { $arguments += "-Interactive" }
+    if ($Scenario -ne "craft-plan") { $arguments += @("-Scenario", $Scenario) }
     $preference = $ErrorActionPreference
     try {
         $ErrorActionPreference = "Continue"
@@ -57,6 +65,7 @@ function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive, [bool
 try {
     Invoke-Case "pass" -shouldPass $true
     Invoke-Case "pass" -Latest -shouldPass $true
+    Invoke-Case "pass" -Scenario "neoeco-cpu" -shouldPass $true
     if (-not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\evidence\result.json")) -or
             -not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\latest\evidence\result.json"))) {
         throw "Compatible and latest evidence was not separated"

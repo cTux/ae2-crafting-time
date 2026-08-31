@@ -1,13 +1,14 @@
 param(
     [switch]$Latest,
-    [switch]$Interactive
+    [switch]$Interactive,
+    [ValidateSet("craft-plan", "neoeco-cpu")][string]$Scenario = "craft-plan"
 )
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $source = Join-Path $root "versions\1.20.1-forge\run\saves\ae2-crafting-time"
 $profile = if ($Latest) { "latest" } else { "compatible" }
-$base = Join-Path $root "build\ui-smoke\1.20.1-forge\$profile"
+$base = Join-Path $root "build\ui-smoke\1.20.1-forge\$profile$(if ($Scenario -eq 'craft-plan') { '' } else { "\$Scenario" })"
 $runtime = Join-Path $base "runtime"
 $evidence = Join-Path $base "evidence"
 $world = "ae2ct-$([guid]::NewGuid().ToString('N'))"
@@ -61,7 +62,7 @@ soundCategory_master:0.0
 $arguments = @(
     "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "run-client.ps1"),
     "-Target", "1.20.1-forge", "-RuntimeDirectory", $runtime,
-    "-DriverScenario", "craft-plan", "-DriverOutputDirectory", $evidence, "-DriverWorld", $world,
+    "-DriverScenario", $Scenario, "-DriverOutputDirectory", $evidence, "-DriverWorld", $world,
     "--no-daemon"
 )
 if ($Latest) { $arguments += "-Latest" }
@@ -105,16 +106,25 @@ try {
     $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
         Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
     $driverName = "ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"
-    $requiredChecks = @("screen", "ttc-row", "total-ttc", "sort-cycle", "tooltip", "layout")
+    $requiredChecks = if ($Scenario -eq "neoeco-cpu") {
+        @("cpu-selected", "profile-sample", "ttc-after-sample")
+    } else {
+        @("screen", "ttc-row", "total-ttc", "sort-cycle", "tooltip", "layout")
+    }
     if ($result.schema -ne 1 -or -not $result.complete -or $result.result -ne "PASS" -or
             $result.driver -ne $driverName -or $result.target -ne "1.20.1-forge" -or
-            $result.profile -ne $profile -or $result.scenario -ne "craft-plan") {
+            $result.profile -ne $profile -or $result.scenario -ne $Scenario) {
         throw "Invalid UI-smoke result identity or completion state"
     }
     $actualChecks = @($result.checks.psobject.Properties.Name)
     if (Compare-Object $requiredChecks $actualChecks -SyncWindow 0) { throw "Invalid UI-smoke check set" }
     foreach ($check in $requiredChecks) { if (-not $result.checks.$check) { throw "Failed UI-smoke check: $check" } }
-    foreach ($screenshot in @("craft-plan.png", "craft-plan-tooltip.png")) {
+    $requiredScreenshots = if ($Scenario -eq "neoeco-cpu") {
+        @("neoeco-profiled-plan.png")
+    } else {
+        @("craft-plan.png", "craft-plan-tooltip.png")
+    }
+    foreach ($screenshot in $requiredScreenshots) {
         if ($screenshot -notin $result.screenshots -or -not (Test-Path -LiteralPath (Join-Path $evidence $screenshot))) {
             throw "Missing required screenshot $screenshot"
         }

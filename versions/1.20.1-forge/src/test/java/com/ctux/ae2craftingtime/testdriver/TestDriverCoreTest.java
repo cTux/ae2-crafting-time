@@ -52,6 +52,12 @@ class TestDriverCoreTest {
         for (int i = 0; i < path.size() - 1; i++) {
             assertTrue(ScenarioFlow.allows(path.get(i), path.get(i + 1)));
         }
+        var neoEcoPath = List.of(ScenarioState.PLAN_STABLE, ScenarioState.NEOECO_CPU_SELECTED,
+                ScenarioState.NEOECO_CRAFT_SUBMITTED, ScenarioState.NEOECO_SAMPLE_RECORDED,
+                ScenarioState.NEOECO_PLAN_OPEN, ScenarioState.RESULT_WRITTEN);
+        for (int i = 0; i < neoEcoPath.size() - 1; i++) {
+            assertTrue(ScenarioFlow.allows(neoEcoPath.get(i), neoEcoPath.get(i + 1)));
+        }
         assertTrue(ScenarioFlow.allows(ScenarioState.PLAN_STABLE, ScenarioState.FAILED));
         assertFalse(ScenarioFlow.allows(ScenarioState.PLAN_STABLE, ScenarioState.TOOLTIP_CHECKED));
         assertFalse(ScenarioFlow.allows(ScenarioState.FAILED, ScenarioState.FAILED));
@@ -115,6 +121,8 @@ class TestDriverCoreTest {
         checks.put("extra", true);
         assertThrows(IllegalArgumentException.class, () -> new DriverResult(1, true, "driver.jar",
                 "1.20.1-forge", "compatible", "craft-plan", "PASS", checks, List.of(), null));
+        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+                DriverResult.requiredChecks("neoeco-cpu"));
         var file = temporary.resolve("not-a-directory");
         Files.writeString(file, "x");
         assertThrows(Exception.class, () -> AtomicResultWriter.write(file, result));
@@ -158,7 +166,7 @@ class TestDriverCoreTest {
 
     private static LinkedHashMap<String, Boolean> checks(boolean value) {
         var checks = new LinkedHashMap<String, Boolean>();
-        DriverResult.REQUIRED_CHECKS.forEach(key -> checks.put(key, value));
+        DriverResult.requiredChecks("craft-plan").forEach(key -> checks.put(key, value));
         return checks;
     }
 
