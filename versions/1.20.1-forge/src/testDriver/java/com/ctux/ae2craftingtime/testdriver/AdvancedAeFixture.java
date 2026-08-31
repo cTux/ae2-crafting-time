@@ -48,6 +48,10 @@ final class AdvancedAeFixture {
                 var position = anchor.relative(direction).immutable();
                 if (node != null && node.getGrid() == grid && level.getBlockState(position).isAir()) {
                     level.setBlockAndUpdate(position, core.defaultBlockState());
+                    if (!(level.getBlockEntity(position) instanceof AdvCraftingBlockEntity)) {
+                        throw new IllegalStateException("AdvancedAE quantum core placement produced "
+                                + ForgeRegistries.BLOCKS.getKey(level.getBlockState(position).getBlock()));
+                    }
                     return new Placement(position, anchor.immutable(), direction);
                 }
             }
