@@ -9,6 +9,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPUCalculator;
 import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
 
 import java.util.Arrays;
@@ -73,7 +74,17 @@ final class AdvancedAeFixture {
             throw new IllegalStateException("AdvancedAE quantum core block entity was not placed");
         }
         if (!blockEntity.isFormed()) {
-            return false;
+            if (blockEntity.getGridNode() == null) {
+                return false;
+            }
+            var calculator = new AdvCraftingCPUCalculator(blockEntity);
+            if (!calculator.checkMultiblockScale(placement.min(), placement.max())
+                    || !calculator.verifyInternalStructure(level, placement.min(), placement.max())) {
+                throw new IllegalStateException("AdvancedAE quantum computer fixture is invalid");
+            }
+            calculator.updateBlockEntities(
+                    calculator.createCluster(level, placement.min(), placement.max()),
+                    level, placement.min(), placement.max());
         }
         if (!(level.getBlockEntity(placement.anchor()) instanceof IInWorldGridNodeHost host)) {
             throw new IllegalStateException("AdvancedAE quantum computer connection is unavailable");
