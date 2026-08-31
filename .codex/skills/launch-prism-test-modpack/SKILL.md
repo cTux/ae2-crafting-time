@@ -17,6 +17,9 @@ description: Audit dependencies or run AE2 Crafting Time client, UI, version-mat
 - Clients use the repository's 8 GiB heap setting. Maximize the exact Minecraft
   window through VNC before visual inspection. Test-driver scenarios maximize
   themselves, but still verify the resulting window.
+- Run Gradle on JDK 17 for the 1.20.1 targets and JDK 21 for both NeoForge
+  targets. The 26.1.2 project selects its installed JDK 25 toolchain itself;
+  starting the multi-project Gradle build on JDK 25 breaks Fabric configuration.
 - Run clients sequentially. Confirm the exact client stopped before continuing;
   never kill Java processes broadly.
 
