@@ -63,6 +63,9 @@ final class AdvancedAeFixture {
         if (!(level.getBlockEntity(placement.core()) instanceof AdvCraftingBlockEntity core)) {
             throw new IllegalStateException("AdvancedAE quantum core was not placed");
         }
+        if (!core.getMainNode().isReady()) {
+            core.onReady();
+        }
         if (!core.isFormed() && core.getMainNode().isReady()) {
             new AdvCraftingCPUCalculator(core).calculateMultiblock(level, placement.core());
         }
