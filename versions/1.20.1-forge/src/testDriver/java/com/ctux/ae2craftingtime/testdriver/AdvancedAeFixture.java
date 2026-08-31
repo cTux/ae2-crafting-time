@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGrid;
+import appeng.api.networking.IGridNode;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.crafting.ICraftingCPU;
 import net.minecraft.core.BlockPos;
@@ -52,7 +53,7 @@ final class AdvancedAeFixture {
                         throw new IllegalStateException("AdvancedAE quantum core placement produced "
                                 + ForgeRegistries.BLOCKS.getKey(level.getBlockState(position).getBlock()));
                     }
-                    return new Placement(position, anchor.immutable(), direction);
+                    return new Placement(position, node);
                 }
             }
         }
@@ -80,17 +81,12 @@ final class AdvancedAeFixture {
             throw new IllegalStateException("AdvancedAE quantum core did not form after rescan; node ready="
                     + core.getMainNode().isReady());
         }
-        if (!(level.getBlockEntity(placement.anchor()) instanceof IInWorldGridNodeHost host)) {
-            throw new IllegalStateException("AdvancedAE quantum core connection is unavailable");
-        }
-        var hostNode = host.getGridNode(placement.direction());
         var coreNode = core.getMainNode().getNode();
-        if (hostNode == null || coreNode == null) {
-            throw new IllegalStateException("AdvancedAE connection nodes are unavailable; host=" + (hostNode != null)
-                    + " core=" + (coreNode != null));
+        if (coreNode == null) {
+            throw new IllegalStateException("AdvancedAE core node is unavailable");
         }
-        if (hostNode.getGrid() != coreNode.getGrid()) {
-            GridHelper.createConnection(hostNode, coreNode);
+        if (placement.hostNode().getGrid() != coreNode.getGrid()) {
+            GridHelper.createConnection(placement.hostNode(), coreNode);
         }
         return true;
     }
@@ -105,6 +101,6 @@ final class AdvancedAeFixture {
         return cpu.isActive() && cpu.getGrid() == grid ? cpu : null;
     }
 
-    record Placement(BlockPos core, BlockPos anchor, Direction direction) {
+    record Placement(BlockPos core, IGridNode hostNode) {
     }
 }
