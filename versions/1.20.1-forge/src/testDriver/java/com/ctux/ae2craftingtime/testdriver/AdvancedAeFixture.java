@@ -70,8 +70,11 @@ final class AdvancedAeFixture {
         if (!core.getMainNode().isReady()) {
             core.onReady();
         }
-        if (!core.isFormed() && core.getMainNode().isReady()) {
-            new AdvCraftingCPUCalculator(core).calculateMultiblock(level, placement.core());
+        if (!core.isFormed()) {
+            var calculator = new AdvCraftingCPUCalculator(core);
+            calculator.updateBlockEntities(
+                    calculator.createCluster(level, placement.core(), placement.core()),
+                    level, placement.core(), placement.core());
         }
         if (!core.isFormed()) {
             throw new IllegalStateException("AdvancedAE quantum core did not form after rescan; node ready="
