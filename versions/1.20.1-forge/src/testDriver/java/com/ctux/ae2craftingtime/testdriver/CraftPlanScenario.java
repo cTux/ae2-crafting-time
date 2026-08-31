@@ -46,7 +46,6 @@ public final class CraftPlanScenario {
     private int sortStage;
     private long lastFrame = -1;
     private DriverResult.Failure failure;
-    private String lastCpuName;
     private String networkId;
     private CompletableFuture<String> cpuCheck;
     private CompletableFuture<Integer> sampleCheck;
@@ -189,16 +188,7 @@ public final class CraftPlanScenario {
     }
 
     private void selectNeoEcoCpu() {
-        if (!(minecraft.screen instanceof CraftConfirmScreen screen)) {
-            return;
-        }
-        var name = screen.getMenu().getName();
-        var renderedName = name == null ? "" : name.getString();
-        if (!renderedName.endsWith(" ECO CPU")) {
-            if (!renderedName.equals(lastCpuName)) {
-                screen.getMenu().cycleSelectedCPU(true);
-                lastCpuName = renderedName;
-            }
+        if (!(minecraft.screen instanceof CraftConfirmScreen)) {
             return;
         }
         if (cpuCheck == null) {
@@ -207,25 +197,28 @@ public final class CraftPlanScenario {
             cpuCheck = server.submit(() -> {
                 var player = server.getPlayerList().getPlayer(playerId);
                 if (player == null || !(player.containerMenu instanceof appeng.menu.me.crafting.CraftConfirmMenu menu)) {
-                    return "";
+                    throw new IllegalStateException("server Crafting Plan menu is unavailable");
                 }
-                var cpu = ((CraftConfirmMenuAccessor) menu).ae2craftingtime_test_driver$selectedCpu();
-                if (cpu == null || !cpu.getClass().getName().equals("cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU")) {
-                    return "";
+                var context = StatsRequestContext.current(player);
+                var accessor = (CraftConfirmMenuAccessor) menu;
+                var attempts = context.grid().getCraftingService().getCpus().size() + 1;
+                for (int i = 0; i < attempts; i++) {
+                    var cpu = accessor.ae2craftingtime_test_driver$selectedCpu();
+                    if (cpu != null
+                            && cpu.getClass().getName().equals("cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU")) {
+                        var id = ProfilerBridge.networkId(context.grid());
+                        ProfilerBridge.clearStats(new ProfileKey(id, marker.outputId()));
+                        return id;
+                    }
+                    menu.cycleSelectedCPU(true);
                 }
-                var id = ProfilerBridge.networkId(StatsRequestContext.current(player).grid());
-                ProfilerBridge.clearStats(new ProfileKey(id, marker.outputId()));
-                return id;
+                throw new IllegalStateException("NeoEco CPU is not available in the fixture network");
             });
         }
         if (!cpuCheck.isDone()) {
             return;
         }
         networkId = cpuCheck.join();
-        if (networkId.isEmpty()) {
-            cpuCheck = null;
-            return;
-        }
         checks.put("cpu-selected", true);
         advance(ScenarioState.NEOECO_CPU_SELECTED);
     }
