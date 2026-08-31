@@ -20,6 +20,7 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: gradle/actions/setup-gradle@v6
+      - run: bash ./scripts/test-discord-release-announcement.sh
       - run: bash ./gradlew test jacocoTestReport
       - uses: codecov/codecov-action@v7
         with:

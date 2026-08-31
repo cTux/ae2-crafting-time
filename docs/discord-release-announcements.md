@@ -37,75 +37,18 @@ Value: <the copied Discord webhook URL>
 Repository secrets are not available to pull requests from forks. That does
 not affect this workflow because it only runs for a published release.
 
-## Add the workflow
+## How it runs
 
-Create `.github/workflows/discord-release.yml` with this content:
-
-```yaml
-name: Announce release in Discord
-
-on:
-  release:
-    types: [published]
-
-permissions:
-  contents: read
-
-jobs:
-  announce:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Post release and JAR links
-        env:
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_RELEASE_WEBHOOK_URL }}
-          GH_TOKEN: ${{ github.token }}
-          RELEASE_ID: ${{ github.event.release.id }}
-          REPOSITORY: ${{ github.repository }}
-          EXPECTED_JARS: 4
-        shell: bash
-        run: |
-          set -euo pipefail
-
-          release_json=
-          jar_count=0
-          for attempt in {1..12}; do
-            release_json=$(gh api "repos/$REPOSITORY/releases/$RELEASE_ID")
-            jar_count=$(jq '[.assets[] | select(.name | endswith(".jar"))] | length' <<<"$release_json")
-            if (( jar_count == EXPECTED_JARS )); then
-              break
-            fi
-            sleep 5
-          done
-
-          test "$jar_count" -eq "$EXPECTED_JARS"
-          release_name=$(jq -r '.name // .tag_name' <<<"$release_json")
-          release_url=$(jq -r '.html_url' <<<"$release_json")
-          jars=$(jq -r '
-            [.assets[]
-              | select(.name | endswith(".jar"))
-              | "[\(.name)](\(.browser_download_url))"]
-            | join("\n")
-          ' <<<"$release_json")
-
-          printf -v content \
-            '**AE2 Crafting Time %s**\n%s\n\n**JAR downloads**\n%s' \
-            "$release_name" "$release_url" "$jars"
-          jq -n --arg content "$content" '{content: $content}' |
-            curl --fail-with-body \
-              -H "Content-Type: application/json" \
-              --data-binary @- \
-              "$DISCORD_WEBHOOK_URL"
-```
-
-The workflow does not check out or run repository code. It uses GitHub's
-release event and the read-only token that GitHub creates for the job. The
-`browser_download_url` value is the public, direct download URL for each release
-asset.
+The tracked `.github/workflows/discord-release.yml` workflow runs on GitHub's
+`release: published` event. It checks out the trusted default branch and runs
+`scripts/announce-discord-release.sh` with GitHub's read-only job token. The
+script uses each asset's public `browser_download_url` value for the direct
+download link.
 
 GitHub may start the workflow while `gh release create` is still uploading
-assets. The workflow waits for all four current matrix rows before posting and
-fails instead of sending a partial announcement. Update `EXPECTED_JARS` whenever
-the number of rows in `scripts/release-matrix.json` changes.
+assets. The script reads the expected JAR count from
+`scripts/release-matrix.json`, waits for the complete set, and fails instead of
+sending a partial announcement.
 
 ## Verify the next release
 
