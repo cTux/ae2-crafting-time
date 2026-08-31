@@ -7,6 +7,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.registries.ForgeRegistries;
+import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPUCalculator;
 import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
 
 import java.util.Arrays;
@@ -70,7 +71,7 @@ final class AdvancedAeFixture {
             throw new IllegalStateException("AdvancedAE quantum core block entity was not placed");
         }
         if (!blockEntity.isFormed()) {
-            blockEntity.updateMultiBlock(position);
+            new AdvCraftingCPUCalculator(blockEntity).calculateMultiblock(player.serverLevel(), position);
         }
         if (!blockEntity.isFormed()) {
             throw new IllegalStateException("AdvancedAE quantum core did not form");
