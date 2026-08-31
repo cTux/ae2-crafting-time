@@ -12,6 +12,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Rotation;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -64,22 +65,26 @@ final class NeoEcoFixture {
             if (!(level.getBlockEntity(anchor) instanceof IInWorldGridNodeHost host)) {
                 continue;
             }
-            for (Direction direction : List.of(Direction.WEST, Direction.NORTH)) {
+            for (Direction direction : Direction.Plane.HORIZONTAL) {
                 var node = host.getGridNode(direction);
                 if (node == null || node.getGrid() != grid) {
                     continue;
                 }
-                var candidate = blueprint(level, anchor.relative(direction).subtract(INTERFACE_OFFSET));
-                if (candidate.blocks.keySet().stream().allMatch(pos -> level.getBlockState(pos).isAir())) {
-                    return candidate;
+                for (Rotation rotation : Rotation.values()) {
+                    var interfaceOffset = INTERFACE_OFFSET.rotate(rotation);
+                    var candidate = blueprint(
+                            level, anchor.relative(direction).subtract(interfaceOffset), rotation);
+                    if (candidate.blocks.keySet().stream().allMatch(pos -> level.getBlockState(pos).isAir())) {
+                        return candidate;
+                    }
                 }
             }
         }
         throw new IllegalStateException("no empty space beside the fixture AE2 grid for NeoEco CPU");
     }
 
-    private static BlueprintContext blueprint(Level level, BlockPos origin) {
-        var context = new BlueprintContext(level, origin);
+    private static BlueprintContext blueprint(Level level, BlockPos origin, Rotation rotation) {
+        var context = new BlueprintContext(level, origin, rotation);
         NEMultiBlocks.COMPUTATION_SYSTEM_L9.createLevel(context);
         return context;
     }
@@ -87,17 +92,19 @@ final class NeoEcoFixture {
     private static final class BlueprintContext extends MultiBlockContext {
         private final Level level;
         private final BlockPos origin;
+        private final Rotation rotation;
         private final LinkedHashMap<BlockPos, BlockState> blocks = new LinkedHashMap<>();
 
-        private BlueprintContext(Level level, BlockPos origin) {
+        private BlueprintContext(Level level, BlockPos origin, Rotation rotation) {
             this.level = level;
             this.origin = origin;
+            this.rotation = rotation;
             repeats = 1;
         }
 
         @Override
         public void setBlock(BlockPos pos, BlockState blockState) {
-            blocks.put(origin.offset(pos), blockState);
+            blocks.put(origin.offset(pos.rotate(rotation)), blockState.rotate(rotation));
         }
 
         @Override
