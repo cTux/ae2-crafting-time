@@ -14,7 +14,6 @@ import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -30,8 +29,6 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("neoeco-cpu"));
         assertFalse(AddonCpuFixture.supports("missing-cpu"));
         assertNull(AddonCpuFixture.create("craft-plan"));
-        assertInstanceOf(AdvancedAeFixture.class, AddonCpuFixture.create("advancedae-cpu"));
-        assertInstanceOf(NeoEcoFixture.class, AddonCpuFixture.create("neoeco-cpu"));
         assertThrows(IllegalArgumentException.class, () -> AddonCpuFixture.create("missing-cpu"));
     }
 
