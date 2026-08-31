@@ -11,6 +11,7 @@ $modVersion = ((Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScrip
 [IO.File]::WriteAllText((Join-Path $temp "gradle.properties"), "modVersion=$modVersion`n", [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $temp "gradlew.bat"), @"
 @echo off
+>"%~dp0gradle-args.txt" echo %*
 if defined AE2CT_DRIVER_BUILD_FAIL exit /b 9
 if not exist "%~dp0build\test-driver" mkdir "%~dp0build\test-driver"
 >"%~dp0build\test-driver\ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar" echo driver
@@ -115,6 +116,11 @@ try {
     & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -RuntimeDirectory $customRuntime -ResolveOnly 6>&1 | Out-Null
     if (-not (Test-Path -LiteralPath (Join-Path $customRuntime "resolved-mods\ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"))) {
         throw "Custom runtime directory did not receive the driver"
+    }
+    $gradleInvocation = Get-Content -LiteralPath (Join-Path $temp "gradle-args.txt") -Raw
+    $expectedProjectCache = Join-Path $customRuntime ".gradle-project-cache"
+    if ($gradleInvocation -notlike "*--project-cache-dir*" -or $gradleInvocation -notlike "*$expectedProjectCache*") {
+        throw "Custom runtime directory did not receive the Gradle project cache"
     }
 
     $env:AE2CT_DRIVER_BUILD_FAIL = "1"
