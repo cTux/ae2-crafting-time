@@ -45,7 +45,7 @@ final class AdvancedAeFixture {
             }
             for (var direction : new Direction[] { Direction.UP, Direction.DOWN }) {
                 var node = host.getGridNode(direction);
-                var position = anchor.relative(direction);
+                var position = anchor.relative(direction).immutable();
                 if (node != null && node.getGrid() == grid && level.getBlockState(position).isAir()) {
                     level.setBlockAndUpdate(position, core.defaultBlockState());
                     return new Placement(position, anchor.immutable(), direction);
