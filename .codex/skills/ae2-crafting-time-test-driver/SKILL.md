@@ -22,6 +22,8 @@ existing fixture closest to the requested scenario.
   branch in `CraftPlanScenario`.
 - Extend `TestDriverCoreTest` for registry behavior and the smallest relevant
   fixture boundary. Keep driver content out of production JARs and `dist`.
+- Update `docs/mod-automation-coverage.md` in the same change whenever a target
+  or mod gains, loses, or changes TestDriver or automation-test coverage.
 
 For a different UI flow, update the spec and design first. Reuse the current
 driver artifact and runner unless the new target proves a loader boundary.
