@@ -56,9 +56,9 @@ if ($RequestPath) {
     $request = Get-Content -LiteralPath $RequestPath -Raw | ConvertFrom-Json
     $env:JAVA_HOME = $request.javaHome
     $env:Path = "$(Join-Path $env:JAVA_HOME 'bin');$env:Path"
-    $arguments = @("-ReportDirectory", $request.reportDirectory, "-Scenario", $request.scenario)
-    if ($request.latest) { $arguments += "-Latest" }
-    if ($request.interactive) { $arguments += "-Interactive" }
+    $arguments = @{ ReportDirectory = $request.reportDirectory; Scenario = $request.scenario }
+    if ($request.latest) { $arguments.Latest = $true }
+    if ($request.interactive) { $arguments.Interactive = $true }
     & (Join-Path $request.stagedRoot "scripts\run-ui-smoke.ps1") @arguments
     exit 0
 }
