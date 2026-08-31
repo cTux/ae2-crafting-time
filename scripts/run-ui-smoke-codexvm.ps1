@@ -28,7 +28,7 @@ function Find-Java17([string]$requested) {
     }
     $java = if ($candidate) { Join-Path $candidate "bin\java.exe" } else { "" }
     if (-not $java -or -not (Test-Path -LiteralPath $java -PathType Leaf)) { throw "CodexVM JDK 17 was not found" }
-    $version = (& $java -XshowSettings:properties -version 2>&1 | Out-String)
+    $version = (& { $ErrorActionPreference = "Continue"; & $java -XshowSettings:properties -version 2>&1 } | Out-String)
     if ($version -notmatch '(?m)^\s*java\.version\s*=\s*17(?:\.|\s|$)') { throw "Forge 1.20.1 UI smoke requires JDK 17: $java" }
     return [IO.Path]::GetFullPath($candidate)
 }
