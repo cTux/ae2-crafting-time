@@ -264,6 +264,7 @@ public final class CraftPlanScenario {
             return;
         }
         checks.put("profile-sample", true);
+        stableRows.reset();
         advance(ScenarioState.NEOECO_SAMPLE_RECORDED);
     }
 
