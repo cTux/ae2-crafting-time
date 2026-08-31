@@ -242,13 +242,17 @@ public final class CraftPlanScenario {
                     }
                     menu.cycleSelectedCPU(true);
                 }
-                throw new IllegalStateException(options.scenario() + " CPU is not available in the fixture network");
+                return null;
             });
         }
         if (!cpuCheck.isDone()) {
             return;
         }
         networkId = cpuCheck.join();
+        if (networkId == null) {
+            cpuCheck = null;
+            return;
+        }
         checks.put("cpu-selected", true);
         advance(ScenarioState.ADDON_CPU_SELECTED);
     }
@@ -298,7 +302,7 @@ public final class CraftPlanScenario {
     private String expectedCpuClass() {
         return options.scenario().equals("neoeco-cpu")
                 ? "cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU"
-                : "net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPUCluster";
+                : "net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPU";
     }
 
     private void cycleSorts() {
