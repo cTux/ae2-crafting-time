@@ -9,8 +9,10 @@ description: Audit dependencies or run AE2 Crafting Time client, UI, version-mat
 
 - Load `use-codex-vm` before every Minecraft launch or visual check. Reuse the
   running VM and its read/write `projects` share; do not add a duplicate share.
-- Read the repository through `\\vmware-host\Shared Folders`, then stage the
-  checkout and live Minecraft runtime on guest-local NTFS before launching.
+- Read the repository through `\\vmware-host\Shared Folders`. For Forge 1.20.1
+  UI smoke, dispatch `scripts/invoke-ui-smoke-codexvm.ps1`; it incrementally
+  stages into stable guest-local NTFS and keeps the Gradle and runtime caches.
+  For other launches, stage the checkout and live runtime on guest-local NTFS.
   Loom writes below the checkout and fails on VMware shared-folder rename and
   watch semantics. Pass a guest-local `-RuntimeDirectory` to the staged
   repository launchers.
@@ -33,8 +35,16 @@ description: Audit dependencies or run AE2 Crafting Time client, UI, version-mat
 - For a supported target, run its `scripts-run/run-*.bat` launcher inside the
   VM. Use the matching `-latest` launcher only for the latest profile. For an
   all-version sweep, run all four supported targets and report each separately.
-- For Forge 1.20.1 test-driver UI work, run `scripts/run-ui-smoke.ps1` inside the
-  VM with the requested `-Scenario`, `-Latest`, or `-Interactive` option.
+- For Forge 1.20.1 test-driver UI work, run
+  `scripts/invoke-ui-smoke-codexvm.ps1` with the requested `-Scenario`,
+  `-Latest`, or `-Interactive` option. Prefer its default OpenSSH transport;
+  use `-Transport Vmrun` to verify the VMware path. Read `status.json` and the
+  launcher logs from the profile's shared `build/ui-smoke` directory instead
+  of polling VNC. The status owns the exact launched PID; use the same command
+  with `-Stop` when it must be terminated.
+- Use VNC only to provision the transports, confirm no duplicate client is
+  open, and inspect the maximized Minecraft result. Do not poll terminal output
+  or build progress through screenshots.
 - Do not reinterpret a build, dependency, or generic compatibility request as a
   request to test installed modpacks.
 

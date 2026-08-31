@@ -113,14 +113,23 @@ and `1.20.1-forge`, with `-Latest` and `-Interactive` switches. It:
 1. calls the existing Forge 1.20.1 launcher path for the chosen profile, which
    resolves dependencies and installs the matching driver;
 2. builds the production development classes;
-3. creates `build/ui-smoke/1.20.1-forge/<profile>/runtime` and supplies it as
-   the shared launcher's runtime directory;
+3. reuses `build/ui-smoke/1.20.1-forge/<profile>/runtime` and supplies it as
+   the shared launcher's runtime directory, preserving resolved dependencies
+   and Gradle/runtime caches between runs;
 4. copies the tracked fixture into that runtime with a new disposable ID;
 5. sets fixed client options and the explicit scenario property;
 6. starts the module's `runClient` with that runtime directory;
 7. records only the launched process tree;
 8. validates output and logs after exit; and
 9. removes the disposable world after evidence has been copied out.
+
+`run-ui-smoke-codexvm.ps1` incrementally mirrors the shared checkout into one
+stable guest-local directory, pins JDK 17, and dispatches the runner into the
+logged-in Codex session. `run-ui-smoke.ps1` writes stdout, stderr, and an atomic
+`status.json` to the shared report directory. The status exposes the current
+phase, exact child PID, Java home, exit code, and artifact paths. OpenSSH is the
+normal host transport; VMware `runProgramInGuest` remains a second transport.
+Neither requires VNC terminal polling.
 
 The automatic runner requests normal shutdown first. On timeout it terminates
 only the process tree it launched. It never searches for or kills Java

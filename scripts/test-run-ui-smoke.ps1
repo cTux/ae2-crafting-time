@@ -45,12 +45,13 @@ Set-Content -LiteralPath (Join-Path $RuntimeDirectory "logs\latest.log") -Value 
 '@, [Text.UTF8Encoding]::new($false))
 
 function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive,
-        [string]$Scenario = "craft-plan", [bool]$shouldPass) {
+        [string]$Scenario = "craft-plan", [string]$ReportDirectory, [bool]$shouldPass) {
     $env:AE2CT_UI_SMOKE_TEST_MODE = $mode
     $arguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $scripts "run-ui-smoke.ps1"))
     if ($Latest) { $arguments += "-Latest" }
     if ($Interactive) { $arguments += "-Interactive" }
     if ($Scenario -ne "craft-plan") { $arguments += @("-Scenario", $Scenario) }
+    if ($ReportDirectory) { $arguments += @("-ReportDirectory", $ReportDirectory) }
     $preference = $ErrorActionPreference
     try {
         $ErrorActionPreference = "Continue"
@@ -64,6 +65,19 @@ function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive,
 
 try {
     Invoke-Case "pass" -shouldPass $true
+    $cacheMarker = Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\runtime\cache-marker.txt"
+    Set-Content -LiteralPath $cacheMarker -Value "keep"
+    Invoke-Case "pass" -shouldPass $true
+    if (-not (Test-Path -LiteralPath $cacheMarker)) { throw "Smoke runtime cache was discarded" }
+    $status = Get-Content -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\status.json") -Raw | ConvertFrom-Json
+    if ($status.phase -ne "passed" -or -not $status.pid -or $status.target -ne "1.20.1-forge") {
+        throw "Smoke status omitted the final phase, PID, or target"
+    }
+    $externalReport = Join-Path $temp "shared-report"
+    Invoke-Case "pass" -ReportDirectory $externalReport -shouldPass $true
+    if (-not (Test-Path -LiteralPath (Join-Path $externalReport "evidence\result.json"))) {
+        throw "External smoke report omitted copied evidence"
+    }
     Invoke-Case "pass" -Latest -shouldPass $true
     Invoke-Case "pass" -Scenario "neoeco-cpu" -shouldPass $true
     Invoke-Case "pass" -Scenario "future-addon-cpu" -shouldPass $true
@@ -80,6 +94,8 @@ try {
     Invoke-Case "schema" -shouldPass $false
     Invoke-Case "missing-screenshot" -shouldPass $false
     Invoke-Case "fatal" -shouldPass $false
+    $failedStatus = Get-Content -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\status.json") -Raw | ConvertFrom-Json
+    if ($failedStatus.phase -ne "failed" -or -not $failedStatus.message) { throw "Smoke failure status was incomplete" }
 
     $markerPath = Join-Path $source ".ae2-crafting-time-test-fixture.json"
     $marker = Get-Content -LiteralPath $markerPath -Raw | ConvertFrom-Json
