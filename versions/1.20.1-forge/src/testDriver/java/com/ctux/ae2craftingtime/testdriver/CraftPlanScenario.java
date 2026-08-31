@@ -50,6 +50,7 @@ public final class CraftPlanScenario {
     private CompletableFuture<String> cpuCheck;
     private CompletableFuture<Integer> sampleCheck;
     private CompletableFuture<NeoEcoFixture.Placement> fixturePlacement;
+    private CompletableFuture<BlockPos> advancedAePlacement;
     private CompletableFuture<Void> fixtureSetup;
 
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
@@ -137,9 +138,16 @@ public final class CraftPlanScenario {
         } else if (options.scenario().equals("advancedae-cpu")) {
             var server = minecraft.getSingleplayerServer();
             var playerId = minecraft.player.getUUID();
-            if (fixtureSetup == null) {
-                fixtureSetup = server.submit(() -> AdvancedAeFixture.place(
+            if (advancedAePlacement == null) {
+                advancedAePlacement = server.submit(() -> AdvancedAeFixture.place(
                         server.getPlayerList().getPlayer(playerId), marker));
+            }
+            if (!advancedAePlacement.isDone()) {
+                return;
+            }
+            if (fixtureSetup == null) {
+                fixtureSetup = server.submit(() -> AdvancedAeFixture.finish(
+                        server.getPlayerList().getPlayer(playerId), advancedAePlacement.join()));
             }
             if (!fixtureSetup.isDone()) {
                 return;

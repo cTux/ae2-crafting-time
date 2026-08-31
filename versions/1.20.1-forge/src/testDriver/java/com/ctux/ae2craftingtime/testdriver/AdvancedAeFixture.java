@@ -16,7 +16,7 @@ final class AdvancedAeFixture {
     private AdvancedAeFixture() {
     }
 
-    static void place(ServerPlayer player, FixtureMarker marker) {
+    static BlockPos place(ServerPlayer player, FixtureMarker marker) {
         if (player == null) {
             throw new IllegalStateException("fixture player is unavailable");
         }
@@ -45,19 +45,25 @@ final class AdvancedAeFixture {
                 var target = anchor.relative(direction);
                 if (node != null && node.getGrid() == grid && level.getBlockState(target).isAir()) {
                     level.setBlockAndUpdate(target, core.defaultBlockState());
-                    if (!(level.getBlockEntity(target) instanceof AdvCraftingBlockEntity blockEntity)) {
-                        throw new IllegalStateException("AdvancedAE quantum core block entity was not placed");
-                    }
-                    if (!blockEntity.isFormed()) {
-                        blockEntity.onReady();
-                    }
-                    if (!blockEntity.isFormed()) {
-                        throw new IllegalStateException("AdvancedAE quantum core did not form");
-                    }
-                    return;
+                    return target;
                 }
             }
         }
         throw new IllegalStateException("no empty vertical connection beside the fixture AE2 grid for AdvancedAE CPU");
+    }
+
+    static void finish(ServerPlayer player, BlockPos position) {
+        if (player == null) {
+            throw new IllegalStateException("fixture player is unavailable");
+        }
+        if (!(player.serverLevel().getBlockEntity(position) instanceof AdvCraftingBlockEntity blockEntity)) {
+            throw new IllegalStateException("AdvancedAE quantum core block entity was not placed");
+        }
+        if (!blockEntity.isFormed()) {
+            blockEntity.onReady();
+        }
+        if (!blockEntity.isFormed()) {
+            throw new IllegalStateException("AdvancedAE quantum core did not form");
+        }
     }
 }
