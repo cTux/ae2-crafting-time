@@ -19,7 +19,7 @@ exit /b 0
 $testMatrix = Join-Path $temp "run-client-versions.json"
 foreach ($entry in $matrix) {
     foreach ($dependency in @($entry.compatible.versions | Where-Object { $_.file })) {
-        $dependency.file.sha512 = $hash
+        $dependency.file.hashes.sha512 = $hash
     }
     foreach ($dependency in @($entry.curseforge | Where-Object { $_ })) {
         $dependency.compatible.sha512 = $hash
