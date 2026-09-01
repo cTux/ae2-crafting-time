@@ -21,7 +21,7 @@ import java.util.List;
 public abstract class WcwtTerminalScreenMixin {
     private static final String WCWT_SCREEN = "com.lhy.wcwt.client.WirelessComprehensiveWorkTerminalScreen";
 
-    @ModifyVariable(method = "renderGridInventoryEntryTooltip", at = @At("STORE"), ordinal = 0)
+    @ModifyVariable(method = "renderGridInventoryEntryTooltip", at = @At("STORE"), ordinal = 0, remap = false)
     private List<Component> ae2craftingtime$appendTtc(List<Component> lines, GuiGraphics guiGraphics,
             GridInventoryEntry entry, int x, int y) {
         if (!getClass().getName().equals(WCWT_SCREEN) || !entry.isCraftable()) {
