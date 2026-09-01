@@ -42,7 +42,7 @@ public final class CraftPlanScenario {
     private final List<List<String>> orders = new ArrayList<>();
     private final List<List<String>> knownOrders = new ArrayList<>();
     private ScenarioState state = ScenarioState.STARTING;
-    private long stateStarted = System.nanoTime();
+    private long stateStarted;
     private FixtureMarker marker;
     private int sortStage;
     private long lastFrame = -1;
@@ -392,7 +392,13 @@ public final class CraftPlanScenario {
     }
 
     private Duration elapsed() {
-        return Duration.ofNanos(System.nanoTime() - stateStarted);
+        var now = System.nanoTime();
+        stateStarted = startTime(stateStarted, now);
+        return Duration.ofNanos(now - stateStarted);
+    }
+
+    static long startTime(long started, long now) {
+        return started == 0 ? now : started;
     }
 
     private String currentScreen() {

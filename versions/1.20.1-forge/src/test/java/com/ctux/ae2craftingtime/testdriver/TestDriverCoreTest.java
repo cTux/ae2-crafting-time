@@ -56,6 +56,12 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void scenarioClockStartsOnFirstObservation() {
+        assertEquals(7, CraftPlanScenario.startTime(0, 7));
+        assertEquals(3, CraftPlanScenario.startTime(3, 7));
+    }
+
+    @Test
     void everyScenarioTransitionIsExplicit() {
         var path = List.of(ScenarioState.STARTING, ScenarioState.WORLD_READY, ScenarioState.TERMINAL_OPEN,
                 ScenarioState.PLAN_OPEN, ScenarioState.PLAN_STABLE, ScenarioState.BASE_CHECKED,
