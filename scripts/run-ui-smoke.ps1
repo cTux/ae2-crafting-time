@@ -1,7 +1,7 @@
 param(
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(craft-plan|merequester-screen|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(craft-plan|merequester-screen|ae2networkanalyser-screen|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$ReportDirectory
 )
@@ -137,7 +137,9 @@ try {
     $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
         Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
     $driverName = "ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"
-    $requiredChecks = if ($Scenario -eq "merequester-screen") {
+    $requiredChecks = if ($Scenario -eq "ae2networkanalyser-screen") {
+        @("screen", "layout")
+    } elseif ($Scenario -eq "merequester-screen") {
         @("screen", "ttc-row", "total-ttc", "layout")
     } elseif ($Scenario -like "*-terminal") {
         @("screen", "ttc-tooltip", "plan-ttc")
@@ -154,7 +156,9 @@ try {
     $actualChecks = @($result.checks.psobject.Properties.Name)
     if (Compare-Object $requiredChecks $actualChecks -SyncWindow 0) { throw "Invalid UI-smoke check set" }
     foreach ($check in $requiredChecks) { if (-not $result.checks.$check) { throw "Failed UI-smoke check: $check" } }
-    $requiredScreenshots = if ($Scenario -eq "merequester-screen") {
+    $requiredScreenshots = if ($Scenario -eq "ae2networkanalyser-screen") {
+        @("ae2networkanalyser-screen.png")
+    } elseif ($Scenario -eq "merequester-screen") {
         @("merequester-screen.png")
     } elseif ($Scenario -like "*-terminal") {
         $prefix = $Scenario -replace '-terminal$', ''

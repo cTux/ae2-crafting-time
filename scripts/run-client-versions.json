@@ -70,6 +70,41 @@
     "test_driver_projects": ["PbNc6qBY"],
     "curseforge": [
       {
+        "name": "AE2 Network Analyser",
+        "project_id": 961856,
+        "mod_id": "ae2netanalyser",
+        "version": "1.20-1.0.6-forge",
+        "dependencies": [
+          957920
+        ],
+        "compatible": {
+          "file_id": 5107131,
+          "filename": "AE2NetworkAnalyzer-1.20-1.0.6-forge.jar",
+          "sha512": "da1bb1efebfc4f3bdc02c1c52ba1ee734bbce72e9bfc8cc496a87c9c40de3fb57cfa67646005258502a31832000a5c96996dc34b11aac97ee8e64d2104405ded"
+        },
+        "latest": {
+          "file_id": 5107131,
+          "filename": "AE2NetworkAnalyzer-1.20-1.0.6-forge.jar",
+          "sha512": "da1bb1efebfc4f3bdc02c1c52ba1ee734bbce72e9bfc8cc496a87c9c40de3fb57cfa67646005258502a31832000a5c96996dc34b11aac97ee8e64d2104405ded"
+        }
+      },
+      {
+        "name": "Glodium",
+        "project_id": 957920,
+        "mod_id": "glodium",
+        "version": "1.20-1.5-forge",
+        "compatible": {
+          "file_id": 5226922,
+          "filename": "Glodium-1.20-1.5-forge.jar",
+          "sha512": "57ba996845f588191b12f5e4c578b6f33a2b431facd54176dc61abba0f08f86cbc03c39cf795c7d5dea4926a923ec88e646a25d1a9a3a5bb9508fcb79a661a5e"
+        },
+        "latest": {
+          "file_id": 5226922,
+          "filename": "Glodium-1.20-1.5-forge.jar",
+          "sha512": "57ba996845f588191b12f5e4c578b6f33a2b431facd54176dc61abba0f08f86cbc03c39cf795c7d5dea4926a923ec88e646a25d1a9a3a5bb9508fcb79a661a5e"
+        }
+      },
+      {
         "name": "OmniSequence: Transfinite",
         "project_id": 1624558,
         "mod_id": "molecularmanipulator",

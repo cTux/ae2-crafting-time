@@ -48,7 +48,7 @@ therefore cannot replace layer 2.
 | ae2ct (Crafting Tree) | CRAFTING_UI | 5 | #69 | [CF][ae2ct-cf] | Implemented |
 | ME Requester | QOL / requester | 5 | #70 | [CF][merequester-cf] / [MR][merequester-mr] | Implemented |
 | AE2 Import Export Card | QOL | 4/5 | #85 | [CF][ae2iec-cf] / [MR][ae2iec-mr] | Not started |
-| AE2 Network Analyser | QOL (visual tool) | none | #86 | [CF][ae2na-cf] | Not started |
+| AE2 Network Analyser | QOL (visual tool) | `GuiAnalyser` compatibility smoke; no TTC hook | #86 | [CF][ae2na-cf] | Integrated |
 | AEInfinityBooster | QOL (range) | none | #87 | [CF][aeinfinity-cf] / [MR][aeinfinity-mr] | Not started |
 | Applied Botanics (Fork) | QOL (Botania) | 4 | #88 | [CF][appliedbotanics-cf] | Not started |
 | Advanced Peripherals | QOL (ME Bridge) | 5 (peripheral API, if useful) | #89 | [CF][advancedperipherals-cf] / [MR][advancedperipherals-mr] | Not started |

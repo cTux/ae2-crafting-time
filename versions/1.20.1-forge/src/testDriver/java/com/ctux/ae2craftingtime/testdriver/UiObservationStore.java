@@ -34,6 +34,7 @@ public final class UiObservationStore {
     public static void begin(Minecraft minecraft) {
         if (!(minecraft.screen instanceof AEBaseScreen<?> screen)
                 || (!(screen instanceof CraftConfirmScreen)
+                && !screen.getClass().getName().equals(Ae2NetworkAnalyserFixture.SCREEN)
                 && !screen.getClass().getName().equals(MeRequesterFixture.SCREEN))) {
             active = null;
             return;

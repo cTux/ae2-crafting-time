@@ -126,6 +126,14 @@ configures a deterministic out-of-stock request and profiler sample, opens its
 screen through block use, and checks `screen`, `ttc-row`, `total-ttc`, and
 `layout`. Its screenshot is `merequester-screen.png`.
 
+## AE2 Network Analyser scenario
+
+The `ae2networkanalyser-screen` scenario equips the real network analyser,
+opens its configuration screen through normal item use, and verifies the
+expected screen/menu identity and that its GUI remains inside the viewport.
+It does not assert TTC text because the addon visualizes network topology and
+does not expose crafting status.
+
 ## Interactive diagnosis
 
 Interactive mode runs the same scenario but pauses at the failed or completed
