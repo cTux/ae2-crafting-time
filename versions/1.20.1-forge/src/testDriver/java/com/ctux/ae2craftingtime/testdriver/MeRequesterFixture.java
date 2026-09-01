@@ -26,6 +26,9 @@ final class MeRequesterFixture {
         if (!ModList.get().isLoaded("merequester")) {
             throw new IllegalStateException("ME Requester is unavailable");
         }
+        if (player == null) {
+            return false;
+        }
         if (position == null) {
             position = place(player, marker);
             return false;
@@ -41,7 +44,7 @@ final class MeRequesterFixture {
         var level = player.serverLevel();
         var terminal = new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z());
         if (!(level.getBlockEntity(terminal) instanceof IInWorldGridNodeHost terminalHost)) {
-            throw new IllegalStateException("ME Requester fixture terminal is unavailable");
+            return null;
         }
         var grid = Arrays.stream(Direction.values()).map(terminalHost::getGridNode).filter(Objects::nonNull)
                 .map(node -> node.getGrid()).filter(Objects::nonNull).findFirst()
