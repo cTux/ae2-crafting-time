@@ -445,7 +445,7 @@ try {
         $label = if ($build.changed) { "build" } else { "build latest" }
         Write-Host "$label $($build.entry.id): $($build.version)"
         if (-not $DryRun) {
-            & $gradlew ":$($build.entry.module):distMod" "-PmodVersion=$($build.version)"
+            & $gradlew ":$($build.entry.module):distMod" "-PmodVersion=$($build.version)" --no-daemon
             if ($LASTEXITCODE -ne 0) {
                 throw "Gradle failed for $($build.entry.id)"
             }
