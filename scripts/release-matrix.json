@@ -14,7 +14,7 @@
     "modrinthDependencies": [
       { "project_id": "XxWD5pD3", "dependency_type": "required" },
       { "project_id": "a1RwDz90", "dependency_type": "optional" },
-      { "project_id": "IiATswDj", "dependency_type": "optional" },
+      { "project_id": "IiATswDj", "version_id": "9n9p68Qq", "dependency_type": "optional" },
       { "project_id": "E6BFl96N", "dependency_type": "optional" },
       { "project_id": "udZtKfzP", "dependency_type": "optional", "version_number": "20.3.0" },
       { "project_id": "ArHeh5Fz", "dependency_type": "optional" },
@@ -68,7 +68,7 @@
     "modrinthDependencies": [
       { "project_id": "XxWD5pD3", "dependency_type": "required" },
       { "project_id": "a1RwDz90", "dependency_type": "optional" },
-      { "project_id": "IiATswDj", "dependency_type": "optional" },
+      { "project_id": "IiATswDj", "version_id": "TpUCzFaW", "dependency_type": "optional" },
       { "project_id": "rxYaglEe", "dependency_type": "optional" },
       { "project_id": "E6BFl96N", "dependency_type": "optional" },
       { "project_id": "qPydPwtX", "dependency_type": "optional" },

@@ -40,7 +40,7 @@ side = "CLIENT"
 [[dependencies."${mod_id}"]]
 modId = "appmek"
 mandatory = false
-versionRange = "[1.4.0,)"
+versionRange = "[1.4.3,2.0.0)"
 ordering = "AFTER"
 side = "BOTH"
 
