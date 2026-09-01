@@ -40,7 +40,7 @@ therefore cannot replace layer 2.
 | AE2 Wireless Terminals | WIRELESS_TERMINAL | 5 | #78 | [CF][wireless-cf] / [MR][wireless-mr] | Direct TTC tooltip verified |
 | MEGA Cells | STORAGE_CELL / KEY | 3 | #79 | [CF][megacells-cf] / [MR][megacells-mr] | Not started |
 | OMNI Cells | STORAGE_CELL | 3 | #80 | [CF][omnicells-cf] | Not started |
-| ProjectCell | STORAGE_CELL / EMC_KEY | 3 | #81 | [CF][projectcell-cf] / [MR][projectcell-mr] | Implemented (verify) |
+| ProjectCell | STORAGE_CELL / EMC_KEY | 3 | #81 | [CF][projectcell-cf] / [MR][projectcell-mr] | Verified on Forge 1.20.1 |
 | AppliedE TPS Fix | EMC_KEY | 3 | #82 | [CF][appliede-cf] | Not started |
 | Applied Flux | STORAGE_CELL / energy KEY | 3 | #83 | [CF][appliedflux-cf] / [MR][appliedflux-mr] | Not started |
 | Modern AE2 Additions | QOL (AE Additions) | 4 | #84 | [CF][modernae2-cf] / [MR][modernae2-mr] | Not started |
