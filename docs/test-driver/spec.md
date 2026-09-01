@@ -15,6 +15,10 @@ Wireless-terminal addons are the exception because they add terminals, not
 crafting CPUs. Their scenarios open the real wireless terminal, check the
 craftable-entry TTC tooltip, and follow the normal AE2 Crafting Plan flow.
 
+ME Requester has its own screen scenario. It places and configures a real
+requester on the disposable grid, opens that screen normally, and checks its
+rendered TTC row, header total, badge layout, and screenshot.
+
 This covers [issue #126](https://github.com/cTux/ae2-crafting-time/issues/126).
 
 ## Artifact contract
@@ -109,6 +113,13 @@ Plan screen. The required checks are `screen`, `ttc-tooltip`, and `plan-ttc`.
 
 The `ae2wtlib-terminal` scenario uses the same flow with AE2 Wireless
 Terminals' charged wireless crafting terminal.
+
+## ME Requester scenario
+
+The `merequester-screen` scenario places a real requester on the fixture grid,
+configures a deterministic out-of-stock request and profiler sample, opens its
+screen through block use, and checks `screen`, `ttc-row`, `total-ttc`, and
+`layout`. Its screenshot is `merequester-screen.png`.
 
 ## Interactive diagnosis
 
@@ -222,6 +233,7 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
   one.
 - AE2 WCWT and AE2 Wireless Terminals have separate Forge 1.20.1 terminal
   scenarios because they add no crafting CPU.
+- ME Requester has a dedicated Forge 1.20.1 screen scenario.
 - Run it against both the compatible and latest AE2 profiles already owned by
   `scripts/run-client-versions.json`.
 - Do not create a cross-loader abstraction for this slice. Reuse code only when

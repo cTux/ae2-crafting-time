@@ -9,6 +9,12 @@ public final class LayoutValidator {
         for (var text : snapshot.text()) {
             check("text " + text.key(), text.bounds(), snapshot, failures);
         }
+        failures.addAll(validateBadges(snapshot));
+        return List.copyOf(failures);
+    }
+
+    public static List<String> validateBadges(UiSnapshot snapshot) {
+        var failures = new ArrayList<String>();
         for (var badge : snapshot.badges()) {
             check("badge", badge, snapshot, failures);
         }

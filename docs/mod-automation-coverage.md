@@ -24,7 +24,7 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 | ae2ct (Crafting Tree) (`ae2ct`; optional; candidate) | `1.0.1` | No | Not pinned | No | `1.0.1` | No | — | — |
 | Applied Mekanistics (`appmek`; optional) | `1.4.3` | Yes (`appmek-cpu`) | — | — | `1.6.3` | No | — | — |
 | AdvancedAE (`advanced_ae`; optional; candidate) | `1.3.6-1.20.1` | Yes (scenario) | — | — | `1.6.12-1.21.1` | No | `26.1.7` | No |
-| ME Requester (`merequester`; optional; candidate) | `1.20.1-1.2.1+forge` | No | `1.20.1-1.1.4+fabric` | No | `1.21.1-1.4.3+neoforge` | No | — | — |
+| ME Requester (`merequester`; optional; candidate) | `1.20.1-1.2.1+forge` | Yes (`merequester-screen`) | `1.20.1-1.1.4+fabric` | No | `1.21.1-1.4.3+neoforge` | No | — | — |
 | NeoEco AE (`neoecoae`; optional; candidate) | `20.3.0` | Yes (scenario) | — | — | `21.1.1` | No | — | — |
 | AE2 Lightning Tech (`ae2lightningtech`; optional; candidate) | `2.1.0-beta.2-forge.1.20.1` | No | — | — | `2.1.0-beta.2` | No | `1.0.1alpha-26.1.2neoforge` | No |
 | OmniSequence: Transfinite (`molecularmanipulator`; optional; candidate) | `1.3.9-forge` | Yes (scenario) | — | — | `1.3.9-hotfix` | No | — | — |

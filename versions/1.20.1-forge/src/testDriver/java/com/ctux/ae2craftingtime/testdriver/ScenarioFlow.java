@@ -8,7 +8,7 @@ public final class ScenarioFlow {
         return switch (current) {
             case STARTING -> next == ScenarioState.WORLD_READY;
             case WORLD_READY -> next == ScenarioState.TERMINAL_OPEN;
-            case TERMINAL_OPEN -> next == ScenarioState.PLAN_OPEN;
+            case TERMINAL_OPEN -> next == ScenarioState.PLAN_OPEN || next == ScenarioState.RESULT_WRITTEN;
             case PLAN_OPEN -> next == ScenarioState.PLAN_STABLE;
             case PLAN_STABLE -> next == ScenarioState.BASE_CHECKED || next == ScenarioState.ADDON_CPU_SELECTED
                     || next == ScenarioState.RESULT_WRITTEN;
