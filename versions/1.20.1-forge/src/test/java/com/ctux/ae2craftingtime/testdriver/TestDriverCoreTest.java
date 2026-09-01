@@ -37,6 +37,7 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("omnicells-cpu"));
         assertTrue(AddonCpuFixture.supports("projectcell-cpu"));
         assertTrue(AddonCpuFixture.supports("appliede-cpu"));
+        assertTrue(AddonCpuFixture.supports("appflux-cpu"));
         assertTrue(AddonCpuFixture.supports("omnisequence-cpu"));
         assertFalse(AddonCpuFixture.supports("missing-cpu"));
         assertNull(AddonCpuFixture.create("craft-plan"));
@@ -173,6 +174,8 @@ class TestDriverCoreTest {
                 DriverResult.requiredChecks("projectcell-cpu"));
         assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("appliede-cpu"));
+        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+                DriverResult.requiredChecks("appflux-cpu"));
         assertEquals(List.of("screen", "ttc-tooltip", "plan-ttc"),
                 DriverResult.requiredChecks("ae2wcwt-terminal"));
         assertEquals(List.of("screen", "ttc-tooltip", "plan-ttc"),

@@ -42,7 +42,7 @@ therefore cannot replace layer 2.
 | OMNI Cells | STORAGE_CELL | 3 | #80 | [CF][omnicells-cf] | Not started |
 | ProjectCell | STORAGE_CELL / EMC_KEY | 3 | #81 | [CF][projectcell-cf] / [MR][projectcell-mr] | Verified on Forge 1.20.1 |
 | AppliedE / AppliedE TPS Fix | EMC_KEY | 3 | #82 | [CF][appliede-cf] / [MR][appliede-mr] | Verified on Forge 1.20.1 |
-| Applied Flux | STORAGE_CELL / energy KEY | 3 | #83 | [CF][appliedflux-cf] / [MR][appliedflux-mr] | Not started |
+| Applied Flux | STORAGE_CELL / energy KEY | 3 | #83 | [CF][appliedflux-cf] / [MR][appliedflux-mr] | Verified on Forge 1.20.1 |
 | Modern AE2 Additions | QOL (AE Additions) | 4 | #84 | [CF][modernae2-cf] / [MR][modernae2-mr] | Not started |
 | Applied Mekanistics | CHEMICAL_KEY | 3 | #68 | [CF][appmek-cf] / [MR][appmek-mr] | Implemented |
 | ae2ct (Crafting Tree) | CRAFTING_UI | 5 | #69 | [CF][ae2ct-cf] | Implemented |

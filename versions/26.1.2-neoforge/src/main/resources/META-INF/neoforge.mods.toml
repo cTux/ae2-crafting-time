@@ -58,5 +58,12 @@ versionRange="[1.1.7,1.2.0)"
 ordering="AFTER"
 side="BOTH"
 
+[[dependencies."${mod_id}"]]
+modId="appflux"
+type="OPTIONAL"
+versionRange="[1.0.1,2.0.0)"
+ordering="AFTER"
+side="BOTH"
+
 [[mixins]]
 config="ae2craftingtime.mixins.json"

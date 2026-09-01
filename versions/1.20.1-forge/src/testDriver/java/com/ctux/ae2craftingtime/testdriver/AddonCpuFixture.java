@@ -20,6 +20,7 @@ abstract class AddonCpuFixture<P> {
             Map.entry("omnicells-cpu", "com.ctux.ae2craftingtime.testdriver.OmniCellsFixture"),
             Map.entry("projectcell-cpu", "com.ctux.ae2craftingtime.testdriver.ProjectCellFixture"),
             Map.entry("appliede-cpu", "com.ctux.ae2craftingtime.testdriver.AppliedEFixture"),
+            Map.entry("appflux-cpu", "com.ctux.ae2craftingtime.testdriver.AppliedFluxFixture"),
             Map.entry("omnisequence-cpu", "com.ctux.ae2craftingtime.testdriver.OmniSequenceFixture"));
 
     private CompletableFuture<P> placementFuture;
