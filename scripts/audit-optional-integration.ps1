@@ -30,6 +30,7 @@ function Compare-Version([string]$left, [string]$right) {
 
 function Test-VersionRange([string]$version, [string]$range) {
     if (-not $range -or $range -match '\$\{') { return $false }
+    if ($range -eq "*") { return $true }
     foreach ($alternative in ($range -split '\s*\|\|\s*')) {
         if ($alternative -match '^[\[(](?<minimum>[^,]*),(?<maximum>[^\])]*)[\])]$') {
             $minimumOk = -not $Matches.minimum -or (Compare-Version $version $Matches.minimum) -ge $(if ($alternative[0] -eq '[') { 0 } else { 1 })
@@ -77,8 +78,8 @@ function Get-ArtifactRanges([string]$path, [string]$loader) {
             $reader = [IO.StreamReader]::new($entry.Open())
             try { $metadata = $reader.ReadToEnd() | ConvertFrom-Json } finally { $reader.Dispose() }
             return [pscustomobject]@{
-                Minecraft = [string]$metadata.depends.minecraft
-                Loader = [string]$metadata.depends.fabricloader
+                Minecraft = $(if ($metadata.depends.minecraft) { [string]$metadata.depends.minecraft } else { "*" })
+                Loader = $(if ($metadata.depends.fabricloader) { [string]$metadata.depends.fabricloader } else { "*" })
                 Ae2 = [string]$metadata.depends.ae2
             }
         }
@@ -87,9 +88,11 @@ function Get-ArtifactRanges([string]$path, [string]$loader) {
         if (-not $entry) { return $null }
         $reader = [IO.StreamReader]::new($entry.Open())
         try { $text = $reader.ReadToEnd() } finally { $reader.Dispose() }
+        $minecraftRange = Get-TomlRange $text "minecraft"
+        $loaderRange = Get-TomlRange $text $loader
         return [pscustomobject]@{
-            Minecraft = Get-TomlRange $text "minecraft"
-            Loader = Get-TomlRange $text $loader
+            Minecraft = $(if ($minecraftRange) { $minecraftRange } else { "*" })
+            Loader = $(if ($loaderRange) { $loaderRange } else { "*" })
             Ae2 = Get-TomlRange $text "ae2"
         }
     } finally { $archive.Dispose() }
@@ -106,7 +109,8 @@ try {
         $game = [uri]::EscapeDataString("[`"$($row.minecraftVersion)`"]")
         $loader = [uri]::EscapeDataString("[`"$($row.loader)`"]")
         $availableVersions = Invoke-RestMethod -Uri "$ApiBase/project/$ProjectId/version?game_versions=$game&loaders=$loader"
-        $versions = @($availableVersions | Where-Object version_type -eq "release" | Sort-Object date_published)
+        $versions = @($availableVersions | Where-Object version_type -ne "alpha" | Sort-Object `
+            @{ Expression = { if ($_.version_type -eq "release") { 0 } else { 1 } } }, date_published)
         $selected = $null
         $lastReason = "no stable artifact"
         foreach ($version in $versions) {

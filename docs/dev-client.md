@@ -85,8 +85,9 @@ official artifacts:
 ```
 
 The command selects the oldest stable artifact whose embedded Minecraft,
-loader, and AE2 ranges admit the pinned row. Rows without one are reported as
-`UNSUPPORTED` instead of accepting any downloadable file.
+loader, and AE2 ranges admit the pinned row. It falls back to a compatible beta
+when that target has no stable artifact, but never selects alpha files. Rows
+without a compatible official artifact are reported as `UNSUPPORTED`.
 
 The same matrix is the known-issues list. Keep incompatible candidates in
 `projects`, set `compatible` to `false`, and record the concrete `reason`.

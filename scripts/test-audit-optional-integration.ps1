@@ -60,8 +60,13 @@ versionRange="[21.1.1,)"
 modId="ae2"
 versionRange="[19.0.24,20)"
 '@
+    $neo26 = New-TestJar "neo26.jar" "META-INF/neoforge.mods.toml" @'
+[[dependencies.demo]]
+modId="ae2"
+versionRange="[26.1.10-beta,27)"
+'@
     $global:Ae2CtAuditFiles = @{}
-    foreach ($path in @($forgeOld, $forge, $fabric, $neo)) { $global:Ae2CtAuditFiles[[IO.Path]::GetFileName($path)] = $path }
+    foreach ($path in @($forgeOld, $forge, $fabric, $neo, $neo26)) { $global:Ae2CtAuditFiles[[IO.Path]::GetFileName($path)] = $path }
     $global:Ae2CtAuditVersions = @{
         forge = @(
             (New-Version "forge-old" "0.9.0" $forgeOld -date "2024-01-01T00:00:00Z"),
@@ -69,7 +74,7 @@ versionRange="[19.0.24,20)"
         )
         fabric = @((New-Version "fabric-ok" "1.0.0" $fabric))
         neoforge1211 = @((New-Version "neo-ok" "1.0.0" $neo))
-        neoforge2612 = @((New-Version "neo-beta" "2.0.0-beta" $neo "beta"))
+        neoforge2612 = @((New-Version "neo-beta" "2.0.0-beta" $neo26 "beta"))
     }
 
     function Invoke-RestMethod {
@@ -88,14 +93,14 @@ versionRange="[19.0.24,20)"
     }
 
     $result = @(& $script -ProjectId demo)
-    if ($result.Count -ne 4 -or @($result | Where-Object Status -eq "SUPPORTED").Count -ne 3) {
+    if ($result.Count -ne 4 -or @($result | Where-Object Status -eq "SUPPORTED").Count -ne 4) {
         throw "Audit did not report all supported rows: $($result | ConvertTo-Json -Compress)"
     }
     if (($result | Where-Object Target -eq "1.20.1-forge").VersionId -ne "forge-ok") {
         throw "Audit did not reject the incompatible older artifact"
     }
-    if (($result | Where-Object Target -eq "26.1.2-neoforge").Status -ne "UNSUPPORTED") {
-        throw "Audit selected a prerelease-only row"
+    if (($result | Where-Object Target -eq "26.1.2-neoforge").VersionId -ne "neo-beta") {
+        throw "Audit did not fall back to a compatible beta"
     }
 
     $source = Get-Content -LiteralPath $script -Raw
@@ -105,6 +110,13 @@ versionRange="[19.0.24,20)"
     if ($source -match '\$availableVersions\s*=\s*@\(Invoke-RestMethod') {
         throw "Audit must enumerate Windows PowerShell REST arrays before filtering"
     }
+
+    $savedFabric = $global:Ae2CtAuditVersions.fabric
+    $global:Ae2CtAuditVersions.fabric = @()
+    try {
+        $unsupported = @(& $script -ProjectId demo | Where-Object Target -eq "1.20.1-fabric")
+        if ($unsupported.Status -ne "UNSUPPORTED") { throw "Audit accepted a row without an official artifact" }
+    } finally { $global:Ae2CtAuditVersions.fabric = $savedFabric }
 
     $global:Ae2CtAuditBadHash = $true
     try {
