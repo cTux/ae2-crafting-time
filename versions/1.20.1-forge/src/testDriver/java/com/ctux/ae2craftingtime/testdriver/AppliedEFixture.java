@@ -10,6 +10,7 @@ import appeng.api.parts.IPartHost;
 import appeng.api.parts.IPartItem;
 import appeng.api.stacks.AEItemKey;
 import gripe._90.appliede.AppliedE;
+import gripe._90.appliede.part.EMCModulePart;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -22,6 +23,8 @@ import java.util.Arrays;
 import java.util.Objects;
 
 final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
+    private int finishAttempts;
+
     @Override
     protected Placement place(ServerPlayer player, FixtureMarker marker) {
         if (player == null) {
@@ -50,16 +53,30 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
         if (module == null) {
             throw new IllegalStateException("AppliedE fixture could not place the transmutation module");
         }
-        return new Placement(grid, module.getGridNode(), cobblestone);
+        return new Placement(grid, (EMCModulePart) module, cobblestone);
     }
 
     @Override
     protected boolean finish(ServerPlayer player, Placement placement) {
-        if (!placement.moduleNode().isActive()) {
+        var moduleNode = placement.module().getGridNode();
+        if (!moduleNode.isActive()) {
+            failIfSetupStalled(placement, moduleNode);
             return false;
         }
-        placement.grid().getCraftingService().refreshNodeCraftingProvider(placement.moduleNode());
-        return placement.grid().getCraftingService().isCraftable(placement.cobblestone());
+        placement.grid().getCraftingService().refreshNodeCraftingProvider(moduleNode);
+        if (!placement.grid().getCraftingService().isCraftable(placement.cobblestone())) {
+            failIfSetupStalled(placement, moduleNode);
+            return false;
+        }
+        return true;
+    }
+
+    private void failIfSetupStalled(Placement placement, IGridNode moduleNode) {
+        if (++finishAttempts >= 200) {
+            throw new IllegalStateException("AppliedE fixture did not become craftable: active="
+                    + moduleNode.isActive() + ", owner=" + moduleNode.getOwningPlayerProfileId()
+                    + ", patterns=" + placement.module().getAvailablePatterns().size());
+        }
     }
 
     @Override
@@ -67,6 +84,6 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
         return grid.getCraftingService().getCpus().stream().filter(cpu -> !cpu.isBusy()).findFirst().orElse(null);
     }
 
-    record Placement(IGrid grid, IGridNode moduleNode, AEItemKey cobblestone) {
+    record Placement(IGrid grid, EMCModulePart module, AEItemKey cobblestone) {
     }
 }
