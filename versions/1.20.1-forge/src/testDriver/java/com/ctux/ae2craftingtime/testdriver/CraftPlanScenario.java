@@ -192,7 +192,7 @@ public final class CraftPlanScenario {
                 return;
             }
             if (UiObservationStore.wcwtTooltip().stream()
-                    .noneMatch(text -> text.key().equals("text.ae2craftingtime.ttc"))) {
+                    .noneMatch(CraftPlanScenario::isResolvedTtc)) {
                 return;
             }
             checks.put("ttc-tooltip", true);
@@ -225,7 +225,7 @@ public final class CraftPlanScenario {
             if (isWcwt()) {
                 checks.put("plan-ttc", snapshot.rows().stream().filter(row -> row.outputId().equals(outputId))
                         .flatMap(row -> row.description().stream())
-                        .anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")));
+                        .anyMatch(CraftPlanScenario::isResolvedTtc));
                 screenshot("ae2wcwt-plan.png");
                 writePass();
                 return;
@@ -473,6 +473,11 @@ public final class CraftPlanScenario {
 
     private boolean isWcwt() {
         return options.scenario().equals("ae2wcwt-terminal");
+    }
+
+    private static boolean isResolvedTtc(UiSnapshot.ObservedText text) {
+        return text.key().equals("text.ae2craftingtime.ttc")
+                && !text.arguments().contains("text.ae2craftingtime.collecting_data");
     }
 
     private void advance(ScenarioState next) {
