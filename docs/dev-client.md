@@ -77,6 +77,17 @@ profile resolves Modrinth and loader releases at launch. CurseForge-only files
 have explicit `compatible` and `latest` records because CurseForge has no
 anonymous version API; update their file IDs, names, and hashes in the matrix.
 
+Before adding a Modrinth integration, audit every supported row from its
+official artifacts:
+
+```powershell
+.\scripts\audit-optional-integration.ps1 -ProjectId <id>
+```
+
+The command selects the oldest stable artifact whose embedded Minecraft,
+loader, and AE2 ranges admit the pinned row. Rows without one are reported as
+`UNSUPPORTED` instead of accepting any downloadable file.
+
 The same matrix is the known-issues list. Keep incompatible candidates in
 `projects`, set `compatible` to `false`, and record the concrete `reason`.
 When issues exist, add `issue_url` for this repository and
