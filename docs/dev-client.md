@@ -13,7 +13,10 @@ For the fast Forge 1.20.1 UI smoke, run this on the host:
 
 During integration development, add `-ProjectId <id>` to load only that
 integration and its required dependencies. Before merge, rerun the scenario
-without `-ProjectId` to prove it against the complete compatible profile.
+without `-ProjectId` to prove it against the complete compatible profile. Fetch
+and rebase onto `origin/master` immediately before that final full-profile run;
+rerun it after any later base change to production, build, dependency, fixture,
+or driver code.
 
 It uses OpenSSH by default. Add `-Transport Vmrun` to use VMware guest
 execution, or `-Stop` to terminate only the PID tree recorded by the current
