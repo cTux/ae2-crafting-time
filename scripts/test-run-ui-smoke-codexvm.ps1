@@ -25,6 +25,9 @@ try {
     Set-Content -LiteralPath $cacheMarker -Value "keep"
     & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage
     if (-not (Test-Path -LiteralPath $cacheMarker)) { throw "Stable staging discarded the guest build cache" }
+    if (-not (Test-Path -LiteralPath (Join-Path $source "build\ui-smoke\1.20.1-forge\compatible\craft-plan\wrapper-result.json"))) {
+        throw "Default scenario report was not separated"
+    }
     Write-Host "run-ui-smoke-codexvm checks passed"
 } finally {
     if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force }

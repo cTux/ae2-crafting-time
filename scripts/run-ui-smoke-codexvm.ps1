@@ -36,7 +36,7 @@ function Find-Java17([string]$requested) {
 
 function Get-ReportDirectory([string]$sourceRoot, [bool]$latest, [string]$scenario) {
     $profile = if ($latest) { "latest" } else { "compatible" }
-    return Join-Path $sourceRoot "build\ui-smoke\1.20.1-forge\$profile$(if ($scenario -eq 'craft-plan') { '' } else { "\$scenario" })"
+    return Join-Path $sourceRoot "build\ui-smoke\1.20.1-forge\$profile\$scenario"
 }
 
 function Stop-Smoke([string]$report) {
