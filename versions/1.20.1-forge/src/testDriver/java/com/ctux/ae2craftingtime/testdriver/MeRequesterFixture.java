@@ -1,7 +1,6 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.networking.GridHelper;
-import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.IGridNode;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
@@ -47,7 +46,8 @@ final class MeRequesterFixture {
             throw new IllegalStateException("ME Requester block is unavailable");
         }
         for (var anchor : BlockPos.betweenClosed(terminal.offset(-12, -4, -12), terminal.offset(12, 4, 12))) {
-            if (!(level.getBlockEntity(anchor) instanceof IInWorldGridNodeHost host)) {
+            var host = GridHelper.getNodeHost(level, anchor);
+            if (host == null) {
                 continue;
             }
             for (var direction : Direction.values()) {
