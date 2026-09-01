@@ -300,8 +300,11 @@ public final class CraftPlanScenario {
                     throw new IllegalStateException("server Crafting Plan result is unavailable");
                 }
                 if (plan.simulation()) {
-                    throw new IllegalStateException("server Crafting Plan is a simulation; missing="
-                            + plan.missingItems());
+                    var missing = new ArrayList<String>();
+                    for (var entry : plan.missingItems()) {
+                        missing.add(entry.getKey().getId() + "=" + entry.getLongValue());
+                    }
+                    throw new IllegalStateException("server Crafting Plan is a simulation; missing=" + missing);
                 }
                 menu.startJob();
                 return true;

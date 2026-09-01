@@ -6,9 +6,11 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.AEItemKey;
 import appeng.blockentity.crafting.CraftingBlockEntity;
 import appeng.blockentity.storage.DriveBlockEntity;
 import appeng.core.definitions.AEBlocks;
+import appeng.core.definitions.AEItems;
 import appeng.me.cluster.implementations.CraftingCPUCalculator;
 import me.ramidzkh.mekae2.AMItems;
 import me.ramidzkh.mekae2.ae2.MekanismKey;
@@ -19,12 +21,14 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 
 import java.util.Arrays;
 import java.util.Objects;
 
 final class AppliedMekanisticsFixture extends AddonCpuFixture<AppliedMekanisticsFixture.Placement> {
     private static final long CHEMICAL_AMOUNT = 1_000_000;
+    private static final long COBBLESTONE_AMOUNT = 64;
 
     @Override
     protected Placement place(ServerPlayer player, FixtureMarker marker) {
@@ -59,6 +63,18 @@ final class AppliedMekanisticsFixture extends AddonCpuFixture<AppliedMekanistics
         }
         inventory.setItemDirect(slot, new ItemStack(AMItems.CHEMICAL_CELL_1K.get()));
         drive.onChangeInventory(inventory, slot);
+        var itemSlot = -1;
+        for (var index = 0; index < inventory.size(); index++) {
+            if (inventory.getStackInSlot(index).isEmpty()) {
+                itemSlot = index;
+                break;
+            }
+        }
+        if (itemSlot < 0) {
+            throw new IllegalStateException("Applied Mekanistics fixture drive has no second empty slot");
+        }
+        inventory.setItemDirect(itemSlot, AEItems.ITEM_CELL_1K.stack());
+        drive.onChangeInventory(inventory, itemSlot);
         for (var anchor : BlockPos.betweenClosed(terminal.offset(-12, -4, -12), terminal.offset(12, 4, 12))) {
             if (!(player.serverLevel().getBlockEntity(anchor) instanceof IInWorldGridNodeHost host)) {
                 continue;
@@ -91,7 +107,16 @@ final class AppliedMekanisticsFixture extends AddonCpuFixture<AppliedMekanistics
             throw new IllegalStateException("Applied Mekanistics chemical cell rejected oxygen");
         }
         placement.grid().getStorageService().invalidateCache();
-        var chemicalReady = placement.grid().getStorageService().getInventory().extract(placement.oxygen(),
+        var gridStorage = placement.grid().getStorageService().getInventory();
+        var cobblestone = AEItemKey.of(Items.COBBLESTONE);
+        var availableCobblestone = gridStorage.extract(cobblestone, COBBLESTONE_AMOUNT, Actionable.SIMULATE,
+                placement.source());
+        var missingCobblestone = COBBLESTONE_AMOUNT - availableCobblestone;
+        if (missingCobblestone > 0 && gridStorage.insert(cobblestone, missingCobblestone, Actionable.MODULATE,
+                placement.source()) != missingCobblestone) {
+            throw new IllegalStateException("Applied Mekanistics fixture grid rejected cobblestone");
+        }
+        var chemicalReady = gridStorage.extract(placement.oxygen(),
                 CHEMICAL_AMOUNT, Actionable.SIMULATE, placement.source()) == CHEMICAL_AMOUNT;
         var level = player.serverLevel();
         if (!(level.getBlockEntity(placement.cpu()) instanceof CraftingBlockEntity cpuStorage)) {
