@@ -79,9 +79,9 @@ that the player saw the expected UI.
 
 | Target | Direct UI | Direct behavior | Coexistence candidates and dependencies | Tooling |
 | --- | --- | --- | --- | --- |
-| 1.20.1 Forge | AE2 Crafting Tree; ME Requester | Applied Mekanistics chemical key; NeoEco AE C-series CPU; AE2 Lightning Tech time-wheel CPU | AdvancedAE; ExtendedAE; ExtendedAE-Plus; BM Addon; Crazy AE2 Addons; AE2 WCWT; AE2 Wireless Terminals; MEGA Cells; OMNI Cells; ProjectCell; Applied Flux; Modern AE2 Additions; AE2 Import Export Card; AEInfinityBooster; Advanced Peripherals; Expanded AE; ProjectE | GuideME; JEI |
+| 1.20.1 Forge | AE2 Crafting Tree; ME Requester; AE2 WCWT | Applied Mekanistics chemical key; NeoEco AE C-series CPU; AE2 Lightning Tech time-wheel CPU | AdvancedAE; ExtendedAE; ExtendedAE-Plus; BM Addon; Crazy AE2 Addons; AE2 Wireless Terminals; MEGA Cells; OMNI Cells; ProjectCell; Applied Flux; Modern AE2 Additions; AE2 Import Export Card; AEInfinityBooster; Advanced Peripherals; Expanded AE; ProjectE | GuideME; JEI |
 | 1.20.1 Fabric | ME Requester | None beyond standard AE2 | ExtendedAE; AE2 Wireless Terminals; MEGA Cells; AE2 Things | JEI |
-| 1.21.1 NeoForge | AE2 Crafting Tree; ME Requester | Applied Mekanistics chemical key; AdvancedAE Quantum Computer | NeoEco AE; AE2 Lightning Tech; ExtendedAE; ExtendedAE-Plus; BM Addon; AE2 WCWT; AE2 Wireless Terminals; MEGA Cells; OMNI Cells; ProjectCell; Applied Flux; AE2 Import Export Card; AEInfinityBooster; Advanced Peripherals; Expanded AE; ProjectE | GuideME; JEI |
+| 1.21.1 NeoForge | AE2 Crafting Tree; ME Requester; AE2 WCWT | Applied Mekanistics chemical key; AdvancedAE Quantum Computer | NeoEco AE; AE2 Lightning Tech; ExtendedAE; ExtendedAE-Plus; BM Addon; AE2 Wireless Terminals; MEGA Cells; OMNI Cells; ProjectCell; Applied Flux; AE2 Import Export Card; AEInfinityBooster; Advanced Peripherals; Expanded AE; ProjectE | GuideME; JEI |
 | 26.1.2 NeoForge | None; pre-26 optional UI adapters must be absent | AdvancedAE Quantum Computer | AE2 Lightning Tech; ExtendedAE; BM Addon; Neo Vitae; AE2 Wireless Terminals; OMNI Cells; Applied Flux; AE2 Import Export Card; AEInfinityBooster | GuideME; JEI |
 
 AE2 Crafting Tree is declared for 1.20.1 Fabric but is not a top-level project

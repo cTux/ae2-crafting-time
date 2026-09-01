@@ -32,7 +32,7 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 | ExtendedAE-Plus (optional; candidate) | `1.5.5` | Yes (scenario) | — | — | `1.6.2` | No | — | — |
 | BM Addon (optional) | `1.0.4` | Yes (`bmaddon-cpu`) | — | — | `BMAddon1.21.1-beta1` | No | `beta3` | No |
 | Crazy AE2 Addons (optional) | `3.2.4` | Yes (`crazyae2addons-cpu`) | — | — | — | — | — | — |
-| AE2 WCWT (candidate) | `1.20.1.10` | No | — | — | `1.3.8` | No | — | — |
+| AE2 WCWT (optional) | `1.20.1.10` | Yes (`ae2wcwt-terminal`) | — | — | `1.3.8` | No | — | — |
 | AE2 Wireless Terminals (candidate) | `15.3.3-forge` | No | `15.2.1-fabric` | No | `19.5.1` | No | `26.1.1-beta` | No |
 | MEGA Cells (candidate) | `forge-2.4.6` | No | `fabric-2.4.6` | No | `4.11.0` | No | — | — |
 | OMNI Cells (candidate) | `1.1.6-1.20.1-forge` | No | — | — | `1.1.6-1.21.1-neoforge` | No | `1.1.7-26.1.2-neoforge` | No |

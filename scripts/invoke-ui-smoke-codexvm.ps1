@@ -3,7 +3,7 @@ param(
     [switch]$Latest,
     [switch]$Interactive,
     [switch]$Stop,
-    [ValidatePattern("^(craft-plan|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(craft-plan|ae2wcwt-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string]$SshUser = "Codex",
     [string]$SshKeyPath = (Join-Path $env:USERPROFILE ".ssh\codexvm_smoke_ed25519"),
     [string]$VmrunUser = "CodexSmoke",

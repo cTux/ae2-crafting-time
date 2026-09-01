@@ -19,7 +19,8 @@
     "CraftingStatusMenuMixin",
     "CraftingTreeWidgetMixin",
     "CraftingTreeNewWidgetMixin",
-    "MERequesterScreenMixin"
+    "MERequesterScreenMixin",
+    "WcwtTerminalScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

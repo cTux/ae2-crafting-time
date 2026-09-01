@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.client.gui.me.common.MEStorageScreen;
+import appeng.client.gui.me.common.RepoSlot;
 import appeng.client.gui.me.crafting.CraftAmountScreen;
 import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
@@ -20,6 +21,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -51,6 +53,9 @@ public final class CraftPlanScenario {
     private String outputId;
     private CompletableFuture<String> cpuCheck;
     private CompletableFuture<Integer> sampleCheck;
+    private CompletableFuture<Void> wcwtSetup;
+    private boolean wcwtHoverStarted;
+    private boolean wcwtOpenRequested;
 
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         this.minecraft = minecraft;
@@ -120,11 +125,30 @@ public final class CraftPlanScenario {
         if (addonFixture != null && !addonFixture.setup(minecraft, marker)) {
             return;
         }
+        if (isWcwt() && !setupWcwt()) {
+            return;
+        }
         outputId = addonFixture == null ? marker.outputId() : addonFixture.outputId(marker);
         advance(ScenarioState.WORLD_READY);
     }
 
     private void openTerminal() {
+        if (isWcwt()) {
+            if (minecraft.screen != null) {
+                if (minecraft.screen.getClass().getName()
+                        .equals("com.lhy.wcwt.client.WirelessComprehensiveWorkTerminalScreen")) {
+                    checks.put("screen", true);
+                    advance(ScenarioState.TERMINAL_OPEN);
+                }
+                return;
+            }
+            if (!wcwtOpenRequested && ForgeRegistries.ITEMS.getKey(minecraft.player.getMainHandItem().getItem())
+                    .toString().equals("wcwt:wireless_comprehensive_work_terminal")) {
+                minecraft.gameMode.useItem(minecraft.player, InteractionHand.MAIN_HAND);
+                wcwtOpenRequested = true;
+            }
+            return;
+        }
         if (minecraft.screen != null) {
             return;
         }
@@ -153,6 +177,25 @@ public final class CraftPlanScenario {
         if (entry == null) {
             return;
         }
+        if (isWcwt()) {
+            var slot = screen.getMenu().slots.stream().filter(RepoSlot.class::isInstance).map(RepoSlot.class::cast)
+                    .filter(candidate -> candidate.getEntry() == entry).findFirst().orElse(null);
+            if (slot == null) {
+                return;
+            }
+            if (!wcwtHoverStarted) {
+                UiObservationStore.clearWcwtTooltip();
+                moveMouse(screen.getGuiLeft() + slot.x + 8, screen.getGuiTop() + slot.y + 8);
+                wcwtHoverStarted = true;
+                return;
+            }
+            if (UiObservationStore.wcwtTooltip().stream()
+                    .noneMatch(text -> text.key().equals("text.ae2craftingtime.ttc"))) {
+                return;
+            }
+            checks.put("ttc-tooltip", true);
+            screenshotUnchecked("ae2wcwt-terminal.png");
+        }
         ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$click(entry, 2, ClickType.CLONE);
         advance(next);
     }
@@ -177,6 +220,14 @@ public final class CraftPlanScenario {
             return;
         }
         if (!options.scenario().equals("craft-plan")) {
+            if (isWcwt()) {
+                checks.put("plan-ttc", snapshot.rows().stream().filter(row -> row.outputId().equals(outputId))
+                        .flatMap(row -> row.description().stream())
+                        .anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")));
+                screenshot("ae2wcwt-plan.png");
+                writePass();
+                return;
+            }
             selectAddonCpu();
             return;
         }
@@ -383,6 +434,37 @@ public final class CraftPlanScenario {
             image.writeToFile(options.output().resolve(name));
         }
         screenshots.add(name);
+    }
+
+    private void screenshotUnchecked(String name) {
+        try {
+            screenshot(name);
+        } catch (IOException error) {
+            throw new IllegalStateException("cannot save WCWT screenshot", error);
+        }
+    }
+
+    private boolean setupWcwt() {
+        if (wcwtSetup == null) {
+            var server = minecraft.getSingleplayerServer();
+            var playerId = minecraft.player.getUUID();
+            wcwtSetup = server.submit(() -> {
+                var player = server.getPlayerList().getPlayer(playerId);
+                if (player == null) {
+                    throw new IllegalStateException("fixture player is unavailable");
+                }
+                WcwtTerminalFixture.setup(player, marker);
+            });
+        }
+        if (!wcwtSetup.isDone()) {
+            return false;
+        }
+        wcwtSetup.join();
+        return true;
+    }
+
+    private boolean isWcwt() {
+        return options.scenario().equals("ae2wcwt-terminal");
     }
 
     private void advance(ScenarioState next) {

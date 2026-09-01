@@ -10,7 +10,8 @@ public final class ScenarioFlow {
             case WORLD_READY -> next == ScenarioState.TERMINAL_OPEN;
             case TERMINAL_OPEN -> next == ScenarioState.PLAN_OPEN;
             case PLAN_OPEN -> next == ScenarioState.PLAN_STABLE;
-            case PLAN_STABLE -> next == ScenarioState.BASE_CHECKED || next == ScenarioState.ADDON_CPU_SELECTED;
+            case PLAN_STABLE -> next == ScenarioState.BASE_CHECKED || next == ScenarioState.ADDON_CPU_SELECTED
+                    || next == ScenarioState.RESULT_WRITTEN;
             case ADDON_CPU_SELECTED -> next == ScenarioState.ADDON_CRAFT_SUBMITTED;
             case ADDON_CRAFT_SUBMITTED -> next == ScenarioState.ADDON_SAMPLE_RECORDED;
             case ADDON_SAMPLE_RECORDED -> next == ScenarioState.ADDON_PLAN_OPEN;
