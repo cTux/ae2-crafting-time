@@ -40,7 +40,7 @@ side="CLIENT"
 [[dependencies."${mod_id}"]]
 modId="appmek"
 type="OPTIONAL"
-versionRange="[1.6.0,)"
+versionRange="[1.6.2,2.0.0)"
 ordering="AFTER"
 side="BOTH"
 

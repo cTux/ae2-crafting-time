@@ -115,6 +115,8 @@ dependencies {
     testDriverCompileOnly 'maven.modrinth:IZPmgTLT:wCGFfeun'
     testDriverCompileOnly 'maven.modrinth:oMgZ004U:cAcdjzEn'
     testDriverCompileOnly 'maven.modrinth:5G4fpXXj:5vXTRu3V'
+    testDriverCompileOnly 'maven.modrinth:IiATswDj:9n9p68Qq'
+    testDriverCompileOnly 'maven.modrinth:Ce6I4WUE:uxe1WQp4'
     testDriverCompileOnly 'curse.maven:omnisequence-transfinite-1624558:8675216'
     testDriverCompileOnly 'curse.maven:appliede-tps-fix-1571176:8432892'
     testDriverCompileOnly 'curse.maven:projecte-226410:4901949'

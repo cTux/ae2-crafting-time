@@ -22,7 +22,7 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 | NeoForge (required) | — | — | — | — | `21.1.238` | No | `26.1.2.99` | No |
 | Applied Energistics 2 (required) | `15.4.10` | Yes (base) | `15.1.0` | No | `19.2.17` | No | `26.1.10-beta` | No |
 | ae2ct (Crafting Tree) (`ae2ct`; optional; candidate) | `1.0.1` | No | Not pinned | No | `1.0.1` | No | — | — |
-| Applied Mekanistics (`appmek`; optional; candidate) | `1.4.3` | No | — | — | `1.6.3` | No | — | — |
+| Applied Mekanistics (`appmek`; optional) | `1.4.3` | Yes (`appmek-cpu`) | — | — | `1.6.3` | No | — | — |
 | AdvancedAE (`advanced_ae`; optional; candidate) | `1.3.6-1.20.1` | Yes (scenario) | — | — | `1.6.12-1.21.1` | No | `26.1.7` | No |
 | ME Requester (`merequester`; optional; candidate) | `1.20.1-1.2.1+forge` | No | `1.20.1-1.1.4+fabric` | No | `1.21.1-1.4.3+neoforge` | No | — | — |
 | NeoEco AE (`neoecoae`; optional; candidate) | `20.3.0` | Yes (scenario) | — | — | `21.1.1` | No | — | — |

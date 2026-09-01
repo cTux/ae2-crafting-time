@@ -38,6 +38,7 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("projectcell-cpu"));
         assertTrue(AddonCpuFixture.supports("appliede-cpu"));
         assertTrue(AddonCpuFixture.supports("appflux-cpu"));
+        assertTrue(AddonCpuFixture.supports("appmek-cpu"));
         assertTrue(AddonCpuFixture.supports("modern-ae2-additions-cpu"));
         assertTrue(AddonCpuFixture.supports("omnisequence-cpu"));
         assertFalse(AddonCpuFixture.supports("missing-cpu"));
@@ -177,6 +178,8 @@ class TestDriverCoreTest {
                 DriverResult.requiredChecks("appliede-cpu"));
         assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("appflux-cpu"));
+        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+                DriverResult.requiredChecks("appmek-cpu"));
         assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("modern-ae2-additions-cpu"));
         assertEquals(List.of("screen", "ttc-tooltip", "plan-ttc"),

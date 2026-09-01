@@ -53,6 +53,7 @@ public final class CraftPlanScenario {
     private String networkId;
     private String outputId;
     private CompletableFuture<String> cpuCheck;
+    private CompletableFuture<Boolean> submitCheck;
     private CompletableFuture<Integer> sampleCheck;
     private final WirelessTerminalFixture wirelessFixture;
     private CompletableFuture<ItemStack> wirelessSetup;
@@ -218,9 +219,12 @@ public final class CraftPlanScenario {
             stableRows.reset();
             return;
         }
-        var staticAppliedEPlan = options.scenario().equals("appliede-cpu")
-                && snapshot.rows().stream().map(UiSnapshot.Row::outputId).distinct().count() >= 2;
-        if (!staticAppliedEPlan && !stable(snapshot)) {
+        if (addonFixture != null) {
+            lastFrame = snapshot.frame();
+            selectAddonCpu();
+            return;
+        }
+        if (!stable(snapshot)) {
             return;
         }
         if (!options.scenario().equals("craft-plan")) {
@@ -283,8 +287,31 @@ public final class CraftPlanScenario {
     }
 
     private void submitAddonCraft() {
-        if (minecraft.screen instanceof CraftConfirmScreen screen) {
-            screen.getMenu().startJob();
+        if (submitCheck == null) {
+            var server = minecraft.getSingleplayerServer();
+            var playerId = minecraft.player.getUUID();
+            submitCheck = server.submit(() -> {
+                var player = server.getPlayerList().getPlayer(playerId);
+                if (player == null || !(player.containerMenu instanceof appeng.menu.me.crafting.CraftConfirmMenu menu)) {
+                    throw new IllegalStateException("server Crafting Plan menu is unavailable");
+                }
+                var plan = ((CraftConfirmMenuAccessor) menu).ae2craftingtime_test_driver$result();
+                if (plan == null) {
+                    throw new IllegalStateException("server Crafting Plan result is unavailable");
+                }
+                if (plan.simulation()) {
+                    var missing = new ArrayList<String>();
+                    for (var entry : plan.missingItems()) {
+                        missing.add(entry.getKey().getId() + "=" + entry.getLongValue());
+                    }
+                    throw new IllegalStateException("server Crafting Plan is a simulation; missing=" + missing);
+                }
+                menu.startJob();
+                return true;
+            });
+        }
+        if (submitCheck.isDone()) {
+            submitCheck.join();
             advance(ScenarioState.ADDON_CRAFT_SUBMITTED);
         }
     }
@@ -313,13 +340,18 @@ public final class CraftPlanScenario {
             return;
         }
         var snapshot = UiObservationStore.latest();
-        if (!(minecraft.screen instanceof CraftConfirmScreen) || snapshot == null || !stable(snapshot)) {
+        if (!(minecraft.screen instanceof CraftConfirmScreen) || snapshot == null || snapshot.frame() == lastFrame) {
             return;
         }
-        checks.put("ttc-after-sample", snapshot.rows().stream()
+        lastFrame = snapshot.frame();
+        var resolved = snapshot.rows().stream()
                 .filter(row -> row.outputId().equals(outputId))
                 .flatMap(row -> row.description().stream())
-                .anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")));
+                .anyMatch(CraftPlanScenario::isResolvedTtc);
+        if (!resolved) {
+            return;
+        }
+        checks.put("ttc-after-sample", true);
         screenshot(options.scenario().replace("-cpu", "") + "-profiled-plan.png");
         writePass();
     }
@@ -401,8 +433,7 @@ public final class CraftPlanScenario {
             return false;
         }
         lastFrame = snapshot.frame();
-        return stableRows.observe(snapshot.rows().stream().map(row -> row.outputId() + ":"
-                + row.description().stream().map(UiSnapshot.ObservedText::key).toList()).toList());
+        return stableRows.observe(snapshot.rows().stream().map(UiSnapshot.Row::outputId).toList());
     }
 
     private static List<String> ids(UiSnapshot snapshot) {

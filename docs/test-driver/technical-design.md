@@ -169,8 +169,9 @@ real `TtcSortButton`.
 
 `AddonCpuFixture` owns the shared asynchronous place/finish/select lifecycle.
 Its registry maps each `*-cpu` scenario to one driver-only implementation.
-AdvancedAE, AppliedE, BM Addon, Crazy AE2 Addons, ExtendedAE, ExtendedAE-Plus,
-MEGA Cells, NeoEco AE, OMNI Cells, OmniSequence, and ProjectCell contain only their
+AdvancedAE, AppliedE, Applied Mekanistics, BM Addon, Crazy AE2 Addons,
+ExtendedAE, ExtendedAE-Plus, MEGA Cells, NeoEco AE, OMNI Cells, OmniSequence,
+and ProjectCell contain only their
 mod-specific fixture code. ExtendedAE replaces the disposable world's AE2 molecular assemblers and
 selects an existing idle CPU;
 ExtendedAE-Plus reuses that setup after verifying its mod is loaded. BM Addon
@@ -181,7 +182,9 @@ ProjectCell removes the normal cobblestone supply, mounts a player-bound EMC
 Storage Cell, and verifies that the grid can supply the furnace craft from
 ProjectE EMC before selecting an existing idle CPU. AppliedE grants the player
 furnace knowledge and EMC, mounts a powered Transmutation Module, and verifies
-its native EMC crafting pattern before selecting a native AE2 CPU. A new
+its native EMC crafting pattern before selecting a native AE2 CPU. Applied
+Mekanistics mounts a chemical storage cell, fills it with oxygen through the
+addon's native AE2 key, and places a native AE2 256K CPU. A new
 optional dependency extends that registry and adds a
 `testDriverCompileOnly` dependency when it is not already on the inherited
 compile classpath. A fixture may override the marker output only when the add-on

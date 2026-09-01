@@ -21,6 +21,7 @@ abstract class AddonCpuFixture<P> {
             Map.entry("projectcell-cpu", "com.ctux.ae2craftingtime.testdriver.ProjectCellFixture"),
             Map.entry("appliede-cpu", "com.ctux.ae2craftingtime.testdriver.AppliedEFixture"),
             Map.entry("appflux-cpu", "com.ctux.ae2craftingtime.testdriver.AppliedFluxFixture"),
+            Map.entry("appmek-cpu", "com.ctux.ae2craftingtime.testdriver.AppliedMekanisticsFixture"),
             Map.entry("modern-ae2-additions-cpu", "com.ctux.ae2craftingtime.testdriver.ModernAe2AdditionsFixture"),
             Map.entry("omnisequence-cpu", "com.ctux.ae2craftingtime.testdriver.OmniSequenceFixture"));
 
