@@ -9,11 +9,10 @@ $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $source = Join-Path $root "versions\1.20.1-forge\run\saves\ae2-crafting-time"
 $profile = if ($Latest) { "latest" } else { "compatible" }
-$base = Join-Path $root "build\ui-smoke\1.20.1-forge\$profile$(if ($Scenario -eq 'craft-plan') { '' } else { "\$Scenario" })"
-$report = if ($ReportDirectory) { [IO.Path]::GetFullPath($ReportDirectory) } else { $base }
+$base = Join-Path $root "build\ui-smoke\1.20.1-forge\$profile"
+$report = if ($ReportDirectory) { [IO.Path]::GetFullPath($ReportDirectory) } else { Join-Path $base $Scenario }
 $runtime = Join-Path $base "runtime"
-$evidence = Join-Path $base "evidence"
-$reportEvidence = Join-Path $report "evidence"
+$evidence = Join-Path $report "evidence"
 $world = "ae2ct-$([guid]::NewGuid().ToString('N'))"
 $worldCopy = Join-Path $runtime "saves\$world"
 $stdout = Join-Path $report "launcher.stdout.log"
@@ -38,17 +37,11 @@ function Write-Status([string]$phase, [string]$message = "", [Nullable[int]]$exi
         schema = 1; runId = $runId; target = "1.20.1-forge"; profile = $profile; scenario = $Scenario
         phase = $phase; pid = $(if ($process) { $process.Id } else { $null }); exitCode = $exitCode
         startedAt = $startedAt; updatedAt = [DateTime]::UtcNow.ToString("o"); javaHome = $env:JAVA_HOME
-        stagedRoot = $root; stdout = $stdout; stderr = $stderr; evidence = $reportEvidence; message = $message
+        stagedRoot = $root; stdout = $stdout; stderr = $stderr; evidence = $evidence; message = $message
     }
     $temporary = "$statusPath.$runId.tmp"
     [IO.File]::WriteAllText($temporary, ($status | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
     Move-Item -LiteralPath $temporary -Destination $statusPath -Force
-}
-
-function Sync-Evidence {
-    if ([IO.Path]::GetFullPath($evidence) -eq [IO.Path]::GetFullPath($reportEvidence)) { return }
-    if (Test-Path -LiteralPath $reportEvidence) { Remove-Item -LiteralPath $reportEvidence -Recurse -Force }
-    if (Test-Path -LiteralPath $evidence) { Copy-Item -LiteralPath $evidence -Destination $reportEvidence -Recurse }
 }
 
 if (-not (Test-Path -LiteralPath (Join-Path $source ".ae2-crafting-time-test-fixture.json") -PathType Leaf)) {
@@ -65,12 +58,13 @@ $resolvedBase = [IO.Path]::GetFullPath($base)
 if (-not $resolvedBase.StartsWith($buildRoot, [StringComparison]::OrdinalIgnoreCase)) {
     throw "UI-smoke output escapes build directory"
 }
-New-Item -ItemType Directory -Path $report, (Split-Path -Parent $worldCopy) -Force | Out-Null
-if (Test-Path -LiteralPath $evidence) { Remove-Item -LiteralPath $evidence -Recurse -Force }
-if ([IO.Path]::GetFullPath($evidence) -ne [IO.Path]::GetFullPath($reportEvidence) -and
-        (Test-Path -LiteralPath $reportEvidence)) {
-    Remove-Item -LiteralPath $reportEvidence -Recurse -Force
+New-Item -ItemType Directory -Path $base, $report, (Split-Path -Parent $worldCopy) -Force | Out-Null
+try {
+    $runtimeLock = [IO.File]::Open((Join-Path $base "runtime.lock"), "OpenOrCreate", "ReadWrite", "None")
+} catch {
+    throw "Another $profile UI-smoke scenario is already using this workspace runtime"
 }
+if (Test-Path -LiteralPath $evidence) { Remove-Item -LiteralPath $evidence -Recurse -Force }
 New-Item -ItemType Directory -Path $evidence -Force | Out-Null
 Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
 Write-Status "preparing"
@@ -190,12 +184,12 @@ try {
         if (Test-Path -LiteralPath $worldCopy) { Remove-Item -LiteralPath $worldCopy -Recurse -Force }
         if ((Get-TreeHash $source) -ne $sourceHash) { throw "Tracked source fixture changed during UI smoke" }
     }
-    Sync-Evidence
     Write-Status "passed" "UI smoke passed" $process.ExitCode
+    $runtimeLock.Dispose()
     Write-Host "UI smoke passed: $evidence"
 } catch {
-    Sync-Evidence
     $exitCode = if ($process -and $process.HasExited) { [Nullable[int]]$process.ExitCode } else { $null }
     Write-Status "failed" $_.Exception.Message $exitCode
+    $runtimeLock.Dispose()
     throw
 }

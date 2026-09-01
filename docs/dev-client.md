@@ -20,7 +20,9 @@ the disposable world are replaced.
 
 Progress does not require VNC. Read `status.json`, `launcher.stdout.log`, and
 `launcher.stderr.log` under
-`build\ui-smoke\1.20.1-forge\<profile>`. The status records the phase, exact
+`build\ui-smoke\1.20.1-forge\<profile>\<scenario>`. Each profile keeps one warm
+runtime and separates results by scenario. The runner rejects concurrent smoke
+scenarios that would share that runtime. The status records the phase, exact
 PID, Java home, result, and evidence path. Use VNC only for the final maximized
 Minecraft visual check.
 

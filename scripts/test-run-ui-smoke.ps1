@@ -75,7 +75,7 @@ try {
     Set-Content -LiteralPath $cacheMarker -Value "keep"
     Invoke-Case "pass" -shouldPass $true
     if (-not (Test-Path -LiteralPath $cacheMarker)) { throw "Smoke runtime cache was discarded" }
-    $status = Get-Content -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\status.json") -Raw | ConvertFrom-Json
+    $status = Get-Content -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\craft-plan\status.json") -Raw | ConvertFrom-Json
     if ($status.phase -ne "passed" -or -not $status.pid -or $status.target -ne "1.20.1-forge") {
         throw "Smoke status omitted the final phase, PID, or target"
     }
@@ -86,12 +86,16 @@ try {
     }
     Invoke-Case "pass" -Latest -shouldPass $true
     Invoke-Case "pass" -Scenario "neoeco-cpu" -shouldPass $true
+    if (-not (Test-Path -LiteralPath $cacheMarker)) { throw "Scenario switch discarded the shared runtime" }
     Invoke-Case "pass" -Scenario "ae2wtlib-terminal" -shouldPass $true
     Invoke-Case "pass" -Scenario "future-addon-cpu" -shouldPass $true
-    if (-not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\evidence\result.json")) -or
-            -not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\latest\evidence\result.json"))) {
+    if (-not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\craft-plan\evidence\result.json")) -or
+            -not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\neoeco-cpu\evidence\result.json")) -or
+            -not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\latest\craft-plan\evidence\result.json"))) {
         throw "Compatible and latest evidence was not separated"
     }
+    $lock = [IO.File]::Open((Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\runtime.lock"), "Open", "ReadWrite", "None")
+    try { Invoke-Case "pass" -shouldPass $false } finally { $lock.Dispose() }
     Invoke-Case "pass" -Interactive -shouldPass $true
     $env:AE2CT_TEST_DRIVER_TOKEN = 'b' * 64
     Invoke-Case "interactive-token" -Interactive -shouldPass $true
@@ -101,7 +105,7 @@ try {
     Invoke-Case "schema" -shouldPass $false
     Invoke-Case "missing-screenshot" -shouldPass $false
     Invoke-Case "fatal" -shouldPass $false
-    $failedStatus = Get-Content -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\status.json") -Raw | ConvertFrom-Json
+    $failedStatus = Get-Content -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\craft-plan\status.json") -Raw | ConvertFrom-Json
     if ($failedStatus.phase -ne "failed" -or -not $failedStatus.message) { throw "Smoke failure status was incomplete" }
 
     $markerPath = Join-Path $source ".ae2-crafting-time-test-fixture.json"
