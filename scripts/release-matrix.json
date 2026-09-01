@@ -25,7 +25,8 @@
       { "project_id": "xr109llC", "version_id": "pN9pMjiW", "dependency_type": "optional" },
       { "project_id": "jjuIRIVr", "version_id": "SH2D1n3s", "dependency_type": "optional" },
       { "project_id": "RYE1pYyr", "version_id": "c2s3iMw8", "dependency_type": "optional" },
-      { "project_id": "IZPmgTLT", "version_id": "wCGFfeun", "dependency_type": "optional" }
+      { "project_id": "IZPmgTLT", "version_id": "wCGFfeun", "dependency_type": "optional" },
+      { "project_id": "oMgZ004U", "version_id": "cAcdjzEn", "dependency_type": "optional" }
     ],
     "changelog": "### FIXED\n\n- The total TTC now sits in the crafting status header, so it no longer overlaps the action buttons."
   },
@@ -76,7 +77,8 @@
       { "project_id": "jjuIRIVr", "version_id": "RPG4EriK", "dependency_type": "optional" },
       { "project_id": "RYE1pYyr", "version_id": "k444ySGT", "dependency_type": "optional" },
       { "project_id": "IZPmgTLT", "version_id": "nd0U5eJF", "dependency_type": "optional" },
-      { "project_id": "SyKS54UY", "version_id": "VKYzoChV", "dependency_type": "optional" }
+      { "project_id": "SyKS54UY", "version_id": "VKYzoChV", "dependency_type": "optional" },
+      { "project_id": "oMgZ004U", "version_id": "4x40hq9D", "dependency_type": "optional" }
     ],
     "changelog": "### FIXED\n\n- The total TTC now sits in the crafting status header, so it no longer overlaps the action buttons."
   },
@@ -97,7 +99,8 @@
       { "project_id": "rxYaglEe", "dependency_type": "optional" },
       { "project_id": "qPydPwtX", "dependency_type": "optional" },
       { "project_id": "pNabrMMw", "version_id": "ncEqrp7o", "dependency_type": "optional" },
-      { "project_id": "RYE1pYyr", "version_id": "wv0rLPsF", "dependency_type": "optional" }
+      { "project_id": "RYE1pYyr", "version_id": "wv0rLPsF", "dependency_type": "optional" },
+      { "project_id": "oMgZ004U", "version_id": "yrw1WDVE", "dependency_type": "optional" }
     ],
     "changelog": "### ADDED\n\n- You can now use AE2 Crafting Time with NeoForge on Minecraft 26.1.2 and Applied Energistics 2 26.1.10-beta."
   }
