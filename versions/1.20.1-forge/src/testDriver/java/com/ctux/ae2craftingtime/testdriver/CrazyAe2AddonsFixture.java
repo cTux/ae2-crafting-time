@@ -3,7 +3,6 @@ package com.ctux.ae2craftingtime.testdriver;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.crafting.ICraftingCPU;
-import appeng.blockentity.crafting.CraftingBlockEntity;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -27,8 +26,8 @@ final class CrazyAe2AddonsFixture extends AddonCpuFixture<CraftingCPUCluster> {
         var grid = Arrays.stream(Direction.values()).map(terminalHost::getGridNode).filter(Objects::nonNull)
                 .map(node -> node.getGrid()).filter(Objects::nonNull).findFirst()
                 .orElseThrow(() -> new IllegalStateException("Crazy AE2 Addons fixture grid is unavailable"));
-        var cpu = grid.getMachines(CraftingBlockEntity.class).stream()
-                .map(CraftingBlockEntity::getCluster).filter(Objects::nonNull)
+        var cpu = grid.getCraftingService().getCpus().stream()
+                .filter(CraftingCPUCluster.class::isInstance).map(CraftingCPUCluster.class::cast)
                 .filter(candidate -> !candidate.isBusy())
                 .findFirst().orElseThrow(() -> new IllegalStateException(
                         "Crazy AE2 Addons fixture has no idle AE2 CPU"));
