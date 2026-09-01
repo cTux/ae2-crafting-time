@@ -40,7 +40,7 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 | AppliedE / AppliedE TPS Fix (`appliede`; optional) | `0.14.7-fix2` | Yes (`appliede-cpu`) | — | — | `1.0.0-beta` | No | — | — |
 | Applied Flux (`appflux`; optional) | `1.20-1.3.7-forge` | Yes (`appflux-cpu`) | — | — | `1.21-2.1.5-neoforge` | No | `26.1-1.0.1-neoforge` | No |
 | Modern AE2 Additions (`mae2`; optional) | `2.0.1` | Yes (`modern-ae2-additions-cpu`) | — | — | — | — | — | — |
-| AE2 Import Export Card (candidate) | `1.20.1-1.3.0` | No | — | — | `1.21.1-1.6.0` | No | `26.1.2-2.1.0` | No |
+| AE2 Import Export Card (`ae2insertexportcard` / `ae2importexportcard`; optional) | `1.20.1-1.3.0` | Yes (`ae2importexportcard-terminal`) | — | — | `1.21.1-1.6.0` | No | `26.1.2-2.1.0` | No |
 | AE2 Network Analyser (candidate) | — | — | — | — | — | — | — | — |
 | AEInfinityBooster (candidate) | `1.20.1-1.0.0+20` | No | — | — | `1.21.1-1.0.0.58` | No | `26.1.2-1.0.0.57` | No |
 | Applied Botanics (Fork) (candidate) | — | — | — | — | — | — | — | — |

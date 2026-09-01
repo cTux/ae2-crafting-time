@@ -94,6 +94,7 @@ try {
     Invoke-Case "pass" -Latest -shouldPass $true
     Invoke-Case "pass" -Scenario "neoeco-cpu" -shouldPass $true
     Invoke-Case "pass" -Scenario "merequester-screen" -ProjectId E6BFl96N -shouldPass $true
+    Invoke-Case "pass" -Scenario "ae2importexportcard-terminal" -ProjectId qelfSMnn -shouldPass $true
     if (-not (Test-Path -LiteralPath $cacheMarker)) { throw "Scenario switch discarded the shared runtime" }
     Invoke-Case "pass" -Scenario "ae2wtlib-terminal" -ProjectId pNabrMMw -shouldPass $true
     $focused = Get-Content -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\ae2wtlib-terminal\evidence\resolved-mods.json") -Raw | ConvertFrom-Json

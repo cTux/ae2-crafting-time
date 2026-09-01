@@ -23,6 +23,7 @@ public final class UiObservationStore {
     private static final int PITCH_X = 68;
     private static final int PITCH_Y = 23;
     private static final Set<String> WIRELESS_SCREENS = Set.of(
+            "appeng.client.gui.me.common.MEStorageScreen",
             "com.lhy.wcwt.client.WirelessComprehensiveWorkTerminalScreen",
             "de.mari_023.ae2wtlib.wct.WCTScreen");
     private static Frame active;
