@@ -3,7 +3,6 @@ package com.ctux.ae2craftingtime.testdriver;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.crafting.ICraftingCPU;
-import appeng.me.cluster.implementations.CraftingCPUCluster;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -44,13 +43,14 @@ final class CrazyAe2AddonsFixture extends AddonCpuFixture<IGrid> {
         return cpu != null && priority(cpu) == TEST_PRIORITY ? cpu : null;
     }
 
-    private static CraftingCPUCluster idleCpu(IGrid grid) {
+    private static ICraftingCPU idleCpu(IGrid grid) {
         return grid.getCraftingService().getCpus().stream()
-                .filter(CraftingCPUCluster.class::isInstance).map(CraftingCPUCluster.class::cast)
+                .filter(candidate -> candidate.getClass().getName()
+                        .equals("appeng.me.cluster.implementations.CraftingCPUCluster"))
                 .filter(candidate -> !candidate.isBusy()).findFirst().orElse(null);
     }
 
-    private static void setPriority(CraftingCPUCluster cpu, int priority) {
+    private static void setPriority(ICraftingCPU cpu, int priority) {
         try {
             cpu.getClass().getMethod("setPrio", int.class).invoke(cpu, priority);
         } catch (ReflectiveOperationException error) {
@@ -58,7 +58,7 @@ final class CrazyAe2AddonsFixture extends AddonCpuFixture<IGrid> {
         }
     }
 
-    private static int priority(CraftingCPUCluster cpu) {
+    private static int priority(ICraftingCPU cpu) {
         try {
             return (int) cpu.getClass().getMethod("getPrio").invoke(cpu);
         } catch (ReflectiveOperationException error) {
