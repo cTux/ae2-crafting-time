@@ -5,6 +5,7 @@ import appeng.api.networking.IGridNode;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import com.almostreliable.merequester.requester.RequesterBlockEntity;
+import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -104,7 +105,12 @@ final class MeRequesterFixture {
         if (requesterNode.getGrid() != connectionNode.getGrid()) {
             GridHelper.createConnection(connectionNode, requesterNode);
         }
-        requester.getRequests().setStack(0, new GenericStack(AEItemKey.of(Items.FURNACE), 64));
+        var key = AEItemKey.of(Items.FURNACE);
+        var tick = level.getGameTime();
+        var networkId = ProfilerBridge.networkId(connectionNode.getGrid());
+        ProfilerBridge.start(networkId, requester, key, 64, tick);
+        ProfilerBridge.complete(networkId, requester, key, 64, tick + 40);
+        requester.getRequests().setStack(0, new GenericStack(key, 64));
         requester.getRequests().get(0).updateState(false);
         requester.requestChanged(0);
         return requester.getMainNode().isActive();
