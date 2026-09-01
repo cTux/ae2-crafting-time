@@ -17,7 +17,9 @@ import java.util.Arrays;
 import java.util.Objects;
 
 final class WcwtTerminalFixture {
-    static void setup(ServerPlayer player, FixtureMarker marker) {
+    private BlockPos accessPointPos;
+
+    boolean setup(ServerPlayer player, FixtureMarker marker) {
         if (!ModList.get().isLoaded("wcwt")) {
             throw new IllegalStateException("AE2 WCWT is unavailable");
         }
@@ -34,20 +36,20 @@ final class WcwtTerminalFixture {
         if (accessPointBlock == null) {
             throw new IllegalStateException("AE2 wireless access point is unavailable");
         }
-        var accessPointPos = BlockPos.betweenClosedStream(terminal.offset(-6, -2, -6), terminal.offset(6, 2, 6))
-                .filter(pos -> level.getBlockState(pos).isAir()).findFirst()
-                .map(BlockPos::immutable)
-                .orElseThrow(() -> new IllegalStateException("no space for the WCWT access point"));
-        level.setBlockAndUpdate(accessPointPos, accessPointBlock.defaultBlockState());
+        if (accessPointPos == null) {
+            accessPointPos = BlockPos.betweenClosedStream(terminal.offset(-6, -2, -6), terminal.offset(6, 2, 6))
+                    .filter(pos -> level.getBlockState(pos).isAir()).findFirst()
+                    .map(BlockPos::immutable)
+                    .orElseThrow(() -> new IllegalStateException("no space for the WCWT access point"));
+            level.setBlockAndUpdate(accessPointPos, accessPointBlock.defaultBlockState());
+            return false;
+        }
         if (!(level.getBlockEntity(accessPointPos) instanceof WirelessAccessPointBlockEntity accessPoint)) {
             throw new IllegalStateException("AE2 wireless access point was not placed");
         }
-        if (!accessPoint.getMainNode().isReady()) {
-            accessPoint.onReady();
-        }
         var accessPointNode = accessPoint.getMainNode().getNode();
         if (accessPointNode == null) {
-            throw new IllegalStateException("AE2 wireless access point node is unavailable");
+            return false;
         }
         if (terminalNode.getGrid() != accessPointNode.getGrid()) {
             GridHelper.createConnection(terminalNode, accessPointNode);
@@ -62,8 +64,6 @@ final class WcwtTerminalFixture {
         player.getInventory().selected = 0;
         player.getInventory().setItem(0, stack);
         player.inventoryMenu.broadcastChanges();
-    }
-
-    private WcwtTerminalFixture() {
+        return true;
     }
 }

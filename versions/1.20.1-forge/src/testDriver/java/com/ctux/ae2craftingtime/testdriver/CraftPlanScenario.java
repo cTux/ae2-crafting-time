@@ -53,7 +53,8 @@ public final class CraftPlanScenario {
     private String outputId;
     private CompletableFuture<String> cpuCheck;
     private CompletableFuture<Integer> sampleCheck;
-    private CompletableFuture<Void> wcwtSetup;
+    private final WcwtTerminalFixture wcwtFixture = new WcwtTerminalFixture();
+    private CompletableFuture<Boolean> wcwtSetup;
     private boolean wcwtHoverStarted;
     private boolean wcwtOpenRequested;
 
@@ -453,13 +454,16 @@ public final class CraftPlanScenario {
                 if (player == null) {
                     throw new IllegalStateException("fixture player is unavailable");
                 }
-                WcwtTerminalFixture.setup(player, marker);
+                return wcwtFixture.setup(player, marker);
             });
         }
         if (!wcwtSetup.isDone()) {
             return false;
         }
-        wcwtSetup.join();
+        if (!wcwtSetup.join()) {
+            wcwtSetup = null;
+            return false;
+        }
         return true;
     }
 
