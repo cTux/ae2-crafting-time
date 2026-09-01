@@ -218,9 +218,12 @@ public final class CraftPlanScenario {
             stableRows.reset();
             return;
         }
-        var staticAppliedEPlan = options.scenario().equals("appliede-cpu")
-                && snapshot.rows().stream().map(UiSnapshot.Row::outputId).distinct().count() >= 2;
-        if (!staticAppliedEPlan && !stable(snapshot)) {
+        if (addonFixture != null) {
+            lastFrame = snapshot.frame();
+            selectAddonCpu();
+            return;
+        }
+        if (!stable(snapshot)) {
             return;
         }
         if (!options.scenario().equals("craft-plan")) {
@@ -313,13 +316,18 @@ public final class CraftPlanScenario {
             return;
         }
         var snapshot = UiObservationStore.latest();
-        if (!(minecraft.screen instanceof CraftConfirmScreen) || snapshot == null || !stable(snapshot)) {
+        if (!(minecraft.screen instanceof CraftConfirmScreen) || snapshot == null || snapshot.frame() == lastFrame) {
             return;
         }
-        checks.put("ttc-after-sample", snapshot.rows().stream()
+        lastFrame = snapshot.frame();
+        var resolved = snapshot.rows().stream()
                 .filter(row -> row.outputId().equals(outputId))
                 .flatMap(row -> row.description().stream())
-                .anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")));
+                .anyMatch(CraftPlanScenario::isResolvedTtc);
+        if (!resolved) {
+            return;
+        }
+        checks.put("ttc-after-sample", true);
         screenshot(options.scenario().replace("-cpu", "") + "-profiled-plan.png");
         writePass();
     }
@@ -401,8 +409,7 @@ public final class CraftPlanScenario {
             return false;
         }
         lastFrame = snapshot.frame();
-        return stableRows.observe(snapshot.rows().stream().map(row -> row.outputId() + ":"
-                + row.description().stream().map(UiSnapshot.ObservedText::key).toList()).toList());
+        return stableRows.observe(snapshot.rows().stream().map(UiSnapshot.Row::outputId).toList());
     }
 
     private static List<String> ids(UiSnapshot snapshot) {
