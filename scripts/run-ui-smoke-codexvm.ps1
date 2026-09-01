@@ -3,7 +3,7 @@ param(
     [switch]$Interactive,
     [switch]$Scheduled,
     [switch]$Stop,
-    [ValidatePattern("^(craft-plan|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(craft-plan|ae2wcwt-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string]$JavaHome,
     [string]$LocalRoot,
     [string]$InteractiveUser = "Codex",
