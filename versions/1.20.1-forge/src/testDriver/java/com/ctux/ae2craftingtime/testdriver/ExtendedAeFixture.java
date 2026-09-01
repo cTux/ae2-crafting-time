@@ -64,7 +64,7 @@ final class ExtendedAeFixture extends AddonCpuFixture<List<BlockPos>> {
     @Override
     protected ICraftingCPU cpu(ServerPlayer player, List<BlockPos> positions, IGrid grid) {
         return grid.getCraftingService().getCpus().stream()
-                .filter(candidate -> candidate.getGrid() == grid && !candidate.isBusy())
+                .filter(candidate -> !candidate.isBusy())
                 .findFirst().orElse(null);
     }
 }
