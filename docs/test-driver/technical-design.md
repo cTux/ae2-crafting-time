@@ -204,6 +204,11 @@ deterministic profile sample for its disposable grid.
 
 ME Requester also uses a separate screen flow. Its fixture places and configures
 one requester with a deterministic profiler sample on the disposable AE2 grid.
+
+AE2 Network Analyser uses a bounded screen-only flow. The fixture equips its
+real analyser item, opens `GuiAnalyser` through normal item use, and verifies
+the matching menu and viewport bounds without inventing a TTC hook for a
+topology-only tool.
 The shared scenario opens that block through normal client interaction and validates
 the final translation-keyed TTC row, total, badge geometry, and screenshot.
 

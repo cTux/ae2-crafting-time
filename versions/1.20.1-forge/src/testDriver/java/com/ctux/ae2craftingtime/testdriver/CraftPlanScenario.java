@@ -57,7 +57,9 @@ public final class CraftPlanScenario {
     private CompletableFuture<Integer> sampleCheck;
     private final WirelessTerminalFixture wirelessFixture;
     private final MeRequesterFixture requesterFixture;
+    private final Ae2NetworkAnalyserFixture networkAnalyserFixture;
     private CompletableFuture<ItemStack> wirelessSetup;
+    private CompletableFuture<ItemStack> networkAnalyserSetup;
     private boolean wirelessHoverStarted;
     private boolean wirelessOpenRequested;
 
@@ -68,6 +70,8 @@ public final class CraftPlanScenario {
         addonFixture = AddonCpuFixture.create(options.scenario());
         wirelessFixture = WirelessTerminalFixture.create(options.scenario());
         requesterFixture = MeRequesterFixture.SCENARIO.equals(options.scenario()) ? new MeRequesterFixture() : null;
+        networkAnalyserFixture = Ae2NetworkAnalyserFixture.SCENARIO.equals(options.scenario())
+                ? new Ae2NetworkAnalyserFixture() : null;
         DriverResult.requiredChecks(options.scenario()).forEach(key -> checks.put(key, false));
     }
 
@@ -134,6 +138,9 @@ public final class CraftPlanScenario {
         if (wirelessFixture != null && !setupWirelessTerminal()) {
             return;
         }
+        if (networkAnalyserFixture != null && !setupNetworkAnalyser()) {
+            return;
+        }
         if (requesterFixture != null && !requesterFixture.setup(
                 minecraft.getSingleplayerServer().getPlayerList().getPlayer(minecraft.player.getUUID()), marker)) {
             return;
@@ -143,6 +150,19 @@ public final class CraftPlanScenario {
     }
 
     private void openTerminal() {
+        if (networkAnalyserFixture != null) {
+            if (minecraft.screen != null) {
+                if (minecraft.screen.getClass().getName().equals(Ae2NetworkAnalyserFixture.SCREEN)) {
+                    advance(ScenarioState.TERMINAL_OPEN);
+                }
+                return;
+            }
+            if (ForgeRegistries.ITEMS.getKey(minecraft.player.getMainHandItem().getItem()).toString()
+                    .equals(Ae2NetworkAnalyserFixture.ITEM)) {
+                minecraft.gameMode.useItem(minecraft.player, InteractionHand.MAIN_HAND);
+            }
+            return;
+        }
         if (requesterFixture != null) {
             if (minecraft.screen != null) {
                 if (minecraft.screen.getClass().getName().equals(MeRequesterFixture.SCREEN)) {
@@ -187,6 +207,10 @@ public final class CraftPlanScenario {
     }
 
     private void selectTarget(ScenarioState next) {
+        if (networkAnalyserFixture != null) {
+            verifyNetworkAnalyser();
+            return;
+        }
         if (requesterFixture != null) {
             verifyRequester();
             return;
@@ -241,6 +265,25 @@ public final class CraftPlanScenario {
                 writePass();
             } catch (IOException error) {
                 throw new IllegalStateException("cannot write ME Requester result", error);
+            }
+        }
+    }
+
+    private void verifyNetworkAnalyser() {
+        var snapshot = UiObservationStore.latest();
+        if (snapshot == null || !snapshot.screen().equals(Ae2NetworkAnalyserFixture.SCREEN)) {
+            return;
+        }
+        checks.put("screen", snapshot.menu().equals(Ae2NetworkAnalyserFixture.MENU));
+        checks.put("layout", snapshot.gui().x() >= 0 && snapshot.gui().y() >= 0
+                && snapshot.gui().x() + snapshot.gui().width() <= snapshot.screenWidth()
+                && snapshot.gui().y() + snapshot.gui().height() <= snapshot.screenHeight());
+        if (checks.values().stream().allMatch(Boolean::booleanValue)) {
+            screenshotUnchecked("ae2networkanalyser-screen.png");
+            try {
+                writePass();
+            } catch (IOException error) {
+                throw new IllegalStateException("cannot write AE2 Network Analyser result", error);
             }
         }
     }
@@ -541,6 +584,27 @@ public final class CraftPlanScenario {
             wirelessSetup = null;
             return false;
         }
+        minecraft.player.getInventory().selected = 0;
+        minecraft.player.getInventory().setItem(0, stack.copy());
+        return true;
+    }
+
+    private boolean setupNetworkAnalyser() {
+        if (networkAnalyserSetup == null) {
+            var server = minecraft.getSingleplayerServer();
+            var playerId = minecraft.player.getUUID();
+            networkAnalyserSetup = server.submit(() -> {
+                var player = server.getPlayerList().getPlayer(playerId);
+                if (player == null) {
+                    throw new IllegalStateException("fixture player is unavailable");
+                }
+                return networkAnalyserFixture.setup(player);
+            });
+        }
+        if (!networkAnalyserSetup.isDone()) {
+            return false;
+        }
+        var stack = networkAnalyserSetup.join();
         minecraft.player.getInventory().selected = 0;
         minecraft.player.getInventory().setItem(0, stack.copy());
         return true;

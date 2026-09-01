@@ -34,6 +34,7 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("ae2wcwt-terminal"));
         assertTrue(AddonCpuFixture.supports("ae2wtlib-terminal"));
         assertTrue(AddonCpuFixture.supports("ae2importexportcard-terminal"));
+        assertTrue(AddonCpuFixture.supports("ae2networkanalyser-screen"));
         assertTrue(AddonCpuFixture.supports("merequester-screen"));
         assertTrue(AddonCpuFixture.supports("neoeco-cpu"));
         assertTrue(AddonCpuFixture.supports("omnicells-cpu"));
@@ -48,6 +49,7 @@ class TestDriverCoreTest {
         assertNull(AddonCpuFixture.create("ae2wcwt-terminal"));
         assertNull(AddonCpuFixture.create("ae2wtlib-terminal"));
         assertNull(AddonCpuFixture.create("ae2importexportcard-terminal"));
+        assertNull(AddonCpuFixture.create("ae2networkanalyser-screen"));
         assertNull(AddonCpuFixture.create("merequester-screen"));
         assertEquals("ae2wcwt", WirelessTerminalFixture.create("ae2wcwt-terminal").screenshotPrefix());
         assertEquals("ae2wtlib", WirelessTerminalFixture.create("ae2wtlib-terminal").screenshotPrefix());
@@ -194,6 +196,8 @@ class TestDriverCoreTest {
                 DriverResult.requiredChecks("ae2wtlib-terminal"));
         assertEquals(List.of("screen", "ttc-tooltip", "plan-ttc"),
                 DriverResult.requiredChecks("ae2importexportcard-terminal"));
+        assertEquals(List.of("screen", "layout"),
+                DriverResult.requiredChecks("ae2networkanalyser-screen"));
         assertEquals(List.of("screen", "ttc-row", "total-ttc", "layout"),
                 DriverResult.requiredChecks("merequester-screen"));
         var file = temporary.resolve("not-a-directory");

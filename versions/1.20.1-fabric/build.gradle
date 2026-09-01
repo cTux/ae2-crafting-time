@@ -43,6 +43,10 @@ repositories {
         url = 'https://modmaven.dev/'
         content { includeGroup 'appeng' }
     }
+    maven {
+        url = 'https://cursemaven.com'
+        content { includeGroup 'curse.maven' }
+    }
 }
 
 dependencies {
@@ -52,6 +56,7 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${providers.gradleProperty('runtimeFabricApi1201Version').getOrElse('0.83.1+1.20.1')}"
     modImplementation "appeng:appliedenergistics2-fabric:${providers.gradleProperty('runtimeAe2Fabric1201Version').getOrElse('15.0.10')}"
     modImplementation 'teamreborn:energy:3.0.0'
+    modCompileOnly 'curse.maven:ae2-network-analyser-961856:5266839'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 

@@ -22,7 +22,9 @@ $profile = if ($Latest) { "latest" } else { "compatible" }
 $driver = "ae2-crafting-time-1.1.0-forge-1.20.1-test-driver.jar"
 New-Item -ItemType Directory -Path $DriverOutputDirectory, (Join-Path $RuntimeDirectory "resolved-mods"),
     (Join-Path $RuntimeDirectory "logs") -Force | Out-Null
-$checks = if ($DriverScenario -eq "merequester-screen") {
+$checks = if ($DriverScenario -eq "ae2networkanalyser-screen") {
+    [ordered]@{ screen=$true; layout=$true }
+} elseif ($DriverScenario -eq "merequester-screen") {
     [ordered]@{ screen=$true; 'ttc-row'=$true; 'total-ttc'=$true; layout=$true }
 } elseif ($DriverScenario -like "*-terminal") {
     [ordered]@{ screen=$true; 'ttc-tooltip'=$true; 'plan-ttc'=$true }
@@ -31,7 +33,9 @@ $checks = if ($DriverScenario -eq "merequester-screen") {
 } else {
     [ordered]@{ screen=$true; 'ttc-row'=$true; 'total-ttc'=$true; 'sort-cycle'=$true; tooltip=$true; layout=$true }
 }
-$screenshots = if ($DriverScenario -eq "merequester-screen") {
+$screenshots = if ($DriverScenario -eq "ae2networkanalyser-screen") {
+    @("ae2networkanalyser-screen.png")
+} elseif ($DriverScenario -eq "merequester-screen") {
     @("merequester-screen.png")
 } elseif ($DriverScenario -like "*-terminal") {
     $prefix = $DriverScenario -replace '-terminal$', ''
@@ -95,6 +99,7 @@ try {
     Invoke-Case "pass" -Scenario "neoeco-cpu" -shouldPass $true
     Invoke-Case "pass" -Scenario "merequester-screen" -ProjectId E6BFl96N -shouldPass $true
     Invoke-Case "pass" -Scenario "ae2importexportcard-terminal" -ProjectId qelfSMnn -shouldPass $true
+    Invoke-Case "pass" -Scenario "ae2networkanalyser-screen" -ProjectId 961856 -shouldPass $true
     if (-not (Test-Path -LiteralPath $cacheMarker)) { throw "Scenario switch discarded the shared runtime" }
     Invoke-Case "pass" -Scenario "ae2wtlib-terminal" -ProjectId pNabrMMw -shouldPass $true
     $focused = Get-Content -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\ae2wtlib-terminal\evidence\resolved-mods.json") -Raw | ConvertFrom-Json
