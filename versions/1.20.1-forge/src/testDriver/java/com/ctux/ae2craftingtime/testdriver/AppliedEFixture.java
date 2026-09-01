@@ -64,7 +64,7 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
             failIfSetupStalled(placement, moduleNode);
             return false;
         }
-        IStorageProvider.requestUpdate(moduleNode);
+        IStorageProvider.requestUpdate(placement.module().getMainNode());
         placement.grid().getStorageService().invalidateCache();
         placement.grid().getCraftingService().refreshNodeCraftingProvider(moduleNode);
         if (!placement.grid().getCraftingService().isCraftable(placement.cobblestone())
