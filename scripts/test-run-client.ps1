@@ -34,6 +34,9 @@ foreach ($entry in $matrix) {
     foreach ($project in @($entry.projects | Where-Object { $_.compatible -ne $false }).project_id) {
         if ($project -notin $entry.compatible.versions.project_id) { throw "Missing compatible lock for $project in $($entry.id)" }
     }
+    foreach ($project in @($entry.test_driver_projects | Where-Object { $_ })) {
+        if ($project -notin $entry.compatible.versions.project_id) { throw "Missing test-driver fixture lock for $project in $($entry.id)" }
+    }
     foreach ($version in @($entry.compatible.versions)) { $global:Ae2CtVersions[$version.version_id] = @($version.project_id, $version.version) }
     $global:Ae2CtVersions[$entry.compatible.ae2_version_id] = @("XxWD5pD3", $entry.compatible.ae2_version)
     if ($entry.compatible.fabric_api_version_id) { $global:Ae2CtVersions[$entry.compatible.fabric_api_version_id] = @("P7dR8mSH", $entry.compatible.fabric_api_version) }
@@ -118,14 +121,16 @@ try {
     $global:Ae2CtAe2Dependency = $true
     try {
         $focusedOutput = (& $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix `
-            -RuntimeDirectory $customRuntime -ProjectId pNabrMMw -ResolveOnly 6>&1 | Out-String)
+            -RuntimeDirectory $customRuntime -DriverScenario ae2wtlib-terminal -DriverOutputDirectory $temp `
+            -DriverWorld ae2ct-00000000000000000000000000000000 -ProjectId pNabrMMw -ResolveOnly 6>&1 | Out-String)
     } finally { $global:Ae2CtAe2Dependency = $false }
     Assert-Line $focusedOutput "focused projects pNabrMMw"
     if (-not (Test-Path -LiteralPath (Join-Path $customRuntime "resolved-mods\ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"))) {
         throw "Custom runtime directory did not receive the driver"
     }
     $focusedManifest = Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
-    if (@($focusedManifest).Count -ne 3 -or "pNabrMMw.jar" -notin $focusedManifest -or "Ck4E7v7R.jar" -notin $focusedManifest) {
+    if (@($focusedManifest).Count -ne 4 -or "pNabrMMw.jar" -notin $focusedManifest -or
+            "Ck4E7v7R.jar" -notin $focusedManifest -or "nU0bVIaL.jar" -notin $focusedManifest) {
         throw "Focused profile omitted an AE2 dependency or loaded unrelated projects"
     }
 
