@@ -206,12 +206,15 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 - First artifact: Minecraft 1.20.1, Forge, Java 17, standard AE2 Crafting Plan.
 - Optional add-on CPU fixtures currently cover AdvancedAE, Applied Flux, BM
   Addon, Crazy AE2 Addons, AppliedE, ExtendedAE, ExtendedAE-Plus, MEGA Cells,
-  NeoEco AE, OMNI Cells, OmniSequence: Transfinite, and ProjectCell.
+  Modern AE2 Additions, NeoEco AE, OMNI Cells, OmniSequence: Transfinite, and
+  ProjectCell.
   ExtendedAE and ExtendedAE-Plus replace the fixture's molecular assemblers
   with ExtendedAE assemblers. BM Addon installs a real Blood Pattern and its
   inputs. Crazy AE2 Addons places a native AE2 1K crafting storage CPU and
-  selects that recorded cluster. ProjectCell replaces the fixture's normal
-  cobblestone supply with a bound EMC Storage Cell. AppliedE replaces that
+  selects that recorded cluster. Modern AE2 Additions builds a native AE2 CPU
+  with its 4x co-processor and selects that recorded cluster. ProjectCell
+  replaces the fixture's normal cobblestone supply with a bound EMC Storage
+  Cell. AppliedE replaces that
   craft path with a player-owned Transmutation Module, furnace knowledge,
   ProjectE EMC, and a native AE2 CPU. The other
   provider scenarios use an existing idle CPU because those addons do not add one.
