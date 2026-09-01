@@ -54,16 +54,17 @@ public final class CraftPlanScenario {
     private String outputId;
     private CompletableFuture<String> cpuCheck;
     private CompletableFuture<Integer> sampleCheck;
-    private final WcwtTerminalFixture wcwtFixture = new WcwtTerminalFixture();
-    private CompletableFuture<ItemStack> wcwtSetup;
-    private boolean wcwtHoverStarted;
-    private boolean wcwtOpenRequested;
+    private final WirelessTerminalFixture wirelessFixture;
+    private CompletableFuture<ItemStack> wirelessSetup;
+    private boolean wirelessHoverStarted;
+    private boolean wirelessOpenRequested;
 
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         this.minecraft = minecraft;
         this.options = options;
         this.driverFile = driverFile;
         addonFixture = AddonCpuFixture.create(options.scenario());
+        wirelessFixture = WirelessTerminalFixture.create(options.scenario());
         DriverResult.requiredChecks(options.scenario()).forEach(key -> checks.put(key, false));
     }
 
@@ -127,7 +128,7 @@ public final class CraftPlanScenario {
         if (addonFixture != null && !addonFixture.setup(minecraft, marker)) {
             return;
         }
-        if (isWcwt() && !setupWcwt()) {
+        if (wirelessFixture != null && !setupWirelessTerminal()) {
             return;
         }
         outputId = addonFixture == null ? marker.outputId() : addonFixture.outputId(marker);
@@ -135,19 +136,18 @@ public final class CraftPlanScenario {
     }
 
     private void openTerminal() {
-        if (isWcwt()) {
+        if (wirelessFixture != null) {
             if (minecraft.screen != null) {
-                if (minecraft.screen.getClass().getName()
-                        .equals("com.lhy.wcwt.client.WirelessComprehensiveWorkTerminalScreen")) {
+                if (minecraft.screen.getClass().getName().equals(wirelessFixture.screenClass())) {
                     checks.put("screen", true);
                     advance(ScenarioState.TERMINAL_OPEN);
                 }
                 return;
             }
-            if (!wcwtOpenRequested && ForgeRegistries.ITEMS.getKey(minecraft.player.getMainHandItem().getItem())
-                    .toString().equals("wcwt:wireless_comprehensive_work_terminal")) {
+            if (!wirelessOpenRequested && ForgeRegistries.ITEMS.getKey(minecraft.player.getMainHandItem().getItem())
+                    .toString().equals(wirelessFixture.itemId())) {
                 minecraft.gameMode.useItem(minecraft.player, InteractionHand.MAIN_HAND);
-                wcwtOpenRequested = true;
+                wirelessOpenRequested = true;
             }
             return;
         }
@@ -179,24 +179,24 @@ public final class CraftPlanScenario {
         if (entry == null) {
             return;
         }
-        if (isWcwt()) {
+        if (wirelessFixture != null) {
             var slot = screen.getMenu().slots.stream().filter(RepoSlot.class::isInstance).map(RepoSlot.class::cast)
                     .filter(candidate -> candidate.getEntry() == entry).findFirst().orElse(null);
             if (slot == null) {
                 return;
             }
-            if (!wcwtHoverStarted) {
-                UiObservationStore.clearWcwtTooltip();
+            if (!wirelessHoverStarted) {
+                UiObservationStore.clearWirelessTooltip();
                 moveMouse(screen.getGuiLeft() + slot.x + 8, screen.getGuiTop() + slot.y + 8);
-                wcwtHoverStarted = true;
+                wirelessHoverStarted = true;
                 return;
             }
-            if (UiObservationStore.wcwtTooltip().stream()
+            if (UiObservationStore.wirelessTooltip().stream()
                     .noneMatch(CraftPlanScenario::isResolvedTtc)) {
                 return;
             }
             checks.put("ttc-tooltip", true);
-            screenshotUnchecked("ae2wcwt-terminal.png");
+            screenshotUnchecked(wirelessFixture.screenshotPrefix() + "-terminal.png");
         }
         ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$click(entry, 2, ClickType.CLONE);
         advance(next);
@@ -222,11 +222,11 @@ public final class CraftPlanScenario {
             return;
         }
         if (!options.scenario().equals("craft-plan")) {
-            if (isWcwt()) {
+            if (wirelessFixture != null) {
                 checks.put("plan-ttc", snapshot.rows().stream().filter(row -> row.outputId().equals(outputId))
                         .flatMap(row -> row.description().stream())
                         .anyMatch(CraftPlanScenario::isResolvedTtc));
-                screenshot("ae2wcwt-plan.png");
+                screenshot(wirelessFixture.screenshotPrefix() + "-plan.png");
                 writePass();
                 return;
             }
@@ -442,37 +442,33 @@ public final class CraftPlanScenario {
         try {
             screenshot(name);
         } catch (IOException error) {
-            throw new IllegalStateException("cannot save WCWT screenshot", error);
+            throw new IllegalStateException("cannot save wireless terminal screenshot", error);
         }
     }
 
-    private boolean setupWcwt() {
-        if (wcwtSetup == null) {
+    private boolean setupWirelessTerminal() {
+        if (wirelessSetup == null) {
             var server = minecraft.getSingleplayerServer();
             var playerId = minecraft.player.getUUID();
-            wcwtSetup = server.submit(() -> {
+            wirelessSetup = server.submit(() -> {
                 var player = server.getPlayerList().getPlayer(playerId);
                 if (player == null) {
                     throw new IllegalStateException("fixture player is unavailable");
                 }
-                return wcwtFixture.setup(player, marker);
+                return wirelessFixture.setup(player, marker);
             });
         }
-        if (!wcwtSetup.isDone()) {
+        if (!wirelessSetup.isDone()) {
             return false;
         }
-        var stack = wcwtSetup.join();
+        var stack = wirelessSetup.join();
         if (stack == null) {
-            wcwtSetup = null;
+            wirelessSetup = null;
             return false;
         }
         minecraft.player.getInventory().selected = 0;
         minecraft.player.getInventory().setItem(0, stack.copy());
         return true;
-    }
-
-    private boolean isWcwt() {
-        return options.scenario().equals("ae2wcwt-terminal");
     }
 
     private static boolean isResolvedTtc(UiSnapshot.ObservedText text) {

@@ -44,5 +44,12 @@ versionRange="[26.1.7,)"
 ordering="AFTER"
 side="BOTH"
 
+[[dependencies."${mod_id}"]]
+modId="ae2wtlib"
+type="OPTIONAL"
+versionRange="[26.1.1-beta,27.0.0)"
+ordering="AFTER"
+side="CLIENT"
+
 [[mixins]]
 config="ae2craftingtime.mixins.json"

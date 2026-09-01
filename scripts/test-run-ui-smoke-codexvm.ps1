@@ -13,10 +13,10 @@ New-Item -ItemType Directory -Path $ReportDirectory -Force | Out-Null
 '@, [Text.UTF8Encoding]::new($false))
 
 try {
-    & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Latest -Interactive
-    $resultPath = Join-Path $source "build\ui-smoke\1.20.1-forge\latest\wrapper-result.json"
+    & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Latest -Interactive -Scenario ae2wtlib-terminal
+    $resultPath = Join-Path $source "build\ui-smoke\1.20.1-forge\latest\ae2wtlib-terminal\wrapper-result.json"
     $result = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json
-    if (-not $result.latest -or -not $result.interactive -or $result.scenario -ne "craft-plan") {
+    if (-not $result.latest -or -not $result.interactive -or $result.scenario -ne "ae2wtlib-terminal") {
         throw "CodexVM wrapper dropped smoke arguments"
     }
 

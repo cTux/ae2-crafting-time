@@ -21,7 +21,7 @@ public record DriverResult(
             "screen", "ttc-row", "total-ttc", "sort-cycle", "tooltip", "layout");
     public static final List<String> ADDON_CPU_CHECKS = List.of(
             "cpu-selected", "profile-sample", "ttc-after-sample");
-    public static final List<String> WCWT_CHECKS = List.of("screen", "ttc-tooltip", "plan-ttc");
+    public static final List<String> WIRELESS_TERMINAL_CHECKS = List.of("screen", "ttc-tooltip", "plan-ttc");
 
     public DriverResult {
         checks = Collections.unmodifiableMap(new LinkedHashMap<>(checks));
@@ -33,7 +33,7 @@ public record DriverResult(
 
     public static List<String> requiredChecks(String scenario) {
         return scenario.equals("craft-plan") ? CRAFT_PLAN_CHECKS
-                : scenario.equals("ae2wcwt-terminal") ? WCWT_CHECKS : ADDON_CPU_CHECKS;
+                : WirelessTerminalFixture.supports(scenario) ? WIRELESS_TERMINAL_CHECKS : ADDON_CPU_CHECKS;
     }
 
     public record Failure(String step, String code, String expected, String observed) {

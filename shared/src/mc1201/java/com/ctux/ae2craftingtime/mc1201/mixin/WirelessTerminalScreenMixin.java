@@ -16,15 +16,18 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 @Mixin(MEStorageScreen.class)
-public abstract class WcwtTerminalScreenMixin {
-    private static final String WCWT_SCREEN = "com.lhy.wcwt.client.WirelessComprehensiveWorkTerminalScreen";
+public abstract class WirelessTerminalScreenMixin {
+    private static final Set<String> TERMINAL_SCREENS = Set.of(
+            "com.lhy.wcwt.client.WirelessComprehensiveWorkTerminalScreen",
+            "de.mari_023.ae2wtlib.wct.WCTScreen");
 
     @ModifyVariable(method = "renderGridInventoryEntryTooltip", at = @At("STORE"), ordinal = 0, remap = false)
     private List<Component> ae2craftingtime$appendTtc(List<Component> lines, GuiGraphics guiGraphics,
             GridInventoryEntry entry, int x, int y) {
-        if (!getClass().getName().equals(WCWT_SCREEN) || !entry.isCraftable()) {
+        if (!TERMINAL_SCREENS.contains(getClass().getName()) || !entry.isCraftable()) {
             return lines;
         }
 

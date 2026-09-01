@@ -21,12 +21,17 @@ $profile = if ($Latest) { "latest" } else { "compatible" }
 $driver = "ae2-crafting-time-1.1.0-forge-1.20.1-test-driver.jar"
 New-Item -ItemType Directory -Path $DriverOutputDirectory, (Join-Path $RuntimeDirectory "resolved-mods"),
     (Join-Path $RuntimeDirectory "logs") -Force | Out-Null
-$checks = if ($DriverScenario -ne "craft-plan") {
+$checks = if ($DriverScenario -like "*-terminal") {
+    [ordered]@{ screen=$true; 'ttc-tooltip'=$true; 'plan-ttc'=$true }
+} elseif ($DriverScenario -ne "craft-plan") {
     [ordered]@{ 'cpu-selected'=$true; 'profile-sample'=$true; 'ttc-after-sample'=$true }
 } else {
     [ordered]@{ screen=$true; 'ttc-row'=$true; 'total-ttc'=$true; 'sort-cycle'=$true; tooltip=$true; layout=$true }
 }
-$screenshots = if ($DriverScenario -ne "craft-plan") { @("$(($DriverScenario -replace '-cpu$', ''))-profiled-plan.png") } else { @("craft-plan.png", "craft-plan-tooltip.png") }
+$screenshots = if ($DriverScenario -like "*-terminal") {
+    $prefix = $DriverScenario -replace '-terminal$', ''
+    @("$prefix-terminal.png", "$prefix-plan.png")
+} elseif ($DriverScenario -ne "craft-plan") { @("$(($DriverScenario -replace '-cpu$', ''))-profiled-plan.png") } else { @("craft-plan.png", "craft-plan-tooltip.png") }
 $result = [ordered]@{
     schema = $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "schema") { 2 } else { 1 })
     complete = $true; driver = $driver; target = "1.20.1-forge"; profile = $profile
@@ -81,6 +86,7 @@ try {
     }
     Invoke-Case "pass" -Latest -shouldPass $true
     Invoke-Case "pass" -Scenario "neoeco-cpu" -shouldPass $true
+    Invoke-Case "pass" -Scenario "ae2wtlib-terminal" -shouldPass $true
     Invoke-Case "pass" -Scenario "future-addon-cpu" -shouldPass $true
     if (-not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\evidence\result.json")) -or
             -not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\latest\evidence\result.json"))) {

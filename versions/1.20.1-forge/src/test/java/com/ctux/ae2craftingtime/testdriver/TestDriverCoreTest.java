@@ -31,11 +31,16 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("bmaddon-cpu"));
         assertTrue(AddonCpuFixture.supports("crazyae2addons-cpu"));
         assertTrue(AddonCpuFixture.supports("ae2wcwt-terminal"));
+        assertTrue(AddonCpuFixture.supports("ae2wtlib-terminal"));
         assertTrue(AddonCpuFixture.supports("neoeco-cpu"));
         assertTrue(AddonCpuFixture.supports("omnisequence-cpu"));
         assertFalse(AddonCpuFixture.supports("missing-cpu"));
         assertNull(AddonCpuFixture.create("craft-plan"));
         assertNull(AddonCpuFixture.create("ae2wcwt-terminal"));
+        assertNull(AddonCpuFixture.create("ae2wtlib-terminal"));
+        assertEquals("ae2wcwt", WirelessTerminalFixture.create("ae2wcwt-terminal").screenshotPrefix());
+        assertEquals("ae2wtlib", WirelessTerminalFixture.create("ae2wtlib-terminal").screenshotPrefix());
+        assertNull(WirelessTerminalFixture.create("missing-terminal"));
         assertThrows(IllegalArgumentException.class, () -> AddonCpuFixture.create("missing-cpu"));
     }
 
@@ -158,6 +163,8 @@ class TestDriverCoreTest {
                 DriverResult.requiredChecks("crazyae2addons-cpu"));
         assertEquals(List.of("screen", "ttc-tooltip", "plan-ttc"),
                 DriverResult.requiredChecks("ae2wcwt-terminal"));
+        assertEquals(List.of("screen", "ttc-tooltip", "plan-ttc"),
+                DriverResult.requiredChecks("ae2wtlib-terminal"));
         var file = temporary.resolve("not-a-directory");
         Files.writeString(file, "x");
         assertThrows(Exception.class, () -> AtomicResultWriter.write(file, result));
@@ -205,6 +212,14 @@ class TestDriverCoreTest {
 
         assertEquals("CompletionException: java.lang.IllegalStateException: fixture failed <- IllegalStateException: fixture failed",
                 ReportText.failure(error));
+    }
+
+    @Test
+    void wirelessTooltipRecognizesOnlyRegisteredScreens() {
+        assertTrue(UiObservationStore.isWirelessScreen(
+                "com.lhy.wcwt.client.WirelessComprehensiveWorkTerminalScreen"));
+        assertTrue(UiObservationStore.isWirelessScreen("de.mari_023.ae2wtlib.wct.WCTScreen"));
+        assertFalse(UiObservationStore.isWirelessScreen("appeng.client.gui.me.items.CraftingTermScreen"));
     }
 
     private static LinkedHashMap<String, Boolean> checks(boolean value) {

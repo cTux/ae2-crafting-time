@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class UiObservationStore {
     private static final int TABLE_X = 9;
@@ -20,9 +21,12 @@ public final class UiObservationStore {
     private static final int CELL_HEIGHT = 22;
     private static final int PITCH_X = 68;
     private static final int PITCH_Y = 23;
+    private static final Set<String> WIRELESS_SCREENS = Set.of(
+            "com.lhy.wcwt.client.WirelessComprehensiveWorkTerminalScreen",
+            "de.mari_023.ae2wtlib.wct.WCTScreen");
     private static Frame active;
     private static volatile UiSnapshot latest;
-    private static volatile List<UiSnapshot.ObservedText> wcwtTooltip = List.of();
+    private static volatile List<UiSnapshot.ObservedText> wirelessTooltip = List.of();
     private static long sequence;
 
     public static void begin(Minecraft minecraft) {
@@ -113,19 +117,23 @@ public final class UiObservationStore {
         return latest;
     }
 
-    public static void wcwtTooltip(List<Component> components) {
-        if (Minecraft.getInstance().screen != null && Minecraft.getInstance().screen.getClass().getName()
-                .equals("com.lhy.wcwt.client.WirelessComprehensiveWorkTerminalScreen")) {
-            wcwtTooltip = observed(components, null);
+    public static void wirelessTooltip(List<Component> components) {
+        if (Minecraft.getInstance().screen != null
+                && isWirelessScreen(Minecraft.getInstance().screen.getClass().getName())) {
+            wirelessTooltip = observed(components, null);
         }
     }
 
-    public static List<UiSnapshot.ObservedText> wcwtTooltip() {
-        return wcwtTooltip;
+    static boolean isWirelessScreen(String className) {
+        return WIRELESS_SCREENS.contains(className);
     }
 
-    public static void clearWcwtTooltip() {
-        wcwtTooltip = List.of();
+    public static List<UiSnapshot.ObservedText> wirelessTooltip() {
+        return wirelessTooltip;
+    }
+
+    public static void clearWirelessTooltip() {
+        wirelessTooltip = List.of();
     }
 
     private static List<UiSnapshot.ObservedText> observed(List<Component> components, Rect bounds) {

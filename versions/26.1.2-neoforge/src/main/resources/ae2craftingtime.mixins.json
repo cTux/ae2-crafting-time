@@ -14,7 +14,8 @@
     "CraftConfirmScreenMixin",
     "CraftConfirmTableRendererMixin",
     "CraftingStatusTableRendererMixin",
-    "CraftingStatusMenuMixin"
+    "CraftingStatusMenuMixin",
+    "WirelessTerminalScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1
