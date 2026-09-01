@@ -26,7 +26,8 @@
       { "project_id": "jjuIRIVr", "version_id": "SH2D1n3s", "dependency_type": "optional" },
       { "project_id": "RYE1pYyr", "version_id": "c2s3iMw8", "dependency_type": "optional" },
       { "project_id": "IZPmgTLT", "version_id": "wCGFfeun", "dependency_type": "optional" },
-      { "project_id": "oMgZ004U", "version_id": "cAcdjzEn", "dependency_type": "optional" }
+      { "project_id": "oMgZ004U", "version_id": "cAcdjzEn", "dependency_type": "optional" },
+      { "project_id": "5G4fpXXj", "version_id": "5vXTRu3V", "dependency_type": "optional" }
     ],
     "changelog": "### FIXED\n\n- The total TTC now sits in the crafting status header, so it no longer overlaps the action buttons."
   },
