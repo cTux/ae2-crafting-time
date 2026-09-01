@@ -7,6 +7,7 @@ import appeng.api.stacks.GenericStack;
 import appeng.core.definitions.AEItems;
 import appeng.helpers.WirelessTerminalMenuHost;
 import appeng.items.tools.powered.WirelessTerminalItem;
+import appeng.me.helpers.PlayerSource;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ultramega.ae2insertexportcard.item.UpgradeHost;
@@ -72,6 +73,8 @@ final class Ae2ImportExportCardFixture extends WirelessTerminalFixture {
         selectedSlots[1] = 1;
         card.setSelectedInventorySlots(selectedSlots);
         player.getInventory().setItem(1, ItemStack.EMPTY);
+        grid.getStorageService().getInventory().extract(AEItemKey.of(output), Long.MAX_VALUE,
+                Actionable.MODULATE, new PlayerSource(player));
         ProfilerBridge.clearStats(new ProfileKey(ProfilerBridge.networkId(grid), marker.outputId()));
         return stack;
     }
