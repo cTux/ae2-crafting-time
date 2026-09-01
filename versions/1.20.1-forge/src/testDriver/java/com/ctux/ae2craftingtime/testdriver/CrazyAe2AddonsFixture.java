@@ -30,21 +30,21 @@ final class CrazyAe2AddonsFixture extends AddonCpuFixture<CraftingCPUCluster> {
                 .orElseThrow(() -> new IllegalStateException("Crazy AE2 Addons fixture grid is unavailable"));
         var cpu = grid.getMachines(CraftingBlockEntity.class).stream()
                 .map(CraftingBlockEntity::getCluster).filter(Objects::nonNull)
-                .filter(candidate -> !candidate.isBusy() && candidate instanceof ICpuPrio)
+                .filter(candidate -> !candidate.isBusy() && (Object) candidate instanceof ICpuPrio)
                 .findFirst().orElseThrow(() -> new IllegalStateException(
                         "Crazy AE2 Addons priority mixin is unavailable on the fixture CPU"));
-        ((ICpuPrio) cpu).setPrio(TEST_PRIORITY);
+        ((ICpuPrio) (Object) cpu).setPrio(TEST_PRIORITY);
         return cpu;
     }
 
     @Override
     protected boolean finish(ServerPlayer player, CraftingCPUCluster cpu) {
-        return cpu instanceof ICpuPrio priority && priority.getPrio() == TEST_PRIORITY;
+        return (Object) cpu instanceof ICpuPrio priority && priority.getPrio() == TEST_PRIORITY;
     }
 
     @Override
     protected ICraftingCPU cpu(ServerPlayer player, CraftingCPUCluster cpu, IGrid grid) {
         return !cpu.isBusy() && cpu.isActive() && cpu.getGrid() == grid
-                && ((ICpuPrio) cpu).getPrio() == TEST_PRIORITY ? cpu : null;
+                && ((ICpuPrio) (Object) cpu).getPrio() == TEST_PRIORITY ? cpu : null;
     }
 }
