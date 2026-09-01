@@ -116,7 +116,8 @@ Terminals' charged wireless crafting terminal.
 
 The `ae2importexportcard-terminal` scenario links a charged standard AE2
 wireless terminal, installs a real export card, and verifies the TTC tooltip
-and Crafting Plan on the addon's modified terminal screen.
+and Crafting Plan on the addon's modified terminal screen using a deterministic
+profile sample.
 
 ## ME Requester scenario
 

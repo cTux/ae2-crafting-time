@@ -2,8 +2,10 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.IGrid;
+import appeng.api.stacks.AEItemKey;
 import appeng.core.definitions.AEItems;
 import appeng.items.tools.powered.WirelessTerminalItem;
+import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -48,6 +50,16 @@ final class Ae2ImportExportCardFixture extends WirelessTerminalFixture {
         if (exportCard == null || !terminal.getUpgrades(stack).addItems(new ItemStack(exportCard)).isEmpty()) {
             throw new IllegalStateException("AE2 Import Export Card could not be installed");
         }
+        var output = ForgeRegistries.ITEMS.getValue(
+                Objects.requireNonNull(ResourceLocation.tryParse(marker.outputId())));
+        if (output == null) {
+            throw new IllegalStateException("fixture output is unavailable");
+        }
+        var key = AEItemKey.of(output);
+        var tick = player.serverLevel().getGameTime();
+        var networkId = ProfilerBridge.networkId(grid);
+        ProfilerBridge.start(networkId, stack, key, 1, tick);
+        ProfilerBridge.complete(networkId, stack, key, 1, tick + 40);
         return stack;
     }
 }

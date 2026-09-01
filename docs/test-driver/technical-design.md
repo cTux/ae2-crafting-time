@@ -199,7 +199,8 @@ disposable grid. The scenario opens it through normal item use, captures the
 final tooltip drawn for the known craftable entry, and then reuses the standard
 Crafting Plan observation path. The current fixtures cover AE2 WCWT and AE2
 Wireless Terminals. The AE2 Import Export Card fixture uses the same flow with
-a real export card installed in the addon's modified standard terminal.
+a real export card installed in the addon's modified standard terminal and a
+deterministic profile sample for its disposable grid.
 
 ME Requester also uses a separate screen flow. Its fixture places and configures
 one requester with a deterministic profiler sample on the disposable AE2 grid.
