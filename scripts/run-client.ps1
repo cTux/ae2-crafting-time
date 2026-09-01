@@ -190,6 +190,9 @@ if ($Latest) {
 if (-not $Latest -and $ae2Version.version_number -ne $matrixEntry.compatible.ae2_version) {
     throw "AE2 version lock mismatch for $Target"
 }
+foreach ($dependency in @($ae2Version.dependencies | Where-Object dependency_type -eq "required")) {
+    Install-Project $dependency.project_id
+}
 $runtimeArgs = @("-P$($profile.LoaderProperty)=$loaderVersion", "-P$($profile.Ae2Property)=$($ae2Version.version_number)", "-PruntimeRunDirectory=$run")
 Write-Host "profile $(if ($Latest) { 'latest' } else { 'compatible' })"
 if ($requestedProjects.Count) { Write-Host "focused projects $($requestedProjects -join ', ')" }

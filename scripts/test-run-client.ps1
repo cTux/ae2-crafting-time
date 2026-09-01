@@ -52,7 +52,10 @@ function Invoke-WebRequest {
 function New-TestVersion([string]$project, [string]$version) {
     [pscustomobject]@{
         id = "$project-$version"; version_number = $version
-        dependencies = @([pscustomobject]@{ project_id = "XxWD5pD3"; version_id = "old-pin"; dependency_type = "required" })
+        dependencies = @([pscustomobject]@{
+            project_id = $(if ($project -eq "XxWD5pD3" -and $global:Ae2CtAe2Dependency) { "Ck4E7v7R" } else { "XxWD5pD3" })
+            version_id = "old-pin"; dependency_type = "required"
+        })
         files = @([pscustomobject]@{ filename = "$project.jar"; hashes = [pscustomobject]@{ sha512 = $hash }; url = "https://example.invalid/$project.jar"; primary = $true })
     }
 }
@@ -112,15 +115,18 @@ try {
     }
 
     $customRuntime = Join-Path $temp "custom-runtime"
-    $focusedOutput = (& $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix `
-        -RuntimeDirectory $customRuntime -ProjectId pNabrMMw -ResolveOnly 6>&1 | Out-String)
+    $global:Ae2CtAe2Dependency = $true
+    try {
+        $focusedOutput = (& $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix `
+            -RuntimeDirectory $customRuntime -ProjectId pNabrMMw -ResolveOnly 6>&1 | Out-String)
+    } finally { $global:Ae2CtAe2Dependency = $false }
     Assert-Line $focusedOutput "focused projects pNabrMMw"
     if (-not (Test-Path -LiteralPath (Join-Path $customRuntime "resolved-mods\ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"))) {
         throw "Custom runtime directory did not receive the driver"
     }
     $focusedManifest = Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
-    if (@($focusedManifest).Count -ne 2 -or "pNabrMMw.jar" -notin $focusedManifest) {
-        throw "Focused profile loaded unrelated projects"
+    if (@($focusedManifest).Count -ne 3 -or "pNabrMMw.jar" -notin $focusedManifest -or "Ck4E7v7R.jar" -notin $focusedManifest) {
+        throw "Focused profile omitted an AE2 dependency or loaded unrelated projects"
     }
 
     & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -RuntimeDirectory $customRuntime `
