@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
+    private final CrazyAe2AddonsFixture nativeCpu = new CrazyAe2AddonsFixture();
     private int finishAttempts;
 
     @Override
@@ -56,11 +57,14 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
         if (module == null) {
             throw new IllegalStateException("AppliedE fixture could not place the transmutation module");
         }
-        return new Placement(grid, (EMCModulePart) module, target);
+        return new Placement(grid, (EMCModulePart) module, target, nativeCpu.place(player, marker));
     }
 
     @Override
     protected boolean finish(ServerPlayer player, Placement placement) {
+        if (!nativeCpu.finish(player, placement.cpu())) {
+            return false;
+        }
         var moduleNode = placement.module().getGridNode();
         if (!moduleNode.isActive()) {
             failIfSetupStalled(placement, moduleNode);
@@ -87,12 +91,10 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
 
     @Override
     protected ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {
-        var cpus = grid.getCraftingService().getCpus();
-        return cpus.stream().filter(cpu -> !cpu.isBusy()).findFirst().orElseThrow(() ->
-                new IllegalStateException("AppliedE fixture has no idle CPU: total=" + cpus.size()
-                        + ", busy=" + cpus.stream().filter(ICraftingCPU::isBusy).count()));
+        return nativeCpu.cpu(player, placement.cpu(), grid);
     }
 
-    record Placement(IGrid grid, EMCModulePart module, AEItemKey target) {
+    record Placement(IGrid grid, EMCModulePart module, AEItemKey target,
+            CrazyAe2AddonsFixture.Placement cpu) {
     }
 }
