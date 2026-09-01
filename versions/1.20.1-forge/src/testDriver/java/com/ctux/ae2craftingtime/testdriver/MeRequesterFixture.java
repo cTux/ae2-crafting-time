@@ -19,6 +19,7 @@ import java.util.concurrent.CompletableFuture;
 final class MeRequesterFixture {
     static final String SCENARIO = "merequester-screen";
     static final String SCREEN = "com.almostreliable.merequester.client.RequesterScreen";
+    private static final long REQUEST_AMOUNT = 1_000_000;
 
     private BlockPos position;
     private IGridNode connectionNode;
@@ -108,9 +109,9 @@ final class MeRequesterFixture {
         var key = AEItemKey.of(Items.FURNACE);
         var tick = level.getGameTime();
         var networkId = ProfilerBridge.networkId(connectionNode.getGrid());
-        ProfilerBridge.start(networkId, requester, key, 64, tick);
-        ProfilerBridge.complete(networkId, requester, key, 64, tick + 40);
-        requester.getRequests().setStack(0, new GenericStack(key, 64));
+        ProfilerBridge.start(networkId, requester, key, REQUEST_AMOUNT, tick);
+        ProfilerBridge.complete(networkId, requester, key, REQUEST_AMOUNT, tick + 40);
+        requester.getRequests().setStack(0, new GenericStack(key, REQUEST_AMOUNT));
         requester.getRequests().get(0).updateState(false);
         requester.requestChanged(0);
         return requester.getMainNode().isActive();
