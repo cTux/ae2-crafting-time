@@ -123,7 +123,7 @@ final class BmAddonFixture extends AddonCpuFixture<BmAddonFixture.Placement> {
                 .orElseThrow(() -> new IllegalStateException("BM Addon has no usable tier-1 Blood Magic recipe"));
     }
 
-    private static final class Placement {
+    static final class Placement {
         private final BlockPos assembler;
         private final BlockPos terminal;
         private String outputId;
