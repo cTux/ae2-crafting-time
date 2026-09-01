@@ -4,7 +4,7 @@ $scripts = Join-Path $temp "scripts"
 $source = Join-Path $temp "versions\1.20.1-forge\run\saves\ae2-crafting-time"
 New-Item -ItemType Directory -Path $scripts, $source -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "run-ui-smoke.ps1") -Destination (Join-Path $scripts "run-ui-smoke.ps1")
-[IO.File]::WriteAllText((Join-Path $temp "gradle.properties"), "modVersion=1.0.13`n", [Text.UTF8Encoding]::new($false))
+[IO.File]::WriteAllText((Join-Path $temp "gradle.properties"), "modVersion=1.1.0`n", [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $source ".ae2-crafting-time-test-fixture.json"), @'
 {"schema":1,"scenario":"craft-plan","sourceFixtureId":"ae2-crafting-time","disposableWorldId":"SOURCE_ONLY",
  "terminal":{"x":1,"y":2,"z":3,"face":"SOUTH"},"outputId":"minecraft:furnace"}
@@ -18,7 +18,7 @@ param(
 )
 if ([IO.Path]::GetFullPath((Get-Location).Path) -ne [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))) { exit 8 }
 $profile = if ($Latest) { "latest" } else { "compatible" }
-$driver = "ae2-crafting-time-1.0.13-forge-1.20.1-test-driver.jar"
+$driver = "ae2-crafting-time-1.1.0-forge-1.20.1-test-driver.jar"
 New-Item -ItemType Directory -Path $DriverOutputDirectory, (Join-Path $RuntimeDirectory "resolved-mods"),
     (Join-Path $RuntimeDirectory "logs") -Force | Out-Null
 $checks = if ($DriverScenario -ne "craft-plan") {
