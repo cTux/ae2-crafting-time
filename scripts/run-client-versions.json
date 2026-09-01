@@ -46,7 +46,17 @@
         { "project_id": "gu7yAYhd", "version_id": "gRtcHJd8", "version": "1.120.2" },
         { "project_id": "IiATswDj", "version_id": "9n9p68Qq", "version": "1.4.3" },
         { "project_id": "IZPmgTLT", "version_id": "wCGFfeun", "version": "1.0.1" },
-        { "project_id": "JiOqfoFM", "version_id": "uq3lO4ER", "version": "1.20-1.4.18-forge" },
+        {
+          "project_id": "JiOqfoFM",
+          "version_id": "curseforge-7005572",
+          "version": "1.20-1.4.6-forge",
+          "file": {
+            "filename": "ExtendedAE-1.20-1.4.6-forge.jar",
+            "hashes": { "sha512": "ac3f6dfc0432e51b8c88957d35b21e82fc68dada0f950d70aad1ec4618ce476a4cf558289053fd60078c3d488cf2cff322a89247707852d2b58ad1329c2f70f3" },
+            "url": "https://mediafilez.forgecdn.net/files/7005/572/ExtendedAE-1.20-1.4.6-forge.jar",
+            "primary": true
+          }
+        },
         { "project_id": "jjuIRIVr", "version_id": "SH2D1n3s", "version": "forge-2.4.6" },
         { "project_id": "lhGA9TYQ", "version_id": "1MKTLiiG", "version": "9.2.14+forge" },
         { "project_id": "M5jhzZXH", "version_id": "UgayyKmv", "version": "2.0.0-beta.2-forge.1.20.1" },

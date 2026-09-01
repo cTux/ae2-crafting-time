@@ -18,6 +18,9 @@ exit /b 0
 "@, [Text.UTF8Encoding]::new($false))
 $testMatrix = Join-Path $temp "run-client-versions.json"
 foreach ($entry in $matrix) {
+    foreach ($dependency in @($entry.compatible.versions | Where-Object { $_.file })) {
+        $dependency.file.sha512 = $hash
+    }
     foreach ($dependency in @($entry.curseforge | Where-Object { $_ })) {
         $dependency.compatible.sha512 = $hash
         $dependency.latest.sha512 = $hash
@@ -90,7 +93,10 @@ try {
         Assert-Line $output "runtime ae2 $($entry.compatible.ae2_version)"
         if ($entry.compatible.fabric_api_version) { Assert-Line $output "runtime fabric-api $($entry.compatible.fabric_api_version)" }
         $compatibleProjects = @($entry.projects | Where-Object { $_.compatible -ne $false })
-        foreach ($project in $compatibleProjects.project_id) { Assert-Line $output "mod $project.jar" }
+        foreach ($project in $compatibleProjects.project_id) {
+            $lock = @($entry.compatible.versions | Where-Object project_id -eq $project)[0]
+            Assert-Line $output "mod $(if ($lock.file) { $lock.file.filename } else { "$project.jar" })"
+        }
         $mods = Join-Path $temp "versions\$($entry.id)\run\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
         $manifest = Get-Content -LiteralPath (Join-Path $mods ".ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
         $curseCount = @($entry.curseforge | Where-Object { $_ }).Count

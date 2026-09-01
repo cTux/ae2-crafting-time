@@ -58,10 +58,6 @@ $matrix = Get-Content -LiteralPath $matrixPath -Raw | ConvertFrom-Json
 $matrixEntry = $matrix | Where-Object { $_.id -eq $Target }
 if (-not $matrixEntry) { throw "No run-client version entry for $Target" }
 $projects = @($matrixEntry.projects | Where-Object { $Latest -or $_.compatible -ne $false } | Select-Object -ExpandProperty project_id)
-$versionPins = @{}
-foreach ($dependency in @($matrixEntry.compatible.versions)) {
-    $versionPins[$dependency.project_id] = $dependency.version_id
-}
 
 if ($Target -eq "1.20.1-forge") {
     $legacyMods = Join-Path $run "mods"
@@ -76,9 +72,12 @@ if ($Target -eq "1.20.1-forge") {
 
 function Get-ProjectVersion([string]$projectId) {
     if (-not $Latest) {
-        $versionId = $versionPins[$projectId]
-        if (-not $versionId) { throw "Missing compatible version for Modrinth project $projectId" }
-        return Invoke-RestMethod -Uri "$api/version/$versionId"
+        $lock = @($matrixEntry.compatible.versions | Where-Object project_id -eq $projectId)[0]
+        if (-not $lock) { throw "Missing compatible version for Modrinth project $projectId" }
+        if ($lock.file) {
+            return [pscustomobject]@{ id = $lock.version_id; version_number = $lock.version; dependencies = @(); files = @($lock.file) }
+        }
+        return Invoke-RestMethod -Uri "$api/version/$($lock.version_id)"
     }
     $game = [uri]::EscapeDataString("[`"$($profile.Game)`"]")
     $loader = [uri]::EscapeDataString("[`"$($profile.Loader)`"]")
