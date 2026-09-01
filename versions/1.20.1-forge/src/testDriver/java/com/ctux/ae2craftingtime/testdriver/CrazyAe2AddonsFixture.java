@@ -40,7 +40,7 @@ final class CrazyAe2AddonsFixture extends AddonCpuFixture<CrazyAe2AddonsFixture.
             if (!(level.getBlockEntity(anchor) instanceof IInWorldGridNodeHost host)) {
                 continue;
             }
-            for (var direction : new Direction[] { Direction.UP, Direction.DOWN }) {
+            for (var direction : Direction.values()) {
                 var node = host.getGridNode(direction);
                 var position = anchor.relative(direction).immutable();
                 if (node != null && node.getGrid() == grid && level.getBlockState(position).isAir()) {
@@ -49,7 +49,7 @@ final class CrazyAe2AddonsFixture extends AddonCpuFixture<CrazyAe2AddonsFixture.
                 }
             }
         }
-        throw new IllegalStateException("no empty vertical connection beside the fixture AE2 grid for native CPU");
+        throw new IllegalStateException("no empty connection beside the fixture AE2 grid for native CPU");
     }
 
     @Override
