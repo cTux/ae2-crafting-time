@@ -45,6 +45,7 @@ final class MeRequesterFixture {
         if (block == null || block == net.minecraft.world.level.block.Blocks.AIR) {
             throw new IllegalStateException("ME Requester block is unavailable");
         }
+        findGrid:
         for (var anchor : BlockPos.betweenClosed(terminal.offset(-12, -4, -12), terminal.offset(12, 4, 12))) {
             var host = GridHelper.getNodeHost(level, anchor);
             if (host == null) {
@@ -52,15 +53,25 @@ final class MeRequesterFixture {
             }
             for (var direction : Direction.values()) {
                 var node = host.getGridNode(direction);
-                var candidate = anchor.relative(direction).immutable();
-                if (node != null && node.getGrid() != null && level.getBlockState(candidate).isAir()) {
-                    level.setBlockAndUpdate(candidate, block.defaultBlockState());
+                if (node != null && node.getGrid() != null) {
                     connectionNode = node;
-                    return candidate;
+                    break findGrid;
                 }
             }
         }
-        throw new IllegalStateException("no empty connection beside the fixture AE2 grid for ME Requester");
+        if (connectionNode == null) {
+            throw new IllegalStateException("fixture AE2 grid is unavailable for ME Requester");
+        }
+        var playerPosition = player.blockPosition();
+        for (var candidate : BlockPos.betweenClosed(
+                playerPosition.offset(-2, 0, -2), playerPosition.offset(2, 2, 2))) {
+            if (level.getBlockState(candidate).isAir()) {
+                var position = candidate.immutable();
+                level.setBlockAndUpdate(position, block.defaultBlockState());
+                return position;
+            }
+        }
+        throw new IllegalStateException("no empty placement near the fixture player for ME Requester");
     }
 
     private boolean finish(ServerPlayer player) {
