@@ -8,7 +8,6 @@ import appeng.me.cluster.implementations.CraftingCPUCluster;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
-import net.oktawia.crazyae2addons.logic.interfaces.ICpuPrio;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -30,21 +29,37 @@ final class CrazyAe2AddonsFixture extends AddonCpuFixture<CraftingCPUCluster> {
                 .orElseThrow(() -> new IllegalStateException("Crazy AE2 Addons fixture grid is unavailable"));
         var cpu = grid.getMachines(CraftingBlockEntity.class).stream()
                 .map(CraftingBlockEntity::getCluster).filter(Objects::nonNull)
-                .filter(candidate -> !candidate.isBusy() && (Object) candidate instanceof ICpuPrio)
+                .filter(candidate -> !candidate.isBusy())
                 .findFirst().orElseThrow(() -> new IllegalStateException(
-                        "Crazy AE2 Addons priority mixin is unavailable on the fixture CPU"));
-        ((ICpuPrio) (Object) cpu).setPrio(TEST_PRIORITY);
+                        "Crazy AE2 Addons fixture has no idle AE2 CPU"));
+        setPriority(cpu, TEST_PRIORITY);
         return cpu;
     }
 
     @Override
     protected boolean finish(ServerPlayer player, CraftingCPUCluster cpu) {
-        return (Object) cpu instanceof ICpuPrio priority && priority.getPrio() == TEST_PRIORITY;
+        return priority(cpu) == TEST_PRIORITY;
     }
 
     @Override
     protected ICraftingCPU cpu(ServerPlayer player, CraftingCPUCluster cpu, IGrid grid) {
         return !cpu.isBusy() && cpu.isActive() && cpu.getGrid() == grid
-                && ((ICpuPrio) (Object) cpu).getPrio() == TEST_PRIORITY ? cpu : null;
+                && priority(cpu) == TEST_PRIORITY ? cpu : null;
+    }
+
+    private static void setPriority(CraftingCPUCluster cpu, int priority) {
+        try {
+            cpu.getClass().getMethod("setPrio", int.class).invoke(cpu, priority);
+        } catch (ReflectiveOperationException error) {
+            throw new IllegalStateException("Crazy AE2 Addons priority setter is unavailable", error);
+        }
+    }
+
+    private static int priority(CraftingCPUCluster cpu) {
+        try {
+            return (int) cpu.getClass().getMethod("getPrio").invoke(cpu);
+        } catch (ReflectiveOperationException error) {
+            throw new IllegalStateException("Crazy AE2 Addons priority getter is unavailable", error);
+        }
     }
 }
