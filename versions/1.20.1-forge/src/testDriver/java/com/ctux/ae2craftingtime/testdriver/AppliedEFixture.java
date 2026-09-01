@@ -87,7 +87,10 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
 
     @Override
     protected ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {
-        return grid.getCraftingService().getCpus().stream().filter(cpu -> !cpu.isBusy()).findFirst().orElse(null);
+        var cpus = grid.getCraftingService().getCpus();
+        return cpus.stream().filter(cpu -> !cpu.isBusy()).findFirst().orElseThrow(() ->
+                new IllegalStateException("AppliedE fixture has no idle CPU: total=" + cpus.size()
+                        + ", busy=" + cpus.stream().filter(ICraftingCPU::isBusy).count()));
     }
 
     record Placement(IGrid grid, EMCModulePart module, AEItemKey target) {
