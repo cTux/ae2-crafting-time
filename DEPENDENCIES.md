@@ -31,6 +31,7 @@ AE2 Crafting Time.
 | Neo ECO AE Extension (`neoecoae`) | `1.20.1 Forge` | `>=20.3.0 <20.4.0` | TTC profiling for C-series ECO crafting CPUs, including normal and FastPath dispatch. NeoEco 20.4.1 and 20.4.2 have an upstream AE2 mixin crash. |
 | AE2 Lightning Tech (`ae2lightningtech`) | `1.20.1 Forge` | `>=2.1.0-beta.2` | TTC profiling for Tianshu time-wheel crafting CPUs. |
 | OmniSequence: Transfinite (`molecularmanipulator`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.3.9-forge`; NeoForge: `>=1.3.9-hotfix` | TTC profiling for Omni-Computation Core crafting CPUs through AE2's native execution path. |
+| ExtendedAE-Plus (`extendedae_plus`) | `1.20.1 Forge`, `1.21.1 NeoForge` | `>=1.6.2` | TTC profiling and UI coexistence with ExtendedAE-Plus crafting changes. |
 
 Applied Mekanistics is not declared for the Fabric jar because the supported
 Applied Mekanistics releases for these targets are Forge/NeoForge.

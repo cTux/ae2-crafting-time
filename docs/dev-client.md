@@ -75,7 +75,6 @@ When issues exist, add `issue_url` for this repository and
 `compatible` only after the whole target starts and its requested smoke checks
 pass together.
 
-`1.21.1-neoforge` excludes ExtendedAE-Plus only from the compatible profile:
-all of its available releases collide with Expanded AE's Applied Flux mixin.
-The matching latest client includes it so that upstream conflict remains
-visible and reproducible.
+ExtendedAE-Plus is included in the Forge 1.20.1 and NeoForge 1.21.1 compatible
+profiles. Expanded AE stays excluded because its Applied Flux pattern-provider
+mixin conflicts with other candidates in both rows.
