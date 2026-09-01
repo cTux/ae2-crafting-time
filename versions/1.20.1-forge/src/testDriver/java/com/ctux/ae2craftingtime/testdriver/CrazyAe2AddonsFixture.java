@@ -16,8 +16,6 @@ import java.util.Arrays;
 import java.util.Objects;
 
 final class CrazyAe2AddonsFixture extends AddonCpuFixture<CrazyAe2AddonsFixture.Placement> {
-    private static final int TEST_PRIORITY = 42;
-
     @Override
     protected Placement place(ServerPlayer player, FixtureMarker marker) {
         if (player == null) {
@@ -82,36 +80,21 @@ final class CrazyAe2AddonsFixture extends AddonCpuFixture<CrazyAe2AddonsFixture.
         if (cpu == null || cpu.isBusy()) {
             return false;
         }
-        setPriority(cpu, TEST_PRIORITY);
         return true;
     }
 
     @Override
     protected ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {
-        return grid.getCraftingService().getCpus().stream()
-                .filter(CrazyAe2AddonsFixture::isNativeCpu)
-                .filter(candidate -> !candidate.isBusy() && priority(candidate) == TEST_PRIORITY)
-                .findFirst().orElse(null);
-    }
-
-    private static boolean isNativeCpu(ICraftingCPU cpu) {
-        return cpu.getClass().getName().equals("appeng.me.cluster.implementations.CraftingCPUCluster");
-    }
-
-    private static void setPriority(ICraftingCPU cpu, int priority) {
-        try {
-            cpu.getClass().getMethod("setPrio", int.class).invoke(cpu, priority);
-        } catch (ReflectiveOperationException error) {
-            throw new IllegalStateException("Crazy AE2 Addons priority setter is unavailable", error);
+        if (!(player.serverLevel().getBlockEntity(placement.storage()) instanceof CraftingBlockEntity storage)
+                || storage.getCluster() == null) {
+            return null;
         }
-    }
-
-    private static int priority(ICraftingCPU cpu) {
-        try {
-            return (int) cpu.getClass().getMethod("getPrio").invoke(cpu);
-        } catch (ReflectiveOperationException error) {
-            throw new IllegalStateException("Crazy AE2 Addons priority getter is unavailable", error);
+        var cpu = storage.getCluster();
+        if (!cpu.isActive() || cpu.getGrid() != grid || cpu.isBusy()) {
+            throw new IllegalStateException("native CPU is not selectable; active=" + cpu.isActive()
+                    + " sameGrid=" + (cpu.getGrid() == grid) + " busy=" + cpu.isBusy());
         }
+        return cpu;
     }
 
     record Placement(BlockPos storage, BlockPos terminal) {
