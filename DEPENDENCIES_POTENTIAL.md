@@ -15,7 +15,7 @@ The full requirements and rollout are in [the addon integration spec],
 | 0 | AE2 CPU execution hook | Already in `CraftingCpuLogicMixin`. Covers inherited AE2 methods; an override bypasses only the method it replaces. | Vanilla AE2 and addons that reuse its execution logic, including OmniSequence after conflict-safe verification |
 | 1 | AE2 service observation | **Planned**, after a proof-of-coverage spike. Observe `CraftingService.submitJob`, `getCpus`, and busy-state changes. This can cover job lifecycle only for CPUs the service actually exposes; it cannot produce output-throughput samples by itself. | AE2 service-visible CPUs |
 | 2 | Small custom CPU adapter | Mirror `AdvancedCraftingCpuLogicMixin` only for a custom or overridden crafting loop. Call the existing `ProfilerBridge` methods at the real dispatch, insertion, finish, and capacity points. | AdvancedAE (done), NeoEco, AE2 Lightning Tech |
-| 3 | Native `AEKey` contract | `AeKeyAmounts` already normalizes every `AEKey` through `getAmountPerUnit()`. Verify a new key type before adding code; use `AEKeyType`, not addon class checks. | MEGA Cells, OMNI Cells, ProjectCell, AppliedE TPS Fix, Applied Flux, Applied Mekanistics |
+| 3 | Native `AEKey` contract | `AeKeyAmounts` already normalizes every `AEKey` through `getAmountPerUnit()`. Verify a new key type before adding code; use `AEKeyType`, not addon class checks. | MEGA Cells, OMNI Cells, ProjectCell, AppliedE, Applied Flux, Applied Mekanistics |
 | 4 | AE2 table/UI hook | The concrete craft-confirm and crafting-status renderer mixins cover screens that use them or inherit their hooked methods. `AbstractTableRendererMixin` only decorates TTC lines. **Planned:** add a shared `AEBaseScreen` hook only if one common method can expose TTC without screen-specific assumptions. | ExtendedAE, ExtendedAE-Plus, BM Addon, Crazy AE2, Modern AE2 Additions, Applied Botanics, AE2 Import Export Card, AE2 Things, Expanded AE |
 | 5 | Bespoke UI or API mixin | Per-addon `@Pseudo` mixin (existing pattern). | ae2ct, ME Requester, AE2 WCWT, AE2 Wireless Terminals, AE2 Import Export Card, Advanced Peripherals |
 
@@ -41,7 +41,7 @@ therefore cannot replace layer 2.
 | MEGA Cells | STORAGE_CELL / KEY | 3 | #79 | [CF][megacells-cf] / [MR][megacells-mr] | Not started |
 | OMNI Cells | STORAGE_CELL | 3 | #80 | [CF][omnicells-cf] | Not started |
 | ProjectCell | STORAGE_CELL / EMC_KEY | 3 | #81 | [CF][projectcell-cf] / [MR][projectcell-mr] | Verified on Forge 1.20.1 |
-| AppliedE TPS Fix | EMC_KEY | 3 | #82 | [CF][appliede-cf] | Not started |
+| AppliedE / AppliedE TPS Fix | EMC_KEY | 3 | #82 | [CF][appliede-cf] / [MR][appliede-mr] | Verified on Forge 1.20.1 |
 | Applied Flux | STORAGE_CELL / energy KEY | 3 | #83 | [CF][appliedflux-cf] / [MR][appliedflux-mr] | Not started |
 | Modern AE2 Additions | QOL (AE Additions) | 4 | #84 | [CF][modernae2-cf] / [MR][modernae2-mr] | Not started |
 | Applied Mekanistics | CHEMICAL_KEY | 3 | #68 | [CF][appmek-cf] / [MR][appmek-mr] | Implemented |
@@ -105,6 +105,7 @@ string-target mixin cannot reach the screen or key type.
 [projectcell-cf]: https://www.curseforge.com/minecraft/mc-mods/projectcell
 [projectcell-mr]: https://modrinth.com/mod/projectcell
 [appliede-cf]: https://www.curseforge.com/minecraft/mc-mods/appliede-tps-fix
+[appliede-mr]: https://modrinth.com/mod/appliede
 [appliedflux-cf]: https://www.curseforge.com/minecraft/mc-mods/applied-flux
 [appliedflux-mr]: https://modrinth.com/mod/applied-flux
 [modernae2-cf]: https://www.curseforge.com/minecraft/mc-mods/modern-ae2-additions
