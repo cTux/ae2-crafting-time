@@ -1,0 +1,67 @@
+package com.ctux.ae2craftingtime.testdriver;
+
+import appeng.api.config.Actionable;
+import appeng.api.networking.IGrid;
+import appeng.api.networking.IInWorldGridNodeHost;
+import appeng.api.networking.crafting.ICraftingCPU;
+import appeng.api.networking.security.IActionSource;
+import appeng.api.parts.IPartHost;
+import appeng.api.parts.IPartItem;
+import appeng.api.stacks.AEItemKey;
+import gripe._90.appliede.AppliedE;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
+import moze_intel.projecte.api.proxy.ITransmutationProxy;
+
+import java.math.BigInteger;
+import java.util.Arrays;
+import java.util.Objects;
+
+final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
+    @Override
+    protected Placement place(ServerPlayer player, FixtureMarker marker) {
+        if (player == null) {
+            throw new IllegalStateException("fixture player is unavailable");
+        }
+        var terminal = new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z());
+        var blockEntity = player.serverLevel().getBlockEntity(terminal);
+        if (!(blockEntity instanceof IInWorldGridNodeHost terminalHost) || !(blockEntity instanceof IPartHost partHost)) {
+            throw new IllegalStateException("AppliedE fixture terminal is unavailable");
+        }
+        var grid = Arrays.stream(Direction.values()).map(terminalHost::getGridNode).filter(Objects::nonNull)
+                .map(node -> node.getGrid()).filter(Objects::nonNull).findFirst()
+                .orElseThrow(() -> new IllegalStateException("AppliedE fixture grid is unavailable"));
+        var moduleItem = AppliedE.EMC_MODULE.get();
+        var side = Arrays.stream(Direction.values()).filter(candidate -> partHost.getPart(candidate) == null
+                        && partHost.canAddPart(new ItemStack(moduleItem), candidate))
+                .findFirst().orElseThrow(() -> new IllegalStateException("AppliedE fixture has no free cable side"));
+        var provider = ITransmutationProxy.INSTANCE.getKnowledgeProviderFor(player.getUUID());
+        var cobblestone = AEItemKey.of(Blocks.COBBLESTONE);
+        provider.addKnowledge(cobblestone.toStack());
+        provider.setEmc(provider.getEmc().add(BigInteger.valueOf(1_000_000)));
+        provider.sync(player);
+        grid.getStorageService().getInventory().extract(cobblestone, Long.MAX_VALUE, Actionable.MODULATE,
+                IActionSource.ofPlayer(player));
+        var module = partHost.addPart((IPartItem<?>) moduleItem, side, player);
+        if (module == null) {
+            throw new IllegalStateException("AppliedE fixture could not place the transmutation module");
+        }
+        return new Placement(grid, cobblestone);
+    }
+
+    @Override
+    protected boolean finish(ServerPlayer player, Placement placement) {
+        return placement.grid().getCraftingService().isCraftable(placement.cobblestone());
+    }
+
+    @Override
+    protected ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {
+        return grid.getCraftingService().getCpus().stream().filter(cpu -> !cpu.isBusy()).findFirst().orElse(null);
+    }
+
+    record Placement(IGrid grid, AEItemKey cobblestone) {
+    }
+}

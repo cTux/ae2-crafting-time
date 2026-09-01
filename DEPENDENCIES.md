@@ -39,6 +39,7 @@ AE2 Crafting Time.
 | MEGA Cells (`megacells`) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | Forge/Fabric: `>=2.4.6 <3.0.0`; NeoForge: `>=4.11.0 <5.0.0` | TTC profiling and Crafting Plan display for MEGA crafting CPUs through AE2's native execution path. |
 | OMNI Cells (`ae2omnicells`) | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.20.1/1.21.1: `>=1.1.6 <1.2.0`; 26.1.2: `>=1.1.7 <1.2.0` | TTC profiling and Crafting Plan display for OMNI crafting CPUs through AE2's native execution path. |
 | ProjectCell (`projectcell`) | `1.20.1 Forge`, `1.21.1 NeoForge` | `>=1.0.0 <2.0.0` | TTC profiling and Crafting Plan display when ProjectCell supplies ingredients from ProjectE EMC through AE2's native storage and crafting paths. |
+| AppliedE / AppliedE TPS Fix (`appliede`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=0.14.0 <1.0.0`; NeoForge: `>=1.0.0-beta <2.0.0` | TTC profiling and Crafting Plan display when AppliedE supplies ingredients from ProjectE EMC through AE2's native key and crafting paths. Install either AppliedE or its TPS Fix fork, not both. |
 
 Applied Mekanistics is not declared for the Fabric jar because the supported
 Applied Mekanistics releases for these targets are Forge/NeoForge.

@@ -46,7 +46,6 @@ function Assert-SameSet($expected, $actual, [string]$context) {
 
 $projectById = @{}
 $projectByMod = @{}
-$curseMods = [Collections.Generic.HashSet[string]]::new()
 foreach ($row in $clients) {
     foreach ($project in @($row.projects | Where-Object mod_id)) {
         $id = [string]$project.project_id
@@ -57,7 +56,6 @@ foreach ($row in $clients) {
         $projectById[$id] = $project.mod_id
         $projectByMod[$project.mod_id] = $id
     }
-    foreach ($project in @($row.curseforge | Where-Object mod_id)) { $null = $curseMods.Add([string]$project.mod_id) }
 }
 
 $dependencyRows = @{}
@@ -95,7 +93,8 @@ for ($index = 0; $index -lt $release.Count; $index++) {
         if (-not $modId) { throw "Unknown optional release project $($_.project_id) in $($row.id)" }
         $modId
     })
-    $expectedRelease = @($metadata.Keys | Where-Object { -not $curseMods.Contains($_) })
+    $curseMods = @($client.curseforge | Where-Object mod_id | ForEach-Object { [string]$_.mod_id })
+    $expectedRelease = @($metadata.Keys | Where-Object { $_ -notin $curseMods })
     Assert-SameSet $expectedRelease $released "$($row.id) loader metadata and release dependencies"
 
     foreach ($modId in $metadata.Keys) {

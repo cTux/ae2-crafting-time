@@ -19,6 +19,7 @@ abstract class AddonCpuFixture<P> {
             "neoeco-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture",
             "omnicells-cpu", "com.ctux.ae2craftingtime.testdriver.OmniCellsFixture",
             "projectcell-cpu", "com.ctux.ae2craftingtime.testdriver.ProjectCellFixture",
+            "appliede-cpu", "com.ctux.ae2craftingtime.testdriver.AppliedEFixture",
             "omnisequence-cpu", "com.ctux.ae2craftingtime.testdriver.OmniSequenceFixture");
 
     private CompletableFuture<P> placementFuture;

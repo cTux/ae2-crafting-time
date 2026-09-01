@@ -37,7 +37,7 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 | MEGA Cells (`megacells`; optional) | `forge-2.4.6` | Yes (`megacells-cpu`) | `fabric-2.4.6` | No | `4.11.0` | No | — | — |
 | OMNI Cells (`ae2omnicells`; optional) | `1.1.6-1.20.1-forge` | Yes (`omnicells-cpu`) | — | — | `1.1.6-1.21.1-neoforge` | No | `1.1.7-26.1.2-neoforge` | No |
 | ProjectCell (`projectcell`; optional) | `1.0.1` | Yes (`projectcell-cpu`) | — | — | `1.0.3` | No | — | — |
-| AppliedE TPS Fix (candidate) | — | — | — | — | — | — | — | — |
+| AppliedE / AppliedE TPS Fix (`appliede`; optional) | `0.14.7-fix2` | Yes (`appliede-cpu`) | — | — | `1.0.0-beta` | No | — | — |
 | Applied Flux (candidate) | `1.20-1.3.7-forge` | No | — | — | `1.21-2.1.5-neoforge` | No | `26.1-1.0.1-neoforge` | No |
 | Modern AE2 Additions (candidate) | `2.0.1` | No | — | — | — | — | — | — |
 | AE2 Import Export Card (candidate) | `1.20.1-1.3.0` | No | — | — | `1.21.1-1.6.0` | No | `26.1.2-2.1.0` | No |
