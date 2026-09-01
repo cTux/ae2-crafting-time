@@ -11,6 +11,7 @@ import net.minecraft.core.GlobalPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -20,7 +21,7 @@ import java.util.Objects;
 final class WcwtTerminalFixture {
     private BlockPos accessPointPos;
 
-    boolean setup(ServerPlayer player, FixtureMarker marker) {
+    ItemStack setup(ServerPlayer player, FixtureMarker marker) {
         if (!ModList.get().isLoaded("wcwt")) {
             throw new IllegalStateException("AE2 WCWT is unavailable");
         }
@@ -43,14 +44,14 @@ final class WcwtTerminalFixture {
                     .map(BlockPos::immutable)
                     .orElseThrow(() -> new IllegalStateException("no space for the WCWT access point"));
             level.setBlockAndUpdate(accessPointPos, accessPointBlock.defaultBlockState());
-            return false;
+            return null;
         }
         if (!(level.getBlockEntity(accessPointPos) instanceof WirelessAccessPointBlockEntity accessPoint)) {
             throw new IllegalStateException("AE2 wireless access point was not placed");
         }
         var accessPointNode = accessPoint.getMainNode().getNode();
         if (accessPointNode == null) {
-            return false;
+            return null;
         }
         if (terminalNode.getGrid() != accessPointNode.getGrid()) {
             GridHelper.createConnection(terminalNode, accessPointNode);
@@ -64,6 +65,6 @@ final class WcwtTerminalFixture {
         linkable.link(stack, GlobalPos.of(level.dimension(), accessPointPos));
         player.getInventory().selected = 0;
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);
-        return true;
+        return stack;
     }
 }

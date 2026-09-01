@@ -19,6 +19,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.registries.ForgeRegistries;
@@ -54,7 +55,7 @@ public final class CraftPlanScenario {
     private CompletableFuture<String> cpuCheck;
     private CompletableFuture<Integer> sampleCheck;
     private final WcwtTerminalFixture wcwtFixture = new WcwtTerminalFixture();
-    private CompletableFuture<Boolean> wcwtSetup;
+    private CompletableFuture<ItemStack> wcwtSetup;
     private boolean wcwtHoverStarted;
     private boolean wcwtOpenRequested;
 
@@ -460,10 +461,13 @@ public final class CraftPlanScenario {
         if (!wcwtSetup.isDone()) {
             return false;
         }
-        if (!wcwtSetup.join()) {
+        var stack = wcwtSetup.join();
+        if (stack == null) {
             wcwtSetup = null;
             return false;
         }
+        minecraft.player.getInventory().selected = 0;
+        minecraft.player.getInventory().setItem(0, stack.copy());
         return true;
     }
 
