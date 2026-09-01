@@ -495,7 +495,12 @@ public final class CraftPlanScenario {
     }
 
     private String currentScreen() {
-        return minecraft.screen == null ? "none" : minecraft.screen.getClass().getName();
+        if (minecraft.screen == null) {
+            return "none";
+        }
+        var screen = minecraft.screen.getClass().getName();
+        var snapshot = UiObservationStore.latest();
+        return state == ScenarioState.PLAN_STABLE && snapshot != null ? screen + " rows=" + ids(snapshot) : screen;
     }
 
 }
