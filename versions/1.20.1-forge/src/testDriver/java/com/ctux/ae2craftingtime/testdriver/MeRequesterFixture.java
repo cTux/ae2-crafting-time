@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IInWorldGridNodeHost;
+import appeng.api.networking.IGridNode;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import com.almostreliable.merequester.requester.RequesterBlockEntity;
@@ -13,14 +14,12 @@ import net.minecraft.world.item.Items;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.registries.ForgeRegistries;
 
-import java.util.Arrays;
-import java.util.Objects;
-
 final class MeRequesterFixture {
     static final String SCENARIO = "merequester-screen";
     static final String SCREEN = "com.almostreliable.merequester.client.RequesterScreen";
 
     private BlockPos position;
+    private IGridNode connectionNode;
 
     boolean setup(ServerPlayer player, FixtureMarker marker) {
         if (!ModList.get().isLoaded("merequester")) {
@@ -33,7 +32,7 @@ final class MeRequesterFixture {
             position = place(player, marker);
             return false;
         }
-        return finish(player, marker);
+        return finish(player);
     }
 
     BlockPos position() {
@@ -43,25 +42,20 @@ final class MeRequesterFixture {
     private BlockPos place(ServerPlayer player, FixtureMarker marker) {
         var level = player.serverLevel();
         var terminal = new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z());
-        if (!(level.getBlockEntity(terminal) instanceof IInWorldGridNodeHost terminalHost)) {
-            return null;
-        }
-        var grid = Arrays.stream(Direction.values()).map(terminalHost::getGridNode).filter(Objects::nonNull)
-                .map(node -> node.getGrid()).filter(Objects::nonNull).findFirst()
-                .orElseThrow(() -> new IllegalStateException("ME Requester fixture grid is unavailable"));
         var block = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryBuild("merequester", "requester"));
         if (block == null || block == net.minecraft.world.level.block.Blocks.AIR) {
             throw new IllegalStateException("ME Requester block is unavailable");
         }
-        for (var anchor : BlockPos.betweenClosed(terminal.offset(-12, -4, -12), terminal.offset(12, 4, 12))) {
+        for (var anchor : BlockPos.betweenClosed(terminal.offset(-4, -4, -4), terminal.offset(4, 4, 4))) {
             if (!(level.getBlockEntity(anchor) instanceof IInWorldGridNodeHost host)) {
                 continue;
             }
             for (var direction : Direction.values()) {
                 var node = host.getGridNode(direction);
                 var candidate = anchor.relative(direction).immutable();
-                if (node != null && node.getGrid() == grid && level.getBlockState(candidate).isAir()) {
+                if (node != null && node.getGrid() != null && level.getBlockState(candidate).isAir()) {
                     level.setBlockAndUpdate(candidate, block.defaultBlockState());
+                    connectionNode = node;
                     return candidate;
                 }
             }
@@ -69,7 +63,7 @@ final class MeRequesterFixture {
         throw new IllegalStateException("no empty connection beside the fixture AE2 grid for ME Requester");
     }
 
-    private boolean finish(ServerPlayer player, FixtureMarker marker) {
+    private boolean finish(ServerPlayer player) {
         var level = player.serverLevel();
         if (!(level.getBlockEntity(position) instanceof RequesterBlockEntity requester)) {
             throw new IllegalStateException("ME Requester block entity was not placed");
@@ -77,16 +71,12 @@ final class MeRequesterFixture {
         if (!requester.getMainNode().isReady()) {
             requester.onReady();
         }
-        var terminal = new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z());
-        var terminalHost = (IInWorldGridNodeHost) level.getBlockEntity(terminal);
-        var terminalNode = Arrays.stream(Direction.values()).map(terminalHost::getGridNode)
-                .filter(Objects::nonNull).findFirst().orElseThrow();
         var requesterNode = requester.getMainNode().getNode();
         if (requesterNode == null) {
             return false;
         }
-        if (requesterNode.getGrid() != terminalNode.getGrid()) {
-            GridHelper.createConnection(terminalNode, requesterNode);
+        if (requesterNode.getGrid() != connectionNode.getGrid()) {
+            GridHelper.createConnection(connectionNode, requesterNode);
         }
         requester.getRequests().setStack(0, new GenericStack(AEItemKey.of(Items.FURNACE), 64));
         requester.getRequests().get(0).updateState(false);
