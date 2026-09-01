@@ -98,6 +98,11 @@ versionRange="[19.0.24,20)"
         throw "Audit selected a prerelease-only row"
     }
 
+    $source = Get-Content -LiteralPath $script -Raw
+    if ($source -match '\[string\]\$ReleaseMatrix\s*=|\[string\]\$RunClientMatrix\s*=') {
+        throw "Audit matrix defaults must be resolved after parameter binding"
+    }
+
     $global:Ae2CtAuditBadHash = $true
     try {
         & $script -ProjectId demo | Out-Null

@@ -1,11 +1,13 @@
 param(
     [Parameter(Mandatory = $true)][string]$ProjectId,
-    [string]$ReleaseMatrix = (Join-Path $PSScriptRoot "release-matrix.json"),
-    [string]$RunClientMatrix = (Join-Path $PSScriptRoot "run-client-versions.json"),
+    [string]$ReleaseMatrix,
+    [string]$RunClientMatrix,
     [string]$ApiBase = "https://api.modrinth.com/v2"
 )
 
 $ErrorActionPreference = "Stop"
+$ReleaseMatrix = if ($ReleaseMatrix) { $ReleaseMatrix } else { Join-Path $PSScriptRoot "release-matrix.json" }
+$RunClientMatrix = if ($RunClientMatrix) { $RunClientMatrix } else { Join-Path $PSScriptRoot "run-client-versions.json" }
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 function Compare-Version([string]$left, [string]$right) {
