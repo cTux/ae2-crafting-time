@@ -46,7 +46,7 @@ final class MeRequesterFixture {
         if (block == null || block == net.minecraft.world.level.block.Blocks.AIR) {
             throw new IllegalStateException("ME Requester block is unavailable");
         }
-        for (var anchor : BlockPos.betweenClosed(terminal.offset(-4, -4, -4), terminal.offset(4, 4, 4))) {
+        for (var anchor : BlockPos.betweenClosed(terminal.offset(-12, -4, -12), terminal.offset(12, 4, 12))) {
             if (!(level.getBlockEntity(anchor) instanceof IInWorldGridNodeHost host)) {
                 continue;
             }
