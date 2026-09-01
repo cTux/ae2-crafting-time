@@ -47,12 +47,8 @@ final class MeRequesterFixture {
         }
         findGrid:
         for (var anchor : BlockPos.betweenClosed(terminal.offset(-12, -4, -12), terminal.offset(12, 4, 12))) {
-            var host = GridHelper.getNodeHost(level, anchor);
-            if (host == null) {
-                continue;
-            }
             for (var direction : Direction.values()) {
-                var node = host.getGridNode(direction);
+                var node = GridHelper.getExposedNode(level, anchor, direction);
                 if (node != null && node.getGrid() != null) {
                     connectionNode = node;
                     break findGrid;
