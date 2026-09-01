@@ -11,9 +11,9 @@ scenarios on Minecraft 1.20.1 Forge. New optional-mod scenarios must plug into
 the shared add-on fixture flow without adding another branch to the UI state
 machine.
 
-AE2 WCWT is the exception because it adds a terminal, not a crafting CPU. Its
-scenario opens the real wireless terminal, checks the craftable-entry TTC
-tooltip, and follows the normal AE2 Crafting Plan flow.
+Wireless-terminal addons are the exception because they add terminals, not
+crafting CPUs. Their scenarios open the real wireless terminal, check the
+craftable-entry TTC tooltip, and follow the normal AE2 Crafting Plan flow.
 
 This covers [issue #126](https://github.com/cTux/ae2-crafting-time/issues/126).
 
@@ -99,13 +99,16 @@ Adding an optional mod requires one fixture implementation, one registry entry,
 and a driver-only compile dependency. It must not add a production dependency,
 make the optional mod mandatory, or require a new runner branch.
 
-## AE2 WCWT terminal scenario
+## Wireless terminal scenarios
 
 The `ae2wcwt-terminal` scenario links a charged Wireless Comprehensive Wireless
 Terminal to a real wireless access point on the fixture grid. It opens the
 terminal through normal item use, hovers the known craftable output, checks the
 TTC tooltip, then clicks the entry and verifies TTC on the standard Crafting
 Plan screen. The required checks are `screen`, `ttc-tooltip`, and `plan-ttc`.
+
+The `ae2wtlib-terminal` scenario uses the same flow with AE2 Wireless
+Terminals' charged wireless crafting terminal.
 
 ## Interactive diagnosis
 
@@ -208,8 +211,8 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
   inputs. Crazy AE2 Addons places a native AE2 1K crafting storage CPU, then
   sets and verifies its priority. The other provider scenarios use an existing
   idle CPU because those addons do not add one.
-- AE2 WCWT has a separate Forge 1.20.1 terminal scenario because it adds no
-  crafting CPU.
+- AE2 WCWT and AE2 Wireless Terminals have separate Forge 1.20.1 terminal
+  scenarios because they add no crafting CPU.
 - Run it against both the compatible and latest AE2 profiles already owned by
   `scripts/run-client-versions.json`.
 - Do not create a cross-loader abstraction for this slice. Reuse code only when

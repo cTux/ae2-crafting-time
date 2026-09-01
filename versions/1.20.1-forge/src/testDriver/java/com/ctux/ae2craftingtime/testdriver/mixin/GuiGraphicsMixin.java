@@ -32,12 +32,12 @@ public abstract class GuiGraphicsMixin {
             at = @At("HEAD"))
     private void ae2craftingtime_test_driver$itemTooltip(Font font, List<Component> lines,
             Optional<TooltipComponent> visual, int x, int y, CallbackInfo ci) {
-        UiObservationStore.wcwtTooltip(lines);
+        UiObservationStore.wirelessTooltip(lines);
     }
 
     @Inject(method = "renderComponentTooltip", at = @At("HEAD"))
     private void ae2craftingtime_test_driver$componentTooltip(Font font, List<Component> lines, int x, int y,
             CallbackInfo ci) {
-        UiObservationStore.wcwtTooltip(lines);
+        UiObservationStore.wirelessTooltip(lines);
     }
 }

@@ -22,11 +22,12 @@ abstract class AddonCpuFixture<P> {
     private CompletableFuture<Boolean> setupFuture;
 
     static boolean supports(String scenario) {
-        return "craft-plan".equals(scenario) || "ae2wcwt-terminal".equals(scenario) || FIXTURES.containsKey(scenario);
+        return "craft-plan".equals(scenario) || WirelessTerminalFixture.supports(scenario)
+                || FIXTURES.containsKey(scenario);
     }
 
     static AddonCpuFixture<?> create(String scenario) {
-        if ("craft-plan".equals(scenario) || "ae2wcwt-terminal".equals(scenario)) {
+        if ("craft-plan".equals(scenario) || WirelessTerminalFixture.supports(scenario)) {
             return null;
         }
         var fixtureClass = FIXTURES.get(scenario);

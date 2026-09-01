@@ -37,7 +37,7 @@ therefore cannot replace layer 2.
 | BM Addon | PROVIDER (Ara Vitae Assembler) | 4 | #75 | [CF][bmaddon-cf] / [MR][bmaddon-mr] | Not started |
 | Crazy AE2 Addons | PROVIDER / QOL | 4 | #76 | [CF][crazyae2-cf] / [MR][crazyae2-mr] | Verified coexistence |
 | AE2 WCWT | WIRELESS_TERMINAL | 5 | #77 | [CF][ae2wcwt-cf] / [MR][ae2wcwt-mr] | Direct TTC tooltip verified |
-| AE2 Wireless Terminals | WIRELESS_TERMINAL | 5 | #78 | [CF][wireless-cf] / [MR][wireless-mr] | Not started |
+| AE2 Wireless Terminals | WIRELESS_TERMINAL | 5 | #78 | [CF][wireless-cf] / [MR][wireless-mr] | Direct TTC tooltip verified |
 | MEGA Cells | STORAGE_CELL / KEY | 3 | #79 | [CF][megacells-cf] / [MR][megacells-mr] | Not started |
 | OMNI Cells | STORAGE_CELL | 3 | #80 | [CF][omnicells-cf] | Not started |
 | ProjectCell | STORAGE_CELL / EMC_KEY | 3 | #81 | [CF][projectcell-cf] / [MR][projectcell-mr] | Not started |

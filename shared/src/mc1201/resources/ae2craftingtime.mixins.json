@@ -20,7 +20,7 @@
     "CraftingTreeWidgetMixin",
     "CraftingTreeNewWidgetMixin",
     "MERequesterScreenMixin",
-    "WcwtTerminalScreenMixin"
+    "WirelessTerminalScreenMixin"
   ],
   "injectors": {
     "defaultRequire": 1

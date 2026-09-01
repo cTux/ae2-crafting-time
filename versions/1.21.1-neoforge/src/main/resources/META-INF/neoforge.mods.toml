@@ -80,6 +80,13 @@ ordering="AFTER"
 side="CLIENT"
 
 [[dependencies."${mod_id}"]]
+modId="ae2wtlib"
+type="OPTIONAL"
+versionRange="[19.5.1,20.0.0)"
+ordering="AFTER"
+side="CLIENT"
+
+[[dependencies."${mod_id}"]]
 modId="extendedae_plus"
 type="OPTIONAL"
 versionRange="[1.6.2,)"

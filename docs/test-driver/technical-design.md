@@ -184,11 +184,13 @@ compile classpath. A fixture may override the marker output only when the add-on
 requires its own pattern type; it does not add a scenario branch to
 `CraftPlanScenario` or `run-ui-smoke.ps1`.
 
-`ae2wcwt-terminal` is intentionally separate from the `*-cpu` registry because
-AE2 WCWT adds no crafting CPU. `WcwtTerminalFixture` links its charged terminal
-to a real wireless access point on the disposable grid. The scenario opens it
-through normal item use, captures the final tooltip drawn for the known
-craftable entry, and then reuses the standard Crafting Plan observation path.
+Wireless terminal scenarios are intentionally separate from the `*-cpu`
+registry because they add no crafting CPU. `WirelessTerminalFixture` links the
+selected addon's charged terminal to a real wireless access point on the
+disposable grid. The scenario opens it through normal item use, captures the
+final tooltip drawn for the known craftable entry, and then reuses the standard
+Crafting Plan observation path. The current fixtures cover AE2 WCWT and AE2
+Wireless Terminals.
 
 Plan data is stable after the same screen and ordered output IDs are observed
 for three consecutive rendered frames. A new screen, changed row order, or
@@ -209,7 +211,7 @@ run after normal AE2 Crafting Time injections.
 - actual `GuiGraphics.drawString` calls for AE2 Crafting Time translation keys;
 - actual background-color fill calls, merged into badge rectangles;
 - `TtcSortButton` identity, tooltip/state, and bounds;
-- the final tooltip rendered while the AE2 WCWT terminal is active;
+- the final tooltip rendered while a registered wireless terminal is active;
 - item-cell and AE2-owned widget bounds; and
 - GUI bounds and scroll position.
 
