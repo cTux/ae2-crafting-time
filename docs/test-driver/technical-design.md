@@ -198,8 +198,8 @@ selected addon's charged terminal to a real wireless access point on the
 disposable grid. The scenario opens it through normal item use, captures the
 final tooltip drawn for the known craftable entry, and then reuses the standard
 Crafting Plan observation path. The current fixtures cover AE2 WCWT and AE2
-Wireless Terminals. The AE2 Import Export Card fixture uses the same flow after
-its real export and crafting cards automatically submit the fixture craft.
+Wireless Terminals. The AE2 Import Export Card fixture uses the same flow with
+a real export card installed in the addon's modified standard terminal.
 
 ME Requester also uses a separate screen flow. Its fixture places and configures
 one requester with a deterministic profiler sample on the disposable AE2 grid.

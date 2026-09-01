@@ -115,9 +115,8 @@ The `ae2wtlib-terminal` scenario uses the same flow with AE2 Wireless
 Terminals' charged wireless crafting terminal.
 
 The `ae2importexportcard-terminal` scenario links a charged standard AE2
-wireless terminal, installs and configures a real export card with a crafting
-card, clears the fixture output's prior sample, and waits for the addon's
-automatic craft to produce the TTC tooltip before opening the Crafting Plan.
+wireless terminal, installs a real export card, and verifies the TTC tooltip
+and Crafting Plan on the addon's modified terminal screen.
 
 ## ME Requester scenario
 
