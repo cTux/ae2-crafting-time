@@ -14,6 +14,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot "run-ui-smoke.ps1") -Destination
 param(
     [string]$Target, [string]$RuntimeDirectory, [string]$DriverScenario,
     [string]$DriverOutputDirectory, [string]$DriverWorld, [switch]$Latest,
+    [string[]]$ProjectId,
     [switch]$Interactive, [Parameter(ValueFromRemainingArguments = $true)][string[]]$Rest
 )
 if ([IO.Path]::GetFullPath((Get-Location).Path) -ne [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))) { exit 8 }
@@ -46,17 +47,19 @@ foreach ($screenshot in $screenshots) {
 }
 if ($Interactive -and $env:AE2CT_UI_SMOKE_TEST_MODE -eq "interactive-token" -and
         $env:AE2CT_TEST_DRIVER_TOKEN -ne ('b' * 64)) { exit 7 }
-@($driver) | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $RuntimeDirectory "resolved-mods\.ae2-crafting-time-run-mods.json") -Encoding UTF8
+(@($driver) + @($ProjectId | ForEach-Object { "$_.jar" })) | ConvertTo-Json |
+    Set-Content -LiteralPath (Join-Path $RuntimeDirectory "resolved-mods\.ae2-crafting-time-run-mods.json") -Encoding UTF8
 Set-Content -LiteralPath (Join-Path $RuntimeDirectory "logs\latest.log") -Value $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "fatal") { "Mixin apply failed ae2craftingtime.mixins.json" } else { "clean" })
 '@, [Text.UTF8Encoding]::new($false))
 
 function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive,
-        [string]$Scenario = "craft-plan", [string]$ReportDirectory, [bool]$shouldPass) {
+        [string]$Scenario = "craft-plan", [string[]]$ProjectId, [string]$ReportDirectory, [bool]$shouldPass) {
     $env:AE2CT_UI_SMOKE_TEST_MODE = $mode
     $arguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $scripts "run-ui-smoke.ps1"))
     if ($Latest) { $arguments += "-Latest" }
     if ($Interactive) { $arguments += "-Interactive" }
     if ($Scenario -ne "craft-plan") { $arguments += @("-Scenario", $Scenario) }
+    if ($ProjectId) { $arguments += @("-ProjectId") + $ProjectId }
     if ($ReportDirectory) { $arguments += @("-ReportDirectory", $ReportDirectory) }
     $preference = $ErrorActionPreference
     try {
@@ -87,7 +90,9 @@ try {
     Invoke-Case "pass" -Latest -shouldPass $true
     Invoke-Case "pass" -Scenario "neoeco-cpu" -shouldPass $true
     if (-not (Test-Path -LiteralPath $cacheMarker)) { throw "Scenario switch discarded the shared runtime" }
-    Invoke-Case "pass" -Scenario "ae2wtlib-terminal" -shouldPass $true
+    Invoke-Case "pass" -Scenario "ae2wtlib-terminal" -ProjectId pNabrMMw -shouldPass $true
+    $focused = Get-Content -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\ae2wtlib-terminal\evidence\resolved-mods.json") -Raw | ConvertFrom-Json
+    if ("pNabrMMw.jar" -notin $focused) { throw "Smoke runner dropped the focused project" }
     Invoke-Case "pass" -Scenario "future-addon-cpu" -shouldPass $true
     if (-not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\craft-plan\evidence\result.json")) -or
             -not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\neoeco-cpu\evidence\result.json")) -or

@@ -71,6 +71,7 @@
       {
         "name": "OmniSequence: Transfinite",
         "project_id": 1624558,
+        "dependencies": [226410],
         "compatible": { "file_id": 8675216, "filename": "omnisequence-transfinite-1.3.9-forge.jar", "sha512": "c647cb43cbba8caa3dcfab4918736087f2cee493407f9c8d80b0facb511c366211eabf6dc0a557d0c5190e21ff44b27a75f72a1056e1a931f22913574cb71972" },
         "latest": { "file_id": 8675216, "filename": "omnisequence-transfinite-1.3.9-forge.jar", "sha512": "c647cb43cbba8caa3dcfab4918736087f2cee493407f9c8d80b0facb511c366211eabf6dc0a557d0c5190e21ff44b27a75f72a1056e1a931f22913574cb71972" }
       },
@@ -176,6 +177,7 @@
       {
         "name": "OmniSequence: Transfinite",
         "project_id": 1624558,
+        "dependencies": [226410],
         "compatible": { "file_id": 8622739, "filename": "omnisequence-transfinite-1.3.9-hotfix.jar", "sha512": "39bb7084f853b9b4dfd0abf176d3d931a936749dc1c72acd37b793bcc18b87a4fb8806afcb9305782e11e90336a0332f9263de9d2bbb81587b3bb558cc018ebf" },
         "latest": { "file_id": 8622739, "filename": "omnisequence-transfinite-1.3.9-hotfix.jar", "sha512": "39bb7084f853b9b4dfd0abf176d3d931a936749dc1c72acd37b793bcc18b87a4fb8806afcb9305782e11e90336a0332f9263de9d2bbb81587b3bb558cc018ebf" }
       },

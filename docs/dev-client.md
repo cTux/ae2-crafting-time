@@ -11,6 +11,10 @@ For the fast Forge 1.20.1 UI smoke, run this on the host:
 .\scripts\invoke-ui-smoke-codexvm.ps1
 ```
 
+During integration development, add `-ProjectId <id>` to load only that
+integration and its required dependencies. Before merge, rerun the scenario
+without `-ProjectId` to prove it against the complete compatible profile.
+
 It uses OpenSSH by default. Add `-Transport Vmrun` to use VMware guest
 execution, or `-Stop` to terminate only the PID tree recorded by the current
 run. Both transports dispatch into the logged-in Codex desktop so Minecraft is

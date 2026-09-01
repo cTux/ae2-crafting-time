@@ -4,6 +4,7 @@ param(
     [switch]$Scheduled,
     [switch]$Stop,
     [ValidatePattern("^(craft-plan|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [string[]]$ProjectId,
     [string]$JavaHome,
     [string]$LocalRoot,
     [string]$InteractiveUser = "Codex",
@@ -58,6 +59,7 @@ if ($RequestPath) {
     $env:JAVA_HOME = $request.javaHome
     $env:Path = "$(Join-Path $env:JAVA_HOME 'bin');$env:Path"
     $arguments = @{ ReportDirectory = $request.reportDirectory; Scenario = $request.scenario }
+    if ($request.projectId) { $arguments.ProjectId = @($request.projectId) }
     if ($request.latest) { $arguments.Latest = $true }
     if ($request.interactive) { $arguments.Interactive = $true }
     & (Join-Path $request.stagedRoot "scripts\run-ui-smoke.ps1") @arguments
@@ -85,7 +87,7 @@ if ($LASTEXITCODE -gt 7) { throw "Failed to stage the checkout with robocopy exi
 
 $request = [ordered]@{
     stagedRoot = $stage; reportDirectory = $report; scenario = $Scenario
-    latest = $Latest.IsPresent; interactive = $Interactive.IsPresent; javaHome = $java17
+    projectId = @($ProjectId); latest = $Latest.IsPresent; interactive = $Interactive.IsPresent; javaHome = $java17
 }
 $requestFile = Join-Path $stage "ui-smoke-request.json"
 [IO.File]::WriteAllText($requestFile, ($request | ConvertTo-Json), [Text.UTF8Encoding]::new($false))

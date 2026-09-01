@@ -2,6 +2,7 @@ param(
     [switch]$Latest,
     [switch]$Interactive,
     [ValidatePattern("^(craft-plan|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [string[]]$ProjectId,
     [string]$ReportDirectory
 )
 
@@ -93,6 +94,7 @@ $arguments = @(
 )
 if ($Latest) { $arguments += "-Latest" }
 if ($Interactive) { $arguments += "-Interactive" }
+if ($ProjectId) { $arguments += @("-ProjectId") + $ProjectId }
 
 $previousToken = $env:AE2CT_TEST_DRIVER_TOKEN
 if ($Interactive) {

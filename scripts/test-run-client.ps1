@@ -112,9 +112,37 @@ try {
     }
 
     $customRuntime = Join-Path $temp "custom-runtime"
-    & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -RuntimeDirectory $customRuntime -ResolveOnly 6>&1 | Out-Null
+    $focusedOutput = (& $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix `
+        -RuntimeDirectory $customRuntime -ProjectId pNabrMMw -ResolveOnly 6>&1 | Out-String)
+    Assert-Line $focusedOutput "focused projects pNabrMMw"
     if (-not (Test-Path -LiteralPath (Join-Path $customRuntime "resolved-mods\ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"))) {
         throw "Custom runtime directory did not receive the driver"
+    }
+    $focusedManifest = Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
+    if (@($focusedManifest).Count -ne 2 -or "pNabrMMw.jar" -notin $focusedManifest) {
+        throw "Focused profile loaded unrelated projects"
+    }
+
+    & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -RuntimeDirectory $customRuntime `
+        -ProjectId 1624558 -ResolveOnly 6>&1 | Out-Null
+    $curseManifest = Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
+    if (@($curseManifest).Count -ne 3 -or
+            "omnisequence-transfinite-1.3.9-forge.jar" -notin $curseManifest -or
+            "ProjectE-1.20.1-PE1.0.1.jar" -notin $curseManifest) {
+        throw "Focused CurseForge profile omitted an explicit dependency"
+    }
+
+    try {
+        & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -ProjectId missing -ResolveOnly 6>&1 | Out-Null
+        throw "Expected an unknown focused project failure"
+    } catch {
+        if ($_.Exception.Message -ne "Unknown project missing for 1.20.1-forge") { throw }
+    }
+    try {
+        & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -ProjectId ayN3DZKb -ResolveOnly 6>&1 | Out-Null
+        throw "Expected an excluded focused project failure"
+    } catch {
+        if ($_.Exception.Message -ne "Focused project ayN3DZKb is excluded from the compatible profile") { throw }
     }
 
     $env:AE2CT_DRIVER_BUILD_FAIL = "1"

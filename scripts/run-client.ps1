@@ -10,6 +10,7 @@ param(
     [string]$DriverScenario,
     [string]$DriverOutputDirectory,
     [string]$DriverWorld,
+    [string[]]$ProjectId,
     [switch]$Interactive,
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$GradleArgs
@@ -57,7 +58,22 @@ $matrixPath = if ($VersionMatrix) { $VersionMatrix } else { Join-Path $PSScriptR
 $matrix = Get-Content -LiteralPath $matrixPath -Raw | ConvertFrom-Json
 $matrixEntry = $matrix | Where-Object { $_.id -eq $Target }
 if (-not $matrixEntry) { throw "No run-client version entry for $Target" }
-$projects = @($matrixEntry.projects | Where-Object { $Latest -or $_.compatible -ne $false } | Select-Object -ExpandProperty project_id)
+$requestedProjects = @($ProjectId | Where-Object { $_ } | ForEach-Object { [string]$_ })
+$availableProjects = @($matrixEntry.projects.project_id | ForEach-Object { [string]$_ }) +
+    @($matrixEntry.curseforge.project_id | ForEach-Object { [string]$_ })
+foreach ($requestedProject in $requestedProjects) {
+    if ($requestedProject -notin $availableProjects) { throw "Unknown project $requestedProject for $Target" }
+}
+$projects = @($matrixEntry.projects | Where-Object {
+    ($Latest -or $_.compatible -ne $false) -and
+        ($requestedProjects.Count -eq 0 -or [string]$_.project_id -in $requestedProjects)
+} | Select-Object -ExpandProperty project_id)
+if (-not $Latest) {
+    $excluded = @($matrixEntry.projects | Where-Object {
+        $_.compatible -eq $false -and [string]$_.project_id -in $requestedProjects
+    })
+    if ($excluded) { throw "Focused project $($excluded[0].project_id) is excluded from the compatible profile" }
+}
 $versionPins = @{}
 foreach ($dependency in @($matrixEntry.compatible.versions)) {
     $versionPins[$dependency.project_id] = $dependency.version_id
@@ -133,7 +149,24 @@ function Install-Project([string]$projectId) {
 }
 
 foreach ($projectId in $projects) { Install-Project $projectId }
-foreach ($dependency in @($matrixEntry.curseforge | Where-Object { $_ })) {
+$curseforgeProjects = [Collections.Generic.HashSet[string]]::new()
+function Add-CurseForgeProject([string]$projectId) {
+    if (-not $curseforgeProjects.Add($projectId)) { return }
+    $dependency = $matrixEntry.curseforge | Where-Object { [string]$_.project_id -eq $projectId } | Select-Object -First 1
+    foreach ($requiredProject in @($dependency.dependencies)) { Add-CurseForgeProject ([string]$requiredProject) }
+}
+if ($requestedProjects.Count) {
+    foreach ($requestedProject in $requestedProjects) {
+        if ($requestedProject -in @($matrixEntry.curseforge.project_id | ForEach-Object { [string]$_ })) {
+            Add-CurseForgeProject $requestedProject
+        }
+    }
+} else {
+    foreach ($dependency in @($matrixEntry.curseforge | Where-Object { $_ })) {
+        $null = $curseforgeProjects.Add([string]$dependency.project_id)
+    }
+}
+foreach ($dependency in @($matrixEntry.curseforge | Where-Object { [string]$_.project_id -in $curseforgeProjects })) {
     $file = if ($Latest) { $dependency.latest } else { $dependency.compatible }
     $fileId = [string]$file.file_id
     $group = $fileId.Substring(0, 4)
@@ -159,6 +192,7 @@ if (-not $Latest -and $ae2Version.version_number -ne $matrixEntry.compatible.ae2
 }
 $runtimeArgs = @("-P$($profile.LoaderProperty)=$loaderVersion", "-P$($profile.Ae2Property)=$($ae2Version.version_number)", "-PruntimeRunDirectory=$run")
 Write-Host "profile $(if ($Latest) { 'latest' } else { 'compatible' })"
+if ($requestedProjects.Count) { Write-Host "focused projects $($requestedProjects -join ', ')" }
 Write-Host "runtime loader $loaderVersion"
 Write-Host "runtime ae2 $($ae2Version.version_number)"
 if ($Target -eq "1.20.1-fabric") {
