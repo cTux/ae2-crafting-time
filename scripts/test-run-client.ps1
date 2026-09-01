@@ -130,7 +130,7 @@ try {
     }
     $focusedManifest = Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
     if (@($focusedManifest).Count -ne 4 -or "pNabrMMw.jar" -notin $focusedManifest -or
-            "Ck4E7v7R.jar" -notin $focusedManifest -or "nU0bVIaL.jar" -notin $focusedManifest) {
+            "Ck4E7v7R.jar" -notin $focusedManifest -or "PbNc6qBY.jar" -notin $focusedManifest) {
         throw "Focused profile omitted an AE2 dependency or loaded unrelated projects"
     }
 
