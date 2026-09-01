@@ -10,6 +10,7 @@ import appeng.api.parts.IPartHost;
 import appeng.api.parts.IPartItem;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.storage.IStorageProvider;
+import appeng.core.definitions.AEBlocks;
 import gripe._90.appliede.AppliedE;
 import gripe._90.appliede.part.EMCModulePart;
 import net.minecraft.core.BlockPos;
@@ -39,6 +40,12 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
         var grid = Arrays.stream(Direction.values()).map(terminalHost::getGridNode).filter(Objects::nonNull)
                 .map(node -> node.getGrid()).filter(Objects::nonNull).findFirst()
                 .orElseThrow(() -> new IllegalStateException("AppliedE fixture grid is unavailable"));
+        var terminalFace = Direction.valueOf(marker.terminal().face());
+        var energyPosition = Arrays.stream(Direction.values()).filter(candidate -> candidate != terminalFace)
+                .map(terminal::relative).filter(player.serverLevel()::isEmptyBlock).findFirst()
+                .orElseThrow(() -> new IllegalStateException("AppliedE fixture has no space for grid power"));
+        player.serverLevel().setBlockAndUpdate(energyPosition,
+                AEBlocks.CREATIVE_ENERGY_CELL.block().defaultBlockState());
         var moduleItem = AppliedE.EMC_MODULE.get();
         var side = Arrays.stream(Direction.values()).filter(candidate -> partHost.getPart(candidate) == null
                         && partHost.canAddPart(new ItemStack(moduleItem), candidate))
@@ -48,7 +55,6 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
         provider.addKnowledge(cobblestone.toStack());
         provider.setEmc(provider.getEmc().add(BigInteger.valueOf(1_000_000)));
         provider.sync(player);
-        grid.getEnergyService().injectPower(1_000_000, Actionable.MODULATE);
         var module = partHost.addPart((IPartItem<?>) moduleItem, side, player);
         if (module == null) {
             throw new IllegalStateException("AppliedE fixture could not place the transmutation module");
@@ -59,7 +65,6 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
     @Override
     protected boolean finish(ServerPlayer player, Placement placement) {
         var moduleNode = placement.module().getGridNode();
-        placement.grid().getEnergyService().injectPower(1_000_000, Actionable.MODULATE);
         if (!moduleNode.isActive()) {
             failIfSetupStalled(placement, moduleNode);
             return false;
