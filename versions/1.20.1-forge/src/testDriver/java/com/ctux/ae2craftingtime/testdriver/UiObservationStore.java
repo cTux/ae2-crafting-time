@@ -136,7 +136,12 @@ public final class UiObservationStore {
         if (component.getContents() instanceof TranslatableContents translated) {
             var arguments = new ArrayList<String>();
             for (var argument : translated.getArgs()) {
-                arguments.add(argument instanceof Component nested ? nested.getString() : String.valueOf(argument));
+                if (argument instanceof Component nested
+                        && nested.getContents() instanceof TranslatableContents nestedTranslation) {
+                    arguments.add(nestedTranslation.getKey());
+                } else {
+                    arguments.add(argument instanceof Component nested ? nested.getString() : String.valueOf(argument));
+                }
             }
             return new UiSnapshot.ObservedText(translated.getKey(), component.getString(), arguments, bounds);
         }
