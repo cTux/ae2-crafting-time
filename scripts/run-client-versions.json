@@ -9,7 +9,7 @@
       { "name": "AE2 Lightning Tech", "project_id": "ArHeh5Fz" },
       { "name": "AdvancedAE", "project_id": "rxYaglEe" },
       { "name": "ExtendedAE", "project_id": "JiOqfoFM" },
-      { "name": "ExtendedAE-Plus", "project_id": "xr109llC", "compatible": false, "reason": "Its pattern-provider mixin conflicts with Expanded AE's Applied Flux compatibility mixin." },
+      { "name": "ExtendedAE-Plus", "project_id": "xr109llC" },
       { "name": "BM Addon", "project_id": "qPydPwtX" },
       { "name": "Crazy AE2 Addons", "project_id": "anaGQD2Q" },
       { "name": "AE2 WCWT", "project_id": "4inoel9g" },
@@ -64,7 +64,7 @@
         { "project_id": "UhW5uCKw", "version_id": "eoUaDkZf", "version": "1.20-1.5-forge" },
         { "project_id": "VQhDBNs8", "version_id": "cTJwfNfV", "version": "1.20.1-1.0.0+20" },
         { "project_id": "vvuO3ImH", "version_id": "IPQlZkz1", "version": "5.14.1+1.20.1" },
-        { "project_id": "xr109llC", "version_id": "A3uRgnwT", "version": "1.6.2" }
+        { "project_id": "xr109llC", "version_id": "pN9pMjiW", "version": "1.5.5" }
       ]
     },
     "curseforge": [
@@ -120,7 +120,7 @@
       { "name": "NeoEco AE", "project_id": "udZtKfzP" },
       { "name": "AE2 Lightning Tech", "project_id": "ArHeh5Fz" },
       { "name": "ExtendedAE", "project_id": "JiOqfoFM" },
-      { "name": "ExtendedAE-Plus", "project_id": "xr109llC", "compatible": false, "reason": "Its pattern-provider mixin conflicts with Expanded AE's Applied Flux compatibility mixin." },
+      { "name": "ExtendedAE-Plus", "project_id": "xr109llC" },
       { "name": "BM Addon", "project_id": "qPydPwtX" },
       { "name": "AE2 WCWT", "project_id": "4inoel9g" },
       { "name": "AE2 Wireless Terminals", "project_id": "pNabrMMw" },
@@ -168,7 +168,8 @@
         { "project_id": "u6dRKJwZ", "version_id": "w1zqfWJi", "version": "19.51.0.417" },
         { "project_id": "udZtKfzP", "version_id": "gWMhHBje", "version": "21.1.1" },
         { "project_id": "UhW5uCKw", "version_id": "pfbmdJ3b", "version": "1.21-2.2-neoforge" },
-        { "project_id": "VQhDBNs8", "version_id": "qpbQk2Iq", "version": "1.21.1-1.0.0.58" }
+        { "project_id": "VQhDBNs8", "version_id": "qpbQk2Iq", "version": "1.21.1-1.0.0.58" },
+        { "project_id": "xr109llC", "version_id": "o8U8Ekro", "version": "1.6.2" }
       ]
     },
     "curseforge": [

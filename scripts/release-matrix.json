@@ -17,7 +17,8 @@
       { "project_id": "IiATswDj", "dependency_type": "optional" },
       { "project_id": "E6BFl96N", "dependency_type": "optional" },
       { "project_id": "udZtKfzP", "dependency_type": "optional", "version_number": "20.3.0" },
-      { "project_id": "ArHeh5Fz", "dependency_type": "optional" }
+      { "project_id": "ArHeh5Fz", "dependency_type": "optional" },
+      { "project_id": "xr109llC", "version_id": "pN9pMjiW", "dependency_type": "optional" }
     ],
     "changelog": "### FIXED\n\n- The total TTC now sits in the crafting status header, so it no longer overlaps the action buttons."
   },
@@ -58,7 +59,8 @@
       { "project_id": "a1RwDz90", "dependency_type": "optional" },
       { "project_id": "IiATswDj", "dependency_type": "optional" },
       { "project_id": "rxYaglEe", "dependency_type": "optional" },
-      { "project_id": "E6BFl96N", "dependency_type": "optional" }
+      { "project_id": "E6BFl96N", "dependency_type": "optional" },
+      { "project_id": "xr109llC", "version_id": "o8U8Ekro", "dependency_type": "optional" }
     ],
     "changelog": "### FIXED\n\n- The total TTC now sits in the crafting status header, so it no longer overlaps the action buttons."
   },

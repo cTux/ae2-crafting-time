@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-final class ExtendedAeFixture extends AddonCpuFixture<List<BlockPos>> {
+class ExtendedAeFixture extends AddonCpuFixture<List<BlockPos>> {
     @Override
     protected List<BlockPos> place(ServerPlayer player, FixtureMarker marker) {
         if (player == null) {

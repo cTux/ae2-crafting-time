@@ -89,11 +89,11 @@ assert_contains "$releaseDryRun" 'The total TTC now sits in the crafting status 
   "Release dry run did not create a categorized human-readable changelog"
 assert_contains "$releaseDryRun" 'dry-run next development version: 1.0.5' \
   "Release dry run did not advance the development version"
-assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, E6BFl96N:optional, udZtKfzP:optional, ArHeh5Fz:optional' \
+assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, E6BFl96N:optional, udZtKfzP:optional, ArHeh5Fz:optional, xr109llC:optional' \
   "Release dry run did not include Forge Modrinth dependencies"
 assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: P7dR8mSH:required, XxWD5pD3:required, a1RwDz90:optional, E6BFl96N:optional' \
   "Release dry run did not include Fabric Modrinth dependencies"
-assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, rxYaglEe:optional, E6BFl96N:optional' \
+assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, rxYaglEe:optional, E6BFl96N:optional, xr109llC:optional' \
   "Release dry run did not include NeoForge Modrinth dependencies"
 assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: XxWD5pD3:required, rxYaglEe:optional' \
   "Release dry run did not include 26.1.2 NeoForge Modrinth dependencies"

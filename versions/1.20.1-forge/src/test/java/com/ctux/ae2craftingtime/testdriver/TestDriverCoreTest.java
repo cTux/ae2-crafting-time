@@ -27,6 +27,7 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("craft-plan"));
         assertTrue(AddonCpuFixture.supports("advancedae-cpu"));
         assertTrue(AddonCpuFixture.supports("extendedae-cpu"));
+        assertTrue(AddonCpuFixture.supports("extendedae-plus-cpu"));
         assertTrue(AddonCpuFixture.supports("neoeco-cpu"));
         assertTrue(AddonCpuFixture.supports("omnisequence-cpu"));
         assertFalse(AddonCpuFixture.supports("missing-cpu"));
@@ -144,6 +145,8 @@ class TestDriverCoreTest {
                 DriverResult.requiredChecks("neoeco-cpu"));
         assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("advancedae-cpu"));
+        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+                DriverResult.requiredChecks("extendedae-plus-cpu"));
         var file = temporary.resolve("not-a-directory");
         Files.writeString(file, "x");
         assertThrows(Exception.class, () -> AtomicResultWriter.write(file, result));
