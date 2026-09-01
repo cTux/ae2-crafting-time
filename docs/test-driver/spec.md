@@ -189,8 +189,10 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 ## Compatibility
 
 - First artifact: Minecraft 1.20.1, Forge, Java 17, standard AE2 Crafting Plan.
-- Optional add-on CPU fixtures currently cover AdvancedAE, NeoEco AE, and
-  OmniSequence: Transfinite.
+- Optional add-on CPU fixtures currently cover AdvancedAE, ExtendedAE,
+  NeoEco AE, and OmniSequence: Transfinite. ExtendedAE replaces the fixture's
+  molecular assemblers with its native extended assemblers and uses an existing
+  idle CPU because ExtendedAE does not add one.
 - Run it against both the compatible and latest AE2 profiles already owned by
   `scripts/run-client-versions.json`.
 - Do not create a cross-loader abstraction for this slice. Reuse code only when

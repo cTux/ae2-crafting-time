@@ -169,8 +169,10 @@ real `TtcSortButton`.
 
 `AddonCpuFixture` owns the shared asynchronous place/finish/select lifecycle.
 Its registry maps each `*-cpu` scenario to one driver-only implementation.
-AdvancedAE, NeoEco AE, and OmniSequence contain only their mod-specific fixture
-code. A new optional dependency extends that registry and adds a
+AdvancedAE, ExtendedAE, NeoEco AE, and OmniSequence contain only their
+mod-specific fixture code. ExtendedAE replaces the disposable world's AE2
+molecular assemblers and selects an existing idle CPU. A new optional dependency
+extends that registry and adds a
 `testDriverCompileOnly` dependency when it is not already on the inherited
 compile classpath; it does not change `CraftPlanScenario` or
 `run-ui-smoke.ps1`.
