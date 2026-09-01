@@ -1,7 +1,7 @@
 param(
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(craft-plan|merequester-screen|ae2networkanalyser-screen|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(craft-plan|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$ReportDirectory
 )
@@ -141,6 +141,8 @@ try {
         @("screen", "layout")
     } elseif ($Scenario -eq "merequester-screen") {
         @("screen", "ttc-row", "total-ttc", "layout")
+    } elseif ($Scenario -eq "aeinfinitybooster-terminal") {
+        @("screen", "plan-ttc")
     } elseif ($Scenario -like "*-terminal") {
         @("screen", "ttc-tooltip", "plan-ttc")
     } elseif ($Scenario -ne "craft-plan") {

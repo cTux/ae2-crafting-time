@@ -119,6 +119,11 @@ wireless terminal, installs a real export card, and verifies the TTC tooltip
 and Crafting Plan on the addon's modified terminal screen using a deterministic
 profile sample.
 
+The `aeinfinitybooster-terminal` scenario installs a real Infinity Card in the
+linked access point, moves the player beyond its normal range, and opens the
+standard wireless terminal. It checks `screen` and `plan-ttc`, with terminal and
+plan screenshots. The range-only addon adds no terminal TTC tooltip surface.
+
 ## ME Requester scenario
 
 The `merequester-screen` scenario places a real requester on the fixture grid,
