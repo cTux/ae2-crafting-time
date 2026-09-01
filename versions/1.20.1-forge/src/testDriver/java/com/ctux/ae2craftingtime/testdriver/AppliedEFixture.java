@@ -89,6 +89,11 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
         return grid.getCraftingService().getCpus().stream().filter(cpu -> !cpu.isBusy()).findFirst().orElse(null);
     }
 
+    @Override
+    protected String outputId(Placement placement, FixtureMarker marker) {
+        return placement.cobblestone().getId().toString();
+    }
+
     record Placement(IGrid grid, EMCModulePart module, AEItemKey cobblestone) {
     }
 }
