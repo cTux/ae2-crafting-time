@@ -72,9 +72,12 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
     }
 
     private void failIfSetupStalled(Placement placement, IGridNode moduleNode) {
-        if (++finishAttempts >= 200) {
+        if (++finishAttempts >= 40) {
             throw new IllegalStateException("AppliedE fixture did not become craftable: active="
-                    + moduleNode.isActive() + ", owner=" + moduleNode.getOwningPlayerProfileId()
+                    + moduleNode.isActive() + ", powered=" + moduleNode.isPowered()
+                    + ", channel=" + moduleNode.meetsChannelRequirements()
+                    + " (" + moduleNode.getUsedChannels() + "/" + moduleNode.getMaxChannels() + ")"
+                    + ", owner=" + moduleNode.getOwningPlayerProfileId()
                     + ", patterns=" + placement.module().getAvailablePatterns().size());
         }
     }
