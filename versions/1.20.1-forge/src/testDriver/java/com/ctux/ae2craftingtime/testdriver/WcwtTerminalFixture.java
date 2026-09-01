@@ -10,6 +10,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.GlobalPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.registries.ForgeRegistries;
 
@@ -62,8 +63,7 @@ final class WcwtTerminalFixture {
         }
         linkable.link(stack, GlobalPos.of(level.dimension(), accessPointPos));
         player.getInventory().selected = 0;
-        player.getInventory().setItem(0, stack);
-        player.inventoryMenu.broadcastChanges();
+        player.setItemInHand(InteractionHand.MAIN_HAND, stack);
         return true;
     }
 }
