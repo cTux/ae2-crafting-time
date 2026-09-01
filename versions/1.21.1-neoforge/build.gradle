@@ -50,6 +50,7 @@ sourceSets.test.runtimeClasspath += sourceSets.main.runtimeClasspath
 
 repositories {
     mavenCentral()
+    maven { url = 'https://api.modrinth.com/maven' }
     maven {
         url = 'https://cursemaven.com'
         content { includeGroup 'curse.maven' }
@@ -68,6 +69,7 @@ dependencies {
         runtimeOnly 'org.appliedenergistics:guideme:21.1.0'
     }
     compileOnly 'curse.maven:advancedae-1084104:7849217'
+    compileOnly 'maven.modrinth:qelfSMnn:UNYpf7A1'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 

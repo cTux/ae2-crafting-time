@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.features.GridLinkables;
 import appeng.api.networking.GridHelper;
+import appeng.api.networking.IGrid;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.blockentity.networking.WirelessAccessPointBlockEntity;
 import net.minecraft.core.BlockPos;
@@ -21,13 +22,15 @@ abstract class WirelessTerminalFixture {
     private BlockPos accessPointPos;
 
     static boolean supports(String scenario) {
-        return "ae2wcwt-terminal".equals(scenario) || "ae2wtlib-terminal".equals(scenario);
+        return "ae2wcwt-terminal".equals(scenario) || "ae2wtlib-terminal".equals(scenario)
+                || "ae2importexportcard-terminal".equals(scenario);
     }
 
     static WirelessTerminalFixture create(String scenario) {
         return switch (scenario) {
             case "ae2wcwt-terminal" -> new WcwtTerminalFixture();
             case "ae2wtlib-terminal" -> new Ae2wtlibTerminalFixture();
+            case "ae2importexportcard-terminal" -> new Ae2ImportExportCardFixture();
             default -> null;
         };
     }
@@ -74,6 +77,7 @@ abstract class WirelessTerminalFixture {
             throw new IllegalStateException(modId() + " terminal cannot be linked");
         }
         linkable.link(stack, GlobalPos.of(level.dimension(), accessPointPos));
+        stack = finishSetup(player, marker, terminalNode.getGrid(), stack);
         player.getInventory().selected = 0;
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);
         return stack;
@@ -84,4 +88,8 @@ abstract class WirelessTerminalFixture {
     abstract String screenClass();
     abstract String screenshotPrefix();
     abstract ItemStack terminalStack();
+
+    ItemStack finishSetup(ServerPlayer player, FixtureMarker marker, IGrid grid, ItemStack stack) {
+        return stack;
+    }
 }

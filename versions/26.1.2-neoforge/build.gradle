@@ -56,6 +56,7 @@ repositories {
 dependencies {
     implementation "org.appliedenergistics:appliedenergistics2:${providers.gradleProperty('runtimeAe2NeoForge2612Version').getOrElse('26.1.10-beta')}"
     compileOnly 'maven.modrinth:advancedae:26.1.7'
+    compileOnly 'maven.modrinth:qelfSMnn:v2PSNZ3v'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 

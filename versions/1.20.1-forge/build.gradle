@@ -102,6 +102,7 @@ repositories {
 dependencies {
     modImplementation "appeng:appliedenergistics2-forge:${providers.gradleProperty('runtimeAe2Forge1201Version').getOrElse('15.0.10')}"
     compileOnly 'maven.modrinth:advancedae:1.3.6-1.20.1'
+    compileOnly 'maven.modrinth:qelfSMnn:v8c3El4q'
     testDriverCompileOnly 'maven.modrinth:extended-ae:1.20-1.4.18-forge'
     testDriverCompileOnly 'maven.modrinth:merequester:1.20.1-1.2.1+forge'
     testDriverCompileOnly 'maven.modrinth:extendedae-plus:1.5.5'

@@ -23,11 +23,15 @@ public abstract class WirelessTerminalScreenMixin {
     private static final Set<String> TERMINAL_SCREENS = Set.of(
             "com.lhy.wcwt.client.WirelessComprehensiveWorkTerminalScreen",
             "de.mari_023.ae2wtlib.wct.WCTScreen");
+    private static final Set<String> IMPORT_EXPORT_INTERFACES = Set.of(
+            "com.ultramega.ae2insertexportcard.util.UpgradeInterface",
+            "com.ultramega.ae2importexportcard.util.UpgradeInterface");
 
     @ModifyVariable(method = "renderGridInventoryEntryTooltip", at = @At("STORE"), ordinal = 0, remap = false)
     private List<Component> ae2craftingtime$appendTtc(List<Component> lines, GuiGraphics guiGraphics,
             GridInventoryEntry entry, int x, int y) {
-        if (!TERMINAL_SCREENS.contains(getClass().getName()) || !entry.isCraftable()) {
+        if ((!TERMINAL_SCREENS.contains(getClass().getName()) && !ae2craftingtime$hasImportExportCard())
+                || !entry.isCraftable()) {
             return lines;
         }
 
@@ -40,5 +44,17 @@ public abstract class WirelessTerminalScreenMixin {
                                 () -> result.add(TtcText.ttcCollectingData())),
                 () -> result.add(TtcText.ttcCollectingData()));
         return result;
+    }
+
+    private boolean ae2craftingtime$hasImportExportCard() {
+        for (Class<?> type = ((MEStorageScreen<?>) (Object) this).getMenu().getClass(); type != null;
+                type = type.getSuperclass()) {
+            for (var contract : type.getInterfaces()) {
+                if (IMPORT_EXPORT_INTERFACES.contains(contract.getName())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

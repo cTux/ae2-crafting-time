@@ -14,11 +14,11 @@ New-Item -ItemType Directory -Path $ReportDirectory -Force | Out-Null
 
 try {
     & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Latest -Interactive `
-        -Scenario merequester-screen -ProjectId E6BFl96N
-    $resultPath = Join-Path $source "build\ui-smoke\1.20.1-forge\latest\merequester-screen\wrapper-result.json"
+        -Scenario ae2importexportcard-terminal -ProjectId qelfSMnn
+    $resultPath = Join-Path $source "build\ui-smoke\1.20.1-forge\latest\ae2importexportcard-terminal\wrapper-result.json"
     $result = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json
-    if (-not $result.latest -or -not $result.interactive -or $result.scenario -ne "merequester-screen" -or
-            @($result.projectId).Count -ne 1 -or $result.projectId[0] -ne "E6BFl96N") {
+    if (-not $result.latest -or -not $result.interactive -or $result.scenario -ne "ae2importexportcard-terminal" -or
+            @($result.projectId).Count -ne 1 -or $result.projectId[0] -ne "qelfSMnn") {
         throw "CodexVM wrapper dropped smoke arguments"
     }
 

@@ -114,6 +114,11 @@ Plan screen. The required checks are `screen`, `ttc-tooltip`, and `plan-ttc`.
 The `ae2wtlib-terminal` scenario uses the same flow with AE2 Wireless
 Terminals' charged wireless crafting terminal.
 
+The `ae2importexportcard-terminal` scenario links a charged standard AE2
+wireless terminal, installs a real export card, and verifies the TTC tooltip
+and Crafting Plan on the addon's modified terminal screen using a deterministic
+profile sample.
+
 ## ME Requester scenario
 
 The `merequester-screen` scenario places a real requester on the fixture grid,
