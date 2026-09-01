@@ -14,6 +14,7 @@ abstract class AddonCpuFixture<P> {
             "extendedae-cpu", "com.ctux.ae2craftingtime.testdriver.ExtendedAeFixture",
             "extendedae-plus-cpu", "com.ctux.ae2craftingtime.testdriver.ExtendedAePlusFixture",
             "bmaddon-cpu", "com.ctux.ae2craftingtime.testdriver.BmAddonFixture",
+            "crazyae2addons-cpu", "com.ctux.ae2craftingtime.testdriver.CrazyAe2AddonsFixture",
             "neoeco-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture",
             "omnisequence-cpu", "com.ctux.ae2craftingtime.testdriver.OmniSequenceFixture");
 

@@ -106,6 +106,7 @@ dependencies {
     testDriverCompileOnly 'maven.modrinth:extendedae-plus:1.5.5'
     testDriverCompileOnly 'maven.modrinth:bmaddon:1.0.4'
     testDriverCompileOnly 'curse.maven:blood-magic-224791:7956981'
+    testDriverCompileOnly 'maven.modrinth:anaGQD2Q:KwFCuLdA'
     testDriverCompileOnly 'maven.modrinth:neoecoae:20.3.0'
     testDriverCompileOnly 'curse.maven:omnisequence-transfinite-1624558:8675216'
     fileTree("$runtimeRunDirectory/resolved-mods") { include '*.jar' }.each {
