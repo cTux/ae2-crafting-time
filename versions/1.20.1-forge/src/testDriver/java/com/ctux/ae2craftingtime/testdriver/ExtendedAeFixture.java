@@ -2,7 +2,6 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingCPU;
-import appeng.me.cluster.implementations.CraftingCPUCluster;
 import com.glodblock.github.extendedae.common.tileentities.TileExMolecularAssembler;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
@@ -65,10 +64,7 @@ final class ExtendedAeFixture extends AddonCpuFixture<List<BlockPos>> {
     @Override
     protected ICraftingCPU cpu(ServerPlayer player, List<BlockPos> positions, IGrid grid) {
         return grid.getCraftingService().getCpus().stream()
-                .filter(CraftingCPUCluster.class::isInstance)
-                .map(CraftingCPUCluster.class::cast)
-                .filter(CraftingCPUCluster::isActive)
-                .filter(candidate -> candidate.getGrid() == grid)
+                .filter(candidate -> candidate.getGrid() == grid && !candidate.isBusy())
                 .findFirst().orElse(null);
     }
 }
