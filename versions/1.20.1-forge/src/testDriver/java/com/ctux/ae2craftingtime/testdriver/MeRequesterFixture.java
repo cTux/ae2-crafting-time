@@ -13,12 +13,16 @@ import net.minecraft.world.item.Items;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.registries.ForgeRegistries;
 
+import java.util.concurrent.CompletableFuture;
+
 final class MeRequesterFixture {
     static final String SCENARIO = "merequester-screen";
     static final String SCREEN = "com.almostreliable.merequester.client.RequesterScreen";
 
     private BlockPos position;
     private IGridNode connectionNode;
+    private CompletableFuture<BlockPos> placementFuture;
+    private CompletableFuture<Boolean> setupFuture;
 
     boolean setup(ServerPlayer player, FixtureMarker marker) {
         if (!ModList.get().isLoaded("merequester")) {
@@ -27,11 +31,26 @@ final class MeRequesterFixture {
         if (player == null) {
             return false;
         }
-        if (position == null) {
-            position = place(player, marker);
+        var server = player.server;
+        var playerId = player.getUUID();
+        if (placementFuture == null) {
+            placementFuture = server.submit(() -> place(server.getPlayerList().getPlayer(playerId), marker));
+        }
+        if (!placementFuture.isDone()) {
             return false;
         }
-        return finish(player);
+        position = placementFuture.join();
+        if (setupFuture == null) {
+            setupFuture = server.submit(() -> finish(server.getPlayerList().getPlayer(playerId)));
+        }
+        if (!setupFuture.isDone()) {
+            return false;
+        }
+        if (!setupFuture.join()) {
+            setupFuture = null;
+            return false;
+        }
+        return true;
     }
 
     BlockPos position() {
