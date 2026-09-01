@@ -24,16 +24,16 @@ if (($releaseDryRun -join "`n") -notmatch '### FIXED\s+- The total TTC now sits 
 if (($releaseDryRun -join "`n") -notmatch 'dry-run next development version: 1\.0\.5') {
     throw "Release dry run did not advance the development version"
 }
-if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, E6BFl96N:optional, udZtKfzP:optional, ArHeh5Fz:optional, anaGQD2Q:optional, 4inoel9g:optional, xr109llC:optional') {
+if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, E6BFl96N:optional, udZtKfzP:optional, ArHeh5Fz:optional, anaGQD2Q:optional, 4inoel9g:optional, pNabrMMw:optional, xr109llC:optional') {
     throw "Release dry run did not include Forge Modrinth dependencies"
 }
-if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: P7dR8mSH:required, XxWD5pD3:required, a1RwDz90:optional, E6BFl96N:optional') {
+if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: P7dR8mSH:required, XxWD5pD3:required, a1RwDz90:optional, E6BFl96N:optional, pNabrMMw:optional') {
     throw "Release dry run did not include Fabric Modrinth dependencies"
 }
-if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, rxYaglEe:optional, E6BFl96N:optional, 4inoel9g:optional, xr109llC:optional') {
+if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, rxYaglEe:optional, E6BFl96N:optional, 4inoel9g:optional, pNabrMMw:optional, xr109llC:optional') {
     throw "Release dry run did not include NeoForge Modrinth dependencies"
 }
-if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5pD3:required, rxYaglEe:optional') {
+if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5pD3:required, rxYaglEe:optional, pNabrMMw:optional') {
     throw "Release dry run did not include 26.1.2 NeoForge Modrinth dependencies"
 }
 
