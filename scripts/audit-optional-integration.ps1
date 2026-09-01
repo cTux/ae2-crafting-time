@@ -105,7 +105,7 @@ try {
         if (-not $run) { throw "Missing run-client row $($row.id)" }
         $game = [uri]::EscapeDataString("[`"$($row.minecraftVersion)`"]")
         $loader = [uri]::EscapeDataString("[`"$($row.loader)`"]")
-        $availableVersions = @(Invoke-RestMethod -Uri "$ApiBase/project/$ProjectId/version?game_versions=$game&loaders=$loader")
+        $availableVersions = Invoke-RestMethod -Uri "$ApiBase/project/$ProjectId/version?game_versions=$game&loaders=$loader"
         $versions = @($availableVersions | Where-Object version_type -eq "release" | Sort-Object date_published)
         $selected = $null
         $lastReason = "no stable artifact"

@@ -102,7 +102,7 @@ versionRange="[19.0.24,20)"
     if ($source -match '\[string\]\$ReleaseMatrix\s*=|\[string\]\$RunClientMatrix\s*=') {
         throw "Audit matrix defaults must be resolved after parameter binding"
     }
-    if ($source -notmatch '\$availableVersions\s*=\s*@\(Invoke-RestMethod') {
+    if ($source -match '\$availableVersions\s*=\s*@\(Invoke-RestMethod') {
         throw "Audit must enumerate Windows PowerShell REST arrays before filtering"
     }
 
