@@ -184,7 +184,7 @@ ProjectE EMC before selecting an existing idle CPU. AppliedE grants the player
 furnace knowledge and EMC, mounts a powered Transmutation Module, and verifies
 its native EMC crafting pattern before selecting a native AE2 CPU. Applied
 Mekanistics mounts a chemical storage cell, fills it with oxygen through the
-addon's native AE2 key, and selects an existing idle CPU. A new
+addon's native AE2 key, and places a native AE2 256K CPU. A new
 optional dependency extends that registry and adds a
 `testDriverCompileOnly` dependency when it is not already on the inherited
 compile classpath. A fixture may override the marker output only when the add-on

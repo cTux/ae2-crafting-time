@@ -1,11 +1,15 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.config.Actionable;
+import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.api.networking.security.IActionSource;
+import appeng.blockentity.crafting.CraftingBlockEntity;
 import appeng.blockentity.storage.DriveBlockEntity;
+import appeng.core.definitions.AEBlocks;
+import appeng.me.cluster.implementations.CraftingCPUCalculator;
 import me.ramidzkh.mekae2.AMItems;
 import me.ramidzkh.mekae2.ae2.MekanismKey;
 import mekanism.api.MekanismAPI;
@@ -55,8 +59,22 @@ final class AppliedMekanisticsFixture extends AddonCpuFixture<AppliedMekanistics
         }
         inventory.setItemDirect(slot, new ItemStack(AMItems.CHEMICAL_CELL_1K.get()));
         drive.onChangeInventory(inventory, slot);
-        return new Placement(drive, slot, grid, IActionSource.ofPlayer(player),
-                MekanismKey.of(new GasStack(oxygen, 1)));
+        for (var anchor : BlockPos.betweenClosed(terminal.offset(-12, -4, -12), terminal.offset(12, 4, 12))) {
+            if (!(player.serverLevel().getBlockEntity(anchor) instanceof IInWorldGridNodeHost host)) {
+                continue;
+            }
+            for (var direction : new Direction[] { Direction.UP, Direction.DOWN }) {
+                var node = host.getGridNode(direction);
+                var position = anchor.relative(direction).immutable();
+                if (node != null && node.getGrid() == grid && player.serverLevel().getBlockState(position).isAir()) {
+                    player.serverLevel().setBlockAndUpdate(position,
+                            AEBlocks.CRAFTING_STORAGE_256K.block().defaultBlockState());
+                    return new Placement(drive, slot, grid, position, terminal, IActionSource.ofPlayer(player),
+                            MekanismKey.of(new GasStack(oxygen, 1)));
+                }
+            }
+        }
+        throw new IllegalStateException("no empty vertical connection beside the fixture grid for AppMek CPU");
     }
 
     @Override
@@ -73,15 +91,51 @@ final class AppliedMekanisticsFixture extends AddonCpuFixture<AppliedMekanistics
             throw new IllegalStateException("Applied Mekanistics chemical cell rejected oxygen");
         }
         placement.grid().getStorageService().invalidateCache();
-        return placement.grid().getStorageService().getInventory().extract(placement.oxygen(), CHEMICAL_AMOUNT,
-                Actionable.SIMULATE, placement.source()) == CHEMICAL_AMOUNT;
+        var chemicalReady = placement.grid().getStorageService().getInventory().extract(placement.oxygen(),
+                CHEMICAL_AMOUNT, Actionable.SIMULATE, placement.source()) == CHEMICAL_AMOUNT;
+        var level = player.serverLevel();
+        if (!(level.getBlockEntity(placement.cpu()) instanceof CraftingBlockEntity cpuStorage)) {
+            throw new IllegalStateException("Applied Mekanistics fixture CPU was not placed");
+        }
+        if (!cpuStorage.getMainNode().isReady()) {
+            cpuStorage.onReady();
+        }
+        if (!cpuStorage.isFormed()) {
+            var calculator = new CraftingCPUCalculator(cpuStorage);
+            calculator.updateBlockEntities(calculator.createCluster(level, placement.cpu(), placement.cpu()),
+                    level, placement.cpu(), placement.cpu());
+        }
+        if (!(level.getBlockEntity(placement.terminal()) instanceof IInWorldGridNodeHost terminalHost)) {
+            throw new IllegalStateException("Applied Mekanistics fixture terminal is unavailable");
+        }
+        var terminalNode = Arrays.stream(Direction.values()).map(terminalHost::getGridNode)
+                .filter(Objects::nonNull).findFirst()
+                .orElseThrow(() -> new IllegalStateException("Applied Mekanistics fixture terminal node is unavailable"));
+        var storageNode = cpuStorage.getMainNode().getNode();
+        if (storageNode == null) {
+            return false;
+        }
+        if (terminalNode.getGrid() != storageNode.getGrid()) {
+            GridHelper.createConnection(terminalNode, storageNode);
+        }
+        return chemicalReady && cpuStorage.getCluster() != null && !cpuStorage.getCluster().isBusy();
     }
 
     @Override
     protected ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {
-        return grid.getCraftingService().getCpus().stream().filter(cpu -> !cpu.isBusy()).findFirst().orElse(null);
+        if (!(player.serverLevel().getBlockEntity(placement.cpu()) instanceof CraftingBlockEntity storage)
+                || storage.getCluster() == null) {
+            return null;
+        }
+        var cpu = storage.getCluster();
+        if (!cpu.isActive() || cpu.getGrid() != grid) {
+            throw new IllegalStateException("Applied Mekanistics CPU is not selectable; active=" + cpu.isActive()
+                    + " sameGrid=" + (cpu.getGrid() == grid));
+        }
+        return cpu;
     }
 
-    record Placement(DriveBlockEntity drive, int slot, IGrid grid, IActionSource source, MekanismKey oxygen) {
+    record Placement(DriveBlockEntity drive, int slot, IGrid grid, BlockPos cpu, BlockPos terminal,
+            IActionSource source, MekanismKey oxygen) {
     }
 }

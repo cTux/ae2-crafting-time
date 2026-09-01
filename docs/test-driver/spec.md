@@ -217,8 +217,9 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
   Cell. AppliedE replaces that
   craft path with a player-owned Transmutation Module, furnace knowledge,
   ProjectE EMC, and a native AE2 CPU. Applied Mekanistics mounts a chemical
-  storage cell containing oxygen. The other provider scenarios use an existing
-  idle CPU because those addons do not add one.
+  storage cell containing oxygen and places a native AE2 256K CPU. The other
+  provider scenarios use an existing idle CPU because those addons do not add
+  one.
 - AE2 WCWT and AE2 Wireless Terminals have separate Forge 1.20.1 terminal
   scenarios because they add no crafting CPU.
 - Run it against both the compatible and latest AE2 profiles already owned by
