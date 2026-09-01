@@ -49,6 +49,7 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
         provider.sync(player);
         grid.getStorageService().getInventory().extract(cobblestone, Long.MAX_VALUE, Actionable.MODULATE,
                 IActionSource.ofPlayer(player));
+        grid.getEnergyService().injectPower(1_000_000, Actionable.MODULATE);
         var module = partHost.addPart((IPartItem<?>) moduleItem, side, player);
         if (module == null) {
             throw new IllegalStateException("AppliedE fixture could not place the transmutation module");
@@ -59,6 +60,7 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
     @Override
     protected boolean finish(ServerPlayer player, Placement placement) {
         var moduleNode = placement.module().getGridNode();
+        placement.grid().getEnergyService().injectPower(1_000_000, Actionable.MODULATE);
         if (!moduleNode.isActive()) {
             failIfSetupStalled(placement, moduleNode);
             return false;
@@ -76,7 +78,7 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
             throw new IllegalStateException("AppliedE fixture did not become craftable: active="
                     + moduleNode.isActive() + ", powered=" + moduleNode.isPowered()
                     + ", channel=" + moduleNode.meetsChannelRequirements()
-                    + " (" + moduleNode.getUsedChannels() + "/" + moduleNode.getMaxChannels() + ")"
+                    + " (used=" + moduleNode.getUsedChannels() + ", max=" + moduleNode.getMaxChannels() + ")"
                     + ", owner=" + moduleNode.getOwningPlayerProfileId()
                     + ", patterns=" + placement.module().getAvailablePatterns().size());
         }
