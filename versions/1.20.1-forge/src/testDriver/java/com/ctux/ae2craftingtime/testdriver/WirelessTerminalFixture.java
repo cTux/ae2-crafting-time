@@ -23,7 +23,8 @@ abstract class WirelessTerminalFixture {
 
     static boolean supports(String scenario) {
         return "ae2wcwt-terminal".equals(scenario) || "ae2wtlib-terminal".equals(scenario)
-                || "ae2importexportcard-terminal".equals(scenario);
+                || "ae2importexportcard-terminal".equals(scenario)
+                || "aeinfinitybooster-terminal".equals(scenario);
     }
 
     static WirelessTerminalFixture create(String scenario) {
@@ -31,6 +32,7 @@ abstract class WirelessTerminalFixture {
             case "ae2wcwt-terminal" -> new WcwtTerminalFixture();
             case "ae2wtlib-terminal" -> new Ae2wtlibTerminalFixture();
             case "ae2importexportcard-terminal" -> new Ae2ImportExportCardFixture();
+            case "aeinfinitybooster-terminal" -> new AeInfinityBoosterFixture();
             default -> null;
         };
     }
@@ -77,7 +79,7 @@ abstract class WirelessTerminalFixture {
             throw new IllegalStateException(modId() + " terminal cannot be linked");
         }
         linkable.link(stack, GlobalPos.of(level.dimension(), accessPointPos));
-        stack = finishSetup(player, marker, terminalNode.getGrid(), stack);
+        stack = finishSetup(player, marker, terminalNode.getGrid(), accessPoint, stack);
         player.getInventory().selected = 0;
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);
         return stack;
@@ -89,7 +91,8 @@ abstract class WirelessTerminalFixture {
     abstract String screenshotPrefix();
     abstract ItemStack terminalStack();
 
-    ItemStack finishSetup(ServerPlayer player, FixtureMarker marker, IGrid grid, ItemStack stack) {
+    ItemStack finishSetup(ServerPlayer player, FixtureMarker marker, IGrid grid,
+            WirelessAccessPointBlockEntity accessPoint, ItemStack stack) {
         return stack;
     }
 }

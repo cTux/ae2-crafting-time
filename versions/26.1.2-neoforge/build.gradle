@@ -62,6 +62,7 @@ dependencies {
     compileOnly 'maven.modrinth:advancedae:26.1.7'
     compileOnly 'maven.modrinth:qelfSMnn:v2PSNZ3v'
     compileOnly 'curse.maven:ae2-network-analyser-961856:8127472'
+    compileOnly 'maven.modrinth:VQhDBNs8:qUOmPSfe'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 

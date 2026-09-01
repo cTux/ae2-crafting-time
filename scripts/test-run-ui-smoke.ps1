@@ -26,6 +26,8 @@ $checks = if ($DriverScenario -eq "ae2networkanalyser-screen") {
     [ordered]@{ screen=$true; layout=$true }
 } elseif ($DriverScenario -eq "merequester-screen") {
     [ordered]@{ screen=$true; 'ttc-row'=$true; 'total-ttc'=$true; layout=$true }
+} elseif ($DriverScenario -eq "aeinfinitybooster-terminal") {
+    [ordered]@{ screen=$true; 'plan-ttc'=$true }
 } elseif ($DriverScenario -like "*-terminal") {
     [ordered]@{ screen=$true; 'ttc-tooltip'=$true; 'plan-ttc'=$true }
 } elseif ($DriverScenario -ne "craft-plan") {
@@ -100,6 +102,7 @@ try {
     Invoke-Case "pass" -Scenario "merequester-screen" -ProjectId E6BFl96N -shouldPass $true
     Invoke-Case "pass" -Scenario "ae2importexportcard-terminal" -ProjectId qelfSMnn -shouldPass $true
     Invoke-Case "pass" -Scenario "ae2networkanalyser-screen" -ProjectId 961856 -shouldPass $true
+    Invoke-Case "pass" -Scenario "aeinfinitybooster-terminal" -ProjectId VQhDBNs8 -shouldPass $true
     if (-not (Test-Path -LiteralPath $cacheMarker)) { throw "Scenario switch discarded the shared runtime" }
     Invoke-Case "pass" -Scenario "ae2wtlib-terminal" -ProjectId pNabrMMw -shouldPass $true
     $focused = Get-Content -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\ae2wtlib-terminal\evidence\resolved-mods.json") -Raw | ConvertFrom-Json

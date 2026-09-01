@@ -42,7 +42,7 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 | Modern AE2 Additions (`mae2`; optional) | `2.0.1` | Yes (`modern-ae2-additions-cpu`) | — | — | — | — | — | — |
 | AE2 Import Export Card (`ae2insertexportcard` / `ae2importexportcard`; optional) | `1.20.1-1.3.0` | Yes (`ae2importexportcard-terminal`) | — | — | `1.21.1-1.6.0` | No | `26.1.2-2.1.0` | No |
 | AE2 Network Analyser (`ae2netanalyser`; optional) | `1.20-1.0.6-forge` | Yes (`ae2networkanalyser-screen`) | `1.20-1.0.1-fabric` | No | `1.21-2.1.5-neoforge` | No | `26.1-1.0.0-neoforge` (beta) | No |
-| AEInfinityBooster (candidate) | `1.20.1-1.0.0+20` | No | — | — | `1.21.1-1.0.0.58` | No | `26.1.2-1.0.0.57` | No |
+| AEInfinityBooster (`aeinfinitybooster`; optional) | `1.20.1-1.0.0+20` | Yes (`aeinfinitybooster-terminal`) | — | — | `1.21.1-1.0.0.58` | No | `26.1.2-1.0.0.57` | No |
 | Applied Botanics (Fork) (candidate) | — | — | — | — | — | — | — | — |
 | Advanced Peripherals (candidate) | `1.20.1-0.7.48r` | No | — | — | `1.21.1-0.8.0a` | No | — | — |
 | AE2 Things (candidate) | — | — | `1.3.2` | No | — | — | — | — |

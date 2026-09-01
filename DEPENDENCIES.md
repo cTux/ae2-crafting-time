@@ -49,6 +49,11 @@ Applied Mekanistics releases for these targets are Forge/NeoForge.
 Applied Flux is not declared for the Fabric jar because it has no stable Fabric
 1.20.1 release.
 
+AEInfinityBooster is covered as an optional range-only addon on Forge 1.20.1
+(`1.20.1-1.0.0+20`), NeoForge 1.21.1 (`1.21.1-1.0.0.58`), and NeoForge 26.1.2
+(`26.1.2-1.0.0.57`). It uses AE2's normal Crafting Plan; no extra TTC hook is
+needed. There is no Fabric release for our supported target.
+
 ## Build Tools
 
 If you are building the project yourself, the 1.20.1 modules use Java 17, the

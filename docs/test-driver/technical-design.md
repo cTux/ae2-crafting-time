@@ -202,6 +202,12 @@ Wireless Terminals. The AE2 Import Export Card fixture uses the same flow with
 a real export card installed in the addon's modified standard terminal and a
 deterministic profile sample for its disposable grid.
 
+The AEInfinityBooster fixture installs an Infinity Card into the linked access
+point and moves the player beyond that access point's normal range. It reuses
+the wireless item-use and Crafting Plan flow, but does not request a terminal
+tooltip check because the addon only changes range. The fixture keeps its grid
+chunk loaded in the disposable world and seeds a deterministic profile sample.
+
 ME Requester also uses a separate screen flow. Its fixture places and configures
 one requester with a deterministic profiler sample on the disposable AE2 grid.
 

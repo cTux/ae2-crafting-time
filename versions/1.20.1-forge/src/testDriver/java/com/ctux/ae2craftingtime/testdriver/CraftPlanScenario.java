@@ -226,7 +226,7 @@ public final class CraftPlanScenario {
         if (entry == null) {
             return;
         }
-        if (wirelessFixture != null) {
+        if (wirelessFixture != null && checks.containsKey("ttc-tooltip")) {
             var slot = screen.getMenu().slots.stream().filter(RepoSlot.class::isInstance).map(RepoSlot.class::cast)
                     .filter(candidate -> candidate.getEntry() == entry).findFirst().orElse(null);
             if (slot == null) {
@@ -243,6 +243,8 @@ public final class CraftPlanScenario {
                 return;
             }
             checks.put("ttc-tooltip", true);
+        }
+        if (wirelessFixture != null) {
             screenshotUnchecked(wirelessFixture.screenshotPrefix() + "-terminal.png");
         }
         ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$click(entry, 2, ClickType.CLONE);
