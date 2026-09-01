@@ -3,7 +3,7 @@ param(
     [switch]$Interactive,
     [switch]$Scheduled,
     [switch]$Stop,
-    [ValidatePattern("^(craft-plan|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(craft-plan|merequester-screen|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$JavaHome,
     [string]$LocalRoot,
