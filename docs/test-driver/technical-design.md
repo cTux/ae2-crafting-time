@@ -176,11 +176,12 @@ selects an existing idle CPU;
 ExtendedAE-Plus reuses that setup after verifying its mod is loaded. BM Addon
 places its Blood Assembler, installs a real Blood Pattern, supplies its inputs,
 and selects an existing idle CPU. Crazy AE2 Addons places a native AE2 1K
-crafting storage CPU, then sets and verifies its priority before selecting it.
+crafting storage CPU and selects that recorded cluster.
 ProjectCell removes the normal cobblestone supply, mounts a player-bound EMC
 Storage Cell, and verifies that the grid can supply the furnace craft from
-ProjectE EMC before selecting an existing idle CPU. AppliedE does the same with
-its player-owned Transmutation Module and native EMC crafting pattern. A new
+ProjectE EMC before selecting an existing idle CPU. AppliedE grants the player
+furnace knowledge and EMC, mounts a powered Transmutation Module, and verifies
+its native EMC crafting pattern before selecting a native AE2 CPU. A new
 optional dependency extends that registry and adds a
 `testDriverCompileOnly` dependency when it is not already on the inherited
 compile classpath. A fixture may override the marker output only when the add-on
