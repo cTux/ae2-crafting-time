@@ -13,6 +13,7 @@ abstract class AddonCpuFixture<P> {
             "advancedae-cpu", "com.ctux.ae2craftingtime.testdriver.AdvancedAeFixture",
             "extendedae-cpu", "com.ctux.ae2craftingtime.testdriver.ExtendedAeFixture",
             "extendedae-plus-cpu", "com.ctux.ae2craftingtime.testdriver.ExtendedAePlusFixture",
+            "bmaddon-cpu", "com.ctux.ae2craftingtime.testdriver.BmAddonFixture",
             "neoeco-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture",
             "omnisequence-cpu", "com.ctux.ae2craftingtime.testdriver.OmniSequenceFixture");
 
@@ -63,6 +64,14 @@ abstract class AddonCpuFixture<P> {
 
     final ICraftingCPU cpu(ServerPlayer player, IGrid grid) {
         return cpu(player, placementFuture.join(), grid);
+    }
+
+    final String outputId(FixtureMarker marker) {
+        return outputId(placementFuture.join(), marker);
+    }
+
+    protected String outputId(P placement, FixtureMarker marker) {
+        return marker.outputId();
     }
 
     protected abstract P place(ServerPlayer player, FixtureMarker marker);

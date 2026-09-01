@@ -189,10 +189,11 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 ## Compatibility
 
 - First artifact: Minecraft 1.20.1, Forge, Java 17, standard AE2 Crafting Plan.
-- Optional add-on CPU fixtures currently cover AdvancedAE, ExtendedAE,
+- Optional add-on CPU fixtures currently cover AdvancedAE, BM Addon, ExtendedAE,
   ExtendedAE-Plus, NeoEco AE, and OmniSequence: Transfinite. ExtendedAE and
   ExtendedAE-Plus replace the fixture's molecular assemblers with ExtendedAE
-  assemblers and use an existing idle CPU because neither mod adds one.
+  assemblers. BM Addon installs a real Blood Pattern and its inputs. These
+  provider scenarios use an existing idle CPU because the addons do not add one.
 - Run it against both the compatible and latest AE2 profiles already owned by
   `scripts/run-client-versions.json`.
 - Do not create a cross-loader abstraction for this slice. Reuse code only when

@@ -48,6 +48,7 @@ public final class CraftPlanScenario {
     private long lastFrame = -1;
     private DriverResult.Failure failure;
     private String networkId;
+    private String outputId;
     private CompletableFuture<String> cpuCheck;
     private CompletableFuture<Integer> sampleCheck;
 
@@ -119,6 +120,7 @@ public final class CraftPlanScenario {
         if (addonFixture != null && !addonFixture.setup(minecraft, marker)) {
             return;
         }
+        outputId = addonFixture == null ? marker.outputId() : addonFixture.outputId(marker);
         advance(ScenarioState.WORLD_READY);
     }
 
@@ -145,7 +147,7 @@ public final class CraftPlanScenario {
         }
         var repo = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$repo();
         var entry = repo.getAllEntries().stream()
-                .filter(candidate -> candidate.getWhat().getId().toString().equals(marker.outputId()))
+                .filter(candidate -> candidate.getWhat().getId().toString().equals(outputId))
                 .filter(candidate -> candidate.isCraftable())
                 .findFirst().orElse(null);
         if (entry == null) {
@@ -167,7 +169,7 @@ public final class CraftPlanScenario {
 
     private void stabilizePlan() throws IOException {
         var snapshot = UiObservationStore.latest();
-        if (snapshot == null || snapshot.rows().stream().noneMatch(row -> row.outputId().equals(marker.outputId()))) {
+        if (snapshot == null || snapshot.rows().stream().noneMatch(row -> row.outputId().equals(outputId))) {
             stableRows.reset();
             return;
         }
@@ -181,7 +183,7 @@ public final class CraftPlanScenario {
         orders.add(ids(snapshot));
         knownOrders.add(knownIds(snapshot));
         checks.put("screen", snapshot.screen().equals(CraftConfirmScreen.class.getName()));
-        checks.put("ttc-row", snapshot.rows().stream().filter(row -> row.outputId().equals(marker.outputId()))
+        checks.put("ttc-row", snapshot.rows().stream().filter(row -> row.outputId().equals(outputId))
                 .flatMap(row -> row.description().stream()).anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")));
         checks.put("layout", !snapshot.badges().isEmpty() && LayoutValidator.validate(snapshot).isEmpty());
         screenshot("craft-plan.png");
@@ -207,7 +209,7 @@ public final class CraftPlanScenario {
                 if (cpu != null) {
                     accessor.ae2craftingtime_test_driver$selectedCpu(cpu);
                     var id = ProfilerBridge.networkId(context.grid());
-                    ProfilerBridge.clearStats(new ProfileKey(id, marker.outputId()));
+                    ProfilerBridge.clearStats(new ProfileKey(id, outputId));
                     return id;
                 }
                 return null;
@@ -235,7 +237,7 @@ public final class CraftPlanScenario {
     private void awaitAddonSample() {
         if (sampleCheck == null) {
             var server = minecraft.getSingleplayerServer();
-            sampleCheck = server.submit(() -> ProfilerBridge.stats(new ProfileKey(networkId, marker.outputId()))
+            sampleCheck = server.submit(() -> ProfilerBridge.stats(new ProfileKey(networkId, outputId))
                     .map(stats -> stats.sampleCount()).orElse(0));
         }
         if (!sampleCheck.isDone()) {
@@ -260,7 +262,7 @@ public final class CraftPlanScenario {
             return;
         }
         checks.put("ttc-after-sample", snapshot.rows().stream()
-                .filter(row -> row.outputId().equals(marker.outputId()))
+                .filter(row -> row.outputId().equals(outputId))
                 .flatMap(row -> row.description().stream())
                 .anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")));
         screenshot(options.scenario().replace("-cpu", "") + "-profiled-plan.png");
@@ -284,7 +286,7 @@ public final class CraftPlanScenario {
         var descending = knownOrders.get(3);
         checks.put("sort-cycle", SortObservation.valid(orders.get(1), orders.get(2), orders.get(3),
                 ascending, descending));
-        var target = snapshot.rows().stream().filter(row -> row.outputId().equals(marker.outputId())).findFirst()
+        var target = snapshot.rows().stream().filter(row -> row.outputId().equals(outputId)).findFirst()
                 .orElseThrow(() -> new IllegalStateException("target row is not visible"));
         moveMouse(target.cell().centerX(), target.cell().centerY());
         stableRows.reset();

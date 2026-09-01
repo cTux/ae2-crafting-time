@@ -66,6 +66,13 @@ ordering="AFTER"
 side="BOTH"
 
 [[dependencies."${mod_id}"]]
+modId="bmaddon"
+type="OPTIONAL"
+versionRange="[1.21.1-beta1,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies."${mod_id}"]]
 modId="extendedae_plus"
 type="OPTIONAL"
 versionRange="[1.6.2,)"

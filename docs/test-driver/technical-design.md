@@ -169,14 +169,17 @@ real `TtcSortButton`.
 
 `AddonCpuFixture` owns the shared asynchronous place/finish/select lifecycle.
 Its registry maps each `*-cpu` scenario to one driver-only implementation.
-AdvancedAE, ExtendedAE, ExtendedAE-Plus, NeoEco AE, and OmniSequence contain
-only their mod-specific fixture code. ExtendedAE replaces the disposable
+AdvancedAE, BM Addon, ExtendedAE, ExtendedAE-Plus, NeoEco AE, and OmniSequence
+contain only their mod-specific fixture code. ExtendedAE replaces the disposable
 world's AE2 molecular assemblers and selects an existing idle CPU;
-ExtendedAE-Plus reuses that setup after verifying its mod is loaded. A new
+ExtendedAE-Plus reuses that setup after verifying its mod is loaded. BM Addon
+places its Blood Assembler, installs a real Blood Pattern, supplies its inputs,
+and selects an existing idle CPU. A new
 optional dependency extends that registry and adds a
 `testDriverCompileOnly` dependency when it is not already on the inherited
-compile classpath; it does not change `CraftPlanScenario` or
-`run-ui-smoke.ps1`.
+compile classpath. A fixture may override the marker output only when the add-on
+requires its own pattern type; it does not add a scenario branch to
+`CraftPlanScenario` or `run-ui-smoke.ps1`.
 
 Plan data is stable after the same screen and ordered output IDs are observed
 for three consecutive rendered frames. A new screen, changed row order, or

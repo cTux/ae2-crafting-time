@@ -30,7 +30,7 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 | OmniSequence: Transfinite (optional; candidate) | `1.3.9-forge` | Yes (scenario) | — | — | `1.3.9-hotfix` | No | — | — |
 | ExtendedAE (optional; candidate) | `1.20-1.4.18-forge` | Yes (scenario) | `1.20-1.0.2-fabric` | No | `1.21-2.2.35-neoforge` | No | `26.1-1.0.3-neoforge` | No |
 | ExtendedAE-Plus (optional; candidate) | `1.5.5` | Yes (scenario) | — | — | `1.6.2` | No | — | — |
-| BM Addon (candidate) | `1.0.4` | No | — | — | `BMAddon1.21.1-beta1` | No | `beta3` | No |
+| BM Addon (optional) | `1.0.4` | Yes (`bmaddon-cpu`) | — | — | `BMAddon1.21.1-beta1` | No | `beta3` | No |
 | Crazy AE2 Addons (candidate) | `3.2.4` | No | — | — | — | — | — | — |
 | AE2 WCWT (candidate) | `1.20.1.10` | No | — | — | `1.3.8` | No | — | — |
 | AE2 Wireless Terminals (candidate) | `15.3.3-forge` | No | `15.2.1-fabric` | No | `19.5.1` | No | `26.1.1-beta` | No |
