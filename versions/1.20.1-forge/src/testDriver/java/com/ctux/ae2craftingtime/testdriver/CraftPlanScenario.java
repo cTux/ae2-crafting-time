@@ -218,7 +218,9 @@ public final class CraftPlanScenario {
             stableRows.reset();
             return;
         }
-        if (!stable(snapshot)) {
+        var staticAppliedEPlan = options.scenario().equals("appliede-cpu")
+                && snapshot.rows().stream().map(UiSnapshot.Row::outputId).distinct().count() >= 2;
+        if (!staticAppliedEPlan && !stable(snapshot)) {
             return;
         }
         if (!options.scenario().equals("craft-plan")) {
