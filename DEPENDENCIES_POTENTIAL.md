@@ -33,7 +33,7 @@ therefore cannot replace layer 2.
 | OmniSequence: Transfinite | CUSTOM_CPU (Omni-Computation Core) | 0 (conflict-safe verification) | #71 | [CF][omnisequence-cf] | Implemented (verify) |
 | AE2 Lightning Tech | CUSTOM_CPU (Tianshu + Matter Warping) | 2 | #72 | [CF][ae2lt-cf] / [MR][ae2lt-mr] | Implemented (verify) |
 | ExtendedAE | ASSEMBLER + PROVIDER | 4 | #73 | [CF][extendedae-cf] | Not started |
-| ExtendedAE-Plus | PROVIDER / QOL | 4 | #74 | [CF][extendedaeplus-cf] / [MR][extendedaeplus-mr] | Not started |
+| ExtendedAE-Plus | PROVIDER / QOL | 4 | #74 | [CF][extendedaeplus-cf] / [MR][extendedaeplus-mr] | Verified coexistence |
 | BM Addon | PROVIDER (Ara Vitae Assembler) | 4 | #75 | [CF][bmaddon-cf] / [MR][bmaddon-mr] | Not started |
 | Crazy AE2 Addons | PROVIDER / QOL | 4 | #76 | [CF][crazyae2-cf] / [MR][crazyae2-mr] | Not started |
 | AE2 WCWT | WIRELESS_TERMINAL | 5 | #77 | [CF][ae2wcwt-cf] / [MR][ae2wcwt-mr] | Not started |
