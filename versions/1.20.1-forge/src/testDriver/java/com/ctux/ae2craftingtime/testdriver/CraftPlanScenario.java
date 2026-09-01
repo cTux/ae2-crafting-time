@@ -234,7 +234,7 @@ public final class CraftPlanScenario {
         checks.put("ttc-row", snapshot.text().stream().anyMatch(CraftPlanScenario::isResolvedTtc));
         checks.put("total-ttc", snapshot.text().stream()
                 .anyMatch(text -> text.key().equals("text.ae2craftingtime.total_ttc")));
-        checks.put("layout", !snapshot.badges().isEmpty() && LayoutValidator.validate(snapshot).isEmpty());
+        checks.put("layout", !snapshot.badges().isEmpty() && LayoutValidator.validateBadges(snapshot).isEmpty());
         if (checks.values().stream().allMatch(Boolean::booleanValue)) {
             screenshotUnchecked("merequester-screen.png");
             try {

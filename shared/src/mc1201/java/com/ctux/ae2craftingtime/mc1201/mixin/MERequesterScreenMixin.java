@@ -35,7 +35,7 @@ public abstract class MERequesterScreenMixin {
     @Unique
     private static final int AE2CRAFTINGTIME_LABEL_PADDING = 2;
     @Unique
-    private static final int AE2CRAFTINGTIME_STATUS_X = 47;
+    private static final int AE2CRAFTINGTIME_STATUS_X = 26;
     @Shadow
     @Final
     private static int GUI_HEADER_HEIGHT;
