@@ -9,6 +9,7 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.parts.IPartHost;
 import appeng.api.parts.IPartItem;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.storage.IStorageProvider;
 import gripe._90.appliede.AppliedE;
 import gripe._90.appliede.part.EMCModulePart;
 import net.minecraft.core.BlockPos;
@@ -47,12 +48,6 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
         provider.addKnowledge(cobblestone.toStack());
         provider.setEmc(provider.getEmc().add(BigInteger.valueOf(1_000_000)));
         provider.sync(player);
-        var inventory = grid.getStorageService().getInventory();
-        var source = IActionSource.ofPlayer(player);
-        inventory.extract(cobblestone, Long.MAX_VALUE, Actionable.MODULATE, source);
-        if (inventory.insert(cobblestone, 1, Actionable.MODULATE, source) != 1) {
-            throw new IllegalStateException("AppliedE fixture could not expose its crafting target");
-        }
         grid.getEnergyService().injectPower(1_000_000, Actionable.MODULATE);
         var module = partHost.addPart((IPartItem<?>) moduleItem, side, player);
         if (module == null) {
@@ -69,8 +64,12 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
             failIfSetupStalled(placement, moduleNode);
             return false;
         }
+        IStorageProvider.requestUpdate(moduleNode);
+        placement.grid().getStorageService().invalidateCache();
         placement.grid().getCraftingService().refreshNodeCraftingProvider(moduleNode);
-        if (!placement.grid().getCraftingService().isCraftable(placement.cobblestone())) {
+        if (!placement.grid().getCraftingService().isCraftable(placement.cobblestone())
+                || placement.grid().getStorageService().getInventory().extract(placement.cobblestone(), 1,
+                        Actionable.SIMULATE, IActionSource.ofPlayer(player)) != 1) {
             failIfSetupStalled(placement, moduleNode);
             return false;
         }
