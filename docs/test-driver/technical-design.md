@@ -201,9 +201,9 @@ Crafting Plan observation path. The current fixtures cover AE2 WCWT and AE2
 Wireless Terminals.
 
 ME Requester also uses a separate screen flow. Its fixture places and configures
-one requester on the disposable AE2 grid. The shared scenario opens that block
-through normal client interaction and validates the final translation-keyed TTC
-row, total, badge geometry, and screenshot without calling production helpers.
+one requester with a deterministic profiler sample on the disposable AE2 grid.
+The shared scenario opens that block through normal client interaction and validates
+the final translation-keyed TTC row, total, badge geometry, and screenshot.
 
 Plan data is stable after the same screen and ordered output IDs are observed
 for three consecutive rendered frames. A new screen, changed row order, or

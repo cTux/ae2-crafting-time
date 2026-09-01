@@ -117,9 +117,9 @@ Terminals' charged wireless crafting terminal.
 ## ME Requester scenario
 
 The `merequester-screen` scenario places a real requester on the fixture grid,
-configures a furnace stock request, opens its screen through block use, and
-checks `screen`, `ttc-row`, `total-ttc`, and `layout`. Its screenshot is
-`merequester-screen.png`.
+configures a deterministic out-of-stock request and profiler sample, opens its
+screen through block use, and checks `screen`, `ttc-row`, `total-ttc`, and
+`layout`. Its screenshot is `merequester-screen.png`.
 
 ## Interactive diagnosis
 
