@@ -9,18 +9,18 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 abstract class AddonCpuFixture<P> {
-    private static final Map<String, String> FIXTURES = Map.of(
-            "advancedae-cpu", "com.ctux.ae2craftingtime.testdriver.AdvancedAeFixture",
-            "extendedae-cpu", "com.ctux.ae2craftingtime.testdriver.ExtendedAeFixture",
-            "extendedae-plus-cpu", "com.ctux.ae2craftingtime.testdriver.ExtendedAePlusFixture",
-            "bmaddon-cpu", "com.ctux.ae2craftingtime.testdriver.BmAddonFixture",
-            "crazyae2addons-cpu", "com.ctux.ae2craftingtime.testdriver.CrazyAe2AddonsFixture",
-            "megacells-cpu", "com.ctux.ae2craftingtime.testdriver.MegaCellsFixture",
-            "neoeco-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture",
-            "omnicells-cpu", "com.ctux.ae2craftingtime.testdriver.OmniCellsFixture",
-            "projectcell-cpu", "com.ctux.ae2craftingtime.testdriver.ProjectCellFixture",
-            "appliede-cpu", "com.ctux.ae2craftingtime.testdriver.AppliedEFixture",
-            "omnisequence-cpu", "com.ctux.ae2craftingtime.testdriver.OmniSequenceFixture");
+    private static final Map<String, String> FIXTURES = Map.ofEntries(
+            Map.entry("advancedae-cpu", "com.ctux.ae2craftingtime.testdriver.AdvancedAeFixture"),
+            Map.entry("extendedae-cpu", "com.ctux.ae2craftingtime.testdriver.ExtendedAeFixture"),
+            Map.entry("extendedae-plus-cpu", "com.ctux.ae2craftingtime.testdriver.ExtendedAePlusFixture"),
+            Map.entry("bmaddon-cpu", "com.ctux.ae2craftingtime.testdriver.BmAddonFixture"),
+            Map.entry("crazyae2addons-cpu", "com.ctux.ae2craftingtime.testdriver.CrazyAe2AddonsFixture"),
+            Map.entry("megacells-cpu", "com.ctux.ae2craftingtime.testdriver.MegaCellsFixture"),
+            Map.entry("neoeco-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture"),
+            Map.entry("omnicells-cpu", "com.ctux.ae2craftingtime.testdriver.OmniCellsFixture"),
+            Map.entry("projectcell-cpu", "com.ctux.ae2craftingtime.testdriver.ProjectCellFixture"),
+            Map.entry("appliede-cpu", "com.ctux.ae2craftingtime.testdriver.AppliedEFixture"),
+            Map.entry("omnisequence-cpu", "com.ctux.ae2craftingtime.testdriver.OmniSequenceFixture"));
 
     private CompletableFuture<P> placementFuture;
     private CompletableFuture<Boolean> setupFuture;
