@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.testdriver;
 
+import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
@@ -30,7 +31,9 @@ public final class UiObservationStore {
     private static long sequence;
 
     public static void begin(Minecraft minecraft) {
-        if (!(minecraft.screen instanceof CraftConfirmScreen screen)) {
+        if (!(minecraft.screen instanceof AEBaseScreen<?> screen)
+                || (!(screen instanceof CraftConfirmScreen)
+                && !screen.getClass().getName().equals(MeRequesterFixture.SCREEN))) {
             active = null;
             return;
         }

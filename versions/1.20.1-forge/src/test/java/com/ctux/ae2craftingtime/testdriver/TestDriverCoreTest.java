@@ -33,6 +33,7 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("megacells-cpu"));
         assertTrue(AddonCpuFixture.supports("ae2wcwt-terminal"));
         assertTrue(AddonCpuFixture.supports("ae2wtlib-terminal"));
+        assertTrue(AddonCpuFixture.supports("merequester-screen"));
         assertTrue(AddonCpuFixture.supports("neoeco-cpu"));
         assertTrue(AddonCpuFixture.supports("omnicells-cpu"));
         assertTrue(AddonCpuFixture.supports("projectcell-cpu"));
@@ -45,6 +46,7 @@ class TestDriverCoreTest {
         assertNull(AddonCpuFixture.create("craft-plan"));
         assertNull(AddonCpuFixture.create("ae2wcwt-terminal"));
         assertNull(AddonCpuFixture.create("ae2wtlib-terminal"));
+        assertNull(AddonCpuFixture.create("merequester-screen"));
         assertEquals("ae2wcwt", WirelessTerminalFixture.create("ae2wcwt-terminal").screenshotPrefix());
         assertEquals("ae2wtlib", WirelessTerminalFixture.create("ae2wtlib-terminal").screenshotPrefix());
         assertNull(WirelessTerminalFixture.create("missing-terminal"));
@@ -186,6 +188,8 @@ class TestDriverCoreTest {
                 DriverResult.requiredChecks("ae2wcwt-terminal"));
         assertEquals(List.of("screen", "ttc-tooltip", "plan-ttc"),
                 DriverResult.requiredChecks("ae2wtlib-terminal"));
+        assertEquals(List.of("screen", "ttc-row", "total-ttc", "layout"),
+                DriverResult.requiredChecks("merequester-screen"));
         var file = temporary.resolve("not-a-directory");
         Files.writeString(file, "x");
         assertThrows(Exception.class, () -> AtomicResultWriter.write(file, result));

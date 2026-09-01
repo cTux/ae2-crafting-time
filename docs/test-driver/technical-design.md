@@ -147,6 +147,7 @@ convert a compatible failure into a pass.
 STARTING
   -> WORLD_READY
   -> TERMINAL_OPEN
+  |  -> RESULT_WRITTEN (ME Requester)
   -> PLAN_OPEN
   -> PLAN_STABLE
   -> BASE_CHECKED -> SORTS_CHECKED -> TOOLTIP_CHECKED
@@ -199,6 +200,11 @@ final tooltip drawn for the known craftable entry, and then reuses the standard
 Crafting Plan observation path. The current fixtures cover AE2 WCWT and AE2
 Wireless Terminals.
 
+ME Requester also uses a separate screen flow. Its fixture places and configures
+one requester on the disposable AE2 grid. The shared scenario opens that block
+through normal client interaction and validates the final translation-keyed TTC
+row, total, badge geometry, and screenshot without calling production helpers.
+
 Plan data is stable after the same screen and ordered output IDs are observed
 for three consecutive rendered frames. A new screen, changed row order, or
 changed plan restarts the count.
@@ -219,6 +225,7 @@ run after normal AE2 Crafting Time injections.
 - actual background-color fill calls, merged into badge rectangles;
 - `TtcSortButton` identity, tooltip/state, and bounds;
 - the final tooltip rendered while a registered wireless terminal is active;
+- the final ME Requester screen text and badge bounds;
 - item-cell and AE2-owned widget bounds; and
 - GUI bounds and scroll position.
 

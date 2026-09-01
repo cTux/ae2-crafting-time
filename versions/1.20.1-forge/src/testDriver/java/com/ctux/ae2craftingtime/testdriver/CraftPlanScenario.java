@@ -56,6 +56,7 @@ public final class CraftPlanScenario {
     private CompletableFuture<Boolean> submitCheck;
     private CompletableFuture<Integer> sampleCheck;
     private final WirelessTerminalFixture wirelessFixture;
+    private final MeRequesterFixture requesterFixture;
     private CompletableFuture<ItemStack> wirelessSetup;
     private boolean wirelessHoverStarted;
     private boolean wirelessOpenRequested;
@@ -66,6 +67,7 @@ public final class CraftPlanScenario {
         this.driverFile = driverFile;
         addonFixture = AddonCpuFixture.create(options.scenario());
         wirelessFixture = WirelessTerminalFixture.create(options.scenario());
+        requesterFixture = MeRequesterFixture.SCENARIO.equals(options.scenario()) ? new MeRequesterFixture() : null;
         DriverResult.requiredChecks(options.scenario()).forEach(key -> checks.put(key, false));
     }
 
@@ -132,11 +134,27 @@ public final class CraftPlanScenario {
         if (wirelessFixture != null && !setupWirelessTerminal()) {
             return;
         }
+        if (requesterFixture != null && !requesterFixture.setup(
+                minecraft.getSingleplayerServer().getPlayerList().getPlayer(minecraft.player.getUUID()), marker)) {
+            return;
+        }
         outputId = addonFixture == null ? marker.outputId() : addonFixture.outputId(marker);
         advance(ScenarioState.WORLD_READY);
     }
 
     private void openTerminal() {
+        if (requesterFixture != null) {
+            if (minecraft.screen != null) {
+                if (minecraft.screen.getClass().getName().equals(MeRequesterFixture.SCREEN)) {
+                    advance(ScenarioState.TERMINAL_OPEN);
+                }
+                return;
+            }
+            var position = requesterFixture.position();
+            minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(position), Direction.UP, position, false));
+            return;
+        }
         if (wirelessFixture != null) {
             if (minecraft.screen != null) {
                 if (minecraft.screen.getClass().getName().equals(wirelessFixture.screenClass())) {
@@ -169,6 +187,10 @@ public final class CraftPlanScenario {
     }
 
     private void selectTarget(ScenarioState next) {
+        if (requesterFixture != null) {
+            verifyRequester();
+            return;
+        }
         if (!(minecraft.screen instanceof MEStorageScreen<?> screen)) {
             return;
         }
@@ -201,6 +223,26 @@ public final class CraftPlanScenario {
         }
         ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$click(entry, 2, ClickType.CLONE);
         advance(next);
+    }
+
+    private void verifyRequester() {
+        var snapshot = UiObservationStore.latest();
+        if (snapshot == null || !snapshot.screen().equals(MeRequesterFixture.SCREEN)) {
+            return;
+        }
+        checks.put("screen", true);
+        checks.put("ttc-row", snapshot.text().stream().anyMatch(CraftPlanScenario::isResolvedTtc));
+        checks.put("total-ttc", snapshot.text().stream()
+                .anyMatch(text -> text.key().equals("text.ae2craftingtime.total_ttc")));
+        checks.put("layout", !snapshot.badges().isEmpty() && LayoutValidator.validate(snapshot).isEmpty());
+        if (checks.values().stream().allMatch(Boolean::booleanValue)) {
+            screenshotUnchecked("merequester-screen.png");
+            try {
+                writePass();
+            } catch (IOException error) {
+                throw new IllegalStateException("cannot write ME Requester result", error);
+            }
+        }
     }
 
     private void openPlan() {
@@ -475,7 +517,7 @@ public final class CraftPlanScenario {
         try {
             screenshot(name);
         } catch (IOException error) {
-            throw new IllegalStateException("cannot save wireless terminal screenshot", error);
+            throw new IllegalStateException("cannot save test-driver screenshot", error);
         }
     }
 
