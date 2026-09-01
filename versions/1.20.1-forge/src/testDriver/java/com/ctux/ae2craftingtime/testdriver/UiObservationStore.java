@@ -22,6 +22,7 @@ public final class UiObservationStore {
     private static final int PITCH_Y = 23;
     private static Frame active;
     private static volatile UiSnapshot latest;
+    private static volatile List<UiSnapshot.ObservedText> wcwtTooltip = List.of();
     private static long sequence;
 
     public static void begin(Minecraft minecraft) {
@@ -112,6 +113,21 @@ public final class UiObservationStore {
         return latest;
     }
 
+    public static void wcwtTooltip(List<Component> components) {
+        if (Minecraft.getInstance().screen != null && Minecraft.getInstance().screen.getClass().getName()
+                .equals("com.lhy.wcwt.client.WirelessComprehensiveWorkTerminalScreen")) {
+            wcwtTooltip = observed(components, null);
+        }
+    }
+
+    public static List<UiSnapshot.ObservedText> wcwtTooltip() {
+        return wcwtTooltip;
+    }
+
+    public static void clearWcwtTooltip() {
+        wcwtTooltip = List.of();
+    }
+
     private static List<UiSnapshot.ObservedText> observed(List<Component> components, Rect bounds) {
         return components.stream().map(component -> observed(component, bounds)).toList();
     }
@@ -120,7 +136,12 @@ public final class UiObservationStore {
         if (component.getContents() instanceof TranslatableContents translated) {
             var arguments = new ArrayList<String>();
             for (var argument : translated.getArgs()) {
-                arguments.add(argument instanceof Component nested ? nested.getString() : String.valueOf(argument));
+                if (argument instanceof Component nested
+                        && nested.getContents() instanceof TranslatableContents nestedTranslation) {
+                    arguments.add(nestedTranslation.getKey());
+                } else {
+                    arguments.add(argument instanceof Component nested ? nested.getString() : String.valueOf(argument));
+                }
             }
             return new UiSnapshot.ObservedText(translated.getKey(), component.getString(), arguments, bounds);
         }

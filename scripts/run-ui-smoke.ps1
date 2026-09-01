@@ -1,7 +1,7 @@
 param(
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(craft-plan|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(craft-plan|ae2wcwt-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string]$ReportDirectory
 )
 
@@ -141,7 +141,9 @@ try {
     $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
         Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
     $driverName = "ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"
-    $requiredChecks = if ($Scenario -ne "craft-plan") {
+    $requiredChecks = if ($Scenario -eq "ae2wcwt-terminal") {
+        @("screen", "ttc-tooltip", "plan-ttc")
+    } elseif ($Scenario -ne "craft-plan") {
         @("cpu-selected", "profile-sample", "ttc-after-sample")
     } else {
         @("screen", "ttc-row", "total-ttc", "sort-cycle", "tooltip", "layout")
@@ -154,7 +156,9 @@ try {
     $actualChecks = @($result.checks.psobject.Properties.Name)
     if (Compare-Object $requiredChecks $actualChecks -SyncWindow 0) { throw "Invalid UI-smoke check set" }
     foreach ($check in $requiredChecks) { if (-not $result.checks.$check) { throw "Failed UI-smoke check: $check" } }
-    $requiredScreenshots = if ($Scenario -ne "craft-plan") {
+    $requiredScreenshots = if ($Scenario -eq "ae2wcwt-terminal") {
+        @("ae2wcwt-terminal.png", "ae2wcwt-plan.png")
+    } elseif ($Scenario -ne "craft-plan") {
         @("$($Scenario -replace '-cpu$', '')-profiled-plan.png")
     } else {
         @("craft-plan.png", "craft-plan-tooltip.png")

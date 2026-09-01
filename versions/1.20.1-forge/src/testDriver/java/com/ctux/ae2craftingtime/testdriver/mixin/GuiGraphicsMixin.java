@@ -4,11 +4,15 @@ import com.ctux.ae2craftingtime.testdriver.UiObservationStore;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.inventory.tooltip.TooltipComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.List;
+import java.util.Optional;
 
 @Mixin(GuiGraphics.class)
 public abstract class GuiGraphicsMixin {
@@ -22,5 +26,18 @@ public abstract class GuiGraphicsMixin {
     @Inject(method = "fill(IIIII)V", at = @At("HEAD"))
     private void ae2craftingtime_test_driver$fill(int x1, int y1, int x2, int y2, int color, CallbackInfo ci) {
         UiObservationStore.fill(x1, y1, x2, y2, color);
+    }
+
+    @Inject(method = "renderTooltip(Lnet/minecraft/client/gui/Font;Ljava/util/List;Ljava/util/Optional;II)V",
+            at = @At("HEAD"))
+    private void ae2craftingtime_test_driver$itemTooltip(Font font, List<Component> lines,
+            Optional<TooltipComponent> visual, int x, int y, CallbackInfo ci) {
+        UiObservationStore.wcwtTooltip(lines);
+    }
+
+    @Inject(method = "renderComponentTooltip", at = @At("HEAD"))
+    private void ae2craftingtime_test_driver$componentTooltip(Font font, List<Component> lines, int x, int y,
+            CallbackInfo ci) {
+        UiObservationStore.wcwtTooltip(lines);
     }
 }

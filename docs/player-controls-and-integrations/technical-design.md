@@ -104,6 +104,11 @@ events into `ProfilerBridge`. `StatsRequestContext` can resolve the selected
 AdvancedAE CPU for status diagnostics. Missing AdvancedAE classes leave the
 adapter inactive.
 
+AE2 WCWT inherits AE2's `MEStorageScreen` craftable-entry tooltip path. A
+client-only mixin activates only for WCWT's terminal screen, requests the
+cached stats for the hovered craftable key, and appends the one-item TTC. The
+terminal continues into AE2's normal Crafting Plan and CPU-selection screens.
+
 ## Localization
 
 `TtcText` and `StatsChatServer` build Minecraft translatable components instead
@@ -116,6 +121,7 @@ the same keys. Placeholders and key sets must stay matched.
 - Server execution mixins stay under `mixins`.
 - AE2 and optional renderer/input mixins stay under `client`.
 - 1.20.1 and 1.21.1 include Crafting Tree and ME Requester adapters.
+- 1.20.1 Forge and 1.21.1 NeoForge include the AE2 WCWT terminal adapter.
 - both NeoForge targets include the AdvancedAE adapter.
 - 26.1.2 omits the pre-26 optional UI adapters.
 - loader metadata keeps optional dependencies optional and agrees with

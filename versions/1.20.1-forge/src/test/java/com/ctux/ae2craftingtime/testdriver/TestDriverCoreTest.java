@@ -30,10 +30,12 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("extendedae-plus-cpu"));
         assertTrue(AddonCpuFixture.supports("bmaddon-cpu"));
         assertTrue(AddonCpuFixture.supports("crazyae2addons-cpu"));
+        assertTrue(AddonCpuFixture.supports("ae2wcwt-terminal"));
         assertTrue(AddonCpuFixture.supports("neoeco-cpu"));
         assertTrue(AddonCpuFixture.supports("omnisequence-cpu"));
         assertFalse(AddonCpuFixture.supports("missing-cpu"));
         assertNull(AddonCpuFixture.create("craft-plan"));
+        assertNull(AddonCpuFixture.create("ae2wcwt-terminal"));
         assertThrows(IllegalArgumentException.class, () -> AddonCpuFixture.create("missing-cpu"));
     }
 
@@ -81,6 +83,7 @@ class TestDriverCoreTest {
             assertTrue(ScenarioFlow.allows(addonPath.get(i), addonPath.get(i + 1)));
         }
         assertTrue(ScenarioFlow.allows(ScenarioState.PLAN_STABLE, ScenarioState.FAILED));
+        assertTrue(ScenarioFlow.allows(ScenarioState.PLAN_STABLE, ScenarioState.RESULT_WRITTEN));
         assertFalse(ScenarioFlow.allows(ScenarioState.PLAN_STABLE, ScenarioState.TOOLTIP_CHECKED));
         assertFalse(ScenarioFlow.allows(ScenarioState.FAILED, ScenarioState.FAILED));
         assertFalse(ScenarioFlow.allows(ScenarioState.QUIT_REQUESTED, ScenarioState.FAILED));
@@ -153,6 +156,8 @@ class TestDriverCoreTest {
                 DriverResult.requiredChecks("bmaddon-cpu"));
         assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("crazyae2addons-cpu"));
+        assertEquals(List.of("screen", "ttc-tooltip", "plan-ttc"),
+                DriverResult.requiredChecks("ae2wcwt-terminal"));
         var file = temporary.resolve("not-a-directory");
         Files.writeString(file, "x");
         assertThrows(Exception.class, () -> AtomicResultWriter.write(file, result));
