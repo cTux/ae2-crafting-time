@@ -50,7 +50,7 @@ Test-driver JARs are written to `build/test-driver` with the production contract
 in the filename, for example:
 
 ```text
-ae2-crafting-time-1.0.13-forge-1.20.1-test-driver.jar
+ae2-crafting-time-1.1.0-forge-1.20.1-test-driver.jar
 ```
 
 `distMod`, release scripts, normalized-JAR checks, and deploy discovery continue
@@ -167,8 +167,8 @@ The driver writes `result.json.tmp`, closes it, then atomically renames it to
 ```json
 {
   "schema": 1,
-  "driver": "ae2-crafting-time-1.0.13-forge-1.20.1-test-driver.jar",
-  "production": "ae2-crafting-time-1.0.13-forge-1.20.1.jar",
+  "driver": "ae2-crafting-time-1.1.0-forge-1.20.1-test-driver.jar",
+  "production": "ae2-crafting-time-1.1.0-forge-1.20.1.jar",
   "target": "1.20.1-forge",
   "profile": "compatible",
   "scenario": "craft-plan",
