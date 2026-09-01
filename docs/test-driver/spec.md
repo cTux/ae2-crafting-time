@@ -193,9 +193,9 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
   Addons, ExtendedAE, ExtendedAE-Plus, NeoEco AE, and OmniSequence: Transfinite.
   ExtendedAE and ExtendedAE-Plus replace the fixture's molecular assemblers
   with ExtendedAE assemblers. BM Addon installs a real Blood Pattern and its
-  inputs. Crazy AE2 Addons sets and verifies a priority on an existing AE2 CPU.
-  These provider scenarios use an existing idle CPU because the addons do not
-  add one.
+  inputs. Crazy AE2 Addons places a native AE2 1K crafting storage CPU, then
+  sets and verifies its priority. The other provider scenarios use an existing
+  idle CPU because those addons do not add one.
 - Run it against both the compatible and latest AE2 profiles already owned by
   `scripts/run-client-versions.json`.
 - Do not create a cross-loader abstraction for this slice. Reuse code only when

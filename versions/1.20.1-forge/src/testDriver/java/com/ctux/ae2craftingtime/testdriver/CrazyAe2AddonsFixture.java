@@ -78,9 +78,8 @@ final class CrazyAe2AddonsFixture extends AddonCpuFixture<CrazyAe2AddonsFixture.
         if (terminalNode.getGrid() != storageNode.getGrid()) {
             GridHelper.createConnection(terminalNode, storageNode);
         }
-        var grid = terminalNode.getGrid();
-        var cpu = idleCpu(grid);
-        if (cpu == null) {
+        var cpu = storage.getCluster();
+        if (cpu == null || cpu.isBusy()) {
             return false;
         }
         setPriority(cpu, TEST_PRIORITY);
@@ -89,15 +88,14 @@ final class CrazyAe2AddonsFixture extends AddonCpuFixture<CrazyAe2AddonsFixture.
 
     @Override
     protected ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {
-        var cpu = idleCpu(grid);
-        return cpu != null && priority(cpu) == TEST_PRIORITY ? cpu : null;
+        return grid.getCraftingService().getCpus().stream()
+                .filter(CrazyAe2AddonsFixture::isNativeCpu)
+                .filter(candidate -> !candidate.isBusy() && priority(candidate) == TEST_PRIORITY)
+                .findFirst().orElse(null);
     }
 
-    private static ICraftingCPU idleCpu(IGrid grid) {
-        return grid.getCraftingService().getCpus().stream()
-                .filter(candidate -> candidate.getClass().getName()
-                        .equals("appeng.me.cluster.implementations.CraftingCPUCluster"))
-                .filter(candidate -> !candidate.isBusy()).findFirst().orElse(null);
+    private static boolean isNativeCpu(ICraftingCPU cpu) {
+        return cpu.getClass().getName().equals("appeng.me.cluster.implementations.CraftingCPUCluster");
     }
 
     private static void setPriority(ICraftingCPU cpu, int priority) {
