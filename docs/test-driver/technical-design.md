@@ -169,7 +169,7 @@ real `TtcSortButton`.
 
 `AddonCpuFixture` owns the shared asynchronous place/finish/select lifecycle.
 Its registry maps each `*-cpu` scenario to one driver-only implementation.
-AdvancedAE, BM Addon, Crazy AE2 Addons, ExtendedAE, ExtendedAE-Plus, NeoEco AE,
+AdvancedAE, BM Addon, Crazy AE2 Addons, ExtendedAE, ExtendedAE-Plus, MEGA Cells, NeoEco AE,
 and OmniSequence contain only their mod-specific fixture code. ExtendedAE
 replaces the disposable world's AE2 molecular assemblers and selects an
 existing idle CPU;
