@@ -110,6 +110,7 @@ dependencies {
     testDriverCompileOnly 'maven.modrinth:4inoel9g:RFT2nmVb'
     testDriverCompileOnly 'maven.modrinth:pNabrMMw:z8QXeyI0'
     testDriverCompileOnly 'maven.modrinth:neoecoae:20.3.0'
+    testDriverCompileOnly 'maven.modrinth:jjuIRIVr:SH2D1n3s'
     testDriverCompileOnly 'curse.maven:omnisequence-transfinite-1624558:8675216'
     fileTree("$runtimeRunDirectory/resolved-mods") { include '*.jar' }.each {
         add('modImplementation', "runmods:${it.name - '.jar'}:1")

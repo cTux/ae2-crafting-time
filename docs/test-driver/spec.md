@@ -205,7 +205,7 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 
 - First artifact: Minecraft 1.20.1, Forge, Java 17, standard AE2 Crafting Plan.
 - Optional add-on CPU fixtures currently cover AdvancedAE, BM Addon, Crazy AE2
-  Addons, ExtendedAE, ExtendedAE-Plus, NeoEco AE, and OmniSequence: Transfinite.
+  Addons, ExtendedAE, ExtendedAE-Plus, MEGA Cells, NeoEco AE, and OmniSequence: Transfinite.
   ExtendedAE and ExtendedAE-Plus replace the fixture's molecular assemblers
   with ExtendedAE assemblers. BM Addon installs a real Blood Pattern and its
   inputs. Crazy AE2 Addons places a native AE2 1K crafting storage CPU, then

@@ -30,6 +30,7 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("extendedae-plus-cpu"));
         assertTrue(AddonCpuFixture.supports("bmaddon-cpu"));
         assertTrue(AddonCpuFixture.supports("crazyae2addons-cpu"));
+        assertTrue(AddonCpuFixture.supports("megacells-cpu"));
         assertTrue(AddonCpuFixture.supports("ae2wcwt-terminal"));
         assertTrue(AddonCpuFixture.supports("ae2wtlib-terminal"));
         assertTrue(AddonCpuFixture.supports("neoeco-cpu"));
@@ -161,6 +162,8 @@ class TestDriverCoreTest {
                 DriverResult.requiredChecks("bmaddon-cpu"));
         assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("crazyae2addons-cpu"));
+        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+                DriverResult.requiredChecks("megacells-cpu"));
         assertEquals(List.of("screen", "ttc-tooltip", "plan-ttc"),
                 DriverResult.requiredChecks("ae2wcwt-terminal"));
         assertEquals(List.of("screen", "ttc-tooltip", "plan-ttc"),
