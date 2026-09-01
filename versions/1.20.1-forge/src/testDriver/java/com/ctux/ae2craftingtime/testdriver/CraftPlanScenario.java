@@ -53,6 +53,7 @@ public final class CraftPlanScenario {
     private String networkId;
     private String outputId;
     private CompletableFuture<String> cpuCheck;
+    private CompletableFuture<Boolean> submitCheck;
     private CompletableFuture<Integer> sampleCheck;
     private final WirelessTerminalFixture wirelessFixture;
     private CompletableFuture<ItemStack> wirelessSetup;
@@ -286,8 +287,28 @@ public final class CraftPlanScenario {
     }
 
     private void submitAddonCraft() {
-        if (minecraft.screen instanceof CraftConfirmScreen screen) {
-            screen.getMenu().startJob();
+        if (submitCheck == null) {
+            var server = minecraft.getSingleplayerServer();
+            var playerId = minecraft.player.getUUID();
+            submitCheck = server.submit(() -> {
+                var player = server.getPlayerList().getPlayer(playerId);
+                if (player == null || !(player.containerMenu instanceof appeng.menu.me.crafting.CraftConfirmMenu menu)) {
+                    throw new IllegalStateException("server Crafting Plan menu is unavailable");
+                }
+                var plan = ((CraftConfirmMenuAccessor) menu).ae2craftingtime_test_driver$result();
+                if (plan == null) {
+                    throw new IllegalStateException("server Crafting Plan result is unavailable");
+                }
+                if (plan.simulation()) {
+                    throw new IllegalStateException("server Crafting Plan is a simulation; missing="
+                            + plan.missingItems());
+                }
+                menu.startJob();
+                return true;
+            });
+        }
+        if (submitCheck.isDone()) {
+            submitCheck.join();
             advance(ScenarioState.ADDON_CRAFT_SUBMITTED);
         }
     }
