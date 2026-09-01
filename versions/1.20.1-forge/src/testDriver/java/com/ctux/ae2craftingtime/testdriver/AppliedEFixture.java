@@ -47,8 +47,12 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
         provider.addKnowledge(cobblestone.toStack());
         provider.setEmc(provider.getEmc().add(BigInteger.valueOf(1_000_000)));
         provider.sync(player);
-        grid.getStorageService().getInventory().extract(cobblestone, Long.MAX_VALUE, Actionable.MODULATE,
-                IActionSource.ofPlayer(player));
+        var inventory = grid.getStorageService().getInventory();
+        var source = IActionSource.ofPlayer(player);
+        inventory.extract(cobblestone, Long.MAX_VALUE, Actionable.MODULATE, source);
+        if (inventory.insert(cobblestone, 1, Actionable.MODULATE, source) != 1) {
+            throw new IllegalStateException("AppliedE fixture could not expose its crafting target");
+        }
         grid.getEnergyService().injectPower(1_000_000, Actionable.MODULATE);
         var module = partHost.addPart((IPartItem<?>) moduleItem, side, player);
         if (module == null) {
