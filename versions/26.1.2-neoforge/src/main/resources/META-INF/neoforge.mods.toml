@@ -51,5 +51,12 @@ versionRange="[26.1.1-beta,27.0.0)"
 ordering="AFTER"
 side="CLIENT"
 
+[[dependencies."${mod_id}"]]
+modId="ae2omnicells"
+type="OPTIONAL"
+versionRange="[1.1.7,1.2.0)"
+ordering="AFTER"
+side="BOTH"
+
 [[mixins]]
 config="ae2craftingtime.mixins.json"

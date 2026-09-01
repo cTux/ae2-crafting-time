@@ -17,6 +17,7 @@ abstract class AddonCpuFixture<P> {
             "crazyae2addons-cpu", "com.ctux.ae2craftingtime.testdriver.CrazyAe2AddonsFixture",
             "megacells-cpu", "com.ctux.ae2craftingtime.testdriver.MegaCellsFixture",
             "neoeco-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture",
+            "omnicells-cpu", "com.ctux.ae2craftingtime.testdriver.OmniCellsFixture",
             "omnisequence-cpu", "com.ctux.ae2craftingtime.testdriver.OmniSequenceFixture");
 
     private CompletableFuture<P> placementFuture;
