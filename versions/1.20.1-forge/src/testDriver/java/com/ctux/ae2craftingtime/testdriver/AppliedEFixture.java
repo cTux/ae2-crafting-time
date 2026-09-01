@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.IGrid;
+import appeng.api.networking.IGridNode;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.api.networking.security.IActionSource;
@@ -49,11 +50,15 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
         if (module == null) {
             throw new IllegalStateException("AppliedE fixture could not place the transmutation module");
         }
-        return new Placement(grid, cobblestone);
+        return new Placement(grid, module.getGridNode(), cobblestone);
     }
 
     @Override
     protected boolean finish(ServerPlayer player, Placement placement) {
+        if (!placement.moduleNode().isActive()) {
+            return false;
+        }
+        placement.grid().getCraftingService().refreshNodeCraftingProvider(placement.moduleNode());
         return placement.grid().getCraftingService().isCraftable(placement.cobblestone());
     }
 
@@ -62,6 +67,6 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
         return grid.getCraftingService().getCpus().stream().filter(cpu -> !cpu.isBusy()).findFirst().orElse(null);
     }
 
-    record Placement(IGrid grid, AEItemKey cobblestone) {
+    record Placement(IGrid grid, IGridNode moduleNode, AEItemKey cobblestone) {
     }
 }
