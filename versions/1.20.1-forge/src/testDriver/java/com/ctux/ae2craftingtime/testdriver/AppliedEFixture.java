@@ -1,15 +1,12 @@
 package com.ctux.ae2craftingtime.testdriver;
 
-import appeng.api.config.Actionable;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.crafting.ICraftingCPU;
-import appeng.api.networking.security.IActionSource;
 import appeng.api.parts.IPartHost;
 import appeng.api.parts.IPartItem;
 import appeng.api.stacks.AEItemKey;
-import appeng.api.storage.IStorageProvider;
 import appeng.core.definitions.AEBlocks;
 import gripe._90.appliede.AppliedE;
 import gripe._90.appliede.part.EMCModulePart;
@@ -51,15 +48,15 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
                         && partHost.canAddPart(new ItemStack(moduleItem), candidate))
                 .findFirst().orElseThrow(() -> new IllegalStateException("AppliedE fixture has no free cable side"));
         var provider = ITransmutationProxy.INSTANCE.getKnowledgeProviderFor(player.getUUID());
-        var cobblestone = AEItemKey.of(Blocks.COBBLESTONE);
-        provider.addKnowledge(cobblestone.toStack());
+        var target = AEItemKey.of(Blocks.FURNACE);
+        provider.addKnowledge(target.toStack());
         provider.setEmc(provider.getEmc().add(BigInteger.valueOf(1_000_000)));
         provider.sync(player);
         var module = partHost.addPart((IPartItem<?>) moduleItem, side, player);
         if (module == null) {
             throw new IllegalStateException("AppliedE fixture could not place the transmutation module");
         }
-        return new Placement(grid, (EMCModulePart) module, cobblestone);
+        return new Placement(grid, (EMCModulePart) module, target);
     }
 
     @Override
@@ -69,12 +66,8 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
             failIfSetupStalled(placement, moduleNode);
             return false;
         }
-        IStorageProvider.requestUpdate(placement.module().getMainNode());
-        placement.grid().getStorageService().invalidateCache();
         placement.grid().getCraftingService().refreshNodeCraftingProvider(moduleNode);
-        if (!placement.grid().getCraftingService().isCraftable(placement.cobblestone())
-                || placement.grid().getStorageService().getInventory().extract(placement.cobblestone(), 1,
-                        Actionable.SIMULATE, IActionSource.ofPlayer(player)) != 1) {
+        if (!placement.grid().getCraftingService().isCraftable(placement.target())) {
             failIfSetupStalled(placement, moduleNode);
             return false;
         }
@@ -97,11 +90,6 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
         return grid.getCraftingService().getCpus().stream().filter(cpu -> !cpu.isBusy()).findFirst().orElse(null);
     }
 
-    @Override
-    protected String outputId(Placement placement, FixtureMarker marker) {
-        return placement.cobblestone().getId().toString();
-    }
-
-    record Placement(IGrid grid, EMCModulePart module, AEItemKey cobblestone) {
+    record Placement(IGrid grid, EMCModulePart module, AEItemKey target) {
     }
 }
