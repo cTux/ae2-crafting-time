@@ -34,6 +34,7 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("ae2wcwt-terminal"));
         assertTrue(AddonCpuFixture.supports("ae2wtlib-terminal"));
         assertTrue(AddonCpuFixture.supports("neoeco-cpu"));
+        assertTrue(AddonCpuFixture.supports("omnicells-cpu"));
         assertTrue(AddonCpuFixture.supports("omnisequence-cpu"));
         assertFalse(AddonCpuFixture.supports("missing-cpu"));
         assertNull(AddonCpuFixture.create("craft-plan"));
@@ -164,6 +165,8 @@ class TestDriverCoreTest {
                 DriverResult.requiredChecks("crazyae2addons-cpu"));
         assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("megacells-cpu"));
+        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+                DriverResult.requiredChecks("omnicells-cpu"));
         assertEquals(List.of("screen", "ttc-tooltip", "plan-ttc"),
                 DriverResult.requiredChecks("ae2wcwt-terminal"));
         assertEquals(List.of("screen", "ttc-tooltip", "plan-ttc"),

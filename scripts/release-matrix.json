@@ -22,7 +22,8 @@
       { "project_id": "4inoel9g", "version_id": "RFT2nmVb", "dependency_type": "optional" },
       { "project_id": "pNabrMMw", "version_id": "z8QXeyI0", "dependency_type": "optional" },
       { "project_id": "xr109llC", "version_id": "pN9pMjiW", "dependency_type": "optional" },
-      { "project_id": "jjuIRIVr", "version_id": "SH2D1n3s", "dependency_type": "optional" }
+      { "project_id": "jjuIRIVr", "version_id": "SH2D1n3s", "dependency_type": "optional" },
+      { "project_id": "RYE1pYyr", "version_id": "c2s3iMw8", "dependency_type": "optional" }
     ],
     "changelog": "### FIXED\n\n- The total TTC now sits in the crafting status header, so it no longer overlaps the action buttons."
   },
@@ -69,7 +70,8 @@
       { "project_id": "4inoel9g", "version_id": "Zg3OnxBb", "dependency_type": "optional" },
       { "project_id": "pNabrMMw", "version_id": "CxSEpEnO", "dependency_type": "optional" },
       { "project_id": "xr109llC", "version_id": "o8U8Ekro", "dependency_type": "optional" },
-      { "project_id": "jjuIRIVr", "version_id": "RPG4EriK", "dependency_type": "optional" }
+      { "project_id": "jjuIRIVr", "version_id": "RPG4EriK", "dependency_type": "optional" },
+      { "project_id": "RYE1pYyr", "version_id": "k444ySGT", "dependency_type": "optional" }
     ],
     "changelog": "### FIXED\n\n- The total TTC now sits in the crafting status header, so it no longer overlaps the action buttons."
   },
@@ -88,7 +90,8 @@
     "modrinthDependencies": [
       { "project_id": "XxWD5pD3", "dependency_type": "required" },
       { "project_id": "rxYaglEe", "dependency_type": "optional" },
-      { "project_id": "pNabrMMw", "version_id": "ncEqrp7o", "dependency_type": "optional" }
+      { "project_id": "pNabrMMw", "version_id": "ncEqrp7o", "dependency_type": "optional" },
+      { "project_id": "RYE1pYyr", "version_id": "wv0rLPsF", "dependency_type": "optional" }
     ],
     "changelog": "### ADDED\n\n- You can now use AE2 Crafting Time with NeoForge on Minecraft 26.1.2 and Applied Energistics 2 26.1.10-beta."
   }

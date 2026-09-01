@@ -37,6 +37,7 @@ AE2 Crafting Time.
 | OmniSequence: Transfinite (`molecularmanipulator`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.3.9-forge`; NeoForge: `>=1.3.9-hotfix` | TTC profiling for Omni-Computation Core crafting CPUs through AE2's native execution path. |
 | ExtendedAE-Plus (`extendedae_plus`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.5.5 <1.6.0`; NeoForge: `>=1.6.2` | TTC profiling and UI coexistence with ExtendedAE-Plus crafting changes. |
 | MEGA Cells (`megacells`) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | Forge/Fabric: `>=2.4.6 <3.0.0`; NeoForge: `>=4.11.0 <5.0.0` | TTC profiling and Crafting Plan display for MEGA crafting CPUs through AE2's native execution path. |
+| OMNI Cells (`ae2omnicells`) | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.20.1/1.21.1: `>=1.1.6 <1.2.0`; 26.1.2: `>=1.1.7 <1.2.0` | TTC profiling and Crafting Plan display for OMNI crafting CPUs through AE2's native execution path. |
 
 Applied Mekanistics is not declared for the Fabric jar because the supported
 Applied Mekanistics releases for these targets are Forge/NeoForge.
