@@ -11,6 +11,13 @@ For the fast Forge 1.20.1 UI smoke, run this on the host:
 .\scripts\invoke-ui-smoke-codexvm.ps1
 ```
 
+During integration development, add `-ProjectId <id>` to load only that
+integration and its required dependencies. Before merge, rerun the scenario
+without `-ProjectId` to prove it against the complete compatible profile. Fetch
+and rebase onto `origin/master` immediately before that final full-profile run;
+rerun it after any later base change to production, build, dependency, fixture,
+or driver code.
+
 It uses OpenSSH by default. Add `-Transport Vmrun` to use VMware guest
 execution, or `-Stop` to terminate only the PID tree recorded by the current
 run. Both transports dispatch into the logged-in Codex desktop so Minecraft is
@@ -20,7 +27,9 @@ the disposable world are replaced.
 
 Progress does not require VNC. Read `status.json`, `launcher.stdout.log`, and
 `launcher.stderr.log` under
-`build\ui-smoke\1.20.1-forge\<profile>`. The status records the phase, exact
+`build\ui-smoke\1.20.1-forge\<profile>\<scenario>`. Each profile keeps one warm
+runtime and separates results by scenario. The runner rejects concurrent smoke
+scenarios that would share that runtime. The status records the phase, exact
 PID, Java home, result, and evidence path. Use VNC only for the final maximized
 Minecraft visual check.
 
@@ -67,6 +76,18 @@ Update every client in one place: `scripts/run-client-versions.json`. Change
 profile resolves Modrinth and loader releases at launch. CurseForge-only files
 have explicit `compatible` and `latest` records because CurseForge has no
 anonymous version API; update their file IDs, names, and hashes in the matrix.
+
+Before adding a Modrinth integration, audit every supported row from its
+official artifacts:
+
+```powershell
+.\scripts\audit-optional-integration.ps1 -ProjectId <id>
+```
+
+The command selects the oldest stable artifact whose embedded Minecraft,
+loader, and AE2 ranges admit the pinned row. It falls back to a compatible beta
+when that target has no stable artifact, but never selects alpha files. Rows
+without a compatible official artifact are reported as `UNSUPPORTED`.
 
 The same matrix is the known-issues list. Keep incompatible candidates in
 `projects`, set `compatible` to `false`, and record the concrete `reason`.

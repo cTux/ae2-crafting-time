@@ -18,6 +18,7 @@
       { "project_id": "E6BFl96N", "dependency_type": "optional" },
       { "project_id": "udZtKfzP", "dependency_type": "optional", "version_number": "20.3.0" },
       { "project_id": "ArHeh5Fz", "dependency_type": "optional" },
+      { "project_id": "qPydPwtX", "dependency_type": "optional" },
       { "project_id": "anaGQD2Q", "version_id": "KwFCuLdA", "dependency_type": "optional" },
       { "project_id": "4inoel9g", "version_id": "RFT2nmVb", "dependency_type": "optional" },
       { "project_id": "pNabrMMw", "version_id": "z8QXeyI0", "dependency_type": "optional" },
@@ -67,6 +68,7 @@
       { "project_id": "IiATswDj", "dependency_type": "optional" },
       { "project_id": "rxYaglEe", "dependency_type": "optional" },
       { "project_id": "E6BFl96N", "dependency_type": "optional" },
+      { "project_id": "qPydPwtX", "dependency_type": "optional" },
       { "project_id": "4inoel9g", "version_id": "Zg3OnxBb", "dependency_type": "optional" },
       { "project_id": "pNabrMMw", "version_id": "CxSEpEnO", "dependency_type": "optional" },
       { "project_id": "xr109llC", "version_id": "o8U8Ekro", "dependency_type": "optional" },
@@ -90,6 +92,7 @@
     "modrinthDependencies": [
       { "project_id": "XxWD5pD3", "dependency_type": "required" },
       { "project_id": "rxYaglEe", "dependency_type": "optional" },
+      { "project_id": "qPydPwtX", "dependency_type": "optional" },
       { "project_id": "pNabrMMw", "version_id": "ncEqrp7o", "dependency_type": "optional" },
       { "project_id": "RYE1pYyr", "version_id": "wv0rLPsF", "dependency_type": "optional" }
     ],

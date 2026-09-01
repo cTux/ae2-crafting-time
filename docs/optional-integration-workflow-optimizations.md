@@ -2,7 +2,7 @@
 
 These changes would shorten the time needed to add an optional dependency and
 prove it through the Forge 1.20.1 UI smoke driver. They are ordered by expected
-value. None of them are implemented yet.
+value. Every P0 and P1 item is implemented; the P2 items remain planned.
 
 | Priority | Optimization | Concrete change | Expected benefit | Safety rule |
 | --- | --- | --- | --- | --- |
@@ -18,6 +18,6 @@ value. None of them are implemented yet.
 | P2 | Baseline third-party warnings | Store normalized known-warning fingerprints per profile and show only new warnings and errors while retaining the complete log. | Reduces manual review to the relevant warning delta. | Never suppress new or repository-owned warnings. |
 | P2 | Overlap independent gates | After the commit creates the PR, let GitHub CI run while the VM smoke and PowerShell self-checks run locally. | Wall time becomes roughly the slowest gate instead of the sum of every gate. | Do not run multiple Minecraft clients against the shared runtime concurrently. |
 
-Start with the shared runtime, rebase-before-smoke order, matrix-derived release
-assertions, and compatibility-audit command. Add the focused profile after
-benchmarking it against the mandatory full compatible-profile gate.
+The complete compatible profile remains the mandatory pre-merge gate. Use the
+focused profile for iteration, then rebase and run the full profile once for the
+final result.

@@ -46,9 +46,13 @@ function Assert-ReleaseEntry($entry) {
     if ($entry.releaseType -notin @("alpha", "beta", "release")) {
         throw "$($entry.id) releaseType must be alpha, beta, or release"
     }
+    $dependencyIds = [Collections.Generic.HashSet[string]]::new()
     foreach ($dependency in @($entry.modrinthDependencies)) {
         if (-not $dependency.project_id -or $dependency.dependency_type -notin @("required", "optional", "incompatible", "embedded")) {
             throw "$($entry.id) has invalid Modrinth dependency metadata"
+        }
+        if (-not $dependencyIds.Add([string]$dependency.project_id)) {
+            throw "$($entry.id) has duplicate Modrinth dependency $($dependency.project_id)"
         }
     }
 }

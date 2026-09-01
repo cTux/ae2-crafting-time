@@ -24,17 +24,36 @@ if (($releaseDryRun -join "`n") -notmatch '### FIXED\s+- The total TTC now sits 
 if (($releaseDryRun -join "`n") -notmatch 'dry-run next development version: 1\.0\.5') {
     throw "Release dry run did not advance the development version"
 }
-if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, E6BFl96N:optional, udZtKfzP:optional, ArHeh5Fz:optional, anaGQD2Q:optional, 4inoel9g:optional, pNabrMMw:optional, xr109llC:optional, jjuIRIVr:optional, RYE1pYyr:optional') {
-    throw "Release dry run did not include Forge Modrinth dependencies"
+$releaseOutput = $releaseDryRun -join "`n"
+$releaseMatrix = Get-Content -LiteralPath (Join-Path $PSScriptRoot "release-matrix.json") -Raw | ConvertFrom-Json
+foreach ($entry in $releaseMatrix) {
+    $ids = @($entry.modrinthDependencies.project_id)
+    if (@($ids | Group-Object | Where-Object Count -gt 1).Count) { throw "Duplicate matrix dependency in $($entry.id)" }
+    $expected = "dry-run Modrinth dependencies: " + ((@($entry.modrinthDependencies) |
+        ForEach-Object { "$($_.project_id):$($_.dependency_type)" }) -join ", ")
+    $section = [regex]::Match($releaseOutput,
+        "(?s)dry-run deploy $([regex]::Escape($entry.id)):.*?(?=dry-run deploy |dry-run GitHub Release:)").Value
+    if (-not $section -or $section -notmatch "(?m)^$([regex]::Escape($expected))$") {
+        throw "Release dry run did not preserve matrix dependencies for $($entry.id)"
+    }
 }
-if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: P7dR8mSH:required, XxWD5pD3:required, a1RwDz90:optional, E6BFl96N:optional, pNabrMMw:optional, jjuIRIVr:optional') {
-    throw "Release dry run did not include Fabric Modrinth dependencies"
-}
-if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, rxYaglEe:optional, E6BFl96N:optional, 4inoel9g:optional, pNabrMMw:optional, xr109llC:optional, jjuIRIVr:optional, RYE1pYyr:optional') {
-    throw "Release dry run did not include NeoForge Modrinth dependencies"
-}
-if (($releaseDryRun -join "`n") -notmatch 'dry-run Modrinth dependencies: XxWD5pD3:required, rxYaglEe:optional, pNabrMMw:optional, RYE1pYyr:optional') {
-    throw "Release dry run did not include 26.1.2 NeoForge Modrinth dependencies"
+
+$duplicateMatrixPath = "$StatePath.duplicate-matrix.json"
+$duplicateMatrix = Get-Content -LiteralPath (Join-Path $PSScriptRoot "release-matrix.json") -Raw | ConvertFrom-Json
+$duplicateMatrix[0].modrinthDependencies += $duplicateMatrix[0].modrinthDependencies[0]
+$duplicateMatrix | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $duplicateMatrixPath -Encoding UTF8
+try {
+    $preference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "Continue"
+        $duplicateOutput = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" `
+            -MatrixPath $duplicateMatrixPath -StatePath "$StatePath.duplicate" -VersionPath $versionPath 2>&1
+    } finally { $ErrorActionPreference = $preference }
+    if ($LASTEXITCODE -eq 0 -or ($duplicateOutput -join "`n") -notlike "*has duplicate Modrinth dependency*") {
+        throw "Release script did not reject duplicate dependencies"
+    }
+} finally {
+    Remove-Item -LiteralPath $duplicateMatrixPath, "$StatePath.duplicate" -Force -ErrorAction SilentlyContinue
 }
 
 $sharedChangelog = "### CHANGED`n`n- Shared release note."

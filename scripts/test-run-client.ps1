@@ -34,6 +34,9 @@ foreach ($entry in $matrix) {
     foreach ($project in @($entry.projects | Where-Object { $_.compatible -ne $false }).project_id) {
         if ($project -notin $entry.compatible.versions.project_id) { throw "Missing compatible lock for $project in $($entry.id)" }
     }
+    foreach ($project in @($entry.test_driver_projects | Where-Object { $_ })) {
+        if ($project -notin $entry.compatible.versions.project_id) { throw "Missing test-driver fixture lock for $project in $($entry.id)" }
+    }
     foreach ($version in @($entry.compatible.versions)) { $global:Ae2CtVersions[$version.version_id] = @($version.project_id, $version.version) }
     $global:Ae2CtVersions[$entry.compatible.ae2_version_id] = @("XxWD5pD3", $entry.compatible.ae2_version)
     if ($entry.compatible.fabric_api_version_id) { $global:Ae2CtVersions[$entry.compatible.fabric_api_version_id] = @("P7dR8mSH", $entry.compatible.fabric_api_version) }
@@ -52,7 +55,10 @@ function Invoke-WebRequest {
 function New-TestVersion([string]$project, [string]$version) {
     [pscustomobject]@{
         id = "$project-$version"; version_number = $version
-        dependencies = @([pscustomobject]@{ project_id = "XxWD5pD3"; version_id = "old-pin"; dependency_type = "required" })
+        dependencies = @([pscustomobject]@{
+            project_id = $(if ($project -eq "XxWD5pD3" -and $global:Ae2CtAe2Dependency) { "Ck4E7v7R" } else { "XxWD5pD3" })
+            version_id = "old-pin"; dependency_type = "required"
+        })
         files = @([pscustomobject]@{ filename = "$project.jar"; hashes = [pscustomobject]@{ sha512 = $hash }; url = "https://example.invalid/$project.jar"; primary = $true })
     }
 }
@@ -112,9 +118,42 @@ try {
     }
 
     $customRuntime = Join-Path $temp "custom-runtime"
-    & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -RuntimeDirectory $customRuntime -ResolveOnly 6>&1 | Out-Null
+    $global:Ae2CtAe2Dependency = $true
+    try {
+        $focusedOutput = (& $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix `
+            -RuntimeDirectory $customRuntime -DriverScenario ae2wtlib-terminal -DriverOutputDirectory $temp `
+            -DriverWorld ae2ct-00000000000000000000000000000000 -ProjectId pNabrMMw -ResolveOnly 6>&1 | Out-String)
+    } finally { $global:Ae2CtAe2Dependency = $false }
+    Assert-Line $focusedOutput "focused projects pNabrMMw"
     if (-not (Test-Path -LiteralPath (Join-Path $customRuntime "resolved-mods\ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"))) {
         throw "Custom runtime directory did not receive the driver"
+    }
+    $focusedManifest = Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
+    if (@($focusedManifest).Count -ne 4 -or "pNabrMMw.jar" -notin $focusedManifest -or
+            "Ck4E7v7R.jar" -notin $focusedManifest -or "PbNc6qBY.jar" -notin $focusedManifest) {
+        throw "Focused profile omitted an AE2 dependency or loaded unrelated projects"
+    }
+
+    & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -RuntimeDirectory $customRuntime `
+        -ProjectId 1624558 -ResolveOnly 6>&1 | Out-Null
+    $curseManifest = Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
+    if (@($curseManifest).Count -ne 3 -or
+            "omnisequence-transfinite-1.3.9-forge.jar" -notin $curseManifest -or
+            "ProjectE-1.20.1-PE1.0.1.jar" -notin $curseManifest) {
+        throw "Focused CurseForge profile omitted an explicit dependency"
+    }
+
+    try {
+        & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -ProjectId missing -ResolveOnly 6>&1 | Out-Null
+        throw "Expected an unknown focused project failure"
+    } catch {
+        if ($_.Exception.Message -ne "Unknown project missing for 1.20.1-forge") { throw }
+    }
+    try {
+        & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -ProjectId ayN3DZKb -ResolveOnly 6>&1 | Out-Null
+        throw "Expected an excluded focused project failure"
+    } catch {
+        if ($_.Exception.Message -ne "Focused project ayN3DZKb is excluded from the compatible profile") { throw }
     }
 
     $env:AE2CT_DRIVER_BUILD_FAIL = "1"

@@ -4,6 +4,7 @@ param(
     [switch]$Interactive,
     [switch]$Stop,
     [ValidatePattern("^(craft-plan|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [string[]]$ProjectId,
     [string]$SshUser = "Codex",
     [string]$SshKeyPath = (Join-Path $env:USERPROFILE ".ssh\codexvm_smoke_ed25519"),
     [string]$VmrunUser = "CodexSmoke",
@@ -27,6 +28,7 @@ $guestScript = Join-Path $GuestSourceRoot "scripts\run-ui-smoke-codexvm.ps1"
 $smokeArguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $guestScript, "-Scenario", $Scenario)
 if ($Latest) { $smokeArguments += "-Latest" }
 if ($Interactive) { $smokeArguments += "-Interactive" }
+if ($ProjectId) { $smokeArguments += @("-ProjectId") + $ProjectId }
 if ($Stop) { $smokeArguments += "-Stop" } else { $smokeArguments += @("-Scheduled", "-InteractiveUser", "Codex") }
 
 if ($Transport -eq "OpenSSH") {
