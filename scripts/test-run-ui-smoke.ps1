@@ -1,5 +1,5 @@
 $ErrorActionPreference = "Stop"
-$temp = Join-Path ([IO.Path]::GetTempPath()) ("ae2ct-ui-smoke-" + [guid]::NewGuid().ToString("N"))
+$temp = Join-Path ([IO.Path]::GetTempPath()) ("ae2ct ui smoke " + [guid]::NewGuid().ToString("N"))
 $scripts = Join-Path $temp "scripts"
 $source = Join-Path $temp "versions\1.20.1-forge\run\saves\ae2-crafting-time"
 New-Item -ItemType Directory -Path $scripts, $source -Force | Out-Null

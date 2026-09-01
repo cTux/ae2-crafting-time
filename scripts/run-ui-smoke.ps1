@@ -87,9 +87,9 @@ soundCategory_master:0.0
 "@, [Text.UTF8Encoding]::new($false))
 
 $arguments = @(
-    "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "run-client.ps1"),
-    "-Target", "1.20.1-forge", "-RuntimeDirectory", $runtime,
-    "-DriverScenario", $Scenario, "-DriverOutputDirectory", $evidence, "-DriverWorld", $world,
+    "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$(Join-Path $PSScriptRoot 'run-client.ps1')`"",
+    "-Target", "1.20.1-forge", "-RuntimeDirectory", "`"$runtime`"",
+    "-DriverScenario", $Scenario, "-DriverOutputDirectory", "`"$evidence`"", "-DriverWorld", $world,
     "--no-daemon"
 )
 if ($Latest) { $arguments += "-Latest" }
