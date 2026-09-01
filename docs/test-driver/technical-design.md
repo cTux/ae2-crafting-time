@@ -169,12 +169,14 @@ real `TtcSortButton`.
 
 `AddonCpuFixture` owns the shared asynchronous place/finish/select lifecycle.
 Its registry maps each `*-cpu` scenario to one driver-only implementation.
-AdvancedAE, BM Addon, ExtendedAE, ExtendedAE-Plus, NeoEco AE, and OmniSequence
-contain only their mod-specific fixture code. ExtendedAE replaces the disposable
-world's AE2 molecular assemblers and selects an existing idle CPU;
+AdvancedAE, BM Addon, Crazy AE2 Addons, ExtendedAE, ExtendedAE-Plus, NeoEco AE,
+and OmniSequence contain only their mod-specific fixture code. ExtendedAE
+replaces the disposable world's AE2 molecular assemblers and selects an
+existing idle CPU;
 ExtendedAE-Plus reuses that setup after verifying its mod is loaded. BM Addon
 places its Blood Assembler, installs a real Blood Pattern, supplies its inputs,
-and selects an existing idle CPU. A new
+and selects an existing idle CPU. Crazy AE2 Addons sets and verifies a priority
+on the existing AE2 CPU before selecting it. A new
 optional dependency extends that registry and adds a
 `testDriverCompileOnly` dependency when it is not already on the inherited
 compile classpath. A fixture may override the marker output only when the add-on

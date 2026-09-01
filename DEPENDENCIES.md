@@ -30,6 +30,7 @@ AE2 Crafting Time.
 | ME Requester (`merequester`) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | Forge/Fabric: `>=1.20.1`; NeoForge: `>=1.21.1` | TTC row labels and total TTC hints in ME Requester screens. |
 | Neo ECO AE Extension (`neoecoae`) | `1.20.1 Forge` | `>=20.3.0 <20.4.0` | TTC profiling for C-series ECO crafting CPUs, including normal and FastPath dispatch. NeoEco 20.4.1 and 20.4.2 have an upstream AE2 mixin crash. |
 | BloodMagic AE2 Addition (`bmaddon`) | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | Forge: `>=1.0.4 <1.1.0`; 1.21.1: `>=1.21.1-beta1`; 26.1.2: `>=1.0.2 <1.1.0` | TTC profiling and Crafting Plan display for crafts handled by the Blood Assembler. |
+| Crazy AE2 Addons (`crazyae2addons`) | `1.20.1 Forge` | `>=3.2.4 <4.0.0` | TTC profiling and Crafting Plan display with Crazy AE2 Addons CPU priorities. |
 | AE2 Lightning Tech (`ae2lightningtech`) | `1.20.1 Forge` | `>=2.1.0-beta.2` | TTC profiling for Tianshu time-wheel crafting CPUs. |
 | OmniSequence: Transfinite (`molecularmanipulator`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.3.9-forge`; NeoForge: `>=1.3.9-hotfix` | TTC profiling for Omni-Computation Core crafting CPUs through AE2's native execution path. |
 | ExtendedAE-Plus (`extendedae_plus`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.5.5 <1.6.0`; NeoForge: `>=1.6.2` | TTC profiling and UI coexistence with ExtendedAE-Plus crafting changes. |

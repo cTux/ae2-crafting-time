@@ -35,7 +35,7 @@ therefore cannot replace layer 2.
 | ExtendedAE | ASSEMBLER + PROVIDER | 4 | #73 | [CF][extendedae-cf] | Not started |
 | ExtendedAE-Plus | PROVIDER / QOL | 4 | #74 | [CF][extendedaeplus-cf] / [MR][extendedaeplus-mr] | Verified coexistence |
 | BM Addon | PROVIDER (Ara Vitae Assembler) | 4 | #75 | [CF][bmaddon-cf] / [MR][bmaddon-mr] | Not started |
-| Crazy AE2 Addons | PROVIDER / QOL | 4 | #76 | [CF][crazyae2-cf] / [MR][crazyae2-mr] | Not started |
+| Crazy AE2 Addons | PROVIDER / QOL | 4 | #76 | [CF][crazyae2-cf] / [MR][crazyae2-mr] | Verified coexistence |
 | AE2 WCWT | WIRELESS_TERMINAL | 5 | #77 | [CF][ae2wcwt-cf] / [MR][ae2wcwt-mr] | Not started |
 | AE2 Wireless Terminals | WIRELESS_TERMINAL | 5 | #78 | [CF][wireless-cf] / [MR][wireless-mr] | Not started |
 | MEGA Cells | STORAGE_CELL / KEY | 3 | #79 | [CF][megacells-cf] / [MR][megacells-mr] | Not started |

@@ -80,6 +80,13 @@ ordering = "AFTER"
 side = "BOTH"
 
 [[dependencies."${mod_id}"]]
+modId = "crazyae2addons"
+mandatory = false
+versionRange = "[3.2.4,4.0.0)"
+ordering = "AFTER"
+side = "BOTH"
+
+[[dependencies."${mod_id}"]]
 modId = "extendedae_plus"
 mandatory = false
 versionRange = "[1.5.5,1.6.0)"
