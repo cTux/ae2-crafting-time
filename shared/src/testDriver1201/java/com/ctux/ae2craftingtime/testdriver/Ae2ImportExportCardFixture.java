@@ -17,7 +17,7 @@ import java.util.Objects;
 final class Ae2ImportExportCardFixture extends WirelessTerminalFixture {
     @Override
     String modId() {
-        return "ae2insertexportcard";
+        return DriverPlatform.IMPORT_EXPORT_ID;
     }
 
     @Override

@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 final class DriverPlatform {
+    static final String IMPORT_EXPORT_ID = "ae2importexportcard";
     static final String EXTENDED_AE_ID = "extendedae";
     static final String TARGET = "1.21.1-neoforge";
 
