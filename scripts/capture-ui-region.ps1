@@ -8,7 +8,9 @@ param(
 
 # Run inside CodexVM after inspecting its current framebuffer. Coordinates are pixels.
 $ErrorActionPreference = "Stop"
-Add-Type 'using System.Runtime.InteropServices; public static class CaptureDpi { [DllImport("user32.dll")] public static extern bool SetProcessDPIAware(); }'
+if (-not ('CaptureDpi' -as [type])) {
+    Add-Type 'using System.Runtime.InteropServices; public static class CaptureDpi { [DllImport("user32.dll")] public static extern bool SetProcessDPIAware(); }'
+}
 [CaptureDpi]::SetProcessDPIAware() | Out-Null
 Add-Type -AssemblyName System.Drawing, System.Windows.Forms
 $region = [Drawing.Rectangle]::new($X, $Y, $Width, $Height)
