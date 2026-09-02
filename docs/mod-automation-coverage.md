@@ -7,7 +7,7 @@ in the compatible development-client profile, which may be older than the real
 latest release.
 
 WCWT, AE2 Wireless Terminals, and Import Export Card terminal tooltips label
-estimates as `TTC: ~1s` (or `TTC: Collecting`). The line comes after AE2's
+estimates as `TTC: ~1s` (or `TTC: No data yet`). The line comes after AE2's
 amounts, craftability, and advanced details on every supported target. Other mods
 can still append content afterward. Compact row badges keep their existing text.
 
@@ -35,6 +35,20 @@ The earlier failed VM attempt is retained separately; the successful retry
 includes fixes for capture-before-render and double initialization of AE2 nodes.
 Per-mod results, screenshots, shared logs, and checkpoint mappings are archived
 under the campaign ID using the [smoke evidence layout](ui-smoke-evidence.md).
+
+The proposed pack update passed CodexVM campaign `20260902T100314Z-suite`:
+NeoEco `20.4.2`, OmniSequence `1.3.9-forge`, WCWT `1.20.1.10`, and LightningTech
+`2.1.0-beta.2`, with its required Thunderbolt `2.0.0-beta.2`. All four scenarios
+passed in one Minecraft process with five visually inspected screenshots.
+The three CPU cases produced fresh profiling samples and post-craft TTC;
+WCWT covered its terminal tooltip and Crafting Plan. The earlier attempt
+`20260902T095012Z-suite` is retained as failed: the driver missed the estimate
+appended after the new tooltip label. The corrected observer traverses appended
+text without treating missing-data text as a resolved estimate.
+Only those requested dependencies changed in the disposable pack copy; the
+prepared-client pins below are unchanged. This baseline smoke does not reproduce
+the separately reported LightningTech Crimson Ingot job or verify its controller
+layout, and it does not imply full modpack gameplay coverage.
 
 `Yes (base)` means the Forge 1.20.1 driver exercises the dependency as part of
 its standard AE2 scenario. `Yes (scenario)` means it has a dedicated optional-mod
