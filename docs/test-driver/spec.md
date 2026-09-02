@@ -121,7 +121,7 @@ computer to the grid. It submits the selected output through the bridge's
 sample and TTC in the normal AE2 Crafting Plan. This tests the peripheral API,
 not an automated Lua editor or a separate ComputerCraft TTC display.
 
-The `ae2things-cpu` fixture mounts the Forge port's real DISK inventory, removes
+The `ae2things-cpu` fixture mounts the loader's real DISK inventory, removes
 pre-existing cobblestone from the disposable grid, and supplies the craft
 ingredients through that DISK. A native CPU craft must produce a fresh profile
 sample and visible TTC. Removed Forge machines are not part of this scenario.
