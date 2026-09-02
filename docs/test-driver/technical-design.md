@@ -200,6 +200,13 @@ A fixture may override the marker output only when the add-on
 requires its own pattern type; it does not add a scenario branch to
 `CraftPlanScenario` or `run-ui-smoke.ps1`.
 
+The shared CPU flow delegates submission to the fixture; its default still
+calls `CraftConfirmMenu.startJob`. Advanced Peripherals overrides only that
+submission boundary to invoke the real ME Bridge `craftItem` method with its
+attached CC:Tweaked computer. Placement supplies a native CPU, storage and
+ingredients, and waits for both the AE2 connection and computer attachment.
+The existing sample/TTC checks remain unchanged.
+
 Wireless terminal scenarios are intentionally separate from the `*-cpu`
 registry because they add no crafting CPU. `WirelessTerminalFixture` links the
 selected addon's charged terminal to a real wireless access point on the

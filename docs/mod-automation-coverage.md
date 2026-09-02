@@ -45,7 +45,7 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 | AEInfinityBooster (`aeinfinitybooster`; optional) | `1.20.1-1.0.0+20` | Yes (`aeinfinitybooster-terminal`) | — | — | `1.21.1-1.0.0.58` | No | `26.1.2-1.0.0.57` | No |
 | Applied Botanics (original) (`appbot`; optional) | `1.5.2` | Yes (`appbot-cpu`: native mana storage + item craft) | `1.5.2` | No | Not pinned | No | — | — |
 | Applied Botanics (Fork; alternative `appbot`) | `1.5.2` | Yes (`appbot-fork-cpu`: native mana storage + item craft) | — | — | — | — | — | — |
-| Advanced Peripherals (candidate) | `1.20.1-0.7.48r` | No | — | — | `1.21.1-0.8.0a` | No | — | — |
+| Advanced Peripherals (`advancedperipherals`; optional) | `1.20.1-0.7.48r` | Yes (`advancedperipherals-cpu`: real ME Bridge API) | — | — | `1.21.1-0.8.0a` (alpha) | No | — | — |
 | AE2 Things (candidate) | — | — | `1.3.2` | No | — | — | — | — |
 | Expanded AE (candidate) | Incompatible; not pinned | No | — | — | Incompatible; not pinned | No | — | — |
 

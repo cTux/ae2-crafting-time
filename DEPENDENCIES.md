@@ -70,6 +70,14 @@ or smoke-verified. No original Applied Botanics release exists for 26.1.2.
 The Forge driver verifies native mana storage and normal crafting together,
 not a mana-generation recipe.
 
+Advanced Peripherals is covered as an optional native-crafting integration on
+Forge 1.20.1 (`0.7.48r`) and NeoForge 1.21.1 (`0.8.0a`, alpha). Its ME Bridge
+submits through AE2's normal crafting service, so existing profiling and TTC
+apply without another production hook. The Forge driver calls `craftItem`
+with a real attached CC:Tweaked computer and checks the result in AE2's UI;
+this does not add a ComputerCraft TTC API or display. There are no published
+Fabric 1.20.1 or NeoForge 26.1.2 versions.
+
 ## Build Tools
 
 If you are building the project yourself, the 1.20.1 modules use Java 17, the
