@@ -14,7 +14,8 @@
     "CraftConfirmTableRendererMixin",
     "GuiGraphicsMixin",
     "MEStorageScreenAccessor",
-    "MouseHandlerAccessor"
+    "MouseHandlerAccessor",
+    "RenderSystemMixin"
   ],
   "injectors": {
     "defaultRequire": 1

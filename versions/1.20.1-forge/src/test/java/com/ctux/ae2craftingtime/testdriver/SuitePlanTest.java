@@ -36,6 +36,16 @@ class SuitePlanTest {
         assertThrows(Exception.class, () -> SuitePlan.read(options()));
     }
 
+    @Test void vmTextureProbeChangesOnlyTheOptedInSvgaSquare() {
+        assertEquals(8192, VmTextureProbe.height(true, "suite", "SVGA3D; LLVM", 16384, 16384));
+        assertEquals(16384, VmTextureProbe.height(false, "suite", "SVGA3D", 16384, 16384));
+        assertEquals(16384, VmTextureProbe.height(true, "", "SVGA3D", 16384, 16384));
+        assertEquals(16384, VmTextureProbe.height(true, "suite", null, 16384, 16384));
+        assertEquals(16384, VmTextureProbe.height(true, "suite", "NVIDIA", 16384, 16384));
+        assertEquals(16384, VmTextureProbe.height(true, "suite", "SVGA3D", 32768, 16384));
+        assertEquals(8192, VmTextureProbe.height(true, "suite", "SVGA3D", 16384, 8192));
+    }
+
     @Test void rejectsInvalidPlansBeforeOpeningAnyWorld() {
         for (var plan : List.of(new SuitePlan(2, List.of(first)), new SuitePlan(1, null),
                 new SuitePlan(1, List.of()), new SuitePlan(1, Collections.nCopies(33, first)),

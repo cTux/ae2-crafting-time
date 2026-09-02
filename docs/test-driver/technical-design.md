@@ -269,6 +269,22 @@ at their pure boundary; verify world switching and cache isolation in CodexVM.
 
 ## UI observation boundaries
 
+### CodexVM rectangular atlas probe
+
+Opt in with `-Dae2craftingtime.test.vmTextureProbe=true` only during an explicit
+driver run. VMware SVGA3D reports `GL_MAX_TEXTURE_SIZE=16384`, but its proxy test
+rejects a 16384-square RGBA texture (1 GiB) while accepting the pack's 16384x8192
+atlas (512 MiB). An independent guest LWJGL probe also successfully allocated the
+actual rectangular texture with no GL error. Vanilla incorrectly lowers its
+dimension limit to 8192 because it probes only squares.
+
+The driver-only `RenderSystemMixin` changes only that one SVGA3D proxy request
+to 16384x8192. The real OpenGL proxy result still determines success. It does not
+forge GPU capabilities, change actual texture allocation, downscale assets, or
+run in normal clients without the opt-in. Larger square atlases can still fail;
+this workaround is not a promise of unlimited VM graphics memory. All normal
+startup/atlas error checks remain required. Player JARs contain none of this code.
+
 Driver mixins target AE2 and Minecraft UI boundaries, not production reporting
 methods. Use a lower mixin priority than the production config so observations
 run after normal AE2 Crafting Time injections.
