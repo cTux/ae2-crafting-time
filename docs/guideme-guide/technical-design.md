@@ -1,129 +1,190 @@
-# GuideME Guide Technical Design
+# Guide Book Technical Design
 
-## Evidence
+## Decision
 
-- The repository's [architecture](../architecture.md) and
-  [feature map](../feature-coverage.md) define the supported targets and shipped
-  behavior.
-- GuideME's official
-  [data-driven guide documentation](https://github.com/AppliedEnergistics/GuideME/blob/main/docs/docs/20-data-driven-guides.md)
-  supports guide definitions and pages entirely through resource packs.
-- GuideME's official
-  [authoring documentation](https://github.com/AppliedEnergistics/GuideME/blob/main/docs/docs/30-authoring/index.md)
-  defines navigation, item targets, Markdown/MDX content, and relative links.
-- GuideME's official
-  [translation documentation](https://github.com/AppliedEnergistics/GuideME/blob/main/docs/docs/60-translation.md)
-  defines language folders and fallback behavior.
-- The `1.21.1 NeoForge` build already resolves GuideME with AE2, and the
-  `26.1.2 NeoForge` AE2 artifact declares GuideME transitively. AE2 15 on the
-  two 1.20.1 rows instead packages the pre-GuideME internal guidebook.
+Use `guideme:guide` with the persistent component
+`guideme:guide_id = ae2craftingtime:guide`. This is our book's stack identity;
+there is no separately registered `ae2craftingtime:guide_book` item. A vanilla
+shapeless recipe produces that stack, and GuideME supplies opening, localized
+naming, model selection, navigation, and search.
 
-## Resource Layout
+This meets the [spec](spec.md) without new Java, renderer, registry, packet
+handler, or second documentation library.
 
-Shared resources own one guide definition and both languages:
+## Research evidence — 2026-09-02
+
+| Evidence inspected | Finding and consequence |
+| --- | --- |
+| [Data-driven guides](https://github.com/AppliedEnergistics/GuideME/blob/main/docs/docs/20-data-driven-guides.md) | The generic item selects its guide through a component; `item_settings` supplies title and model. |
+| [21.1.0 GuideItem](https://github.com/AppliedEnergistics/GuideME/blob/v21.1.0/src/main/java/guideme/internal/item/GuideItem.java) and [26.1.10-alpha GuideItem](https://github.com/AppliedEnergistics/GuideME/blob/v26.1.10-alpha/src/main/java/guideme/internal/item/GuideItem.java) | Both read the component, open on the logical client, and leave the held stack intact. |
+| [21.1.0 component registration](https://github.com/AppliedEnergistics/GuideME/blob/v21.1.0/src/main/java/guideme/internal/GuideME.java) | Persistent and network codecs preserve the guide identity through normal item save/sync. |
+| [21.1.0 model dispatcher](https://github.com/AppliedEnergistics/GuideME/blob/v21.1.0/src/main/java/guideme/internal/item/GuideItemDispatchUnbakedModel.java) and [26.1.10-alpha dispatcher](https://github.com/AppliedEnergistics/GuideME/blob/v26.1.10-alpha/src/main/java/guideme/internal/item/GuideItemDispatchModel.java) | Both accept the configured block-model ID. Use `minecraft:item/book`; no new 26.1 item-definition file because GuideME owns the item. |
+| [21.1.0 definition codec](https://github.com/AppliedEnergistics/GuideME/blob/v21.1.0/src/main/java/guideme/internal/datadriven/DataDrivenGuide.java) | Supports `item_settings`; omit newer optional fields such as `custom_colors` and `default_language`. |
+| [Authoring](https://github.com/AppliedEnergistics/GuideME/blob/main/docs/docs/30-authoring/index.md) and [translation](https://github.com/AppliedEnergistics/GuideME/blob/main/docs/docs/60-translation.md) | Guide-specific resource root, Markdown, navigation frontmatter, relative links, and `_uk_ua` fallback layout. |
+| Cached `appeng:appliedenergistics2:19.0.24`, `META-INF/neoforge.mods.toml` | Does **not** require GuideME. Our runtime-only development pin is not a published dependency guarantee. |
+| Cached `org.appliedenergistics:appliedenergistics2:26.1.10-beta`, same metadata entry | Requires GuideME `>=26.1.10-alpha` on both sides. Retain that minimum. |
+| Recipes in those AE2 JARs, including `data/ae2/recipe/charger/charged_certus_quartz_crystal.json` | 1.21.1 uses ingredient objects; 26.1.2 uses strings. Both use singular `recipe/` and result `id`. |
+| [Release matrix](../../scripts/release-matrix.json), modern build files, [architecture](../architecture.md) | Shared main assets reach all releases; active recipe data belongs only to modern modules. |
+| [GuideME tags](https://github.com/AppliedEnergistics/GuideME/tags) | Official 20.1 releases exist. The 1.20.1 exclusion is scope, not availability. |
+
+Tagged source and locally inspected minimum artifacts establish compatibility;
+upstream main documentation explains authoring. Research is not an in-game test.
+
+## Resource ownership
 
 ```text
 shared/src/main/resources/assets/ae2craftingtime/
   guideme_guides/guide.json
   guides/ae2craftingtime/guide/
     index.md
-    estimates.md
-    screens.md
-    diagnostics.md
-    controls-and-configuration.md
-    integrations.md
-    troubleshooting.md
-    _uk_ua/
-      index.md
-      estimates.md
-      screens.md
-      diagnostics.md
-      controls-and-configuration.md
-      integrations.md
-      troubleshooting.md
+    getting-started.md
+    _uk_ua/index.md
+    _uk_ua/getting-started.md
+  lang/en_us.json                       # add guide.ae2craftingtime.name
+  lang/uk_ua.json                       # same key
+
+versions/1.21.1-neoforge/src/main/resources/data/ae2craftingtime/
+  recipe/guide_book.json
+  advancement/recipes/misc/guide_book.json
+versions/26.1.2-neoforge/src/main/resources/data/ae2craftingtime/
+  recipe/guide_book.json
+  advancement/recipes/misc/guide_book.json
 ```
 
-`guide.json` supplies the translatable guide name and no custom model. Pages
-use frontmatter for navigation order and selected AE2 item targets. The start
-page links to every child page, and every child is present in the navigation
-tree.
+Shared assets are inert on 1.20.1 without GuideME. Do not share active recipe
+or advancement data. Incidental resource discovery if players independently
+install GuideME on an old target is outside our support claim; no gating code.
 
-The shared resource directory is already packaged by every release row. The
-1.20.1 loaders ignore the unknown GuideME resources. No conditional resource
-copy task is needed.
+Shared definition:
 
-## Discovery And Opening
+```json
+{
+  "item_settings": {
+    "display_name": { "translate": "guide.ae2craftingtime.name" },
+    "model": "minecraft:item/book"
+  }
+}
+```
 
-GuideME automatically loads the data-driven definition as
-`ae2craftingtime:guide`. Pages declare only relevant existing AE2 autocrafting
-items as `item_ids`, such as crafting terminals, Crafting CPU components,
-Pattern Providers, and Molecular Assemblers.
+English name: `AE2 Crafting Time Guide`. Ukrainian:
+`Посібник AE2 Crafting Time`. Do not replace the global GuideME/vanilla book
+model, copy textures, or override GuideME's global item-name translation.
 
-GuideME owns the open-guide key, tooltip targeting, guide choice, navigation,
-and search. AE2 Crafting Time adds no key mapping or opening code. If smoke
-testing shows that a selected item target conflicts ambiguously with AE2's own
-guide, narrow the target list to items where GuideME presents a deterministic
-choice; do not add a new UI merely to bypass GuideME's native behavior.
+`index.md` navigation: title `AE2 Crafting Time`, position `0`, icon
+`minecraft:book`. Chapter navigation: localized chapter title, parent
+`index.md`, position `0`, icon `minecraft:clock`. Reciprocal links target
+`getting-started.md` and `index.md`. Ukrainian copies keep these paths and
+parent values; translate titles, headings, link labels, and body copy.
 
-## Content Ownership
+No `item_ids` entries: the book selects our guide directly without competing
+with AE2 item documentation. GuideME owns Home, history, language fallback,
+search, and themes. No custom reader position is stored by this mod.
 
-The implementation reads `docs/feature-coverage.md` first, then uses only its
-shipped player-facing sources:
+## Recipe and discovery
 
-- `docs/profiling-and-diagnostics/` for learning, confidence, accuracy, delay,
-  and bottleneck claims;
-- `docs/time-to-craft-plan.md`, `docs/ttc-colored-text.md`, and
-  `docs/ttc-sorting.md` for visible estimates;
-- `docs/player-controls-and-integrations/` for screens, controls, config, and
-  optional UI behavior;
-- `docs/ae2-addon-integration/` and `docs/dependencies.md` for current integration
-  support;
-- `docs/server-client-stats.md` and `docs/world-save-persistence.md` for
-  multiplayer, privacy, and persistence.
+Recipe ID: `ae2craftingtime:guide_book`. Exact inputs are deliberate: the
+checked AE2 Certus tag also accepts charged crystals.
 
-The guide paraphrases those sources for players. It does not copy planned
-sections from the feature map. Each diagnostic says exactly what the observed
-state proves and keeps causes framed as possibilities unless the server has
-verified them.
+1.21.1 recipe:
 
-## Localization
+```json
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+  "ingredients": [
+    { "item": "minecraft:book" },
+    { "item": "ae2:certus_quartz_crystal" },
+    { "item": "minecraft:clock" }
+  ],
+  "result": {
+    "id": "guideme:guide",
+    "count": 1,
+    "components": { "guideme:guide_id": "ae2craftingtime:guide" }
+  }
+}
+```
 
-English pages are the default. Ukrainian pages live below `_uk_ua` with the
-same filenames, navigation parents, positions, item targets, headings, and
-relative links. The guide name uses the existing language JSON files so the
-definition does not duplicate visible labels.
+26.1.2 uses the same type, category, and result, replacing only the ingredient
+array with:
 
-GuideME falls back to the English page or asset when a localized resource is
-missing, but the repository check treats any English/Ukrainian page-set drift
-as a failure.
+```json
+[
+  "minecraft:book",
+  "ae2:certus_quartz_crystal",
+  "minecraft:clock"
+]
+```
 
-## Validation
+Use vanilla consumption/remainders; no custom serializer. Each target's unlock
+advancement uses parent `minecraft:recipes/root`, an `inventory_changed`
+criterion matching `minecraft:book`, and the standard `recipe_unlocked`
+criterion for `ae2craftingtime:guide_book`. Either criterion is sufficient.
+Reward that recipe; no displayed/toast advancement. Use native item-predicate
+syntax for that Minecraft version and validate through native data loading,
+not just generic JSON parsing.
 
-The root `build.gradle` owns a `checkGuideResources` task, and the root `test`
-task depends on it so the existing CI command runs it. The task uses Groovy's
-built-in `JsonSlurper` for the guide definition and line-oriented checks for
-frontmatter and Markdown links. It scans the guide resources and verifies:
+## Dependency contract
 
-- the definition and start page exist;
-- English and Ukrainian page paths match;
-- navigation positions and parent ids are valid and unique among siblings;
-- every relative Markdown link resolves;
-- selected item ids are namespaced and duplicated only when intentional; and
-- required shipped-content headings exist.
+Add a required `guideme` dependency to each modern module's
+`src/main/resources/META-INF/neoforge.mods.toml`, with `side="BOTH"` and
+`ordering="AFTER"`:
 
-Distribution checks inspect the two modern JARs for the definition and all
-pages. Prepared-client smoke checks on `1.21.1 NeoForge` and `26.1.2 NeoForge`
-prove discovery, item-context opening, navigation, search, both themes, and
-English/Ukrainian rendering.
+| Target | Range | Build/runtime ownership |
+| --- | --- | --- |
+| 1.21.1 NeoForge | `[21.1.0,21.2.0)` | Keep the existing minimum runtime dependency; latest client preparation supplies its compatible pin. No Java compile dependency. |
+| 26.1.2 NeoForge | `[26.1.10-alpha,26.2.0)` | Existing AE2 transitive resolution supplies the minimum; no bundled copy. |
 
-## Failure And Compatibility Rules
+Add GuideME project `Ck4E7v7R` as required in the two modern Modrinth rows of
+`scripts/release-matrix.json`. The current CurseForge uploaders do not send
+file relations. In `Publish-CurseForge` in `scripts/deploy-changed.ps1` and
+`publish_curseforge` in `scripts/deploy-changed.sh`, when the row requires
+GuideME in its Modrinth dependencies, add `relations.projects` with required
+`applied-energistics-2` and `guideme` entries. Each uses `slug` and
+`type: "requiredDependency"`, as defined by the official
+[CurseForge Upload API](https://support.curseforge.com/support/solutions/articles/9000197321).
+Include AE2 explicitly so these file relations retain the base dependency.
+Leave old-row payloads unchanged. Echo these relations in dry-run output and
+extend the existing `scripts/test-deploy-changed.ps1` and `.sh` checks to prove
+both modern inclusion and old-row absence; do not perform a live upload.
+Update `docs/dependencies.md`; mark the book shipped in
+`docs/feature-coverage.md` only when implemented. No old-target dependency.
 
-- Broken content fails resource validation before release.
-- GuideME parser errors or missing pages fail the prepared-client smoke check.
-- No packet, persistence, config, or protocol version changes are involved.
-- No loader metadata change is needed unless the existing AE2 metadata does
-  not actually enforce a compatible GuideME at implementation time; verify the
-  packaged dependency metadata before deciding.
-- If the two GuideME versions require different data formats, prefer the
-  common supported subset. Split only the minimum incompatible resource, not
-  the whole guide.
+This changes installation requirements for AE2 19.0.24 users, but not the AE2
+minimum itself. Missing/incompatible GuideME fails through NeoForge metadata
+before recipe use, not an unknown-item recipe error. Verify the required ranges
+against the implementation-time artifacts without silently expanding scope.
+
+## Runtime flow and failures
+
+1. GuideME registers its item and component on both logical sides.
+2. Server loads the vanilla recipe/advancement; crafting creates the component-
+   bearing stack and syncs it through normal inventory synchronization.
+3. Client resources register our guide, two pages, and localized name.
+4. GuideME reads the ID for rendering/name/use; opening stays client-side.
+5. Vanilla saves the component; GuideME handles native reading history.
+
+Dedicated servers need no guide screen or Markdown parsing to craft the item.
+Install this mod and GuideME on both sides. No external page fetch, custom
+world state, command execution, or new network trust boundary is introduced.
+Client resource reload and server datapack reload must preserve a usable book.
+
+Malformed or missing components/resources fail implementation checks. Native
+unknown-guide/missing-page messages are diagnostics, not accepted behavior.
+There are no shipped guide items to migrate. Keep the chosen guide ID stable
+after release.
+
+## Validation and alternatives
+
+Add one root `checkGuideResources` Gradle task using built-in Groovy JSON and
+bounded text checks; attach it to the existing `test` lifecycle. Validate
+definition/name/model, bilingual page topology, relative links, exact recipes
+and result components, unlock IDs, translation keys, metadata, and no old-target
+recipe data. Do not require translated headings to equal English headings.
+
+Native client/server checks establish codec validity, appearance, use,
+persistence, navigation, translation, and search. The
+[implementation plan](implementation-plan.md) maps these to A1–A8.
+
+A Java book duplicates GuideME behavior. A renamed vanilla book cannot open
+the guide. A global model override affects other books. Patchouli/custom
+readers add an unnecessary UI and dependency. None is needed here.
