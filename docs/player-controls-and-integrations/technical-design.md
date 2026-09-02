@@ -91,6 +91,10 @@ request key and wanted amount reflectively, requests both aggregate stats and
 current stored network amounts, then estimates only the positive shortfall.
 It draws half-scale row badges and a header total using the shared TTC, color,
 and badge helpers.
+Row badges fit in the seven-pixel strip below the amount fields, starting at
+x=46. The `addSubWidget` hook moves only `request_status_*` widgets 64 pixels
+right and reduces their width by the same amount. `RequesterTtcLayout` owns
+the spacing and text fit; the item slot and status bar stay clear of the badge.
 
 ## Other Addon Boundaries
 

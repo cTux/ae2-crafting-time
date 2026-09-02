@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.testdriver;
 
+import com.ctux.ae2craftingtime.core.RequesterTtcLayout;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
 import net.minecraft.network.chat.Component;
 import org.junit.jupiter.api.Test;
@@ -212,6 +213,26 @@ class TestDriverCoreTest {
                         new Rect(10, 10, 30, 30))));
         assertEquals(List.of("text text.ae2craftingtime.ttc outside GUI"),
                 LayoutValidator.validate(snapshot(text, List.of(), List.of(), new Rect(20, 20, 30, 30))));
+    }
+
+    @Test
+    void requesterBadgesRejectTheOriginalItemOverlap() {
+        var gui = new Rect(100, 40, 195, 250);
+        var item = new Rect(127, 60, 16, 16);
+        var statusOffset = RequesterTtcLayout.statusOffset("request_status_0");
+        var widgets = List.of(
+                new UiSnapshot.Widget("amount", "", new Rect(146, 59, 52, 12), List.of()),
+                new UiSnapshot.Widget("status", "", new Rect(147 + statusOffset, 74, 118 - statusOffset, 2),
+                        List.of()));
+        var oldBadge = new Rect(126, 70, 28, 9);
+        var rowBadge = new Rect(gui.x() + RequesterTtcLayout.BADGE_X,
+                gui.y() + RequesterTtcLayout.rowTop(19, 19, 0), 28, 7);
+        var headerBadge = new Rect(246, 46, 28, 9);
+        for (var badge : List.of(oldBadge, rowBadge)) {
+            var frame = new UiSnapshot(MeRequesterFixture.SCREEN, "menu", gui, 400, 400, 1, 1, 0,
+                    List.of(), List.of(), List.of(badge, headerBadge), widgets, List.of(item), List.of());
+            assertEquals(badge == rowBadge, LayoutValidator.validateBadges(frame).isEmpty());
+        }
     }
 
     @Test

@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.mc1201.mixin;
 
 import appeng.api.stacks.AEKey;
 import appeng.client.gui.widgets.Scrollbar;
+import com.ctux.ae2craftingtime.core.RequesterTtcLayout;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcColor;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
@@ -12,6 +13,7 @@ import com.ctux.ae2craftingtime.mc1201.TtcBadge;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,6 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -34,8 +37,6 @@ public abstract class MERequesterScreenMixin {
     private static final float AE2CRAFTINGTIME_TEXT_SCALE = 0.5f;
     @Unique
     private static final int AE2CRAFTINGTIME_LABEL_PADDING = 2;
-    @Unique
-    private static final int AE2CRAFTINGTIME_STATUS_X = 26;
     @Shadow
     @Final
     private static int GUI_HEADER_HEIGHT;
@@ -54,6 +55,14 @@ public abstract class MERequesterScreenMixin {
 
     @Shadow
     protected int rowAmount;
+
+    @Inject(method = "addSubWidget", at = @At("HEAD"), remap = false)
+    private void ae2craftingtime$reserveTtcSpace(String id, AbstractWidget widget,
+            Map<String, AbstractWidget> subWidgets, CallbackInfo ci) {
+        var offset = RequesterTtcLayout.statusOffset(id);
+        widget.setX(widget.getX() + offset);
+        widget.setWidth(widget.getWidth() - offset);
+    }
 
     @Inject(method = "drawFG", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$drawRequestTtc(GuiGraphics guiGraphics, int offsetX, int offsetY, int mouseX,
@@ -82,32 +91,33 @@ public abstract class MERequesterScreenMixin {
 
         TimeEstimate.formatTotal(estimates.stream().map(MERequesterEstimate::seconds).toList())
                 .ifPresent(eta -> ae2craftingtime$drawBadge(guiGraphics, 160, 6, TtcText.totalTtc(eta), 0xE0E0E0,
-                        0.5f));
+                        0.5f, AE2CRAFTINGTIME_TEXT_SCALE, AE2CRAFTINGTIME_LABEL_PADDING));
     }
 
     @Unique
     private static void ae2craftingtime$drawRowBadge(GuiGraphics guiGraphics, int row, Component label, int color) {
-        var y = GUI_HEADER_HEIGHT + row * ROW_HEIGHT + 11;
-        ae2craftingtime$drawBadge(guiGraphics, AE2CRAFTINGTIME_STATUS_X, y, label, color, 0.0f);
+        var font = Minecraft.getInstance().font;
+        var y = RequesterTtcLayout.rowTop(GUI_HEADER_HEIGHT, ROW_HEIGHT, row);
+        ae2craftingtime$drawBadge(guiGraphics, RequesterTtcLayout.BADGE_X, y, label, color, 0.0f,
+                RequesterTtcLayout.rowScale(font.width(label), font.lineHeight), 1);
     }
 
     @Unique
     private static void ae2craftingtime$drawBadge(GuiGraphics guiGraphics, int anchorX, int top, Component label,
-            int color, float horizontalAlignment) {
+            int color, float horizontalAlignment, float scale, int verticalPadding) {
         var font = Minecraft.getInstance().font;
-        var scaledTextWidth = font.width(label) * AE2CRAFTINGTIME_TEXT_SCALE;
+        var scaledTextWidth = font.width(label) * scale;
         var labelWidth = (int) Math.ceil(scaledTextWidth) + AE2CRAFTINGTIME_LABEL_PADDING * 2;
-        var labelHeight = (int) Math.ceil(font.lineHeight * AE2CRAFTINGTIME_TEXT_SCALE)
-                + AE2CRAFTINGTIME_LABEL_PADDING * 2;
+        var labelHeight = (int) Math.ceil(font.lineHeight * scale) + verticalPadding * 2;
         var labelLeft = anchorX - labelWidth * horizontalAlignment;
-        var textX = (int) ((labelLeft + AE2CRAFTINGTIME_LABEL_PADDING) / AE2CRAFTINGTIME_TEXT_SCALE);
-        var textY = (int) ((top + AE2CRAFTINGTIME_LABEL_PADDING) / AE2CRAFTINGTIME_TEXT_SCALE);
+        var textX = (int) ((labelLeft + AE2CRAFTINGTIME_LABEL_PADDING) / scale);
+        var textY = (int) ((top + verticalPadding) / scale);
         var pose = guiGraphics.pose();
 
         TtcBadge.fillRoundedRect(guiGraphics, (int) Math.floor(labelLeft), top,
                 (int) Math.ceil(labelLeft + labelWidth), top + labelHeight, TtcBadge.BACKGROUND);
         pose.pushPose();
-        pose.scale(AE2CRAFTINGTIME_TEXT_SCALE, AE2CRAFTINGTIME_TEXT_SCALE, AE2CRAFTINGTIME_TEXT_SCALE);
+        pose.scale(scale, scale, scale);
         guiGraphics.drawString(font, label, textX, textY, color, true);
         pose.popPose();
     }

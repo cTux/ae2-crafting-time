@@ -242,6 +242,8 @@ chunk loaded in the disposable world and seeds a deterministic profile sample.
 
 ME Requester also uses a separate screen flow. Its fixture places and configures
 one requester with a deterministic profiler sample on the disposable AE2 grid.
+The final frame records active menu slot bounds in GUI coordinates and checks
+badges against those bounds and the screen's widgets.
 
 AE2 Network Analyser uses a bounded screen-only flow. The fixture equips its
 real analyser item, opens `GuiAnalyser` through normal item use, and verifies

@@ -113,6 +113,12 @@ public final class UiObservationStore {
         if (active == null || minecraft.screen == null) {
             return;
         }
+        if (active.screen.equals(MeRequesterFixture.SCREEN)) {
+            var screen = (AEBaseScreen<?>) minecraft.screen;
+            screen.getMenu().slots.stream().filter(net.minecraft.world.inventory.Slot::isActive)
+                    .map(slot -> new Rect(active.gui.x() + slot.x, active.gui.y() + slot.y, 16, 16))
+                    .forEach(active.itemCells::add);
+        }
         for (var child : minecraft.screen.children()) {
             if (child instanceof AbstractWidget widget) {
                 var state = widget instanceof TtcSortButton button

@@ -220,7 +220,9 @@ plan screenshots. The range-only addon adds no terminal TTC tooltip surface.
 The `merequester-screen` scenario places a real requester on the fixture grid,
 configures a deterministic out-of-stock request and profiler sample, opens its
 screen through block use, and checks `screen`, `ttc-row`, `total-ttc`, and
-`layout`. Its screenshot is `merequester-screen.png`.
+`layout`. The layout check includes active menu item slots, so a badge drawn
+under an item cannot pass just because its text draw call was observed.
+Its screenshot is `merequester-screen.png`.
 
 ## AE2 Network Analyser scenario
 
