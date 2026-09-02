@@ -79,7 +79,7 @@ the driver explicitly enabled, and runs this sequence:
 5. Check TTC rows, total TTC, badge geometry, and the sort button.
 6. Cycle AE2 order, shortest first, and longest first through the real button.
 7. Hover the known row and check its final tooltip.
-8. Save base and tooltip screenshots and an atomic semantic result.
+8. Save base, each sort-mode, and tooltip screenshots and an atomic semantic result.
 9. Close the exact client cleanly.
 
 The fixture supplies retained samples so this scenario checks rendered TTC,
@@ -247,7 +247,7 @@ temporary or incomplete file is never a pass.
     "tooltip": true,
     "layout": true
   },
-  "screenshots": ["craft-plan.png", "craft-plan-tooltip.png"]
+  "screenshots": ["craft-plan.png", "craft-plan-sort-1.png", "craft-plan-sort-2.png", "craft-plan-sort-3.png", "craft-plan-tooltip.png"]
 }
 ```
 
@@ -305,7 +305,7 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 - The driver remains inactive without the explicit test option and refuses
   multiplayer, the tracked fixture, and unmarked worlds.
 - One command copies the fixture, runs the compatible Crafting Plan scenario,
-  validates the result and logs, saves two screenshots, closes the exact
+  validates the result and logs, saves five screenshots, closes the exact
   client, and returns zero only on a complete pass.
 - The same command can select the latest profile without weakening a compatible
   profile failure.

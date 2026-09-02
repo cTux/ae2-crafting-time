@@ -278,7 +278,9 @@ AE2 return value while the cursor is over the known row.
 
 Screenshots use Minecraft's framebuffer capture after three stable frames. The
 base image moves the cursor outside the GUI; the tooltip image places it at the
-observed row center. Files are limited to the scenario output directory.
+observed row center. Each of the three sort-mode observations also saves its
+own `craft-plan-sort-<step>.png` before the next click. Files are limited to the
+scenario output directory.
 
 ## Thread ownership
 
