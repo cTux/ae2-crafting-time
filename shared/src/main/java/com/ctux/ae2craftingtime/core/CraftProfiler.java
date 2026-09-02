@@ -319,6 +319,7 @@ public final class CraftProfiler {
             if (output == null || output.key() == null || output.unit() == null) {
                 continue;
             }
+            output = ProfileAmounts.migrate(output);
             for (var sample : output.samples()) {
                 if (sample.amount() > 0 && sample.durationTicks() > 0) {
                     addSample(output.key(), new CraftSample(sample.amount(), output.unit(), sample.durationTicks()));

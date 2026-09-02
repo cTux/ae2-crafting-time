@@ -188,7 +188,7 @@ public final class ProfilerBridge {
     }
 
     private static ProfileUnit unit(AEKey key) {
-        return key.getAmountPerUnit() > 1 ? ProfileUnit.MILLIBUCKET : ProfileUnit.ITEM;
+        return AeKeyAmounts.unit(key);
     }
 
     private static long normalizeAmount(AEKey key, long amount) {

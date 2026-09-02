@@ -24,6 +24,7 @@ AE2 Crafting Time.
 
 | Dependency | Targets | Version range | What it enables |
 | --- | --- | --- | --- |
+| Applied Botanics (`appbot`; original) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | 1.20.1: `>=1.5.0 <1.6.0`; 1.21.1: `>=1.6.0-alpha.3 <1.7.0` | Raw mana amounts and mana unit labels through its native AE2 key. Existing milli-pool histories are converted on load. |
 | AE2: Crafting Tree (`ae2ct`) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | `>=1.0.1` | TTC lines and details in AE2: Crafting Tree UI. |
 | Applied Mekanistics (`appmek`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.4.3 <2.0.0`; NeoForge: `>=1.6.2 <2.0.0` | TTC profiling and Crafting Plan display for chemicals stored in the ME network through Applied Mekanistics' native AE2 key. |
 | AdvancedAE (`advanced_ae`) | `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.21.1: `>=1.6.11`; 26.1.2: `>=26.1.7` | TTC profiling for AdvancedAE crafting CPUs, including the Quantum Computer. |
@@ -53,6 +54,14 @@ AEInfinityBooster is covered as an optional range-only addon on Forge 1.20.1
 (`1.20.1-1.0.0+20`), NeoForge 1.21.1 (`1.21.1-1.0.0.58`), and NeoForge 26.1.2
 (`26.1.2-1.0.0.57`). It uses AE2's normal Crafting Plan; no extra TTC hook is
 needed. There is no Fabric release for our supported target.
+
+Original Applied Botanics 1.5.2 and Botania 455 are pinned in both 1.20.1
+compatible clients. The 1.21.1 alpha requires Botania `454-SNAPSHOT` (upstream
+build: `vazkii.botania:botania-neoforge-1.21.1:454-20260621.181850-47`), which
+has no matching published Modrinth release; that client is not runtime-pinned
+or smoke-verified. No original Applied Botanics release exists for 26.1.2.
+The Forge driver verifies native mana storage and normal crafting together,
+not a mana-generation recipe.
 
 ## Build Tools
 

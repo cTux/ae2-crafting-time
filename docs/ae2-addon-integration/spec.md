@@ -43,6 +43,13 @@ any addon required.
 3. Verify profile identity before claiming support for a new key type. If two
    key types can share the same resource ID, handle that as a separate persisted
    data and packet compatibility change.
+4. Applied Botanics mana (`botania:mana`) is recorded in raw mana units. Its
+   pool-sized display unit must not round small positive samples to zero or
+   label mana as mB. This is an explicit exception because AE2's display-unit
+   size does not name the underlying mana unit.
+5. Preserve existing mana history by converting recorded milli-pool amounts to
+   mana (multiply by 1,000). Already-lost fractional precision cannot be
+   recovered. Leave other resource histories unchanged.
 
 ### UI
 

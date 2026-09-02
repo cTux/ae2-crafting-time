@@ -1,7 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.core.ProfileStats;
-import com.ctux.ae2craftingtime.core.ProfileUnit;
 import com.ctux.ae2craftingtime.core.StallDiagnostic;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
@@ -155,9 +154,7 @@ public final class TtcText {
     }
 
     private static String unitName(ProfileStats stats) {
-        return I18n.get(stats.unit() == ProfileUnit.MILLIBUCKET
-                ? "text.ae2craftingtime.unit.millibucket"
-                : "text.ae2craftingtime.unit.item");
+        return I18n.get(stats.unit().translationKey());
     }
 
     private static String seconds(double ticks) {

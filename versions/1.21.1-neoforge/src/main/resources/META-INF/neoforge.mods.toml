@@ -130,3 +130,10 @@ side="BOTH"
 
 [[mixins]]
 config="ae2craftingtime.mixins.json"
+
+[[dependencies."${mod_id}"]]
+modId="appbot"
+type="OPTIONAL"
+versionRange="[1.6.0-alpha.3,1.7.0)"
+ordering="AFTER"
+side="BOTH"

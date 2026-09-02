@@ -113,7 +113,7 @@ networkAmounts: map<string, long>
 waitingTicks: map<string, nonnegative long>
 entries: list {
   key: string
-  unit: item | millibucket
+  unit: item | millibucket | mana
   sampleCount: int
   averageDurationTicks: double
   amountPerTick: double

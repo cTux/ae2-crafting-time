@@ -58,6 +58,18 @@ Known cases:
 method delegates to `AEKeyType`, fluids, chemicals, energy, EMC, and future key
 types can describe their own units without addon checks.
 
+Applied Botanics uses `botania:mana` with 1,000,000 mana per displayed pool.
+The generic milli-unit conversion would lose samples below 1,000 mana. A shared
+pure-Java amount helper keeps this resource in raw mana and selects the `MANA`
+profile unit. All other keys retain their current normalization. Tooltip and
+chat labels come from the same profile-unit translation key.
+
+On history load, convert only `botania:mana` entries recorded as `MILLIBUCKET`
+from milli-pools to mana by multiplying each representable positive amount by
+1,000. New `MANA` samples and unrelated entries remain unchanged. The named NBT
+unit field stays compatible; snapshot protocol versions change on all loaders
+because older clients cannot decode the new enum value.
+
 `ProfilerBridge.key` currently identifies a profile with `AEKey.getId()`. Do not
 silently change that format. Adding the `AEKeyType` ID would affect saved data,
 packet request IDs, cache lookup, and reset messages, so it needs its own format

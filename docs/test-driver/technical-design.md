@@ -185,7 +185,11 @@ ProjectE EMC before selecting an existing idle CPU. AppliedE grants the player
 furnace knowledge and EMC, mounts a powered Transmutation Module, and verifies
 its native EMC crafting pattern before selecting a native AE2 CPU. Applied
 Mekanistics mounts a chemical storage cell, fills it with oxygen through the
-addon's native AE2 key, and places a native AE2 256K CPU. A new
+addon's native AE2 key, and places a native AE2 256K CPU. The
+Applied Botanics fixture mounts its real mana cell and verifies the native
+`ManaKey` through the storage grid before using the existing CPU selection and
+profiling flow. It supplies a native AE2 CPU and normal recipe ingredients so
+focused addon runs do not depend on CPUs or cells from absent addons. A new
 optional dependency extends that registry and adds a
 `testDriverCompileOnly` dependency when it is not already on the inherited
 compile classpath. A fixture may override the marker output only when the add-on

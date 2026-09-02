@@ -4,7 +4,6 @@ import com.ctux.ae2craftingtime.core.PacketLimits;
 import com.ctux.ae2craftingtime.core.PlayerMessageRateLimit;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.ProfileStats;
-import com.ctux.ae2craftingtime.core.ProfileUnit;
 import com.ctux.ae2craftingtime.core.StatsChatAction;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
@@ -54,9 +53,7 @@ public final class StatsChatServer {
                         decimal(stats.averageDurationTicks() / 20.0)),
                 Component.translatable("text.ae2craftingtime.value.seconds",
                         decimal(stats.lastDurationTicks() / 20.0)),
-                decimal(stats.amountPerSecond()), Component.translatable(stats.unit() == ProfileUnit.MILLIBUCKET
-                        ? "text.ae2craftingtime.unit.millibucket"
-                        : "text.ae2craftingtime.unit.item"));
+                decimal(stats.amountPerSecond()), Component.translatable(stats.unit().translationKey()));
         if (stats.usedSampleCount() != stats.sampleCount()) {
             component.append(Component.translatable("text.ae2craftingtime.chat.details.used",
                     stats.usedSampleCount(), stats.sampleCount()));
