@@ -36,6 +36,11 @@ Hovering the delayed recipe shows its timing, recent activity, and advice:
 
 ![Delayed recipe diagnostics](crafting-status-ttc-bottleneck-diagnostics.png)
 
+When the CPU can't return its stored items to the ME network, the row explains
+the problem and suggests freeing or adding storage:
+
+![NO SPACE warning and storage advice](crafting-status-no-space.png)
+
 ## Timing details
 
 The first sample is marked as low confidence:
@@ -93,6 +98,9 @@ The furnace-item, crafting-tree, sorting, and ME Requester examples use the
 repository's UI test fixtures. Their seeded sample values demonstrate the UI;
 they are not machine-performance measurements. ME Requester uses a diamond
 request with a seeded two-second estimate.
+
+The NO SPACE example uses a full item cell and seeded retained CPU contents.
+Adding writable storage clears the warning without reopening the screen.
 
 To refresh a crop, open the target UI and run `scripts/capture-ui-region.ps1`
 inside the same interactive Windows session. Supply the output PNG path and
