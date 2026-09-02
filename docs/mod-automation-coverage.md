@@ -56,7 +56,7 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 | AdvancedAE (`advanced_ae`; optional; candidate) | `1.3.6-1.20.1` | Yes (scenario) | — | — | `1.6.12-1.21.1` | No | `26.1.7` | No |
 | ME Requester (`merequester`; optional; candidate) | `1.20.1-1.2.1+forge` | Yes (`merequester-screen`) | `1.20.1-1.1.4+fabric` | No | `1.21.1-1.4.3+neoforge` | No | — | — |
 | NeoEco AE (`neoecoae`; optional; candidate) | `20.3.0` | Yes (scenario) | — | — | `21.1.1` | No | — | — |
-| AE2 Lightning Tech (`ae2lightningtech`; optional; candidate) | `2.1.0-beta.2-forge.1.20.1` | No | — | — | `2.1.0-beta.2` | No | `1.0.1alpha-26.1.2neoforge` | No |
+| AE2 Lightning Tech (`ae2lt`; optional; candidate) | `2.1.0-beta.2-forge.1.20.1` | No | — | — | `2.1.0-beta.2` | No | `1.0.1alpha-26.1.2neoforge` | No |
 | OmniSequence: Transfinite (`molecularmanipulator`; optional; candidate) | `1.3.9-forge` | Yes (scenario) | — | — | `1.3.9-hotfix` | No | — | — |
 | ExtendedAE (optional; candidate) | `1.20-1.4.18-forge` | Yes (scenario) | `1.20-1.0.2-fabric` | No | `1.21-2.2.35-neoforge` | No | `26.1-1.0.3-neoforge` | No |
 | ExtendedAE-Plus (`extendedae_plus`; optional; candidate) | `1.5.5` | Yes (scenario) | — | — | `1.6.2` | No | — | — |

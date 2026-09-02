@@ -65,6 +65,13 @@ any addon required.
 
 ### Compatibility and safety
 
+- Optional-addon runtime metadata uses a minimum supported version with no
+  upper cap. A tested development pin is not a maximum supported version.
+  Updating an addon must not be refused merely because it is newer than our
+  smoke-tested baseline. Keep Minecraft, loader, Java and required AE2 API
+  boundaries separate; this does not promise compatibility with every future API.
+- Record demonstrated upstream failures as diagnostics, not speculative loader
+  caps. Fix our adapter when its hooks change and verify the requested versions.
 - Cover all four supported release rows: 1.20.1 Forge, 1.20.1 Fabric, 1.21.1
   NeoForge, and 26.1.2 NeoForge.
 - Keep optional mixins tolerant when their target addon is absent.
