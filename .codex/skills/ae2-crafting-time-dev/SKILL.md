@@ -52,6 +52,9 @@ Every new or changed executable behavior must have 100% line and branch coverage
   affected loader together and version the format or protocol when needed.
 - Treat `scripts/release-matrix.json` as the supported-target source of truth.
 - Keep build dependencies and loader metadata at the minimum supported versions.
+- Optional-addon runtime ranges stay open-ended above that minimum; never turn
+  a development-client pin or an unverified newer release into a loader cap.
+  Record actual incompatibilities separately and verify changed addon APIs.
 - Keep ordinary `run-*` clients on the pinned compatible graph and use
   `run-*-latest` clients for the newest available versions. Update both through
   `scripts/run-client-versions.json`.

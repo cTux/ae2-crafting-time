@@ -119,6 +119,8 @@ dependencies {
     testDriverCompileOnly 'maven.modrinth:4inoel9g:RFT2nmVb'
     testDriverCompileOnly 'maven.modrinth:pNabrMMw:z8QXeyI0'
     testDriverCompileOnly 'maven.modrinth:neoecoae:20.3.0'
+    testDriverCompileOnly 'maven.modrinth:ArHeh5Fz:8RXazZkx'
+    testDriverCompileOnly 'maven.modrinth:M5jhzZXH:UgayyKmv'
     testDriverCompileOnly 'maven.modrinth:jjuIRIVr:SH2D1n3s'
     testDriverCompileOnly 'maven.modrinth:RYE1pYyr:c2s3iMw8'
     testDriverCompileOnly 'maven.modrinth:IZPmgTLT:wCGFfeun'

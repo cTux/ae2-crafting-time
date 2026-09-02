@@ -33,7 +33,7 @@ side="BOTH"
 [[dependencies."${mod_id}"]]
 modId="bmaddon"
 type="OPTIONAL"
-versionRange="[1.0.2,1.1.0)"
+versionRange="[1.0.2,)"
 ordering="AFTER"
 side="BOTH"
 
@@ -47,21 +47,21 @@ side="BOTH"
 [[dependencies."${mod_id}"]]
 modId="ae2wtlib"
 type="OPTIONAL"
-versionRange="[26.1.1-beta,27.0.0)"
+versionRange="[26.1.1-beta,)"
 ordering="AFTER"
 side="CLIENT"
 
 [[dependencies."${mod_id}"]]
 modId="ae2omnicells"
 type="OPTIONAL"
-versionRange="[1.1.7,1.2.0)"
+versionRange="[1.1.7,)"
 ordering="AFTER"
 side="BOTH"
 
 [[dependencies."${mod_id}"]]
 modId="appflux"
 type="OPTIONAL"
-versionRange="[1.0.1,2.0.0)"
+versionRange="[1.0.1,)"
 ordering="AFTER"
 side="BOTH"
 

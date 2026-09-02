@@ -120,6 +120,13 @@ only requests aggregate data and renders it.
 
 ## Version boundaries
 
+Optional Forge/NeoForge metadata uses `[minimum,)`; Fabric suggestions use
+`>=minimum`. Do not derive maximum versions from the pinned client graph.
+The optional-integration validator rejects closed or capped ranges on every
+release row. It leaves required Minecraft/loader/AE2 boundaries untouched.
+Pins remain exact for repeatable development runs, while named-pack tests use
+the explicitly selected pack versions and retain any real API/startup failure.
+
 The hook contract is shared where the AE2 API matches, but every source layer
 must be checked:
 

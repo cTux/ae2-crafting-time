@@ -22,27 +22,33 @@ for its JAR.
 These are picked up automatically when installed. You do not need them to run
 AE2 Crafting Time.
 
+Optional ranges have a minimum, not an upper version cap. A newer addon is not
+blocked just because our development client pins an older release. Those pins
+exist for repeatable tests, not to freeze modpacks. Real upstream API changes
+can still need integration fixes; an open range is not a promise that every
+future release has already been tested.
+
 | Dependency | Targets | Version range | What it enables |
 | --- | --- | --- | --- |
-| Applied Botanics (original) (`appbot`) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | 1.20.1: `>=1.5.0 <1.6.0`; 1.21.1: `>=1.6.0-alpha.3 <1.7.0` | Raw mana amounts and mana unit labels through its native AE2 key. Existing milli-pool histories are converted on load. |
+| Applied Botanics (original) (`appbot`) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | 1.20.1: `>=1.5.0`; 1.21.1: `>=1.6.0-alpha.3` | Raw mana amounts and mana unit labels through its native AE2 key. Existing milli-pool histories are converted on load. |
 | AE2: Crafting Tree (`ae2ct`) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | `>=1.0.1` | TTC lines and details in AE2: Crafting Tree UI. |
-| Applied Mekanistics (`appmek`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.4.3 <2.0.0`; NeoForge: `>=1.6.2 <2.0.0` | TTC profiling and Crafting Plan display for chemicals stored in the ME network through Applied Mekanistics' native AE2 key. |
+| Applied Mekanistics (`appmek`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.4.3`; NeoForge: `>=1.6.2` | TTC profiling and Crafting Plan display for chemicals stored in the ME network through Applied Mekanistics' native AE2 key. |
 | AdvancedAE (`advanced_ae`) | `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.21.1: `>=1.6.11`; 26.1.2: `>=26.1.7` | TTC profiling for AdvancedAE crafting CPUs, including the Quantum Computer. |
 | ME Requester (`merequester`) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | Forge/Fabric: `>=1.20.1`; NeoForge: `>=1.21.1` | TTC row labels and total TTC hints in ME Requester screens. |
-| Neo ECO AE Extension (`neoecoae`) | `1.20.1 Forge` | `>=20.3.0 <=20.4.0` | TTC profiling for C-series ECO crafting CPUs, including normal and FastPath dispatch. NeoEco 20.4.1 and 20.4.2 have an upstream AE2 mixin crash. |
-| BloodMagic AE2 Addition (`bmaddon`) | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | Forge: `>=1.0.4 <1.1.0`; 1.21.1: `>=1.21.1-beta1`; 26.1.2: `>=1.0.2 <1.1.0` | TTC profiling and Crafting Plan display for crafts handled by the Blood Assembler. |
-| Crazy AE2 Addons (`crazyae2addons`) | `1.20.1 Forge` | `>=2.6.2 <4.0.0` | TTC profiling and Crafting Plan display with Crazy AE2 Addons CPU priorities. |
-| AE2 WCWT (`wcwt`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.20.1.7-hotfix <1.21`; NeoForge: `>=1.3.8 <2.0.0` | One-item TTC in craftable entries of the wireless comprehensive work terminal. Crafting still uses AE2's normal CPU detection and Crafting Plan. |
-| AE2 Wireless Terminals (`ae2wtlib`) | All supported targets | 1.20.1 Forge: `>=15.3.3 <16.0.0`; Fabric: `>=15.2.1 <16.0.0`; 1.21.1: `>=19.5.1 <20.0.0`; 26.1.2: `>=26.1.1-beta <27.0.0` | One-item TTC in craftable entries of its wireless crafting terminal. Crafting still uses AE2's normal CPU detection and Crafting Plan. |
-| AE2 Lightning Tech (`ae2lightningtech`) | `1.20.1 Forge` | `>=2.1.0-beta.2` | TTC profiling for Tianshu time-wheel crafting CPUs. |
+| Neo ECO AE Extension (`neoecoae`) | `1.20.1 Forge` | `>=20.3.0` | TTC profiling for C-series ECO crafting CPUs, including normal and FastPath dispatch. Version 20.4.2 passed the Project Infinity update graph's CPU smoke with LightningTech and Thunderbolt installed; results for other dependency graphs can differ. |
+| BloodMagic AE2 Addition (`bmaddon`) | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | Forge: `>=1.0.4`; 1.21.1: `>=1.21.1-beta1`; 26.1.2: `>=1.0.2` | TTC profiling and Crafting Plan display for crafts handled by the Blood Assembler. |
+| Crazy AE2 Addons (`crazyae2addons`) | `1.20.1 Forge` | `>=2.6.2` | TTC profiling and Crafting Plan display with Crazy AE2 Addons CPU priorities. |
+| AE2 WCWT (`wcwt`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.20.1.7-hotfix`; NeoForge: `>=1.3.8` | One-item TTC in craftable entries of the wireless comprehensive work terminal. Crafting still uses AE2's normal CPU detection and Crafting Plan. |
+| AE2 Wireless Terminals (`ae2wtlib`) | All supported targets | 1.20.1 Forge: `>=15.3.3`; Fabric: `>=15.2.1`; 1.21.1: `>=19.5.1`; 26.1.2: `>=26.1.1-beta` | One-item TTC in craftable entries of its wireless crafting terminal. Crafting still uses AE2's normal CPU detection and Crafting Plan. |
+| AE2 Lightning Tech (`ae2lt`) | `1.20.1 Forge` | `>=2.1.0-beta.2` | TTC profiling for Tianshu time-wheel crafting CPUs. |
 | OmniSequence: Transfinite (`molecularmanipulator`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.3.8-hotfix-forge`; NeoForge: `>=1.3.9-hotfix` | TTC profiling for Omni-Computation Core crafting CPUs through AE2's native execution path. |
-| ExtendedAE-Plus (`extendedae_plus`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.5.5 <1.6.0`; NeoForge: `>=1.6.2` | TTC profiling and UI coexistence with ExtendedAE-Plus crafting changes. |
-| MEGA Cells (`megacells`) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | Forge/Fabric: `>=2.4.6 <3.0.0`; NeoForge: `>=4.11.0 <5.0.0` | TTC profiling and Crafting Plan display for MEGA crafting CPUs through AE2's native execution path. |
-| OMNI Cells (`ae2omnicells`) | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.20.1/1.21.1: `>=1.1.6 <1.2.0`; 26.1.2: `>=1.1.7 <1.2.0` | TTC profiling and Crafting Plan display for OMNI crafting CPUs through AE2's native execution path. |
-| ProjectCell (`projectcell`) | `1.20.1 Forge`, `1.21.1 NeoForge` | `>=1.0.0 <2.0.0` | TTC profiling and Crafting Plan display when ProjectCell supplies ingredients from ProjectE EMC through AE2's native storage and crafting paths. |
-| AppliedE / AppliedE TPS Fix (`appliede`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=0.14.0 <1.0.0`; NeoForge: `>=1.0.0-beta <2.0.0` | TTC profiling and Crafting Plan display when AppliedE supplies ingredients from ProjectE EMC through AE2's native key and crafting paths. Install either AppliedE or its TPS Fix fork, not both. |
-| Applied Flux (`appflux`) | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.20.1: `>=1.3.7 <2.0.0`; 1.21.1: `>=2.1.4 <3.0.0`; 26.1.2: `>=1.0.1 <2.0.0` | TTC profiling and Crafting Plan display for FE stored in the ME network through Applied Flux's native AE2 energy key. |
-| Modern AE2 Additions (`mae2`) | `1.20.1 Forge` | `>=1.1.0 <3.0.0` | TTC profiling and Crafting Plan display for CPUs using Modern AE2 Additions dense co-processors through AE2's native crafting path. |
+| ExtendedAE-Plus (`extendedae_plus`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.5.5`; NeoForge: `>=1.6.2` | TTC profiling and UI coexistence with ExtendedAE-Plus crafting changes. |
+| MEGA Cells (`megacells`) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | Forge/Fabric: `>=2.4.6`; NeoForge: `>=4.11.0` | TTC profiling and Crafting Plan display for MEGA crafting CPUs through AE2's native execution path. |
+| OMNI Cells (`ae2omnicells`) | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.20.1/1.21.1: `>=1.1.6`; 26.1.2: `>=1.1.7` | TTC profiling and Crafting Plan display for OMNI crafting CPUs through AE2's native execution path. |
+| ProjectCell (`projectcell`) | `1.20.1 Forge`, `1.21.1 NeoForge` | `>=1.0.0` | TTC profiling and Crafting Plan display when ProjectCell supplies ingredients from ProjectE EMC through AE2's native storage and crafting paths. |
+| AppliedE / AppliedE TPS Fix (`appliede`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=0.14.0`; NeoForge: `>=1.0.0-beta` | TTC profiling and Crafting Plan display when AppliedE supplies ingredients from ProjectE EMC through AE2's native key and crafting paths. Install either AppliedE or its TPS Fix fork, not both. |
+| Applied Flux (`appflux`) | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.20.1: `>=1.3.7`; 1.21.1: `>=2.1.4`; 26.1.2: `>=1.0.1` | TTC profiling and Crafting Plan display for FE stored in the ME network through Applied Flux's native AE2 energy key. |
+| Modern AE2 Additions (`mae2`) | `1.20.1 Forge` | `>=1.1.0` | TTC profiling and Crafting Plan display for CPUs using Modern AE2 Additions dense co-processors through AE2's native crafting path. |
 
 Applied Mekanistics is not declared for the Fabric jar because the supported
 Applied Mekanistics releases for these targets are Forge/NeoForge.

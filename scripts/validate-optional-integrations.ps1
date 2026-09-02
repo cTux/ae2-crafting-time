@@ -98,6 +98,10 @@ for ($index = 0; $index -lt $release.Count; $index++) {
     Assert-SameSet $expectedRelease $released "$($row.id) loader metadata and release dependencies"
 
     foreach ($modId in $metadata.Keys) {
+        $upgradeableRange = if ($row.loader -eq "fabric") { '^>=\S+$' } else { '^\[[^,\[\]()]+,\)$' }
+        if ($metadata[$modId] -notmatch $upgradeableRange) {
+            throw "$($row.id) optional dependency $modId must use an open-ended minimum version"
+        }
         if (-not $coverageRows[$modId]) { throw "Missing coverage row for $modId" }
         $minimum = Get-Minimum $metadata[$modId]
         if ($minimum -and $dependencyRows[$modId].Range -notlike "*$minimum*") {

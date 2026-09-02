@@ -7,7 +7,7 @@ in the compatible development-client profile, which may be older than the real
 latest release.
 
 WCWT, AE2 Wireless Terminals, and Import Export Card terminal tooltips label
-estimates as `TTC: ~1s` (or `TTC: Collecting`). The line comes after AE2's
+estimates as `TTC: ~1s` (or `TTC: No data yet`). The line comes after AE2's
 amounts, craftability, and advanced details on every supported target. Other mods
 can still append content afterward. Compact row badges keep their existing text.
 
@@ -36,6 +36,20 @@ includes fixes for capture-before-render and double initialization of AE2 nodes.
 Per-mod results, screenshots, shared logs, and checkpoint mappings are archived
 under the campaign ID using the [smoke evidence layout](ui-smoke-evidence.md).
 
+The proposed pack update passed CodexVM campaign `20260902T100314Z-suite`:
+NeoEco `20.4.2`, OmniSequence `1.3.9-forge`, WCWT `1.20.1.10`, and LightningTech
+`2.1.0-beta.2`, with its required Thunderbolt `2.0.0-beta.2`. All four scenarios
+passed in one Minecraft process with five visually inspected screenshots.
+The three CPU cases produced fresh profiling samples and post-craft TTC;
+WCWT covered its terminal tooltip and Crafting Plan. The earlier attempt
+`20260902T095012Z-suite` is retained as failed: the driver missed the estimate
+appended after the new tooltip label. The corrected observer traverses appended
+text without treating missing-data text as a resolved estimate.
+Only those requested dependencies changed in the disposable pack copy; the
+prepared-client pins below are unchanged. This baseline smoke does not reproduce
+the separately reported LightningTech Crimson Ingot job or verify its controller
+layout, and it does not imply full modpack gameplay coverage.
+
 `Yes (base)` means the Forge 1.20.1 driver exercises the dependency as part of
 its standard AE2 scenario. `Yes (scenario)` means it has a dedicated optional-mod
 scenario. `No` means a version is known for that target, but no TestDriver covers
@@ -56,7 +70,7 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 | AdvancedAE (`advanced_ae`; optional; candidate) | `1.3.6-1.20.1` | Yes (scenario) | — | — | `1.6.12-1.21.1` | No | `26.1.7` | No |
 | ME Requester (`merequester`; optional; candidate) | `1.20.1-1.2.1+forge` | Yes (`merequester-screen`) | `1.20.1-1.1.4+fabric` | No | `1.21.1-1.4.3+neoforge` | No | — | — |
 | NeoEco AE (`neoecoae`; optional; candidate) | `20.3.0` | Yes (scenario) | — | — | `21.1.1` | No | — | — |
-| AE2 Lightning Tech (`ae2lightningtech`; optional; candidate) | `2.1.0-beta.2-forge.1.20.1` | No | — | — | `2.1.0-beta.2` | No | `1.0.1alpha-26.1.2neoforge` | No |
+| AE2 Lightning Tech (`ae2lt`; optional; candidate) | `2.1.0-beta.2-forge.1.20.1` | Yes (scenario) | — | — | `2.1.0-beta.2` | No | `1.0.1alpha-26.1.2neoforge` | No |
 | OmniSequence: Transfinite (`molecularmanipulator`; optional; candidate) | `1.3.9-forge` | Yes (scenario) | — | — | `1.3.9-hotfix` | No | — | — |
 | ExtendedAE (optional; candidate) | `1.20-1.4.18-forge` | Yes (scenario) | `1.20-1.0.2-fabric` | No | `1.21-2.2.35-neoforge` | No | `26.1-1.0.3-neoforge` | No |
 | ExtendedAE-Plus (`extendedae_plus`; optional; candidate) | `1.5.5` | Yes (scenario) | — | — | `1.6.2` | No | — | — |
