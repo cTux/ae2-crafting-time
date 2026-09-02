@@ -15,7 +15,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import java.util.Arrays;
 import java.util.Objects;
 
-final class NativeCpuFixture extends AddonCpuFixture<NativeCpuFixture.Placement> {
+class NativeCpuFixture extends AddonCpuFixture<NativeCpuFixture.Placement> {
     @Override
     protected Placement place(ServerPlayer player, FixtureMarker marker) {
         if (player == null) {

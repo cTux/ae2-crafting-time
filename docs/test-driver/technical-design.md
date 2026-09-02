@@ -16,7 +16,9 @@ in the companion. The driver metadata requires the exact production version.
 The existing launcher and VM dispatch chain carry `-Target` through status,
 runtime paths, suite selection, and result validation. Forge keeps its default
 and `resolved-mods`; Fabric uses `mods`. Both reuse the same marked source world,
-copying it separately for every case. The prepared Fabric suite has seven cases
+copying it separately for every case. Fabric provisions a native AE2 CPU and
+item cell before each scenario because the source world uses Forge-only addons.
+The DISK scenario then removes that supply and must craft from its own DISK. The prepared Fabric suite has seven cases
 in `scripts/ui-smoke-fabric-suite.json`; unavailable Forge-only addons stay out.
 The common ExtendedAE fixture checks the actual registered assembler block and
 its AE2 node, avoiding the upstream package-name difference between loaders.

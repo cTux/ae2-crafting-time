@@ -38,6 +38,7 @@ public final class CraftPlanScenario {
     private final Minecraft minecraft;
     private final DriverOptions options;
     private final String driverFile;
+    private final AddonCpuFixture<?> baseFixture = DriverPlatform.baseFixture();
     private final AddonCpuFixture<?> addonFixture;
     private final StableFrames<List<String>> stableRows = new StableFrames<>(3);
     private final LinkedHashMap<String, Boolean> checks = new LinkedHashMap<>();
@@ -136,6 +137,9 @@ public final class CraftPlanScenario {
         marker = FixtureMarker.read(world);
         if (!marker.disposableWorldId().equals(options.world())) {
             throw new IllegalArgumentException("fixture world ID mismatch");
+        }
+        if (baseFixture != null && !baseFixture.setup(minecraft, marker)) {
+            return;
         }
         if (addonFixture != null && !addonFixture.setup(minecraft, marker)) {
             return;
