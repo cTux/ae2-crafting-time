@@ -1,5 +1,16 @@
 # AE2 Crafting Time Test Driver Spec
 
+## No-space status scenario
+
+`no-space-status` uses an isolated native AE2 CPU and a full item cell in the
+disposable world. A full external furnace first leaves the warning absent.
+The fixture seeds retained CPU contents through AE2's inventory API; AE2's
+normal tick and menu synchronization must report rejected storage. Observe the
+rendered warning, badge, and tooltip in English and Ukrainian. Replace the full
+cell with writable capacity and require the warning to clear in the same screen.
+Keep before, both-language tooltip, and recovered screenshots. Pure row tests
+cover active and scheduled exclusions; the fixture does not simulate a craft.
+
 ## Goal
 
 Provide a development-only companion mod that drives and observes a real

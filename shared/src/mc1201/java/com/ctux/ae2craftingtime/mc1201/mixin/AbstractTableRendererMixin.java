@@ -58,7 +58,7 @@ public abstract class AbstractTableRendererMixin {
     private static boolean ae2craftingtime$isTtcLine(TranslatableContents translatable) {
         var key = translatable.getKey();
         return key.equals("text.ae2craftingtime.ttc") || key.equals("text.ae2craftingtime.ttc_delayed")
-                || key.equals("text.ae2craftingtime.waiting");
+                || key.equals("text.ae2craftingtime.waiting") || key.equals("text.ae2craftingtime.no_space");
     }
 
     @Inject(method = "render", at = @At("HEAD"), remap = false)

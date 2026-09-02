@@ -43,6 +43,7 @@ public final class UiObservationStore {
     public static void begin(Minecraft minecraft) {
         if (!(minecraft.screen instanceof AEBaseScreen<?> screen)
                 || (!(screen instanceof CraftConfirmScreen)
+                && !(screen instanceof appeng.client.gui.me.crafting.CraftingCPUScreen<?>)
                 && !screen.getClass().getName().equals(Ae2NetworkAnalyserFixture.SCREEN)
                 && !screen.getClass().getName().equals(MeRequesterFixture.SCREEN)
                 && !CraftingTreeScenario.isScreen(screen.getClass().getName()))) {
@@ -144,7 +145,8 @@ public final class UiObservationStore {
     }
 
     public static void wirelessTooltip(List<Component> components) {
-        if (active != null && CraftingTreeScenario.isScreen(active.screen)) {
+        if (active != null && (CraftingTreeScenario.isScreen(active.screen)
+                || Minecraft.getInstance().screen instanceof appeng.client.gui.me.crafting.CraftingCPUScreen<?>)) {
             active.tooltip.clear();
             active.tooltip.addAll(observed(components, null));
         }

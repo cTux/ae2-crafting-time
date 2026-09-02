@@ -1,6 +1,8 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
 import appeng.client.gui.me.crafting.CraftingStatusTableRenderer;
+import appeng.client.gui.me.crafting.CraftingCPUScreen;
+import com.ctux.ae2craftingtime.core.CraftingRowState;
 import appeng.menu.me.crafting.CraftingStatusEntry;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
@@ -10,6 +12,7 @@ import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.TtcColorContext;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
 import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
 import org.spongepowered.asm.mixin.Mixin;
@@ -30,6 +33,10 @@ public abstract class CraftingStatusTableRendererMixin {
     @Inject(method = "getEntryTooltip", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$appendTooltipTimeToCraft(CraftingStatusEntry entry,
             CallbackInfoReturnable<List<Component>> cir) {
+        if (ae2craftingtime$noSpace(entry)) {
+            cir.getReturnValue().addAll(TtcText.noSpaceTooltip());
+            return;
+        }
         var amount = entry.getActiveAmount() + entry.getPendingAmount();
         if (amount <= 0) {
             return;
@@ -41,6 +48,10 @@ public abstract class CraftingStatusTableRendererMixin {
     }
 
     private static void ae2craftingtime$appendTtc(CraftingStatusEntry entry, List<Component> lines) {
+        if (ae2craftingtime$noSpace(entry)) {
+            lines.add(TtcText.noSpace());
+            return;
+        }
         var amount = entry.getActiveAmount() + entry.getPendingAmount();
         if (amount <= 0) {
             return;
@@ -87,6 +98,13 @@ public abstract class CraftingStatusTableRendererMixin {
     private static Component delayedTtcLine() {
         return TtcText.ttcDelayed()
                 .withStyle(style -> style.withColor(TextColor.fromRgb(0xFF5555)).withBold(true));
+    }
+
+    private static boolean ae2craftingtime$noSpace(CraftingStatusEntry entry) {
+        return CraftingRowState.noSpace(
+                Minecraft.getInstance().screen instanceof CraftingCPUScreen<?> screen
+                        && screen.getMenu().isCantStoreItems(),
+                entry.getStoredAmount(), entry.getActiveAmount(), entry.getPendingAmount());
     }
 
     private static Component ttcLine(com.ctux.ae2craftingtime.core.ProfileKey key, String eta) {

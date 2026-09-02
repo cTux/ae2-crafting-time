@@ -22,6 +22,23 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
+    @Test
+    void noSpaceRequiresTheRenderedWarningAndBothAdviceLines() {
+        assertTrue(AddonCpuFixture.supports(NoSpaceScenario.SCENARIO));
+        assertNull(AddonCpuFixture.create(NoSpaceScenario.SCENARIO));
+        assertEquals(NoSpaceScenario.CHECKS, DriverResult.requiredChecks(NoSpaceScenario.SCENARIO));
+        var tooltip = List.of(NoSpaceScenario.KEY, NoSpaceScenario.KEY + ".explanation",
+                NoSpaceScenario.KEY + ".suggestion").stream()
+                .map(key -> new UiSnapshot.ObservedText(key, key, List.of(), null)).toList();
+        assertTrue(NoSpaceScenario.tooltipReady(tooltip));
+        for (int missing = 0; missing < tooltip.size(); missing++) {
+            var incomplete = new java.util.ArrayList<>(tooltip);
+            incomplete.remove(missing);
+            assertFalse(NoSpaceScenario.tooltipReady(incomplete));
+        }
+        assertFalse(NoSpaceScenario.tooltipReady(List.of()));
+    }
+
     @TempDir
     Path temporary;
 

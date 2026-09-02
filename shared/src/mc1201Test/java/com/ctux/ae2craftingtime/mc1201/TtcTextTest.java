@@ -45,6 +45,25 @@ class TtcTextTest {
         }
     }
 
+    @ParameterizedTest
+    @CsvSource({"en_us, NO SPACE", "uk_ua, Немає місця"})
+    void noSpaceHasWarningStyleAndTranslatedAdvice(String locale, String expected) throws IOException {
+        var lines = TtcText.noSpaceTooltip();
+        assertEquals(3, lines.size());
+        assertTrue(lines.get(0).getStyle().isBold());
+        assertEquals(TextColor.fromLegacyFormat(ChatFormatting.RED), lines.get(0).getStyle().getColor());
+        try (var reader = new InputStreamReader(getClass().getResourceAsStream(
+                "/assets/ae2craftingtime/lang/" + locale + ".json"), StandardCharsets.UTF_8)) {
+            var translations = JsonParser.parseReader(reader).getAsJsonObject();
+            assertEquals(expected, translations.get("text.ae2craftingtime.no_space").getAsString());
+            for (var line : lines) {
+                var contents = (TranslatableContents) line.getContents();
+                assertTrue(!translations.get(contents.getKey()).getAsString().isBlank());
+                assertEquals(0, contents.getArgs().length);
+            }
+        }
+    }
+
     @Test
     void waitingUsesTranslationWithoutArguments() {
         var contents = (TranslatableContents) TtcText.waiting().getContents();
