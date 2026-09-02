@@ -9,7 +9,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
 public final class AtomicResultWriter {
-    public static void write(Path outputDirectory, DriverResult result) throws IOException {
+    public static void write(Path outputDirectory, Object result) throws IOException {
         Files.createDirectories(outputDirectory);
         var temporary = outputDirectory.resolve("result.json.tmp");
         var destination = outputDirectory.resolve("result.json");

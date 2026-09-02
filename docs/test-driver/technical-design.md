@@ -246,7 +246,44 @@ Plan data is stable after the same screen and ordered output IDs are observed
 for three consecutive rendered frames. A new screen, changed row order, or
 changed plan restarts the count.
 
-## Independent UI observations
+## Single-launch orchestration
+
+`TestDriverRuntime` sequences the existing `CraftPlanScenario` instances for an
+explicit suite plan. `SuitePlan` validates bounded, unique scenario/world IDs,
+the matching first world, and non-interactive execution. Output paths are derived
+from validated scenario names. Preflight every fixture marker and reject linked
+world paths before loading any suite world.
+
+After a case reaches `RESULT_WRITTEN`, intercept its normal quit transition.
+Write the suite progress atomically, disconnect the level, and use Minecraft's
+normal `clearLevel` / world-open flow for the next pre-created copy. Construct a
+fresh scenario and reset driver UI observations. Normal server unload/load hooks
+own production cache and profiler reset; no production test hooks are added.
+Verify the running server's actual save path, not just a marker in another folder.
+
+The final case closes normally. A failed case aborts the suite; untouched cases
+remain `NOT_RUN`. Record a single process ID plus per-case start/end timestamps.
+The normal per-case result files and screenshots remain the source of assertion
+evidence. Test plan validation, summary completion/failure, and world-path guards
+at their pure boundary; verify world switching and cache isolation in CodexVM.
+
+## UI observation boundaries
+
+### CodexVM rectangular atlas probe
+
+Opt in with `-Dae2craftingtime.test.vmTextureProbe=true` only during an explicit
+driver run. VMware SVGA3D reports `GL_MAX_TEXTURE_SIZE=16384`, but its proxy test
+rejects a 16384-square RGBA texture (1 GiB) while accepting the pack's 16384x8192
+atlas (512 MiB). An independent guest LWJGL probe also successfully allocated the
+actual rectangular texture with no GL error. Vanilla incorrectly lowers its
+dimension limit to 8192 because it probes only squares.
+
+The driver-only `RenderSystemMixin` changes only that one SVGA3D proxy request
+to 16384x8192. The real OpenGL proxy result still determines success. It does not
+forge GPU capabilities, change actual texture allocation, downscale assets, or
+run in normal clients without the opt-in. Larger square atlases can still fail;
+this workaround is not a promise of unlimited VM graphics memory. All normal
+startup/atlas error checks remain required. Player JARs contain none of this code.
 
 Driver mixins target AE2 and Minecraft UI boundaries, not production reporting
 methods. Use a lower mixin priority than the production config so observations
@@ -319,6 +356,15 @@ driver, and log reads are fixed to the current runtime's `latest.log` with a
 64-KiB returned tail. The server closes before Minecraft process teardown.
 
 ## Result and validation flow
+
+Scenario actions run at the end of a rendered frame, not a client tick. A
+screen can open during a tick before its first render; reading the framebuffer
+then would save the previous screen while the screen-object check passes.
+The smoke run must also inspect every saved checkpoint image.
+
+Placed AE2 nodes wait for their normal first-tick initialization. Fixture setup
+returns pending while `isReady()` is false; it must not call `onReady()` itself,
+because AE2 already queues that callback and a second initialization crashes.
 
 The driver builds one immutable result and writes `result.json.tmp` beside the
 destination. It flushes and atomically renames the file to `result.json`; an

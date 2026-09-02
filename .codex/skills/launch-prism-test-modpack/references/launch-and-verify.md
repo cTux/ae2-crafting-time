@@ -24,6 +24,12 @@ Read this after an eligible named-modpack instance exists.
 
 ## Launch And Decide
 
+- For an SVGA3D atlas-size failure, distinguish `GL_MAX_TEXTURE_SIZE` from
+  Minecraft's square-allocation probe. Read the
+  [guarded driver probe](../../../../docs/test-driver/technical-design.md#codexvm-rectangular-atlas-probe)
+  before opting in. Verify real allocation and startup inside CodexVM; do not
+  substitute host testing or downscale the pack's assets to claim a VM pass.
+
 - Confirm Prism does not already mark the instance as running, then launch its
   selected entry inside the VM.
 - Keep Prism's console visible. Verify the newest populated `latest.log` belongs

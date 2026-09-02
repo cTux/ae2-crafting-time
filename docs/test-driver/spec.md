@@ -117,7 +117,36 @@ requires a new profile sample and TTC after crafting. Run it as a focused
 latest-profile scenario: the full compatible graph excludes Expanded AE
 because of its existing conflict with OmniSequence.
 
-## Optional add-on CPU scenarios
+## Single-launch suites
+
+A named-pack campaign runs all selected scenarios in one Minecraft process.
+Load mods and textures once, then run each case, save its screenshots and result,
+unload its world normally, and open the next fresh disposable fixture copy.
+World reloads isolate blocks, inventories, jobs, and saved profiler data without
+restarting the client. Never reuse a mutated world for another case.
+
+Use `scenario=suite` with the usual profile, output directory, and first world
+properties. The output directory contains `suite-plan.json`: schema 1 and a
+`cases` array of unique `{scenario, world}` entries (1–32 cases). All worlds must
+be pre-created, marked disposable copies. Validate the whole plan before acting.
+Interactive mode remains single-case only.
+
+Each case writes under `<output>/<scenario>/`. The root `result.json` records
+one JVM process ID, ordered case outcomes and timings, and the overall result.
+Missing cases never count as passes. Stop on the first failure, retain its
+screenshot/result, mark later cases `NOT_RUN`, and close the exact client.
+Only a complete suite with every case passing can report `PASS`.
+
+The existing single-case option and result schema remain unchanged. Selecting a
+suite does not silently add mods or skip missing integrations.
+
+Prepare a suite with `scripts/prepare-ui-smoke-suite.ps1 -RuntimeDirectory <game>
+-OutputDirectory <new-evidence-directory> -Scenarios <ordered-names>`. It returns
+the first world and launch properties. Pass `scenario=suite`, that world, profile,
+and output through the existing JVM properties, with the first world as Prism's
+quick-play world. The helper never changes the pack's mod graph.
+
+## Optional add-on CPU fixtures
 
 An add-on CPU scenario uses the same disposable world, UI flow, profiler checks,
 result schema, and runner. Its fixture owns only the add-on-specific placement,

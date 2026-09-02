@@ -26,6 +26,11 @@ description: Install or smoke-test a named AE2 modpack through Prism in CodexVM.
 
 ## Named Modpack Contract
 
+For multiple scenarios on one installed mod graph, use the
+[single-launch suite](../../../docs/test-driver/spec.md#single-launch-suites).
+Prepare fresh case worlds once, launch Prism once, and collect each case's
+screenshots before advancing. Do not relaunch the pack for every integration.
+
 1. Resolve the canonical CurseForge or Modrinth project and an exact release
    supported by `scripts/release-matrix.json`. Report ambiguity instead of
    silently choosing a similarly named pack.

@@ -1,0 +1,35 @@
+$ErrorActionPreference = 'Stop'
+$temporary = Join-Path ([IO.Path]::GetTempPath()) ('ae2ct-suite-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $temporary | Out-Null
+$runtime = Join-Path $temporary 'runtime'
+$output = Join-Path $temporary 'evidence'
+try {
+    $result = & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -RuntimeDirectory $runtime -OutputDirectory $output -Scenarios @('craft-plan','merequester-screen')
+    $plan = Get-Content "$output\suite-plan.json" -Raw | ConvertFrom-Json
+    if ($result.caseCount -ne 2 -or $result.world -ne $plan.cases[0].world -or $result.scenario -ne 'suite') { throw 'Wrong suite launch identity' }
+    foreach ($case in $plan.cases) {
+        $marker = Get-Content "$runtime\saves\$($case.world)\.ae2-crafting-time-test-fixture.json" -Raw | ConvertFrom-Json
+        if ($marker.disposableWorldId -ne $case.world -or $marker.sourceFixtureId -ne 'ae2-crafting-time') { throw 'Wrong case marker' }
+    }
+    if ($plan.cases[0].world -eq $plan.cases[1].world) { throw 'Worlds are not isolated' }
+    foreach ($invalid in @(@('craft-plan','craft-plan'), @('../escape'))) {
+        $rejected = $false
+        try { & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -RuntimeDirectory $runtime -OutputDirectory "$temporary\rejected-$([guid]::NewGuid())" -Scenarios $invalid | Out-Null }
+        catch { $rejected = $true }
+        if (!$rejected) { throw 'Expected duplicate or invalid name rejection' }
+    }
+    $rejected = $false
+    try { & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -RuntimeDirectory $runtime -OutputDirectory $output -Scenarios @('craft-plan') | Out-Null }
+    catch { $rejected = $true }
+    if (!$rejected) { throw 'Expected existing output rejection' }
+    $rejected = $false
+    try { & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -RuntimeDirectory $runtime -OutputDirectory "$temporary\too-many" -Scenarios (1..33 | ForEach-Object {"case-$_"}) | Out-Null }
+    catch { $rejected = $true }
+    if (!$rejected) { throw 'Expected bounded suite rejection' }
+    Write-Host 'PASS: suite copies, launch identity, markers, unique worlds, and invalid inputs'
+} finally {
+    $resolved = (Resolve-Path -LiteralPath $temporary).Path
+    if (!$resolved.StartsWith([IO.Path]::GetFullPath([IO.Path]::GetTempPath()), [StringComparison]::OrdinalIgnoreCase) -or
+            (Split-Path $resolved -Leaf) -notmatch '^ae2ct-suite-[a-f0-9]{32}$') { throw 'Unsafe test cleanup path' }
+    Remove-Item -LiteralPath $resolved -Recurse -Force
+}

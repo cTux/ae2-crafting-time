@@ -59,10 +59,10 @@ final class ModernAe2AdditionsFixture
             throw new IllegalStateException("Modern AE2 Additions crafting CPU was not placed");
         }
         if (!storage.getMainNode().isReady()) {
-            storage.onReady();
+            return false;
         }
         if (!accelerator.getMainNode().isReady()) {
-            accelerator.onReady();
+            return false;
         }
         if (!storage.isFormed()) {
             var min = new BlockPos(Math.min(placement.storage().getX(), placement.accelerator().getX()),

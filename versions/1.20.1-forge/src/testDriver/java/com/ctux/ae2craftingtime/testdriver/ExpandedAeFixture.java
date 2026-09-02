@@ -32,10 +32,10 @@ final class ExpandedAeFixture extends AddonCpuFixture<ExpandedAeFixture.Placemen
         var storage = (CraftingBlockEntity) level.getBlockEntity(placement.cpu().storage());
         var accelerator = (CraftingBlockEntity) level.getBlockEntity(placement.accelerator());
         if (!storage.getMainNode().isReady()) {
-            storage.onReady();
+            return false;
         }
         if (!accelerator.getMainNode().isReady()) {
-            accelerator.onReady();
+            return false;
         }
         if (storage.getCluster() == null || storage.getCluster() != accelerator.getCluster()) {
             var first = placement.cpu().storage();

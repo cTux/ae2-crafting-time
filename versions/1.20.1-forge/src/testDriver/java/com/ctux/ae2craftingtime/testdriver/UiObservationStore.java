@@ -31,6 +31,12 @@ public final class UiObservationStore {
     private static volatile List<UiSnapshot.ObservedText> wirelessTooltip = List.of();
     private static long sequence;
 
+    public static void reset() {
+        active = null;
+        latest = null;
+        wirelessTooltip = List.of();
+    }
+
     public static void begin(Minecraft minecraft) {
         if (!(minecraft.screen instanceof AEBaseScreen<?> screen)
                 || (!(screen instanceof CraftConfirmScreen)

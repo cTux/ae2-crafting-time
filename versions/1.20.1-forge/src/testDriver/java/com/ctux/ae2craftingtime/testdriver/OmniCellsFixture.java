@@ -53,7 +53,7 @@ final class OmniCellsFixture extends AddonCpuFixture<OmniCellsFixture.Placement>
             throw new IllegalStateException("OMNI crafting storage was not placed");
         }
         if (!storage.getMainNode().isReady()) {
-            storage.onReady();
+            return false;
         }
         if (!storage.isFormed()) {
             var calculator = new CraftingCPUCalculator(storage);

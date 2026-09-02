@@ -12,12 +12,24 @@ WCWT `1.20.1.7-hotfix`, NeoEco `20.4.0`, and OmniSequence
 scenario fixtures remain applicable. NeoEco's expected-output hook accepts
 both the 20.3 accounting object and the 20.4 batched-dispatch signature.
 The prepared-client pins below are unchanged. CodexVM passed dependency
-validation but could not create the pack's `16384x8192` texture atlas because
-its graphics limit is `8192x8192`. A user-approved host-GPU rerun in a disposable
+validation but Minecraft's square texture probe lowered its detected limit to
+`8192`, preventing the pack's `16384x8192` atlas. A guest GL allocation probe later
+confirmed that SVGA3D supports that rectangular atlas; the opt-in test-driver
+workaround is documented in the test-driver design. A user-approved host-GPU rerun in a disposable
 copy passed the dedicated scenarios for all four exact versions above, including
 fresh CPU profiling samples and visible TTC for the three CPU integrations and
 terminal tooltip/plan TTC for WCWT. The original pack's mods were not upgraded
 or removed. These scenario results do not imply full modpack gameplay coverage.
+
+The subsequent CodexVM campaign `20260902T084023Z-suite` passed all 23 installed
+integration scenarios in one Minecraft process, with a fresh disposable world
+per case, 31 visually inspected checkpoint screenshots, and exit code 0. It used
+the exact pack above with Forge `47.4.20` and the opt-in rectangular atlas probe.
+All 358 third-party JAR hashes and the original source instance were unchanged.
+The earlier failed VM attempt is retained separately; the successful retry
+includes fixes for capture-before-render and double initialization of AE2 nodes.
+Per-mod results, screenshots, shared logs, and checkpoint mappings are archived
+under the campaign ID using the [smoke evidence layout](ui-smoke-evidence.md).
 
 `Yes (base)` means the Forge 1.20.1 driver exercises the dependency as part of
 its standard AE2 scenario. `Yes (scenario)` means it has a dedicated optional-mod

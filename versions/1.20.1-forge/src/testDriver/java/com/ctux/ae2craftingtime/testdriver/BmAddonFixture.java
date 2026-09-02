@@ -57,7 +57,7 @@ final class BmAddonFixture extends AddonCpuFixture<BmAddonFixture.Placement> {
             throw new IllegalStateException("BM Addon Blood Assembler was not placed");
         }
         if (!assembler.getMainNode().isReady()) {
-            assembler.onReady();
+            return false;
         }
         if (!(level.getBlockEntity(placement.terminal) instanceof IInWorldGridNodeHost terminalHost)) {
             throw new IllegalStateException("BM Addon fixture terminal is unavailable");

@@ -53,7 +53,7 @@ final class MegaCellsFixture extends AddonCpuFixture<MegaCellsFixture.Placement>
             throw new IllegalStateException("MEGA crafting storage was not placed");
         }
         if (!storage.getMainNode().isReady()) {
-            storage.onReady();
+            return false;
         }
         if (!storage.isFormed()) {
             var calculator = new CraftingCPUCalculator(storage);
