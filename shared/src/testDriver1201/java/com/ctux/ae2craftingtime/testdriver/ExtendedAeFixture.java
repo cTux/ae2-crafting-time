@@ -23,7 +23,7 @@ class ExtendedAeFixture extends AddonCpuFixture<List<BlockPos>> {
         var ae2Assembler = BuiltInRegistries.BLOCK.getOptional(
                 Objects.requireNonNull(ResourceLocation.tryBuild("ae2", "molecular_assembler"))).orElse(null);
         var extendedAssembler = BuiltInRegistries.BLOCK.getOptional(
-                Objects.requireNonNull(ResourceLocation.tryBuild("expatternprovider", "ex_molecular_assembler"))).orElse(null);
+                Objects.requireNonNull(ResourceLocation.tryBuild(DriverPlatform.EXTENDED_AE_ID, "ex_molecular_assembler"))).orElse(null);
         if (ae2Assembler == null || extendedAssembler == null) {
             throw new IllegalStateException("ExtendedAE assembler blocks are unavailable");
         }
