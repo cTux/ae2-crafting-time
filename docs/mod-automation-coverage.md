@@ -50,6 +50,21 @@ prepared-client pins below are unchanged. This baseline smoke does not reproduce
 the separately reported LightningTech Crimson Ingot job or verify its controller
 layout, and it does not imply full modpack gameplay coverage.
 
+The prepared Forge campaign `20260902T110131Z-suite` completed all 25 scenarios
+in one JVM with 47 loaded mods, 33 inspected screenshots, and launcher exit 0.
+All automated checks passed, but the visual audit found ME Requester's row TTC
+partly covered by its configured item icon; its header total remained readable.
+Treat this as 24 visual scenario passes and one visual failure, not a clean full
+UI pass. The source is the badge/item render order in `MERequesterScreenMixin`;
+the current draw-call and rectangle checks do not detect that occlusion.
+The earlier campaign `20260902T104212Z-suite` is retained after its blank
+AEInfinityBooster captures were rejected. The rerun's corrected terminal/plan
+captures show their contents. Production classes and every third-party JAR were
+unchanged between attempts; only the driver changed. The complete dependency
+inventory, hashes, images, shared logs, and timing reports use the archive layout
+in [UI smoke evidence](ui-smoke-evidence.md). Crafting Tree has no dedicated UI
+scenario, and the known compatible-profile exclusions remain in effect.
+
 The prepared Forge suite also waits for rendered item tooltips in range-only
 wireless terminals and rendered plan TTC before capture; populated menu data
 alone is not screenshot readiness.
