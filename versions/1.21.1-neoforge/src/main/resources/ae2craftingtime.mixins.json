@@ -6,7 +6,9 @@
   "mixins": [
     "AdvancedCraftingCpuLogicMixin",
     "CraftingCPUMenuAccessor",
-    "CraftingCpuLogicMixin"
+    "CraftingCpuLogicMixin",
+    "Ae2LtTimeWheelCraftingCpuLogicMixin",
+    "ECOCraftingCpuLogicMixin"
   ],
   "client": [
     "AbstractTableRendererMixin",

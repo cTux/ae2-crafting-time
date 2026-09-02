@@ -52,6 +52,12 @@ Known cases:
 - AE2 Lightning Tech needs hooks around its time-wheel CPU logic.
 - OmniSequence stays in layer 0 unless runtime proof shows a missing event.
 
+NeoForge 1.21.1 registers the shared NeoEco and Lightning Tech adapters. The
+NeoEco expected-output redirect also accepts 21.1.1's integer-batch signature;
+it still observes only the first waiting-output insertion, not returned containers.
+Lightning Tech uses the same time-wheel method descriptors on both loaders.
+No profiler, packet, or saved-data format changes are needed.
+
 ### 3. AE2 key contract
 
 `AeKeyAmounts.normalize` already uses `AEKey.getAmountPerUnit()`. Because that
