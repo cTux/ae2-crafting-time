@@ -149,11 +149,17 @@ final class AdvancedAeFixture extends AddonCpuFixture<AdvancedAeFixture.Placemen
     protected void startCraft(ServerPlayer player, Placement placement, CraftConfirmMenu menu) {
         var core = (AdvCraftingBlockEntity) player.serverLevel().getBlockEntity(placement.core());
         var cluster = core.getCluster();
-        ((CraftConfirmMenuAccessor) menu).ae2craftingtime_test_driver$selectedCpu(cluster.getRemainingCapacityCPU());
-        menu.startJob();
+        // The released service hook auto-selects a cluster even when given an AdvCraftingCPU wrapper.
+        var plan = ((CraftConfirmMenuAccessor) menu).ae2craftingtime_test_driver$result();
+        var result = cluster.submitJob(core.getMainNode().getGrid(), plan,
+                appeng.api.networking.security.IActionSource.ofPlayer(player), null);
+        if (!result.successful()) {
+            throw new IllegalStateException("AdvancedAE rejected the smoke craft: " + result.errorCode());
+        }
         if (cluster.getActiveCPUs().size() != 1) {
             throw new IllegalStateException("AdvancedAE did not receive the smoke crafting job");
         }
+        menu.getHost().returnToMainMenu(player, menu);
     }
 
     record Placement(BlockPos core, BlockPos terminal, BlockPos min, BlockPos max) {
