@@ -19,6 +19,11 @@ public final class TtcText {
         return Component.translatable("text.ae2craftingtime.ttc", eta);
     }
 
+    public static MutableComponent tooltipTtc(Component value) {
+        return Component.translatable("text.ae2craftingtime.stats.ttc")
+                .append(": ").append(value).setStyle(value.getStyle());
+    }
+
     public static MutableComponent ttcDelayed() {
         return Component.translatable("text.ae2craftingtime.ttc_delayed");
     }

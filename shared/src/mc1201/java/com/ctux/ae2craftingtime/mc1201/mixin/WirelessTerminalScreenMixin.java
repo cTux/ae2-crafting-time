@@ -27,7 +27,10 @@ public abstract class WirelessTerminalScreenMixin {
             "com.ultramega.ae2insertexportcard.util.UpgradeInterface",
             "com.ultramega.ae2importexportcard.util.UpgradeInterface");
 
-    @ModifyVariable(method = "renderGridInventoryEntryTooltip", at = @At("STORE"), ordinal = 0, remap = false)
+    // The final getWhat call starts rendering, after amounts, craftability, and the advanced serial line.
+    @ModifyVariable(method = "renderGridInventoryEntryTooltip", at = @At(value = "INVOKE",
+            target = "Lappeng/menu/me/common/GridInventoryEntry;getWhat()Lappeng/api/stacks/AEKey;",
+            ordinal = 4), ordinal = 0, remap = false)
     private List<Component> ae2craftingtime$appendTtc(List<Component> lines, GuiGraphics guiGraphics,
             GridInventoryEntry entry, int x, int y) {
         if ((!TERMINAL_SCREENS.contains(getClass().getName()) && !ae2craftingtime$hasImportExportCard())
@@ -40,9 +43,9 @@ public abstract class WirelessTerminalScreenMixin {
         ClientStatsRequests.request(key);
         ClientStats.CACHE.get(key).ifPresentOrElse(
                 stats -> TimeEstimate.format(AeKeyAmounts.normalize(entry.getWhat(), 1), stats)
-                        .ifPresentOrElse(eta -> result.add(TtcText.ttc(eta)),
-                                () -> result.add(TtcText.ttcCollectingData())),
-                () -> result.add(TtcText.ttcCollectingData()));
+                        .ifPresentOrElse(eta -> result.add(TtcText.tooltipTtc(TtcText.ttc(eta))),
+                                () -> result.add(TtcText.tooltipTtc(TtcText.ttcCollectingData()))),
+                () -> result.add(TtcText.tooltipTtc(TtcText.ttcCollectingData())));
         return result;
     }
 
