@@ -35,6 +35,10 @@ any addon required.
    method that AE2 cannot expose.
 6. Avoid double recording when a CPU is visible through more than one layer.
 
+NeoForge 1.21.1 also profiles NeoEco 21.1.1 and Lightning Tech 2.1.0-beta.2
+custom CPU execution. Their smoke scenarios must submit a real craft, observe a
+new server sample, and show its TTC in the reopened plan. Both remain optional.
+
 ### Keys
 
 1. Normalize amounts through `AEKey.getAmountPerUnit()`.

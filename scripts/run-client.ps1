@@ -236,8 +236,8 @@ if ($Target -eq "1.21.1-neoforge") {
 }
 
 if ($DriverScenario) {
-    if ($Target -notin @("1.20.1-forge", "1.20.1-fabric") -or -not $DriverOutputDirectory -or -not $DriverWorld) {
-        throw "Test-driver scenarios require Forge or Fabric 1.20.1, an output directory, and a disposable world"
+    if ($Target -notin @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge") -or -not $DriverOutputDirectory -or -not $DriverWorld) {
+        throw "Test-driver scenarios require a supported target, an output directory, and a disposable world"
     }
     $runtimeArgs += "-PtestDriverScenario=$DriverScenario"
     $runtimeArgs += "-PtestDriverProfile=$(if ($Latest) { 'latest' } else { 'compatible' })"
@@ -264,18 +264,18 @@ foreach ($pattern in @("ae2ct-*.jar", "jei-*.jar")) {
         Remove-Item -Force
 }
 
-if ($Target -in @("1.20.1-forge", "1.20.1-fabric")) {
+if ($Target -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge")) {
     $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
         Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
     if (-not $modVersion) { throw "Missing modVersion in gradle.properties" }
-    $driverName = "ae2-crafting-time-$modVersion-$($profile.Loader)-1.20.1-test-driver.jar"
+    $driverName = "ae2-crafting-time-$modVersion-$($profile.Loader)-$($profile.Game)-test-driver.jar"
     & (Join-Path $root "gradlew.bat") ":$($profile.Module):testDriverJar" @runtimeArgs @GradleArgs
     if ($LASTEXITCODE -ne 0) { throw "Test-driver build failed" }
     $driverArtifact = Join-Path $root "build\test-driver\$driverName"
     if (-not (Test-Path -LiteralPath $driverArtifact -PathType Leaf)) {
         throw "Missing exact test-driver artifact $driverArtifact"
     }
-    Get-ChildItem -LiteralPath $mods -Filter "ae2-crafting-time-*-$($profile.Loader)-1.20.1-test-driver.jar" -File |
+    Get-ChildItem -LiteralPath $mods -Filter "ae2-crafting-time-*-$($profile.Loader)-$($profile.Game)-test-driver.jar" -File |
         Where-Object Name -ne $driverName | Remove-Item -Force
     Copy-Item -LiteralPath $driverArtifact -Destination (Join-Path $mods $driverName) -Force
     $managed.Add($driverName)

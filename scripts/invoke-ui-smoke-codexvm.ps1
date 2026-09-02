@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("1.20.1-forge", "1.20.1-fabric")][string]$Target = "1.20.1-forge",
+    [ValidateSet("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge")][string]$Target = "1.20.1-forge",
     [ValidateSet("OpenSSH", "Vmrun")][string]$Transport = "OpenSSH",
     [switch]$Latest,
     [switch]$Interactive,

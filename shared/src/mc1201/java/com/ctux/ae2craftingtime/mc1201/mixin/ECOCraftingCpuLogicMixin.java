@@ -64,7 +64,9 @@ public abstract class ECOCraftingCpuLogicMixin {
                     "recordPushedPattern(Lcn/dancingsnow/neoecoae/api/me/"
                             + "ECOCraftingCPULogic$PendingPatternAccounting;)V",
                     "recordPushedPattern(Lcn/dancingsnow/neoecoae/api/me/ExecutingCraftingJob;"
-                            + "Lcn/dancingsnow/neoecoae/impl/crafting/fastpath/ECOExtractedPatternExecution;JZ)V"
+                            + "Lcn/dancingsnow/neoecoae/impl/crafting/fastpath/ECOExtractedPatternExecution;JZ)V",
+                    "recordPushedPattern(Lcn/dancingsnow/neoecoae/api/me/ExecutingCraftingJob;"
+                            + "Lcn/dancingsnow/neoecoae/impl/crafting/fastpath/ECOExtractedPatternExecution;I)V"
             },
             at = @At(
                     value = "INVOKE",

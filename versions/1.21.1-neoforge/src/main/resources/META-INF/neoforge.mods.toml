@@ -137,3 +137,17 @@ type="OPTIONAL"
 versionRange="[1.6.0-alpha.3,)"
 ordering="AFTER"
 side="BOTH"
+
+[[dependencies."${mod_id}"]]
+modId="neoecoae"
+type="OPTIONAL"
+versionRange="[21.1.1,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies."${mod_id}"]]
+modId="ae2lt"
+type="OPTIONAL"
+versionRange="[2.1.0-beta.2,)"
+ordering="AFTER"
+side="BOTH"

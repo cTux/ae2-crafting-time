@@ -1,0 +1,25 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "com.ctux.ae2craftingtime.testdriver.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "priority": 1100,
+  "mixins": [
+    "CraftConfirmMenuAccessor"
+  ],
+  "client": [
+    "AEBaseScreenMixin",
+    "AEKeyRenderingMixin",
+    "AbstractTableRendererMixin",
+    "CraftAmountScreenAccessor",
+    "ContainerScreenAccessor",
+    "CraftConfirmTableRendererMixin",
+    "GuiGraphicsMixin",
+    "MEStorageScreenAccessor",
+    "MouseHandlerAccessor",
+    "RenderSystemMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

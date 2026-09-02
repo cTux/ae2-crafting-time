@@ -2,7 +2,9 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingCPU;
-import appeng.blockentity.grid.AENetworkInvBlockEntity;
+import appeng.api.networking.IInWorldGridNodeHost;
+import net.minecraft.core.Direction;
+import java.util.Arrays;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -48,13 +50,11 @@ class ExtendedAeFixture extends AddonCpuFixture<List<BlockPos>> {
         }
         var level = player.serverLevel();
         for (var position : positions) {
-            if (!(level.getBlockEntity(position) instanceof AENetworkInvBlockEntity assembler)) {
+            if (!(level.getBlockEntity(position) instanceof IInWorldGridNodeHost assembler)) {
                 throw new IllegalStateException("ExtendedAE assembler was not placed at " + position);
             }
-            if (!assembler.getMainNode().isReady()) {
-                return false;
-            }
-            if (!assembler.getMainNode().isActive()) {
+            if (Arrays.stream(Direction.values()).map(assembler::getGridNode)
+                    .filter(Objects::nonNull).noneMatch(node -> node.isActive())) {
                 return false;
             }
         }

@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("1.20.1-forge", "1.20.1-fabric")][string]$Target = "1.20.1-forge",
+    [ValidateSet("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge")][string]$Target = "1.20.1-forge",
     [switch]$Latest,
     [switch]$Interactive,
     [switch]$Scheduled,
@@ -22,17 +22,18 @@ function Get-WorkspaceId([string]$path) {
     } finally { $sha.Dispose() }
 }
 
-function Find-Java17([string]$requested) {
+function Find-SmokeJava([string]$requested) {
+    $major = if ($Target -eq "1.21.1-neoforge") { 21 } else { 17 }
     $candidate = if ($requested) { $requested } else {
         @(
-            Get-ChildItem -LiteralPath "C:\Program Files\Eclipse Adoptium" -Directory -Filter "jdk-17*" -ErrorAction SilentlyContinue
-            Get-ChildItem -LiteralPath (Join-Path $env:USERPROFILE ".gradle\jdks") -Directory -Recurse -Filter "jdk-17*" -ErrorAction SilentlyContinue
+            Get-ChildItem -LiteralPath "C:\Program Files\Eclipse Adoptium" -Directory -Filter "jdk-$major*" -ErrorAction SilentlyContinue
+            Get-ChildItem -LiteralPath (Join-Path $env:USERPROFILE ".gradle\jdks") -Directory -Recurse -Filter "jdk-$major*" -ErrorAction SilentlyContinue
         ) | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName
     }
     $java = if ($candidate) { Join-Path $candidate "bin\java.exe" } else { "" }
-    if (-not $java -or -not (Test-Path -LiteralPath $java -PathType Leaf)) { throw "CodexVM JDK 17 was not found" }
+    if (-not $java -or -not (Test-Path -LiteralPath $java -PathType Leaf)) { throw "CodexVM JDK $major was not found" }
     $version = (& { $ErrorActionPreference = "Continue"; & $java -XshowSettings:properties -version 2>&1 } | Out-String)
-    if ($version -notmatch '(?m)^\s*java\.version\s*=\s*17(?:\.|\s|$)') { throw "Minecraft 1.20.1 UI smoke requires JDK 17: $java" }
+    if ($version -notmatch "(?m)^\s*java\.version\s*=\s*$major(?:\.|\s|$)") { throw "$Target UI smoke requires JDK ${major}: $java" }
     return [IO.Path]::GetFullPath($candidate)
 }
 
@@ -81,14 +82,14 @@ $taskName = "AE2 Crafting Time UI Smoke $workspaceId"
 $existing = if ($Scheduled) { Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue } else { $null }
 if ($existing -and $existing.State -eq "Running") { throw "UI smoke task is already running" }
 
-$java17 = Find-Java17 $JavaHome
+$smokeJava = Find-SmokeJava $JavaHome
 New-Item -ItemType Directory -Path $stage, $report -Force | Out-Null
 & robocopy.exe $sourceRoot $stage /MIR /XD .git .gradle build /XF .git /NFL /NDL /NJH /NJS /NP | Out-Null
 if ($LASTEXITCODE -gt 7) { throw "Failed to stage the checkout with robocopy exit $LASTEXITCODE" }
 
 $request = [ordered]@{
     target = $Target; stagedRoot = $stage; reportDirectory = $report; scenario = $Scenario
-    projectId = @($ProjectId); latest = $Latest.IsPresent; interactive = $Interactive.IsPresent; javaHome = $java17
+    projectId = @($ProjectId); latest = $Latest.IsPresent; interactive = $Interactive.IsPresent; javaHome = $smokeJava
 }
 $requestFile = Join-Path $stage "ui-smoke-request.json"
 [IO.File]::WriteAllText($requestFile, ($request | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
@@ -109,7 +110,7 @@ if ($Scheduled) {
     exit 0
 }
 
-$env:JAVA_HOME = $java17
-$env:Path = "$(Join-Path $java17 'bin');$env:Path"
+$env:JAVA_HOME = $smokeJava
+$env:Path = "$(Join-Path $smokeJava 'bin');$env:Path"
 & (Join-Path $stage "scripts\run-ui-smoke-codexvm.ps1") -RequestPath $requestFile
 exit 0

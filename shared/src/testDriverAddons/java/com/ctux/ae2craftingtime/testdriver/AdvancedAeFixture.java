@@ -8,7 +8,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.Registries;
 import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPUCalculator;
 import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
 import appeng.menu.me.crafting.CraftConfirmMenu;
@@ -35,7 +35,7 @@ final class AdvancedAeFixture extends AddonCpuFixture<AdvancedAeFixture.Placemen
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("fixture terminal grid is unavailable"));
-        var core = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryBuild("advanced_ae", "quantum_core"));
+        var core = level.registryAccess().registryOrThrow(Registries.BLOCK).get(ResourceLocation.tryBuild("advanced_ae", "quantum_core"));
         if (core == null) {
             throw new IllegalStateException("AdvancedAE quantum core is unavailable");
         }
@@ -48,7 +48,13 @@ final class AdvancedAeFixture extends AddonCpuFixture<AdvancedAeFixture.Placemen
                 var position = anchor.relative(direction).immutable();
                 if (node != null && node.getGrid() == grid && level.getBlockState(position).isAir()) {
                     // The three upgrade blocks must be inside a complete structural shell.
-                    var min = position.above(8);
+                    var height = position.getY() + 8;
+                    for (var column : BlockPos.betweenClosed(position, position.offset(2, 0, 4))) {
+                        height = Math.max(height, level.getHeight(
+                                net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE,
+                                column.getX(), column.getZ()) + 1);
+                    }
+                    var min = new BlockPos(position.getX(), height, position.getZ());
                     var max = min.offset(2, 2, 4);
                     for (var part : BlockPos.betweenClosed(min, max)) {
                         if (!level.getBlockState(part).isAir()) {
@@ -59,14 +65,14 @@ final class AdvancedAeFixture extends AddonCpuFixture<AdvancedAeFixture.Placemen
                         var id = part.equals(min.offset(1, 1, 1)) ? "quantum_core"
                                 : part.equals(min.offset(1, 1, 2)) ? "quantum_accelerator"
                                 : part.equals(min.offset(1, 1, 3)) ? "data_entangler" : "quantum_structure";
-                        var block = Objects.requireNonNull(ForgeRegistries.BLOCKS.getValue(
+                        var block = Objects.requireNonNull(level.registryAccess().registryOrThrow(Registries.BLOCK).get(
                                 ResourceLocation.tryBuild("advanced_ae", id)), "AdvancedAE block " + id);
                         level.setBlockAndUpdate(part, block.defaultBlockState());
                     }
                     position = min.offset(1, 1, 1);
                     if (!(level.getBlockEntity(position) instanceof AdvCraftingBlockEntity)) {
                         throw new IllegalStateException("AdvancedAE quantum core placement produced "
-                                + ForgeRegistries.BLOCKS.getKey(level.getBlockState(position).getBlock()));
+                                + level.registryAccess().registryOrThrow(Registries.BLOCK).getKey(level.getBlockState(position).getBlock()));
                     }
                     return new Placement(position, terminal, min, max);
                 }

@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("1.20.1-forge", "1.20.1-fabric")][string]$Target = "1.20.1-forge",
+    [ValidateSet("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge")][string]$Target = "1.20.1-forge",
     [switch]$Latest,
     [switch]$Interactive,
     [ValidatePattern("^(suite|craft-plan|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
@@ -12,8 +12,9 @@ if ($Scenario -eq "suite" -and ($Interactive -or $Latest -or $ProjectId)) {
     throw "The prepared suite requires the full compatible profile and non-interactive execution"
 }
 $root = Split-Path -Parent $PSScriptRoot
-$source = Join-Path $root "versions\1.20.1-forge\run\saves\ae2-crafting-time"
-$loader = $Target.Substring("1.20.1-".Length)
+$fixtureTarget = if ($Target -eq "1.21.1-neoforge") { $Target } else { "1.20.1-forge" }
+$source = Join-Path $root "versions\$fixtureTarget\run\saves\ae2-crafting-time"
+$game, $loader = $Target.Split("-", 2)
 $modsDirectory = if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" }
 $profile = if ($Latest) { "latest" } else { "compatible" }
 $base = Join-Path $root "build\ui-smoke\$Target\$profile"
@@ -53,7 +54,7 @@ function Write-Status([string]$phase, [string]$message = "", [Nullable[int]]$exi
 }
 
 if (-not (Test-Path -LiteralPath (Join-Path $source ".ae2-crafting-time-test-fixture.json") -PathType Leaf)) {
-    throw "Missing tracked Forge 1.20.1 test fixture"
+    throw "Missing tracked $fixtureTarget test fixture"
 }
 $sourceMarker = Get-Content -LiteralPath (Join-Path $source ".ae2-crafting-time-test-fixture.json") -Raw | ConvertFrom-Json
 if ($sourceMarker.schema -ne 1 -or $sourceMarker.scenario -ne "craft-plan" -or
@@ -78,7 +79,7 @@ Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
 Write-Status "preparing"
 if ($Scenario -eq "suite") {
     $scenarios = Get-Content -LiteralPath (Join-Path $PSScriptRoot "ui-smoke-$loader-suite.json") -Raw | ConvertFrom-Json
-    $suite = & (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1") -RuntimeDirectory $runtime -OutputDirectory $evidence -Scenarios $scenarios
+    $suite = & (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1") -Target $Target -RuntimeDirectory $runtime -OutputDirectory $evidence -Scenarios $scenarios
     $world = $suite.world
     $plan = Get-Content -LiteralPath (Join-Path $evidence "suite-plan.json") -Raw | ConvertFrom-Json
     $worldCopies = @($plan.cases | ForEach-Object { Join-Path $runtime "saves\$($_.world)" })
@@ -92,6 +93,7 @@ if ($Scenario -eq "suite") {
 [IO.File]::WriteAllText((Join-Path $runtime "options.txt"), @"
 version:3465
 fullscreen:false
+onboardAccessibility:false
 overrideWidth:854
 overrideHeight:480
 guiScale:2
@@ -167,7 +169,7 @@ try {
         }
         $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
             Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
-        $driverName = "ae2-crafting-time-$modVersion-$loader-1.20.1-test-driver.jar"
+        $driverName = "ae2-crafting-time-$modVersion-$loader-$game-test-driver.jar"
         $requiredChecks = if ($caseScenario -eq "crafting-tree-screen") {
             @("screen", "node-ttc", "tooltip", "layout")
         } elseif ($caseScenario -eq "ae2networkanalyser-screen") {

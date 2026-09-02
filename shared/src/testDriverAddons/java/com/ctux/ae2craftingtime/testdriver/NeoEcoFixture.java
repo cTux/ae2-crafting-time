@@ -17,7 +17,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.Registries;
 
 import java.util.LinkedHashMap;
 import java.util.Arrays;
@@ -75,7 +75,7 @@ final class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
                     + calculator.checkMultiblockScale(min, max) + ", structure="
                     + calculator.verifyInternalStructure(level, min, max) + ", invalid=" + invalid);
         }
-        var cellItem = ForgeRegistries.ITEMS.getValue(
+        var cellItem = level.registryAccess().registryOrThrow(Registries.ITEM).get(
                 Objects.requireNonNull(ResourceLocation.tryBuild("neoecoae", "eco_computation_cell_l9")));
         if (cellItem == null) {
             throw new IllegalStateException("NeoEco L9 computation cell is unavailable");

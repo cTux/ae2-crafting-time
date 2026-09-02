@@ -241,8 +241,8 @@ if [ "$Target" = "1.21.1-neoforge" ]; then
   echo "runtime ae2 group org.appliedenergistics"
 fi
 if [ -n "$DriverScenario" ]; then
-  if { [ "$Target" != "1.20.1-forge" ] && [ "$Target" != "1.20.1-fabric" ]; } || [ -z "$DriverOutputDirectory" ] || [ -z "$DriverWorld" ]; then
-    echo "Test-driver scenarios require Forge or Fabric 1.20.1, an output directory, and a disposable world" >&2
+  if { [ "$Target" != "1.20.1-forge" ] && [ "$Target" != "1.20.1-fabric" ] && [ "$Target" != "1.21.1-neoforge" ]; } || [ -z "$DriverOutputDirectory" ] || [ -z "$DriverWorld" ]; then
+    echo "Test-driver scenarios require a supported target, an output directory, and a disposable world" >&2
     exit 1
   fi
   if [ "$Latest" -eq 1 ]; then driver_profile="latest"; else driver_profile="compatible"; fi
@@ -286,14 +286,14 @@ for pattern in "ae2ct-*.jar" "jei-*.jar"; do
   done
 done
 
-if [ "$Target" = "1.20.1-forge" ] || [ "$Target" = "1.20.1-fabric" ]; then
+if [ "$Target" = "1.20.1-forge" ] || [ "$Target" = "1.20.1-fabric" ] || [ "$Target" = "1.21.1-neoforge" ]; then
   mod_version="$(sed -n 's/^modVersion=//p' "$root/gradle.properties" | head -n 1)"
   [ -n "$mod_version" ] || { echo "Missing modVersion in gradle.properties" >&2; exit 1; }
-  driver_name="ae2-crafting-time-$mod_version-$Loader-1.20.1-test-driver.jar"
+  driver_name="ae2-crafting-time-$mod_version-$Loader-$Game-test-driver.jar"
   "$root/gradlew" ":$Module:testDriverJar" "${runtimeArgs[@]}" "${GradleArgs[@]}"
   driver_artifact="$root/build/test-driver/$driver_name"
   [ -f "$driver_artifact" ] || { echo "Missing exact test-driver artifact $driver_artifact" >&2; exit 1; }
-  for file in "$mods"/ae2-crafting-time-*-$Loader-1.20.1-test-driver.jar; do
+  for file in "$mods"/ae2-crafting-time-*-$Loader-$Game-test-driver.jar; do
     [ -e "$file" ] || continue
     [ "$(basename "$file")" = "$driver_name" ] || rm -f "$file"
   done
