@@ -71,8 +71,18 @@ while IFS= read -r target; do
   fi
   output="$("$script" -Target "$target" -Root "$temp" -VersionMatrix "$test_matrix" -ResolveOnly 2>&1)"
   assert_line "$output" "profile compatible"
+  if [ "$target" = "1.20.1-forge" ]; then
+    assert_line "$output" 'mod applied-botanics-forge-1.5.2.jar'
+    assert_line "$output" 'mod BpFDhV66.jar'
+    if printf '%s\n' "$output" | grep -qxF 'mod ByiqRpj3.jar'; then echo 'Original and fork loaded together' >&2; exit 1; fi
+  fi
   output="$("$script" -Target "$target" -Root "$temp" -VersionMatrix "$test_matrix" -Latest -ResolveOnly 2>&1)"
   assert_line "$output" "profile latest"
+  if [ "$target" = "1.20.1-forge" ]; then
+    assert_line "$output" 'mod applied-botanics-forge-1.5.2.jar'
+    assert_line "$output" 'mod pfjLUfGv.jar'
+    if printf '%s\n' "$output" | grep -qxF 'mod 545hUrw9.jar'; then echo 'Original and fork loaded together' >&2; exit 1; fi
+  fi
   if [ "$target" = "1.20.1-forge" ]; then leaf="resolved-mods"; else leaf="mods"; fi
   [ -f "$temp/versions/$target/run/$leaf/.ae2-crafting-time-run-mods.json" ]
   [ -f "$temp/versions/$target/run-latest/$leaf/.ae2-crafting-time-run-mods.json" ]

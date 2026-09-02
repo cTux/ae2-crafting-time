@@ -97,6 +97,8 @@ native mana insertion and extraction through the grid, and then runs the shared
 craft/sample/TTC flow on a normal AE2 CPU. Separate amount, packet, and saved-data
 tests cover raw mana precision and unit migration; the fixture does not claim
 to automate a Botania mana-generation recipe.
+The `appbot-fork-cpu` scenario reuses that fixture against the separately pinned
+fork artifact. Original and fork must never be loaded together.
 
 ## Optional add-on CPU scenarios
 

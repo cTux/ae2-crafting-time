@@ -192,7 +192,11 @@ profiling flow. It supplies a native AE2 CPU and normal recipe ingredients so
 focused addon runs do not depend on CPUs or cells from absent addons. A new
 optional dependency extends that registry and adds a
 `testDriverCompileOnly` dependency when it is not already on the inherited
-compile classpath. A fixture may override the marker output only when the add-on
+compile classpath. `appbot-fork-cpu` reuses the mana fixture because the published
+fork's mana key/type bytecode is identical. The runtime matrix uses
+`replaces_project_id` to suppress the original when the fork is selected, and
+`modrinth_dependencies` supplies Botania for a focused CurseForge run.
+A fixture may override the marker output only when the add-on
 requires its own pattern type; it does not add a scenario branch to
 `CraftPlanScenario` or `run-ui-smoke.ps1`.
 
