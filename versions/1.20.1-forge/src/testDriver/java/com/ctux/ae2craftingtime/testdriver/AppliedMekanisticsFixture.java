@@ -123,7 +123,7 @@ final class AppliedMekanisticsFixture extends AddonCpuFixture<AppliedMekanistics
             throw new IllegalStateException("Applied Mekanistics fixture CPU was not placed");
         }
         if (!cpuStorage.getMainNode().isReady()) {
-            cpuStorage.onReady();
+            return false;
         }
         if (!cpuStorage.isFormed()) {
             var calculator = new CraftingCPUCalculator(cpuStorage);

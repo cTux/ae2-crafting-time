@@ -67,7 +67,7 @@ final class AdvancedAeFixture extends AddonCpuFixture<AdvancedAeFixture.Placemen
             throw new IllegalStateException("AdvancedAE quantum core was not placed");
         }
         if (!core.getMainNode().isReady()) {
-            core.onReady();
+            return false;
         }
         if (!core.isFormed()) {
             var calculator = new AdvCraftingCPUCalculator(core);

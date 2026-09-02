@@ -362,6 +362,10 @@ screen can open during a tick before its first render; reading the framebuffer
 then would save the previous screen while the screen-object check passes.
 The smoke run must also inspect every saved checkpoint image.
 
+Placed AE2 nodes wait for their normal first-tick initialization. Fixture setup
+returns pending while `isReady()` is false; it must not call `onReady()` itself,
+because AE2 already queues that callback and a second initialization crashes.
+
 The driver builds one immutable result and writes `result.json.tmp` beside the
 destination. It flushes and atomically renames the file to `result.json`; an
 unsupported or failed atomic move is a scenario failure, never a pass.

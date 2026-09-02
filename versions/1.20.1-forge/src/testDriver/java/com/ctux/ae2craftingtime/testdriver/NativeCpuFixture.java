@@ -57,7 +57,7 @@ final class NativeCpuFixture extends AddonCpuFixture<NativeCpuFixture.Placement>
             throw new IllegalStateException("AE2 crafting storage was not placed");
         }
         if (!storage.getMainNode().isReady()) {
-            storage.onReady();
+            return false;
         }
         if (!storage.isFormed()) {
             var calculator = new CraftingCPUCalculator(storage);

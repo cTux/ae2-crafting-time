@@ -97,7 +97,7 @@ final class MeRequesterFixture {
             throw new IllegalStateException("ME Requester block entity was not placed");
         }
         if (!requester.getMainNode().isReady()) {
-            requester.onReady();
+            return false;
         }
         var requesterNode = requester.getMainNode().getNode();
         if (requesterNode == null) {

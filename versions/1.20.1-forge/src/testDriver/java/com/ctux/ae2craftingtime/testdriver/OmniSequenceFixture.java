@@ -42,7 +42,7 @@ final class OmniSequenceFixture extends AddonCpuFixture<OmniSequenceFixture.Plac
             throw new IllegalStateException("OmniSequence computation controller was not placed");
         }
         if (!core.getMainNode().isReady()) {
-            core.onReady();
+            return false;
         }
         core.refreshStructureNow();
         if (!core.isStructureFormed()) {
