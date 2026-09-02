@@ -163,10 +163,27 @@ allows 40 minutes including dependency resolution/build; single cases keep their
 This suite rejects `-Latest`, `-ProjectId`, and `-Interactive`: its case list
 matches the full compatible graph. The graph includes the Applied Botanics fork;
 the colliding original and incompatible Expanded AE require separate graphs.
-Crafting Tree, documentation/recipe viewers, and transitive libraries are loaded
+Documentation/recipe viewers and transitive libraries are loaded
 but have no dedicated UI assertions. Do not report those as scenario passes.
 
 ## Optional add-on CPU fixtures
+
+`advancedae-cpu` builds a valid Quantum Computer enclosure containing its core,
+an Accelerator, and a Data Entangler. CPU selection verifies the added threads
+and multiplied storage. Submission must create a job in that exact cluster
+before a fresh profile sample and the resulting plan TTC can pass.
+
+## Crafting Tree scenario
+
+`crafting-tree-screen` opens the real tree toolbar button from a populated
+Crafting Plan. It supports the original and Refreshed widget packages. Check
+the rendered node badges, their bounds against node icons, and a hovered
+crafted node's TTC and details/reset hints. Capture the tree and its tooltip
+separately. A missing tree, badge, or tooltip fails the scenario; opening a
+normal plan alone cannot pass it. Run against the prepared compatible graph
+and the original Crafting Tree artifact in Project Infinity 0.1.
+
+## Optional fixture contract
 
 An add-on CPU scenario uses the same disposable world, UI flow, profiler checks,
 result schema, and runner. Its fixture owns only the add-on-specific placement,

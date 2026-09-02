@@ -41,7 +41,11 @@ scenario; `Yes (scenario)` or a scenario name means a dedicated driver exists.
 a compatible-client artifact; `—` in a target column means it is not part of that
 target's recorded inventory. Driver availability is not a passing smoke result:
 see the [campaign evidence and known visual failure](mod-automation-coverage.md).
-AdvancedAE's Forge fixture is development coverage, not a declared Forge dependency.
+AdvancedAE's Forge fixture verifies an enclosed Quantum Computer with an
+Accelerator and Data Entangler, exact CPU submission, a fresh sample, and plan TTC.
+It is development coverage, not a declared Forge dependency. Crafting Tree now has
+a Forge `crafting-tree-screen` scenario for node badges, tooltip hints, and layout;
+this does not establish automated coverage on Fabric or NeoForge.
 
 | Mod Name | 1.20.1-forge | 1.20.1-forge TestDriver | 1.20.1-fabric | 1.20.1-fabric TestDriver | 1.21.1-neoforge | 1.21.1-neoforge TestDriver | 26.1.2-neoforge | 26.1.2-neoforge TestDriver | Declared targets | Minimum version | Integration / limits | Project links / tracking issue |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -52,7 +56,7 @@ AdvancedAE's Forge fixture is development coverage, not a declared Forge depende
 | Fabric API (required) | — | — | `0.92.11+1.20.1` | No | — | — | — | — | — | See required dependencies | Required runtime / base AE2 crafting. | — |
 | NeoForge (required) | — | — | — | — | `21.1.238` | No | `26.1.2.99` | No | — | See required dependencies | Required runtime / base AE2 crafting. | — |
 | Applied Energistics 2 (required) | `15.4.10` | Yes (base) | `15.1.0` | No | `19.2.17` | No | `26.1.10-beta` | No | — | See required dependencies | Required runtime / base AE2 crafting. | — |
-| ae2ct (Crafting Tree) (`ae2ct`; optional) | `1.0.1` | No | Not pinned | No | `1.0.1` | No | — | — | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | `>=1.0.1` | TTC lines and details in AE2: Crafting Tree UI. | [CF][ae2ct-cf] / [#69](https://github.com/cTux/ae2-crafting-time/issues/69) |
+| ae2ct (Crafting Tree) (`ae2ct`; optional) | `1.0.1` | Yes (scenario) | Not pinned | No | `1.0.1` | No | — | — | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | `>=1.0.1` | TTC lines and details in AE2: Crafting Tree UI. | [CF][ae2ct-cf] / [#69](https://github.com/cTux/ae2-crafting-time/issues/69) |
 | Applied Mekanistics (`appmek`; optional) | `1.4.3` | Yes (`appmek-cpu`) | — | — | `1.6.3` | No | — | — | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.4.3`; NeoForge: `>=1.6.2` | TTC profiling and Crafting Plan display for chemicals stored in the ME network through Applied Mekanistics' native AE2 key. | [CF][appmek-cf] / [MR][appmek-mr] / [#68](https://github.com/cTux/ae2-crafting-time/issues/68) |
 | AdvancedAE (`advanced_ae`; optional) | `1.3.6-1.20.1` | Yes (scenario) | — | — | `1.6.12-1.21.1` | No | `26.1.7` | No | `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.21.1: `>=1.6.11`; 26.1.2: `>=26.1.7` | TTC profiling for AdvancedAE crafting CPUs, including the Quantum Computer. | [CF][advancedae-cf] / [MR][advancedae-mr] / [#67](https://github.com/cTux/ae2-crafting-time/issues/67) |
 | ME Requester (`merequester`; optional) | `1.20.1-1.2.1+forge` | Yes (`merequester-screen`) | `1.20.1-1.1.4+fabric` | No | `1.21.1-1.4.3+neoforge` | No | — | — | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | Forge/Fabric: `>=1.20.1`; NeoForge: `>=1.21.1` | TTC row labels and total TTC hints in ME Requester screens. Forge row TTC has a known icon-overlap visual failure; header total remains readable. | [CF][merequester-cf] / [MR][merequester-mr] / [#70](https://github.com/cTux/ae2-crafting-time/issues/70) |

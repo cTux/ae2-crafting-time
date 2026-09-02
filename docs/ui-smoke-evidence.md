@@ -4,7 +4,7 @@ Keep screenshot evidence for named modpacks and prepared version clients using
 the same archive layout:
 
 For prepared Forge clients, use `scripts/invoke-ui-smoke-codexvm.ps1 -Scenario suite`
-for the full compatible graph and its 25 implemented scenarios.
+for the full compatible graph and its 26 implemented scenarios.
 
 For multiple scenarios on the same installed mod graph, launch Minecraft once.
 Run the suite sequentially with a fresh disposable world per case, capturing each

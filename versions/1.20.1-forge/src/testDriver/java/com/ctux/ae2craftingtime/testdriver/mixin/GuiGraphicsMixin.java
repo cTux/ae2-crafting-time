@@ -25,7 +25,7 @@ public abstract class GuiGraphicsMixin {
 
     @Inject(method = "fill(IIIII)V", at = @At("HEAD"))
     private void ae2craftingtime_test_driver$fill(int x1, int y1, int x2, int y2, int color, CallbackInfo ci) {
-        UiObservationStore.fill(x1, y1, x2, y2, color);
+        UiObservationStore.fill((GuiGraphics) (Object) this, x1, y1, x2, y2, color);
     }
 
     @Inject(method = "renderTooltip(Lnet/minecraft/client/gui/Font;Ljava/util/List;Ljava/util/Optional;II)V",

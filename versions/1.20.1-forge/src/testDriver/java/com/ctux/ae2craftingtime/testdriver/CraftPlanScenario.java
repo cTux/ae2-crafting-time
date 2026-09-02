@@ -62,6 +62,7 @@ public final class CraftPlanScenario {
     private CompletableFuture<ItemStack> networkAnalyserSetup;
     private boolean wirelessHoverStarted;
     private boolean wirelessOpenRequested;
+    private boolean treeHoverStarted;
 
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         this.minecraft = minecraft;
@@ -306,6 +307,10 @@ public final class CraftPlanScenario {
     }
 
     private void stabilizePlan() throws IOException {
+        if (CraftingTreeScenario.SCENARIO.equals(options.scenario())) {
+            verifyCraftingTree();
+            return;
+        }
         var snapshot = UiObservationStore.latest();
         if (snapshot == null || snapshot.rows().stream().noneMatch(row -> row.outputId().equals(outputId))) {
             stableRows.reset();
@@ -340,6 +345,46 @@ public final class CraftPlanScenario {
         screenshot("craft-plan.png");
         clickSort(snapshot);
         advance(ScenarioState.BASE_CHECKED);
+    }
+
+    private void verifyCraftingTree() throws IOException {
+        var snapshot = UiObservationStore.latest();
+        if (minecraft.screen instanceof CraftConfirmScreen screen) {
+            if (!stable(snapshot)) {
+                return;
+            }
+            var button = screen.children().stream()
+                    .filter(child -> child.getClass().getName().endsWith(".ae2ct.gui.ChangeButton"))
+                    .map(net.minecraft.client.gui.components.Button.class::cast).findFirst()
+                    .orElseThrow(() -> new IllegalStateException("Crafting Tree toolbar button is missing"));
+            button.onPress();
+            stableRows.reset();
+            return;
+        }
+        if (snapshot == null || !CraftingTreeScenario.isScreen(snapshot.screen()) || snapshot.frame() == lastFrame) {
+            return;
+        }
+        lastFrame = snapshot.frame();
+        var target = snapshot.rows().stream().filter(row -> row.outputId().equals(outputId)).findFirst();
+        if (target.isEmpty() || snapshot.badges().isEmpty() || !stableRows.observe(ids(snapshot))) {
+            return;
+        }
+        checks.put("screen", true);
+        checks.put("node-ttc", true);
+        checks.put("layout", LayoutValidator.validateBadges(snapshot).isEmpty());
+        if (!treeHoverStarted) {
+            screenshot("crafting-tree-screen.png");
+            moveMouse(target.get().cell().centerX(), target.get().cell().centerY());
+            treeHoverStarted = true;
+            stableRows.reset();
+            return;
+        }
+        if (!CraftingTreeScenario.tooltipReady(snapshot)) {
+            return;
+        }
+        checks.put("tooltip", true);
+        screenshot("crafting-tree-tooltip.png");
+        writePass();
     }
 
     private void selectAddonCpu() {

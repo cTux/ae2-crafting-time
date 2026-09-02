@@ -40,7 +40,9 @@ if ($DriverScenario -eq "suite") {
     $summary | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $DriverOutputDirectory 'result.json') -Encoding UTF8
     return
 }
-$checks = if ($DriverScenario -eq "ae2networkanalyser-screen") {
+$checks = if ($DriverScenario -eq "crafting-tree-screen") {
+    [ordered]@{ screen=$true; 'node-ttc'=$true; tooltip=$true; layout=$true }
+} elseif ($DriverScenario -eq "ae2networkanalyser-screen") {
     [ordered]@{ screen=$true; layout=$true }
 } elseif ($DriverScenario -eq "merequester-screen") {
     [ordered]@{ screen=$true; 'ttc-row'=$true; 'total-ttc'=$true; layout=$true }
@@ -53,7 +55,9 @@ $checks = if ($DriverScenario -eq "ae2networkanalyser-screen") {
 } else {
     [ordered]@{ screen=$true; 'ttc-row'=$true; 'total-ttc'=$true; 'sort-cycle'=$true; tooltip=$true; layout=$true }
 }
-$screenshots = if ($DriverScenario -eq "ae2networkanalyser-screen") {
+$screenshots = if ($DriverScenario -eq "crafting-tree-screen") {
+    @("crafting-tree-screen.png", "crafting-tree-tooltip.png")
+} elseif ($DriverScenario -eq "ae2networkanalyser-screen") {
     @("ae2networkanalyser-screen.png")
 } elseif ($DriverScenario -eq "merequester-screen") {
     @("merequester-screen.png")
@@ -126,6 +130,8 @@ try {
     Invoke-Case "pass" -Scenario suite -ProjectId E6BFl96N -shouldPass $false
     Invoke-Case "pass" -Latest -shouldPass $true
     Invoke-Case "pass" -Scenario "neoeco-cpu" -shouldPass $true
+    Invoke-Case "pass" -Scenario "crafting-tree-screen" -shouldPass $true
+    Invoke-Case "missing-screenshot" -Scenario "crafting-tree-screen" -shouldPass $false
     Invoke-Case "pass" -Scenario "merequester-screen" -ProjectId E6BFl96N -shouldPass $true
     Invoke-Case "pass" -Scenario "ae2importexportcard-terminal" -ProjectId qelfSMnn -shouldPass $true
     Invoke-Case "pass" -Scenario "ae2networkanalyser-screen" -ProjectId 961856 -shouldPass $true

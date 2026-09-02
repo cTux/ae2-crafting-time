@@ -25,6 +25,27 @@ class TestDriverCoreTest {
     Path temporary;
 
     @Test
+    void craftingTreeRequiresBothWidgetLayoutsAndEveryTooltipLine() {
+        assertTrue(CraftingTreeScenario.isScreen("com.neuvillette.ae2ct.gui.CraftingTreeScreen"));
+        assertTrue(CraftingTreeScenario.isScreen("com.vcwdfca.ae2ct.gui.CraftingTreeScreen"));
+        assertFalse(CraftingTreeScenario.isScreen("appeng.client.gui.me.crafting.CraftConfirmScreen"));
+        var keys = List.of("text.ae2craftingtime.ttc", "text.ae2craftingtime.details_hint",
+                "text.ae2craftingtime.reset_hint");
+        for (int mask = 0; mask < 8; mask++) {
+            var lines = new java.util.ArrayList<UiSnapshot.ObservedText>();
+            for (int bit = 0; bit < 3; bit++) {
+                if ((mask & (1 << bit)) != 0) {
+                    lines.add(new UiSnapshot.ObservedText(keys.get(bit), "line", List.of(), null));
+                }
+            }
+            var frame = new UiSnapshot("screen", "menu", new Rect(0, 0, 100, 100), 100, 100, 1, 1, 0,
+                    List.of(), List.of(), List.of(), List.of(), List.of(), lines);
+            assertEquals(mask == 7, CraftingTreeScenario.tooltipReady(frame));
+        }
+        assertThrows(IllegalStateException.class, () -> new AdvancedAeFixture().place(null, null));
+    }
+
+    @Test
     void tooltipObservationKeepsAppendedEstimatesAndMissingDataDistinct() {
         var bounds = new Rect(1, 2, 3, 4);
         for (var value : List.of(TtcText.ttc("~1s"), TtcText.ttcCollectingData())) {
@@ -65,6 +86,10 @@ class TestDriverCoreTest {
 
     @Test
     void addonFixturesAreRegisteredInOnePlace() {
+        assertTrue(AddonCpuFixture.supports("crafting-tree-screen"));
+        assertNull(AddonCpuFixture.create("crafting-tree-screen"));
+        assertEquals(List.of("screen", "node-ttc", "tooltip", "layout"),
+                DriverResult.requiredChecks("crafting-tree-screen"));
         assertTrue(AddonCpuFixture.supports("craft-plan"));
         assertTrue(AddonCpuFixture.supports("advancedae-cpu"));
         assertTrue(AddonCpuFixture.supports("extendedae-cpu"));

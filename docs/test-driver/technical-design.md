@@ -281,6 +281,22 @@ at their pure boundary; verify world switching and cache isolation in CodexVM.
 
 ## UI observation boundaries
 
+Crafting Tree reuses the plan-opening flow and then clicks its actual toolbar
+button. Its small scenario adapter reads the upstream widget's layout to find
+a crafted node. Final GuiGraphics badge fills and rendered tooltip components
+are the evidence; production TTC helpers are never treated as proof of display.
+Both original and Refreshed screen names are recognized without loading either
+optional class. Each tree checkpoint is captured after a completed frame.
+
+AdvancedAE's fixture forms and validates a 3x3x5 enclosure through the addon's
+calculator. Its three interior blocks are the core, accelerator, and entangler.
+It checks actual cluster capacity against the installed blocks and submits the
+real plan through that cluster's `submitJob`, then verifies its active job before
+accepting the shared new-sample check. AdvancedAE 1.3.6's service mixin falls
+back to automatic selection for the `AdvCraftingCPU` wrapper; using the cluster
+API prevents a different computer from satisfying this fixture's assertions.
+This scenario verifies CPU execution and profiling, not the addon's menu routing.
+
 ### CodexVM rectangular atlas probe
 
 Opt in with `-Dae2craftingtime.test.vmTextureProbe=true` only during an explicit

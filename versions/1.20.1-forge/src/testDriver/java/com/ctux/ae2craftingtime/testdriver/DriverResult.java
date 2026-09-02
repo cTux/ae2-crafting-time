@@ -24,6 +24,7 @@ public record DriverResult(
     public static final List<String> WIRELESS_TERMINAL_CHECKS = List.of("screen", "ttc-tooltip", "plan-ttc");
     public static final List<String> ME_REQUESTER_CHECKS = List.of("screen", "ttc-row", "total-ttc", "layout");
     public static final List<String> VISUAL_TOOL_CHECKS = List.of("screen", "layout");
+    public static final List<String> CRAFTING_TREE_CHECKS = List.of("screen", "node-ttc", "tooltip", "layout");
     public static final List<String> WIRELESS_RANGE_CHECKS = List.of("screen", "plan-ttc");
 
     public DriverResult {
@@ -36,6 +37,7 @@ public record DriverResult(
 
     public static List<String> requiredChecks(String scenario) {
         return scenario.equals("craft-plan") ? CRAFT_PLAN_CHECKS
+                : scenario.equals(CraftingTreeScenario.SCENARIO) ? CRAFTING_TREE_CHECKS
                 : scenario.equals(MeRequesterFixture.SCENARIO) ? ME_REQUESTER_CHECKS
                 : scenario.equals(Ae2NetworkAnalyserFixture.SCENARIO) ? VISUAL_TOOL_CHECKS
                 : scenario.equals("aeinfinitybooster-terminal") ? WIRELESS_RANGE_CHECKS
