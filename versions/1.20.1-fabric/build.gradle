@@ -31,6 +31,10 @@ sourceSets.test.java.srcDir '../../shared/src/mc1201Test/java'
 repositories {
     mavenCentral()
     maven {
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
+    maven {
         name = 'Fabric'
         url = 'https://maven.fabricmc.net/'
     }

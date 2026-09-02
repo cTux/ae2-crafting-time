@@ -22,7 +22,7 @@ import java.util.Arrays;
 import java.util.Objects;
 
 final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
-    private final CrazyAe2AddonsFixture nativeCpu = new CrazyAe2AddonsFixture();
+    private final NativeCpuFixture nativeCpu = new NativeCpuFixture();
     private int finishAttempts;
 
     @Override
@@ -95,6 +95,6 @@ final class AppliedEFixture extends AddonCpuFixture<AppliedEFixture.Placement> {
     }
 
     record Placement(IGrid grid, EMCModulePart module, AEItemKey target,
-            CrazyAe2AddonsFixture.Placement cpu) {
+            NativeCpuFixture.Placement cpu) {
     }
 }
