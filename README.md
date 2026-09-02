@@ -26,12 +26,8 @@ tooltips, and TTC states.
 
 ## Supported Versions
 
-| Minecraft | Loader | Gradle module |
-| --- | --- | --- |
-| 1.20.1 | Forge | `:mc_1_20_1_forge` |
-| 1.20.1 | Fabric | `:fabric_1_20_1` |
-| 1.21.1 | NeoForge | `:mc_1_21_1_neoforge` |
-| 26.1.2 | NeoForge | `:mc_26_1_2_neoforge` |
+See [dependencies.md](docs/dependencies.md) for supported Minecraft versions,
+loaders, required dependencies, and optional integrations.
 
 ## Download
 
