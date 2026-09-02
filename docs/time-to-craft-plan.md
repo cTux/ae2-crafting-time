@@ -216,7 +216,9 @@ extra vertical spacing for the badge so it does not cover the node amount or
 connector lines.
 
 ME Requester uses the same compact dark badge and text shadow. Row TTC badges
-start at the left edge of the request status lines and are colored by relative duration;
+sit below the amount fields, clear of the item icon, and are colored by relative duration.
+The status bar keeps its right edge and gives the badge room on its left. Row badges
+use one pixel of vertical padding and fit long labels within that space;
 the total badge stays inside the requester header instead of extending beyond
 the screen. Its row estimate uses only the current network shortfall:
 `normalize(max(0, wanted amount - network amount)) / amountPerSecond`. A row
