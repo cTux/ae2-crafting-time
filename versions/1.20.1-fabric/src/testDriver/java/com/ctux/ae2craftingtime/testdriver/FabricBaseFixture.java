@@ -8,6 +8,7 @@ import appeng.api.stacks.AEItemKey;
 import appeng.blockentity.storage.DriveBlockEntity;
 import appeng.core.definitions.AEItems;
 import net.minecraft.core.Direction;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Items;
 
@@ -16,13 +17,20 @@ import java.util.Objects;
 
 /** Gives the copied Forge world a native CPU and supply before optional fixtures run. */
 final class FabricBaseFixture extends NativeCpuFixture {
+    private final boolean addCpu;
     private DriveBlockEntity drive;
     private IGrid grid;
     private int cellSlot;
 
+    FabricBaseFixture(boolean addCpu) {
+        this.addCpu = addCpu;
+    }
+
     @Override
     protected Placement place(ServerPlayer player, FixtureMarker marker) {
-        var placement = super.place(player, marker);
+        // CPU-specific scenarios place their own block after the supply is ready.
+        var placement = addCpu ? super.place(player, marker)
+                : new Placement(null, new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z()));
         var host = (IInWorldGridNodeHost) player.serverLevel().getBlockEntity(placement.terminal());
         grid = Arrays.stream(Direction.values()).map(host::getGridNode).filter(Objects::nonNull)
                 .map(node -> node.getGrid()).filter(Objects::nonNull).findFirst().orElseThrow();
@@ -42,7 +50,7 @@ final class FabricBaseFixture extends NativeCpuFixture {
 
     @Override
     protected boolean finish(ServerPlayer player, Placement placement) {
-        if (!super.finish(player, placement)) return false;
+        if (addCpu && !super.finish(player, placement)) return false;
         var cell = drive.getOriginalCellInventory(cellSlot);
         if (cell == null) return false;
         var source = IActionSource.ofPlayer(player);

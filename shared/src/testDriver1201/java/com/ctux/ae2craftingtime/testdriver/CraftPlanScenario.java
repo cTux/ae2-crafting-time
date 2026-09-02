@@ -38,7 +38,7 @@ public final class CraftPlanScenario {
     private final Minecraft minecraft;
     private final DriverOptions options;
     private final String driverFile;
-    private final AddonCpuFixture<?> baseFixture = DriverPlatform.baseFixture();
+    private final AddonCpuFixture<?> baseFixture;
     private final AddonCpuFixture<?> addonFixture;
     private final StableFrames<List<String>> stableRows = new StableFrames<>(3);
     private final LinkedHashMap<String, Boolean> checks = new LinkedHashMap<>();
@@ -69,6 +69,7 @@ public final class CraftPlanScenario {
         this.minecraft = minecraft;
         this.options = options;
         this.driverFile = driverFile;
+        baseFixture = DriverPlatform.baseFixture(options.scenario());
         addonFixture = AddonCpuFixture.create(options.scenario());
         wirelessFixture = WirelessTerminalFixture.create(options.scenario());
         requesterFixture = MeRequesterFixture.SCENARIO.equals(options.scenario()) ? new MeRequesterFixture() : null;

@@ -4,7 +4,7 @@ final class DriverPlatform {
     static final String EXTENDED_AE_ID = "expatternprovider";
     static final String TARGET = "1.20.1-forge";
 
-    static AddonCpuFixture<?> baseFixture() {
+    static AddonCpuFixture<?> baseFixture(String scenario) {
         return null;
     }
 

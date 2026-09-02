@@ -4,8 +4,8 @@ final class DriverPlatform {
     static final String EXTENDED_AE_ID = "extendedae";
     static final String TARGET = "1.20.1-fabric";
 
-    static AddonCpuFixture<?> baseFixture() {
-        return new FabricBaseFixture();
+    static AddonCpuFixture<?> baseFixture(String scenario) {
+        return new FabricBaseFixture(!java.util.Set.of("appbot-cpu", "ae2things-cpu", "megacells-cpu").contains(scenario));
     }
 
     static boolean isModLoaded(String id) {
