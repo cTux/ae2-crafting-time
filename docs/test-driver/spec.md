@@ -100,6 +100,12 @@ to automate a Botania mana-generation recipe.
 The `appbot-fork-cpu` scenario reuses that fixture against the separately pinned
 fork artifact. Original and fork must never be loaded together.
 
+The `advancedperipherals-cpu` fixture connects a real ME Bridge and CC:Tweaked
+computer to the grid. It submits the selected output through the bridge's
+`craftItem` API using the attached computer, then observes a new server profile
+sample and TTC in the normal AE2 Crafting Plan. This tests the peripheral API,
+not an automated Lua editor or a separate ComputerCraft TTC display.
+
 ## Optional add-on CPU scenarios
 
 An add-on CPU scenario uses the same disposable world, UI flow, profiler checks,

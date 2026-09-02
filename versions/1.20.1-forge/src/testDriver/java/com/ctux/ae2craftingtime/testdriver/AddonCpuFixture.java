@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingCPU;
+import appeng.menu.me.crafting.CraftConfirmMenu;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.level.ServerPlayer;
 
@@ -17,6 +18,7 @@ abstract class AddonCpuFixture<P> {
             Map.entry("crazyae2addons-cpu", "com.ctux.ae2craftingtime.testdriver.NativeCpuFixture"),
             Map.entry("appbot-cpu", "com.ctux.ae2craftingtime.testdriver.AppliedBotanicsFixture"),
             Map.entry("appbot-fork-cpu", "com.ctux.ae2craftingtime.testdriver.AppliedBotanicsFixture"),
+            Map.entry("advancedperipherals-cpu", "com.ctux.ae2craftingtime.testdriver.AdvancedPeripheralsFixture"),
             Map.entry("megacells-cpu", "com.ctux.ae2craftingtime.testdriver.MegaCellsFixture"),
             Map.entry("neoeco-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture"),
             Map.entry("omnicells-cpu", "com.ctux.ae2craftingtime.testdriver.OmniCellsFixture"),
@@ -87,6 +89,14 @@ abstract class AddonCpuFixture<P> {
 
     protected String outputId(P placement, FixtureMarker marker) {
         return marker.outputId();
+    }
+
+    final void startCraft(ServerPlayer player, CraftConfirmMenu menu) {
+        startCraft(player, placementFuture.join(), menu);
+    }
+
+    protected void startCraft(ServerPlayer player, P placement, CraftConfirmMenu menu) {
+        menu.startJob();
     }
 
     protected abstract P place(ServerPlayer player, FixtureMarker marker);

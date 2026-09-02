@@ -393,7 +393,7 @@ public final class CraftPlanScenario {
                     }
                     throw new IllegalStateException("server Crafting Plan is a simulation; missing=" + missing);
                 }
-                menu.startJob();
+                addonFixture.startCraft(player, menu);
                 return true;
             });
         }
