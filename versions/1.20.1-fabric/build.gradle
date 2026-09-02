@@ -124,8 +124,9 @@ dependencies {
 }
 
 tasks.named('processTestDriverResources', ProcessResources) {
-    inputs.property 'version', project.version
-    filesMatching('fabric.mod.json') { expand version: project.version }
+    def driverVersion = project.version
+    inputs.property 'version', driverVersion
+    filesMatching('fabric.mod.json') { expand version: driverVersion }
 }
 
 def remapTestDriverJar = tasks.register('testDriverJar', net.fabricmc.loom.task.RemapJarTask) {
