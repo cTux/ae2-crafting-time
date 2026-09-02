@@ -112,7 +112,8 @@ final class AdvancedPeripheralsFixture extends AddonCpuFixture<AdvancedPeriphera
         try {
             var result = placement.bridge().getPeripheral().craftItem(computer,
                     new ObjectArguments(Map.of("name", output.what().getId().toString(), "count", output.amount())));
-            if (!Boolean.TRUE.equals(result.getResult()[0])) {
+            if (!(result.getResult()[0] instanceof de.srendi.advancedperipherals.common.addons.ae2.AECraftJob job)
+                    || !job.getToCraft().equals(output.what()) || job.hasErrorOccurred()) {
                 throw new IllegalStateException("ME Bridge rejected craft: " + Arrays.toString(result.getResult()));
             }
             menu.getHost().returnToMainMenu(player, menu);
