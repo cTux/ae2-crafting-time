@@ -3,9 +3,10 @@
 ## Why this exists
 
 [Discussion #64](https://github.com/cTux/ae2-crafting-time/discussions/64)
-asks the crafting windows to show `Collecting` before an estimate is
-available. Right now a new player sees no TTC line at all, so the mod can look
-inactive while it is learning that craft.
+introduced a placeholder before an estimate is available, so the mod doesn't
+look inactive while it is learning that craft.
+[Issue #166](https://github.com/cTux/ae2-crafting-time/issues/166) names that
+placeholder `No data yet`, matching the existing absence-of-statistics text.
 
 The discussion's follow-up confirms that delayed rows must stop before adding a
 normal estimate and that the placeholder uses neutral gray text. This spec uses
@@ -41,11 +42,11 @@ windows, the first matching state wins:
 | --- | --- |
 | The running craft is waiting for its first dispatch | Existing `Waiting` status |
 | The running craft is delayed | Existing `DELAYED` warning |
-| No usable stats are cached | `Collecting` |
+| No usable stats are cached | `No data yet` |
 | A usable but low-confidence estimate exists | Existing estimate with `?`, such as `~12s?` |
 | A reliable estimate exists | Existing estimate, such as `~12s` |
 
-`Collecting` describes the absence of usable historical or live production
+`No data yet` describes the absence of usable historical or live production
 data. It is not a network loading spinner and does not promise that the current
 craft will make progress.
 
@@ -84,8 +85,8 @@ craft will make progress.
 
 ## Acceptance checks
 
-- A fresh output shows `Collecting` in both standard crafting tables.
-- A fresh running output changes from `Collecting` to a low-confidence estimate
+- A fresh output shows `No data yet` in both standard crafting tables.
+- A fresh running output changes from `No data yet` to a low-confidence estimate
   after its first completed output, without waiting for the next order.
 - A stored-only or missing-only plan row shows no TTC line.
 - A status row with no active or pending work shows no TTC line.

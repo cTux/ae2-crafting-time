@@ -24,7 +24,7 @@ supply the energy required to dispatch the next batch of that pattern.
   - `Increase network power generation or stored energy.`
 - Give `NO PROVIDER` priority when both blockers affect patterns contributing
   to the same output row. Otherwise `NO POWER` wins over `Waiting`, `DELAYED`,
-  TTC, and `Collecting data`.
+  TTC, and `No data yet`.
 
 ## Compatibility
 

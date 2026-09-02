@@ -26,7 +26,7 @@ pattern.
   - `No connected Pattern Provider currently offers this pattern.`
   - `Restore a connected provider or put the pattern back.`
 - Give `NO PROVIDER` priority over `NO POWER`, `Waiting`, `DELAYED`, TTC, and
-  `Collecting data` for the same row.
+  `No data yet` for the same row.
 
 ## Compatibility
 

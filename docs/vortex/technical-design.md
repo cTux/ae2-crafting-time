@@ -69,7 +69,7 @@ the addon must remain absent safely.
 The collector reuses the existing TTC estimator and row-state priority. It
 reduces constituent output states to one job state, using the established
 priority `NO SPACE`, `NO PROVIDER`, `NO POWER`, `Waiting`, `DELAYED`, then TTC
-or `Collecting data`. `NO SPACE`, `NO PROVIDER`, `NO POWER`, and `DELAYED` are
+or `No data yet`. `NO SPACE`, `NO PROVIDER`, `NO POWER`, and `DELAYED` are
 errors; the spec's error set remains authoritative if status work lands in a
 different order. Total job TTC is the sum of usable remaining-output estimates,
 matching the existing crafting-status total rather than estimating only the

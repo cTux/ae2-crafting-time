@@ -11,7 +11,7 @@ The client already knows everything needed to choose the row text:
 eligible AE2 row
   -> request existing server stats
   -> cached stats produce an estimate? yes -> show existing TTC
-                                    no  -> show Collecting
+                                    no  -> show No data yet
 ```
 
 For the running Crafting Status table, the existing waiting status wins before
@@ -43,7 +43,7 @@ build the existing outer TTC component with a new translated value:
 
 ```text
 text.ae2craftingtime.ttc = "%s"
-text.ae2craftingtime.collecting_data = "Collecting"
+text.ae2craftingtime.collecting_data = "No data yet"
 ```
 
 The resulting component still has `text.ae2craftingtime.ttc` as its outer
@@ -82,7 +82,7 @@ sample count would be misleading.
   server. If no retained sample exists, `ProfilerBridge.entry(...)` may expose
   completed progress from the current busy window as a non-persisted,
   low-confidence preview. The normal one-second client request loop replaces
-  `Collecting` as soon as that preview exists.
+  `No data yet` as soon as that preview exists.
 - `ProfileStats.reliableEstimate()` stays true only with at least three samples
   and no filtered outlier.
 - `TimeEstimate` keeps formatting low-confidence estimates with `?`.

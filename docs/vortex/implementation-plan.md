@@ -83,7 +83,7 @@ After the hook-created PR exists:
 3. Smoke one owner with two distinct loaded networks in different dimensions,
    duplicate Hubs on one network, jobs started by both owner and another
    player, and a denied second player.
-4. Verify empty, TTC, Waiting, Collecting data, and every available error state;
+4. Verify empty, TTC, Waiting, No data yet, and every available error state;
    confirm red/purple recovery with the screen closed.
 5. Verify a locatable delayed machine, an unloaded/cross-dimension target, and
    unlocatable `NO PROVIDER` without guessed coordinates.

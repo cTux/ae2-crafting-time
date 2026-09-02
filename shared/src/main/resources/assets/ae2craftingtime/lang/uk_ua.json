@@ -27,7 +27,7 @@
   "text.ae2craftingtime.total_ttc": "Час: %s",
   "text.ae2craftingtime.ttc": "%s",
   "text.ae2craftingtime.ttc_delayed": "ЗАТРИМКА",
-  "text.ae2craftingtime.collecting_data": "Збирання",
+  "text.ae2craftingtime.collecting_data": "Даних ще немає",
   "text.ae2craftingtime.waiting": "Очікування",
   "text.ae2craftingtime.unit.item": "предм.",
   "text.ae2craftingtime.unit.millibucket": "мВ",

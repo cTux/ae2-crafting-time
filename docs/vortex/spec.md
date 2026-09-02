@@ -45,7 +45,7 @@ craft has an error, and locate a known problem machine.
 - If any visible current craft has `DELAYED`, `NO PROVIDER`, `NO POWER`, or
   `NO SPACE`, every loaded Vortex owned by that player changes its light texture
   to red within one second.
-- `Waiting` and `Collecting data` are not errors and leave the lights purple.
+- `Waiting` and `No data yet` are not errors and leave the lights purple.
 - The red state returns to purple within one second after the last error clears.
 - The colored lens texture uses ordinary fixed Minecraft block luminance;
   colored dynamic lighting and a custom emissive renderer are not required.

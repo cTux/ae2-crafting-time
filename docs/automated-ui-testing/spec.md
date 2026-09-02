@@ -52,7 +52,7 @@ For every client, the suite:
 3. Launches the client and rejects loader, mixin, resource, and startup errors.
 4. Enters the disposable world and opens its known AE2 terminal.
 5. Opens Crafting Plan for a known craftable output.
-6. Verifies TTC or `Collecting data` on eligible rows, total TTC, badge
+6. Verifies TTC or `No data yet` on eligible rows, total TTC, badge
    geometry, default longest-first order, every sort mode, tooltip content,
    Ctrl-click details, and Ctrl-Alt-click reset.
 7. Submits the craft and opens Crafting Status.
