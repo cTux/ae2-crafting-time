@@ -1,9 +1,19 @@
 package com.ctux.ae2craftingtime.testdriver;
 
+import appeng.api.config.Actionable;
+import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.crafting.ICraftingCPU;
+import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.GenericStack;
+import appeng.blockentity.crafting.PatternProviderBlockEntity;
+import appeng.blockentity.grid.AENetworkBlockEntity;
+import appeng.core.definitions.AEBlocks;
+import appeng.menu.me.crafting.CraftConfirmMenu;
+import com.ctux.ae2craftingtime.testdriver.mixin.CraftConfirmMenuAccessor;
 import com.moakiee.ae2lt.block.TianshuSupercomputerControllerBlock;
 import com.moakiee.ae2lt.blockentity.TianshuSupercomputerControllerBlockEntity;
 import com.moakiee.ae2lt.blockentity.TianshuSupercomputerPortBlockEntity;
@@ -14,6 +24,10 @@ import com.moakiee.ae2lt.registry.ModBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.Arrays;
@@ -50,8 +64,19 @@ final class LightningTechFixture extends AddonCpuFixture<LightningTechFixture.Pl
                             : ModBlocks.TIANSHU_BLANK_UNIT.get();
                     blocks.put(TianshuMultiblockScanner.worldPos(controller, pos, facing), block.defaultBlockState());
                 }
+                var provider = controller.above(10);
+                blocks.put(provider, AEBlocks.PATTERN_PROVIDER.block().defaultBlockState());
+                blocks.put(provider.below(), Blocks.FURNACE.defaultBlockState());
+                blocks.put(provider.below(2), Blocks.HOPPER.defaultBlockState());
+                blocks.put(provider.below(3), AEBlocks.INTERFACE.block().defaultBlockState());
                 if (blocks.keySet().stream().allMatch(pos -> player.serverLevel().getBlockState(pos).isAir())) {
                     blocks.forEach((pos, state) -> player.serverLevel().setBlock(pos, state, 2));
+                    ((FurnaceBlockEntity) player.serverLevel().getBlockEntity(provider.below()))
+                            .setItem(1, new ItemStack(Items.COAL, 64));
+                    ((PatternProviderBlockEntity) player.serverLevel().getBlockEntity(provider)).getLogic()
+                            .getPatternInv().setItemDirect(0, PatternDetailsHelper.encodeProcessingPattern(
+                                    new GenericStack[]{new GenericStack(AEItemKey.of(Items.STONE), 1)},
+                                    new GenericStack[]{new GenericStack(AEItemKey.of(Items.SMOOTH_STONE), 1)}));
                     return new Placement(controller, terminal);
                 }
             }
@@ -78,7 +103,37 @@ final class LightningTechFixture extends AddonCpuFixture<LightningTechFixture.Pl
         if (terminalNode.getGrid() != portNode.getGrid()) {
             GridHelper.createConnection(terminalNode, portNode);
         }
+        for (var pos : List.of(placement.controller.above(10), placement.controller.above(7))) {
+            var machine = (AENetworkBlockEntity) level.getBlockEntity(pos);
+            if (!machine.getMainNode().isReady()) {
+                return false;
+            }
+            var node = Objects.requireNonNull(machine.getMainNode().getNode());
+            if (node.getGrid() != terminalNode.getGrid()) {
+                GridHelper.createConnection(terminalNode, node);
+            }
+        }
+        terminalNode.getGrid().getStorageService().getInventory()
+                .insert(AEItemKey.of(Items.STONE), 64, Actionable.MODULATE, IActionSource.ofPlayer(player));
         return true;
+    }
+
+    @Override
+    protected String outputId(Placement placement, FixtureMarker marker) {
+        return "minecraft:smooth_stone";
+    }
+
+    @Override
+    protected void startCraft(ServerPlayer player, Placement placement, CraftConfirmMenu menu) {
+        var controller = (TianshuSupercomputerControllerBlockEntity) player.serverLevel()
+                .getBlockEntity(placement.controller);
+        var pool = controller.getTimeWheelCraftingCpuPool();
+        // Select at submission too: AE2's CPU-list refresh can reset the menu between driver steps.
+        ((CraftConfirmMenuAccessor) menu).ae2craftingtime_test_driver$selectedCpu(pool);
+        menu.startJob();
+        if (pool.getActiveCpus().size() != 1) {
+            throw new IllegalStateException("LightningTech did not receive the smoke crafting job");
+        }
     }
 
     @Override
