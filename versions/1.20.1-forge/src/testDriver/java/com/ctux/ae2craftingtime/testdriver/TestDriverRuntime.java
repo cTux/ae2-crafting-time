@@ -39,7 +39,7 @@ public final class TestDriverRuntime implements AutoCloseable {
     }
 
     @SubscribeEvent
-    public void tick(TickEvent.ClientTickEvent event) {
+    public void tick(TickEvent.RenderTickEvent event) {
         if (event.phase != TickEvent.Phase.END || switching || finished) {
             return;
         }

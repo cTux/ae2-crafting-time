@@ -357,6 +357,11 @@ driver, and log reads are fixed to the current runtime's `latest.log` with a
 
 ## Result and validation flow
 
+Scenario actions run at the end of a rendered frame, not a client tick. A
+screen can open during a tick before its first render; reading the framebuffer
+then would save the previous screen while the screen-object check passes.
+The smoke run must also inspect every saved checkpoint image.
+
 The driver builds one immutable result and writes `result.json.tmp` beside the
 destination. It flushes and atomically renames the file to `result.json`; an
 unsupported or failed atomic move is a scenario failure, never a pass.
