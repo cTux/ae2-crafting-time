@@ -2,9 +2,6 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraftforge.client.event.ScreenEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.lwjgl.glfw.GLFW;
 import java.time.Instant;
 import java.util.List;
@@ -38,9 +35,8 @@ public final class TestDriverRuntime implements AutoCloseable {
         endpoint = options.interactive() ? new InteractiveMcpServer(minecraft, scenario, options) : null;
     }
 
-    @SubscribeEvent
-    public void tick(TickEvent.RenderTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || switching || finished) {
+    public void tick() {
+        if (switching || finished) {
             return;
         }
         scenario.tick();
@@ -79,13 +75,11 @@ public final class TestDriverRuntime implements AutoCloseable {
         AtomicResultWriter.write(options.output(), progress.snapshot(ProcessHandle.current().pid()));
     }
 
-    @SubscribeEvent
-    public void beforeRender(ScreenEvent.Render.Pre event) {
+    public void beforeRender() {
         UiObservationStore.begin(minecraft);
     }
 
-    @SubscribeEvent
-    public void afterRender(ScreenEvent.Render.Post event) {
+    public void afterRender() {
         UiObservationStore.finish(minecraft);
     }
 

@@ -2,11 +2,11 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingCPU;
-import com.glodblock.github.extendedae.common.tileentities.TileExMolecularAssembler;
+import appeng.blockentity.grid.AENetworkInvBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,10 +20,10 @@ class ExtendedAeFixture extends AddonCpuFixture<List<BlockPos>> {
         }
         var level = player.serverLevel();
         var terminal = new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z());
-        var ae2Assembler = ForgeRegistries.BLOCKS.getValue(
-                Objects.requireNonNull(ResourceLocation.tryBuild("ae2", "molecular_assembler")));
-        var extendedAssembler = ForgeRegistries.BLOCKS.getValue(
-                Objects.requireNonNull(ResourceLocation.tryBuild("expatternprovider", "ex_molecular_assembler")));
+        var ae2Assembler = BuiltInRegistries.BLOCK.getOptional(
+                Objects.requireNonNull(ResourceLocation.tryBuild("ae2", "molecular_assembler"))).orElse(null);
+        var extendedAssembler = BuiltInRegistries.BLOCK.getOptional(
+                Objects.requireNonNull(ResourceLocation.tryBuild(DriverPlatform.EXTENDED_AE_ID, "ex_molecular_assembler"))).orElse(null);
         if (ae2Assembler == null || extendedAssembler == null) {
             throw new IllegalStateException("ExtendedAE assembler blocks are unavailable");
         }
@@ -48,7 +48,7 @@ class ExtendedAeFixture extends AddonCpuFixture<List<BlockPos>> {
         }
         var level = player.serverLevel();
         for (var position : positions) {
-            if (!(level.getBlockEntity(position) instanceof TileExMolecularAssembler assembler)) {
+            if (!(level.getBlockEntity(position) instanceof AENetworkInvBlockEntity assembler)) {
                 throw new IllegalStateException("ExtendedAE assembler was not placed at " + position);
             }
             if (!assembler.getMainNode().isReady()) {

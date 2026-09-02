@@ -16,7 +16,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -32,8 +32,8 @@ final class AppliedBotanicsFixture extends AddonCpuFixture<AppliedBotanicsFixtur
                 .map(node -> node.getGrid()).filter(Objects::nonNull).findFirst().orElseThrow();
         var drive = grid.getMachines(DriveBlockEntity.class).stream()
                 .filter(candidate -> candidate.getMainNode().isActive()).findFirst().orElseThrow();
-        var manaCell = ForgeRegistries.ITEMS.getValue(
-                Objects.requireNonNull(ResourceLocation.tryBuild("appbot", "mana_storage_cell_1k")));
+        var manaCell = BuiltInRegistries.ITEM.getOptional(
+                Objects.requireNonNull(ResourceLocation.tryBuild("appbot", "mana_storage_cell_1k"))).orElse(null);
         if (manaCell == null || manaCell == Items.AIR) {
             throw new IllegalStateException("Applied Botanics mana cell is unavailable");
         }

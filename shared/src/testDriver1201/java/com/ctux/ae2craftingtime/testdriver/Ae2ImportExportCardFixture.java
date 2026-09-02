@@ -10,14 +10,14 @@ import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.Objects;
 
-final class AeInfinityBoosterFixture extends WirelessTerminalFixture {
+final class Ae2ImportExportCardFixture extends WirelessTerminalFixture {
     @Override
     String modId() {
-        return "aeinfinitybooster";
+        return "ae2insertexportcard";
     }
 
     @Override
@@ -32,7 +32,7 @@ final class AeInfinityBoosterFixture extends WirelessTerminalFixture {
 
     @Override
     String screenshotPrefix() {
-        return "aeinfinitybooster";
+        return "ae2importexportcard";
     }
 
     @Override
@@ -46,26 +46,19 @@ final class AeInfinityBoosterFixture extends WirelessTerminalFixture {
     @Override
     ItemStack finishSetup(ServerPlayer player, FixtureMarker marker, IGrid grid,
             WirelessAccessPointBlockEntity accessPoint, ItemStack stack) {
-        var card = ForgeRegistries.ITEMS.getValue(
-                Objects.requireNonNull(ResourceLocation.tryBuild(modId(), "infinity_card")));
-        var normalRange = accessPoint.getRange();
-        if (card == null || !accessPoint.getInternalInventory().addItems(new ItemStack(card)).isEmpty()) {
-            throw new IllegalStateException("AEInfinityBooster Infinity Card could not be installed");
+        var terminal = (WirelessTerminalItem) stack.getItem();
+        var exportCard = BuiltInRegistries.ITEM.getOptional(
+                Objects.requireNonNull(ResourceLocation.tryBuild(modId(), "export_card"))).orElse(null);
+        if (exportCard == null || !terminal.getUpgrades(stack).addItems(new ItemStack(exportCard)).isEmpty()) {
+            throw new IllegalStateException("AE2 Import Export Card could not be installed");
         }
-        var position = accessPoint.getBlockPos();
-        var level = player.serverLevel();
-        level.setChunkForced(position.getX() >> 4, position.getZ() >> 4, true);
-        player.teleportTo(position.getX() + normalRange + 64, position.getY() + 1, position.getZ());
-        if (player.distanceToSqr(position.getX(), position.getY(), position.getZ()) <= normalRange * normalRange) {
-            throw new IllegalStateException("wireless range fixture did not move beyond normal range");
-        }
-        var output = ForgeRegistries.ITEMS.getValue(
-                Objects.requireNonNull(ResourceLocation.tryParse(marker.outputId())));
+        var output = BuiltInRegistries.ITEM.getOptional(
+                Objects.requireNonNull(ResourceLocation.tryParse(marker.outputId()))).orElse(null);
         if (output == null) {
             throw new IllegalStateException("fixture output is unavailable");
         }
         var key = AEItemKey.of(output);
-        var tick = level.getGameTime();
+        var tick = player.serverLevel().getGameTime();
         var networkId = ProfilerBridge.networkId(grid);
         ProfilerBridge.start(networkId, stack, key, 1, tick);
         ProfilerBridge.complete(networkId, stack, key, 1, tick + 40);

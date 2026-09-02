@@ -10,12 +10,12 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.Arrays;
 import java.util.Objects;
 
-final class NativeCpuFixture extends AddonCpuFixture<NativeCpuFixture.Placement> {
+class NativeCpuFixture extends AddonCpuFixture<NativeCpuFixture.Placement> {
     @Override
     protected Placement place(ServerPlayer player, FixtureMarker marker) {
         if (player == null) {
@@ -29,8 +29,8 @@ final class NativeCpuFixture extends AddonCpuFixture<NativeCpuFixture.Placement>
         var grid = Arrays.stream(Direction.values()).map(terminalHost::getGridNode).filter(Objects::nonNull)
                 .map(node -> node.getGrid()).filter(Objects::nonNull).findFirst()
                 .orElseThrow(() -> new IllegalStateException("native CPU fixture grid is unavailable"));
-        var storage = ForgeRegistries.BLOCKS.getValue(
-                Objects.requireNonNull(ResourceLocation.tryBuild("ae2", "1k_crafting_storage")));
+        var storage = BuiltInRegistries.BLOCK.getOptional(
+                Objects.requireNonNull(ResourceLocation.tryBuild("ae2", "1k_crafting_storage"))).orElse(null);
         if (storage == null) {
             throw new IllegalStateException("AE2 1k crafting storage is unavailable");
         }

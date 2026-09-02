@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.client.gui.AEBaseScreen;
+import com.ctux.ae2craftingtime.testdriver.mixin.ContainerScreenAccessor;
 import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
@@ -49,7 +50,8 @@ public final class UiObservationStore {
             return;
         }
         active = new Frame(screen.getClass().getName(), screen.getMenu().getClass().getName(),
-                new Rect(screen.getGuiLeft(), screen.getGuiTop(), screen.getXSize(), screen.getYSize()),
+                new Rect(screen.getGuiLeft(), screen.getGuiTop(), ((ContainerScreenAccessor) screen).ae2craftingtime_test_driver$width(),
+                        ((ContainerScreenAccessor) screen).ae2craftingtime_test_driver$height()),
                 minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight(),
                 minecraft.getWindow().getGuiScale());
     }

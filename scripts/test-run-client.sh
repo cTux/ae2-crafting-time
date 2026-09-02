@@ -21,6 +21,7 @@ set -euo pipefail
 [ -z "\${AE2CT_DRIVER_BUILD_FAIL:-}" ] || exit 9
 mkdir -p "\$(dirname "\$0")/build/test-driver"
 printf driver > "\$(dirname "\$0")/build/test-driver/ae2-crafting-time-$mod_version-forge-1.20.1-test-driver.jar"
+printf driver > "\$(dirname "\$0")/build/test-driver/ae2-crafting-time-$mod_version-fabric-1.20.1-test-driver.jar"
 GRADLE_EOF
 chmod +x "$temp/gradlew"
 
@@ -93,8 +94,9 @@ while IFS= read -r target; do
   if [ "$target" = "1.20.1-forge" ]; then leaf="resolved-mods"; else leaf="mods"; fi
   [ -f "$temp/versions/$target/run/$leaf/.ae2-crafting-time-run-mods.json" ]
   [ -f "$temp/versions/$target/run-latest/$leaf/.ae2-crafting-time-run-mods.json" ]
-  if [ "$target" = "1.20.1-forge" ]; then
-    driver="ae2-crafting-time-$mod_version-forge-1.20.1-test-driver.jar"
+  if [ "$target" = "1.20.1-forge" ] || [ "$target" = "1.20.1-fabric" ]; then
+    loader="${target#1.20.1-}"
+    driver="ae2-crafting-time-$mod_version-$loader-1.20.1-test-driver.jar"
     [ -f "$temp/versions/$target/run/$leaf/$driver" ]
     [ -f "$temp/versions/$target/run-latest/$leaf/$driver" ]
     [ ! -f "$temp/versions/$target/run/$leaf/ae2-crafting-time-old-forge-1.20.1-test-driver.jar" ]

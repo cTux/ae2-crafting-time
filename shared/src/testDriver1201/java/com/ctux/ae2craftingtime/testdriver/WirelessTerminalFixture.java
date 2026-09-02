@@ -12,8 +12,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -29,7 +28,7 @@ abstract class WirelessTerminalFixture {
 
     static WirelessTerminalFixture create(String scenario) {
         return switch (scenario) {
-            case "ae2wcwt-terminal" -> new WcwtTerminalFixture();
+            case "ae2wcwt-terminal" -> DriverPlatform.wcwtTerminal();
             case "ae2wtlib-terminal" -> new Ae2wtlibTerminalFixture();
             case "ae2importexportcard-terminal" -> new Ae2ImportExportCardFixture();
             case "aeinfinitybooster-terminal" -> new AeInfinityBoosterFixture();
@@ -38,7 +37,7 @@ abstract class WirelessTerminalFixture {
     }
 
     final ItemStack setup(ServerPlayer player, FixtureMarker marker) {
-        if (!ModList.get().isLoaded(modId())) {
+        if (!DriverPlatform.isModLoaded(modId())) {
             throw new IllegalStateException(modId() + " is unavailable");
         }
         var level = player.serverLevel();
@@ -49,8 +48,8 @@ abstract class WirelessTerminalFixture {
         var terminalNode = Arrays.stream(Direction.values()).map(terminalHost::getGridNode)
                 .filter(Objects::nonNull).findFirst()
                 .orElseThrow(() -> new IllegalStateException("fixture terminal node is unavailable"));
-        var accessPointBlock = ForgeRegistries.BLOCKS.getValue(
-                Objects.requireNonNull(ResourceLocation.tryBuild("ae2", "wireless_access_point")));
+        var accessPointBlock = BuiltInRegistries.BLOCK.getOptional(
+                Objects.requireNonNull(ResourceLocation.tryBuild("ae2", "wireless_access_point"))).orElse(null);
         if (accessPointBlock == null) {
             throw new IllegalStateException("AE2 wireless access point is unavailable");
         }

@@ -22,7 +22,7 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -38,6 +38,7 @@ public final class CraftPlanScenario {
     private final Minecraft minecraft;
     private final DriverOptions options;
     private final String driverFile;
+    private final AddonCpuFixture<?> baseFixture;
     private final AddonCpuFixture<?> addonFixture;
     private final StableFrames<List<String>> stableRows = new StableFrames<>(3);
     private final LinkedHashMap<String, Boolean> checks = new LinkedHashMap<>();
@@ -68,6 +69,7 @@ public final class CraftPlanScenario {
         this.minecraft = minecraft;
         this.options = options;
         this.driverFile = driverFile;
+        baseFixture = DriverPlatform.baseFixture(options.scenario());
         addonFixture = AddonCpuFixture.create(options.scenario());
         wirelessFixture = WirelessTerminalFixture.create(options.scenario());
         requesterFixture = MeRequesterFixture.SCENARIO.equals(options.scenario()) ? new MeRequesterFixture() : null;
@@ -137,6 +139,9 @@ public final class CraftPlanScenario {
         if (!marker.disposableWorldId().equals(options.world())) {
             throw new IllegalArgumentException("fixture world ID mismatch");
         }
+        if (baseFixture != null && !baseFixture.setup(minecraft, marker)) {
+            return;
+        }
         if (addonFixture != null && !addonFixture.setup(minecraft, marker)) {
             return;
         }
@@ -162,7 +167,7 @@ public final class CraftPlanScenario {
                 }
                 return;
             }
-            if (ForgeRegistries.ITEMS.getKey(minecraft.player.getMainHandItem().getItem()).toString()
+            if (BuiltInRegistries.ITEM.getKey(minecraft.player.getMainHandItem().getItem()).toString()
                     .equals(Ae2NetworkAnalyserFixture.ITEM)) {
                 minecraft.gameMode.useItem(minecraft.player, InteractionHand.MAIN_HAND);
             }
@@ -188,7 +193,7 @@ public final class CraftPlanScenario {
                 }
                 return;
             }
-            if (!wirelessOpenRequested && ForgeRegistries.ITEMS.getKey(minecraft.player.getMainHandItem().getItem())
+            if (!wirelessOpenRequested && BuiltInRegistries.ITEM.getKey(minecraft.player.getMainHandItem().getItem())
                     .toString().equals(wirelessFixture.itemId())) {
                 minecraft.gameMode.useItem(minecraft.player, InteractionHand.MAIN_HAND);
                 wirelessOpenRequested = true;
@@ -566,7 +571,7 @@ public final class CraftPlanScenario {
     }
 
     private DriverResult result(boolean complete, String value, DriverResult.Failure resultFailure) {
-        return new DriverResult(1, complete, driverFile, "1.20.1-forge", options.profile(), options.scenario(), value,
+        return new DriverResult(1, complete, driverFile, DriverPlatform.TARGET, options.profile(), options.scenario(), value,
                 checks, screenshots, resultFailure);
     }
 
