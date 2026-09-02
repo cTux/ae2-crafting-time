@@ -19,6 +19,7 @@ param(
     [switch]$Interactive, [Parameter(ValueFromRemainingArguments = $true)][string[]]$Rest
 )
 if ([IO.Path]::GetFullPath((Get-Location).Path) -ne [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))) { exit 8 }
+if ((Get-Content (Join-Path $RuntimeDirectory 'options.txt') -Raw) -notmatch '(?m)^onboardAccessibility:false$') { exit 9 }
 $profile = if ($Latest) { "latest" } else { "compatible" }
 $loader = $Target.Substring(7)
 $modsDirectory = if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" }

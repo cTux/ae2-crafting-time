@@ -92,6 +92,7 @@ if ($Scenario -eq "suite") {
 [IO.File]::WriteAllText((Join-Path $runtime "options.txt"), @"
 version:3465
 fullscreen:false
+onboardAccessibility:false
 overrideWidth:854
 overrideHeight:480
 guiScale:2
