@@ -5,6 +5,8 @@ import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import appeng.api.stacks.AEKey;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -41,7 +43,8 @@ public final class UiObservationStore {
         if (!(minecraft.screen instanceof AEBaseScreen<?> screen)
                 || (!(screen instanceof CraftConfirmScreen)
                 && !screen.getClass().getName().equals(Ae2NetworkAnalyserFixture.SCREEN)
-                && !screen.getClass().getName().equals(MeRequesterFixture.SCREEN))) {
+                && !screen.getClass().getName().equals(MeRequesterFixture.SCREEN)
+                && !CraftingTreeScenario.isScreen(screen.getClass().getName()))) {
             active = null;
             return;
         }
@@ -95,8 +98,12 @@ public final class UiObservationStore {
         }
     }
 
-    public static void fill(int x1, int y1, int x2, int y2, int color) {
+    public static void fill(GuiGraphics graphics, int x1, int y1, int x2, int y2, int color) {
         if (active != null && color == 0xB0000000) {
+            if (CraftingTreeScenario.isScreen(active.screen)) {
+                active.badges.add(transformed(graphics, x1, y1, x2, y2));
+                return;
+            }
             active.badges.add(new Rect(active.gui.x() + Math.min(x1, x2), active.gui.y() + Math.min(y1, y2),
                     Math.abs(x2 - x1), Math.abs(y2 - y1)));
         }
@@ -129,6 +136,10 @@ public final class UiObservationStore {
     }
 
     public static void wirelessTooltip(List<Component> components) {
+        if (active != null && CraftingTreeScenario.isScreen(active.screen)) {
+            active.tooltip.clear();
+            active.tooltip.addAll(observed(components, null));
+        }
         if (Minecraft.getInstance().screen != null
                 && isWirelessScreen(Minecraft.getInstance().screen.getClass().getName())) {
             wirelessTooltip = observed(components, null);
@@ -137,6 +148,22 @@ public final class UiObservationStore {
 
     static boolean isWirelessScreen(String className) {
         return WIRELESS_SCREENS.contains(className);
+    }
+
+    public static void treeNode(GuiGraphics graphics, AEKey key, int x, int y) {
+        if (active != null && CraftingTreeScenario.isScreen(active.screen)) {
+            var bounds = transformed(graphics, x, y, x + 16, y + 16);
+            active.rows.add(new PendingRow(key.getId().toString(), 0, bounds));
+            active.itemCells.add(bounds);
+        }
+    }
+
+    private static Rect transformed(GuiGraphics graphics, int x1, int y1, int x2, int y2) {
+        var pose = graphics.pose().last().pose();
+        var from = pose.transformPosition(new org.joml.Vector3f(x1, y1, 0));
+        var to = pose.transformPosition(new org.joml.Vector3f(x2, y2, 0));
+        return new Rect((int) Math.floor(from.x), (int) Math.floor(from.y),
+                (int) Math.ceil(to.x - from.x), (int) Math.ceil(to.y - from.y));
     }
 
     public static List<UiSnapshot.ObservedText> wirelessTooltip() {

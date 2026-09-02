@@ -9,6 +9,7 @@
     "CraftConfirmMenuAccessor"
   ],
   "client": [
+    "AEKeyRenderingMixin",
     "AbstractTableRendererMixin",
     "CraftAmountScreenAccessor",
     "CraftConfirmTableRendererMixin",

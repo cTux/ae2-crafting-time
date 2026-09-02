@@ -36,14 +36,14 @@ abstract class AddonCpuFixture<P> {
     private CompletableFuture<Boolean> setupFuture;
 
     static boolean supports(String scenario) {
-        return "craft-plan".equals(scenario) || MeRequesterFixture.SCENARIO.equals(scenario)
+        return "craft-plan".equals(scenario) || CraftingTreeScenario.SCENARIO.equals(scenario) || MeRequesterFixture.SCENARIO.equals(scenario)
                 || Ae2NetworkAnalyserFixture.SCENARIO.equals(scenario)
                 || WirelessTerminalFixture.supports(scenario)
                 || FIXTURES.containsKey(scenario);
     }
 
     static AddonCpuFixture<?> create(String scenario) {
-        if ("craft-plan".equals(scenario) || MeRequesterFixture.SCENARIO.equals(scenario)
+        if ("craft-plan".equals(scenario) || CraftingTreeScenario.SCENARIO.equals(scenario) || MeRequesterFixture.SCENARIO.equals(scenario)
                 || Ae2NetworkAnalyserFixture.SCENARIO.equals(scenario)
                 || WirelessTerminalFixture.supports(scenario)) {
             return null;

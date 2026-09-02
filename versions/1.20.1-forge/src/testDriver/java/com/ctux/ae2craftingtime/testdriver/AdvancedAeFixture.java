@@ -11,6 +11,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPUCalculator;
 import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
+import appeng.menu.me.crafting.CraftConfirmMenu;
+import com.ctux.ae2craftingtime.testdriver.mixin.CraftConfirmMenuAccessor;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -45,12 +47,28 @@ final class AdvancedAeFixture extends AddonCpuFixture<AdvancedAeFixture.Placemen
                 var node = host.getGridNode(direction);
                 var position = anchor.relative(direction).immutable();
                 if (node != null && node.getGrid() == grid && level.getBlockState(position).isAir()) {
-                    level.setBlockAndUpdate(position, core.defaultBlockState());
+                    // The three upgrade blocks must be inside a complete structural shell.
+                    var min = position.above(8);
+                    var max = min.offset(2, 2, 4);
+                    for (var part : BlockPos.betweenClosed(min, max)) {
+                        if (!level.getBlockState(part).isAir()) {
+                            throw new IllegalStateException("AdvancedAE enclosure would overwrite a fixture block");
+                        }
+                    }
+                    for (var part : BlockPos.betweenClosed(min, max)) {
+                        var id = part.equals(min.offset(1, 1, 1)) ? "quantum_core"
+                                : part.equals(min.offset(1, 1, 2)) ? "quantum_accelerator"
+                                : part.equals(min.offset(1, 1, 3)) ? "data_entangler" : "quantum_structure";
+                        var block = Objects.requireNonNull(ForgeRegistries.BLOCKS.getValue(
+                                ResourceLocation.tryBuild("advanced_ae", id)), "AdvancedAE block " + id);
+                        level.setBlockAndUpdate(part, block.defaultBlockState());
+                    }
+                    position = min.offset(1, 1, 1);
                     if (!(level.getBlockEntity(position) instanceof AdvCraftingBlockEntity)) {
                         throw new IllegalStateException("AdvancedAE quantum core placement produced "
                                 + ForgeRegistries.BLOCKS.getKey(level.getBlockState(position).getBlock()));
                     }
-                    return new Placement(position, terminal);
+                    return new Placement(position, terminal, min, max);
                 }
             }
         }
@@ -66,18 +84,33 @@ final class AdvancedAeFixture extends AddonCpuFixture<AdvancedAeFixture.Placemen
         if (!(level.getBlockEntity(placement.core()) instanceof AdvCraftingBlockEntity core)) {
             throw new IllegalStateException("AdvancedAE quantum core was not placed");
         }
-        if (!core.getMainNode().isReady()) {
-            return false;
+        for (var part : BlockPos.betweenClosed(placement.min(), placement.max())) {
+            if (!((AdvCraftingBlockEntity) level.getBlockEntity(part)).getMainNode().isReady()) {
+                return false;
+            }
+        }
+        var calculator = new AdvCraftingCPUCalculator(core);
+        if (!calculator.verifyInternalStructure(level, placement.min(), placement.max())) {
+            throw new IllegalStateException("AdvancedAE enclosure is invalid");
         }
         if (!core.isFormed()) {
-            var calculator = new AdvCraftingCPUCalculator(core);
             calculator.updateBlockEntities(
-                    calculator.createCluster(level, placement.core(), placement.core()),
-                    level, placement.core(), placement.core());
+                    calculator.createCluster(level, placement.min(), placement.max()),
+                    level, placement.min(), placement.max());
         }
         if (!core.isFormed()) {
             throw new IllegalStateException("AdvancedAE quantum core did not form after rescan; node ready="
                     + core.getMainNode().isReady());
+        }
+        var accelerator = (AdvCraftingBlockEntity) level.getBlockEntity(placement.min().offset(1, 1, 2));
+        var entangler = (AdvCraftingBlockEntity) level.getBlockEntity(placement.min().offset(1, 1, 3));
+        var cluster = core.getCluster();
+        if (cluster.numBlockEntities() != 45
+                || cluster.getCoProcessors() != core.getAcceleratorThreads() + accelerator.getAcceleratorThreads()
+                || cluster.getCoProcessors() <= core.getAcceleratorThreads()
+                || cluster.getAvailableStorage() != core.getStorageBytes() * entangler.getStorageMultiplier()
+                || cluster.getAvailableStorage() <= core.getStorageBytes()) {
+            throw new IllegalStateException("AdvancedAE Accelerator or Data Entangler capacity was not applied");
         }
         if (!(level.getBlockEntity(placement.terminal()) instanceof IInWorldGridNodeHost host)) {
             throw new IllegalStateException("AdvancedAE fixture terminal is unavailable");
@@ -112,6 +145,17 @@ final class AdvancedAeFixture extends AddonCpuFixture<AdvancedAeFixture.Placemen
         return cpu;
     }
 
-    record Placement(BlockPos core, BlockPos terminal) {
+    @Override
+    protected void startCraft(ServerPlayer player, Placement placement, CraftConfirmMenu menu) {
+        var core = (AdvCraftingBlockEntity) player.serverLevel().getBlockEntity(placement.core());
+        var cluster = core.getCluster();
+        ((CraftConfirmMenuAccessor) menu).ae2craftingtime_test_driver$selectedCpu(cluster.getRemainingCapacityCPU());
+        menu.startJob();
+        if (cluster.getActiveCPUs().size() != 1) {
+            throw new IllegalStateException("AdvancedAE did not receive the smoke crafting job");
+        }
+    }
+
+    record Placement(BlockPos core, BlockPos terminal, BlockPos min, BlockPos max) {
     }
 }
