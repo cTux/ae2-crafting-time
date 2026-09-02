@@ -78,9 +78,9 @@ The crafting tree has its own estimate and tooltip:
 
 ![Crafting tree tooltip](crafting-tree-tooltip.png)
 
-ME Requester has a separate request window with TTC information:
+ME Requester with a diamond request and TTC below the amount fields:
 
-![ME Requester TTC](me-requester-estimate.png)
+![ME Requester diamond request with row and total TTC](me-requester-estimate.png)
 
 ## Capture notes
 
@@ -91,8 +91,8 @@ long duration is not a normal smelting benchmark.
 
 The furnace-item, crafting-tree, sorting, and ME Requester examples use the
 repository's UI test fixtures. Their seeded sample values demonstrate the UI;
-they are not machine-performance measurements. ME Requester's barrier icon is
-a fixture item.
+they are not machine-performance measurements. ME Requester uses a diamond
+request with a seeded two-second estimate.
 
 To refresh a crop, open the target UI and run `scripts/capture-ui-region.ps1`
 inside the same interactive Windows session. Supply the output PNG path and

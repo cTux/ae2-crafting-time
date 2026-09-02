@@ -106,7 +106,7 @@ final class MeRequesterFixture {
         if (requesterNode.getGrid() != connectionNode.getGrid()) {
             GridHelper.createConnection(connectionNode, requesterNode);
         }
-        var key = AEItemKey.of(Items.BARRIER);
+        var key = AEItemKey.of(Items.DIAMOND);
         var tick = level.getGameTime();
         var networkId = ProfilerBridge.networkId(connectionNode.getGrid());
         ProfilerBridge.start(networkId, requester, key, REQUEST_AMOUNT, tick);
