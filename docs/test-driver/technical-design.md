@@ -1,6 +1,27 @@
 # AE2 Crafting Time Test Driver Technical Design
 
-## Repository evidence
+## Fabric 1.20.1 port
+
+The shared `shared/src/testDriver1201` source set owns the existing scenario
+state machine, observation mixins, suite orchestration, and portable fixtures.
+Forge and Fabric keep separate entrypoints and loader adapters. Forge forwards
+render events; Fabric uses screen render events and a driver-only end-of-frame
+GameRenderer mixin. Both run assertions after a completed frame.
+
+Fabric Loom remaps its driver and optional compile dependencies. The shared
+Shadow configuration packages the existing MCP libraries only in the companion.
+The artifact check rejects driver content in production and production classes
+in the companion. The driver metadata requires the exact production version.
+
+The existing launcher and VM dispatch chain carry `-Target` through status,
+runtime paths, suite selection, and result validation. Forge keeps its default
+and `resolved-mods`; Fabric uses `mods`. Both reuse the same marked source world,
+copying it separately for every case. The prepared Fabric suite has seven cases
+in `scripts/ui-smoke-fabric-suite.json`; unavailable Forge-only addons stay out.
+The common ExtendedAE fixture checks the actual registered assembler block and
+its AE2 node, avoiding the upstream package-name difference between loaders.
+
+## Original Forge implementation evidence
 
 - `:mc_1_20_1_forge` already owns the Forge 1.20.1 client, Java 17 toolchain,
   AE2 dependency, production source sets, reobfuscation, and `distMod` task.
@@ -432,9 +453,9 @@ signatures. Driver `PASS` plus a fatal log entry is a runner failure.
 
 ## Compatibility and later ports
 
-The first implementation stays in the Forge 1.20.1 module. Keep result-model,
+The original implementation started in the Forge 1.20.1 module; the Fabric port now shares identical code. Keep result-model,
 state-machine, and rectangle code free of Minecraft types where that falls out
-naturally, but do not create shared source sets or loader interfaces yet.
+naturally, but do not create shared source sets or loader interfaces until a second target needs them.
 
 When a second target is approved, move only already-identical code into a shared
 test-driver source set. Screen adapters remain at the Minecraft/AE2 API
@@ -452,7 +473,5 @@ the exact client through the VM display before inspection.
   to its own output.
 - A custom MCP protocol implementation: protocol, transport, and authentication
   edge cases are not project value; use the official SDK in the isolated JAR.
-- A general cross-loader driver now: only Forge 1.20.1 has a defined scenario,
-  so the shared boundary is not yet evidence-backed.
 - Full-frame golden images: animated items and renderer differences add noise
   without improving the first semantic checks.

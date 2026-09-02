@@ -7,7 +7,8 @@ import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
 import appeng.blockentity.storage.DriveBlockEntity;
-import io.github.projectet.ae2things.item.AETItems;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 import io.github.projectet.ae2things.storage.DISKCellInventory;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
@@ -34,7 +35,7 @@ final class Ae2ThingsFixture extends AddonCpuFixture<Ae2ThingsFixture.Placement>
         var inventory = drive.getInternalInventory();
         for (var slot = 0; slot < inventory.size(); slot++) {
             if (inventory.getStackInSlot(slot).isEmpty()) {
-                inventory.setItemDirect(slot, new ItemStack(AETItems.DISK_DRIVE_1K.get()));
+                inventory.setItemDirect(slot, new ItemStack(BuiltInRegistries.ITEM.getOptional(new ResourceLocation("ae2things", "disk_drive_1k")).orElseThrow()));
                 drive.onChangeInventory(inventory, slot);
                 return new Placement(cpu, drive, slot, grid);
             }

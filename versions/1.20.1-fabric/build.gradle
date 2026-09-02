@@ -1,5 +1,6 @@
 plugins {
     id 'fabric-loom' version '1.10.5'
+    id 'com.gradleup.shadow' version '8.3.8'
 }
 
 base {
@@ -13,6 +14,14 @@ loom {
         client {
             runDir runtimeRunDirectory
             vmArg '-Xmx8G'
+            ['scenario', 'profile', 'world', 'output', 'interactive'].each { name ->
+                def property = providers.gradleProperty("testDriver${name.capitalize()}")
+                if (property.isPresent()) vmArg "-Dae2craftingtime.test.${name}=${property.get()}"
+            }
+            if (providers.gradleProperty('testDriverWorld').isPresent()) {
+                programArg '--quickPlaySingleplayer'
+                programArg providers.gradleProperty('testDriverWorld').get()
+            }
         }
         server { runDir runtimeRunDirectory }
     }
@@ -91,3 +100,55 @@ tasks.register('distMod', Copy) {
     into rootProject.layout.projectDirectory.dir('dist')
     rename { "ae2-crafting-time-${distModVersion}-fabric-1.20.1.jar" }
 }
+
+// The companion uses the same mapped Minecraft/AE2 classes without joining main.
+sourceSets { testDriver }
+loom {
+    createRemapConfigurations(sourceSets.testDriver)
+    mixin { add sourceSets.testDriver, 'ae2craftingtime_test_driver.refmap.json' }
+}
+sourceSets.testDriver.compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+sourceSets.testDriver.runtimeClasspath += sourceSets.testDriver.output + sourceSets.testDriver.compileClasspath
+ext.testDriverLoader = 'fabric'
+apply from: rootProject.file('scripts/test-driver.gradle')
+
+dependencies {
+    modTestDriverCompileOnly 'maven.modrinth:merequester:1.20.1-1.1.4+fabric'
+    modTestDriverCompileOnly 'maven.modrinth:jjuIRIVr:NINqmdmJ'
+}
+
+tasks.named('processTestDriverResources', ProcessResources) {
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') { expand version: project.version }
+}
+
+def remapTestDriverJar = tasks.register('testDriverJar', net.fabricmc.loom.task.RemapJarTask) {
+    group = 'build'
+    description = 'Builds the isolated Fabric 1.20.1 UI test-driver mod.'
+    dependsOn tasks.named('testDriverUnmappedJar')
+    inputFile = tasks.named('testDriverUnmappedJar').flatMap { it.archiveFile }
+    archiveFileName = "ae2-crafting-time-${project.version}-fabric-1.20.1-test-driver.jar"
+    destinationDirectory = rootProject.layout.buildDirectory.dir('test-driver')
+    addNestedDependencies = false
+}
+
+tasks.register('checkTestDriverArtifacts') {
+    group = 'verification'
+    dependsOn tasks.named('remapJar'), remapTestDriverJar
+    doLast {
+        def production = tasks.named('remapJar').get().archiveFile.get().asFile
+        def driver = remapTestDriverJar.get().archiveFile.get().asFile
+        def productionEntries = zipTree(production).files.collect { it.path.replace('\\', '/') }
+        def driverEntries = zipTree(driver).files.collect { it.path.replace('\\', '/') }
+        if (productionEntries.any { it.contains('testdriver/') || it.contains('ae2craftingtime_test_driver') }) {
+            throw new GradleException("Production JAR contains test-driver content: ${production}")
+        }
+        if (driverEntries.any { it.contains('/mc1201/Ae2CraftingTime.class') }
+                || !driverEntries.any { it.endsWith('/testdriver/TestDriverMod.class') }
+                || !driverEntries.any { it.endsWith('/fabric.mod.json') }
+                || !driverEntries.any { it.endsWith('/ae2craftingtime_test_driver.refmap.json') }) {
+            throw new GradleException("Invalid test-driver artifact: ${driver}")
+        }
+    }
+}
+tasks.named('test') { dependsOn tasks.named('checkTestDriverArtifacts') }

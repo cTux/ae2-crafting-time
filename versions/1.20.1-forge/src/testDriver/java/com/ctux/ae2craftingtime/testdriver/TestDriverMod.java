@@ -23,7 +23,11 @@ public final class TestDriverMod {
             var version = ModList.get().getModContainerById(MOD_ID).orElseThrow().getModInfo().getVersion();
             var driverFile = "ae2-crafting-time-" + version + "-forge-1.20.1-test-driver.jar";
             var runtime = new TestDriverRuntime(options, driverFile);
-            MinecraftForge.EVENT_BUS.register(runtime);
+            MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.TickEvent.RenderTickEvent event) -> {
+                if (event.phase == net.minecraftforge.event.TickEvent.Phase.END) runtime.tick();
+            });
+            MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.ScreenEvent.Render.Pre event) -> runtime.beforeRender());
+            MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.client.event.ScreenEvent.Render.Post event) -> runtime.afterRender());
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 try {
                     runtime.close();

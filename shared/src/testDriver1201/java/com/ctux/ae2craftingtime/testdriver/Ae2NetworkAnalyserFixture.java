@@ -4,8 +4,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.Objects;
 
@@ -16,10 +15,10 @@ final class Ae2NetworkAnalyserFixture {
     static final String ITEM = "ae2netanalyser:network_analyser";
 
     ItemStack setup(ServerPlayer player) {
-        if (!ModList.get().isLoaded("ae2netanalyser")) {
+        if (!DriverPlatform.isModLoaded("ae2netanalyser")) {
             throw new IllegalStateException("AE2 Network Analyser is unavailable");
         }
-        var item = ForgeRegistries.ITEMS.getValue(Objects.requireNonNull(ResourceLocation.tryParse(ITEM)));
+        var item = BuiltInRegistries.ITEM.getOptional(Objects.requireNonNull(ResourceLocation.tryParse(ITEM))).orElse(null);
         if (item == null) {
             throw new IllegalStateException("AE2 Network Analyser item is unavailable");
         }

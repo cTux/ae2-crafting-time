@@ -1,4 +1,5 @@
 param(
+    [ValidateSet("1.20.1-forge", "1.20.1-fabric")][string]$Target = "1.20.1-forge",
     [switch]$Latest,
     [switch]$Interactive,
     [switch]$Scheduled,
@@ -31,13 +32,13 @@ function Find-Java17([string]$requested) {
     $java = if ($candidate) { Join-Path $candidate "bin\java.exe" } else { "" }
     if (-not $java -or -not (Test-Path -LiteralPath $java -PathType Leaf)) { throw "CodexVM JDK 17 was not found" }
     $version = (& { $ErrorActionPreference = "Continue"; & $java -XshowSettings:properties -version 2>&1 } | Out-String)
-    if ($version -notmatch '(?m)^\s*java\.version\s*=\s*17(?:\.|\s|$)') { throw "Forge 1.20.1 UI smoke requires JDK 17: $java" }
+    if ($version -notmatch '(?m)^\s*java\.version\s*=\s*17(?:\.|\s|$)') { throw "Minecraft 1.20.1 UI smoke requires JDK 17: $java" }
     return [IO.Path]::GetFullPath($candidate)
 }
 
 function Get-ReportDirectory([string]$sourceRoot, [bool]$latest, [string]$scenario) {
     $profile = if ($latest) { "latest" } else { "compatible" }
-    return Join-Path $sourceRoot "build\ui-smoke\1.20.1-forge\$profile\$scenario"
+    return Join-Path $sourceRoot "build\ui-smoke\$Target\$profile\$scenario"
 }
 
 function Stop-Smoke([string]$report) {
@@ -58,7 +59,7 @@ if ($RequestPath) {
     $request = Get-Content -LiteralPath $RequestPath -Raw | ConvertFrom-Json
     $env:JAVA_HOME = $request.javaHome
     $env:Path = "$(Join-Path $env:JAVA_HOME 'bin');$env:Path"
-    $arguments = @{ ReportDirectory = $request.reportDirectory; Scenario = $request.scenario }
+    $arguments = @{ ReportDirectory = $request.reportDirectory; Scenario = $request.scenario; Target = $request.target }
     if ($request.projectId) { $arguments.ProjectId = @($request.projectId) }
     if ($request.latest) { $arguments.Latest = $true }
     if ($request.interactive) { $arguments.Interactive = $true }
@@ -86,7 +87,7 @@ New-Item -ItemType Directory -Path $stage, $report -Force | Out-Null
 if ($LASTEXITCODE -gt 7) { throw "Failed to stage the checkout with robocopy exit $LASTEXITCODE" }
 
 $request = [ordered]@{
-    stagedRoot = $stage; reportDirectory = $report; scenario = $Scenario
+    target = $Target; stagedRoot = $stage; reportDirectory = $report; scenario = $Scenario
     projectId = @($ProjectId); latest = $Latest.IsPresent; interactive = $Interactive.IsPresent; javaHome = $java17
 }
 $requestFile = Join-Path $stage "ui-smoke-request.json"
@@ -100,7 +101,7 @@ if ($Scheduled) {
         $principal = New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\$InteractiveUser" -LogonType Interactive -RunLevel Limited
         Register-ScheduledTask -TaskName $taskName -Action $action -Principal $principal | Out-Null
     }
-    $queued = [ordered]@{ schema = 1; target = "1.20.1-forge"; profile = $(if ($Latest) { "latest" } else { "compatible" })
+    $queued = [ordered]@{ schema = 1; target = $Target; profile = $(if ($Latest) { "latest" } else { "compatible" })
         scenario = $Scenario; phase = "queued"; pid = $null; stagedRoot = $stage; updatedAt = [DateTime]::UtcNow.ToString("o") }
     [IO.File]::WriteAllText((Join-Path $report "status.json"), ($queued | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
     Start-ScheduledTask -TaskName $taskName

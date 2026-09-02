@@ -7,7 +7,7 @@ Minecraft client for repeatable AE2 Crafting Time UI smoke tests. It runs beside
 the production mod and never replaces or ships inside it.
 
 The driver covers the standard AE2 Crafting Plan screen and add-on crafting CPU
-scenarios on Minecraft 1.20.1 Forge. New optional-mod scenarios must plug into
+scenarios on Minecraft 1.20.1 Forge and Fabric. New optional-mod scenarios must plug into
 the shared add-on fixture flow without adding another branch to the UI state
 machine.
 
@@ -20,6 +20,21 @@ requester on the disposable grid, opens that screen normally, and checks its
 rendered TTC row, header total, badge layout, and screenshot.
 
 This covers [issue #126](https://github.com/cTux/ae2-crafting-time/issues/126).
+
+## Fabric full-client suite
+
+Run `scripts/invoke-ui-smoke-codexvm.ps1 -Target 1.20.1-fabric -Scenario suite`.
+The full pinned compatible graph runs in one maximized 8 GiB client with seven
+cases: Crafting Plan, ExtendedAE, Applied Botanics, AE2 Things DISK storage,
+MEGA Cells, AE2 Wireless Terminals, and ME Requester. Each case gets a fresh
+copy of the tracked 1.20.1 fixture, screenshots, and checked semantic results.
+JEI and transitive libraries load with the graph but have no dedicated assertions.
+Crafting Tree and Network Analyser are not pinned in this Fabric graph.
+
+The same `-Target` works for single scenarios, latest profiles, and interactive
+runs. Full suites remain compatible-only. Fabric uses its own version-matched
+`ae2-crafting-time-<mod-version>-fabric-1.20.1-test-driver.jar`, remapped by Loom,
+installed into `run/mods` or `run-latest/mods`. Player JARs stay independent.
 
 ## Artifact contract
 

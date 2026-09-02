@@ -14,6 +14,7 @@ $modVersion = ((Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScrip
 if defined AE2CT_DRIVER_BUILD_FAIL exit /b 9
 if not exist "%~dp0build\test-driver" mkdir "%~dp0build\test-driver"
 >"%~dp0build\test-driver\ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar" echo driver
+>"%~dp0build\test-driver\ae2-crafting-time-$modVersion-fabric-1.20.1-test-driver.jar" echo driver
 exit /b 0
 "@, [Text.UTF8Encoding]::new($false))
 $testMatrix = Join-Path $temp "run-client-versions.json"
@@ -85,8 +86,10 @@ function Assert-Line([string]$text, [string]$expected) {
 
 try {
     foreach ($entry in $matrix) {
-        if ($entry.id -eq "1.20.1-forge") {
-            $stale = Join-Path $temp "versions\1.20.1-forge\run\resolved-mods\ae2-crafting-time-old-forge-1.20.1-test-driver.jar"
+        if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric")) {
+            $loader = $entry.id.Substring(7)
+            $leaf = if ($loader -eq "forge") { "resolved-mods" } else { "mods" }
+            $stale = Join-Path $temp "versions\$($entry.id)\run\$leaf\ae2-crafting-time-old-$loader-1.20.1-test-driver.jar"
             New-Item -ItemType Directory -Path (Split-Path -Parent $stale) -Force | Out-Null
             Set-Content -LiteralPath $stale -Value "stale"
         }
@@ -107,13 +110,13 @@ try {
         $mods = Join-Path $temp "versions\$($entry.id)\run\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
         $manifest = Get-Content -LiteralPath (Join-Path $mods ".ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
         $curseCount = @($entry.curseforge | Where-Object { $_ }).Count
-        $driverCount = if ($entry.id -eq "1.20.1-forge") { 1 } else { 0 }
+        $driverCount = if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric")) { 1 } else { 0 }
         if ($manifest.Count -ne $compatibleProjects.Count + $extraProjects.Count + $curseCount + $driverCount) { throw "Unexpected compatible managed-mod count for $($entry.id)" }
         foreach ($project in $replacedProjects) {
             if ("$project.jar" -in $manifest) { throw "Replaced project $project was also installed" }
         }
-        if ($entry.id -eq "1.20.1-forge") {
-            $driverName = "ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"
+        if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric")) {
+            $driverName = "ae2-crafting-time-$modVersion-$loader-1.20.1-test-driver.jar"
             if ($driverName -notin $manifest -or -not (Test-Path -LiteralPath (Join-Path $mods $driverName))) { throw "Missing compatible driver" }
             if (Test-Path -LiteralPath $stale) { throw "Stale driver was not removed" }
         } elseif (Get-ChildItem -LiteralPath $mods -Filter "*test-driver.jar" -File -ErrorAction SilentlyContinue) {
@@ -129,6 +132,8 @@ try {
         if (-not (Test-Path -LiteralPath (Join-Path $latestMods ".ae2-crafting-time-run-mods.json"))) { throw "Missing latest manifest for $($entry.id)" }
     }
 
+    & $script -Target "1.20.1-fabric" -Root $temp -VersionMatrix $testMatrix -DriverScenario craft-plan `
+        -DriverOutputDirectory $temp -DriverWorld ae2ct-00000000000000000000000000000000 -ResolveOnly 6>&1 | Out-Null
     $customRuntime = Join-Path $temp "custom-runtime"
     $global:Ae2CtAe2Dependency = $true
     try {

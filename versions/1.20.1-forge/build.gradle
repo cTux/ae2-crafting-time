@@ -141,15 +141,6 @@ dependencies {
     testDriverAnnotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }
 
-configurations {
-    testDriverLibraries
-    testDriverImplementation.extendsFrom testDriverLibraries
-}
-
-dependencies {
-    testDriverLibraries 'io.modelcontextprotocol.sdk:mcp:2.0.1'
-    testDriverLibraries 'org.apache.tomcat.embed:tomcat-embed-core:11.0.10'
-}
 
 test {
     useJUnitPlatform()
@@ -213,34 +204,11 @@ tasks.register('distMod', Copy) {
 }
 
 def testDriverFileName = "ae2-crafting-time-${project.version}-forge-1.20.1-test-driver.jar"
-def testDriverUnmappedJar = tasks.register('testDriverUnmappedJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
-    dependsOn tasks.named('compileTestDriverJava')
-    from sourceSets.testDriver.output
+ext.testDriverLoader = 'forge'
+apply from: rootProject.file('scripts/test-driver.gradle')
+def testDriverUnmappedJar = tasks.named('testDriverUnmappedJar')
+testDriverUnmappedJar.configure {
     from layout.buildDirectory.file('mixin/ae2craftingtime_test_driver.refmap.json')
-    configurations = [project.configurations.testDriverLibraries]
-    archiveFileName = testDriverFileName
-    destinationDirectory = layout.buildDirectory.dir('test-driver-unmapped')
-    mergeServiceFiles()
-    manifest {
-        attributes 'MixinConfigs': 'ae2craftingtime_test_driver.mixins.json'
-    }
-    exclude 'META-INF/*.SF', 'META-INF/*.DSA', 'META-INF/*.RSA', 'META-INF/versions/**',
-            'module-info.class', 'org/slf4j/**'
-    relocate 'io.modelcontextprotocol', 'com.ctux.ae2craftingtime.testdriver.lib.mcp'
-    relocate 'reactor', 'com.ctux.ae2craftingtime.testdriver.lib.reactor'
-    relocate 'com.fasterxml.jackson', 'com.ctux.ae2craftingtime.testdriver.lib.jackson'
-    relocate 'tools.jackson', 'com.ctux.ae2craftingtime.testdriver.lib.jackson3'
-    relocate 'com.networknt', 'com.ctux.ae2craftingtime.testdriver.lib.jsonschema'
-    relocate 'com.ethlo', 'com.ctux.ae2craftingtime.testdriver.lib.ethlo'
-    relocate 'org.snakeyaml', 'com.ctux.ae2craftingtime.testdriver.lib.snakeyaml'
-    relocate 'org.reactivestreams', 'com.ctux.ae2craftingtime.testdriver.lib.reactivestreams'
-    relocate 'org.apache.catalina', 'com.ctux.ae2craftingtime.testdriver.lib.tomcat'
-    relocate 'org.apache.coyote', 'com.ctux.ae2craftingtime.testdriver.lib.tomcat_coyote'
-    relocate 'org.apache.tomcat', 'com.ctux.ae2craftingtime.testdriver.lib.tomcat_api'
-    relocate 'org.apache.juli', 'com.ctux.ae2craftingtime.testdriver.lib.tomcat_logging'
-    relocate 'jakarta.servlet', 'com.ctux.ae2craftingtime.testdriver.lib.servlet'
-    relocate 'jakarta.security', 'com.ctux.ae2craftingtime.testdriver.lib.security'
-    relocate 'jakarta.annotation', 'com.ctux.ae2craftingtime.testdriver.lib.annotation'
 }
 
 def reobfTestDriverJar = obfuscation.reobfuscate(testDriverUnmappedJar, sourceSets.testDriver) {

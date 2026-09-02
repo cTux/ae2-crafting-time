@@ -1,4 +1,5 @@
 param(
+    [ValidateSet("1.20.1-forge", "1.20.1-fabric")][string]$Target = "1.20.1-forge",
     [ValidateSet("OpenSSH", "Vmrun")][string]$Transport = "OpenSSH",
     [switch]$Latest,
     [switch]$Interactive,
@@ -25,7 +26,7 @@ if (-not $GuestSourceRoot) {
     $GuestSourceRoot = "\\vmware-host\Shared Folders\projects$($resolvedRoot.Substring($projects.Length))"
 }
 $guestScript = Join-Path $GuestSourceRoot "scripts\run-ui-smoke-codexvm.ps1"
-$smokeArguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $guestScript, "-Scenario", $Scenario)
+$smokeArguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $guestScript, "-Target", $Target, "-Scenario", $Scenario)
 if ($Latest) { $smokeArguments += "-Latest" }
 if ($Interactive) { $smokeArguments += "-Interactive" }
 if ($ProjectId) { $smokeArguments += @("-ProjectId") + $ProjectId }

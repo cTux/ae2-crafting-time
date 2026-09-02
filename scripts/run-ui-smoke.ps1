@@ -1,4 +1,5 @@
 param(
+    [ValidateSet("1.20.1-forge", "1.20.1-fabric")][string]$Target = "1.20.1-forge",
     [switch]$Latest,
     [switch]$Interactive,
     [ValidatePattern("^(suite|craft-plan|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
@@ -12,8 +13,10 @@ if ($Scenario -eq "suite" -and ($Interactive -or $Latest -or $ProjectId)) {
 }
 $root = Split-Path -Parent $PSScriptRoot
 $source = Join-Path $root "versions\1.20.1-forge\run\saves\ae2-crafting-time"
+$loader = $Target.Substring("1.20.1-".Length)
+$modsDirectory = if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" }
 $profile = if ($Latest) { "latest" } else { "compatible" }
-$base = Join-Path $root "build\ui-smoke\1.20.1-forge\$profile"
+$base = Join-Path $root "build\ui-smoke\$Target\$profile"
 $report = if ($ReportDirectory) { [IO.Path]::GetFullPath($ReportDirectory) } else { Join-Path $base $Scenario }
 $runtime = Join-Path $base "runtime"
 $evidence = Join-Path $report "evidence"
@@ -39,7 +42,7 @@ function Get-TreeHash([string]$path) {
 
 function Write-Status([string]$phase, [string]$message = "", [Nullable[int]]$exitCode = $null) {
     $status = [ordered]@{
-        schema = 1; runId = $runId; target = "1.20.1-forge"; profile = $profile; scenario = $Scenario
+        schema = 1; runId = $runId; target = $Target; profile = $profile; scenario = $Scenario
         phase = $phase; pid = $(if ($process) { $process.Id } else { $null }); exitCode = $exitCode
         startedAt = $startedAt; updatedAt = [DateTime]::UtcNow.ToString("o"); javaHome = $env:JAVA_HOME
         stagedRoot = $root; stdout = $stdout; stderr = $stderr; evidence = $evidence; message = $message
@@ -74,7 +77,7 @@ if ($Scenario -ne "suite") { New-Item -ItemType Directory -Path $evidence -Force
 Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
 Write-Status "preparing"
 if ($Scenario -eq "suite") {
-    $scenarios = Get-Content -LiteralPath (Join-Path $PSScriptRoot "ui-smoke-forge-suite.json") -Raw | ConvertFrom-Json
+    $scenarios = Get-Content -LiteralPath (Join-Path $PSScriptRoot "ui-smoke-$loader-suite.json") -Raw | ConvertFrom-Json
     $suite = & (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1") -RuntimeDirectory $runtime -OutputDirectory $evidence -Scenarios $scenarios
     $world = $suite.world
     $plan = Get-Content -LiteralPath (Join-Path $evidence "suite-plan.json") -Raw | ConvertFrom-Json
@@ -100,7 +103,7 @@ soundCategory_master:0.0
 
 $arguments = @(
     "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$(Join-Path $PSScriptRoot 'run-client.ps1')`"",
-    "-Target", "1.20.1-forge", "-RuntimeDirectory", "`"$runtime`"",
+    "-Target", $Target, "-RuntimeDirectory", "`"$runtime`"",
     "-DriverScenario", $Scenario, "-DriverOutputDirectory", "`"$evidence`"", "-DriverWorld", $world,
     "--no-daemon"
 )
@@ -164,7 +167,7 @@ try {
         }
         $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
             Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
-        $driverName = "ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"
+        $driverName = "ae2-crafting-time-$modVersion-$loader-1.20.1-test-driver.jar"
         $requiredChecks = if ($caseScenario -eq "crafting-tree-screen") {
             @("screen", "node-ttc", "tooltip", "layout")
         } elseif ($caseScenario -eq "ae2networkanalyser-screen") {
@@ -181,7 +184,7 @@ try {
             @("screen", "ttc-row", "total-ttc", "sort-cycle", "tooltip", "layout")
         }
         if ($result.schema -ne 1 -or -not $result.complete -or $result.result -ne "PASS" -or
-                $result.driver -ne $driverName -or $result.target -ne "1.20.1-forge" -or
+                $result.driver -ne $driverName -or $result.target -ne $Target -or
                 $result.profile -ne $profile -or $result.scenario -ne $caseScenario) {
             throw "Invalid UI-smoke result identity or completion state"
         }
@@ -208,7 +211,7 @@ try {
             }
         }
     }
-    $manifest = Join-Path $runtime "resolved-mods\.ae2-crafting-time-run-mods.json"
+    $manifest = Join-Path $runtime "$modsDirectory\.ae2-crafting-time-run-mods.json"
     if (-not (Test-Path -LiteralPath $manifest)) { throw "Missing managed dependency manifest" }
     $managed = Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json
     if ($driverName -notin $managed) { throw "Managed dependency manifest omits $driverName" }

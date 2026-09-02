@@ -6,9 +6,9 @@ $scripts = Join-Path $source "scripts"
 New-Item -ItemType Directory -Path $scripts -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "run-ui-smoke-codexvm.ps1") -Destination $scripts
 [IO.File]::WriteAllText((Join-Path $scripts "run-ui-smoke.ps1"), @'
-param([string]$ReportDirectory, [string]$Scenario, [string[]]$ProjectId, [switch]$Latest, [switch]$Interactive)
+param([string]$Target, [string]$ReportDirectory, [string]$Scenario, [string[]]$ProjectId, [switch]$Latest, [switch]$Interactive)
 New-Item -ItemType Directory -Path $ReportDirectory -Force | Out-Null
-[ordered]@{ scenario=$Scenario; projectId=@($ProjectId); latest=$Latest.IsPresent; interactive=$Interactive.IsPresent; javaHome=$env:JAVA_HOME } |
+[ordered]@{ target=$Target; scenario=$Scenario; projectId=@($ProjectId); latest=$Latest.IsPresent; interactive=$Interactive.IsPresent; javaHome=$env:JAVA_HOME } |
     ConvertTo-Json | Set-Content -LiteralPath (Join-Path $ReportDirectory "wrapper-result.json") -Encoding UTF8
 '@, [Text.UTF8Encoding]::new($false))
 
@@ -33,6 +33,9 @@ try {
     & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Scenario suite
     $suiteResult = Get-Content (Join-Path $source 'build\ui-smoke\1.20.1-forge\compatible\suite\wrapper-result.json') -Raw | ConvertFrom-Json
     if ($suiteResult.scenario -ne 'suite') { throw 'Wrapper dropped suite selection' }
+    & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Target 1.20.1-fabric -Scenario suite
+    $fabricResult = Get-Content (Join-Path $source 'build\ui-smoke\1.20.1-fabric\compatible\suite\wrapper-result.json') -Raw | ConvertFrom-Json
+    if ($fabricResult.target -ne '1.20.1-fabric' -or $fabricResult.scenario -ne 'suite') { throw 'Wrapper dropped Fabric target' }
     Write-Host "run-ui-smoke-codexvm checks passed"
 } finally {
     if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force }

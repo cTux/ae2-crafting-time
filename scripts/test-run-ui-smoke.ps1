@@ -4,7 +4,7 @@ $scripts = Join-Path $temp "scripts"
 $source = Join-Path $temp "versions\1.20.1-forge\run\saves\ae2-crafting-time"
 New-Item -ItemType Directory -Path $scripts, $source -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "run-ui-smoke.ps1") -Destination (Join-Path $scripts "run-ui-smoke.ps1")
-Copy-Item -LiteralPath (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1"), (Join-Path $PSScriptRoot "ui-smoke-forge-suite.json") -Destination $scripts
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1"), (Join-Path $PSScriptRoot "ui-smoke-forge-suite.json"), (Join-Path $PSScriptRoot "ui-smoke-fabric-suite.json") -Destination $scripts
 [IO.File]::WriteAllText((Join-Path $temp "gradle.properties"), "modVersion=1.1.0`n", [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $source ".ae2-crafting-time-test-fixture.json"), @'
 {"schema":1,"scenario":"craft-plan","sourceFixtureId":"ae2-crafting-time","disposableWorldId":"SOURCE_ONLY",
@@ -20,8 +20,10 @@ param(
 )
 if ([IO.Path]::GetFullPath((Get-Location).Path) -ne [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))) { exit 8 }
 $profile = if ($Latest) { "latest" } else { "compatible" }
-$driver = "ae2-crafting-time-1.1.0-forge-1.20.1-test-driver.jar"
-New-Item -ItemType Directory -Path $DriverOutputDirectory, (Join-Path $RuntimeDirectory "resolved-mods"),
+$loader = $Target.Substring(7)
+$modsDirectory = if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" }
+$driver = "ae2-crafting-time-1.1.0-$loader-1.20.1-test-driver.jar"
+New-Item -ItemType Directory -Path $DriverOutputDirectory, (Join-Path $RuntimeDirectory $modsDirectory),
     (Join-Path $RuntimeDirectory "logs") -Force | Out-Null
 if ($DriverScenario -eq "suite") {
     $plan = Get-Content (Join-Path $DriverOutputDirectory 'suite-plan.json') -Raw | ConvertFrom-Json
@@ -67,7 +69,7 @@ $screenshots = if ($DriverScenario -eq "crafting-tree-screen") {
 } elseif ($DriverScenario -ne "craft-plan") { @("$(($DriverScenario -replace '-cpu$', ''))-profiled-plan.png") } else { @("craft-plan.png", "craft-plan-sort-1.png", "craft-plan-sort-2.png", "craft-plan-sort-3.png", "craft-plan-tooltip.png") }
 $result = [ordered]@{
     schema = $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "schema") { 2 } else { 1 })
-    complete = $true; driver = $driver; target = "1.20.1-forge"; profile = $profile
+    complete = $true; driver = $driver; target = $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "wrong-target") { "wrong" } else { $Target }); profile = $profile
     scenario = $DriverScenario; result = "PASS"; checks = $checks
     screenshots = $screenshots
 }
@@ -80,14 +82,15 @@ foreach ($screenshot in $screenshots) {
 if ($Interactive -and $env:AE2CT_UI_SMOKE_TEST_MODE -eq "interactive-token" -and
         $env:AE2CT_TEST_DRIVER_TOKEN -ne ('b' * 64)) { exit 7 }
 (@($driver) + @($ProjectId | ForEach-Object { "$_.jar" })) | ConvertTo-Json |
-    Set-Content -LiteralPath (Join-Path $RuntimeDirectory "resolved-mods\.ae2-crafting-time-run-mods.json") -Encoding UTF8
+    Set-Content -LiteralPath (Join-Path $RuntimeDirectory "$modsDirectory\.ae2-crafting-time-run-mods.json") -Encoding UTF8
 Set-Content -LiteralPath (Join-Path $RuntimeDirectory "logs\latest.log") -Value $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "fatal") { "Mixin apply failed ae2craftingtime.mixins.json" } else { "clean" })
 '@, [Text.UTF8Encoding]::new($false))
 
 function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive,
-        [string]$Scenario = "craft-plan", [string[]]$ProjectId, [string]$ReportDirectory, [bool]$shouldPass) {
+        [string]$Target = "1.20.1-forge", [string]$Scenario = "craft-plan", [string[]]$ProjectId, [string]$ReportDirectory, [bool]$shouldPass) {
     $env:AE2CT_UI_SMOKE_TEST_MODE = $mode
     $arguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $scripts "run-ui-smoke.ps1"))
+    $arguments += @("-Target", $Target)
     if ($Latest) { $arguments += "-Latest" }
     if ($Interactive) { $arguments += "-Interactive" }
     if ($Scenario -ne "craft-plan") { $arguments += @("-Scenario", $Scenario) }
@@ -105,6 +108,10 @@ function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive,
 }
 
 try {
+    Invoke-Case "pass" -Target "1.20.1-fabric" -Scenario suite -shouldPass $true
+    Invoke-Case "pass" -Target "1.20.1-fabric" -Latest -shouldPass $true
+    Invoke-Case "wrong-target" -Target "1.20.1-fabric" -shouldPass $false
+    Invoke-Case "pass" -Target "1.21.1-neoforge" -shouldPass $false
     Invoke-Case "pass" -shouldPass $true
     $cacheMarker = Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\runtime\cache-marker.txt"
     Set-Content -LiteralPath $cacheMarker -Value "keep"

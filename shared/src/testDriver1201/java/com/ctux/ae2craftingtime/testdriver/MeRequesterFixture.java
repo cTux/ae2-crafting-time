@@ -11,8 +11,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.fml.ModList;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -27,7 +26,7 @@ final class MeRequesterFixture {
     private CompletableFuture<Boolean> setupFuture;
 
     boolean setup(ServerPlayer player, FixtureMarker marker) {
-        if (!ModList.get().isLoaded("merequester")) {
+        if (!DriverPlatform.isModLoaded("merequester")) {
             throw new IllegalStateException("ME Requester is unavailable");
         }
         if (player == null) {
@@ -62,7 +61,7 @@ final class MeRequesterFixture {
     private BlockPos place(ServerPlayer player, FixtureMarker marker) {
         var level = player.serverLevel();
         var terminal = new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z());
-        var block = ForgeRegistries.BLOCKS.getValue(ResourceLocation.tryBuild("merequester", "requester"));
+        var block = BuiltInRegistries.BLOCK.getOptional(ResourceLocation.tryBuild("merequester", "requester")).orElse(null);
         if (block == null || block == net.minecraft.world.level.block.Blocks.AIR) {
             throw new IllegalStateException("ME Requester block is unavailable");
         }
