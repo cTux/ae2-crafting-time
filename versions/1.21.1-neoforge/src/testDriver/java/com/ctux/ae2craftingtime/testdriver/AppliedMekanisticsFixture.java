@@ -62,7 +62,6 @@ final class AppliedMekanisticsFixture extends AddonCpuFixture<AppliedMekanistics
             throw new IllegalStateException("Mekanism oxygen is unavailable");
         }
         inventory.setItemDirect(slot, new ItemStack(AMItems.CHEMICAL_CELL_1K.get()));
-        drive.onChangeInventory((appeng.util.inv.AppEngInternalInventory) inventory, slot);
         var itemSlot = -1;
         for (var index = 0; index < inventory.size(); index++) {
             if (inventory.getStackInSlot(index).isEmpty()) {
@@ -74,7 +73,6 @@ final class AppliedMekanisticsFixture extends AddonCpuFixture<AppliedMekanistics
             throw new IllegalStateException("Applied Mekanistics fixture drive has no second empty slot");
         }
         inventory.setItemDirect(itemSlot, AEItems.ITEM_CELL_1K.stack());
-        drive.onChangeInventory((appeng.util.inv.AppEngInternalInventory) inventory, itemSlot);
         for (var anchor : BlockPos.betweenClosed(terminal.offset(-12, -4, -12), terminal.offset(12, 4, 12))) {
             if (!(player.serverLevel().getBlockEntity(anchor) instanceof IInWorldGridNodeHost host)) {
                 continue;

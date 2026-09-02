@@ -51,7 +51,6 @@ final class AdvancedPeripheralsFixture extends AddonCpuFixture<AdvancedPeriphera
             throw new IllegalStateException("ME Bridge fixture needs an empty drive slot");
         }
         inventory.setItemDirect(slot, AEItems.ITEM_CELL_1K.stack());
-        drive.onChangeInventory((appeng.util.inv.AppEngInternalInventory) inventory, slot);
         var bridgeBlock = Objects.requireNonNull(BuiltInRegistries.BLOCK.get(
                 Objects.requireNonNull(ResourceLocation.tryBuild("advancedperipherals", "me_bridge"))));
         var computerBlock = Objects.requireNonNull(BuiltInRegistries.BLOCK.get(

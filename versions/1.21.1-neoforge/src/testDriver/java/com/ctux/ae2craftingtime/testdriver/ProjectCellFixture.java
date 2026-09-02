@@ -53,7 +53,6 @@ final class ProjectCellFixture extends AddonCpuFixture<ProjectCellFixture.Placem
         var cell = new ItemStack(ProjectCell.EMC_STORAGE_CELL.get());
         cell.set(ProjectCell.OWNER_UUID.get(), player.getUUID());
         inventory.setItemDirect(slot, cell);
-        drive.onChangeInventory((appeng.util.inv.AppEngInternalInventory) inventory, slot);
         return new Placement(drive, slot, grid, source, cobblestone);
     }
 

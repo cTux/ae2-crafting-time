@@ -103,7 +103,6 @@ final class BmAddonFixture extends AddonCpuFixture<BmAddonFixture.Placement> {
         var details = BloodAltarPatternDetails.create(level, pattern, (AraVitaeRecipe) recipe.value())
                 .orElseThrow(() -> new IllegalStateException("BM Addon pattern could not be decoded"));
         assembler.getPatternInventory().setItemDirect(0, pattern);
-        assembler.onChangeInventory((appeng.util.inv.AppEngInternalInventory) assembler.getPatternInventory(), 0);
         var storage = grid.getStorageService().getInventory();
         for (var requirement : details.getInputs()) {
             var stack = requirement.getPossibleInputs()[0];

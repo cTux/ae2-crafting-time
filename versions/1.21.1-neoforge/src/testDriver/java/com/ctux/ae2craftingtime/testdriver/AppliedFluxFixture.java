@@ -47,7 +47,6 @@ final class AppliedFluxFixture extends AddonCpuFixture<AppliedFluxFixture.Placem
             throw new IllegalStateException("Applied Flux fixture drive has no empty slot");
         }
         inventory.setItemDirect(slot, new ItemStack(AFSingletons.FE_CELL_1k));
-        drive.onChangeInventory((appeng.util.inv.AppEngInternalInventory) inventory, slot);
         return new Placement(drive, slot, grid, IActionSource.ofPlayer(player), FluxKey.of(EnergyType.FE));
     }
 
