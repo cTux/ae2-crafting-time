@@ -167,7 +167,7 @@ public final class CraftPlanScenario {
 
     private void openTerminal() throws IOException {
         if (noSpace != null) {
-            if (noSpace.tick(minecraft, marker, checks, this::screenshotUnchecked, this::captureRegion, this::moveMouse)) {
+            if (noSpace.tick(minecraft, marker, checks, this::screenshotUnchecked, this::moveMouse)) {
                 advance(ScenarioState.TERMINAL_OPEN);
                 writePass();
             }
@@ -650,34 +650,6 @@ public final class CraftPlanScenario {
             screenshot(name);
         } catch (IOException error) {
             throw new IllegalStateException("cannot save test-driver screenshot", error);
-        }
-    }
-
-    private void captureRegion(String name) {
-        var snapshot = UiObservationStore.latest();
-        var gui = snapshot.gui();
-        var scale = minecraft.getWindow().getGuiScale();
-        var windowX = new int[1];
-        var windowY = new int[1];
-        org.lwjgl.glfw.GLFW.glfwGetWindowPos(minecraft.getWindow().getWindow(), windowX, windowY);
-        var tooltipWidth = snapshot.tooltip().stream().mapToInt(text -> minecraft.font.width(text.rendered()))
-                .max().orElse(0);
-        var width = Math.max(gui.width(), 40 + 16 + tooltipWidth) + 36;
-        var device = java.awt.GraphicsEnvironment.getLocalGraphicsEnvironment().getDefaultScreenDevice();
-        var dpi = device.getDefaultConfiguration().getDefaultTransform();
-        var region = new java.awt.Rectangle(
-                (int) Math.floor((windowX[0] + (gui.x() - 24) * scale) / dpi.getScaleX()),
-                (int) Math.floor((windowY[0] + (gui.y() - 6) * scale) / dpi.getScaleY()),
-                (int) Math.ceil(width * scale / dpi.getScaleX()),
-                (int) Math.ceil((gui.height() + 12) * scale / dpi.getScaleY()));
-        try {
-            var capture = (java.awt.image.BufferedImage) new java.awt.Robot(device)
-                    .createMultiResolutionScreenCapture(region).getResolutionVariants().stream()
-                    .max(java.util.Comparator.comparingInt(image -> image.getWidth(null))).orElseThrow();
-            javax.imageio.ImageIO.write(capture, "png", options.output().resolve(name).toFile());
-            screenshots.add(name);
-        } catch (java.awt.AWTException | IOException error) {
-            throw new IllegalStateException("cannot capture native UI region", error);
         }
     }
 

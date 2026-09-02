@@ -64,7 +64,7 @@ $checks = if ($DriverScenario -eq "no-space-status") {
     [ordered]@{ screen=$true; 'ttc-row'=$true; 'total-ttc'=$true; 'sort-cycle'=$true; tooltip=$true; layout=$true }
 }
 $screenshots = if ($DriverScenario -eq "no-space-status") {
-    @("no-space-before.png", "no-space-en-us.png", "no-space-uk-ua.png", "no-space-recovered.png", "no-space-gallery.png")
+    @("no-space-before.png", "no-space-en-us.png", "no-space-uk-ua.png", "no-space-recovered.png")
 } elseif ($DriverScenario -eq "crafting-tree-screen") {
     @("crafting-tree-screen.png", "crafting-tree-tooltip.png")
 } elseif ($DriverScenario -eq "ae2networkanalyser-screen") {
