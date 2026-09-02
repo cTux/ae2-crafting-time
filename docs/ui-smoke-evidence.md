@@ -23,6 +23,8 @@ E:/games/mc-instances/.codex-test-results/ui-smoke/
 Use a new timestamped run directory; never replace an earlier run or failed
 attempt. Runtime `build/ui-smoke` folders are temporary, not the final archive.
 Copy the evidence before cleaning a runtime or removing a worktree.
+For a single-launch suite, keep shared client logs once in `logs/` and link them
+from every case's record instead of copying the same log for each integration.
 
 Capture each distinct UI checkpoint for every tested integration: its screen,
 TTC row and total, tooltip, sort modes, and post-craft result where applicable.

@@ -21,6 +21,16 @@ fresh CPU profiling samples and visible TTC for the three CPU integrations and
 terminal tooltip/plan TTC for WCWT. The original pack's mods were not upgraded
 or removed. These scenario results do not imply full modpack gameplay coverage.
 
+The subsequent CodexVM campaign `20260902T084023Z-suite` passed all 23 installed
+integration scenarios in one Minecraft process, with a fresh disposable world
+per case, 31 visually inspected checkpoint screenshots, and exit code 0. It used
+the exact pack above with Forge `47.4.20` and the opt-in rectangular atlas probe.
+All 358 third-party JAR hashes and the original source instance were unchanged.
+The earlier failed VM attempt is retained separately; the successful retry
+includes fixes for capture-before-render and double initialization of AE2 nodes.
+Per-mod results, screenshots, shared logs, and checkpoint mappings are archived
+under the campaign ID using the [smoke evidence layout](ui-smoke-evidence.md).
+
 `Yes (base)` means the Forge 1.20.1 driver exercises the dependency as part of
 its standard AE2 scenario. `Yes (scenario)` means it has a dedicated optional-mod
 scenario. `No` means a version is known for that target, but no TestDriver covers
