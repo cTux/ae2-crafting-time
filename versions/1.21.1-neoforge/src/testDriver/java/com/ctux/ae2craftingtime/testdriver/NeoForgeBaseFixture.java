@@ -34,8 +34,10 @@ final class NeoForgeBaseFixture extends NativeCpuFixture {
                 .filter(candidate -> candidate.getMainNode().isActive()).findFirst().orElseThrow();
         var inventory = drive.getInternalInventory();
         for (var slot = 0; slot < inventory.size(); slot++) {
-            if (inventory.getStackInSlot(slot).isEmpty()) {
+            if (slot + 1 < inventory.size() && inventory.getStackInSlot(slot).isEmpty()
+                    && inventory.getStackInSlot(slot + 1).isEmpty()) {
                 inventory.setItemDirect(slot, AEItems.ITEM_CELL_1K.stack());
+                inventory.setItemDirect(slot + 1, AEItems.FLUID_CELL_1K.stack());
                 cellSlot = slot;
                 return placement;
             }

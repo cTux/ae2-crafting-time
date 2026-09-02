@@ -108,7 +108,7 @@ final class BmAddonFixture extends AddonCpuFixture<BmAddonFixture.Placement> {
             var stack = requirement.getPossibleInputs()[0];
             var amount = stack.amount() * requirement.getMultiplier();
             if (storage.insert(stack.what(), amount, Actionable.MODULATE, IActionSource.empty()) != amount) {
-                throw new IllegalStateException("BM Addon fixture input could not be inserted");
+                throw new IllegalStateException("BM Addon fixture input could not be inserted: " + stack.what() + " x " + amount);
             }
         }
         placement.outputId = details.getPrimaryOutput().what().getId().toString();
