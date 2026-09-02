@@ -48,7 +48,13 @@ final class AdvancedAeFixture extends AddonCpuFixture<AdvancedAeFixture.Placemen
                 var position = anchor.relative(direction).immutable();
                 if (node != null && node.getGrid() == grid && level.getBlockState(position).isAir()) {
                     // The three upgrade blocks must be inside a complete structural shell.
-                    var min = position.above(8);
+                    var height = position.getY() + 8;
+                    for (var column : BlockPos.betweenClosed(position, position.offset(2, 0, 4))) {
+                        height = Math.max(height, level.getHeight(
+                                net.minecraft.world.level.levelgen.Heightmap.Types.WORLD_SURFACE,
+                                column.getX(), column.getZ()) + 1);
+                    }
+                    var min = new BlockPos(position.getX(), height, position.getZ());
                     var max = min.offset(2, 2, 4);
                     for (var part : BlockPos.betweenClosed(min, max)) {
                         if (!level.getBlockState(part).isAir()) {

@@ -39,7 +39,8 @@ NeoForge copies its tracked native 1.21.1 world; it never upgrades the Forge
 fixture. The base fixture supplies native storage, a CPU, a real furnace pattern
 and assembler, and a retained UI sample before addon setup. Addon cases clear that
 sample and require a new one after actual crafting.
-No source world or production protocol changes are allowed.
+Runtime preparation mutates only disposable copies; the tracked native fixture
+preconfirms NeoForge's experimental-world warning. Production protocols stay unchanged.
 
 ## Original Forge implementation evidence
 
