@@ -114,7 +114,7 @@ final class AdvancedPeripheralsFixture extends AddonCpuFixture<AdvancedPeriphera
             if (!Boolean.TRUE.equals(result.getResult()[0])) {
                 throw new IllegalStateException("ME Bridge rejected craft: " + Arrays.toString(result.getResult()));
             }
-            menu.goBack();
+            menu.getHost().returnToMainMenu(player, menu);
         } catch (LuaException exception) {
             throw new IllegalStateException("ME Bridge craftItem failed", exception);
         }
