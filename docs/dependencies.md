@@ -82,6 +82,11 @@ AdvancedAE's Forge fixture is development coverage, not a declared Forge depende
 
 ## Compatibility boundaries
 
+- Lightning Tech `1.0.1alpha-26.1.2neoforge` uses `@OnlyIn`, which triggers a
+  NeoForge development warning screen. The 26.1.2 client runs use NeoForge's
+  `neoforge.warnings.onlyin.hide` option to skip that screen while keeping the
+  diagnostics in the log. This does not fix Lightning Tech's annotations or
+  change the server run; the reported client log ended with a normal shutdown.
 - Applied Mekanistics has Forge/NeoForge releases for these targets. Applied
   Flux has no stable Fabric 1.20.1 release. Neither is declared for Fabric.
 - Applied Botanics original and fork share `appbot`, its version, and mana key;
