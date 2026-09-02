@@ -223,6 +223,7 @@ try {
         'Exception caught from mod bus', 'Mixin apply failed ae2craftingtime.mixins.json',
         'Mixin apply failed ae2craftingtime_test_driver.mixins.json', 'MixinTransformerError',
         'Failed to load resource', 'The game crashed whilst', 'There is no mod with modId',
+        "Reference map 'ae2craftingtime.refmap.json'",
         "Reference map 'ae2craftingtime_test_driver.refmap.json'"
     ) -SimpleMatch
         if ($fatal) { throw "Fatal loader, mixin, resource, or crash signature in latest.log" }

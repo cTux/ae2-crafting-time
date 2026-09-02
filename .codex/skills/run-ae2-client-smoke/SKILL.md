@@ -12,10 +12,12 @@ description: Run prepared AE2 Crafting Time repository clients or automated UI s
 - Use the prepared clients and launchers in this repository. Never open Prism
   unless the user explicitly asks to test a modpack; that request uses
   `launch-prism-test-modpack` instead.
-- For Forge 1.20.1 UI smoke, dispatch
-  `scripts/invoke-ui-smoke-codexvm.ps1` with the requested `-Scenario`, `-Latest`,
+- For Forge or Fabric 1.20.1 UI smoke, dispatch
+  `scripts/invoke-ui-smoke-codexvm.ps1` with `-Target 1.20.1-fabric` for Fabric
+  (Forge is the default) and the requested `-Scenario`, `-Latest`,
   or `-Interactive` option. Prefer OpenSSH; use `-Transport Vmrun` when the
-  OpenSSH path cannot be dispatched reliably.
+  OpenSSH path cannot be dispatched reliably. Use `-Scenario suite` for the full
+  compatible graph in one client, with a fresh world and screenshots per case.
 - For another supported target, run its `scripts-run/run-*.bat` launcher inside
   the VM. Use a matching `-latest` launcher only when the latest profile is
   requested. Run all-version clients sequentially and report each separately.

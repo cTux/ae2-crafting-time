@@ -31,6 +31,12 @@ those columns means no separate optional dependency declaration is recorded.
 It does not erase the native integration or development coverage in the row.
 Required versions are listed above.
 
+The prepared Fabric client disables Fabric's development-only mod shuffle so
+initialization order matches a normal installed client. With random dev order,
+ExtendedAE `1.20-1.0.2-fabric` can call AE2WTLib `15.2.1` before its universal
+terminal item exists and crash in `WUTHandler.addTerminal`. This is a development
+profile setting, not an upstream addon fix; all pinned addons remain installed.
+
 The Fabric development runtime also loads MixinExtras `0.5.5`. It fixes world-entry
 crashes when newer Fabric Mixin versions compile `Redirect.at` as an array.
 This runtime-only dependency is not bundled in the published mod JAR.

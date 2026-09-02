@@ -14,6 +14,8 @@ loom {
         client {
             runDir runtimeRunDirectory
             vmArg '-Xmx8G'
+            // Match production order; dev shuffling can initialize ExtendedAE before AE2WTLib.
+            vmArg '-Dfabric.debug.disableModShuffle=true'
             ['scenario', 'profile', 'world', 'output', 'interactive'].each { name ->
                 def property = providers.gradleProperty("testDriver${name.capitalize()}")
                 if (property.isPresent()) vmArg "-Dae2craftingtime.test.${name}=${property.get()}"
@@ -142,6 +144,13 @@ tasks.register('checkTestDriverArtifacts') {
     doLast {
         def production = tasks.named('remapJar').get().archiveFile.get().asFile
         def driver = remapTestDriverJar.get().archiveFile.get().asFile
+        [production: 'ae2craftingtime.refmap.json', driver: 'ae2craftingtime_test_driver.refmap.json'].each { name, refmap ->
+            def artifact = name == 'production' ? production : driver
+            def mappings = zipTree(artifact).matching { include refmap }.singleFile
+            if (!new groovy.json.JsonSlurper().parse(mappings).mappings) {
+                throw new GradleException("Missing mixin mappings in ${artifact}")
+            }
+        }
         def productionEntries = zipTree(production).files.collect { it.path.replace('\\', '/') }
         def driverEntries = zipTree(driver).files.collect { it.path.replace('\\', '/') }
         if (productionEntries.any { it.contains('testdriver/') || it.contains('ae2craftingtime_test_driver') }) {

@@ -34,8 +34,11 @@ Follow [the screenshot archive contract](../../../docs/ui-smoke-evidence.md)
 when running or extending scenarios. Capture each distinct UI checkpoint and
 map checks to images without treating screenshots as proof of server-only state.
 
+Shared 1.20.1 driver code lives in `shared/src/testDriver1201`; loader
+entrypoints and platform-specific fixtures stay in their version modules.
+
 Use `run-ae2-client-smoke`. UI checks must run inside CodexVM with an 8 GiB
-client and a maximized Minecraft window. Run `scripts/run-ui-smoke.ps1` for the
-Forge 1.20.1 driver; use `-Scenario <name>`, `-Latest`, or `-Interactive` only
+client and a maximized Minecraft window. Run `scripts/invoke-ui-smoke-codexvm.ps1` for the
+1.20.1 drivers (`-Target 1.20.1-fabric` for Fabric; Forge is the default); use `-Scenario <name>`, `-Latest`, or `-Interactive` only
 when the request needs them. Use `launch-prism-test-modpack` only when the user
 explicitly asks to test a named modpack.

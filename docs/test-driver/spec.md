@@ -359,11 +359,10 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
   one.
 - AE2 WCWT and AE2 Wireless Terminals have separate Forge 1.20.1 terminal
   scenarios because they add no crafting CPU.
-- ME Requester has a dedicated Forge 1.20.1 screen scenario.
+- ME Requester has dedicated Forge and Fabric 1.20.1 screen scenarios.
 - Run it against both the compatible and latest AE2 profiles already owned by
   `scripts/run-client-versions.json`.
-- Do not create a cross-loader abstraction for this slice. Reuse code only when
-  a second supported target proves the shared boundary.
+- Share identical 1.20.1 driver code. Keep loader entrypoints in their modules.
 - The driver may compile against production classes but may not alter the
   production packet protocol, saved-data format, runtime behavior, or JAR.
 
@@ -371,7 +370,7 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 
 - Crafting Status or submitted-craft checks.
 - Optional-addon behavior outside the registered CPU fixture contract.
-- Fabric, NeoForge, dedicated-server, or multiplayer support.
+- NeoForge, dedicated-server, or multiplayer support.
 - General-purpose UI automation, arbitrary world setup, or remote control.
 - Pixel-perfect full-frame comparisons.
 - Publishing the driver on GitHub, CurseForge, or Modrinth.
@@ -384,7 +383,7 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 - The Forge 1.20.1 compatible and latest development launchers install that
   exact driver in their selected `resolved-mods` directory, remove stale driver
   versions, and stop if installation fails.
-- Forge refuses a driver paired with the wrong AE2 Crafting Time version.
+- Both loaders refuse a driver paired with the wrong AE2 Crafting Time version.
 - The driver remains inactive without the explicit test option and refuses
   multiplayer, the tracked fixture, and unmarked worlds.
 - One command copies the fixture, runs the compatible Crafting Plan scenario,

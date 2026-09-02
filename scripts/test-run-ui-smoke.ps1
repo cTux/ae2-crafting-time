@@ -83,7 +83,7 @@ if ($Interactive -and $env:AE2CT_UI_SMOKE_TEST_MODE -eq "interactive-token" -and
         $env:AE2CT_TEST_DRIVER_TOKEN -ne ('b' * 64)) { exit 7 }
 (@($driver) + @($ProjectId | ForEach-Object { "$_.jar" })) | ConvertTo-Json |
     Set-Content -LiteralPath (Join-Path $RuntimeDirectory "$modsDirectory\.ae2-crafting-time-run-mods.json") -Encoding UTF8
-Set-Content -LiteralPath (Join-Path $RuntimeDirectory "logs\latest.log") -Value $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "fatal") { "Mixin apply failed ae2craftingtime.mixins.json" } else { "clean" })
+Set-Content -LiteralPath (Join-Path $RuntimeDirectory "logs\latest.log") -Value $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "fatal") { "Mixin apply failed ae2craftingtime.mixins.json" } elseif ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "production-refmap") { "Reference map 'ae2craftingtime.refmap.json' could not be read" } else { "clean" })
 '@, [Text.UTF8Encoding]::new($false))
 
 function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive,
@@ -163,6 +163,7 @@ try {
     Remove-Item Env:\AE2CT_TEST_DRIVER_TOKEN
     Invoke-Case "schema" -shouldPass $false
     Invoke-Case "missing-screenshot" -shouldPass $false
+    Invoke-Case "production-refmap" -Target "1.20.1-fabric" -shouldPass $false
     Invoke-Case "fatal" -shouldPass $false
     $failedStatus = Get-Content -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\craft-plan\status.json") -Raw | ConvertFrom-Json
     if ($failedStatus.phase -ne "failed" -or -not $failedStatus.message) { throw "Smoke failure status was incomplete" }
