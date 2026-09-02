@@ -33,6 +33,19 @@ class TtcTextTest {
     }
 
     @Test
+    void tooltipLabelsEstimatesAndCollectingDataWithoutChangingCompactText() {
+        for (var value : List.of(TtcText.ttc("~1s"), TtcText.ttcCollectingData())) {
+            var tooltip = TtcText.tooltipTtc(value);
+            var label = (TranslatableContents) tooltip.getContents();
+            assertEquals("text.ae2craftingtime.stats.ttc", label.getKey());
+            assertEquals(List.of(Component.literal(": "), value), tooltip.getSiblings());
+            assertEquals(value.getStyle(), tooltip.getStyle());
+            assertTrue(value.getSiblings().isEmpty());
+            assertEquals("text.ae2craftingtime.ttc", ((TranslatableContents) value.getContents()).getKey());
+        }
+    }
+
+    @Test
     void waitingUsesTranslationWithoutArguments() {
         var contents = (TranslatableContents) TtcText.waiting().getContents();
         assertEquals("text.ae2craftingtime.waiting", contents.getKey());

@@ -6,6 +6,11 @@ current TestDriver coverage. Version cells use the latest working version pinned
 in the compatible development-client profile, which may be older than the real
 latest release.
 
+WCWT, AE2 Wireless Terminals, and Import Export Card terminal tooltips label
+estimates as `TTC: ~1s` (or `TTC: Collecting`). The line comes after AE2's
+amounts, craftability, and advanced details on every supported target. Other mods
+can still append content afterward. Compact row badges keep their existing text.
+
 Project Infinity 0.1 (`0.0.51.3 HOTFIX`) also uses Crazy AE2 Addons `2.6.2`,
 WCWT `1.20.1.7-hotfix`, NeoEco `20.4.0`, and OmniSequence
 `1.3.8-hotfix-forge`. Forge metadata admits these pack versions; the existing
