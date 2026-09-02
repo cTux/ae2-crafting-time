@@ -271,7 +271,7 @@ function Publish-Modrinth($entry, [string]$version, [string]$jarPath, [string]$n
     try {
         $data = @{
             name = [IO.Path]::GetFileNameWithoutExtension((Get-ArtifactFileName $entry $version))
-            version_number = "$($entry.id)-$version"
+            version_number = "$version-$($entry.loader)-$($entry.minecraftVersion)"
             changelog = $notes
             dependencies = @($entry.modrinthDependencies)
             game_versions = @($entry.minecraftVersion)
@@ -463,7 +463,7 @@ try {
         foreach ($release in $releases) {
             if ($DryRun) {
                 Write-Host "dry-run deploy $($release.entry.id): $($release.jarPath)"
-                Write-Host "dry-run Modrinth version: $($release.entry.id)-$($release.version)"
+                Write-Host "dry-run Modrinth version: $($release.version)-$($release.entry.loader)-$($release.entry.minecraftVersion)"
                 Write-Host "dry-run Modrinth dependencies: $((@($release.entry.modrinthDependencies) | ForEach-Object { "$($_.project_id):$($_.dependency_type)" }) -join ', ')"
                 Write-Host "dry-run CurseForge versions: $($release.entry.minecraftVersion), $($release.entry.loaderName), Client, Server"
                 Write-Host "dry-run changelog $($release.entry.id):"
