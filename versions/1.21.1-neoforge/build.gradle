@@ -147,7 +147,7 @@ tasks.register('testDriverUnmappedJar', com.github.jengelman.gradle.plugins.shad
 apply from: rootProject.file('scripts/test-driver.gradle')
 sourceSets.testDriver.java.exclude { element ->
     element.file.path.replace('\\', '/').contains('/shared/src/testDriver1201/') &&
-            element.file.name in ['AppliedBotanicsFixture.java', 'Ae2ThingsFixture.java', 'ExtendedAeFixture.java']
+            element.file.name in ['AppliedBotanicsFixture.java', 'Ae2ThingsFixture.java']
 }
 sourceSets.testDriver.resources.setSrcDirs(['src/testDriver/resources'])
 dependencies {
