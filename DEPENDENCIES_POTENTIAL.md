@@ -48,7 +48,7 @@ therefore cannot replace layer 2.
 | Applied Botanics (original) | MANA_KEY | Raw mana precision and native key | — | [MR](https://modrinth.com/mod/applied-botanics) | Integrated; Forge mana-storage/crafting driver |
 | ae2ct (Crafting Tree) | CRAFTING_UI | 5 | #69 | [CF][ae2ct-cf] | Implemented |
 | ME Requester | QOL / requester | 5 | #70 | [CF][merequester-cf] / [MR][merequester-mr] | Implemented |
-| AE2 Import Export Card | QOL | 4/5 | #85 | [CF][ae2iec-cf] / [MR][ae2iec-mr] | Not started |
+| AE2 Import Export Card | QOL | 4/5 | #85 | [CF][ae2iec-cf] / [MR][ae2iec-mr] | Integrated; Forge terminal/card TTC driver |
 | AE2 Network Analyser | QOL (visual tool) | `GuiAnalyser` compatibility smoke; no TTC hook | #86 | [CF][ae2na-cf] | Integrated |
 | AEInfinityBooster | QOL (range) | Wireless range and Crafting Plan compatibility; no new TTC hook | #87 | [CF][aeinfinity-cf] / [MR][aeinfinity-mr] | Integrated |
 | Applied Botanics (Fork) | MANA_KEY | Same native mana contract as original | #88 | [CF][appliedbotanics-cf] | Integrated; separate Forge artifact/driver |
