@@ -50,14 +50,14 @@ public final class TestDriverRuntime implements AutoCloseable {
                 writeProgress();
                 if (next) {
                     minecraft.level.disconnect();
-                    minecraft.clearLevel(new TitleScreen());
+                    DriverPlatform.clearLevel(minecraft);
                     UiObservationStore.reset();
                     var item = cases.get(++index);
                     SuitePlan.verifyWorld(minecraft.gameDirectory.toPath().resolve("saves"), item);
                     scenario = new CraftPlanScenario(minecraft, item, driverFile);
                     progress.start(Instant.now());
                     writeProgress();
-                    minecraft.createWorldOpenFlows().loadLevel(new TitleScreen(), item.world());
+                    DriverPlatform.openWorld(minecraft, item.world());
                 } else {
                     finished = true;
                     minecraft.stop();

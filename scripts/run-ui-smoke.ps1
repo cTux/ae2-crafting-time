@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("1.20.1-forge", "1.20.1-fabric")][string]$Target = "1.20.1-forge",
+    [ValidateSet("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge")][string]$Target = "1.20.1-forge",
     [switch]$Latest,
     [switch]$Interactive,
     [ValidatePattern("^(suite|craft-plan|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
@@ -13,7 +13,7 @@ if ($Scenario -eq "suite" -and ($Interactive -or $Latest -or $ProjectId)) {
 }
 $root = Split-Path -Parent $PSScriptRoot
 $source = Join-Path $root "versions\1.20.1-forge\run\saves\ae2-crafting-time"
-$loader = $Target.Substring("1.20.1-".Length)
+$game, $loader = $Target.Split("-", 2)
 $modsDirectory = if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" }
 $profile = if ($Latest) { "latest" } else { "compatible" }
 $base = Join-Path $root "build\ui-smoke\$Target\$profile"
@@ -167,7 +167,7 @@ try {
         }
         $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
             Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
-        $driverName = "ae2-crafting-time-$modVersion-$loader-1.20.1-test-driver.jar"
+        $driverName = "ae2-crafting-time-$modVersion-$loader-$game-test-driver.jar"
         $requiredChecks = if ($caseScenario -eq "crafting-tree-screen") {
             @("screen", "node-ttc", "tooltip", "layout")
         } elseif ($caseScenario -eq "ae2networkanalyser-screen") {

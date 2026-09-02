@@ -1,4 +1,5 @@
 sourceSets.testDriver.java.srcDir '../../shared/src/testDriver1201/java'
+def testDriverGame = project.name == 'mc_1_21_1_neoforge' ? '1.21.1' : '1.20.1'
 sourceSets.testDriver.resources.srcDir '../../shared/src/testDriver1201/resources'
 
 configurations {
@@ -16,7 +17,7 @@ tasks.named('testDriverUnmappedJar') {
     dependsOn tasks.named('compileTestDriverJava')
     from sourceSets.testDriver.output
     configurations = [project.configurations.testDriverLibraries]
-    archiveFileName = "ae2-crafting-time-${project.version}-${testDriverLoader}-1.20.1-test-driver.jar"
+    archiveFileName = "ae2-crafting-time-${project.version}-${testDriverLoader}-${testDriverGame}-test-driver.jar"
     destinationDirectory = layout.buildDirectory.dir('test-driver-unmapped')
     mergeServiceFiles()
     manifest {

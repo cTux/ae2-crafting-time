@@ -5,7 +5,8 @@ the same archive layout:
 
 For prepared Forge clients, use `scripts/invoke-ui-smoke-codexvm.ps1 -Scenario suite`
 for the full compatible graph and its 26 implemented scenarios. Add
-`-Target 1.20.1-fabric` for the seven-case Fabric compatible suite.
+`-Target 1.20.1-fabric` for the seven-case Fabric compatible suite, or `-Target 1.21.1-neoforge`
+for the 21-case NeoForge compatible suite.
 
 For multiple scenarios on the same installed mod graph, launch Minecraft once.
 Run the suite sequentially with a fresh disposable world per case, capturing each

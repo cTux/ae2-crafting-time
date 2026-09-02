@@ -7,7 +7,7 @@ Minecraft client for repeatable AE2 Crafting Time UI smoke tests. It runs beside
 the production mod and never replaces or ships inside it.
 
 The driver covers the standard AE2 Crafting Plan screen and add-on crafting CPU
-scenarios on Minecraft 1.20.1 Forge and Fabric. New optional-mod scenarios must plug into
+scenarios on Minecraft 1.20.1 Forge/Fabric and 1.21.1 NeoForge. New optional-mod scenarios must plug into
 the shared add-on fixture flow without adding another branch to the UI state
 machine.
 
@@ -35,6 +35,24 @@ The same `-Target` works for single scenarios, latest profiles, and interactive
 runs. Full suites remain compatible-only. Fabric uses its own version-matched
 `ae2-crafting-time-<mod-version>-fabric-1.20.1-test-driver.jar`, remapped by Loom,
 installed into `run/mods` or `run-latest/mods`. Player JARs stay independent.
+
+## NeoForge 1.21.1 full-client suite
+
+Run `scripts/invoke-ui-smoke-codexvm.ps1 -Target 1.21.1-neoforge -Scenario suite`.
+Use JDK 21 and the complete pinned compatible graph in one maximized 8 GiB
+client. The 21 cases in `scripts/ui-smoke-neoforge-suite.json` cover the base
+plan, Crafting Tree, all pinned CPU/provider fixtures, four wireless-terminal
+flows, and ME Requester. Each case uses a fresh disposable world and retains
+its own semantic results and screenshots. JEI, GuideME, and transitive libraries
+load with the graph but have no dedicated UI assertions. Expanded AE remains
+excluded from the compatible graph because of its recorded OmniSequence conflict.
+Applied Botanics, AE2 Things, and Network Analyser are not pinned in this graph.
+
+Compatible and latest launchers install the exact
+`ae2-crafting-time-<mod-version>-neoforge-1.21.1-test-driver.jar` in their managed
+`mods` directory. Single scenarios and interactive diagnosis use the same target;
+full suites remain compatible-only. The companion stays inert without explicit
+scenario options and never enters the production JAR or `dist`.
 
 ## Artifact contract
 
@@ -370,7 +388,7 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 
 - Crafting Status or submitted-craft checks.
 - Optional-addon behavior outside the registered CPU fixture contract.
-- NeoForge, dedicated-server, or multiplayer support.
+- NeoForge 26.1.2, dedicated-server, or multiplayer support.
 - General-purpose UI automation, arbitrary world setup, or remote control.
 - Pixel-perfect full-frame comparisons.
 - Publishing the driver on GitHub, CurseForge, or Modrinth.

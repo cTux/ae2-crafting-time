@@ -110,8 +110,7 @@ final class MeRequesterFixture {
         var networkId = ProfilerBridge.networkId(connectionNode.getGrid());
         ProfilerBridge.start(networkId, requester, key, REQUEST_AMOUNT, tick);
         ProfilerBridge.complete(networkId, requester, key, REQUEST_AMOUNT, tick + 40);
-        requester.getRequests().setStack(0, new GenericStack(key, REQUEST_AMOUNT));
-        requester.getRequests().get(0).updateState(false);
+        DriverPlatform.configureRequester(requester, new GenericStack(key, REQUEST_AMOUNT));
         requester.requestChanged(0);
         return requester.getMainNode().isActive();
     }

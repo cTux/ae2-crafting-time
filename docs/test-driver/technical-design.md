@@ -24,6 +24,20 @@ in `scripts/ui-smoke-fabric-suite.json`; unavailable Forge-only addons stay out.
 The common ExtendedAE fixture checks the actual registered assembler block and
 its AE2 node, avoiding the upstream package-name difference between loaders.
 
+## NeoForge 1.21.1 port
+
+Reuse the shared driver state machine, observations, result checks, and suite
+orchestration. NeoForge owns its client entrypoint, changed addon APIs, and
+Minecraft 1.21.1 data-component boundaries. Its companion uses ModDev's mapped
+compile classpath and a separate Shadow artifact; NeoForge uses named runtime
+classes, so the driver needs no Forge reobfuscation or Fabric remapping.
+
+The dispatch chain selects JDK 21 for `1.21.1-neoforge`, carries the exact target
+and artifact identity through validation, and selects the NeoForge suite list.
+Disposable copies of the tracked fixture are upgraded only inside the runtime.
+The NeoForge base fixture supplies native storage and a CPU before addon setup.
+No source world or production protocol changes are allowed.
+
 ## Original Forge implementation evidence
 
 - `:mc_1_20_1_forge` already owns the Forge 1.20.1 client, Java 17 toolchain,

@@ -4,7 +4,7 @@ $scripts = Join-Path $temp "scripts"
 $source = Join-Path $temp "versions\1.20.1-forge\run\saves\ae2-crafting-time"
 New-Item -ItemType Directory -Path $scripts, $source -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "run-ui-smoke.ps1") -Destination (Join-Path $scripts "run-ui-smoke.ps1")
-Copy-Item -LiteralPath (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1"), (Join-Path $PSScriptRoot "ui-smoke-forge-suite.json"), (Join-Path $PSScriptRoot "ui-smoke-fabric-suite.json") -Destination $scripts
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1"), (Join-Path $PSScriptRoot "ui-smoke-forge-suite.json"), (Join-Path $PSScriptRoot "ui-smoke-fabric-suite.json"), (Join-Path $PSScriptRoot "ui-smoke-neoforge-suite.json") -Destination $scripts
 [IO.File]::WriteAllText((Join-Path $temp "gradle.properties"), "modVersion=1.1.0`n", [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $source ".ae2-crafting-time-test-fixture.json"), @'
 {"schema":1,"scenario":"craft-plan","sourceFixtureId":"ae2-crafting-time","disposableWorldId":"SOURCE_ONLY",
@@ -22,7 +22,7 @@ if ([IO.Path]::GetFullPath((Get-Location).Path) -ne [IO.Path]::GetFullPath((Spli
 $profile = if ($Latest) { "latest" } else { "compatible" }
 $loader = $Target.Substring(7)
 $modsDirectory = if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" }
-$driver = "ae2-crafting-time-1.1.0-$loader-1.20.1-test-driver.jar"
+$driver = "ae2-crafting-time-1.1.0-$loader-$($Target.Split("-")[0])-test-driver.jar"
 New-Item -ItemType Directory -Path $DriverOutputDirectory, (Join-Path $RuntimeDirectory $modsDirectory),
     (Join-Path $RuntimeDirectory "logs") -Force | Out-Null
 if ($DriverScenario -eq "suite") {
@@ -111,7 +111,11 @@ try {
     Invoke-Case "pass" -Target "1.20.1-fabric" -Scenario suite -shouldPass $true
     Invoke-Case "pass" -Target "1.20.1-fabric" -Latest -shouldPass $true
     Invoke-Case "wrong-target" -Target "1.20.1-fabric" -shouldPass $false
-    Invoke-Case "pass" -Target "1.21.1-neoforge" -shouldPass $false
+    Invoke-Case "pass" -Target "1.21.1-neoforge" -Scenario suite -shouldPass $true
+    Invoke-Case "pass" -Target "1.21.1-neoforge" -Latest -shouldPass $true
+    Invoke-Case "wrong-target" -Target "1.21.1-neoforge" -shouldPass $false
+    Invoke-Case "missing-screenshot" -Target "1.21.1-neoforge" -Scenario suite -shouldPass $false
+    Invoke-Case "pass" -Target "26.1.2-neoforge" -shouldPass $false
     Invoke-Case "pass" -shouldPass $true
     $cacheMarker = Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\runtime\cache-marker.txt"
     Set-Content -LiteralPath $cacheMarker -Value "keep"

@@ -1,0 +1,20 @@
+modLoader="javafml"
+loaderVersion="[1,)"
+license="MIT"
+[[mods]]
+modId="ae2craftingtime_test_driver"
+version="${version}"
+displayName="AE2 Crafting Time Test Driver"
+[[dependencies.ae2craftingtime_test_driver]]
+modId="ae2craftingtime"
+type="required"
+versionRange="[${version}]"
+ordering="AFTER"
+side="BOTH"
+[[dependencies.ae2craftingtime_test_driver]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1]"
+side="BOTH"
+[[mixins]]
+config="ae2craftingtime_test_driver.mixins.json"

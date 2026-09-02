@@ -15,4 +15,18 @@ final class DriverPlatform {
     static WirelessTerminalFixture wcwtTerminal() {
         return new WcwtTerminalFixture();
     }
+
+    static void clearLevel(net.minecraft.client.Minecraft minecraft) {
+        minecraft.clearLevel(new net.minecraft.client.gui.screens.TitleScreen());
+    }
+
+    static void openWorld(net.minecraft.client.Minecraft minecraft, String world) {
+        minecraft.createWorldOpenFlows().loadLevel(new net.minecraft.client.gui.screens.TitleScreen(), world);
+    }
+
+    static void configureRequester(com.almostreliable.merequester.requester.RequesterBlockEntity requester,
+            appeng.api.stacks.GenericStack stack) {
+        requester.getRequests().setStack(0, stack);
+        requester.getRequests().get(0).updateState(false);
+    }
 }

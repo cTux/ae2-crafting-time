@@ -1,4 +1,5 @@
 plugins {
+    id 'com.gradleup.shadow' version '8.3.8'
     id 'net.neoforged.moddev' version '2.0.141'
 }
 
@@ -19,6 +20,14 @@ neoForge {
         client {
             client()
             jvmArgument '-Xmx8G'
+            ['scenario', 'profile', 'world', 'output', 'interactive'].each { name ->
+                def property = providers.gradleProperty("testDriver${name.capitalize()}")
+                if (property.isPresent()) jvmArgument "-Dae2craftingtime.test.${name}=${property.get()}"
+            }
+            if (providers.gradleProperty('testDriverWorld').isPresent()) {
+                programArgument '--quickPlaySingleplayer'
+                programArgument providers.gradleProperty('testDriverWorld').get()
+            }
         }
         server {
             server()
@@ -128,3 +137,76 @@ tasks.register('distMod', Copy) {
     into rootProject.layout.projectDirectory.dir('dist')
     rename { "ae2-crafting-time-${distModVersion}-neoforge-1.21.1.jar" }
 }
+
+// Separate companion: never add driver sources or libraries to the player mod.
+sourceSets { testDriver }
+sourceSets.testDriver.compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+sourceSets.testDriver.runtimeClasspath += sourceSets.testDriver.output + sourceSets.testDriver.compileClasspath
+ext.testDriverLoader = 'neoforge'
+tasks.register('testDriverUnmappedJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar)
+apply from: rootProject.file('scripts/test-driver.gradle')
+sourceSets.testDriver.java.exclude { element ->
+    element.file.path.replace('\\', '/').contains('/shared/src/testDriver1201/') &&
+            element.file.name in ['AppliedBotanicsFixture.java', 'Ae2ThingsFixture.java', 'ExtendedAeFixture.java']
+}
+sourceSets.testDriver.resources.setSrcDirs(['src/testDriver/resources'])
+dependencies {
+    testDriverCompileOnly 'maven.modrinth:4inoel9g:Zg3OnxBb'
+    testDriverCompileOnly 'maven.modrinth:692GClaE:jH6bsw4F'
+    testDriverCompileOnly 'maven.modrinth:8BmcQJ2H:tPkJmim6'
+    testDriverCompileOnly 'maven.modrinth:a1RwDz90:35O4yt0D'
+    testDriverCompileOnly 'maven.modrinth:ArHeh5Fz:RSF7tEIt'
+    testDriverCompileOnly 'maven.modrinth:ayN3DZKb:Iw2gl7Lb'
+    testDriverCompileOnly 'maven.modrinth:B1CBVXHX:bpcbGDy4'
+    testDriverCompileOnly 'maven.modrinth:Ce6I4WUE:5KzzycBT'
+    testDriverCompileOnly 'maven.modrinth:E6BFl96N:Zf5HhnF1'
+    testDriverCompileOnly 'maven.modrinth:gu7yAYhd:1ewzHZYg'
+    testDriverCompileOnly 'maven.modrinth:IiATswDj:TpUCzFaW'
+    testDriverCompileOnly 'maven.modrinth:IZPmgTLT:nd0U5eJF'
+    testDriverCompileOnly 'maven.modrinth:JiOqfoFM:bC302UUP'
+    testDriverCompileOnly 'maven.modrinth:jjuIRIVr:RPG4EriK'
+    testDriverCompileOnly 'maven.modrinth:M5jhzZXH:3xQLbgab'
+    testDriverCompileOnly 'maven.modrinth:oMgZ004U:4x40hq9D'
+    testDriverCompileOnly 'maven.modrinth:pNabrMMw:CxSEpEnO'
+    testDriverCompileOnly 'maven.modrinth:qelfSMnn:UNYpf7A1'
+    testDriverCompileOnly 'maven.modrinth:qPydPwtX:kKLZdIPS'
+    testDriverCompileOnly 'maven.modrinth:rvaW4C93:7JwMBNfy'
+    testDriverCompileOnly 'maven.modrinth:rxYaglEe:ablTMAjP'
+    testDriverCompileOnly 'maven.modrinth:RYE1pYyr:k444ySGT'
+    testDriverCompileOnly 'maven.modrinth:SOw6jD6x:Awt8eCuo'
+    testDriverCompileOnly 'maven.modrinth:SyKS54UY:me5XWMw9'
+    testDriverCompileOnly 'maven.modrinth:udZtKfzP:gWMhHBje'
+    testDriverCompileOnly 'maven.modrinth:UhW5uCKw:pfbmdJ3b'
+    testDriverCompileOnly 'maven.modrinth:VQhDBNs8:qpbQk2Iq'
+    testDriverCompileOnly 'maven.modrinth:xr109llC:o8U8Ekro'
+    testDriverCompileOnly 'curse.maven:omnisequence-1624558:8622739'
+    testDriverCompileOnly 'curse.maven:projecte-226410:6611984'
+}
+
+tasks.named('compileTestDriverJava', JavaCompile) { options.compilerArgs += ['-proc:none'] }
+tasks.named('processTestDriverResources', ProcessResources) {
+    inputs.property 'version', project.version
+    filesMatching('META-INF/neoforge.mods.toml') { expand version: project.version }
+}
+tasks.register('testDriverJar', Copy) {
+    dependsOn tasks.named('testDriverUnmappedJar')
+    from tasks.named('testDriverUnmappedJar').flatMap { it.archiveFile }
+    into rootProject.layout.buildDirectory.dir('test-driver')
+}
+tasks.register('checkTestDriverArtifacts') {
+    group = 'verification'
+    dependsOn tasks.named('jar'), tasks.named('testDriverJar')
+    doLast {
+        def production = tasks.named('jar').get().archiveFile.get().asFile
+        def driver = tasks.named('testDriverUnmappedJar').get().archiveFile.get().asFile
+        def productionEntries = zipTree(production).files.collect { it.path.replace('\\', '/') }
+        def driverEntries = zipTree(driver).files.collect { it.path.replace('\\', '/') }
+        if (productionEntries.any { it.contains('testdriver/') || it.contains('ae2craftingtime_test_driver') }
+                || driverEntries.any { it.contains('/mc1201/Ae2CraftingTime.class') }
+                || !driverEntries.any { it.endsWith('/testdriver/TestDriverMod.class') }
+                || !driverEntries.any { it.endsWith('/META-INF/neoforge.mods.toml') }) {
+            throw new GradleException('Invalid isolated NeoForge test-driver artifact')
+        }
+    }
+}
+tasks.named('test') { dependsOn tasks.named('checkTestDriverArtifacts') }
