@@ -74,7 +74,7 @@ if ($Scenario -ne "suite") { New-Item -ItemType Directory -Path $evidence -Force
 Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
 Write-Status "preparing"
 if ($Scenario -eq "suite") {
-    $scenarios = @(Get-Content -LiteralPath (Join-Path $PSScriptRoot "ui-smoke-forge-suite.json") -Raw | ConvertFrom-Json)
+    $scenarios = Get-Content -LiteralPath (Join-Path $PSScriptRoot "ui-smoke-forge-suite.json") -Raw | ConvertFrom-Json
     $suite = & (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1") -RuntimeDirectory $runtime -OutputDirectory $evidence -Scenarios $scenarios
     $world = $suite.world
     $plan = Get-Content -LiteralPath (Join-Path $evidence "suite-plan.json") -Raw | ConvertFrom-Json
