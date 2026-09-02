@@ -31,6 +31,10 @@ those columns means no separate optional dependency declaration is recorded.
 It does not erase the native integration or development coverage in the row.
 Required versions are listed above.
 
+The Fabric development runtime also loads MixinExtras `0.5.5`. It fixes world-entry
+crashes when newer Fabric Mixin versions compile `Redirect.at` as an array.
+This runtime-only dependency is not bundled in the published mod JAR.
+
 `Yes (base)` means the Forge driver exercises the dependency in its base AE2
 scenario; `Yes (scenario)` or a scenario name means a dedicated driver exists.
 `No` means no driver for that target; `Not pinned` means declared support without
