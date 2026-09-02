@@ -1,0 +1,35 @@
+# UI smoke evidence
+
+Keep screenshot evidence for named modpacks and prepared version clients using
+the same archive layout:
+
+```text
+E:/games/mc-instances/.codex-test-results/ui-smoke/
+  <modpacks|clients>/<pack-release-or-target>/<UTC-run-id>/
+    report.md
+    <mod-id>/<scenario>/<attempt>/
+      <checkpoint>.png
+      result.json
+      latest.log
+```
+
+Use a new timestamped run directory; never replace an earlier run or failed
+attempt. Runtime `build/ui-smoke` folders are temporary, not the final archive.
+Copy the evidence before cleaning a runtime or removing a worktree.
+
+Capture each distinct UI checkpoint for every tested integration: its screen,
+TTC row and total, tooltip, sort modes, and post-craft result where applicable.
+Map every requested check in `report.md` to its screenshot and semantic result.
+A frame may support several checks only when it visibly shows each one. For a
+server-only check such as a new profiling sample, keep the structured assertion
+and a screenshot of the resulting UI; do not claim the image proves server state.
+
+Record pass, fail, blocked, or not tested for every requested integration point.
+Capture the current failure screen when possible. Never reuse another run's
+image as evidence or mark missing driver coverage as a pass.
+
+Record the exact pack/project/release or client target/profile, Minecraft and
+loader versions, enabled mod inventory, tested commit, production and driver
+JAR hashes, scenario, attempt, and timestamps. Preserve logs and result files
+beside the screenshots, but exclude account data, tokens, and unrelated worlds.
+Inspect the saved images and link the archive report in the final response.

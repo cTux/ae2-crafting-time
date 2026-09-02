@@ -50,6 +50,10 @@ that final smoke again.
 
 ## Timing Report
 
+For every UI smoke run, read and follow
+[the screenshot archive contract](../../../docs/ui-smoke-evidence.md). Archive
+evidence before the runner overwrites its scenario folder on a later attempt.
+
 Start a wall-clock timer before the first smoke-test action. Record actual phase
 start and end timestamps from the host, status file, and logs. End every
 smoke-test report with this table and a total row:

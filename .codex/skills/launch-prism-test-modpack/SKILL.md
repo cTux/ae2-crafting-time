@@ -46,6 +46,10 @@ description: Install or smoke-test a named AE2 modpack through Prism in CodexVM.
 
 ## Timing Report
 
+For every UI smoke run, read and follow
+[the screenshot archive contract](../../../docs/ui-smoke-evidence.md). Keep
+evidence per mod and integration checkpoint, including failed attempts.
+
 Start a wall-clock timer before the first smoke-test action. Record each material
 phase from actual timestamps, including setup, installation or staging, launch,
 UI verification, retries, evidence collection, and cleanup. End every smoke-test
