@@ -105,7 +105,10 @@ tasks.register('distMod', Copy) {
 sourceSets { testDriver }
 loom {
     createRemapConfigurations(sourceSets.testDriver)
-    mixin { add sourceSets.testDriver, 'ae2craftingtime_test_driver.refmap.json' }
+    mixin {
+        add sourceSets.main, 'ae2craftingtime.refmap.json'
+        add sourceSets.testDriver, 'ae2craftingtime_test_driver.refmap.json'
+    }
 }
 sourceSets.testDriver.compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
 sourceSets.testDriver.runtimeClasspath += sourceSets.testDriver.output + sourceSets.testDriver.compileClasspath
