@@ -73,6 +73,14 @@
     "test_driver_projects": ["PbNc6qBY"],
     "curseforge": [
       {
+        "name": "AE2 Things (Forge)",
+        "project_id": 609977,
+        "mod_id": "ae2things",
+        "version": "1.2.1",
+        "compatible": { "file_id": 4616683, "filename": "AE2-Things-1.2.1.jar", "sha512": "4f9c41593020b1d8aaffb4fc5c4699d06254a6b5e75d470d62b99866fcca99ddda176a45898ab3a78d94a0c88503d92c57c37ccb8260f77e1c08ef8803fc2caf" },
+        "latest": { "file_id": 4616683, "filename": "AE2-Things-1.2.1.jar", "sha512": "4f9c41593020b1d8aaffb4fc5c4699d06254a6b5e75d470d62b99866fcca99ddda176a45898ab3a78d94a0c88503d92c57c37ccb8260f77e1c08ef8803fc2caf" }
+      },
+      {
         "name": "Applied Botanics (Fork)",
         "project_id": 1605404,
         "replaces_project_id": "545hUrw9",
@@ -150,7 +158,7 @@
       { "name": "ExtendedAE", "project_id": "JiOqfoFM" },
       { "name": "AE2 Wireless Terminals", "project_id": "pNabrMMw", "mod_id": "ae2wtlib" },
       { "name": "MEGA Cells", "project_id": "jjuIRIVr", "mod_id": "megacells" },
-      { "name": "AE2 Things", "project_id": "veunMwU3" },
+      { "name": "AE2 Things", "project_id": "veunMwU3", "mod_id": "ae2things" },
       { "name": "JEI", "project_id": "u6dRKJwZ" }
     ],
     "compatible": {
