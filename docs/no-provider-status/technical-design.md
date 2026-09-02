@@ -89,7 +89,7 @@ Use a covered pure-Java row-state resolver with this visible priority:
 3. `NO POWER`;
 4. `Waiting`;
 5. `DELAYED`;
-6. TTC or `Collecting data`.
+6. TTC or `No data yet`.
 
 `CraftingStatusTableRendererMixin` uses the result for the visible line and
 appends the localized explanation and suggestion to the tooltip. Blocked rows

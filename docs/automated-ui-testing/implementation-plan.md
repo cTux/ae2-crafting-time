@@ -60,7 +60,7 @@ the tracked fixture byte-for-byte unchanged (**A2**).
 
 1. Implement the bounded tick-driven states through `PLAN_ASSERTIONS`.
 2. Observe final Crafting Plan rows, translation/output identities, TTC or
-   `Collecting data`, total TTC, badge/widget/item rectangles, and visible order.
+   `No data yet`, total TTC, badge/widget/item rectangles, and visible order.
 3. Click the real sort widget through all modes and verify visible order after
    each click.
 4. Hover a known row and verify its tooltip; exercise details and reset input

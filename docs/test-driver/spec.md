@@ -83,7 +83,7 @@ the driver explicitly enabled, and runs this sequence:
 9. Close the exact client cleanly.
 
 The fixture supplies retained samples so this scenario checks rendered TTC,
-not the separate `Collecting data` state. A fixed resolution, GUI scale,
+not the separate `No data yet` state. A fixed resolution, GUI scale,
 language, fixture, and cursor position make the screenshots comparable.
 
 The driver observes the final AE2 screen, renderer, widget, tooltip, and

@@ -5,6 +5,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
+import com.google.gson.JsonParser;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import net.minecraft.ChatFormatting;
@@ -12,8 +16,22 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 class TtcTextTest {
+    @ParameterizedTest
+    @CsvSource({"en_us, No data yet", "uk_ua, Даних ще немає"})
+    void missingRowStatsUseTheExistingNoDataWording(String locale, String expected) throws IOException {
+        var resource = "/assets/ae2craftingtime/lang/" + locale + ".json";
+        try (var reader = new InputStreamReader(getClass().getResourceAsStream(resource), StandardCharsets.UTF_8)) {
+            var translations = JsonParser.parseReader(reader).getAsJsonObject();
+            var rowText = translations.get("text.ae2craftingtime.collecting_data").getAsString();
+            assertEquals(expected, rowText);
+            assertEquals(translations.get("text.ae2craftingtime.no_stats").getAsString(), rowText);
+        }
+    }
+
     @Test
     void waitingUsesTranslationWithoutArguments() {
         var contents = (TranslatableContents) TtcText.waiting().getContents();
