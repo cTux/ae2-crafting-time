@@ -50,6 +50,10 @@ prepared-client pins below are unchanged. This baseline smoke does not reproduce
 the separately reported LightningTech Crimson Ingot job or verify its controller
 layout, and it does not imply full modpack gameplay coverage.
 
+The prepared Forge suite also waits for rendered item tooltips in range-only
+wireless terminals and rendered plan TTC before capture; populated menu data
+alone is not screenshot readiness.
+
 `Yes (base)` means the Forge 1.20.1 driver exercises the dependency as part of
 its standard AE2 scenario. `Yes (scenario)` means it has a dedicated optional-mod
 scenario. `No` means a version is known for that target, but no TestDriver covers

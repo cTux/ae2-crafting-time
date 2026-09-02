@@ -263,6 +263,10 @@ Verify the running server's actual save path, not just a marker in another folde
 
 The final case closes normally. A failed case aborts the suite; untouched cases
 remain `NOT_RUN`. Record a single process ID plus per-case start/end timestamps.
+Wireless checkpoints wait for an actually rendered item tooltip, including
+range-only terminals that do not require tooltip TTC. Stable plan captures also
+require drawn TTC badges and total text, not only populated row data.
+
 The normal per-case result files and screenshots remain the source of assertion
 evidence. Test plan validation, summary completion/failure, and world-path guards
 at their pure boundary; verify world switching and cache isolation in CodexVM.
