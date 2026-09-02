@@ -11,8 +11,10 @@ WCWT `1.20.1.7-hotfix`, NeoEco `20.4.0`, and OmniSequence
 `1.3.8-hotfix-forge`. Forge metadata admits these pack versions; the existing
 scenario fixtures remain applicable. NeoEco's expected-output hook accepts
 both the 20.3 accounting object and the 20.4 batched-dispatch signature.
-The prepared-client pins below are unchanged. Actual-pack smoke verification
-is pending; declaration and bytecode inspection alone are not a smoke pass.
+The prepared-client pins below are unchanged. The actual-pack rerun passed
+dependency validation, then crashed during texture stitching: the pack needs
+a `16384x8192` atlas, above CodexVM's `8192x8192` limit. No world or integration
+checkpoint was reached, so these exact versions remain functionally unverified.
 
 `Yes (base)` means the Forge 1.20.1 driver exercises the dependency as part of
 its standard AE2 scenario. `Yes (scenario)` means it has a dedicated optional-mod
