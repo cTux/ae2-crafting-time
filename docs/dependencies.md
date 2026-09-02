@@ -56,12 +56,12 @@ suite. NeoForge 26.1.2 has no automated UI suite yet.
 
 | Mod Name | 1.20.1-forge | 1.20.1-forge TestDriver | 1.20.1-fabric | 1.20.1-fabric TestDriver | 1.21.1-neoforge | 1.21.1-neoforge TestDriver | 26.1.2-neoforge | 26.1.2-neoforge TestDriver | Declared targets | Minimum version | Integration / limits | Project links / tracking issue |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| Minecraft (required) | `1.20.1` | Yes (base) | `1.20.1` | Yes (base suite) | `1.21.1` | Yes (`base suite`) | `26.1.2` | No | — | See required dependencies | Required runtime / base AE2 crafting. | — |
-| Java (required) | `17` | Yes (base) | `17` | Yes (base suite) | `21` | Yes (`base suite`) | `25` | No | — | See required dependencies | Required runtime / base AE2 crafting. | — |
+| Minecraft (required) | `1.20.1` | Yes (base) | `1.20.1` | Yes (base suite) | `1.21.1` | Yes (base suite) | `26.1.2` | No | — | See required dependencies | Required runtime / base AE2 crafting. | — |
+| Java (required) | `17` | Yes (base) | `17` | Yes (base suite) | `21` | Yes (base suite) | `25` | No | — | See required dependencies | Required runtime / base AE2 crafting. | — |
 | Forge (required) | `47.4.10` | Yes (base) | — | — | — | — | — | — | — | See required dependencies | Required runtime / base AE2 crafting. | — |
 | Fabric Loader (required) | — | — | `0.19.4` | Yes (base suite) | — | — | — | — | — | See required dependencies | Required runtime / base AE2 crafting. | — |
 | Fabric API (required) | — | — | `0.92.11+1.20.1` | Yes (base suite) | — | — | — | — | — | See required dependencies | Required runtime / base AE2 crafting. | — |
-| NeoForge (required) | — | — | — | — | `21.1.238` | Yes (`base suite`) | `26.1.2.99` | No | — | See required dependencies | Required runtime / base AE2 crafting. | — |
+| NeoForge (required) | — | — | — | — | `21.1.238` | Yes (base suite) | `26.1.2.99` | No | — | See required dependencies | Required runtime / base AE2 crafting. | — |
 | Applied Energistics 2 (required) | `15.4.10` | Yes (base) | `15.1.0` | Yes (base suite) | `19.2.17` | Yes (`craft-plan`) | `26.1.10-beta` | No | — | See required dependencies | Required runtime / base AE2 crafting. | — |
 | ae2ct (Crafting Tree) (`ae2ct`; optional) | `1.0.1` | Yes (scenario) | Not pinned | No | `1.0.1` | Yes (`crafting-tree-screen`) | — | — | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | `>=1.0.1` | TTC lines and details in AE2: Crafting Tree UI. | [CF][ae2ct-cf] / [#69](https://github.com/cTux/ae2-crafting-time/issues/69) |
 | Applied Mekanistics (`appmek`; optional) | `1.4.3` | Yes (`appmek-cpu`) | — | — | `1.6.3` | Yes (`appmek-cpu`) | — | — | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.4.3`; NeoForge: `>=1.6.2` | TTC profiling and Crafting Plan display for chemicals stored in the ME network through Applied Mekanistics' native AE2 key. | [CF][appmek-cf] / [MR][appmek-mr] / [#68](https://github.com/cTux/ae2-crafting-time/issues/68) |
