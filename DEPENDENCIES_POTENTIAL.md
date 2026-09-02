@@ -54,7 +54,7 @@ therefore cannot replace layer 2.
 | Applied Botanics (Fork) | MANA_KEY | Same native mana contract as original | #88 | [CF][appliedbotanics-cf] | Integrated; separate Forge artifact/driver |
 | Advanced Peripherals | QOL (ME Bridge) | Native AE2 submission; no extra TTC API | #89 | [CF][advancedperipherals-cf] / [MR][advancedperipherals-mr] | Integrated; real Forge ME Bridge craft driver |
 | AE2 Things | DISK storage; native crafting | No extra TTC hook | — | [MR][ae2things-mr] / [Forge port](https://www.curseforge.com/minecraft/mc-mods/ae2-things-forge) | Integrated; real Forge DISK craft driver |
-| Expanded AE | PROVIDER / QOL | 4 | — | [CF][expandedae-cf] / [MR][expandedae-mr] | Not started |
+| Expanded AE | Native CPU / PROVIDER / QOL | Native profiling and Crafting Plan | — | [CF][expandedae-cf] / [MR][expandedae-mr] | Integrated; focused Forge accelerator driver; OmniSequence conflict remains |
 
 ## CPU-detection mixin summary (#24 fix path)
 

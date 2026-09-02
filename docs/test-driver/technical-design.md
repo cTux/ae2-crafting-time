@@ -211,6 +211,11 @@ AE2 Things composes the native CPU fixture and mounts a `DISKCellInventory`
 in the existing drive. It seeds the cell directly and verifies grid visibility
 before reusing the common native submission and sample/TTC checks.
 
+Expanded AE composes the native fixture, places `ExpBlocks.CPU_2` beside its
+storage, and forms a two-block native CPU cluster. The fixture checks the
+actual co-processor count before the unchanged submission/sample/TTC flow.
+It does not bypass the full-profile incompatibility exclusion.
+
 Wireless terminal scenarios are intentionally separate from the `*-cpu`
 registry because they add no crafting CPU. `WirelessTerminalFixture` links the
 selected addon's charged terminal to a real wireless access point on the

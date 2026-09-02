@@ -88,6 +88,14 @@ this integration does not add TTC overlays to the Fabric-only machine UIs.
 NeoForge support is compile-checked, but its new beta runtime has not been
 promoted into the compatible client profile without a NeoForge smoke run.
 
+Expanded AE is supported on Forge 1.20.1 (`1.2.2`) and NeoForge 1.21.1
+(`2.1.1`) through the native AE2 CPU and Crafting Plan path. The Forge driver
+builds a CPU with its two-thread accelerator and checks a real craft, sample
+and TTC. There are no Fabric 1.20.1 or NeoForge 26.1.2 artifacts. Its existing
+Applied Flux/OmniSequence conflict remains: Expanded AE is excluded from the
+full compatible profile and tested separately with the latest focused profile.
+No coexistence with OmniSequence is claimed.
+
 ## Build Tools
 
 If you are building the project yourself, the 1.20.1 modules use Java 17, the
