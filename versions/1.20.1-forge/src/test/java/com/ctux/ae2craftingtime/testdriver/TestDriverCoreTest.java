@@ -50,6 +50,7 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("expandedae-cpu"));
         assertTrue(AddonCpuFixture.supports("modern-ae2-additions-cpu"));
         assertTrue(AddonCpuFixture.supports("omnisequence-cpu"));
+        assertTrue(AddonCpuFixture.supports("lightningtech-cpu"));
         assertFalse(AddonCpuFixture.supports("missing-cpu"));
         assertNull(AddonCpuFixture.create("craft-plan"));
         assertNull(AddonCpuFixture.create("ae2wcwt-terminal"));
@@ -177,6 +178,8 @@ class TestDriverCoreTest {
                 "1.20.1-forge", "compatible", "craft-plan", "PASS", checks, List.of(), null));
         assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("neoeco-cpu"));
+        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+                DriverResult.requiredChecks("lightningtech-cpu"));
         assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("advancedae-cpu"));
         assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),

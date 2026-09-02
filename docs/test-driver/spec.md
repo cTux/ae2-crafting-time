@@ -290,7 +290,7 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 - Optional add-on CPU fixtures currently cover AdvancedAE, Applied Flux,
   Applied Mekanistics, BM Addon, Crazy AE2 Addons, AppliedE, ExtendedAE,
   ExtendedAE-Plus, MEGA Cells, Modern AE2 Additions, NeoEco AE, OMNI Cells,
-  OmniSequence: Transfinite, and ProjectCell.
+  OmniSequence: Transfinite, LightningTech's Tianshu multidimensional CPU pool, and ProjectCell.
   ExtendedAE and ExtendedAE-Plus replace the fixture's molecular assemblers
   with ExtendedAE assemblers. BM Addon installs a real Blood Pattern and its
   inputs. Crazy AE2 Addons places a native AE2 1K crafting storage CPU and
