@@ -8,7 +8,7 @@ public record DriverOptions(String scenario, String profile, String world, Path 
         if (scenario.isEmpty()) {
             return null;
         }
-        if (!AddonCpuFixture.supports(scenario)) {
+        if (!scenario.equals("suite") && !AddonCpuFixture.supports(scenario)) {
             throw new IllegalArgumentException("unsupported test-driver scenario: " + scenario);
         }
         var profile = required("ae2craftingtime.test.profile");

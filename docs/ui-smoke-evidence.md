@@ -3,6 +3,13 @@
 Keep screenshot evidence for named modpacks and prepared version clients using
 the same archive layout:
 
+For multiple scenarios on the same installed mod graph, launch Minecraft once.
+Run the suite sequentially with a fresh disposable world per case, capturing each
+case's screenshots before advancing. Retain the suite plan, one process ID,
+ordered timestamps, and overall result alongside the per-mod evidence. A crash
+or failed case leaves later cases `NOT_RUN`; do not hide it with automatic retries.
+Different mod graphs or incompatible original/fork artifacts require separate runs.
+
 ```text
 E:/games/mc-instances/.codex-test-results/ui-smoke/
   <modpacks|clients>/<pack-release-or-target>/<UTC-run-id>/

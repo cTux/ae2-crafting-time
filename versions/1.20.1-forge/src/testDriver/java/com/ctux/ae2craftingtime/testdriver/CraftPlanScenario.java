@@ -128,6 +128,10 @@ public final class CraftPlanScenario {
         if (!world.getParent().equals(saves)) {
             throw new IllegalArgumentException("world escapes saves directory");
         }
+        if (!minecraft.getSingleplayerServer().getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT)
+                .toRealPath().equals(world.toRealPath())) {
+            throw new IllegalArgumentException("running world is not the requested disposable fixture");
+        }
         marker = FixtureMarker.read(world);
         if (!marker.disposableWorldId().equals(options.world())) {
             throw new IllegalArgumentException("fixture world ID mismatch");
@@ -502,6 +506,10 @@ public final class CraftPlanScenario {
     private void fail(String code, String expected, String observed) {
         failure = new DriverResult.Failure(state.name(), code, ReportText.safe(expected), ReportText.safe(observed));
         advance(ScenarioState.FAILED);
+        try {
+            screenshot("failure.png");
+        } catch (IOException ignored) {
+        }
         try {
             AtomicResultWriter.write(options.output(), result(false, "FAIL", failure));
         } catch (IOException ignored) {

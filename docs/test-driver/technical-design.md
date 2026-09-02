@@ -246,7 +246,28 @@ Plan data is stable after the same screen and ordered output IDs are observed
 for three consecutive rendered frames. A new screen, changed row order, or
 changed plan restarts the count.
 
-## Independent UI observations
+## Single-launch orchestration
+
+`TestDriverRuntime` sequences the existing `CraftPlanScenario` instances for an
+explicit suite plan. `SuitePlan` validates bounded, unique scenario/world IDs,
+the matching first world, and non-interactive execution. Output paths are derived
+from validated scenario names. Preflight every fixture marker and reject linked
+world paths before loading any suite world.
+
+After a case reaches `RESULT_WRITTEN`, intercept its normal quit transition.
+Write the suite progress atomically, disconnect the level, and use Minecraft's
+normal `clearLevel` / world-open flow for the next pre-created copy. Construct a
+fresh scenario and reset driver UI observations. Normal server unload/load hooks
+own production cache and profiler reset; no production test hooks are added.
+Verify the running server's actual save path, not just a marker in another folder.
+
+The final case closes normally. A failed case aborts the suite; untouched cases
+remain `NOT_RUN`. Record a single process ID plus per-case start/end timestamps.
+The normal per-case result files and screenshots remain the source of assertion
+evidence. Test plan validation, summary completion/failure, and world-path guards
+at their pure boundary; verify world switching and cache isolation in CodexVM.
+
+## UI observation boundaries
 
 Driver mixins target AE2 and Minecraft UI boundaries, not production reporting
 methods. Use a lower mixin priority than the production config so observations
