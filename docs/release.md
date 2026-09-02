@@ -118,7 +118,7 @@ Release metadata can come from the matrix row or from environment overrides. `RE
 
 Each matrix row also declares its required and optional Modrinth projects in
 `modrinthDependencies`. The deploy script validates and uploads that list with
-every new version; keep it consistent with `DEPENDENCIES.md` and the loader's
+every new version; keep it consistent with `docs/dependencies.md` and the loader's
 mod metadata.
 
 `-Deploy` fails fast unless both platform project ids resolve for every affected row. The current Modrinth and CurseForge project ids are stored per row in the release matrix.

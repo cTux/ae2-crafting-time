@@ -76,7 +76,7 @@ shipped player-facing sources:
   `docs/ttc-sorting.md` for visible estimates;
 - `docs/player-controls-and-integrations/` for screens, controls, config, and
   optional UI behavior;
-- `docs/ae2-addon-integration/` and `DEPENDENCIES.md` for current integration
+- `docs/ae2-addon-integration/` and `docs/dependencies.md` for current integration
   support;
 - `docs/server-client-stats.md` and `docs/world-save-persistence.md` for
   multiplayer, privacy, and persistence.

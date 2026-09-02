@@ -55,7 +55,7 @@ For each category:
    the three covered targets and verify every manifest entry resolves.
 5. Inspect the 26.1.2 JAR and metadata to prove Ponder code and declarations are
    absent.
-6. Update `DEPENDENCIES.md`, feature documentation, and release metadata with
+6. Update `docs/dependencies.md`, feature documentation, and release metadata with
    only the verified optional support.
 
 Complete when the manifest has no unclassified functional content, all linked
