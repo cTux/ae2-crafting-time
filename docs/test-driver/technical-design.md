@@ -207,6 +207,10 @@ attached CC:Tweaked computer. Placement supplies a native CPU, storage and
 ingredients, and waits for both the AE2 connection and computer attachment.
 The existing sample/TTC checks remain unchanged.
 
+AE2 Things composes the native CPU fixture and mounts a `DISKCellInventory`
+in the existing drive. It seeds the cell directly and verifies grid visibility
+before reusing the common native submission and sample/TTC checks.
+
 Wireless terminal scenarios are intentionally separate from the `*-cpu`
 registry because they add no crafting CPU. `WirelessTerminalFixture` links the
 selected addon's charged terminal to a real wireless access point on the

@@ -53,7 +53,7 @@ therefore cannot replace layer 2.
 | AEInfinityBooster | QOL (range) | Wireless range and Crafting Plan compatibility; no new TTC hook | #87 | [CF][aeinfinity-cf] / [MR][aeinfinity-mr] | Integrated |
 | Applied Botanics (Fork) | MANA_KEY | Same native mana contract as original | #88 | [CF][appliedbotanics-cf] | Integrated; separate Forge artifact/driver |
 | Advanced Peripherals | QOL (ME Bridge) | Native AE2 submission; no extra TTC API | #89 | [CF][advancedperipherals-cf] / [MR][advancedperipherals-mr] | Integrated; real Forge ME Bridge craft driver |
-| AE2 Things | QOL (Inscriber / Crystal Growth) | 4/5 | — | [MR][ae2things-mr] | Not started |
+| AE2 Things | DISK storage; native crafting | No extra TTC hook | — | [MR][ae2things-mr] / [Forge port](https://www.curseforge.com/minecraft/mc-mods/ae2-things-forge) | Integrated; real Forge DISK craft driver |
 | Expanded AE | PROVIDER / QOL | 4 | — | [CF][expandedae-cf] / [MR][expandedae-mr] | Not started |
 
 ## CPU-detection mixin summary (#24 fix path)

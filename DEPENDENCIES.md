@@ -78,6 +78,16 @@ with a real attached CC:Tweaked computer and checks the result in AE2's UI;
 this does not add a ComputerCraft TTC API or display. There are no published
 Fabric 1.20.1 or NeoForge 26.1.2 versions.
 
+AE2 Things is covered through native item storage and crafting: the original
+Fabric 1.20.1 release (`1.3.2`) and the separately published Forge port
+(`1.2.1` for 1.20.1; `1.4.2-beta` for NeoForge 1.21.1). No 26.1.2 artifact
+exists. The Forge driver mounts a real DISK, supplies the craft ingredients
+through it, and checks a fresh profiling sample and TTC. The Forge/NeoForge
+editions no longer contain the old Inscriber or Crystal Growth Chamber;
+this integration does not add TTC overlays to the Fabric-only machine UIs.
+NeoForge support is compile-checked, but its new beta runtime has not been
+promoted into the compatible client profile without a NeoForge smoke run.
+
 ## Build Tools
 
 If you are building the project yourself, the 1.20.1 modules use Java 17, the
