@@ -14,7 +14,7 @@ try {
     if ($plan.cases[0].world -eq $plan.cases[1].world) { throw 'Worlds are not isolated' }
     $neo = & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -Target 1.21.1-neoforge -RuntimeDirectory $runtime -OutputDirectory "$temporary\neo-evidence" -Scenarios @('craft-plan')
     $neoMarker = Get-Content "$runtime\saves\$($neo.world)\.ae2-crafting-time-test-fixture.json" -Raw | ConvertFrom-Json
-    if ($neoMarker.terminal.x -ne 2 -or $neoMarker.terminal.y -ne 85) { throw 'NeoForge did not copy its native fixture' }
+    if ($neoMarker.terminal.x -ne 2 -or $neoMarker.terminal.y -ne 205) { throw 'NeoForge did not copy its native fixture' }
     foreach ($invalid in @(@('craft-plan','craft-plan'), @('../escape'))) {
         $rejected = $false
         try { & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -RuntimeDirectory $runtime -OutputDirectory "$temporary\rejected-$([guid]::NewGuid())" -Scenarios $invalid | Out-Null }

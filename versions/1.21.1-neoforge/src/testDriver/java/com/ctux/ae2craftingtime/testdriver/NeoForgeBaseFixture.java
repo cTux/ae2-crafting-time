@@ -2,18 +2,14 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.config.Actionable;
 import appeng.api.networking.IGrid;
-import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
 import appeng.blockentity.storage.DriveBlockEntity;
 import appeng.core.definitions.AEItems;
-import net.minecraft.core.Direction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Items;
 
-import java.util.Arrays;
-import java.util.Objects;
 
 /** Prepares the native 1.21.1 disposable world through current AE2 APIs. */
 final class NeoForgeBaseFixture extends NativeCpuFixture {
@@ -25,13 +21,22 @@ final class NeoForgeBaseFixture extends NativeCpuFixture {
 
     @Override
     protected Placement place(ServerPlayer player, FixtureMarker marker) {
-        // CPU-specific scenarios place their own block after the supply is ready.
-        var placement = super.place(player, marker);
-        var host = (IInWorldGridNodeHost) player.serverLevel().getBlockEntity(placement.terminal());
-        grid = Arrays.stream(Direction.values()).map(host::getGridNode).filter(Objects::nonNull)
-                .map(node -> node.getGrid()).filter(Objects::nonNull).findFirst().orElseThrow();
-        drive = grid.getMachines(DriveBlockEntity.class).stream()
-                .filter(candidate -> candidate.getMainNode().isActive()).findFirst().orElseThrow();
+        var level = player.serverLevel();
+        var destination = new BlockPos(marker.terminal().x() - 2, marker.terminal().y() - 2, marker.terminal().z());
+        var template = new net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate();
+        template.fillFromWorld(level, new BlockPos(0, 83, 44), new net.minecraft.core.Vec3i(5, 3, 2), false, null);
+        for (var position : BlockPos.betweenClosed(destination, destination.offset(4, 2, 1))) {
+            if (!level.isEmptyBlock(position)) throw new IllegalStateException("Native smoke grid needs open space");
+        }
+        if (!template.placeInWorld(level, destination, destination,
+                new net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings(),
+                level.random, 3)) throw new IllegalStateException("Cannot copy the native smoke grid");
+        for (var position : BlockPos.betweenClosed(destination.offset(-1, -1, -4), destination.offset(5, -1, 2))) {
+            level.setBlockAndUpdate(position, net.minecraft.world.level.block.Blocks.GLASS.defaultBlockState());
+        }
+        player.teleportTo(destination.getX() + 2.5, destination.getY(), destination.getZ() - 1.5);
+        var placement = new Placement(destination.offset(0, 1, 1), destination.offset(2, 2, 0));
+        drive = (DriveBlockEntity) level.getBlockEntity(destination.above());
         var inventory = drive.getInternalInventory();
         for (var slot = 0; slot < inventory.size(); slot++) {
             if (slot + 1 < inventory.size() && inventory.getStackInSlot(slot).isEmpty()
@@ -48,6 +53,8 @@ final class NeoForgeBaseFixture extends NativeCpuFixture {
     @Override
     protected boolean finish(ServerPlayer player, Placement placement) {
         if (!super.finish(player, placement)) return false;
+        grid = drive.getMainNode().getGrid();
+        if (grid == null || !drive.getMainNode().isActive()) return false;
         var cell = drive.getOriginalCellInventory(cellSlot);
         if (cell == null) return false;
         var source = IActionSource.ofPlayer(player);

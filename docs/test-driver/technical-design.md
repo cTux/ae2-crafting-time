@@ -36,7 +36,8 @@ classes, so the driver needs no Forge reobfuscation or Fabric remapping.
 The dispatch chain selects JDK 21 for `1.21.1-neoforge`, carries the exact target
 and artifact identity through validation, and selects the NeoForge suite list.
 NeoForge copies its tracked native 1.21.1 world; it never upgrades the Forge
-fixture. The base fixture supplies native storage, a CPU, a real furnace pattern
+fixture. The base fixture copies its small AE2 grid into open sky inside each
+disposable world, then supplies native storage, a CPU, a real furnace pattern
 and assembler, and a retained UI sample before addon setup. Addon cases clear that
 sample and require a new one after actual crafting.
 Runtime preparation mutates only disposable copies; the tracked native fixture
