@@ -147,6 +147,8 @@ test {
 }
 
 tasks.named('processResources', ProcessResources).configure {
+    dependsOn tasks.named('compileJava')
+    from layout.buildDirectory.file('mixin/ae2craftingtime.refmap.json')
     def props = [
             mod_id                 : 'ae2craftingtime',
             mod_name               : 'AE2 Crafting Time',
@@ -180,6 +182,7 @@ tasks.named('processTestDriverResources', ProcessResources).configure {
 }
 
 tasks.named('jar', Jar).configure {
+    filesMatching('ae2craftingtime.refmap.json') { duplicatesStrategy = DuplicatesStrategy.EXCLUDE }
     manifest {
         attributes([
                 'Specification-Title'     : 'ae2craftingtime',
@@ -233,6 +236,12 @@ tasks.register('checkTestDriverArtifacts') {
     doLast {
         def production = tasks.named('reobfJar').get().archiveFile.get().asFile
         def driver = reobfTestDriverJar.get().archiveFile.get().asFile
+        [zipTree(production).matching { include 'ae2craftingtime.refmap.json' }.singleFile,
+         layout.buildDirectory.file('resources/main/ae2craftingtime.refmap.json').get().asFile].each { refmap ->
+            if (!new groovy.json.JsonSlurper().parse(refmap).mappings) {
+                throw new GradleException("Missing production mixin mappings: ${refmap}")
+            }
+        }
         def productionEntries = zipTree(production).files.collect { it.path.replace('\\', '/') }
         def driverEntries = zipTree(driver).files.collect { it.path.replace('\\', '/') }
         def forbiddenProduction = ['testdriver/', 'ae2craftingtime_test_driver', 'modelcontextprotocol']
