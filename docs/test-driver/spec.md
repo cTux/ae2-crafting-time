@@ -117,6 +117,12 @@ requires a new profile sample and TTC after crafting. Run it as a focused
 latest-profile scenario: the full compatible graph excludes Expanded AE
 because of its existing conflict with OmniSequence.
 
+The `lightningtech-cpu` fixture submits a smooth-stone smelting job to a real
+Tianshu pool, using a pattern provider, furnace, hopper, and ME interface.
+It checks that the pool receives the job and requires a fresh
+profiling sample for the final output and visible TTC on the next Crafting Plan.
+This is a regression check for standalone outputs that go directly to ME storage.
+
 ## Single-launch suites
 
 A named-pack or prepared-client campaign runs all selected scenarios in one Minecraft process.

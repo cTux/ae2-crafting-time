@@ -1,6 +1,5 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
-import appeng.api.config.Actionable;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingPlan;
 import appeng.api.networking.crafting.ICraftingRequester;
@@ -30,15 +29,6 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
     @Unique
     private IGrid ae2craftingtime$grid;
 
-    @Unique
-    private boolean ae2craftingtime$inserting;
-
-    @Unique
-    private boolean ae2craftingtime$deferredFinish;
-
-    @Unique
-    private boolean ae2craftingtime$deferredSuccess;
-
     @Inject(method = "trySubmitJob", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$startJobAccuracy(IGrid grid, ICraftingPlan plan, IActionSource source,
             ICraftingRequester requester, CallbackInfoReturnable<ICraftingSubmitResult> cir) {
@@ -62,41 +52,21 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
         }
     }
 
-    @Inject(method = "insert", at = @At("HEAD"), remap = false)
-    private void ae2craftingtime$beginCompletedOutput(AEKey what, long amount, Actionable type,
+    @Inject(
+            method = "extractWaitingFor(Lcom/moakiee/ae2lt/crafting/timewheel/"
+                    + "Ae2LtTimeWheelCraftingCpuLogic$TimeWheelJob;Lappeng/api/stacks/AEKey;J)J",
+            at = @At("RETURN"),
+            remap = false)
+    private void ae2craftingtime$profileCompletedOutput(@Coerce Object activeJob, AEKey what, long amount,
             CallbackInfoReturnable<Long> cir) {
-        if (type == Actionable.MODULATE) {
-            ae2craftingtime$inserting = true;
-            ae2craftingtime$deferredFinish = false;
-        }
-    }
-
-    @Inject(method = "insert", at = @At("RETURN"), remap = false)
-    private void ae2craftingtime$profileCompletedOutput(AEKey what, long amount, Actionable type,
-            CallbackInfoReturnable<Long> cir) {
-        if (type != Actionable.MODULATE) {
-            return;
-        }
-
-        var accepted = cir.getReturnValue();
-        if (accepted > 0) {
-            ProfilerBridge.complete(ProfilerBridge.networkId(ae2craftingtime$grid), this, what, accepted,
-                    ae2craftingtime$tick());
-        }
-        ae2craftingtime$inserting = false;
-        if (ae2craftingtime$deferredFinish) {
-            ProfilerBridge.finishJob(this, ae2craftingtime$deferredSuccess, ae2craftingtime$tick(), System.nanoTime());
-        }
+        // Standalone final outputs complete waiting demand but fall through to ME storage: insert returns zero.
+        ProfilerBridge.complete(ProfilerBridge.networkId(ae2craftingtime$grid), this, what, cir.getReturnValue(),
+                ae2craftingtime$tick());
     }
 
     @Inject(method = "finishJob", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$finishJob(boolean success, CallbackInfo ci) {
-        if (ae2craftingtime$inserting) {
-            ae2craftingtime$deferredFinish = true;
-            ae2craftingtime$deferredSuccess = success;
-        } else {
-            ProfilerBridge.finishJob(this, success, ae2craftingtime$tick(), System.nanoTime());
-        }
+        ProfilerBridge.finishJob(this, success, ae2craftingtime$tick(), System.nanoTime());
     }
 
     @Inject(

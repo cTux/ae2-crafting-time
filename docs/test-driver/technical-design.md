@@ -207,6 +207,14 @@ attached CC:Tweaked computer. Placement supplies a native CPU, storage and
 ingredients, and waits for both the AE2 connection and computer attachment.
 The existing sample/TTC checks remain unchanged.
 
+LightningTech supplies a real smooth-stone processing pattern above a fueled
+vanilla furnace. A hopper returns the result through an ME interface on the same
+grid. This exercises external-machine output insertion rather than only the
+crafting-table batch path. It selects its Tianshu pool again inside the same server-thread
+submission call, then requires one active job in that pool. AE2 can refresh the
+CPU list between driver steps and reset a field-only selection. This check keeps
+a different CPU's sample from passing the LightningTech scenario.
+
 AE2 Things composes the native CPU fixture and mounts a `DISKCellInventory`
 in the existing drive. It seeds the cell directly and verifies grid visibility
 before reusing the common native submission and sample/TTC checks.

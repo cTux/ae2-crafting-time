@@ -50,6 +50,16 @@ prepared-client pins below are unchanged. This baseline smoke does not reproduce
 the separately reported LightningTech Crimson Ingot job or verify its controller
 layout, and it does not imply full modpack gameplay coverage.
 
+The author's `Project Infinity-TEST 0.0.52.0 TEST.zip` includes LightningTech
+`2.1.0-beta.2` and Thunderbolt `2.0.0-beta.2`. The time-wheel integration records
+completed waiting demand, including standalone final outputs sent to ME storage.
+Those outputs return zero from the CPU's storage-insertion API, so using that
+return value missed their samples. The Forge driver now checks that the Tianshu
+pool actually receives its smooth-stone smelting job before waiting for a fresh
+sample and visible TTC. A real furnace and hopper return the output through an
+ME interface. This covers ordinary final-output accounting; it does not claim
+coverage of every Botanical Extra Machinery recipe or the controller's layout.
+
 The prepared Forge campaign `20260902T110131Z-suite` completed all 25 scenarios
 in one JVM with 47 loaded mods, 33 inspected screenshots, and launcher exit 0.
 All automated checks passed, but the visual audit found ME Requester's row TTC
