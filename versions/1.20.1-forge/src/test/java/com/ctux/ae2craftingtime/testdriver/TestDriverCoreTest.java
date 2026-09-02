@@ -47,6 +47,7 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("appbot-fork-cpu"));
         assertTrue(AddonCpuFixture.supports("advancedperipherals-cpu"));
         assertTrue(AddonCpuFixture.supports("ae2things-cpu"));
+        assertTrue(AddonCpuFixture.supports("expandedae-cpu"));
         assertTrue(AddonCpuFixture.supports("modern-ae2-additions-cpu"));
         assertTrue(AddonCpuFixture.supports("omnisequence-cpu"));
         assertFalse(AddonCpuFixture.supports("missing-cpu"));
@@ -204,6 +205,8 @@ class TestDriverCoreTest {
                 DriverResult.requiredChecks("advancedperipherals-cpu"));
         assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("ae2things-cpu"));
+        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+                DriverResult.requiredChecks("expandedae-cpu"));
         assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("modern-ae2-additions-cpu"));
         assertEquals(List.of("screen", "ttc-tooltip", "plan-ttc"),

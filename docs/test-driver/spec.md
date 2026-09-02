@@ -111,6 +111,12 @@ pre-existing cobblestone from the disposable grid, and supplies the craft
 ingredients through that DISK. A native CPU craft must produce a fresh profile
 sample and visible TTC. Removed Forge machines are not part of this scenario.
 
+The `expandedae-cpu` fixture joins Expanded AE's real two-thread accelerator
+to native crafting storage, verifies the CPU reports two co-processors, and
+requires a new profile sample and TTC after crafting. Run it as a focused
+latest-profile scenario: the full compatible graph excludes Expanded AE
+because of its existing conflict with OmniSequence.
+
 ## Optional add-on CPU scenarios
 
 An add-on CPU scenario uses the same disposable world, UI flow, profiler checks,

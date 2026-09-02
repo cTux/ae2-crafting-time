@@ -186,6 +186,10 @@ install_project() {
     install_project "$dpid"
   done <<< "$deps"
 
+  local extra
+  while IFS= read -r extra; do install_project "$extra"; done < <(
+    jq -r --arg target "$Target" --arg project "$projectId" '.[] | select(.id==$target) | .projects[] | select(.project_id==$project) | .modrinth_dependencies[]?' "$matrix")
+
   local file_json; file_json="$(echo "$version_json" | jq -c '(.files[] | select(.primary==true)) // .files[0]')"
   if [ -z "$file_json" ] || [ "$file_json" = "null" ]; then
     echo "Modrinth version has no files" >&2

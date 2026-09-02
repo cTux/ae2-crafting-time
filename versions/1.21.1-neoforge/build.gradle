@@ -75,6 +75,7 @@ dependencies {
     compileOnly 'maven.modrinth:545hUrw9:leZwUP1X'
     compileOnly 'maven.modrinth:SOw6jD6x:Awt8eCuo'
     compileOnly 'curse.maven:ae2-things-forge-609977:5637783'
+    compileOnly 'maven.modrinth:ayN3DZKb:Iw2gl7Lb'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 

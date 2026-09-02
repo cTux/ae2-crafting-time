@@ -20,6 +20,7 @@ abstract class AddonCpuFixture<P> {
             Map.entry("appbot-fork-cpu", "com.ctux.ae2craftingtime.testdriver.AppliedBotanicsFixture"),
             Map.entry("advancedperipherals-cpu", "com.ctux.ae2craftingtime.testdriver.AdvancedPeripheralsFixture"),
             Map.entry("ae2things-cpu", "com.ctux.ae2craftingtime.testdriver.Ae2ThingsFixture"),
+            Map.entry("expandedae-cpu", "com.ctux.ae2craftingtime.testdriver.ExpandedAeFixture"),
             Map.entry("megacells-cpu", "com.ctux.ae2craftingtime.testdriver.MegaCellsFixture"),
             Map.entry("neoeco-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture"),
             Map.entry("omnicells-cpu", "com.ctux.ae2craftingtime.testdriver.OmniCellsFixture"),
