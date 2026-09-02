@@ -28,7 +28,8 @@ its AE2 node, avoiding the upstream package-name difference between loaders.
 
 Reuse the shared driver state machine, observations, result checks, and suite
 orchestration. NeoForge owns its client entrypoint, changed addon APIs, and
-Minecraft 1.21.1 data-component boundaries. Its companion uses ModDev's mapped
+Minecraft 1.21.1 data-component boundaries. Identical addon fixtures live in
+`shared/src/testDriverAddons`, included by Forge and NeoForge only. Its companion uses ModDev's mapped
 compile classpath and a separate Shadow artifact; NeoForge uses named runtime
 classes, so the driver needs no Forge reobfuscation or Fabric remapping.
 

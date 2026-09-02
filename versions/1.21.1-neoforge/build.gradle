@@ -151,24 +151,18 @@ sourceSets.testDriver.java.exclude { element ->
 }
 sourceSets.testDriver.resources.setSrcDirs(['src/testDriver/resources'])
 dependencies {
-    testDriverCompileOnly 'maven.modrinth:4inoel9g:Zg3OnxBb'
     testDriverCompileOnly 'maven.modrinth:692GClaE:jH6bsw4F'
-    testDriverCompileOnly 'maven.modrinth:8BmcQJ2H:tPkJmim6'
-    testDriverCompileOnly 'maven.modrinth:a1RwDz90:35O4yt0D'
-    testDriverCompileOnly 'maven.modrinth:ArHeh5Fz:RSF7tEIt'
-    testDriverCompileOnly 'maven.modrinth:ayN3DZKb:Iw2gl7Lb'
     testDriverCompileOnly 'maven.modrinth:B1CBVXHX:bpcbGDy4'
+    testDriverCompileOnly 'maven.modrinth:gu7yAYhd:1ewzHZYg'
+    testDriverCompileOnly 'maven.modrinth:ArHeh5Fz:RSF7tEIt'
     testDriverCompileOnly 'maven.modrinth:Ce6I4WUE:5KzzycBT'
     testDriverCompileOnly 'maven.modrinth:E6BFl96N:Zf5HhnF1'
-    testDriverCompileOnly 'maven.modrinth:gu7yAYhd:1ewzHZYg'
     testDriverCompileOnly 'maven.modrinth:IiATswDj:TpUCzFaW'
     testDriverCompileOnly 'maven.modrinth:IZPmgTLT:nd0U5eJF'
-    testDriverCompileOnly 'maven.modrinth:JiOqfoFM:bC302UUP'
     testDriverCompileOnly 'maven.modrinth:jjuIRIVr:RPG4EriK'
     testDriverCompileOnly 'maven.modrinth:M5jhzZXH:3xQLbgab'
     testDriverCompileOnly 'maven.modrinth:oMgZ004U:4x40hq9D'
     testDriverCompileOnly 'maven.modrinth:pNabrMMw:CxSEpEnO'
-    testDriverCompileOnly 'maven.modrinth:qelfSMnn:UNYpf7A1'
     testDriverCompileOnly 'maven.modrinth:qPydPwtX:kKLZdIPS'
     testDriverCompileOnly 'maven.modrinth:rvaW4C93:7JwMBNfy'
     testDriverCompileOnly 'maven.modrinth:rxYaglEe:ablTMAjP'
@@ -176,9 +170,6 @@ dependencies {
     testDriverCompileOnly 'maven.modrinth:SOw6jD6x:Awt8eCuo'
     testDriverCompileOnly 'maven.modrinth:SyKS54UY:me5XWMw9'
     testDriverCompileOnly 'maven.modrinth:udZtKfzP:gWMhHBje'
-    testDriverCompileOnly 'maven.modrinth:UhW5uCKw:pfbmdJ3b'
-    testDriverCompileOnly 'maven.modrinth:VQhDBNs8:qpbQk2Iq'
-    testDriverCompileOnly 'maven.modrinth:xr109llC:o8U8Ekro'
     testDriverCompileOnly 'curse.maven:omnisequence-1624558:8622739'
     testDriverCompileOnly 'curse.maven:projecte-226410:6611984'
 }
@@ -210,3 +201,5 @@ tasks.register('checkTestDriverArtifacts') {
     }
 }
 tasks.named('test') { dependsOn tasks.named('checkTestDriverArtifacts') }
+
+sourceSets.testDriver.java.srcDir '../../shared/src/testDriverAddons/java'

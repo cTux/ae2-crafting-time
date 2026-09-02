@@ -252,3 +252,5 @@ tasks.register('checkTestDriverArtifacts') {
 tasks.named('test') {
     dependsOn tasks.named('checkTestDriverArtifacts')
 }
+
+sourceSets.testDriver.java.srcDir '../../shared/src/testDriverAddons/java'
