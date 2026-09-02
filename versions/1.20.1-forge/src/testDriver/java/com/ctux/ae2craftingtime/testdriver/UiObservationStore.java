@@ -147,8 +147,13 @@ public final class UiObservationStore {
         wirelessTooltip = List.of();
     }
 
-    private static List<UiSnapshot.ObservedText> observed(List<Component> components, Rect bounds) {
-        return components.stream().map(component -> observed(component, bounds)).toList();
+    static List<UiSnapshot.ObservedText> observed(List<Component> components, Rect bounds) {
+        var result = new ArrayList<UiSnapshot.ObservedText>();
+        for (var component : components) {
+            result.add(observed(component, bounds));
+            result.addAll(observed(component.getSiblings(), bounds));
+        }
+        return List.copyOf(result);
     }
 
     private static UiSnapshot.ObservedText observed(Component component, Rect bounds) {

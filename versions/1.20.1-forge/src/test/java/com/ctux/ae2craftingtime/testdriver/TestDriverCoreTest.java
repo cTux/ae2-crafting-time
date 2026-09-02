@@ -1,5 +1,7 @@
 package com.ctux.ae2craftingtime.testdriver;
 
+import com.ctux.ae2craftingtime.mc1201.TtcText;
+import net.minecraft.network.chat.Component;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -21,6 +23,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TestDriverCoreTest {
     @TempDir
     Path temporary;
+
+    @Test
+    void tooltipObservationKeepsAppendedEstimatesAndMissingDataDistinct() {
+        var bounds = new Rect(1, 2, 3, 4);
+        for (var value : List.of(TtcText.ttc("~1s"), TtcText.ttcCollectingData())) {
+            var line = Component.empty().append(TtcText.tooltipTtc(value));
+            var observations = UiObservationStore.observed(List.of(line), bounds);
+            assertEquals(List.of("literal", "text.ae2craftingtime.stats.ttc", "literal",
+                    "text.ae2craftingtime.ttc"), observations.stream().map(UiSnapshot.ObservedText::key).toList());
+            var expected = UiObservationStore.observed(List.of(value), bounds).get(0);
+            assertEquals(expected, observations.get(3));
+            assertEquals(bounds, observations.get(3).bounds());
+        }
+        assertEquals(List.of(), UiObservationStore.observed(List.of(), null));
+        assertEquals(List.of("text.ae2craftingtime.collecting_data"), UiObservationStore.observed(
+                List.of(TtcText.ttcCollectingData()), null).get(0).arguments());
+    }
 
     @Test
     void addonFixturesAreRegisteredInOnePlace() {
