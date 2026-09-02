@@ -309,7 +309,7 @@ publish_modrinth() {
   name="${name%.jar}"
   local data; data="$(echo "$entry" | jq -c \
     --arg name "$name" \
-    --arg vn "$(echo "$entry" | jq -r .id)-$version" \
+    --arg vn "$version-$(echo "$entry" | jq -r .loader)-$(echo "$entry" | jq -r .minecraftVersion)" \
     --arg notes "$notes" \
     '{
       name: $name,
@@ -543,7 +543,7 @@ if [[ "$Deploy" = "1" && "$rc" -gt 0 ]]; then
     rid="$(echo "$rel" | jq -r .id)"
     if [[ "$DryRun" = "1" ]]; then
       echo "dry-run deploy $rid: $rjar"
-      echo "dry-run Modrinth version: $(echo "$rentry" | jq -r .id)-$rver"
+      echo "dry-run Modrinth version: $rver-$(echo "$rentry" | jq -r .loader)-$(echo "$rentry" | jq -r .minecraftVersion)"
       deps="$(echo "$rentry" | jq -r '.["modrinthDependencies"] | map("\(.project_id):\(.dependency_type)") | join(", ")')"
       echo "dry-run Modrinth dependencies: $deps"
       echo "dry-run CurseForge versions: $(echo "$rentry" | jq -r .minecraftVersion), $(echo "$rentry" | jq -r .loaderName), Client, Server"
