@@ -11,6 +11,9 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1"), (
  "terminal":{"x":1,"y":2,"z":3,"face":"SOUTH"},"outputId":"minecraft:furnace"}
 '@, [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $source "level.dat"), "fixture", [Text.UTF8Encoding]::new($false))
+$neoFixture = Join-Path $temp "versions\1.21.1-neoforge\run\saves\ae2-crafting-time"
+New-Item -ItemType Directory -Path (Split-Path $neoFixture) -Force | Out-Null
+Copy-Item $source $neoFixture -Recurse
 [IO.File]::WriteAllText((Join-Path $scripts "run-client.ps1"), @'
 param(
     [string]$Target, [string]$RuntimeDirectory, [string]$DriverScenario,

@@ -12,7 +12,8 @@ if ($Scenario -eq "suite" -and ($Interactive -or $Latest -or $ProjectId)) {
     throw "The prepared suite requires the full compatible profile and non-interactive execution"
 }
 $root = Split-Path -Parent $PSScriptRoot
-$source = Join-Path $root "versions\1.20.1-forge\run\saves\ae2-crafting-time"
+$fixtureTarget = if ($Target -eq "1.21.1-neoforge") { $Target } else { "1.20.1-forge" }
+$source = Join-Path $root "versions\$fixtureTarget\run\saves\ae2-crafting-time"
 $game, $loader = $Target.Split("-", 2)
 $modsDirectory = if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" }
 $profile = if ($Latest) { "latest" } else { "compatible" }
@@ -53,7 +54,7 @@ function Write-Status([string]$phase, [string]$message = "", [Nullable[int]]$exi
 }
 
 if (-not (Test-Path -LiteralPath (Join-Path $source ".ae2-crafting-time-test-fixture.json") -PathType Leaf)) {
-    throw "Missing tracked Forge 1.20.1 test fixture"
+    throw "Missing tracked $fixtureTarget test fixture"
 }
 $sourceMarker = Get-Content -LiteralPath (Join-Path $source ".ae2-crafting-time-test-fixture.json") -Raw | ConvertFrom-Json
 if ($sourceMarker.schema -ne 1 -or $sourceMarker.scenario -ne "craft-plan" -or
@@ -78,7 +79,7 @@ Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
 Write-Status "preparing"
 if ($Scenario -eq "suite") {
     $scenarios = Get-Content -LiteralPath (Join-Path $PSScriptRoot "ui-smoke-$loader-suite.json") -Raw | ConvertFrom-Json
-    $suite = & (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1") -RuntimeDirectory $runtime -OutputDirectory $evidence -Scenarios $scenarios
+    $suite = & (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1") -Target $Target -RuntimeDirectory $runtime -OutputDirectory $evidence -Scenarios $scenarios
     $world = $suite.world
     $plan = Get-Content -LiteralPath (Join-Path $evidence "suite-plan.json") -Raw | ConvertFrom-Json
     $worldCopies = @($plan.cases | ForEach-Object { Join-Path $runtime "saves\$($_.world)" })

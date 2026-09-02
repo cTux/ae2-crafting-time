@@ -42,7 +42,7 @@ Run `scripts/invoke-ui-smoke-codexvm.ps1 -Target 1.21.1-neoforge -Scenario suite
 Use JDK 21 and the complete pinned compatible graph in one maximized 8 GiB
 client. The 21 cases in `scripts/ui-smoke-neoforge-suite.json` cover the base
 plan, Crafting Tree, all pinned CPU/provider fixtures, four wireless-terminal
-flows, and ME Requester. Each case uses a fresh disposable world and retains
+flows, and ME Requester. Each case uses a fresh copy of the native 1.21.1 world and retains
 its own semantic results and screenshots. JEI, GuideME, and transitive libraries
 load with the graph but have no dedicated UI assertions. Expanded AE remains
 excluded from the compatible graph because of its recorded OmniSequence conflict.

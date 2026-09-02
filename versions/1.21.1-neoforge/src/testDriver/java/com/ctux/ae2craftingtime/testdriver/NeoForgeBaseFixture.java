@@ -15,11 +15,12 @@ import net.minecraft.world.item.Items;
 import java.util.Arrays;
 import java.util.Objects;
 
-/** Gives the copied Forge world a native CPU and supply before optional fixtures run. */
+/** Prepares the native 1.21.1 disposable world through current AE2 APIs. */
 final class NeoForgeBaseFixture extends NativeCpuFixture {
     private DriveBlockEntity drive;
     private IGrid grid;
     private int cellSlot;
+    private boolean initialized;
 
 
     @Override
@@ -54,6 +55,27 @@ final class NeoForgeBaseFixture extends NativeCpuFixture {
             throw new IllegalStateException("NeoForge fixture rejected crafting ingredients");
         }
         grid.getStorageService().invalidateCache();
-        return true;
+        if (!initialized) {
+            var level = player.serverLevel();
+            var position = placement.terminal().east(2);
+            var provider = (appeng.blockentity.crafting.PatternProviderBlockEntity) level.getBlockEntity(position);
+            level.setBlockAndUpdate(position.above(), appeng.core.definitions.AEBlocks.MOLECULAR_ASSEMBLER.block().defaultBlockState());
+            var recipe = level.getRecipeManager().getAllRecipesFor(net.minecraft.world.item.crafting.RecipeType.CRAFTING)
+                    .stream().filter(holder -> holder.id().toString().equals("minecraft:furnace"))
+                    .findFirst().orElseThrow();
+            var inputs = new net.minecraft.world.item.ItemStack[9];
+            java.util.Arrays.setAll(inputs, index -> index == 4 ? net.minecraft.world.item.ItemStack.EMPTY
+                    : new net.minecraft.world.item.ItemStack(Items.COBBLESTONE));
+            provider.getLogic().getPatternInv().setItemDirect(0, appeng.api.crafting.PatternDetailsHelper.encodeCraftingPattern(
+                    recipe, inputs, new net.minecraft.world.item.ItemStack(Items.FURNACE), false, false));
+            provider.getLogic().updatePatterns();
+            var key = AEItemKey.of(Items.FURNACE);
+            var tick = level.getGameTime();
+            var network = com.ctux.ae2craftingtime.mc1201.ProfilerBridge.networkId(grid);
+            com.ctux.ae2craftingtime.mc1201.ProfilerBridge.start(network, this, key, 1, tick);
+            com.ctux.ae2craftingtime.mc1201.ProfilerBridge.complete(network, this, key, 1, tick + 40);
+            initialized = true;
+        }
+        return grid.getCraftingService().isCraftable(AEItemKey.of(Items.FURNACE));
     }
 }
