@@ -204,10 +204,11 @@ public final class CraftPlanScenario {
             return;
         }
         var position = new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z());
+        var face = Direction.valueOf(marker.terminal().face());
         var hit = minecraft.hitResult instanceof BlockHitResult current && current.getBlockPos().equals(position)
                 ? current
-                : new BlockHitResult(Vec3.atCenterOf(position).add(0, 0, 0.5),
-                        Direction.valueOf(marker.terminal().face()), position, false);
+                : new BlockHitResult(Vec3.atCenterOf(position).add(Vec3.atLowerCornerOf(face.getNormal()).scale(0.5)),
+                        face, position, false);
         minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND, hit);
         advance(ScenarioState.TERMINAL_OPEN);
     }
