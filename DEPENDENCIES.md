@@ -95,6 +95,9 @@ and TTC. There are no Fabric 1.20.1 or NeoForge 26.1.2 artifacts. Its existing
 Applied Flux/OmniSequence conflict remains: Expanded AE is excluded from the
 full compatible profile and tested separately with the latest focused profile.
 No coexistence with OmniSequence is claimed.
+The Forge client explicitly resolves AdvancedAE (required by an unguarded
+released mixin), ExtendedAE and AE2 Wireless Terminals (declared under malformed
+upstream TOML dependency tables); Modrinth does not list those prerequisites.
 
 ## Build Tools
 

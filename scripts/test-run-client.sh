@@ -60,7 +60,12 @@ CURL_EOF
 chmod +x "$bin_dir/curl"
 export AE2CT_TEST_SHA512="$sha" PATH="$bin_dir:$PATH"
 test_matrix="$temp/run-client-versions.json"
-jq --arg hash "$sha" 'walk(if type == "object" and has("sha512") then .sha512 = $hash else . end)' "$script_dir/run-client-versions.json" > "$test_matrix"
+jq --arg hash "$sha" 'walk(if type == "object" and has("sha512") then .sha512 = $hash else . end) |
+  map(if .id == "1.20.1-forge" then
+    .projects |= map(if .project_id == "E6BFl96N" then .modrinth_dependencies = ["matrix-extra", "matrix-extra", "XxWD5pD3"] else . end) |
+    .projects += [{project_id: "matrix-extra", compatible: false, modrinth_dependencies: ["E6BFl96N"]}] |
+    .compatible.versions += [{project_id: "matrix-extra", version_id: "matrix-extra", version: "test"}]
+  else . end)' "$script_dir/run-client-versions.json" > "$test_matrix"
 
 assert_line() { printf '%s\n' "$1" | grep -qxF "$2" || { echo "Missing '$2'" >&2; exit 1; }; }
 
@@ -74,6 +79,8 @@ while IFS= read -r target; do
   if [ "$target" = "1.20.1-forge" ]; then
     assert_line "$output" 'mod applied-botanics-forge-1.5.2.jar'
     assert_line "$output" 'mod BpFDhV66.jar'
+    assert_line "$output" 'mod matrix-extra.jar'
+    [ "$(printf '%s\n' "$output" | grep -xcF 'mod matrix-extra.jar')" -eq 1 ]
     if printf '%s\n' "$output" | grep -qxF 'mod ByiqRpj3.jar'; then echo 'Original and fork loaded together' >&2; exit 1; fi
   fi
   output="$("$script" -Target "$target" -Root "$temp" -VersionMatrix "$test_matrix" -Latest -ResolveOnly 2>&1)"

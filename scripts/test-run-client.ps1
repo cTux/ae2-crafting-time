@@ -189,6 +189,21 @@ try {
         if ($_.Exception.Message -ne "Focused project ayN3DZKb is excluded from the compatible profile") { throw }
     }
 
+    $extraMatrix = Join-Path $temp "extra-dependencies.json"
+    $extraData = Get-Content $testMatrix -Raw | ConvertFrom-Json
+    $extraForge = $extraData | Where-Object id -eq "1.20.1-forge"
+    ($extraForge.projects | Where-Object project_id -eq "ayN3DZKb").modrinth_dependencies = @("rxYaglEe", "rxYaglEe", "XxWD5pD3")
+    $extraForge.projects | Where-Object project_id -eq "rxYaglEe" |
+        Add-Member -NotePropertyName modrinth_dependencies -NotePropertyValue @("ayN3DZKb") -Force
+    [IO.File]::WriteAllText($extraMatrix, ($extraData | ConvertTo-Json -Depth 20), [Text.UTF8Encoding]::new($false))
+    & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $extraMatrix -RuntimeDirectory $customRuntime `
+        -Latest -ProjectId ayN3DZKb -ResolveOnly 6>&1 | Out-Null
+    $extraManifest = @(Get-Content (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json)
+    if ($extraManifest.Count -ne 3 -or @($extraManifest | Where-Object { $_ -eq "rxYaglEe.jar" }).Count -ne 1 -or
+            "ayN3DZKb.jar" -notin $extraManifest -or "XxWD5pD3.jar" -in $extraManifest) {
+        throw "Explicit Modrinth dependencies were omitted, duplicated, or failed to terminate a cycle"
+    }
+
     $env:AE2CT_DRIVER_BUILD_FAIL = "1"
     try {
         & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -ResolveOnly 6>&1 | Out-Null

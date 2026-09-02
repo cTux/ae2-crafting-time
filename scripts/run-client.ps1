@@ -150,6 +150,10 @@ function Install-Project([string]$projectId) {
     foreach ($dependency in @($version.dependencies | Where-Object dependency_type -eq "required")) {
         Install-Project $dependency.project_id
     }
+    $project = $matrixEntry.projects | Where-Object project_id -eq $projectId | Select-Object -First 1
+    foreach ($dependency in @($project.modrinth_dependencies | Where-Object { $_ })) {
+        Install-Project $dependency
+    }
     $file = $version.files | Where-Object primary | Select-Object -First 1
     if (-not $file) { $file = $version.files | Select-Object -First 1 }
     if (-not $file) { throw "Modrinth version $($version.id) has no files" }
