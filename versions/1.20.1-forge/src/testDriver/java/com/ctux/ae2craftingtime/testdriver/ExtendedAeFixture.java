@@ -52,7 +52,7 @@ class ExtendedAeFixture extends AddonCpuFixture<List<BlockPos>> {
                 throw new IllegalStateException("ExtendedAE assembler was not placed at " + position);
             }
             if (!assembler.getMainNode().isReady()) {
-            return false;
+                return false;
             }
             if (!assembler.getMainNode().isActive()) {
                 return false;

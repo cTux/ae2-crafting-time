@@ -12,12 +12,16 @@ try {
         if ($marker.disposableWorldId -ne $case.world -or $marker.sourceFixtureId -ne 'ae2-crafting-time') { throw 'Wrong case marker' }
     }
     if ($plan.cases[0].world -eq $plan.cases[1].world) { throw 'Worlds are not isolated' }
-    foreach ($invalid in @(@('craft-plan','craft-plan'), @('../escape'), @('craft-plan'))) {
+    foreach ($invalid in @(@('craft-plan','craft-plan'), @('../escape'))) {
         $rejected = $false
-        try { & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -RuntimeDirectory $runtime -OutputDirectory $output -Scenarios $invalid | Out-Null }
+        try { & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -RuntimeDirectory $runtime -OutputDirectory "$temporary\rejected-$([guid]::NewGuid())" -Scenarios $invalid | Out-Null }
         catch { $rejected = $true }
-        if (!$rejected) { throw 'Expected duplicate, invalid name, or existing output rejection' }
+        if (!$rejected) { throw 'Expected duplicate or invalid name rejection' }
     }
+    $rejected = $false
+    try { & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -RuntimeDirectory $runtime -OutputDirectory $output -Scenarios @('craft-plan') | Out-Null }
+    catch { $rejected = $true }
+    if (!$rejected) { throw 'Expected existing output rejection' }
     $rejected = $false
     try { & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -RuntimeDirectory $runtime -OutputDirectory "$temporary\too-many" -Scenarios (1..33 | ForEach-Object {"case-$_"}) | Out-Null }
     catch { $rejected = $true }
