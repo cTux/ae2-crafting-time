@@ -451,6 +451,7 @@ public final class CraftPlanScenario {
         orders.add(ids(snapshot));
         knownOrders.add(knownIds(snapshot));
         sortStage++;
+        screenshotUnchecked("craft-plan-sort-" + sortStage + ".png");
         if (sortStage < 3) {
             clickSort(snapshot);
             stableRows.reset();
