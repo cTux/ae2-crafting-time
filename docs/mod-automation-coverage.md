@@ -6,6 +6,14 @@ current TestDriver coverage. Version cells use the latest working version pinned
 in the compatible development-client profile, which may be older than the real
 latest release.
 
+Project Infinity 0.1 (`0.0.51.3 HOTFIX`) also uses Crazy AE2 Addons `2.6.2`,
+WCWT `1.20.1.7-hotfix`, NeoEco `20.4.0`, and OmniSequence
+`1.3.8-hotfix-forge`. Forge metadata admits these pack versions; the existing
+scenario fixtures remain applicable. NeoEco's expected-output hook accepts
+both the 20.3 accounting object and the 20.4 batched-dispatch signature.
+The prepared-client pins below are unchanged. Actual-pack smoke verification
+is pending; declaration and bytecode inspection alone are not a smoke pass.
+
 `Yes (base)` means the Forge 1.20.1 driver exercises the dependency as part of
 its standard AE2 scenario. `Yes (scenario)` means it has a dedicated optional-mod
 scenario. `No` means a version is known for that target, but no TestDriver covers
