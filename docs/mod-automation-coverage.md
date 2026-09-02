@@ -94,9 +94,41 @@ AEInfinityBooster captures were rejected. The rerun's corrected terminal/plan
 captures show their contents. Production classes and every third-party JAR were
 unchanged between attempts; only the driver changed. The complete dependency
 inventory, hashes, images, shared logs, and timing reports use the archive layout
-in [UI smoke evidence](ui-smoke-evidence.md). Crafting Tree has no dedicated UI
-scenario, and the known compatible-profile exclusions remain in effect.
+in [UI smoke evidence](ui-smoke-evidence.md). That campaign predates the dedicated
+Crafting Tree scenario; the known compatible-profile exclusions remain in effect.
 
 The prepared Forge suite also waits for rendered item tooltips in range-only
 wireless terminals and rendered plan TTC before capture; populated menu data
 alone is not screenshot readiness.
+
+## AdvancedAE and Crafting Tree verification
+
+Commit `94b105f` passed all 26 automated cases in prepared Forge campaign
+`20260902T152335Z-advancedae-tree`, attempt 4, with AE2 `15.4.10`, Forge `47.4.10`,
+AdvancedAE `1.3.6-1.20.1`, and Crafting Tree Refreshed `1.0.1`. All 35 checkpoint
+images were inspected. The existing ME Requester row overlap remains a visual
+failure; AdvancedAE and Crafting Tree passed both their assertions and visual
+review. Three earlier driver failures are retained in the archive.
+
+Project Infinity 0.1 (`0.0.51.3 HOTFIX`, CurseForge project `1266680`, file `8664964`)
+also passed both scenarios in CodexVM campaign `20260902T155211Z-advancedae-tree`.
+This used the pack's original Crafting Tree `1.1.1`, AdvancedAE `1.3.6-1.20.1`,
+AE2 `15.4.10`, and Forge `47.4.20`. Its three screenshots show post-craft plan TTC,
+the populated tree with a node badge, and the TTC/details/reset tooltip. The
+pack's third-party mods were preserved. Only the production test artifact and
+development driver were installed in a disposable copy, with the documented
+VM rectangular-atlas probe enabled. Both clients exited after their suites.
+
+The AdvancedAE fixture forms a 45-block enclosure containing a Quantum Core,
+Quantum Accelerator, and Data Entangler. It checks the added processing threads
+and multiplied storage, submits the real menu plan through that cluster's public
+API, and requires an active job in the same cluster, a fresh profiling sample,
+and rendered TTC afterward. AdvancedAE `1.3.6` can reselect a different cluster
+when its service receives a CPU wrapper, so this tests execution and profiling;
+it does not claim to test the addon's menu-routing behavior.
+
+Crafting Tree opens through its real toolbar button. The driver verifies the
+rendered target node, TTC badge geometry, and final tooltip components in both
+the original and Refreshed screen packages. The old Forge craft-start crash in
+#96 did not recur in either tested graph. This verifies the current artifacts,
+not every historical development mapping or Fabric/NeoForge UI behavior.
