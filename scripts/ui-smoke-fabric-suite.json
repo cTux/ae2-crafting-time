@@ -5,5 +5,6 @@
   "ae2things-cpu",
   "megacells-cpu",
   "ae2wtlib-terminal",
-  "merequester-screen"
+  "merequester-screen",
+  "no-space-status"
 ]

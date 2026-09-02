@@ -40,9 +40,10 @@ final class NoSpaceScenario {
     private CompletableFuture<Void> reload;
     private int menuId;
     private final StableFrames<Integer> frames = new StableFrames<>(3);
+    private final StableFrames<Integer> tooltipFrames = new StableFrames<>(3);
 
     boolean tick(Minecraft minecraft, FixtureMarker marker, Map<String, Boolean> checks,
-            Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) {
+            Consumer<String> screenshot, Consumer<String> captureRegion, BiConsumer<Integer, Integer> moveMouse) {
         if (phase < 2) {
             if (!serverStep(minecraft, player -> prepare(player, marker))) {
                 return false;
@@ -90,6 +91,9 @@ final class NoSpaceScenario {
             if (!tooltipReady(snapshot.tooltip())) {
                 return false;
             }
+            if (!tooltipFrames.observe(phase)) {
+                return false;
+            }
             var warning = snapshot.text().stream().filter(text -> text.key().equals(KEY)).findFirst().orElseThrow();
             if (!warning.bounds().inside(snapshot.gui()) || snapshot.badges().stream()
                     .noneMatch(badge -> warning.bounds().inside(badge))) {
@@ -100,6 +104,7 @@ final class NoSpaceScenario {
             checks.put("layout", true);
             if (phase == 4) {
                 screenshot.accept("no-space-en-us.png");
+                captureRegion.accept("no-space-gallery.png");
                 minecraft.getLanguageManager().setSelected("uk_ua");
                 minecraft.options.languageCode = "uk_ua";
                 reload = minecraft.reloadResourcePacks();

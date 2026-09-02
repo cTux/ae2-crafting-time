@@ -196,7 +196,7 @@ try {
         if (Compare-Object $requiredChecks $actualChecks -SyncWindow 0) { throw "Invalid UI-smoke check set" }
         foreach ($check in $requiredChecks) { if (-not $result.checks.$check) { throw "Failed UI-smoke check: $check" } }
         $requiredScreenshots = if ($caseScenario -eq "no-space-status") {
-            @("no-space-before.png", "no-space-en-us.png", "no-space-uk-ua.png", "no-space-recovered.png")
+            @("no-space-before.png", "no-space-en-us.png", "no-space-uk-ua.png", "no-space-recovered.png", "no-space-gallery.png")
         } elseif ($caseScenario -eq "crafting-tree-screen") {
             @("crafting-tree-screen.png", "crafting-tree-tooltip.png")
         } elseif ($caseScenario -eq "ae2networkanalyser-screen") {
