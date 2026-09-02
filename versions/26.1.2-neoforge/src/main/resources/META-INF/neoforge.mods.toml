@@ -61,7 +61,7 @@ side="BOTH"
 [[dependencies."${mod_id}"]]
 modId="appflux"
 type="OPTIONAL"
-versionRange="[1.0.1,)"
+versionRange="[26.1-1.0.1-neoforge,)"
 ordering="AFTER"
 side="BOTH"
 

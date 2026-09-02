@@ -122,6 +122,11 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 | AE2 Things (`ae2things`; original Fabric / Forge port; optional) | `1.2.1` | Yes (`ae2things-cpu`: real DISK storage craft) | `1.3.2` | No | Not pinned (`1.4.2-beta` supported) | No | — | — |
 | Expanded AE (`expandedae`; optional) | `1.2.2` (focused only; excluded from full compatible set) | Yes (`expandedae-cpu`, latest focused profile) | — | — | `2.1.1` (excluded from compatible set) | No | — | — |
 
+Applied Flux loader ranges use its full declared versions, including the Minecraft
+prefix and loader suffix. The 1.21.1 minimum is `1.21-2.1.4-neoforge`, which accepts
+ATM10 8.1's `1.21-2.1.5-neoforge`. The two JARs have identical energy-key classes;
+this fixes dependency loading, but does not add NeoForge UI smoke coverage.
+
 Original Applied Botanics 1.21.1 support is declared from `1.6.0-alpha.3`, but
 its required Botania snapshot has no matching published Modrinth release.
 That runtime is not pinned or smoke-verified; no original 26.1.2 artifact exists.

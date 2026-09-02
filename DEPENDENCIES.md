@@ -47,7 +47,7 @@ future release has already been tested.
 | OMNI Cells (`ae2omnicells`) | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.20.1/1.21.1: `>=1.1.6`; 26.1.2: `>=1.1.7` | TTC profiling and Crafting Plan display for OMNI crafting CPUs through AE2's native execution path. |
 | ProjectCell (`projectcell`) | `1.20.1 Forge`, `1.21.1 NeoForge` | `>=1.0.0` | TTC profiling and Crafting Plan display when ProjectCell supplies ingredients from ProjectE EMC through AE2's native storage and crafting paths. |
 | AppliedE / AppliedE TPS Fix (`appliede`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=0.14.0`; NeoForge: `>=1.0.0-beta` | TTC profiling and Crafting Plan display when AppliedE supplies ingredients from ProjectE EMC through AE2's native key and crafting paths. Install either AppliedE or its TPS Fix fork, not both. |
-| Applied Flux (`appflux`) | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.20.1: `>=1.3.7`; 1.21.1: `>=2.1.4`; 26.1.2: `>=1.0.1` | TTC profiling and Crafting Plan display for FE stored in the ME network through Applied Flux's native AE2 energy key. |
+| Applied Flux (`appflux`) | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.20.1: `>=1.20-1.3.7-forge`; 1.21.1: `>=1.21-2.1.4-neoforge`; 26.1.2: `>=26.1-1.0.1-neoforge` | TTC profiling and Crafting Plan display for FE stored in the ME network through Applied Flux's native AE2 energy key. |
 | Modern AE2 Additions (`mae2`) | `1.20.1 Forge` | `>=1.1.0` | TTC profiling and Crafting Plan display for CPUs using Modern AE2 Additions dense co-processors through AE2's native crafting path. |
 
 Applied Mekanistics is not declared for the Fabric jar because the supported
