@@ -13,6 +13,7 @@ import io.modelcontextprotocol.spec.McpSchema.Tool;
 import net.minecraft.client.Minecraft;
 import org.apache.catalina.Context;
 import org.apache.catalina.startup.Tomcat;
+import org.apache.catalina.webresources.TomcatURLStreamHandlerFactory;
 import org.apache.tomcat.util.descriptor.web.FilterDef;
 import org.apache.tomcat.util.descriptor.web.FilterMap;
 
@@ -77,6 +78,8 @@ public final class InteractiveMcpServer implements AutoCloseable {
     }
 
     private Tomcat createTomcat(EndpointPolicy policy) {
+        // Forge owns the JVM's one URL factory; this servlet does not serve WAR resources.
+        TomcatURLStreamHandlerFactory.disable();
         var value = new Tomcat();
         value.setHostname("127.0.0.1");
         value.setPort(0);
