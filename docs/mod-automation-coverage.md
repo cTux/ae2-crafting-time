@@ -26,6 +26,11 @@ what their evidence does and does not prove.
 
 ## Modpack and prepared-client evidence
 
+ATM10 8.1's Applied Flux `1.21-2.1.5-neoforge` has identical energy-key classes
+and dependency requirements to `1.21-2.1.4-neoforge`. Corrected loader ranges
+accept its full declared version. This verifies the dependency-loading fix;
+full ATM10 client/server smoke testing has not been run.
+
 Project Infinity 0.1 (`0.0.51.3 HOTFIX`) also uses Crazy AE2 Addons `2.6.2`,
 WCWT `1.20.1.7-hotfix`, NeoEco `20.4.0`, and OmniSequence
 `1.3.8-hotfix-forge`. Forge metadata admits these pack versions; the existing

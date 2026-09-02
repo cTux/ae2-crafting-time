@@ -124,7 +124,7 @@ side="BOTH"
 [[dependencies."${mod_id}"]]
 modId="appflux"
 type="OPTIONAL"
-versionRange="[2.1.4,)"
+versionRange="[1.21-2.1.4-neoforge,)"
 ordering="AFTER"
 side="BOTH"
 
