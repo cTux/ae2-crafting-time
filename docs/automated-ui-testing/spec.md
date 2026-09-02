@@ -18,7 +18,7 @@ Tracking issue: [#124](https://github.com/cTux/ae2-crafting-time/issues/124).
 - `scripts/release-matrix.json` owns the published targets.
 - `scripts/run-client-versions.json` owns compatible and latest development
   dependency graphs.
-- `DEPENDENCIES.md` owns integrations the project claims to support.
+- `docs/dependencies.md` owns integrations the project claims to support.
 
 The suite rejects a release target missing from the run-client matrix. Every
 top-level project in the selected profile is reported as direct coverage,

@@ -59,15 +59,16 @@ foreach ($row in $clients) {
 }
 
 $dependencyRows = @{}
-foreach ($line in Get-Content -LiteralPath (Join-Path $Root "DEPENDENCIES.md")) {
-    if ($line -match '^\| .*?\(`(?<mod>[^`]+)`\) \| (?<targets>.*?) \| (?<range>.*?) \|') {
-        if ($dependencyRows.ContainsKey($Matches.mod)) { throw "Duplicate DEPENDENCIES.md row for $($Matches.mod)" }
+# The matrix starts with nine version/driver columns, then declared targets and minimums.
+foreach ($line in Get-Content -LiteralPath (Join-Path $Root "docs/dependencies.md")) {
+    if ($line -match '^\| .*?\(`(?<mod>[^`]+)`[;)][^|]*\|(?:[^|]*\|){8} (?<targets>`[^|]+|All supported targets) \| (?<range>.*?) \|') {
+        if ($dependencyRows.ContainsKey($Matches.mod)) { throw "Duplicate docs/dependencies.md row for $($Matches.mod)" }
         $dependencyRows[$Matches.mod] = [pscustomobject]@{ Targets = $Matches.targets; Range = $Matches.range }
     }
 }
 
 $coverageRows = @{}
-foreach ($line in Get-Content -LiteralPath (Join-Path $Root "docs\mod-automation-coverage.md")) {
+foreach ($line in Get-Content -LiteralPath (Join-Path $Root "docs\dependencies.md")) {
     if ($line -match '^\| .*?\(`(?<mod>[^`]+)`[;)]') {
         $cells = @($line.Trim('|').Split('|') | ForEach-Object Trim)
         if ($coverageRows.ContainsKey($Matches.mod)) { throw "Duplicate coverage row for $($Matches.mod)" }
@@ -86,7 +87,7 @@ for ($index = 0; $index -lt $release.Count; $index++) {
     $documented = @($dependencyRows.Keys | Where-Object {
         $dependencyRows[$_].Targets -eq "All supported targets" -or $dependencyRows[$_].Targets -like "*$label*"
     })
-    Assert-SameSet $metadata.Keys $documented "$($row.id) loader metadata and DEPENDENCIES.md"
+    Assert-SameSet $metadata.Keys $documented "$($row.id) loader metadata and docs/dependencies.md"
 
     $released = @($row.modrinthDependencies | Where-Object dependency_type -eq "optional" | ForEach-Object {
         $modId = $projectById[[string]$_.project_id]
@@ -105,7 +106,7 @@ for ($index = 0; $index -lt $release.Count; $index++) {
         if (-not $coverageRows[$modId]) { throw "Missing coverage row for $modId" }
         $minimum = Get-Minimum $metadata[$modId]
         if ($minimum -and $dependencyRows[$modId].Range -notlike "*$minimum*") {
-            throw "DEPENDENCIES.md omits $($row.id) minimum $minimum for $modId"
+            throw "docs/dependencies.md omits $($row.id) minimum $minimum for $modId"
         }
         $coverage = $coverageRows[$modId][1 + (2 * $index)].Trim('`')
         $project = $client.projects | Where-Object mod_id -eq $modId | Select-Object -First 1
@@ -120,5 +121,5 @@ for ($index = 0; $index -lt $release.Count; $index++) {
         }
     }
 }
-Assert-SameSet $allMetadataMods $dependencyRows.Keys "Loader metadata and DEPENDENCIES.md optional integrations"
+Assert-SameSet $allMetadataMods $dependencyRows.Keys "Loader metadata and docs/dependencies.md optional integrations"
 Write-Host "optional-integration consistency checks passed"

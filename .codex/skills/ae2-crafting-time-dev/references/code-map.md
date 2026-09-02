@@ -84,4 +84,4 @@ adapter only for a proven custom or overridden crafting loop.
 - SavedData ID is exactly `ae2-crafting-time`, producing `<world>/data/ae2-crafting-time.dat`. NBT version 1 stores retained `(networkId, key, unit, amount, durationTicks)` samples. Pending work, accuracy, and stalls are runtime-only.
 - Config semantics are stable across loaders: `enabled`, `showInTree`, `showChatMessages`, `maxSamples`, and `outlierMultiplier`. Server behavior must not depend on a client-only setting.
 - Mixin JSON must keep server mixins under `mixins` and renderer/input integrations under `client`. Optional string-target mixins use tolerant injection only where absence or upstream variation is expected.
-- Required and optional dependencies must agree across Gradle, loader metadata, `DEPENDENCIES.md`, run-client profiles, and actual code.
+- Required and optional dependencies must agree across Gradle, loader metadata, `docs/dependencies.md`, run-client profiles, and actual code.
