@@ -19,6 +19,8 @@ neoForge {
         client {
             client()
             jvmArgument '-Xmx8G'
+            // Lightning Tech uses @OnlyIn; keep diagnostics in the log without pausing client startup.
+            jvmArgument '-Dneoforge.warnings.onlyin.hide=true'
         }
         server {
             server()
