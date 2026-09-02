@@ -230,7 +230,7 @@ public final class CraftPlanScenario {
         if (entry == null) {
             return;
         }
-        if (wirelessFixture != null && checks.containsKey("ttc-tooltip")) {
+        if (wirelessFixture != null) {
             var slot = screen.getMenu().slots.stream().filter(RepoSlot.class::isInstance).map(RepoSlot.class::cast)
                     .filter(candidate -> candidate.getEntry() == entry).findFirst().orElse(null);
             if (slot == null) {
@@ -242,11 +242,12 @@ public final class CraftPlanScenario {
                 wirelessHoverStarted = true;
                 return;
             }
-            if (UiObservationStore.wirelessTooltip().stream()
-                    .noneMatch(CraftPlanScenario::isResolvedTtc)) {
+            if (!wirelessTooltipReady(UiObservationStore.wirelessTooltip(), checks.containsKey("ttc-tooltip"))) {
                 return;
             }
-            checks.put("ttc-tooltip", true);
+            if (checks.containsKey("ttc-tooltip")) {
+                checks.put("ttc-tooltip", true);
+            }
         }
         if (wirelessFixture != null) {
             screenshotUnchecked(wirelessFixture.screenshotPrefix() + "-terminal.png");
@@ -524,8 +525,21 @@ public final class CraftPlanScenario {
                 checks, screenshots, resultFailure);
     }
 
+    static boolean wirelessTooltipReady(List<UiSnapshot.ObservedText> tooltip, boolean requireTtc) {
+        return !tooltip.isEmpty() && (!requireTtc || tooltip.stream().anyMatch(CraftPlanScenario::isResolvedTtc));
+    }
+
+    static boolean renderedPlan(UiSnapshot snapshot) {
+        return snapshot != null && !snapshot.badges().isEmpty() && snapshot.text().stream()
+                .anyMatch(text -> text.key().equals("text.ae2craftingtime.total_ttc"));
+    }
+
     private boolean stable(UiSnapshot snapshot) {
-        if (snapshot == null || snapshot.frame() == lastFrame) {
+        if (!renderedPlan(snapshot)) {
+            stableRows.reset();
+            return false;
+        }
+        if (snapshot.frame() == lastFrame) {
             return false;
         }
         lastFrame = snapshot.frame();

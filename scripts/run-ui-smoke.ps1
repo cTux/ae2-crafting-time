@@ -1,12 +1,15 @@
 param(
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(craft-plan|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|craft-plan|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$ReportDirectory
 )
 
 $ErrorActionPreference = "Stop"
+if ($Scenario -eq "suite" -and ($Interactive -or $Latest -or $ProjectId)) {
+    throw "The prepared suite requires the full compatible profile and non-interactive execution"
+}
 $root = Split-Path -Parent $PSScriptRoot
 $source = Join-Path $root "versions\1.20.1-forge\run\saves\ae2-crafting-time"
 $profile = if ($Latest) { "latest" } else { "compatible" }
@@ -16,6 +19,7 @@ $runtime = Join-Path $base "runtime"
 $evidence = Join-Path $report "evidence"
 $world = "ae2ct-$([guid]::NewGuid().ToString('N'))"
 $worldCopy = Join-Path $runtime "saves\$world"
+$worldCopies = @($worldCopy)
 $stdout = Join-Path $report "launcher.stdout.log"
 $stderr = Join-Path $report "launcher.stderr.log"
 $statusPath = Join-Path $report "status.json"
@@ -66,14 +70,22 @@ try {
     throw "Another $profile UI-smoke scenario is already using this workspace runtime"
 }
 if (Test-Path -LiteralPath $evidence) { Remove-Item -LiteralPath $evidence -Recurse -Force }
-New-Item -ItemType Directory -Path $evidence -Force | Out-Null
+if ($Scenario -ne "suite") { New-Item -ItemType Directory -Path $evidence -Force | Out-Null }
 Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
 Write-Status "preparing"
-Copy-Item -LiteralPath $source -Destination $worldCopy -Recurse
-$markerPath = Join-Path $worldCopy ".ae2-crafting-time-test-fixture.json"
-$marker = Get-Content -LiteralPath $markerPath -Raw | ConvertFrom-Json
-$marker.disposableWorldId = $world
-[IO.File]::WriteAllText($markerPath, ($marker | ConvertTo-Json -Depth 10), [Text.UTF8Encoding]::new($false))
+if ($Scenario -eq "suite") {
+    $scenarios = Get-Content -LiteralPath (Join-Path $PSScriptRoot "ui-smoke-forge-suite.json") -Raw | ConvertFrom-Json
+    $suite = & (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1") -RuntimeDirectory $runtime -OutputDirectory $evidence -Scenarios $scenarios
+    $world = $suite.world
+    $plan = Get-Content -LiteralPath (Join-Path $evidence "suite-plan.json") -Raw | ConvertFrom-Json
+    $worldCopies = @($plan.cases | ForEach-Object { Join-Path $runtime "saves\$($_.world)" })
+} else {
+    Copy-Item -LiteralPath $source -Destination $worldCopy -Recurse
+    $markerPath = Join-Path $worldCopy ".ae2-crafting-time-test-fixture.json"
+    $marker = Get-Content -LiteralPath $markerPath -Raw | ConvertFrom-Json
+    $marker.disposableWorldId = $world
+    [IO.File]::WriteAllText($markerPath, ($marker | ConvertTo-Json -Depth 10), [Text.UTF8Encoding]::new($false))
+}
 [IO.File]::WriteAllText((Join-Path $runtime "options.txt"), @"
 version:3465
 fullscreen:false
@@ -118,7 +130,7 @@ try {
             -RedirectStandardOutput $stdout -RedirectStandardError $stderr
         $null = $process.Handle
         Write-Status "running"
-        $timeout = if ($Interactive) { [TimeSpan]::FromMinutes(30) } else { [TimeSpan]::FromMinutes(8) }
+        $timeout = if ($Interactive) { [TimeSpan]::FromMinutes(30) } elseif ($Scenario -eq "suite") { [TimeSpan]::FromMinutes(40) } else { [TimeSpan]::FromMinutes(8) }
         if (-not $process.WaitForExit([int]$timeout.TotalMilliseconds)) {
             $null = $process.CloseMainWindow()
             if (-not $process.WaitForExit(10000)) { & taskkill.exe /PID $process.Id /T /F | Out-Null }
@@ -128,51 +140,68 @@ try {
             throw "UI-smoke $profile-profile setup/startup failed with launcher exit $($process.ExitCode); see $stderr"
         }
 
-    $resultPath = Join-Path $evidence "result.json"
-    if (-not (Test-Path -LiteralPath $resultPath -PathType Leaf)) { throw "Missing atomic result.json" }
-    $result = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json
-    if ($result.result -eq "FAIL" -and $result.failure) {
-        throw "UI-smoke driver failed: step=$($result.failure.step) code=$($result.failure.code) expected=$($result.failure.expected) observed=$($result.failure.observed)"
+    $caseScenarios = @($Scenario)
+    if ($Scenario -eq "suite") {
+        $summary = Get-Content -LiteralPath (Join-Path $evidence "result.json") -Raw | ConvertFrom-Json
+        if ($summary.schema -ne 1 -or -not $summary.complete -or $summary.result -ne "PASS" -or $summary.processId -le 0 -or
+                @($summary.cases).Count -ne $scenarios.Count) { throw "Incomplete or failed UI-smoke suite" }
+        for ($i = 0; $i -lt $scenarios.Count; $i++) {
+            $case = $summary.cases[$i]
+            if ($case.scenario -ne $scenarios[$i] -or $case.world -ne $plan.cases[$i].world -or
+                    $case.result -ne "PASS" -or -not $case.startedAt -or -not $case.finishedAt) {
+                throw "Invalid suite case outcome: $($scenarios[$i])"
+            }
+        }
+        $caseScenarios = $scenarios
     }
-    $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
-        Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
-    $driverName = "ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"
-    $requiredChecks = if ($Scenario -eq "ae2networkanalyser-screen") {
-        @("screen", "layout")
-    } elseif ($Scenario -eq "merequester-screen") {
-        @("screen", "ttc-row", "total-ttc", "layout")
-    } elseif ($Scenario -eq "aeinfinitybooster-terminal") {
-        @("screen", "plan-ttc")
-    } elseif ($Scenario -like "*-terminal") {
-        @("screen", "ttc-tooltip", "plan-ttc")
-    } elseif ($Scenario -ne "craft-plan") {
-        @("cpu-selected", "profile-sample", "ttc-after-sample")
-    } else {
-        @("screen", "ttc-row", "total-ttc", "sort-cycle", "tooltip", "layout")
-    }
-    if ($result.schema -ne 1 -or -not $result.complete -or $result.result -ne "PASS" -or
-            $result.driver -ne $driverName -or $result.target -ne "1.20.1-forge" -or
-            $result.profile -ne $profile -or $result.scenario -ne $Scenario) {
-        throw "Invalid UI-smoke result identity or completion state"
-    }
-    $actualChecks = @($result.checks.psobject.Properties.Name)
-    if (Compare-Object $requiredChecks $actualChecks -SyncWindow 0) { throw "Invalid UI-smoke check set" }
-    foreach ($check in $requiredChecks) { if (-not $result.checks.$check) { throw "Failed UI-smoke check: $check" } }
-    $requiredScreenshots = if ($Scenario -eq "ae2networkanalyser-screen") {
-        @("ae2networkanalyser-screen.png")
-    } elseif ($Scenario -eq "merequester-screen") {
-        @("merequester-screen.png")
-    } elseif ($Scenario -like "*-terminal") {
-        $prefix = $Scenario -replace '-terminal$', ''
-        @("$prefix-terminal.png", "$prefix-plan.png")
-    } elseif ($Scenario -ne "craft-plan") {
-        @("$($Scenario -replace '-cpu$', '')-profiled-plan.png")
-    } else {
-        @("craft-plan.png", "craft-plan-tooltip.png")
-    }
-    foreach ($screenshot in $requiredScreenshots) {
-        if ($screenshot -notin $result.screenshots -or -not (Test-Path -LiteralPath (Join-Path $evidence $screenshot))) {
-            throw "Missing required screenshot $screenshot"
+    foreach ($caseScenario in $caseScenarios) {
+        $caseEvidence = if ($Scenario -eq "suite") { Join-Path $evidence $caseScenario } else { $evidence }
+        $resultPath = Join-Path $caseEvidence "result.json"
+        if (-not (Test-Path -LiteralPath $resultPath -PathType Leaf)) { throw "Missing atomic result.json" }
+        $result = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json
+        if ($result.result -eq "FAIL" -and $result.failure) {
+            throw "UI-smoke driver failed: step=$($result.failure.step) code=$($result.failure.code) expected=$($result.failure.expected) observed=$($result.failure.observed)"
+        }
+        $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
+            Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
+        $driverName = "ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"
+        $requiredChecks = if ($caseScenario -eq "ae2networkanalyser-screen") {
+            @("screen", "layout")
+        } elseif ($caseScenario -eq "merequester-screen") {
+            @("screen", "ttc-row", "total-ttc", "layout")
+        } elseif ($caseScenario -eq "aeinfinitybooster-terminal") {
+            @("screen", "plan-ttc")
+        } elseif ($caseScenario -like "*-terminal") {
+            @("screen", "ttc-tooltip", "plan-ttc")
+        } elseif ($caseScenario -ne "craft-plan") {
+            @("cpu-selected", "profile-sample", "ttc-after-sample")
+        } else {
+            @("screen", "ttc-row", "total-ttc", "sort-cycle", "tooltip", "layout")
+        }
+        if ($result.schema -ne 1 -or -not $result.complete -or $result.result -ne "PASS" -or
+                $result.driver -ne $driverName -or $result.target -ne "1.20.1-forge" -or
+                $result.profile -ne $profile -or $result.scenario -ne $caseScenario) {
+            throw "Invalid UI-smoke result identity or completion state"
+        }
+        $actualChecks = @($result.checks.psobject.Properties.Name)
+        if (Compare-Object $requiredChecks $actualChecks -SyncWindow 0) { throw "Invalid UI-smoke check set" }
+        foreach ($check in $requiredChecks) { if (-not $result.checks.$check) { throw "Failed UI-smoke check: $check" } }
+        $requiredScreenshots = if ($caseScenario -eq "ae2networkanalyser-screen") {
+            @("ae2networkanalyser-screen.png")
+        } elseif ($caseScenario -eq "merequester-screen") {
+            @("merequester-screen.png")
+        } elseif ($caseScenario -like "*-terminal") {
+            $prefix = $caseScenario -replace '-terminal$', ''
+            @("$prefix-terminal.png", "$prefix-plan.png")
+        } elseif ($caseScenario -ne "craft-plan") {
+            @("$($caseScenario -replace '-cpu$', '')-profiled-plan.png")
+        } else {
+            @("craft-plan.png", "craft-plan-sort-1.png", "craft-plan-sort-2.png", "craft-plan-sort-3.png", "craft-plan-tooltip.png")
+        }
+        foreach ($screenshot in $requiredScreenshots) {
+            if ($screenshot -notin $result.screenshots -or -not (Test-Path -LiteralPath (Join-Path $caseEvidence $screenshot))) {
+                throw "Missing required screenshot $screenshot"
+            }
         }
     }
     $manifest = Join-Path $runtime "resolved-mods\.ae2-crafting-time-run-mods.json"
@@ -191,9 +220,13 @@ try {
     ) -SimpleMatch
         if ($fatal) { throw "Fatal loader, mixin, resource, or crash signature in latest.log" }
     } finally {
+        $latestLog = Join-Path $runtime "logs\latest.log"
+        if (Test-Path -LiteralPath $latestLog) { Copy-Item -LiteralPath $latestLog -Destination (Join-Path $evidence "latest.log") -Force }
         if ($previousToken) { $env:AE2CT_TEST_DRIVER_TOKEN = $previousToken }
         else { Remove-Item Env:\AE2CT_TEST_DRIVER_TOKEN -ErrorAction SilentlyContinue }
-        if (Test-Path -LiteralPath $worldCopy) { Remove-Item -LiteralPath $worldCopy -Recurse -Force }
+        foreach ($copy in $worldCopies) {
+            if (Test-Path -LiteralPath $copy) { Remove-Item -LiteralPath $copy -Recurse -Force }
+        }
         if ((Get-TreeHash $source) -ne $sourceHash) { throw "Tracked source fixture changed during UI smoke" }
     }
     Write-Status "passed" "UI smoke passed" $process.ExitCode

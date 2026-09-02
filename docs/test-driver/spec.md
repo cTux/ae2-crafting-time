@@ -119,7 +119,7 @@ because of its existing conflict with OmniSequence.
 
 ## Single-launch suites
 
-A named-pack campaign runs all selected scenarios in one Minecraft process.
+A named-pack or prepared-client campaign runs all selected scenarios in one Minecraft process.
 Load mods and textures once, then run each case, save its screenshots and result,
 unload its world normally, and open the next fresh disposable fixture copy.
 World reloads isolate blocks, inventories, jobs, and saved profiler data without
@@ -145,6 +145,20 @@ Prepare a suite with `scripts/prepare-ui-smoke-suite.ps1 -RuntimeDirectory <game
 the first world and launch properties. Pass `scenario=suite`, that world, profile,
 and output through the existing JVM properties, with the first world as Prism's
 quick-play world. The helper never changes the pack's mod graph.
+
+For the full prepared Forge compatible graph, run
+`scripts/invoke-ui-smoke-codexvm.ps1 -Scenario suite`. The ordered cases live in
+`scripts/ui-smoke-forge-suite.json`; each uses a fresh world in one client run.
+The wrapper validates every per-case result and screenshot plus the overall
+suite result, retains shared logs, and cleans all disposable worlds. The suite
+allows 40 minutes including dependency resolution/build; single cases keep their
+8-minute limit. Archive the evidence before another invocation.
+
+This suite rejects `-Latest`, `-ProjectId`, and `-Interactive`: its case list
+matches the full compatible graph. The graph includes the Applied Botanics fork;
+the colliding original and incompatible Expanded AE require separate graphs.
+Crafting Tree, documentation/recipe viewers, and transitive libraries are loaded
+but have no dedicated UI assertions. Do not report those as scenario passes.
 
 ## Optional add-on CPU fixtures
 

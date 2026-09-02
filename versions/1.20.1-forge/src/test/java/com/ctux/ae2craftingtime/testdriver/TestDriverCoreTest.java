@@ -42,6 +42,28 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void capturesRequireRenderedContentInsteadOfOnlyPopulatedMenus() {
+        var literal = new UiSnapshot.ObservedText("literal", "Furnace", List.of(), null);
+        var ttc = UiObservationStore.observed(List.of(TtcText.ttc("~1s")), null);
+        var missing = UiObservationStore.observed(List.of(TtcText.ttcCollectingData()), null);
+        assertFalse(CraftPlanScenario.wirelessTooltipReady(List.of(), false));
+        assertTrue(CraftPlanScenario.wirelessTooltipReady(List.of(literal), false));
+        assertFalse(CraftPlanScenario.wirelessTooltipReady(List.of(literal), true));
+        assertFalse(CraftPlanScenario.wirelessTooltipReady(missing, true));
+        assertTrue(CraftPlanScenario.wirelessTooltipReady(ttc, true));
+        assertFalse(CraftPlanScenario.renderedPlan(null));
+        var badge = new Rect(10, 10, 20, 10);
+        var total = new UiSnapshot.ObservedText("text.ae2craftingtime.total_ttc", "TTC: ~1s", List.of(), badge);
+        for (boolean drawBadge : List.of(false, true)) {
+            for (var text : List.of(literal, total)) {
+                var frame = new UiSnapshot("screen", "menu", badge, 100, 100, 1, 1, 0, List.of(),
+                        List.of(text), drawBadge ? List.of(badge) : List.of(), List.of(), List.of(), List.of());
+                assertEquals(drawBadge && text == total, CraftPlanScenario.renderedPlan(frame));
+            }
+        }
+    }
+
+    @Test
     void addonFixturesAreRegisteredInOnePlace() {
         assertTrue(AddonCpuFixture.supports("craft-plan"));
         assertTrue(AddonCpuFixture.supports("advancedae-cpu"));

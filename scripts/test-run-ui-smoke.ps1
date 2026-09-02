@@ -4,6 +4,7 @@ $scripts = Join-Path $temp "scripts"
 $source = Join-Path $temp "versions\1.20.1-forge\run\saves\ae2-crafting-time"
 New-Item -ItemType Directory -Path $scripts, $source -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "run-ui-smoke.ps1") -Destination (Join-Path $scripts "run-ui-smoke.ps1")
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1"), (Join-Path $PSScriptRoot "ui-smoke-forge-suite.json") -Destination $scripts
 [IO.File]::WriteAllText((Join-Path $temp "gradle.properties"), "modVersion=1.1.0`n", [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $source ".ae2-crafting-time-test-fixture.json"), @'
 {"schema":1,"scenario":"craft-plan","sourceFixtureId":"ae2-crafting-time","disposableWorldId":"SOURCE_ONLY",
@@ -22,6 +23,23 @@ $profile = if ($Latest) { "latest" } else { "compatible" }
 $driver = "ae2-crafting-time-1.1.0-forge-1.20.1-test-driver.jar"
 New-Item -ItemType Directory -Path $DriverOutputDirectory, (Join-Path $RuntimeDirectory "resolved-mods"),
     (Join-Path $RuntimeDirectory "logs") -Force | Out-Null
+if ($DriverScenario -eq "suite") {
+    $plan = Get-Content (Join-Path $DriverOutputDirectory 'suite-plan.json') -Raw | ConvertFrom-Json
+    $cases = foreach ($case in $plan.cases) {
+        & $PSCommandPath -Target $Target -RuntimeDirectory $RuntimeDirectory -DriverScenario $case.scenario `
+            -DriverOutputDirectory (Join-Path $DriverOutputDirectory $case.scenario) -DriverWorld $case.world
+        [ordered]@{scenario=$case.scenario; world=$case.world; result='PASS'; startedAt='2026-09-02T00:00:00Z'; finishedAt='2026-09-02T00:00:01Z'}
+    }
+    $summary = [ordered]@{schema=1;complete=$true;result='PASS';processId=$PID;cases=@($cases)}
+    switch ($env:AE2CT_UI_SMOKE_TEST_MODE) {
+        'suite-missing' { $summary.cases = @($cases | Select-Object -Skip 1) }
+        'suite-order' { $summary.cases[0].scenario = 'wrong-cpu' }
+        'suite-fail' { $summary.result = 'FAIL'; $summary.complete = $false }
+        'suite-world' { $summary.cases[0].world = 'wrong-world' }
+    }
+    $summary | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $DriverOutputDirectory 'result.json') -Encoding UTF8
+    return
+}
 $checks = if ($DriverScenario -eq "ae2networkanalyser-screen") {
     [ordered]@{ screen=$true; layout=$true }
 } elseif ($DriverScenario -eq "merequester-screen") {
@@ -42,7 +60,7 @@ $screenshots = if ($DriverScenario -eq "ae2networkanalyser-screen") {
 } elseif ($DriverScenario -like "*-terminal") {
     $prefix = $DriverScenario -replace '-terminal$', ''
     @("$prefix-terminal.png", "$prefix-plan.png")
-} elseif ($DriverScenario -ne "craft-plan") { @("$(($DriverScenario -replace '-cpu$', ''))-profiled-plan.png") } else { @("craft-plan.png", "craft-plan-tooltip.png") }
+} elseif ($DriverScenario -ne "craft-plan") { @("$(($DriverScenario -replace '-cpu$', ''))-profiled-plan.png") } else { @("craft-plan.png", "craft-plan-sort-1.png", "craft-plan-sort-2.png", "craft-plan-sort-3.png", "craft-plan-tooltip.png") }
 $result = [ordered]@{
     schema = $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "schema") { 2 } else { 1 })
     complete = $true; driver = $driver; target = "1.20.1-forge"; profile = $profile
@@ -97,6 +115,15 @@ try {
     if (-not (Test-Path -LiteralPath (Join-Path $externalReport "evidence\result.json"))) {
         throw "External smoke report omitted copied evidence"
     }
+    Invoke-Case "pass" -Scenario suite -shouldPass $true
+    $suiteSaves = Join-Path $temp 'build\ui-smoke\1.20.1-forge\compatible\runtime\saves'
+    if (@(Get-ChildItem $suiteSaves -Directory).Count) { throw 'Suite left disposable worlds behind' }
+    foreach ($mode in @('suite-missing', 'suite-order', 'suite-fail', 'suite-world', 'schema', 'missing-screenshot', 'fatal')) {
+        Invoke-Case $mode -Scenario suite -shouldPass $false
+    }
+    Invoke-Case "pass" -Scenario suite -Latest -shouldPass $false
+    Invoke-Case "pass" -Scenario suite -Interactive -shouldPass $false
+    Invoke-Case "pass" -Scenario suite -ProjectId E6BFl96N -shouldPass $false
     Invoke-Case "pass" -Latest -shouldPass $true
     Invoke-Case "pass" -Scenario "neoeco-cpu" -shouldPass $true
     Invoke-Case "pass" -Scenario "merequester-screen" -ProjectId E6BFl96N -shouldPass $true

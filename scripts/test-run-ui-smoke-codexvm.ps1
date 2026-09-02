@@ -30,6 +30,9 @@ try {
     if (-not (Test-Path -LiteralPath (Join-Path $source "build\ui-smoke\1.20.1-forge\compatible\craft-plan\wrapper-result.json"))) {
         throw "Default scenario report was not separated"
     }
+    & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Scenario suite
+    $suiteResult = Get-Content (Join-Path $source 'build\ui-smoke\1.20.1-forge\compatible\suite\wrapper-result.json') -Raw | ConvertFrom-Json
+    if ($suiteResult.scenario -ne 'suite') { throw 'Wrapper dropped suite selection' }
     Write-Host "run-ui-smoke-codexvm checks passed"
 } finally {
     if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force }
