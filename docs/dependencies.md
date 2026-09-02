@@ -1,0 +1,189 @@
+# Dependencies
+
+Pick the JAR that matches your Minecraft version and loader. Required versions,
+optional integrations, development-client pins, and TestDriver coverage live here.
+[Client and modpack coverage](mod-automation-coverage.md) records actual smoke
+campaigns, client setup, exclusions, and the limits of those results.
+
+## Required dependencies
+
+These are required. The mod will not load unless your instance matches the row
+for its JAR.
+
+| Target jar | Required dependencies |
+| --- | --- |
+| `1.20.1 Forge` | Minecraft `[1.20.1,1.21)`, Forge `[47.1.3,)`, Applied Energistics 2 `[15.0.10,16.0.0)` |
+| `1.20.1 Fabric` | Minecraft `1.20.1`, Fabric Loader `>=0.14.21`, Fabric API `>=0.83.1`, Java `>=17`, Applied Energistics 2 `>=15.0.10 <16.0.0` |
+| `1.21.1 NeoForge` | Minecraft `[1.21.1]`, NeoForge `[21.1.1,)`, Applied Energistics 2 `[19.0.24,20.0.0)` |
+| `26.1.2 NeoForge` | Minecraft `[26.1.2]`, NeoForge `[26.1.2.71,)`, Java `>=25`, Applied Energistics 2 `[26.1.10-beta,27.0.0)` |
+
+## Dependency and integration matrix
+
+Optional addons are not required to run AE2 Crafting Time. Declared optional
+ranges have a minimum and no upper cap. Development-client pins make tests
+repeatable; they do not freeze modpacks or guarantee future addon compatibility.
+
+The four version columns record compatible development-client pins, with
+focused-only and unpinned exceptions marked.
+They are not minimum versions or a claim about the latest upstream release.
+**Declared targets** and **Minimum version** describe loader metadata; `—` in
+those columns means no separate optional dependency declaration is recorded.
+It does not erase the native integration or development coverage in the row.
+Required versions are listed above.
+
+`Yes (base)` means the Forge driver exercises the dependency in its base AE2
+scenario; `Yes (scenario)` or a scenario name means a dedicated driver exists.
+`No` means no driver for that target; `Not pinned` means declared support without
+a compatible-client artifact; `—` in a target column means it is not part of that
+target's recorded inventory. Driver availability is not a passing smoke result:
+see the [campaign evidence and known visual failure](mod-automation-coverage.md).
+AdvancedAE's Forge fixture is development coverage, not a declared Forge dependency.
+
+| Mod Name | 1.20.1-forge | 1.20.1-forge TestDriver | 1.20.1-fabric | 1.20.1-fabric TestDriver | 1.21.1-neoforge | 1.21.1-neoforge TestDriver | 26.1.2-neoforge | 26.1.2-neoforge TestDriver | Declared targets | Minimum version | Integration / limits | Project links / tracking issue |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Minecraft (required) | `1.20.1` | Yes (base) | `1.20.1` | No | `1.21.1` | No | `26.1.2` | No | — | See required dependencies | Required runtime / base AE2 crafting. | — |
+| Java (required) | `17` | Yes (base) | `17` | No | `21` | No | `25` | No | — | See required dependencies | Required runtime / base AE2 crafting. | — |
+| Forge (required) | `47.4.10` | Yes (base) | — | — | — | — | — | — | — | See required dependencies | Required runtime / base AE2 crafting. | — |
+| Fabric Loader (required) | — | — | `0.19.4` | No | — | — | — | — | — | See required dependencies | Required runtime / base AE2 crafting. | — |
+| Fabric API (required) | — | — | `0.92.11+1.20.1` | No | — | — | — | — | — | See required dependencies | Required runtime / base AE2 crafting. | — |
+| NeoForge (required) | — | — | — | — | `21.1.238` | No | `26.1.2.99` | No | — | See required dependencies | Required runtime / base AE2 crafting. | — |
+| Applied Energistics 2 (required) | `15.4.10` | Yes (base) | `15.1.0` | No | `19.2.17` | No | `26.1.10-beta` | No | — | See required dependencies | Required runtime / base AE2 crafting. | — |
+| ae2ct (Crafting Tree) (`ae2ct`; optional) | `1.0.1` | No | Not pinned | No | `1.0.1` | No | — | — | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | `>=1.0.1` | TTC lines and details in AE2: Crafting Tree UI. | [CF][ae2ct-cf] / [#69](https://github.com/cTux/ae2-crafting-time/issues/69) |
+| Applied Mekanistics (`appmek`; optional) | `1.4.3` | Yes (`appmek-cpu`) | — | — | `1.6.3` | No | — | — | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.4.3`; NeoForge: `>=1.6.2` | TTC profiling and Crafting Plan display for chemicals stored in the ME network through Applied Mekanistics' native AE2 key. | [CF][appmek-cf] / [MR][appmek-mr] / [#68](https://github.com/cTux/ae2-crafting-time/issues/68) |
+| AdvancedAE (`advanced_ae`; optional) | `1.3.6-1.20.1` | Yes (scenario) | — | — | `1.6.12-1.21.1` | No | `26.1.7` | No | `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.21.1: `>=1.6.11`; 26.1.2: `>=26.1.7` | TTC profiling for AdvancedAE crafting CPUs, including the Quantum Computer. | [CF][advancedae-cf] / [MR][advancedae-mr] / [#67](https://github.com/cTux/ae2-crafting-time/issues/67) |
+| ME Requester (`merequester`; optional) | `1.20.1-1.2.1+forge` | Yes (`merequester-screen`) | `1.20.1-1.1.4+fabric` | No | `1.21.1-1.4.3+neoforge` | No | — | — | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | Forge/Fabric: `>=1.20.1`; NeoForge: `>=1.21.1` | TTC row labels and total TTC hints in ME Requester screens. Forge row TTC has a known icon-overlap visual failure; header total remains readable. | [CF][merequester-cf] / [MR][merequester-mr] / [#70](https://github.com/cTux/ae2-crafting-time/issues/70) |
+| NeoEco AE (`neoecoae`; optional) | `20.3.0` | Yes (scenario) | — | — | `21.1.1` | No | — | — | `1.20.1 Forge` | `>=20.3.0` | TTC profiling for C-series ECO crafting CPUs, including normal and FastPath dispatch. Version 20.4.2 passed the Project Infinity update graph's CPU smoke with LightningTech and Thunderbolt installed; results for other dependency graphs can differ. | [CF][neoecoae-cf] / [MR][neoecoae-mr] / [#66](https://github.com/cTux/ae2-crafting-time/issues/66) |
+| AE2 Lightning Tech (`ae2lt`; optional) | `2.1.0-beta.2-forge.1.20.1` | Yes (scenario) | — | — | `2.1.0-beta.2` | No | `1.0.1alpha-26.1.2neoforge` | No | `1.20.1 Forge` | `>=2.1.0-beta.2` | TTC profiling for Tianshu time-wheel crafting CPUs. | [CF][ae2lt-cf] / [MR][ae2lt-mr] / [#72](https://github.com/cTux/ae2-crafting-time/issues/72) |
+| OmniSequence: Transfinite (`molecularmanipulator`; optional) | `1.3.9-forge` | Yes (scenario) | — | — | `1.3.9-hotfix` | No | — | — | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.3.8-hotfix-forge`; NeoForge: `>=1.3.9-hotfix` | TTC profiling for Omni-Computation Core crafting CPUs through AE2's native execution path. | [CF][omnisequence-cf] / [#71](https://github.com/cTux/ae2-crafting-time/issues/71) |
+| ExtendedAE (optional) | `1.20-1.4.18-forge` | Yes (scenario) | `1.20-1.0.2-fabric` | No | `1.21-2.2.35-neoforge` | No | `26.1-1.0.3-neoforge` | No | — | — | Assembler/provider integration through AE2 UI and execution paths; Forge driver available. | [CF][extendedae-cf] / [#73](https://github.com/cTux/ae2-crafting-time/issues/73) |
+| ExtendedAE-Plus (`extendedae_plus`; optional) | `1.5.5` | Yes (scenario) | — | — | `1.6.2` | No | — | — | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.5.5`; NeoForge: `>=1.6.2` | TTC profiling and UI coexistence with ExtendedAE-Plus crafting changes. | [CF][extendedaeplus-cf] / [MR][extendedaeplus-mr] / [#74](https://github.com/cTux/ae2-crafting-time/issues/74) |
+| BM Addon (`bmaddon`; optional) | `1.0.4` | Yes (`bmaddon-cpu`) | — | — | `BMAddon1.21.1-beta1` | No | `beta3` | No | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | Forge: `>=1.0.4`; 1.21.1: `>=1.21.1-beta1`; 26.1.2: `>=1.0.2` | TTC profiling and Crafting Plan display for crafts handled by the Blood Assembler. | [CF][bmaddon-cf] / [MR][bmaddon-mr] / [#75](https://github.com/cTux/ae2-crafting-time/issues/75) |
+| Crazy AE2 Addons (`crazyae2addons`; optional) | `3.2.4` | Yes (`crazyae2addons-cpu`) | — | — | — | — | — | — | `1.20.1 Forge` | `>=2.6.2` | TTC profiling and Crafting Plan display with Crazy AE2 Addons CPU priorities. | [CF][crazyae2-cf] / [MR][crazyae2-mr] / [#76](https://github.com/cTux/ae2-crafting-time/issues/76) |
+| AE2 WCWT (`wcwt`; optional) | `1.20.1.10` | Yes (`ae2wcwt-terminal`) | — | — | `1.3.8` | No | — | — | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.20.1.7-hotfix`; NeoForge: `>=1.3.8` | One-item TTC in craftable entries of the wireless comprehensive work terminal. Crafting still uses AE2's normal CPU detection and Crafting Plan. | [CF][ae2wcwt-cf] / [MR][ae2wcwt-mr] / [#77](https://github.com/cTux/ae2-crafting-time/issues/77) |
+| AE2 Wireless Terminals (`ae2wtlib`; optional) | `15.3.3-forge` | Yes (`ae2wtlib-terminal`) | `15.2.1-fabric` | No | `19.5.1` | No | `26.1.1-beta` | No | All supported targets | 1.20.1 Forge: `>=15.3.3`; Fabric: `>=15.2.1`; 1.21.1: `>=19.5.1`; 26.1.2: `>=26.1.1-beta` | One-item TTC in craftable entries of its wireless crafting terminal. Crafting still uses AE2's normal CPU detection and Crafting Plan. | [CF][wireless-cf] / [MR][wireless-mr] / [#78](https://github.com/cTux/ae2-crafting-time/issues/78) |
+| MEGA Cells (`megacells`; optional) | `forge-2.4.6` | Yes (`megacells-cpu`) | `fabric-2.4.6` | No | `4.11.0` | No | — | — | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | Forge/Fabric: `>=2.4.6`; NeoForge: `>=4.11.0` | TTC profiling and Crafting Plan display for MEGA crafting CPUs through AE2's native execution path. | [CF][megacells-cf] / [MR][megacells-mr] / [#79](https://github.com/cTux/ae2-crafting-time/issues/79) |
+| OMNI Cells (`ae2omnicells`; optional) | `1.1.6-1.20.1-forge` | Yes (`omnicells-cpu`) | — | — | `1.1.6-1.21.1-neoforge` | No | `1.1.7-26.1.2-neoforge` | No | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.20.1/1.21.1: `>=1.1.6`; 26.1.2: `>=1.1.7` | TTC profiling and Crafting Plan display for OMNI crafting CPUs through AE2's native execution path. | [CF][omnicells-cf] / [#80](https://github.com/cTux/ae2-crafting-time/issues/80) |
+| ProjectCell (`projectcell`; optional) | `1.0.1` | Yes (`projectcell-cpu`) | — | — | `1.0.3` | No | — | — | `1.20.1 Forge`, `1.21.1 NeoForge` | `>=1.0.0` | TTC profiling and Crafting Plan display when ProjectCell supplies ingredients from ProjectE EMC through AE2's native storage and crafting paths. | [CF][projectcell-cf] / [MR][projectcell-mr] / [#81](https://github.com/cTux/ae2-crafting-time/issues/81) |
+| AppliedE / AppliedE TPS Fix (`appliede`; optional) | `0.14.7-fix2` | Yes (`appliede-cpu`) | — | — | `1.0.0-beta` | No | — | — | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=0.14.0`; NeoForge: `>=1.0.0-beta` | TTC profiling and Crafting Plan display when AppliedE supplies ingredients from ProjectE EMC through AE2's native key and crafting paths. Install either AppliedE or its TPS Fix fork, not both. | [CF][appliede-cf] / [MR][appliede-mr] / [#82](https://github.com/cTux/ae2-crafting-time/issues/82) |
+| Applied Flux (`appflux`; optional) | `1.20-1.3.7-forge` | Yes (`appflux-cpu`) | — | — | `1.21-2.1.5-neoforge` | No | `26.1-1.0.1-neoforge` | No | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.20.1: `>=1.20-1.3.7-forge`; 1.21.1: `>=1.21-2.1.4-neoforge`; 26.1.2: `>=26.1-1.0.1-neoforge` | TTC profiling and Crafting Plan display for FE stored in the ME network through Applied Flux's native AE2 energy key. | [CF][appliedflux-cf] / [MR][appliedflux-mr] / [#83](https://github.com/cTux/ae2-crafting-time/issues/83) |
+| Modern AE2 Additions (`mae2`; optional) | `2.0.1` | Yes (`modern-ae2-additions-cpu`) | — | — | — | — | — | — | `1.20.1 Forge` | `>=1.1.0` | TTC profiling and Crafting Plan display for CPUs using Modern AE2 Additions dense co-processors through AE2's native crafting path. | [CF][modernae2-cf] / [MR][modernae2-mr] / [#84](https://github.com/cTux/ae2-crafting-time/issues/84) |
+| AE2 Import Export Card (`ae2insertexportcard` / `ae2importexportcard`; optional) | `1.20.1-1.3.0` | Yes (`ae2importexportcard-terminal`) | — | — | `1.21.1-1.6.0` | No | `26.1.2-2.1.0` | No | — | — | Terminal/card integration with direct one-item TTC tooltips; Forge driver available. | [CF][ae2iec-cf] / [MR][ae2iec-mr] / [#85](https://github.com/cTux/ae2-crafting-time/issues/85) |
+| AE2 Network Analyser (`ae2netanalyser`; optional) | `1.20-1.0.6-forge` | Yes (`ae2networkanalyser-screen`) | `1.20-1.0.1-fabric` | No | `1.21-2.1.5-neoforge` | No | `26.1-1.0.0-neoforge` (beta) | No | — | — | Visual analyser compatibility smoke (`GuiAnalyser`); no extra TTC hook. | [CF][ae2na-cf] / [#86](https://github.com/cTux/ae2-crafting-time/issues/86) |
+| AEInfinityBooster (`aeinfinitybooster`; optional) | `1.20.1-1.0.0+20` | Yes (`aeinfinitybooster-terminal`) | — | — | `1.21.1-1.0.0.58` | No | `26.1.2-1.0.0.57` | No | — | — | Wireless range compatibility through AE2's normal Crafting Plan; no extra TTC hook. | [CF][aeinfinity-cf] / [MR][aeinfinity-mr] / [#87](https://github.com/cTux/ae2-crafting-time/issues/87) |
+| Applied Botanics (original) (`appbot`; optional) | `1.5.2` | Yes (`appbot-cpu`: native mana storage + item craft) | `1.5.2` | No | Not pinned | No | — | — | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | 1.20.1: `>=1.5.0`; 1.21.1: `>=1.6.0-alpha.3` | Raw mana amounts and mana unit labels through its native AE2 key. Existing milli-pool histories are converted on load. NeoForge alpha is not runtime-pinned or smoke-verified. | [MR](https://modrinth.com/mod/applied-botanics) |
+| Applied Botanics (Fork; alternative `appbot`) | `1.5.2` | Yes (`appbot-fork-cpu`: native mana storage + item craft) | — | — | — | — | — | — | — | — | Alternative `appbot` artifact using the same native mana integration; install either the original or fork. | [CF][appliedbotanics-cf] / [#88](https://github.com/cTux/ae2-crafting-time/issues/88) |
+| Advanced Peripherals (`advancedperipherals`; optional) | `1.20.1-0.7.48r` | Yes (`advancedperipherals-cpu`: real ME Bridge API) | — | — | `1.21.1-0.8.0a` (alpha) | No | — | — | — | — | ME Bridge submits through AE2's native crafting service; Forge driver uses a real attached CC:Tweaked computer. No ComputerCraft TTC API or display. | [CF][advancedperipherals-cf] / [MR][advancedperipherals-mr] / [#89](https://github.com/cTux/ae2-crafting-time/issues/89) |
+| AE2 Things (`ae2things`; original Fabric / Forge port; optional) | `1.2.1` | Yes (`ae2things-cpu`: real DISK storage craft) | `1.3.2` | No | Not pinned (`1.4.2-beta` supported) | No | — | — | — | — | Native DISK storage and crafting; Forge driver supplies ingredients from a real DISK. No TTC overlays for Fabric-only machine UIs. | [MR][ae2things-mr] / [Forge port](https://www.curseforge.com/minecraft/mc-mods/ae2-things-forge) |
+| Expanded AE (`expandedae`; optional) | `1.2.2` (focused only; excluded from full compatible set) | Yes (`expandedae-cpu`, latest focused profile) | — | — | `2.1.1` (excluded from compatible set) | No | — | — | — | — | Native CPU profiling and Crafting Plan; Forge driver uses a two-thread accelerator. Focused testing only; no OmniSequence coexistence claim. | [CF][expandedae-cf] / [MR][expandedae-mr] |
+
+## Compatibility boundaries
+
+- Applied Mekanistics has Forge/NeoForge releases for these targets. Applied
+  Flux has no stable Fabric 1.20.1 release. Neither is declared for Fabric.
+- Applied Botanics original and fork share `appbot`, its version, and mana key;
+  install one, not both. Both use raw mana and Botania 455 on Forge 1.20.1.
+  The fork has no recorded Fabric, NeoForge 1.21.1, or 26.1.2 artifact.
+  Original 1.21.1 support starts at `1.6.0-alpha.3` and requires Botania
+  `454-SNAPSHOT` (`vazkii.botania:botania-neoforge-1.21.1:454-20260621.181850-47`),
+  with no matching published Modrinth release. No original 26.1.2 artifact is
+  recorded. The Forge driver covers native mana storage plus normal item
+  crafting, not a mana-generation recipe.
+- AppliedE and AppliedE TPS Fix are alternative artifacts: install one, not both.
+- AEInfinityBooster uses AE2's normal Crafting Plan and has no recorded Fabric
+  release for the supported target. Advanced Peripherals has no recorded Fabric
+  1.20.1 or NeoForge 26.1.2 release; NeoForge 1.21.1 uses an alpha.
+- AE2 Things uses the original Fabric release and a separate Forge/NeoForge
+  port. The latter has no old Inscriber or Crystal Growth Chamber. NeoForge
+  `1.4.2-beta` is compile-checked, not promoted to the compatible runtime without
+  a smoke run. No 26.1.2 artifact is recorded.
+- Expanded AE has no recorded Fabric 1.20.1 or NeoForge 26.1.2 artifact. Its
+  Applied Flux/OmniSequence conflict excludes it from the full compatible set;
+  the [client coverage notes](mod-automation-coverage.md#client-setup-and-exclusions)
+  explain the focused profile and missing upstream prerequisite declarations.
+- WCWT, AE2 Wireless Terminals, and Import Export Card label one-item estimates
+  `TTC: ~1s` or `TTC: No data yet`, after AE2's amount, craftability, and advanced
+  details. Other mods may append content afterward. Compact row badges retain
+  their existing text.
+
+## Integration approach
+
+Start with AE2's CPU, key, and UI contracts. Add addon-specific code only when
+source inspection proves that an addon bypasses them. Reuse `ClientStats`,
+`TimeEstimate`, and `AeKeyAmounts`; add a compile-time dependency only when AE2
+APIs or an optional string-target mixin cannot reach the screen or key type.
+
+| Path | What it covers | Boundary |
+| --- | --- | --- |
+| Native CPU execution | `CraftingCpuLogicMixin`, including OmniSequence and other addons inheriting its methods | An override bypasses only the method it replaces. OmniSequence's `executeCrafting` redirect must remain conflict-safe. |
+| Custom CPU adapter | AdvancedAE, NeoEco, and LightningTech call `ProfilerBridge` at dispatch, insertion, finish, and capacity points | Use a small optional `@Pseudo` mixin for custom execution. NeoEco uses `cn.dancingsnow.neoecoae.api.me.ECOCraftingCPULogic`; LightningTech uses `com.moakiee.ae2lt.crafting.timewheel.Ae2LtTimeWheelCraftingCpuLogic`. |
+| Native resource key | `AeKeyAmounts` normalizes `AEKey` through `getAmountPerUnit()` | Verify each key type; use `AEKeyType`, not addon class checks. Preserve raw-mana precision. |
+| Existing AE2 UI hooks | Craft-confirm and crafting-status renderers and screens inheriting their hooked methods | `AbstractTableRendererMixin` only decorates TTC lines; inheritance alone does not prove every screen path is covered. |
+| Bespoke UI hook | Crafting Tree, ME Requester, WCWT, Wireless Terminals, and Import Export Card | Add an optional screen-specific mixin only where the shared UI path does not reach. Advanced Peripherals uses native submission and needs no extra TTC API. |
+| Planned service observation | A proof-of-coverage spike may observe `CraftingService.submitJob`, `getCpus`, and busy-state changes | Only covers exposed CPUs and job lifecycle; cannot produce output-throughput samples. A shared `AEBaseScreen` hook also remains conditional on one usable common method. |
+
+Automatic `ICraftingCPU` discovery and a Mixin plugin do not replace execution
+adapters: the interface exposes status, capacity, and cancellation, not dispatch
+and accepted-output events. `getGrid()` and `getLevel()` are concrete CPU methods;
+check the supplying addon class before using them in an adapter.
+
+The [addon integration spec](ae2-addon-integration/spec.md),
+[technical design](ae2-addon-integration/technical-design.md), and
+[implementation plan](ae2-addon-integration/implementation-plan.md) retain the
+full requirements and rollout. Tracking issues in the matrix identify that work;
+they do not claim a current issue state.
+
+## Build tools and sources
+
+Build the 1.20.1 modules with Java 17, 1.21.1 NeoForge with Java 21, and
+26.1.2 NeoForge with Java 25.
+
+Declared support comes from [the release matrix](../scripts/release-matrix.json)
+and loader metadata. Client pins come from
+[run-client-versions.json](../scripts/run-client-versions.json); scenarios live in
+[the Forge test driver](../versions/1.20.1-forge/src/testDriver).
+
+[advancedae-cf]: https://www.curseforge.com/minecraft/mc-mods/advancedae
+[advancedae-mr]: https://modrinth.com/mod/advancedae
+[neoecoae-cf]: https://www.curseforge.com/minecraft/mc-mods/neo-eco-ae-extension
+[neoecoae-mr]: https://modrinth.com/mod/neoecoae
+[omnisequence-cf]: https://www.curseforge.com/minecraft/mc-mods/omnisequence-transfinite
+[ae2lt-cf]: https://www.curseforge.com/minecraft/mc-mods/ae2-lightning-tech
+[ae2lt-mr]: https://modrinth.com/mod/ae2-lightning-tech
+[extendedae-cf]: https://www.curseforge.com/minecraft/mc-mods/ex-pattern-provider
+[extendedaeplus-cf]: https://www.curseforge.com/minecraft/mc-mods/extendedae-plus
+[extendedaeplus-mr]: https://modrinth.com/mod/extendedae-plus
+[bmaddon-cf]: https://www.curseforge.com/minecraft/mc-mods/bmaddon
+[bmaddon-mr]: https://modrinth.com/mod/bmaddon
+[crazyae2-cf]: https://www.curseforge.com/minecraft/mc-mods/crazy-ae2-addons
+[crazyae2-mr]: https://modrinth.com/mod/crazy-ae2-addons
+[ae2wcwt-cf]: https://www.curseforge.com/minecraft/mc-mods/ae2-wcwt
+[ae2wcwt-mr]: https://modrinth.com/mod/ae2-wcwt
+[wireless-cf]: https://www.curseforge.com/minecraft/mc-mods/applied-energistics-2-wireless-terminals
+[wireless-mr]: https://modrinth.com/mod/applied-energistics-2-wireless-terminals
+[megacells-cf]: https://www.curseforge.com/minecraft/mc-mods/mega-cells
+[megacells-mr]: https://modrinth.com/mod/mega
+[omnicells-cf]: https://www.curseforge.com/minecraft/mc-mods/omni-cells
+[projectcell-cf]: https://www.curseforge.com/minecraft/mc-mods/projectcell
+[projectcell-mr]: https://modrinth.com/mod/projectcell
+[appliede-cf]: https://www.curseforge.com/minecraft/mc-mods/appliede-tps-fix
+[appliede-mr]: https://modrinth.com/mod/appliede
+[appliedflux-cf]: https://www.curseforge.com/minecraft/mc-mods/applied-flux
+[appliedflux-mr]: https://modrinth.com/mod/applied-flux
+[modernae2-cf]: https://www.curseforge.com/minecraft/mc-mods/modern-ae2-additions
+[modernae2-mr]: https://modrinth.com/mod/modern-ae2-additions
+[appmek-cf]: https://www.curseforge.com/minecraft/mc-mods/applied-mekanistics
+[appmek-mr]: https://modrinth.com/mod/applied-mekanistics
+[ae2ct-cf]: https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-tree
+[merequester-cf]: https://www.curseforge.com/minecraft/mc-mods/merequester
+[merequester-mr]: https://modrinth.com/mod/merequester
+[ae2iec-cf]: https://www.curseforge.com/minecraft/mc-mods/ae2-import-export-card
+[ae2iec-mr]: https://modrinth.com/mod/ae2-import-export-card
+[ae2na-cf]: https://www.curseforge.com/minecraft/mc-mods/ae2-network-analyser
+[aeinfinity-cf]: https://www.curseforge.com/minecraft/mc-mods/aeinfinitybooster
+[aeinfinity-mr]: https://modrinth.com/mod/aeinfinitybooster
+[appliedbotanics-cf]: https://www.curseforge.com/minecraft/mc-mods/applied-botanics-fork
+[advancedperipherals-cf]: https://www.curseforge.com/minecraft/mc-mods/advancedperipherals
+[advancedperipherals-mr]: https://modrinth.com/mod/advancedperipherals
+[ae2things-mr]: https://modrinth.com/mod/ae2things
+[expandedae-cf]: https://www.curseforge.com/minecraft/mc-mods/expanded-ae
+[expandedae-mr]: https://modrinth.com/mod/expanded-ae

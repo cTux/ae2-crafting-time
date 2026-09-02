@@ -125,4 +125,4 @@ the same keys. Placeholders and key sets must stay matched.
 - both NeoForge targets include the AdvancedAE adapter.
 - 26.1.2 omits the pre-26 optional UI adapters.
 - loader metadata keeps optional dependencies optional and agrees with
-  `DEPENDENCIES.md`.
+  `docs/dependencies.md`.

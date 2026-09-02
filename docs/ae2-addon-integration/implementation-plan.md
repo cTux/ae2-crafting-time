@@ -93,5 +93,5 @@ specific, reproduced contract gap.
 - Launch each named modpack only through its matching Prism test workflow.
 - Test with each optional addon present and absent.
 - Check that samples are recorded once, persisted, requested, reset, and shown.
-- Update `DEPENDENCIES.md`, loader metadata, and candidate status only for code
+- Update `docs/dependencies.md`, loader metadata, and candidate status only for code
   and versions that were actually verified.

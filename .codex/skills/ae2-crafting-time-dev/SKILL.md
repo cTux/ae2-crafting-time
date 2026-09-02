@@ -58,7 +58,7 @@ Every new or changed executable behavior must have 100% line and branch coverage
 - Keep ordinary `run-*` clients on the pinned compatible graph and use
   `run-*-latest` clients for the newest available versions. Update both through
   `scripts/run-client-versions.json`.
-- Update `docs/mod-automation-coverage.md` in the same change whenever required
+- Update `docs/dependencies.md` in the same change whenever required
   or optional dependency support changes, or an existing integration changes
   its behavior, supported targets, versions, or status.
 - When a reproduced third-party conflict makes the full graph impossible,
