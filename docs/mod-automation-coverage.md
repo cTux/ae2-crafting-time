@@ -12,8 +12,10 @@ WCWT `1.20.1.7-hotfix`, NeoEco `20.4.0`, and OmniSequence
 scenario fixtures remain applicable. NeoEco's expected-output hook accepts
 both the 20.3 accounting object and the 20.4 batched-dispatch signature.
 The prepared-client pins below are unchanged. CodexVM passed dependency
-validation but could not create the pack's `16384x8192` texture atlas because
-its graphics limit is `8192x8192`. A user-approved host-GPU rerun in a disposable
+validation but Minecraft's square texture probe lowered its detected limit to
+`8192`, preventing the pack's `16384x8192` atlas. A guest GL allocation probe later
+confirmed that SVGA3D supports that rectangular atlas; the opt-in test-driver
+workaround is documented in the test-driver design. A user-approved host-GPU rerun in a disposable
 copy passed the dedicated scenarios for all four exact versions above, including
 fresh CPU profiling samples and visible TTC for the three CPU integrations and
 terminal tooltip/plan TTC for WCWT. The original pack's mods were not upgraded
