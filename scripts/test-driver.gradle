@@ -12,7 +12,7 @@ dependencies {
 }
 
 
-tasks.register('testDriverUnmappedJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar) {
+tasks.named('testDriverUnmappedJar') {
     dependsOn tasks.named('compileTestDriverJava')
     from sourceSets.testDriver.output
     configurations = [project.configurations.testDriverLibraries]
@@ -40,4 +40,3 @@ tasks.register('testDriverUnmappedJar', com.github.jengelman.gradle.plugins.shad
     relocate 'jakarta.security', 'com.ctux.ae2craftingtime.testdriver.lib.security'
     relocate 'jakarta.annotation', 'com.ctux.ae2craftingtime.testdriver.lib.annotation'
 }
-

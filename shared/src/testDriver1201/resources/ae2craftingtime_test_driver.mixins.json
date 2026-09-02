@@ -13,6 +13,7 @@
     "AEKeyRenderingMixin",
     "AbstractTableRendererMixin",
     "CraftAmountScreenAccessor",
+    "ContainerScreenAccessor",
     "CraftConfirmTableRendererMixin",
     "GuiGraphicsMixin",
     "MEStorageScreenAccessor",

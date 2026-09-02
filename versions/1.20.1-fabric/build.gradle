@@ -110,6 +110,7 @@ loom {
 sourceSets.testDriver.compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
 sourceSets.testDriver.runtimeClasspath += sourceSets.testDriver.output + sourceSets.testDriver.compileClasspath
 ext.testDriverLoader = 'fabric'
+tasks.register('testDriverUnmappedJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar)
 apply from: rootProject.file('scripts/test-driver.gradle')
 
 dependencies {
