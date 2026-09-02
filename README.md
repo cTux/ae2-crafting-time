@@ -19,7 +19,7 @@ that have stopped making progress.
 
 It is not affiliated with or endorsed by the Applied Energistics 2 team.
 
-![Crafting status TTC bottleneck diagnostics](docs/images/crafting-status-ttc-bottleneck-diagnostics.png)
+![Delayed crafting job](docs/images/crafting-status-delayed.png)
 
 [See the screenshot gallery](docs/images/README.md) for the other windows,
 tooltips, and TTC states.
