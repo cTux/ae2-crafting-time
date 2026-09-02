@@ -44,7 +44,7 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 | AE2 Network Analyser (`ae2netanalyser`; optional) | `1.20-1.0.6-forge` | Yes (`ae2networkanalyser-screen`) | `1.20-1.0.1-fabric` | No | `1.21-2.1.5-neoforge` | No | `26.1-1.0.0-neoforge` (beta) | No |
 | AEInfinityBooster (`aeinfinitybooster`; optional) | `1.20.1-1.0.0+20` | Yes (`aeinfinitybooster-terminal`) | — | — | `1.21.1-1.0.0.58` | No | `26.1.2-1.0.0.57` | No |
 | Applied Botanics (original) (`appbot`; optional) | `1.5.2` | Yes (`appbot-cpu`: native mana storage + item craft) | `1.5.2` | No | Not pinned | No | — | — |
-| Applied Botanics (Fork) (candidate) | — | — | — | — | — | — | — | — |
+| Applied Botanics (Fork; alternative `appbot`) | `1.5.2` | Yes (`appbot-fork-cpu`: native mana storage + item craft) | — | — | — | — | — | — |
 | Advanced Peripherals (candidate) | `1.20.1-0.7.48r` | No | — | — | `1.21.1-0.8.0a` | No | — | — |
 | AE2 Things (candidate) | — | — | `1.3.2` | No | — | — | — | — |
 | Expanded AE (candidate) | Incompatible; not pinned | No | — | — | Incompatible; not pinned | No | — | — |
@@ -52,6 +52,9 @@ it. `Not pinned` means support is declared without a compatible-profile artifact
 Original Applied Botanics 1.21.1 support is declared from `1.6.0-alpha.3`, but
 its required Botania snapshot has no matching published Modrinth release.
 That runtime is not pinned or smoke-verified; no original 26.1.2 artifact exists.
+
+Forge full clients select the fork instead of the original because their mod
+IDs and filenames collide. Focused runs can select either artifact explicitly.
 
 The supported targets and declared dependencies come from
 [`scripts/release-matrix.json`](../scripts/release-matrix.json), loader metadata,

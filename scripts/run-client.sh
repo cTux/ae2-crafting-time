@@ -90,6 +90,8 @@ fi
 manifest="$mods/.ae2-crafting-time-run-mods.json"
 mkdir -p "$mods"
 if [ -n "$VersionMatrix" ]; then matrix="$VersionMatrix"; else matrix="$script_dir/run-client-versions.json"; fi
+while IFS= read -r replaced; do provided+=("$replaced"); done < <(
+  jq -r --arg target "$Target" '.[] | select(.id==$target) | .curseforge[]? | .replaces_project_id // empty' "$matrix")
 if [ "$Latest" -eq 1 ]; then project_filter='.projects[]'; else project_filter='.projects[] | select(.compatible != false)'; fi
 mapfile -t Projects < <(jq -r --arg target "$Target" ".[] | select(.id==\$target) | $project_filter | .project_id" "$matrix")
 declare -A VersionPins=()
@@ -195,6 +197,7 @@ install_project() {
 for projectId in "${Projects[@]}"; do install_project "$projectId"; done
 while IFS= read -r dependency; do
   [ -z "$dependency" ] && continue
+  while IFS= read -r projectId; do install_project "$projectId"; done < <(echo "$dependency" | jq -r '.modrinth_dependencies[]?')
   if [ "$Latest" -eq 1 ]; then file="$(echo "$dependency" | jq -c '.latest')"; else file="$(echo "$dependency" | jq -c '.compatible')"; fi
   file_id="$(echo "$file" | jq -r '.file_id')"
   filename="$(echo "$file" | jq -r '.filename')"

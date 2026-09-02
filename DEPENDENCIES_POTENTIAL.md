@@ -51,7 +51,7 @@ therefore cannot replace layer 2.
 | AE2 Import Export Card | QOL | 4/5 | #85 | [CF][ae2iec-cf] / [MR][ae2iec-mr] | Not started |
 | AE2 Network Analyser | QOL (visual tool) | `GuiAnalyser` compatibility smoke; no TTC hook | #86 | [CF][ae2na-cf] | Integrated |
 | AEInfinityBooster | QOL (range) | Wireless range and Crafting Plan compatibility; no new TTC hook | #87 | [CF][aeinfinity-cf] / [MR][aeinfinity-mr] | Integrated |
-| Applied Botanics (Fork) | QOL (Botania) | 4 | #88 | [CF][appliedbotanics-cf] | Not started |
+| Applied Botanics (Fork) | MANA_KEY | Same native mana contract as original | #88 | [CF][appliedbotanics-cf] | Integrated; separate Forge artifact/driver |
 | Advanced Peripherals | QOL (ME Bridge) | 5 (peripheral API, if useful) | #89 | [CF][advancedperipherals-cf] / [MR][advancedperipherals-mr] | Not started |
 | AE2 Things | QOL (Inscriber / Crystal Growth) | 4/5 | — | [MR][ae2things-mr] | Not started |
 | Expanded AE | PROVIDER / QOL | 4 | — | [CF][expandedae-cf] / [MR][expandedae-mr] | Not started |

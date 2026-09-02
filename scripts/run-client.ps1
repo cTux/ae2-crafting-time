@@ -64,6 +64,14 @@ $availableProjects = @($matrixEntry.projects.project_id | ForEach-Object { [stri
 foreach ($requestedProject in $requestedProjects) {
     if ($requestedProject -notin $availableProjects) { throw "Unknown project $requestedProject for $Target" }
 }
+foreach ($replacement in @($matrixEntry.curseforge | Where-Object {
+    $_.replaces_project_id -and ($requestedProjects.Count -eq 0 -or [string]$_.project_id -in $requestedProjects)
+})) {
+    if ($replacement.replaces_project_id -in $requestedProjects) {
+        throw "Cannot load projects $($replacement.project_id) and $($replacement.replaces_project_id) together"
+    }
+    $null = $provided.Add([string]$replacement.replaces_project_id)
+}
 $projects = @($matrixEntry.projects | Where-Object {
     ($Latest -or $_.compatible -ne $false) -and
         ($requestedProjects.Count -eq 0 -or [string]$_.project_id -in $requestedProjects)
@@ -170,6 +178,7 @@ if ($requestedProjects.Count) {
     }
 }
 foreach ($dependency in @($matrixEntry.curseforge | Where-Object { [string]$_.project_id -in $curseforgeProjects })) {
+    foreach ($projectId in @($dependency.modrinth_dependencies | Where-Object { $_ })) { Install-Project $projectId }
     $file = if ($Latest) { $dependency.latest } else { $dependency.compatible }
     $fileId = [string]$file.file_id
     $group = $fileId.Substring(0, 4)

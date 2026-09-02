@@ -95,13 +95,23 @@ try {
         Assert-Line $output "runtime loader $($entry.compatible.loader_version)"
         Assert-Line $output "runtime ae2 $($entry.compatible.ae2_version)"
         if ($entry.compatible.fabric_api_version) { Assert-Line $output "runtime fabric-api $($entry.compatible.fabric_api_version)" }
-        $compatibleProjects = @($entry.projects | Where-Object { $_.compatible -ne $false })
+        $replacedProjects = @($entry.curseforge.replaces_project_id)
+        $compatibleProjects = @($entry.projects | Where-Object {
+            $_.compatible -ne $false -and $_.project_id -notin $replacedProjects
+        })
         foreach ($project in $compatibleProjects.project_id) { Assert-Line $output "mod $project.jar" }
+        $extraProjects = @($entry.curseforge.modrinth_dependencies | Where-Object {
+            $_ -and $_ -notin $compatibleProjects.project_id
+        } | Sort-Object -Unique)
+        foreach ($project in $extraProjects) { Assert-Line $output "mod $project.jar" }
         $mods = Join-Path $temp "versions\$($entry.id)\run\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
         $manifest = Get-Content -LiteralPath (Join-Path $mods ".ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
         $curseCount = @($entry.curseforge | Where-Object { $_ }).Count
         $driverCount = if ($entry.id -eq "1.20.1-forge") { 1 } else { 0 }
-        if ($manifest.Count -ne $compatibleProjects.Count + $curseCount + $driverCount) { throw "Unexpected compatible managed-mod count for $($entry.id)" }
+        if ($manifest.Count -ne $compatibleProjects.Count + $extraProjects.Count + $curseCount + $driverCount) { throw "Unexpected compatible managed-mod count for $($entry.id)" }
+        foreach ($project in $replacedProjects) {
+            if ("$project.jar" -in $manifest) { throw "Replaced project $project was also installed" }
+        }
         if ($entry.id -eq "1.20.1-forge") {
             $driverName = "ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"
             if ($driverName -notin $manifest -or -not (Test-Path -LiteralPath (Join-Path $mods $driverName))) { throw "Missing compatible driver" }
@@ -112,7 +122,9 @@ try {
 
         $output = (& $script -Target $entry.id -Root $temp -VersionMatrix $testMatrix -Latest -ResolveOnly 6>&1 | Out-String)
         Assert-Line $output "profile latest"
-        foreach ($project in $entry.projects.project_id) { Assert-Line $output "mod $project.jar" }
+        foreach ($project in @($entry.projects.project_id | Where-Object { $_ -notin $replacedProjects })) {
+            Assert-Line $output "mod $project.jar"
+        }
         $latestMods = Join-Path $temp "versions\$($entry.id)\run-latest\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
         if (-not (Test-Path -LiteralPath (Join-Path $latestMods ".ae2-crafting-time-run-mods.json"))) { throw "Missing latest manifest for $($entry.id)" }
     }
@@ -148,6 +160,27 @@ try {
         throw "Expected an unknown focused project failure"
     } catch {
         if ($_.Exception.Message -ne "Unknown project missing for 1.20.1-forge") { throw }
+    }
+
+    & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -RuntimeDirectory $customRuntime `
+        -ProjectId 1605404 -ResolveOnly 6>&1 | Out-Null
+    $forkManifest = Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
+    if (@($forkManifest).Count -ne 3 -or "pfjLUfGv.jar" -notin $forkManifest -or
+            "applied-botanics-forge-1.5.2.jar" -notin $forkManifest -or "545hUrw9.jar" -in $forkManifest) {
+        throw "Focused fork profile did not replace the original with its Botania dependency"
+    }
+    & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -RuntimeDirectory $customRuntime `
+        -ProjectId 545hUrw9 -ResolveOnly 6>&1 | Out-Null
+    $originalManifest = Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
+    if (@($originalManifest).Count -ne 2 -or "545hUrw9.jar" -notin $originalManifest -or
+            "applied-botanics-forge-1.5.2.jar" -in $originalManifest) {
+        throw "Focused original profile retained the fork"
+    }
+    try {
+        & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -ProjectId 1605404,545hUrw9 -ResolveOnly 6>&1 | Out-Null
+        throw "Expected mutually exclusive project rejection"
+    } catch {
+        if ($_.Exception.Message -ne "Cannot load projects 1605404 and 545hUrw9 together") { throw }
     }
     try {
         & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -ProjectId ayN3DZKb -ResolveOnly 6>&1 | Out-Null

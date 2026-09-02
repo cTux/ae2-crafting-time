@@ -55,8 +55,15 @@ AEInfinityBooster is covered as an optional range-only addon on Forge 1.20.1
 (`26.1.2-1.0.0.57`). It uses AE2's normal Crafting Plan; no extra TTC hook is
 needed. There is no Fabric release for our supported target.
 
-Original Applied Botanics 1.5.2 and Botania 455 are pinned in both 1.20.1
-compatible clients. The 1.21.1 alpha requires Botania `454-SNAPSHOT` (upstream
+Applied Botanics (Fork) 1.5.2 is an alternative to the original on Forge 1.20.1.
+It shares the `appbot` ID, version and mana key; install one, not both. The full
+Forge compatible/latest clients use the fork, while a focused `-ProjectId 545hUrw9`
+selects the original and `-ProjectId 1605404` selects the fork.
+Both use the same raw-mana integration and Botania 455. The fork has no
+published Fabric, NeoForge 1.21.1, or NeoForge 26.1.2 artifact.
+
+Original Applied Botanics 1.5.2 remains pinned for Fabric 1.20.1 and focused
+Forge runs. The 1.21.1 alpha requires Botania `454-SNAPSHOT` (upstream
 build: `vazkii.botania:botania-neoforge-1.21.1:454-20260621.181850-47`), which
 has no matching published Modrinth release; that client is not runtime-pinned
 or smoke-verified. No original Applied Botanics release exists for 26.1.2.
