@@ -31,6 +31,10 @@ sourceSets.test.java.srcDir '../../shared/src/mc1201Test/java'
 repositories {
     mavenCentral()
     maven {
+        url = 'https://api.modrinth.com/maven'
+        content { includeGroup 'maven.modrinth' }
+    }
+    maven {
         name = 'Fabric'
         url = 'https://maven.fabricmc.net/'
     }
@@ -57,6 +61,7 @@ dependencies {
     modImplementation "appeng:appliedenergistics2-fabric:${providers.gradleProperty('runtimeAe2Fabric1201Version').getOrElse('15.0.10')}"
     modImplementation 'teamreborn:energy:3.0.0'
     modCompileOnly 'curse.maven:ae2-network-analyser-961856:5266839'
+    modCompileOnly 'maven.modrinth:545hUrw9:j9qN58Hl'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
 

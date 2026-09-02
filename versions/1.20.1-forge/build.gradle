@@ -105,6 +105,7 @@ dependencies {
     compileOnly 'maven.modrinth:qelfSMnn:v8c3El4q'
     compileOnly 'curse.maven:ae2-network-analyser-961856:5107131'
     compileOnly 'maven.modrinth:VQhDBNs8:cTJwfNfV'
+    compileOnly 'maven.modrinth:545hUrw9:ErMXkIs4'
     testDriverCompileOnly 'maven.modrinth:extended-ae:1.20-1.4.18-forge'
     testDriverCompileOnly 'maven.modrinth:merequester:1.20.1-1.2.1+forge'
     testDriverCompileOnly 'maven.modrinth:extendedae-plus:1.5.5'

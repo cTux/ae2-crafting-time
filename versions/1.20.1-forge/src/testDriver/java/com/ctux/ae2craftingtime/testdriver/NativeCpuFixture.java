@@ -15,7 +15,7 @@ import net.minecraftforge.registries.ForgeRegistries;
 import java.util.Arrays;
 import java.util.Objects;
 
-final class CrazyAe2AddonsFixture extends AddonCpuFixture<CrazyAe2AddonsFixture.Placement> {
+final class NativeCpuFixture extends AddonCpuFixture<NativeCpuFixture.Placement> {
     @Override
     protected Placement place(ServerPlayer player, FixtureMarker marker) {
         if (player == null) {
@@ -24,11 +24,11 @@ final class CrazyAe2AddonsFixture extends AddonCpuFixture<CrazyAe2AddonsFixture.
         var terminal = new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z());
         var level = player.serverLevel();
         if (!(level.getBlockEntity(terminal) instanceof IInWorldGridNodeHost terminalHost)) {
-            throw new IllegalStateException("Crazy AE2 Addons fixture terminal is unavailable");
+            throw new IllegalStateException("native CPU fixture terminal is unavailable");
         }
         var grid = Arrays.stream(Direction.values()).map(terminalHost::getGridNode).filter(Objects::nonNull)
                 .map(node -> node.getGrid()).filter(Objects::nonNull).findFirst()
-                .orElseThrow(() -> new IllegalStateException("Crazy AE2 Addons fixture grid is unavailable"));
+                .orElseThrow(() -> new IllegalStateException("native CPU fixture grid is unavailable"));
         var storage = ForgeRegistries.BLOCKS.getValue(
                 Objects.requireNonNull(ResourceLocation.tryBuild("ae2", "1k_crafting_storage")));
         if (storage == null) {
@@ -65,7 +65,7 @@ final class CrazyAe2AddonsFixture extends AddonCpuFixture<CrazyAe2AddonsFixture.
                     level, placement.storage(), placement.storage());
         }
         if (!(level.getBlockEntity(placement.terminal()) instanceof IInWorldGridNodeHost terminalHost)) {
-            throw new IllegalStateException("Crazy AE2 Addons fixture terminal is unavailable");
+            throw new IllegalStateException("native CPU fixture terminal is unavailable");
         }
         var terminalNode = Arrays.stream(Direction.values()).map(terminalHost::getGridNode)
                 .filter(Objects::nonNull).findFirst().orElseThrow();

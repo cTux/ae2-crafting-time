@@ -31,6 +31,7 @@
   "text.ae2craftingtime.waiting": "Waiting",
   "text.ae2craftingtime.unit.item": "items",
   "text.ae2craftingtime.unit.millibucket": "mB",
+  "text.ae2craftingtime.unit.mana": "mana",
   "text.ae2craftingtime.unknown": "unknown",
   "text.ae2craftingtime.value.accuracy": "%s/%s jobs fully covered · MAPE %s%% · actual/TTC %sx · error %ss · avg coverage %s%%",
   "text.ae2craftingtime.value.accuracy_pending": "%s jobs tracked, no fully covered plan yet · avg coverage %s%%",

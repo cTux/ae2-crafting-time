@@ -57,6 +57,15 @@ class StatsPacketTest {
     }
 
     @Test
+    void snapshotRoundTripsRawManaUnit() {
+        var buffer = new FriendlyByteBuf(Unpooled.buffer());
+        var packet = new StatsSnapshotS2C(List.of(new StatsEntry(new ProfileKey("botania:mana"),
+                new ProfileStats(1, 20, 0.05, 1, 20, ProfileUnit.MANA))));
+        StatsSnapshotS2C.encode(packet, buffer);
+        assertEquals(packet, StatsSnapshotS2C.decode(buffer));
+    }
+
+    @Test
     void chatRoundTripsServerValidatedIntent() {
         var buffer = new FriendlyByteBuf(Unpooled.buffer());
         var packet = new StatsChatC2S("minecraft:iron_ingot", 1509, StatsChatAction.SHOW);

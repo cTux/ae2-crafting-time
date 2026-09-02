@@ -92,6 +92,12 @@ reporting that it executed is not evidence that its output reached the screen.
 Translation keys and output IDs are semantic identity; rendered English text is
 report evidence, not the assertion key.
 
+The `appbot-cpu` fixture mounts a real Applied Botanics mana cell, verifies
+native mana insertion and extraction through the grid, and then runs the shared
+craft/sample/TTC flow on a normal AE2 CPU. Separate amount, packet, and saved-data
+tests cover raw mana precision and unit migration; the fixture does not claim
+to automate a Botania mana-generation recipe.
+
 ## Optional add-on CPU scenarios
 
 An add-on CPU scenario uses the same disposable world, UI flow, profiler checks,

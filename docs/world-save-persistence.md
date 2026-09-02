@@ -92,6 +92,10 @@ outputs: [
 ```
 
 This is enough to reconstruct averages, throughput, latest duration, `TTC`, and colors.
+Applied Botanics entries use the named `MANA` unit and raw mana amounts. Legacy
+`botania:mana` entries recorded as `MILLIBUCKET` are converted from milli-pools
+by multiplying representable positive amounts by 1,000. Other histories are
+unchanged; precision already lost by the old rounding cannot be restored.
 Controller-backed networks now persist a concrete `networkId` derived from the
 controller anchor position.
 

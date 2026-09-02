@@ -22,7 +22,8 @@ class Ae2CraftingTimeSavedDataTest {
         data.replaceFrom(List.of(new PersistedOutputSamples(
                 new ProfileKey("minecraft:iron_plate"),
                 ProfileUnit.ITEM,
-                List.of(new PersistedCraftSample(2, 20)))));
+                List.of(new PersistedCraftSample(2, 20))), new PersistedOutputSamples(
+                new ProfileKey("botania:mana"), ProfileUnit.MANA, List.of(new PersistedCraftSample(1, 20)))));
 
         var tag = data.save(new CompoundTag());
         var loaded = Ae2CraftingTimeSavedData.load(tag);
