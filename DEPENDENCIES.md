@@ -24,7 +24,7 @@ AE2 Crafting Time.
 
 | Dependency | Targets | Version range | What it enables |
 | --- | --- | --- | --- |
-| Applied Botanics (`appbot`; original) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | 1.20.1: `>=1.5.0 <1.6.0`; 1.21.1: `>=1.6.0-alpha.3 <1.7.0` | Raw mana amounts and mana unit labels through its native AE2 key. Existing milli-pool histories are converted on load. |
+| Applied Botanics (original) (`appbot`) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | 1.20.1: `>=1.5.0 <1.6.0`; 1.21.1: `>=1.6.0-alpha.3 <1.7.0` | Raw mana amounts and mana unit labels through its native AE2 key. Existing milli-pool histories are converted on load. |
 | AE2: Crafting Tree (`ae2ct`) | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | `>=1.0.1` | TTC lines and details in AE2: Crafting Tree UI. |
 | Applied Mekanistics (`appmek`) | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.4.3 <2.0.0`; NeoForge: `>=1.6.2 <2.0.0` | TTC profiling and Crafting Plan display for chemicals stored in the ME network through Applied Mekanistics' native AE2 key. |
 | AdvancedAE (`advanced_ae`) | `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.21.1: `>=1.6.11`; 26.1.2: `>=26.1.7` | TTC profiling for AdvancedAE crafting CPUs, including the Quantum Computer. |
