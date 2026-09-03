@@ -33,6 +33,8 @@ final class NoPowerScenario {
     private long changedAt;
     private String recoveryState;
     private long recoveredActiveAmount;
+    private long powerRestoredTick;
+    private long recoveryResolvedAt;
     private CompletableFuture<Boolean> operation;
     private CompletableFuture<Void> reload;
     private CompletableFuture<Void> powerPulse;
@@ -160,6 +162,7 @@ final class NoPowerScenario {
             if (serverStep(minecraft, player -> {
                 var energy = fixture.cpu(player).getMainNode().getGrid().getEnergyService();
                 energy.injectPower(100_000, Actionable.MODULATE);
+                powerRestoredTick = player.level().getGameTime();
                 System.out.println("AE2CT power restored: active=" + fixture.cpu(player).getCluster().isActive()
                         + ", simulated=" + energy.extractAEPower(64, Actionable.SIMULATE, PowerMultiplier.CONFIG));
                 return true;
@@ -171,20 +174,28 @@ final class NoPowerScenario {
             if (!serverStep(minecraft, player -> {
                 var cpu = fixture.cpu(player).getCluster();
                 recoveredActiveAmount = cpu.craftingLogic.getWaitingFor(AEItemKey.of(Items.DIAMOND));
-                recoveryState = "server=" + ProfilerBridge.blockReasons(cpu, cpu.getGrid(), player.level().getGameTime())
+                var tick = player.level().getGameTime();
+                var reasons = ProfilerBridge.blockReasons(cpu, cpu.getGrid(), tick);
+                if (!reasons.isEmpty() && tick - powerRestoredTick >= 20) {
+                    throw new IllegalStateException("power blocker survived its 20-tick expiry after restoration");
+                }
+                if (reasons.isEmpty() && recoveredActiveAmount > 1 && recoveryResolvedAt == 0) {
+                    recoveryResolvedAt = System.nanoTime();
+                }
+                recoveryState = "server=" + reasons
                         + ", active=" + cpu.isActive() + ", energy=" + cpu.getGrid().getEnergyService()
                                 .extractAEPower(64, Actionable.SIMULATE, PowerMultiplier.CONFIG)
                         + ", waiting=" + cpu.craftingLogic.getWaitingFor(AEItemKey.of(Items.DIAMOND));
                 return true;
             })) return false;
             if (hasWarning(snapshot)) {
-                if (System.nanoTime() - changedAt > 2_000_000_000L) throw new IllegalStateException("power recovery missed refresh: " + recoveryState
+                if (recoveryResolvedAt != 0 && System.nanoTime() - recoveryResolvedAt > 2_000_000_000L) throw new IllegalStateException("power recovery missed refresh: " + recoveryState
                         + ", client=" + com.ctux.ae2craftingtime.mc1201.ClientStats.blockReason(
                                 new com.ctux.ae2craftingtime.core.ProfileKey("minecraft:diamond")));
                 return false;
             }
             if (screen.getMenu().containerId != menuId) throw new IllegalStateException("recovery reopened menu");
-            if (recoveredActiveAmount <= 1) return false;
+            if (recoveredActiveAmount <= 1 || recoveryResolvedAt == 0) return false;
             checks.put("power-restored", true);
             screenshot.accept("no-power-restored.png");
             phase++;
