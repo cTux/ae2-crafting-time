@@ -150,12 +150,16 @@ final class NoPowerScenario {
         } else if (phase == 7) {
             if (!reload.isDone()) return false;
             reload.join();
+            // Resource reloads can pause render-driven power pulses; await AE2's activation delay first.
+            if (!serverStep(minecraft, player -> fixture.cpu(player).getCluster().isActive())) return false;
             phase++;
         } else if (phase == 8) {
             if (powerPulse != null && !powerPulse.isDone()) return false;
             if (serverStep(minecraft, player -> {
                 var energy = fixture.cpu(player).getMainNode().getGrid().getEnergyService();
                 energy.injectPower(100_000, Actionable.MODULATE);
+                System.out.println("AE2CT power restored: active=" + fixture.cpu(player).getCluster().isActive()
+                        + ", simulated=" + energy.extractAEPower(64, Actionable.SIMULATE, PowerMultiplier.CONFIG));
                 return true;
             })) {
                 changedAt = System.nanoTime();
