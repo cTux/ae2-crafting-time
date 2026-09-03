@@ -5,10 +5,11 @@ direct links to every `.jar`. Discord's built-in GitHub webhook can announce
 repository events, but its message format is fixed and does not guarantee that
 release assets appear in the message.
 
-The current workflow runs when a GitHub Release is published. It reads the
-release assets from GitHub, keeps only `.jar` files, and posts the release page
-plus a direct download link for each JAR. It does not yet include the release
-body. The following requirement is planned follow-up implementation work.
+The workflow runs when a GitHub Release is published. It posts the release page,
+the complete release body, and a direct download link for each JAR. Long
+announcements are sent as ordered messages within Discord's 2,000-character
+limit. The workflow logs each confirmed message ID and stops on a failed or
+unconfirmed part; inspect those messages before retrying.
 
 ## Full release description requirement
 
@@ -31,8 +32,8 @@ Requirements updated 2026-09-03:
 
 ## Implementation and acceptance
 
-Update `scripts/announce-discord-release.sh` and its existing
-`scripts/test-discord-release-announcement.sh` regression checks. Reuse the
+`scripts/announce-discord-release.sh` and its
+`scripts/test-discord-release-announcement.sh` regression checks reuse the
 already-fetched release JSON's `body` field. A null/empty GitHub body has no
 description to mirror; keep the title and links without invented notes.
 
@@ -53,8 +54,8 @@ remain complete and ordered; each JAR URL appears once; mentions stay disabled;
 and a failed middle part stops delivery without reporting success. Compare
 reconstructed description text with the release `body`, allowing only transport
 formatting. Verify actual Discord content after the next approved real release,
-not by publishing a throwaway release. No runtime script changes or Discord
-messages are included in this requirements update.
+not by publishing a throwaway release. Local regression checks capture payloads
+without posting to Discord.
 
 ## Create the Discord webhook
 

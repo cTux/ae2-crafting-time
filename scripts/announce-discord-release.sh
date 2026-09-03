@@ -25,20 +25,53 @@ if ((jar_count != expected_jars)); then
   exit 1
 fi
 
-release_name="$(jq -r '.name // .tag_name' <<<"$release_json")"
-release_url="$(jq -r '.html_url' <<<"$release_json")"
-jars="$(jq -r '
-  [.assets[]
-    | select(.name | endswith(".jar"))
-    | "[\(.name)](\(.browser_download_url))"]
-  | join("\n")
+payloads="$(python3 -c '
+import json, sys
+
+release = json.load(sys.stdin)
+name = release.get("name") or release["tag_name"]
+content = "**AE2 Crafting Time " + name + "**\n" + release["html_url"] + "\n\n"
+body = release.get("body") or ""
+if body:
+    content += body + "\n\n"
+content += "**JAR downloads**\n" + "\n".join(
+    "[" + asset["name"] + "](" + asset["browser_download_url"] + ")"
+    for asset in release["assets"] if asset["name"].endswith(".jar")
+)
+while content:
+    end, units = 0, 0
+    for char in content:
+        units += 2 if ord(char) > 0xffff else 1
+        if units > 2000:
+            break
+        end += 1
+    if end < len(content):
+        for separator in ("\n\n", "\n"):
+            boundary = content.rfind(separator, 0, end)
+            if boundary >= 0:
+                end = boundary + len(separator)
+                break
+    print(json.dumps({"content": content[:end], "allowed_mentions": {"parse": []}}))
+    content = content[end:]
 ' <<<"$release_json")"
 
-printf -v content \
-  '**AE2 Crafting Time %s**\n%s\n\n**JAR downloads**\n%s' \
-  "$release_name" "$release_url" "$jars"
-jq -n --arg content "$content" '{content: $content}' |
-  curl --fail-with-body \
+separator='?'
+[[ "$DISCORD_WEBHOOK_URL" == *\?* ]] && separator='&'
+part=0
+while IFS= read -r payload; do
+  part=$((part + 1))
+  if ! response="$(curl --silent --show-error --fail-with-body \
     -H "Content-Type: application/json" \
-    --data-binary @- \
-    "$DISCORD_WEBHOOK_URL"
+    --data-binary "$payload" \
+    "${DISCORD_WEBHOOK_URL}${separator}wait=true")"; then
+    printf '%s\n' "$response" >&2
+    echo "Discord part $part failed; inspect earlier confirmed message IDs before retrying." >&2
+    exit 1
+  fi
+  if ! message_id="$(jq -er '.id | strings | select(test("^[0-9]+$"))' <<<"$response")"; then
+    echo "Discord part $part has no confirmed message ID; inspect delivery before retrying." >&2
+    exit 1
+  fi
+  echo "Discord part $part confirmed: message $message_id"
+done <<<"$payloads"
+echo "Discord announcement complete: $part part(s)."
