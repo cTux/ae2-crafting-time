@@ -31,6 +31,8 @@ final class NoPowerScenario {
     private long loggedTick = -1;
     private int menuId;
     private long changedAt;
+    private String recoveryState;
+    private long recoveredActiveAmount;
     private CompletableFuture<Boolean> operation;
     private CompletableFuture<Void> reload;
     private CompletableFuture<Void> powerPulse;
@@ -166,13 +168,23 @@ final class NoPowerScenario {
                 phase++;
             }
         } else if (phase == 9) {
+            if (!serverStep(minecraft, player -> {
+                var cpu = fixture.cpu(player).getCluster();
+                recoveredActiveAmount = cpu.craftingLogic.getWaitingFor(AEItemKey.of(Items.DIAMOND));
+                recoveryState = "server=" + ProfilerBridge.blockReasons(cpu, cpu.getGrid(), player.serverLevel().getGameTime())
+                        + ", active=" + cpu.isActive() + ", energy=" + cpu.getGrid().getEnergyService()
+                                .extractAEPower(64, Actionable.SIMULATE, PowerMultiplier.CONFIG)
+                        + ", waiting=" + cpu.craftingLogic.getWaitingFor(AEItemKey.of(Items.DIAMOND));
+                return true;
+            })) return false;
             if (hasWarning(snapshot)) {
-                if (System.nanoTime() - changedAt > 2_000_000_000L) throw new IllegalStateException("power recovery missed refresh");
+                if (System.nanoTime() - changedAt > 2_000_000_000L) throw new IllegalStateException("power recovery missed refresh: " + recoveryState
+                        + ", client=" + com.ctux.ae2craftingtime.mc1201.ClientStats.blockReason(
+                                new com.ctux.ae2craftingtime.core.ProfileKey("minecraft:diamond")));
                 return false;
             }
             if (screen.getMenu().containerId != menuId) throw new IllegalStateException("recovery reopened menu");
-            if (!serverStep(minecraft, player -> fixture.cpu(player).getCluster().craftingLogic
-                    .getWaitingFor(AEItemKey.of(Items.DIAMOND)) > 1)) return false;
+            if (recoveredActiveAmount <= 1) return false;
             checks.put("power-restored", true);
             screenshot.accept("no-power-restored.png");
             phase++;
