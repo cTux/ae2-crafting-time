@@ -13,6 +13,7 @@ The version-selection requirements below are planned, not implemented. Read
 their [technical design](technical-design.md#versioned-adapter-selection) and
 [implementation plan](implementation-plan.md#versioned-adapter-selection).
 They extend this feature; they do not change the current support matrix.
+Tracking issue: [#210](https://github.com/cTux/ae2-crafting-time/issues/210).
 
 ## Player outcomes
 
