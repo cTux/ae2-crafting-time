@@ -204,7 +204,11 @@ final class StandardAe2Scenario {
         var chat = ((ChatComponentAccessor) minecraft.gui.getChat()).ae2craftingtime_test_driver$messages();
         if (!clicked) {
             if (System.nanoTime() < nextStatsClick) return false;
-            if (keyboard == null) keyboard = new java.awt.Robot();
+            if (keyboard == null) {
+                // Minecraft marks AWT headless even though this explicit UI test owns a desktop window.
+                System.setProperty("java.awt.headless", "false");
+                keyboard = new java.awt.Robot();
+            }
             if (clickPhase++ == 0) {
                 chatCount = chat.size();
                 keyboard.keyPress(java.awt.event.KeyEvent.VK_CONTROL);

@@ -103,6 +103,19 @@ tasks.register('distMod', Copy) {
     rename { "ae2-crafting-time-${distModVersion}-fabric-1.20.1.jar" }
 }
 
+configurations {
+    nativeRuntimeMods {
+        canBeConsumed = false
+        canBeResolved = true
+        extendsFrom modRuntimeOnly
+    }
+}
+
+tasks.register('exportNativeRuntimeMods', Sync) {
+    from configurations.nativeRuntimeMods
+    into layout.buildDirectory.dir('native-runtime-mods')
+}
+
 // The companion uses the same mapped Minecraft/AE2 classes without joining main.
 sourceSets { testDriver }
 loom {

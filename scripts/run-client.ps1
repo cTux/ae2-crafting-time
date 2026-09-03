@@ -294,6 +294,7 @@ if ($Target -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-ne
     $driverName = "ae2-crafting-time-$modVersion-$($profile.Loader)-$($profile.Game)-test-driver.jar"
     $buildTasks = @("$($profile.Module):testDriverJar")
     if ($Packaged) { $buildTasks += "$($profile.Module):distMod" }
+    if ($Packaged -and $Target -eq '1.20.1-fabric') { $buildTasks += "$($profile.Module):exportNativeRuntimeMods" }
     & (Join-Path $root "gradlew.bat") @buildTasks @runtimeArgs @GradleArgs
     if ($LASTEXITCODE -ne 0) { throw "Test-driver build failed" }
     $driverArtifact = Join-Path $root "build\test-driver\$driverName"
@@ -308,6 +309,14 @@ if ($Target -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-ne
         $productionName = "ae2-crafting-time-$modVersion-$($profile.Loader)-$($profile.Game).jar"
         Copy-Item -LiteralPath (Join-Path $root "dist\$productionName") -Destination (Join-Path $mods $productionName) -Force
         $managed.Add($productionName)
+        if ($Target -eq '1.20.1-fabric') {
+            $runtimeMods = @(Get-ChildItem -LiteralPath (Join-Path $root "versions/$Target/build/native-runtime-mods") -Filter '*.jar' -File)
+            if (-not $runtimeMods) { throw 'Fabric native runtime mod export is empty' }
+            foreach ($runtimeMod in $runtimeMods) {
+                Copy-Item -LiteralPath $runtimeMod.FullName -Destination (Join-Path $mods $runtimeMod.Name) -Force
+                $managed.Add($runtimeMod.Name)
+            }
+        }
     }
     Write-Host "mod $driverName"
 }

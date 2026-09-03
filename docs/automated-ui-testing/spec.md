@@ -30,12 +30,11 @@ Installing an addon alone is not evidence of supported behavior.
 Clients run sequentially so their memory, logs, screenshots, ports, and world
 state remain attributable.
 
-| Target | Compatible release gate | Latest diagnostic |
-| --- | --- | --- |
-| 1.20.1 Forge | `run-1.20.1-forge.bat` | `run-1.20.1-forge-latest.bat` |
-| 1.20.1 Fabric | `run-1.20.1-fabric.bat` | `run-1.20.1-fabric-latest.bat` |
-| 1.21.1 NeoForge | `run-1.21.1-neoforge.bat` | `run-1.21.1-neoforge-latest.bat` |
-| 26.1.2 NeoForge | `run-26.1.2-neoforge.bat` | `run-26.1.2-neoforge-latest.bat` |
+Run `scripts/run-ui-smoke.ps1` on the host for all four compatible suites.
+Add `-Latest` for the diagnostic matrix. To run one target, add `-Target`
+with `1.20.1-forge`, `1.20.1-fabric`, `1.21.1-neoforge`, or
+`26.1.2-neoforge`. The ordinary `run-*.bat` clients remain interactive
+development launchers; starting one does not produce a smoke result.
 
 All four compatible profiles are required release-facing smoke checks. Latest
 profiles deliberately resolve current upstream files; a latest-only resolution
