@@ -10,7 +10,7 @@ public final class TestDriverMod {
     public static final String MOD_ID = "ae2craftingtime_test_driver";
 
     public TestDriverMod() {
-        startClient();
+        NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.lifecycle.ClientStartedEvent event) -> startClient());
     }
 
     private static void startClient() {
