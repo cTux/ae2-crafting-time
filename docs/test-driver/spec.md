@@ -32,6 +32,16 @@ cell with writable capacity and require the warning to clear in the same screen.
 Keep before, both-language tooltip, and recovered screenshots. Pure row tests
 cover active and scheduled exclusions; the fixture does not simulate a craft.
 
+## Standard AE2 acceptance scenario
+
+`standard-ae2` runs before the existing cases on every target. Its disposable
+native grid has two vanilla furnaces producing stone and smooth stone. It checks
+real multi-row plan/status ordering, tooltip, Ctrl-click details and Ctrl-Alt-click
+reset with returned chat and server state, real submission, waiting/running/delayed
+rows, header geometry, completion and exact produced quantity. Fuel is held until
+the delayed state is captured; the fixture imports actual furnace output using
+the grid storage API. No production status is injected.
+
 ## Goal
 
 Provide a development-only companion mod that drives and observes a real
@@ -64,7 +74,7 @@ JEI and transitive libraries load with the graph but have no dedicated assertion
 Crafting Tree and Network Analyser are not pinned in this Fabric graph.
 
 The same `-Target` works for single scenarios, latest profiles, and interactive
-runs. Full suites remain compatible-only. Fabric uses its own version-matched
+runs. Full suites also run as separate latest diagnostics. Fabric uses its own version-matched
 `ae2-crafting-time-<mod-version>-fabric-1.20.1-test-driver.jar`, remapped by Loom,
 installed into `run/mods` or `run-latest/mods`. Player JARs stay independent.
 
@@ -83,7 +93,7 @@ Applied Botanics, AE2 Things, and Network Analyser are not pinned in this graph.
 Compatible and latest launchers install the exact
 `ae2-crafting-time-<mod-version>-neoforge-1.21.1-test-driver.jar` in their managed
 `mods` directory. Single scenarios and interactive diagnosis use the same target;
-full suites remain compatible-only. The companion stays inert without explicit
+full suites also run as separate latest diagnostics. The companion stays inert without explicit
 scenario options and never enters the production JAR or `dist`.
 
 ## NeoForge 26.1.2 full-client suite
@@ -100,7 +110,7 @@ builds a native AE2 grid in that copy and checks real crafting, new profiling
 samples, final UI observations, and checkpoint screenshots. The Gradle launcher
 uses JDK 21 and selects the JDK 25 client toolchain. The exact companion JAR
 is installed by both compatible and latest launchers and stays out of player
-artifacts and `dist`. Full suites remain compatible-only.
+artifacts and `dist`. Full suites also run as separate latest diagnostics.
 
 ## Artifact contract
 
@@ -434,9 +444,8 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 
 ## Not included
 
-- Crafting Status or submitted-craft checks.
 - Optional-addon behavior outside the registered CPU fixture contract.
-- NeoForge 26.1.2, dedicated-server, or multiplayer support.
+- Dedicated-server or multiplayer support.
 - General-purpose UI automation, arbitrary world setup, or remote control.
 - Pixel-perfect full-frame comparisons.
 - Publishing the driver on GitHub, CurseForge, or Modrinth.

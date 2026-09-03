@@ -122,6 +122,23 @@ public final class UiObservationStore {
                     .map(slot -> new Rect(active.gui.x() + slot.x, active.gui.y() + slot.y, 16, 16))
                     .forEach(active.itemCells::add);
         }
+        if (minecraft.screen instanceof appeng.client.gui.me.crafting.CraftingCPUScreen<?> screen) {
+            var accessor = (com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) screen;
+            var status = accessor.ae2craftingtime_test_driver$status();
+            if (status != null) {
+                active.rows.clear();
+                int scroll = accessor.ae2craftingtime_test_driver$scrollbar().getCurrentScroll();
+                var entries = status.getEntries();
+                for (int i = scroll * 3; i < Math.min(entries.size(), scroll * 3 + 18); i++) {
+                    var entry = entries.get(i);
+                    int visible = i - scroll * 3;
+                    var cell = new Rect(active.gui.x() + 9 + visible % 3 * 68,
+                            active.gui.y() + 19 + visible / 3 * 23, 67, 22);
+                    active.rows.add(new PendingRow(entry.getWhat().getId().toString(),
+                            entry.getActiveAmount() + entry.getPendingAmount(), cell));
+                }
+            }
+        }
         for (var child : minecraft.screen.children()) {
             if (child instanceof AbstractWidget widget) {
                 var state = widget instanceof TtcSortButton button

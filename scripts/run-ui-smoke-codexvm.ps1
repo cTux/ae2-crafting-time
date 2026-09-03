@@ -4,11 +4,13 @@ param(
     [switch]$Interactive,
     [switch]$Scheduled,
     [switch]$Stop,
-    [ValidatePattern("^(suite|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$LocalRoot,
     [string]$InteractiveUser = "Codex",
-    [string]$RequestPath
+    [string]$RequestPath,
+    [string]$BundleDirectory,
+    [string]$PreparedLaunchRoot = 'C:\Users\Public\Documents\AE2CraftingTimeSmoke\prepared'
 )
 
 $ErrorActionPreference = "Stop"
@@ -46,6 +48,9 @@ if ($RequestPath) {
     $env:JAVA_HOME = & (Join-Path $PSScriptRoot 'get-java-home.ps1') -Major $major
     $env:Path = "$(Join-Path $env:JAVA_HOME 'bin');$env:Path"
     $arguments = @{ ReportDirectory = $request.reportDirectory; Scenario = $request.scenario; Target = $request.target }
+    if (-not $request.bundleDirectory -or -not $request.preparedLaunch) { throw 'Guest smoke requires host-built artifacts and an installed native loader manifest' }
+    $arguments.BundleDirectory = $request.bundleDirectory
+    $arguments.PreparedLaunch = $request.preparedLaunch
     if ($request.projectId) { $arguments.ProjectId = @($request.projectId) }
     if ($request.latest) { $arguments.Latest = $true }
     if ($request.interactive) { $arguments.Interactive = $true }
@@ -62,6 +67,7 @@ if ($Stop) {
     Stop-Smoke $report
     exit 0
 }
+if (-not $BundleDirectory) { throw 'Build the bundle on the host through invoke-ui-smoke-codexvm.ps1' }
 
 $taskName = "AE2 Crafting Time UI Smoke $workspaceId"
 $existing = if ($Scheduled) { Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue } else { $null }
@@ -76,6 +82,7 @@ if ($LASTEXITCODE -gt 7) { throw "Failed to stage the checkout with robocopy exi
 $request = [ordered]@{
     target = $Target; stagedRoot = $stage; reportDirectory = $report; scenario = $Scenario
     projectId = @($ProjectId); latest = $Latest.IsPresent; interactive = $Interactive.IsPresent; javaHome = $smokeJava
+    bundleDirectory = $BundleDirectory; preparedLaunch = (Join-Path $PreparedLaunchRoot "$Target/launch.json")
 }
 $requestFile = Join-Path $stage "ui-smoke-request.json"
 [IO.File]::WriteAllText($requestFile, ($request | ConvertTo-Json), [Text.UTF8Encoding]::new($false))

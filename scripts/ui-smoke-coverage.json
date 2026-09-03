@@ -1,0 +1,306 @@
+{
+  "1.20.1-forge": {
+    "545hUrw9": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "appbot-cpu"
+    },
+    "a1RwDz90": {
+      "disposition": "DIRECT_UI",
+      "scenario": "crafting-tree-screen"
+    },
+    "IiATswDj": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "appmek-cpu"
+    },
+    "E6BFl96N": {
+      "disposition": "DIRECT_UI",
+      "scenario": "merequester-screen"
+    },
+    "udZtKfzP": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "neoeco-cpu"
+    },
+    "ArHeh5Fz": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "lightningtech-cpu"
+    },
+    "rxYaglEe": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "advancedae-cpu"
+    },
+    "JiOqfoFM": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "extendedae-cpu"
+    },
+    "xr109llC": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "extendedae-plus-cpu"
+    },
+    "qPydPwtX": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "bmaddon-cpu"
+    },
+    "anaGQD2Q": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "crazyae2addons-cpu"
+    },
+    "4inoel9g": {
+      "disposition": "DIRECT_UI",
+      "scenario": "ae2wcwt-terminal"
+    },
+    "pNabrMMw": {
+      "disposition": "DIRECT_UI",
+      "scenario": "ae2wtlib-terminal"
+    },
+    "jjuIRIVr": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "megacells-cpu"
+    },
+    "RYE1pYyr": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "omnicells-cpu"
+    },
+    "IZPmgTLT": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "projectcell-cpu"
+    },
+    "oMgZ004U": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "appflux-cpu"
+    },
+    "5G4fpXXj": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "modern-ae2-additions-cpu"
+    },
+    "qelfSMnn": {
+      "disposition": "DIRECT_UI",
+      "scenario": "ae2importexportcard-terminal"
+    },
+    "VQhDBNs8": {
+      "disposition": "DIRECT_UI",
+      "scenario": "aeinfinitybooster-terminal"
+    },
+    "SOw6jD6x": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "advancedperipherals-cpu"
+    },
+    "ayN3DZKb": {
+      "disposition": "COEXISTENCE",
+      "scenario": "standard-ae2"
+    },
+    "Ck4E7v7R": {
+      "disposition": "TOOLING",
+      "scenario": "standard-ae2"
+    },
+    "u6dRKJwZ": {
+      "disposition": "TOOLING",
+      "scenario": "standard-ae2"
+    },
+    "609977": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "ae2things-cpu"
+    },
+    "1605404": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "appbot-fork-cpu"
+    },
+    "961856": {
+      "disposition": "DIRECT_UI",
+      "scenario": "ae2networkanalyser-screen"
+    },
+    "957920": {
+      "disposition": "TOOLING",
+      "scenario": "standard-ae2"
+    },
+    "1624558": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "omnisequence-cpu"
+    },
+    "1571176": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "appliede-cpu"
+    },
+    "226410": {
+      "disposition": "COEXISTENCE",
+      "scenario": "standard-ae2"
+    }
+  },
+  "1.20.1-fabric": {
+    "545hUrw9": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "appbot-cpu"
+    },
+    "E6BFl96N": {
+      "disposition": "DIRECT_UI",
+      "scenario": "merequester-screen"
+    },
+    "JiOqfoFM": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "extendedae-cpu"
+    },
+    "pNabrMMw": {
+      "disposition": "DIRECT_UI",
+      "scenario": "ae2wtlib-terminal"
+    },
+    "jjuIRIVr": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "megacells-cpu"
+    },
+    "veunMwU3": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "ae2things-cpu"
+    },
+    "u6dRKJwZ": {
+      "disposition": "TOOLING",
+      "scenario": "standard-ae2"
+    }
+  },
+  "1.21.1-neoforge": {
+    "a1RwDz90": {
+      "disposition": "DIRECT_UI",
+      "scenario": "crafting-tree-screen"
+    },
+    "IiATswDj": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "appmek-cpu"
+    },
+    "rxYaglEe": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "advancedae-cpu"
+    },
+    "E6BFl96N": {
+      "disposition": "DIRECT_UI",
+      "scenario": "merequester-screen"
+    },
+    "udZtKfzP": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "neoeco-cpu"
+    },
+    "ArHeh5Fz": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "lightningtech-cpu"
+    },
+    "JiOqfoFM": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "extendedae-cpu"
+    },
+    "xr109llC": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "extendedae-plus-cpu"
+    },
+    "qPydPwtX": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "bmaddon-cpu"
+    },
+    "4inoel9g": {
+      "disposition": "DIRECT_UI",
+      "scenario": "ae2wcwt-terminal"
+    },
+    "pNabrMMw": {
+      "disposition": "DIRECT_UI",
+      "scenario": "ae2wtlib-terminal"
+    },
+    "jjuIRIVr": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "megacells-cpu"
+    },
+    "RYE1pYyr": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "omnicells-cpu"
+    },
+    "IZPmgTLT": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "projectcell-cpu"
+    },
+    "SyKS54UY": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "appliede-cpu"
+    },
+    "oMgZ004U": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "appflux-cpu"
+    },
+    "qelfSMnn": {
+      "disposition": "DIRECT_UI",
+      "scenario": "ae2importexportcard-terminal"
+    },
+    "VQhDBNs8": {
+      "disposition": "DIRECT_UI",
+      "scenario": "aeinfinitybooster-terminal"
+    },
+    "SOw6jD6x": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "advancedperipherals-cpu"
+    },
+    "ayN3DZKb": {
+      "disposition": "COEXISTENCE",
+      "scenario": "standard-ae2"
+    },
+    "Ck4E7v7R": {
+      "disposition": "TOOLING",
+      "scenario": "standard-ae2"
+    },
+    "u6dRKJwZ": {
+      "disposition": "TOOLING",
+      "scenario": "standard-ae2"
+    },
+    "1624558": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "omnisequence-cpu"
+    },
+    "226410": {
+      "disposition": "COEXISTENCE",
+      "scenario": "standard-ae2"
+    }
+  },
+  "26.1.2-neoforge": {
+    "rxYaglEe": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "advancedae-cpu"
+    },
+    "ArHeh5Fz": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "lightningtech-cpu"
+    },
+    "JiOqfoFM": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "extendedae-cpu"
+    },
+    "qPydPwtX": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "bmaddon-cpu"
+    },
+    "rvaW4C93": {
+      "disposition": "COEXISTENCE",
+      "scenario": "standard-ae2"
+    },
+    "pNabrMMw": {
+      "disposition": "DIRECT_UI",
+      "scenario": "ae2wtlib-terminal"
+    },
+    "RYE1pYyr": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "omnicells-cpu"
+    },
+    "oMgZ004U": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "appflux-cpu"
+    },
+    "qelfSMnn": {
+      "disposition": "DIRECT_UI",
+      "scenario": "ae2importexportcard-terminal"
+    },
+    "VQhDBNs8": {
+      "disposition": "DIRECT_UI",
+      "scenario": "aeinfinitybooster-terminal"
+    },
+    "Ck4E7v7R": {
+      "disposition": "TOOLING",
+      "scenario": "standard-ae2"
+    },
+    "u6dRKJwZ": {
+      "disposition": "TOOLING",
+      "scenario": "standard-ae2"
+    }
+  }
+}

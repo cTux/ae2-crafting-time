@@ -4,19 +4,27 @@ param(
     [switch]$Latest,
     [switch]$Interactive,
     [switch]$Stop,
-    [ValidatePattern("^(suite|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$SshUser = "Codex",
     [string]$SshKeyPath = (Join-Path $env:USERPROFILE ".ssh\codexvm_smoke_ed25519"),
     [string]$VmrunUser = "CodexSmoke",
     [string]$CredentialPath = (Join-Path $env:APPDATA "Codex\codexvm-smoke.credential.xml"),
-    [string]$GuestSourceRoot
+    [string]$GuestSourceRoot,
+    [string]$BundleDirectory,
+    [string]$PreparedLaunchRoot = 'C:\Users\Public\Documents\AE2CraftingTimeSmoke\prepared'
 )
 
 $ErrorActionPreference = "Stop"
 $vmx = "F:\VMs\Codex-Windows11\Codex-Windows11.vmx"
 $vmrun = "C:\Program Files\VMware\VMware Workstation\vmrun.exe"
 $root = Split-Path -Parent $PSScriptRoot
+if (-not $Stop -and -not $BundleDirectory) {
+    $campaign = @{ Target = $Target; Scenario = $Scenario; Latest = $Latest; PreparedLaunchRoot = $PreparedLaunchRoot }
+    if ($GuestSourceRoot) { $campaign.GuestSourceRoot = $GuestSourceRoot }
+    & (Join-Path $PSScriptRoot 'run-ui-smoke-matrix.ps1') @campaign
+    exit $LASTEXITCODE
+}
 if (-not $GuestSourceRoot) {
     $projects = [IO.Path]::GetFullPath("E:\projects")
     $resolvedRoot = [IO.Path]::GetFullPath($root)
@@ -27,6 +35,14 @@ if (-not $GuestSourceRoot) {
 }
 $guestScript = Join-Path $GuestSourceRoot "scripts\run-ui-smoke-codexvm.ps1"
 $smokeArguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $guestScript, "-Target", $Target, "-Scenario", $Scenario)
+if ($BundleDirectory) {
+    $bundlePath = [IO.Path]::GetFullPath($BundleDirectory)
+    if (-not $bundlePath.StartsWith($root.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Bundle must be inside the shared worktree'
+    }
+    $guestBundle = Join-Path $GuestSourceRoot $bundlePath.Substring($root.Length).TrimStart('\')
+    $smokeArguments += @('-BundleDirectory', $guestBundle, '-PreparedLaunchRoot', $PreparedLaunchRoot)
+}
 if ($Latest) { $smokeArguments += "-Latest" }
 if ($Interactive) { $smokeArguments += "-Interactive" }
 if ($ProjectId) { $smokeArguments += @("-ProjectId") + $ProjectId }

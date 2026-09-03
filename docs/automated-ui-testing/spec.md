@@ -7,7 +7,7 @@ client, exercises AE2 Crafting Time on real AE2 screens, records semantic and
 visual evidence, and closes only the client it started. Starting Minecraft
 successfully is not a UI pass.
 
-The runner and companion test driver do not exist yet. See
+The per-target runners and companion test drivers are implemented. See
 [AE2 Crafting Time Test Driver](../test-driver/spec.md) for the development-only mod
 that observes and controls the client.
 

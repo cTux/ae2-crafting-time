@@ -16,9 +16,27 @@ release-matrix.json + run-client-versions.json
 projects have locks, and resolution writes a managed-mod manifest. The UI suite
 extends these seams instead of creating another dependency matrix or launcher.
 
-There is no test-driver source set, fixture, scenario runner, result parser, or
-UI-smoke command today. Production modules currently register only the
-`ae2craftingtime` mod source set, and `distMod` copies only the production JAR.
+All four targets have isolated drivers and per-target suites. The cross-target
+command builds and resolves on the host, then stages those exact JARs into a
+guest-local runtime. The guest launches the installed loader directly with its
+prepared `launch.json`; it never invokes Gradle. Validate the manifest's target,
+Java version and installed loader against the resolved host profile before launch.
+Native loader libraries and assets remain in the prepared installation; world,
+mods, options, logs and evidence belong to the isolated run.
+
+`standard-ae2` builds a native two-stage smelting grid in its disposable world.
+Two real furnaces turn cobblestone into stone, then smooth stone. Distinct known
+samples make row ordering observable. The driver checks plan input and returned
+chat/reset state, submits using the screen, and observes the status screen while
+fuel is withheld and restored. It imports only actual furnace output through
+the grid storage API and requires the exact final output and idle CPU. This is
+fixture transport, not a production profiling or status hook.
+
+The host records a coverage ledger before resolution. Every matrix project must
+have a declared disposition; direct coverage names required scenarios. Missing
+declarations and missing scenarios fail compatible runs. Each target executes in
+matrix order even if an earlier target fails. Latest results remain separate
+diagnostics. Failure paths retain the manifest, available logs and driver evidence.
 
 ## Components and ownership
 
