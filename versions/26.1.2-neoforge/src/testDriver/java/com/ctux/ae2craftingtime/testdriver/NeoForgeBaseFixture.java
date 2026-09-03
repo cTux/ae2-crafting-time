@@ -34,6 +34,7 @@ final class NeoForgeBaseFixture extends NativeCpuFixture {
         level.setBlockAndUpdate(terminal.east(2), AEBlocks.PATTERN_PROVIDER.block().defaultBlockState());
         level.setBlockAndUpdate(terminal.east(2).above(), AEBlocks.MOLECULAR_ASSEMBLER.block().defaultBlockState());
         level.setBlockAndUpdate(terminal.west(), AEBlocks.CRAFTING_STORAGE_1K.block().defaultBlockState());
+        PartHelper.setPart(level, terminal, null, player, AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT));
         PartHelper.setPart(level, terminal, Direction.NORTH, player, AEParts.CRAFTING_TERMINAL.get());
         var drive = (DriveBlockEntity) level.getBlockEntity(terminal.west(2));
         drive.getInternalInventory().setItemDirect(0, AEItems.ITEM_CELL_1K.stack());
