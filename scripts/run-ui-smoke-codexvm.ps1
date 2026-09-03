@@ -91,12 +91,14 @@ $requestFile = Join-Path $stage "ui-smoke-request.json"
 [IO.File]::WriteAllText($requestFile, ($request | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
 
 if ($Scheduled) {
+    $script = Join-Path $stage "scripts\run-ui-smoke-codexvm.ps1"
+    $action = New-ScheduledTaskAction -Execute "powershell.exe" `
+        -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$script`" -RequestPath `"$requestFile`""
     if (-not $existing) {
-        $script = Join-Path $stage "scripts\run-ui-smoke-codexvm.ps1"
-        $action = New-ScheduledTaskAction -Execute "powershell.exe" `
-            -Argument "-NoProfile -ExecutionPolicy Bypass -File `"$script`" -RequestPath `"$requestFile`""
         $principal = New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\$InteractiveUser" -LogonType Interactive -RunLevel Limited
         Register-ScheduledTask -TaskName $taskName -Action $action -Principal $principal | Out-Null
+    } else {
+        Set-ScheduledTask -TaskName $taskName -Action $action | Out-Null
     }
     $queued = [ordered]@{ schema = 1; target = $Target; profile = $(if ($Latest) { "latest" } else { "compatible" })
         scenario = $Scenario; phase = "queued"; pid = $null; stagedRoot = $stage; updatedAt = [DateTime]::UtcNow.ToString("o") }
