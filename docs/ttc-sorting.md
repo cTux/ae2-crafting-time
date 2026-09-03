@@ -40,6 +40,8 @@ private comparator. The mod should not replace that server-side summary order.
 The Crafting Status screen receives its row list through
 `CraftingCPUScreen.postUpdate(...)`. Its client mixin replaces only the list
 used to build the displayed `CraftingStatus`; it does not change the server job.
+The displayed order also refreshes when TTC data arrives, even while the job's
+item amounts stay unchanged. Waiting rows remain behind rows with known times.
 
 ## Approach
 

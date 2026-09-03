@@ -63,6 +63,12 @@ the server's actual job/output state. Each input phase waits for stable frames;
 phase timestamps and the last fixture checkpoint make timeouts attributable.
 Modifier keys are released on both success and failure.
 
+After completion, the driver saves the last job view, returns to the terminal
+and reopens Crafting Status through its buttons. The fresh view must be empty.
+Older AE2 builds can retain a final incremental row in the already-open view;
+`status-finished-job.png` preserves that observation instead of hiding it.
+Each screenshot also has a JSON snapshot with transformed screen-space bounds.
+
 ## Coverage and results
 
 `ui-smoke-coverage.json` contains project IDs, dispositions and required
@@ -90,6 +96,11 @@ The runner hashes the marked source fixture before copying and verifies it
 again during cleanup. Only uniquely named copies inside the owned runtime may
 be opened or removed. Each suite case receives a separate copy. Runtime locks
 prevent concurrent use of the same target/profile directory.
+
+Fabric keeps the marked Forge block layout but copies `level.dat` from the
+tracked Fabric world. This removes the Forge metadata dependency on Blood Magic
+dimensions without changing either checked-in world. Both source layout and
+target metadata hashes are recorded before and after the run.
 
 The native Java PID, process creation time and argument-file path identify the
 launched client. Normal driver completion requests shutdown. Timeout cleanup

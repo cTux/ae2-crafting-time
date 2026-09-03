@@ -77,9 +77,11 @@ final class StandardAe2Scenario {
             } else if (minecraft.screen instanceof CraftConfirmScreen) phase++;
             return false;
         }
-        if (phase == 8) {
-            if (!server(minecraft, player -> fixture.cpu(player).getCluster().isBusy())) return false;
-            checks.put("submitted", true);
+        if (phase == 8 || phase == 18) {
+            if (phase == 8) {
+                if (!server(minecraft, player -> fixture.cpu(player).getCluster().isBusy())) return false;
+                checks.put("submitted", true);
+            }
             if (minecraft.screen instanceof MEStorageScreen<?> screen) {
                 var button = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$statusButton();
                 DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
@@ -181,7 +183,16 @@ final class StandardAe2Scenario {
                 checks.put("output", true);
                 phase++;
             }
-        } else if (phase == 17 && snapshot.rows().stream().noneMatch(row -> row.craftAmount() > 0)) {
+        } else if (phase == 17) {
+            // Older AE2 can retain its last incremental row after the CPU becomes idle.
+            // Preserve that view, then reopen through the actual return/status buttons.
+            screenshot.accept("status-finished-job.png");
+            var button = minecraft.screen.children().stream().filter(appeng.client.gui.widgets.TabButton.class::isInstance)
+                    .map(appeng.client.gui.widgets.TabButton.class::cast).filter(w -> w.visible).findFirst().orElseThrow();
+            DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+            phase++;
+        } else if (phase == 19 && minecraft.screen instanceof CraftingStatusScreen
+                && snapshot.rows().stream().noneMatch(row -> row.craftAmount() > 0)) {
             checks.put("completed", true);
             screenshot.accept("status-completed.png");
             return true;
