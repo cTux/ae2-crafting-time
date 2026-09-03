@@ -7,7 +7,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 
 class CraftingRowStateTest {
     @ParameterizedTest
-    @CsvSource({"ttc,true", "ttc_delayed,true", "waiting,true", "no_space,true", "no_provider,true",
+    @CsvSource({"ttc,true", "ttc_delayed,true", "waiting,true", "no_space,true", "no_provider,true", "no_power,true",
             "no_provider.explanation,false", "details_hint,false", "unknown,false"})
     void onlyCompactStatusLinesReceiveBadges(String suffix, boolean expected) {
         assertEquals(expected, CraftingRowState.isBadge("text.ae2craftingtime." + suffix));
@@ -18,7 +18,9 @@ class CraftingRowStateTest {
             "9223372036854775807,true,true"})
     void missingProviderRequiresPendingWorkRegardlessOfActiveBatches(long pending, boolean missing,
             boolean expected) {
-        assertEquals(expected, CraftingRowState.noProvider(pending, missing));
+        for (var reason : CraftingBlockReason.values()) {
+            assertEquals(expected ? reason : null, CraftingRowState.blockReason(pending, missing ? reason : null));
+        }
     }
 
     @ParameterizedTest

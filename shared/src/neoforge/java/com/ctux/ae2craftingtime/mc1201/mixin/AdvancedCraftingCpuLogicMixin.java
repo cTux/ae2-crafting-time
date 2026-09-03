@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
 import appeng.api.config.Actionable;
+import appeng.api.config.PowerMultiplier;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingPlan;
@@ -19,8 +20,10 @@ import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -35,6 +38,32 @@ public abstract class AdvancedCraftingCpuLogicMixin {
     @Shadow
     @Final
     private int[] usedOps;
+
+    @Unique
+    private IPatternDetails ae2craftingtime$dispatchPattern;
+
+    // Capture the execution local even when an addon supplies providers without calling the original lookup.
+    @ModifyVariable(method = "executeCrafting", at = @At("STORE"), ordinal = 0, remap = false)
+    private IPatternDetails ae2craftingtime$captureDispatchPattern(IPatternDetails pattern) {
+        ae2craftingtime$dispatchPattern = pattern;
+        return pattern;
+    }
+
+    @Inject(method = "executeCrafting", at = @At("RETURN"), remap = false)
+    private void ae2craftingtime$clearDispatchPattern(CallbackInfoReturnable<Integer> cir) {
+        ae2craftingtime$dispatchPattern = null;
+    }
+
+    @Redirect(method = "executeCrafting", at = @At(value = "INVOKE", ordinal = 0,
+            target = "Lappeng/api/networking/energy/IEnergyService;extractAEPower(DLappeng/api/config/Actionable;Lappeng/api/config/PowerMultiplier;)D"),
+            remap = false)
+    private double ae2craftingtime$observeDispatchPower(IEnergyService energy, double required,
+            Actionable mode, PowerMultiplier multiplier) {
+        var extracted = energy.extractAEPower(required, mode, multiplier);
+        ProfilerBridge.observeDispatchPower(ProfilerBridge.networkId(cpu.getGrid()), cpu,
+                ae2craftingtime$dispatchPattern, required, extracted, cpu.getLevel().getGameTime());
+        return extracted;
+    }
 
     @Redirect(
             method = "executeCrafting",

@@ -43,24 +43,24 @@ restored patterns and empty CPU maps are removed.
 
 ## Transport and client
 
-Add `missingProviders: Set<String>` beside `waitingTicks` in the request
-response, shared snapshot codec, and all four loader packet records. A set is
-enough for this issue; NO POWER detection and its transport remain separate.
-Decode at most `PacketLimits.MAX_KEYS`, validate output ids, and reject keys
-outside the request. No status ordinals or unknown-enum path are introduced.
+The status snapshot now carries one bounded `blockReasons` map, shared with
+NO POWER. The server returns at most `PacketLimits.MAX_KEYS`, validates output
+ids, rejects unrequested keys and unknown reason values, and gives NO PROVIDER
+priority when both causes affect one row. This replaces the set originally
+shipped for NO PROVIDER, as approved during issue #121 implementation.
 
-Bump the current wire boundaries: Forge `7` to `8`, Fabric
-`stats_snapshot_v5` to `stats_snapshot_v6`, and both NeoForge registrars `6` to
-`7`. Saved data is unchanged. Fabric retains its existing capability check.
+Current wire boundaries are Forge `9`, Fabric `stats_snapshot_v7`, and both
+NeoForge registrars `8`. Saved data is unchanged. Fabric retains its existing
+capability check.
 
-`ClientStatsCache` replaces the missing-provider set for requested keys even
-when no learned stats exist. Clearing selected-CPU state also clears this set
+`ClientStatsCache` replaces the blocker map for requested keys even
+when no learned stats exist. Clearing selected-CPU state also clears this map
 when opening the status screen or selecting another CPU. A snapshot also carries a `long cpuContext`, packing the menu container id and
 selected CPU serial. The cache only exposes flags when that context matches the
 current menu. Late replies and automatic CPU reselection cannot show another
 CPU's warning. This tag applies only to the new diagnostic.
 
-`CraftingRowState.noProvider` requires a positive pending amount and cached
+`CraftingRowState.blockReason` requires a positive pending amount and cached
 server evidence. The status table checks it after stored-only NO SPACE and
 before Waiting, DELAYED, or TTC. Both API variants of the status screen use
 the same predicate to exclude blocked rows from TTC sorting and coloring.

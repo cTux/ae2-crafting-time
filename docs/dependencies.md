@@ -224,3 +224,8 @@ and loader metadata. Client pins come from
 [ae2things-mr]: https://modrinth.com/mod/ae2things
 [expandedae-cf]: https://www.curseforge.com/minecraft/mc-mods/expanded-ae
 [expandedae-mr]: https://modrinth.com/mod/expanded-ae
+
+The native AE2 and supported AdvancedAE dispatch hooks now share the NO PROVIDER /
+NO POWER status transport. NO POWER observes only the real simulated AE network
+energy extraction. All four prepared compatible suites include both native
+status scenarios; their results apply only to the actual tested artifacts.

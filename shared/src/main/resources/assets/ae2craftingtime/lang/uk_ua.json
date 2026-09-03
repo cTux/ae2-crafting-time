@@ -1,4 +1,8 @@
 {
+  "text.ae2craftingtime.no_power": "Немає енергії",
+  "text.ae2craftingtime.no_power.explanation": "Мережі ME бракує енергії для наступного запуску шаблону.",
+  "text.ae2craftingtime.no_power.suggestion": "Збільште виробництво або запас енергії в мережі.",
+
   "key.categories.ae2craftingtime": "AE2 Crafting Time",
   "key.ae2craftingtime.show_ttc_details": "Ctrl-клік — деталі TTC",
   "text.ae2craftingtime.chat.details": "%s зразків · середнє: %s · останнє: %s · %s %s/с",

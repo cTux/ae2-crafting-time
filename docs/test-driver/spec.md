@@ -468,3 +468,18 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 - `dist` and every production JAR remain free of driver artifacts and classes.
 - Automated tests cover result validation, state transitions, safety refusals,
   endpoint limits, and artifact isolation.
+
+## No-power status scenario
+
+`no-power-status` reuses the real processing-job fixture with 64 cobblestone
+per dispatch and an unfuelled furnace. Verify no warning while network energy
+is sufficient. Replace the creative source with a real energy cell and keep
+only enough energy for idle demand, below the next dispatch cost. Observe an
+active CPU, one active output, and scheduled work, then the rendered NO POWER
+badge and complete tooltip in English and Ukrainian. Restore energy, require
+another real dispatch and warning recovery in the same menu, cancel, and check
+that an inactive CPU alone produces no warning. Retain all five checkpoints.
+Every full compatible suite includes this scenario and the NO PROVIDER
+regression. Driver checks observe final frames and real AE2 state, never seed
+production diagnostics. Shared pure tests cover threshold, expiry, priority,
+CPU switching and lifecycle; packet tests cover the shared transport boundary.

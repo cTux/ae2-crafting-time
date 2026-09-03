@@ -1,4 +1,8 @@
 {
+  "text.ae2craftingtime.no_power": "NO POWER",
+  "text.ae2craftingtime.no_power.explanation": "The ME network can't power the next pattern dispatch.",
+  "text.ae2craftingtime.no_power.suggestion": "Increase network power generation or stored energy.",
+
   "key.categories.ae2craftingtime": "AE2 Crafting Time",
   "key.ae2craftingtime.show_ttc_details": "Ctrl-Click for TTC details",
   "text.ae2craftingtime.chat.details": "%s samples · average: %s · latest: %s · %s %s/s",

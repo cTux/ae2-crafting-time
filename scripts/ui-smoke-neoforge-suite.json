@@ -20,5 +20,7 @@
   "ae2importexportcard-terminal",
   "aeinfinitybooster-terminal",
   "merequester-screen",
-  "no-space-status"
+  "no-space-status",
+  "no-provider-status",
+  "no-power-status"
 ]

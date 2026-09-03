@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.core.ClientStatsCache;
+import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -9,7 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 public final class ClientStats {
@@ -34,15 +34,15 @@ public final class ClientStats {
         CACHE.replaceWaiting(requestedKeys.stream().map(ProfileKey::new).toList(), waiting);
     }
 
-    public static void replaceMissingProviders(List<String> requestedKeys, Set<String> values, long cpuContext) {
-        CACHE.replaceMissingProviders(requestedKeys.stream().map(ProfileKey::new).toList(),
-                values.stream().map(ProfileKey::new).collect(Collectors.toSet()), cpuContext);
+    public static void replaceBlockReasons(List<String> requestedKeys, Map<String, CraftingBlockReason> values, long cpuContext) {
+        CACHE.replaceBlockReasons(requestedKeys.stream().map(ProfileKey::new).toList(),
+                values.entrySet().stream().collect(Collectors.toMap(entry -> new ProfileKey(entry.getKey()), Map.Entry::getValue)), cpuContext);
     }
 
-    public static boolean missingProvider(ProfileKey key) {
+    public static CraftingBlockReason blockReason(ProfileKey key) {
         var context = Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> screen
                 ? StatsRequestContext.cpuContext(screen.getMenu()) : -1;
-        return CACHE.missingProvider(key, context);
+        return CACHE.blockReason(key, context);
     }
 
     private ClientStats() {

@@ -40,6 +40,22 @@ public final class ProfilerBridge {
         PROFILER.observeProviders(scope, pattern, outputs, providers.iterator().hasNext());
     }
 
+    public static void observeDispatchPower(String networkId, Object scope, IPatternDetails pattern,
+            double required, double extracted, long tick) {
+        isEnabled();
+        var outputs = new HashMap<ProfileKey, Long>();
+        for (var output : pattern.getOutputs()) {
+            outputs.merge(key(networkId, output.what()), output.amount(), Long::sum);
+        }
+        PROFILER.observeDispatchPower(scope, pattern, outputs, required, extracted, tick);
+    }
+
+    public static java.util.Map<ProfileKey, com.ctux.ae2craftingtime.core.CraftingBlockReason> blockReasons(
+            Object scope, IGrid grid, long tick) {
+        return grid == null ? java.util.Map.of()
+                : PROFILER.blockReasons(scope, tick, missingProviders(scope, grid));
+    }
+
     public static Set<ProfileKey> missingProviders(Object scope, IGrid grid) {
         isEnabled();
         return grid == null ? Set.of() : PROFILER.missingProviderOutputs(scope,

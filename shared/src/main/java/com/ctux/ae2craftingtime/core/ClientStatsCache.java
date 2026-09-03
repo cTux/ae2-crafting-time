@@ -1,18 +1,16 @@
 package com.ctux.ae2craftingtime.core;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Set;
 
 public final class ClientStatsCache {
     private final Map<ProfileKey, StatsEntry> stats = new HashMap<>();
     private final Map<ProfileKey, Long> waitingTicks = new HashMap<>();
-    private long missingProviderContext = -1;
-    private final Set<ProfileKey> missingProviders = new HashSet<>();
+    private long blockContext = -1;
+    private final Map<ProfileKey, CraftingBlockReason> blockReasons = new HashMap<>();
 
     public void replace(List<StatsEntry> entries) {
         for (var entry : entries) {
@@ -49,28 +47,28 @@ public final class ClientStatsCache {
         waitingTicks.putAll(values);
     }
 
-    public boolean missingProvider(ProfileKey key, long cpuContext) {
-        return missingProviderContext == cpuContext && missingProviders.contains(key);
+    public CraftingBlockReason blockReason(ProfileKey key, long cpuContext) {
+        return blockContext == cpuContext ? blockReasons.get(key) : null;
     }
 
-    public void replaceMissingProviders(List<ProfileKey> requestedKeys, Set<ProfileKey> values, long cpuContext) {
-        if (missingProviderContext != cpuContext) {
-            missingProviders.clear();
-            missingProviderContext = cpuContext;
+    public void replaceBlockReasons(List<ProfileKey> requestedKeys, Map<ProfileKey, CraftingBlockReason> values, long cpuContext) {
+        if (blockContext != cpuContext) {
+            blockReasons.clear();
+            blockContext = cpuContext;
         }
-        missingProviders.removeAll(requestedKeys);
-        missingProviders.addAll(values);
+        requestedKeys.forEach(blockReasons::remove);
+        blockReasons.putAll(values);
     }
 
     public void clearCpuState() {
         waitingTicks.clear();
-        missingProviders.clear();
+        blockReasons.clear();
     }
 
     public void remove(ProfileKey key) {
         stats.remove(key);
         waitingTicks.remove(key);
-        missingProviders.remove(key);
+        blockReasons.remove(key);
     }
 
     public void clear() {

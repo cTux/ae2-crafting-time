@@ -12,9 +12,7 @@ import com.ctux.ae2craftingtime.testdriver.mixin.CraftAmountScreenAccessor;
 import com.ctux.ae2craftingtime.testdriver.mixin.CraftConfirmMenuAccessor;
 import com.ctux.ae2craftingtime.testdriver.mixin.MEStorageScreenAccessor;
 import com.ctux.ae2craftingtime.testdriver.mixin.MouseHandlerAccessor;
-import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
@@ -38,6 +36,7 @@ public final class CraftPlanScenario {
     private final Minecraft minecraft;
     private final NoSpaceScenario noSpace;
     private final NoProviderScenario noProvider;
+    private final NoPowerScenario noPower;
     private final DriverOptions options;
     private final String driverFile;
     private final AddonCpuFixture<?> baseFixture;
@@ -72,10 +71,11 @@ public final class CraftPlanScenario {
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         this.minecraft = minecraft;
         noSpace = NoSpaceScenario.SCENARIO.equals(options.scenario()) ? new NoSpaceScenario() : null;
+        noPower = NoPowerScenario.SCENARIO.equals(options.scenario()) ? new NoPowerScenario() : null;
         noProvider = NoProviderScenario.SCENARIO.equals(options.scenario()) ? new NoProviderScenario() : null;
         this.options = options;
         this.driverFile = driverFile;
-        baseFixture = noSpace == null && noProvider == null ? DriverPlatform.baseFixture(options.scenario()) : null;
+        baseFixture = noSpace == null && noProvider == null && noPower == null ? DriverPlatform.baseFixture(options.scenario()) : null;
         addonFixture = AddonCpuFixture.create(options.scenario());
         wirelessFixture = WirelessTerminalFixture.create(options.scenario());
         requesterFixture = RequesterFixture.SCENARIO.equals(options.scenario()) ? RequesterFixture.create() : null;
@@ -95,11 +95,13 @@ public final class CraftPlanScenario {
         if (state == ScenarioState.FAILED || state == ScenarioState.QUIT_REQUESTED) {
             return;
         }
-        if (elapsed().compareTo(state == ScenarioState.STARTING || noSpace != null || noProvider != null ? START_TIMEOUT : STEP_TIMEOUT) > 0) {
+        if (elapsed().compareTo(state == ScenarioState.STARTING || noSpace != null || noProvider != null || noPower != null ? START_TIMEOUT : STEP_TIMEOUT) > 0) {
             fail("timeout", state.name(), currentScreen());
             return;
         }
         try {
+            // Reload futures can complete while the loading overlay still covers the rendered screen.
+            if (minecraft.getOverlay() != null) return;
             switch (state) {
                 case STARTING -> start();
                 case WORLD_READY -> openTerminal();
@@ -135,6 +137,12 @@ public final class CraftPlanScenario {
     }
 
     private void start() throws IOException {
+        if (!minecraft.getLanguageManager().getSelected().equals("en_us")) {
+            minecraft.getLanguageManager().setSelected("en_us");
+            minecraft.options.languageCode = "en_us";
+            minecraft.reloadResourcePacks();
+            return;
+        }
         if (minecraft.level == null || minecraft.player == null || minecraft.gameMode == null
                 || minecraft.getSingleplayerServer() == null || minecraft.getCurrentServer() != null) {
             return;
@@ -152,7 +160,7 @@ public final class CraftPlanScenario {
         if (!marker.disposableWorldId().equals(options.world())) {
             throw new IllegalArgumentException("fixture world ID mismatch");
         }
-        if (noSpace != null || noProvider != null) {
+        if (noSpace != null || noProvider != null || noPower != null) {
             advance(ScenarioState.WORLD_READY);
             return;
         }
@@ -177,6 +185,13 @@ public final class CraftPlanScenario {
     }
 
     private void openTerminal() throws IOException {
+        if (noPower != null) {
+            if (noPower.tick(minecraft, marker, checks, this::screenshotUnchecked, this::moveMouse)) {
+                advance(ScenarioState.TERMINAL_OPEN);
+                writePass();
+            }
+            return;
+        }
         if (noProvider != null) {
             if (noProvider.tick(minecraft, marker, checks, this::screenshotUnchecked, this::moveMouse)) {
                 advance(ScenarioState.TERMINAL_OPEN);

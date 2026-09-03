@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import appeng.api.networking.IGrid;
 import com.ctux.ae2craftingtime.core.PlayerRequestRateLimit;
 import com.ctux.ae2craftingtime.core.ProfileKey;
@@ -11,7 +12,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public final class StatsRequestHandler {
     private static final PlayerRequestRateLimit RATE_LIMIT = new PlayerRequestRateLimit();
@@ -28,19 +28,19 @@ public final class StatsRequestHandler {
         var context = StatsRequestContext.current(player);
         var networkId = ProfilerBridge.networkId(context.grid());
         var gameTick = player.level().getGameTime();
-        var missing = ProfilerBridge.missingProviders(context.craftingCpu(), context.grid());
-        var missingProviders = new HashSet<String>();
+        var missing = ProfilerBridge.blockReasons(context.craftingCpu(), context.grid(), gameTick);
+        var blockReasons = new HashMap<String, CraftingBlockReason>();
         for (var key : keys) {
             var profileKey = new ProfileKey(networkId, key);
-            if (missing.contains(profileKey)) {
-                missingProviders.add(key);
+            if (missing.containsKey(profileKey)) {
+                blockReasons.put(key, missing.get(profileKey));
             }
             ProfilerBridge.entry(profileKey, new ProfileKey(key), context.craftingCpu(), gameTick)
                     .ifPresent(entries::add);
             ProfilerBridge.waitingTicks(profileKey, context.craftingCpu(), gameTick)
                     .ifPresent(value -> waitingTicks.put(key, value));
         }
-        return new Response(entries, networkAmounts(context.grid(), keys), waitingTicks, missingProviders,
+        return new Response(entries, networkAmounts(context.grid(), keys), waitingTicks, blockReasons,
                 StatsRequestContext.cpuContext(player.containerMenu));
     }
 
@@ -61,6 +61,6 @@ public final class StatsRequestHandler {
     }
 
     public record Response(List<StatsEntry> entries, Map<String, Long> networkAmounts,
-            Map<String, Long> waitingTicks, Set<String> missingProviders, long cpuContext) {
+            Map<String, Long> waitingTicks, Map<String, CraftingBlockReason> blockReasons, long cpuContext) {
     }
 }

@@ -1,8 +1,8 @@
 # Screenshot gallery
 
 These are real Minecraft 1.20.1 Forge screenshots, captured at native pixel size.
-Each image focuses on a window, recipe row, or tooltip. There are no full-screen
-captures or duplicate light/dark versions.
+Most images are cropped to a window, recipe row, or tooltip. The NO POWER
+example keeps the full captured frame; click it to view the original size.
 
 ## Crafting plan
 
@@ -45,6 +45,11 @@ When scheduled work loses its connected Pattern Provider or encoded pattern,
 the row shows NO PROVIDER and explains how to resume the job:
 
 ![NO PROVIDER warning and provider recovery advice](crafting-status-no-provider.png)
+
+When the ME network can't supply enough energy to dispatch the next pattern,
+the row shows NO POWER and suggests increasing generation or stored energy:
+
+![NO POWER warning and ME network energy advice](crafting-status-no-power.png)
 
 ## Timing details
 
@@ -111,6 +116,12 @@ The NO PROVIDER example uses a real processing job with one active output and
 63 scheduled outputs. Removing its encoded pattern triggers the warning;
 restoring it clears the warning in the same open screen. The crop shows the
 tooltip at its original pixel size.
+
+The NO POWER example comes from the full Forge UI smoke run. It uses a real
+processing job with one active output and 63 scheduled outputs, with too little
+ME energy for the next dispatch. Restoring sufficient energy clears the warning
+without reopening the screen. An unfuelled external machine alone doesn't
+trigger it. The unfinished fixture's native AE2 title timer isn't a TTC estimate.
 
 To refresh a crop, open the target UI and run `scripts/capture-ui-region.ps1`
 inside the same interactive Windows session. Supply the output PNG path and

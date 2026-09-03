@@ -25,5 +25,7 @@
   "aeinfinitybooster-terminal",
   "merequester-screen",
   "ae2networkanalyser-screen",
-  "no-space-status"
+  "no-space-status",
+  "no-provider-status",
+  "no-power-status"
 ]
