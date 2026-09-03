@@ -7,12 +7,7 @@ final class DriverPlatform {
     }
 
     static boolean focus(net.minecraft.client.Minecraft minecraft) {
-        long window = minecraft.getWindow().getWindow();
-        var nativeWindow = new com.sun.jna.platform.win32.WinDef.HWND(com.sun.jna.Pointer.createConstant(
-                org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window(window)));
-        if (nativeWindow.equals(com.sun.jna.platform.win32.User32.INSTANCE.GetForegroundWindow())) return true;
-        org.lwjgl.glfw.GLFW.glfwFocusWindow(window);
-        return false;
+        return StandardAe2Scenario.focus(minecraft.getWindow().getWindow());
     }
 
     static void cloneEntry(appeng.client.gui.me.common.MEStorageScreen<?> screen,
@@ -22,11 +17,7 @@ final class DriverPlatform {
     }
 
     static void click(net.minecraft.client.Minecraft minecraft, double x, double y) {
-        boolean control = net.minecraft.client.gui.screens.Screen.hasControlDown();
-        boolean alt = net.minecraft.client.gui.screens.Screen.hasAltDown();
-        boolean details = com.ctux.ae2craftingtime.mc1201.TtcDetailsKeyMapping.matchesMouse(0);
-        boolean handled = minecraft.screen.mouseClicked(x, y, 0);
-        System.out.println("AE2CT click control=" + control + " alt=" + alt + " details=" + details + " handled=" + handled);
+        minecraft.screen.mouseClicked(x, y, 0);
     }
 
     static final String IMPORT_EXPORT_ID = "ae2insertexportcard";

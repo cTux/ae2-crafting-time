@@ -7,12 +7,7 @@ final class DriverPlatform {
     }
 
     static boolean focus(net.minecraft.client.Minecraft minecraft) {
-        long window = minecraft.getWindow().getWindow();
-        var nativeWindow = new com.sun.jna.platform.win32.WinDef.HWND(com.sun.jna.Pointer.createConstant(
-                org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window(window)));
-        if (nativeWindow.equals(com.sun.jna.platform.win32.User32.INSTANCE.GetForegroundWindow())) return true;
-        org.lwjgl.glfw.GLFW.glfwFocusWindow(window);
-        return false;
+        return StandardAe2Scenario.focus(minecraft.getWindow().getWindow());
     }
 
     static void cloneEntry(appeng.client.gui.me.common.MEStorageScreen<?> screen,

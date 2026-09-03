@@ -220,12 +220,7 @@ final class StandardAe2Scenario {
                 if (reset) key(0x12, false);
                 return false;
             }
-            if (!DriverPlatform.modifiers(minecraft, reset)) {
-                if (clickPhase % 100 == 2) System.out.println("AE2CT modifier wait native="
-                        + User32.INSTANCE.GetAsyncKeyState(0x11) + " glfw="
-                        + org.lwjgl.glfw.GLFW.glfwGetKey(minecraft.getWindow().getWindow(), 341));
-                return false;
-            }
+            if (!DriverPlatform.modifiers(minecraft, reset)) return false;
             var row = snapshot.rows().stream().filter(r -> r.outputId().equals(statsOutput())).findFirst().orElseThrow();
             DriverPlatform.click(minecraft, row.cell().centerX(), row.cell().centerY());
             releaseKeys();
@@ -259,6 +254,25 @@ final class StandardAe2Scenario {
         if (User32.INSTANCE.SendInput(new DWORD(1), new INPUT[] {input}, input.size()).intValue() != 1) {
             throw new IllegalStateException("Native modifier input was rejected");
         }
+    }
+
+    static boolean focus(long window) {
+        var user = User32.INSTANCE;
+        var nativeWindow = new com.sun.jna.platform.win32.WinDef.HWND(com.sun.jna.Pointer.createConstant(
+                org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window(window)));
+        var foreground = user.GetForegroundWindow();
+        if (nativeWindow.equals(foreground)) return true;
+        // A scheduled client can be visible while another desktop window still owns input.
+        var currentThread = new DWORD(com.sun.jna.platform.win32.Kernel32.INSTANCE.GetCurrentThreadId());
+        var foregroundThread = new DWORD(user.GetWindowThreadProcessId(foreground, null));
+        boolean attached = !currentThread.equals(foregroundThread)
+                && user.AttachThreadInput(currentThread, foregroundThread, true);
+        try {
+            org.lwjgl.glfw.GLFW.glfwFocusWindow(window);
+        } finally {
+            if (attached) user.AttachThreadInput(currentThread, foregroundThread, false);
+        }
+        return false;
     }
 
     private String statsOutput() {
