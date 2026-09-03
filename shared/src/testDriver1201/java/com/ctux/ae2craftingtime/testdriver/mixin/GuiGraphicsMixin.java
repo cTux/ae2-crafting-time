@@ -20,7 +20,7 @@ public abstract class GuiGraphicsMixin {
             at = @At("HEAD"))
     private void ae2craftingtime_test_driver$text(Font font, Component text, int x, int y, int color, boolean shadow,
             CallbackInfoReturnable<Integer> cir) {
-        UiObservationStore.text(text, x, y, font.width(text), font.lineHeight);
+        UiObservationStore.text((GuiGraphics) (Object) this, text, x, y, font.width(text), font.lineHeight);
     }
 
     @Inject(method = "fill(IIIII)V", at = @At("HEAD"))

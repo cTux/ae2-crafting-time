@@ -20,11 +20,14 @@ description: Run prepared AE2 Crafting Time repository clients or automated UI s
   launch its installed loader directly. Preserve the requested target, profile,
   and scenario. Use the single-launch suite for the full compatible graph,
   with a fresh world and screenshots per case. Run clients sequentially.
-- The current `invoke-ui-smoke-codexvm.ps1` dispatcher, `run-ui-smoke.ps1`,
-  `run-client.ps1`, and `run-*` wrappers reach Gradle builds. Do not use them
-  to launch in CodexVM until they support host-built artifacts without guest
-  builds. If an artifact-only prepared launcher is missing, report that gap;
-  do not fall back to a guest build or substitute a Prism modpack.
+- Run `scripts/run-ui-smoke.ps1` on the host for all four compatible suites.
+  Use `run-ui-smoke-matrix.ps1 -Target <id>` for one target or `-Latest` for
+  diagnostics. These commands build on the host and dispatch only packaged
+  artifacts to the guest's installed native loader. The dispatcher shares the
+  exact worktree; `-GuestSourceRoot` selects an existing share when needed.
+- The guest requires matching prepared `launch.json` manifests as documented
+  in `docs/dev-client.md`. Missing or mismatched native installations are setup
+  failures. Never substitute a guest Gradle build or a Prism modpack.
 - Read current status, evidence, and launcher logs from `build/ui-smoke`.
   Record the exact client PID and stop only that process when needed; do not
   reuse a PID from a previous run.

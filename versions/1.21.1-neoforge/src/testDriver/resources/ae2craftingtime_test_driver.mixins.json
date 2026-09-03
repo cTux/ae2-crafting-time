@@ -17,7 +17,9 @@
     "GuiGraphicsMixin",
     "MEStorageScreenAccessor",
     "MouseHandlerAccessor",
-    "RenderSystemMixin"
+    "RenderSystemMixin",
+    "ChatComponentAccessor",
+    "CraftingStatusAccessor"
   ],
   "injectors": {
     "defaultRequire": 1

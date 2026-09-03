@@ -1,21 +1,31 @@
 param(
-    [ValidateSet("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")][string]$Target = "1.20.1-forge",
+    [ValidateSet("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")][string]$Target,
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(suite|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
-    [string]$ReportDirectory
+    [string]$ReportDirectory,
+    [string]$BundleDirectory,
+    [string]$PreparedLaunch
 )
 
 $ErrorActionPreference = "Stop"
-if ($Scenario -eq "suite" -and ($Interactive -or $Latest -or $ProjectId)) {
+if (-not $PreparedLaunch -and -not $ReportDirectory) {
+    if ($BundleDirectory) { throw 'A native bundle requires its prepared launch manifest' }
+    $campaign = @{ Latest = $Latest; ProjectId = $ProjectId; Target = $Target; Interactive = $Interactive }
+    if ($PSBoundParameters.ContainsKey('Scenario')) { $campaign.Scenario = $Scenario }
+    & (Join-Path $PSScriptRoot 'run-ui-smoke-matrix.ps1') @campaign
+    exit $LASTEXITCODE
+}
+if (-not $Target) { throw 'A native launch or explicit report requires a target' }
+if ($Scenario -eq "suite" -and ($Interactive -or $ProjectId)) {
     throw "The prepared suite requires the full compatible profile and non-interactive execution"
 }
 $root = Split-Path -Parent $PSScriptRoot
 $fixtureTarget = if ($Target -like "*-neoforge") { $Target } else { "1.20.1-forge" }
 $source = Join-Path $root "versions\$fixtureTarget\run\saves\ae2-crafting-time"
 $game, $loader = $Target.Split("-", 2)
-$modsDirectory = if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" }
+$modsDirectory = if ($Target -eq "1.20.1-forge" -and -not $PreparedLaunch) { "resolved-mods" } else { "mods" }
 $profile = if ($Latest) { "latest" } else { "compatible" }
 $base = Join-Path $root "build\ui-smoke\$Target\$profile"
 $report = if ($ReportDirectory) { [IO.Path]::GetFullPath($ReportDirectory) } else { Join-Path $base $Scenario }
@@ -47,6 +57,8 @@ function Write-Status([string]$phase, [string]$message = "", [Nullable[int]]$exi
         phase = $phase; pid = $(if ($process) { $process.Id } else { $null }); exitCode = $exitCode
         startedAt = $startedAt; updatedAt = [DateTime]::UtcNow.ToString("o"); javaHome = $env:JAVA_HOME
         stagedRoot = $root; stdout = $stdout; stderr = $stderr; evidence = $evidence; message = $message
+        processStartedAt = $(if ($process) { $process.StartTime.ToUniversalTime().ToString('o') } else { $null })
+        argumentFile = $(if ($PreparedLaunch) { Join-Path $runtime 'ui-smoke-java.args' } else { $null })
     }
     $temporary = "$statusPath.$runId.tmp"
     [IO.File]::WriteAllText($temporary, ($status | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
@@ -62,6 +74,8 @@ if ($sourceMarker.schema -ne 1 -or $sourceMarker.scenario -ne "craft-plan" -or
     throw "Tracked source fixture marker is invalid or executable"
 }
 $sourceHash = Get-TreeHash $source
+$metadata = Join-Path $root "versions/$Target/run/saves/ae2-crafting-time/level.dat"
+$metadataHash = (Get-FileHash -LiteralPath $metadata).Hash
 $buildRoot = [IO.Path]::GetFullPath((Join-Path $root "build\ui-smoke"))
 $resolvedBase = [IO.Path]::GetFullPath($base)
 if (-not $resolvedBase.StartsWith($buildRoot, [StringComparison]::OrdinalIgnoreCase)) {
@@ -85,7 +99,7 @@ if ($Scenario -eq "suite") {
     $plan = Get-Content -LiteralPath (Join-Path $evidence "suite-plan.json") -Raw | ConvertFrom-Json
     $worldCopies = @($plan.cases | ForEach-Object { Join-Path $runtime "saves\$($_.world)" })
 } else {
-    Copy-Item -LiteralPath $source -Destination $worldCopy -Recurse
+    & (Join-Path $PSScriptRoot 'copy-ui-smoke-fixture.ps1') -Source $source -Destination $worldCopy -Target $Target
     $markerPath = Join-Path $worldCopy ".ae2-crafting-time-test-fixture.json"
     $marker = Get-Content -LiteralPath $markerPath -Raw | ConvertFrom-Json
     $marker.disposableWorldId = $world
@@ -131,15 +145,27 @@ if ($Interactive) {
 
 try {
     try {
-        $process = Start-Process -FilePath "powershell.exe" -ArgumentList $arguments -PassThru -WindowStyle Hidden `
-            -WorkingDirectory $root `
+        $executable = 'powershell.exe'
+        if ($PreparedLaunch) {
+            $launch = & (Join-Path $PSScriptRoot 'prepare-ui-smoke-launch.ps1') -LaunchManifest $PreparedLaunch `
+                -BundleDirectory $BundleDirectory -RuntimeDirectory $runtime -Target $Target -Profile $profile `
+                -Scenario $Scenario -World $world -Evidence $evidence -Interactive:$Interactive
+            $executable = $launch.executable
+            $arguments = $launch.arguments
+        }
+        $workingDirectory = if ($PreparedLaunch) { $runtime } else { $root }
+        $process = Start-Process -FilePath $executable -ArgumentList $arguments -PassThru -WindowStyle Hidden `
+            -WorkingDirectory $workingDirectory `
             -RedirectStandardOutput $stdout -RedirectStandardError $stderr
         $null = $process.Handle
         Write-Status "running"
         $timeout = if ($Interactive) { [TimeSpan]::FromMinutes(30) } elseif ($Scenario -eq "suite") { [TimeSpan]::FromMinutes(40) } else { [TimeSpan]::FromMinutes(8) }
         if (-not $process.WaitForExit([int]$timeout.TotalMilliseconds)) {
             $null = $process.CloseMainWindow()
-            if (-not $process.WaitForExit(10000)) { & taskkill.exe /PID $process.Id /T /F | Out-Null }
+            if (-not $process.WaitForExit(10000)) {
+                & taskkill.exe /PID $process.Id /T /F | Out-Null
+                if (-not $process.WaitForExit(10000)) { throw 'Recorded smoke client did not exit after termination' }
+            }
             throw "UI-smoke client exceeded $($timeout.TotalMinutes) minutes"
         }
         if ($process.ExitCode -ne 0) {
@@ -171,7 +197,11 @@ try {
         $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
             Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
         $driverName = "ae2-crafting-time-$modVersion-$loader-$game-test-driver.jar"
-        $requiredChecks = if ($caseScenario -eq "no-space-status") {
+        $requiredChecks = if ($caseScenario -eq "standard-ae2") {
+            @('plan', 'plan-sort', 'plan-tooltip', 'plan-details', 'plan-reset', 'submitted', 'status',
+                'status-sort', 'status-tooltip', 'status-details', 'status-reset', 'waiting', 'running',
+                'delayed', 'header', 'layout', 'completed', 'output')
+        } elseif ($caseScenario -eq "no-space-status") {
             @("screen", "external-machine", "warning", "tooltip", "layout", "ukrainian", "recovered")
         } elseif ($caseScenario -eq "no-power-status") {
             @("screen", "real-job", "external-unpowered", "active-network", "mixed-row", "tooltip", "layout", "ukrainian", "power-restored", "cancelled", "inactive-cpu")
@@ -201,7 +231,12 @@ try {
         $actualChecks = @($result.checks.psobject.Properties.Name)
         if (Compare-Object $requiredChecks $actualChecks -SyncWindow 0) { throw "Invalid UI-smoke check set" }
         foreach ($check in $requiredChecks) { if (-not $result.checks.$check) { throw "Failed UI-smoke check: $check" } }
-        $requiredScreenshots = if ($caseScenario -eq "no-space-status") {
+        $requiredScreenshots = if ($caseScenario -eq "standard-ae2") {
+            @('plan-default.png', 'plan-sort-1.png', 'plan-sort-2.png', 'plan-sort-3.png', 'plan-tooltip.png',
+                'plan-details.png', 'plan-reset.png', 'status-default.png', 'status-sort-1.png', 'status-sort-2.png',
+                'status-sort-3.png', 'status-tooltip.png', 'status-details.png', 'status-reset.png',
+                'status-waiting-running.png', 'status-delayed.png', 'status-progress.png', 'status-completed.png')
+        } elseif ($caseScenario -eq "no-space-status") {
             @("no-space-before.png", "no-space-en-us.png", "no-space-uk-ua.png", "no-space-recovered.png")
         } elseif ($caseScenario -eq "no-power-status") {
             @("no-power-external-unpowered.png", "no-power-en-us.png", "no-power-uk-ua.png", "no-power-restored.png", "no-power-inactive.png")
@@ -246,14 +281,23 @@ try {
     ) -SimpleMatch
         if ($fatal) { throw "Fatal loader, mixin, resource, or crash signature in latest.log" }
     } finally {
+        $manifest = Join-Path $runtime "$modsDirectory\.ae2-crafting-time-run-mods.json"
+        if (Test-Path -LiteralPath $manifest) { Copy-Item -LiteralPath $manifest -Destination (Join-Path $evidence 'resolved-mods.json') -Force }
         $latestLog = Join-Path $runtime "logs\latest.log"
         if (Test-Path -LiteralPath $latestLog) { Copy-Item -LiteralPath $latestLog -Destination (Join-Path $evidence "latest.log") -Force }
         if ($previousToken) { $env:AE2CT_TEST_DRIVER_TOKEN = $previousToken }
         else { Remove-Item Env:\AE2CT_TEST_DRIVER_TOKEN -ErrorAction SilentlyContinue }
         foreach ($copy in $worldCopies) {
-            if (Test-Path -LiteralPath $copy) { Remove-Item -LiteralPath $copy -Recurse -Force }
+            if ((-not $process -or $process.HasExited) -and (Test-Path -LiteralPath $copy)) {
+                Remove-Item -LiteralPath $copy -Recurse -Force
+            }
         }
-        if ((Get-TreeHash $source) -ne $sourceHash) { throw "Tracked source fixture changed during UI smoke" }
+        $afterHash = Get-TreeHash $source
+        $afterMetadata = (Get-FileHash -LiteralPath $metadata).Hash
+        [ordered]@{ before = $sourceHash; after = $afterHash; metadataBefore = $metadataHash; metadataAfter = $afterMetadata
+            unchanged = ($afterHash -eq $sourceHash -and $afterMetadata -eq $metadataHash) } |
+            ConvertTo-Json | Set-Content -LiteralPath (Join-Path $evidence 'fixture-hashes.json') -Encoding UTF8
+        if ($afterHash -ne $sourceHash -or $afterMetadata -ne $metadataHash) { throw "Tracked source fixture changed during UI smoke" }
     }
     Write-Status "passed" "UI smoke passed" $process.ExitCode
     $runtimeLock.Dispose()

@@ -22,6 +22,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
     @Test
+    void standardResultCannotOmitAnyRequiredPlanStatusOrOutputCheck() {
+        assertTrue(AddonCpuFixture.supports("standard-ae2"));
+        assertNull(AddonCpuFixture.create("standard-ae2"));
+        for (String missing : StandardAe2Scenario.CHECKS) {
+            var checks = new LinkedHashMap<String, Boolean>();
+            StandardAe2Scenario.CHECKS.stream().filter(key -> !key.equals(missing)).forEach(key -> checks.put(key, true));
+            assertThrows(IllegalArgumentException.class, () -> new DriverResult(1, true, "driver.jar",
+                    "1.20.1-forge", "compatible", "standard-ae2", "PASS", checks, List.of(), null));
+        }
+    }
+
+    @Test
     void noSpaceRequiresTheRenderedWarningAndBothAdviceLines() {
         assertTrue(AddonCpuFixture.supports(NoSpaceScenario.SCENARIO));
         assertNull(AddonCpuFixture.create(NoSpaceScenario.SCENARIO));

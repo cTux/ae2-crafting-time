@@ -17,6 +17,10 @@ Copy-Item $source $neoFixture -Recurse
 $newFixture = Join-Path $temp "versions\26.1.2-neoforge\run\saves\ae2-crafting-time"
 New-Item -ItemType Directory -Path (Split-Path $newFixture) -Force | Out-Null
 Copy-Item $source $newFixture -Recurse
+$fabricFixture = Join-Path $temp 'versions/1.20.1-fabric/run/saves/ae2-crafting-time'
+New-Item -ItemType Directory -Path $fabricFixture -Force | Out-Null
+Set-Content -LiteralPath (Join-Path $fabricFixture 'level.dat') -Value 'native Fabric metadata'
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'copy-ui-smoke-fixture.ps1') -Destination $scripts
 [IO.File]::WriteAllText((Join-Path $scripts "run-client.ps1"), @'
 param(
     [string]$Target, [string]$RuntimeDirectory, [string]$DriverScenario,
@@ -26,6 +30,7 @@ param(
 )
 if ([IO.Path]::GetFullPath((Get-Location).Path) -ne [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))) { exit 8 }
 if ((Get-Content (Join-Path $RuntimeDirectory 'options.txt') -Raw) -notmatch '(?m)^onboardAccessibility:false\r?$') { exit 9 }
+if ($Target -eq '1.20.1-fabric' -and (Get-Content (Join-Path $RuntimeDirectory "saves/$DriverWorld/level.dat") -Raw).Trim() -ne 'native Fabric metadata') { exit 10 }
 $profile = if ($Latest) { "latest" } else { "compatible" }
 $loader = $Target.Split("-", 2)[1]
 $modsDirectory = if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" }
@@ -36,7 +41,7 @@ if ($DriverScenario -eq "suite") {
     $plan = Get-Content (Join-Path $DriverOutputDirectory 'suite-plan.json') -Raw | ConvertFrom-Json
     $cases = foreach ($case in $plan.cases) {
         & $PSCommandPath -Target $Target -RuntimeDirectory $RuntimeDirectory -DriverScenario $case.scenario `
-            -DriverOutputDirectory (Join-Path $DriverOutputDirectory $case.scenario) -DriverWorld $case.world
+            -DriverOutputDirectory (Join-Path $DriverOutputDirectory $case.scenario) -DriverWorld $case.world -Latest:$Latest
         [ordered]@{scenario=$case.scenario; world=$case.world; result='PASS'; startedAt='2026-09-02T00:00:00Z'; finishedAt='2026-09-02T00:00:01Z'}
     }
     $summary = [ordered]@{schema=1;complete=$true;result='PASS';processId=$PID;cases=@($cases)}
@@ -49,7 +54,12 @@ if ($DriverScenario -eq "suite") {
     $summary | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $DriverOutputDirectory 'result.json') -Encoding UTF8
     return
 }
-$checks = if ($DriverScenario -eq "no-space-status") {
+$checks = if ($DriverScenario -eq "standard-ae2") {
+    $values = [ordered]@{}
+    foreach ($key in @('plan','plan-sort','plan-tooltip','plan-details','plan-reset','submitted','status','status-sort',
+            'status-tooltip','status-details','status-reset','waiting','running','delayed','header','layout','completed','output')) { $values[$key] = $true }
+    $values
+} elseif ($DriverScenario -eq "no-space-status") {
     [ordered]@{ screen=$true; "external-machine"=$true; warning=$true; tooltip=$true; layout=$true; ukrainian=$true; recovered=$true }
 } elseif ($DriverScenario -eq "no-power-status") {
     [ordered]@{ 'screen'=$true; 'real-job'=$true; 'external-unpowered'=$true; 'active-network'=$true; 'mixed-row'=$true; 'tooltip'=$true; 'layout'=$true; 'ukrainian'=$true; 'power-restored'=$true; 'cancelled'=$true; 'inactive-cpu'=$true }
@@ -72,7 +82,11 @@ $checks = if ($DriverScenario -eq "no-space-status") {
 } else {
     [ordered]@{ screen=$true; 'ttc-row'=$true; 'total-ttc'=$true; 'sort-cycle'=$true; tooltip=$true; layout=$true }
 }
-$screenshots = if ($DriverScenario -eq "no-space-status") {
+$screenshots = if ($DriverScenario -eq "standard-ae2") {
+    @('plan-default.png','plan-sort-1.png','plan-sort-2.png','plan-sort-3.png','plan-tooltip.png','plan-details.png','plan-reset.png',
+      'status-default.png','status-sort-1.png','status-sort-2.png','status-sort-3.png','status-tooltip.png','status-details.png','status-reset.png',
+      'status-waiting-running.png','status-delayed.png','status-progress.png','status-completed.png')
+} elseif ($DriverScenario -eq "no-space-status") {
     @("no-space-before.png", "no-space-en-us.png", "no-space-uk-ua.png", "no-space-recovered.png")
 } elseif ($DriverScenario -eq "no-power-status") {
     @("no-power-external-unpowered.png", "no-power-en-us.png", "no-power-uk-ua.png", "no-power-restored.png", "no-power-inactive.png")
@@ -118,7 +132,11 @@ function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive,
     if ($Interactive) { $arguments += "-Interactive" }
     if ($Scenario -ne "craft-plan") { $arguments += @("-Scenario", $Scenario) }
     if ($ProjectId) { $arguments += @("-ProjectId") + $ProjectId }
-    if ($ReportDirectory) { $arguments += @("-ReportDirectory", $ReportDirectory) }
+    if (-not $ReportDirectory) {
+        $profile = if ($Latest) { 'latest' } else { 'compatible' }
+        $ReportDirectory = Join-Path $temp "build/ui-smoke/$Target/$profile/$Scenario"
+    }
+    $arguments += @("-ReportDirectory", $ReportDirectory)
     $preference = $ErrorActionPreference
     try {
         $ErrorActionPreference = "Continue"
@@ -163,7 +181,7 @@ try {
     foreach ($mode in @('suite-missing', 'suite-order', 'suite-fail', 'suite-world', 'schema', 'missing-screenshot', 'fatal')) {
         Invoke-Case $mode -Scenario suite -shouldPass $false
     }
-    Invoke-Case "pass" -Scenario suite -Latest -shouldPass $false
+    Invoke-Case "pass" -Scenario suite -Latest -shouldPass $true
     Invoke-Case "pass" -Scenario suite -Interactive -shouldPass $false
     Invoke-Case "pass" -Scenario suite -ProjectId E6BFl96N -shouldPass $false
     Invoke-Case "pass" -Latest -shouldPass $true
@@ -205,6 +223,10 @@ try {
     $failedStatus = Get-Content -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\craft-plan\status.json") -Raw | ConvertFrom-Json
     if ($failedStatus.phase -ne "failed" -or -not $failedStatus.message) { throw "Smoke failure status was incomplete" }
 
+    Invoke-Case "pass" -Scenario standard-ae2 -shouldPass $true
+    Invoke-Case "missing-screenshot" -Scenario standard-ae2 -shouldPass $false
+    $failedManifest = Join-Path $temp 'build/ui-smoke/1.20.1-forge/compatible/standard-ae2/evidence/resolved-mods.json'
+    if (-not (Test-Path -LiteralPath $failedManifest)) { throw 'Failure omitted the resolved manifest' }
     $markerPath = Join-Path $source ".ae2-crafting-time-test-fixture.json"
     $marker = Get-Content -LiteralPath $markerPath -Raw | ConvertFrom-Json
     $marker.disposableWorldId = "ae2-crafting-time"

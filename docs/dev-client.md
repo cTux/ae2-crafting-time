@@ -71,28 +71,30 @@ its Codex group membership too. Do not edit settings while Prism or that client
 is running. Prism needs the resolved executable path, not a literal environment
 variable in its Java-path field.
 
-## Prepared-client launcher limitation
+## Prepared UI smoke
 
-The current `invoke-ui-smoke-codexvm.ps1` dispatcher reaches
-`run-ui-smoke-codexvm.ps1`, `run-ui-smoke.ps1`, and `run-client.ps1`, which build
-with Gradle and launch the production mod from a source set. The `run-*` wrappers
-also reach that build path, including `run-client.ps1 -ResolveOnly`, which still
-builds the driver. They are not artifact-only VM launchers. Do not run these
-paths in CodexVM until they support launching host-built JARs without guest
-builds. A missing artifact-only prepared launcher is a tooling gap, not permission
-to build in the VM, launch the UI on the host, or substitute a Prism modpack.
+Run `scripts/run-ui-smoke.ps1` on the host for all four compatible suites in
+matrix order. Use `scripts/run-ui-smoke-matrix.ps1 -Target <id>` for one target,
+or `-Latest` for a separate diagnostic campaign. The campaign builds and resolves
+on the host, stages exact production/driver JARs, and launches Java directly in
+CodexVM. It continues with later targets after a failure and returns non-zero
+for any compatible failure. If a client exit cannot be confirmed, it stops before
+launching another target. Timestamped reports are under `build/ui-smoke/campaigns`.
 
-The existing scenario contracts, fixture preparation, screenshot archive, and
-result checks still apply to smoke runs. Keep the requested target, profile,
-and scenario. During integration development, a focused dependency graph may
-load only that integration and its required dependencies. Before merge, use the
-complete compatible profile. Fetch and rebase onto `origin/master` immediately
-before that final run; rerun after any later base change to production, build,
-dependency, fixture, or driver code.
+The prepared guest loader manifests live at
+`C:/Users/Public/Documents/AE2CraftingTimeSmoke/prepared/<target>/launch.json`.
+Each contains `target`, `java`, and the installed native launch `arguments`.
+The runner replaces all old test properties, game directory and disposable-world
+arguments. Loader libraries/assets stay in their existing prepared installation.
+The manifest must match the resolved loader; missing or different installations
+are setup failures, or diagnostics for latest profiles. Pass `-PreparedLaunchRoot`
+to use another prepared installation. Neither preparation nor launch runs Gradle
+inside the guest.
 
-Provision VM transports with `prepare-codexvm-ui-smoke.ps1` on the host and
-`setup-codexvm-ui-smoke.ps1` in elevated guest PowerShell when needed. Transport
-setup does not authorize guest builds.
+The dispatcher creates or reuses a share for the exact host worktree. Pass `-GuestSourceRoot` to select an existing mapping. Keep the live runtime on local
+NTFS. Archive and inspect every campaign before removing the worktree.
+Fetch and rebase onto `origin/master` before the final compatible smoke; rerun if
+subsequent base changes affect production, build, dependency, fixture or driver code.
 
 ## Dependency profiles
 

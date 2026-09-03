@@ -1,6 +1,25 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 final class DriverPlatform {
+    static boolean modifiers(net.minecraft.client.Minecraft minecraft, boolean reset) {
+        return net.minecraft.client.gui.screens.Screen.hasControlDown()
+                && net.minecraft.client.gui.screens.Screen.hasAltDown() == reset;
+    }
+
+    static boolean focus(net.minecraft.client.Minecraft minecraft) {
+        return StandardAe2Scenario.focus(minecraft.getWindow().getWindow());
+    }
+
+    static void cloneEntry(appeng.client.gui.me.common.MEStorageScreen<?> screen,
+            appeng.menu.me.common.GridInventoryEntry entry) {
+        ((com.ctux.ae2craftingtime.testdriver.mixin.MEStorageScreenAccessor) screen)
+                .ae2craftingtime_test_driver$click(entry, 2, net.minecraft.world.inventory.ClickType.CLONE);
+    }
+
+    static void click(net.minecraft.client.Minecraft minecraft, double x, double y) {
+        minecraft.screen.mouseClicked(x, y, 0);
+    }
+
     static final String IMPORT_EXPORT_ID = "ae2insertexportcard";
     static final String EXTENDED_AE_ID = "extendedae";
     static final String TARGET = "1.20.1-fabric";

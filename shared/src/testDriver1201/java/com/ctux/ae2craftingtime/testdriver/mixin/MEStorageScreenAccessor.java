@@ -9,6 +9,9 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(MEStorageScreen.class)
 public interface MEStorageScreenAccessor {
+    @org.spongepowered.asm.mixin.gen.Accessor(value = "craftingStatusBtn", remap = false)
+    appeng.client.gui.widgets.TabButton ae2craftingtime_test_driver$statusButton();
+
     @org.spongepowered.asm.mixin.gen.Accessor(value = "repo", remap = false)
     Repo ae2craftingtime_test_driver$repo();
 

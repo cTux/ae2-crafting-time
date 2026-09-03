@@ -19,6 +19,13 @@ if not exist "%~dp0build\test-driver" mkdir "%~dp0build\test-driver"
 >"%~dp0build\test-driver\ae2-crafting-time-$modVersion-fabric-1.20.1-test-driver.jar" echo driver
 >"%~dp0build\test-driver\ae2-crafting-time-$modVersion-neoforge-1.21.1-test-driver.jar" echo driver
 >"%~dp0build\test-driver\ae2-crafting-time-$modVersion-neoforge-26.1.2-test-driver.jar" echo driver
+if not exist "%~dp0dist" mkdir "%~dp0dist"
+>"%~dp0dist\ae2-crafting-time-$modVersion-forge-1.20.1.jar" echo production
+>"%~dp0dist\ae2-crafting-time-$modVersion-fabric-1.20.1.jar" echo production
+>"%~dp0dist\ae2-crafting-time-$modVersion-neoforge-1.21.1.jar" echo production
+>"%~dp0dist\ae2-crafting-time-$modVersion-neoforge-26.1.2.jar" echo production
+if not exist "%~dp0versions\1.20.1-fabric\build\native-runtime-mods" mkdir "%~dp0versions\1.20.1-fabric\build\native-runtime-mods"
+if not defined AE2CT_EMPTY_RUNTIME_MODS >"%~dp0versions\1.20.1-fabric\build\native-runtime-mods\mixinextras-fabric.jar" echo runtime
 exit /b 0
 "@, [Text.UTF8Encoding]::new($false))
 $testMatrix = Join-Path $temp "run-client-versions.json"
@@ -249,6 +256,27 @@ try {
     } catch {
         if ($_.Exception.Message -notlike "Hash mismatch for *") { throw }
     } finally { $global:Ae2CtBadDownload = $false }
+    foreach ($target in @('1.20.1-forge','1.20.1-fabric')) {
+        $packaged = Join-Path $temp "packaged-$target"
+        # A second preparation must keep the resolved files listed in the manifest.
+        foreach ($attempt in 1,2) {
+            & $script -Target $target -Root $temp -VersionMatrix $testMatrix -ResolveOnly -Packaged -RuntimeDirectory $packaged 6>&1 | Out-Null
+            $files = Get-Content (Join-Path $packaged 'mods/.ae2-crafting-time-run-mods.json') -Raw | ConvertFrom-Json
+            foreach ($file in $files) {
+                if (-not (Test-Path -LiteralPath (Join-Path $packaged "mods/$file"))) { throw "Packaged manifest refers to a missing file: $file" }
+            }
+            if (-not (Test-Path -LiteralPath (Join-Path $packaged 'profile.json'))) { throw 'Packaged loader identity is missing' }
+            if ($target -eq '1.20.1-fabric' -and 'mixinextras-fabric.jar' -notin $files) { throw 'Fabric runtime-only dependency was omitted' }
+        }
+    }
+    Remove-Item -LiteralPath (Join-Path $temp 'versions/1.20.1-fabric/build/native-runtime-mods/mixinextras-fabric.jar')
+    $env:AE2CT_EMPTY_RUNTIME_MODS = '1'
+    try {
+        & $script -Target '1.20.1-fabric' -Root $temp -VersionMatrix $testMatrix -ResolveOnly -Packaged 6>&1 | Out-Null
+        throw 'Expected empty runtime export failure'
+    } catch {
+        if ($_.Exception.Message -ne 'Fabric native runtime mod export is empty') { throw }
+    } finally { Remove-Item Env:\AE2CT_EMPTY_RUNTIME_MODS -ErrorAction SilentlyContinue }
     Write-Host "run-client checks passed"
 } finally {
     $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())

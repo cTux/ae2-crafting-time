@@ -9,9 +9,9 @@ check and does not add the next loader or scenario until the current one passes.
    duplicating dependency versions from either matrix.
 2. Add `scripts/run-ui-smoke.ps1` matrix selection, result directories, status
    classification, and exact-process-tree cleanup.
-3. Reuse `scripts/run-client.ps1 -ResolveOnly`; add only the launch arguments
-   needed for driver mode and result paths. Run clients with `--no-daemon` so
-   each launch owns its Gradle and Minecraft process tree.
+3. Reuse `scripts/run-client.ps1 -ResolveOnly -Packaged` for host-built bundles.
+   Launch the installed native loader on guest-local NTFS and record its exact
+   process identity; Gradle stays on the host.
 4. Add `scripts/test-run-ui-smoke.ps1` with temporary fake matrices/results to
    cover matrix mismatch, missing dispositions, compatible versus latest exit
    behavior, incomplete results, missing screenshots, and exact cleanup targets.
@@ -24,11 +24,11 @@ top-level matrix project has one explicit coverage disposition (**A1**, **A3**,
 
 1. Add the smallest `testDriver` source set and `testDriverJar` task to
    `:mc_1_20_1_forge`.
-2. Forward the `uiSmoke*` Gradle properties to the client as the documented
-   `ae2ct.uiSmoke.*` system properties.
+2. Pass the documented `ae2craftingtime.test.*` system properties through the
+   prepared native launch manifest.
 3. Register `ae2craftingtime_test_driver` only in explicit test mode and enforce
    the exact production-mod version contract.
-4. Add pure result/checklist code under `test-driver/src/main/java` and the
+4. Add shared result/checklist code under `shared/src/testDriver1201/java` and the
    Forge bootstrap plus 1.20.1 screen adapter only where needed.
 5. Write the driver JAR to `build/test-driver`; keep it out of `dist`.
 6. Extend artifact checks to reject the driver mod ID/classes from production
@@ -108,8 +108,7 @@ fails for any required target or scenario (**A1**-**A8**).
    when the matching fixture is runnable.
 2. Report all other installed projects through their declared coexistence,
    tooling, exclusion, or not-applicable checks.
-3. Keep 1.20.1 Fabric AE2 Crafting Tree as `MISSING_FIXTURE` until its compatible
-   installation exists in `scripts/run-client-versions.json`.
+3. Report Fabric Crafting Tree as `NOT_APPLICABLE` while upstream has no Fabric artifact; require a direct fixture if a compatible artifact becomes available.
 4. Run latest profiles with the same scenario/result contract and normalize
    resolution/startup failures to `DIAGNOSTIC_FAILURE`.
 5. Add interactive loopback MCP only after automatic failure evidence is stable;

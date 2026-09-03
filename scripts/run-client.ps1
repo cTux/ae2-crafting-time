@@ -4,6 +4,7 @@ param(
     [string]$Target,
     [switch]$Latest,
     [switch]$ResolveOnly,
+    [switch]$Packaged,
     [string]$Root,
     [string]$VersionMatrix,
     [string]$RuntimeDirectory,
@@ -17,6 +18,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+if ($Packaged -and -not $ResolveOnly) { throw 'Packaged preparation requires -ResolveOnly; launch copied artifacts in CodexVM' }
 $javaHomes = @{}
 foreach ($major in 17, 21, 25) {
     $javaHomes[$major] = & (Join-Path $PSScriptRoot 'get-java-home.ps1') -Major $major
@@ -62,7 +64,7 @@ $profile = $profiles[$Target]
 $root = if ($Root) { $Root } else { Split-Path -Parent $PSScriptRoot }
 $runName = if ($Latest) { "run-latest" } else { "run" }
 $run = if ($RuntimeDirectory) { [IO.Path]::GetFullPath($RuntimeDirectory) } else { Join-Path $root "versions\$Target\$runName" }
-$mods = Join-Path $run $(if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" })
+$mods = Join-Path $run $(if ($Target -eq "1.20.1-forge" -and -not $Packaged) { "resolved-mods" } else { "mods" })
 $manifest = Join-Path $mods ".ae2-crafting-time-run-mods.json"
 New-Item -ItemType Directory -Path $mods -Force | Out-Null
 $matrixPath = if ($VersionMatrix) { $VersionMatrix } else { Join-Path $PSScriptRoot "run-client-versions.json" }
@@ -98,7 +100,7 @@ foreach ($dependency in @($matrixEntry.compatible.versions)) {
     $versionPins[$dependency.project_id] = $dependency.version_id
 }
 
-if ($Target -eq "1.20.1-forge") {
+if ($Target -eq "1.20.1-forge" -and -not $Packaged) {
     $legacyMods = Join-Path $run "mods"
     $oldManifest = Join-Path $legacyMods ".ae2-crafting-time-run-mods.json"
     if (Test-Path -LiteralPath $oldManifest) {
@@ -257,7 +259,17 @@ if ($DriverScenario) {
     if ($Interactive) { $runtimeArgs += "-PtestDriverInteractive=true" }
 }
 
-if ($Target -eq "1.20.1-forge") {
+if ($Packaged) {
+    Install-File ($ae2Version.files | Where-Object primary | Select-Object -First 1)
+    if ($Target -eq '1.20.1-fabric') {
+        Install-File ($fabricApiVersion.files | Where-Object primary | Select-Object -First 1)
+    }
+    [ordered]@{ schema = 1; target = $Target; profile = $(if ($Latest) { 'latest' } else { 'compatible' })
+        loader = $loaderVersion; ae2 = $ae2Version.version_number; java = $clientJava
+    } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $run 'profile.json') -Encoding UTF8
+}
+
+if ($Target -eq "1.20.1-forge" -and -not $Packaged) {
     foreach ($filename in $managed) {
         Remove-Item -LiteralPath (Join-Path $legacyMods $filename) -Force -ErrorAction SilentlyContinue
     }
@@ -280,7 +292,10 @@ if ($Target -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-ne
         Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
     if (-not $modVersion) { throw "Missing modVersion in gradle.properties" }
     $driverName = "ae2-crafting-time-$modVersion-$($profile.Loader)-$($profile.Game)-test-driver.jar"
-    & (Join-Path $root "gradlew.bat") ":$($profile.Module):testDriverJar" @runtimeArgs @GradleArgs
+    $buildTasks = @("$($profile.Module):testDriverJar")
+    if ($Packaged) { $buildTasks += "$($profile.Module):distMod" }
+    if ($Packaged -and $Target -eq '1.20.1-fabric') { $buildTasks += "$($profile.Module):exportNativeRuntimeMods" }
+    & (Join-Path $root "gradlew.bat") @buildTasks @runtimeArgs @GradleArgs
     if ($LASTEXITCODE -ne 0) { throw "Test-driver build failed" }
     $driverArtifact = Join-Path $root "build\test-driver\$driverName"
     if (-not (Test-Path -LiteralPath $driverArtifact -PathType Leaf)) {
@@ -290,10 +305,24 @@ if ($Target -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-ne
         Where-Object Name -ne $driverName | Remove-Item -Force
     Copy-Item -LiteralPath $driverArtifact -Destination (Join-Path $mods $driverName) -Force
     $managed.Add($driverName)
+    if ($Packaged) {
+        $productionName = "ae2-crafting-time-$modVersion-$($profile.Loader)-$($profile.Game).jar"
+        Copy-Item -LiteralPath (Join-Path $root "dist\$productionName") -Destination (Join-Path $mods $productionName) -Force
+        $managed.Add($productionName)
+        if ($Target -eq '1.20.1-fabric') {
+            $runtimeMods = @(Get-ChildItem -LiteralPath (Join-Path $root "versions/$Target/build/native-runtime-mods") -Filter '*.jar' -File)
+            if (-not $runtimeMods) { throw 'Fabric native runtime mod export is empty' }
+            foreach ($runtimeMod in $runtimeMods) {
+                Copy-Item -LiteralPath $runtimeMod.FullName -Destination (Join-Path $mods $runtimeMod.Name) -Force
+                $managed.Add($runtimeMod.Name)
+            }
+        }
+    }
     Write-Host "mod $driverName"
 }
 [IO.File]::WriteAllText($manifest, ($managed | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
-Write-Host "mod AE2 Crafting Time (Gradle source set :$($profile.Module))"
+if ($Packaged) { Write-Host "mod $productionName" }
+else { Write-Host "mod AE2 Crafting Time (Gradle source set :$($profile.Module))" }
 
 if (-not $ResolveOnly) {
     & (Join-Path $root "gradlew.bat") ":$($profile.Module):runClient" @runtimeArgs @GradleArgs
