@@ -1,5 +1,26 @@
 # AE2 Crafting Time Test Driver Spec
 
+## No-provider status scenario
+
+`no-provider-status` submits a real 64-output processing job to an isolated
+native AE2 CPU. Blocking mode and a chest hold the first batch active while
+later batches remain scheduled. Removing its pattern must show NO PROVIDER in
+that combined row. Check the rendered badge and both tooltip sentences in
+English and Ukrainian. Restore the pattern and require recovery without
+reopening the menu. Install an equivalent pattern in a second provider, remove
+the first pattern, and require no warning for two refresh cycles. Remove that
+second provider block, observe the warning again, then replace/reconnect it and
+require recovery. Cancel the job and confirm its diagnostic clears.
+
+The scenario uses real provider inventories, grid lookups, job submission,
+menu synchronization, and final frame observations. It never seeds the warning
+or invokes a production reporting hook to make a UI assertion pass. Capture
+before, mixed-row warning, both-language tooltips, both recoveries, redundant
+provider, provider removal, and cancellation checkpoints. Keep the scenario
+available across the shared 1.20.1/1.21.1 driver and the 26.1.2 API counterpart;
+a passing smoke result applies only to the target actually launched.
+
+
 ## No-space status scenario
 
 `no-space-status` uses an isolated native AE2 CPU and a full item cell in the

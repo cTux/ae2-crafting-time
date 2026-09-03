@@ -9,6 +9,11 @@ final class DriverPlatform {
         return new FabricBaseFixture(!java.util.Set.of("appbot-cpu", "ae2things-cpu", "megacells-cpu").contains(scenario));
     }
 
+    static net.minecraft.world.item.ItemStack processingPattern(appeng.api.stacks.GenericStack input,
+            appeng.api.stacks.GenericStack output) {
+        return appeng.api.crafting.PatternDetailsHelper.encodeProcessingPattern(
+                new appeng.api.stacks.GenericStack[] {input}, new appeng.api.stacks.GenericStack[] {output});
+    }
     static boolean isModLoaded(String id) {
         return net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded(id);
     }

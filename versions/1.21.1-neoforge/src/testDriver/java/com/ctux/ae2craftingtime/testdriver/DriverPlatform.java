@@ -9,6 +9,11 @@ final class DriverPlatform {
         return new NeoForgeBaseFixture();
     }
 
+    static net.minecraft.world.item.ItemStack processingPattern(appeng.api.stacks.GenericStack input,
+            appeng.api.stacks.GenericStack output) {
+        return appeng.api.crafting.PatternDetailsHelper.encodeProcessingPattern(
+                java.util.List.of(input), java.util.List.of(output));
+    }
     static boolean isModLoaded(String id) {
         return net.neoforged.fml.ModList.get().isLoaded(id);
     }

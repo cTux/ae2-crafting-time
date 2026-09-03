@@ -1,5 +1,21 @@
 # AE2 Crafting Time Test Driver Technical Design
 
+## No-provider status scenario
+
+`NoProviderScenario` owns an isolated native CPU, drive, energy cell, and two
+providers. Server-thread operations place the fixture, calculate and submit a
+64-diamond processing job, and mutate real pattern inventories. One cobblestone
+batch sits in a chest; blocking mode keeps the remaining batches scheduled.
+The calculation future is polled without blocking the server thread.
+
+The shared frame observer checks the final label, badge bounds, and tooltip.
+Language reloads complete before inspecting localized text. Recovery must
+reach the same menu within two seconds. Cancellation also checks the profiler's
+server-side state. Eight screenshots preserve the distinct UI checkpoints.
+The version-specific `DriverPlatform.processingPattern` method converts the
+array/list API difference; the 26.1.2 counterpart uses its native identifiers
+and registry API. No code seeds missing-provider evidence.
+
 ## No-space status driver
 
 `NoSpaceScenario` runs after the shared disposable-world safety check and owns

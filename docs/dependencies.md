@@ -54,6 +54,12 @@ a Forge `crafting-tree-screen` scenario for node badges, tooltip hints, and layo
 Fabric has an eight-case compatible suite; NeoForge 1.21.1 has a 22-case compatible
 suite. NeoForge 26.1.2 has an eleven-case compatible suite, including NO SPACE.
 
+`no-provider-status` is a focused native AE2 scenario on all four targets.
+Its Forge 1.20.1 smoke checks real pattern/provider removal, both-language
+tooltips, recovery, redundant providers, and cancellation. The other target
+drivers compile; this result does not claim their runtime smoke or a full
+optional-mod graph run.
+
 | Mod Name | 1.20.1-forge | 1.20.1-forge TestDriver | 1.20.1-fabric | 1.20.1-fabric TestDriver | 1.21.1-neoforge | 1.21.1-neoforge TestDriver | 26.1.2-neoforge | 26.1.2-neoforge TestDriver | Declared targets | Minimum version | Integration / limits | Project links / tracking issue |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Minecraft (required) | `1.20.1` | Yes (base) | `1.20.1` | Yes (base suite) | `1.21.1` | Yes (base suite) | `26.1.2` | Yes (base suite) | — | See required dependencies | Required runtime / base AE2 crafting. | — |
@@ -62,7 +68,7 @@ suite. NeoForge 26.1.2 has an eleven-case compatible suite, including NO SPACE.
 | Fabric Loader (required) | — | — | `0.19.4` | Yes (base suite) | — | — | — | — | — | See required dependencies | Required runtime / base AE2 crafting. | — |
 | Fabric API (required) | — | — | `0.92.11+1.20.1` | Yes (base suite) | — | — | — | — | — | See required dependencies | Required runtime / base AE2 crafting. | — |
 | NeoForge (required) | — | — | — | — | `21.1.238` | Yes (base suite) | `26.1.2.99` | Yes (base suite) | — | See required dependencies | Required runtime / base AE2 crafting. | — |
-| Applied Energistics 2 (required) | `15.4.10` | Yes (`craft-plan`, `no-space-status`) | `15.1.0` | Yes (`craft-plan`, `no-space-status`) | `19.2.17` | Yes (`craft-plan`, `no-space-status`) | `26.1.10-beta` | Yes (`craft-plan`, `no-space-status`) | — | See required dependencies | Required runtime / base AE2 crafting. | — |
+| Applied Energistics 2 (required) | `15.4.10` | Yes (`craft-plan`, `no-space-status`, `no-provider-status`) | `15.1.0` | Yes (`craft-plan`, `no-space-status`, `no-provider-status`) | `19.2.17` | Yes (`craft-plan`, `no-space-status`, `no-provider-status`) | `26.1.10-beta` | Yes (`craft-plan`, `no-space-status`, `no-provider-status`) | — | See required dependencies | Required runtime / base AE2 crafting. | — |
 | ae2ct (Crafting Tree) (`ae2ct`; optional) | `1.0.1` | Yes (scenario) | Not pinned | No | `1.0.1` | Yes (`crafting-tree-screen`) | — | — | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | `>=1.0.1` | TTC lines and details in AE2: Crafting Tree UI. | [CF][ae2ct-cf] / [#69](https://github.com/cTux/ae2-crafting-time/issues/69) |
 | Applied Mekanistics (`appmek`; optional) | `1.4.3` | Yes (`appmek-cpu`) | — | — | `1.6.3` | Yes (`appmek-cpu`) | — | — | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.4.3`; NeoForge: `>=1.6.2` | TTC profiling and Crafting Plan display for chemicals stored in the ME network through Applied Mekanistics' native AE2 key. | [CF][appmek-cf] / [MR][appmek-mr] / [#68](https://github.com/cTux/ae2-crafting-time/issues/68) |
 | AdvancedAE (`advanced_ae`; optional) | `1.3.6-1.20.1` | Yes (scenario) | — | — | `1.6.12-1.21.1` | Yes (`advancedae-cpu`) | `26.1.7` | Yes (`advancedae-cpu`) | `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.21.1: `>=1.6.11`; 26.1.2: `>=26.1.7` | TTC profiling for AdvancedAE crafting CPUs, including the Quantum Computer. | [CF][advancedae-cf] / [MR][advancedae-mr] / [#67](https://github.com/cTux/ae2-crafting-time/issues/67) |
