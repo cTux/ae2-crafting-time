@@ -9,6 +9,11 @@ crafting execution, key, or table UI behavior.
 The integration must stay optional. Installing AE2 Crafting Time must not make
 any addon required.
 
+The version-selection requirements below are planned, not implemented. Read
+their [technical design](technical-design.md#versioned-adapter-selection) and
+[implementation plan](implementation-plan.md#versioned-adapter-selection).
+They extend this feature; they do not change the current support matrix.
+
 ## Player outcomes
 
 - Crafts run by compatible addon CPUs contribute the same throughput samples as
@@ -83,6 +88,46 @@ new server sample, and show its TTC in the reopened plan. Both remain optional.
   unless a separately planned compatibility migration changes it.
 - Do not add loader metadata or a compile dependency until real code needs it.
 - Every executable branch added later needs full line and branch coverage.
+
+### Versioned adapter selection
+
+An integration is support for one dependency. An adapter variant implements
+that support for a particular upstream API generation. One variant can contain
+several cooperating hooks; those hooks are not competing integrations.
+
+| ID | Required behavior |
+| --- | --- |
+| VS-01 | When an upstream API change needs different integration code, add a variant and retain the older supported variant in the same target JAR. An unchanged API continues to use its existing variant. Shared bug fixes may update all affected variants. |
+| VS-02 | Select exactly one compatible variant per applicable dependency during process startup, before its hooks or callbacks are installed. Different dependencies can each have an active integration at the same time. Select zero when the optional dependency is absent, unsupported on that target/side, or has no compatible variant. |
+| VS-03 | Try variants in explicit newest-API-first priority within the current Minecraft/loader target. Skip an incompatible candidate and try the next eligible candidate before activation. Do not prefer a newer variant merely because its name or version string sorts later. |
+| VS-04 | Keep the decision fixed for that process. Repeated startup callbacks, Mixin configurations, screen openings, and world changes must not select another variant or duplicate hooks. Changing the installed dependency requires restarting the game/server. |
+| VS-05 | Reject unselected variants before their hooks apply. Selection must not load or initialize optional gameplay classes, or client classes on a dedicated server. A feature setting can suppress selected behavior without changing the selected variant. |
+| VS-06 | Preserve support for older dependency releases within our existing supported Minecraft/loader/AE2 boundaries. A newer development pin does not remove an older adapter, raise the runtime minimum, or prove compatibility. Removing support requires an explicit, separate decision. |
+| VS-07 | Report the dependency, actual installed version, selected variant or skip reason, and priority decision once. Selection establishes eligibility only; successful application and observed behavior remain separate evidence. |
+| VS-08 | A known unsupported optional contract disables only our adapter before activation. Do not disable the dependency itself or unrelated integrations. Unexpected probe errors, required dependency failures, and failures after activation retain their original failure behavior; never roll back applied hooks or retry another variant after a partial activation. |
+| VS-09 | Prevent duplicate profiling, UI decorations, and callback registration within a dependency. Shared AE2 hooks still run where needed; native-hook reuse is not a second version of an addon adapter. |
+
+This is one variant per dependency **per process**, not one addon for the whole
+modpack. Physical clients may host both UI and integrated-server capabilities
+of the same selected variant. Dedicated servers skip client-only integrations.
+Client and server decide independently; their selections are not negotiated.
+
+Required AE2 adapters follow the same preserve-and-select policy if an API
+change inside an already supported target needs a new variant. Required
+Minecraft, loader, Java, and AE2 validation remains mandatory. This work does
+not add new AE2 majors or combine different Minecraft builds into one JAR.
+
+### Version-selection acceptance criteria
+
+| Check | Observable result | Requirements |
+| --- | --- | --- |
+| VS-AC-01 | The same built target JAR works with the retained old dependency and the newer dependency in separate launches. Each launch selects its matching variant and produces correct TTC/profiling behavior. | VS-01, VS-02, VS-06 |
+| VS-AC-02 | When two candidates are eligible, only the higher-priority variant is selected. An incompatible newer candidate permits a compatible older candidate before activation; no eligible candidate produces an explicit skip. | VS-02, VS-03, VS-08 |
+| VS-AC-03 | Two different installed addons work together, with one selected variant each and no repeated profiling or UI additions. | VS-02, VS-09 |
+| VS-AC-04 | Core-only clients and dedicated servers start on all four targets. Absent, wrong-target, and wrong-side variants cannot load optional/client classes. Required AE2 hooks are preserved. | VS-05, VS-08 |
+| VS-AC-05 | Callback order, repeated plugin instances, screen/world changes, and feature setting changes never alter the selected variant or add a second registration. | VS-04, VS-05, VS-09 |
+| VS-AC-06 | Logs identify the installed version and selection reason once, distinguish selection from actual execution, and preserve unexpected and post-activation failures without runtime fallback. | VS-07, VS-08 |
+| VS-AC-07 | Published JARs contain every supported variant for their target, and metadata minima, optionality, packet layouts, and saved samples remain unchanged. Tests cover selection boundaries; runtime evidence covers retained and new contracts. | VS-01 through VS-09 |
 
 ### Development clients
 

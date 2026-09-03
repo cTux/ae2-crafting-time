@@ -1,5 +1,248 @@
 # AE2 Addon Integration Technical Design
 
+## Versioned adapter selection
+
+Status: planned. Implements VS-01 through VS-09 in the
+[specification](spec.md#versioned-adapter-selection). The remaining sections
+describe the existing integration layers that this change must preserve.
+
+### Research and evidence
+
+Source inspection on 2026-09-03 used fetched `origin/master` at
+`24cd545dc6061217e8340ed1d3838b984f0d5014`. No new game, server, or compatibility
+test was run for this planning change. Historical smoke results below are
+evidence for regression targets, not fresh verification.
+
+| Repository evidence | Finding and design consequence |
+| --- | --- |
+| [Shared pre-26 mixins](../../shared/src/mc1201/resources/ae2craftingtime.mixins.json), [1.21.1 mixins](../../versions/1.21.1-neoforge/src/main/resources/ae2craftingtime.mixins.json), [26.1.2 mixins](../../versions/26.1.2-neoforge/src/main/resources/ae2craftingtime.mixins.json) | No configuration plugin currently chooses variants. `required: false`, `@Pseudo`, and optional injections do not express mutual exclusion. |
+| [Old Tree widget](../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingTreeWidgetMixin.java), [new Tree widget](../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingTreeNewWidgetMixin.java) | Both are listed. The old target is `com.neuvillette.ae2ct.gui.CraftingTreeWidget`; the new target is `com.vcwdfca.ae2ct.gui.CraftingTreeWidget`. Node access, tooltip method, click return type, and spacing behavior differ. This is already additive support, but selection relies on which classes exist. |
+| [NeoEco CPU mixin](../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/ECOCraftingCpuLogicMixin.java) | One redirect targets three `recordPushedPattern` descriptors. History `58a19dcf`, `205f5265`, and `27f2cce1` identifies the accounting-object, Forge long/boolean, and NeoForge integer-batch contracts. Explicit dispatch variants can preserve them without several competing redirects. |
+| [Forge build](../../versions/1.20.1-forge/build.gradle), [extra AdvancedAE config](../../versions/1.20.1-forge/src/main/resources/ae2craftingtime-advancedae.mixins.json) | Forge packages AdvancedAE through an additional config and a shared source directory. Both configs must share the same selection state. |
+| [Lightning Tech mixin](../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/Ae2LtTimeWheelCraftingCpuLogicMixin.java), [ME Requester mixin](../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/MERequesterScreenMixin.java) | Each currently has one adapter. Do not manufacture historical variants without an actual distinct supported contract. Lightning Tech's returned-output fix is a correctness change, not evidence that an old bug must be retained. |
+| [Dependencies](../dependencies.md), [campaign evidence](../mod-automation-coverage.md) | The curated Forge NeoEco pin is 20.3.0; Project Infinity records 20.4.0 and 20.4.2. Both sides of that contract change need regression proof. Source inspection alone does not identify the first released version of every Tree package. |
+| [Startup diagnostics design](../startup-integration-diagnostics/technical-design.md) | Issue #193 is planned, not implemented. Its inventory and observed-capability states must consume selection results rather than select a second time. |
+
+Crafting Tree is also a fork boundary, not just a numerical version boundary.
+Live [original releases](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-tree/files/all)
+and [Refreshed metadata](https://api.modrinth.com/v2/project/a1RwDz90/version)
+identify the following concrete fixtures. Downloaded original JARs and the
+cached prepared Refreshed Forge JAR were inspected as ZIPs, without execution.
+Both projects use mod ID `ae2ct`; Refreshed's numerically smaller `1.0.1` owns
+the newer adapter contract. Never order these forks by their version strings.
+
+| Contract | Forge 1.20.1 fixture | NeoForge 1.21.1 fixture |
+| --- | --- | --- |
+| `tree-helper` | Original `1.20.1-1.1.1`, [CF file 7182165](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-tree/files/7182165); JAR contains `com/neuvillette/ae2ct/gui/CraftingTreeWidget.class`. | Original `1.21.1-1.1.1`, [CF file 7182163](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-tree/files/7182163); same old widget namespace. |
+| `tree-layout` | Refreshed `1.0.1`, [MR version flhDmaU7](https://modrinth.com/mod/ae2-crafting-tree-refreshed/version/flhDmaU7); inspected JAR contains `com/vcwdfca/ae2ct/gui/CraftingTreeWidget.class` and `tree/LegacyTreeLayout`. | Refreshed `1.0.1`, [MR version 35O4yt0D](https://modrinth.com/mod/ae2-crafting-tree-refreshed/version/35O4yt0D); metadata verified, its widget contract still needs artifact verification during implementation. |
+
+The checked original file catalogue lists Forge/NeoForge, and the Refreshed
+version API returns only those two loader releases. No Fabric artifact was
+found in these sources. Preserve the repository's existing Fabric declaration
+and packaged variants, but require negative/side/selection tests there, not a
+fictional positive smoke. Do not claim Fabric Tree runtime support was verified.
+
+Upstream mechanisms checked for this design:
+
+- Mixin's [configuration plugin contract](https://github.com/SpongePowered/Mixin/blob/master/src/main/java/org/spongepowered/asm/mixin/extensibility/IMixinConfigPlugin.java)
+  supplies `shouldApplyMixin` as an early veto and warns plugins against game
+  class references. Mixin priority orders transformations; it does not choose
+  one adapter. Normal mod initialization is too late to veto those transforms.
+- Mixin's [bytecode provider](https://github.com/SpongePowered/Mixin/blob/master/src/main/java/org/spongepowered/asm/service/IClassBytecodeProvider.java)
+  supports reading an ASM `ClassNode` with transformers disabled. Use metadata
+  and bounded reads of named classes, not `Class.forName`, construction,
+  reflective method invocation, or a classpath scan.
+- [Fabric Loader 0.14.21](https://maven.fabricmc.net/docs/fabric-loader-0.14.21/net/fabricmc/loader/api/FabricLoader.html)
+  exposes mod containers and physical environment.
+  [Forge 1.20.x](https://github.com/MinecraftForge/MinecraftForge/blob/1.20.x/fmlloader/src/main/java/net/minecraftforge/fml/loading/FMLLoader.java)
+  and [FML 4.0](https://github.com/neoforged/FancyModLoader/blob/4.0/loader/src/main/java/net/neoforged/fml/loading/FMLLoader.java)
+  expose an early loading mod list. [Current FML](https://github.com/neoforged/FancyModLoader/blob/main/loader/src/main/java/net/neoforged/fml/loading/FMLLoader.java)
+  uses `FMLLoader.getCurrent().getLoadingModList()`. Keep this difference in the
+  target-specific bridge. These upstream branches explain the API; compile and
+  packaged startup checks against the repository's pinned loaders are required.
+
+The design inference is to use a small fixed catalogue and a Mixin gate. It
+does not need a plugin framework, runtime downloads, dependency scanning, or a
+new library. Mixin and ASM are already part of the loader toolchain.
+
+### Ownership and bootstrap
+
+Use three small seams, with no game-class references in their static state:
+
+1. `core/IntegrationSelection.java` under `shared/src/main/java`: immutable
+   candidate/decision values and deterministic first-compatible selection. Plain
+   strings, target/side values, ordered lists, and compatibility booleans only.
+   Reuse JUnit in `shared/src/test/java` for decision tests.
+2. `integration/IntegrationMixinPlugin.java` under `shared/src/mcCommon/java`
+   (package `com.ctux.ae2craftingtime.integration`, outside the Mixin package):
+   the fixed catalogue, bounded bytecode probes, process-local decisions, and
+   `IMixinConfigPlugin` implementation. Share decisions across plugin instances.
+   `getMixins` returns null; retain static config lists and gate them with
+   `shouldApplyMixin`. Do not mutate foreign configs in `acceptTargets` or
+   rewrite target bytecode in `preApply`/`postApply`.
+3. `integration/IntegrationPlatform.java` in each target's main Java source:
+   the same compile-time class name with loader-specific metadata and physical
+   side access. Fabric uses `FabricLoader`; Forge and NeoForge use the early
+   FML loading lists, never the later `ModList` singleton. No reflection to
+   guess which loader is running. Each published JAR contains exactly one
+   platform implementation.
+
+Register the plugin in all four actual configs, including Forge's extra
+AdvancedAE config. The shared pre-26 config serves both Forge and Fabric.
+Keep the bootstrap helper out of config/mixin packages that Mixin reserves;
+it must not initialize `ProfilerBridge`, client helpers, normal entrypoints,
+or mutable game configuration. Use direct SLF4J for the bounded selection log.
+
+Compute each family's complete decision atomically on its first relevant
+`shouldApplyMixin` call, before returning any acceptance for that family.
+Reject target and physical-side mismatches before reading optional bytecode.
+Cache an immutable result keyed by canonical dependency ID for the process.
+Singleton groups obey the same path. Never cache temporarily unavailable loader
+metadata as an absent dependency: an unexpected early-bootstrap failure must
+propagate with context. There is no retry after Mixin starts applying a family.
+
+### Catalogue and priority
+
+The catalogue is an ordered Java list, newest supported API first **within a
+target**, not a sort of upstream release strings or Mixin annotation priorities.
+Each candidate has a dependency ID, stable variant ID, target set, applicable
+side, cooperating mixin names, and a contract predicate. Priority is list order;
+duplicate variant IDs or cross-family mixin ownership are programming errors
+rejected by tests. Same-family common hooks are allowed as described below.
+
+| Dependency | Initial variants and order | Target / side |
+| --- | --- | --- |
+| `ae2ct` | `tree-layout` (`CraftingTreeNewWidgetMixin`), then `tree-helper` (`CraftingTreeWidgetMixin`) | Forge/Fabric 1.20.1 and NeoForge 1.21.1; client only |
+| `neoecoae` | Forge: `batched-long` then `pending-accounting`; NeoForge 1.21.1: `batched-int` | Forge 1.20.1 and NeoForge 1.21.1; both physical sides |
+| `advanced_ae` | `advanced-cpu`, containing current CPU hooks | Forge 1.20.1 and both NeoForge targets; both physical sides |
+| `ae2lt` | `time-wheel`, containing current CPU hooks | Forge 1.20.1 and NeoForge 1.21.1; both physical sides |
+| `merequester` | `requester-screen`, containing current screen hooks | Forge/Fabric 1.20.1 and NeoForge 1.21.1; client only |
+
+Singleton adapters retain existing injection requirements. Their eligibility
+uses target, side, installed ID, and target-class presence; this is not a claim
+that every method is compatible. Additional structural rejection predicates
+are added only for known API breaks with retained alternatives. Unsupported
+signatures inside an otherwise selected singleton retain current Mixin/runtime
+failure behavior, not an invented promise of safe recovery.
+
+Crafting Tree predicates require the four integer shadow fields (`outputX`,
+`outputY`, `spacingX`, `spacingY`), `draw` with five arguments and void return,
+and `drawNode` with two arguments, the matching addon-owned second argument,
+and void return. The old variant additionally requires `mouseClicked(DDI)Z`,
+`getMousePoint(DD)Ljava/awt/Point;`, and the old `CraftingTreeHelper$Node`.
+The new variant requires `mouseClicked(DDI)V`, `updateTooltip`, and
+`LegacyTreeLayout$Entry` with `node()` and `point()` accessors. Check method
+names and argument/return shapes without resolving the Minecraft graphics
+class. Existing injection requirements remain responsible for exact call sites.
+Inspect only those named classes and required declared superclass members.
+Contract research and runtime tests must establish that the chosen widget is
+the active UI path; a signature probe cannot prove an unused shim is live.
+Do not guess a numeric release boundary from the two package names.
+
+NeoEco predicates require the exact addon-owned `recordPushedPattern` descriptor:
+
+```text
+pending-accounting:
+  (Lcn/dancingsnow/neoecoae/api/me/ECOCraftingCPULogic$PendingPatternAccounting;)V
+batched-long:
+  (Lcn/dancingsnow/neoecoae/api/me/ExecutingCraftingJob;Lcn/dancingsnow/neoecoae/impl/crafting/fastpath/ECOExtractedPatternExecution;JZ)V
+batched-int:
+  (Lcn/dancingsnow/neoecoae/api/me/ExecutingCraftingJob;Lcn/dancingsnow/neoecoae/impl/crafting/fastpath/ECOExtractedPatternExecution;I)V
+```
+
+Split only NeoEco's dispatch redirect into three small optional mixins with
+one descriptor each. Keep the existing `ECOCraftingCpuLogicMixin` as the shared
+lifecycle/capacity/output component, included in each mutually exclusive
+variant's bundle. Move its existing network-aware `ProfilerBridge.start` call
+behind one narrow `NeoEcoDispatchObserver` interface in `mcCommon`; the common
+mixin implements it, and the selected dispatch mixin calls it after the original
+inventory insertion. Do not duplicate grid state, deferred finish handling, or
+profiler logic. Common membership within one family is intentional; its mixin
+is accepted once whenever that family has a selected variant. Common membership
+across different families remains an error.
+
+If an upstream class contains multiple compatible overloads, prefer the newer
+variant only when its hook observes the active dispatch path, including normal
+and FastPath modes. Verify callers and delegate chains so both variants cannot
+observe the same insertion. A signature's existence is necessary, not proof of
+execution. Retain legacy support; never broaden one redirect to all overloads.
+
+Raw bytecode probes use the addon-owned descriptors and primitive/argument
+shapes above, avoiding comparisons between development Minecraft names and
+obfuscated production names. Keep reflection-dependent UI behavior, full
+descriptors involving game classes, and injector success as runtime validation
+boundaries. Probes cannot certify bytecode after other mods transform it.
+
+Native AE2 hook reuse, key normalization, wireless class/interface filters, and
+AdvancedAE's selected-CPU lookup remain shared behavior. They do not need fake
+per-addon variants. When a future API break affects those paths, add a family
+and gate the entire owned capability bundle through the same cached decision;
+ordinary callbacks must read that decision before registering. Do not copy the
+selector into each callback. Core required AE2 mixins always pass this optional
+gate. A future required-AE2 variant family must fail clearly if none matches,
+rather than silently disabling required profiling.
+
+### Decisions, failures, and diagnostics
+
+```text
+early loader metadata + target + physical side
+  -> ordered, bounded candidate checks
+  -> one immutable dependency decision
+  -> allow selected/common mixins; veto other variants
+  -> real hooks -> existing profiler/cache/UI
+```
+
+Decision reasons are `selected`, `absent`, `unsupported_target`,
+`wrong_side`, or `no_compatible_variant`. Store the selected variant and bounded
+rejection reasons for newer candidates. Missing named classes/members are
+expected incompatibility; I/O errors, malformed bytecode, unavailable metadata,
+and programming/linkage errors are not ordinary absence. Preserve their cause
+and stop that startup through the original failure path. Do not catch `Throwable`.
+
+When no optional candidate matches a known contract, veto the complete owned
+bundle before application and emit one WARN. Normal absence/side/target skips
+and successful selections use INFO. No runtime Mixin rollback, lowered
+`require`, replacement of an upstream crash, or fallback after a callback fails.
+Existing shared AE2 profiling and other addons continue unless startup itself
+fails. No game objects, class nodes, or throwable objects remain in the cache.
+
+Issue #193's diagnostics will consume this snapshot. `selected` maps to pending
+applicable capabilities, not initialized. A preflight contract rejection maps
+to unavailable/disabled optional capabilities with its reason; it is distinct
+from a runtime failure. Do not count each Tree/NeoEco variant as an integration
+or emit the same selection from every config. Until #193 exists, keep the single
+selection line in the bootstrap plugin; do not implement its wider report here.
+
+### Compatibility, alternatives, and validation
+
+Keep runtime optional ranges open-ended and required ranges unchanged.
+Internal API predicates are not loader version caps. Do not reject an unknown
+future version just because it is newer than a development pin; use its known
+contract if it still matches. A semantic break with unchanged signatures still
+requires upstream research and a new variant/predicate; structural matching
+cannot promise compatibility with arbitrary future code.
+
+All retained variants ship in each applicable target JAR. Compile against the
+existing dependency where possible; string targets and shared API types avoid
+loading two upstream versions. If a later variant needs conflicting concrete
+types, isolate its compile-only source set and merge its output, without bundling
+either dependency. Do not add that build machinery until a real variant needs it.
+
+No packet, persistent data, profile identity, configuration, locale, or player
+UI change is involved. Only process-local startup decisions are new.
+
+Rejected alternatives: replacing the old adapter loses supported installs;
+setting Mixin priority still applies both hooks; ordinary entrypoint selection
+is too late; class loading as a probe can trigger transformations; a global
+single winner prevents unrelated addons from working together; universal
+version ranges cannot distinguish forks or semantically different APIs.
+
+The [implementation plan](implementation-plan.md#versioned-adapter-selection)
+maps all acceptance checks to pure decisions, packaging, startup, and actual
+old/new behavior. Build once per target and test that identical JAR across each
+retained dependency fixture. Compilation or selection logs alone cannot close
+the work.
+
 ## Native-first layers
 
 ### 0. AE2 crafting execution
