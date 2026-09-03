@@ -69,6 +69,17 @@ try {
     & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -BundleDirectory (Join-Path $source "bundle") -LocalRoot $stage -Scenario no-provider-status
     $focused = Get-Content (Join-Path $source 'build/ui-smoke/1.20.1-forge/compatible/no-provider-status/wrapper-result.json') -Raw | ConvertFrom-Json
     if ($focused.scenario -ne 'no-provider-status') { throw 'Wrapper dropped no-provider scenario' }
+    function Get-ScheduledTask { if ($global:Ae2CtSmokeTaskAction) { [pscustomobject]@{State='Ready'} } }
+    function New-ScheduledTaskAction { param($Execute,$Argument) [pscustomobject]@{Execute=$Execute;Arguments=$Argument} }
+    function New-ScheduledTaskPrincipal { param($UserId,$LogonType,$RunLevel) [pscustomobject]@{UserId=$UserId} }
+    function Register-ScheduledTask { param($TaskName,$Action,$Principal) $global:Ae2CtSmokeTaskAction=$Action }
+    function Set-ScheduledTask { param($TaskName,$Action) $global:Ae2CtSmokeTaskAction=$Action; $global:Ae2CtSmokeTaskUpdated=$true }
+    function Start-ScheduledTask { param($TaskName) }
+    foreach ($attempt in 1,2) {
+        & (Join-Path $scripts 'run-ui-smoke-codexvm.ps1') -BundleDirectory (Join-Path $source 'bundle') -LocalRoot $stage -Scheduled
+        if ($global:Ae2CtSmokeTaskAction.Arguments -notlike '*-WindowStyle Hidden*') { throw 'Scheduled launcher can steal Minecraft focus' }
+    }
+    if (-not $global:Ae2CtSmokeTaskUpdated) { throw 'Existing scheduled task kept stale launch arguments' }
     Write-Host "run-ui-smoke-codexvm checks passed"
 } finally {
     if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force }
