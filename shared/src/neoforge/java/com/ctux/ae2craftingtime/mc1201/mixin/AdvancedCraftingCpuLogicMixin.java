@@ -23,6 +23,7 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -40,6 +41,13 @@ public abstract class AdvancedCraftingCpuLogicMixin {
 
     @Unique
     private IPatternDetails ae2craftingtime$dispatchPattern;
+
+    // Capture the execution local even when an addon supplies providers without calling the original lookup.
+    @ModifyVariable(method = "executeCrafting", at = @At("STORE"), ordinal = 0, remap = false)
+    private IPatternDetails ae2craftingtime$captureDispatchPattern(IPatternDetails pattern) {
+        ae2craftingtime$dispatchPattern = pattern;
+        return pattern;
+    }
 
     @Inject(method = "executeCrafting", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$clearDispatchPattern(CallbackInfoReturnable<Integer> cir) {
@@ -64,7 +72,6 @@ public abstract class AdvancedCraftingCpuLogicMixin {
             remap = false)
     private Iterable<ICraftingProvider> ae2craftingtime$observeProviders(CraftingService service,
             IPatternDetails pattern) {
-        ae2craftingtime$dispatchPattern = pattern;
         var providers = service.getProviders(pattern);
         ProfilerBridge.observeProviders(ProfilerBridge.networkId(cpu.getGrid()), cpu, pattern, providers);
         return providers;
