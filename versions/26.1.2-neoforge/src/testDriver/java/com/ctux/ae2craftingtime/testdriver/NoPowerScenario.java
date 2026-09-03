@@ -43,8 +43,13 @@ final class NoPowerScenario {
         }
         if (phase < 3) {
             if (serverStep(minecraft, player -> {
+                if (phase == 1) {
+                    var grid = fixture.cpu(player).getMainNode().getGrid();
+                    if (grid != null) grid.getEnergyService().injectPower(100_000, Actionable.MODULATE);
+                }
                 var ready = fixture.prepare(phase, player, marker);
                 if (ready && phase == 0) {
+                    DispatchStatusFixture.place(player, fixture.cpuPosition.east(2), "energy_cell");
                     player.level().setBlockAndUpdate(fixture.cpuPosition.east(6).north(), Blocks.AIR.defaultBlockState());
                     player.level().setBlockAndUpdate(fixture.cpuPosition.east(6).below(),
                             Blocks.FURNACE.defaultBlockState());
@@ -69,6 +74,8 @@ final class NoPowerScenario {
                 if (tick - loggedTick >= 20) {
                     System.out.println("AE2CT power fixture: idle=" + energy.getIdlePowerUsage()
                             + ", simulated=" + energy.extractAEPower(64, Actionable.SIMULATE, PowerMultiplier.CONFIG)
+                            + ", reasons=" + ProfilerBridge.blockReasons(cpu, cpu.getGrid(), tick)
+                            + ", menuCpu=" + (com.ctux.ae2craftingtime.mc1201.StatsRequestContext.current(player).craftingCpu() == cpu)
                             + ", active=" + cpu.isActive() + ", providerBusy=" + fixture.provider(player, 6).getLogic().isBusy());
                     loggedTick = tick;
                 }
@@ -93,13 +100,6 @@ final class NoPowerScenario {
             phase++;
         } else if (phase == 4) {
             if (serverStep(minecraft, player -> {
-                // Replace the creative source once, then let the real node initialize.
-                var pos = fixture.cpuPosition.east(2);
-                if (player.level().getBlockState(pos).getBlock().toString().contains("creative")) {
-                    DispatchStatusFixture.place(player, pos, "energy_cell");
-                    return false;
-                }
-                if (!fixture.connect(player, 2)) return false;
                 var energy = fixture.cpu(player).getMainNode().getGrid().getEnergyService();
                 energy.extractAEPower(Double.MAX_VALUE, Actionable.MODULATE, PowerMultiplier.ONE);
                 energy.injectPower(PowerMultiplier.CONFIG.multiply(48), Actionable.MODULATE);
