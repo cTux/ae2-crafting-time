@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201.net;
 
+import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import com.ctux.ae2craftingtime.core.PacketLimits;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.ProfileStats;
@@ -13,7 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 public final class StatsPacketCodec {
     private StatsPacketCodec() {
@@ -45,7 +45,11 @@ public final class StatsPacketCodec {
             buffer.writeUtf(key, PacketLimits.MAX_OUTPUT_ID_LENGTH);
             buffer.writeVarLong(ticks);
         });
-        writeKeys(buffer, List.copyOf(snapshot.missingProviders()));
+        buffer.writeVarInt(snapshot.blockReasons().size());
+        snapshot.blockReasons().forEach((key, reason) -> {
+            buffer.writeUtf(key, PacketLimits.MAX_OUTPUT_ID_LENGTH);
+            buffer.writeEnum(reason);
+        });
         buffer.writeVarInt(snapshot.entries().size());
         for (var entry : snapshot.entries()) {
             var stats = entry.stats();
@@ -87,7 +91,13 @@ public final class StatsPacketCodec {
             }
             waitingTicks.put(key, ticks);
         }
-        var missingProviders = PacketLimits.checkedSubset(requestedKeys, readKeys(buffer, "missing providers"));
+        var reasonCount = PacketLimits.checkedSize(buffer.readVarInt(), PacketLimits.MAX_KEYS, "block reasons");
+        var blockReasons = new HashMap<String, CraftingBlockReason>();
+        for (int i = 0; i < reasonCount; i++) {
+            var key = buffer.readUtf(PacketLimits.MAX_OUTPUT_ID_LENGTH);
+            PacketLimits.checkedSubset(requestedKeys, List.of(key));
+            blockReasons.put(key, buffer.readEnum(CraftingBlockReason.class));
+        }
         var size = PacketLimits.checkedSize(buffer.readVarInt(), PacketLimits.MAX_KEYS, "entries");
         var entries = new ArrayList<StatsEntry>(size);
         for (int i = 0; i < size; i++) {
@@ -120,10 +130,10 @@ public final class StatsPacketCodec {
                     amountPerSecond, lastDurationTicks, unit, reliableEstimate, usedSampleCount, outlierMultiplier,
                     durations, amounts), accuracy, stall));
         }
-        return new Snapshot(requestedKeys, entries, networkAmounts, waitingTicks, missingProviders, buffer.readLong());
+        return new Snapshot(requestedKeys, entries, networkAmounts, waitingTicks, blockReasons, buffer.readLong());
     }
 
     public record Snapshot(List<String> requestedKeys, List<StatsEntry> entries, Map<String, Long> networkAmounts,
-            Map<String, Long> waitingTicks, Set<String> missingProviders, long cpuContext) {
+            Map<String, Long> waitingTicks, Map<String, CraftingBlockReason> blockReasons, long cpuContext) {
     }
 }

@@ -6,5 +6,7 @@
   "megacells-cpu",
   "ae2wtlib-terminal",
   "merequester-screen",
-  "no-space-status"
+  "no-space-status",
+  "no-provider-status",
+  "no-power-status"
 ]

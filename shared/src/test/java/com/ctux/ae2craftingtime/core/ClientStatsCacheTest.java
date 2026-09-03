@@ -16,27 +16,27 @@ class ClientStatsCacheTest {
         var cache = new ClientStatsCache();
         var iron = new ProfileKey("minecraft:iron_ingot");
         var gold = new ProfileKey("minecraft:gold_ingot");
-        assertFalse(cache.missingProvider(iron, 7));
-        cache.replaceMissingProviders(List.of(iron, gold), java.util.Set.of(iron, gold), 7);
-        assertTrue(cache.missingProvider(iron, 7));
-        assertFalse(cache.missingProvider(iron, 8));
+        assertEquals(null, cache.blockReason(iron, 7));
+        cache.replaceBlockReasons(List.of(iron, gold), Map.of(iron, CraftingBlockReason.NO_PROVIDER, gold, CraftingBlockReason.NO_PROVIDER), 7);
+        assertEquals(CraftingBlockReason.NO_PROVIDER, cache.blockReason(iron, 7));
+        assertEquals(null, cache.blockReason(iron, 8));
         assertTrue(cache.get(iron).isEmpty());
-        cache.replaceMissingProviders(List.of(iron), java.util.Set.of(), 7);
-        assertFalse(cache.missingProvider(iron, 7));
-        assertTrue(cache.missingProvider(gold, 7));
+        cache.replaceBlockReasons(List.of(iron), Map.of(), 7);
+        assertEquals(null, cache.blockReason(iron, 7));
+        assertEquals(CraftingBlockReason.NO_PROVIDER, cache.blockReason(gold, 7));
         cache.remove(gold);
-        assertFalse(cache.missingProvider(gold, 7));
-        cache.replaceMissingProviders(List.of(iron), java.util.Set.of(iron), 7);
+        assertEquals(null, cache.blockReason(gold, 7));
+        cache.replaceBlockReasons(List.of(iron), Map.of(iron, CraftingBlockReason.NO_PROVIDER), 7);
         cache.clearCpuState();
-        assertFalse(cache.missingProvider(iron, 7));
-        cache.replaceMissingProviders(List.of(iron), java.util.Set.of(iron), 7);
+        assertEquals(null, cache.blockReason(iron, 7));
+        cache.replaceBlockReasons(List.of(iron), Map.of(iron, CraftingBlockReason.NO_PROVIDER), 7);
         cache.clear();
-        assertFalse(cache.missingProvider(iron, 7));
-        cache.replaceMissingProviders(List.of(iron), java.util.Set.of(iron), 7);
-        cache.replaceMissingProviders(List.of(gold), java.util.Set.of(gold), 8);
-        assertFalse(cache.missingProvider(iron, 8));
-        assertTrue(cache.missingProvider(gold, 8));
-        assertFalse(cache.missingProvider(gold, 7));
+        assertEquals(null, cache.blockReason(iron, 7));
+        cache.replaceBlockReasons(List.of(iron), Map.of(iron, CraftingBlockReason.NO_PROVIDER), 7);
+        cache.replaceBlockReasons(List.of(gold), Map.of(gold, CraftingBlockReason.NO_PROVIDER), 8);
+        assertEquals(null, cache.blockReason(iron, 8));
+        assertEquals(CraftingBlockReason.NO_PROVIDER, cache.blockReason(gold, 8));
+        assertEquals(null, cache.blockReason(gold, 7));
     }
 
     @Test

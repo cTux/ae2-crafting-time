@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.core.ProfileStats;
+import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import com.ctux.ae2craftingtime.core.StallDiagnostic;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
@@ -42,14 +43,15 @@ public final class TtcText {
                 Component.translatable("text.ae2craftingtime.no_space.suggestion"));
     }
 
-    public static MutableComponent noProvider() {
-        return Component.translatable("text.ae2craftingtime.no_provider")
+    public static MutableComponent blockReason(CraftingBlockReason reason) {
+        return Component.translatable("text.ae2craftingtime." + reason.name().toLowerCase(Locale.ROOT))
                 .withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
     }
 
-    public static List<Component> noProviderTooltip() {
-        return List.of(noProvider(), Component.translatable("text.ae2craftingtime.no_provider.explanation"),
-                Component.translatable("text.ae2craftingtime.no_provider.suggestion"));
+    public static List<Component> blockReasonTooltip(CraftingBlockReason reason) {
+        var key = "text.ae2craftingtime." + reason.name().toLowerCase(Locale.ROOT);
+        return List.of(blockReason(reason), Component.translatable(key + ".explanation"),
+                Component.translatable(key + ".suggestion"));
     }
 
     public static MutableComponent ttcCollectingData() {

@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeoutException;
 
@@ -54,6 +53,23 @@ class TestDriverCoreTest {
             assertFalse(NoProviderScenario.tooltipReady(incomplete));
         }
         assertFalse(NoProviderScenario.tooltipReady(List.of()));
+    }
+
+    @Test
+    void noPowerRequiresTheRenderedWarningAndBothAdviceLines() {
+        assertTrue(AddonCpuFixture.supports(NoPowerScenario.SCENARIO));
+        assertNull(AddonCpuFixture.create(NoPowerScenario.SCENARIO));
+        assertEquals(NoPowerScenario.CHECKS, DriverResult.requiredChecks(NoPowerScenario.SCENARIO));
+        var tooltip = List.of(NoPowerScenario.KEY, NoPowerScenario.KEY + ".explanation",
+                NoPowerScenario.KEY + ".suggestion").stream()
+                .map(key -> new UiSnapshot.ObservedText(key, key, List.of(), null)).toList();
+        assertTrue(NoPowerScenario.tooltipReady(tooltip));
+        for (int missing = 0; missing < tooltip.size(); missing++) {
+            var incomplete = new java.util.ArrayList<>(tooltip);
+            incomplete.remove(missing);
+            assertFalse(NoPowerScenario.tooltipReady(incomplete));
+        }
+        assertFalse(NoPowerScenario.tooltipReady(List.of()));
     }
 
     @TempDir

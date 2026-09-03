@@ -38,6 +38,7 @@ public record DriverResult(
     public static List<String> requiredChecks(String scenario) {
         return scenario.equals("craft-plan") ? CRAFT_PLAN_CHECKS
                 : scenario.equals(NoSpaceScenario.SCENARIO) ? NoSpaceScenario.CHECKS
+                : scenario.equals(NoPowerScenario.SCENARIO) ? NoPowerScenario.CHECKS
                 : scenario.equals(NoProviderScenario.SCENARIO) ? NoProviderScenario.CHECKS
                 : scenario.equals(CraftingTreeScenario.SCENARIO) ? CRAFTING_TREE_CHECKS
                 : scenario.equals(RequesterFixture.SCENARIO) ? ME_REQUESTER_CHECKS

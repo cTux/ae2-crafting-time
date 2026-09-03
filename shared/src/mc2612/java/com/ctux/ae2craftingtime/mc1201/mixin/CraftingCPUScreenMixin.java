@@ -19,7 +19,6 @@ import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
 import com.ctux.ae2craftingtime.mc1201.StatsClickHandler;
 import com.ctux.ae2craftingtime.mc1201.TtcBadge;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsClick;
-import com.ctux.ae2craftingtime.mc1201.TtcDetailsKeyMapping;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -262,7 +261,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
         var key = ProfilerBridge.key(entry.getWhat());
         ClientStatsRequests.request(key);
-        if (CraftingRowState.noProvider(entry.getPendingAmount(), ClientStats.missingProvider(key))) {
+        if (CraftingRowState.blockReason(entry.getPendingAmount(), ClientStats.blockReason(key)) != null) {
             return OptionalLong.empty();
         }
         if (entry.getActiveAmount() == 0 && entry.getPendingAmount() > 0

@@ -51,6 +51,8 @@ if ($DriverScenario -eq "suite") {
 }
 $checks = if ($DriverScenario -eq "no-space-status") {
     [ordered]@{ screen=$true; "external-machine"=$true; warning=$true; tooltip=$true; layout=$true; ukrainian=$true; recovered=$true }
+} elseif ($DriverScenario -eq "no-power-status") {
+    [ordered]@{ 'screen'=$true; 'real-job'=$true; 'external-unpowered'=$true; 'active-network'=$true; 'mixed-row'=$true; 'tooltip'=$true; 'layout'=$true; 'ukrainian'=$true; 'power-restored'=$true; 'cancelled'=$true; 'inactive-cpu'=$true }
 } elseif ($DriverScenario -eq "no-provider-status") {
     [ordered]@{ screen=$true; 'real-job'=$true; 'mixed-row'=$true; 'pattern-removed'=$true; tooltip=$true;
         layout=$true; ukrainian=$true; 'pattern-restored'=$true; 'second-provider'=$true;
@@ -72,6 +74,8 @@ $checks = if ($DriverScenario -eq "no-space-status") {
 }
 $screenshots = if ($DriverScenario -eq "no-space-status") {
     @("no-space-before.png", "no-space-en-us.png", "no-space-uk-ua.png", "no-space-recovered.png")
+} elseif ($DriverScenario -eq "no-power-status") {
+    @("no-power-external-unpowered.png", "no-power-en-us.png", "no-power-uk-ua.png", "no-power-restored.png", "no-power-inactive.png")
 } elseif ($DriverScenario -eq "no-provider-status") {
     @("no-provider-before.png", "no-provider-en-us.png", "no-provider-uk-ua.png",
         "no-provider-pattern-restored.png", "no-provider-redundant.png", "no-provider-block-removed.png",
@@ -165,6 +169,8 @@ try {
     Invoke-Case "pass" -Latest -shouldPass $true
     Invoke-Case "pass" -Scenario "no-space-status" -shouldPass $true
     Invoke-Case "missing-screenshot" -Scenario "no-space-status" -shouldPass $false
+    Invoke-Case "pass" -Scenario "no-power-status" -shouldPass $true
+    Invoke-Case "missing-screenshot" -Scenario "no-power-status" -shouldPass $false
     Invoke-Case "pass" -Scenario "no-provider-status" -shouldPass $true
     Invoke-Case "missing-screenshot" -Scenario "no-provider-status" -shouldPass $false
     Invoke-Case "pass" -Scenario "neoeco-cpu" -shouldPass $true

@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.ctux.ae2craftingtime.core.PacketLimits;
+import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
@@ -17,14 +18,27 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 class StatsPacketTest {
+    @Test
+    void snapshotRejectsUnknownBlockReason() {
+        for (var reason : new int[] {-1, 2}) {
+            var buffer = new FriendlyByteBuf(Unpooled.buffer());
+            StatsPacketCodec.writeKeys(buffer, List.of("minecraft:iron_ingot"));
+            buffer.writeVarInt(0);
+            buffer.writeVarInt(0);
+            buffer.writeVarInt(1);
+            buffer.writeUtf("minecraft:iron_ingot");
+            buffer.writeVarInt(reason);
+            assertThrows(RuntimeException.class, () -> StatsSnapshotS2C.decode(buffer));
+        }
+    }
+
     @Test
     void snapshotRoundTripsMissingProvidersWithoutLearnedStatsAtBothSizeLimits() {
         for (var count : new int[] {0, PacketLimits.MAX_KEYS}) {
             var keys = java.util.stream.IntStream.range(0, count).mapToObj(i -> "test:output_" + i).toList();
-            var packet = new StatsSnapshotS2C(keys, List.of(), Map.of(), Map.of(), Set.copyOf(keys), 0x123456789L);
+            var packet = new StatsSnapshotS2C(keys, List.of(), Map.of(), Map.of(), keys.stream().collect(java.util.stream.Collectors.toMap(key -> key, key -> CraftingBlockReason.NO_POWER)), 0x123456789L);
             var buffer = new FriendlyByteBuf(Unpooled.buffer());
             StatsSnapshotS2C.encode(packet, buffer);
             assertEquals(packet, StatsSnapshotS2C.decode(buffer));
@@ -85,7 +99,7 @@ class StatsPacketTest {
                 new StatsEntry(new ProfileKey("minecraft:lava"),
                         new ProfileStats(1, 20, 50, 1000, 20, ProfileUnit.MILLIBUCKET))),
                 Map.of("minecraft:water", 8_000L, "minecraft:lava", 0L),
-                Map.of("minecraft:water", 40L), Set.of("minecraft:lava"), 0x123456789L);
+                Map.of("minecraft:water", 40L), Map.of("minecraft:lava", CraftingBlockReason.NO_PROVIDER), 0x123456789L);
 
         StatsSnapshotS2C.encode(packet, buffer);
 
@@ -126,7 +140,7 @@ class StatsPacketTest {
         assertEquals(entries, packet.entries());
         assertEquals(Map.of(), packet.networkAmounts());
         assertEquals(Map.of(), packet.waitingTicks());
-        assertEquals(Set.of(), packet.missingProviders());
+        assertEquals(Map.of(), packet.blockReasons());
         assertEquals(-1, packet.cpuContext());
     }
 

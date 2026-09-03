@@ -66,16 +66,18 @@ class TtcTextTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"en_us, NO PROVIDER", "uk_ua, Без провайдера"})
-    void noProviderHasWarningStyleAndTranslatedAdvice(String locale, String expected) throws IOException {
-        var lines = TtcText.noProviderTooltip();
+    @CsvSource({"en_us, NO_PROVIDER, NO PROVIDER", "uk_ua, NO_PROVIDER, Без провайдера",
+            "en_us, NO_POWER, NO POWER", "uk_ua, NO_POWER, Немає енергії"})
+    void blockerHasWarningStyleAndTranslatedAdvice(String locale,
+            com.ctux.ae2craftingtime.core.CraftingBlockReason reason, String expected) throws IOException {
+        var lines = TtcText.blockReasonTooltip(reason);
         assertEquals(3, lines.size());
         assertTrue(lines.get(0).getStyle().isBold());
         assertEquals(TextColor.fromLegacyFormat(ChatFormatting.RED), lines.get(0).getStyle().getColor());
         try (var reader = new InputStreamReader(getClass().getResourceAsStream(
                 "/assets/ae2craftingtime/lang/" + locale + ".json"), StandardCharsets.UTF_8)) {
             var translations = JsonParser.parseReader(reader).getAsJsonObject();
-            assertEquals(expected, translations.get("text.ae2craftingtime.no_provider").getAsString());
+            assertEquals(expected, translations.get("text.ae2craftingtime." + reason.name().toLowerCase(java.util.Locale.ROOT)).getAsString());
             for (var line : lines) {
                 var contents = (TranslatableContents) line.getContents();
                 assertTrue(!translations.get(contents.getKey()).getAsString().isBlank());

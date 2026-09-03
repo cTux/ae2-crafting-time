@@ -38,6 +38,7 @@ public final class CraftPlanScenario {
     private final Minecraft minecraft;
     private final NoSpaceScenario noSpace;
     private final NoProviderScenario noProvider;
+    private final NoPowerScenario noPower;
     private final DriverOptions options;
     private final String driverFile;
     private final AddonCpuFixture<?> baseFixture;
@@ -70,10 +71,11 @@ public final class CraftPlanScenario {
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         this.minecraft = minecraft;
         noSpace = NoSpaceScenario.SCENARIO.equals(options.scenario()) ? new NoSpaceScenario() : null;
+        noPower = NoPowerScenario.SCENARIO.equals(options.scenario()) ? new NoPowerScenario() : null;
         noProvider = NoProviderScenario.SCENARIO.equals(options.scenario()) ? new NoProviderScenario() : null;
         this.options = options;
         this.driverFile = driverFile;
-        baseFixture = noSpace == null && noProvider == null ? DriverPlatform.baseFixture(options.scenario()) : null;
+        baseFixture = noSpace == null && noProvider == null && noPower == null ? DriverPlatform.baseFixture(options.scenario()) : null;
         addonFixture = AddonCpuFixture.create(options.scenario());
         wirelessFixture = WirelessTerminalFixture.create(options.scenario());
         requesterFixture = RequesterFixture.SCENARIO.equals(options.scenario()) ? RequesterFixture.create() : null;
@@ -86,7 +88,7 @@ public final class CraftPlanScenario {
         if (state == ScenarioState.FAILED || state == ScenarioState.QUIT_REQUESTED) {
             return;
         }
-        if (elapsed().compareTo(state == ScenarioState.STARTING || noSpace != null || noProvider != null ? START_TIMEOUT : STEP_TIMEOUT) > 0) {
+        if (elapsed().compareTo(state == ScenarioState.STARTING || noSpace != null || noProvider != null || noPower != null ? START_TIMEOUT : STEP_TIMEOUT) > 0) {
             fail("timeout", state.name(), currentScreen());
             return;
         }
@@ -143,7 +145,7 @@ public final class CraftPlanScenario {
         if (!marker.disposableWorldId().equals(options.world())) {
             throw new IllegalArgumentException("fixture world ID mismatch");
         }
-        if (noSpace != null || noProvider != null) {
+        if (noSpace != null || noProvider != null || noPower != null) {
             advance(ScenarioState.WORLD_READY);
             return;
         }
@@ -168,6 +170,13 @@ public final class CraftPlanScenario {
     }
 
     private void openTerminal() throws IOException {
+        if (noPower != null) {
+            if (noPower.tick(minecraft, marker, checks, this::screenshotUnchecked, this::moveMouse)) {
+                advance(ScenarioState.TERMINAL_OPEN);
+                writePass();
+            }
+            return;
+        }
         if (noProvider != null) {
             if (noProvider.tick(minecraft, marker, checks, this::screenshotUnchecked, this::moveMouse)) {
                 advance(ScenarioState.TERMINAL_OPEN);

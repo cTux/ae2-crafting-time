@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
 import appeng.api.config.Actionable;
+import appeng.api.config.PowerMultiplier;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingPlan;
@@ -18,6 +19,7 @@ import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
@@ -34,6 +36,25 @@ public abstract class CraftingCpuLogicMixin {
     @Final
     private int[] usedOps;
 
+    @Unique
+    private IPatternDetails ae2craftingtime$dispatchPattern;
+
+    @Inject(method = "executeCrafting", at = @At("RETURN"), remap = false)
+    private void ae2craftingtime$clearDispatchPattern(CallbackInfo ci) {
+        ae2craftingtime$dispatchPattern = null;
+    }
+
+    @Redirect(method = "executeCrafting", at = @At(value = "INVOKE", ordinal = 0,
+            target = "Lappeng/api/networking/energy/IEnergyService;extractAEPower(DLappeng/api/config/Actionable;Lappeng/api/config/PowerMultiplier;)D"),
+            remap = false)
+    private double ae2craftingtime$observeDispatchPower(IEnergyService energy, double required,
+            Actionable mode, PowerMultiplier multiplier) {
+        var extracted = energy.extractAEPower(required, mode, multiplier);
+        ProfilerBridge.observeDispatchPower(ProfilerBridge.networkId(cluster.getGrid()), cluster,
+                ae2craftingtime$dispatchPattern, required, extracted, cluster.getLevel().getGameTime());
+        return extracted;
+    }
+
     @Redirect(
             method = "executeCrafting",
             at = @At(value = "INVOKE",
@@ -41,6 +62,7 @@ public abstract class CraftingCpuLogicMixin {
             remap = false)
     private Iterable<ICraftingProvider> ae2craftingtime$observeProviders(CraftingService service,
             IPatternDetails pattern) {
+        ae2craftingtime$dispatchPattern = pattern;
         var providers = service.getProviders(pattern);
         ProfilerBridge.observeProviders(ProfilerBridge.networkId(cluster.getGrid()), cluster, pattern, providers);
         return providers;

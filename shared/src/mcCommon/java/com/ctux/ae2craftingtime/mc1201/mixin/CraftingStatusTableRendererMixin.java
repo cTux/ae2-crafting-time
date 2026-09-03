@@ -4,6 +4,7 @@ import appeng.client.gui.me.crafting.CraftingCPUScreen;
 import appeng.client.gui.me.crafting.CraftingStatusTableRenderer;
 import appeng.menu.me.crafting.CraftingStatusEntry;
 import com.ctux.ae2craftingtime.core.CraftingRowState;
+import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
@@ -42,8 +43,9 @@ public abstract class CraftingStatusTableRendererMixin {
             return;
         }
 
-        if (ae2craftingtime$noProvider(entry)) {
-            cir.getReturnValue().addAll(TtcText.noProviderTooltip());
+        var reason = ae2craftingtime$blockReason(entry);
+        if (reason != null) {
+            cir.getReturnValue().addAll(TtcText.blockReasonTooltip(reason));
             return;
         }
         ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue());
@@ -63,8 +65,9 @@ public abstract class CraftingStatusTableRendererMixin {
 
         var key = ProfilerBridge.key(entry.getWhat());
         ClientStatsRequests.request(key);
-        if (ae2craftingtime$noProvider(entry)) {
-            lines.add(TtcText.noProvider());
+        var reason = ae2craftingtime$blockReason(entry);
+        if (reason != null) {
+            lines.add(TtcText.blockReason(reason));
             return;
         }
         if (entry.getActiveAmount() == 0 && entry.getPendingAmount() > 0) {
@@ -115,9 +118,9 @@ public abstract class CraftingStatusTableRendererMixin {
                 entry.getStoredAmount(), entry.getActiveAmount(), entry.getPendingAmount());
     }
 
-    private static boolean ae2craftingtime$noProvider(CraftingStatusEntry entry) {
-        return CraftingRowState.noProvider(entry.getPendingAmount(),
-                ClientStats.missingProvider(ProfilerBridge.key(entry.getWhat())));
+    private static CraftingBlockReason ae2craftingtime$blockReason(CraftingStatusEntry entry) {
+        return CraftingRowState.blockReason(entry.getPendingAmount(),
+                ClientStats.blockReason(ProfilerBridge.key(entry.getWhat())));
     }
 
     private static Component ttcLine(com.ctux.ae2craftingtime.core.ProfileKey key, String eta) {

@@ -9,5 +9,7 @@
   "ae2wtlib-terminal",
   "ae2importexportcard-terminal",
   "aeinfinitybooster-terminal",
-  "no-space-status"
+  "no-space-status",
+  "no-provider-status",
+  "no-power-status"
 ]

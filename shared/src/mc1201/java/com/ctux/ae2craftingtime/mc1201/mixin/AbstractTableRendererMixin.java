@@ -133,7 +133,7 @@ public abstract class AbstractTableRendererMixin {
         }
 
         var key = ProfilerBridge.key(statusEntry.getWhat());
-        if (CraftingRowState.noProvider(statusEntry.getPendingAmount(), ClientStats.missingProvider(key))) {
+        if (CraftingRowState.blockReason(statusEntry.getPendingAmount(), ClientStats.blockReason(key)) != null) {
             return OptionalLong.empty();
         }
         if (statusEntry.getActiveAmount() == 0 && statusEntry.getPendingAmount() > 0

@@ -263,7 +263,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
         var key = ProfilerBridge.key(entry.getWhat());
         ClientStatsRequests.request(key);
-        if (CraftingRowState.noProvider(entry.getPendingAmount(), ClientStats.missingProvider(key))) {
+        if (CraftingRowState.blockReason(entry.getPendingAmount(), ClientStats.blockReason(key)) != null) {
             return OptionalLong.empty();
         }
         if (entry.getActiveAmount() == 0 && entry.getPendingAmount() > 0
