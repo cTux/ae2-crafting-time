@@ -220,7 +220,12 @@ final class StandardAe2Scenario {
                 if (reset) key(0x12, false);
                 return false;
             }
-            if (!DriverPlatform.modifiers(minecraft, reset)) return false;
+            if (!DriverPlatform.modifiers(minecraft, reset)) {
+                if (clickPhase % 100 == 2) System.out.println("AE2CT modifier wait native="
+                        + User32.INSTANCE.GetAsyncKeyState(0x11) + " glfw="
+                        + org.lwjgl.glfw.GLFW.glfwGetKey(minecraft.getWindow().getWindow(), 341));
+                return false;
+            }
             var row = snapshot.rows().stream().filter(r -> r.outputId().equals(statsOutput())).findFirst().orElseThrow();
             DriverPlatform.click(minecraft, row.cell().centerX(), row.cell().centerY());
             releaseKeys();
