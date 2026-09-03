@@ -57,8 +57,9 @@ if ($Stop) { $smokeArguments += "-Stop" } else { $smokeArguments += @("-Schedule
 if ($Transport -eq "OpenSSH") {
     $ip = (& $vmrun -T ws getGuestIPAddress $vmx -wait).Trim()
     if ($LASTEXITCODE -ne 0 -or $ip -notmatch '^\d{1,3}(?:\.\d{1,3}){3}$') { throw "Could not resolve the CodexVM guest IP" }
-    $remote = $smokeArguments | ForEach-Object { '"' + ($_ -replace '"', '\"') + '"' }
-    & ssh.exe -i $SshKeyPath -o BatchMode=yes -o ConnectTimeout=10 "$SshUser@$ip" powershell.exe ($remote -join ' ')
+    $remote = '& powershell.exe ' + (($smokeArguments | ForEach-Object { "'" + $_.Replace("'", "''") + "'" }) -join ' ')
+    $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($remote))
+    & ssh.exe -i $SshKeyPath -o BatchMode=yes -o ConnectTimeout=10 "$SshUser@$ip" powershell.exe -NoProfile -EncodedCommand $encoded
     if ($LASTEXITCODE -ne 0) { throw "OpenSSH UI-smoke dispatch failed with exit $LASTEXITCODE" }
     exit 0
 }
