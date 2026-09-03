@@ -6,23 +6,30 @@ test_dir="$(mktemp -d)"
 trap 'rm -rf "$test_dir"' EXIT
 
 printf '[{}, {}]\n' >"$test_dir/matrix.json"
-
-gh() {
-  cat <<'JSON'
-{
-  "name": "1.0.9",
-  "html_url": "https://github.com/cTux/ae2-crafting-time/releases/tag/test",
-  "assets": [
-    {"name": "forge.jar", "browser_download_url": "https://example/forge.jar"},
-    {"name": "fabric.jar", "browser_download_url": "https://example/fabric.jar"},
-    {"name": "sources.zip", "browser_download_url": "https://example/sources.zip"}
-  ]
-}
-JSON
-}
-
+gh() { cat "$test_dir/release.json"; }
+sleep() { :; }
 curl() {
-  cat >"$test_dir/payload.json"
+  local payload='' url=''
+  while (($#)); do
+    case "$1" in
+      --data-binary) payload="$2"; shift ;;
+      https://*) url="$1" ;;
+    esac
+    shift
+  done
+  [[ "$url" == *'wait=true' ]] || return 1
+  printf '%s\n' "$payload" >>"$test_dir/payloads.jsonl"
+  local count
+  count="$(wc -l <"$test_dir/payloads.jsonl")"
+  if [[ "$count" -eq "${fail_at:-0}" ]]; then
+    echo '{"message":"test failure"}'
+    return 22
+  fi
+  if [[ "$count" -eq "${unconfirmed_at:-0}" ]]; then
+    echo '{}'
+  else
+    printf '{"id":"%s"}\n' "$count"
+  fi
 }
 
 export DISCORD_WEBHOOK_URL=https://discord.example/webhook
@@ -31,20 +38,76 @@ export RELEASE_ID=1
 export REPOSITORY=cTux/ae2-crafting-time
 export MATRIX_PATH="$test_dir/matrix.json"
 
-source "$root/scripts/announce-discord-release.sh"
-
-expected=$'**AE2 Crafting Time 1.0.9**\nhttps://github.com/cTux/ae2-crafting-time/releases/tag/test\n\n**JAR downloads**\n[forge.jar](https://example/forge.jar)\n[fabric.jar](https://example/fabric.jar)'
-jq -e --arg expected "$expected" '.content == $expected' "$test_dir/payload.json" >/dev/null
-
-gh() {
-  cat <<'JSON'
-{"name":"1.0.9","html_url":"https://example/release","assets":[{"name":"forge.jar","browser_download_url":"https://example/forge.jar"}]}
-JSON
+for case_name in short multiline empty null exact over unicode long; do
+  python3 - "$test_dir" "$case_name" <<'PY'
+import json, pathlib, sys
+path, case = pathlib.Path(sys.argv[1]), sys.argv[2]
+release = {
+    "name": "1.1.1", "html_url": "https://example/release",
+    "assets": [
+        {"name": "forge.jar", "browser_download_url": "https://example/forge.jar"},
+        {"name": "fabric.jar", "browser_download_url": "https://example/fabric.jar"},
+        {"name": "sources.zip", "browser_download_url": "https://example/sources.zip"},
+    ],
 }
-sleep() { :; }
+prefix = "**AE2 Crafting Time 1.1.1**\nhttps://example/release\n\n"
+suffix = "**JAR downloads**\n[forge.jar](https://example/forge.jar)\n[fabric.jar](https://example/fabric.jar)"
+exact = 2000 - len(prefix + "\n\n" + suffix)
+body = {
+    "short": "### FIXED\n\n- Clearer status.",
+    "multiline": "### ADDED\n\n- First line.\n- @everyone <@123> <@&456>\n\n### FIXED\n\n- Last line.\n",
+    "empty": "", "null": None,
+    "exact": "x" * exact, "over": "x" * (exact + 1),
+    "unicode": "### ADDED\n\n" + "Немає енергії 😀\n" * 400,
+    "long": "x" * 6500,
+}[case]
+release["body"] = body
+(path / "release.json").write_text(json.dumps(release), encoding="utf-8")
+(path / "expected.txt").write_text(prefix + (body + "\n\n" if body else "") + suffix, encoding="utf-8")
+PY
+  : >"$test_dir/payloads.jsonl"
+  (source "$root/scripts/announce-discord-release.sh") >"$test_dir/output.log"
+  python3 - "$test_dir" "$case_name" <<'PY'
+import json, pathlib, sys
+path, case = pathlib.Path(sys.argv[1]), sys.argv[2]
+payloads = [json.loads(line) for line in (path / "payloads.jsonl").read_text().splitlines()]
+assert all(0 < len(p["content"].encode("utf-16-le")) // 2 <= 2000 for p in payloads), case
+assert all(p["allowed_mentions"] == {"parse": []} for p in payloads), case
+joined = "".join(p["content"] for p in payloads)
+assert joined == (path / "expected.txt").read_text(encoding="utf-8"), case
+assert joined.count("https://example/forge.jar") == joined.count("https://example/fabric.jar") == 1
+assert "sources.zip" not in joined
+assert len(payloads) == 1 if case in {"short", "multiline", "empty", "null", "exact"} else len(payloads) > 1
+output = (path / "output.log").read_text()
+assert output.count("confirmed: message") == len(payloads)
+assert "announcement complete" in output
+PY
+done
+
+# A long body needs several parts. Stop on failed or unconfirmed delivery.
+for failure in failed unconfirmed; do
+  fail_at=0
+  unconfirmed_at=0
+  if [[ "$failure" == failed ]]; then fail_at=2; else unconfirmed_at=2; fi
+  : >"$test_dir/payloads.jsonl"
+  if (source "$root/scripts/announce-discord-release.sh") >"$test_dir/output.log" 2>&1; then
+    echo "A $failure part should stop delivery." >&2
+    exit 1
+  fi
+  [[ "$(wc -l <"$test_dir/payloads.jsonl")" -eq 2 ]]
+  ! grep -q 'announcement complete' "$test_dir/output.log"
+  grep -q 'part 1 confirmed: message 1' "$test_dir/output.log"
+done
+fail_at=0
+unconfirmed_at=0
+
+jq '.assets = [.assets[0]]' "$test_dir/release.json" >"$test_dir/partial.json"
+mv "$test_dir/partial.json" "$test_dir/release.json"
+: >"$test_dir/payloads.jsonl"
 if (source "$root/scripts/announce-discord-release.sh" >/dev/null 2>&1); then
   echo "Partial JAR set should not be announced." >&2
   exit 1
 fi
+[[ ! -s "$test_dir/payloads.jsonl" ]]
 
-echo "Discord release announcement test passed."
+echo "Discord release announcement tests passed."
