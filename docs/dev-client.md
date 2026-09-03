@@ -1,64 +1,75 @@
 # Running a Development Client
 
-Run UI and startup checks inside CodexVM. The VM's read/write `projects` share
-contains this checkout; keep `-RuntimeDirectory` on guest-local NTFS so Minecraft
-does not use VMware's shared filesystem for its live runtime. Each client has an
-8 GiB maximum heap. Maximize the exact Minecraft window before a visual check.
+Build all production and test-driver JARs on the host. CodexVM only runs the
+client and smoke checks using copied artifacts. Keep the live Minecraft runtime
+on guest-local NTFS, give it an 8 GiB maximum heap, and maximize the exact
+Minecraft window before a visual check.
 
-For the fast Forge 1.20.1 UI smoke, run this on the host:
+## Host build and VM staging
 
-```powershell
-.\scripts\invoke-ui-smoke-codexvm.ps1
-```
+1. Keep `JAVA_HOME_17`, `JAVA_HOME_21`, and `JAVA_HOME_25` set to installed host
+   JDK directories. Verify each `bin/java.exe -version` before using it. Use
+   `JAVA_HOME_17` or `JAVA_HOME_21` for the Gradle process; the version modules
+   select Java 17, 21, or 25 toolchains. Do not start the multi-project build on
+   Java 25. If the variables are missing, locate and verify the installed JDKs
+   before setting them; do not guess paths.
+2. Make the changes in the session worktree. Build the exact release-matrix
+   row's `distMod` task and, when needed, `testDriverJar` on the host. Pass the
+   installed toolchain paths explicitly when Gradle does not discover them:
 
-During integration development, add `-ProjectId <id>` to load only that
-integration and its required dependencies. Before merge, rerun the scenario
-without `-ProjectId` to prove it against the complete compatible profile. Fetch
-and rebase onto `origin/master` immediately before that final full-profile run;
-rerun it after any later base change to production, build, dependency, fixture,
-or driver code.
+   ```powershell
+   $env:JAVA_HOME = $env:JAVA_HOME_21
+   $jdkPaths = "$env:JAVA_HOME_17,$env:JAVA_HOME_21,$env:JAVA_HOME_25"
+   # Example: Forge 1.20.1 production and test-driver artifacts.
+   .\gradlew.bat :mc_1_20_1_forge:distMod :mc_1_20_1_forge:testDriverJar "-Porg.gradle.java.installations.paths=$jdkPaths"
+   ```
 
-It uses OpenSSH by default. Add `-Transport Vmrun` to use VMware guest
-execution, or `-Stop` to terminate only the PID tree recorded by the current
-run. Both transports dispatch into the logged-in Codex desktop so Minecraft is
-still visible. The guest checkout, Gradle output, resolved mods, and runtime
-stay warm under `C:\Users\Public\Documents\AE2CraftingTimeSmoke`; only per-run evidence and
-the disposable world are replaced.
+   Read the actual module name from `scripts/release-matrix.json`. Rebuild after
+   source changes; reuse the resulting artifact across matching clients in the
+   same campaign. A user-supplied exact JAR does not need rebuilding.
+3. Add the session worktree directory as a CodexVM shared folder through VMware's
+   shared-folder controls. Reuse a share only when it already points to that
+   exact worktree. Keep unrelated shares, reuse the running VM, and verify the
+   guest can read the built files. Do not edit a running VM's VMX or restart it
+   just to add a share.
+4. Copy/replace the exact production and matching test-driver JARs in the needed
+   guest-local client or modpack. Remove older enabled copies of our replaced
+   JARs, leave one of each required artifact, and compare their SHA-256 hashes
+   with the host files. Keep the existing client and dependencies when they
+   already match the requested target and profile.
+5. Launch the installed client with Java 17 for Minecraft 1.20.1, Java 21 for
+   1.21.1, or Java 25 for 26.1.2. Run the requested smoke, review screenshots,
+   return logs and evidence through the share, and stop only the tested client.
 
-Progress does not require VNC. Read `status.json`, `launcher.stdout.log`, and
-`launcher.stderr.log` under
-`build\ui-smoke\1.20.1-forge\<profile>\<scenario>`. Each profile keeps one warm
-runtime and separates results by scenario. The runner rejects concurrent smoke
-scenarios that would share that runtime. The status records the phase, exact
-PID, Java home, result, and evidence path. Use VNC only for the final maximized
-Minecraft visual check.
+For Prism, inspect and use only the **Codex** group. If it lacks the exact
+requested modpack release, download and install that release into **Codex**.
+A matching pack elsewhere is not eligible: do not launch, copy, move, or modify
+it. Keep temporary guest-local test instances in **Codex** as well.
 
-Provision a fresh VM once by running `prepare-codexvm-ui-smoke.ps1` on the host,
-then run `setup-codexvm-ui-smoke.ps1` in an elevated guest PowerShell with the
-one-time JSON path printed by the host command. The guest deletes that JSON
-after installing OpenSSH, adding the dedicated `CodexSmoke` vmrun account, and
-installing the host public key. The reusable vmrun credential is encrypted for
-the current host user and is never stored in the repository.
+## Prepared-client launcher limitation
 
-Use an ordinary script for the pinned compatible sandbox:
+The current `invoke-ui-smoke-codexvm.ps1` dispatcher reaches
+`run-ui-smoke-codexvm.ps1`, `run-ui-smoke.ps1`, and `run-client.ps1`, which build
+with Gradle and launch the production mod from a source set. The `run-*` wrappers
+also reach that build path, including `run-client.ps1 -ResolveOnly`, which still
+builds the driver. They are not artifact-only VM launchers. Do not run these
+paths in CodexVM until they support launching host-built JARs without guest
+builds. A missing artifact-only prepared launcher is a tooling gap, not permission
+to build in the VM, launch the UI on the host, or substitute a Prism modpack.
 
-```powershell
-.\run-1.20.1-forge.bat
-.\run-1.20.1-fabric.bat
-.\run-1.21.1-neoforge.bat
-.\run-26.1.2-neoforge.bat
-```
+The existing scenario contracts, fixture preparation, screenshot archive, and
+result checks still apply to smoke runs. Keep the requested target, profile,
+and scenario. During integration development, a focused dependency graph may
+load only that integration and its required dependencies. Before merge, use the
+complete compatible profile. Fetch and rebase onto `origin/master` immediately
+before that final run; rerun after any later base change to production, build,
+dependency, fixture, or driver code.
 
-Use the matching latest script to expose new upstream incompatibilities:
+Provision VM transports with `prepare-codexvm-ui-smoke.ps1` on the host and
+`setup-codexvm-ui-smoke.ps1` in elevated guest PowerShell when needed. Transport
+setup does not authorize guest builds.
 
-```powershell
-.\run-1.20.1-forge-latest.bat
-.\run-1.20.1-fabric-latest.bat
-.\run-1.21.1-neoforge-latest.bat
-.\run-26.1.2-neoforge-latest.bat
-```
-
-The `.sh` wrappers have the same names and behavior.
+## Dependency profiles
 
 Ordinary clients use a complete version lock: loader, AE2, Fabric API where
 needed, the maximum mutually compatible addon set, every required library, and

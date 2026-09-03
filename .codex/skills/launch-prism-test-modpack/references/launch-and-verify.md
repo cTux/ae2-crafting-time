@@ -1,14 +1,15 @@
 # Launch And Verify
 
-Read this after an eligible named-modpack instance exists.
+Read this after an eligible named-modpack instance exists in Prism's **Codex** group.
 
 ## Stage The Instance
 
-- Reconfirm `instance.cfg` and `mmc-pack.json`, then inspect enabled mod JAR
-  metadata, including nested archives, for mod ID `ae2`.
+- Reconfirm **Codex** group membership, `instance.cfg`, and `mmc-pack.json`, then
+  inspect enabled mod JAR metadata, including nested archives, for mod ID `ae2`.
 - Copy eligible instances to a temporary guest-local NTFS root and point Prism
   there for the campaign. Java watch registration fails on VMware's shared
   filesystem with `java.io.IOException: Incorrect function`.
+- Keep the staged instance in **Codex** too. Never stage a pack from another group.
 - After testing, sync logs and crash reports to the shared instance, restore
   Prism's normal shared root, and remove only the marked temporary copy.
 
@@ -16,11 +17,17 @@ Read this after an eligible named-modpack instance exists.
 
 - Match the Minecraft version and loader to `scripts/release-matrix.json`.
 - Unless the user supplied an exact artifact, derive the distribution filename
-  from that row and the current `modVersion`. Build each required row once and
-  reuse its verified artifact across compatible instances.
-- Remove existing enabled `ae2-crafting-time-*.jar` files, copy the selected JAR,
-  and verify exactly one enabled copy remains. Replace directly; do not create
-  backups.
+  from that row and the current `modVersion`. Build each required row on the
+  host once and reuse its verified artifact across compatible instances. Build
+  the matching test-driver JAR on the host when the requested smoke needs it.
+- Add the session worktree to the VM's shared folders, reusing an exact existing
+  share. Copy its built JARs into the guest-local instance; never run a JAR build
+  or a Gradle launcher inside CodexVM.
+- Replace existing enabled `ae2-crafting-time-*.jar` files with the selected
+  production JAR and the matching test-driver JAR when needed. Verify one
+  production copy and at most one required driver remain. Replace directly;
+  do not create backups. Compare SHA-256 hashes of every copied JAR against
+  its host artifact before launch.
 
 ## Launch And Decide
 

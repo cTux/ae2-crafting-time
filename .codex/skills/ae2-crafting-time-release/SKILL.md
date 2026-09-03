@@ -7,6 +7,11 @@ description: Build or release AE2 Crafting Time distributions. Use for release-m
 
 ## Workflow
 
+Build all production and test-driver JARs on the host, never in CodexVM. Use
+`JAVA_HOME_17`, `JAVA_HOME_21`, and `JAVA_HOME_25` for the installed host JDKs;
+follow [host build and VM staging](../../../docs/dev-client.md#host-build-and-vm-staging)
+when preparing artifacts for a client or modpack smoke test.
+
 1. Read `AGENTS.md` and `docs/release.md`; they own the complete release order.
 2. Read [the writing skill](../ae2-crafting-time-writing/SKILL.md) before
    changing changelogs, release notes, or text published to CurseForge,

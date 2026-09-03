@@ -7,8 +7,11 @@ description: Install or smoke-test a named AE2 modpack through Prism in CodexVM.
 
 ## Always use CodexVM
 
+- Build production and test-driver JARs only on the host. Follow
+  [host build and VM staging](../../../docs/dev-client.md#host-build-and-vm-staging)
+  for Java selection, the session worktree share, and artifact replacement.
 - Load `use-codex-vm` before every Minecraft launch or visual check. Reuse the
-  running VM and its read/write `projects` share; do not add a duplicate share.
+  running VM and share the session worktree; reuse an exact existing share.
 - Maximize the exact Minecraft window through VNC before visual inspection. Run
   clients sequentially and confirm the tested client stopped; never kill Java
   processes broadly.
@@ -34,14 +37,18 @@ screenshots before advancing. Do not relaunch the pack for every integration.
 1. Resolve the canonical CurseForge or Modrinth project and an exact release
    supported by `scripts/release-matrix.json`. Report ambiguity instead of
    silently choosing a similarly named pack.
-2. Reuse an instance only when `instance.cfg` and `mmc-pack.json` prove the same
-   managed pack release, Minecraft version, and loader. Otherwise install it
-   through Prism's UI.
+2. Inspect only instances in Prism's **Codex** group. Reuse one only when
+   group membership, `instance.cfg`, and `mmc-pack.json` prove the same managed
+   pack release, Minecraft version, and loader. If no matching instance exists
+   in that group, download and install it through Prism's UI into **Codex**.
+   Never launch, copy, move, or modify a modpack outside that group, even when
+   its release matches.
 3. Inspect enabled JAR metadata, including nested JARs, for mod ID `ae2`. If AE2
    is absent, do not copy or launch this mod; remove the test instance and report
    it as ineligible rather than failed.
 4. Select the exact release-matrix row. Unless the user supplied a JAR, build
-   that row once per campaign and reuse its loader- and version-specific artifact.
+   that row on the host once per campaign and reuse its loader- and
+   version-specific artifact.
    Stop as unsupported when no row matches.
 5. Launch through Prism, verify the mod and startup completion from current logs
    plus the guest display, collect crash evidence when needed, and close only the
