@@ -13,7 +13,7 @@ import java.util.List;
 
 @Mixin(value = AEBaseScreen.class, remap = false)
 public abstract class AEBaseScreenMixin {
-    @Inject(method = "drawTooltipWithHeader(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILjava/util/List;)V",
+    @Inject(method = "drawTooltip(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IILjava/util/List;)V",
             at = @At("HEAD"))
     private void ae2craftingtime_test_driver$treeTooltip(GuiGraphicsExtractor graphics, int x, int y,
             List<Component> lines, CallbackInfo ci) {

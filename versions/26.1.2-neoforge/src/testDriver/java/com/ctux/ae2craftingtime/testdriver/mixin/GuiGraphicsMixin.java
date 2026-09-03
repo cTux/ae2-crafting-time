@@ -28,10 +28,10 @@ public abstract class GuiGraphicsMixin {
         UiObservationStore.fill((GuiGraphicsExtractor) (Object) this, x1, y1, x2, y2, color);
     }
 
-    @Inject(method = "setTooltipForNextFrame(Lnet/minecraft/client/gui/Font;Ljava/util/List;Ljava/util/Optional;II)V",
+    @Inject(method = "setTooltipForNextFrame(Lnet/minecraft/client/gui/Font;Ljava/util/List;Ljava/util/Optional;IILnet/minecraft/resources/Identifier;)V",
             at = @At("HEAD"))
     private void ae2craftingtime_test_driver$itemTooltip(Font font, List<Component> lines,
-            Optional<TooltipComponent> visual, int x, int y, CallbackInfo ci) {
+            Optional<TooltipComponent> visual, int x, int y, net.minecraft.resources.Identifier style, CallbackInfo ci) {
         UiObservationStore.wirelessTooltip(lines);
     }
 
