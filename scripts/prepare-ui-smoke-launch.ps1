@@ -14,7 +14,8 @@ $bundle = Get-Content -LiteralPath (Join-Path $BundleDirectory 'profile.json') -
 if ($bundle.schema -ne 1 -or $bundle.target -ne $Target -or $bundle.profile -ne $Profile -or
         $launch.target -ne $Target -or $launch.java -ne $bundle.java) { throw 'Prepared launch target/profile/Java mismatch' }
 # The installed native loader must be the resolved profile's loader, including latest diagnostics.
-$loaderArguments = @($launch.arguments | Where-Object { $_ -match "(^|[-])$([regex]::Escape($bundle.loader))($|[-])" })
+$loaderVersion = $bundle.loader -replace ('^' + [regex]::Escape($Target.Split('-')[0]) + '-'), ''
+$loaderArguments = @($launch.arguments | Where-Object { $_ -match "(^|[-])$([regex]::Escape($loaderVersion))($|[-])" })
 if (-not $loaderArguments.Count) { throw "Prepared loader does not match resolved loader $($bundle.loader)" }
 $runtime = [IO.Path]::GetFullPath($RuntimeDirectory)
 $ownedRoot = [IO.Path]::GetFullPath((Join-Path (Split-Path -Parent $PSScriptRoot) 'build/ui-smoke'))

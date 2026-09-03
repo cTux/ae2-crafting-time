@@ -35,7 +35,10 @@ function Stop-Smoke([string]$report) {
     if (-not $status.pid -or $status.phase -notin @("preparing", "running")) { throw "UI smoke is not running" }
     $running = Get-CimInstance Win32_Process -Filter "ProcessId = $($status.pid)"
     if (-not $running) { throw "Recorded UI-smoke PID $($status.pid) is no longer running" }
-    if ($running.CommandLine -notlike "*$($status.stagedRoot)*run-client.ps1*") {
+    $matchesCommand = if ($status.argumentFile) { $running.CommandLine.Contains($status.argumentFile) }
+        else { $running.CommandLine -like "*$($status.stagedRoot)*run-client.ps1*" }
+    if (-not $matchesCommand -or -not $status.processStartedAt -or
+            [Math]::Abs(($running.CreationDate.ToUniversalTime() - [DateTime]::Parse($status.processStartedAt).ToUniversalTime()).TotalSeconds) -gt 1) {
         throw "PID $($status.pid) does not match the recorded UI-smoke command"
     }
     & taskkill.exe /PID $status.pid /T /F | Out-Null

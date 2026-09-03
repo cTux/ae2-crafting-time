@@ -53,6 +53,8 @@ function Write-Status([string]$phase, [string]$message = "", [Nullable[int]]$exi
         phase = $phase; pid = $(if ($process) { $process.Id } else { $null }); exitCode = $exitCode
         startedAt = $startedAt; updatedAt = [DateTime]::UtcNow.ToString("o"); javaHome = $env:JAVA_HOME
         stagedRoot = $root; stdout = $stdout; stderr = $stderr; evidence = $evidence; message = $message
+        processStartedAt = $(if ($process) { $process.StartTime.ToUniversalTime().ToString('o') } else { $null })
+        argumentFile = $(if ($PreparedLaunch) { Join-Path $runtime 'ui-smoke-java.args' } else { $null })
     }
     $temporary = "$statusPath.$runId.tmp"
     [IO.File]::WriteAllText($temporary, ($status | ConvertTo-Json), [Text.UTF8Encoding]::new($false))

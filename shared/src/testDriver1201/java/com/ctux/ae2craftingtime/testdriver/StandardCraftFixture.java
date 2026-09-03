@@ -35,7 +35,7 @@ final class StandardCraftFixture {
                         ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState());
             }
             PartHelper.setPart(level, terminal, null, player, AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT));
-            PartHelper.setPart(level, terminal, Direction.NORTH, player, AEParts.CRAFTING_TERMINAL.get());
+            PartHelper.setPart(level, terminal, Direction.NORTH, player, AEParts.CRAFTING_TERMINAL.asItem());
             DispatchStatusFixture.place(player, terminal.west(2), "16k_crafting_storage");
             DispatchStatusFixture.place(player, terminal.east(2), "drive");
             DispatchStatusFixture.place(player, terminal.below(), "creative_energy_cell");
