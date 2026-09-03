@@ -90,8 +90,7 @@ are setup failures, or diagnostics for latest profiles. Pass `-PreparedLaunchRoo
 to use another prepared installation. Neither preparation nor launch runs Gradle
 inside the guest.
 
-The host worktree must have its own VM share. Pass `-GuestSourceRoot` when that
-share does not use the default projects mapping. Keep the live runtime on local
+The dispatcher creates or reuses a share for the exact host worktree. Pass `-GuestSourceRoot` to select an existing mapping. Keep the live runtime on local
 NTFS. Archive and inspect every campaign before removing the worktree.
 Fetch and rebase onto `origin/master` before the final compatible smoke; rerun if
 subsequent base changes affect production, build, dependency, fixture or driver code.

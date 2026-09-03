@@ -12,6 +12,13 @@ try {
         if ($marker.disposableWorldId -ne $case.world -or $marker.sourceFixtureId -ne 'ae2-crafting-time') { throw 'Wrong case marker' }
     }
     if ($plan.cases[0].world -eq $plan.cases[1].world) { throw 'Worlds are not isolated' }
+    $fabric = & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -Target 1.20.1-fabric -RuntimeDirectory $runtime -OutputDirectory "$temporary\fabric-evidence" -Scenarios @('standard-ae2')
+    $fabricSource = Join-Path (Split-Path -Parent $PSScriptRoot) 'versions/1.20.1-fabric/run/saves/ae2-crafting-time/level.dat'
+    if ((Get-FileHash -LiteralPath "$runtime/saves/$($fabric.world)/level.dat").Hash -ne (Get-FileHash -LiteralPath $fabricSource).Hash) {
+        throw 'Fabric retained Forge-only world metadata'
+    }
+    $fabricMarker = Get-Content "$runtime/saves/$($fabric.world)/.ae2-crafting-time-test-fixture.json" -Raw | ConvertFrom-Json
+    if ($fabricMarker.terminal.x -ne -13 -or $fabricMarker.terminal.y -ne -59) { throw 'Fabric lost the marked fixture layout' }
     $neo = & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -Target 1.21.1-neoforge -RuntimeDirectory $runtime -OutputDirectory "$temporary\neo-evidence" -Scenarios @('craft-plan')
     $neoMarker = Get-Content "$runtime\saves\$($neo.world)\.ae2-crafting-time-test-fixture.json" -Raw | ConvertFrom-Json
     if ($neoMarker.terminal.x -ne 2 -or $neoMarker.terminal.y -ne 205) { throw 'NeoForge did not copy its native fixture' }

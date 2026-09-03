@@ -1,6 +1,12 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 final class DriverPlatform {
+    static void cloneEntry(appeng.client.gui.me.common.MEStorageScreen<?> screen,
+            appeng.menu.me.common.GridInventoryEntry entry) {
+        ((com.ctux.ae2craftingtime.testdriver.mixin.MEStorageScreenAccessor) screen)
+                .ae2craftingtime_test_driver$click(entry, 2, net.minecraft.world.inventory.ClickType.CLONE);
+    }
+
     static void click(net.minecraft.client.Minecraft minecraft, double x, double y) {
         minecraft.screen.mouseClicked(x, y, 0);
     }

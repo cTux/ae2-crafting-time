@@ -108,8 +108,7 @@ fails for any required target or scenario (**A1**-**A8**).
    when the matching fixture is runnable.
 2. Report all other installed projects through their declared coexistence,
    tooling, exclusion, or not-applicable checks.
-3. Keep 1.20.1 Fabric AE2 Crafting Tree as `MISSING_FIXTURE` until its compatible
-   installation exists in `scripts/run-client-versions.json`.
+3. Report Fabric Crafting Tree as `NOT_APPLICABLE` while upstream has no Fabric artifact; require a direct fixture if a compatible artifact becomes available.
 4. Run latest profiles with the same scenario/result contract and normalize
    resolution/startup failures to `DIAGNOSTIC_FAILURE`.
 5. Add interactive loopback MCP only after automatic failure evidence is stable;

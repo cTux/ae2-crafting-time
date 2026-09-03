@@ -14,7 +14,6 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.core.Direction;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 
@@ -35,15 +34,23 @@ final class StandardAe2Scenario {
     private final StableFrames<Integer> frames = new StableFrames<>(8);
     private CompletableFuture<Boolean> operation;
     private int phase;
+    private int reportedPhase = -1;
     private int sort;
     private long lastFrame = -1;
     private java.awt.Robot keyboard;
     private int clickPhase;
     private boolean clicked;
     private int chatCount;
+    private long nextStatsClick;
+
+    String checkpoint() { return "phase=" + phase + " fixture=" + fixture.checkpoint; }
 
     boolean tick(Minecraft minecraft, FixtureMarker marker, Map<String, Boolean> checks,
             Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) throws Exception {
+        if (reportedPhase != phase) {
+            System.out.println("AE2CT standard checkpoint " + java.time.Instant.now() + " " + checkpoint());
+            reportedPhase = phase;
+        }
         if (phase == 0) {
             if (server(minecraft, player -> fixture.prepare(player, marker))) phase++;
             return false;
@@ -51,13 +58,13 @@ final class StandardAe2Scenario {
         if (phase == 1) {
             if (minecraft.screen == null) {
                 minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
-                        new BlockHitResult(Vec3.atCenterOf(fixture.terminal), Direction.NORTH, fixture.terminal, false));
+                        new BlockHitResult(Vec3.atCenterOf(fixture.terminal).add(0, 0, -0.5), Direction.NORTH, fixture.terminal, false));
             } else if (minecraft.screen instanceof MEStorageScreen<?> screen) {
                 var entry = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$repo().getAllEntries().stream()
                         .filter(row -> row.getWhat().getId().toString().equals("minecraft:smooth_stone") && row.isCraftable())
                         .findFirst().orElse(null);
                 if (entry != null) {
-                    ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$click(entry, 2, ClickType.CLONE);
+                    DriverPlatform.cloneEntry(screen, entry);
                     phase++;
                 }
             }
@@ -93,13 +100,18 @@ final class StandardAe2Scenario {
             if (sort == 0) {
                 checks.put(prefix, true);
                 if (plan && !snapshot.text().stream().anyMatch(t -> t.key().equals("text.ae2craftingtime.total_ttc"))) return false;
+                if (plan && (snapshot.badges().isEmpty() || !LayoutValidator.validateBadges(snapshot).isEmpty())) {
+                    throw new IllegalStateException("plan badge layout: " + LayoutValidator.validateBadges(snapshot));
+                }
+                moveMouse.accept(snapshot.gui().x() - 8, snapshot.gui().y() - 8);
                 screenshot.accept(prefix + "-default.png");
             }
-            if (sort == 2 && !rows.subList(0, 2).equals(List.of("minecraft:smooth_stone", "minecraft:stone"))) {
-                throw new IllegalStateException(prefix + " ascending row order is " + rows);
-            }
-            if ((sort == 0 || sort == 3) && !rows.subList(0, 2).equals(List.of("minecraft:stone", "minecraft:smooth_stone"))) {
-                throw new IllegalStateException(prefix + " descending row order is " + rows);
+            if (sort != 1) {
+                var expected = plan && sort == 2 ? List.of("minecraft:smooth_stone", "minecraft:stone")
+                        : List.of("minecraft:stone", "minecraft:smooth_stone");
+                if (!rows.subList(0, 2).equals(expected)) {
+                    throw new IllegalStateException(prefix + " sort " + sort + " row order is " + rows + ", expected " + expected);
+                }
             }
             if (sort > 0) screenshot.accept(prefix + "-sort-" + sort + ".png");
             if (sort++ < 3) {
@@ -112,7 +124,7 @@ final class StandardAe2Scenario {
                 phase++;
             }
         } else if (phase == 4 || phase == 11) {
-            var row = snapshot.rows().stream().filter(r -> r.outputId().equals("minecraft:stone")).findFirst().orElseThrow();
+            var row = snapshot.rows().stream().filter(r -> r.outputId().equals(statsOutput())).findFirst().orElseThrow();
             moveMouse.accept(row.cell().centerX(), row.cell().centerY());
             if (snapshot.tooltip().stream().noneMatch(t -> t.key().equals("text.ae2craftingtime.details_hint"))) return false;
             checks.put(prefix + "-tooltip", true);
@@ -123,12 +135,13 @@ final class StandardAe2Scenario {
             if (!clickStats(minecraft, snapshot, reset)) return false;
             if (reset && !server(minecraft, player -> ProfilerBridge.stats(ProfilerBridge.key(
                     ProfilerBridge.networkId(fixture.cpu(player).getMainNode().getGrid()),
-                    appeng.api.stacks.AEItemKey.of(net.minecraft.world.item.Items.STONE))).isEmpty())) return false;
+                    appeng.api.stacks.AEItemKey.of(plan ? net.minecraft.world.item.Items.STONE : net.minecraft.world.item.Items.SMOOTH_STONE))).isEmpty())) return false;
             checks.put(prefix + (reset ? "-reset" : "-details"), true);
             screenshot.accept(prefix + (reset ? "-reset.png" : "-details.png"));
             phase++;
             clicked = false;
         } else if (phase == 7) {
+            moveMouse.accept(0, 0);
             if (!server(minecraft, player -> { fixture.seed(player); return true; })) return false;
             var start = minecraft.screen.children().stream().filter(AbstractWidget.class::isInstance)
                     .map(AbstractWidget.class::cast).filter(w -> w.active && w.getMessage().getString().equals("Start"))
@@ -144,6 +157,7 @@ final class StandardAe2Scenario {
                 phase++;
             }
         } else if (phase == 14) {
+            moveMouse.accept(0, 0);
             if (server(minecraft, player -> { fixture.seed(player); return true; })) phase++;
         } else if (phase == 15) {
             if (snapshot.text().stream().noneMatch(t -> t.key().equals("text.ae2craftingtime.ttc_delayed"))) return false;
@@ -151,12 +165,13 @@ final class StandardAe2Scenario {
             screenshot.accept("status-delayed.png");
             phase++;
         } else if (phase == 16) {
-            boolean complete = server(minecraft, player -> fixture.pump(player, true) == 1 && !fixture.cpu(player).getCluster().isBusy());
+            boolean complete = server(minecraft, player -> fixture.pump(player, true) == 1 && !fixture.cpu(player).getCluster().isBusy() && fixture.observedNewSamples(player));
             var header = snapshot.text().stream().filter(t -> t.bounds() != null && t.bounds().y() < snapshot.gui().y() + 19
                     && t.key().equals("text.ae2craftingtime.ttc")).findFirst();
             if (header.isPresent() && !checks.get("header")) {
                 if (!header.get().bounds().inside(snapshot.gui()) || !LayoutValidator.validateBadges(snapshot).isEmpty()) {
-                    throw new IllegalStateException("status TTC header or badge layout is invalid");
+                    throw new IllegalStateException("status header " + header.get().bounds() + " GUI " + snapshot.gui()
+                            + " badge layout: " + LayoutValidator.validateBadges(snapshot));
                 }
                 checks.put("header", true);
                 checks.put("layout", true);
@@ -177,6 +192,7 @@ final class StandardAe2Scenario {
     private boolean clickStats(Minecraft minecraft, UiSnapshot snapshot, boolean reset) throws Exception {
         var chat = ((ChatComponentAccessor) minecraft.gui.getChat()).ae2craftingtime_test_driver$messages();
         if (!clicked) {
+            if (System.nanoTime() < nextStatsClick) return false;
             if (keyboard == null) keyboard = new java.awt.Robot();
             if (clickPhase++ == 0) {
                 chatCount = chat.size();
@@ -185,16 +201,31 @@ final class StandardAe2Scenario {
                 return false;
             }
             if (clickPhase < 3) return false;
-            var row = snapshot.rows().stream().filter(r -> r.outputId().equals("minecraft:stone")).findFirst().orElseThrow();
+            var row = snapshot.rows().stream().filter(r -> r.outputId().equals(statsOutput())).findFirst().orElseThrow();
             DriverPlatform.click(minecraft, row.cell().centerX(), row.cell().centerY());
             keyboard.keyRelease(java.awt.event.KeyEvent.VK_ALT);
             keyboard.keyRelease(java.awt.event.KeyEvent.VK_CONTROL);
             clicked = true;
             clickPhase = 0;
         }
-        String expected = reset ? "Cleared TTC stats for Stone" : "Stone x";
-        return chat.size() > chatCount && chat.subList(0, chat.size() - chatCount).stream()
+        String expected = reset ? "Cleared TTC stats for " + statsOutput() : statsOutput() + " x1:";
+        boolean received = chat.size() > chatCount && chat.subList(0, chat.size() - chatCount).stream()
                 .anyMatch(message -> message.content().getString().contains(expected));
+        if (received) nextStatsClick = System.nanoTime() + java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(
+                com.ctux.ae2craftingtime.core.PlayerMessageRateLimit.COOLDOWN_MILLIS);
+        return received;
+    }
+
+    void releaseKeys() {
+        if (keyboard != null) {
+            keyboard.keyRelease(java.awt.event.KeyEvent.VK_ALT);
+            keyboard.keyRelease(java.awt.event.KeyEvent.VK_CONTROL);
+        }
+    }
+
+    private String statsOutput() {
+        // Reset the waiting status row so the running furnace keeps its real in-flight sample.
+        return phase < 8 ? "minecraft:stone" : "minecraft:smooth_stone";
     }
 
     private boolean server(Minecraft minecraft, Function<ServerPlayer, Boolean> action) {

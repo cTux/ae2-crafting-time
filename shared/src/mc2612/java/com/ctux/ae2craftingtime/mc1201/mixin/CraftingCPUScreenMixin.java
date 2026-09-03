@@ -124,6 +124,12 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
                 Comparator.naturalOrder(), ae2craftingtime$ttcSortMode == 2);
     }
 
+    @Inject(method = "updateBeforeRender", at = @At("HEAD"), remap = false)
+    private void ae2craftingtime$refreshArrivingTtc(CallbackInfo ci) {
+        if (status != null && !ae2craftingtime$sortStatusByTtc(status.getEntries()).equals(status.getEntries())) {
+            postUpdate(status);
+        }
+    }
     @SuppressWarnings("mapping")
     @ModifyArg(
             method = "updateBeforeRender",

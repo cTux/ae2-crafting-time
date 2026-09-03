@@ -9,6 +9,21 @@ import org.junit.jupiter.api.Test;
 
 class TtcSortTest {
     @Test
+    void arrivingStatsRefreshOrderWithoutChangingEntriesOrMovingWaitingAhead() {
+        var entries = List.of("waiting", "running");
+        var times = new java.util.HashMap<String, Long>();
+        java.util.function.Function<String, OptionalLong> seconds = key -> times.containsKey(key)
+                ? OptionalLong.of(times.get(key)) : OptionalLong.empty();
+        assertEquals(entries, TtcSort.copySorted(entries, seconds, Comparator.naturalOrder(), true));
+        times.put("running", 5L);
+        for (boolean descending : List.of(false, true)) {
+            assertEquals(List.of("running", "waiting"),
+                    TtcSort.copySorted(entries, seconds, Comparator.naturalOrder(), descending));
+        }
+        assertEquals(List.of("waiting", "running"), entries);
+    }
+
+    @Test
     void knownTimesSortBeforeUnknownAndKeepStableUnknownOrder() {
         var entries = List.of(entry("unknown-a", OptionalLong.empty()), entry("slow", OptionalLong.of(10)),
                 entry("unknown-b", OptionalLong.empty()), entry("fast", OptionalLong.of(2)));

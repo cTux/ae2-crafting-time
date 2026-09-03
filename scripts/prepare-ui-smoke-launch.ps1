@@ -6,7 +6,8 @@ param(
     [Parameter(Mandatory)][string]$Profile,
     [Parameter(Mandatory)][string]$Scenario,
     [Parameter(Mandatory)][string]$World,
-    [Parameter(Mandatory)][string]$Evidence
+    [Parameter(Mandatory)][string]$Evidence,
+    [switch]$Interactive
 )
 $ErrorActionPreference = 'Stop'
 $launch = Get-Content -LiteralPath $LaunchManifest -Raw | ConvertFrom-Json
@@ -47,6 +48,7 @@ for ($i = 0; $i -lt $launch.arguments.Count; $i++) {
     $arguments.Add($argument)
 }
 $arguments.Insert(0, '-Xmx8G')
+if ($Interactive) { $arguments.Insert(0, '-Dae2craftingtime.test.interactive=true') }
 foreach ($property in @("scenario=$Scenario", "profile=$Profile", "world=$World", "output=$Evidence", 'vmTextureProbe=true')) {
     $arguments.Insert(0, "-Dae2craftingtime.test.$property")
 }

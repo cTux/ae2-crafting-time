@@ -609,6 +609,7 @@ public final class CraftPlanScenario {
     }
 
     private void requestQuit() {
+        if (standard != null) standard.releaseKeys();
         if (!options.interactive()) {
             minecraft.stop();
         }
@@ -616,6 +617,7 @@ public final class CraftPlanScenario {
     }
 
     private void fail(String code, String expected, String observed) {
+        if (standard != null) standard.releaseKeys();
         failure = new DriverResult.Failure(state.name(), code, ReportText.safe(expected), ReportText.safe(observed));
         advance(ScenarioState.FAILED);
         try {
@@ -687,6 +689,8 @@ public final class CraftPlanScenario {
         Files.createDirectories(options.output());
         if (screenshots.contains(name)) return;
         screenshotWrite = DriverScreenshots.capture(minecraft, options.output().resolve(name));
+        Files.writeString(options.output().resolve(name.replace(".png", ".json")),
+                new com.google.gson.Gson().toJson(UiObservationStore.latest()));
         screenshots.add(name);
     }
 
@@ -768,6 +772,7 @@ public final class CraftPlanScenario {
     }
 
     private String currentScreen() {
+        if (standard != null) return standard.checkpoint() + " screen=" + (minecraft.screen == null ? "none" : minecraft.screen.getClass().getName());
         if (minecraft.screen == null) {
             return "none";
         }

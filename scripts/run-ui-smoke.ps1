@@ -10,10 +10,14 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-if (-not $Target) {
-    & (Join-Path $PSScriptRoot 'run-ui-smoke-matrix.ps1') -Latest:$Latest
+if (-not $PreparedLaunch -and -not $ReportDirectory) {
+    if ($BundleDirectory) { throw 'A native bundle requires its prepared launch manifest' }
+    $campaign = @{ Latest = $Latest; ProjectId = $ProjectId; Target = $Target; Interactive = $Interactive }
+    if ($PSBoundParameters.ContainsKey('Scenario')) { $campaign.Scenario = $Scenario }
+    & (Join-Path $PSScriptRoot 'run-ui-smoke-matrix.ps1') @campaign
     exit $LASTEXITCODE
 }
+if (-not $Target) { throw 'A native launch or explicit report requires a target' }
 if ($Scenario -eq "suite" -and ($Interactive -or $ProjectId)) {
     throw "The prepared suite requires the full compatible profile and non-interactive execution"
 }
@@ -70,6 +74,8 @@ if ($sourceMarker.schema -ne 1 -or $sourceMarker.scenario -ne "craft-plan" -or
     throw "Tracked source fixture marker is invalid or executable"
 }
 $sourceHash = Get-TreeHash $source
+$metadata = Join-Path $root "versions/$Target/run/saves/ae2-crafting-time/level.dat"
+$metadataHash = (Get-FileHash -LiteralPath $metadata).Hash
 $buildRoot = [IO.Path]::GetFullPath((Join-Path $root "build\ui-smoke"))
 $resolvedBase = [IO.Path]::GetFullPath($base)
 if (-not $resolvedBase.StartsWith($buildRoot, [StringComparison]::OrdinalIgnoreCase)) {
@@ -93,7 +99,7 @@ if ($Scenario -eq "suite") {
     $plan = Get-Content -LiteralPath (Join-Path $evidence "suite-plan.json") -Raw | ConvertFrom-Json
     $worldCopies = @($plan.cases | ForEach-Object { Join-Path $runtime "saves\$($_.world)" })
 } else {
-    Copy-Item -LiteralPath $source -Destination $worldCopy -Recurse
+    & (Join-Path $PSScriptRoot 'copy-ui-smoke-fixture.ps1') -Source $source -Destination $worldCopy -Target $Target
     $markerPath = Join-Path $worldCopy ".ae2-crafting-time-test-fixture.json"
     $marker = Get-Content -LiteralPath $markerPath -Raw | ConvertFrom-Json
     $marker.disposableWorldId = $world
@@ -143,12 +149,13 @@ try {
         if ($PreparedLaunch) {
             $launch = & (Join-Path $PSScriptRoot 'prepare-ui-smoke-launch.ps1') -LaunchManifest $PreparedLaunch `
                 -BundleDirectory $BundleDirectory -RuntimeDirectory $runtime -Target $Target -Profile $profile `
-                -Scenario $Scenario -World $world -Evidence $evidence
+                -Scenario $Scenario -World $world -Evidence $evidence -Interactive:$Interactive
             $executable = $launch.executable
             $arguments = $launch.arguments
         }
+        $workingDirectory = if ($PreparedLaunch) { $runtime } else { $root }
         $process = Start-Process -FilePath $executable -ArgumentList $arguments -PassThru -WindowStyle Hidden `
-            -WorkingDirectory $root `
+            -WorkingDirectory $workingDirectory `
             -RedirectStandardOutput $stdout -RedirectStandardError $stderr
         $null = $process.Handle
         Write-Status "running"
@@ -280,7 +287,12 @@ try {
         foreach ($copy in $worldCopies) {
             if (Test-Path -LiteralPath $copy) { Remove-Item -LiteralPath $copy -Recurse -Force }
         }
-        if ((Get-TreeHash $source) -ne $sourceHash) { throw "Tracked source fixture changed during UI smoke" }
+        $afterHash = Get-TreeHash $source
+        $afterMetadata = (Get-FileHash -LiteralPath $metadata).Hash
+        [ordered]@{ before = $sourceHash; after = $afterHash; metadataBefore = $metadataHash; metadataAfter = $afterMetadata
+            unchanged = ($afterHash -eq $sourceHash -and $afterMetadata -eq $metadataHash) } |
+            ConvertTo-Json | Set-Content -LiteralPath (Join-Path $evidence 'fixture-hashes.json') -Encoding UTF8
+        if ($afterHash -ne $sourceHash -or $afterMetadata -ne $metadataHash) { throw "Tracked source fixture changed during UI smoke" }
     }
     Write-Status "passed" "UI smoke passed" $process.ExitCode
     $runtimeLock.Dispose()

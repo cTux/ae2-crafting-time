@@ -74,7 +74,7 @@ public final class UiObservationStore {
             var cell = new Rect(active.gui.x() + TABLE_X + visibleIndex % 3 * PITCH_X,
                     active.gui.y() + TABLE_Y + visibleIndex / 3 * PITCH_Y, CELL_WIDTH, CELL_HEIGHT);
             active.rows.add(new PendingRow(entry.getWhat().getId().toString(), entry.getCraftAmount(), cell));
-            active.itemCells.add(new Rect(cell.x() + 1, cell.y() + 1, 16, 16));
+            active.itemCells.add(new Rect(cell.x() + CELL_WIDTH - 19, cell.y() + 3, 16, 16));
         }
     }
 
@@ -91,11 +91,11 @@ public final class UiObservationStore {
         }
     }
 
-    public static void text(Component component, int x, int y, int width, int height) {
+    public static void text(GuiGraphicsExtractor graphics, Component component, int x, int y, int width, int height) {
         if (active == null) {
             return;
         }
-        var observed = observed(component, new Rect(active.gui.x() + x, active.gui.y() + y, width, height));
+        var observed = observed(component, transformed(graphics, x, y, x + width, y + height));
         if (observed.key().startsWith("text.ae2craftingtime.")) {
             active.text.add(observed);
         }
@@ -103,12 +103,7 @@ public final class UiObservationStore {
 
     public static void fill(GuiGraphicsExtractor graphics, int x1, int y1, int x2, int y2, int color) {
         if (active != null && color == 0xB0000000) {
-            if (CraftingTreeScenario.isScreen(active.screen)) {
-                active.badges.add(transformed(graphics, x1, y1, x2, y2));
-                return;
-            }
-            active.badges.add(new Rect(active.gui.x() + Math.min(x1, x2), active.gui.y() + Math.min(y1, y2),
-                    Math.abs(x2 - x1), Math.abs(y2 - y1)));
+            active.badges.add(transformed(graphics, x1, y1, x2, y2));
         }
     }
 
@@ -136,11 +131,12 @@ public final class UiObservationStore {
                             active.gui.y() + 19 + visible / 3 * 23, 67, 22);
                     active.rows.add(new PendingRow(entry.getWhat().getId().toString(),
                             entry.getActiveAmount() + entry.getPendingAmount(), cell));
+                    active.itemCells.add(new Rect(cell.x() + CELL_WIDTH - 19, cell.y() + 3, 16, 16));
                 }
             }
         }
         for (var child : minecraft.screen.children()) {
-            if (child instanceof AbstractWidget widget) {
+            if (child instanceof AbstractWidget widget && widget.visible) {
                 var state = widget instanceof TtcSortButton button
                         ? button.getTooltipMessage().stream().map(Component::getString).reduce((a, b) -> a + " | " + b)
                                 .orElse("")

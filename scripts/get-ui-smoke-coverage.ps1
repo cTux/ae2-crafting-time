@@ -4,14 +4,14 @@ param(
     [string]$MatrixDirectory = $PSScriptRoot
 )
 $ErrorActionPreference = 'Stop'
-$release = @(Get-Content -LiteralPath (Join-Path $MatrixDirectory 'release-matrix.json') -Raw | ConvertFrom-Json)
-$clients = @(Get-Content -LiteralPath (Join-Path $MatrixDirectory 'run-client-versions.json') -Raw | ConvertFrom-Json)
+$release = Get-Content -LiteralPath (Join-Path $MatrixDirectory 'release-matrix.json') -Raw | ConvertFrom-Json
+$clients = Get-Content -LiteralPath (Join-Path $MatrixDirectory 'run-client-versions.json') -Raw | ConvertFrom-Json
 if (Compare-Object @($release.id) @($clients.id)) { throw 'Release and client target matrices differ' }
 $client = $clients | Where-Object id -eq $Target
 if (-not $client) { throw "Unknown coverage target $Target" }
 $coverage = (Get-Content -LiteralPath (Join-Path $MatrixDirectory 'ui-smoke-coverage.json') -Raw | ConvertFrom-Json).$Target
 $suiteName = if ($Target -eq '26.1.2-neoforge') { 'neoforge-26.1.2' } else { $Target.Split('-')[1] }
-$scenarios = @(Get-Content -LiteralPath (Join-Path $MatrixDirectory "ui-smoke-$suiteName-suite.json") -Raw | ConvertFrom-Json)
+$scenarios = Get-Content -LiteralPath (Join-Path $MatrixDirectory "ui-smoke-$suiteName-suite.json") -Raw | ConvertFrom-Json
 if ('standard-ae2' -notin $scenarios) { throw 'Missing required standard-ae2 scenario' }
 $projects = @($client.projects) + @($client.curseforge | Where-Object { $_ })
 if (Compare-Object @($projects | ForEach-Object { [string]$_.project_id }) @($coverage.psobject.Properties.Name)) {

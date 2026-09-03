@@ -77,18 +77,18 @@ that the player saw the expected UI.
   while the candidate is installed. This does not claim addon support.
 - **Tooling:** required by the development client but not an integration.
 
-| Target | Direct UI | Direct behavior | Coexistence candidates and dependencies | Tooling |
-| --- | --- | --- | --- | --- |
-| 1.20.1 Forge | AE2 Crafting Tree; ME Requester; AE2 WCWT; AE2 Wireless Terminals | Applied Mekanistics chemical key; NeoEco AE C-series CPU; AE2 Lightning Tech time-wheel CPU; ProjectCell EMC Storage Cell; AppliedE EMC key | AdvancedAE; ExtendedAE; ExtendedAE-Plus; BM Addon; Crazy AE2 Addons; MEGA Cells; OMNI Cells; Applied Flux; Modern AE2 Additions; AE2 Import Export Card; AEInfinityBooster; Advanced Peripherals; Expanded AE; ProjectE | GuideME; JEI |
-| 1.20.1 Fabric | ME Requester | None beyond standard AE2 | ExtendedAE; AE2 Wireless Terminals; MEGA Cells; AE2 Things | JEI |
-| 1.21.1 NeoForge | AE2 Crafting Tree; ME Requester; AE2 WCWT | Applied Mekanistics chemical key; AdvancedAE Quantum Computer | NeoEco AE; AE2 Lightning Tech; ExtendedAE; ExtendedAE-Plus; BM Addon; AE2 Wireless Terminals; MEGA Cells; OMNI Cells; ProjectCell; AppliedE; Applied Flux; AE2 Import Export Card; AEInfinityBooster; Advanced Peripherals; Expanded AE; ProjectE | GuideME; JEI |
-| 26.1.2 NeoForge | None; pre-26 optional UI adapters must be absent | AdvancedAE Quantum Computer | AE2 Lightning Tech; ExtendedAE; BM Addon; Neo Vitae; AE2 Wireless Terminals; OMNI Cells; Applied Flux; AE2 Import Export Card; AEInfinityBooster | GuideME; JEI |
+The executable project-by-project table is
+[`scripts/ui-smoke-coverage.json`](../../scripts/ui-smoke-coverage.json).
+The runner checks it against the current client matrix and writes each
+project's disposition, required scenario, result and exclusion reason into
+`coverage.json`. This avoids a second dependency inventory in this spec.
 
-AE2 Crafting Tree is declared for 1.20.1 Fabric but is not a top-level project
-in that run-client target. Its direct check remains `MISSING_FIXTURE` until the
-matrix contains a compatible installation. Candidate integrations gain a
-direct scenario only after their behavior is supported or verified.
-
+Fabric Crafting Tree is `NOT_APPLICABLE`: the upstream
+[CurseForge files](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-tree/files/all)
+and Modrinth version metadata provide Forge/NeoForge releases and no Fabric
+1.20.1 artifact (verified 2026-09-03). The dormant Fabric optional metadata is
+not evidence of a runnable integration. If an official compatible Fabric
+artifact appears, add it to the matrix and require its direct scenario.
 ## Evidence
 
 Semantic observations identify translation keys and output IDs and include
@@ -108,13 +108,16 @@ Each target, profile, and scenario receives its own directory:
 
 ```text
 build/ui-smoke/1.21.1-neoforge/compatible/standard-ae2/
-  result.json
-  resolved-mods.json
-  client.log
-  craft-plan.png
-  craft-plan-tooltip.png
-  crafting-status.png
-  failure.png
+  status.json
+  launcher.stdout.log
+  launcher.stderr.log
+  evidence/
+    result.json
+    resolved-mods.json
+    latest.log
+    plan-default.png
+    status-progress.png
+    failure.png
 ```
 
 Every scenario reports one of:

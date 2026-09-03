@@ -100,7 +100,7 @@ foreach ($dependency in @($matrixEntry.compatible.versions)) {
     $versionPins[$dependency.project_id] = $dependency.version_id
 }
 
-if ($Target -eq "1.20.1-forge") {
+if ($Target -eq "1.20.1-forge" -and -not $Packaged) {
     $legacyMods = Join-Path $run "mods"
     $oldManifest = Join-Path $legacyMods ".ae2-crafting-time-run-mods.json"
     if (Test-Path -LiteralPath $oldManifest) {
@@ -269,7 +269,7 @@ if ($Packaged) {
     } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $run 'profile.json') -Encoding UTF8
 }
 
-if ($Target -eq "1.20.1-forge") {
+if ($Target -eq "1.20.1-forge" -and -not $Packaged) {
     foreach ($filename in $managed) {
         Remove-Item -LiteralPath (Join-Path $legacyMods $filename) -Force -ErrorAction SilentlyContinue
     }
@@ -312,7 +312,8 @@ if ($Target -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-ne
     Write-Host "mod $driverName"
 }
 [IO.File]::WriteAllText($manifest, ($managed | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
-Write-Host "mod AE2 Crafting Time (Gradle source set :$($profile.Module))"
+if ($Packaged) { Write-Host "mod $productionName" }
+else { Write-Host "mod AE2 Crafting Time (Gradle source set :$($profile.Module))" }
 
 if (-not $ResolveOnly) {
     & (Join-Path $root "gradlew.bat") ":$($profile.Module):runClient" @runtimeArgs @GradleArgs

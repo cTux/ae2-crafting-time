@@ -25,10 +25,13 @@ import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 final class StandardCraftFixture {
     BlockPos terminal;
     private boolean initialized;
+    private int[] initialSamples;
+    String checkpoint = "new";
 
     boolean prepare(ServerPlayer player, FixtureMarker marker) {
         var level = player.level();
         if (terminal == null) {
+            checkpoint = "placing";
             terminal = new BlockPos(marker.terminal().x() + 60, marker.terminal().y(), marker.terminal().z());
             for (var pos : BlockPos.betweenClosed(terminal.offset(-3, -2, -3), terminal.offset(9, 3, 3))) {
                 level.setBlockAndUpdate(pos, pos.getY() == terminal.getY() - 2
@@ -46,20 +49,25 @@ final class StandardCraftFixture {
             player.teleportTo(terminal.getX() + 0.5, terminal.getY() - 1, terminal.getZ() - 2.5);
             return false;
         }
+        checkpoint = "terminal-node";
         var node = ((IInWorldGridNodeHost) level.getBlockEntity(terminal)).getGridNode(Direction.NORTH);
         if (node == null) return false;
         for (var pos : java.util.List.of(terminal.west(2), terminal.east(2), terminal.below(), terminal.east(4), terminal.east(8))) {
+            checkpoint = "node " + pos;
             var other = ((IInWorldGridNodeHost) level.getBlockEntity(pos)).getGridNode(Direction.UP);
             if (other == null) return false;
             if (node.getGrid() != other.getGrid()) GridHelper.createConnection(node, other);
         }
+        checkpoint = "cpu";
         var cpu = cpu(player);
         if (!cpu.isFormed()) {
             var calculator = new CraftingCPUCalculator(cpu);
             var pos = terminal.west(2);
             calculator.updateBlockEntities(calculator.createCluster(level, pos, pos), level, pos, pos);
         }
+        checkpoint = "cpu-active";
         if (!cpu.getCluster().isActive()) return false;
+        checkpoint = "patterns";
         if (!initialized) {
             var drive = (DriveBlockEntity) level.getBlockEntity(terminal.east(2));
             drive.getInternalInventory().setItemDirect(0, appeng.core.definitions.AEItems.ITEM_CELL_1K.stack());
@@ -69,6 +77,7 @@ final class StandardCraftFixture {
             seed(player);
             initialized = true;
         }
+        checkpoint = "craftable";
         return node.getGrid().getCraftingService().isCraftable(AEItemKey.of(Items.SMOOTH_STONE));
     }
 
@@ -94,7 +103,20 @@ final class StandardCraftFixture {
         return (CraftingBlockEntity) player.level().getBlockEntity(terminal.west(2));
     }
 
+    private int[] sampleCounts(ServerPlayer player) {
+        var network = ProfilerBridge.networkId(cpu(player).getMainNode().getGrid());
+        return java.util.stream.Stream.of(Items.STONE, Items.SMOOTH_STONE)
+                .mapToInt(item -> ProfilerBridge.stats(ProfilerBridge.key(network, AEItemKey.of(item)))
+                        .map(stats -> stats.sampleCount()).orElse(0)).toArray();
+    }
+
+    boolean observedNewSamples(ServerPlayer player) {
+        var current = sampleCounts(player);
+        return initialSamples != null && current[0] > initialSamples[0] && current[1] > initialSamples[1];
+    }
+
     long pump(ServerPlayer player, boolean fuel) {
+        if (fuel && initialSamples == null) initialSamples = sampleCounts(player);
         var storage = cpu(player).getMainNode().getGrid().getStorageService().getInventory();
         for (int offset : new int[] {4, 8}) {
             var furnace = (FurnaceBlockEntity) player.level().getBlockEntity(terminal.east(offset).below());

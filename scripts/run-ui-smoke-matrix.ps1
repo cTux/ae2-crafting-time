@@ -1,13 +1,17 @@
 param(
     [string]$Target,
     [switch]$Latest,
+    [switch]$Interactive,
     [string]$Scenario = 'suite',
+    [string[]]$ProjectId,
     [string]$GuestSourceRoot,
     [string]$PreparedLaunchRoot = 'C:\Users\Public\Documents\AE2CraftingTimeSmoke\prepared'
 )
 $ErrorActionPreference = 'Stop'
+if ($Scenario -eq 'suite' -and ($ProjectId -or $Interactive)) { throw 'The suite requires the full graph and non-interactive execution' }
+if ($Interactive -and -not $Target) { throw 'Interactive execution requires one target' }
 $root = Split-Path -Parent $PSScriptRoot
-$matrix = @(Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-matrix.json') -Raw | ConvertFrom-Json)
+$matrix = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-matrix.json') -Raw | ConvertFrom-Json
 if ($Target -and $Target -notin $matrix.id) { throw "Unknown target: $Target" }
 $targets = @($matrix | Where-Object { -not $Target -or $_.id -eq $Target })
 $profile = if ($Latest) { 'latest' } else { 'compatible' }
@@ -15,6 +19,8 @@ $runId = [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssfffZ')
 $campaign = Join-Path $root "build/ui-smoke/campaigns/$runId/$profile"
 New-Item -ItemType Directory -Path $campaign -Force | Out-Null
 $results = @()
+$commit = & git -C $root rev-parse HEAD
+$stopCampaign = $false
 foreach ($row in $targets) {
     $report = Join-Path $campaign $row.id
     New-Item -ItemType Directory -Path $report -Force | Out-Null
@@ -25,16 +31,26 @@ foreach ($row in $targets) {
     try {
         $coverage = @(& (Join-Path $PSScriptRoot 'get-ui-smoke-coverage.ps1') -Target $row.id -Latest:$Latest)
         $coverage | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $report 'coverage.json') -Encoding UTF8
-        $bundle = Join-Path $root "build/ui-smoke/bundles/$($row.id)/$profile"
-        & (Join-Path $PSScriptRoot 'run-client.ps1') -Target $row.id -Latest:$Latest -ResolveOnly -Packaged -RuntimeDirectory $bundle
+        $cache = Join-Path $root "build/ui-smoke/bundle-cache/$($row.id)/$profile"
+        & (Join-Path $PSScriptRoot 'run-client.ps1') -Target $row.id -Latest:$Latest -ResolveOnly -Packaged -RuntimeDirectory $cache -ProjectId $ProjectId
+        # Guest shares may retain read handles. Each run receives an immutable bundle.
+        $bundle = Join-Path $report 'bundle'
+        Copy-Item -LiteralPath $cache -Destination $bundle -Recurse
+        Get-ChildItem -LiteralPath (Join-Path $bundle 'mods') -Filter '*.jar' -File | ForEach-Object {
+            [ordered]@{ file = $_.Name; sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash }
+        } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $report 'artifact-hashes.json') -Encoding UTF8
         $arguments = @{ Target = $row.id; Latest = $Latest; Scenario = $Scenario
-            BundleDirectory = $bundle; PreparedLaunchRoot = $PreparedLaunchRoot }
+            BundleDirectory = $bundle; PreparedLaunchRoot = $PreparedLaunchRoot; ProjectId = $ProjectId; Interactive = $Interactive }
         if ($GuestSourceRoot) { $arguments.GuestSourceRoot = $GuestSourceRoot }
         & (Join-Path $PSScriptRoot 'invoke-ui-smoke-codexvm.ps1') @arguments
         $live = Join-Path $root "build/ui-smoke/$($row.id)/$profile/$Scenario"
         $deadline = [DateTime]::UtcNow.AddMinutes(45)
         do {
-            if ([DateTime]::UtcNow -gt $deadline) { throw 'Guest runner did not finish within 45 minutes' }
+            if ([DateTime]::UtcNow -gt $deadline) {
+                $stopCampaign = $true
+                & (Join-Path $PSScriptRoot 'invoke-ui-smoke-codexvm.ps1') @arguments -Stop
+                throw 'Guest runner exceeded 45 minutes; stopped the recorded client and ended the campaign'
+            }
             Start-Sleep -Seconds 2
             $status = Get-Content -LiteralPath (Join-Path $live 'status.json') -Raw | ConvertFrom-Json
         } while ($status.phase -in @('queued', 'preparing', 'running'))
@@ -58,9 +74,10 @@ foreach ($row in $targets) {
         $coverage | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $report 'coverage.json') -Encoding UTF8
         $results += [ordered]@{ target = $row.id; profile = $profile; result = $result; message = $message
             startedAt = $started; finishedAt = [DateTime]::UtcNow.ToString('o'); report = $report }
-        [ordered]@{ schema = 1; runId = $runId; commit = (& git -C $root rev-parse HEAD); results = $results } |
+        [ordered]@{ schema = 1; runId = $runId; commit = $commit; results = $results } |
             ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $campaign 'result.json') -Encoding UTF8
     }
+    if ($stopCampaign) { break }
 }
 Write-Host "UI smoke campaign: $campaign"
 if (@($results | Where-Object { $_.profile -eq 'compatible' -and $_.result -ne 'PASS' }).Count) { exit 1 }

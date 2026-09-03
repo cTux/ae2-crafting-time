@@ -20,18 +20,24 @@ $vmx = "F:\VMs\Codex-Windows11\Codex-Windows11.vmx"
 $vmrun = "C:\Program Files\VMware\VMware Workstation\vmrun.exe"
 $root = Split-Path -Parent $PSScriptRoot
 if (-not $Stop -and -not $BundleDirectory) {
-    $campaign = @{ Target = $Target; Scenario = $Scenario; Latest = $Latest; PreparedLaunchRoot = $PreparedLaunchRoot }
+    $campaign = @{ Target = $Target; Scenario = $Scenario; Latest = $Latest; PreparedLaunchRoot = $PreparedLaunchRoot
+        ProjectId = $ProjectId; Interactive = $Interactive }
     if ($GuestSourceRoot) { $campaign.GuestSourceRoot = $GuestSourceRoot }
     & (Join-Path $PSScriptRoot 'run-ui-smoke-matrix.ps1') @campaign
     exit $LASTEXITCODE
 }
 if (-not $GuestSourceRoot) {
-    $projects = [IO.Path]::GetFullPath("E:\projects")
-    $resolvedRoot = [IO.Path]::GetFullPath($root)
-    if (-not $resolvedRoot.StartsWith($projects, [StringComparison]::OrdinalIgnoreCase)) {
-        throw "GuestSourceRoot is required outside E:\projects"
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { $name = 'ae2ct-' + ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($root))) -replace '-', '').Substring(0, 12).ToLowerInvariant() }
+    finally { $sha.Dispose() }
+    $null = & $vmrun -T ws setSharedFolderState $vmx $name $root writable 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        & $vmrun -T ws addSharedFolder $vmx $name $root
+        if ($LASTEXITCODE -ne 0) { throw 'Could not share the current worktree with CodexVM' }
     }
-    $GuestSourceRoot = "\\vmware-host\Shared Folders\projects$($resolvedRoot.Substring($projects.Length))"
+    & $vmrun -T ws enableSharedFolders $vmx
+    if ($LASTEXITCODE -ne 0) { throw 'Could not enable the CodexVM worktree share' }
+    $GuestSourceRoot = "\\vmware-host\Shared Folders\$name"
 }
 $guestScript = Join-Path $GuestSourceRoot "scripts\run-ui-smoke-codexvm.ps1"
 $smokeArguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $guestScript, "-Target", $Target, "-Scenario", $Scenario)
