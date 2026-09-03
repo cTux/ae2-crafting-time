@@ -108,10 +108,14 @@ final class AdvancedPeripheralsFixture extends AddonCpuFixture<AdvancedPeriphera
     @Override
     protected void startCraft(ServerPlayer player, Placement placement, CraftConfirmMenu menu) {
         var output = ((CraftConfirmMenuAccessor) menu).ae2craftingtime_test_driver$result().finalOutput();
+        var storage = (appeng.blockentity.crafting.CraftingBlockEntity) player.serverLevel()
+                .getBlockEntity(placement.cpu().storage());
+        storage.setName("AE2CT ME Bridge smoke CPU");
         var computer = attachedComputer;
         try {
             var result = placement.bridge().getPeripheral().craftItem(computer,
-                    new ObjectArguments(Map.of("name", output.what().getId().toString(), "count", output.amount())));
+                    new ObjectArguments(Map.of("name", output.what().getId().toString(), "count", output.amount()),
+                            storage.getCluster().getName().getString()));
             if (!(result.getResult()[0] instanceof de.srendi.advancedperipherals.common.addons.ae2.AECraftJob job)
                     || !job.getToCraft().equals(output.what()) || job.hasErrorOccurred()) {
                 throw new IllegalStateException("ME Bridge rejected craft: " + Arrays.toString(result.getResult()));

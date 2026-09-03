@@ -12,7 +12,7 @@ Keep screenshot evidence for named modpacks and prepared version clients using
 the same archive layout:
 
 For prepared Forge clients, use `scripts/invoke-ui-smoke-codexvm.ps1 -Scenario suite`
-for the full compatible graph and its 30 implemented scenarios. Add
+for the full compatible graph and its 29 implemented scenarios. Add
 `-Target 1.20.1-fabric` for the eleven-case Fabric compatible suite, or `-Target 1.21.1-neoforge`
 for the 25-case NeoForge compatible suite. Use `-Target 26.1.2-neoforge`
 for its fourteen-case compatible suite.

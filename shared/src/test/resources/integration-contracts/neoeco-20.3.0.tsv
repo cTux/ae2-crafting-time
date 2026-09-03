@@ -1,0 +1,6 @@
+# 1.20.1-forge	neoecoae	pending-accounting
+# source=https://modrinth.com/mod/neoecoae/version/TYrXvWwv
+# sha512=07da3cad9b513470e72834e88fbe02a4d44f38e2a851bab25d047202f67245189dba04be69bc205dd08521984ac625b5e6aafbae4012e76c04dcdafc533c9f19
+cn/dancingsnow/neoecoae/api/me/ECOCraftingCPULogic	class	java/lang/Object
+cn/dancingsnow/neoecoae/api/me/ECOCraftingCPULogic	method:recordPushedPattern	(Lcn/dancingsnow/neoecoae/impl/crafting/fastpath/ECOExtractedPatternExecution;I)V
+cn/dancingsnow/neoecoae/api/me/ECOCraftingCPULogic	method:recordPushedPattern	(Lcn/dancingsnow/neoecoae/api/me/ECOCraftingCPULogic$PendingPatternAccounting;)V

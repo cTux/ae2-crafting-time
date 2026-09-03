@@ -7,6 +7,61 @@ what their evidence does and does not prove.
 
 ## Client setup and exclusions
 
+- Forge's compatible pin remains NeoEco `20.3.0`. Its older adapter receives
+  contract and packaging checks, so `neoeco-cpu` is excluded from that pinned
+  suite. Run that scenario separately with the newest `batched-long` adapter
+  (retained fixture `20.4.2`); do not upgrade the compatible pin just to smoke it.
+- All prepared smoke scenarios use English (`en_us`). Results record language
+  and startup adapter decisions. The driver rejects a direct adapter scenario
+  if the selected variant is not the newest one implemented for its target.
+
+## Versioned adapter verification
+
+Issue [#210](https://github.com/cTux/ae2-crafting-time/issues/210) adds the selector,
+separate NeoEco dispatch hooks, and English/newest-adapter smoke enforcement.
+The implementation campaign in [PR #211](https://github.com/cTux/ae2-crafting-time/pull/211)
+on 2026-09-03 verified core-only client and dedicated-server startup on all four
+targets, plus all eight applicable dedicated CPU cases. Each CPU case recorded
+the intended implementation, exact dispatch/return amounts, one accepted job,
+and one successful finish. Forge NeoEco FastPath recorded 64/64/64 output units
+and 15 actual FastPath crafts.
+
+English compatible suites passed on Fabric 1.20.1 (11 cases), NeoForge 1.21.1
+(25 cases), and NeoForge 26.1.2 (14 cases). Focused Forge evidence covers Tree
+details/reset and the newest NeoEco normal/FastPath adapters; AdvancedAE and
+Lightning Tech also passed in the full newest-addon graph. Fabric Tree has no
+positive runtime claim.
+
+The final focused NeoForge 1.21.1 ME Bridge rerun also passed with its named
+native CPU, exact output counts, a fresh sample, and reopened TTC.
+
+The full Forge suite remains blocked: its latest attempts passed 14 of 29 cases
+before ProjectCell timed out, first during dispatch and then while opening its
+initial plan. Earlier attempts also recorded intermittent AdvancedAE stalls.
+These failures remain part of the evidence; successful focused cases do not
+constitute a full Forge-suite pass. Dependency pins and ProjectCell behavior
+were not changed to hide the failure. Runtime acceptance is therefore incomplete.
+
+Retained class-contract snapshots are in
+`shared/src/test/resources/integration-contracts`. They cover original Tree
+1.1.1 and Refreshed Tree 1.0.1 on Forge and NeoForge 1.21.1, NeoEco Forge
+20.3.0/20.4.0/20.4.2, and NeoEco NeoForge 21.1.1. Each snapshot identifies its
+download page and SHA-512 hash. These are bytecode contracts, not runtime proof.
+
+NeoEco 20.4.0 and 20.4.2 expose a three-argument long overload that delegates to
+the four-argument long/boolean method. Normal dispatch enters the delegate;
+FastPath can enter the four-argument method directly. Only the latter owns the
+expected-output insertion hook. The accounting-object and integer-batch hooks
+remain separate and mutually exclusive. Driver results count accepted jobs,
+expected-output amounts, returned-output amounts, and successful completion to
+detect duplicate hooks; a fresh sample and reopened TTC remain required.
+
+The platform bridges use early loader metadata: Fabric's loader API, Forge
+47.1.3 and NeoForge FML 4.0.24 static loading lists, and FML 11.0.15's
+`FMLLoader.getCurrent()` instance API. They do not use runtime `ModList`.
+
+## Existing client exclusions
+
 - Forge compatible/latest full clients select Applied Botanics Fork `1.5.2`.
   The original shares its mod ID and filename, so they cannot coexist. Focused
   `-ProjectId 545hUrw9` selects original Applied Botanics; `-ProjectId 1605404`

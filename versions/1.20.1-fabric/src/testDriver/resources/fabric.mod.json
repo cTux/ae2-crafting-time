@@ -3,7 +3,7 @@
   "id": "ae2craftingtime_test_driver",
   "version": "${version}",
   "name": "AE2 Crafting Time Test Driver",
-  "environment": "client",
+  "environment": "*",
   "entrypoints": {
     "client": [
       "com.ctux.ae2craftingtime.testdriver.TestDriverMod"

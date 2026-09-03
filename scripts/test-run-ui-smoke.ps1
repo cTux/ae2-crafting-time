@@ -60,15 +60,15 @@ $checks = if ($DriverScenario -eq "standard-ae2") {
             'status-tooltip','status-details','status-reset','waiting','running','delayed','header','layout','completed','output')) { $values[$key] = $true }
     $values
 } elseif ($DriverScenario -eq "no-space-status") {
-    [ordered]@{ screen=$true; "external-machine"=$true; warning=$true; tooltip=$true; layout=$true; ukrainian=$true; recovered=$true }
+    [ordered]@{ screen=$true; "external-machine"=$true; warning=$true; tooltip=$true; layout=$true; recovered=$true }
 } elseif ($DriverScenario -eq "no-power-status") {
-    [ordered]@{ 'screen'=$true; 'real-job'=$true; 'external-unpowered'=$true; 'active-network'=$true; 'mixed-row'=$true; 'tooltip'=$true; 'layout'=$true; 'ukrainian'=$true; 'power-restored'=$true; 'cancelled'=$true; 'inactive-cpu'=$true }
+    [ordered]@{ 'screen'=$true; 'real-job'=$true; 'external-unpowered'=$true; 'active-network'=$true; 'mixed-row'=$true; 'tooltip'=$true; 'layout'=$true; 'power-restored'=$true; 'cancelled'=$true; 'inactive-cpu'=$true }
 } elseif ($DriverScenario -eq "no-provider-status") {
     [ordered]@{ screen=$true; 'real-job'=$true; 'mixed-row'=$true; 'pattern-removed'=$true; tooltip=$true;
-        layout=$true; ukrainian=$true; 'pattern-restored'=$true; 'second-provider'=$true;
+        layout=$true; 'pattern-restored'=$true; 'second-provider'=$true;
         'provider-removed'=$true; 'provider-restored'=$true; cancelled=$true }
 } elseif ($DriverScenario -eq "crafting-tree-screen") {
-    [ordered]@{ screen=$true; 'node-ttc'=$true; tooltip=$true; layout=$true }
+    [ordered]@{ screen=$true; 'node-ttc'=$true; tooltip=$true; layout=$true; details=$true; reset=$true }
 } elseif ($DriverScenario -eq "ae2networkanalyser-screen") {
     [ordered]@{ screen=$true; layout=$true }
 } elseif ($DriverScenario -eq "merequester-screen") {
@@ -78,7 +78,7 @@ $checks = if ($DriverScenario -eq "standard-ae2") {
 } elseif ($DriverScenario -like "*-terminal") {
     [ordered]@{ screen=$true; 'ttc-tooltip'=$true; 'plan-ttc'=$true }
 } elseif ($DriverScenario -ne "craft-plan") {
-    [ordered]@{ 'cpu-selected'=$true; 'profile-sample'=$true; 'ttc-after-sample'=$true }
+    [ordered]@{ 'cpu-selected'=$true; 'job-accepted'=$true; 'dispatch-amount'=$true; 'returned-amount'=$true; 'job-finished'=$true; 'profile-sample'=$true; 'ttc-after-sample'=$true }
 } else {
     [ordered]@{ screen=$true; 'ttc-row'=$true; 'total-ttc'=$true; 'sort-cycle'=$true; tooltip=$true; layout=$true }
 }
@@ -87,15 +87,14 @@ $screenshots = if ($DriverScenario -eq "standard-ae2") {
       'status-default.png','status-sort-1.png','status-sort-2.png','status-sort-3.png','status-tooltip.png','status-details.png','status-reset.png',
       'status-waiting-running.png','status-delayed.png','status-progress.png','status-completed.png')
 } elseif ($DriverScenario -eq "no-space-status") {
-    @("no-space-before.png", "no-space-en-us.png", "no-space-uk-ua.png", "no-space-recovered.png")
+    @("no-space-before.png", "no-space-en-us.png", "no-space-recovered.png")
 } elseif ($DriverScenario -eq "no-power-status") {
-    @("no-power-external-unpowered.png", "no-power-en-us.png", "no-power-uk-ua.png", "no-power-restored.png", "no-power-inactive.png")
+    @("no-power-external-unpowered.png", "no-power-en-us.png", "no-power-restored.png", "no-power-inactive.png")
 } elseif ($DriverScenario -eq "no-provider-status") {
-    @("no-provider-before.png", "no-provider-en-us.png", "no-provider-uk-ua.png",
-        "no-provider-pattern-restored.png", "no-provider-redundant.png", "no-provider-block-removed.png",
+    @("no-provider-before.png", "no-provider-en-us.png", "no-provider-pattern-restored.png", "no-provider-redundant.png", "no-provider-block-removed.png",
         "no-provider-block-restored.png", "no-provider-cancelled.png")
 } elseif ($DriverScenario -eq "crafting-tree-screen") {
-    @("crafting-tree-screen.png", "crafting-tree-tooltip.png")
+    @("crafting-tree-screen.png", "crafting-tree-tooltip.png", "crafting-tree-details.png", "crafting-tree-reset.png")
 } elseif ($DriverScenario -eq "ae2networkanalyser-screen") {
     @("ae2networkanalyser-screen.png")
 } elseif ($DriverScenario -eq "merequester-screen") {
@@ -107,7 +106,7 @@ $screenshots = if ($DriverScenario -eq "standard-ae2") {
 $result = [ordered]@{
     schema = $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "schema") { 2 } else { 1 })
     complete = $true; driver = $driver; target = $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "wrong-target") { "wrong" } else { $Target }); profile = $profile
-    scenario = $DriverScenario; result = "PASS"; checks = $checks
+    scenario = $DriverScenario; result = "PASS"; checks = $checks; language = $(if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq "wrong-language") { "uk_ua" } else { "en_us" }); adapters = @{}
     screenshots = $screenshots
 }
 $result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $DriverOutputDirectory "result.json") -Encoding UTF8
@@ -216,6 +215,7 @@ try {
     $env:AE2CT_TEST_DRIVER_TOKEN = 'invalid'
     Invoke-Case "pass" -Interactive -shouldPass $false
     Remove-Item Env:\AE2CT_TEST_DRIVER_TOKEN
+    Invoke-Case "wrong-language" -shouldPass $false
     Invoke-Case "schema" -shouldPass $false
     Invoke-Case "missing-screenshot" -shouldPass $false
     Invoke-Case "production-refmap" -Target "1.20.1-fabric" -shouldPass $false

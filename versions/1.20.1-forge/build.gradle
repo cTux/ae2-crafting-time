@@ -119,6 +119,8 @@ dependencies {
     testDriverCompileOnly 'maven.modrinth:4inoel9g:RFT2nmVb'
     testDriverCompileOnly 'maven.modrinth:pNabrMMw:z8QXeyI0'
     testDriverCompileOnly 'maven.modrinth:neoecoae:20.3.0'
+    // Already required by the pinned NeoEco runtime; its fixture also needs the API.
+    testDriverCompileOnly 'maven.modrinth:B1CBVXHX:NzNZILgs'
     testDriverCompileOnly 'maven.modrinth:ArHeh5Fz:8RXazZkx'
     testDriverCompileOnly 'maven.modrinth:M5jhzZXH:UgayyKmv'
     testDriverCompileOnly 'maven.modrinth:jjuIRIVr:SH2D1n3s'
@@ -263,3 +265,7 @@ tasks.named('test') {
 }
 
 sourceSets.testDriver.java.srcDir '../../shared/src/testDriverAddons/java'
+
+tasks.named('testDriverUnmappedJar') {
+    manifest.attributes 'MixinConfigs': 'ae2craftingtime_test_driver.mixins.json,ae2craftingtime_test_driver_neoeco.mixins.json'
+}

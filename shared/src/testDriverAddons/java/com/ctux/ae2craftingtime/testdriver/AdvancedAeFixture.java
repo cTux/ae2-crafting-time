@@ -141,7 +141,10 @@ final class AdvancedAeFixture extends AddonCpuFixture<AdvancedAeFixture.Placemen
             return null;
         }
         var cpu = core.getCluster().getRemainingCapacityCPU();
-        if (!cpu.isActive() || cpu.getGrid() != grid) {
+        if (!cpu.isActive()) {
+            return null;
+        }
+        if (cpu.getGrid() != grid) {
             throw new IllegalStateException("AdvancedAE CPU is not selectable; active=" + cpu.isActive()
                     + " sameGrid=" + (cpu.getGrid() == grid)
                     + " nodeActive=" + core.getMainNode().isActive()

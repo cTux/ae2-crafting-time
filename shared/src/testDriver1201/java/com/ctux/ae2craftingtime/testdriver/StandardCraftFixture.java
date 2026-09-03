@@ -94,7 +94,7 @@ final class StandardCraftFixture {
 
     private void pattern(ServerPlayer player, int offset, net.minecraft.world.item.Item input, net.minecraft.world.item.Item output) {
         var provider = (PatternProviderBlockEntity) player.serverLevel().getBlockEntity(terminal.east(offset));
-        provider.getLogic().getPatternInv().setItemDirect(0, DriverPlatform.processingPattern(
+        provider.getLogic().getPatternInv().setItemDirect(0, ServerDriverPlatform.processingPattern(
                 new GenericStack(AEItemKey.of(input), 1), new GenericStack(AEItemKey.of(output), 1)));
         provider.getLogic().updatePatterns();
     }

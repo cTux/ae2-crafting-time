@@ -1,0 +1,15 @@
+# 1.20.1-forge	ae2ct	tree-helper
+# source=https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-tree/files/7182165
+# sha512=962bc5ff0421a959a0ddac6684e8b97bbcdb84b963c26b983283b1d3750221ae31dd5ff7a7db8aa794a62f29f50be6ce659e71de093a674775bb34f2918d3737
+com/neuvillette/ae2ct/gui/CraftingTreeWidget	class	java/lang/Object
+com/neuvillette/ae2ct/gui/CraftingTreeWidget	field:outputX	I
+com/neuvillette/ae2ct/gui/CraftingTreeWidget	field:outputY	I
+com/neuvillette/ae2ct/gui/CraftingTreeWidget	field:spacingX	I
+com/neuvillette/ae2ct/gui/CraftingTreeWidget	field:spacingY	I
+com/neuvillette/ae2ct/gui/CraftingTreeWidget	method:draw	(Lnet/minecraft/client/gui/GuiGraphics;IIII)V
+com/neuvillette/ae2ct/gui/CraftingTreeWidget	method:drawNode	(Lnet/minecraft/client/gui/GuiGraphics;Lcom/neuvillette/ae2ct/api/CraftingTreeHelper$Node;)V
+com/neuvillette/ae2ct/gui/CraftingTreeWidget	method:mouseClicked	(DDI)Z
+com/neuvillette/ae2ct/gui/CraftingTreeWidget	method:getMousePoint	(DD)Ljava/awt/Point;
+com/neuvillette/ae2ct/api/CraftingTreeHelper$Node	class	java/lang/Object
+com/neuvillette/ae2ct/api/CraftingTreeHelper$Node	method:Node	(Lcom/neuvillette/ae2ct/api/CraftingTreeHelper;Lappeng/api/stacks/GenericStack;Ljava/lang/Long;Lcom/neuvillette/ae2ct/api/CraftingTreeHelper$AmountHelper;)V
+com/neuvillette/ae2ct/api/CraftingTreeHelper$Node	method:Node	(Lcom/neuvillette/ae2ct/api/CraftingTreeHelper;Lappeng/api/stacks/GenericStack;Ljava/lang/Long;Lcom/neuvillette/ae2ct/api/CraftingTreeHelper$AmountHelper;Ljava/util/List;)V

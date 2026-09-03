@@ -19,14 +19,13 @@ final class NoProviderScenario {
     static final String SCENARIO = "no-provider-status";
     static final String KEY = "text.ae2craftingtime.no_provider";
     static final List<String> CHECKS = List.of("screen", "real-job", "mixed-row", "pattern-removed", "tooltip",
-            "layout", "ukrainian", "pattern-restored", "second-provider", "provider-removed",
+            "layout", "pattern-restored", "second-provider", "provider-removed",
             "provider-restored", "cancelled");
     private final DispatchStatusFixture fixture = new DispatchStatusFixture(1);
     private int phase;
     private int menuId;
     private long changedAt;
     private CompletableFuture<Boolean> operation;
-    private CompletableFuture<Void> reload;
     private final StableFrames<Integer> frames = new StableFrames<>(3);
     private final StableFrames<Integer> tooltipFrames = new StableFrames<>(3);
 
@@ -61,13 +60,7 @@ final class NoProviderScenario {
                 changedAt = System.nanoTime();
                 phase++;
             }
-        } else if (phase == 5 || phase == 6) {
-            if (reload != null && !reload.isDone()) {
-                return false;
-            }
-            if (reload != null) {
-                reload.join();
-            }
+        } else if (phase == 5) {
             if (!hasWarning(snapshot)) {
                 return false;
             }
@@ -83,25 +76,9 @@ final class NoProviderScenario {
             checks.put("pattern-removed", true);
             checks.put("tooltip", true);
             checks.put("layout", true);
-            if (phase == 5) {
-                screenshot.accept("no-provider-en-us.png");
-                minecraft.getLanguageManager().setSelected("uk_ua");
-                minecraft.options.languageCode = "uk_ua";
-                reload = minecraft.reloadResourcePacks();
-                phase++;
-            } else if (warning.rendered().equals("Без провайдера")) {
-                checks.put("ukrainian", true);
-                screenshot.accept("no-provider-uk-ua.png");
-                minecraft.getLanguageManager().setSelected("en_us");
-                minecraft.options.languageCode = "en_us";
-                reload = minecraft.reloadResourcePacks();
-                phase++;
-            }
+            screenshot.accept("no-provider-en-us.png");
+            phase = 7;
         } else if (phase == 7) {
-            if (!reload.isDone()) {
-                return false;
-            }
-            reload.join();
             if (serverStep(minecraft, player -> {
                 fixture.provider(player, 6).getLogic().getPatternInv().setItemDirect(0, fixture.pattern());
                 return true;

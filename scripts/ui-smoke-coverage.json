@@ -17,8 +17,9 @@
       "scenario": "merequester-screen"
     },
     "udZtKfzP": {
-      "disposition": "DIRECT_BEHAVIOR",
-      "scenario": "neoeco-cpu"
+      "disposition": "FOCUSED_BEHAVIOR",
+      "scenario": "neoeco-cpu",
+      "reason": "The compatible Forge pin selects the older pending-accounting adapter. Smoke batched-long in a focused newest-adapter graph."
     },
     "ArHeh5Fz": {
       "disposition": "DIRECT_BEHAVIOR",

@@ -25,7 +25,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
 
-final class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
+class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
     private static final BlockPos INTERFACE_OFFSET = new BlockPos(2, 1, 1);
 
     @Override
@@ -35,7 +35,7 @@ final class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
         }
         var level = player.serverLevel();
         var terminal = new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z());
-        var context = findSpace(level, terminal);
+        var context = findSpace(level, terminal, NEMultiBlocks.COMPUTATION_SYSTEM_L9);
 
         context.blocks.forEach((pos, state) -> level.setBlockAndUpdate(pos, state));
         return new Placement(List.copyOf(context.blocks.keySet()));
@@ -100,7 +100,15 @@ final class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
     record Placement(List<BlockPos> blocks) {
     }
 
-    private static BlueprintContext findSpace(Level level, BlockPos terminal) {
+    static List<BlockPos> placeBlueprint(Level level, BlockPos terminal,
+            cn.dancingsnow.neoecoae.multiblock.definition.MultiBlockDefinition definition) {
+        var context = findSpace(level, terminal, definition);
+        context.blocks.forEach(level::setBlockAndUpdate);
+        return List.copyOf(context.blocks.keySet());
+    }
+
+    private static BlueprintContext findSpace(Level level, BlockPos terminal,
+            cn.dancingsnow.neoecoae.multiblock.definition.MultiBlockDefinition definition) {
         if (!(level.getBlockEntity(terminal) instanceof IInWorldGridNodeHost terminalHost)) {
             throw new IllegalStateException("fixture terminal is not connected to an AE2 grid");
         }
@@ -124,7 +132,7 @@ final class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
                     var interfaceOffset = MultiBlockRotation.localToWorld(
                             INTERFACE_OFFSET, BlockPos.ZERO, facing);
                     var candidate = blueprint(
-                            level, anchor.relative(direction).subtract(interfaceOffset), facing);
+                            level, anchor.relative(direction).subtract(interfaceOffset), facing, definition);
                     if (candidate.blocks.keySet().stream().allMatch(pos -> level.getBlockState(pos).isAir())) {
                         return candidate;
                     }
@@ -134,9 +142,10 @@ final class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
         throw new IllegalStateException("no empty space beside the fixture AE2 grid for NeoEco CPU");
     }
 
-    private static BlueprintContext blueprint(Level level, BlockPos controllerPos, Direction facing) {
+    private static BlueprintContext blueprint(Level level, BlockPos controllerPos, Direction facing,
+            cn.dancingsnow.neoecoae.multiblock.definition.MultiBlockDefinition definition) {
         var context = new BlueprintContext(level, controllerPos, facing);
-        NEMultiBlocks.COMPUTATION_SYSTEM_L9.createLevel(context);
+        definition.createLevel(context);
         return context;
     }
 

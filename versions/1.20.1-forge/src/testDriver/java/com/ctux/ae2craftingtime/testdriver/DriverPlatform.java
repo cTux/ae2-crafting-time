@@ -30,8 +30,7 @@ final class DriverPlatform {
 
     static net.minecraft.world.item.ItemStack processingPattern(appeng.api.stacks.GenericStack input,
             appeng.api.stacks.GenericStack output) {
-        return appeng.api.crafting.PatternDetailsHelper.encodeProcessingPattern(
-                new appeng.api.stacks.GenericStack[] {input}, new appeng.api.stacks.GenericStack[] {output});
+        return ServerDriverPlatform.processingPattern(input, output);
     }
     static boolean isModLoaded(String id) {
         return net.minecraftforge.fml.ModList.get().isLoaded(id);

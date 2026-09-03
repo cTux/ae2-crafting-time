@@ -23,6 +23,7 @@ abstract class AddonCpuFixture<P> {
             Map.entry("expandedae-cpu", "com.ctux.ae2craftingtime.testdriver.ExpandedAeFixture"),
             Map.entry("megacells-cpu", "com.ctux.ae2craftingtime.testdriver.MegaCellsFixture"),
             Map.entry("neoeco-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture"),
+            Map.entry("neoeco-fastpath-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFastPathFixture"),
             Map.entry("lightningtech-cpu", "com.ctux.ae2craftingtime.testdriver.LightningTechFixture"),
             Map.entry("omnicells-cpu", "com.ctux.ae2craftingtime.testdriver.OmniCellsFixture"),
             Map.entry("projectcell-cpu", "com.ctux.ae2craftingtime.testdriver.ProjectCellFixture"),
@@ -63,7 +64,13 @@ abstract class AddonCpuFixture<P> {
         var server = minecraft.getSingleplayerServer();
         var playerId = minecraft.player.getUUID();
         if (placementFuture == null) {
-            placementFuture = server.submit(() -> place(server.getPlayerList().getPlayer(playerId), marker));
+            placementFuture = server.submit(() -> {
+                var player = server.getPlayerList().getPlayer(playerId);
+                if (player == null) throw new IllegalStateException("fixture player is unavailable");
+                player.teleportTo(marker.terminal().x() + 0.5, marker.terminal().y() - 1,
+                        marker.terminal().z() - 2.5);
+                return place(player, marker);
+            });
         }
         if (!placementFuture.isDone()) {
             return false;
@@ -99,7 +106,18 @@ abstract class AddonCpuFixture<P> {
     }
 
     protected void startCraft(ServerPlayer player, P placement, CraftConfirmMenu menu) {
+        var selected = cpu(player, placement, com.ctux.ae2craftingtime.mc1201.StatsRequestContext.current(player).grid());
+        if (selected == null) throw new IllegalStateException("Selected fixture CPU is no longer available");
+        // Menu broadcasts can restore automatic selection between driver steps.
+        ((com.ctux.ae2craftingtime.testdriver.mixin.CraftConfirmMenuAccessor) menu)
+                .ae2craftingtime_test_driver$selectedCpu(selected);
         menu.startJob();
+    }
+
+    void configureAmount(appeng.client.gui.me.crafting.CraftAmountScreen screen) {}
+
+    void verifyDispatch(DispatchObservation.Snapshot snapshot) {
+        if (!snapshot.completedExactlyOnce()) throw new IllegalStateException("fixture dispatch/output mismatch: " + snapshot);
     }
 
     protected abstract P place(ServerPlayer player, FixtureMarker marker);

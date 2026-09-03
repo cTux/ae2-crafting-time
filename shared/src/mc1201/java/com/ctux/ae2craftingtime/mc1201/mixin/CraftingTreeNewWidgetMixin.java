@@ -53,7 +53,9 @@ public abstract class CraftingTreeNewWidgetMixin {
             return;
         }
 
-        ae2craftingtime$handleClickedStats(mouseX, mouseY, button);
+        if (ae2craftingtime$handleClickedStats(mouseX, mouseY, button)) {
+            ci.cancel();
+        }
     }
 
     @Inject(method = "draw", at = @At("HEAD"), require = 0)

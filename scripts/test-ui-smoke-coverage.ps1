@@ -11,6 +11,12 @@ try {
                 throw 'Every selected project must have explicit coverage'
             }
             $expanded = $rows | Where-Object name -eq 'Expanded AE'
+            if ($target -eq '1.20.1-forge') {
+                $neoeco = $rows | Where-Object projectId -eq 'udZtKfzP'
+                if ($neoeco.disposition -ne 'FOCUSED_BEHAVIOR' -or $neoeco.result -ne 'NOT_RUN' -or -not $neoeco.reason) {
+                    throw 'Newest NeoEco requires separate runtime proof, never a passed or excluded legacy campaign'
+                }
+            }
             if ($expanded -and (($expanded.disposition -eq 'EXCLUDED') -eq $latest)) { throw 'Latest exclusion leaked from compatible' }
         }
     }
@@ -25,6 +31,10 @@ try {
     }
     $coveragePath = Join-Path $temp 'ui-smoke-coverage.json'
     $original = Get-Content -LiteralPath $coveragePath -Raw
+    $coverage = $original | ConvertFrom-Json
+    $coverage.'1.20.1-forge'.udZtKfzP.reason = ''
+    $coverage | ConvertTo-Json -Depth 10 | Set-Content $coveragePath
+    Assert-Rejected 'Focused project lacks a reason'
     $coverage = $original | ConvertFrom-Json
     $coverage.'1.20.1-forge'.psobject.Properties.Remove('a1RwDz90')
     $coverage | ConvertTo-Json -Depth 10 | Set-Content $coveragePath
