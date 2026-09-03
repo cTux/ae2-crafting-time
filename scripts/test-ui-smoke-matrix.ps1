@@ -56,6 +56,8 @@ try {
         if ($results.Count -ne 1 -or $results[0].message -notlike '*exit is unconfirmed*') {
             throw 'The matrix launched another client after unconfirmed termination'
         }
+        $coverage = Get-Content (Join-Path $results[0].report 'coverage.json') -Raw | ConvertFrom-Json
+        if ($coverage.result -ne 'PASS') { throw 'A failed run erased its completed scenario outcome' }
     } finally { Remove-Item Env:\AE2CT_UNCONFIRMED_EXIT -ErrorAction SilentlyContinue }
     Write-Host 'UI smoke matrix checks passed'
 } finally {

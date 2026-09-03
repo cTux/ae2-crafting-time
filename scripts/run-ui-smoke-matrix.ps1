@@ -61,20 +61,21 @@ foreach ($row in $targets) {
         }
         if ($status.phase -ne 'passed') { $result = 'FAIL'; throw $status.message }
         $result = 'PASS'
-        foreach ($entry in $coverage) {
-            if ($entry.result -ne 'NOT_APPLICABLE') {
-                $case = Join-Path $report "run/evidence/$($entry.scenario)/result.json"
-                if ($Scenario -ne 'suite') { $case = Join-Path $report 'run/evidence/result.json' }
-                if (($Scenario -eq 'suite' -or $entry.scenario -eq $Scenario) -and (Test-Path -LiteralPath $case)) {
-                    $entry.result = (Get-Content -LiteralPath $case -Raw | ConvertFrom-Json).result
-                }
-            }
-        }
     } catch {
         $message = $_.Exception.Message
         if ($Latest) { $result = 'DIAGNOSTIC_FAILURE' }
         Write-Warning "$($row.id) $profile $result`: $message"
     } finally {
+        foreach ($entry in $coverage) {
+            if ($entry.result -ne 'NOT_APPLICABLE') {
+                $case = Join-Path $report "run/evidence/$($entry.scenario)/result.json"
+                if ($Scenario -ne 'suite') { $case = Join-Path $report 'run/evidence/result.json' }
+                if (($Scenario -eq 'suite' -or $entry.scenario -eq $Scenario) -and (Test-Path -LiteralPath $case)) {
+                    try { $entry.result = (Get-Content -LiteralPath $case -Raw | ConvertFrom-Json).result }
+                    catch { $entry.result = 'FAIL' }
+                }
+            }
+        }
         $coverage | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $report 'coverage.json') -Encoding UTF8
         $results += [ordered]@{ target = $row.id; profile = $profile; result = $result; message = $message
             startedAt = $started; finishedAt = [DateTime]::UtcNow.ToString('o'); report = $report }

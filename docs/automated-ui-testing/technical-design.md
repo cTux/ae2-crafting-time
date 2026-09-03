@@ -62,6 +62,8 @@ widget bounds, item cells and tooltips. Assertions use those observations and
 the server's actual job/output state. Each input phase waits for stable frames;
 phase timestamps and the last fixture checkpoint make timeouts attributable.
 Modifier keys are released on both success and failure.
+The Windows VM receives native key events through Minecraft's existing JNA
+library; input does not depend on AWT's headless setting.
 
 After completion, the driver saves the last job view, returns to the terminal
 and reopens Crafting Status through its buttons. The fresh view must be empty.
@@ -89,6 +91,8 @@ host bundle, coverage ledger and copied guest run. Compatible failures produce
 a nonzero exit after all selected targets have been attempted. Latest failures
 are retained as `DIAGNOSTIC_FAILURE` and do not change compatible results.
 A focused campaign leaves unrelated coverage `NOT_RUN`.
+Completed case outcomes remain in the ledger even when another part of the run
+fails. An unconfirmed client exit stops the campaign before another launch.
 
 ## Fixture and process safety
 
