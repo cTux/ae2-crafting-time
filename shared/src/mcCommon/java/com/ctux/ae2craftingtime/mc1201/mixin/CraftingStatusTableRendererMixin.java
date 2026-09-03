@@ -1,9 +1,9 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
-import appeng.client.gui.me.crafting.CraftingStatusTableRenderer;
 import appeng.client.gui.me.crafting.CraftingCPUScreen;
-import com.ctux.ae2craftingtime.core.CraftingRowState;
+import appeng.client.gui.me.crafting.CraftingStatusTableRenderer;
 import appeng.menu.me.crafting.CraftingStatusEntry;
+import com.ctux.ae2craftingtime.core.CraftingRowState;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
@@ -42,6 +42,10 @@ public abstract class CraftingStatusTableRendererMixin {
             return;
         }
 
+        if (ae2craftingtime$noProvider(entry)) {
+            cir.getReturnValue().addAll(TtcText.noProviderTooltip());
+            return;
+        }
         ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue());
         cir.getReturnValue().add(TtcText.detailsHint().withStyle(ChatFormatting.GRAY));
         cir.getReturnValue().add(TtcText.resetHint().withStyle(ChatFormatting.GRAY));
@@ -59,6 +63,10 @@ public abstract class CraftingStatusTableRendererMixin {
 
         var key = ProfilerBridge.key(entry.getWhat());
         ClientStatsRequests.request(key);
+        if (ae2craftingtime$noProvider(entry)) {
+            lines.add(TtcText.noProvider());
+            return;
+        }
         if (entry.getActiveAmount() == 0 && entry.getPendingAmount() > 0) {
             var waiting = ClientStats.CACHE.waitingTicks(key);
             if (waiting.isPresent()) {
@@ -105,6 +113,11 @@ public abstract class CraftingStatusTableRendererMixin {
                 Minecraft.getInstance().screen instanceof CraftingCPUScreen<?> screen
                         && screen.getMenu().isCantStoreItems(),
                 entry.getStoredAmount(), entry.getActiveAmount(), entry.getPendingAmount());
+    }
+
+    private static boolean ae2craftingtime$noProvider(CraftingStatusEntry entry) {
+        return CraftingRowState.noProvider(entry.getPendingAmount(),
+                ClientStats.missingProvider(ProfilerBridge.key(entry.getWhat())));
     }
 
     private static Component ttcLine(com.ctux.ae2craftingtime.core.ProfileKey key, String eta) {

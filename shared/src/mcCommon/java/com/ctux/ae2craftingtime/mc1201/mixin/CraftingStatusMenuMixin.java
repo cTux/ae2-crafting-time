@@ -14,7 +14,7 @@ public abstract class CraftingStatusMenuMixin {
     private void ae2craftingtime$clearWaitingOnCpuSelection(int serial, CallbackInfo ci) {
         var menu = (CraftingStatusMenu) (Object) this;
         if (menu.isClientSide() && menu.getSelectedCpuSerial() != serial) {
-            ClientStats.CACHE.clearWaiting();
+            ClientStats.CACHE.clearCpuState();
             ClientStatsRequests.clear();
         }
     }

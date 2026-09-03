@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public final class CraftProfiler {
     private final int maxSamples;
@@ -22,6 +23,7 @@ public final class CraftProfiler {
     private final Map<Object, WaitingState> waiting = new IdentityHashMap<>();
     private final Map<ProfileKey, BusyWindow> busyWindows = new HashMap<>();
     private final Map<ProfileKey, ArrayDeque<CraftSample>> samples = new HashMap<>();
+    private final MissingProviderTracker<Object> missingProviders = new MissingProviderTracker<>();
     private boolean enabled = true;
 
     public CraftProfiler(int maxSamples) {
@@ -41,6 +43,7 @@ public final class CraftProfiler {
 
     public void setEnabled(boolean enabled) {
         this.enabled = enabled;
+        missingProviders.setEnabled(enabled);
         if (!enabled) {
             pending.clear();
             lastProgressTicks.clear();
@@ -50,11 +53,20 @@ public final class CraftProfiler {
         }
     }
 
+    public void observeProviders(Object scope, Object pattern, Map<ProfileKey, Long> outputs, boolean hasProvider) {
+        missingProviders.observe(scope, pattern, outputs, hasProvider);
+    }
+
+    public Set<ProfileKey> missingProviderOutputs(Object scope, Predicate<Object> hasProvider) {
+        return missingProviders.missingOutputs(scope, hasProvider);
+    }
+
     public void startWaiting(Object scope, Iterable<ProfileKey> keys, long tick) {
         if (!enabled || scope == null || keys == null) {
             return;
         }
 
+        missingProviders.clear(scope);
         var waitingKeys = new HashSet<ProfileKey>();
         for (var key : keys) {
             if (key != null) {
@@ -144,6 +156,7 @@ public final class CraftProfiler {
     }
 
     public void clearPending(Object scope) {
+        missingProviders.clear(scope);
         var removed = pending.remove(scope);
         lastProgressTicks.remove(scope);
         capacities.remove(scope);
@@ -310,6 +323,7 @@ public final class CraftProfiler {
 
     public void loadSamples(List<PersistedOutputSamples> persisted) {
         samples.clear();
+        missingProviders.clear();
         pending.clear();
         lastProgressTicks.clear();
         capacities.clear();

@@ -8,16 +8,52 @@ import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
 import com.ctux.ae2craftingtime.core.StallDiagnostic;
-import com.ctux.ae2craftingtime.core.StatsEntry;
 import com.ctux.ae2craftingtime.core.StatsChatAction;
+import com.ctux.ae2craftingtime.core.StatsEntry;
 import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
 import io.netty.buffer.Unpooled;
-import java.util.List;
-import java.util.Map;
 import net.minecraft.network.FriendlyByteBuf;
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 class StatsPacketTest {
+    @Test
+    void snapshotRoundTripsMissingProvidersWithoutLearnedStatsAtBothSizeLimits() {
+        for (var count : new int[] {0, PacketLimits.MAX_KEYS}) {
+            var keys = java.util.stream.IntStream.range(0, count).mapToObj(i -> "test:output_" + i).toList();
+            var packet = new StatsSnapshotS2C(keys, List.of(), Map.of(), Map.of(), Set.copyOf(keys), 0x123456789L);
+            var buffer = new FriendlyByteBuf(Unpooled.buffer());
+            StatsSnapshotS2C.encode(packet, buffer);
+            assertEquals(packet, StatsSnapshotS2C.decode(buffer));
+            assertEquals(0, buffer.readableBytes());
+        }
+    }
+
+    @Test
+    void snapshotRejectsInvalidMissingProviderKeysAndCounts() {
+        for (var count : new int[] {-1, PacketLimits.MAX_KEYS + 1}) {
+            var buffer = new FriendlyByteBuf(Unpooled.buffer());
+            buffer.writeVarInt(0); // Requested keys.
+            buffer.writeVarInt(0); // Network amounts.
+            buffer.writeVarInt(0); // Waiting ticks.
+            buffer.writeVarInt(count);
+            assertThrows(IllegalArgumentException.class, () -> StatsSnapshotS2C.decode(buffer));
+        }
+        for (var key : List.of("invalid", "minecraft:unrequested",
+                "minecraft:" + "a".repeat(PacketLimits.MAX_OUTPUT_ID_LENGTH))) {
+            var buffer = new FriendlyByteBuf(Unpooled.buffer());
+            buffer.writeVarInt(0);
+            buffer.writeVarInt(0);
+            buffer.writeVarInt(0);
+            buffer.writeVarInt(1);
+            buffer.writeUtf(key);
+            assertThrows(RuntimeException.class, () -> StatsSnapshotS2C.decode(buffer));
+        }
+    }
+
     @Test
     void requestRoundTripsVisibleOutputKeys() {
         var buffer = new FriendlyByteBuf(Unpooled.buffer());
@@ -49,7 +85,7 @@ class StatsPacketTest {
                 new StatsEntry(new ProfileKey("minecraft:lava"),
                         new ProfileStats(1, 20, 50, 1000, 20, ProfileUnit.MILLIBUCKET))),
                 Map.of("minecraft:water", 8_000L, "minecraft:lava", 0L),
-                Map.of("minecraft:water", 40L));
+                Map.of("minecraft:water", 40L), Set.of("minecraft:lava"), 0x123456789L);
 
         StatsSnapshotS2C.encode(packet, buffer);
 
@@ -90,6 +126,8 @@ class StatsPacketTest {
         assertEquals(entries, packet.entries());
         assertEquals(Map.of(), packet.networkAmounts());
         assertEquals(Map.of(), packet.waitingTicks());
+        assertEquals(Set.of(), packet.missingProviders());
+        assertEquals(-1, packet.cpuContext());
     }
 
     @Test
@@ -106,6 +144,7 @@ class StatsPacketTest {
         assertThrows(IllegalArgumentException.class, () -> StatsSnapshotS2C.decode(oversizedAmounts));
 
         var oversizedEntries = new FriendlyByteBuf(Unpooled.buffer());
+        oversizedEntries.writeVarInt(0);
         oversizedEntries.writeVarInt(0);
         oversizedEntries.writeVarInt(0);
         oversizedEntries.writeVarInt(0);
@@ -144,6 +183,7 @@ class StatsPacketTest {
     @Test
     void snapshotRejectsOversizedSampleHistoryBeforeAllocation() {
         var buffer = new FriendlyByteBuf(Unpooled.buffer());
+        buffer.writeVarInt(0);
         buffer.writeVarInt(0);
         buffer.writeVarInt(0);
         buffer.writeVarInt(0);

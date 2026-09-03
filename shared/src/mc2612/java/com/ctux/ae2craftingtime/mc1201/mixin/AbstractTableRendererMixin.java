@@ -5,6 +5,7 @@ import appeng.client.gui.me.crafting.CraftConfirmTableRenderer;
 import appeng.client.gui.me.crafting.CraftingStatusTableRenderer;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 import appeng.menu.me.crafting.CraftingStatusEntry;
+import com.ctux.ae2craftingtime.core.CraftingRowState;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcColor;
@@ -57,9 +58,7 @@ public abstract class AbstractTableRendererMixin {
 
     @Unique
     private static boolean ae2craftingtime$isTtcLine(TranslatableContents translatable) {
-        var key = translatable.getKey();
-        return key.equals("text.ae2craftingtime.ttc") || key.equals("text.ae2craftingtime.ttc_delayed")
-                || key.equals("text.ae2craftingtime.waiting") || key.equals("text.ae2craftingtime.no_space");
+        return CraftingRowState.isBadge(translatable.getKey());
     }
 
     @Inject(method = "render", at = @At("HEAD"), remap = false)
@@ -135,6 +134,9 @@ public abstract class AbstractTableRendererMixin {
         }
 
         var key = ProfilerBridge.key(statusEntry.getWhat());
+        if (CraftingRowState.noProvider(statusEntry.getPendingAmount(), ClientStats.missingProvider(key))) {
+            return OptionalLong.empty();
+        }
         if (statusEntry.getActiveAmount() == 0 && statusEntry.getPendingAmount() > 0
                 && ClientStats.CACHE.waitingTicks(key).isPresent()) {
             return OptionalLong.empty();

@@ -93,6 +93,12 @@ suite. NeoForge 26.1.2 has an eleven-case compatible suite, including NO SPACE.
 
 ## Compatibility boundaries
 
+- `NO PROVIDER` observes the standard AE2 dispatch lookup on all four targets
+  and AdvancedAE's equivalent lookup on Forge 1.20.1 and both NeoForge targets.
+  The verified AdvancedAE artifacts are `1.3.6-1.20.1`, CurseForge file `7849217`,
+  and `26.1.7`. Other custom dispatch engines are not claimed by this diagnostic.
+  This source/bytecode verification does not add a live UI-smoke result.
+
 - Lightning Tech `1.0.1alpha-26.1.2neoforge` uses `@OnlyIn`, which triggers a
   NeoForge development warning screen. The 26.1.2 client runs use NeoForge's
   `neoforge.warnings.onlyin.hide` option to skip that screen while keeping the

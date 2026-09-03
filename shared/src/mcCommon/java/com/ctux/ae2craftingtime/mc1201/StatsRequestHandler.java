@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public final class StatsRequestHandler {
     private static final PlayerRequestRateLimit RATE_LIMIT = new PlayerRequestRateLimit();
@@ -27,14 +28,20 @@ public final class StatsRequestHandler {
         var context = StatsRequestContext.current(player);
         var networkId = ProfilerBridge.networkId(context.grid());
         var gameTick = player.level().getGameTime();
+        var missing = ProfilerBridge.missingProviders(context.craftingCpu(), context.grid());
+        var missingProviders = new HashSet<String>();
         for (var key : keys) {
             var profileKey = new ProfileKey(networkId, key);
+            if (missing.contains(profileKey)) {
+                missingProviders.add(key);
+            }
             ProfilerBridge.entry(profileKey, new ProfileKey(key), context.craftingCpu(), gameTick)
                     .ifPresent(entries::add);
             ProfilerBridge.waitingTicks(profileKey, context.craftingCpu(), gameTick)
                     .ifPresent(value -> waitingTicks.put(key, value));
         }
-        return new Response(entries, networkAmounts(context.grid(), keys), waitingTicks);
+        return new Response(entries, networkAmounts(context.grid(), keys), waitingTicks, missingProviders,
+                StatsRequestContext.cpuContext(player.containerMenu));
     }
 
     private static Map<String, Long> networkAmounts(IGrid grid, List<String> keys) {
@@ -54,6 +61,6 @@ public final class StatsRequestHandler {
     }
 
     public record Response(List<StatsEntry> entries, Map<String, Long> networkAmounts,
-            Map<String, Long> waitingTicks) {
+            Map<String, Long> waitingTicks, Set<String> missingProviders, long cpuContext) {
     }
 }

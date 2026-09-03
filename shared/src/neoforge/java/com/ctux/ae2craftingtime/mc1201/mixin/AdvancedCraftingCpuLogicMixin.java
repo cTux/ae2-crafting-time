@@ -1,14 +1,16 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
 import appeng.api.config.Actionable;
+import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingPlan;
+import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.networking.crafting.ICraftingRequester;
 import appeng.api.networking.crafting.ICraftingSubmitResult;
+import appeng.api.networking.energy.IEnergyService;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.crafting.inv.ListCraftingInventory;
-import appeng.api.networking.energy.IEnergyService;
 import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPU;
@@ -20,8 +22,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Pseudo
 @Mixin(targets = "net.pedroksl.advanced_ae.common.logic.AdvCraftingCPULogic", remap = false)
@@ -33,6 +35,18 @@ public abstract class AdvancedCraftingCpuLogicMixin {
     @Shadow
     @Final
     private int[] usedOps;
+
+    @Redirect(
+            method = "executeCrafting",
+            at = @At(value = "INVOKE",
+                    target = "Lappeng/me/service/CraftingService;getProviders(Lappeng/api/crafting/IPatternDetails;)Ljava/lang/Iterable;"),
+            remap = false)
+    private Iterable<ICraftingProvider> ae2craftingtime$observeProviders(CraftingService service,
+            IPatternDetails pattern) {
+        var providers = service.getProviders(pattern);
+        ProfilerBridge.observeProviders(ProfilerBridge.networkId(cpu.getGrid()), cpu, pattern, providers);
+        return providers;
+    }
 
     @Redirect(
             method = "executeCrafting",
