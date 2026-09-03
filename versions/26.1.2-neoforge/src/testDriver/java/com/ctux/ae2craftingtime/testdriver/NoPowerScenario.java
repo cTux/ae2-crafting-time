@@ -27,6 +27,8 @@ final class NoPowerScenario {
     private final StableFrames<Integer> frames = new StableFrames<>(3);
     private final StableFrames<Integer> tooltipFrames = new StableFrames<>(3);
     private int phase;
+    private int loggedPhase = -1;
+    private long loggedTick = -1;
     private int menuId;
     private long changedAt;
     private CompletableFuture<Boolean> operation;
@@ -35,6 +37,10 @@ final class NoPowerScenario {
 
     boolean tick(Minecraft minecraft, FixtureMarker marker, Map<String, Boolean> checks,
             Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) {
+        if (loggedPhase != phase) {
+            System.out.println("AE2CT power fixture phase " + phase);
+            loggedPhase = phase;
+        }
         if (phase < 3) {
             if (serverStep(minecraft, player -> {
                 var ready = fixture.prepare(phase, player, marker);
@@ -56,9 +62,21 @@ final class NoPowerScenario {
             var server = minecraft.getSingleplayerServer();
             var playerId = minecraft.player.getUUID();
             powerPulse = server.submit(() -> {
-                var energy = fixture.cpu(server.getPlayerList().getPlayer(playerId)).getMainNode().getGrid().getEnergyService();
+                var player = server.getPlayerList().getPlayer(playerId);
+                var cpu = fixture.cpu(player).getCluster();
+                var energy = cpu.getGrid().getEnergyService();
+                var tick = player.level().getGameTime();
+                if (tick - loggedTick >= 20) {
+                    System.out.println("AE2CT power fixture: idle=" + energy.getIdlePowerUsage()
+                            + ", simulated=" + energy.extractAEPower(64, Actionable.SIMULATE, PowerMultiplier.CONFIG)
+                            + ", active=" + cpu.isActive() + ", providerBusy=" + fixture.provider(player, 6).getLogic().isBusy());
+                    loggedTick = tick;
+                }
                 energy.extractAEPower(Double.MAX_VALUE, Actionable.MODULATE, PowerMultiplier.ONE);
-                energy.injectPower(10, Actionable.MODULATE);
+                energy.injectPower(PowerMultiplier.CONFIG.multiply(48), Actionable.MODULATE);
+                if (energy.getIdlePowerUsage() >= 48) {
+                    throw new IllegalStateException("fixture idle demand exceeds low-power budget: " + energy.getIdlePowerUsage());
+                }
             });
         }
         var snapshot = UiObservationStore.latest();
@@ -84,7 +102,10 @@ final class NoPowerScenario {
                 if (!fixture.connect(player, 2)) return false;
                 var energy = fixture.cpu(player).getMainNode().getGrid().getEnergyService();
                 energy.extractAEPower(Double.MAX_VALUE, Actionable.MODULATE, PowerMultiplier.ONE);
-                energy.injectPower(10, Actionable.MODULATE);
+                energy.injectPower(PowerMultiplier.CONFIG.multiply(48), Actionable.MODULATE);
+                if (energy.getIdlePowerUsage() >= 48) {
+                    throw new IllegalStateException("fixture idle demand exceeds low-power budget: " + energy.getIdlePowerUsage());
+                }
                 ((Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).below())).clearContent();
                 return true;
             })) phase++;
@@ -101,6 +122,8 @@ final class NoPowerScenario {
             }
             if (!serverStep(minecraft, player -> {
                 var cpu = fixture.cpu(player).getCluster();
+                System.out.println("AE2CT power fixture: idle=" + cpu.getGrid().getEnergyService().getIdlePowerUsage()
+                        + ", simulated=" + cpu.getGrid().getEnergyService().extractAEPower(64, Actionable.SIMULATE, PowerMultiplier.CONFIG));
                 if (!cpu.isActive() || cpu.craftingLogic.getWaitingFor(AEItemKey.of(Items.DIAMOND)) != 1) {
                     throw new IllegalStateException("expected active CPU with one active and 63 pending outputs");
                 }
