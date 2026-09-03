@@ -93,6 +93,8 @@ public final class CraftPlanScenario {
             return;
         }
         try {
+            // Reload futures can complete while the loading overlay still covers the rendered screen.
+            if (minecraft.getOverlay() != null) return;
             switch (state) {
                 case STARTING -> start();
                 case WORLD_READY -> openTerminal();
@@ -128,6 +130,12 @@ public final class CraftPlanScenario {
     }
 
     private void start() throws IOException {
+        if (!minecraft.getLanguageManager().getSelected().equals("en_us")) {
+            minecraft.getLanguageManager().setSelected("en_us");
+            minecraft.options.languageCode = "en_us";
+            minecraft.reloadResourcePacks();
+            return;
+        }
         if (minecraft.level == null || minecraft.player == null || minecraft.gameMode == null
                 || minecraft.getSingleplayerServer() == null || minecraft.getCurrentServer() != null) {
             return;
@@ -642,7 +650,7 @@ public final class CraftPlanScenario {
         var button = minecraft.screen.children().stream().filter(TtcSortButton.class::isInstance)
                 .map(TtcSortButton.class::cast).findFirst()
                 .orElseThrow(() -> new IllegalStateException("TTC sort button is missing"));
-        button.onPress();
+        ((net.minecraft.client.gui.components.AbstractButton) button).onPress();
         moveMouse(snapshot.gui().x() - 8, snapshot.gui().y() - 8);
         stableRows.reset();
     }
