@@ -15,7 +15,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 
 import java.util.concurrent.CompletableFuture;
 
-final class MeRequesterFixture {
+final class MeRequesterFixture implements RequesterFixture {
     static final String SCENARIO = "merequester-screen";
     static final String SCREEN = "com.almostreliable.merequester.client.RequesterScreen";
     private static final long REQUEST_AMOUNT = 64;
@@ -25,7 +25,7 @@ final class MeRequesterFixture {
     private CompletableFuture<BlockPos> placementFuture;
     private CompletableFuture<Boolean> setupFuture;
 
-    boolean setup(ServerPlayer player, FixtureMarker marker) {
+    public boolean setup(ServerPlayer player, FixtureMarker marker) {
         if (!DriverPlatform.isModLoaded("merequester")) {
             throw new IllegalStateException("ME Requester is unavailable");
         }
@@ -54,7 +54,7 @@ final class MeRequesterFixture {
         return true;
     }
 
-    BlockPos position() {
+    public BlockPos position() {
         return position;
     }
 

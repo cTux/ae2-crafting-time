@@ -236,7 +236,7 @@ if ($Target -eq "1.21.1-neoforge") {
 }
 
 if ($DriverScenario) {
-    if ($Target -notin @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge") -or -not $DriverOutputDirectory -or -not $DriverWorld) {
+    if ($Target -notin @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge") -or -not $DriverOutputDirectory -or -not $DriverWorld) {
         throw "Test-driver scenarios require a supported target, an output directory, and a disposable world"
     }
     $runtimeArgs += "-PtestDriverScenario=$DriverScenario"
@@ -264,7 +264,7 @@ foreach ($pattern in @("ae2ct-*.jar", "jei-*.jar")) {
         Remove-Item -Force
 }
 
-if ($Target -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge")) {
+if ($Target -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) {
     $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
         Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
     if (-not $modVersion) { throw "Missing modVersion in gradle.properties" }

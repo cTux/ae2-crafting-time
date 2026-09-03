@@ -1,4 +1,5 @@
 plugins {
+    id 'com.gradleup.shadow' version '8.3.8'
     id 'net.neoforged.moddev' version '2.0.141'
 }
 
@@ -19,6 +20,15 @@ neoForge {
         client {
             client()
             jvmArgument '-Xmx8G'
+            ['scenario', 'profile', 'world', 'output', 'interactive'].each { name ->
+                def property = providers.gradleProperty("testDriver${name.capitalize()}")
+                if (property.isPresent()) jvmArgument "-Dae2craftingtime.test.${name}=${property.get()}"
+            }
+            if (providers.gradleProperty('testDriverWorld').isPresent()) {
+                programArgument '--quickPlaySingleplayer'
+                programArgument providers.gradleProperty('testDriverWorld').get()
+            }
+
             // Lightning Tech uses @OnlyIn; keep diagnostics in the log without pausing client startup.
             jvmArgument '-Dneoforge.warnings.onlyin.hide=true'
         }
@@ -117,3 +127,58 @@ tasks.register('distMod', Copy) {
     into rootProject.layout.projectDirectory.dir('dist')
     rename { "ae2-crafting-time-${distModVersion}-neoforge-26.1.2.jar" }
 }
+
+// Separate companion: never add driver sources or libraries to the player mod.
+sourceSets { testDriver }
+sourceSets.testDriver.compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+sourceSets.testDriver.runtimeClasspath += sourceSets.testDriver.output + sourceSets.testDriver.compileClasspath
+ext.testDriverLoader = 'neoforge'
+tasks.register('testDriverUnmappedJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar)
+apply from: rootProject.file('scripts/test-driver.gradle')
+sourceSets.testDriver.java.exclude { element ->
+    element.file.path.replace('\\', '/').contains('/shared/src/testDriver1201/') &&
+            element.file.name in ['CraftPlanScenario.java', 'TestDriverRuntime.java', 'UiObservationStore.java', 'NoSpaceScenario.java', 'NativeCpuFixture.java', 'WirelessTerminalFixture.java', 'Ae2wtlibTerminalFixture.java', 'Ae2ImportExportCardFixture.java', 'AeInfinityBoosterFixture.java', 'Ae2NetworkAnalyserFixture.java', 'ExtendedAeFixture.java', 'InteractiveMcpServer.java', 'AppliedBotanicsFixture.java', 'Ae2ThingsFixture.java', 'MegaCellsFixture.java', 'MeRequesterFixture.java', 'GuiGraphicsMixin.java', 'AbstractTableRendererMixin.java', 'AEBaseScreenMixin.java', 'AEKeyRenderingMixin.java', 'RenderSystemMixin.java', 'MEStorageScreenAccessor.java']
+}
+sourceSets.testDriver.resources.setSrcDirs(['src/testDriver/resources'])
+
+dependencies {
+    testDriverCompileOnly 'maven.modrinth:692GClaE:EkohPYvX'
+    testDriverCompileOnly 'maven.modrinth:ArHeh5Fz:3kMh6U7h'
+    testDriverCompileOnly 'maven.modrinth:JiOqfoFM:KpNzac5y'
+    testDriverCompileOnly 'maven.modrinth:oMgZ004U:yrw1WDVE'
+    testDriverCompileOnly 'maven.modrinth:pNabrMMw:ncEqrp7o'
+    testDriverCompileOnly 'maven.modrinth:qPydPwtX:lNUOSgAt'
+    testDriverCompileOnly 'maven.modrinth:rvaW4C93:SKmbCuk9'
+    testDriverCompileOnly 'maven.modrinth:RYE1pYyr:wv0rLPsF'
+}
+
+tasks.named('compileTestDriverJava', JavaCompile) { options.compilerArgs += ['-proc:none', '-Xlint:deprecation'] }
+tasks.named('processTestDriverResources', ProcessResources) {
+    def driverVersion = project.version
+    inputs.property 'version', driverVersion
+    filesMatching('META-INF/neoforge.mods.toml') { expand version: driverVersion }
+}
+tasks.register('testDriverJar', Copy) {
+    dependsOn tasks.named('testDriverUnmappedJar')
+    from tasks.named('testDriverUnmappedJar').flatMap { it.archiveFile }
+    into rootProject.layout.buildDirectory.dir('test-driver')
+}
+tasks.register('checkTestDriverArtifacts') {
+    group = 'verification'
+    dependsOn tasks.named('jar'), tasks.named('testDriverJar')
+    doLast {
+        def production = tasks.named('jar').get().archiveFile.get().asFile
+        def driver = tasks.named('testDriverUnmappedJar').get().archiveFile.get().asFile
+        def productionEntries = zipTree(production).files.collect { it.path.replace('\\', '/') }
+        def driverEntries = zipTree(driver).files.collect { it.path.replace('\\', '/') }
+        if (productionEntries.any { it.contains('testdriver/') || it.contains('ae2craftingtime_test_driver') }
+                || driverEntries.any { it.contains('/mc1201/Ae2CraftingTime.class') }
+                || !driverEntries.any { it.endsWith('/testdriver/TestDriverMod.class') }
+                || !driverEntries.any { it.endsWith('/META-INF/neoforge.mods.toml') }) {
+            throw new GradleException('Invalid isolated NeoForge test-driver artifact')
+        }
+    }
+}
+tasks.named('test') { dependsOn tasks.named('checkTestDriverArtifacts') }
+
+

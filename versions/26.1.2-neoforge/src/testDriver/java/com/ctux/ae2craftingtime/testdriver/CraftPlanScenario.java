@@ -18,7 +18,7 @@ import net.minecraft.client.Screenshot;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -44,6 +44,7 @@ public final class CraftPlanScenario {
     private final StableFrames<List<String>> stableRows = new StableFrames<>(3);
     private final LinkedHashMap<String, Boolean> checks = new LinkedHashMap<>();
     private final List<String> screenshots = new ArrayList<>();
+    private CompletableFuture<Void> screenshotWrite = CompletableFuture.completedFuture(null);
     private final List<List<String>> orders = new ArrayList<>();
     private final List<List<String>> knownOrders = new ArrayList<>();
     private ScenarioState state = ScenarioState.STARTING;
@@ -81,6 +82,9 @@ public final class CraftPlanScenario {
     }
 
     public void tick() {
+        if (!screenshotWrite.isDone()) return;
+        screenshotWrite.join();
+        if (state == ScenarioState.FAILED && !options.interactive()) minecraft.stop();
         if (state == ScenarioState.FAILED || state == ScenarioState.QUIT_REQUESTED) {
             return;
         }
@@ -220,7 +224,7 @@ public final class CraftPlanScenario {
         var face = Direction.valueOf(marker.terminal().face());
         var hit = minecraft.hitResult instanceof BlockHitResult current && current.getBlockPos().equals(position)
                 ? current
-                : new BlockHitResult(Vec3.atCenterOf(position).add(Vec3.atLowerCornerOf(face.getNormal()).scale(0.5)),
+                : new BlockHitResult(Vec3.atCenterOf(position).add(Vec3.atLowerCornerOf(face.getUnitVec3i()).scale(0.5)),
                         face, position, false);
         minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND, hit);
         advance(ScenarioState.TERMINAL_OPEN);
@@ -272,7 +276,7 @@ public final class CraftPlanScenario {
         if (wirelessFixture != null) {
             screenshotUnchecked(wirelessFixture.screenshotPrefix() + "-terminal.png");
         }
-        ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$click(entry, 2, ClickType.CLONE);
+        ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$click(entry, 2, ContainerInput.CLONE);
         advance(next);
     }
 
@@ -317,7 +321,7 @@ public final class CraftPlanScenario {
 
     private void openPlan() {
         if (minecraft.screen instanceof CraftAmountScreen amount) {
-            ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next().onPress();
+            ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next().onPress(new net.minecraft.client.input.KeyEvent(257, 0, 0));
             return;
         }
         if (minecraft.screen instanceof CraftConfirmScreen) {
@@ -376,7 +380,7 @@ public final class CraftPlanScenario {
                     .filter(child -> child.getClass().getName().endsWith(".ae2ct.gui.ChangeButton"))
                     .map(net.minecraft.client.gui.components.Button.class::cast).findFirst()
                     .orElseThrow(() -> new IllegalStateException("Crafting Tree toolbar button is missing"));
-            button.onPress();
+            button.onPress(new net.minecraft.client.input.KeyEvent(257, 0, 0));
             stableRows.reset();
             return;
         }
@@ -492,7 +496,7 @@ public final class CraftPlanScenario {
 
     private void verifyAddonTtc() throws IOException {
         if (minecraft.screen instanceof CraftAmountScreen amount) {
-            ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next().onPress();
+            ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next().onPress(new net.minecraft.client.input.KeyEvent(257, 0, 0));
             return;
         }
         var snapshot = UiObservationStore.latest();
@@ -551,6 +555,8 @@ public final class CraftPlanScenario {
     }
 
     private void writePass() throws IOException {
+        if (!screenshotWrite.isDone()) return;
+        screenshotWrite.join();
         var failed = checks.entrySet().stream().filter(entry -> !entry.getValue()).map(java.util.Map.Entry::getKey)
                 .toList();
         if (!failed.isEmpty()) {
@@ -579,10 +585,9 @@ public final class CraftPlanScenario {
             AtomicResultWriter.write(options.output(), result(false, "FAIL", failure));
         } catch (IOException ignored) {
         }
-        if (!options.interactive()) {
-            minecraft.stop();
-        }
     }
+
+    boolean evidenceReady() { return screenshotWrite.isDone(); }
 
     private DriverResult result(boolean complete, String value, DriverResult.Failure resultFailure) {
         return new DriverResult(1, complete, driverFile, DriverPlatform.TARGET, options.profile(), options.scenario(), value,
@@ -624,7 +629,7 @@ public final class CraftPlanScenario {
         var button = minecraft.screen.children().stream().filter(TtcSortButton.class::isInstance)
                 .map(TtcSortButton.class::cast).findFirst()
                 .orElseThrow(() -> new IllegalStateException("TTC sort button is missing"));
-        button.onPress();
+        button.onPress(new net.minecraft.client.input.KeyEvent(257, 0, 0));
         moveMouse(snapshot.gui().x() - 8, snapshot.gui().y() - 8);
         stableRows.reset();
     }
@@ -634,14 +639,13 @@ public final class CraftPlanScenario {
         var rawX = guiX * (double) window.getScreenWidth() / window.getGuiScaledWidth();
         var rawY = guiY * (double) window.getScreenHeight() / window.getGuiScaledHeight();
         ((MouseHandlerAccessor) minecraft.mouseHandler).ae2craftingtime_test_driver$move(
-                window.getWindow(), rawX, rawY);
+                window.handle(), rawX, rawY);
     }
 
     private void screenshot(String name) throws IOException {
         Files.createDirectories(options.output());
-        try (NativeImage image = Screenshot.takeScreenshot(minecraft.getMainRenderTarget())) {
-            image.writeToFile(options.output().resolve(name));
-        }
+        if (screenshots.contains(name)) return;
+        screenshotWrite = DriverScreenshots.capture(minecraft, options.output().resolve(name));
         screenshots.add(name);
     }
 
@@ -673,7 +677,7 @@ public final class CraftPlanScenario {
             wirelessSetup = null;
             return false;
         }
-        minecraft.player.getInventory().selected = 0;
+        minecraft.player.getInventory().setSelectedSlot(0);
         minecraft.player.getInventory().setItem(0, stack.copy());
         return true;
     }
@@ -694,7 +698,7 @@ public final class CraftPlanScenario {
             return false;
         }
         var stack = networkAnalyserSetup.join();
-        minecraft.player.getInventory().selected = 0;
+        minecraft.player.getInventory().setSelectedSlot(0);
         minecraft.player.getInventory().setItem(0, stack.copy());
         return true;
     }

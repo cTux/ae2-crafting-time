@@ -16,6 +16,7 @@ if not exist "%~dp0build\test-driver" mkdir "%~dp0build\test-driver"
 >"%~dp0build\test-driver\ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar" echo driver
 >"%~dp0build\test-driver\ae2-crafting-time-$modVersion-fabric-1.20.1-test-driver.jar" echo driver
 >"%~dp0build\test-driver\ae2-crafting-time-$modVersion-neoforge-1.21.1-test-driver.jar" echo driver
+>"%~dp0build\test-driver\ae2-crafting-time-$modVersion-neoforge-26.1.2-test-driver.jar" echo driver
 exit /b 0
 "@, [Text.UTF8Encoding]::new($false))
 $testMatrix = Join-Path $temp "run-client-versions.json"
@@ -87,7 +88,7 @@ function Assert-Line([string]$text, [string]$expected) {
 
 try {
     foreach ($entry in $matrix) {
-        if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge")) {
+        if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) {
             $game, $loader = $entry.id.Split("-", 2)
             $leaf = if ($loader -eq "forge") { "resolved-mods" } else { "mods" }
             $stale = Join-Path $temp "versions\$($entry.id)\run\$leaf\ae2-crafting-time-old-$loader-$game-test-driver.jar"
@@ -111,12 +112,12 @@ try {
         $mods = Join-Path $temp "versions\$($entry.id)\run\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
         $manifest = Get-Content -LiteralPath (Join-Path $mods ".ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
         $curseCount = @($entry.curseforge | Where-Object { $_ }).Count
-        $driverCount = if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge")) { 1 } else { 0 }
+        $driverCount = if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) { 1 } else { 0 }
         if ($manifest.Count -ne $compatibleProjects.Count + $extraProjects.Count + $curseCount + $driverCount) { throw "Unexpected compatible managed-mod count for $($entry.id)" }
         foreach ($project in $replacedProjects) {
             if ("$project.jar" -in $manifest) { throw "Replaced project $project was also installed" }
         }
-        if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge")) {
+        if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) {
             $driverName = "ae2-crafting-time-$modVersion-$loader-$game-test-driver.jar"
             if ($driverName -notin $manifest -or -not (Test-Path -LiteralPath (Join-Path $mods $driverName))) { throw "Missing compatible driver" }
             if (Test-Path -LiteralPath $stale) { throw "Stale driver was not removed" }

@@ -1,5 +1,5 @@
 sourceSets.testDriver.java.srcDir '../../shared/src/testDriver1201/java'
-def testDriverGame = project.name == 'mc_1_21_1_neoforge' ? '1.21.1' : '1.20.1'
+def testDriverGame = project.projectDir.name.split('-')[0]
 sourceSets.testDriver.resources.srcDir '../../shared/src/testDriver1201/resources'
 
 configurations {

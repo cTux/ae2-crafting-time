@@ -67,6 +67,22 @@ scenario options and never enters the production JAR or `dist`.
 
 ## Artifact contract
 
+## NeoForge 26.1.2 full-client suite
+
+Run `scripts/invoke-ui-smoke-codexvm.ps1 -Target 26.1.2-neoforge -Scenario suite`.
+The pinned compatible graph runs eleven cases in one maximized 8 GiB client:
+Crafting Plan, AdvancedAE, ExtendedAE, BM Addon, Lightning Tech, OMNI Cells,
+Applied Flux, AE2 Wireless Terminals, Import Export Card, Infinity Booster,
+and NO SPACE. Neo Vitae supports the BM Addon recipe; GuideME, JEI, and
+transitive libraries load with the graph without dedicated assertions.
+
+Each case uses a fresh disposable copy of the native 26.1.2 world. The driver
+builds a native AE2 grid in that copy and checks real crafting, new profiling
+samples, final UI observations, and checkpoint screenshots. The Gradle launcher
+uses JDK 21 and selects the JDK 25 client toolchain. The exact companion JAR
+is installed by both compatible and latest launchers and stays out of player
+artifacts and `dist`. Full suites remain compatible-only.
+
 The driver artifact name is derived from the project version:
 
 ```text
