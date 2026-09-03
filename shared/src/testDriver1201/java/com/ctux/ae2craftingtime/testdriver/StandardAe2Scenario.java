@@ -9,6 +9,11 @@ import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import com.ctux.ae2craftingtime.testdriver.mixin.ChatComponentAccessor;
 import com.ctux.ae2craftingtime.testdriver.mixin.CraftAmountScreenAccessor;
 import com.ctux.ae2craftingtime.testdriver.mixin.MEStorageScreenAccessor;
+import com.sun.jna.platform.win32.User32;
+import com.sun.jna.platform.win32.WinDef.DWORD;
+import com.sun.jna.platform.win32.WinDef.WORD;
+import com.sun.jna.platform.win32.WinUser.INPUT;
+import com.sun.jna.platform.win32.WinUser.KEYBDINPUT;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.core.Direction;
@@ -37,7 +42,7 @@ final class StandardAe2Scenario {
     private int reportedPhase = -1;
     private int sort;
     private long lastFrame = -1;
-    private java.awt.Robot keyboard;
+    private boolean keyboardUsed;
     private int clickPhase;
     private boolean clicked;
     private int chatCount;
@@ -204,22 +209,16 @@ final class StandardAe2Scenario {
         var chat = ((ChatComponentAccessor) minecraft.gui.getChat()).ae2craftingtime_test_driver$messages();
         if (!clicked) {
             if (System.nanoTime() < nextStatsClick) return false;
-            if (keyboard == null) {
-                // Minecraft marks AWT headless even though this explicit UI test owns a desktop window.
-                System.setProperty("java.awt.headless", "false");
-                keyboard = new java.awt.Robot();
-            }
             if (clickPhase++ == 0) {
                 chatCount = chat.size();
-                keyboard.keyPress(java.awt.event.KeyEvent.VK_CONTROL);
-                if (reset) keyboard.keyPress(java.awt.event.KeyEvent.VK_ALT);
+                key(0x11, false);
+                if (reset) key(0x12, false);
                 return false;
             }
             if (clickPhase < 3) return false;
             var row = snapshot.rows().stream().filter(r -> r.outputId().equals(statsOutput())).findFirst().orElseThrow();
             DriverPlatform.click(minecraft, row.cell().centerX(), row.cell().centerY());
-            keyboard.keyRelease(java.awt.event.KeyEvent.VK_ALT);
-            keyboard.keyRelease(java.awt.event.KeyEvent.VK_CONTROL);
+            releaseKeys();
             clicked = true;
             clickPhase = 0;
         }
@@ -232,9 +231,22 @@ final class StandardAe2Scenario {
     }
 
     void releaseKeys() {
-        if (keyboard != null) {
-            keyboard.keyRelease(java.awt.event.KeyEvent.VK_ALT);
-            keyboard.keyRelease(java.awt.event.KeyEvent.VK_CONTROL);
+        if (keyboardUsed) {
+            key(0x12, true);
+            key(0x11, true);
+        }
+    }
+
+    private void key(int code, boolean release) {
+        // CodexVM is Windows; Minecraft's existing JNA dependency avoids AWT's cached headless state.
+        var input = new INPUT();
+        input.type = new DWORD(INPUT.INPUT_KEYBOARD);
+        input.input.setType(KEYBDINPUT.class);
+        input.input.ki.wVk = new WORD(code);
+        input.input.ki.dwFlags = new DWORD(release ? KEYBDINPUT.KEYEVENTF_KEYUP : 0);
+        keyboardUsed = true;
+        if (User32.INSTANCE.SendInput(new DWORD(1), new INPUT[] {input}, input.size()).intValue() != 1) {
+            throw new IllegalStateException("Native modifier input was rejected");
         }
     }
 
