@@ -1,6 +1,6 @@
 # Install A Modpack
 
-Read this only when the exact managed instance is absent.
+Read this when the exact managed instance is absent from Prism's **Codex** group.
 
 ## Prepare
 
@@ -9,9 +9,10 @@ Read this only when the exact managed instance is absent.
   project/version IDs, title, release number, Minecraft version, and loader.
 - Prism uses `E:\games\mc-instances` on the host through
   `\\vmware-host\Shared Folders\mc-instances`. Install into the **Codex** group.
-  If a fresh profile has no groups, install first, then move the instance into a
-  newly created `Codex` group.
+  Create **Codex** as part of installation if the group is missing.
 - Install sequentially. Do not launch a client while Prism installs another pack.
+- A matching instance outside **Codex** does not count. Download a separate
+  instance into **Codex**; do not copy or move the other instance into the group.
 
 ## Select The Release
 
@@ -43,4 +44,5 @@ Read this only when the exact managed instance is absent.
   to close and the instance to appear.
 - Use Prism's **Folder** action and verify `instance.cfg`, `mmc-pack.json`,
   `flame`, and `minecraft`. Do not guess a folder from the display name.
+- Verify membership in **Codex** before staging, replacing JARs, or launching.
 - Do not use Prism's `--import` CLI option; it leaves an interactive dialog.

@@ -7,30 +7,35 @@ description: Run prepared AE2 Crafting Time repository clients or automated UI s
 
 ## Route
 
+- Build production and test-driver JARs only on the host. Follow
+  [host build and VM staging](../../../docs/dev-client.md#host-build-and-vm-staging)
+  for Java selection, the session worktree share, and artifact replacement.
 - Load `use-codex-vm` before every Minecraft launch or visual check. Reuse the
-  running VM and its read/write `projects` share; do not add a duplicate share.
+  running VM; add the session worktree as its own share unless that exact
+  directory already has one.
 - Use the prepared clients and launchers in this repository. Never open Prism
   unless the user explicitly asks to test a modpack; that request uses
   `launch-prism-test-modpack` instead.
-- For Forge/Fabric 1.20.1 or NeoForge 1.21.1 UI smoke, dispatch
-  `scripts/invoke-ui-smoke-codexvm.ps1` with `-Target 1.20.1-fabric` for Fabric
-  or `-Target 1.21.1-neoforge` for NeoForge (Forge is the default), and the requested `-Scenario`, `-Latest`,
-  or `-Interactive` option. Prefer OpenSSH; use `-Transport Vmrun` when the
-  OpenSSH path cannot be dispatched reliably. Use `-Scenario suite` for the full
-  compatible graph in one client, with a fresh world and screenshots per case.
-- For another supported target, run its `scripts-run/run-*.bat` launcher inside
-  the VM. Use a matching `-latest` launcher only when the latest profile is
-  requested. Run all-version clients sequentially and report each separately.
-- Read `status.json`, evidence, and launcher logs from `build/ui-smoke` instead
-  of polling build progress through VNC. The status owns the exact PID; stop
-  only that process through the same dispatcher when needed.
+- Copy the host-built JARs into the exact guest-local prepared client, then
+  launch its installed loader directly. Preserve the requested target, profile,
+  and scenario. Use the single-launch suite for the full compatible graph,
+  with a fresh world and screenshots per case. Run clients sequentially.
+- The current `invoke-ui-smoke-codexvm.ps1` dispatcher, `run-ui-smoke.ps1`,
+  `run-client.ps1`, and `run-*` wrappers reach Gradle builds. Do not use them
+  to launch in CodexVM until they support host-built artifacts without guest
+  builds. If an artifact-only prepared launcher is missing, report that gap;
+  do not fall back to a guest build or substitute a Prism modpack.
+- Read current status, evidence, and launcher logs from `build/ui-smoke`.
+  Record the exact client PID and stop only that process when needed; do not
+  reuse a PID from a previous run.
 - Maximize the exact Minecraft window before visual inspection. Test-driver
   scenarios may maximize themselves, but verify the captured result. Confirm
   the exact client stopped before continuing; never kill Java processes broadly.
 
-Run 1.20.1 clients on JDK 17 and both NeoForge clients on JDK 21. The 26.1.2
-project selects its installed JDK 25 toolchain; do not start the multi-project
-build on JDK 25.
+Run 1.20.1 clients on Java 17, 1.21.1 on Java 21, and 26.1.2 on Java 25.
+Resolve the launch machine's `JAVA_HOME_17`, `JAVA_HOME_21`, or `JAVA_HOME_25`
+with `scripts/get-java-home.ps1`; never use a path copied from the other machine.
+These are guest runtime versions; Gradle and all JAR builds stay on the host.
 
 ## Dependency audits
 
@@ -71,8 +76,8 @@ time. Mark an unavailable duration as `not measured`; do not estimate it.
 
 ## Boundaries
 
-- Keep the staged checkout and live runtime on guest-local NTFS; Loom is not
-  reliable on the VMware shared folder. Sync only status, logs, and evidence.
+- Keep the live runtime on guest-local NTFS. Use the shared worktree to copy
+  built JARs into that runtime and return status, logs, and evidence.
 - Do not install a modpack, select an account, join a world or server, or perform
   gameplay unless the request authorizes it.
 - Never substitute a loader, target, scenario, or profile. Do not reinterpret a

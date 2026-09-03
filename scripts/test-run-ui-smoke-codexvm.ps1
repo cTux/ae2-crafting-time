@@ -5,6 +5,7 @@ $stage = Join-Path $temp "stage"
 $scripts = Join-Path $source "scripts"
 New-Item -ItemType Directory -Path $scripts -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "run-ui-smoke-codexvm.ps1") -Destination $scripts
+Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'get-java-home.ps1') -Destination $scripts
 [IO.File]::WriteAllText((Join-Path $scripts "run-ui-smoke.ps1"), @'
 param([string]$Target, [string]$ReportDirectory, [string]$Scenario, [string[]]$ProjectId, [switch]$Latest, [switch]$Interactive)
 New-Item -ItemType Directory -Path $ReportDirectory -Force | Out-Null
@@ -41,23 +42,27 @@ try {
     if ($neoResult.target -ne '1.21.1-neoforge' -or $neoResult.scenario -ne 'suite' -or $neoResult.javaHome -notmatch '21') {
         throw 'Wrapper dropped NeoForge target or JDK 21'
     }
+    $previousJava = $env:JAVA_HOME_21
+    $env:JAVA_HOME_21 = $fabricResult.javaHome
     try {
-        & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Target 1.21.1-neoforge -JavaHome $fabricResult.javaHome
+        & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Target 1.21.1-neoforge
         throw 'Accepted Java 17 for NeoForge'
     } catch {
         if ($_.Exception.Message -notlike '*requires JDK 21*') { throw }
-    }
+    } finally { $env:JAVA_HOME_21 = $previousJava }
     & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Target 26.1.2-neoforge -Scenario suite
     $neoResult = Get-Content (Join-Path $source 'build\ui-smoke\26.1.2-neoforge\compatible\suite\wrapper-result.json') -Raw | ConvertFrom-Json
-    if ($neoResult.target -ne '26.1.2-neoforge' -or $neoResult.scenario -ne 'suite' -or $neoResult.javaHome -notmatch '21') {
-        throw 'Wrapper dropped NeoForge target or JDK 21'
+    if ($neoResult.target -ne '26.1.2-neoforge' -or $neoResult.scenario -ne 'suite' -or $neoResult.javaHome -notmatch '25') {
+        throw 'Wrapper dropped NeoForge target or JDK 25'
     }
+    $previousJava = $env:JAVA_HOME_25
+    $env:JAVA_HOME_25 = $fabricResult.javaHome
     try {
-        & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Target 26.1.2-neoforge -JavaHome $fabricResult.javaHome
+        & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Target 26.1.2-neoforge
         throw 'Accepted Java 17 for NeoForge'
     } catch {
-        if ($_.Exception.Message -notlike '*requires JDK 21*') { throw }
-    }
+        if ($_.Exception.Message -notlike '*requires JDK 25*') { throw }
+    } finally { $env:JAVA_HOME_25 = $previousJava }
     & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Scenario no-space-status
     $focused = Get-Content (Join-Path $source 'build/ui-smoke/1.20.1-forge/compatible/no-space-status/wrapper-result.json') -Raw | ConvertFrom-Json
     if ($focused.scenario -ne 'no-space-status') { throw 'Wrapper dropped no-space scenario' }

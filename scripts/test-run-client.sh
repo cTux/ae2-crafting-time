@@ -12,12 +12,19 @@ jq -e --slurpfile release "$script_dir/release-matrix.json" '
 temp="$(mktemp -d)"
 bin_dir="$(mktemp -d)"
 trap 'rm -rf "$temp" "$bin_dir"' EXIT
+for major in 17 21 25; do
+  mkdir -p "$temp/jdk $major/bin"
+  printf '#!/usr/bin/env bash\nprintf "    java.version = %s.0.1\\n"\n' "$major" > "$temp/jdk $major/bin/java"
+  chmod +x "$temp/jdk $major/bin/java"
+  export "JAVA_HOME_$major=$temp/jdk $major"
+done
 sha="$(printf 'test mod' | sha512sum | awk '{print $1}')"
 mod_version="$(sed -n 's/^modVersion=//p' "$script_dir/../gradle.properties" | head -n 1)"
 printf 'modVersion=%s\n' "$mod_version" > "$temp/gradle.properties"
 cat > "$temp/gradlew" <<GRADLE_EOF
 #!/usr/bin/env bash
 set -euo pipefail
+printf '%s\n' "\$JAVA_HOME" "\$@" > "\$(dirname "\$0")/java-selection.txt"
 [ -z "\${AE2CT_DRIVER_BUILD_FAIL:-}" ] || exit 9
 mkdir -p "\$(dirname "\$0")/build/test-driver"
 printf driver > "\$(dirname "\$0")/build/test-driver/ae2-crafting-time-$mod_version-forge-1.20.1-test-driver.jar"
@@ -70,7 +77,7 @@ jq --arg hash "$sha" 'walk(if type == "object" and has("sha512") then .sha512 = 
     .compatible.versions += [{project_id: "matrix-extra", version_id: "matrix-extra", version: "test"}]
   else . end)' "$script_dir/run-client-versions.json" > "$test_matrix"
 
-assert_line() { printf '%s\n' "$1" | grep -qxF "$2" || { echo "Missing '$2'" >&2; exit 1; }; }
+assert_line() { printf '%s\n' "$1" | grep -qxF -- "$2" || { echo "Missing '$2'" >&2; exit 1; }; }
 
 while IFS= read -r target; do
   if [ "$target" = "1.20.1-forge" ]; then
@@ -79,6 +86,12 @@ while IFS= read -r target; do
   fi
   output="$("$script" -Target "$target" -Root "$temp" -VersionMatrix "$test_matrix" -ResolveOnly 2>&1)"
   assert_line "$output" "profile compatible"
+  case "$target" in 1.20.1-*) major=17; bootstrap="$JAVA_HOME_17";; 1.21.1-neoforge) major=21; bootstrap="$JAVA_HOME_21";; *) major=25; bootstrap="$JAVA_HOME_21";; esac
+  assert_line "$output" "runtime java $major"
+  assert_line "$(cat "$temp/java-selection.txt")" "$bootstrap"
+  assert_line "$(cat "$temp/java-selection.txt")" '-Porg.gradle.java.installations.fromEnv=JAVA_HOME_17,JAVA_HOME_21,JAVA_HOME_25'
+  assert_line "$(cat "$temp/java-selection.txt")" '-Porg.gradle.java.installations.auto-detect=false'
+  assert_line "$(cat "$temp/java-selection.txt")" '-Porg.gradle.java.installations.auto-download=false'
   if [ "$target" = "1.20.1-forge" ]; then
     assert_line "$output" 'mod applied-botanics-forge-1.5.2.jar'
     assert_line "$output" 'mod BpFDhV66.jar'
@@ -105,6 +118,18 @@ while IFS= read -r target; do
 done < <(jq -r '.[].id' "$script_dir/run-client-versions.json")
 
 custom_runtime="$temp/custom-runtime"
+for invalid in missing invalid wrong failed; do
+  case "$invalid" in
+    missing) bad_home=''; expected='Set JAVA_HOME_17';;
+    invalid) bad_home="$temp/absent"; expected='has no executable';;
+    wrong) bad_home="$JAVA_HOME_21"; expected='requires JDK 17';;
+    failed) bad_home="$temp/failed"; mkdir -p "$bad_home/bin"; printf '#!/usr/bin/env bash\nexit 3\n' > "$bad_home/bin/java"; chmod +x "$bad_home/bin/java"; expected='';;
+  esac
+  if out="$(JAVA_HOME_17="$bad_home" "$script" -Target 1.20.1-forge -Root "$temp" -ResolveOnly 2>&1)"; then
+    echo "Accepted $invalid Java setting" >&2; exit 1
+  fi
+  [[ "$out" == *"$expected"* ]] || { echo "$out" >&2; exit 1; }
+done
 "$script" -Target 1.20.1-forge -Root "$temp" -VersionMatrix "$test_matrix" -RuntimeDirectory "$custom_runtime" -ResolveOnly >/dev/null
 [ -f "$custom_runtime/resolved-mods/ae2-crafting-time-$mod_version-forge-1.20.1-test-driver.jar" ]
 

@@ -507,9 +507,12 @@ When a second target is approved, move only already-identical code into a shared
 test-driver source set. Screen adapters remain at the Minecraft/AE2 API
 boundary, and loader bootstraps remain in their version modules.
 
-Client UI checks run inside CodexVM. The checkout is read from VMware's
-read/write `projects` share, while each Minecraft runtime stays on guest-local
-NTFS. Development clients receive an 8 GiB maximum heap. Test-driver launches
+Build production and test-driver JARs on the host using the Java setup in
+[the client workflow](../dev-client.md#host-build-and-vm-staging). Share the
+session worktree with CodexVM and copy the built JARs into the exact client or
+Codex-group Prism modpack. Never build JARs inside the VM. Client UI checks run
+inside CodexVM, while each Minecraft runtime stays on guest-local NTFS.
+Development clients receive an 8 GiB maximum heap. Test-driver launches
 maximize their GLFW window before the scenario starts; other UI checks maximize
 the exact client through the VM display before inspection.
 
