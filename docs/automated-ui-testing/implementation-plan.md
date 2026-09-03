@@ -1,5 +1,142 @@
 # Automated UI Testing Implementation Plan
 
+## Planned change-based selection and standard-case split
+
+This is the next feature, not a claim that the historical slices below are
+unfinished. Implement CS-01 through CS-09 from [the spec](spec.md), following
+[the researched design](technical-design.md#change-based-selection-research-and-design).
+The current task delivers planning documents only; do not launch Minecraft or
+implement the feature as part of creating its issue.
+
+### 1. Define and test the plan contract
+
+- Add `scripts/get-ui-smoke-plan.ps1`, `ui-smoke-impact.json` and
+  `ui-smoke-groups.json`. Implement the exact source ownership, group membership,
+  CLI constraints, path fallback and language-key rules in the design.
+- Use temporary Git repositories in `scripts/test-ui-smoke-plan.ps1` to prove
+  merge-base behavior, changes committed/staged/unstaged/untracked, empty diffs,
+  renames across targets, deletion, non-ASCII/whitespace/newline filenames,
+  conflicted files, missing refs, and native-command failure handling.
+- Cover unions, broad-rule dominance, docs/test-only NOT_REQUIRED, unknown
+  runtime fallback, common versus version source sets, JSON values/keys,
+  malformed/duplicate-key JSON, and a DELAYED-only change in a mixed renderer
+  deliberately selecting all status cases.
+- Validate all IDs against release/suite/coverage sources. Test mapping errors,
+  unsupported cases, nested/duplicate groups, and source-set inclusion/exclusion
+  parity, including shared standard-flow use by 26.1.2.
+- Test fingerprints before build and bundle sealing; stale HEAD, local content
+  or rule changes reject execution. Plan-only must have zero build/VM effects.
+
+Gate: CA-01 through CA-07, CA-10 and CA-12 have deterministic executable checks;
+the report explains every selected or omitted path. No runtime is needed yet.
+
+### 2. Split the standard flow without losing checks
+
+- Refactor shared `StandardAe2Scenario` into the six leaf modes specified in the
+  design, using named stages and the existing `StandardCraftFixture` helpers.
+  Trace all callers first: `CraftPlanScenario`, `AddonCpuFixture`, `DriverOptions`,
+  `DriverResult`, both target runtime implementations, and host result validation.
+- Keep setup local to each leaf. Add actual waiting recovery, running progress,
+  delayed tooltip/styling/recovery assertions and their named screenshots.
+  Preserve UI submission and real output/sample checks in `craft-lifecycle`.
+- Register leaf IDs and exact check sets; remove the monolithic standard ID as
+  a raw driver case only after host alias expansion works. Retain ordinary
+  `craft-plan` and the three existing blocked-status names.
+- Reuse the common driver source for all four targets. Change a target adapter
+  only when its native APIs require it; check 26.1.2 input/render/runtime
+  replacements explicitly. Add no production source changes solely for tests.
+- Extend `TestDriverCoreTest` and relevant driver boundary checks for leaf
+  dispatch, required-check rejection, independent initialization, transitions,
+  timeout/failure evidence, and modifier cleanup. Put Minecraft-free decisions
+  in tested shared driver code; keep normal project coverage gates intact.
+
+Gate: every old standard check maps to a runnable leaf, all new leaf checks have
+bounded failure paths, and the full lifecycle still proves the original journey.
+
+### 3. Carry selected case lists through the existing runner
+
+- Add changed/plan-only parameters to the public host and matrix scripts.
+  Preserve no-argument full mode. Reject conflicting changed-mode overrides.
+- Pass per-target lists through `invoke-ui-smoke-codexvm.ps1`,
+  `run-ui-smoke-codexvm.ps1`, `run-ui-smoke.ps1` and
+  `prepare-ui-smoke-suite.ps1`; inspect the actual dispatch argument encoding
+  so PowerShell arrays cannot be collapsed or interpreted as commands.
+- Expand and deduplicate host groups before Java launch; preserve target lists
+  containing `standard-ae2`. Raise the PowerShell and `SuitePlan` maximum to 64,
+  retaining unique scenario/world validation. Test 1, 32, 34, 64 and 65 cases.
+- Extend `test-ui-smoke-matrix.ps1`, `test-run-ui-smoke.ps1`,
+  `test-prepare-ui-smoke-suite.ps1`, `test-prepare-ui-smoke-launch.ps1` and
+  `SuitePlanTest` at the affected boundaries. Prove per-target differences,
+  standard alias expansion, one launch per graph, manual leaf mode, adapter
+  obligations, unchanged timeouts, and refusal to continue with an unconfirmed PID.
+
+Gate: CA-08 and CA-09 work through the runner contract tests; Forge's 34-case
+expanded list is accepted without truncation or an extra launch.
+
+### 4. Preserve coverage meaning and update workflow documentation
+
+- Extend `get-ui-smoke-coverage.ps1` and campaign aggregation for group-to-leaf
+  results. Only six passing leaves produce a standard-group pass; unselected
+  leaves stay NOT_RUN. Test failures, missing screenshots, partial suites,
+  setup failures, stale reports and latest diagnostic classifications.
+- Record selection reasons, commit/worktree identity, graph/adapter identity,
+  immutable artifact hashes, and leaf evidence. Keep old archive contents intact.
+- Update this feature's original standard-flow sections, `docs/test-driver`
+  spec/design/plan, `docs/ui-smoke-evidence.md`, `docs/dev-client.md`, and
+  `docs/dependencies.md` where group/coverage wording changes. Explain the
+  raw JVM `standard-ae2` migration and unchanged host alias.
+- Update development and prepared-smoke skills to choose changed mode for
+  authorized focused verification and full mode for full/release requests.
+  Update the Prism suite recipe for alias expansion without changing pack
+  selection or adding automatic pack launches. Do not add a GitHub VM workflow
+  or modify the post-commit hook to launch clients.
+
+Gate: CA-09 through CA-11 are reflected consistently in reports and instructions;
+no document describes focused coverage as a full release gate.
+
+### 5. Verify all four real clients and deliver
+
+Follow repository commit ordering: self-review the full diff, make one
+conventional feature commit, and let the hook create the PR before local test
+execution. Then run the selector and changed runner self-tests above; report
+GitHub build/test/coverage checks separately. Never weaken coverage thresholds.
+
+After contract checks pass, use `run-ae2-client-smoke` and CodexVM:
+
+1. Run each of the six leaves as an independent invocation on each of the four
+   targets. They must succeed without a prior leaf run or retained world.
+2. Run `standard-ae2` as a group on each target and verify the six leaf outcomes,
+   fresh worlds and single recorded PID. Compare check coverage with the old
+   18-check standard contract, not historical screenshot pixels.
+3. Exercise a genuine target-local change and a shared delayed-specific change
+   in disposable verification branches. Capture plan and actual launch identities:
+   one target in the first case; delayed leaf on all four in the second. Remove
+   verification-only edits before the final candidate build. Broad fallback and
+   failure paths are covered by deterministic tests, not invented smoke passes.
+4. Fetch/rebase the clean feature branch immediately before final full compatible
+   smoke. Run all four expanded full suites, plus required newest-adapter focused
+   graphs under SP-01/SP-02. Do not demand runtime smoke of older adapters.
+5. Review every distinct English screenshot and semantic result, archive evidence,
+   confirm fixture hashes, exact PID exit and removal of disposable worlds, and
+   verify no driver/planner material entered production JARs. Record measured
+   timings, failed attempts and any timeout evidence. No estimated speedup claim.
+6. Read the PR and CI state back. A known unrelated integration failure, including
+   [ProjectCell #213](https://github.com/cTux/ae2-crafting-time/issues/213), remains
+   visible and blocks a full PASS; never omit it to certify the selector.
+
+Completion requires all CA-01 through CA-12, preserved old standard assertions,
+reviewed independent/group/full runtime evidence, truthful coverage reports and
+green required CI. Named-modpack installation is not required to prove this
+prepared-client selector; existing explicit Prism behavior must remain intact.
+
+| Requirements | Implementation slices |
+| --- | --- |
+| CS-01/02/03, CA-01..07/12 | 1, 3, 4, 5 |
+| CS-04/07, CA-10 | 1, 3, 4 |
+| CS-05/06, CA-08 | 2, 3, 5 |
+| CS-08, CA-11 | 3, 4, 5 |
+| CS-09, CA-09 | 2, 3, 4, 5 |
+
 ## Follow-up: newest adapter and English-only smoke
 
 Implement [SP-01 through SP-04](spec.md#smoke-policy) before claiming the current

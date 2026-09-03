@@ -13,6 +13,102 @@ that observes and controls the client.
 
 Tracking issue: [#124](https://github.com/cTux/ae2-crafting-time/issues/124).
 
+## Planned change-based smoke selection
+
+Tracking issue: [#218](https://github.com/cTux/ae2-crafting-time/issues/218).
+
+Status: planned, researched on 2026-09-03. This section extends the implemented
+runner; it does not claim that automatic selection or independent standard
+cases already exist. The original #124 remains the completed baseline.
+For this extension, CS-01 through CS-09 supersede the monolithic execution
+details below; the original behavior, evidence and safety requirements remain.
+
+### Scope and execution
+
+- **CS-01:** Select affected Minecraft/loader targets and relevant UI cases from
+  a Git change set. A change isolated to one target runs only that target.
+  Shared code selects every consuming target, not just the folder's apparent
+  Minecraft version. Union the requirements of all changed files.
+- **CS-02:** Narrow behavior only when a reviewed mapping proves its scope.
+  Dedicated delayed-status code or an English delayed-label resource change
+  selects `delayed-status` on the affected targets. Mixed status rendering
+  selects all status cases. Shared profiling, wire formats, general UI, build,
+  or unclassified runtime changes select full affected-target suites. Never
+  guess scope from the word `delayed`, an issue title, or an added line alone.
+- **CS-03:** Show an inspectable plan before execution: comparison commits,
+  local changes, targets, expanded cases, dependency/profile identity, reasons,
+  exclusions, fallback decisions, and not-selected coverage. A known docs-only
+  or test-only change produces `NOT_REQUIRED`, not a fabricated smoke pass.
+- **CS-04:** Automatic selection happens when the host change-based command is
+  invoked. The development workflow uses it when UI smoke is required or
+  requested, after the hook-created PR exists. A commit does not launch
+  Minecraft. GitHub CI keeps builds and non-UI tests; adding a VM scheduler or
+  self-hosted CI runner is out of scope. Explicit full runs stay available and
+  release-required full coverage cannot be replaced by a focused pass.
+
+### Independently runnable standard cases
+
+- **CS-05:** `standard-ae2` becomes an ordered group of the six cases below.
+  Each can run alone on all four release targets, with its own marked fresh
+  world, setup, assertions, screenshots, cleanup, and result. No case consumes
+  another case's world, job, cached observation, or profiler sample.
+- **CS-06:** Group execution uses one client process per target and dependency
+  graph. Preserve the existing full journey through real UI submission and
+  real machine output. Splitting the checks must not remove coverage.
+
+| Case | Independently verified behavior |
+| --- | --- |
+| `standard-plan-controls` | Plan rows and total TTC, badge geometry, all sort modes, tooltip, details response, reset response and server sample removal |
+| `standard-status-controls` | A real active job, status rows, header and badge geometry, all sort modes, tooltip, details and reset targeting |
+| `waiting-status` | A pending output before first dispatch shows WAITING; actual dependency completion starts it and removes WAITING |
+| `running-status` | A dispatched output shows its TTC while another output waits; actual progress updates the status/header without a false blocked label |
+| `delayed-status` | Actual stalled dispatch becomes DELAYED after the production threshold; correct row, styling, tooltip and layout; real output recovery clears DELAYED |
+| `craft-lifecycle` | Terminal -> amount -> plan -> UI Start -> busy CPU -> actual furnace output and new samples -> idle CPU -> reopened empty status |
+
+`craft-plan`, `no-space-status`, `no-provider-status`, `no-power-status`, and
+existing integration cases keep their names and remain independently runnable.
+The standard group covers the old standard flow; the three blocked-status
+cases remain separate members of the full target suite.
+
+### Overrides, failures, and compatibility
+
+- **CS-07:** Keep explicit target/scenario/profile/mod selections. They are
+  manual scopes, not proof that all changed behavior was covered. Change-based
+  mode cannot silently discard affected targets or cases through an override.
+  Missing refs, invalid mappings, unsupported selected cases, and missing
+  required fixtures fail before launching; uncertain runtime scope expands.
+- **CS-08:** Keep SP-01 through SP-04, newest-adapter identity checks, `en_us`,
+  host builds, guest-local runtimes, sequential clients, exact-process cleanup,
+  screenshot review and archive requirements. Named modpacks remain an explicit
+  Prism workflow against the exact requested pack graph. A source diff never
+  automatically chooses, upgrades, or installs a modpack.
+- **CS-09:** Every selected leaf must pass for its group to pass. Missing or
+  later unrun cases never count as passes. Keep historical reports unchanged;
+  new group evidence identifies its actual leaf results. A focused result does
+  not imply a full-suite pass, including in the project coverage ledger.
+
+### Acceptance examples
+
+| ID | Change or request | Required outcome |
+| --- | --- | --- |
+| CA-01 | Runtime file under `versions/1.20.1-forge` only | Forge alone; relevant mapped cases, otherwise its full suite |
+| CA-02 | Shared dedicated delayed diagnostics or only the English `ttc_delayed` value | `delayed-status` on all four targets |
+| CA-03 | Shared status renderer or status-priority rules | All status cases on all consuming targets, with the reason visible |
+| CA-04 | Common profiler or packet change | Full suites on all consuming targets |
+| CA-05 | Changes affecting different targets/features together | Union, ordered and deduplicated; no first-match loss |
+| CA-06 | Rename/delete, new runtime file, unknown path, missing merge base | Both path identities considered; conservative full fallback or explicit preflight error, never an empty successful plan |
+| CA-07 | Docs/images only, or tests only | Explained `NOT_REQUIRED`; normal static/unit checks still apply |
+| CA-08 | Each standard leaf run alone, then `standard-ae2` and full suites | Independent passes, complete old-check coverage, one process per suite graph, no 32-case truncation |
+| CA-09 | Selected leaf fails or evidence is missing | Nonzero compatible result; group cannot pass; later cases recorded `NOT_RUN` |
+| CA-10 | Explicit manual selection excludes changed behavior | Clearly manual coverage; cannot certify the change-based gate |
+| CA-11 | Requested pack reaches an older integration adapter | Preserve pack; follow SP-04 and keep newest-adapter proof separate |
+| CA-12 | Worktree changes after a saved plan | Reject stale execution and require replanning |
+
+This is bounded test selection, not general semantic code analysis. A DELAYED
+edit inside a method shared by several statuses may correctly run more than
+`delayed-status`. Finer narrowing requires a reviewed ownership mapping, not
+an assertion by the caller that the rest is unaffected.
+
 ## Smoke policy
 
 Requirements updated 2026-09-03. These rules apply to future prepared-client,
