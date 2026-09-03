@@ -114,7 +114,7 @@ public final class CraftPlanScenario {
                 default -> {
                 }
             }
-        } catch (Exception error) {
+        } catch (Exception | LinkageError error) {
             fail("exception", state.name(), ReportText.failure(error));
         }
     }

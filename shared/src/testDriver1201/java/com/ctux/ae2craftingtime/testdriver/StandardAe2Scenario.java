@@ -122,7 +122,7 @@ final class StandardAe2Scenario {
             }
             if (sort > 0) screenshot.accept(prefix + "-sort-" + sort + ".png");
             if (sort++ < 3) {
-                var button = minecraft.screen.children().stream().filter(TtcSortButton.class::isInstance)
+                AbstractWidget button = minecraft.screen.children().stream().filter(TtcSortButton.class::isInstance)
                         .map(TtcSortButton.class::cast).findFirst().orElseThrow();
                 DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
             } else {
