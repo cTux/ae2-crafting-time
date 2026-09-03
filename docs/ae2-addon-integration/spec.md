@@ -107,6 +107,7 @@ several cooperating hooks; those hooks are not competing integrations.
 | VS-07 | Report the dependency, actual installed version, selected variant or skip reason, and priority decision once. Selection establishes eligibility only; successful application and observed behavior remain separate evidence. |
 | VS-08 | A known unsupported optional contract disables only our adapter before activation. Do not disable the dependency itself or unrelated integrations. Unexpected probe errors, required dependency failures, and failures after activation retain their original failure behavior; never roll back applied hooks or retry another variant after a partial activation. |
 | VS-09 | Prevent duplicate profiling, UI decorations, and callback registration within a dependency. Shared AE2 hooks still run where needed; native-hook reuse is not a second version of an addon adapter. |
+| VS-10 | Runtime smoke covers only the newest implemented adapter per dependency and supported target, in English (`en_us`). Retained older variants keep unit/contract/packaging coverage without additional smoke campaigns. Follow the [shared smoke policy](../automated-ui-testing/spec.md#smoke-policy). |
 
 This is one variant per dependency **per process**, not one addon for the whole
 modpack. Physical clients may host both UI and integrated-server capabilities
@@ -122,13 +123,13 @@ not add new AE2 majors or combine different Minecraft builds into one JAR.
 
 | Check | Observable result | Requirements |
 | --- | --- | --- |
-| VS-AC-01 | The same built target JAR works with the retained old dependency and the newer dependency in separate launches. Each launch selects its matching variant and produces correct TTC/profiling behavior. | VS-01, VS-02, VS-06 |
+| VS-AC-01 | The same target JAR retains old and new variants. Contract/selection/packaging checks cover both; only the newest adapter receives runtime smoke, in English, proving correct TTC/profiling behavior. | VS-01, VS-02, VS-06, VS-10 |
 | VS-AC-02 | When two candidates are eligible, only the higher-priority variant is selected. An incompatible newer candidate permits a compatible older candidate before activation; no eligible candidate produces an explicit skip. | VS-02, VS-03, VS-08 |
 | VS-AC-03 | Two different installed addons work together, with one selected variant each and no repeated profiling or UI additions. | VS-02, VS-09 |
 | VS-AC-04 | Core-only clients and dedicated servers start on all four targets. Absent, wrong-target, and wrong-side variants cannot load optional/client classes. Required AE2 hooks are preserved. | VS-05, VS-08 |
 | VS-AC-05 | Callback order, repeated plugin instances, screen/world changes, and feature setting changes never alter the selected variant or add a second registration. | VS-04, VS-05, VS-09 |
 | VS-AC-06 | Logs identify the installed version and selection reason once, distinguish selection from actual execution, and preserve unexpected and post-activation failures without runtime fallback. | VS-07, VS-08 |
-| VS-AC-07 | Published JARs contain every supported variant for their target, and metadata minima, optionality, packet layouts, and saved samples remain unchanged. Tests cover selection boundaries; runtime evidence covers retained and new contracts. | VS-01 through VS-09 |
+| VS-AC-07 | Published JARs contain every supported variant for their target, and metadata minima, optionality, packet layouts, and saved samples remain unchanged. Non-smoke tests cover retained contracts and selection boundaries; runtime evidence covers the newest adapter in English only. | VS-01 through VS-10 |
 
 ### Development clients
 

@@ -1,5 +1,9 @@
 # AE2 Crafting Time Test Driver Technical Design
 
+Apply the [planned smoke-policy enforcement](../automated-ui-testing/technical-design.md#planned-smoke-policy-enforcement)
+to shared and version-specific scenarios. English-only requirements below do
+not claim the current bilingual driver states have already been removed.
+
 ## No-provider status scenario
 
 `NoProviderScenario` owns an isolated native CPU, drive, energy cell, and two
@@ -9,9 +13,9 @@ batch sits in a chest; blocking mode keeps the remaining batches scheduled.
 The calculation future is polled without blocking the server thread.
 
 The shared frame observer checks the final label, badge bounds, and tooltip.
-Language reloads complete before inspecting localized text. Recovery must
+Set English (`en_us`) before inspecting text; do not add language-switch steps. Recovery must
 reach the same menu within two seconds. Cancellation also checks the profiler's
-server-side state. Eight screenshots preserve the distinct UI checkpoints.
+server-side state. Capture each distinct English UI checkpoint; no language-duplicate images are required.
 The version-specific `DriverPlatform.processingPattern` method converts the
 array/list API difference; the 26.1.2 counterpart uses its native identifiers
 and registry API. No code seeds missing-provider evidence.
@@ -548,9 +552,9 @@ per dispatch and an unfuelled furnace. Verify no warning while network energy
 is sufficient. Replace the creative source with a real energy cell and keep
 only enough energy for idle demand, below the next dispatch cost. Observe an
 active CPU, one active output, and scheduled work, then the rendered NO POWER
-badge and complete tooltip in English and Ukrainian. Restore energy, require
+badge and complete tooltip in English (`en_us`). Restore energy, require
 another real dispatch and warning recovery in the same menu, cancel, and check
-that an inactive CPU alone produces no warning. Retain all five checkpoints.
+that an inactive CPU alone produces no warning. Retain all distinct English behavior checkpoints.
 Every full compatible suite includes this scenario and the NO PROVIDER
 regression. Driver checks observe final frames and real AE2 state, never seed
 production diagnostics. Shared pure tests cover threshold, expiry, priority,

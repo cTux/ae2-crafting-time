@@ -92,7 +92,7 @@ launchers. No new broad driver framework is required.
 | Rejected inputs | No output with missing ingredient, unrelated extra item, quartz dust, charged Certus, Nether Quartz, written book, or enchanted book. | A1 |
 | Appearance/use | Inventory/hand/dropped appearance matches vanilla book with no glint. Main-hand and eligible off-hand use opens our guide repeatedly without consuming it. Ordinary book and AE2 guide unchanged. | A2–A3 |
 | Reading | First opening shows introduction; navigate to chapter and back, close/reopen, use Home, and search chapter text without parser/model errors. | A3–A4 |
-| Languages/themes | English/Ukrainian names and complete pages in both themes; links and navigation work. Untranslated locale falls back to English. Client resource reload preserves book behavior. | A4–A5 |
+| Language/themes | English (`en_us`) names and complete pages in both themes; links, navigation, and resource reload work. Check Ukrainian page/key parity and fallback structurally, without another smoke language. | A4–A5 |
 | Save/multiplayer | Store crafted book in chest, reload world, retrieve/open. On each modern dedicated server, craft/drop/pick up, reconnect, and reopen. Inspect persisted component and correct guide destination. | A3, A6 |
 | Old targets | Start 1.20.1 Forge/Fabric without adding GuideME for this feature; no new recipe errors or dependency requirement. | A7 |
 
@@ -102,7 +102,7 @@ also verify their recipe loading, model, and opening. Report each version set
 separately rather than treating one run as proof for another.
 
 Capture crafting result/title, introduction, and chapter one for both modern
-targets, plus Ukrainian rendering. Archive through
+targets in English only. Archive through
 `docs/ui-smoke-evidence.md`. Report actual checks, fixes, and GitHub CI
 separately; research checks do not count as runtime evidence.
 

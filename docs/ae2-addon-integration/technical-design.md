@@ -2,7 +2,7 @@
 
 ## Versioned adapter selection
 
-Status: planned. Implements VS-01 through VS-09 in the
+Status: planned. Implements VS-01 through VS-10 in the
 [specification](spec.md#versioned-adapter-selection). The remaining sections
 describe the existing integration layers that this change must preserve.
 
@@ -238,10 +238,14 @@ single winner prevents unrelated addons from working together; universal
 version ranges cannot distinguish forks or semantically different APIs.
 
 The [implementation plan](implementation-plan.md#versioned-adapter-selection)
-maps all acceptance checks to pure decisions, packaging, startup, and actual
-old/new behavior. Build once per target and test that identical JAR across each
-retained dependency fixture. Compilation or selection logs alone cannot close
-the work.
+maps all acceptance checks to pure decisions, packaging, startup, and behavior.
+Retain old/new artifact contracts for non-smoke checks. Runtime smoke exercises
+only the newest implemented adapter per dependency/target, in English (`en_us`),
+under the [shared smoke policy](../automated-ui-testing/spec.md#smoke-policy).
+For Forge NeoEco this is `batched-long`; `pending-accounting` keeps contract
+coverage without a 20.3 smoke. NeoForge's `batched-int` remains that target's
+newest adapter. For Tree, smoke `tree-layout` and retain `tree-helper` contract
+checks. Compilation or selection logs alone cannot replace newest-adapter smoke.
 
 ## Native-first layers
 

@@ -100,8 +100,10 @@ After it succeeds:
 3. Confirm CurseForge accepted every upload. Public visibility can lag, and the author upload token may not be authorized for the public files read endpoint.
 4. Merge the hook-created release PR and verify `origin/master` contains the next patch `modVersion`.
 
-To mirror each published GitHub Release into Discord with direct links to every
-JAR, follow [Discord release announcements](discord-release-announcements.md).
+To mirror each published GitHub Release into Discord, include its same full
+release description, GitHub link, and direct links to every JAR. Follow
+[Discord release announcements](discord-release-announcements.md), including
+the planned full-body delivery requirement; a link-only post is insufficient.
 
 If an upload fails, start with the response body printed by the script. Before
 retrying, check the platform, GitHub Releases, `.release-state.json`, and the
