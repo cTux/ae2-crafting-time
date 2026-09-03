@@ -130,7 +130,7 @@ try {
     Invoke-Case "pass" -Target "1.21.1-neoforge" -Latest -shouldPass $true
     Invoke-Case "wrong-target" -Target "1.21.1-neoforge" -shouldPass $false
     Invoke-Case "missing-screenshot" -Target "1.21.1-neoforge" -Scenario suite -shouldPass $false
-    Invoke-Case "pass" -Target "26.1.2-neoforge" -shouldPass $false
+    Invoke-Case "pass" -Target "unsupported" -shouldPass $false
     Invoke-Case "pass" -shouldPass $true
     $cacheMarker = Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\runtime\cache-marker.txt"
     Set-Content -LiteralPath $cacheMarker -Value "keep"

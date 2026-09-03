@@ -47,6 +47,7 @@ public final class CraftPlanScenario {
     private CompletableFuture<Void> screenshotWrite = CompletableFuture.completedFuture(null);
     private final List<List<String>> orders = new ArrayList<>();
     private final List<List<String>> knownOrders = new ArrayList<>();
+    private boolean pendingPass;
     private ScenarioState state = ScenarioState.STARTING;
     private long stateStarted;
     private FixtureMarker marker;
@@ -84,6 +85,10 @@ public final class CraftPlanScenario {
     public void tick() {
         if (!screenshotWrite.isDone()) return;
         screenshotWrite.join();
+        if (pendingPass) {
+            try { writePass(); } catch (IOException error) { fail("result_write", "atomic result", ReportText.failure(error)); }
+            return;
+        }
         if (state == ScenarioState.FAILED && !options.interactive()) minecraft.stop();
         if (state == ScenarioState.FAILED || state == ScenarioState.QUIT_REQUESTED) {
             return;
@@ -555,8 +560,9 @@ public final class CraftPlanScenario {
     }
 
     private void writePass() throws IOException {
-        if (!screenshotWrite.isDone()) return;
+        if (!screenshotWrite.isDone()) { pendingPass = true; return; }
         screenshotWrite.join();
+        pendingPass = false;
         var failed = checks.entrySet().stream().filter(entry -> !entry.getValue()).map(java.util.Map.Entry::getKey)
                 .toList();
         if (!failed.isEmpty()) {

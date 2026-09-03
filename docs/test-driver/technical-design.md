@@ -53,8 +53,6 @@ sample and require a new one after actual crafting.
 Runtime preparation mutates only disposable copies; the tracked native fixture
 preconfirms NeoForge's experimental-world warning. Production protocols stay unchanged.
 
-## Original Forge implementation evidence
-
 ## NeoForge 26.1.2 port
 
 Reuse the driver result model, safety checks, suite orchestration, and scenario
@@ -68,6 +66,8 @@ Every addon craft clears the retained sample and requires a fresh sample from
 that actual craft. `ui-smoke-neoforge-26.1.2-suite.json` owns the exact pinned
 scenario list. The existing runner and VM dispatcher retain their process,
 world cleanup, evidence, and independent result-validation contracts.
+
+## Original Forge implementation evidence
 
 - `:mc_1_20_1_forge` already owns the Forge 1.20.1 client, Java 17 toolchain,
   AE2 dependency, production source sets, reobfuscation, and `distMod` task.

@@ -180,5 +180,3 @@ tasks.register('checkTestDriverArtifacts') {
     }
 }
 tasks.named('test') { dependsOn tasks.named('checkTestDriverArtifacts') }
-
-

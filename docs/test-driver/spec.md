@@ -65,8 +65,6 @@ Compatible and latest launchers install the exact
 full suites remain compatible-only. The companion stays inert without explicit
 scenario options and never enters the production JAR or `dist`.
 
-## Artifact contract
-
 ## NeoForge 26.1.2 full-client suite
 
 Run `scripts/invoke-ui-smoke-codexvm.ps1 -Target 26.1.2-neoforge -Scenario suite`.
@@ -82,6 +80,8 @@ samples, final UI observations, and checkpoint screenshots. The Gradle launcher
 uses JDK 21 and selects the JDK 25 client toolchain. The exact companion JAR
 is installed by both compatible and latest launchers and stays out of player
 artifacts and `dist`. Full suites remain compatible-only.
+
+## Artifact contract
 
 The driver artifact name is derived from the project version:
 
