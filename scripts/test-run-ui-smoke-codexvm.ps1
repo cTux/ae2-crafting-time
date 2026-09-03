@@ -47,6 +47,17 @@ try {
     } catch {
         if ($_.Exception.Message -notlike '*requires JDK 21*') { throw }
     }
+    & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Target 26.1.2-neoforge -Scenario suite
+    $neoResult = Get-Content (Join-Path $source 'build\ui-smoke\26.1.2-neoforge\compatible\suite\wrapper-result.json') -Raw | ConvertFrom-Json
+    if ($neoResult.target -ne '26.1.2-neoforge' -or $neoResult.scenario -ne 'suite' -or $neoResult.javaHome -notmatch '21') {
+        throw 'Wrapper dropped NeoForge target or JDK 21'
+    }
+    try {
+        & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Target 26.1.2-neoforge -JavaHome $fabricResult.javaHome
+        throw 'Accepted Java 17 for NeoForge'
+    } catch {
+        if ($_.Exception.Message -notlike '*requires JDK 21*') { throw }
+    }
     & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Scenario no-space-status
     $focused = Get-Content (Join-Path $source 'build/ui-smoke/1.20.1-forge/compatible/no-space-status/wrapper-result.json') -Raw | ConvertFrom-Json
     if ($focused.scenario -ne 'no-space-status') { throw 'Wrapper dropped no-space scenario' }

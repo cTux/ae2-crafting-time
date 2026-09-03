@@ -39,7 +39,7 @@ public record DriverResult(
         return scenario.equals("craft-plan") ? CRAFT_PLAN_CHECKS
                 : scenario.equals(NoSpaceScenario.SCENARIO) ? NoSpaceScenario.CHECKS
                 : scenario.equals(CraftingTreeScenario.SCENARIO) ? CRAFTING_TREE_CHECKS
-                : scenario.equals(MeRequesterFixture.SCENARIO) ? ME_REQUESTER_CHECKS
+                : scenario.equals(RequesterFixture.SCENARIO) ? ME_REQUESTER_CHECKS
                 : scenario.equals(Ae2NetworkAnalyserFixture.SCENARIO) ? VISUAL_TOOL_CHECKS
                 : scenario.equals("aeinfinitybooster-terminal") ? WIRELESS_RANGE_CHECKS
                 : WirelessTerminalFixture.supports(scenario) ? WIRELESS_TERMINAL_CHECKS : ADDON_CPU_CHECKS;

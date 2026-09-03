@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge")][string]$Target = "1.20.1-forge",
+    [ValidateSet("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")][string]$Target = "1.20.1-forge",
     [switch]$Latest,
     [switch]$Interactive,
     [ValidatePattern("^(suite|craft-plan|no-space-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
@@ -12,7 +12,7 @@ if ($Scenario -eq "suite" -and ($Interactive -or $Latest -or $ProjectId)) {
     throw "The prepared suite requires the full compatible profile and non-interactive execution"
 }
 $root = Split-Path -Parent $PSScriptRoot
-$fixtureTarget = if ($Target -eq "1.21.1-neoforge") { $Target } else { "1.20.1-forge" }
+$fixtureTarget = if ($Target -like "*-neoforge") { $Target } else { "1.20.1-forge" }
 $source = Join-Path $root "versions\$fixtureTarget\run\saves\ae2-crafting-time"
 $game, $loader = $Target.Split("-", 2)
 $modsDirectory = if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" }
@@ -78,7 +78,8 @@ if ($Scenario -ne "suite") { New-Item -ItemType Directory -Path $evidence -Force
 Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
 Write-Status "preparing"
 if ($Scenario -eq "suite") {
-    $scenarios = Get-Content -LiteralPath (Join-Path $PSScriptRoot "ui-smoke-$loader-suite.json") -Raw | ConvertFrom-Json
+    $suiteName = if ($Target -eq "26.1.2-neoforge") { "neoforge-26.1.2" } else { $loader }
+    $scenarios = Get-Content -LiteralPath (Join-Path $PSScriptRoot "ui-smoke-$suiteName-suite.json") -Raw | ConvertFrom-Json
     $suite = & (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1") -Target $Target -RuntimeDirectory $runtime -OutputDirectory $evidence -Scenarios $scenarios
     $world = $suite.world
     $plan = Get-Content -LiteralPath (Join-Path $evidence "suite-plan.json") -Raw | ConvertFrom-Json

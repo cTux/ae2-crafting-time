@@ -1,5 +1,5 @@
 param(
-    [ValidateSet("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge")][string]$Target = "1.20.1-forge",
+    [ValidateSet("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")][string]$Target = "1.20.1-forge",
     [switch]$Latest,
     [switch]$Interactive,
     [switch]$Scheduled,
@@ -23,7 +23,7 @@ function Get-WorkspaceId([string]$path) {
 }
 
 function Find-SmokeJava([string]$requested) {
-    $major = if ($Target -eq "1.21.1-neoforge") { 21 } else { 17 }
+    $major = if ($Target -like "*-neoforge") { 21 } else { 17 }
     $candidate = if ($requested) { $requested } else {
         @(
             Get-ChildItem -LiteralPath "C:\Program Files\Eclipse Adoptium" -Directory -Filter "jdk-$major*" -ErrorAction SilentlyContinue

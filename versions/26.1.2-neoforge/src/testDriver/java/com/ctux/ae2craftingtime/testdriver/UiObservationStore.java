@@ -6,7 +6,7 @@ import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import appeng.api.stacks.AEKey;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
@@ -101,7 +101,7 @@ public final class UiObservationStore {
         }
     }
 
-    public static void fill(GuiGraphics graphics, int x1, int y1, int x2, int y2, int color) {
+    public static void fill(GuiGraphicsExtractor graphics, int x1, int y1, int x2, int y2, int color) {
         if (active != null && color == 0xB0000000) {
             if (CraftingTreeScenario.isScreen(active.screen)) {
                 active.badges.add(transformed(graphics, x1, y1, x2, y2));
@@ -160,7 +160,7 @@ public final class UiObservationStore {
         return WIRELESS_SCREENS.contains(className);
     }
 
-    public static void treeNode(GuiGraphics graphics, AEKey key, int x, int y) {
+    public static void treeNode(GuiGraphicsExtractor graphics, AEKey key, int x, int y) {
         if (active != null && CraftingTreeScenario.isScreen(active.screen)) {
             var bounds = transformed(graphics, x, y, x + 16, y + 16);
             active.rows.add(new PendingRow(key.getId().toString(), 0, bounds));
@@ -168,10 +168,10 @@ public final class UiObservationStore {
         }
     }
 
-    private static Rect transformed(GuiGraphics graphics, int x1, int y1, int x2, int y2) {
-        var pose = graphics.pose().last().pose();
-        var from = pose.transformPosition(new org.joml.Vector3f(x1, y1, 0));
-        var to = pose.transformPosition(new org.joml.Vector3f(x2, y2, 0));
+    private static Rect transformed(GuiGraphicsExtractor graphics, int x1, int y1, int x2, int y2) {
+        var pose = graphics.pose();
+        var from = pose.transformPosition(new org.joml.Vector2f(x1, y1));
+        var to = pose.transformPosition(new org.joml.Vector2f(x2, y2));
         return new Rect((int) Math.floor(from.x), (int) Math.floor(from.y),
                 (int) Math.ceil(to.x - from.x), (int) Math.ceil(to.y - from.y));
     }

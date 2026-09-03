@@ -53,6 +53,20 @@ sample and require a new one after actual crafting.
 Runtime preparation mutates only disposable copies; the tracked native fixture
 preconfirms NeoForge's experimental-world warning. Production protocols stay unchanged.
 
+## NeoForge 26.1.2 port
+
+Reuse the driver result model, safety checks, suite orchestration, and scenario
+assertions. Keep changed Minecraft 26 and addon APIs in the target driver source
+set. Observe `GuiGraphicsExtractor` text, fills, tooltips, and AE2 table output,
+then capture the rendered framebuffer after the frame completes. Route the
+new input events and asynchronous screenshot readback through the target API.
+
+The native fixture creates its grid only after disposable-world verification.
+Every addon craft clears the retained sample and requires a fresh sample from
+that actual craft. `ui-smoke-neoforge-26.1.2-suite.json` owns the exact pinned
+scenario list. The existing runner and VM dispatcher retain their process,
+world cleanup, evidence, and independent result-validation contracts.
+
 ## Original Forge implementation evidence
 
 - `:mc_1_20_1_forge` already owns the Forge 1.20.1 client, Java 17 toolchain,

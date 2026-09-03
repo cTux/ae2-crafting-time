@@ -22,6 +22,8 @@ set -euo pipefail
 mkdir -p "\$(dirname "\$0")/build/test-driver"
 printf driver > "\$(dirname "\$0")/build/test-driver/ae2-crafting-time-$mod_version-forge-1.20.1-test-driver.jar"
 printf driver > "\$(dirname "\$0")/build/test-driver/ae2-crafting-time-$mod_version-fabric-1.20.1-test-driver.jar"
+printf driver > "\$(dirname "\$0")/build/test-driver/ae2-crafting-time-$mod_version-neoforge-1.21.1-test-driver.jar"
+printf driver > "\$(dirname "\$0")/build/test-driver/ae2-crafting-time-$mod_version-neoforge-26.1.2-test-driver.jar"
 GRADLE_EOF
 chmod +x "$temp/gradlew"
 
@@ -94,16 +96,12 @@ while IFS= read -r target; do
   if [ "$target" = "1.20.1-forge" ]; then leaf="resolved-mods"; else leaf="mods"; fi
   [ -f "$temp/versions/$target/run/$leaf/.ae2-crafting-time-run-mods.json" ]
   [ -f "$temp/versions/$target/run-latest/$leaf/.ae2-crafting-time-run-mods.json" ]
-  if [ "$target" = "1.20.1-forge" ] || [ "$target" = "1.20.1-fabric" ]; then
-    loader="${target#1.20.1-}"
-    driver="ae2-crafting-time-$mod_version-$loader-1.20.1-test-driver.jar"
-    [ -f "$temp/versions/$target/run/$leaf/$driver" ]
-    [ -f "$temp/versions/$target/run-latest/$leaf/$driver" ]
-    [ ! -f "$temp/versions/$target/run/$leaf/ae2-crafting-time-old-forge-1.20.1-test-driver.jar" ]
-  elif find "$temp/versions/$target" -name '*test-driver.jar' -print -quit | grep -q .; then
-    echo "Driver leaked into $target" >&2
-    exit 1
-  fi
+  loader="${target#*-}"
+  game="${target%%-*}"
+  driver="ae2-crafting-time-$mod_version-$loader-$game-test-driver.jar"
+  [ -f "$temp/versions/$target/run/$leaf/$driver" ]
+  [ -f "$temp/versions/$target/run-latest/$leaf/$driver" ]
+  [ ! -f "$temp/versions/$target/run/$leaf/ae2-crafting-time-old-forge-1.20.1-test-driver.jar" ]
 done < <(jq -r '.[].id' "$script_dir/run-client-versions.json")
 
 custom_runtime="$temp/custom-runtime"
