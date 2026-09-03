@@ -162,7 +162,10 @@ try {
         $timeout = if ($Interactive) { [TimeSpan]::FromMinutes(30) } elseif ($Scenario -eq "suite") { [TimeSpan]::FromMinutes(40) } else { [TimeSpan]::FromMinutes(8) }
         if (-not $process.WaitForExit([int]$timeout.TotalMilliseconds)) {
             $null = $process.CloseMainWindow()
-            if (-not $process.WaitForExit(10000)) { & taskkill.exe /PID $process.Id /T /F | Out-Null }
+            if (-not $process.WaitForExit(10000)) {
+                & taskkill.exe /PID $process.Id /T /F | Out-Null
+                if (-not $process.WaitForExit(10000)) { throw 'Recorded smoke client did not exit after termination' }
+            }
             throw "UI-smoke client exceeded $($timeout.TotalMinutes) minutes"
         }
         if ($process.ExitCode -ne 0) {
@@ -285,7 +288,9 @@ try {
         if ($previousToken) { $env:AE2CT_TEST_DRIVER_TOKEN = $previousToken }
         else { Remove-Item Env:\AE2CT_TEST_DRIVER_TOKEN -ErrorAction SilentlyContinue }
         foreach ($copy in $worldCopies) {
-            if (Test-Path -LiteralPath $copy) { Remove-Item -LiteralPath $copy -Recurse -Force }
+            if ((-not $process -or $process.HasExited) -and (Test-Path -LiteralPath $copy)) {
+                Remove-Item -LiteralPath $copy -Recurse -Force
+            }
         }
         $afterHash = Get-TreeHash $source
         $afterMetadata = (Get-FileHash -LiteralPath $metadata).Hash

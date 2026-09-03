@@ -55,6 +55,10 @@ foreach ($row in $targets) {
             $status = Get-Content -LiteralPath (Join-Path $live 'status.json') -Raw | ConvertFrom-Json
         } while ($status.phase -in @('queued', 'preparing', 'running'))
         Copy-Item -LiteralPath $live -Destination (Join-Path $report 'run') -Recurse
+        if ($status.pid -and $null -eq $status.exitCode) {
+            $stopCampaign = $true
+            throw 'Recorded client exit is unconfirmed; refusing to launch another client'
+        }
         if ($status.phase -ne 'passed') { $result = 'FAIL'; throw $status.message }
         $result = 'PASS'
         foreach ($entry in $coverage) {
