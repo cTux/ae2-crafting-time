@@ -1,8 +1,8 @@
 # No Power Status Implementation Plan
 
-1. Reuse or add the shared `CraftingBlockReason` state, snapshot transport,
-   compatibility bumps, client cache, and row resolver from the `NO PROVIDER`
-   plan. Do not add a second packet field or second protocol bump.
+1. Replace the shipped NO PROVIDER snapshot set with a shared
+   `CraftingBlockReason` map, using the approved compatibility bump below.
+   Preserve its CPU context and exact-pattern revalidation.
 2. Extend the standard AE2 execution mixin around the simulated energy check,
    preserving its exact amount and threshold behavior.
 3. Add the equivalent optional AdvancedAE hook only where verified.

@@ -30,8 +30,8 @@ supply the energy required to dispatch the next batch of that pattern.
 
 - Support every row in `scripts/release-matrix.json`.
 - Keep the logical server authoritative in singleplayer and multiplayer.
-- Reuse the shared blocker transport planned with `NO PROVIDER` so the packet
-  layout changes only once.
+- Replace the shipped NO PROVIDER field with one shared blocker map using the
+  additional compatibility bump approved below.
 - Apply the same lifecycle to standard AE2 and supported AdvancedAE CPUs where
   the exact energy-check seam exists.
 - Update English and Ukrainian together.

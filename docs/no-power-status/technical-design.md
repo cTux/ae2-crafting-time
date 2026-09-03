@@ -13,11 +13,10 @@ power failure from that guard or from a stationary status row.
 
 ## Shared runtime and transport
 
-Reuse the `CraftingBlockReason` runtime map, 20-tick freshness window, bounded
-snapshot map, client cache, compatibility bumps, and row-state resolver defined
-by `docs/no-provider-status/technical-design.md`. If this status is implemented
-first, introduce that shared two-value foundation once; do not create a second
-power-specific packet field.
+Replace the shipped missing-provider set with the approved shared
+`CraftingBlockReason` snapshot map, retaining its CPU context and request bounds.
+Keep NO PROVIDER exact-pattern revalidation. Power observations use a separate
+20-tick lifetime and feed the same map, cache, and row resolver.
 
 Record `NO_POWER` by concrete CPU identity and every positive output of the
 pattern whose simulated extraction failed. Repeated failures refresh the tick.
@@ -49,8 +48,9 @@ color, and is treated as unknown by TTC sorting.
 
 ## Failure handling
 
-- A successful dispatch does not need an explicit clear; an unrefreshed
-  observation expires after 20 ticks and disappears on the next snapshot.
+- A sufficient simulated extraction clears that exact pattern immediately.
+  An unrefreshed power observation expires after 20 ticks and disappears on the
+  next snapshot.
 - A null grid or CPU returns no blocker.
 - Unknown packet values are rejected at the shared compatibility boundary.
 - No runtime blocker is persisted.
