@@ -39,7 +39,7 @@ final class NoPowerScenario {
             if (serverStep(minecraft, player -> {
                 var ready = fixture.prepare(phase, player, marker);
                 if (ready && phase == 0) {
-                    player.serverLevel().setBlockAndUpdate(fixture.cpuPosition.east(6).north(),
+                    player.level().setBlockAndUpdate(fixture.cpuPosition.east(6).north(),
                             Blocks.FURNACE.defaultBlockState());
                 }
                 return ready;
@@ -76,7 +76,7 @@ final class NoPowerScenario {
             if (serverStep(minecraft, player -> {
                 // Replace the creative source once, then let the real node initialize.
                 var pos = fixture.cpuPosition.east(2);
-                if (player.serverLevel().getBlockState(pos).getBlock().toString().contains("creative")) {
+                if (player.level().getBlockState(pos).getBlock().toString().contains("creative")) {
                     DispatchStatusFixture.place(player, pos, "energy_cell");
                     return false;
                 }
@@ -84,7 +84,7 @@ final class NoPowerScenario {
                 var energy = fixture.cpu(player).getMainNode().getGrid().getEnergyService();
                 energy.extractAEPower(Double.MAX_VALUE, Actionable.MODULATE, PowerMultiplier.ONE);
                 energy.injectPower(10, Actionable.MODULATE);
-                ((Container) player.serverLevel().getBlockEntity(fixture.cpuPosition.east(6).north())).clearContent();
+                ((Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north())).clearContent();
                 return true;
             })) phase++;
         } else if (phase == 5 || phase == 6) {
@@ -153,7 +153,7 @@ final class NoPowerScenario {
                 var cpu = fixture.cpu(player);
                 cpu.getCluster().craftingLogic.cancel();
                 var clear = ProfilerBridge.blockReasons(cpu.getCluster(), cpu.getMainNode().getGrid(),
-                        player.serverLevel().getGameTime()).isEmpty();
+                        player.level().getGameTime()).isEmpty();
                 cpu.getMainNode().getGrid().getEnergyService().extractAEPower(Double.MAX_VALUE,
                         Actionable.MODULATE, PowerMultiplier.ONE);
                 return clear;
