@@ -28,7 +28,7 @@ top-level matrix project has one explicit coverage disposition (**A1**, **A3**,
    prepared native launch manifest.
 3. Register `ae2craftingtime_test_driver` only in explicit test mode and enforce
    the exact production-mod version contract.
-4. Add pure result/checklist code under `test-driver/src/main/java` and the
+4. Add shared result/checklist code under `shared/src/testDriver1201/java` and the
    Forge bootstrap plus 1.20.1 screen adapter only where needed.
 5. Write the driver JAR to `build/test-driver`; keep it out of `dist`.
 6. Extend artifact checks to reject the driver mod ID/classes from production

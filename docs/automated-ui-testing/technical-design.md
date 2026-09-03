@@ -63,7 +63,10 @@ the server's actual job/output state. Each input phase waits for stable frames;
 phase timestamps and the last fixture checkpoint make timeouts attributable.
 Modifier keys are released on both success and failure.
 The Windows VM receives native key events through Minecraft's existing JNA
-library; input does not depend on AWT's headless setting.
+library; input does not depend on AWT's headless setting. Before pressing keys,
+the driver verifies native foreground ownership and transfers focus from the
+previous desktop window when necessary. It waits for Minecraft to observe the
+modifiers before clicking the row.
 
 After completion, the driver saves the last job view, returns to the terminal
 and reopens Crafting Status through its buttons. The fresh view must be empty.

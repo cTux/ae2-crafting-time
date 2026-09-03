@@ -78,7 +78,8 @@ matrix order. Use `scripts/run-ui-smoke-matrix.ps1 -Target <id>` for one target,
 or `-Latest` for a separate diagnostic campaign. The campaign builds and resolves
 on the host, stages exact production/driver JARs, and launches Java directly in
 CodexVM. It continues with later targets after a failure and returns non-zero
-for any compatible failure. Timestamped reports are under `build/ui-smoke/campaigns`.
+for any compatible failure. If a client exit cannot be confirmed, it stops before
+launching another target. Timestamped reports are under `build/ui-smoke/campaigns`.
 
 The prepared guest loader manifests live at
 `C:/Users/Public/Documents/AE2CraftingTimeSmoke/prepared/<target>/launch.json`.

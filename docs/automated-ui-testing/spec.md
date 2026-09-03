@@ -96,8 +96,9 @@ non-overlap with owned buttons and item cells. It clicks real widgets and rows,
 then verifies visible ordering and the resulting server response so display and
 input indices cannot silently diverge.
 
-Screenshots use a fixed resolution, GUI scale, language, fixture, and cursor
-position. They remain human evidence for clipping, spacing, and color. Full
+Screenshots use the maximized VM window and each scenario's language, fixture,
+and cursor position. Snapshots record GUI dimensions and scale. They remain
+human evidence for clipping, spacing, and color. Full
 frame pixel equality is not required; a cropped golden comparison is added
 only for a stable region with a demonstrated regression.
 
