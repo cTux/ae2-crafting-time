@@ -176,8 +176,9 @@ dependencies {
 
 tasks.named('compileTestDriverJava', JavaCompile) { options.compilerArgs += ['-proc:none'] }
 tasks.named('processTestDriverResources', ProcessResources) {
-    inputs.property 'version', project.version
-    filesMatching('META-INF/neoforge.mods.toml') { expand version: project.version }
+    def driverVersion = project.version
+    inputs.property 'version', driverVersion
+    filesMatching('META-INF/neoforge.mods.toml') { expand version: driverVersion }
 }
 tasks.register('testDriverJar', Copy) {
     dependsOn tasks.named('testDriverUnmappedJar')

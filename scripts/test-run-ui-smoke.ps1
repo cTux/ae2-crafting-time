@@ -46,7 +46,9 @@ if ($DriverScenario -eq "suite") {
     $summary | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $DriverOutputDirectory 'result.json') -Encoding UTF8
     return
 }
-$checks = if ($DriverScenario -eq "crafting-tree-screen") {
+$checks = if ($DriverScenario -eq "no-space-status") {
+    [ordered]@{ screen=$true; "external-machine"=$true; warning=$true; tooltip=$true; layout=$true; ukrainian=$true; recovered=$true }
+} elseif ($DriverScenario -eq "crafting-tree-screen") {
     [ordered]@{ screen=$true; 'node-ttc'=$true; tooltip=$true; layout=$true }
 } elseif ($DriverScenario -eq "ae2networkanalyser-screen") {
     [ordered]@{ screen=$true; layout=$true }
@@ -61,7 +63,9 @@ $checks = if ($DriverScenario -eq "crafting-tree-screen") {
 } else {
     [ordered]@{ screen=$true; 'ttc-row'=$true; 'total-ttc'=$true; 'sort-cycle'=$true; tooltip=$true; layout=$true }
 }
-$screenshots = if ($DriverScenario -eq "crafting-tree-screen") {
+$screenshots = if ($DriverScenario -eq "no-space-status") {
+    @("no-space-before.png", "no-space-en-us.png", "no-space-uk-ua.png", "no-space-recovered.png")
+} elseif ($DriverScenario -eq "crafting-tree-screen") {
     @("crafting-tree-screen.png", "crafting-tree-tooltip.png")
 } elseif ($DriverScenario -eq "ae2networkanalyser-screen") {
     @("ae2networkanalyser-screen.png")
@@ -144,6 +148,8 @@ try {
     Invoke-Case "pass" -Scenario suite -Interactive -shouldPass $false
     Invoke-Case "pass" -Scenario suite -ProjectId E6BFl96N -shouldPass $false
     Invoke-Case "pass" -Latest -shouldPass $true
+    Invoke-Case "pass" -Scenario "no-space-status" -shouldPass $true
+    Invoke-Case "missing-screenshot" -Scenario "no-space-status" -shouldPass $false
     Invoke-Case "pass" -Scenario "neoeco-cpu" -shouldPass $true
     Invoke-Case "pass" -Scenario "crafting-tree-screen" -shouldPass $true
     Invoke-Case "missing-screenshot" -Scenario "crafting-tree-screen" -shouldPass $false

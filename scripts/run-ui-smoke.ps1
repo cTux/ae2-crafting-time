@@ -2,7 +2,7 @@ param(
     [ValidateSet("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge")][string]$Target = "1.20.1-forge",
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(suite|craft-plan|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|craft-plan|no-space-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$ReportDirectory
 )
@@ -170,7 +170,9 @@ try {
         $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
             Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
         $driverName = "ae2-crafting-time-$modVersion-$loader-$game-test-driver.jar"
-        $requiredChecks = if ($caseScenario -eq "crafting-tree-screen") {
+        $requiredChecks = if ($caseScenario -eq "no-space-status") {
+            @("screen", "external-machine", "warning", "tooltip", "layout", "ukrainian", "recovered")
+        } elseif ($caseScenario -eq "crafting-tree-screen") {
             @("screen", "node-ttc", "tooltip", "layout")
         } elseif ($caseScenario -eq "ae2networkanalyser-screen") {
             @("screen", "layout")
@@ -193,7 +195,9 @@ try {
         $actualChecks = @($result.checks.psobject.Properties.Name)
         if (Compare-Object $requiredChecks $actualChecks -SyncWindow 0) { throw "Invalid UI-smoke check set" }
         foreach ($check in $requiredChecks) { if (-not $result.checks.$check) { throw "Failed UI-smoke check: $check" } }
-        $requiredScreenshots = if ($caseScenario -eq "crafting-tree-screen") {
+        $requiredScreenshots = if ($caseScenario -eq "no-space-status") {
+            @("no-space-before.png", "no-space-en-us.png", "no-space-uk-ua.png", "no-space-recovered.png")
+        } elseif ($caseScenario -eq "crafting-tree-screen") {
             @("crafting-tree-screen.png", "crafting-tree-tooltip.png")
         } elseif ($caseScenario -eq "ae2networkanalyser-screen") {
             @("ae2networkanalyser-screen.png")

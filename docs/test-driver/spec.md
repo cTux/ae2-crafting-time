@@ -1,5 +1,16 @@
 # AE2 Crafting Time Test Driver Spec
 
+## No-space status scenario
+
+`no-space-status` uses an isolated native AE2 CPU and a full item cell in the
+disposable world. A full external furnace first leaves the warning absent.
+The fixture seeds retained CPU contents through AE2's inventory API; AE2's
+normal tick and menu synchronization must report rejected storage. Observe the
+rendered warning, badge, and tooltip in English and Ukrainian. Replace the full
+cell with writable capacity and require the warning to clear in the same screen.
+Keep before, both-language tooltip, and recovered screenshots. Pure row tests
+cover active and scheduled exclusions; the fixture does not simulate a craft.
+
 ## Goal
 
 Provide a development-only companion mod that drives and observes a real
@@ -24,9 +35,9 @@ This covers [issue #126](https://github.com/cTux/ae2-crafting-time/issues/126).
 ## Fabric full-client suite
 
 Run `scripts/invoke-ui-smoke-codexvm.ps1 -Target 1.20.1-fabric -Scenario suite`.
-The full pinned compatible graph runs in one maximized 8 GiB client with seven
+The full pinned compatible graph runs in one maximized 8 GiB client with eight
 cases: Crafting Plan, ExtendedAE, Applied Botanics, AE2 Things DISK storage,
-MEGA Cells, AE2 Wireless Terminals, and ME Requester. Each case gets a fresh
+MEGA Cells, AE2 Wireless Terminals, ME Requester, and NO SPACE. Each case gets a fresh
 copy of the tracked 1.20.1 fixture, screenshots, and checked semantic results.
 JEI and transitive libraries load with the graph but have no dedicated assertions.
 Crafting Tree and Network Analyser are not pinned in this Fabric graph.
@@ -40,9 +51,9 @@ installed into `run/mods` or `run-latest/mods`. Player JARs stay independent.
 
 Run `scripts/invoke-ui-smoke-codexvm.ps1 -Target 1.21.1-neoforge -Scenario suite`.
 Use JDK 21 and the complete pinned compatible graph in one maximized 8 GiB
-client. The 21 cases in `scripts/ui-smoke-neoforge-suite.json` cover the base
+client. The 22 cases in `scripts/ui-smoke-neoforge-suite.json` cover the base
 plan, Crafting Tree, all pinned CPU/provider fixtures, four wireless-terminal
-flows, and ME Requester. Each case uses a fresh copy of the native 1.21.1 world and retains
+flows, ME Requester, and NO SPACE. Each case uses a fresh copy of the native 1.21.1 world and retains
 its own semantic results and screenshots. JEI, GuideME, and transitive libraries
 load with the graph but have no dedicated UI assertions. Expanded AE remains
 excluded from the compatible graph because of its recorded OmniSequence conflict.

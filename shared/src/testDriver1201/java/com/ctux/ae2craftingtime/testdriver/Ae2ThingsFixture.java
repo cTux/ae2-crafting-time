@@ -35,7 +35,8 @@ final class Ae2ThingsFixture extends AddonCpuFixture<Ae2ThingsFixture.Placement>
         var inventory = drive.getInternalInventory();
         for (var slot = 0; slot < inventory.size(); slot++) {
             if (inventory.getStackInSlot(slot).isEmpty()) {
-                inventory.setItemDirect(slot, new ItemStack(BuiltInRegistries.ITEM.getOptional(new ResourceLocation("ae2things", "disk_drive_1k")).orElseThrow()));
+                inventory.setItemDirect(slot, new ItemStack(BuiltInRegistries.ITEM.getOptional(
+                        Objects.requireNonNull(ResourceLocation.tryBuild("ae2things", "disk_drive_1k"))).orElseThrow()));
                 drive.onChangeInventory(inventory, slot);
                 return new Placement(cpu, drive, slot, grid);
             }

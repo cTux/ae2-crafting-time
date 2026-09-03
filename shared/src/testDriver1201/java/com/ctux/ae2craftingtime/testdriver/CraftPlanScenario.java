@@ -36,6 +36,7 @@ public final class CraftPlanScenario {
     private static final Duration STEP_TIMEOUT = Duration.ofSeconds(30);
     private static final Duration START_TIMEOUT = Duration.ofMinutes(2);
     private final Minecraft minecraft;
+    private final NoSpaceScenario noSpace;
     private final DriverOptions options;
     private final String driverFile;
     private final AddonCpuFixture<?> baseFixture;
@@ -67,9 +68,10 @@ public final class CraftPlanScenario {
 
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         this.minecraft = minecraft;
+        noSpace = NoSpaceScenario.SCENARIO.equals(options.scenario()) ? new NoSpaceScenario() : null;
         this.options = options;
         this.driverFile = driverFile;
-        baseFixture = DriverPlatform.baseFixture(options.scenario());
+        baseFixture = noSpace == null ? DriverPlatform.baseFixture(options.scenario()) : null;
         addonFixture = AddonCpuFixture.create(options.scenario());
         wirelessFixture = WirelessTerminalFixture.create(options.scenario());
         requesterFixture = MeRequesterFixture.SCENARIO.equals(options.scenario()) ? new MeRequesterFixture() : null;
@@ -82,7 +84,7 @@ public final class CraftPlanScenario {
         if (state == ScenarioState.FAILED || state == ScenarioState.QUIT_REQUESTED) {
             return;
         }
-        if (elapsed().compareTo(state == ScenarioState.STARTING ? START_TIMEOUT : STEP_TIMEOUT) > 0) {
+        if (elapsed().compareTo(state == ScenarioState.STARTING || noSpace != null ? START_TIMEOUT : STEP_TIMEOUT) > 0) {
             fail("timeout", state.name(), currentScreen());
             return;
         }
@@ -139,6 +141,10 @@ public final class CraftPlanScenario {
         if (!marker.disposableWorldId().equals(options.world())) {
             throw new IllegalArgumentException("fixture world ID mismatch");
         }
+        if (noSpace != null) {
+            advance(ScenarioState.WORLD_READY);
+            return;
+        }
         if (baseFixture != null && !baseFixture.setup(minecraft, marker)) {
             return;
         }
@@ -159,7 +165,14 @@ public final class CraftPlanScenario {
         advance(ScenarioState.WORLD_READY);
     }
 
-    private void openTerminal() {
+    private void openTerminal() throws IOException {
+        if (noSpace != null) {
+            if (noSpace.tick(minecraft, marker, checks, this::screenshotUnchecked, this::moveMouse)) {
+                advance(ScenarioState.TERMINAL_OPEN);
+                writePass();
+            }
+            return;
+        }
         if (networkAnalyserFixture != null) {
             if (minecraft.screen != null) {
                 if (minecraft.screen.getClass().getName().equals(Ae2NetworkAnalyserFixture.SCREEN)) {

@@ -162,7 +162,7 @@ function Install-Project([string]$projectId) {
 
 foreach ($projectId in $projects) { Install-Project $projectId }
 if ($DriverScenario -and $requestedProjects.Count) {
-    foreach ($projectId in @($matrixEntry.test_driver_projects)) { Install-Project $projectId }
+    foreach ($projectId in @($matrixEntry.test_driver_projects | Where-Object { $_ })) { Install-Project $projectId }
 }
 $curseforgeProjects = [Collections.Generic.HashSet[string]]::new()
 function Add-CurseForgeProject([string]$projectId) {

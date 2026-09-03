@@ -1,5 +1,15 @@
 # AE2 Crafting Time Test Driver Technical Design
 
+## No-space status driver
+
+`NoSpaceScenario` runs after the shared disposable-world safety check and owns
+only its native storage fixture and bounded UI checkpoints. It uses no optional
+addon. The full cell and retained CPU items are real AE2 inventories; no test
+sets the menu warning flag or calls production display helpers. Existing frame
+observers include Crafting CPU screens and capture final text draws, badge
+bounds, and hovered tooltips. Restore writable capacity on the server, then
+require the same client menu to clear its synchronized warning.
+
 ## Fabric 1.20.1 port
 
 The shared `shared/src/testDriver1201` source set owns the existing scenario
