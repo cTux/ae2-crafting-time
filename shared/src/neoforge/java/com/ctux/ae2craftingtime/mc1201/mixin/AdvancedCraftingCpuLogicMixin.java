@@ -42,7 +42,7 @@ public abstract class AdvancedCraftingCpuLogicMixin {
     private IPatternDetails ae2craftingtime$dispatchPattern;
 
     @Inject(method = "executeCrafting", at = @At("RETURN"), remap = false)
-    private void ae2craftingtime$clearDispatchPattern(CallbackInfo ci) {
+    private void ae2craftingtime$clearDispatchPattern(CallbackInfoReturnable<Integer> cir) {
         ae2craftingtime$dispatchPattern = null;
     }
 
