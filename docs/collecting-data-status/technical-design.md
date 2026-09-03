@@ -108,8 +108,9 @@ all supported targets.
 
 AE2 renders table text at half scale in a 67-pixel cell, right-aligned before
 the item icon. The exact English phrase is much wider than a normal estimate,
-and Ukrainian can be wider still. In-game verification must cover the longest
-translation at each supported target's normal GUI scale.
+and Ukrainian can be wider still. English-only smoke checks the rendered label
+at each supported target's normal GUI scale. Preserve Ukrainian text quality
+through translation/resource review; do not add a Ukrainian smoke campaign.
 
 Do not replace AE2's renderer or add a new scaling system for one label. If a
 translation overlaps, shorten that translated value while preserving the

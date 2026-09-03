@@ -1,5 +1,28 @@
 # Automated UI Testing Technical Design
 
+## Planned smoke-policy enforcement
+
+Implement [SP-01 through SP-04](spec.md#smoke-policy) without changing product
+translation support. Resolve the newest implemented adapter per dependency and
+target before scheduling direct cases, then assert the runtime-selected ID
+against it. The integration selector's immutable catalogue/snapshot owns this
+identity; do not infer it by sorting dependency versions or duplicate its order
+in a runner. Until that selector exists, explicitly record the adapter/contract
+established by artifact inspection in the campaign evidence.
+
+Preserve compatible/latest graph identities. Where a compatible pin selects
+an older variant, omit its direct adapter case and schedule a focused fixture
+for the newest variant. Record the omitted case as an older-adapter policy skip,
+not PASS, failure, or removed support. Latest-profile diagnostics do not waive
+the required newest-adapter case. A requested named pack is never upgraded to
+meet this policy.
+
+Set `en_us` before the first observed frame and verify it for each scenario.
+Remove Ukrainian reload/capture states from the shared and 26.1.2 driver
+counterparts and update checkpoint/result validators together. Keep distinct
+English behavior checkpoints and both-language static resource checks. Historical
+campaigns retain their original languages, filenames, and results.
+
 ## Execution path
 
 The public unattended command is `scripts/run-ui-smoke.ps1` with no target.

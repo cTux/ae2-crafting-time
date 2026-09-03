@@ -3,6 +3,14 @@
 Implements the [specification](spec.md). Execution order and proof requirements
 are in the [implementation plan](implementation-plan.md).
 
+The separately planned [versioned adapter selector](../ae2-addon-integration/technical-design.md#versioned-adapter-selection)
+owns early compatibility choice. Consume its immutable per-dependency snapshot;
+do not choose variants again in diagnostics. A selected variant has pending
+capabilities until actual hook evidence arrives. Include its variant ID/reason,
+count the dependency once, and do not duplicate its bootstrap selection log.
+Known preflight no-match skips the optional adapter before application; it does
+not authorize runtime rollback or widen this design's recovery boundaries.
+
 ## Research baseline
 
 Inspected on 2026-09-02 at `b17f7dd` (the fetched `origin/master`), against the
@@ -72,8 +80,8 @@ installed on an unsupported target. No entire mod-list dump is needed.
 | Crafting Tree / `ae2ct` | F B N | Client: node estimate/layout, tooltip, details/reset routing; old or new widget mixin plus successful reflection. Package variants are alternatives, not two integrations. |
 | ME Requester / `merequester` | F B N | Client: request rows and total; `drawFG` plus valid reflective request reads. |
 | AdvancedAE / `advanced_ae` | F N X | Logical server: five custom CPU event hooks, plus independent selected-CPU lookup. Report Forge's packaged adapter despite missing optional metadata declaration. |
-| NeoEco / `neoecoae` | F | Logical server: custom CPU events, with normal and FastPath dispatch evidence distinguished. N's development pin does not establish that adapter. |
-| Lightning Tech / `ae2lt` | F | Logical server: custom CPU events, including reflective capacity read. N/X pins remain outside this adapter's scope. |
+| NeoEco / `neoecoae` | F N | Logical server: custom CPU events, with normal and FastPath dispatch evidence distinguished. N registers its integer-batch adapter in the current source; runtime activation still needs evidence. |
+| Lightning Tech / `ae2lt` | F N | Logical server: custom CPU events, including reflective capacity read. N registers this adapter in the current source; X's development pin remains outside the custom adapter's scope. |
 | WCWT / `wcwt` | F N | Client: one-item tooltip, observed after the matching terminal filter. |
 | Wireless Terminals / `ae2wtlib` | F B N X | Client: one-item tooltip, observed after WCT filter. |
 | Import Export Card / `ae2insertexportcard`, `ae2importexportcard` | F N X | Client: one-item tooltip after the matching menu-interface filter; one canonical integration, retain the actual installed alias/version. |

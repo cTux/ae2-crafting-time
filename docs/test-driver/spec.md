@@ -1,12 +1,18 @@
 # AE2 Crafting Time Test Driver Spec
 
+All future smoke follows the [shared policy](../automated-ui-testing/spec.md#smoke-policy):
+newest adapter per dependency/target and English (`en_us`) only. The English-only
+scenario requirements below are the required next state; removing existing
+bilingual driver states is follow-up implementation work. Keep Ukrainian
+product translations and static resource checks.
+
 ## No-provider status scenario
 
 `no-provider-status` submits a real 64-output processing job to an isolated
 native AE2 CPU. Blocking mode and a chest hold the first batch active while
 later batches remain scheduled. Removing its pattern must show NO PROVIDER in
 that combined row. Check the rendered badge and both tooltip sentences in
-English and Ukrainian. Restore the pattern and require recovery without
+English (`en_us`). Restore the pattern and require recovery without
 reopening the menu. Install an equivalent pattern in a second provider, remove
 the first pattern, and require no warning for two refresh cycles. Remove that
 second provider block, observe the warning again, then replace/reconnect it and
@@ -15,7 +21,7 @@ require recovery. Cancel the job and confirm its diagnostic clears.
 The scenario uses real provider inventories, grid lookups, job submission,
 menu synchronization, and final frame observations. It never seeds the warning
 or invokes a production reporting hook to make a UI assertion pass. Capture
-before, mixed-row warning, both-language tooltips, both recoveries, redundant
+before, mixed-row warning, English tooltips, both recoveries, redundant
 provider, provider removal, and cancellation checkpoints. Keep the scenario
 available across the shared 1.20.1/1.21.1 driver and the 26.1.2 API counterpart;
 a passing smoke result applies only to the target actually launched.
@@ -27,9 +33,9 @@ a passing smoke result applies only to the target actually launched.
 disposable world. A full external furnace first leaves the warning absent.
 The fixture seeds retained CPU contents through AE2's inventory API; AE2's
 normal tick and menu synchronization must report rejected storage. Observe the
-rendered warning, badge, and tooltip in English and Ukrainian. Replace the full
+rendered warning, badge, and tooltip in English (`en_us`). Replace the full
 cell with writable capacity and require the warning to clear in the same screen.
-Keep before, both-language tooltip, and recovered screenshots. Pure row tests
+Keep before, English tooltip, and recovered screenshots. Pure row tests
 cover active and scheduled exclusions; the fixture does not simulate a craft.
 
 ## Standard AE2 acceptance scenario
@@ -485,9 +491,9 @@ per dispatch and an unfuelled furnace. Verify no warning while network energy
 is sufficient. Replace the creative source with a real energy cell and keep
 only enough energy for idle demand, below the next dispatch cost. Observe an
 active CPU, one active output, and scheduled work, then the rendered NO POWER
-badge and complete tooltip in English and Ukrainian. Restore energy, require
+badge and complete tooltip in English (`en_us`). Restore energy, require
 another real dispatch and warning recovery in the same menu, cancel, and check
-that an inactive CPU alone produces no warning. Retain all five checkpoints.
+that an inactive CPU alone produces no warning. Retain each distinct English checkpoint.
 Every full compatible suite includes this scenario and the NO PROVIDER
 regression. Driver checks observe final frames and real AE2 state, never seed
 production diagnostics. Shared pure tests cover threshold, expiry, priority,

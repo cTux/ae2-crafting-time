@@ -1,5 +1,29 @@
 # Automated UI Testing Implementation Plan
 
+## Follow-up: newest adapter and English-only smoke
+
+Implement [SP-01 through SP-04](spec.md#smoke-policy) before claiming the current
+runner enforces them:
+
+1. Reuse the adapter catalogue/selection snapshot to choose required direct
+   cases per target. Record older-adapter cases as policy skips. Add focused
+   newest-adapter fixtures only where compatible pins exercise an older one;
+   preserve named modpack versions and the existing development locks.
+2. Set and verify `en_us` in the shared and 26.1.2 drivers. Remove language-switch
+   states, Ukrainian screenshot requirements, and matching result-validator
+   requirements together. Retain every distinct English behavior checkpoint.
+3. Cover selection mismatch, older-only graphs, newest-fixture setup failure,
+   and language enforcement with the existing runner/driver tests. Preserve
+   translation-key/placeholder checks for both supported product languages.
+4. Run required newest-adapter smoke in English on applicable targets. Record
+   selected IDs, artifacts, language, screenshots, and policy skips. Do not run
+   an old-adapter or Ukrainian campaign as an additional completion gate.
+
+The existing implementation slices below follow this policy. Done means newest
+adapter IDs and `en_us` are verified, old variants retain non-smoke coverage,
+and no required scenario fails merely because an old/language duplicate was
+intentionally removed.
+
 Implement the suite in working vertical slices. Each slice leaves one runnable
 check and does not add the next loader or scenario until the current one passes.
 

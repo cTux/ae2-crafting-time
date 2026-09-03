@@ -13,6 +13,36 @@ that observes and controls the client.
 
 Tracking issue: [#124](https://github.com/cTux/ae2-crafting-time/issues/124).
 
+## Smoke policy
+
+Requirements updated 2026-09-03. These rules apply to future prepared-client,
+focused, full-suite, named-modpack, and release smoke work. They supersede older
+plans requiring smoke for every retained adapter or multiple languages;
+historical evidence remains unchanged. Runner/driver enforcement is follow-up
+implementation work, not a result of this documentation change.
+
+- **SP-01:** Runtime smoke exercises only the newest implemented adapter for
+  each applicable dependency and Minecraft/loader target. Older adapters remain
+  supported and keep unit, contract, and packaging checks, but need no runtime
+  smoke. Do not launch extra old-version campaigns to satisfy a coverage gate.
+- **SP-02:** Verify the selected adapter identity, not merely the dependency
+  version or profile name. Reuse a compatible pin if it reaches the newest
+  adapter; otherwise use a focused dependency fixture that does. A latest
+  upstream file with an unknown API is not automatically a supported adapter.
+  Failure to exercise the newest adapter remains an unmet smoke gate; a pass
+  on an older adapter cannot substitute for it.
+- **SP-03:** All smoke UI, assertions, and screenshots use English (`en_us`)
+  only. Do not switch to Ukrainian or repeat scenarios by language. Keep the
+  product's English/Ukrainian translations and static key/placeholder checks.
+- **SP-04:** Preserve the requested target/modpack graph. If that graph only
+  reaches an older adapter, record its direct adapter smoke as not required by
+  SP-01; do not silently upgrade the pack. The required newest-adapter case runs
+  in a separate prepared fixture. Core startup/coexistence checks can still run.
+
+Completion evidence names the target, dependency artifact, selected newest
+adapter, and `en_us`. Older variants must not appear as missing required smoke
+cases. Core-only startup and dedicated-server absence checks remain applicable.
+
 ## Source-of-truth matrices
 
 - `scripts/release-matrix.json` owns the published targets.
@@ -36,8 +66,10 @@ with `1.20.1-forge`, `1.20.1-fabric`, `1.21.1-neoforge`, or
 `26.1.2-neoforge`. The ordinary `run-*.bat` clients remain interactive
 development launchers; starting one does not produce a smoke result.
 
-All four compatible profiles are required release-facing smoke checks. Latest
-profiles deliberately resolve current upstream files; a latest-only resolution
+All four compatible profiles retain release-facing core and applicable newest-
+adapter checks under SP-01 through SP-04. An older-adapter case in a compatible
+graph is not a required direct smoke; use the focused newest fixture instead.
+Latest profiles deliberately resolve current upstream files; a latest-only resolution
 or startup failure is a visible diagnostic result, not evidence that the pinned
 release is broken.
 
@@ -96,7 +128,7 @@ non-overlap with owned buttons and item cells. It clicks real widgets and rows,
 then verifies visible ordering and the resulting server response so display and
 input indices cannot silently diverge.
 
-Screenshots use the maximized VM window and each scenario's language, fixture,
+Screenshots use the maximized VM window, English (`en_us`), each scenario's fixture,
 and cursor position. Snapshots record GUI dimensions and scale. They remain
 human evidence for clipping, spacing, and color. Full
 frame pixel equality is not required; a cropped golden comparison is added

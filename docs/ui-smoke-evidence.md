@@ -1,5 +1,13 @@
 # UI smoke evidence
 
+For all new campaigns, follow the [smoke policy](automated-ui-testing/spec.md#smoke-policy):
+exercise only the newest adapter per dependency/target and use English (`en_us`)
+for every UI assertion and screenshot. Retained older adapters need non-smoke
+checks, not extra runtime campaigns. Preserve historical bilingual evidence.
+Record the actual selected adapter and language; a profile named `latest` is
+not proof that the newest adapter ran. Older checkpoint counts below describe
+existing campaigns/drivers and do not require new Ukrainian screenshots.
+
 Keep screenshot evidence for named modpacks and prepared version clients using
 the same archive layout:
 

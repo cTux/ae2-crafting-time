@@ -65,7 +65,7 @@ In a matching development client, check:
 6. A pending-only row waiting for its first dispatch still shows `Waiting`.
 7. Clearing the stats returns the row to collecting data when it is not waiting.
 8. Stored-only, missing-only, completed, and zero-work rows get no new line.
-9. English and Ukrainian labels stay inside the table cell and do not cover the
+9. English smoke verifies labels stay inside the table cell and do not cover the
    item icon or adjacent cells.
 
 If the label does not fit, shorten only the translated value. Add renderer
