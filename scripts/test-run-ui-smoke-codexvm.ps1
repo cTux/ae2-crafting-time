@@ -66,6 +66,9 @@ try {
     & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Scenario no-space-status
     $focused = Get-Content (Join-Path $source 'build/ui-smoke/1.20.1-forge/compatible/no-space-status/wrapper-result.json') -Raw | ConvertFrom-Json
     if ($focused.scenario -ne 'no-space-status') { throw 'Wrapper dropped no-space scenario' }
+    & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -LocalRoot $stage -Scenario no-provider-status
+    $focused = Get-Content (Join-Path $source 'build/ui-smoke/1.20.1-forge/compatible/no-provider-status/wrapper-result.json') -Raw | ConvertFrom-Json
+    if ($focused.scenario -ne 'no-provider-status') { throw 'Wrapper dropped no-provider scenario' }
     Write-Host "run-ui-smoke-codexvm checks passed"
 } finally {
     if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force }

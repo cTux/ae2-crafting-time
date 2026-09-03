@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.core;
 
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 public final class PacketLimits {
@@ -27,6 +28,14 @@ public final class PacketLimits {
 
     public static String checkedOutputId(String outputId) {
         return checkedKeys(List.of(outputId)).get(0);
+    }
+
+    public static Set<String> checkedSubset(List<String> requestedKeys, List<String> keys) {
+        var checked = checkedKeys(keys);
+        if (!requestedKeys.containsAll(checked)) {
+            throw new IllegalArgumentException("snapshot contains unrequested output ids");
+        }
+        return Set.copyOf(checked);
     }
 
     private PacketLimits() {

@@ -39,6 +39,23 @@ class TestDriverCoreTest {
         assertFalse(NoSpaceScenario.tooltipReady(List.of()));
     }
 
+    @Test
+    void noProviderRequiresTheRenderedWarningAndBothAdviceLines() {
+        assertTrue(AddonCpuFixture.supports(NoProviderScenario.SCENARIO));
+        assertNull(AddonCpuFixture.create(NoProviderScenario.SCENARIO));
+        assertEquals(NoProviderScenario.CHECKS, DriverResult.requiredChecks(NoProviderScenario.SCENARIO));
+        var tooltip = List.of(NoProviderScenario.KEY, NoProviderScenario.KEY + ".explanation",
+                NoProviderScenario.KEY + ".suggestion").stream()
+                .map(key -> new UiSnapshot.ObservedText(key, key, List.of(), null)).toList();
+        assertTrue(NoProviderScenario.tooltipReady(tooltip));
+        for (int missing = 0; missing < tooltip.size(); missing++) {
+            var incomplete = new java.util.ArrayList<>(tooltip);
+            incomplete.remove(missing);
+            assertFalse(NoProviderScenario.tooltipReady(incomplete));
+        }
+        assertFalse(NoProviderScenario.tooltipReady(List.of()));
+    }
+
     @TempDir
     Path temporary;
 

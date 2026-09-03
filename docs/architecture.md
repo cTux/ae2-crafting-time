@@ -66,6 +66,16 @@ pattern dispatch, and sends elapsed waiting ticks for requested rows. This lets
 the client distinguish work that has never started from a later gap between
 batches.
 
+Missing-provider diagnostics record actual empty pattern-provider lookups per
+CPU. Before sending a status snapshot, the server rechecks those exact patterns
+and removes restored providers. A combined output stays blocked if any of its
+scheduled patterns still lacks a provider. The client shows bold red
+`NO PROVIDER` only for pending work and the matching menu/CPU context.
+This state is runtime-only and clears with the job, disable, or sample reload.
+See the [specification](no-provider-status/spec.md),
+[technical design](no-provider-status/technical-design.md), and
+[implementation plan](no-provider-status/implementation-plan.md).
+
 The client never reads profiler state directly. That rule matters in
 singleplayer too: local UI still requests snapshots from the integrated server
 instead of using a separate client-side profiler.

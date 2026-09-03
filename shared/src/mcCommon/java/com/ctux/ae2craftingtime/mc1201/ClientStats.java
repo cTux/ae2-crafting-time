@@ -2,11 +2,15 @@ package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.core.ClientStatsCache;
 import com.ctux.ae2craftingtime.core.ProfileKey;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public final class ClientStats {
     public static final ClientStatsCache CACHE = new ClientStatsCache();
@@ -28,6 +32,17 @@ public final class ClientStats {
         var waiting = new HashMap<ProfileKey, Long>();
         values.forEach((key, ticks) -> waiting.put(new ProfileKey(key), ticks));
         CACHE.replaceWaiting(requestedKeys.stream().map(ProfileKey::new).toList(), waiting);
+    }
+
+    public static void replaceMissingProviders(List<String> requestedKeys, Set<String> values, long cpuContext) {
+        CACHE.replaceMissingProviders(requestedKeys.stream().map(ProfileKey::new).toList(),
+                values.stream().map(ProfileKey::new).collect(Collectors.toSet()), cpuContext);
+    }
+
+    public static boolean missingProvider(ProfileKey key) {
+        var context = Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> screen
+                ? StatsRequestContext.cpuContext(screen.getMenu()) : -1;
+        return CACHE.missingProvider(key, context);
     }
 
     private ClientStats() {

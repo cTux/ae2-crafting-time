@@ -6,11 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
 import com.google.gson.JsonParser;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Optional;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
@@ -18,6 +13,12 @@ import net.minecraft.network.chat.contents.TranslatableContents;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Optional;
 
 class TtcTextTest {
     @ParameterizedTest
@@ -56,6 +57,25 @@ class TtcTextTest {
                 "/assets/ae2craftingtime/lang/" + locale + ".json"), StandardCharsets.UTF_8)) {
             var translations = JsonParser.parseReader(reader).getAsJsonObject();
             assertEquals(expected, translations.get("text.ae2craftingtime.no_space").getAsString());
+            for (var line : lines) {
+                var contents = (TranslatableContents) line.getContents();
+                assertTrue(!translations.get(contents.getKey()).getAsString().isBlank());
+                assertEquals(0, contents.getArgs().length);
+            }
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({"en_us, NO PROVIDER", "uk_ua, Без провайдера"})
+    void noProviderHasWarningStyleAndTranslatedAdvice(String locale, String expected) throws IOException {
+        var lines = TtcText.noProviderTooltip();
+        assertEquals(3, lines.size());
+        assertTrue(lines.get(0).getStyle().isBold());
+        assertEquals(TextColor.fromLegacyFormat(ChatFormatting.RED), lines.get(0).getStyle().getColor());
+        try (var reader = new InputStreamReader(getClass().getResourceAsStream(
+                "/assets/ae2craftingtime/lang/" + locale + ".json"), StandardCharsets.UTF_8)) {
+            var translations = JsonParser.parseReader(reader).getAsJsonObject();
+            assertEquals(expected, translations.get("text.ae2craftingtime.no_provider").getAsString());
             for (var line : lines) {
                 var contents = (TranslatableContents) line.getContents();
                 assertTrue(!translations.get(contents.getKey()).getAsString().isBlank());

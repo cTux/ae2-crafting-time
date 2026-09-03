@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public final class StatsPacketCodec {
     private StatsPacketCodec() {
@@ -44,6 +45,7 @@ public final class StatsPacketCodec {
             buffer.writeUtf(key, PacketLimits.MAX_OUTPUT_ID_LENGTH);
             buffer.writeVarLong(ticks);
         });
+        writeKeys(buffer, List.copyOf(snapshot.missingProviders()));
         buffer.writeVarInt(snapshot.entries().size());
         for (var entry : snapshot.entries()) {
             var stats = entry.stats();
@@ -65,6 +67,7 @@ public final class StatsPacketCodec {
             buffer.writeBoolean(entry.stall().isPresent());
             entry.stall().ifPresent(value -> StallDiagnosticPacketCodec.write(buffer, value));
         }
+        buffer.writeLong(snapshot.cpuContext());
     }
 
     public static Snapshot readSnapshot(FriendlyByteBuf buffer) {
@@ -84,6 +87,7 @@ public final class StatsPacketCodec {
             }
             waitingTicks.put(key, ticks);
         }
+        var missingProviders = PacketLimits.checkedSubset(requestedKeys, readKeys(buffer, "missing providers"));
         var size = PacketLimits.checkedSize(buffer.readVarInt(), PacketLimits.MAX_KEYS, "entries");
         var entries = new ArrayList<StatsEntry>(size);
         for (int i = 0; i < size; i++) {
@@ -116,10 +120,10 @@ public final class StatsPacketCodec {
                     amountPerSecond, lastDurationTicks, unit, reliableEstimate, usedSampleCount, outlierMultiplier,
                     durations, amounts), accuracy, stall));
         }
-        return new Snapshot(requestedKeys, entries, networkAmounts, waitingTicks);
+        return new Snapshot(requestedKeys, entries, networkAmounts, waitingTicks, missingProviders, buffer.readLong());
     }
 
     public record Snapshot(List<String> requestedKeys, List<StatsEntry> entries, Map<String, Long> networkAmounts,
-            Map<String, Long> waitingTicks) {
+            Map<String, Long> waitingTicks, Set<String> missingProviders, long cpuContext) {
     }
 }

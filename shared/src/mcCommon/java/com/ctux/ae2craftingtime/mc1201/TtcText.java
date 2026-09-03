@@ -42,6 +42,16 @@ public final class TtcText {
                 Component.translatable("text.ae2craftingtime.no_space.suggestion"));
     }
 
+    public static MutableComponent noProvider() {
+        return Component.translatable("text.ae2craftingtime.no_provider")
+                .withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
+    }
+
+    public static List<Component> noProviderTooltip() {
+        return List.of(noProvider(), Component.translatable("text.ae2craftingtime.no_provider.explanation"),
+                Component.translatable("text.ae2craftingtime.no_provider.suggestion"));
+    }
+
     public static MutableComponent ttcCollectingData() {
         return Component.translatable("text.ae2craftingtime.ttc",
                 Component.translatable("text.ae2craftingtime.collecting_data"))

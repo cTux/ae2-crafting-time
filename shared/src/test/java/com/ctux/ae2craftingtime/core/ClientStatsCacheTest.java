@@ -2,14 +2,43 @@ package com.ctux.ae2craftingtime.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import org.junit.jupiter.api.Test;
-
 class ClientStatsCacheTest {
+    @Test
+    void missingProvidersReplaceWithoutStatsAndClearWithCpuState() {
+        var cache = new ClientStatsCache();
+        var iron = new ProfileKey("minecraft:iron_ingot");
+        var gold = new ProfileKey("minecraft:gold_ingot");
+        assertFalse(cache.missingProvider(iron, 7));
+        cache.replaceMissingProviders(List.of(iron, gold), java.util.Set.of(iron, gold), 7);
+        assertTrue(cache.missingProvider(iron, 7));
+        assertFalse(cache.missingProvider(iron, 8));
+        assertTrue(cache.get(iron).isEmpty());
+        cache.replaceMissingProviders(List.of(iron), java.util.Set.of(), 7);
+        assertFalse(cache.missingProvider(iron, 7));
+        assertTrue(cache.missingProvider(gold, 7));
+        cache.remove(gold);
+        assertFalse(cache.missingProvider(gold, 7));
+        cache.replaceMissingProviders(List.of(iron), java.util.Set.of(iron), 7);
+        cache.clearCpuState();
+        assertFalse(cache.missingProvider(iron, 7));
+        cache.replaceMissingProviders(List.of(iron), java.util.Set.of(iron), 7);
+        cache.clear();
+        assertFalse(cache.missingProvider(iron, 7));
+        cache.replaceMissingProviders(List.of(iron), java.util.Set.of(iron), 7);
+        cache.replaceMissingProviders(List.of(gold), java.util.Set.of(gold), 8);
+        assertFalse(cache.missingProvider(iron, 8));
+        assertTrue(cache.missingProvider(gold, 8));
+        assertFalse(cache.missingProvider(gold, 7));
+    }
+
     @Test
     void replacesStatsByOutputKey() {
         var cache = new ClientStatsCache();
@@ -101,7 +130,7 @@ class ClientStatsCacheTest {
         cache.remove(copper);
         assertFalse(cache.waitingTicks(copper).isPresent());
         cache.replaceWaiting(List.of(iron), Map.of(iron, 60L));
-        cache.clearWaiting();
+        cache.clearCpuState();
         assertFalse(cache.waitingTicks(iron).isPresent());
         cache.replaceWaiting(List.of(iron), Map.of(iron, 80L));
         cache.clear();

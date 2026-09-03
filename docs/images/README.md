@@ -41,6 +41,11 @@ the problem and suggests freeing or adding storage:
 
 ![NO SPACE warning and storage advice](crafting-status-no-space.png)
 
+When scheduled work loses its connected Pattern Provider or encoded pattern,
+the row shows NO PROVIDER and explains how to resume the job:
+
+![NO PROVIDER warning and provider recovery advice](crafting-status-no-provider.png)
+
 ## Timing details
 
 The first sample is marked as low confidence:
@@ -101,6 +106,11 @@ request with a seeded two-second estimate.
 
 The NO SPACE example uses a full item cell and seeded retained CPU contents.
 Adding writable storage clears the warning without reopening the screen.
+
+The NO PROVIDER example uses a real processing job with one active output and
+63 scheduled outputs. Removing its encoded pattern triggers the warning;
+restoring it clears the warning in the same open screen. The crop shows the
+tooltip at its original pixel size.
 
 To refresh a crop, open the target UI and run `scripts/capture-ui-region.ps1`
 inside the same interactive Windows session. Supply the output PNG path and

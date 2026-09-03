@@ -1,20 +1,20 @@
 package com.ctux.ae2craftingtime.mc1201;
 
-import com.ctux.ae2craftingtime.mc1201.net.StatsRequestC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsChatC2S;
+import com.ctux.ae2craftingtime.mc1201.net.StatsRequestC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsSnapshotS2C;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 
 public final class StatsNetwork {
     private static final ResourceLocation REQUEST_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
             "stats_request_v2");
     private static final ResourceLocation SNAPSHOT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
-            "stats_snapshot_v5");
+            "stats_snapshot_v6");
     private static final ResourceLocation CHAT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "stats_chat_v2");
 
     public static void registerServer() {

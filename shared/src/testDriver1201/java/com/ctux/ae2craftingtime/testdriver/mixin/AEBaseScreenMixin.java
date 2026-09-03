@@ -6,6 +6,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Desc;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
@@ -13,7 +14,8 @@ import java.util.List;
 
 @Mixin(value = AEBaseScreen.class, remap = false)
 public abstract class AEBaseScreenMixin {
-    @Inject(method = "drawTooltipWithHeader(Lnet/minecraft/client/gui/GuiGraphics;IILjava/util/List;)V",
+    @Inject(target = @Desc(value = "drawTooltipWithHeader",
+            args = {GuiGraphics.class, int.class, int.class, List.class}),
             at = @At("HEAD"))
     private void ae2craftingtime_test_driver$treeTooltip(GuiGraphics graphics, int x, int y,
             List<Component> lines, CallbackInfo ci) {

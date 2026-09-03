@@ -1,28 +1,35 @@
 # No Provider Status Implementation Plan
 
-1. Add `CraftingBlockReason` and covered runtime blocker storage/query logic to
-   `shared/src/main/java`, including freshness, precedence, replacement, and
-   lifecycle clearing tests.
-2. Add the covered pure-Java crafting-row status resolver and prove the complete
-   priority order, including active-plus-pending combined rows.
-3. Extend `ProfilerBridge` in both API source sets and the standard AE2
-   execution mixin to report empty provider lookups for the pattern outputs.
-4. Add the equivalent optional AdvancedAE hook only for artifacts whose seam is
-   verified.
-5. Add bounded blocker values to `StatsRequestHandler`, `StatsPacketCodec`, all
-   four loader packet records, and `ClientStatsCache`; bump the four wire
-   boundaries once for `NO PROVIDER` and `NO POWER` together.
-6. Add `NO PROVIDER`, its explanation, and its suggestion to English and
-   Ukrainian. Update translation-key checks.
-7. Render the status and tooltip in the standard crafting-status table. Exclude
-   blocked rows from TTC sorting and color.
-8. Cover packet round trips, invalid ordinals, stale replacement, CPU switching,
-   and absent stats.
-9. After the hook-created PR exists, run the development skill's required
-   shared and four-target checks. Verify GitHub CI separately.
-10. In development clients, remove and restore the only provider, remove and
-    restore the pattern, and confirm a second provider prevents the status.
+1. Reconcile the issue and spec with the verified dispatch seam and current
+   protocol versions. Review the acceptance-to-check table in the design before
+   editing executable code.
+2. Add the generic pure-Java missing-provider tracker and its tests: positive
+   outputs, empty/nonempty lookups, exact pattern replacement, CPU identity,
+   network isolation, combined output rows, restored providers, empty scopes,
+   disable/re-enable, CPU clear, and global clear.
+3. Wire both `ProfilerBridge` variants into accepted-job, finish/cancel,
+   disable, and load lifecycles. Extend standard and AdvancedAE provider lookup
+   redirects without changing AE2's returned iterable. Test the tracker through
+   `CraftProfiler`'s existing lifecycle entrypoints used by both bridges.
+4. Extend request collection, shared snapshot codec, four loader records and
+   handlers, and the client cache with bounded missing-output sets. Bump all
+   four current wire boundaries. Cover round trips without stats, zero/max and
+   excessive counts, malformed/unrequested ids, cache replacement and clearing.
+5. Add the shared row predicate, red label, exact tooltip advice, and English/
+   Ukrainian text. Apply the predicate before Waiting, DELAYED, and TTC; exclude
+   warnings from TTC sorting/color in both API variants and add badge keys.
+   Cover pending-only, mixed active/pending, active-only, stored-only, and
+   missing-evidence rows, plus translated text and styling.
+6. Update architecture and dependency documentation to describe this status and
+   its verified AdvancedAE boundary. Review all changes against the spec; run
+   static resource/link checks and `git diff --check`.
+7. Commit the feature once with its planning docs. Let the configured hook push
+   and create the PR, then inspect GitHub's test, coverage, and build checks.
+   Fix observed failures with a focused corrective commit. Do not claim pending
+   CI, excluded adapter coverage, or unperformed UI smoke as passed.
 
-Complete when every acceptance criterion in `spec.md` is covered by an
-automated boundary check or recorded cross-version client check, all required
-checks pass, and no repository-owned warning remains.
+Completion requires implementation and regression coverage for every acceptance
+criterion, matching resources and all four wire adapters, and a reviewed PR.
+The required CI must verify 100% line and branch coverage for shared logic.
+Live visual fit remains a separate runtime check when running a client smoke;
+its absence must be stated in the handoff.

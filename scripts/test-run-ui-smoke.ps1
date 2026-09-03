@@ -51,6 +51,10 @@ if ($DriverScenario -eq "suite") {
 }
 $checks = if ($DriverScenario -eq "no-space-status") {
     [ordered]@{ screen=$true; "external-machine"=$true; warning=$true; tooltip=$true; layout=$true; ukrainian=$true; recovered=$true }
+} elseif ($DriverScenario -eq "no-provider-status") {
+    [ordered]@{ screen=$true; 'real-job'=$true; 'mixed-row'=$true; 'pattern-removed'=$true; tooltip=$true;
+        layout=$true; ukrainian=$true; 'pattern-restored'=$true; 'second-provider'=$true;
+        'provider-removed'=$true; 'provider-restored'=$true; cancelled=$true }
 } elseif ($DriverScenario -eq "crafting-tree-screen") {
     [ordered]@{ screen=$true; 'node-ttc'=$true; tooltip=$true; layout=$true }
 } elseif ($DriverScenario -eq "ae2networkanalyser-screen") {
@@ -68,6 +72,10 @@ $checks = if ($DriverScenario -eq "no-space-status") {
 }
 $screenshots = if ($DriverScenario -eq "no-space-status") {
     @("no-space-before.png", "no-space-en-us.png", "no-space-uk-ua.png", "no-space-recovered.png")
+} elseif ($DriverScenario -eq "no-provider-status") {
+    @("no-provider-before.png", "no-provider-en-us.png", "no-provider-uk-ua.png",
+        "no-provider-pattern-restored.png", "no-provider-redundant.png", "no-provider-block-removed.png",
+        "no-provider-block-restored.png", "no-provider-cancelled.png")
 } elseif ($DriverScenario -eq "crafting-tree-screen") {
     @("crafting-tree-screen.png", "crafting-tree-tooltip.png")
 } elseif ($DriverScenario -eq "ae2networkanalyser-screen") {
@@ -157,6 +165,8 @@ try {
     Invoke-Case "pass" -Latest -shouldPass $true
     Invoke-Case "pass" -Scenario "no-space-status" -shouldPass $true
     Invoke-Case "missing-screenshot" -Scenario "no-space-status" -shouldPass $false
+    Invoke-Case "pass" -Scenario "no-provider-status" -shouldPass $true
+    Invoke-Case "missing-screenshot" -Scenario "no-provider-status" -shouldPass $false
     Invoke-Case "pass" -Scenario "neoeco-cpu" -shouldPass $true
     Invoke-Case "pass" -Scenario "crafting-tree-screen" -shouldPass $true
     Invoke-Case "missing-screenshot" -Scenario "crafting-tree-screen" -shouldPass $false

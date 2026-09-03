@@ -1,11 +1,14 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingPlan;
-import appeng.blockentity.networking.ControllerBlockEntity;
+import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
+import appeng.blockentity.networking.ControllerBlockEntity;
+import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.core.CraftProfiler;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.ProfileStats;
@@ -14,15 +17,35 @@ import com.ctux.ae2craftingtime.core.StatsEntry;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
 import com.ctux.ae2craftingtime.core.TtcAccuracyTracker;
+
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.OptionalLong;
+import java.util.Set;
 
 public final class ProfilerBridge {
     private static final CraftProfiler PROFILER = new CraftProfiler(Ae2CraftingTimeConfig.MAX_SAMPLES.get(),
             Ae2CraftingTimeConfig.OUTLIER_MULTIPLIER.get());
     private static final TtcAccuracyTracker ACCURACY = new TtcAccuracyTracker(Ae2CraftingTimeConfig.MAX_SAMPLES.get());
     private static Ae2CraftingTimeSavedData savedData;
+
+    public static void observeProviders(String networkId, Object scope, IPatternDetails pattern,
+            Iterable<ICraftingProvider> providers) {
+        isEnabled();
+        var outputs = new HashMap<ProfileKey, Long>();
+        for (var output : pattern.getOutputs()) {
+            outputs.merge(key(networkId, output.what()), output.amount(), Long::sum);
+        }
+        PROFILER.observeProviders(scope, pattern, outputs, providers.iterator().hasNext());
+    }
+
+    public static Set<ProfileKey> missingProviders(Object scope, IGrid grid) {
+        isEnabled();
+        return grid == null ? Set.of() : PROFILER.missingProviderOutputs(scope,
+                pattern -> ((CraftingService) grid.getCraftingService())
+                        .getProviders((IPatternDetails) pattern).iterator().hasNext());
+    }
 
     public static void start(String networkId, GenericStack output, long tick) {
         if (output == null || !isEnabled()) {

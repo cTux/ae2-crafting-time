@@ -8,14 +8,15 @@ import appeng.client.gui.widgets.Scrollbar;
 import appeng.menu.me.crafting.CraftingCPUMenu;
 import appeng.menu.me.crafting.CraftingStatus;
 import appeng.menu.me.crafting.CraftingStatusEntry;
+import com.ctux.ae2craftingtime.core.CraftingRowState;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcSort;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
-import com.ctux.ae2craftingtime.mc1201.StatsClickHandler;
 import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
+import com.ctux.ae2craftingtime.mc1201.StatsClickHandler;
 import com.ctux.ae2craftingtime.mc1201.TtcBadge;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsClick;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsKeyMapping;
@@ -96,7 +97,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
     private void ae2craftingtime$addStatusTtcSortButton(T menu, Inventory playerInventory, Component title,
             ScreenStyle style, CallbackInfo ci) {
         if ((Object) this instanceof CraftingStatusScreen) {
-            ClientStats.CACHE.clearWaiting();
+            ClientStats.CACHE.clearCpuState();
             ClientStatsRequests.clear();
             addToLeftToolbar(new TtcSortButton(this::ae2craftingtime$cycleTtcSortMode,
                     () -> ae2craftingtime$ttcSortMode));
@@ -262,6 +263,9 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
         var key = ProfilerBridge.key(entry.getWhat());
         ClientStatsRequests.request(key);
+        if (CraftingRowState.noProvider(entry.getPendingAmount(), ClientStats.missingProvider(key))) {
+            return OptionalLong.empty();
+        }
         if (entry.getActiveAmount() == 0 && entry.getPendingAmount() > 0
                 && ClientStats.CACHE.waitingTicks(key).isPresent()) {
             return OptionalLong.empty();

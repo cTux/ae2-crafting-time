@@ -3,11 +3,23 @@ package com.ctux.ae2craftingtime.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import java.util.ArrayList;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
+import java.util.List;
+
 class PacketLimitsTest {
+    @Test
+    void snapshotFlagsMustBeValidRequestedKeys() {
+        var requested = List.of("minecraft:stone");
+        assertEquals(java.util.Set.of(), PacketLimits.checkedSubset(requested, List.of()));
+        assertEquals(java.util.Set.of("minecraft:stone"), PacketLimits.checkedSubset(requested, requested));
+        assertThrows(IllegalArgumentException.class,
+                () -> PacketLimits.checkedSubset(requested, List.of("minecraft:dirt")));
+        assertThrows(IllegalArgumentException.class,
+                () -> PacketLimits.checkedSubset(requested, List.of("invalid")));
+    }
+
     @Test
     void acceptsValidSizesAndOutputIds() {
         assertEquals(0, PacketLimits.checkedSize(0, 1, "values"));

@@ -25,7 +25,7 @@ pattern.
 - Add these tooltip lines:
   - `No connected Pattern Provider currently offers this pattern.`
   - `Restore a connected provider or put the pattern back.`
-- Give `NO PROVIDER` priority over `NO POWER`, `Waiting`, `DELAYED`, TTC, and
+- Give `NO PROVIDER` priority over `Waiting`, `DELAYED`, TTC, and
   `No data yet` for the same row.
 
 ## Compatibility
@@ -44,6 +44,7 @@ pattern.
 - Showing this status in the craft plan, Crafting Tree, or ME Requester.
 - Persistence across world reloads.
 - A config option or a new screen.
+- NO POWER detection, which is a separate issue.
 
 ## Acceptance criteria
 
@@ -54,7 +55,7 @@ pattern.
 - One blocked pattern can mark its combined output row even when another batch
   of that output is active.
 - Finish, cancellation, disable, and runtime reload clear the state.
-- Unknown or stale server status values never crash the client.
+- Malformed server status data is rejected; omitted values clear stale state.
 - The visible status and tooltip fit and read naturally in English and
   Ukrainian on every supported target.
 - New executable branches and packet boundaries have full line and branch

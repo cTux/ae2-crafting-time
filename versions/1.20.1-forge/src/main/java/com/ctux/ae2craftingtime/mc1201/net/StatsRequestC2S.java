@@ -34,7 +34,7 @@ public record StatsRequestC2S(List<String> keys) {
             if (response != null) {
                 StatsNetwork.sendTo(player,
                         new StatsSnapshotS2C(packet.keys, response.entries(), response.networkAmounts(),
-                                response.waitingTicks()));
+                                response.waitingTicks(), response.missingProviders(), response.cpuContext()));
             }
         });
         context.setPacketHandled(true);
