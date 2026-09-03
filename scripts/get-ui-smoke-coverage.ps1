@@ -20,18 +20,19 @@ if (Compare-Object @($projects | ForEach-Object { [string]$_.project_id }) @($co
 foreach ($project in $projects) {
     $id = [string]$project.project_id
     $entry = $coverage.$id
-    if ($entry.disposition -notin @('DIRECT_UI', 'DIRECT_BEHAVIOR', 'COEXISTENCE', 'TOOLING')) {
+    if ($entry.disposition -notin @('DIRECT_UI', 'DIRECT_BEHAVIOR', 'FOCUSED_BEHAVIOR', 'COEXISTENCE', 'TOOLING')) {
         throw "Invalid coverage disposition: $id"
     }
     $disposition = $entry.disposition
-    $reason = ''
+    $reason = if ($disposition -eq 'FOCUSED_BEHAVIOR') { $entry.reason } else { '' }
+    if ($disposition -eq 'FOCUSED_BEHAVIOR' -and -not $reason) { throw "Focused project lacks a reason: $id" }
     $replacement = $client.curseforge | Where-Object replaces_project_id -eq $id
     if ($replacement) { $disposition = 'EXCLUDED'; $reason = "Replaced by $($replacement.project_id)" }
     elseif (-not $Latest -and $project.compatible -is [bool] -and -not $project.compatible) {
         $disposition = 'EXCLUDED'; $reason = $project.reason
         if (-not $reason) { throw "Excluded project lacks a reason: $id" }
     }
-    if ($disposition -ne 'EXCLUDED' -and $entry.scenario -notin $scenarios) {
+    if ($disposition -notin @('EXCLUDED', 'FOCUSED_BEHAVIOR') -and $entry.scenario -notin $scenarios) {
         throw "MISSING_FIXTURE: $id requires $($entry.scenario)"
     }
     [pscustomobject]@{ projectId = $id; name = $project.name; disposition = $disposition

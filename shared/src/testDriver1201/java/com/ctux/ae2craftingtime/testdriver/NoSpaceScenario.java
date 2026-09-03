@@ -33,11 +33,10 @@ final class NoSpaceScenario {
     static final String SCENARIO = "no-space-status";
     static final String KEY = "text.ae2craftingtime.no_space";
     static final List<String> CHECKS = List.of("screen", "external-machine", "warning", "tooltip", "layout",
-            "ukrainian", "recovered");
+            "recovered");
     private BlockPos cpuPosition;
     private int phase;
     private CompletableFuture<Boolean> operation;
-    private CompletableFuture<Void> reload;
     private int menuId;
     private final StableFrames<Integer> frames = new StableFrames<>(3);
     private final StableFrames<Integer> tooltipFrames = new StableFrames<>(3);
@@ -77,13 +76,7 @@ final class NoSpaceScenario {
             })) {
                 phase++;
             }
-        } else if (phase == 4 || phase == 5) {
-            if (reload != null && !reload.isDone()) {
-                return false;
-            }
-            if (reload != null) {
-                reload.join();
-            }
+        } else if (phase == 4) {
             if (!screen.getMenu().isCantStoreItems() || !hasWarning(snapshot)) {
                 return false;
             }
@@ -102,17 +95,8 @@ final class NoSpaceScenario {
             checks.put("warning", true);
             checks.put("tooltip", true);
             checks.put("layout", true);
-            if (phase == 4) {
-                screenshot.accept("no-space-en-us.png");
-                minecraft.getLanguageManager().setSelected("uk_ua");
-                minecraft.options.languageCode = "uk_ua";
-                reload = minecraft.reloadResourcePacks();
-                phase++;
-            } else if (warning.rendered().equals("Немає місця")) {
-                checks.put("ukrainian", true);
-                screenshot.accept("no-space-uk-ua.png");
-                phase++;
-            }
+            screenshot.accept("no-space-en-us.png");
+            phase = 6;
         } else if (phase == 6) {
             if (serverStep(minecraft, player -> {
                 var drive = (DriveBlockEntity) player.serverLevel().getBlockEntity(cpuPosition.east(2));

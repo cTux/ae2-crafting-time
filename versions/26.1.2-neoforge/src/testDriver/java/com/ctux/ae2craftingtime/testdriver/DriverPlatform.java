@@ -36,7 +36,7 @@ final class DriverPlatform {
 
     static net.minecraft.world.item.ItemStack processingPattern(appeng.api.stacks.GenericStack input,
             appeng.api.stacks.GenericStack output) {
-        return appeng.api.crafting.PatternDetailsHelper.encodeProcessingPattern(java.util.List.of(input), java.util.List.of(output));
+        return ServerDriverPlatform.processingPattern(input, output);
     }
 
     static boolean isModLoaded(String id) {

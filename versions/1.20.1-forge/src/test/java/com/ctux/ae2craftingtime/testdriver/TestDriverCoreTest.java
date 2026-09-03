@@ -29,7 +29,7 @@ class TestDriverCoreTest {
             var checks = new LinkedHashMap<String, Boolean>();
             StandardAe2Scenario.CHECKS.stream().filter(key -> !key.equals(missing)).forEach(key -> checks.put(key, true));
             assertThrows(IllegalArgumentException.class, () -> new DriverResult(1, true, "driver.jar",
-                    "1.20.1-forge", "compatible", "standard-ae2", "PASS", checks, List.of(), null));
+                    "1.20.1-forge", "compatible", "standard-ae2", "PASS", "en_us", java.util.Map.of(), null, checks, List.of(), null));
         }
     }
 
@@ -104,6 +104,15 @@ class TestDriverCoreTest {
             var frame = new UiSnapshot("screen", "menu", new Rect(0, 0, 100, 100), 100, 100, 1, 1, 0,
                     List.of(), List.of(), List.of(), List.of(), List.of(), lines);
             assertEquals(mask == 7, CraftingTreeScenario.tooltipReady(frame));
+            if (mask == 7) {
+                for (var line : List.copyOf(lines)) {
+                    lines.add(line);
+                    assertFalse(CraftingTreeScenario.tooltipReady(new UiSnapshot("screen", "menu",
+                            new Rect(0, 0, 100, 100), 100, 100, 1, 1, 0,
+                            List.of(), List.of(), List.of(), List.of(), List.of(), lines)));
+                    lines.remove(lines.size() - 1);
+                }
+            }
         }
         assertThrows(IllegalStateException.class, () -> new AdvancedAeFixture().place(null, null));
     }
@@ -151,7 +160,7 @@ class TestDriverCoreTest {
     void addonFixturesAreRegisteredInOnePlace() {
         assertTrue(AddonCpuFixture.supports("crafting-tree-screen"));
         assertNull(AddonCpuFixture.create("crafting-tree-screen"));
-        assertEquals(List.of("screen", "node-ttc", "tooltip", "layout"),
+        assertEquals(List.of("screen", "node-ttc", "tooltip", "layout", "details", "reset"),
                 DriverResult.requiredChecks("crafting-tree-screen"));
         assertTrue(AddonCpuFixture.supports("craft-plan"));
         assertTrue(AddonCpuFixture.supports("advancedae-cpu"));
@@ -318,48 +327,48 @@ class TestDriverCoreTest {
     void resultIsAtomicAndRequiresExactChecks() throws Exception {
         var checks = checks(true);
         var result = new DriverResult(1, true, "driver.jar", "1.20.1-forge", "compatible", "craft-plan",
-                "PASS", checks, List.of("a.png", "b.png"), null);
+                "PASS", "en_us", java.util.Map.of(), null, checks, List.of("a.png", "b.png"), null);
         AtomicResultWriter.write(temporary, result);
         assertTrue(Files.exists(temporary.resolve("result.json")));
         assertFalse(Files.exists(temporary.resolve("result.json.tmp")));
         checks.put("extra", true);
         assertThrows(IllegalArgumentException.class, () -> new DriverResult(1, true, "driver.jar",
-                "1.20.1-forge", "compatible", "craft-plan", "PASS", checks, List.of(), null));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+                "1.20.1-forge", "compatible", "craft-plan", "PASS", "en_us", java.util.Map.of(), null, checks, List.of(), null));
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("neoeco-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("lightningtech-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("advancedae-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("extendedae-plus-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("bmaddon-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("crazyae2addons-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("megacells-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("omnicells-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("projectcell-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("appliede-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("appflux-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("appmek-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("appbot-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("appbot-fork-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("advancedperipherals-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("ae2things-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("expandedae-cpu"));
-        assertEquals(List.of("cpu-selected", "profile-sample", "ttc-after-sample"),
+        assertEquals(List.of("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"),
                 DriverResult.requiredChecks("modern-ae2-additions-cpu"));
         assertEquals(List.of("screen", "ttc-tooltip", "plan-ttc"),
                 DriverResult.requiredChecks("ae2wcwt-terminal"));

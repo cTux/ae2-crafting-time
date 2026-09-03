@@ -1,5 +1,31 @@
 # Dependencies
 
+## Startup adapter selection
+
+Optional hooks use one fixed startup choice per dependency. The first matching
+API contract wins; older contracts stay packaged. Required AE2 hooks and all
+loader dependency ranges are unchanged. A selected adapter is eligible for
+application, not proof that its hooks have run. The immutable selection snapshot
+is available through `IntegrationMixinPlugin.snapshot()`.
+
+| Dependency | Adapter priority and target boundary |
+| --- | --- |
+| Crafting Tree | `tree-layout`, then `tree-helper`; client only, pre-26 targets. Fabric retains its declaration but has no verified published Tree artifact. |
+| NeoEco | Forge: `batched-long`, then `pending-accounting`. NeoForge 1.21.1: `batched-int`. One dispatch adapter shares lifecycle hooks; neither family is enabled on Fabric or 26.1.2. |
+| AdvancedAE | `advanced-cpu`; Forge and both NeoForge targets, both physical sides. |
+| Lightning Tech | `time-wheel`; Forge and NeoForge 1.21.1, both physical sides. Its 26.1.2 native coverage does not imply a custom adapter. |
+| ME Requester | `requester-screen`; pre-26 clients only. |
+
+Raw class metadata is inspected before optional mixin application, without
+initializing addon or Minecraft classes. Expected missing contracts skip the
+whole family; unexpected read or bootstrap errors propagate. Selection is never
+changed by later world, setting, or hook failures.
+
+The retained [contract fixtures](../shared/src/test/resources/integration-contracts)
+record released artifact URLs, SHA-512 hashes, and inspected member descriptors.
+See [verification evidence](mod-automation-coverage.md#versioned-adapter-verification)
+for the runtime acceptance state.
+
 Pick the JAR that matches your Minecraft version and loader. Required versions,
 optional integrations, development-client pins, and TestDriver coverage live here.
 [Client and modpack coverage](mod-automation-coverage.md) records actual smoke
@@ -56,13 +82,15 @@ see the [campaign evidence and known visual failure](mod-automation-coverage.md)
 AdvancedAE's Forge fixture verifies an enclosed Quantum Computer with an
 Accelerator and Data Entangler, exact CPU submission, a fresh sample, and plan TTC.
 It is development coverage, not a declared Forge dependency. Crafting Tree now has
-a Forge `crafting-tree-screen` scenario for node badges, tooltip hints, and layout;
-Fabric has an eight-case compatible suite; NeoForge 1.21.1 has a 22-case compatible
-suite. NeoForge 26.1.2 has an eleven-case compatible suite, including NO SPACE.
+a Forge `crafting-tree-screen` scenario for node badges, spacing, one copy of each
+tooltip hint, and real details/reset input; Fabric has an eleven-case compatible
+suite. NeoForge 1.21.1 has a 25-case compatible suite, and NeoForge 26.1.2 has a
+fourteen-case compatible suite.
 
 `no-provider-status` is a focused native AE2 scenario on all four targets.
-Its Forge 1.20.1 smoke checks real pattern/provider removal, both-language
-tooltips, recovery, redundant providers, and cancellation. The other target
+Its historical Forge 1.20.1 smoke checks real pattern/provider removal, bilingual
+tooltips, recovery, redundant providers, and cancellation. New campaigns use
+English only. The other target
 drivers compile; this result does not claim their runtime smoke or a full
 optional-mod graph run.
 

@@ -1,0 +1,18 @@
+# 1.20.1-forge	ae2ct	tree-layout
+# source=https://modrinth.com/mod/ae2-crafting-tree-refreshed/version/flhDmaU7
+# sha512=a52ce04796ee6c0e7c96ff8c2aec4514e1212da5fb4a1ef11931b1f53fd3c37e9c20ed445c446a866806b9c4d11b76a47e576e71a1fb5a8fc9492c1014badd15
+com/vcwdfca/ae2ct/gui/CraftingTreeWidget	class	java/lang/Object
+com/vcwdfca/ae2ct/gui/CraftingTreeWidget	field:outputX	I
+com/vcwdfca/ae2ct/gui/CraftingTreeWidget	field:outputY	I
+com/vcwdfca/ae2ct/gui/CraftingTreeWidget	field:spacingX	I
+com/vcwdfca/ae2ct/gui/CraftingTreeWidget	field:spacingY	I
+com/vcwdfca/ae2ct/gui/CraftingTreeWidget	method:draw	(Lnet/minecraft/client/gui/GuiGraphics;IIII)V
+com/vcwdfca/ae2ct/gui/CraftingTreeWidget	method:drawNode	(Lnet/minecraft/client/gui/GuiGraphics;Lcom/vcwdfca/ae2ct/tree/LegacyTreeLayout$Entry;)V
+com/vcwdfca/ae2ct/gui/CraftingTreeWidget	method:updateTooltip	(Lnet/minecraft/client/gui/GuiGraphics;II)V
+com/vcwdfca/ae2ct/gui/CraftingTreeWidget	method:mouseClicked	(DDI)V
+com/vcwdfca/ae2ct/gui/CraftingTreeWidget	method:getMouseEntry	(DD)Lcom/vcwdfca/ae2ct/tree/LegacyTreeLayout$Entry;
+com/vcwdfca/ae2ct/gui/CraftingTreeWidget	method:getMousePoint	(DD)Ljava/awt/Point;
+com/vcwdfca/ae2ct/tree/LegacyTreeLayout$Entry	class	java/lang/Object
+com/vcwdfca/ae2ct/tree/LegacyTreeLayout$Entry	method:node	(Lcom/vcwdfca/ae2ct/tree/LegacyTreeNode;IILcom/vcwdfca/ae2ct/tree/LegacyTreeLayout$Entry;)Lcom/vcwdfca/ae2ct/tree/LegacyTreeLayout$Entry;
+com/vcwdfca/ae2ct/tree/LegacyTreeLayout$Entry	method:node	()Lcom/vcwdfca/ae2ct/tree/LegacyTreeNode;
+com/vcwdfca/ae2ct/tree/LegacyTreeLayout$Entry	method:point	()Ljava/awt/Point;

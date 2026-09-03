@@ -68,8 +68,10 @@ public final class CraftPlanScenario {
     private boolean wirelessHoverStarted;
     private boolean wirelessOpenRequested;
     private boolean treeHoverStarted;
+    private final StatsInteraction treeStats = new StatsInteraction();
 
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
+        DispatchObservation.watch(null, null);
         this.minecraft = minecraft;
         standard = StandardAe2Scenario.SCENARIO.equals(options.scenario()) ? new StandardAe2Scenario() : null;
         noSpace = NoSpaceScenario.SCENARIO.equals(options.scenario()) ? new NoSpaceScenario() : null;
@@ -151,6 +153,9 @@ public final class CraftPlanScenario {
                 .toRealPath().equals(world.toRealPath())) {
             throw new IllegalArgumentException("running world is not the requested disposable fixture");
         }
+        AdapterSmokePolicy.verify(DriverPlatform.TARGET, options.scenario(),
+                minecraft.getLanguageManager().getSelected(),
+                com.ctux.ae2craftingtime.integration.IntegrationMixinPlugin.snapshot());
         marker = FixtureMarker.read(world);
         if (!marker.disposableWorldId().equals(options.world())) {
             throw new IllegalArgumentException("fixture world ID mismatch");
@@ -354,6 +359,7 @@ public final class CraftPlanScenario {
 
     private void openPlan() {
         if (minecraft.screen instanceof CraftAmountScreen amount) {
+            if (addonFixture != null) addonFixture.configureAmount(amount);
             ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next().onPress();
             return;
         }
@@ -422,7 +428,8 @@ public final class CraftPlanScenario {
         }
         lastFrame = snapshot.frame();
         var target = snapshot.rows().stream().filter(row -> row.outputId().equals(outputId)).findFirst();
-        if (target.isEmpty() || snapshot.badges().isEmpty() || !stableRows.observe(ids(snapshot))) {
+        if (target.isEmpty() || (!checks.get("node-ttc") && snapshot.badges().isEmpty())
+                || !stableRows.observe(ids(snapshot))) {
             return;
         }
         checks.put("screen", true);
@@ -435,12 +442,19 @@ public final class CraftPlanScenario {
             stableRows.reset();
             return;
         }
-        if (!CraftingTreeScenario.tooltipReady(snapshot)) {
+        if (!checks.get("tooltip") && !CraftingTreeScenario.tooltipReady(snapshot)) {
             return;
         }
-        checks.put("tooltip", true);
-        screenshot("crafting-tree-tooltip.png");
-        writePass();
+        if (!checks.get("tooltip")) {
+            checks.put("tooltip", true);
+            screenshot("crafting-tree-tooltip.png");
+        }
+        boolean reset = checks.get("details");
+        if (!treeStats.click(minecraft, snapshot, outputId, reset)) return;
+        checks.put(reset ? "reset" : "details", true);
+        screenshot(reset ? "crafting-tree-reset.png" : "crafting-tree-details.png");
+        treeStats.next();
+        if (reset) writePass();
     }
 
     private void selectAddonCpu() {
@@ -499,6 +513,7 @@ public final class CraftPlanScenario {
                     }
                     throw new IllegalStateException("server Crafting Plan is a simulation; missing=" + missing);
                 }
+                DispatchObservation.watch(networkId, outputId);
                 addonFixture.startCraft(player, menu);
                 return true;
             });
@@ -522,6 +537,17 @@ public final class CraftPlanScenario {
             sampleCheck = null;
             return;
         }
+        var observed = DispatchObservation.snapshot();
+        if (observed.finishes() == 0) {
+            sampleCheck = null;
+            return;
+        }
+        addonFixture.verifyDispatch(observed);
+        AdapterSmokePolicy.verifyCpu(DriverPlatform.TARGET, options.scenario(), observed);
+        checks.put("job-accepted", true);
+        checks.put("dispatch-amount", true);
+        checks.put("returned-amount", true);
+        checks.put("job-finished", true);
         checks.put("profile-sample", true);
         stableRows.reset();
         advance(ScenarioState.ADDON_SAMPLE_RECORDED);
@@ -529,6 +555,7 @@ public final class CraftPlanScenario {
 
     private void verifyAddonTtc() throws IOException {
         if (minecraft.screen instanceof CraftAmountScreen amount) {
+            if (addonFixture != null) addonFixture.configureAmount(amount);
             ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next().onPress();
             return;
         }
@@ -588,6 +615,9 @@ public final class CraftPlanScenario {
     }
 
     private void writePass() throws IOException {
+        AdapterSmokePolicy.verify(DriverPlatform.TARGET, options.scenario(),
+                minecraft.getLanguageManager().getSelected(),
+                com.ctux.ae2craftingtime.integration.IntegrationMixinPlugin.snapshot());
         var failed = checks.entrySet().stream().filter(entry -> !entry.getValue()).map(java.util.Map.Entry::getKey)
                 .toList();
         if (!failed.isEmpty()) {
@@ -600,6 +630,7 @@ public final class CraftPlanScenario {
 
     private void requestQuit() {
         if (standard != null) standard.releaseKeys();
+        treeStats.releaseKeys();
         if (!options.interactive()) {
             minecraft.stop();
         }
@@ -608,6 +639,7 @@ public final class CraftPlanScenario {
 
     private void fail(String code, String expected, String observed) {
         if (standard != null) standard.releaseKeys();
+        treeStats.releaseKeys();
         failure = new DriverResult.Failure(state.name(), code, ReportText.safe(expected), ReportText.safe(observed));
         advance(ScenarioState.FAILED);
         try {
@@ -625,7 +657,9 @@ public final class CraftPlanScenario {
 
     private DriverResult result(boolean complete, String value, DriverResult.Failure resultFailure) {
         return new DriverResult(1, complete, driverFile, DriverPlatform.TARGET, options.profile(), options.scenario(), value,
-                checks, screenshots, resultFailure);
+                minecraft.getLanguageManager().getSelected(),
+                com.ctux.ae2craftingtime.integration.IntegrationMixinPlugin.snapshot(),
+                addonFixture == null ? null : DispatchObservation.snapshot(), checks, screenshots, resultFailure);
     }
 
     static boolean wirelessTooltipReady(List<UiSnapshot.ObservedText> tooltip, boolean requireTtc) {

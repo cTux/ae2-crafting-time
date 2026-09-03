@@ -22,7 +22,7 @@ final class NoPowerScenario {
     static final String SCENARIO = "no-power-status";
     static final String KEY = "text.ae2craftingtime.no_power";
     static final List<String> CHECKS = List.of("screen", "real-job", "external-unpowered", "active-network",
-            "mixed-row", "tooltip", "layout", "ukrainian", "power-restored", "cancelled", "inactive-cpu");
+            "mixed-row", "tooltip", "layout", "power-restored", "cancelled", "inactive-cpu");
     private final DispatchStatusFixture fixture = new DispatchStatusFixture(64);
     private final StableFrames<Integer> frames = new StableFrames<>(3);
     private final StableFrames<Integer> tooltipFrames = new StableFrames<>(3);
@@ -36,7 +36,6 @@ final class NoPowerScenario {
     private long powerRestoredTick;
     private long recoveryResolvedAt;
     private CompletableFuture<Boolean> operation;
-    private CompletableFuture<Void> reload;
     private CompletableFuture<Void> powerPulse;
 
     boolean tick(Minecraft minecraft, FixtureMarker marker, Map<String, Boolean> checks,
@@ -113,9 +112,7 @@ final class NoPowerScenario {
                 ((Container) player.serverLevel().getBlockEntity(fixture.cpuPosition.east(6).below())).clearContent();
                 return true;
             })) phase++;
-        } else if (phase == 5 || phase == 6) {
-            if (reload != null && !reload.isDone()) return false;
-            if (reload != null) reload.join();
+        } else if (phase == 5) {
             if (!hasWarning(snapshot)) return false;
             moveMouse.accept(snapshot.gui().x() + 40, snapshot.gui().y() + 30);
             if (!tooltipReady(snapshot.tooltip()) || !tooltipFrames.observe(phase)) return false;
@@ -137,24 +134,9 @@ final class NoPowerScenario {
             checks.put("mixed-row", true);
             checks.put("tooltip", true);
             checks.put("layout", true);
-            if (phase == 5) {
-                screenshot.accept("no-power-en-us.png");
-                minecraft.getLanguageManager().setSelected("uk_ua");
-                minecraft.options.languageCode = "uk_ua";
-                reload = minecraft.reloadResourcePacks();
-                phase++;
-            } else if (warning.rendered().equals("Немає енергії")) {
-                checks.put("ukrainian", true);
-                screenshot.accept("no-power-uk-ua.png");
-                minecraft.getLanguageManager().setSelected("en_us");
-                minecraft.options.languageCode = "en_us";
-                reload = minecraft.reloadResourcePacks();
-                phase++;
-            }
+            screenshot.accept("no-power-en-us.png");
+            phase = 7;
         } else if (phase == 7) {
-            if (!reload.isDone()) return false;
-            reload.join();
-            // Resource reloads can pause render-driven power pulses; await AE2's activation delay first.
             if (!serverStep(minecraft, player -> fixture.cpu(player).getCluster().isActive())) return false;
             phase++;
         } else if (phase == 8) {

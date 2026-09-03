@@ -1,0 +1,6 @@
+# 1.20.1-forge	neoecoae	batched-long
+# source=https://modrinth.com/mod/neoecoae/version/Qm3GW128
+# sha512=36ec97ef0d5b5226eaa58fa9e253a2fc24b8218207d12cd162ce913fb029be75bee8d2e4e352bbe64861c444e596bf50f5961b7c0bf028d86821544d2c2a1d8c
+cn/dancingsnow/neoecoae/api/me/ECOCraftingCPULogic	class	java/lang/Object
+cn/dancingsnow/neoecoae/api/me/ECOCraftingCPULogic	method:recordPushedPattern	(Lcn/dancingsnow/neoecoae/api/me/ExecutingCraftingJob;Lcn/dancingsnow/neoecoae/impl/crafting/fastpath/ECOExtractedPatternExecution;J)V
+cn/dancingsnow/neoecoae/api/me/ECOCraftingCPULogic	method:recordPushedPattern	(Lcn/dancingsnow/neoecoae/api/me/ExecutingCraftingJob;Lcn/dancingsnow/neoecoae/impl/crafting/fastpath/ECOExtractedPatternExecution;JZ)V

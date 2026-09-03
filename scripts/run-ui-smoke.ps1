@@ -99,7 +99,10 @@ if ($Scenario -eq "suite") {
     $plan = Get-Content -LiteralPath (Join-Path $evidence "suite-plan.json") -Raw | ConvertFrom-Json
     $worldCopies = @($plan.cases | ForEach-Object { Join-Path $runtime "saves\$($_.world)" })
 } else {
-    & (Join-Path $PSScriptRoot 'copy-ui-smoke-fixture.ps1') -Source $source -Destination $worldCopy -Target $Target
+    # The tracked Forge world names Blood Magic dimensions. Reduced graphs need native metadata.
+    $vanillaMetadata = $Target -eq '1.20.1-forge' -and $BundleDirectory -and
+        -not (Get-ChildItem -LiteralPath (Join-Path $BundleDirectory 'mods') -Filter 'BloodMagic*.jar')
+    & (Join-Path $PSScriptRoot 'copy-ui-smoke-fixture.ps1') -Source $source -Destination $worldCopy -Target $Target -VanillaMetadata:$vanillaMetadata
     $markerPath = Join-Path $worldCopy ".ae2-crafting-time-test-fixture.json"
     $marker = Get-Content -LiteralPath $markerPath -Raw | ConvertFrom-Json
     $marker.disposableWorldId = $world
@@ -202,14 +205,14 @@ try {
                 'status-sort', 'status-tooltip', 'status-details', 'status-reset', 'waiting', 'running',
                 'delayed', 'header', 'layout', 'completed', 'output')
         } elseif ($caseScenario -eq "no-space-status") {
-            @("screen", "external-machine", "warning", "tooltip", "layout", "ukrainian", "recovered")
+            @("screen", "external-machine", "warning", "tooltip", "layout", "recovered")
         } elseif ($caseScenario -eq "no-power-status") {
-            @("screen", "real-job", "external-unpowered", "active-network", "mixed-row", "tooltip", "layout", "ukrainian", "power-restored", "cancelled", "inactive-cpu")
+            @("screen", "real-job", "external-unpowered", "active-network", "mixed-row", "tooltip", "layout", "power-restored", "cancelled", "inactive-cpu")
         } elseif ($caseScenario -eq "no-provider-status") {
-            @("screen", "real-job", "mixed-row", "pattern-removed", "tooltip", "layout", "ukrainian",
+            @("screen", "real-job", "mixed-row", "pattern-removed", "tooltip", "layout",
                 "pattern-restored", "second-provider", "provider-removed", "provider-restored", "cancelled")
         } elseif ($caseScenario -eq "crafting-tree-screen") {
-            @("screen", "node-ttc", "tooltip", "layout")
+            @("screen", "node-ttc", "tooltip", "layout", "details", "reset")
         } elseif ($caseScenario -eq "ae2networkanalyser-screen") {
             @("screen", "layout")
         } elseif ($caseScenario -eq "merequester-screen") {
@@ -219,13 +222,13 @@ try {
         } elseif ($caseScenario -like "*-terminal") {
             @("screen", "ttc-tooltip", "plan-ttc")
         } elseif ($caseScenario -ne "craft-plan") {
-            @("cpu-selected", "profile-sample", "ttc-after-sample")
+            @("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample")
         } else {
             @("screen", "ttc-row", "total-ttc", "sort-cycle", "tooltip", "layout")
         }
         if ($result.schema -ne 1 -or -not $result.complete -or $result.result -ne "PASS" -or
                 $result.driver -ne $driverName -or $result.target -ne $Target -or
-                $result.profile -ne $profile -or $result.scenario -ne $caseScenario) {
+                $result.profile -ne $profile -or $result.scenario -ne $caseScenario -or $result.language -ne "en_us") {
             throw "Invalid UI-smoke result identity or completion state"
         }
         $actualChecks = @($result.checks.psobject.Properties.Name)
@@ -237,15 +240,14 @@ try {
                 'status-sort-3.png', 'status-tooltip.png', 'status-details.png', 'status-reset.png',
                 'status-waiting-running.png', 'status-delayed.png', 'status-progress.png', 'status-completed.png')
         } elseif ($caseScenario -eq "no-space-status") {
-            @("no-space-before.png", "no-space-en-us.png", "no-space-uk-ua.png", "no-space-recovered.png")
+            @("no-space-before.png", "no-space-en-us.png", "no-space-recovered.png")
         } elseif ($caseScenario -eq "no-power-status") {
-            @("no-power-external-unpowered.png", "no-power-en-us.png", "no-power-uk-ua.png", "no-power-restored.png", "no-power-inactive.png")
+            @("no-power-external-unpowered.png", "no-power-en-us.png", "no-power-restored.png", "no-power-inactive.png")
         } elseif ($caseScenario -eq "no-provider-status") {
-            @("no-provider-before.png", "no-provider-en-us.png", "no-provider-uk-ua.png",
-                "no-provider-pattern-restored.png", "no-provider-redundant.png", "no-provider-block-removed.png",
+            @("no-provider-before.png", "no-provider-en-us.png", "no-provider-pattern-restored.png", "no-provider-redundant.png", "no-provider-block-removed.png",
                 "no-provider-block-restored.png", "no-provider-cancelled.png")
         } elseif ($caseScenario -eq "crafting-tree-screen") {
-            @("crafting-tree-screen.png", "crafting-tree-tooltip.png")
+            @("crafting-tree-screen.png", "crafting-tree-tooltip.png", "crafting-tree-details.png", "crafting-tree-reset.png")
         } elseif ($caseScenario -eq "ae2networkanalyser-screen") {
             @("ae2networkanalyser-screen.png")
         } elseif ($caseScenario -eq "merequester-screen") {

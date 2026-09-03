@@ -8,7 +8,7 @@ import appeng.api.networking.crafting.ICraftingSubmitResult;
 import appeng.api.networking.energy.IEnergyService;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
-import appeng.crafting.inv.ListCraftingInventory;
+import com.ctux.ae2craftingtime.mc1201.NeoEcoDispatchObserver;
 import appeng.hooks.ticking.TickHandler;
 import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
@@ -18,13 +18,12 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Pseudo
 @Mixin(targets = "cn.dancingsnow.neoecoae.api.me.ECOCraftingCPULogic", remap = false)
-public abstract class ECOCraftingCpuLogicMixin {
+public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver {
     @Unique
     private IGrid ae2craftingtime$grid;
 
@@ -59,24 +58,8 @@ public abstract class ECOCraftingCpuLogicMixin {
         return maxPatterns;
     }
 
-    @Redirect(
-            method = {
-                    "recordPushedPattern(Lcn/dancingsnow/neoecoae/api/me/"
-                            + "ECOCraftingCPULogic$PendingPatternAccounting;)V",
-                    "recordPushedPattern(Lcn/dancingsnow/neoecoae/api/me/ExecutingCraftingJob;"
-                            + "Lcn/dancingsnow/neoecoae/impl/crafting/fastpath/ECOExtractedPatternExecution;JZ)V",
-                    "recordPushedPattern(Lcn/dancingsnow/neoecoae/api/me/ExecutingCraftingJob;"
-                            + "Lcn/dancingsnow/neoecoae/impl/crafting/fastpath/ECOExtractedPatternExecution;I)V"
-            },
-            at = @At(
-                    value = "INVOKE",
-                    target = "Lappeng/crafting/inv/ListCraftingInventory;insert(Lappeng/api/stacks/AEKey;"
-                            + "JLappeng/api/config/Actionable;)V",
-                    ordinal = 0),
-            remap = false)
-    private void ae2craftingtime$profileExpectedOutput(ListCraftingInventory inventory, AEKey what, long amount,
-            Actionable type) {
-        inventory.insert(what, amount, type);
+    @Override
+    public void ae2craftingtime$dispatched(AEKey what, long amount, Actionable type) {
         if (type == Actionable.MODULATE) {
             ProfilerBridge.start(ProfilerBridge.networkId(ae2craftingtime$grid), this, what, amount,
                     ae2craftingtime$tick());
