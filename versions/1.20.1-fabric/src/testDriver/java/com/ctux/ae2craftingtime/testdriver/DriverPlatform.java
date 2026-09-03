@@ -15,7 +15,11 @@ final class DriverPlatform {
     }
 
     static void click(net.minecraft.client.Minecraft minecraft, double x, double y) {
-        minecraft.screen.mouseClicked(x, y, 0);
+        boolean control = net.minecraft.client.gui.screens.Screen.hasControlDown();
+        boolean alt = net.minecraft.client.gui.screens.Screen.hasAltDown();
+        boolean details = com.ctux.ae2craftingtime.mc1201.TtcDetailsKeyMapping.matchesMouse(0);
+        boolean handled = minecraft.screen.mouseClicked(x, y, 0);
+        System.out.println("AE2CT click control=" + control + " alt=" + alt + " details=" + details + " handled=" + handled);
     }
 
     static final String IMPORT_EXPORT_ID = "ae2insertexportcard";
