@@ -1,6 +1,13 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 final class DriverPlatform {
+    static boolean modifiers(net.minecraft.client.Minecraft minecraft, boolean reset) {
+        long window = minecraft.getWindow().handle();
+        boolean control = org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL) != 0;
+        boolean alt = org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_ALT) != 0;
+        return control && alt == reset;
+    }
+
     static boolean focus(net.minecraft.client.Minecraft minecraft) {
         long window = minecraft.getWindow().handle();
         if (org.lwjgl.glfw.GLFW.glfwGetWindowAttrib(window, org.lwjgl.glfw.GLFW.GLFW_FOCUSED) != 0) return true;

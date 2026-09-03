@@ -216,7 +216,7 @@ final class StandardAe2Scenario {
                 if (reset) key(0x12, false);
                 return false;
             }
-            if (clickPhase < 3) return false;
+            if (!DriverPlatform.modifiers(minecraft, reset)) return false;
             var row = snapshot.rows().stream().filter(r -> r.outputId().equals(statsOutput())).findFirst().orElseThrow();
             DriverPlatform.click(minecraft, row.cell().centerX(), row.cell().centerY());
             releaseKeys();
@@ -243,8 +243,9 @@ final class StandardAe2Scenario {
         var input = new INPUT();
         input.type = new DWORD(INPUT.INPUT_KEYBOARD);
         input.input.setType(KEYBDINPUT.class);
-        input.input.ki.wVk = new WORD(code);
-        input.input.ki.dwFlags = new DWORD(release ? KEYBDINPUT.KEYEVENTF_KEYUP : 0);
+        input.input.ki.wVk = new WORD(0);
+        input.input.ki.wScan = new WORD(code == 0x11 ? 0x1d : 0x38);
+        input.input.ki.dwFlags = new DWORD(KEYBDINPUT.KEYEVENTF_SCANCODE | (release ? KEYBDINPUT.KEYEVENTF_KEYUP : 0));
         keyboardUsed = true;
         if (User32.INSTANCE.SendInput(new DWORD(1), new INPUT[] {input}, input.size()).intValue() != 1) {
             throw new IllegalStateException("Native modifier input was rejected");

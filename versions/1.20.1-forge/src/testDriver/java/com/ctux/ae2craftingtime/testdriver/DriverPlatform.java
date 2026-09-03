@@ -1,6 +1,11 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 final class DriverPlatform {
+    static boolean modifiers(net.minecraft.client.Minecraft minecraft, boolean reset) {
+        return net.minecraft.client.gui.screens.Screen.hasControlDown()
+                && net.minecraft.client.gui.screens.Screen.hasAltDown() == reset;
+    }
+
     static boolean focus(net.minecraft.client.Minecraft minecraft) {
         long window = minecraft.getWindow().getWindow();
         if (org.lwjgl.glfw.GLFW.glfwGetWindowAttrib(window, org.lwjgl.glfw.GLFW.GLFW_FOCUSED) != 0) return true;
