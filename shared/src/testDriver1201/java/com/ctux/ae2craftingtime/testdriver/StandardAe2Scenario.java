@@ -209,7 +209,11 @@ final class StandardAe2Scenario {
         var chat = ((ChatComponentAccessor) minecraft.gui.getChat()).ae2craftingtime_test_driver$messages();
         if (!clicked) {
             if (System.nanoTime() < nextStatsClick) return false;
-            if (!DriverPlatform.focus(minecraft)) return false;
+            if (!DriverPlatform.focus(minecraft)) {
+                releaseKeys();
+                clickPhase = 0;
+                return false;
+            }
             if (clickPhase++ == 0) {
                 chatCount = chat.size();
                 key(0x11, false);

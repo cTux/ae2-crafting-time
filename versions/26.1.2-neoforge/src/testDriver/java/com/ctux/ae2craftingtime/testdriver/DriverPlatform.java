@@ -10,7 +10,9 @@ final class DriverPlatform {
 
     static boolean focus(net.minecraft.client.Minecraft minecraft) {
         long window = minecraft.getWindow().handle();
-        if (org.lwjgl.glfw.GLFW.glfwGetWindowAttrib(window, org.lwjgl.glfw.GLFW.GLFW_FOCUSED) != 0) return true;
+        var nativeWindow = new com.sun.jna.platform.win32.WinDef.HWND(com.sun.jna.Pointer.createConstant(
+                org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window(window)));
+        if (nativeWindow.equals(com.sun.jna.platform.win32.User32.INSTANCE.GetForegroundWindow())) return true;
         org.lwjgl.glfw.GLFW.glfwFocusWindow(window);
         return false;
     }
