@@ -17,6 +17,17 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+$javaHomes = @{}
+foreach ($major in 17, 21, 25) {
+    $javaHomes[$major] = & (Join-Path $PSScriptRoot 'get-java-home.ps1') -Major $major
+    [Environment]::SetEnvironmentVariable("JAVA_HOME_$major", $javaHomes[$major], 'Process')
+}
+$clientJava = if ($Target -like '1.20.1-*') { 17 } elseif ($Target -eq '1.21.1-neoforge') { 21 } else { 25 }
+$env:JAVA_HOME = $javaHomes[[Math]::Min($clientJava, 21)]
+$env:Path = "$(Join-Path $env:JAVA_HOME 'bin');$env:Path"
+$GradleArgs += @('-Porg.gradle.java.installations.fromEnv=JAVA_HOME_17,JAVA_HOME_21,JAVA_HOME_25',
+    '-Porg.gradle.java.installations.auto-detect=false', '-Porg.gradle.java.installations.auto-download=false')
+Write-Host "runtime java $clientJava ($($javaHomes[$clientJava]))"
 $api = "https://api.modrinth.com/v2"
 $profiles = @{
     "1.20.1-forge" = [pscustomobject]@{

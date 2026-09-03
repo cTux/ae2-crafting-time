@@ -6,7 +6,6 @@ param(
     [switch]$Stop,
     [ValidatePattern("^(suite|craft-plan|no-space-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
-    [string]$JavaHome,
     [string]$LocalRoot,
     [string]$InteractiveUser = "Codex",
     [string]$RequestPath
@@ -20,21 +19,6 @@ function Get-WorkspaceId([string]$path) {
         return (([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes(
             [IO.Path]::GetFullPath($path).ToLowerInvariant()))) -replace '-', '').Substring(0, 12)).ToLowerInvariant()
     } finally { $sha.Dispose() }
-}
-
-function Find-SmokeJava([string]$requested) {
-    $major = if ($Target -like "*-neoforge") { 21 } else { 17 }
-    $candidate = if ($requested) { $requested } else {
-        @(
-            Get-ChildItem -LiteralPath "C:\Program Files\Eclipse Adoptium" -Directory -Filter "jdk-$major*" -ErrorAction SilentlyContinue
-            Get-ChildItem -LiteralPath (Join-Path $env:USERPROFILE ".gradle\jdks") -Directory -Recurse -Filter "jdk-$major*" -ErrorAction SilentlyContinue
-        ) | Sort-Object Name -Descending | Select-Object -First 1 -ExpandProperty FullName
-    }
-    $java = if ($candidate) { Join-Path $candidate "bin\java.exe" } else { "" }
-    if (-not $java -or -not (Test-Path -LiteralPath $java -PathType Leaf)) { throw "CodexVM JDK $major was not found" }
-    $version = (& { $ErrorActionPreference = "Continue"; & $java -XshowSettings:properties -version 2>&1 } | Out-String)
-    if ($version -notmatch "(?m)^\s*java\.version\s*=\s*$major(?:\.|\s|$)") { throw "$Target UI smoke requires JDK ${major}: $java" }
-    return [IO.Path]::GetFullPath($candidate)
 }
 
 function Get-ReportDirectory([string]$sourceRoot, [bool]$latest, [string]$scenario) {
@@ -58,7 +42,8 @@ function Stop-Smoke([string]$report) {
 
 if ($RequestPath) {
     $request = Get-Content -LiteralPath $RequestPath -Raw | ConvertFrom-Json
-    $env:JAVA_HOME = $request.javaHome
+    $major = if ($request.target -like '1.20.1-*') { 17 } elseif ($request.target -eq '1.21.1-neoforge') { 21 } else { 25 }
+    $env:JAVA_HOME = & (Join-Path $PSScriptRoot 'get-java-home.ps1') -Major $major
     $env:Path = "$(Join-Path $env:JAVA_HOME 'bin');$env:Path"
     $arguments = @{ ReportDirectory = $request.reportDirectory; Scenario = $request.scenario; Target = $request.target }
     if ($request.projectId) { $arguments.ProjectId = @($request.projectId) }
@@ -82,7 +67,8 @@ $taskName = "AE2 Crafting Time UI Smoke $workspaceId"
 $existing = if ($Scheduled) { Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue } else { $null }
 if ($existing -and $existing.State -eq "Running") { throw "UI smoke task is already running" }
 
-$smokeJava = Find-SmokeJava $JavaHome
+$major = if ($Target -like '1.20.1-*') { 17 } elseif ($Target -eq '1.21.1-neoforge') { 21 } else { 25 }
+$smokeJava = & (Join-Path $PSScriptRoot 'get-java-home.ps1') -Major $major
 New-Item -ItemType Directory -Path $stage, $report -Force | Out-Null
 & robocopy.exe $sourceRoot $stage /MIR /XD .git .gradle build /XF .git /NFL /NDL /NJH /NJS /NP | Out-Null
 if ($LASTEXITCODE -gt 7) { throw "Failed to stage the checkout with robocopy exit $LASTEXITCODE" }

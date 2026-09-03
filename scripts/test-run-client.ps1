@@ -11,6 +11,8 @@ $modVersion = ((Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScrip
 [IO.File]::WriteAllText((Join-Path $temp "gradle.properties"), "modVersion=$modVersion`n", [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $temp "gradlew.bat"), @"
 @echo off
+>"%~dp0java-selection.txt" echo %JAVA_HOME%
+>>"%~dp0java-selection.txt" echo %*
 if defined AE2CT_DRIVER_BUILD_FAIL exit /b 9
 if not exist "%~dp0build\test-driver" mkdir "%~dp0build\test-driver"
 >"%~dp0build\test-driver\ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar" echo driver
@@ -96,6 +98,15 @@ try {
             Set-Content -LiteralPath $stale -Value "stale"
         }
         $output = (& $script -Target $entry.id -Root $temp -VersionMatrix $testMatrix -ResolveOnly 6>&1 | Out-String)
+        $major = if ($entry.id -like '1.20.1-*') { 17 } elseif ($entry.id -eq '1.21.1-neoforge') { 21 } else { 25 }
+        Assert-Line $output "runtime java $major ($([Environment]::GetEnvironmentVariable("JAVA_HOME_$major")))"
+        $selection = Get-Content -LiteralPath (Join-Path $temp 'java-selection.txt')
+        if ($selection[0] -ne [Environment]::GetEnvironmentVariable("JAVA_HOME_$([Math]::Min($major, 21))") -or
+                $selection[1] -notlike '*-Porg.gradle.java.installations.fromEnv=JAVA_HOME_17,JAVA_HOME_21,JAVA_HOME_25*' -or
+                $selection[1] -notlike '*-Porg.gradle.java.installations.auto-detect=false*' -or
+                $selection[1] -notlike '*-Porg.gradle.java.installations.auto-download=false*') {
+            throw "Wrong Gradle Java selection for $($entry.id)"
+        }
         Assert-Line $output "profile compatible"
         Assert-Line $output "runtime loader $($entry.compatible.loader_version)"
         Assert-Line $output "runtime ae2 $($entry.compatible.ae2_version)"
@@ -215,10 +226,10 @@ try {
     [IO.File]::WriteAllText($extraMatrix, ($extraData | ConvertTo-Json -Depth 20), [Text.UTF8Encoding]::new($false))
     & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $extraMatrix -RuntimeDirectory $customRuntime `
         -Latest -ProjectId ayN3DZKb -ResolveOnly 6>&1 | Out-Null
-    $extraManifest = @(Get-Content (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json)
+    $extraManifest = (Get-Content (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json)
     if ($extraManifest.Count -ne 3 -or @($extraManifest | Where-Object { $_ -eq "rxYaglEe.jar" }).Count -ne 1 -or
             "ayN3DZKb.jar" -notin $extraManifest -or "XxWD5pD3.jar" -in $extraManifest) {
-        throw "Explicit Modrinth dependencies were omitted, duplicated, or failed to terminate a cycle"
+        throw "Explicit Modrinth dependencies were omitted, duplicated, or failed to terminate a cycle: $($extraManifest -join ', ')"
     }
 
     $env:AE2CT_DRIVER_BUILD_FAIL = "1"

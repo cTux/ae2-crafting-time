@@ -33,6 +33,8 @@ description: Run prepared AE2 Crafting Time repository clients or automated UI s
   the exact client stopped before continuing; never kill Java processes broadly.
 
 Run 1.20.1 clients on Java 17, 1.21.1 on Java 21, and 26.1.2 on Java 25.
+Resolve the launch machine's `JAVA_HOME_17`, `JAVA_HOME_21`, or `JAVA_HOME_25`
+with `scripts/get-java-home.ps1`; never use a path copied from the other machine.
 These are guest runtime versions; Gradle and all JAR builds stay on the host.
 
 ## Dependency audits

@@ -31,6 +31,15 @@ Read this after an eligible named-modpack instance exists in Prism's **Codex** g
 
 ## Launch And Decide
 
+- Before opening Prism, run `scripts/set-prism-java.ps1 -InstanceDirectory`
+  with the exact staged **Codex** instance directory on the launch machine.
+  It selects `JAVA_HOME_17`, `JAVA_HOME_21`, or `JAVA_HOME_25` from the pack's
+  Minecraft version, verifies Java, and disables automatic Java selection for
+  that instance. Repeat after moving between host and VM or changing a variable.
+- If Prism is already open, use its instance Java settings with the resolved
+  `scripts/get-java-home.ps1 -Major <17|21|25>` path; do not overwrite live
+  configuration files. Never apply test Java settings globally or to other groups.
+
 - For an SVGA3D atlas-size failure, distinguish `GL_MAX_TEXTURE_SIZE` from
   Minecraft's square-allocation probe. Read the
   [guarded driver probe](../../../../docs/test-driver/technical-design.md#codexvm-rectangular-atlas-probe)

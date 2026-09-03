@@ -48,6 +48,27 @@ if [ "$ok" -ne 1 ]; then
   exit 1
 fi
 
+for major in 17 21 25; do
+  name="JAVA_HOME_$major"
+  java_home="${!name:-}"
+  [ -n "$java_home" ] || { echo "Set $name to the installed JDK $major directory" >&2; exit 1; }
+  [ -x "$java_home/bin/java" ] || { echo "$name has no executable bin/java: $java_home" >&2; exit 1; }
+  version="$("$java_home/bin/java" -XshowSettings:properties -version 2>&1)"
+  printf '%s\n' "$version" | grep -Eq "^[[:space:]]*java.version[[:space:]]*=[[:space:]]*$major([.[:space:]]|$)" || {
+    echo "$name requires JDK $major: $java_home" >&2; exit 1;
+  }
+  export "$name"
+done
+case "$Target" in
+  1.20.1-*) client_java=17; export JAVA_HOME="$JAVA_HOME_17";;
+  1.21.1-neoforge) client_java=21; export JAVA_HOME="$JAVA_HOME_21";;
+  26.1.2-neoforge) client_java=25; export JAVA_HOME="$JAVA_HOME_21";;
+esac
+export PATH="$JAVA_HOME/bin:$PATH"
+GradleArgs+=('-Porg.gradle.java.installations.fromEnv=JAVA_HOME_17,JAVA_HOME_21,JAVA_HOME_25'
+  '-Porg.gradle.java.installations.auto-detect=false' '-Porg.gradle.java.installations.auto-download=false')
+echo "runtime java $client_java"
+
 case "$Target" in
   1.20.1-forge)
     Module="mc_1_20_1_forge"; Game="1.20.1"; Loader="forge"

@@ -7,8 +7,9 @@ Minecraft window before a visual check.
 
 ## Host build and VM staging
 
-1. Keep `JAVA_HOME_17`, `JAVA_HOME_21`, and `JAVA_HOME_25` set to installed host
-   JDK directories. Verify each `bin/java.exe -version` before using it. Use
+1. Keep `JAVA_HOME_17`, `JAVA_HOME_21`, and `JAVA_HOME_25` set on both the host
+   and CodexVM, pointing to each machine's own installed JDK directories.
+   Verify each `bin/java.exe -version` before using it. Use
    `JAVA_HOME_17` or `JAVA_HOME_21` for the Gradle process; the version modules
    select Java 17, 21, or 25 toolchains. Do not start the multi-project build on
    Java 25. If the variables are missing, locate and verify the installed JDKs
@@ -41,10 +42,34 @@ Minecraft window before a visual check.
    1.21.1, or Java 25 for 26.1.2. Run the requested smoke, review screenshots,
    return logs and evidence through the share, and stop only the tested client.
 
+The PowerShell launchers resolve these variables from the current process,
+then saved user settings, then machine settings. They reject missing executables
+and wrong Java versions. `scripts/get-java-home.ps1 -Major 21` returns the
+verified directory for a direct Java 21 launch on either machine. The Bash
+launcher expects all three variables exported in its shell.
+
+Host Gradle client launchers use these three variables as their toolchain
+inventory, with automatic discovery and downloads disabled. Minecraft 26.1.2
+uses `JAVA_HOME_25` for its client toolchain and `JAVA_HOME_21` for Gradle.
+
 For Prism, inspect and use only the **Codex** group. If it lacks the exact
 requested modpack release, download and install that release into **Codex**.
 A matching pack elsewhere is not eligible: do not launch, copy, move, or modify
 it. Keep temporary guest-local test instances in **Codex** as well.
+
+Before opening Prism for a test, run this on the machine that will run the client:
+
+```powershell
+.\scripts\set-prism-java.ps1 -InstanceDirectory '<exact Codex instance directory>'
+```
+
+It checks Codex membership and the installed Minecraft version, resolves that
+machine's matching `JAVA_HOME_*`, and sets the instance's Java executable with
+automatic Java selection disabled. Run it again after changing a variable or
+moving the instance between machines. For a staged guest-local instance, copy
+its Codex group membership too. Do not edit settings while Prism or that client
+is running. Prism needs the resolved executable path, not a literal environment
+variable in its Java-path field.
 
 ## Prepared-client launcher limitation
 
