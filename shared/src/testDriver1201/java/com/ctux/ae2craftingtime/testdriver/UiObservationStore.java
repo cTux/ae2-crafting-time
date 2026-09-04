@@ -217,7 +217,8 @@ public final class UiObservationStore {
                     arguments.add(argument instanceof Component nested ? nested.getString() : String.valueOf(argument));
                 }
             }
-            return new UiSnapshot.ObservedText(translated.getKey(), component.getString(), arguments, bounds);
+            return new UiSnapshot.ObservedText(translated.getKey(), component.getString(), arguments, bounds,
+                    component.getStyle().getColor() == null ? null : component.getStyle().getColor().getValue(), component.getStyle().isBold());
         }
         return new UiSnapshot.ObservedText("literal", component.getString(), List.of(), bounds);
     }

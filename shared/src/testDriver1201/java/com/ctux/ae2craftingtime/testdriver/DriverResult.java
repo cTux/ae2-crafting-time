@@ -40,7 +40,7 @@ public record DriverResult(
     }
 
     public static List<String> requiredChecks(String scenario) {
-        return scenario.equals(StandardAe2Scenario.SCENARIO) ? StandardAe2Scenario.CHECKS
+        return StandardAe2Scenario.supports(scenario) ? StandardAe2Scenario.CHECKS.get(scenario)
                 : scenario.equals("craft-plan") ? CRAFT_PLAN_CHECKS
                 : scenario.equals(NoSpaceScenario.SCENARIO) ? NoSpaceScenario.CHECKS
                 : scenario.equals(NoPowerScenario.SCENARIO) ? NoPowerScenario.CHECKS

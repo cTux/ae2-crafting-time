@@ -73,3 +73,8 @@ Every new or changed executable behavior must have 100% line and branch coverage
 
 Follow `AGENTS.md` for branch, commit, PR, and validation ordering. Report only
 checks that actually ran, and call unfinished CI pending rather than passed.
+
+When UI smoke is authorized for a focused code change, use the prepared-smoke
+skill's `-Changed` workflow after PR creation. Review the selection reasons;
+keep full mode for explicit full/release verification. NOT_REQUIRED does not
+waive the normal unit, boundary, or static checks.

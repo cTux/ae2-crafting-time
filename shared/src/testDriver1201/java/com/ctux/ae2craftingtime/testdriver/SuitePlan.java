@@ -19,7 +19,7 @@ record SuitePlan(int schema, List<Case> cases) {
     }
 
     List<DriverOptions> options(DriverOptions options) {
-        if (schema != 1 || cases == null || cases.isEmpty() || cases.size() > 32 || options.interactive()) {
+        if (schema != 1 || cases == null || cases.isEmpty() || cases.size() > 64 || options.interactive()) {
             throw new IllegalArgumentException("invalid suite schema, case count, or interactive mode");
         }
         var scenarios = new HashSet<String>();

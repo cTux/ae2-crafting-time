@@ -559,3 +559,15 @@ Every full compatible suite includes this scenario and the NO PROVIDER
 regression. Driver checks observe final frames and real AE2 state, never seed
 production diagnostics. Shared pure tests cover threshold, expiry, priority,
 CPU switching and lifecycle; packet tests cover the shared transport boundary.
+
+## Independent standard cases
+
+The shared `StandardAe2Scenario` uses named stages and a leaf ID, with fresh
+fixture preparation for every leaf. Both target runtime implementations use
+the same dispatch and exact check contracts. The 26.1.2 fixture/observer adapters
+retain their native APIs. `ui-smoke-groups.json` owns host alias expansion and
+required evidence; Java `DriverResult` enforces the matching check sets.
+`SuitePlan` and the host accept 1–64 unique cases/worlds. Group results live in
+the campaign report; existing schema-1 leaf and flat-suite reports are preserved.
+Runtime acceptance still requires independent, group and full-suite evidence
+on all four targets; code or contract tests alone do not establish a UI pass.

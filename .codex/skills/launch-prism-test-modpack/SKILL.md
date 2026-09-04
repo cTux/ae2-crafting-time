@@ -85,3 +85,9 @@ runtime separate from total task time. Mark an unavailable duration as
   filenames, start duplicate clients, or kill Java processes broadly.
 - Retry a repeated provider metadata failure once. If it repeats or stalls at
   completion, record the install as blocked and continue the batch.
+
+For a standard group in an explicitly requested pack, pass `standard-ae2`
+through `prepare-ui-smoke-suite.ps1` so it expands into six leaves and fresh
+worlds before the one Prism launch. Do not pass that alias to the raw JVM
+scenario property. This does not change the inspected pack graph or authorize
+automatic pack selection from a source diff.

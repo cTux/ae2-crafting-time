@@ -7,9 +7,9 @@ New-Item -ItemType Directory -Path $scripts -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "run-ui-smoke-codexvm.ps1") -Destination $scripts
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'get-java-home.ps1') -Destination $scripts
 [IO.File]::WriteAllText((Join-Path $scripts "run-ui-smoke.ps1"), @'
-param([string]$BundleDirectory, [string]$PreparedLaunch, [string]$Target, [string]$ReportDirectory, [string]$Scenario, [string[]]$ProjectId, [switch]$Latest, [switch]$Interactive)
+param([string]$CasesBase64,[string]$BundleDirectory, [string]$PreparedLaunch, [string]$Target, [string]$ReportDirectory, [string]$Scenario, [string[]]$ProjectId, [switch]$Latest, [switch]$Interactive)
 New-Item -ItemType Directory -Path $ReportDirectory -Force | Out-Null
-[ordered]@{ target=$Target; scenario=$Scenario; projectId=@($ProjectId); latest=$Latest.IsPresent; interactive=$Interactive.IsPresent; javaHome=$env:JAVA_HOME } |
+[ordered]@{ casesBase64=$CasesBase64; target=$Target; scenario=$Scenario; projectId=@($ProjectId); latest=$Latest.IsPresent; interactive=$Interactive.IsPresent; javaHome=$env:JAVA_HOME } |
     ConvertTo-Json | Set-Content -LiteralPath (Join-Path $ReportDirectory "wrapper-result.json") -Encoding UTF8
 '@, [Text.UTF8Encoding]::new($false))
 
@@ -32,8 +32,10 @@ try {
         throw "Default scenario report was not separated"
     }
     & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -BundleDirectory (Join-Path $source "bundle") -LocalRoot $stage -Scenario suite
+    $encoded = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes('["waiting-status","delayed-status"]'))
+    & (Join-Path $scripts 'run-ui-smoke-codexvm.ps1') -BundleDirectory (Join-Path $source 'bundle') -LocalRoot $stage -Scenario suite -CasesBase64 $encoded
     $suiteResult = Get-Content (Join-Path $source 'build\ui-smoke\1.20.1-forge\compatible\suite\wrapper-result.json') -Raw | ConvertFrom-Json
-    if ($suiteResult.scenario -ne 'suite') { throw 'Wrapper dropped suite selection' }
+    if ($suiteResult.scenario -ne 'suite' -or $suiteResult.casesBase64 -cne $encoded) { throw 'Wrapper dropped suite selection' }
     & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -BundleDirectory (Join-Path $source "bundle") -LocalRoot $stage -Target 1.20.1-fabric -Scenario suite
     $fabricResult = Get-Content (Join-Path $source 'build\ui-smoke\1.20.1-fabric\compatible\suite\wrapper-result.json') -Raw | ConvertFrom-Json
     if ($fabricResult.target -ne '1.20.1-fabric' -or $fabricResult.scenario -ne 'suite') { throw 'Wrapper dropped Fabric target' }

@@ -137,3 +137,26 @@ pass together.
 ExtendedAE-Plus is included in the Forge 1.20.1 and NeoForge 1.21.1 compatible
 profiles. Expanded AE stays excluded because its Applied Flux pattern-provider
 mixin conflicts with other candidates in both rows.
+
+## Change-based UI smoke
+
+After the PR exists, use `scripts/run-ui-smoke.ps1 -Changed -BaseRef origin/master`
+for authorized verification of a change. Add `-PlanOnly` to inspect targets,
+expanded cases and reasons without building or accessing the VM. Committed,
+staged, unstaged and untracked changes are unioned from the merge base.
+Missing refs, conflicts and stale fingerprints fail before execution.
+
+No arguments still runs full suites. Explicit `-Target` / `-Scenario` requests
+are manual coverage, and cannot be combined with `-Changed`. A focused pass
+never satisfies a full-suite or release gate. Docs/tests-only plans report
+`NOT_REQUIRED`; their normal checks remain required.
+
+`-Scenario standard-ae2` expands to six independent cases in one launch, with
+one fresh world per case. You can run any leaf directly: `standard-plan-controls`,
+`standard-status-controls`, `waiting-status`, `running-status`, `delayed-status`,
+or `craft-lifecycle`. The raw JVM scenario property now accepts the leaves;
+`standard-ae2` is a host alias. Flat suites accept up to 64 unique cases.
+
+Campaigns retain `selection.json`, bundle hashes, leaf outcomes and group
+results. All six leaves and their screenshots/semantic sidecars must pass for
+`standard-ae2` to pass. Missing and unselected leaves remain `NOT_RUN`.

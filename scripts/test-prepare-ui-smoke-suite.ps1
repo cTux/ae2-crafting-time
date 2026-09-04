@@ -13,6 +13,7 @@ try {
     }
     if ($plan.cases[0].world -eq $plan.cases[1].world) { throw 'Worlds are not isolated' }
     $fabric = & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -Target 1.20.1-fabric -RuntimeDirectory $runtime -OutputDirectory "$temporary\fabric-evidence" -Scenarios @('standard-ae2')
+    if ($fabric.caseCount -ne 6) { throw 'Standard alias must expand to six worlds' }
     $fabricSource = Join-Path (Split-Path -Parent $PSScriptRoot) 'versions/1.20.1-fabric/run/saves/ae2-crafting-time/level.dat'
     if ((Get-FileHash -LiteralPath "$runtime/saves/$($fabric.world)/level.dat").Hash -ne (Get-FileHash -LiteralPath $fabricSource).Hash) {
         throw 'Fabric retained Forge-only world metadata'
@@ -36,7 +37,7 @@ try {
     catch { $rejected = $true }
     if (!$rejected) { throw 'Expected existing output rejection' }
     $rejected = $false
-    try { & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -RuntimeDirectory $runtime -OutputDirectory "$temporary\too-many" -Scenarios (1..33 | ForEach-Object {"case-$_"}) | Out-Null }
+    try { & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -RuntimeDirectory $runtime -OutputDirectory "$temporary\too-many" -Scenarios (1..65 | ForEach-Object {"case-$_"}) | Out-Null }
     catch { $rejected = $true }
     if (!$rejected) { throw 'Expected bounded suite rejection' }
     Write-Host 'PASS: suite copies, launch identity, markers, unique worlds, and invalid inputs'

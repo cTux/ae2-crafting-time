@@ -5,6 +5,9 @@ $source = Join-Path $temp "versions\1.20.1-forge\run\saves\ae2-crafting-time"
 New-Item -ItemType Directory -Path $scripts, $source -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "run-ui-smoke.ps1") -Destination (Join-Path $scripts "run-ui-smoke.ps1")
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1"), (Join-Path $PSScriptRoot "ui-smoke-forge-suite.json"), (Join-Path $PSScriptRoot "ui-smoke-fabric-suite.json"), (Join-Path $PSScriptRoot "ui-smoke-neoforge-suite.json"), (Join-Path $PSScriptRoot "ui-smoke-neoforge-26.1.2-suite.json") -Destination $scripts
+foreach ($file in @('expand-ui-smoke-groups.ps1','release-matrix.json','ui-smoke-coverage.json','ui-smoke-groups.json')) {
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination $scripts
+}
 [IO.File]::WriteAllText((Join-Path $temp "gradle.properties"), "modVersion=1.1.0`n", [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $source ".ae2-crafting-time-test-fixture.json"), @'
 {"schema":1,"scenario":"craft-plan","sourceFixtureId":"ae2-crafting-time","disposableWorldId":"SOURCE_ONLY",
@@ -54,10 +57,10 @@ if ($DriverScenario -eq "suite") {
     $summary | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $DriverOutputDirectory 'result.json') -Encoding UTF8
     return
 }
-$checks = if ($DriverScenario -eq "standard-ae2") {
+$contracts = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json).cases
+$checks = if ($contracts.$DriverScenario) {
     $values = [ordered]@{}
-    foreach ($key in @('plan','plan-sort','plan-tooltip','plan-details','plan-reset','submitted','status','status-sort',
-            'status-tooltip','status-details','status-reset','waiting','running','delayed','header','layout','completed','output')) { $values[$key] = $true }
+    foreach ($key in $contracts.$DriverScenario.checks) { $values[$key] = $true }
     $values
 } elseif ($DriverScenario -eq "no-space-status") {
     [ordered]@{ screen=$true; "external-machine"=$true; warning=$true; tooltip=$true; layout=$true; recovered=$true }
@@ -82,10 +85,8 @@ $checks = if ($DriverScenario -eq "standard-ae2") {
 } else {
     [ordered]@{ screen=$true; 'ttc-row'=$true; 'total-ttc'=$true; 'sort-cycle'=$true; tooltip=$true; layout=$true }
 }
-$screenshots = if ($DriverScenario -eq "standard-ae2") {
-    @('plan-default.png','plan-sort-1.png','plan-sort-2.png','plan-sort-3.png','plan-tooltip.png','plan-details.png','plan-reset.png',
-      'status-default.png','status-sort-1.png','status-sort-2.png','status-sort-3.png','status-tooltip.png','status-details.png','status-reset.png',
-      'status-waiting-running.png','status-delayed.png','status-progress.png','status-completed.png')
+$screenshots = if ($contracts.$DriverScenario) {
+    @($contracts.$DriverScenario.screenshots)
 } elseif ($DriverScenario -eq "no-space-status") {
     @("no-space-before.png", "no-space-en-us.png", "no-space-recovered.png")
 } elseif ($DriverScenario -eq "no-power-status") {
@@ -113,6 +114,7 @@ $result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $Driver
 foreach ($screenshot in $screenshots) {
     if ($env:AE2CT_UI_SMOKE_TEST_MODE -ne "missing-screenshot" -or $screenshot -ne $screenshots[-1]) {
         Set-Content -LiteralPath (Join-Path $DriverOutputDirectory $screenshot) -Value "png"
+        @{screen='fixture-screen';gui=@{x=0;y=0;width=100;height=100}} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $DriverOutputDirectory $screenshot.Replace('.png','.json'))
     }
 }
 if ($Interactive -and $env:AE2CT_UI_SMOKE_TEST_MODE -eq "interactive-token" -and
@@ -223,6 +225,9 @@ try {
     $failedStatus = Get-Content -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\craft-plan\status.json") -Raw | ConvertFrom-Json
     if ($failedStatus.phase -ne "failed" -or -not $failedStatus.message) { throw "Smoke failure status was incomplete" }
 
+    foreach ($leaf in @('standard-plan-controls','standard-status-controls','waiting-status','running-status','delayed-status','craft-lifecycle')) {
+        Invoke-Case "pass" -Scenario $leaf -shouldPass $true
+    }
     Invoke-Case "pass" -Scenario standard-ae2 -shouldPass $true
     Invoke-Case "missing-screenshot" -Scenario standard-ae2 -shouldPass $false
     $failedManifest = Join-Path $temp 'build/ui-smoke/1.20.1-forge/compatible/standard-ae2/evidence/resolved-mods.json'

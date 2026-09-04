@@ -48,7 +48,7 @@ class SuitePlanTest {
 
     @Test void rejectsInvalidPlansBeforeOpeningAnyWorld() {
         for (var plan : List.of(new SuitePlan(2, List.of(first)), new SuitePlan(1, null),
-                new SuitePlan(1, List.of()), new SuitePlan(1, Collections.nCopies(33, first)),
+                new SuitePlan(1, List.of()), new SuitePlan(1, Collections.nCopies(65, first)),
                 new SuitePlan(1, Arrays.asList((SuitePlan.Case) null)),
                 new SuitePlan(1, List.of(new SuitePlan.Case(null, FIRST))),
                 new SuitePlan(1, List.of(new SuitePlan.Case("../escape", FIRST))),

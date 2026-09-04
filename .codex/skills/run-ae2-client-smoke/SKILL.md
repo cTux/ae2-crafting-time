@@ -85,3 +85,10 @@ time. Mark an unavailable duration as `not measured`; do not estimate it.
   gameplay unless the request authorizes it.
 - Never substitute a loader, target, scenario, or profile. Do not reinterpret a
   build or dependency request as permission to launch Minecraft.
+
+For authorized change-focused verification after the PR exists, use
+`scripts/run-ui-smoke.ps1 -Changed -BaseRef origin/master`. Add `-PlanOnly`
+to review scope without builds or VM access. Keep no-argument full mode for
+full/release requests. `standard-ae2` is a host alias for six independent
+leaves; raw JVM launches must use a leaf or an expanded suite. A focused pass
+never replaces full-suite or newest-adapter proof. Archive selection.json.

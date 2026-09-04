@@ -263,3 +263,9 @@ The native AE2 and supported AdvancedAE dispatch hooks now share the NO PROVIDER
 NO POWER status transport. NO POWER observes only the real simulated AE network
 energy extraction. All four prepared compatible suites include both native
 status scenarios; their results apply only to the actual tested artifacts.
+
+Standard AE2 coverage now expands into six independent leaves before full-suite
+execution (34/16/30/19 cases for Forge 1.20.1, Fabric 1.20.1, NeoForge 1.21.1,
+and NeoForge 26.1.2). A focused leaf pass does not certify a dependency's full
+standard group. Optional integrations keep their existing scenario names and
+newest-adapter obligations; change selection does not alter dependency pins.

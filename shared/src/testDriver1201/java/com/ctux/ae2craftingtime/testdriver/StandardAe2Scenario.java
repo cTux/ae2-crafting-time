@@ -27,17 +27,31 @@ import java.util.function.Function;
 
 /** Bounded, real plan -> dispatch -> vanilla processing -> completed output flow. */
 final class StandardAe2Scenario {
-    static final String SCENARIO = "standard-ae2";
-    static final List<String> CHECKS = List.of("plan", "plan-sort", "plan-tooltip", "plan-details", "plan-reset",
-            "submitted", "status", "status-sort", "status-tooltip", "status-details", "status-reset",
-            "waiting", "running", "delayed", "header", "layout", "completed", "output");
+    static final Map<String, List<String>> CHECKS = Map.ofEntries(
+            Map.entry("standard-plan-controls", List.of("plan", "plan-sort", "plan-tooltip", "plan-details", "plan-reset", "total-ttc", "layout")),
+            Map.entry("standard-status-controls", List.of("submitted", "status", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout")),
+            Map.entry("waiting-status", List.of("submitted", "waiting", "first-dispatch", "recovered", "layout")),
+            Map.entry("running-status", List.of("submitted", "running", "progress", "header", "layout")),
+            Map.entry("delayed-status", List.of("submitted", "delayed", "row", "style", "tooltip", "layout", "recovered")),
+            Map.entry("craft-lifecycle", List.of("plan", "submitted", "status", "profile-sample", "completed", "output")));
+    private enum Stage { PREPARE, TERMINAL, AMOUNT, PLAN_SORT, PLAN_TOOLTIP, PLAN_DETAILS, PLAN_RESET,
+        SUBMIT, OPEN_STATUS, ACTIVE, STATUS_SORT, STATUS_TOOLTIP, STATUS_DETAILS, STATUS_RESET,
+        RESTORE, DELAYED, PUMP, FINISHED, REOPEN, EMPTY }
+    private final String leaf;
+    StandardAe2Scenario(String leaf) {
+        if (!CHECKS.containsKey(leaf)) throw new IllegalArgumentException("Unknown standard leaf: " + leaf);
+        this.leaf = leaf;
+    }
+    static boolean supports(String scenario) { return CHECKS.containsKey(scenario); }
     private final StandardCraftFixture fixture = new StandardCraftFixture();
     private final StableFrames<Integer> frames = new StableFrames<>(8);
     private CompletableFuture<Boolean> operation;
-    private int phase;
-    private int reportedPhase = -1;
+    private Stage phase = Stage.PREPARE;
+    private Stage reportedPhase;
     private int sort;
     private long lastFrame = -1;
+    private volatile boolean dispatched;
+    private volatile boolean progressed;
     private final StatsInteraction stats = new StatsInteraction();
 
     String checkpoint() { return "phase=" + phase + " fixture=" + fixture.checkpoint; }
@@ -48,11 +62,11 @@ final class StandardAe2Scenario {
             System.out.println("AE2CT standard checkpoint " + java.time.Instant.now() + " " + checkpoint());
             reportedPhase = phase;
         }
-        if (phase == 0) {
-            if (server(minecraft, player -> fixture.prepare(player, marker))) phase++;
+        if (phase == Stage.PREPARE) {
+            if (server(minecraft, player -> fixture.prepare(player, marker))) phase = Stage.values()[phase.ordinal() + 1];
             return false;
         }
-        if (phase == 1) {
+        if (phase == Stage.TERMINAL) {
             if (minecraft.screen == null) {
                 minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
                         new BlockHitResult(Vec3.atCenterOf(fixture.terminal).add(0, 0, -0.5), Direction.NORTH, fixture.terminal, false));
@@ -62,27 +76,27 @@ final class StandardAe2Scenario {
                         .findFirst().orElse(null);
                 if (entry != null) {
                     DriverPlatform.cloneEntry(screen, entry);
-                    phase++;
+                    phase = Stage.values()[phase.ordinal() + 1];
                 }
             }
             return false;
         }
-        if (phase == 2) {
+        if (phase == Stage.AMOUNT) {
             if (minecraft.screen instanceof CraftAmountScreen amount) {
                 var button = ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next();
                 DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
-            } else if (minecraft.screen instanceof CraftConfirmScreen) phase++;
+            } else if (minecraft.screen instanceof CraftConfirmScreen) phase = Stage.values()[phase.ordinal() + 1];
             return false;
         }
-        if (phase == 8 || phase == 18) {
-            if (phase == 8) {
+        if (phase == Stage.OPEN_STATUS || phase == Stage.REOPEN) {
+            if (phase == Stage.OPEN_STATUS) {
                 if (!server(minecraft, player -> fixture.cpu(player).getCluster().isBusy())) return false;
-                checks.put("submitted", true);
+                mark(checks, "submitted", true);
             }
             if (minecraft.screen instanceof MEStorageScreen<?> screen) {
                 var button = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$statusButton();
                 DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
-                phase++;
+                phase = Stage.values()[phase.ordinal() + 1];
             }
 
             return false;
@@ -90,17 +104,27 @@ final class StandardAe2Scenario {
         var snapshot = UiObservationStore.latest();
         if (snapshot == null || snapshot.frame() == lastFrame) return false;
         lastFrame = snapshot.frame();
-        if (!frames.observe(phase * 10 + sort)) return false;
-        boolean plan = phase < 8;
+        if (!frames.observe(phase.ordinal() * 10 + sort)) return false;
+        boolean plan = phase.ordinal() < Stage.OPEN_STATUS.ordinal();
         String prefix = plan ? "plan" : "status";
-        if (phase == 3 || phase == 10) {
+        if (phase == Stage.PLAN_SORT && !leaf.equals("standard-plan-controls")) {
+            if (!(minecraft.screen instanceof CraftConfirmScreen) || snapshot.rows().stream()
+                    .filter(row -> row.craftAmount() > 0).count() < 2) return false;
+            mark(checks, "plan", true);
+            if (leaf.equals("craft-lifecycle")) screenshot.accept("plan-default.png");
+            phase = Stage.SUBMIT;
+        } else if (phase == Stage.PLAN_SORT || phase == Stage.STATUS_SORT) {
             var rows = snapshot.rows().stream().filter(row -> row.craftAmount() > 0).map(UiSnapshot.Row::outputId).toList();
             if (!rows.containsAll(List.of("minecraft:stone", "minecraft:smooth_stone"))) return false;
             if (sort == 0) {
-                checks.put(prefix, true);
+                mark(checks, prefix, true);
                 if (plan && !snapshot.text().stream().anyMatch(t -> t.key().equals("text.ae2craftingtime.total_ttc"))) return false;
                 if (plan && (snapshot.badges().isEmpty() || !LayoutValidator.validateBadges(snapshot).isEmpty())) {
                     throw new IllegalStateException("plan badge layout: " + LayoutValidator.validateBadges(snapshot));
+                }
+                if (plan) {
+                    mark(checks, "total-ttc", true);
+                    mark(checks, "layout", true);
                 }
                 moveMouse.accept(snapshot.gui().x() - 8, snapshot.gui().y() - 8);
                 screenshot.accept(prefix + "-default.png");
@@ -118,83 +142,178 @@ final class StandardAe2Scenario {
                         .map(TtcSortButton.class::cast).findFirst().orElseThrow();
                 DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
             } else {
-                checks.put(prefix + "-sort", true);
+                mark(checks, prefix + "-sort", true);
                 sort = 0;
-                phase++;
+                phase = Stage.values()[phase.ordinal() + 1];
             }
-        } else if (phase == 4 || phase == 11) {
+        } else if (phase == Stage.PLAN_TOOLTIP || phase == Stage.STATUS_TOOLTIP) {
             var row = snapshot.rows().stream().filter(r -> r.outputId().equals(statsOutput())).findFirst().orElseThrow();
             moveMouse.accept(row.cell().centerX(), row.cell().centerY());
             if (snapshot.tooltip().stream().noneMatch(t -> t.key().equals("text.ae2craftingtime.details_hint"))) return false;
-            checks.put(prefix + "-tooltip", true);
+            mark(checks, prefix + "-tooltip", true);
             screenshot.accept(prefix + "-tooltip.png");
-            phase++;
-        } else if (phase == 5 || phase == 6 || phase == 12 || phase == 13) {
-            boolean reset = phase == 6 || phase == 13;
+            phase = Stage.values()[phase.ordinal() + 1];
+        } else if (phase == Stage.PLAN_DETAILS || phase == Stage.PLAN_RESET || phase == Stage.STATUS_DETAILS || phase == Stage.STATUS_RESET) {
+            boolean reset = phase == Stage.PLAN_RESET || phase == Stage.STATUS_RESET;
             if (!stats.click(minecraft, snapshot, statsOutput(), reset)) return false;
             if (reset && !server(minecraft, player -> ProfilerBridge.stats(ProfilerBridge.key(
                     ProfilerBridge.networkId(fixture.cpu(player).getMainNode().getGrid()),
                     appeng.api.stacks.AEItemKey.of(plan ? net.minecraft.world.item.Items.STONE : net.minecraft.world.item.Items.SMOOTH_STONE))).isEmpty())) return false;
-            checks.put(prefix + (reset ? "-reset" : "-details"), true);
+            mark(checks, prefix + (reset ? "-reset" : "-details"), true);
             screenshot.accept(prefix + (reset ? "-reset.png" : "-details.png"));
-            phase++;
+            phase = Stage.values()[phase.ordinal() + 1];
             stats.next();
-        } else if (phase == 7) {
+            if (reset && plan) return true;
+        } else if (phase == Stage.SUBMIT) {
             moveMouse.accept(0, 0);
             if (!server(minecraft, player -> { fixture.seed(player); return true; })) return false;
             var start = minecraft.screen.children().stream().filter(AbstractWidget.class::isInstance)
                     .map(AbstractWidget.class::cast).filter(w -> w.active && w.getMessage().getString().equals("Start"))
                     .findFirst().orElseThrow(() -> new IllegalStateException("Crafting Plan Start button is missing"));
             DriverPlatform.click(minecraft, start.getX() + 4, start.getY() + 4);
-            phase++;
-        } else if (phase == 9) {
+            phase = Stage.values()[phase.ordinal() + 1];
+        } else if (phase == Stage.ACTIVE) {
             if (!(minecraft.screen instanceof CraftingStatusScreen)) return false;
-            checks.put("waiting", snapshot.text().stream().anyMatch(t -> t.key().equals("text.ae2craftingtime.waiting")));
-            checks.put("running", snapshot.text().stream().anyMatch(t -> t.key().equals("text.ae2craftingtime.ttc")));
-            if (checks.get("waiting") && checks.get("running")) {
+            var waiting = rowText(snapshot, "minecraft:smooth_stone", "text.ae2craftingtime.waiting");
+            var running = rowText(snapshot, "minecraft:stone", "text.ae2craftingtime.ttc");
+            if (leaf.equals("standard-status-controls")) { phase = Stage.STATUS_SORT; return false; }
+            if (leaf.equals("craft-lifecycle")) {
+                mark(checks, "status", true);
+                screenshot.accept("status-default.png");
+                phase = Stage.PUMP;
+            } else if (leaf.equals("delayed-status")) { phase = Stage.DELAYED; }
+            else if (waiting != null && running != null) {
+                validateLayout(snapshot);
+                if (leaf.equals("running-status") && snapshot.text().stream().noneMatch(t -> t.key().equals("text.ae2craftingtime.ttc")
+                        && t.bounds() != null && t.bounds().y() < snapshot.gui().y() + 19 && t.bounds().inside(snapshot.gui()))) return false;
+                mark(checks, "waiting", true);
+                mark(checks, "running", true);
+                mark(checks, "layout", true);
+                mark(checks, "header", true);
                 screenshot.accept("status-waiting-running.png");
-                phase++;
+                phase = Stage.PUMP;
             }
-        } else if (phase == 14) {
+        } else if (phase == Stage.RESTORE) {
             moveMouse.accept(0, 0);
-            if (server(minecraft, player -> { fixture.seed(player); return true; })) phase++;
-        } else if (phase == 15) {
-            if (snapshot.text().stream().noneMatch(t -> t.key().equals("text.ae2craftingtime.ttc_delayed"))) return false;
-            checks.put("delayed", true);
-            screenshot.accept("status-delayed.png");
-            phase++;
-        } else if (phase == 16) {
-            boolean complete = server(minecraft, player -> fixture.pump(player, true) == 1 && !fixture.cpu(player).getCluster().isBusy() && fixture.observedNewSamples(player));
+            if (server(minecraft, player -> { fixture.seed(player); return true; })) phase = Stage.PUMP;
+        } else if (phase == Stage.DELAYED) {
+            var warning = rowText(snapshot, "minecraft:stone", "text.ae2craftingtime.ttc_delayed");
+            if (warning == null) return false;
+            if (!warning.bold() || !Integer.valueOf(0xFF5555).equals(warning.color())) {
+                throw new IllegalStateException("DELAYED must be bold red on the active stone row");
+            }
+            validateLayout(snapshot);
+            mark(checks, "delayed", true);
+            mark(checks, "row", true);
+            mark(checks, "style", true);
+            mark(checks, "layout", true);
+            if (!checks.get("tooltip")) {
+                var row = snapshot.rows().stream().filter(r -> r.outputId().equals("minecraft:stone")).findFirst().orElseThrow();
+                moveMouse.accept(row.cell().centerX(), row.cell().centerY());
+                if (!delayedTooltip(snapshot)) return false;
+                screenshot.accept("status-delayed.png");
+                screenshot.accept("delayed-tooltip.png");
+                mark(checks, "tooltip", true);
+            }
+            moveMouse.accept(0, 0);
+            phase = Stage.PUMP;
+        } else if (phase == Stage.PUMP) {
+            boolean complete = server(minecraft, player -> {
+                long output = fixture.pump(player, true);
+                dispatched = fixture.cpu(player).getCluster().craftingLogic.getWaitingFor(
+                        appeng.api.stacks.AEItemKey.of(net.minecraft.world.item.Items.SMOOTH_STONE)) > 0;
+                progressed = fixture.returnedStone;
+                return output == 1 && !fixture.cpu(player).getCluster().isBusy() && fixture.observedNewSamples(player);
+            });
+            if (leaf.equals("waiting-status") && dispatched && progressed
+                    && rowText(snapshot, "minecraft:smooth_stone", "text.ae2craftingtime.ttc") != null
+                    && rowText(snapshot, "minecraft:smooth_stone", "text.ae2craftingtime.waiting") == null) {
+                mark(checks, "first-dispatch", true);
+                mark(checks, "recovered", true);
+                screenshot.accept("waiting-recovered.png");
+                return true;
+            }
+            if (leaf.equals("running-status") && progressed && dispatched
+                    && rowText(snapshot, "minecraft:smooth_stone", "text.ae2craftingtime.ttc") != null) {
+                validateLayout(snapshot);
+                mark(checks, "progress", true);
+                screenshot.accept("running-progress.png");
+                return true;
+            }
             var header = snapshot.text().stream().filter(t -> t.bounds() != null && t.bounds().y() < snapshot.gui().y() + 19
                     && t.key().equals("text.ae2craftingtime.ttc")).findFirst();
-            if (header.isPresent() && !checks.get("header")) {
+            if (leaf.equals("standard-status-controls") && header.isPresent() && !Boolean.TRUE.equals(checks.get("header"))) {
                 if (!header.get().bounds().inside(snapshot.gui()) || !LayoutValidator.validateBadges(snapshot).isEmpty()) {
                     throw new IllegalStateException("status header " + header.get().bounds() + " GUI " + snapshot.gui()
                             + " badge layout: " + LayoutValidator.validateBadges(snapshot));
                 }
-                checks.put("header", true);
-                checks.put("layout", true);
+                mark(checks, "header", true);
+                mark(checks, "layout", true);
                 screenshot.accept("status-progress.png");
+                return true;
             }
             if (complete) {
-                checks.put("output", true);
-                phase++;
+                mark(checks, "output", true);
+                mark(checks, "profile-sample", true);
+                phase = Stage.values()[phase.ordinal() + 1];
             }
-        } else if (phase == 17) {
+        } else if (phase == Stage.FINISHED) {
             // Older AE2 can retain its last incremental row after the CPU becomes idle.
             // Preserve that view, then reopen through the actual return/status buttons.
-            screenshot.accept("status-finished-job.png");
+            if (leaf.equals("craft-lifecycle")) screenshot.accept("status-finished-job.png");
             var button = minecraft.screen.children().stream().filter(appeng.client.gui.widgets.TabButton.class::isInstance)
                     .map(appeng.client.gui.widgets.TabButton.class::cast).filter(w -> w.visible).findFirst().orElseThrow();
             DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
-            phase++;
-        } else if (phase == 19 && minecraft.screen instanceof CraftingStatusScreen
+            phase = Stage.values()[phase.ordinal() + 1];
+        } else if (phase == Stage.EMPTY && minecraft.screen instanceof CraftingStatusScreen
                 && snapshot.rows().stream().noneMatch(row -> row.craftAmount() > 0)) {
-            checks.put("completed", true);
-            screenshot.accept("status-completed.png");
+            mark(checks, "completed", true);
+            if (leaf.equals("delayed-status")) {
+                if (snapshot.text().stream().anyMatch(t -> t.key().equals("text.ae2craftingtime.ttc_delayed"))) return false;
+                mark(checks, "recovered", true);
+                screenshot.accept("delayed-recovered.png");
+            } else { screenshot.accept("status-completed.png"); }
             return true;
         }
         return false;
+    }
+
+    private static UiSnapshot.ObservedText rowText(UiSnapshot snapshot, String output, String key) {
+        var row = snapshot.rows().stream().filter(r -> r.outputId().equals(output)).findFirst();
+        if (row.isEmpty()) return null;
+        return snapshot.text().stream().filter(t -> t.key().equals(key) && t.bounds() != null
+                && t.bounds().inside(row.get().cell())).findFirst().orElse(null);
+    }
+
+    private static void validateLayout(UiSnapshot snapshot) {
+        if (!LayoutValidator.validateBadges(snapshot).isEmpty() || snapshot.badges().isEmpty()) {
+            throw new IllegalStateException("Invalid standard status badge layout");
+        }
+        var header = snapshot.text().stream().filter(t -> t.key().equals("text.ae2craftingtime.ttc")
+                && t.bounds() != null && t.bounds().y() < snapshot.gui().y() + 19).findFirst();
+        if (header.isPresent() && !header.get().bounds().inside(snapshot.gui())) {
+            throw new IllegalStateException("Standard status header escapes GUI");
+        }
+    }
+
+    private static boolean delayedTooltip(UiSnapshot snapshot) {
+        var key = new com.ctux.ae2craftingtime.core.ProfileKey("minecraft:stone");
+        var stall = com.ctux.ae2craftingtime.mc1201.ClientStats.CACHE.stall(key);
+        if (stall.isEmpty()) return false;
+        var diagnostic = stall.get();
+        // Compare rendered numbers to the synchronized diagnostic, not a seeded warning.
+        var seconds = (long) Math.ceil(diagnostic.idleTicks() / 20.0);
+        var expected = Map.of(
+                "text.ae2craftingtime.stall.no_output", net.minecraft.client.resources.language.I18n.get("text.ae2craftingtime.value.whole_seconds", seconds),
+                "text.ae2craftingtime.stall.typical", com.ctux.ae2craftingtime.core.TimeEstimate.formatTicks(diagnostic.typicalDurationTicks()),
+                "text.ae2craftingtime.stall.state", net.minecraft.client.resources.language.I18n.get("text.ae2craftingtime.value.stall_state", 1, 0));
+        return expected.entrySet().stream().allMatch(entry -> snapshot.tooltip().stream()
+                .anyMatch(text -> text.key().equals(entry.getKey()) && text.rendered().endsWith(": " + entry.getValue())))
+                && snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.stall.improvements"));
+    }
+
+    private static void mark(Map<String, Boolean> checks, String key, boolean value) {
+        if (checks.containsKey(key)) checks.put(key, value);
     }
 
     void releaseKeys() { stats.releaseKeys(); }
@@ -220,7 +339,7 @@ final class StandardAe2Scenario {
 
     private String statsOutput() {
         // Reset the waiting status row so the running furnace keeps its real in-flight sample.
-        return phase < 8 ? "minecraft:stone" : "minecraft:smooth_stone";
+        return phase.ordinal() < Stage.OPEN_STATUS.ordinal() ? "minecraft:stone" : "minecraft:smooth_stone";
     }
 
     private boolean server(Minecraft minecraft, Function<ServerPlayer, Boolean> action) {

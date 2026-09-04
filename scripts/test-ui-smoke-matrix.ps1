@@ -3,9 +3,14 @@ $temp = Join-Path ([IO.Path]::GetTempPath()) ('ae2ct-matrix-' + [guid]::NewGuid(
 $scripts = Join-Path $temp 'scripts'
 New-Item -ItemType Directory -Path $scripts -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'run-ui-smoke-matrix.ps1'), (Join-Path $PSScriptRoot 'release-matrix.json') -Destination $scripts
-$runner = Join-Path $scripts 'run-ui-smoke-matrix.ps1'
-$runnerText = Get-Content -LiteralPath $runner -Raw
-$runnerText.Replace('$commit = & git -C $root rev-parse HEAD', '$commit = ''fixture-commit''') | Set-Content -LiteralPath $runner
+foreach ($file in @('get-ui-smoke-plan.ps1','get-ui-smoke-results.ps1','expand-ui-smoke-groups.ps1','run-client-versions.json',
+        'ui-smoke-impact.json','ui-smoke-groups.json','ui-smoke-coverage.json','ui-smoke-forge-suite.json',
+        'ui-smoke-fabric-suite.json','ui-smoke-neoforge-suite.json','ui-smoke-neoforge-26.1.2-suite.json')) {
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination $scripts
+}
+& git -C $temp init --quiet
+& git -C $temp -c user.name=Test -c user.email=test@example.invalid -c core.hooksPath=disabled-hooks commit --allow-empty -qm fixture
+if ($LASTEXITCODE -ne 0) { throw 'Could not initialize matrix fixture' }
 @'
 param([string]$Target,[switch]$Latest)
 [pscustomobject]@{projectId='ae2';name='AE2';disposition='DIRECT_UI';scenario='standard-ae2';reason='';result='NOT_RUN'}
@@ -17,16 +22,29 @@ if ($Target -eq '1.20.1-fabric') { throw 'intentional resolution failure' }
 New-Item -ItemType Directory -Path (Join-Path $RuntimeDirectory 'mods') -Force | Out-Null
 '@ | Set-Content (Join-Path $scripts 'run-client.ps1')
 @'
-param([string]$Target,[switch]$Latest,[string]$Scenario,[string]$BundleDirectory,[string]$PreparedLaunchRoot,[string]$GuestSourceRoot)
+param([string]$Target,[switch]$Latest,[string]$Scenario,[string]$BundleDirectory,[string]$PreparedLaunchRoot,[string]$GuestSourceRoot,[string]$CasesBase64)
 $profile=if($Latest){'latest'}else{'compatible'}
 $live=Join-Path (Split-Path -Parent $PSScriptRoot) "build/ui-smoke/$Target/$profile/$Scenario"
-New-Item -ItemType Directory -Path "$live/evidence/standard-ae2" -Force | Out-Null
-@{phase='passed';message=''} | ConvertTo-Json | Set-Content "$live/status.json"
+$cases = @([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($CasesBase64)) | ConvertFrom-Json)
+$contracts = (Get-Content (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json).cases
+foreach ($case in $cases) {
+    $evidence = if ($cases.Count -eq 1) { "$live/evidence" } else { "$live/evidence/$case" }
+    New-Item -ItemType Directory -Path $evidence -Force | Out-Null
+    $checks = [ordered]@{}
+    foreach ($check in $contracts.$case.checks) { $checks[$check] = $true }
+    foreach ($image in $contracts.$case.screenshots) {
+        Set-Content (Join-Path $evidence $image) 'fixture-image'
+        @{screen='fixture-screen';gui=@{x=0;y=0;width=100;height=100}} | ConvertTo-Json | Set-Content (Join-Path $evidence $image.Replace('.png','.json'))
+    }
+    @{schema=1;complete=$true;target=$Target;profile=$profile;scenario=$case;language='en_us';result='PASS';checks=$checks;screenshots=@($contracts.$case.screenshots)} |
+        ConvertTo-Json -Depth 6 | Set-Content "$evidence/result.json"
+}
+@{phase='passed';message='';pid=123;exitCode=0} | ConvertTo-Json | Set-Content "$live/status.json"
 if ($env:AE2CT_UNCONFIRMED_EXIT) {
     @{phase='failed';message='termination failed';pid=123;exitCode=$null} | ConvertTo-Json | Set-Content "$live/status.json"
 }
-@{result='PASS'} | ConvertTo-Json | Set-Content "$live/evidence/standard-ae2/result.json"
 '@ | Set-Content (Join-Path $scripts 'invoke-ui-smoke-codexvm.ps1')
+Set-Content -LiteralPath (Join-Path $temp '.gitignore') 'build/'
 try {
     foreach ($latest in @($false,$true)) {
         $arguments = @('-NoProfile','-File',(Join-Path $scripts 'run-ui-smoke-matrix.ps1'))

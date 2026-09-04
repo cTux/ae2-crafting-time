@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "groups": {
+    "standard-ae2": ["standard-plan-controls", "standard-status-controls", "waiting-status", "running-status", "delayed-status", "craft-lifecycle"]
+  },
+  "cases": {
+    "standard-plan-controls": {
+      "checks": ["plan", "plan-sort", "plan-tooltip", "plan-details", "plan-reset", "total-ttc", "layout"],
+      "screenshots": ["plan-default.png", "plan-sort-1.png", "plan-sort-2.png", "plan-sort-3.png", "plan-tooltip.png", "plan-details.png", "plan-reset.png"]
+    },
+    "standard-status-controls": {
+      "checks": ["submitted", "status", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout"],
+      "screenshots": ["status-default.png", "status-sort-1.png", "status-sort-2.png", "status-sort-3.png", "status-tooltip.png", "status-details.png", "status-reset.png", "status-progress.png"]
+    },
+    "waiting-status": {
+      "checks": ["submitted", "waiting", "first-dispatch", "recovered", "layout"],
+      "screenshots": ["status-waiting-running.png", "waiting-recovered.png"]
+    },
+    "running-status": {
+      "checks": ["submitted", "running", "progress", "header", "layout"],
+      "screenshots": ["status-waiting-running.png", "running-progress.png"]
+    },
+    "delayed-status": {
+      "checks": ["submitted", "delayed", "row", "style", "tooltip", "layout", "recovered"],
+      "screenshots": ["status-delayed.png", "delayed-tooltip.png", "delayed-recovered.png"]
+    },
+    "craft-lifecycle": {
+      "checks": ["plan", "submitted", "status", "profile-sample", "completed", "output"],
+      "screenshots": ["plan-default.png", "status-default.png", "status-finished-job.png", "status-completed.png"]
+    }
+  }
+}

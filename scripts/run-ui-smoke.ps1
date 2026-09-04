@@ -1,8 +1,12 @@
 param(
     [ValidateSet("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")][string]$Target,
+    [switch]$Changed,
+    [string]$BaseRef = 'origin/master',
+    [switch]$PlanOnly,
+    [string]$CasesBase64,
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(suite|standard-ae2|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$ReportDirectory,
     [string]$BundleDirectory,
@@ -11,11 +15,25 @@ param(
 
 $ErrorActionPreference = "Stop"
 if (-not $PreparedLaunch -and -not $ReportDirectory) {
+    if ($CasesBase64) { throw 'Case-list transport is internal to native execution' }
     if ($BundleDirectory) { throw 'A native bundle requires its prepared launch manifest' }
     $campaign = @{ Latest = $Latest; ProjectId = $ProjectId; Target = $Target; Interactive = $Interactive }
     if ($PSBoundParameters.ContainsKey('Scenario')) { $campaign.Scenario = $Scenario }
+    $campaign.Changed = $Changed; $campaign.BaseRef = $BaseRef; $campaign.PlanOnly = $PlanOnly
     & (Join-Path $PSScriptRoot 'run-ui-smoke-matrix.ps1') @campaign
     exit $LASTEXITCODE
+}
+if ($Changed -or $PlanOnly) { throw 'Planning is host-only' }
+if ($CasesBase64) {
+    $requestedCases = @([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($CasesBase64)) | ConvertFrom-Json)
+    $selectedCases = @(& (Join-Path $PSScriptRoot 'expand-ui-smoke-groups.ps1') -Target $Target -Scenarios $requestedCases)
+    if (Compare-Object $requestedCases $selectedCases -SyncWindow 0) { throw 'Internal case list must be flat and unique' }
+    if ($Scenario -ne 'suite' -and ($selectedCases.Count -ne 1 -or $selectedCases[0] -cne $Scenario)) { throw 'Case list does not match launch scenario' }
+}
+if ($Scenario -eq 'standard-ae2') {
+    if ($Interactive -or $ProjectId) { throw 'Groups require non-interactive full graph execution' }
+    $selectedCases = @(& (Join-Path $PSScriptRoot 'expand-ui-smoke-groups.ps1') -Target $Target -Scenarios $Scenario)
+    $Scenario = 'suite'
 }
 if (-not $Target) { throw 'A native launch or explicit report requires a target' }
 if ($Scenario -eq "suite" -and ($Interactive -or $ProjectId)) {
@@ -93,7 +111,7 @@ Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
 Write-Status "preparing"
 if ($Scenario -eq "suite") {
     $suiteName = if ($Target -eq "26.1.2-neoforge") { "neoforge-26.1.2" } else { $loader }
-    $scenarios = Get-Content -LiteralPath (Join-Path $PSScriptRoot "ui-smoke-$suiteName-suite.json") -Raw | ConvertFrom-Json
+    $scenarios = if ($selectedCases) { $selectedCases } else { @(& (Join-Path $PSScriptRoot "expand-ui-smoke-groups.ps1") -Target $Target -Scenarios suite) }
     $suite = & (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1") -Target $Target -RuntimeDirectory $runtime -OutputDirectory $evidence -Scenarios $scenarios
     $world = $suite.world
     $plan = Get-Content -LiteralPath (Join-Path $evidence "suite-plan.json") -Raw | ConvertFrom-Json
@@ -200,10 +218,9 @@ try {
         $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
             Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
         $driverName = "ae2-crafting-time-$modVersion-$loader-$game-test-driver.jar"
-        $requiredChecks = if ($caseScenario -eq "standard-ae2") {
-            @('plan', 'plan-sort', 'plan-tooltip', 'plan-details', 'plan-reset', 'submitted', 'status',
-                'status-sort', 'status-tooltip', 'status-details', 'status-reset', 'waiting', 'running',
-                'delayed', 'header', 'layout', 'completed', 'output')
+        $standardContracts = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json).cases
+        $requiredChecks = if ($standardContracts.$caseScenario) {
+            @($standardContracts.$caseScenario.checks)
         } elseif ($caseScenario -eq "no-space-status") {
             @("screen", "external-machine", "warning", "tooltip", "layout", "recovered")
         } elseif ($caseScenario -eq "no-power-status") {
@@ -234,11 +251,8 @@ try {
         $actualChecks = @($result.checks.psobject.Properties.Name)
         if (Compare-Object $requiredChecks $actualChecks -SyncWindow 0) { throw "Invalid UI-smoke check set" }
         foreach ($check in $requiredChecks) { if (-not $result.checks.$check) { throw "Failed UI-smoke check: $check" } }
-        $requiredScreenshots = if ($caseScenario -eq "standard-ae2") {
-            @('plan-default.png', 'plan-sort-1.png', 'plan-sort-2.png', 'plan-sort-3.png', 'plan-tooltip.png',
-                'plan-details.png', 'plan-reset.png', 'status-default.png', 'status-sort-1.png', 'status-sort-2.png',
-                'status-sort-3.png', 'status-tooltip.png', 'status-details.png', 'status-reset.png',
-                'status-waiting-running.png', 'status-delayed.png', 'status-progress.png', 'status-completed.png')
+        $requiredScreenshots = if ($standardContracts.$caseScenario) {
+            @($standardContracts.$caseScenario.screenshots)
         } elseif ($caseScenario -eq "no-space-status") {
             @("no-space-before.png", "no-space-en-us.png", "no-space-recovered.png")
         } elseif ($caseScenario -eq "no-power-status") {
@@ -263,6 +277,12 @@ try {
         foreach ($screenshot in $requiredScreenshots) {
             if ($screenshot -notin $result.screenshots -or -not (Test-Path -LiteralPath (Join-Path $caseEvidence $screenshot))) {
                 throw "Missing required screenshot $screenshot"
+            }
+            if ($standardContracts.$caseScenario) {
+                $sidecar = Join-Path $caseEvidence $screenshot.Replace('.png','.json')
+                if (!(Test-Path -LiteralPath $sidecar -PathType Leaf)) { throw "Missing semantic snapshot $screenshot" }
+                $snapshot = Get-Content -LiteralPath $sidecar -Raw | ConvertFrom-Json
+                if (!$snapshot.screen -or !$snapshot.gui) { throw "Invalid semantic snapshot $screenshot" }
             }
         }
     }
