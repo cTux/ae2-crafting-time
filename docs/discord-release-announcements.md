@@ -96,7 +96,9 @@ download link, resolves the matching CurseForge file URL via the public
 cfwidget API using the matrix `curseProjectId`, and builds the matching
 Modrinth version URL from the matrix `modrinthProjectId` plus the
 `<modVersion>-<loader>-<minecraftVersion>` version number. If the CurseForge
-lookup fails, the announcement still sends with the available links.
+lookup fails, the announcement still sends with the available links. A JAR
+that matches no matrix entry is posted with its GitHub link only and logged
+as a warning so filename/matrix drift stays visible.
 
 GitHub may start the workflow while `gh release create` is still uploading
 assets. The script reads the expected JAR count from
