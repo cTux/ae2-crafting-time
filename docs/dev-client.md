@@ -106,7 +106,9 @@ compatibility baseline, not the oldest file from each project.
 Latest clients ignore that lock and resolve every project again. A dependency
 conflict or startup failure is expected evidence; the launcher does not hide it
 or fall back to the compatible version. Latest clients use `run-latest`, so
-their mods, configs, and worlds do not touch the ordinary `run` sandbox.
+their mods, configs, and worlds do not touch the ordinary `run-dev` sandbox.
+The tracked `versions/*/run` tree is the read-only UI-smoke fixture source;
+ordinary dev clients run in `run-dev`, so loading a client never dirties git.
 
 Update every client in one place: `scripts/run-client-versions.json`. Change
 `projects` when the candidate set changes. Change `compatible` and its exact

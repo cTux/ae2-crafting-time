@@ -11,7 +11,7 @@ java {
     toolchain.languageVersion = JavaLanguageVersion.of(21)
 }
 
-def runtimeRunDirectory = providers.gradleProperty('runtimeRunDirectory').getOrElse('run')
+def runtimeRunDirectory = providers.gradleProperty('runtimeRunDirectory').getOrElse('run-dev')
 
 neoForge {
     version = providers.gradleProperty('runtimeNeoForge1211Version').getOrElse('21.1.1')
