@@ -8,6 +8,7 @@ public final class PacketLimits {
     public static final int MAX_KEYS = 256;
     public static final int MAX_OUTPUT_ID_LENGTH = 128;
     public static final int MAX_SAMPLES = 100;
+    public static final int MAX_HIGHLIGHT_POSITIONS = 16;
     private static final Pattern OUTPUT_ID = Pattern.compile("[a-z0-9_.-]+:[a-z0-9/._-]+");
 
     public static int checkedSize(int size, int maximum, String field) {

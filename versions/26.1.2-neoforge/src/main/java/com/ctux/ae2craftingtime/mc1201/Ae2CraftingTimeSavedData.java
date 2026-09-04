@@ -18,12 +18,14 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
             DataFixTypes.LEVEL);
 
     private List<PersistedOutputSamples> samples = List.of();
+    private List<ProviderLocateRecords.StoredStart> providerStarts = List.of();
 
     private static Ae2CraftingTimeSavedData load(CompoundTag tag) {
         var data = new Ae2CraftingTimeSavedData();
         if (tag.getIntOr("version", PersistedSamplesTag.VERSION) == PersistedSamplesTag.VERSION) {
             data.samples = PersistedSamplesTag.readOutputs(tag.getListOrEmpty("outputs"));
         }
+        data.providerStarts = PersistedProviderTag.readStarts(tag.getListOrEmpty("providers"));
         return data;
     }
 
@@ -32,14 +34,24 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
         setDirty();
     }
 
+    public void replaceProviderStarts(List<ProviderLocateRecords.StoredStart> starts) {
+        this.providerStarts = starts == null ? List.of() : List.copyOf(starts);
+        setDirty();
+    }
+
     public List<PersistedOutputSamples> samples() {
         return samples;
+    }
+
+    public List<ProviderLocateRecords.StoredStart> providerStarts() {
+        return providerStarts;
     }
 
     private CompoundTag save() {
         var tag = new CompoundTag();
         tag.putInt("version", PersistedSamplesTag.VERSION);
         tag.put("outputs", PersistedSamplesTag.writeOutputs(samples));
+        tag.put("providers", PersistedProviderTag.writeStarts(providerStarts));
         return tag;
     }
 }

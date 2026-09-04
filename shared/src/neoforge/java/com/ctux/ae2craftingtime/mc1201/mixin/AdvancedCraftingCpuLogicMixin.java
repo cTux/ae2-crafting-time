@@ -131,6 +131,6 @@ public abstract class AdvancedCraftingCpuLogicMixin {
         var usedSlots = Math.min(totalSlots, usedOps[0] + usedOps[1] + usedOps[2]);
         var tick = cpu.getLevel().getGameTime();
         ProfilerBridge.updateCapacity(cpu, usedSlots, totalSlots, tick);
-        DelayedNotificationServer.maybeNotify(cpu, tick, cpu.getLevel().getServer());
+        DelayedNotificationServer.maybeNotify(cpu, cpu.getGrid(), tick, cpu.getLevel().getServer());
     }
 }

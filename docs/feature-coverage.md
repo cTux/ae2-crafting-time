@@ -14,6 +14,7 @@ and verification.
 | Running-job total based on elapsed progress | [Time To Craft lines](time-to-craft-plan.md#estimate-formula) |
 | Prediction-accuracy history | [Profiling and diagnostics spec](profiling-and-diagnostics/spec.md) and [technical design](profiling-and-diagnostics/technical-design.md#prediction-accuracy) |
 | Delayed-output warnings and bottleneck hints | [Profiling and diagnostics spec](profiling-and-diagnostics/spec.md) and [technical design](profiling-and-diagnostics/technical-design.md#delayed-output-diagnostics) |
+| Clickable delayed warnings that locate the provider | [Provider locate spec](provider-locate/spec.md) and [technical design](provider-locate/technical-design.md) |
 | Network-scoped server snapshots, packet limits, and privacy boundaries | [Server-owned stats](server-client-stats.md) |
 | World-save persistence | [World-save persistence](world-save-persistence.md) |
 | Fast-to-slow TTC colors | [TTC colors](ttc-colored-text.md) |

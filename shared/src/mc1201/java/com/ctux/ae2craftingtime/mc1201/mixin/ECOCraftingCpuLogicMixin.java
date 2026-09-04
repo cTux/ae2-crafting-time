@@ -85,7 +85,7 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
         var tick = ae2craftingtime$tick();
         ProfilerBridge.updateCapacity(this, (int) Math.min(ae2craftingtime$usedSlots, ae2craftingtime$totalSlots),
                 ae2craftingtime$totalSlots, tick);
-        DelayedNotificationServer.maybeNotify(this, tick, ae2craftingtime$server());
+        DelayedNotificationServer.maybeNotify(this, ae2craftingtime$grid, tick, ae2craftingtime$server());
     }
 
     @Inject(method = "insert", at = @At("HEAD"), remap = false)

@@ -88,6 +88,7 @@ If you want the more technical details, start here:
 - [TTC sorting](docs/ttc-sorting.md)
 - [TTC colored text](docs/ttc-colored-text.md)
 - [Waiting to start status](docs/waiting-to-start/spec.md)
+- [Provider locate](docs/provider-locate/spec.md)
 
 ## Development Disclosure
 

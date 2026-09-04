@@ -31,7 +31,7 @@ public final class StatsRequestHandler {
         if (context.craftingCpu() != null) {
             // Backup path: tick notifications already cover closed screens, but a status
             // request must never duplicate them and must only notify the job owner.
-            DelayedNotificationServer.maybeNotify(context.craftingCpu(), gameTick,
+            DelayedNotificationServer.maybeNotify(context.craftingCpu(), context.grid(), gameTick,
                     player.level().getServer());
         }
         var missing = ProfilerBridge.blockReasons(context.craftingCpu(), context.grid(), gameTick);

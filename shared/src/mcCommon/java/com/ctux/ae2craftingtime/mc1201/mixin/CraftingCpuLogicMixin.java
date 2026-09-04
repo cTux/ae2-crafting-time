@@ -120,7 +120,7 @@ public abstract class CraftingCpuLogicMixin {
         var usedSlots = Math.min(totalSlots, usedOps[0] + usedOps[1] + usedOps[2]);
         var tick = cluster.getLevel().getGameTime();
         ProfilerBridge.updateCapacity(cluster, usedSlots, totalSlots, tick);
-        DelayedNotificationServer.maybeNotify(cluster, tick, cluster.getLevel().getServer());
+        DelayedNotificationServer.maybeNotify(cluster, cluster.getGrid(), tick, cluster.getLevel().getServer());
     }
 
     @Inject(method = "trySubmitJob", at = @At("RETURN"), remap = false)

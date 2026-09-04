@@ -138,7 +138,22 @@ class TtcTextTest {
                 "/assets/ae2craftingtime/lang/uk_ua.json"), StandardCharsets.UTF_8)) {
             uk = JsonParser.parseReader(reader).getAsJsonObject().get(key).getAsString();
         }
-        assertEquals(3, en.split("%s", -1).length - 1);
-        assertEquals(3, uk.split("%s", -1).length - 1);
+        assertEquals(4, en.split("%s", -1).length - 1);
+        assertEquals(4, uk.split("%s", -1).length - 1);
+    }
+
+    @Test
+    void delayedWordAndHintsAreTranslated() throws IOException {
+        for (var locale : List.of("en_us", "uk_ua")) {
+            try (var reader = new InputStreamReader(getClass().getResourceAsStream(
+                    "/assets/ae2craftingtime/lang/" + locale + ".json"), StandardCharsets.UTF_8)) {
+                var translations = JsonParser.parseReader(reader).getAsJsonObject();
+                for (var key : List.of("text.ae2craftingtime.chat.delayed.word",
+                        "text.ae2craftingtime.chat.delayed.hint",
+                        "text.ae2craftingtime.chat.delayed.expired")) {
+                    assertTrue(!translations.get(key).getAsString().isBlank(), locale + " " + key);
+                }
+            }
+        }
     }
 }

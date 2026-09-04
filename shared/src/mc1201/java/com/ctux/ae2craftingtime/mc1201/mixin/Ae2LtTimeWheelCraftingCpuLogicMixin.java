@@ -82,7 +82,7 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
         var tick = ae2craftingtime$tick();
         ProfilerBridge.updateCapacity(this, Math.min(maxOps, ae2craftingtime$successfulDispatches(cir.getReturnValue())),
                 maxOps, tick);
-        DelayedNotificationServer.maybeNotify(this, tick, ae2craftingtime$server());
+        DelayedNotificationServer.maybeNotify(this, ae2craftingtime$grid, tick, ae2craftingtime$server());
     }
 
     @Unique

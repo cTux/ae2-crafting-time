@@ -11,11 +11,15 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
     public static final String FILE_ID = "ae2-crafting-time";
 
     private List<PersistedOutputSamples> samples = List.of();
+    private List<ProviderLocateRecords.StoredStart> providerStarts = List.of();
 
     public static Ae2CraftingTimeSavedData load(CompoundTag tag) {
         var data = new Ae2CraftingTimeSavedData();
         if (!tag.contains("version", Tag.TAG_INT) || tag.getInt("version") == PersistedSamplesTag.VERSION) {
             data.samples = PersistedSamplesTag.readOutputs(tag.getList("outputs", Tag.TAG_COMPOUND));
+        }
+        if (tag.contains("providers", Tag.TAG_LIST)) {
+            data.providerStarts = PersistedProviderTag.readStarts(tag.getList("providers", Tag.TAG_COMPOUND));
         }
         return data;
     }
@@ -25,14 +29,24 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
         setDirty();
     }
 
+    public void replaceProviderStarts(List<ProviderLocateRecords.StoredStart> starts) {
+        this.providerStarts = starts == null ? List.of() : List.copyOf(starts);
+        setDirty();
+    }
+
     public List<PersistedOutputSamples> samples() {
         return samples;
+    }
+
+    public List<ProviderLocateRecords.StoredStart> providerStarts() {
+        return providerStarts;
     }
 
     @Override
     public CompoundTag save(CompoundTag tag) {
         tag.putInt("version", PersistedSamplesTag.VERSION);
         tag.put("outputs", PersistedSamplesTag.writeOutputs(samples));
+        tag.put("providers", PersistedProviderTag.writeStarts(providerStarts));
         return tag;
     }
 }
