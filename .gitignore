@@ -9,6 +9,11 @@ versions/*/run/*
 !versions/*/run/options.txt
 !versions/*/run/saves/
 !versions/*/run/saves/**
+# Disposable dev-client sandboxes. The tracked versions/*/run tree holds the
+# read-only UI-smoke fixtures, so ordinary and latest client launches use
+# these untracked directories and never dirty git.
+versions/*/run-dev/
+versions/*/run-latest/
 dist/
 **/bin/
 **/logs/
