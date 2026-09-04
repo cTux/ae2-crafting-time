@@ -207,5 +207,4 @@ disabled_generic_methods = []
 		width = 8
 		#Maximum height of monitors
 		#Range: 1 ~ 32
-		height = 6
-
+	height = 6
