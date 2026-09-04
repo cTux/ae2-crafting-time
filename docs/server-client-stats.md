@@ -97,7 +97,9 @@ Rules:
 
 Carries only a bounded output id, amount, and `SHOW` or `RESET` action. The
 server resolves the player's current AE2 network, reads or clears authoritative
-stats, formats the translatable message, and broadcasts it. Clients never send
+stats, and formats the translatable message. `SHOW` details are broadcast as
+player-attributed chat; the `RESET` confirmation is sent as a private system
+message visible only to the player who triggered it. Clients never send
 chat text for the server to relay. A reset is accepted only when that output has
 retained stats on the player's current network.
 
@@ -188,7 +190,7 @@ Client config:
 showInTree = true
 ```
 
-`showChatMessages` controls the public Ctrl-click TTC detail and reset player chat messages. Reset still works when this is false.
+`showChatMessages` controls the public Ctrl-click TTC details and the private reset confirmation. Reset still works when this is false.
 
 Config storage is loader-specific, but ownership stays the same: `enabled` and
 `showChatMessages` affect server behavior, while `showInTree` affects local

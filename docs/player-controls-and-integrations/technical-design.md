@@ -47,6 +47,8 @@ authoritative `ProfileKey`, updates persistence through `ProfilerBridge`, and
 removes the local cache entry immediately.
 
 Messages use a bound player chat type and are sent to every connected player.
+The reset confirmation is the exception: it is sent as a private system message
+visible only to the player who triggered the reset.
 `showChatMessages = false` suppresses SHOW and reset notices, but it does not
 block the reset mutation.
 
