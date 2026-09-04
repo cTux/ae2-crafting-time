@@ -196,6 +196,9 @@ Rules:
   on a red plate on each camera-facing face (plate-only when the output id
   is not an item)
   (see [issue #237](https://github.com/cTux/ae2-crafting-time/issues/237)).
+- Every locate is also answered with a private "Highlighting <name> at
+  <coords> in <dimension>" system message, whatever triggered it
+  (see [issue #240](https://github.com/cTux/ae2-crafting-time/issues/240)).
 
 ### Provider-start persistence
 

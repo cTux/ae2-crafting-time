@@ -161,6 +161,28 @@ class ProviderLocateTest {
     }
 
     @Test
+    void highlightingMessageStructureAndCoords() {
+        var message = ProviderLocateCommand.highlightingMessage("Basic Control Circuit",
+                List.of(new BlockPos(1, 2, 3), new BlockPos(-4, 5, -6)), "minecraft:overworld");
+        var contents = (TranslatableContents) message.getContents();
+        assertEquals("text.ae2craftingtime.chat.highlighting", contents.getKey());
+        assertEquals(3, contents.getArgs().length);
+        assertEquals("Basic Control Circuit", contents.getArgs()[0]);
+        assertEquals("(1, 2, 3), (-4, 5, -6)", contents.getArgs()[1]);
+        assertEquals("minecraft:overworld", contents.getArgs()[2]);
+    }
+
+    @Test
+    void highlightingMessageToleratesMissingParts() {
+        var message = ProviderLocateCommand.highlightingMessage(null, null, null);
+        var contents = (TranslatableContents) message.getContents();
+        assertEquals("text.ae2craftingtime.chat.highlighting", contents.getKey());
+        assertEquals("", contents.getArgs()[0]);
+        assertEquals("", contents.getArgs()[1]);
+        assertEquals("", contents.getArgs()[2]);
+    }
+
+    @Test
     void delayedMessageNameIsClickable() {
         assumeTrue(bootstrapped, "click events need MC registries");
         var message = DelayedChatText.delayedMessage("Basic Control Circuit", UUID.randomUUID(), 640, 320.0);

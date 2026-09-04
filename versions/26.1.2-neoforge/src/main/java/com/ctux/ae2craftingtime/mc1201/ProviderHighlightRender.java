@@ -1,6 +1,5 @@
 package com.ctux.ae2craftingtime.mc1201;
 
-import com.ctux.ae2craftingtime.core.ProfileKey;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.item.ItemModelResolver;
@@ -50,7 +49,7 @@ public final class ProviderHighlightRender {
         var filled = consumers.getBuffer(RenderTypes.debugFilledBox());
         for (var plate : ProviderHighlightClient.plates()) {
             if (!levelDimension.equals(plate.dimensionId())
-                    || ClientStats.CACHE.stall(new ProfileKey(plate.outputId())).isEmpty()) {
+                    || !ProviderHighlightClient.shouldShowPlates(plate.outputId())) {
                 continue;
             }
             for (var pos : plate.positions()) {
@@ -83,7 +82,7 @@ public final class ProviderHighlightRender {
         }
         for (var plate : ProviderHighlightClient.plates()) {
             if (!levelDimension.equals(plate.dimensionId())
-                    || ClientStats.CACHE.stall(new ProfileKey(plate.outputId())).isEmpty()) {
+                    || !ProviderHighlightClient.shouldShowPlates(plate.outputId())) {
                 continue;
             }
             var stack = ProviderHighlightShapes.resolveItem(plate.outputId());

@@ -80,6 +80,35 @@ class ProviderPlatesTest {
         assertEquals(1, ProviderHighlightClient.plates().size());
     }
 
+    @Test
+    void plateGateShowsUnknownOutputsWithoutOpenScreen() {
+        assertTrue(ProviderHighlightClient.shouldShowPlates("minecraft:iron_ingot"));
+    }
+
+    @Test
+    void plateGateShowsStalledOutputs() {
+        var iron = new ProfileKey("minecraft:iron_ingot");
+        ClientStats.CACHE.replace(List.of(iron),
+                List.of(new StatsEntry(iron, stats(), Optional.empty(),
+                        Optional.of(new StallDiagnostic(300, 20.0, 1, 0, 0)))));
+        assertTrue(ProviderHighlightClient.shouldShowPlates("minecraft:iron_ingot"));
+    }
+
+    @Test
+    void plateGateHidesPositiveEntriesWithoutStall() {
+        var iron = new ProfileKey("minecraft:iron_ingot");
+        ClientStats.CACHE.replace(List.of(iron),
+                List.of(new StatsEntry(iron, stats(), Optional.empty(), Optional.empty())));
+        assertFalse(ProviderHighlightClient.shouldShowPlates("minecraft:iron_ingot"));
+    }
+
+    @Test
+    void plateGateRejectsBlankOutputIds() {
+        assertFalse(ProviderHighlightClient.shouldShowPlates(null));
+        assertFalse(ProviderHighlightClient.shouldShowPlates(""));
+        assertFalse(ProviderHighlightClient.shouldShowPlates("   "));
+    }
+
     private static ProfileStats stats() {
         return new ProfileStats(1, 20.0, 0.05, 1.0, 20, ProfileUnit.ITEM, false, 1, 4.0, List.of(20L),
                 List.of(1L));

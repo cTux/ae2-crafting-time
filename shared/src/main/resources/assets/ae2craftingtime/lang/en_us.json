@@ -17,6 +17,7 @@
   "text.ae2craftingtime.chat.no_space.word": "has no space",
   "text.ae2craftingtime.chat.delayed.hint": "Click to show the provider in the world",
   "text.ae2craftingtime.chat.delayed.expired": "That provider link has expired.",
+  "text.ae2craftingtime.chat.highlighting": "Highlighting %s at %s in %s",
   "text.ae2craftingtime.chat.summary": "%s x%s: %s",
   "text.ae2craftingtime.confidence.low": "low",
   "text.ae2craftingtime.confidence.low_outliers": "low (outliers filtered)",

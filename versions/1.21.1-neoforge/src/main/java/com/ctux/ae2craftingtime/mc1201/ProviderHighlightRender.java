@@ -1,6 +1,5 @@
 package com.ctux.ae2craftingtime.mc1201;
 
-import com.ctux.ae2craftingtime.core.ProfileKey;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderType;
@@ -44,7 +43,7 @@ public final class ProviderHighlightRender {
         // Plates persist while their output still reports a stall.
         for (var plate : ProviderHighlightClient.plates()) {
             if (!minecraft.level.dimension().location().toString().equals(plate.dimensionId())
-                    || ClientStats.CACHE.stall(new ProfileKey(plate.outputId())).isEmpty()) {
+                    || !ProviderHighlightClient.shouldShowPlates(plate.outputId())) {
                 continue;
             }
             var stack = ProviderHighlightShapes.resolveItem(plate.outputId());

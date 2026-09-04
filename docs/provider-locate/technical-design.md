@@ -120,7 +120,14 @@ non-player sources get no answer:
   bus.
 
 The handler loads the record, rejects foreign or missing records with the
-expiry notice, and otherwise sends the highlight packet to the clicker only.
+expiry notice, and otherwise sends the highlight packet to the clicker only,
+followed by a private "Highlighting <name> at <coords> in <dimension>"
+system message built by `ProviderLocateCommand.highlightingMessage`.
+The double-click path (`ProviderLocateServer.locate`, both source sets)
+sends the same message after its highlight, naming
+`ProfilerBridge.displayName` with its output-id fallback. Both send points
+were added for
+[issue #240](https://github.com/cTux/ae2-crafting-time/issues/240).
 
 The highlight packet carries `dimension id, positions, output id, duration
 seconds`; the output id is the profile key id the client resolves to an
@@ -134,11 +141,18 @@ locate click (command, runs as the clicker, silent)
   -> ProviderHighlightS2C(dimension, positions, output id, 15s) to the clicker only
   -> client draws edges for 15s and pins plates while the output stays delayed
 
-double-click a delayed CPU row (ProviderLocateC2S(output id), no record)
-  -> resolve the clicker's open CPU scope and grid, require job ownership
-  -> live positions resolve -> same highlight packet to the clicker only
-  -> nothing resolves -> private expiry notice
-```
+ double-click a delayed CPU row (ProviderLocateC2S(output id), no record)
+   -> resolve the clicker's open CPU scope and grid, require job ownership
+   -> live positions resolve -> same highlight packet to the clicker only
+   -> nothing resolves -> private expiry notice
+ ```
+
+ Clicking the chat link closes the chat via a `ChatScreenMixin` (one copy
+ per version group, same fully qualified name) that watches vanilla
+ `handleComponentClicked` at return and closes the screen only when it
+ handled our own `/ae2craftingtime locate` run-command. A double-click
+ locate closes the CPU screen the same way, right after the request is
+ sent.
 
 Adding the packet changes the wire registry. Bump every affected
 compatibility boundary in the same commit:
@@ -159,9 +173,13 @@ A small client store keeps the latest highlight (dimension, positions,
 output id, expiry timestamp) and prunes it on access, plus one persistent
 plate per located output (dimension, positions, output id, capped at 32).
 Each loader draws thick (2-3x) rainbow-cycling outline boxes for the live
-15-second highlight, while plates render on top for as long as the client
-cache still reports a stall for that output — even with no live highlight
-(see [issue #239](https://github.com/cTux/ae2-crafting-time/issues/239)):
+15-second highlight, while plates render while
+`ProviderHighlightClient.shouldShowPlates` allows: a stall present, or no
+cache entry at all (unknown outputs show, e.g. with the CPU screen closed
+so no snapshot ever arrived). A positive entry without a stall hides the
+plate, and `prunePlates` drops that case once a snapshot arrives
+(see [issue #239](https://github.com/cTux/ae2-crafting-time/issues/239)
+and [issue #240](https://github.com/cTux/ae2-crafting-time/issues/240)):
 
 - 1.20.1 Forge: game-bus subscriber on the translucent-particles render
   stage;

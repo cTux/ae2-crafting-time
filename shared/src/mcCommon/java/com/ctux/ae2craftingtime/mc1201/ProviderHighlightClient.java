@@ -84,6 +84,20 @@ public final class ProviderHighlightClient {
     }
 
     /**
+     * Plate gate for every loader's render hook. Unknown outputs (no cache
+     * entry yet, e.g. the CPU screen is closed so no snapshot ever arrived)
+     * still show: only a positive entry without a stall hides the plate.
+     * prunePlates drops that case once a snapshot arrives.
+     */
+    public static boolean shouldShowPlates(String outputId) {
+        if (outputId == null || outputId.isBlank()) {
+            return false;
+        }
+        var key = new ProfileKey(outputId);
+        return ClientStats.CACHE.stall(key).isPresent() || ClientStats.CACHE.get(key).isEmpty();
+    }
+
+    /**
      * Smooth one-second blink shared by every loader's render hook, so the
      * box reads as an alert rather than a static frame. Ranges from 0.35
      * (dim) to 1.0 (full) opacity.

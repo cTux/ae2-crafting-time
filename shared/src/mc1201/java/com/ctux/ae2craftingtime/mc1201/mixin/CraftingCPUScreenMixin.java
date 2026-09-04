@@ -90,6 +90,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (button == 0 && ae2craftingtime$tryLocateDoubleClick(mouseX, mouseY)) {
+            getMinecraft().setScreen(null);
             return true;
         }
         if (TtcDetailsClick.tryHandle(button)

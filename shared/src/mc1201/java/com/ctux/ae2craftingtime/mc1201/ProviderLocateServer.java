@@ -45,8 +45,11 @@ public final class ProviderLocateServer {
             expired(player);
             return;
         }
-        sender.accept(player, new ProviderHighlightCodec.Highlight(ProfilerBridge.dimensionId(grid), positions,
+        var dimension = ProfilerBridge.dimensionId(grid);
+        sender.accept(player, new ProviderHighlightCodec.Highlight(dimension, positions,
                 key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS));
+        player.sendSystemMessage(ProviderLocateCommand.highlightingMessage(
+                ProfilerBridge.displayName(scopedKey), positions, dimension));
     }
 
     private static void expired(ServerPlayer player) {

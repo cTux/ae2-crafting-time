@@ -2,11 +2,15 @@ package com.ctux.ae2craftingtime.mc1201;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
@@ -55,7 +59,24 @@ public final class ProviderLocateCommand {
             player.sendSystemMessage(Component.translatable("text.ae2craftingtime.chat.delayed.expired"));
             return;
         }
-        sender.accept(player, record.get());
+        var located = record.get();
+        sender.accept(player, located);
+        player.sendSystemMessage(
+                highlightingMessage(located.outputName(), located.positions(), located.dimensionId()));
+    }
+
+    /**
+     * Private "highlighting here" notice sent after every locate, whatever
+     * triggered it. Coordinates render as "(x, y, z)" joined with ", ".
+     */
+    public static MutableComponent highlightingMessage(String outputName, List<BlockPos> positions,
+            String dimensionId) {
+        var coords = positions == null ? ""
+                : positions.stream()
+                        .map(pos -> "(" + pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + ")")
+                        .collect(Collectors.joining(", "));
+        return Component.translatable("text.ae2craftingtime.chat.highlighting",
+                outputName == null ? "" : outputName, coords, dimensionId == null ? "" : dimensionId);
     }
 
     private static void expired(CommandSourceStack source) {

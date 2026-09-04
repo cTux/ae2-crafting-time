@@ -1,6 +1,5 @@
 package com.ctux.ae2craftingtime.mc1201;
 
-import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
@@ -70,7 +69,7 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
             var levelDimension = minecraft.level.dimension().location().toString();
             for (var plate : ProviderHighlightClient.plates()) {
                 if (!levelDimension.equals(plate.dimensionId())
-                        || ClientStats.CACHE.stall(new ProfileKey(plate.outputId())).isEmpty()) {
+                        || !ProviderHighlightClient.shouldShowPlates(plate.outputId())) {
                     continue;
                 }
                 var stack = ProviderHighlightShapes.resolveItem(plate.outputId());

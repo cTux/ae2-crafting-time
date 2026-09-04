@@ -17,6 +17,7 @@
   "text.ae2craftingtime.chat.no_space.word": "немає місця",
   "text.ae2craftingtime.chat.delayed.hint": "Клацніть, щоб показати провайдер у світі",
   "text.ae2craftingtime.chat.delayed.expired": "Термін дії цього посилання вичерпано.",
+  "text.ae2craftingtime.chat.highlighting": "Підсвічую %s за координатами %s у вимірі %s",
   "text.ae2craftingtime.chat.summary": "%s x%s: %s",
   "text.ae2craftingtime.confidence.low": "низька",
   "text.ae2craftingtime.confidence.low_outliers": "низька (викиди відфільтровано)",

@@ -37,6 +37,14 @@ read as messy rectangles in-game.)
   with no icon. Only the warned player ever receives highlights.
 - Double-clicking a delayed row in the crafting CPU screen locates the same
   way as clicking the chat link, without needing the chat message.
+- Every locate answers with a private system message
+  ("Highlighting <name> at <coords> in <dimension>"), whatever triggered it.
+- Clicking the chat link closes the chat; a double-click locate closes the
+  CPU screen, so the player immediately sees the highlight.
+  (See [issue #240](https://github.com/cTux/ae2-crafting-time/issues/240).)
+- Plates render even with no open CPU screen: an output the client cache has
+  never seen still shows plates, and only a positive cache entry without a
+  stall hides them.
 - The word "delayed" renders in red in English and Ukrainian.
 - Clicking a link that belongs to another player, or whose record expired or
   was lost across a reload, highlights nothing and answers with a short
@@ -120,6 +128,9 @@ read as messy rectangles in-game.)
 - Clicking the name draws thick (2-3x) rainbow-cycling edge boxes on the
   correct provider block(s) for 15 seconds and pins item-on-red plates
   there while the output stays delayed; other players see nothing.
+- The clicker also gets a private "Highlighting <name> at <coords> in
+  <dimension>" message, and the chat (or CPU screen, for double-click)
+  closes so the highlight is visible.
 - Clicking another player's or an expired link shows the expiry notice and
   draws nothing.
 - Leaving and re-entering the world keeps the link working for an active
