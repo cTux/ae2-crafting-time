@@ -10,8 +10,6 @@ import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
 @EventBusSubscriber(modid = Ae2CraftingTime.MOD_ID, value = Dist.CLIENT)
 public final class ProviderHighlightRender {
-    private static final int RED = 0xFFFF5555;
-
     @net.neoforged.bus.api.SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent.AfterTranslucentParticles event) {
         var highlight = ProviderHighlightClient.live();
@@ -25,9 +23,10 @@ public final class ProviderHighlightRender {
         }
         var camera = minecraft.gameRenderer.getMainCamera().position();
         var consumers = minecraft.renderBuffers().bufferSource();
+        var alpha = (int) (ProviderHighlightClient.pulseAlpha() * 255) << 24 | 0xFF5555;
         for (var pos : highlight.positions()) {
             ShapeRenderer.renderShape(event.getPoseStack(), consumers.getBuffer(RenderTypes.lines()),
-                    Shapes.block(), pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z, RED,
+                    Shapes.block(), pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z, alpha,
                     2.0f);
         }
         consumers.endBatch(RenderTypes.lines());

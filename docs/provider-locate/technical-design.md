@@ -134,7 +134,9 @@ boxes while the highlight is live and the player is in the same dimension:
   stage event.
 
 Plain `LevelRenderer.renderLineBox` boxes are enough for at most 16
-positions over 15 seconds; no extra render library is needed.
+positions over 15 seconds; no extra render library is needed. Every loader
+drives the box opacity from one shared one-second pulse so the highlight
+blinks instead of sitting static.
 
 The warning message splits the status word out of the sentence so it can be
 styled without breaking translation order:

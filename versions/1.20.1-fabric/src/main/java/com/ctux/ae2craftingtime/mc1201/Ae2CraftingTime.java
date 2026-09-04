@@ -58,8 +58,9 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
                 return;
             }
             for (var pos : highlight.positions()) {
-                LevelRenderer.renderLineBox(poseStack, consumers.getBuffer(RenderType.lines()), new AABB(pos),
-                        1.0f, 0.33f, 0.33f, 1.0f);
+                LevelRenderer.renderLineBox(poseStack, consumers.getBuffer(RenderType.lines()),
+                        new AABB(pos).inflate(0.002), 1.0f, 0.33f, 0.33f,
+                        ProviderHighlightClient.pulseAlpha());
             }
             poseStack.popPose();
         });

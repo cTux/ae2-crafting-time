@@ -31,6 +31,16 @@ public final class ProviderHighlightClient {
         return highlight;
     }
 
+    /**
+     * Smooth one-second blink shared by every loader's render hook, so the
+     * box reads as an alert rather than a static frame. Ranges from 0.35
+     * (dim) to 1.0 (full) opacity.
+     */
+    public static float pulseAlpha() {
+        var phase = (System.currentTimeMillis() % 1000) / 1000.0;
+        return 0.35f + 0.65f * (0.5f - 0.5f * (float) Math.cos(phase * Math.PI * 2.0));
+    }
+
     public static void clear() {
         current = null;
     }

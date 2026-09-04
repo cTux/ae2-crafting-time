@@ -15,7 +15,8 @@ This covers [issue #231](https://github.com/cTux/ae2-crafting-time/issues/231).
 - The delayed warning keeps its #118 wording, timing context, owner-only
   delivery, and once-per-stall rules.
 - The output name renders underlined with a hover hint that invites the click.
-- Clicking the name highlights each resolved provider block for 15 seconds.
+- Clicking the name highlights each resolved provider block with a blinking
+  red edge stroke for 15 seconds.
   Only the warned player ever receives highlights.
 - The word "delayed" renders in red in English and Ukrainian.
 - Clicking a link that belongs to another player, or whose record expired or

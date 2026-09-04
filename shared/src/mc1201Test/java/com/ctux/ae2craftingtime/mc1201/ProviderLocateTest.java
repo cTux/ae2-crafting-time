@@ -152,6 +152,14 @@ class ProviderLocateTest {
         assertNotNull(name.getStyle().getHoverEvent());
     }
 
+    @Test
+    void highlightPulseStaysInVisibleRange() {
+        for (var i = 0; i < 5; i++) {
+            var alpha = ProviderHighlightClient.pulseAlpha();
+            assertTrue(alpha >= 0.35f && alpha <= 1.0f);
+        }
+    }
+
     private static List<BlockPos> positions(int count) {
         var positions = new ArrayList<BlockPos>();
         for (var i = 0; i < count; i++) {

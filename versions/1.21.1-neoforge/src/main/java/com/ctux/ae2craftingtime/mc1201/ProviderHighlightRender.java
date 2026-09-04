@@ -30,9 +30,10 @@ public final class ProviderHighlightRender {
         poseStack.pushPose();
         poseStack.translate(-camera.x, -camera.y, -camera.z);
         var consumers = minecraft.renderBuffers().bufferSource();
+        var alpha = ProviderHighlightClient.pulseAlpha();
         for (var pos : highlight.positions()) {
-            LevelRenderer.renderLineBox(poseStack, consumers.getBuffer(RenderType.lines()), new AABB(pos),
-                    1.0f, 0.33f, 0.33f, 1.0f);
+            LevelRenderer.renderLineBox(poseStack, consumers.getBuffer(RenderType.lines()),
+                    new AABB(pos).inflate(0.002), 1.0f, 0.33f, 0.33f, alpha);
         }
         consumers.endBatch(RenderType.lines());
         poseStack.popPose();
