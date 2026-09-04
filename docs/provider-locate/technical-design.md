@@ -122,45 +122,58 @@ non-player sources get no answer:
 The handler loads the record, rejects foreign or missing records with the
 expiry notice, and otherwise sends the highlight packet to the clicker only.
 
-One shared `FriendlyByteBuf` codec carries `dimension id, positions,
-duration seconds`; each loader wraps it in its own S2C packet following the
-existing snapshot pattern:
+The highlight packet carries `dimension id, positions, output id, duration
+seconds`; the output id is the profile key id the client resolves to an
+item icon. Each loader wraps it in its own S2C packet following the
+existing snapshot pattern (second layout revision; bump every affected
+compatibility boundary again in the same commit):
 
 ```text
 locate click (command, runs as the clicker, silent)
   -> record lookup (owner must match clicker)
-  -> ProviderHighlightS2C(dimension, positions, 15s) to the clicker only
+  -> ProviderHighlightS2C(dimension, positions, output id, 15s) to the clicker only
 ```
 
 Adding the packet changes the wire registry. Bump every affected
 compatibility boundary in the same commit:
 
-- 1.20.1 Forge channel protocol: `9` to `10`;
-- 1.20.1 Fabric: new `provider_highlight_v1` channel (existing channels
-  keep their versions because their layouts do not change);
-- 1.21.1 and 26.1.2 NeoForge registrar version: `8` to `9`.
+- 1.20.1 Forge channel protocol: `9` to `10` for the first layout,
+  then `10` to `11` when the output id field lands;
+- 1.20.1 Fabric: new `provider_highlight_v1` channel, then a new
+  `provider_highlight_v2` channel for the output id layout (existing
+  channels keep their versions because their layouts do not change);
+- 1.21.1 and 26.1.2 NeoForge registrar version: `8` to `9`, then `9`
+  to `10`.
 
 ## Client behavior
 
 A small client store keeps the latest highlight (dimension, positions,
-expiry timestamp) and prunes it on access. Each loader draws thick (2-3x)
-rainbow-cycling outline boxes with matching face diagonals while the
-highlight is live and the player is in the same dimension
-(see [issue #234](https://github.com/cTux/ae2-crafting-time/issues/234)):
+output id, expiry timestamp) and prunes it on access. Each loader draws
+thick (2-3x) rainbow-cycling outline boxes while the highlight is live and
+the player is in the same dimension, plus the stuck output's item icon on a
+red plate centered on each camera-facing face
+(see [issue #237](https://github.com/cTux/ae2-crafting-time/issues/237)):
 
 - 1.20.1 Forge: game-bus subscriber on the translucent-particles render
   stage;
 - 1.20.1 Fabric: `WorldRenderEvents.AFTER_TRANSLUCENT`;
-- 1.21.1 and 26.1.2 NeoForge: game-bus subscriber on the render-level
-  stage event.
+- 1.21.1 NeoForge: game-bus subscriber on the render-level stage event;
+- 26.1.2 NeoForge: game-bus subscriber on the render-level stage event for
+  edges and plates, plus a `SubmitCustomGeometryEvent` subscriber for the
+  item icons (the 26.1 submit pipeline requires items to go through its
+  collector).
 
 Edge color cycles rainbow hues on a time-based phase (instead of static
-red) so the box contrasts with any environment; each block face also gets
-thick diagonals in the same current color as the edges. Vanilla
-`RenderType.lines()` width is fixed, so thicker lines need a custom line
-RenderType, multi-offset strokes, or the `ShapeRenderer` line-width path
-already used on 26.1.2. Every loader keeps driving the box opacity from one
-shared one-second pulse so the highlight blinks instead of sitting static.
+red) so the box contrasts with any environment. Vanilla
+`RenderType.lines()` width is fixed, so thicker edges use multi-offset
+strokes on 1.20.1/1.21.1 and the `ShapeRenderer` line-width path on 26.1.2.
+Face plates are flat red quads (`debugFilledBox` on every loader) with the
+output item rendered item-frame style (`FIXED` display context) at half
+scale; the client resolves the packet's output id through the item registry
+and renders plate-only when it is not an item. Only faces pointing toward
+the camera render (at most 3 per block). Every loader keeps driving the box
+opacity from one shared one-second pulse so the highlight blinks instead of
+sitting static.
 
 The warning message splits the status word out of the sentence so it can be
 styled without breaking translation order:
@@ -188,7 +201,7 @@ output becomes DELAYED, owner online
 
 click (same session)
   -> record lookup, owner must match
-  -> highlight packet -> thick rainbow boxes with face diagonals for 15 seconds
+  -> highlight packet -> thick rainbow boxes with item-on-red face plates for 15 seconds
 
 click with foreign/missing record
   -> private expiry notice, no highlight

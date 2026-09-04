@@ -9,6 +9,7 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.phys.AABB;
 
@@ -23,7 +24,7 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
         CommandRegistrationCallback.EVENT.register((dispatcher, access, environment) -> dispatcher.register(
                 ProviderLocateCommand.build((source, id) -> ProviderLocateCommand.locate(source, id,
                         (player, record) -> StatsNetwork.sendTo(player, new ProviderHighlightS2C(
-                                record.dimensionId(), record.positions(),
+                                record.dimensionId(), record.positions(), record.outputId(),
                                 ProviderLocateCommand.HIGHLIGHT_SECONDS))))));
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             var data = server.overworld().getDataStorage()
@@ -58,10 +59,18 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
             }
             var rainbow = ProviderHighlightClient.rainbowRgb();
             var alpha = ProviderHighlightClient.pulseAlpha();
+            var stack = ProviderHighlightShapes.resolveItem(highlight.outputId());
             for (var pos : highlight.positions()) {
                 ProviderHighlightShapes.renderThickRainbowBox(poseStack,
                         consumers.getBuffer(RenderType.lines()), new AABB(pos).inflate(0.002), rainbow[0],
                         rainbow[1], rainbow[2], alpha);
+                ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos,
+                        stack, ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z),
+                        LevelRenderer.getLightColor(minecraft.level, pos), alpha);
+            }
+            if (consumers instanceof net.minecraft.client.renderer.MultiBufferSource.BufferSource source) {
+                source.endBatch(RenderType.lines());
+                source.endBatch(RenderType.debugFilledBox());
             }
             poseStack.popPose();
         });

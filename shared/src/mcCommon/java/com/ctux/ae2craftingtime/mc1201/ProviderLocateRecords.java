@@ -16,7 +16,7 @@ import net.minecraft.core.BlockPos;
  */
 public final class ProviderLocateRecords {
     public record LocateRecord(UUID id, UUID owner, String dimensionId, List<BlockPos> positions,
-            String outputName, long createdTick) {
+            String outputName, String outputId, long createdTick) {
     }
 
     public record ProviderStartInfo(UUID owner, List<BlockPos> positions, String outputName) {
@@ -34,9 +34,9 @@ public final class ProviderLocateRecords {
     private static final LinkedHashMap<ProfileKey, ProviderStartInfo> STARTS = new LinkedHashMap<>();
 
     public static synchronized LocateRecord create(UUID owner, String dimensionId, List<BlockPos> positions,
-            String outputName, long tick) {
+            String outputName, String outputId, long tick) {
         var record = new LocateRecord(UUID.randomUUID(), owner, dimensionId, positions == null ? List.of()
-                : List.copyOf(positions), outputName, tick);
+                : List.copyOf(positions), outputName, outputId == null ? "" : outputId, tick);
         RECORDS.put(record.id(), record);
         evictEldest(RECORDS, MAX_RECORDS);
         return record;

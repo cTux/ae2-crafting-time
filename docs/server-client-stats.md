@@ -159,6 +159,7 @@ Fields:
 ```text
 dimensionId: string
 positions: list<BlockPos>, at most 16
+outputId: string, at most 128 chars (profile key id, e.g. an item id)
 durationSeconds: nonnegative int (15)
 ```
 
@@ -169,9 +170,11 @@ Rules:
 - The locate command (`/ae2craftingtime locate <record>`) only serves
   records owned by the clicking player. Missing or foreign records answer
   with a private expiry notice and highlight nothing.
-- The client draws thick (2-3x) rainbow-cycling outline boxes with matching
-  face diagonals while in the same dimension until the duration expires
-  (see [issue #234](https://github.com/cTux/ae2-crafting-time/issues/234)).
+- The client draws thick (2-3x) rainbow-cycling outline boxes while in the
+  same dimension until the duration expires, plus the output item centered
+  on a red plate on each camera-facing face (plate-only when the output id
+  is not an item)
+  (see [issue #237](https://github.com/cTux/ae2-crafting-time/issues/237)).
 
 ### Provider-start persistence
 

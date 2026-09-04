@@ -9,16 +9,19 @@ import net.minecraft.core.BlockPos;
  * on a dedicated server.
  */
 public final class ProviderHighlightClient {
-    public record Highlight(String dimensionId, List<BlockPos> positions, long expiresAtMillis) {
+    public record Highlight(String dimensionId, List<BlockPos> positions, String outputId, long expiresAtMillis) {
+        public Highlight {
+            outputId = outputId == null ? "" : outputId;
+        }
     }
 
     private static volatile Highlight current;
 
-    public static void show(String dimensionId, List<BlockPos> positions, int durationSeconds) {
+    public static void show(String dimensionId, List<BlockPos> positions, int durationSeconds, String outputId) {
         if (dimensionId == null || positions == null || positions.isEmpty() || durationSeconds <= 0) {
             return;
         }
-        current = new Highlight(dimensionId, List.copyOf(positions),
+        current = new Highlight(dimensionId, List.copyOf(positions), outputId,
                 System.currentTimeMillis() + durationSeconds * 1000L);
     }
 

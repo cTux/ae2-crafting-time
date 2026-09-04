@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -47,12 +48,30 @@ class ProviderLocateTest {
         List<List<BlockPos>> cases = List.of(List.of(),
                 List.of(new BlockPos(1, 2, 3), new BlockPos(-4, 5, -6)));
         for (var positions : cases) {
-            var highlight = new Highlight("minecraft:overworld", positions, 15);
+            var highlight = new Highlight("minecraft:overworld", positions, "minecraft:iron_ingot", 15);
             var buffer = new FriendlyByteBuf(Unpooled.buffer());
             ProviderHighlightCodec.write(buffer, highlight);
             assertEquals(highlight, ProviderHighlightCodec.read(buffer));
             assertEquals(0, buffer.readableBytes());
         }
+    }
+
+    @Test
+    void highlightRoundTripsBlankOutputIdAsEmpty() {
+        var highlight = new Highlight("minecraft:overworld", List.of(new BlockPos(1, 2, 3)), null, 15);
+        var buffer = new FriendlyByteBuf(Unpooled.buffer());
+        ProviderHighlightCodec.write(buffer, highlight);
+        var read = ProviderHighlightCodec.read(buffer);
+        assertEquals("", read.outputId());
+        assertEquals(0, buffer.readableBytes());
+    }
+
+    @Test
+    void highlightRejectsOversizeOutputId() {
+        var buffer = new FriendlyByteBuf(Unpooled.buffer());
+        assertThrows(IllegalArgumentException.class,
+                () -> ProviderHighlightCodec.write(buffer,
+                        new Highlight("minecraft:overworld", List.of(), "x".repeat(129), 15)));
     }
 
     @Test
@@ -63,7 +82,7 @@ class ProviderLocateTest {
         }
         var buffer = new FriendlyByteBuf(Unpooled.buffer());
         ProviderHighlightCodec.write(buffer,
-                new Highlight("minecraft:overworld", many, 15));
+                new Highlight("minecraft:overworld", many, "minecraft:iron_ingot", 15));
         assertEquals(PacketLimits.MAX_HIGHLIGHT_POSITIONS,
                 ProviderHighlightCodec.read(buffer).positions().size());
 
@@ -209,6 +228,37 @@ class ProviderLocateTest {
         for (var channel : live) {
             assertTrue(channel >= 0.0f && channel <= 1.0f);
         }
+    }
+
+    @Test
+    void visibleFacesPointTowardCamera() {
+        var pos = new BlockPos(0, 0, 0);
+        assertEquals(List.of(Direction.UP), ProviderFaceIcons.visibleFaces(pos, 0.5, 10.0, 0.5));
+        assertEquals(List.of(Direction.DOWN), ProviderFaceIcons.visibleFaces(pos, 0.5, -10.0, 0.5));
+        assertEquals(List.of(Direction.NORTH), ProviderFaceIcons.visibleFaces(pos, 0.5, 0.5, -10.0));
+        assertEquals(List.of(Direction.SOUTH), ProviderFaceIcons.visibleFaces(pos, 0.5, 0.5, 10.0));
+        assertEquals(List.of(Direction.WEST), ProviderFaceIcons.visibleFaces(pos, -10.0, 0.5, 0.5));
+        assertEquals(List.of(Direction.EAST), ProviderFaceIcons.visibleFaces(pos, 10.0, 0.5, 0.5));
+        var corner = ProviderFaceIcons.visibleFaces(pos, 10.0, 10.0, 10.0);
+        assertEquals(3, corner.size());
+        assertTrue(corner.contains(Direction.UP));
+        assertTrue(corner.contains(Direction.SOUTH));
+        assertTrue(corner.contains(Direction.EAST));
+    }
+
+    @Test
+    void resolveItemRejectsInvalidIds() {
+        assertTrue(ProviderHighlightShapes.resolveItem(null).isEmpty());
+        assertTrue(ProviderHighlightShapes.resolveItem("").isEmpty());
+        assertTrue(ProviderHighlightShapes.resolveItem("   ").isEmpty());
+        assertTrue(ProviderHighlightShapes.resolveItem("x".repeat(129)).isEmpty());
+        assertTrue(ProviderHighlightShapes.resolveItem("not an id!!").isEmpty());
+    }
+
+    @Test
+    void resolveItemFallsBackToEmptyForUnknownIds() {
+        assumeTrue(bootstrapped, "item registry needs MC registries");
+        assertTrue(ProviderHighlightShapes.resolveItem("minecraft:not_a_real_item_xyz").isEmpty());
     }
 
     private static List<BlockPos> positions(int count) {

@@ -7,9 +7,10 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 
 public final class ProviderHighlightCodec {
-    public record Highlight(String dimensionId, List<BlockPos> positions, int durationSeconds) {
+    public record Highlight(String dimensionId, List<BlockPos> positions, String outputId, int durationSeconds) {
         public Highlight {
             positions = positions == null ? List.of() : List.copyOf(positions);
+            outputId = outputId == null ? "" : outputId;
         }
     }
 
@@ -26,6 +27,10 @@ public final class ProviderHighlightCodec {
         for (var pos : positions) {
             buffer.writeBlockPos(pos);
         }
+        if (highlight.outputId().length() > PacketLimits.MAX_OUTPUT_ID_LENGTH) {
+            throw new IllegalArgumentException("output id too long");
+        }
+        buffer.writeUtf(highlight.outputId());
         buffer.writeVarInt(Math.max(0, highlight.durationSeconds()));
     }
 
@@ -36,7 +41,8 @@ public final class ProviderHighlightCodec {
         for (var i = 0; i < count; i++) {
             positions.add(buffer.readBlockPos());
         }
-        return new Highlight(dimension, positions, Math.max(0, buffer.readVarInt()));
+        var outputId = buffer.readUtf(PacketLimits.MAX_OUTPUT_ID_LENGTH);
+        return new Highlight(dimension, positions, outputId, Math.max(0, buffer.readVarInt()));
     }
 
     private ProviderHighlightCodec() {

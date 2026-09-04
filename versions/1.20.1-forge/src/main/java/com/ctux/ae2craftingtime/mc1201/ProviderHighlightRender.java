@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
@@ -32,11 +33,16 @@ public final class ProviderHighlightRender {
         var rainbow = ProviderHighlightClient.rainbowRgb();
         var alpha = ProviderHighlightClient.pulseAlpha();
         var lines = consumers.getBuffer(RenderType.lines());
+        var stack = ProviderHighlightShapes.resolveItem(highlight.outputId());
         for (var pos : highlight.positions()) {
             ProviderHighlightShapes.renderThickRainbowBox(poseStack, lines, new AABB(pos).inflate(0.002),
                     rainbow[0], rainbow[1], rainbow[2], alpha);
+            ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos, stack,
+                    ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z),
+                    LevelRenderer.getLightColor(minecraft.level, pos), alpha);
         }
         consumers.endBatch(RenderType.lines());
+        consumers.endBatch(RenderType.debugFilledBox());
         poseStack.popPose();
     }
 

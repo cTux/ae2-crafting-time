@@ -1,93 +1,107 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import com.ctux.ae2craftingtime.core.PacketLimits;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
+import java.util.List;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 
 /**
- * Client-side only. Draws the delayed-craft provider highlight as thick
- * rainbow boxes with matching face diagonals.
+ * Client-side only. Draws the delayed-craft provider highlight on 1.20.1 and
+ * 1.21.1: thick rainbow edge boxes plus a red plate with the stuck output's
+ * item icon on each camera-facing face.
  *
  * <p>Vanilla {@code RenderType.lines()} width is fixed at one pixel on most
- * drivers, so thickness is simulated without touching the vertex format (which
- * differs between 1.20.1 and 1.21.1): edges draw as three nested shells
- * (roughly 2-3x the old single stroke) and each face diagonal draws as a
- * rotated rod whose outline reads as one thick diagonal line. Only
- * {@link LevelRenderer#renderLineBox} plus pose translate/rotate are used, so
- * the same code compiles on 1.20.1 Forge, 1.20.1 Fabric, and 1.21.1 NeoForge.
- * Called only from the per-loader render hooks; never touched on a dedicated
+ * drivers, so edge thickness comes from three nested shells (roughly 2-3x
+ * the old single stroke). Plates are thin filled boxes and icons render
+ * item-frame style, all through APIs shared by 1.20.1 and 1.21.1. Called
+ * only from the per-loader render hooks; never touched on a dedicated
  * server.
  */
 public final class ProviderHighlightShapes {
     private static final double[] SHELL_OFFSETS = {0.002, 0.014, 0.026};
-    private static final double DIAGONAL_SHELL = 0.014;
-    /** Half of the rod width: 0.05 blocks total, visibly thicker than a 1px edge. */
-    private static final double ROD_HALF_WIDTH = 0.025;
-    /** Half of the rod height along the face normal: keeps the rod off the surface. */
-    private static final double ROD_HALF_HEIGHT = 0.004;
-    /** Half the face-diagonal length for the inflated shell. */
-    private static final double HALF_DIAGONAL = (1.0 + DIAGONAL_SHELL * 2.0) * 0.5 * Math.sqrt(2.0);
+    private static final float PLATE_HALF_SIZE = 0.36f;
+    private static final float PLATE_MIN_Z = 0.004f;
+    private static final float PLATE_MAX_Z = 0.016f;
+    private static final float ITEM_Z = 0.03f;
+    private static final float ITEM_SCALE = 0.55f;
 
     public static void renderThickRainbowBox(PoseStack pose, VertexConsumer consumer, AABB box, float red,
             float green, float blue, float alpha) {
         for (var shell : SHELL_OFFSETS) {
             LevelRenderer.renderLineBox(pose, consumer, box.inflate(shell), red, green, blue, alpha);
         }
-        var fat = box.inflate(DIAGONAL_SHELL);
-        var centerX = (fat.minX + fat.maxX) * 0.5;
-        var centerY = (fat.minY + fat.maxY) * 0.5;
-        var centerZ = (fat.minZ + fat.maxZ) * 0.5;
-        // An X of rods on each of the 6 faces, in the same color as the edges.
-        rodY(pose, consumer, centerX, fat.minY, centerZ, 45.0f, red, green, blue, alpha);
-        rodY(pose, consumer, centerX, fat.minY, centerZ, -45.0f, red, green, blue, alpha);
-        rodY(pose, consumer, centerX, fat.maxY, centerZ, 45.0f, red, green, blue, alpha);
-        rodY(pose, consumer, centerX, fat.maxY, centerZ, -45.0f, red, green, blue, alpha);
-        rodZ(pose, consumer, centerX, centerY, fat.minZ, 45.0f, red, green, blue, alpha);
-        rodZ(pose, consumer, centerX, centerY, fat.minZ, -45.0f, red, green, blue, alpha);
-        rodZ(pose, consumer, centerX, centerY, fat.maxZ, 45.0f, red, green, blue, alpha);
-        rodZ(pose, consumer, centerX, centerY, fat.maxZ, -45.0f, red, green, blue, alpha);
-        rodX(pose, consumer, fat.minX, centerY, centerZ, 45.0f, red, green, blue, alpha);
-        rodX(pose, consumer, fat.minX, centerY, centerZ, -45.0f, red, green, blue, alpha);
-        rodX(pose, consumer, fat.maxX, centerY, centerZ, 45.0f, red, green, blue, alpha);
-        rodX(pose, consumer, fat.maxX, centerY, centerZ, -45.0f, red, green, blue, alpha);
     }
 
-    private static void rodY(PoseStack pose, VertexConsumer consumer, double centerX, double y, double centerZ,
-            float degrees, float red, float green, float blue, float alpha) {
-        pose.pushPose();
-        pose.translate(centerX, y, centerZ);
-        pose.mulPose(Axis.YP.rotationDegrees(degrees));
-        LevelRenderer.renderLineBox(pose, consumer,
-                new AABB(-HALF_DIAGONAL, -ROD_HALF_HEIGHT, -ROD_HALF_WIDTH, HALF_DIAGONAL, ROD_HALF_HEIGHT,
-                        ROD_HALF_WIDTH),
-                red, green, blue, alpha);
-        pose.popPose();
+    /**
+     * Draws a red plate with the stuck output's icon on each given face.
+     * Faces must already be culled to the camera side. An empty stack draws
+     * plates only (for example fluid outputs).
+     */
+    public static void renderFacePlatesAndIcons(PoseStack pose, MultiBufferSource buffers, Level level, BlockPos pos,
+            ItemStack stack, List<Direction> faces, int light, float alpha) {
+        var filled = buffers.getBuffer(RenderType.debugFilledBox());
+        var items = Minecraft.getInstance().getItemRenderer();
+        for (var face : faces) {
+            pose.pushPose();
+            orientToFace(pose, pos, face);
+            LevelRenderer.addChainedFilledBoxVertices(pose, filled, -PLATE_HALF_SIZE, -PLATE_HALF_SIZE, PLATE_MIN_Z,
+                    PLATE_HALF_SIZE, PLATE_HALF_SIZE, PLATE_MAX_Z, 1.0f, 0.15f, 0.15f, alpha);
+            if (!stack.isEmpty()) {
+                pose.pushPose();
+                pose.translate(0.0, 0.0, ITEM_Z);
+                pose.scale(ITEM_SCALE, ITEM_SCALE, ITEM_SCALE);
+                items.renderStatic(stack, ItemDisplayContext.FIXED, light, OverlayTexture.NO_OVERLAY, pose, buffers,
+                        level, 0);
+                pose.popPose();
+            }
+            pose.popPose();
+        }
     }
 
-    private static void rodZ(PoseStack pose, VertexConsumer consumer, double centerX, double centerY, double z,
-            float degrees, float red, float green, float blue, float alpha) {
-        pose.pushPose();
-        pose.translate(centerX, centerY, z);
-        pose.mulPose(Axis.ZP.rotationDegrees(degrees));
-        LevelRenderer.renderLineBox(pose, consumer,
-                new AABB(-HALF_DIAGONAL, -ROD_HALF_WIDTH, -ROD_HALF_HEIGHT, HALF_DIAGONAL, ROD_HALF_WIDTH,
-                        ROD_HALF_HEIGHT),
-                red, green, blue, alpha);
-        pose.popPose();
+    private static void orientToFace(PoseStack pose, BlockPos pos, Direction face) {
+        pose.translate(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+        switch (face) {
+            case DOWN -> pose.mulPose(Axis.XP.rotationDegrees(90.0f));
+            case UP -> pose.mulPose(Axis.XP.rotationDegrees(-90.0f));
+            case NORTH -> pose.mulPose(Axis.YP.rotationDegrees(180.0f));
+            case SOUTH -> {
+            }
+            case WEST -> pose.mulPose(Axis.YP.rotationDegrees(-90.0f));
+            case EAST -> pose.mulPose(Axis.YP.rotationDegrees(90.0f));
+        }
+        pose.translate(0.0, 0.0, 0.5);
     }
 
-    private static void rodX(PoseStack pose, VertexConsumer consumer, double x, double centerY, double centerZ,
-            float degrees, float red, float green, float blue, float alpha) {
-        pose.pushPose();
-        pose.translate(x, centerY, centerZ);
-        pose.mulPose(Axis.XP.rotationDegrees(degrees));
-        LevelRenderer.renderLineBox(pose, consumer,
-                new AABB(-ROD_HALF_HEIGHT, -HALF_DIAGONAL, -ROD_HALF_WIDTH, ROD_HALF_HEIGHT, HALF_DIAGONAL,
-                        ROD_HALF_WIDTH),
-                red, green, blue, alpha);
-        pose.popPose();
+    /**
+     * Resolves a highlight output id to an item stack for the face icon.
+     * Returns {@link ItemStack#EMPTY} for anything that is not an item, so
+     * callers always render at least the red plate.
+     */
+    public static ItemStack resolveItem(String outputId) {
+        if (outputId == null || outputId.isBlank() || outputId.length() > PacketLimits.MAX_OUTPUT_ID_LENGTH) {
+            return ItemStack.EMPTY;
+        }
+        var id = ResourceLocation.tryParse(outputId);
+        if (id == null) {
+            return ItemStack.EMPTY;
+        }
+        var item = BuiltInRegistries.ITEM.get(id);
+        return item == null || item == Items.AIR ? ItemStack.EMPTY : new ItemStack(item);
     }
 
     private ProviderHighlightShapes() {
