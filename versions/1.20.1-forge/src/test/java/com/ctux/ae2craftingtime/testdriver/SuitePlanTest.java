@@ -63,6 +63,28 @@ class SuitePlanTest {
                 new DriverOptions("suite", "compatible", FIRST, temporary, true)));
     }
 
+    @Test void expandedSuitesReachCaseValidationThroughSixtyFourEntries() {
+        var names = List.of("standard-plan-controls", "standard-status-controls", "waiting-status",
+                "running-status", "delayed-status", "craft-lifecycle", "craft-plan", "crafting-tree-screen",
+                "advancedae-cpu", "extendedae-cpu", "extendedae-plus-cpu", "bmaddon-cpu", "crazyae2addons-cpu",
+                "appbot-fork-cpu", "advancedperipherals-cpu", "ae2things-cpu", "megacells-cpu", "lightningtech-cpu",
+                "omnicells-cpu", "projectcell-cpu", "appliede-cpu", "appflux-cpu", "appmek-cpu",
+                "modern-ae2-additions-cpu", "omnisequence-cpu", "ae2wcwt-terminal", "ae2wtlib-terminal",
+                "ae2importexportcard-terminal", "aeinfinitybooster-terminal", "merequester-screen",
+                "ae2networkanalyser-screen", "no-space-status", "no-provider-status", "no-power-status");
+        for (int count : List.of(1, 32, 34)) {
+            var cases = java.util.stream.IntStream.range(0, count).mapToObj(index -> new SuitePlan.Case(
+                    names.get(index), index == 0 ? FIRST : String.format("ae2ct-%032x", index))).toList();
+            assertEquals(count, new SuitePlan(1, cases).options(options()).size());
+        }
+        // There are fewer than 64 registered leaves today. At 64, duplicate
+        // validation must still run; at 65 the count gate must reject first.
+        assertEquals("invalid or duplicate suite case", assertThrows(IllegalArgumentException.class,
+                () -> new SuitePlan(1, Collections.nCopies(64, first)).options(options())).getMessage());
+        assertEquals("invalid suite schema, case count, or interactive mode", assertThrows(IllegalArgumentException.class,
+                () -> new SuitePlan(1, Collections.nCopies(65, first)).options(options())).getMessage());
+    }
+
     @Test void requiresTheMatchingDisposableMarker() throws Exception {
         var saves = temporary.resolve("saves");
         var world = Files.createDirectories(saves.resolve(FIRST));
