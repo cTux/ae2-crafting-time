@@ -28,6 +28,7 @@ try {
     Invoke-FixtureGit @('config','user.name','Smoke plan test')
     Invoke-FixtureGit @('config','user.email','smoke-test@example.invalid')
     Invoke-FixtureGit @('config','core.hooksPath','disabled-hooks')
+    Invoke-FixtureGit @('config','core.protectNTFS','false')
     Put 'README.md' 'baseline'
     $lang = 'shared/src/main/resources/assets/ae2craftingtime/lang/en_us.json'
     Put $lang '{"text.ae2craftingtime.ttc_delayed":"DELAYED","other":"value"}'
@@ -36,6 +37,15 @@ try {
     Invoke-FixtureGit @('commit','-m','fixture')
     Invoke-FixtureGit @('tag','baseline')
     Assert ((Plan).result -eq 'NOT_REQUIRED') 'Empty diff must not launch'
+    # Git can contain names that Windows cannot materialize. Use the index so
+    # this exercises actual NUL-delimited Git output on Windows as well.
+    $blob = & git -C $temp rev-parse baseline:README.md
+    $newlinePath = "unknown`nline.java"
+    Invoke-FixtureGit @('-c','core.protectNTFS=false','update-index','--add','--cacheinfo',"100644,$blob,$newlinePath")
+    $newlinePlan = Plan
+    Assert ($newlinePlan.targets.Count -eq 4) 'Newline filename must select all targets'
+    Assert ($newlinePath -cin $newlinePlan.changes.path) 'Newline filename must remain one exact path'
+    Clean
     Put 'docs/new.md' 'docs'
     Put 'docs/StallDiagnostic.java' 'documented example'
     Put 'shared/src/test/java/Test.java' 'tests'

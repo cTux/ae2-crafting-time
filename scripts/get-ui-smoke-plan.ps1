@@ -107,7 +107,7 @@ foreach ($name in @('release-matrix.json','run-client-versions.json','ui-smoke-i
 $content = @()
 foreach ($path in @($changes.path | Sort-Object -Unique -CaseSensitive)) {
     $file = Join-Path $Repository $path
-    $content += @($path, $(if (Test-Path -LiteralPath $file -PathType Leaf) { (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash } else { 'DELETED' }))
+    $content += @($path, $(if ([IO.File]::Exists($file)) { (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash } else { 'DELETED' }))
 }
 # Include the index identity even when staged content differs from the final worktree.
 $fingerprint = Hash-Text (@($head, $base, $merge, (Read-Git @('diff','--cached','--binary','--')), ($changes | ConvertTo-Json -Depth 6 -Compress),
@@ -139,7 +139,7 @@ foreach ($change in $changes) {
         else { $cases = @('delayed-status'); $reason = 'English delayed label changed' }
     } elseif ($behavior.Count) { $cases = @($behavior.cases | Select-Object -Unique); $reason = $behavior.reason -join '; ' }
     else {
-        if ($path -cmatch '/resources/assets/ae2craftingtime/lang/en_us\.json$' -and (Test-Path -LiteralPath (Join-Path $Repository $path))) {
+        if ($path -cmatch '/resources/assets/ae2craftingtime/lang/en_us\.json$' -and [IO.File]::Exists((Join-Path $Repository $path))) {
             $null = Read-Language (Get-Content -LiteralPath (Join-Path $Repository $path) -Raw)
         }
         $cases = @('suite'); $fallback = $true; $reason = 'No narrow behavior rule; full consuming suites required'
