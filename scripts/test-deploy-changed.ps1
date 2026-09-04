@@ -4,6 +4,47 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Exercise fingerprint selection without building or modifying repository sources.
+$deployAst = [Management.Automation.Language.Parser]::ParseFile("$PSScriptRoot/deploy-changed.ps1", [ref]$null, [ref]$null)
+$fingerprintFunction = $deployAst.Find({ param($node)
+    $node -is [Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -eq 'Get-InputFingerprint'
+}, $true)
+. ([scriptblock]::Create($fingerprintFunction.Extent.Text))
+$root = Join-Path $env:TEMP ("release-fingerprint-" + [guid]::NewGuid())
+$matrix = Get-Content "$PSScriptRoot/release-matrix.json" -Raw | ConvertFrom-Json
+$inputs = @('build.gradle', 'settings.gradle', 'shared/build.gradle',
+    'shared/src/main/input', 'shared/src/mcCommon/input', 'shared/src/mc1201/input',
+    'shared/src/mc2612/input', 'shared/src/neoforge/input',
+    'shared/src/neoforge/java/com/ctux/ae2craftingtime/mc1201/mixin/input',
+    'shared/src/mc1201Test/input', 'shared/src/testDriverAddons/input')
+$inputs += @($matrix | ForEach-Object { "$($_.projectDir)/build.gradle"; "$($_.projectDir)/src/main/input" })
+try {
+    foreach ($inputPath in $inputs) {
+        $file = Join-Path $root $inputPath
+        New-Item -ItemType Directory -Path (Split-Path $file) -Force | Out-Null
+        Set-Content $file 'before'
+    }
+    foreach ($entry in $matrix) {
+        $baseline = Get-InputFingerprint $entry
+        foreach ($source in @('mcCommon', 'mc1201', 'mc2612', 'neoforge',
+                'neoforge/java/com/ctux/ae2craftingtime/mc1201/mixin', 'mc1201Test', 'testDriverAddons')) {
+            $file = Join-Path $root "shared/src/$source/input"
+            Set-Content $file 'after'
+            $changed = (Get-InputFingerprint $entry) -ne $baseline
+            Set-Content $file 'before'
+            $expected = $source -eq 'mcCommon' -or
+                ($source -eq 'mc1201' -and $entry.minecraftVersion -ne '26.1.2') -or
+                ($source -eq 'mc2612' -and $entry.minecraftVersion -eq '26.1.2') -or
+                ($source -eq 'neoforge' -and $entry.loader -eq 'neoforge') -or
+                ($source -like 'neoforge/*' -and $entry.loader -ne 'fabric')
+            if ($changed -ne $expected) { throw "Wrong fingerprint selection: $($entry.id), $source" }
+        }
+    }
+} finally {
+    # The unique absolute fixture directory was created above under TEMP.
+    Remove-Item -LiteralPath $root -Recurse -Force
+}
+
 Remove-Item -LiteralPath $StatePath -Force -ErrorAction SilentlyContinue
 $versionPath = "$StatePath.version"
 Set-Content -LiteralPath $versionPath -Value "modVersion=1.0.4" -Encoding UTF8

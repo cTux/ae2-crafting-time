@@ -116,10 +116,18 @@ function Get-InputFingerprint($entry) {
         "build.gradle",
         "settings.gradle",
         "shared/src/main",
+        "shared/src/mcCommon",
+        $(if ($entry.minecraftVersion -eq '26.1.2') { 'shared/src/mc2612' } else { 'shared/src/mc1201' }),
         "shared/build.gradle",
         "$($entry.projectDir)/build.gradle",
         "$($entry.projectDir)/src/main"
     )
+    if ($entry.loader -eq 'neoforge') {
+        $paths += 'shared/src/neoforge'
+    }
+    elseif ($entry.loader -eq 'forge') {
+        $paths += 'shared/src/neoforge/java/com/ctux/ae2craftingtime/mc1201/mixin'
+    }
 
     $hashes = foreach ($path in $paths) {
         $fullPath = Join-Path $root $path
