@@ -26,6 +26,7 @@ public final class CraftProfiler {
     private final Map<Object, Set<ProfileKey>> delayedNotified = new IdentityHashMap<>();
     private final Map<ProfileKey, BusyWindow> busyWindows = new HashMap<>();
     private final Map<ProfileKey, ArrayDeque<CraftSample>> samples = new HashMap<>();
+    private final Map<ProfileKey, PersistedOutputStatus> rememberedStatuses = new HashMap<>();
     private final MissingProviderTracker<Object> missingProviders = new MissingProviderTracker<>();
     private final DispatchPowerTracker dispatchPower = new DispatchPowerTracker();
     private boolean enabled = true;
@@ -57,6 +58,7 @@ public final class CraftProfiler {
             busyWindows.clear();
             jobOwners.clear();
             delayedNotified.clear();
+            rememberedStatuses.clear();
         }
     }
 
@@ -114,6 +116,8 @@ public final class CraftProfiler {
         if (!enabled || amount <= 0) {
             return;
         }
+        // Fresh live observations supersede any remembered status for the key.
+        rememberedStatuses.remove(key);
         var waitingState = waiting.get(scope);
         if (waitingState != null && waitingState.keys.remove(key) && waitingState.keys.isEmpty()) {
             waiting.remove(scope);
@@ -169,6 +173,7 @@ public final class CraftProfiler {
         }
 
         busyWindows.remove(key);
+        rememberedStatuses.remove(key);
         addSample(key, new CraftSample(window.completedAmount, window.unit,
                 Math.max(1, tick - window.startedTick)));
         return true;
@@ -187,6 +192,9 @@ public final class CraftProfiler {
             return;
         }
         for (var key : removed.keySet()) {
+            if (!hasPending(key)) {
+                rememberedStatuses.remove(key);
+            }
             rebuildBusyWindow(key);
         }
     }
@@ -270,12 +278,93 @@ public final class CraftProfiler {
         for (var entry : currentlyDelayed.entrySet()) {
             if (notified.add(entry.getKey())) {
                 newly.add(new DelayedEvent(entry.getKey(), entry.getValue()));
+                rememberedStatuses.put(entry.getKey(),
+                        new PersistedOutputStatus(entry.getKey(), StatusKind.DELAYED,
+                                entry.getValue().idleTicks(), entry.getValue().typicalDurationTicks(), tick));
             }
         }
         if (notified.isEmpty()) {
             delayedNotified.remove(scope);
         }
         return List.copyOf(newly);
+    }
+
+    public void rememberStatus(PersistedOutputStatus status) {
+        if (status == null) {
+            return;
+        }
+        rememberedStatuses.put(status.key(), status);
+    }
+
+    /**
+     * Snapshot remembered statuses plus currently waiting keys for the world
+     * save. Live data always wins on display; this is only the fallback shown
+     * after a reload until fresh observations arrive.
+     */
+    public List<PersistedOutputStatus> snapshotStatuses() {
+        var snapshot = new HashMap<>(rememberedStatuses);
+        for (var state : waiting.values()) {
+            for (var key : state.keys) {
+                snapshot.putIfAbsent(key,
+                        new PersistedOutputStatus(key, StatusKind.WAITING, 0, 0, state.acceptedAtTick));
+            }
+        }
+        return List.copyOf(snapshot.values());
+    }
+
+    public void restoreStatuses(List<PersistedOutputStatus> statuses) {
+        rememberedStatuses.clear();
+        if (statuses == null) {
+            return;
+        }
+        for (var status : statuses) {
+            if (status != null) {
+                rememberedStatuses.put(status.key(), status);
+            }
+        }
+    }
+
+    /**
+     * Remembered DELAYED diagnostic for display when no live pending exists
+     * for the key. Live observations always win: any pending craft means the
+     * live stall check (or its absence) is authoritative.
+     */
+    public Optional<StallDiagnostic> rememberedStall(ProfileKey key) {
+        if (key == null) {
+            return Optional.empty();
+        }
+        var remembered = rememberedStatuses.get(key);
+        if (remembered == null || remembered.kind() != StatusKind.DELAYED || hasPending(key)) {
+            return Optional.empty();
+        }
+        return Optional.of(new StallDiagnostic(remembered.idleTicks(), remembered.typicalDurationTicks(), 0, 0, 0));
+    }
+
+    public OptionalLong rememberedWaitingTicks(ProfileKey key, long tick) {
+        if (key == null) {
+            return OptionalLong.empty();
+        }
+        var remembered = rememberedStatuses.get(key);
+        if (remembered == null || remembered.kind() != StatusKind.WAITING || hasPending(key)) {
+            return OptionalLong.empty();
+        }
+        return OptionalLong.of(Math.max(0, tick - remembered.acceptedAtTick()));
+    }
+
+    public Map<ProfileKey, CraftingBlockReason> rememberedReasons() {
+        var reasons = new HashMap<ProfileKey, CraftingBlockReason>();
+        for (var status : rememberedStatuses.values()) {
+            if (status.kind() == StatusKind.NO_POWER) {
+                reasons.put(status.key(), CraftingBlockReason.NO_POWER);
+            } else if (status.kind() == StatusKind.NO_PROVIDER) {
+                reasons.put(status.key(), CraftingBlockReason.NO_PROVIDER);
+            }
+        }
+        return reasons;
+    }
+
+    public boolean hasPending(ProfileKey key) {
+        return key != null && pending.values().stream().anyMatch(scoped -> scoped.containsKey(key));
     }
 
     public Optional<ProfileStats> stats(ProfileKey key) {
@@ -348,6 +437,7 @@ public final class CraftProfiler {
     public boolean clearSamples(ProfileKey key) {
         var cleared = samples.remove(key) != null;
         busyWindows.remove(key);
+        rememberedStatuses.remove(key);
         pending.values().forEach(scoped -> scoped.remove(key));
         pending.values().removeIf(Map::isEmpty);
         lastProgressTicks.values().forEach(scoped -> scoped.remove(key));
@@ -403,6 +493,7 @@ public final class CraftProfiler {
 
     public void loadSamples(List<PersistedOutputSamples> persisted) {
         samples.clear();
+        rememberedStatuses.clear();
         missingProviders.clear();
         dispatchPower.clear();
         pending.clear();
@@ -435,10 +526,6 @@ public final class CraftProfiler {
             this.unit = unit;
             this.startedTick = startedTick;
         }
-    }
-
-    private boolean hasPending(ProfileKey key) {
-        return pending.values().stream().anyMatch(scoped -> scoped.containsKey(key));
     }
 
     private void removeLastProgress(Object scope, ProfileKey key) {

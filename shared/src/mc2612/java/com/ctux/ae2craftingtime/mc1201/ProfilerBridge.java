@@ -9,10 +9,14 @@ import appeng.api.stacks.KeyCounter;
 import appeng.blockentity.networking.ControllerBlockEntity;
 import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.core.CraftProfiler;
+import com.ctux.ae2craftingtime.core.CraftingBlockReason;
+import com.ctux.ae2craftingtime.core.PersistedOutputStatus;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
+import com.ctux.ae2craftingtime.core.StallDiagnostic;
 import com.ctux.ae2craftingtime.core.StatsEntry;
+import com.ctux.ae2craftingtime.core.StatusKind;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
 import com.ctux.ae2craftingtime.core.TtcAccuracyTracker;
@@ -60,8 +64,18 @@ public final class ProfilerBridge {
 
     public static java.util.Map<ProfileKey, com.ctux.ae2craftingtime.core.CraftingBlockReason> blockReasons(
             Object scope, IGrid grid, long tick) {
-        return grid == null ? java.util.Map.of()
-                : PROFILER.blockReasons(scope, tick, missingProviders(scope, grid));
+        if (grid == null) {
+            return java.util.Map.of();
+        }
+        var live = PROFILER.blockReasons(scope, tick, missingProviders(scope, grid));
+        for (var entry : live.entrySet()) {
+            PROFILER.rememberStatus(new PersistedOutputStatus(entry.getKey(),
+                    entry.getValue() == CraftingBlockReason.NO_POWER ? StatusKind.NO_POWER : StatusKind.NO_PROVIDER, 0,
+                    0, tick));
+        }
+        var merged = new java.util.HashMap<>(live);
+        PROFILER.rememberedReasons().forEach(merged::putIfAbsent);
+        return merged;
     }
 
     public static Set<ProfileKey> missingProviders(Object scope, IGrid grid) {
@@ -105,6 +119,7 @@ public final class ProfilerBridge {
         }
         if (PROFILER.complete(key(networkId, what), scope, normalizeAmount(what, amount), tick) && savedData != null) {
             savedData.replaceFrom(PROFILER.snapshotSamples());
+            persistStatuses();
         }
     }
 
@@ -235,6 +250,13 @@ public final class ProfilerBridge {
         if (savedData != null) {
             savedData.replaceProviderStarts(ProviderLocateRecords.snapshotStarts());
         }
+        persistStatuses();
+    }
+
+    public static void persistStatuses() {
+        if (savedData != null) {
+            savedData.replaceStatuses(PROFILER.snapshotStatuses());
+        }
     }
 
     public static void finishJob(Object scope, boolean success, long tick, long nanoTime) {
@@ -242,6 +264,7 @@ public final class ProfilerBridge {
         PROFILER.clearPending(scope);
         ProviderStartTracker.clear(scope);
         BlockReasonNotifier.clear(scope);
+        persistStatuses();
     }
 
     public static Optional<ProfileStats> stats(AEKey what) {
@@ -266,7 +289,11 @@ public final class ProfilerBridge {
     }
 
     public static OptionalLong waitingTicks(ProfileKey key, Object scope, long tick) {
-        return key == null || !isEnabled() ? OptionalLong.empty() : PROFILER.waitingTicks(key, scope, tick);
+        if (key == null || !isEnabled()) {
+            return OptionalLong.empty();
+        }
+        var live = PROFILER.waitingTicks(key, scope, tick);
+        return live.isPresent() ? live : PROFILER.rememberedWaitingTicks(key, tick);
     }
 
     public static void updateCapacity(Object scope, int usedParallelSlots, int totalParallelSlots, long tick) {
@@ -280,8 +307,14 @@ public final class ProfilerBridge {
     }
 
     public static Optional<StatsEntry> entry(ProfileKey lookupKey, ProfileKey displayKey, Object scope, long tick) {
-        return stats(lookupKey).map(stats -> new StatsEntry(displayKey, stats, accuracy(lookupKey),
-                scope == null ? Optional.empty() : PROFILER.stall(lookupKey, scope, tick)));
+        return stats(lookupKey).map(stats -> {
+            var stall = scope == null ? Optional.<StallDiagnostic>empty()
+                    : PROFILER.stall(lookupKey, scope, tick);
+            if (stall.isEmpty()) {
+                stall = PROFILER.rememberedStall(lookupKey);
+            }
+            return new StatsEntry(displayKey, stats, accuracy(lookupKey), stall);
+        });
     }
 
     public static boolean clearStats(ProfileKey key) {
@@ -292,6 +325,7 @@ public final class ProfilerBridge {
         ACCURACY.clear(key);
         if (cleared && savedData != null) {
             savedData.replaceFrom(PROFILER.snapshotSamples());
+            persistStatuses();
         }
         return cleared;
     }
@@ -330,6 +364,7 @@ public final class ProfilerBridge {
         ProviderLocateRecords.clearAll();
         BlockReasonNotifier.clearAll();
         ProviderLocateRecords.restoreStarts(data.providerStarts());
+        PROFILER.restoreStatuses(data.statuses());
         var migrated = PROFILER.snapshotSamples();
         if (!migrated.equals(data.samples())) {
             savedData.replaceFrom(migrated);

@@ -64,6 +64,33 @@ samples:
 
 Do not persist pending crafts. Pending operations are in-flight runtime state; if the server shuts down mid-craft, those timings are not reliable.
 
+## Remembered Statuses
+
+Persist each output's last-known status (see
+[issue #238](https://github.com/cTux/ae2-crafting-time/issues/238)) so rows
+keep their badges after leaving and re-entering the world instead of falling
+back to bare TTC:
+
+```text
+statuses: [
+  {
+    networkId: "minecraft:overworld|10,64,10"
+    key: "minecraft:iron_ingot"
+    kind: "delayed" | "waiting" | "no_provider" | "no_power"
+    idleTicks: 300
+    typicalTicks: 20.0
+    acceptedAtTick: 18400
+  }
+]
+```
+
+Live dispatch data always wins: a new pending craft drops the remembered
+status for its output, finishing or cancelling drops it, and a remembered
+row only renders while nothing live contradicts it. `NO SPACE` stays
+live-only because the client derives it from the open CPU screen each frame.
+Bounded to 256 entries with tolerant reads and no save-version bump, same
+as the other sections.
+
 ## NBT Shape
 
 Use one top-level version and a list of output entries:

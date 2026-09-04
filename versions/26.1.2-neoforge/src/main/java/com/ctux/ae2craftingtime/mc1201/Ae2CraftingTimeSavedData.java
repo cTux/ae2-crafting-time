@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.core.PersistedOutputSamples;
+import com.ctux.ae2craftingtime.core.PersistedOutputStatus;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.datafix.DataFixTypes;
@@ -19,6 +20,7 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
 
     private List<PersistedOutputSamples> samples = List.of();
     private List<ProviderLocateRecords.StoredStart> providerStarts = List.of();
+    private List<PersistedOutputStatus> statuses = List.of();
 
     private static Ae2CraftingTimeSavedData load(CompoundTag tag) {
         var data = new Ae2CraftingTimeSavedData();
@@ -26,6 +28,7 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
             data.samples = PersistedSamplesTag.readOutputs(tag.getListOrEmpty("outputs"));
         }
         data.providerStarts = PersistedProviderTag.readStarts(tag.getListOrEmpty("providers"));
+        data.statuses = PersistedStatusTag.readStatuses(tag.getListOrEmpty("statuses"));
         return data;
     }
 
@@ -39,6 +42,11 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
         setDirty();
     }
 
+    public void replaceStatuses(List<PersistedOutputStatus> statuses) {
+        this.statuses = statuses == null ? List.of() : List.copyOf(statuses);
+        setDirty();
+    }
+
     public List<PersistedOutputSamples> samples() {
         return samples;
     }
@@ -47,11 +55,16 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
         return providerStarts;
     }
 
+    public List<PersistedOutputStatus> statuses() {
+        return statuses;
+    }
+
     private CompoundTag save() {
         var tag = new CompoundTag();
         tag.putInt("version", PersistedSamplesTag.VERSION);
         tag.put("outputs", PersistedSamplesTag.writeOutputs(samples));
         tag.put("providers", PersistedProviderTag.writeStarts(providerStarts));
+        tag.put("statuses", PersistedStatusTag.writeStatuses(statuses));
         return tag;
     }
 }

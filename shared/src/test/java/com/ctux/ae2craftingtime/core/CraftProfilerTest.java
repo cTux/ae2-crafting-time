@@ -590,8 +590,7 @@ class CraftProfilerTest {
     }
 
     @Test
-    void ignoresInvalidWaitingRegistrationsAndDropsEmptyReplacement() {
-        var profiler = new CraftProfiler(10);
+    void ignoresInvalidWaitingRegistrationsAndDropsEmptyReplacement() {        var profiler = new CraftProfiler(10);
         var cpu = new Object();
         var key = new ProfileKey("minecraft:iron_plate");
 
@@ -604,5 +603,150 @@ class CraftProfilerTest {
         profiler.setEnabled(false);
         profiler.startWaiting(cpu, List.of(key), 2);
         assertFalse(profiler.waitingTicks(key, cpu, 2).isPresent());
+    }
+
+    @Test
+    void rejectsStatusWithoutKeyOrKind() {
+        var key = new ProfileKey("minecraft:iron_plate");
+        assertThrows(NullPointerException.class, () -> new PersistedOutputStatus(null, StatusKind.DELAYED, 0, 0, 0));
+        assertThrows(NullPointerException.class, () -> new PersistedOutputStatus(key, null, 0, 0, 0));
+    }
+
+    @Test
+    void ignoresNullRememberedStatusAndRestoresNullAsEmpty() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_plate");
+
+        profiler.rememberStatus(null);
+        assertTrue(profiler.snapshotStatuses().isEmpty());
+        assertFalse(profiler.rememberedStall(null).isPresent());
+        assertFalse(profiler.rememberedStall(key).isPresent());
+        assertFalse(profiler.rememberedWaitingTicks(null, 100).isPresent());
+        assertFalse(profiler.rememberedWaitingTicks(new ProfileKey("minecraft:copper_plate"), 100).isPresent());
+        assertTrue(profiler.rememberedReasons().isEmpty());
+        assertFalse(profiler.hasPending(null));
+        assertFalse(profiler.hasPending(key));
+
+        profiler.rememberStatus(new PersistedOutputStatus(key, StatusKind.DELAYED, 300, 100.0, 50));
+        profiler.restoreStatuses(null);
+        assertTrue(profiler.snapshotStatuses().isEmpty());
+    }
+
+    @Test
+    void delayedStallSurvivesReloadUntilFreshDispatch() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_plate");
+        var cpu = new Object();
+
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(key, cpu, 1, 20);
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 100);
+        assertEquals(1, profiler.pollNewlyDelayed(cpu, 400).size());
+
+        // World save, then a reload clears live state but keeps the snapshot.
+        var snapshot = profiler.snapshotStatuses();
+        profiler.loadSamples(List.of());
+        assertFalse(profiler.rememberedStall(key).isPresent());
+        profiler.restoreStatuses(snapshot);
+
+        var diagnostic = profiler.rememberedStall(key).orElseThrow();
+        assertEquals(300, diagnostic.idleTicks());
+        assertEquals(20.0, diagnostic.typicalDurationTicks());
+
+        // A resumed craft reports live values again instead of the memory.
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 1000);
+        assertTrue(profiler.hasPending(key));
+        assertFalse(profiler.rememberedStall(key).isPresent());
+    }
+
+    @Test
+    void livePendingSuppressesRememberedStall() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_plate");
+        var cpu = new Object();
+
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 0);
+        profiler.rememberStatus(new PersistedOutputStatus(key, StatusKind.DELAYED, 300, 20.0, 0));
+        assertFalse(profiler.rememberedStall(key).isPresent());
+
+        profiler.rememberStatus(new PersistedOutputStatus(key, StatusKind.WAITING, 0, 0, 0));
+        assertFalse(profiler.rememberedWaitingTicks(key, 100).isPresent());
+
+        profiler.complete(key, cpu, 1, 20);
+        assertFalse(profiler.rememberedStall(key).isPresent());
+    }
+
+    @Test
+    void clearingOneCpuKeepsStatusesForWorkStillPendingElsewhere() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_plate");
+        var first = new Object();
+        var second = new Object();
+
+        profiler.start(key, first, 1, ProfileUnit.ITEM, 0);
+        profiler.start(key, second, 1, ProfileUnit.ITEM, 0);
+        profiler.rememberStatus(new PersistedOutputStatus(key, StatusKind.NO_POWER, 0, 0, 0));
+
+        profiler.clearPending(first);
+        assertEquals(CraftingBlockReason.NO_POWER, profiler.rememberedReasons().get(key));
+
+        profiler.clearPending(second);
+        assertTrue(profiler.rememberedReasons().isEmpty());
+    }
+
+    @Test
+    void waitingKeysSnapshotAndRestoreForDisplay() {
+        var profiler = new CraftProfiler(10);
+        var cpu = new Object();
+        var iron = new ProfileKey("minecraft:iron_plate");
+        var copper = new ProfileKey("minecraft:copper_plate");
+
+        profiler.startWaiting(cpu, List.of(iron, copper), 100);
+        profiler.rememberStatus(new PersistedOutputStatus(copper, StatusKind.DELAYED, 300, 20.0, 100));
+
+        var snapshot = profiler.snapshotStatuses();
+        assertEquals(2, snapshot.size());
+
+        profiler.loadSamples(List.of());
+        profiler.restoreStatuses(snapshot);
+        assertEquals(20, profiler.rememberedWaitingTicks(iron, 120).orElseThrow());
+        // The delayed memory is not a waiting row for the same key.
+        assertFalse(profiler.rememberedWaitingTicks(copper, 130).isPresent());
+        // The delayed memory wins over the live waiting row for the same key.
+        assertTrue(profiler.rememberedStall(copper).isPresent());
+
+        profiler.restoreStatuses(Arrays.asList(null,
+                new PersistedOutputStatus(iron, StatusKind.NO_PROVIDER, 0, 0, 0)));
+        assertEquals(CraftingBlockReason.NO_PROVIDER, profiler.rememberedReasons().get(iron));
+        assertFalse(profiler.rememberedStall(iron).isPresent());
+    }
+
+    @Test
+    void rememberedReasonsOnlyCoverBlockReasons() {
+        var profiler = new CraftProfiler(10);
+        var delayed = new ProfileKey("minecraft:iron_plate");
+        var waiting = new ProfileKey("minecraft:copper_plate");
+        var power = new ProfileKey("minecraft:gear");
+        var provider = new ProfileKey("minecraft:stick");
+
+        profiler.rememberStatus(new PersistedOutputStatus(delayed, StatusKind.DELAYED, 1, 1.0, 0));
+        profiler.rememberStatus(new PersistedOutputStatus(waiting, StatusKind.WAITING, 0, 0, 0));
+        profiler.rememberStatus(new PersistedOutputStatus(power, StatusKind.NO_POWER, 0, 0, 0));
+        profiler.rememberStatus(new PersistedOutputStatus(provider, StatusKind.NO_PROVIDER, 0, 0, 0));
+
+        var reasons = profiler.rememberedReasons();
+        assertEquals(2, reasons.size());
+        assertEquals(CraftingBlockReason.NO_POWER, reasons.get(power));
+        assertEquals(CraftingBlockReason.NO_PROVIDER, reasons.get(provider));
+    }
+
+    @Test
+    void disablingDropsRememberedStatuses() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_plate");
+
+        profiler.rememberStatus(new PersistedOutputStatus(key, StatusKind.DELAYED, 300, 20.0, 0));
+        profiler.setEnabled(false);
+        assertTrue(profiler.snapshotStatuses().isEmpty());
     }
 }
