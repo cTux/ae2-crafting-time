@@ -4,14 +4,16 @@ import com.ctux.ae2craftingtime.core.ProfileKey;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 
 /**
  * Client-side only. Holds the latest provider highlight (dimension, block
  * positions, expiry timestamp) for the per-loader render hooks, plus one
- * persistent plate per located output. Plates outlive the 15-second edge
- * highlight and render while the output still reports a stall. Never touched
- * on a dedicated server.
+ * persistent plate per located output. Edges expire after
+ * {@link ProviderLocateCommand#HIGHLIGHT_SECONDS} seconds; plates persist
+ * until the craft ends, is cancelled, or the provider block is broken. Never
+ * touched on a dedicated server.
  */
 public final class ProviderHighlightClient {
     public record Highlight(String dimensionId, List<BlockPos> positions, String outputId, long expiresAtMillis) {
@@ -38,28 +40,107 @@ public final class ProviderHighlightClient {
     private static volatile Highlight current;
 
     public static void show(String dimensionId, List<BlockPos> positions, int durationSeconds, String outputId) {
+        if (outputId != null && !outputId.isBlank()
+                && (durationSeconds <= 0 || positions == null || positions.isEmpty())) {
+            clearFor(outputId);
+            return;
+        }
         if (dimensionId == null || positions == null || positions.isEmpty() || durationSeconds <= 0) {
             return;
         }
         current = new Highlight(dimensionId, List.copyOf(positions), outputId,
                 System.currentTimeMillis() + durationSeconds * 1000L);
-        if (outputId != null && !outputId.isBlank()) {
-            PLATES.put(outputId, new Plate(dimensionId, positions, outputId));
-            while (PLATES.size() > MAX_PLATES) {
-                var eldest = PLATES.keySet().iterator();
-                eldest.next();
-                eldest.remove();
-            }
+        storePlate(dimensionId, positions, outputId);
+    }
+
+    /**
+     * Remembers the red plate (background plus item icon) for one output
+     * without touching the rainbow edge. The server sends exactly this for
+     * automatic delayed pings, so plates appear with no open window and no
+     * edge; manual locates use {@link #show} for edge plus plate.
+     */
+    public static void showPlate(String dimensionId, List<BlockPos> positions, String outputId) {
+        if (dimensionId == null || positions == null || positions.isEmpty() || outputId == null
+                || outputId.isBlank()) {
+            return;
+        }
+        storePlate(dimensionId, positions, outputId);
+    }
+
+    private static void storePlate(String dimensionId, List<BlockPos> positions, String outputId) {
+        if (outputId == null || outputId.isBlank()) {
+            return;
+        }
+        PLATES.put(outputId, new Plate(dimensionId, positions, outputId));
+        while (PLATES.size() > MAX_PLATES) {
+            var eldest = PLATES.keySet().iterator();
+            eldest.next();
+            eldest.remove();
         }
     }
 
     public static Highlight live() {
+        return liveAt(System.currentTimeMillis());
+    }
+
+    static Highlight liveAt(long nowMillis) {
         var highlight = current;
-        if (highlight == null || System.currentTimeMillis() >= highlight.expiresAtMillis()) {
+        if (highlight == null || nowMillis >= highlight.expiresAtMillis()) {
             current = null;
             return null;
         }
         return highlight;
+    }
+
+    /**
+     * Removes every trace of one output: its persistent plate and the live
+     * edge when it belongs to the same output. The server sends an empty
+     * highlight for exactly this on craft finish and cancel, so plates never
+     * stick around with a closed screen and no snapshot.
+     */
+    public static void clearFor(String outputId) {
+        if (outputId == null || outputId.isBlank()) {
+            return;
+        }
+        PLATES.remove(outputId);
+        var highlight = current;
+        if (highlight != null && outputId.equals(highlight.outputId())) {
+            current = null;
+        }
+    }
+
+    /**
+     * Drops positions the {@code keep} predicate rejects (for example broken
+     * provider blocks observed during render) from the live edge and every
+     * plate in the given dimension. Entries left with no positions disappear;
+     * other dimensions are untouched.
+     */
+    public static void trimPositions(String dimensionId, Predicate<BlockPos> keep) {
+        if (dimensionId == null || keep == null) {
+            return;
+        }
+        var highlight = current;
+        if (highlight != null && dimensionId.equals(highlight.dimensionId())) {
+            var kept = highlight.positions().stream().filter(keep).toList();
+            current = kept.isEmpty() ? null
+                    : new Highlight(highlight.dimensionId(), kept, highlight.outputId(),
+                            highlight.expiresAtMillis());
+        }
+        var emptied = new ArrayList<String>();
+        for (var entry : PLATES.entrySet()) {
+            var plate = entry.getValue();
+            if (!dimensionId.equals(plate.dimensionId())) {
+                continue;
+            }
+            var kept = plate.positions().stream().filter(keep).toList();
+            if (kept.isEmpty()) {
+                emptied.add(entry.getKey());
+            } else if (kept.size() != plate.positions().size()) {
+                entry.setValue(new Plate(plate.dimensionId(), kept, plate.outputId(),
+                        plate.highlightedAtMillis()));
+            }
+        }
+        emptied.forEach(PLATES::remove);
     }
 
     /** Persistent plates for the render hooks to filter by dimension and stall. */
@@ -69,16 +150,21 @@ public final class ProviderHighlightClient {
 
     /**
      * Drops plates whose output no longer reports a stall after a snapshot
-     * for the requested keys was applied. Call right after the client cache
-     * replace, from every loader's snapshot handler.
+     * for the requested keys was applied, plus the live edge when it belongs
+     * to a dropped output. Call right after the client cache replace, from
+     * every loader's snapshot handler.
      */
     public static void prunePlates(List<String> requestedKeys) {
-        if (requestedKeys == null || requestedKeys.isEmpty() || PLATES.isEmpty()) {
+        if (requestedKeys == null || requestedKeys.isEmpty() || (PLATES.isEmpty() && current == null)) {
             return;
         }
         for (var id : requestedKeys) {
             if (id != null && ClientStats.CACHE.stall(new ProfileKey(id)).isEmpty()) {
                 PLATES.remove(id);
+                var highlight = current;
+                if (highlight != null && id.equals(highlight.outputId())) {
+                    current = null;
+                }
             }
         }
     }
@@ -89,14 +175,13 @@ public final class ProviderHighlightClient {
     }
 
     /**
-     * Plate gate for every loader's render hook. Unknown outputs (no cache
-     * entry yet, e.g. the CPU screen is closed so no snapshot ever arrived)
-     * still show: only a positive entry without a stall hides the plate.
-     * prunePlates drops that case once a snapshot arrives.
-     * A freshly auto-highlighted plate (delayed/blocked ping with no open
-     * window) still shows while its 15-second edge is live, even when a stale
-     * no-stall snapshot entry says otherwise. Once that window lapses the
-     * gate falls back to the stall cache, so stale plates never stick around.
+     * Plate gate for every loader's render hook. Plates live until the craft
+     * ends (explicit server clear), the provider block breaks (render trim),
+     * or a snapshot reports no stall: only a positive entry without a stall
+     * hides the plate. Unknown outputs (no cache entry yet, e.g. the CPU
+     * screen is closed so no snapshot ever arrived) still show; the finish
+     * and cancel clear removes them, so a closed screen never sticks.
+     * Wall-clock plays no role here: the 15-second window gates edges only.
      */
     public static boolean shouldShowPlates(String outputId) {
         return shouldShowPlatesAt(outputId, System.currentTimeMillis());
@@ -110,14 +195,7 @@ public final class ProviderHighlightClient {
         if (ClientStats.CACHE.stall(key).isPresent()) {
             return true;
         }
-        if (ClientStats.CACHE.get(key).isEmpty()) {
-            return true;
-        }
-        var plate = PLATES.get(outputId);
-        if (plate == null) {
-            return false;
-        }
-        return nowMillis - plate.highlightedAtMillis() < ProviderLocateCommand.HIGHLIGHT_SECONDS * 1000L;
+        return ClientStats.CACHE.get(key).isEmpty();
     }
 
     /**

@@ -6,6 +6,7 @@ import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.StuckEpisodeTracker;
 import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightCodec;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -71,10 +72,13 @@ public final class BlockReasonNotifier {
         // Poll even when nothing is currently stuck: an empty set ends the
         // episode so a later transition warns again.
         var newly = tracker.pollNewlyStuck(scope, keys);
-        if (newly.isEmpty()) {
+        var resolved = tracker.pollResolved(scope);
+        if (newly.isEmpty() && resolved.isEmpty()) {
             return;
         }
-        var owner = DelayedNotificationServer.ownerOf(scope, newly);
+        var lookup = new HashSet<>(newly);
+        lookup.addAll(resolved);
+        var owner = DelayedNotificationServer.ownerOf(scope, List.copyOf(lookup));
         if (owner == null) {
             return;
         }
@@ -85,6 +89,9 @@ public final class BlockReasonNotifier {
         var dimension = ProfilerBridge.dimensionId(grid);
         for (var key : newly) {
             notify(player, scope, grid, dimension, owner, key, wordKey, detail, highlightSender);
+        }
+        for (var key : resolved) {
+            DelayedNotificationServer.pushClearHighlight(player, key, highlightSender);
         }
         ProfilerBridge.persistProviderState();
     }

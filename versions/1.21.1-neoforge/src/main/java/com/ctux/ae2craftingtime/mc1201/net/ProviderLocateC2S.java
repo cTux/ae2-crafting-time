@@ -40,7 +40,7 @@ public record ProviderLocateC2S(String outputId) implements CustomPacketPayload 
                 ProviderLocateServer.locate(player, packet.outputId,
                         (target, highlight) -> StatsNetwork.sendTo(target, new ProviderHighlightS2C(
                                 highlight.dimensionId(), highlight.positions(), highlight.outputId(),
-                                highlight.durationSeconds())));
+                                highlight.durationSeconds(), highlight.plateOnly())));
             }
         });
     }

@@ -7,10 +7,15 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 
 public final class ProviderHighlightCodec {
-    public record Highlight(String dimensionId, List<BlockPos> positions, String outputId, int durationSeconds) {
+    public record Highlight(String dimensionId, List<BlockPos> positions, String outputId, int durationSeconds,
+            boolean plateOnly) {
         public Highlight {
             positions = positions == null ? List.of() : List.copyOf(positions);
             outputId = outputId == null ? "" : outputId;
+        }
+
+        public Highlight(String dimensionId, List<BlockPos> positions, String outputId, int durationSeconds) {
+            this(dimensionId, positions, outputId, durationSeconds, false);
         }
     }
 
@@ -32,6 +37,7 @@ public final class ProviderHighlightCodec {
         }
         buffer.writeUtf(highlight.outputId());
         buffer.writeVarInt(Math.max(0, highlight.durationSeconds()));
+        buffer.writeBoolean(highlight.plateOnly());
     }
 
     public static Highlight read(FriendlyByteBuf buffer) {
@@ -42,7 +48,10 @@ public final class ProviderHighlightCodec {
             positions.add(buffer.readBlockPos());
         }
         var outputId = buffer.readUtf(PacketLimits.MAX_OUTPUT_ID_LENGTH);
-        return new Highlight(dimension, positions, outputId, Math.max(0, buffer.readVarInt()));
+        var durationSeconds = Math.max(0, buffer.readVarInt());
+        // Packets written before the plate-only flag carry no trailing byte.
+        var plateOnly = buffer.readableBytes() > 0 && buffer.readBoolean();
+        return new Highlight(dimension, positions, outputId, durationSeconds, plateOnly);
     }
 
     private ProviderHighlightCodec() {

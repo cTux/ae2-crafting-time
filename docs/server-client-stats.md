@@ -182,6 +182,7 @@ dimensionId: string
 positions: list<BlockPos>, at most 16
 outputId: string, at most 128 chars (profile key id, e.g. an item id)
 durationSeconds: nonnegative int (15)
+plateOnly: boolean (true for automatic delayed pings: red plate only, no rainbow edge)
 ```
 
 Rules:

@@ -181,4 +181,32 @@ class DelayedNotificationTest {
         profiler.clearPending(cpu);
         assertTrue(profiler.jobOwner(cpu).isEmpty());
     }
+
+    @Test
+    void resolvedDelayedDrainsOnceWhileCraftRuns() {
+        var profiler = new CraftProfiler(10);
+        var key = key("minecraft:iron_plate");
+        var cpu = new Object();
+
+        seedTypical(profiler, key, new Object());
+        profiler.start(key, cpu, 10, ProfileUnit.ITEM, 100);
+        profiler.setJobOwner(cpu, UUID.randomUUID());
+
+        assertEquals(1, profiler.pollNewlyDelayed(cpu, 800).size());
+        assertTrue(profiler.pollResolvedDelayed(cpu).isEmpty());
+
+        // Partial progress resolves the stall while the craft still runs.
+        profiler.complete(key, cpu, 1, 860);
+        assertTrue(profiler.pollNewlyDelayed(cpu, 900).isEmpty());
+        assertEquals(List.of(key), profiler.pollResolvedDelayed(cpu));
+        assertTrue(profiler.pollResolvedDelayed(cpu).isEmpty());
+    }
+
+    @Test
+    void resolvedDelayedIsNullSafe() {
+        var profiler = new CraftProfiler(10);
+
+        assertTrue(profiler.pollResolvedDelayed(null).isEmpty());
+        assertTrue(profiler.pollResolvedDelayed(new Object()).isEmpty());
+    }
 }

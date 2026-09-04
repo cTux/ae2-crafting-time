@@ -68,7 +68,14 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
 
     @Inject(method = "finishJob", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$finishJob(boolean success, CallbackInfo ci) {
-        ProfilerBridge.finishJob(this, success, ae2craftingtime$tick(), System.nanoTime());
+        ProfilerBridge.finishJob(this, success, ae2craftingtime$tick(), System.nanoTime(),
+                ae2craftingtime$server());
+    }
+
+    @Inject(method = "cancel", at = @At("HEAD"), remap = false, require = 0)
+    private void ae2craftingtime$clearHighlightOnCancel(CallbackInfo ci) {
+        ProfilerBridge.finishJob(this, false, ae2craftingtime$tick(), System.nanoTime(),
+                ae2craftingtime$server());
     }
 
     @Inject(

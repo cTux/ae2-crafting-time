@@ -2,6 +2,8 @@ package com.ctux.ae2craftingtime.mc1201;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -107,6 +109,61 @@ class ProviderPlatesTest {
         assertFalse(ProviderHighlightClient.shouldShowPlates(null));
         assertFalse(ProviderHighlightClient.shouldShowPlates(""));
         assertFalse(ProviderHighlightClient.shouldShowPlates("   "));
+    }
+
+    @Test
+    void expiredEdgeClearsButPlatePersists() {
+        ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
+                "minecraft:iron_ingot");
+        var shownAt = System.currentTimeMillis();
+        assertNotNull(ProviderHighlightClient.liveAt(shownAt));
+        assertNull(ProviderHighlightClient.liveAt(shownAt + 16_000L));
+        assertEquals(1, ProviderHighlightClient.plates().size());
+        assertTrue(ProviderHighlightClient.shouldShowPlates("minecraft:iron_ingot"));
+    }
+
+    @Test
+    void clearForRemovesPlateAndMatchingEdge() {
+        ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(4, 5, 6)), 15,
+                "minecraft:copper_plate");
+        ProviderHighlightClient.clearFor("minecraft:iron_ingot");
+        assertEquals(1, ProviderHighlightClient.plates().size());
+        assertNotNull(ProviderHighlightClient.live());
+        ProviderHighlightClient.clearFor("minecraft:copper_plate");
+        assertTrue(ProviderHighlightClient.plates().isEmpty());
+        assertNull(ProviderHighlightClient.live());
+        ProviderHighlightClient.clearFor(null);
+        ProviderHighlightClient.clearFor("   ");
+    }
+
+    @Test
+    void emptyHighlightClearsLikeServerFinish() {
+        ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.show("minecraft:overworld", List.of(), 0, "minecraft:iron_ingot");
+        assertTrue(ProviderHighlightClient.plates().isEmpty());
+        assertNull(ProviderHighlightClient.live());
+    }
+
+    @Test
+    void trimPositionsDropsBrokenBlocks() {
+        var kept = new BlockPos(1, 2, 3);
+        var broken = new BlockPos(4, 5, 6);
+        ProviderHighlightClient.show("minecraft:overworld", List.of(kept, broken), 15,
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.trimPositions("minecraft:overworld", pos -> !pos.equals(broken));
+        assertEquals(List.of(kept), ProviderHighlightClient.live().positions());
+        assertEquals(List.of(kept), ProviderHighlightClient.plates().get(0).positions());
+        ProviderHighlightClient.trimPositions("minecraft:the_nether", pos -> false);
+        assertNotNull(ProviderHighlightClient.live());
+        assertEquals(1, ProviderHighlightClient.plates().size());
+        ProviderHighlightClient.trimPositions("minecraft:overworld", pos -> false);
+        assertNull(ProviderHighlightClient.live());
+        assertTrue(ProviderHighlightClient.plates().isEmpty());
+        ProviderHighlightClient.trimPositions(null, pos -> true);
+        ProviderHighlightClient.trimPositions("minecraft:overworld", null);
     }
 
     private static ProfileStats stats() {

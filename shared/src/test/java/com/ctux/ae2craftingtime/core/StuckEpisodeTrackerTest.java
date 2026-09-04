@@ -38,6 +38,26 @@ class StuckEpisodeTrackerTest {
     }
 
     @Test
+    void resolvedKeysDrainOnceAndRearm() {
+        var tracker = new StuckEpisodeTracker();
+        var scope = new Object();
+        var iron = key("minecraft:iron_plate");
+
+        assertEquals(List.of(iron), tracker.pollNewlyStuck(scope, Set.of(iron)));
+        assertTrue(tracker.pollResolved(scope).isEmpty());
+
+        assertTrue(tracker.pollNewlyStuck(scope, Set.of()).isEmpty());
+        assertEquals(List.of(iron), tracker.pollResolved(scope));
+        assertTrue(tracker.pollResolved(scope).isEmpty());
+
+        assertTrue(tracker.pollResolved(null).isEmpty());
+        assertTrue(tracker.pollResolved(new Object()).isEmpty());
+
+        // Leaving the stuck set re-arms a later transition.
+        assertEquals(List.of(iron), tracker.pollNewlyStuck(scope, Set.of(iron)));
+    }
+
+    @Test
     void scopesAreIndependentAndNullSafe() {
         var tracker = new StuckEpisodeTracker();
         var first = new Object();
