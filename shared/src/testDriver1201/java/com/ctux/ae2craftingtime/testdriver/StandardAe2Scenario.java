@@ -184,12 +184,9 @@ final class StandardAe2Scenario {
             } else if (leaf.equals("delayed-status")) { phase = Stage.DELAYED; }
             else if (waiting != null && running != null) {
                 validateLayout(snapshot);
-                if (leaf.equals("running-status") && snapshot.text().stream().noneMatch(t -> t.key().equals("text.ae2craftingtime.ttc")
-                        && t.bounds() != null && t.bounds().y() < snapshot.gui().y() + 19 && t.bounds().inside(snapshot.gui()))) return false;
                 mark(checks, "waiting", true);
                 mark(checks, "running", true);
                 mark(checks, "layout", true);
-                mark(checks, "header", true);
                 screenshot.accept("status-waiting-running.png");
                 phase = Stage.PUMP;
             }
@@ -236,9 +233,12 @@ final class StandardAe2Scenario {
                 return true;
             }
             if (leaf.equals("running-status") && progressed && dispatched
-                    && rowText(snapshot, "minecraft:smooth_stone", "text.ae2craftingtime.ttc") != null) {
+                    && rowText(snapshot, "minecraft:smooth_stone", "text.ae2craftingtime.ttc") != null
+                    && snapshot.text().stream().anyMatch(t -> t.key().equals("text.ae2craftingtime.ttc")
+                            && t.bounds() != null && t.bounds().y() < snapshot.gui().y() + 19 && t.bounds().inside(snapshot.gui()))) {
                 validateLayout(snapshot);
                 mark(checks, "progress", true);
+                mark(checks, "header", true);
                 screenshot.accept("running-progress.png");
                 return true;
             }
