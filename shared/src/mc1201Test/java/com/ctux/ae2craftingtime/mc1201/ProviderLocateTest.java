@@ -162,23 +162,44 @@ class ProviderLocateTest {
 
     @Test
     void highlightingMessageStructureAndCoords() {
-        var message = ProviderLocateCommand.highlightingMessage("Basic Control Circuit",
+        var message = DelayedChatText.highlightingMessage(Component.literal("Pattern Provider"),
                 List.of(new BlockPos(1, 2, 3), new BlockPos(-4, 5, -6)), "minecraft:overworld");
         var contents = (TranslatableContents) message.getContents();
         assertEquals("text.ae2craftingtime.chat.highlighting", contents.getKey());
         assertEquals(3, contents.getArgs().length);
-        assertEquals("Basic Control Circuit", contents.getArgs()[0]);
-        assertEquals("(1, 2, 3), (-4, 5, -6)", contents.getArgs()[1]);
+        assertEquals("Pattern Provider", ((Component) contents.getArgs()[0]).getString());
+        assertEquals("(1, 2, 3), (-4, 5, -6)", ((Component) contents.getArgs()[1]).getString());
         assertEquals("minecraft:overworld", contents.getArgs()[2]);
     }
 
     @Test
+    void highlightingMessageCoordsTeleportOnClick() {
+        assumeTrue(bootstrapped, "click events need MC registries");
+        var message = DelayedChatText.highlightingMessage(Component.literal("Pattern Provider"),
+                List.of(new BlockPos(1, 2, 3), new BlockPos(-4, 5, -6)), "minecraft:overworld");
+        var coords = (Component) ((TranslatableContents) message.getContents()).getArgs()[1];
+        var clickable = new ArrayList<Component>();
+        for (var sibling : coords.getSiblings()) {
+            if (sibling.getStyle().getClickEvent() != null) {
+                clickable.add(sibling);
+            }
+        }
+        assertEquals(2, clickable.size());
+        assertEquals("(1, 2, 3)", clickable.get(0).getString());
+        assertTrue(clickable.get(0).getStyle().isUnderlined());
+        assertTrue(clickable.get(0).getStyle().getClickEvent().toString().contains("/tp @s 1 2 3"));
+        assertNotNull(clickable.get(0).getStyle().getHoverEvent());
+        assertEquals("(-4, 5, -6)", clickable.get(1).getString());
+        assertTrue(clickable.get(1).getStyle().getClickEvent().toString().contains("/tp @s -4 5 -6"));
+    }
+
+    @Test
     void highlightingMessageToleratesMissingParts() {
-        var message = ProviderLocateCommand.highlightingMessage(null, null, null);
+        var message = DelayedChatText.highlightingMessage(null, null, null);
         var contents = (TranslatableContents) message.getContents();
         assertEquals("text.ae2craftingtime.chat.highlighting", contents.getKey());
-        assertEquals("", contents.getArgs()[0]);
-        assertEquals("", contents.getArgs()[1]);
+        assertEquals("", ((Component) contents.getArgs()[0]).getString());
+        assertEquals("", ((Component) contents.getArgs()[1]).getString());
         assertEquals("", contents.getArgs()[2]);
     }
 

@@ -11,24 +11,16 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
- * Client-side only. Closes the chat after our own locate link is clicked,
- * so the player immediately sees the highlighted provider instead of the
- * chat overlay. Other links behave exactly as before.
- *
- * <p>Targets {@code Screen} rather than {@code ChatScreen} because
- * {@code handleComponentClicked} is declared on {@code Screen}: targeting
- * the subclass never resolves and the mixin fails to apply (see the
- * dev-client log for issue #241).
- *
- * <p>Official-names variant for loaders whose toolchain cannot remap
- * vanilla targets (1.21.1 NeoForge): listed only in the 1.21.1 mixin
- * config. The 1.20.1 loaders list {@link ChatScreenMixinSrg} instead, which
- * remaps the same injection for obfuscated production. The two classes are
- * intentionally identical apart from {@code remap}.
+ * Client-side only. Same chat auto-close as {@link ChatScreenMixin} (see
+ * that class for the full rationale), but with the injection remapped for
+ * the obfuscated 1.20.1 production mappings (Searge on Forge,
+ * intermediary on Fabric). Listed only in the shared 1.20.1 mixin config;
+ * the 1.21.1 build excludes this file because its toolchain cannot remap
+ * vanilla targets and uses the {@code remap = false} twin instead.
  */
 @Mixin(Screen.class)
-public abstract class ChatScreenMixin {
-    @Inject(method = "handleComponentClicked", at = @At("RETURN"), remap = false)
+public abstract class ChatScreenMixinSrg {
+    @Inject(method = "handleComponentClicked", at = @At("RETURN"))
     private void ae2craftingtime$closeAfterLocateClick(Style style, CallbackInfoReturnable<Boolean> cir) {
         if (!cir.getReturnValue() || style == null || !((Object) this instanceof ChatScreen)) {
             return;

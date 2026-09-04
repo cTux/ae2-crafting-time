@@ -16,7 +16,7 @@
   ],
   "client": [
     "AbstractTableRendererMixin",
-    "ChatScreenMixin",
+    "ChatScreenMixinSrg",
     "CraftingCPUScreenMixin",
     "CraftConfirmScreenMixin",
     "CraftConfirmTableRendererMixin",

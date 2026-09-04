@@ -121,13 +121,22 @@ non-player sources get no answer:
 
 The handler loads the record, rejects foreign or missing records with the
 expiry notice, and otherwise sends the highlight packet to the clicker only,
-followed by a private "Highlighting <name> at <coords> in <dimension>"
-system message built by `ProviderLocateCommand.highlightingMessage`.
-The double-click path (`ProviderLocateServer.locate`, both source sets)
-sends the same message after its highlight, naming
-`ProfilerBridge.displayName` with its output-id fallback. Both send points
-were added for
-[issue #240](https://github.com/cTux/ae2-crafting-time/issues/240).
+followed by a private "Highlighting <provider> at <coords> in <dimension>"
+system message built by `DelayedChatText.highlightingMessage`. The message
+names the provider block at the first resolved position
+(`Block.getName()`, with a generic `chat.provider` fallback) instead of the
+crafted item, and every coordinate is an underlined literal with a
+`RUN_COMMAND` `/tp @s x y z` click and a `chat.teleport.hint` hover, joined
+with ", ". The builder lives in the per-version `DelayedChatText` copies
+because the click/hover constructors differ between the 1.20.1/1.21.1 and
+26.1 mappings; the shared `ProviderLocateCommand.providerName` helper
+resolves the name from the level. `chat.highlighting` keeps three
+placeholders in both languages. The double-click path
+(`ProviderLocateServer.locate`, both source sets) sends the same message
+after its highlight. All three send points were reworked for
+[issue #241](https://github.com/cTux/ae2-crafting-time/issues/241).
+No packet layout changes anywhere in that batch, so no compatibility
+boundaries moved.
 
 The highlight packet carries `dimension id, positions, output id, duration
 seconds`; the output id is the profile key id the client resolves to an
@@ -194,11 +203,27 @@ Edge color cycles rainbow hues on a time-based phase (instead of static
 red) so the box contrasts with any environment. Vanilla
 `RenderType.lines()` width is fixed, so thicker edges use multi-offset
 strokes on 1.20.1/1.21.1 and the `ShapeRenderer` line-width path on 26.1.2.
-Face plates are flat red quads (`debugFilledBox` on every loader) with the
+Face plates are thin red filled boxes (`debugFilledBox` on 1.20.1/1.21.1,
+`debugFilledBox` on 26.1, where both pipelines are `QUADS`-mode) with the
 output item rendered item-frame style (`FIXED` display context) at half
 scale; the client resolves the packet's output id through the item registry
 and renders plate-only when it is not an item. Only faces pointing toward
-the camera render (at most 3 per block). Every loader keeps driving the box
+the camera render (at most 3 per block). On 1.20.1/1.21.1 each plate is one
+thin box from vanilla `LevelRenderer.addChainedFilledBoxVertices`, flushed
+with its own `endBatch` per face, after the invisible-plate follow-up in
+[issue #241](https://github.com/cTux/ae2-crafting-time/issues/241):
+`debugFilledBox` there is `TRIANGLE_STRIP` with culling and has no vanilla
+callers, so appending each face (and the item icon writes between faces)
+to one shared strip continued the strip out of phase and the culled
+pipeline dropped the plates; every face now uploads as its own
+self-contained strip before its icon draws. Raw vertex calls differ
+between 1.20.1 (`vertex`/`endVertex`) and 1.21.1 (`addVertex`/`setColor`),
+so the shared shapes go through the vanilla static, which exists
+identically on both (verified against the 1.20.1 sources and the mapped
+1.21.1 jar). On 26.1 the same quads keep feeding its `QUADS`-mode
+`debugFilledBox` pipeline unchanged (that matches vanilla
+`DrawableGizmoPrimitives`, which accumulates quads into one filled-box
+buffer). Every loader keeps driving the box
 opacity from one shared one-second pulse so the highlight blinks instead of
 sitting static.
 
@@ -207,8 +232,27 @@ consumer across other-type writes: on 1.20.1/1.21.1 the line and filled
 buffers share one fallback builder, so writing plates or items and then
 reusing a cached lines/filled consumer hits an ended builder and crashes
 (`BufferBuilder not started`, fixed for issue #237 follow-up). Edges draw
-for all positions first, then plates and icons; the filled buffer is fetched
-fresh before every plate.
+for all positions first, then plates and icons; each plate face is
+flushed with its own `endBatch` before its icon draws (see
+[issue #241](https://github.com/cTux/ae2-crafting-time/issues/241)).
+
+The dev-client log for that follow-up also showed the chat auto-close
+mixin never applying on 1.20.1 (`handleComponentClicked` is declared on
+`Screen`, not `ChatScreen`, so the subclass target never resolves).
+The injection now targets `Screen.handleComponentClicked` and returns
+early for non-chat screens. Because the 1.21.1 toolchain cannot remap
+vanilla targets while the 1.20.1 production mappings need the remap, the
+mixin ships as twins: `ChatScreenMixin` (`remap = false`, listed only in
+the 1.21.1 config, which the 1.20.1 builds still compile harmlessly) and
+`ChatScreenMixinSrg` (remapped, listed only in the shared 1.20.1 config
+and excluded from the 1.21.1 compile). 26.1 keeps its own private-method
+mixin unchanged.
+
+A delayed row's tooltip appends the gray `locate_hint` line right after the
+stall breakdown (only when a stall is present, so only locatable rows offer
+it), just before the shared Ctrl-Click details hint; other rows are
+untouched (see
+[issue #241](https://github.com/cTux/ae2-crafting-time/issues/241)).
 
 The warning message splits the status word out of the sentence so it can be
 styled without breaking translation order:

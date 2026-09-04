@@ -51,6 +51,10 @@ sourceSets.main.java.srcDir '../../shared/src/main/java'
 sourceSets.main.java.srcDir '../../shared/src/mcCommon/java'
 sourceSets.main.java.srcDir '../../shared/src/neoforge/java'
 sourceSets.main.java.srcDir '../../shared/src/mc1201/java'
+// The Searge-remapped chat mixin twin cannot be annotation-processed by this
+// toolchain (vanilla targets are official-named here); the 1.21.1 mixin
+// config lists the remap=false ChatScreenMixin instead.
+sourceSets.main.java.exclude '**/mixin/ChatScreenMixinSrg.java'
 sourceSets.main.resources.srcDir '../../shared/src/main/resources'
 sourceSets.test.java.srcDir '../../shared/src/mc1201Test/java'
 

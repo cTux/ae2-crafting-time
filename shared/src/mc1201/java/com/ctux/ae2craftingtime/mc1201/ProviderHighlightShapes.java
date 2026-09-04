@@ -27,10 +27,11 @@ import net.minecraft.world.phys.AABB;
  *
  * <p>Vanilla {@code RenderType.lines()} width is fixed at one pixel on most
  * drivers, so edge thickness comes from three nested shells (roughly 2-3x
- * the old single stroke). Plates are thin filled boxes and icons render
- * item-frame style, all through APIs shared by 1.20.1 and 1.21.1. Called
- * only from the per-loader render hooks; never touched on a dedicated
- * server.
+ * the old single stroke). Plates are thin filled boxes with icons rendered
+ * item-frame style, all through vanilla statics shared by 1.20.1 and 1.21.1
+ * (raw vertex calls differ between the two, so shared code never emits
+ * vertices directly). Called only from the per-loader render hooks; never
+ * touched on a dedicated server.
  */
 public final class ProviderHighlightShapes {
     private static final double[] SHELL_OFFSETS = {0.002, 0.014, 0.026};
@@ -52,9 +53,16 @@ public final class ProviderHighlightShapes {
      * Faces must already be culled to the camera side. An empty stack draws
      * plates only (for example fluid outputs).
      *
-     * <p>The filled buffer is fetched before every plate: item rendering
-     * switches the shared fallback builder to other render types and ends
-     * it, so a cached consumer would write into a dead builder and crash.
+     * <p>Each plate is a thin filled box from vanilla
+     * {@code LevelRenderer.addChainedFilledBoxVertices} into
+     * {@code debugFilledBox} (the only filled-box emitter shared by 1.20.1
+     * and 1.21.1). That pipeline is {@code TRIANGLE_STRIP} with culling
+     * and has no vanilla callers, so every face is flushed with its own
+     * {@code endBatch}: appending the next face to the same strip would
+     * continue the strip out of phase and the culled pipeline would drop
+     * the plate (the #241 invisible plates). Flushing before the item icon
+     * also means the filled builder is never alive across other-type
+     * writes (the #237 crash), so never hold a filled consumer.
      */
     public static void renderFacePlatesAndIcons(PoseStack pose, MultiBufferSource buffers, Level level, BlockPos pos,
             ItemStack stack, List<Direction> faces, int light, float alpha) {
@@ -65,6 +73,9 @@ public final class ProviderHighlightShapes {
             LevelRenderer.addChainedFilledBoxVertices(pose, buffers.getBuffer(RenderType.debugFilledBox()),
                     -PLATE_HALF_SIZE, -PLATE_HALF_SIZE, PLATE_MIN_Z, PLATE_HALF_SIZE, PLATE_HALF_SIZE, PLATE_MAX_Z,
                     1.0f, 0.15f, 0.15f, alpha);
+            if (buffers instanceof MultiBufferSource.BufferSource source) {
+                source.endBatch(RenderType.debugFilledBox());
+            }
             if (!stack.isEmpty()) {
                 pose.pushPose();
                 pose.translate(0.0, 0.0, ITEM_Z);

@@ -5,13 +5,12 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
-import java.util.stream.Collectors;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 
 /**
  * Shared locate command shape. Each loader registers the built tree on its
@@ -61,22 +60,25 @@ public final class ProviderLocateCommand {
         }
         var located = record.get();
         sender.accept(player, located);
-        player.sendSystemMessage(
-                highlightingMessage(located.outputName(), located.positions(), located.dimensionId()));
+        player.sendSystemMessage(DelayedChatText.highlightingMessage(
+                providerName(source.getLevel(), located.positions()), located.positions(),
+                located.dimensionId()));
     }
 
     /**
-     * Private "highlighting here" notice sent after every locate, whatever
-     * triggered it. Coordinates render as "(x, y, z)" joined with ", ".
+     * Names the provider block at the first resolved position for the
+     * highlight message. Anything unresolvable falls back to the generic
+     * provider name so the message never breaks.
      */
-    public static MutableComponent highlightingMessage(String outputName, List<BlockPos> positions,
-            String dimensionId) {
-        var coords = positions == null ? ""
-                : positions.stream()
-                        .map(pos -> "(" + pos.getX() + ", " + pos.getY() + ", " + pos.getZ() + ")")
-                        .collect(Collectors.joining(", "));
-        return Component.translatable("text.ae2craftingtime.chat.highlighting",
-                outputName == null ? "" : outputName, coords, dimensionId == null ? "" : dimensionId);
+    public static Component providerName(Level level, List<BlockPos> positions) {
+        if (level != null && positions != null && !positions.isEmpty()) {
+            try {
+                return level.getBlockState(positions.get(0)).getBlock().getName();
+            } catch (Exception ignored) {
+                // Fall through to the generic provider name.
+            }
+        }
+        return Component.translatable("text.ae2craftingtime.chat.provider");
     }
 
     private static void expired(CommandSourceStack source) {

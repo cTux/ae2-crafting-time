@@ -194,11 +194,16 @@ Rules:
 - The client draws thick (2-3x) rainbow-cycling outline boxes while in the
   same dimension until the duration expires, plus the output item centered
   on a red plate on each camera-facing face (plate-only when the output id
-  is not an item)
-  (see [issue #237](https://github.com/cTux/ae2-crafting-time/issues/237)).
-- Every locate is also answered with a private "Highlighting <name> at
-  <coords> in <dimension>" system message, whatever triggered it
-  (see [issue #240](https://github.com/cTux/ae2-crafting-time/issues/240)).
+  is not an item). On 1.20.1/1.21.1 each plate is one thin filled box
+  flushed with its own batch per face (the strip-mode `debugFilledBox`
+  has no vanilla callers, so faces must never share one strip)
+  (see [issue #241](https://github.com/cTux/ae2-crafting-time/issues/241)).
+- Every locate is also answered with a private "Highlighting <provider> at
+  <coords> in <dimension>" system message naming the provider block,
+  whatever triggered it, with clickable coordinates that teleport to each
+  position
+  (see [issue #241](https://github.com/cTux/ae2-crafting-time/issues/241)).
+  The packet layout is unchanged.
 
 ### Provider-start persistence
 

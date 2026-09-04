@@ -37,8 +37,16 @@ read as messy rectangles in-game.)
   with no icon. Only the warned player ever receives highlights.
 - Double-clicking a delayed row in the crafting CPU screen locates the same
   way as clicking the chat link, without needing the chat message.
+- A delayed row's tooltip shows a "Double-Click for highlighting Pattern
+  Provider in a world" hint above the details line, so the locate action is
+  discoverable without the chat message.
+  (See [issue #241](https://github.com/cTux/ae2-crafting-time/issues/241).)
 - Every locate answers with a private system message
-  ("Highlighting <name> at <coords> in <dimension>"), whatever triggered it.
+  ("Highlighting <provider> at <coords> in <dimension>"), whatever triggered
+  it. The message names the provider block (falling back to a generic
+  "Pattern Provider" name), and every coordinate is a clickable shortcut
+  that teleports the clicker to that position.
+  (See [issue #241](https://github.com/cTux/ae2-crafting-time/issues/241).)
 - Clicking the chat link closes the chat; a double-click locate closes the
   CPU screen, so the player immediately sees the highlight.
   (See [issue #240](https://github.com/cTux/ae2-crafting-time/issues/240).)
@@ -119,7 +127,6 @@ read as messy rectangles in-game.)
   `NO SPACE` and `NO POWER` warn.
 - A locate action outside the delayed warning (no hotkey, no screen button).
 - Changing the 15-second highlight duration in-game.
-- Teleporting the player to the provider.
 
 ## Acceptance criteria
 
@@ -128,9 +135,12 @@ read as messy rectangles in-game.)
 - Clicking the name draws thick (2-3x) rainbow-cycling edge boxes on the
   correct provider block(s) for 15 seconds and pins item-on-red plates
   there while the output stays delayed; other players see nothing.
-- The clicker also gets a private "Highlighting <name> at <coords> in
-  <dimension>" message, and the chat (or CPU screen, for double-click)
-  closes so the highlight is visible.
+- The clicker also gets a private "Highlighting <provider> at <coords> in
+  <dimension>" message naming the provider block, with clickable coordinates
+  that teleport to each position, and the chat (or CPU screen, for
+  double-click) closes so the highlight is visible.
+- A delayed row's tooltip carries the double-click locate hint above the
+  details line.
 - Clicking another player's or an expired link shows the expiry notice and
   draws nothing.
 - Leaving and re-entering the world keeps the link working for an active

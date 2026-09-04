@@ -48,8 +48,8 @@ public final class ProviderLocateServer {
         var dimension = ProfilerBridge.dimensionId(grid);
         sender.accept(player, new ProviderHighlightCodec.Highlight(dimension, positions,
                 key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS));
-        player.sendSystemMessage(ProviderLocateCommand.highlightingMessage(
-                ProfilerBridge.displayName(scopedKey), positions, dimension));
+        player.sendSystemMessage(DelayedChatText.highlightingMessage(
+                ProviderLocateCommand.providerName(player.level(), positions), positions, dimension));
     }
 
     private static void expired(ServerPlayer player) {
