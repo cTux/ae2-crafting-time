@@ -4,9 +4,11 @@ import appeng.api.networking.IGrid;
 import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.StuckEpisodeTracker;
+import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightCodec;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiConsumer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
@@ -21,6 +23,11 @@ public final class BlockReasonNotifier {
     private static final StuckEpisodeTracker NO_SPACE = new StuckEpisodeTracker();
 
     public static void maybeNotifyPower(Object scope, IGrid grid, long tick, MinecraftServer server) {
+        maybeNotifyPower(scope, grid, tick, server, DelayedNotificationServer.defaultHighlightSender());
+    }
+
+    public static void maybeNotifyPower(Object scope, IGrid grid, long tick, MinecraftServer server,
+            BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
         if (!armed(server)) {
             return;
         }
@@ -32,10 +39,15 @@ public final class BlockReasonNotifier {
             }
         }
         notifyAll(scope, grid, keys, server, "text.ae2craftingtime.chat.no_power.word",
-                Component.translatable("text.ae2craftingtime.no_power.explanation"), NO_POWER);
+                Component.translatable("text.ae2craftingtime.no_power.explanation"), NO_POWER, highlightSender);
     }
 
     public static void maybeNotifySpace(Object scope, IGrid grid, Object logic, MinecraftServer server) {
+        maybeNotifySpace(scope, grid, logic, server, DelayedNotificationServer.defaultHighlightSender());
+    }
+
+    public static void maybeNotifySpace(Object scope, IGrid grid, Object logic, MinecraftServer server,
+            BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
         if (!armed(server) || scope == null || grid == null) {
             return;
         }
@@ -47,11 +59,12 @@ public final class BlockReasonNotifier {
             }
         }
         notifyAll(scope, grid, keys, server, "text.ae2craftingtime.chat.no_space.word",
-                Component.translatable("text.ae2craftingtime.no_space.explanation"), NO_SPACE);
+                Component.translatable("text.ae2craftingtime.no_space.explanation"), NO_SPACE, highlightSender);
     }
 
     private static void notifyAll(Object scope, IGrid grid, Set<ProfileKey> keys, MinecraftServer server,
-            String wordKey, Component detail, StuckEpisodeTracker tracker) {
+            String wordKey, Component detail, StuckEpisodeTracker tracker,
+            BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
         if (scope == null) {
             return;
         }
@@ -71,13 +84,14 @@ public final class BlockReasonNotifier {
         }
         var dimension = ProfilerBridge.dimensionId(grid);
         for (var key : newly) {
-            notify(player, scope, grid, dimension, owner, key, wordKey, detail);
+            notify(player, scope, grid, dimension, owner, key, wordKey, detail, highlightSender);
         }
         ProfilerBridge.persistProviderState();
     }
 
     private static void notify(ServerPlayer player, Object scope, IGrid grid, String dimension, UUID owner,
-            ProfileKey key, String wordKey, Component detail) {
+            ProfileKey key, String wordKey, Component detail,
+            BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
         var positions = ProfilerBridge.locatePositions(scope, grid, key);
         var name = ProfilerBridge.displayName(key);
         UUID recordId = null;
@@ -86,6 +100,7 @@ public final class BlockReasonNotifier {
                     player.level().getGameTime()).id();
         }
         ProfilerBridge.replaceProviderStart(key, owner, positions, name);
+        DelayedNotificationServer.pushAutoHighlight(player, dimension, key, positions, highlightSender);
         player.sendSystemMessage(DelayedChatText.blockedMessage(name, recordId, wordKey, detail));
     }
 
