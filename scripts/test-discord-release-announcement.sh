@@ -134,4 +134,41 @@ if (source "$root/scripts/announce-discord-release.sh" >/dev/null 2>&1); then
 fi
 [[ ! -s "$test_dir/payloads.jsonl" ]]
 
+# A JAR with no release-matrix entry still announces with its GitHub link and warns.
+python3 - "$test_dir" <<'PY'
+import json, pathlib, sys
+path = pathlib.Path(sys.argv[1])
+release = {
+    "name": "1.1.1", "html_url": "https://example/release",
+    "body": "### FIXED\n\n- Clearer status.",
+    "assets": [
+        {"name": "ae2-crafting-time-1.1.1-forge-1.20.1.jar", "browser_download_url": "https://example/forge.jar"},
+        {"name": "ae2-crafting-time-1.1.1-fabric-1.20.1.jar", "browser_download_url": "https://example/fabric.jar"},
+        {"name": "mystery-9.9.9.jar", "browser_download_url": "https://example/mystery.jar"},
+    ],
+}
+(path / "release.json").write_text(json.dumps(release), encoding="utf-8")
+matrix = json.loads((path / "matrix.json").read_text(encoding="utf-8"))
+matrix.append({"id": "test-bare"})
+(path / "matrix.json").write_text(json.dumps(matrix), encoding="utf-8")
+PY
+: >"$test_dir/payloads.jsonl"
+(source "$root/scripts/announce-discord-release.sh") >"$test_dir/output.log" 2>"$test_dir/stderr.log"
+python3 - "$test_dir" <<'PY'
+import json, pathlib, sys
+path = pathlib.Path(sys.argv[1])
+payloads = [json.loads(line) for line in (path / "payloads.jsonl").read_text().splitlines()]
+assert all(0 < len(p["content"].encode("utf-16-le")) // 2 <= 2000 for p in payloads)
+assert all(p["allowed_mentions"] == {"parse": []} for p in payloads)
+joined = "".join(p["content"] for p in payloads)
+assert "[mystery-9.9.9.jar](https://example/mystery.jar)" in joined
+mystery_row = [line for line in joined.splitlines() if "mystery-9.9.9.jar" in line][0]
+assert "[CF]" not in mystery_row and "[MR]" not in mystery_row
+assert joined.count("https://example/mystery.jar") == 1
+assert joined.count("https://example/forge.jar") == joined.count("https://example/fabric.jar") == 1
+assert "mystery-9.9.9.jar" in (path / "stderr.log").read_text(encoding="utf-8")
+output = (path / "output.log").read_text()
+assert "announcement complete" in output
+PY
+
 echo "Discord release announcement tests passed."

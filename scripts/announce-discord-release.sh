@@ -95,7 +95,9 @@ for asset in release["assets"]:
     row = "[" + asset_name + "](" + asset.get("browser_download_url", "") + ")"
     entry, version, loader, mc = match_entry(asset_name)
     cf_url, mr_url = None, None
-    if entry is not None:
+    if entry is None:
+        print("warning: no release-matrix entry matches JAR " + asset_name + "; posting GitHub link only", file=sys.stderr)
+    else:
         mr_id = entry.get("modrinthProjectId")
         if mr_id and version and loader and mc:
             mr_url = "https://modrinth.com/mod/" + str(mr_id) + "/version/" + version + "-" + loader + "-" + mc
