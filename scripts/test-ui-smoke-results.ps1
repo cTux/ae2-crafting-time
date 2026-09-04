@@ -42,6 +42,18 @@ try {
     }
     Set-Content -LiteralPath $file -Value '{'
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') 'Malformed result must fail'
+    $expected = Join-Path $temp 'expected-adapters.json'
+    @{neoecoae='batched-long'} | ConvertTo-Json | Set-Content -LiteralPath $expected
+    $adapterResult = @{schema=1;complete=$true;target='1.20.1-forge';profile='latest';scenario='neoeco-cpu';language='en_us';result='PASS';adapters=@{neoecoae=@{variant='pending-accounting';reason='selected'}}}
+    function Read-Adapter { & "$PSScriptRoot/get-ui-smoke-results.ps1" -Target 1.20.1-forge -Profile latest -Scenarios neoeco-cpu -Evidence $temp -ExpectedAdapters $expected }
+    $adapterResult | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $temp 'result.json')
+    Assert ((Read-Adapter).result -eq 'FAIL') 'Older adapter must fail leaf coverage'
+    $adapterResult.adapters.neoecoae.variant = 'batched-long'
+    $adapterResult | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $temp 'result.json')
+    Assert ((Read-Adapter).result -eq 'PASS') 'Selected newest adapter must pass'
+    $adapterResult.adapters.neoecoae.reason = 'missing'
+    $adapterResult | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $temp 'result.json')
+    Assert ((Read-Adapter).result -eq 'FAIL') 'Unselected adapter must fail'
     Write-Host 'PASS: independent evidence, missing/unrun leaves and stale identity rejection'
 } finally {
     $resolved = [IO.Path]::GetFullPath($temp)

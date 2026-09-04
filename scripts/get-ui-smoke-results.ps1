@@ -2,10 +2,12 @@ param(
     [Parameter(Mandatory)][string]$Target,
     [Parameter(Mandatory)][string]$Profile,
     [Parameter(Mandatory)][string[]]$Scenarios,
-    [Parameter(Mandatory)][string]$Evidence
+    [Parameter(Mandatory)][string]$Evidence,
+    [string]$ExpectedAdapters
 )
 $ErrorActionPreference = 'Stop'
-$contracts = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json).cases
+$catalogue = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json
+$contracts = $catalogue.cases
 foreach ($scenario in $Scenarios) {
     $directory = if ($Scenarios.Count -eq 1) { $Evidence } else { Join-Path $Evidence $scenario }
     $file = Join-Path $directory 'result.json'
@@ -16,6 +18,16 @@ foreach ($scenario in $Scenarios) {
             $data = Get-Content -LiteralPath $file -Raw | ConvertFrom-Json
             if ($data.schema -ne 1 -or !$data.complete -or $data.target -cne $Target -or $data.profile -cne $Profile -or
                     $data.scenario -cne $scenario -or $data.language -cne 'en_us' -or $data.result -cne 'PASS') { throw 'Failed or mismatched result' }
+            if ($ExpectedAdapters) {
+                $expected = Get-Content -LiteralPath $ExpectedAdapters -Raw | ConvertFrom-Json
+                foreach ($adapter in $catalogue.adapterCases.psobject.Properties) {
+                    $dependency = $adapter.Name
+                    if ($scenario -cin $adapter.Value -and $expected.$dependency -and
+                            ($data.adapters.$dependency.variant -cne $expected.$dependency -or $data.adapters.$dependency.reason -cne 'selected')) {
+                        throw "Newest adapter not exercised: $dependency requires $($expected.$dependency)"
+                    }
+                }
+            }
             if ($contracts.$scenario) {
                 if (Compare-Object @($contracts.$scenario.checks) @($data.checks.psobject.Properties.Name) -SyncWindow 0) { throw 'Incomplete check set' }
                 foreach ($check in $contracts.$scenario.checks) { if ($data.checks.$check -ne $true) { throw "Failed check: $check" } }

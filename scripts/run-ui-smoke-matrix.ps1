@@ -83,7 +83,7 @@ foreach ($targetEntry in $targets) {
         if ($Latest) { $result = 'DIAGNOSTIC_FAILURE' }
         Write-Warning "$($row.target) $profile $result`: $message"
     } finally {
-        $leaves = @(& (Join-Path $PSScriptRoot 'get-ui-smoke-results.ps1') -Target $row.target -Profile $profile -Scenarios $runCases -Evidence (Join-Path $report 'run/evidence'))
+        $leaves = @(& (Join-Path $PSScriptRoot 'get-ui-smoke-results.ps1') -Target $row.target -Profile $profile -Scenarios $runCases -Evidence (Join-Path $report 'run/evidence') -ExpectedAdapters (Join-Path $report 'bundle/expected-adapters.json'))
         $groups = @()
         $catalogue = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json
         foreach ($group in $catalogue.groups.psobject.Properties) {
