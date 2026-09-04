@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C;
 import com.ctux.ae2craftingtime.mc1201.net.StatsChatC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsRequestC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsSnapshotS2C;
@@ -16,6 +17,8 @@ public final class StatsNetwork {
     private static final ResourceLocation SNAPSHOT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
             "stats_snapshot_v7");
     private static final ResourceLocation CHAT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "stats_chat_v2");
+    private static final ResourceLocation HIGHLIGHT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
+            "provider_highlight_v1");
 
     public static void registerServer() {
         ServerPlayNetworking.registerGlobalReceiver(REQUEST_ID,
@@ -36,6 +39,11 @@ public final class StatsNetwork {
                     var packet = StatsSnapshotS2C.decode(buffer);
                     client.execute(packet::handle);
                 });
+        ClientPlayNetworking.registerGlobalReceiver(HIGHLIGHT_ID,
+                (client, handler, buffer, responseSender) -> {
+                    var packet = ProviderHighlightS2C.decode(buffer);
+                    client.execute(packet::handle);
+                });
     }
 
     public static void sendToServer(StatsRequestC2S packet) {
@@ -48,6 +56,10 @@ public final class StatsNetwork {
 
     public static void sendTo(ServerPlayer player, StatsSnapshotS2C packet) {
         ServerPlayNetworking.send(player, SNAPSHOT_ID, encode(packet));
+    }
+
+    public static void sendTo(ServerPlayer player, ProviderHighlightS2C packet) {
+        ServerPlayNetworking.send(player, HIGHLIGHT_ID, encode(packet));
     }
 
     private static FriendlyByteBuf encode(StatsRequestC2S packet) {
@@ -65,6 +77,12 @@ public final class StatsNetwork {
     private static FriendlyByteBuf encode(StatsChatC2S packet) {
         var buffer = PacketByteBufs.create();
         StatsChatC2S.encode(packet, buffer);
+        return buffer;
+    }
+
+    private static FriendlyByteBuf encode(ProviderHighlightS2C packet) {
+        var buffer = PacketByteBufs.create();
+        ProviderHighlightS2C.encode(packet, buffer);
         return buffer;
     }
 

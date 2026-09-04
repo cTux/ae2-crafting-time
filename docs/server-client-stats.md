@@ -106,7 +106,6 @@ retained stats on the player's current network.
 ### `StatsSnapshotS2C`
 
 Sent from server to only the requesting player.
-
 Fields:
 
 ```text
@@ -150,6 +149,37 @@ Rules:
 - Client drops cache entries for requested keys before applying returned stats.
 - Missing stats or waiting values therefore remove old client state instead of
   leaving stale values behind.
+
+### `ProviderHighlightS2C`
+
+Sent from server to only the clicking player after a locate click.
+
+Fields:
+
+```text
+dimensionId: string
+positions: list<BlockPos>, at most 16
+durationSeconds: nonnegative int (15)
+```
+
+Rules:
+
+- Positions resolve server-side through live grid nodes at notify time;
+  clients never send positions.
+- The locate command (`/ae2craftingtime locate <record>`) only serves
+  records owned by the clicking player. Missing or foreign records answer
+  with a private expiry notice and highlight nothing.
+- The client draws red outline boxes while in the same dimension until the
+  duration expires.
+
+### Provider-start persistence
+
+Per-output provider links (owner, provider positions, display name) persist
+in the world `SavedData` beside throughput samples under a `providers`
+section. Old saves without the section load with empty provider state.
+After a reload, resumed crafts warn again with a working link because the
+owner and positions fall back to the persisted copy when live dispatch data
+is absent.
 
 ## UI Flow
 

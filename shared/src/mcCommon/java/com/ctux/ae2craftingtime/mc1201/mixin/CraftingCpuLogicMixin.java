@@ -15,6 +15,7 @@ import appeng.crafting.execution.CraftingCpuLogic;
 import appeng.crafting.inv.ListCraftingInventory;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
 import appeng.me.service.CraftingService;
+import com.ctux.ae2craftingtime.mc1201.BlockReasonNotifier;
 import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import java.util.Iterator;
@@ -119,8 +120,11 @@ public abstract class CraftingCpuLogicMixin {
         var totalSlots = cluster.getCoProcessors() + 1;
         var usedSlots = Math.min(totalSlots, usedOps[0] + usedOps[1] + usedOps[2]);
         var tick = cluster.getLevel().getGameTime();
+        var server = cluster.getLevel().getServer();
         ProfilerBridge.updateCapacity(cluster, usedSlots, totalSlots, tick);
-        DelayedNotificationServer.maybeNotify(cluster, tick, cluster.getLevel().getServer());
+        DelayedNotificationServer.maybeNotify(cluster, cluster.getGrid(), tick, server);
+        BlockReasonNotifier.maybeNotifyPower(cluster, cluster.getGrid(), tick, server);
+        BlockReasonNotifier.maybeNotifySpace(cluster, cluster.getGrid(), this, server);
     }
 
     @Inject(method = "trySubmitJob", at = @At("RETURN"), remap = false)

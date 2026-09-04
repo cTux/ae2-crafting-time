@@ -13,6 +13,7 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.crafting.inv.ListCraftingInventory;
 import appeng.me.service.CraftingService;
+import com.ctux.ae2craftingtime.mc1201.BlockReasonNotifier;
 import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import java.util.Iterator;
@@ -130,7 +131,10 @@ public abstract class AdvancedCraftingCpuLogicMixin {
         var totalSlots = cpu.getCoProcessors() + 1;
         var usedSlots = Math.min(totalSlots, usedOps[0] + usedOps[1] + usedOps[2]);
         var tick = cpu.getLevel().getGameTime();
+        var server = cpu.getLevel().getServer();
         ProfilerBridge.updateCapacity(cpu, usedSlots, totalSlots, tick);
-        DelayedNotificationServer.maybeNotify(cpu, tick, cpu.getLevel().getServer());
+        DelayedNotificationServer.maybeNotify(cpu, cpu.getGrid(), tick, server);
+        BlockReasonNotifier.maybeNotifyPower(cpu, cpu.getGrid(), tick, server);
+        BlockReasonNotifier.maybeNotifySpace(cpu, cpu.getGrid(), this, server);
     }
 }

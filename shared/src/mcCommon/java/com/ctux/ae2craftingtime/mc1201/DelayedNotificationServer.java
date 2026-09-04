@@ -1,11 +1,14 @@
 package com.ctux.ae2craftingtime.mc1201;
 
-import com.ctux.ae2craftingtime.core.TimeEstimate;
-import net.minecraft.network.chat.Component;
+import appeng.api.networking.IGrid;
+import com.ctux.ae2craftingtime.core.ProfileKey;
+import java.util.List;
+import java.util.UUID;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 
 public final class DelayedNotificationServer {
-    public static void maybeNotify(Object scope, long tick, MinecraftServer server) {
+    public static void maybeNotify(Object scope, IGrid grid, long tick, MinecraftServer server) {
         if (scope == null || server == null) {
             return;
         }
@@ -16,31 +19,49 @@ public final class DelayedNotificationServer {
         if (newlyDelayed.isEmpty()) {
             return;
         }
-        var owner = ProfilerBridge.jobOwner(scope);
-        if (owner.isEmpty()) {
+        var owner = ownerOf(scope, newlyDelayed.stream().map(event -> event.key()).toList());
+        if (owner == null) {
             return;
         }
-        var player = server.getPlayerList().getPlayer(owner.get());
+        var player = server.getPlayerList().getPlayer(owner);
         if (player == null) {
             return;
         }
+        var dimension = ProfilerBridge.dimensionId(grid);
         for (var event : newlyDelayed) {
-            player.sendSystemMessage(delayedMessage(event.key().outputId(),
-                    ProfilerBridge.displayName(event.key()),
-                    event.diagnostic().idleTicks(),
-                    event.diagnostic().typicalDurationTicks()));
+            notify(player, scope, grid, dimension, owner, event.key(),
+                    event.diagnostic().idleTicks(), event.diagnostic().typicalDurationTicks());
         }
+        ProfilerBridge.persistProviderState();
     }
 
-    private static Component delayedMessage(String outputId, String outputName, long idleTicks,
-            double typicalTicks) {
-        var idleSeconds = (long) Math.ceil(Math.max(0, idleTicks) / 20.0);
-        var typical = TimeEstimate.formatTicks(typicalTicks);
-        var name = outputName != null && !outputName.isBlank() ? outputName : outputId;
-        return Component.translatable("text.ae2craftingtime.chat.delayed",
-                name,
-                Component.translatable("text.ae2craftingtime.value.whole_seconds", idleSeconds),
-                typical);
+    static UUID ownerOf(Object scope, List<ProfileKey> keys) {
+        var live = ProfilerBridge.jobOwner(scope);
+        if (live.isPresent()) {
+            return live.get();
+        }
+        for (var key : keys) {
+            var remembered = ProviderLocateRecords.startFor(key)
+                    .map(ProviderLocateRecords.ProviderStartInfo::owner)
+                    .orElse(null);
+            if (remembered != null) {
+                return remembered;
+            }
+        }
+        return null;
+    }
+
+    private static void notify(ServerPlayer player, Object scope, IGrid grid, String dimension, UUID owner,
+            ProfileKey key, long idleTicks, double typicalTicks) {
+        var positions = ProfilerBridge.locatePositions(scope, grid, key);
+        var name = ProfilerBridge.displayName(key);
+        UUID recordId = null;
+        if (!positions.isEmpty()) {
+            recordId = ProviderLocateRecords.create(owner, dimension, positions, name,
+                    player.level().getGameTime()).id();
+        }
+        ProfilerBridge.replaceProviderStart(key, owner, positions, name);
+        player.sendSystemMessage(DelayedChatText.delayedMessage(name, recordId, idleTicks, typicalTicks));
     }
 
     private DelayedNotificationServer() {

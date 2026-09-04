@@ -26,6 +26,7 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.core.BlockPos;
 
 public final class ProfilerBridge {
     private static final CraftProfiler PROFILER = new CraftProfiler(Ae2CraftingTimeConfig.MAX_SAMPLES.get(),
@@ -40,6 +41,9 @@ public final class ProfilerBridge {
         var outputs = new HashMap<ProfileKey, Long>();
         for (var output : pattern.getOutputs()) {
             outputs.merge(key(networkId, output.what()), output.amount(), Long::sum);
+        }
+        if (isEnabled()) {
+            ProviderStartTracker.noteDispatch(scope, pattern, outputs);
         }
         PROFILER.observeProviders(scope, pattern, outputs, hasProvider);
     }
@@ -144,6 +148,15 @@ public final class ProfilerBridge {
 
         PROFILER.startWaiting(scope, waitingKeys, tick);
         PROFILER.setJobOwner(scope, owner);
+        ProviderStartTracker.clear(scope);
+        for (var crafted : craftedAmounts) {
+            if (crafted.getLongValue() <= 0) {
+                continue;
+            }
+            ProviderLocateRecords.noteStart(key(networkId, crafted.getKey()), owner, null,
+                    displayNameOf(crafted.getKey()));
+        }
+        persistProviderState();
         ACCURACY.start(key(networkId, plan.finalOutput().what()), scope, predictedSeconds, knownRows, totalRows, tick,
                 nanoTime);
     }
@@ -185,9 +198,50 @@ public final class ProfilerBridge {
         return name != null && !name.isBlank() ? name : key.outputId();
     }
 
+    public static String dimensionId(IGrid grid) {
+        if (grid == null || grid.getPivot() == null) {
+            return "";
+        }
+        try {
+            return grid.getPivot().getLevel().dimension().identifier().toString();
+        } catch (Exception ignored) {
+            return "";
+        }
+    }
+
+    /**
+     * Provider positions for a delayed output: freshly resolved through the
+     * live grid first, persisted fallback second, empty when not locatable.
+     */
+    public static List<BlockPos> locatePositions(Object scope, IGrid grid, ProfileKey key) {
+        if (scope == null || key == null) {
+            return List.of();
+        }
+        var live = ProviderStartTracker.positions(grid, scope, key);
+        if (!live.isEmpty()) {
+            return live;
+        }
+        return ProviderLocateRecords.startFor(key)
+                .map(ProviderLocateRecords.ProviderStartInfo::positions)
+                .orElse(List.of());
+    }
+
+    public static void replaceProviderStart(ProfileKey key, UUID owner,
+            List<BlockPos> positions, String outputName) {
+        ProviderLocateRecords.replaceStart(key, owner, positions, outputName);
+    }
+
+    public static void persistProviderState() {
+        if (savedData != null) {
+            savedData.replaceProviderStarts(ProviderLocateRecords.snapshotStarts());
+        }
+    }
+
     public static void finishJob(Object scope, boolean success, long tick, long nanoTime) {
         ACCURACY.finish(scope, success && isEnabled(), tick, nanoTime);
         PROFILER.clearPending(scope);
+        ProviderStartTracker.clear(scope);
+        BlockReasonNotifier.clear(scope);
     }
 
     public static Optional<ProfileStats> stats(AEKey what) {
@@ -272,9 +326,21 @@ public final class ProfilerBridge {
         savedData = data;
         ACCURACY.clear();
         PROFILER.loadSamples(data.samples());
+        ProviderStartTracker.clearAll();
+        ProviderLocateRecords.clearAll();
+        BlockReasonNotifier.clearAll();
+        ProviderLocateRecords.restoreStarts(data.providerStarts());
         var migrated = PROFILER.snapshotSamples();
         if (!migrated.equals(data.samples())) {
             savedData.replaceFrom(migrated);
+        }
+    }
+
+    private static String displayNameOf(AEKey key) {
+        try {
+            return key.getDisplayName().getString();
+        } catch (Exception ignored) {
+            return key.getId().toString();
         }
     }
 

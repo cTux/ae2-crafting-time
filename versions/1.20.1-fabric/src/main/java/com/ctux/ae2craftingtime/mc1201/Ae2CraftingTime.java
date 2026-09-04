@@ -1,10 +1,17 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.world.phys.AABB;
 
 public final class Ae2CraftingTime implements ModInitializer, ClientModInitializer {
     public static final String MOD_ID = "ae2craftingtime";
@@ -14,6 +21,11 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
     public void onInitialize() {
         Ae2CraftingTimeConfig.load(FabricLoader.getInstance().getConfigDir().resolve(COMMON_CONFIG_FILE));
         StatsNetwork.registerServer();
+        CommandRegistrationCallback.EVENT.register((dispatcher, access, environment) -> dispatcher.register(
+                ProviderLocateCommand.build((source, id) -> ProviderLocateCommand.locate(source, id,
+                        (player, record) -> StatsNetwork.sendTo(player, new ProviderHighlightS2C(
+                                record.dimensionId(), record.positions(),
+                                ProviderLocateCommand.HIGHLIGHT_SECONDS))))));
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             var data = server.overworld().getDataStorage()
                     .computeIfAbsent(Ae2CraftingTimeSavedData::load, Ae2CraftingTimeSavedData::new,
@@ -26,5 +38,31 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
     public void onInitializeClient() {
         KeyBindingHelper.registerKeyBinding(TtcDetailsKeyMapping.showDetails());
         StatsNetwork.registerClient();
+        WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
+            var highlight = ProviderHighlightClient.live();
+            if (highlight == null) {
+                return;
+            }
+            var minecraft = Minecraft.getInstance();
+            if (minecraft.level == null
+                    || !minecraft.level.dimension().location().toString().equals(highlight.dimensionId())) {
+                return;
+            }
+            var camera = context.camera().getPosition();
+            var poseStack = context.matrixStack();
+            poseStack.pushPose();
+            poseStack.translate(-camera.x, -camera.y, -camera.z);
+            var consumers = context.consumers();
+            if (consumers == null) {
+                poseStack.popPose();
+                return;
+            }
+            for (var pos : highlight.positions()) {
+                LevelRenderer.renderLineBox(poseStack, consumers.getBuffer(RenderType.lines()),
+                        new AABB(pos).inflate(0.002), 1.0f, 0.33f, 0.33f,
+                        ProviderHighlightClient.pulseAlpha());
+            }
+            poseStack.popPose();
+        });
     }
 }

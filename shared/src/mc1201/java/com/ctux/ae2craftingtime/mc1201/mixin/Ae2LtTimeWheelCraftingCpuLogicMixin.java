@@ -9,6 +9,7 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.hooks.ticking.TickHandler;
 import appeng.me.service.CraftingService;
+import com.ctux.ae2craftingtime.mc1201.BlockReasonNotifier;
 import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import java.lang.reflect.Method;
@@ -80,9 +81,12 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
     private void ae2craftingtime$trackParallelCapacity(IEnergyService energyService, CraftingService craftingService,
             int maxOps, long maxCopies, @Coerce Object dispatchSchedule, CallbackInfoReturnable<?> cir) {
         var tick = ae2craftingtime$tick();
+        var server = ae2craftingtime$server();
         ProfilerBridge.updateCapacity(this, Math.min(maxOps, ae2craftingtime$successfulDispatches(cir.getReturnValue())),
                 maxOps, tick);
-        DelayedNotificationServer.maybeNotify(this, tick, ae2craftingtime$server());
+        DelayedNotificationServer.maybeNotify(this, ae2craftingtime$grid, tick, server);
+        BlockReasonNotifier.maybeNotifyPower(this, ae2craftingtime$grid, tick, server);
+        BlockReasonNotifier.maybeNotifySpace(this, ae2craftingtime$grid, this, server);
     }
 
     @Unique
