@@ -41,6 +41,7 @@ foreach ($targetEntry in $targets) {
     $result = 'FAIL_SETUP'
     $message = ''
     $coverage = @()
+    $clientExitConfirmed = $true
     try {
         $coverage = @(& (Join-Path $PSScriptRoot 'get-ui-smoke-coverage.ps1') -Target $row.target -Latest:$runLatest)
         $coverage | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $report 'coverage.json') -Encoding UTF8
@@ -59,6 +60,7 @@ foreach ($targetEntry in $targets) {
         $arguments = @{ Target = $row.target; Latest = $runLatest; Scenario = $Scenario
             CasesBase64 = $casesBase64; BundleDirectory = $bundle; PreparedLaunchRoot = $PreparedLaunchRoot; ProjectId = $runProjects; Interactive = $Interactive }
         if ($GuestSourceRoot) { $arguments.GuestSourceRoot = $GuestSourceRoot }
+        $clientExitConfirmed = $false
         & (Join-Path $PSScriptRoot 'invoke-ui-smoke-codexvm.ps1') @arguments
         $live = Join-Path $root "build/ui-smoke/$($row.target)/$profile/$Scenario"
         $deadline = [DateTime]::UtcNow.AddMinutes(45)
@@ -69,16 +71,25 @@ foreach ($targetEntry in $targets) {
                 throw 'Guest runner exceeded 45 minutes; stopped the recorded client and ended the campaign'
             }
             Start-Sleep -Seconds 2
-            $status = Get-Content -LiteralPath (Join-Path $live 'status.json') -Raw | ConvertFrom-Json
-        } while ($status.phase -in @('queued', 'preparing', 'running'))
+            $status = $null
+            try {
+                $status = Get-Content -LiteralPath (Join-Path $live 'status.json') -Raw | ConvertFrom-Json
+            } catch {
+                # Shared-folder replacement can briefly hide the status file.
+                # Keep the existing deadline and never interpret that gap as exit.
+                Write-Verbose "Waiting for readable guest status: $($_.Exception.Message)"
+            }
+        } while (!$status -or !$status.phase -or $status.phase -in @('queued', 'preparing', 'running'))
         Copy-Item -LiteralPath $live -Destination (Join-Path $report 'run') -Recurse
         if ($status.pid -and $null -eq $status.exitCode) {
             $stopCampaign = $true
             throw 'Recorded client exit is unconfirmed; refusing to launch another client'
         }
+        $clientExitConfirmed = $true
         if ($status.phase -ne 'passed') { $result = 'FAIL'; throw $status.message }
         $result = 'PASS'
     } catch {
+        if (!$clientExitConfirmed) { $stopCampaign = $true }
         $message = $_.Exception.Message
         if ($Latest) { $result = 'DIAGNOSTIC_FAILURE' }
         Write-Warning "$($row.target) $profile $result`: $message"

@@ -44,6 +44,14 @@ foreach ($case in $cases) {
         ConvertTo-Json -Depth 6 | Set-Content "$evidence/result.json"
 }
 @{phase='passed';message='';pid=123;exitCode=0} | ConvertTo-Json | Set-Content "$live/status.json"
+if ($env:AE2CT_STATUS_GAP) {
+    Remove-Item -LiteralPath "$live/status.json"
+    Start-Job -ArgumentList "$live/status.json" -ScriptBlock {
+        param($path)
+        Start-Sleep -Seconds 4
+        @{phase='passed';message='';pid=123;exitCode=0} | ConvertTo-Json | Set-Content -LiteralPath $path
+    } | Out-Null
+}
 if ($env:AE2CT_UNCONFIRMED_EXIT) {
     @{phase='failed';message='termination failed';pid=123;exitCode=$null} | ConvertTo-Json | Set-Content "$live/status.json"
 }
@@ -74,6 +82,11 @@ try {
             throw 'Failure classification or evidence was lost'
         }
     }
+    $env:AE2CT_STATUS_GAP = '1'
+    try {
+        & powershell.exe -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -Target 1.20.1-forge -Scenario waiting-status
+        if ($LASTEXITCODE -ne 0) { throw 'Transient status replacement must not lose the running client' }
+    } finally { Remove-Item Env:\AE2CT_STATUS_GAP -ErrorAction SilentlyContinue }
     $env:AE2CT_UNCONFIRMED_EXIT = '1'
     try {
         & powershell.exe -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1')
