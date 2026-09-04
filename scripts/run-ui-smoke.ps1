@@ -25,7 +25,7 @@ if (-not $PreparedLaunch -and -not $ReportDirectory) {
 }
 if ($Changed -or $PlanOnly) { throw 'Planning is host-only' }
 if ($CasesBase64) {
-    $requestedCases = @([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($CasesBase64)) | ConvertFrom-Json)
+    $requestedCases = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($CasesBase64)) | ConvertFrom-Json
     $selectedCases = @(& (Join-Path $PSScriptRoot 'expand-ui-smoke-groups.ps1') -Target $Target -Scenarios $requestedCases)
     if (Compare-Object $requestedCases $selectedCases -SyncWindow 0) { throw 'Internal case list must be flat and unique' }
     if ($Scenario -ne 'suite' -and ($selectedCases.Count -ne 1 -or $selectedCases[0] -cne $Scenario)) { throw 'Case list does not match launch scenario' }

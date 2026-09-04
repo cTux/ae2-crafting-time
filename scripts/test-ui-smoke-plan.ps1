@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 $temp = Join-Path ([IO.Path]::GetTempPath()) ('ae2ct-plan-' + [guid]::NewGuid().ToString('N'))
 $planner = Join-Path $PSScriptRoot 'get-ui-smoke-plan.ps1'
 New-Item -ItemType Directory -Path $temp | Out-Null
-function Git([string[]]$Arguments) {
+function Invoke-FixtureGit([string[]]$Arguments) {
     & git -C $temp @Arguments | Out-Null
     if ($LASTEXITCODE -ne 0) { throw "Fixture Git failed: $Arguments" }
 }
@@ -19,22 +19,22 @@ function Reject([scriptblock]$Action, [string]$Message) {
     Assert $failed $Message
 }
 function Clean {
-    Git @('reset','--hard','baseline')
+    Invoke-FixtureGit @('reset','--hard','baseline')
     # Git clean is confined to this newly created disposable repository.
-    Git @('clean','-fd')
+    Invoke-FixtureGit @('clean','-fd')
 }
 try {
-    Git @('init','-b','main')
-    Git @('config','user.name','Smoke plan test')
-    Git @('config','user.email','smoke-test@example.invalid')
-    Git @('config','core.hooksPath','disabled-hooks')
+    Invoke-FixtureGit @('init','-b','main')
+    Invoke-FixtureGit @('config','user.name','Smoke plan test')
+    Invoke-FixtureGit @('config','user.email','smoke-test@example.invalid')
+    Invoke-FixtureGit @('config','core.hooksPath','disabled-hooks')
     Put 'README.md' 'baseline'
     $lang = 'shared/src/main/resources/assets/ae2craftingtime/lang/en_us.json'
     Put $lang '{"text.ae2craftingtime.ttc_delayed":"DELAYED","other":"value"}'
     Put 'versions/1.20.1-forge/src/main/Old.java' 'old'
-    Git @('add','.')
-    Git @('commit','-m','fixture')
-    Git @('tag','baseline')
+    Invoke-FixtureGit @('add','.')
+    Invoke-FixtureGit @('commit','-m','fixture')
+    Invoke-FixtureGit @('tag','baseline')
     Assert ((Plan).result -eq 'NOT_REQUIRED') 'Empty diff must not launch'
     Put 'docs/new.md' 'docs'
     Put 'shared/src/test/java/Test.java' 'tests'
@@ -72,7 +72,7 @@ try {
     Put $lang '{"text.ae2craftingtime.ttc_delayed":"later","other":"value"}'
     Reject { & $planner -Changed -BaseRef baseline -Repository $temp -ExpectedFingerprint $saved.fingerprint } 'Changed local content must invalidate plan'
     Put $lang '{"text.ae2craftingtime.ttc_delayed":"late","other":"staged"}'
-    Git @('add','--',$lang)
+    Invoke-FixtureGit @('add','--',$lang)
     Put $lang '{"text.ae2craftingtime.ttc_delayed":"late","other":"value"}'
     Assert ((Plan).targets[0].mode -eq 'full') 'Index and worktree key changes must union'
     Clean
@@ -85,18 +85,18 @@ try {
     Assert ((Plan).result -eq 'NOT_REQUIRED') 'Language formatting must not select UI'
     Clean
     New-Item -ItemType Directory -Path (Join-Path $temp 'versions/1.20.1-fabric/src/main') -Force | Out-Null
-    Git @('mv','versions/1.20.1-forge/src/main/Old.java','versions/1.20.1-fabric/src/main/Renamed.java')
+    Invoke-FixtureGit @('mv','versions/1.20.1-forge/src/main/Old.java','versions/1.20.1-fabric/src/main/Renamed.java')
     Assert ((Plan).targets.Count -eq 2) 'Cross-target rename must retain both owners'
     Clean
-    Git @('rm','versions/1.20.1-forge/src/main/Old.java')
+    Invoke-FixtureGit @('rm','versions/1.20.1-forge/src/main/Old.java')
     Assert ((Plan).targets[0].target -eq '1.20.1-forge') 'Deleted path must retain ownership'
     Clean
     Put 'shared/src/main/java/StallDiagnostic.java' 'committed'
-    Git @('add','.')
-    Git @('commit','-m','changed')
+    Invoke-FixtureGit @('add','.')
+    Invoke-FixtureGit @('commit','-m','changed')
     Assert ((Plan).targets[0].cases[0] -eq 'delayed-status') 'Committed change missing'
     $saved = Plan
-    Git @('commit','--allow-empty','-m','head change')
+    Invoke-FixtureGit @('commit','--allow-empty','-m','head change')
     Reject { & $planner -Changed -BaseRef baseline -Repository $temp -ExpectedFingerprint $saved.fingerprint } 'Changed HEAD must invalidate plan'
     Clean
     Reject { & $planner -Changed -BaseRef missing-ref -Repository $temp } 'Missing base must fail'
@@ -111,6 +111,50 @@ try {
     Assert ($full.targets[1].cases.Count -eq 16) 'Expanded Fabric suite must contain 16 leaves'
     Assert ($full.targets[2].cases.Count -eq 30) 'Expanded NeoForge suite must contain 30 leaves'
     Assert ($full.targets[3].cases.Count -eq 19) 'Expanded 26.1.2 suite must contain 19 leaves'
+    Invoke-FixtureGit @('checkout','-b','conflict-side')
+    Put 'README.md' 'theirs'
+    Invoke-FixtureGit @('add','.')
+    Invoke-FixtureGit @('commit','-m','theirs')
+    Invoke-FixtureGit @('checkout','main')
+    Put 'README.md' 'ours'
+    Invoke-FixtureGit @('add','.')
+    Invoke-FixtureGit @('commit','-m','ours')
+    & git -C $temp merge conflict-side 2>&1 | Out-Null
+    Assert ($LASTEXITCODE -ne 0) 'Fixture must contain a real conflict'
+    Reject { Plan } 'Unmerged files must fail preflight'
+    Invoke-FixtureGit @('merge','--abort')
+    Clean
+    Reject { & $planner -Repository (Join-Path $temp 'missing') } 'Native command failure cannot mean NOT_REQUIRED'
+    $maps = Join-Path $temp 'maps'
+    New-Item -ItemType Directory -Path $maps | Out-Null
+    Get-ChildItem -LiteralPath $PSScriptRoot -Filter '*.json' | Copy-Item -Destination $maps
+    $saved = & $planner -Repository $temp -MatrixDirectory $maps
+    $rulePath = Join-Path $maps 'ui-smoke-impact.json'
+    $original = Get-Content -LiteralPath $rulePath -Raw
+    $rules = $original | ConvertFrom-Json
+    $rules.behavior[0].reason = 'updated rule'
+    $rules | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $rulePath
+    Reject { & $planner -Repository $temp -MatrixDirectory $maps -ExpectedFingerprint $saved.fingerprint } 'Rule changes must invalidate plans'
+    foreach ($mutation in @('id','pattern','target','case')) {
+        $rules = $original | ConvertFrom-Json
+        switch ($mutation) {
+            id { $rules.behavior[0].id = $rules.ownership[0].id }
+            pattern { $rules.behavior[0].pattern = '[' }
+            target { $rules.ownership[0].targets = @('unknown-target') }
+            case { $rules.behavior[0].cases = @('unknown-case') }
+        }
+        $rules | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $rulePath
+        Reject { & $planner -Repository $temp -MatrixDirectory $maps } "Invalid rule $mutation must fail"
+    }
+    Set-Content -LiteralPath $rulePath -Value $original
+    $groupPath = Join-Path $maps 'ui-smoke-groups.json'
+    $original = Get-Content -LiteralPath $groupPath -Raw
+    foreach ($member in @('standard-ae2','unknown-case','delayed-status')) {
+        $groups = $original | ConvertFrom-Json
+        $groups.groups.'standard-ae2' += $member
+        $groups | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $groupPath
+        Reject { & $planner -Repository $temp -MatrixDirectory $maps } 'Nested, missing and duplicate leaves must fail'
+    }
     Write-Host 'PASS: diff ownership, union, language keys, aliases, manual modes and freshness'
 } finally {
     $resolved = [IO.Path]::GetFullPath($temp)

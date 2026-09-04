@@ -25,7 +25,7 @@ New-Item -ItemType Directory -Path (Join-Path $RuntimeDirectory 'mods') -Force |
 param([string]$Target,[switch]$Latest,[string]$Scenario,[string]$BundleDirectory,[string]$PreparedLaunchRoot,[string]$GuestSourceRoot,[string]$CasesBase64)
 $profile=if($Latest){'latest'}else{'compatible'}
 $live=Join-Path (Split-Path -Parent $PSScriptRoot) "build/ui-smoke/$Target/$profile/$Scenario"
-$cases = @([Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($CasesBase64)) | ConvertFrom-Json)
+$cases = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($CasesBase64)) | ConvertFrom-Json
 $contracts = (Get-Content (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json).cases
 foreach ($case in $cases) {
     $evidence = if ($cases.Count -eq 1) { "$live/evidence" } else { "$live/evidence/$case" }
@@ -46,6 +46,10 @@ if ($env:AE2CT_UNCONFIRMED_EXIT) {
 '@ | Set-Content (Join-Path $scripts 'invoke-ui-smoke-codexvm.ps1')
 Set-Content -LiteralPath (Join-Path $temp '.gitignore') 'build/'
 try {
+    $preview = & powershell.exe -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -PlanOnly
+    if ($LASTEXITCODE -ne 0 -or (Test-Path -LiteralPath (Join-Path $temp 'build'))) { throw 'Plan-only built or dispatched a client' }
+    $previewPlan = ($preview -join "`n") | ConvertFrom-Json
+    if ($previewPlan.targets.Count -ne 4 -or $previewPlan.mode -ne 'manual') { throw 'Plan-only lost explicit full scope' }
     foreach ($latest in @($false,$true)) {
         $arguments = @('-NoProfile','-File',(Join-Path $scripts 'run-ui-smoke-matrix.ps1'))
         if ($latest) { $arguments += '-Latest' }
