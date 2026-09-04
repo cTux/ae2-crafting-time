@@ -36,7 +36,7 @@ if ($Scenario -eq 'standard-ae2') {
     $Scenario = 'suite'
 }
 if (-not $Target) { throw 'A native launch or explicit report requires a target' }
-if ($Scenario -eq "suite" -and ($Interactive -or $ProjectId)) {
+if ($Scenario -eq "suite" -and ($Interactive -or ($ProjectId -and !$CasesBase64))) {
     throw "The prepared suite requires the full compatible profile and non-interactive execution"
 }
 $root = Split-Path -Parent $PSScriptRoot
@@ -112,7 +112,7 @@ Write-Status "preparing"
 if ($Scenario -eq "suite") {
     $suiteName = if ($Target -eq "26.1.2-neoforge") { "neoforge-26.1.2" } else { $loader }
     $scenarios = if ($selectedCases) { $selectedCases } else { @(& (Join-Path $PSScriptRoot "expand-ui-smoke-groups.ps1") -Target $Target -Scenarios suite) }
-    $suite = & (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1") -Target $Target -RuntimeDirectory $runtime -OutputDirectory $evidence -Scenarios $scenarios
+    $suite = & (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1") -Target $Target -RuntimeDirectory $runtime -OutputDirectory $evidence -Scenarios $scenarios -VanillaMetadata:($Target -eq '1.20.1-forge' -and $BundleDirectory -and !(Get-ChildItem -LiteralPath (Join-Path $BundleDirectory 'mods') -Filter 'BloodMagic*.jar'))
     $world = $suite.world
     $plan = Get-Content -LiteralPath (Join-Path $evidence "suite-plan.json") -Raw | ConvertFrom-Json
     $worldCopies = @($plan.cases | ForEach-Object { Join-Path $runtime "saves\$($_.world)" })
@@ -247,6 +247,17 @@ try {
                 $result.driver -ne $driverName -or $result.target -ne $Target -or
                 $result.profile -ne $profile -or $result.scenario -ne $caseScenario -or $result.language -ne "en_us") {
             throw "Invalid UI-smoke result identity or completion state"
+        }
+        if ($PreparedLaunch) {
+            $catalogue = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json
+            $expected = Get-Content -LiteralPath (Join-Path $BundleDirectory 'expected-adapters.json') -Raw | ConvertFrom-Json
+            foreach ($adapter in $catalogue.adapterCases.psobject.Properties) {
+                $dependency = $adapter.Name
+                if ($caseScenario -cin $adapter.Value -and $expected.$dependency -and
+                        ($result.adapters.$dependency.variant -cne $expected.$dependency -or $result.adapters.$dependency.reason -cne 'selected')) {
+                    throw "Newest adapter not exercised: $dependency requires $($expected.$dependency)"
+                }
+            }
         }
         $actualChecks = @($result.checks.psobject.Properties.Name)
         if (Compare-Object $requiredChecks $actualChecks -SyncWindow 0) { throw "Invalid UI-smoke check set" }

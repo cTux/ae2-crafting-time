@@ -160,3 +160,12 @@ or `craft-lifecycle`. The raw JVM scenario property now accepts the leaves;
 Campaigns retain `selection.json`, bundle hashes, leaf outcomes and group
 results. All six leaves and their screenshots/semantic sidecars must pass for
 `standard-ae2` to pass. Missing and unselected leaves remain `NOT_RUN`.
+
+Full plans also list required focused graphs declared in the coverage matrix.
+For Forge, NeoEco's two direct cases run against its newest graph separately
+from the 34-case compatible suite. After host build, `SmokeAdapterCatalog`
+reads the ordered catalogue in the exact packaged artifacts. Each native direct
+case must report that newest adapter ID; `latest` alone is not proof. Failure
+of a required focused graph fails a compatible campaign, even though that
+separate graph uses latest dependencies. Core-focused cases retain the full
+compatible graph and do not gain unrelated addon runs.

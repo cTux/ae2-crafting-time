@@ -54,16 +54,17 @@ try {
         Assert (@($plan.targets | Where-Object mode -ne 'full').Count -eq 0) 'Unknown runtime must widen'
         Clean
     }
-    Put 'shared/src/main/java/StallDiagnostic.java' 'delayed'
+    Put 'shared/src/main/java/com/ctux/ae2craftingtime/core/StallDiagnostic.java' 'delayed'
     $plan = Plan
     Assert ($plan.targets.Count -eq 4) 'Dedicated delayed file must reach all targets'
+    Assert (@($plan.targets | Where-Object { $_.graphs.Count -ne 1 }).Count -eq 0) 'Focused core cases must keep one compatible graph'
     Assert (@($plan.targets | Where-Object { $_.cases.Count -ne 1 -or $_.cases[0] -ne 'delayed-status' }).Count -eq 0) 'Dedicated file must narrow'
     Put 'versions/1.20.1-forge/src/main/Packet.java' 'packet'
     $plan = Plan
     Assert (($plan.targets | Where-Object target -eq '1.20.1-forge').mode -eq 'full') 'Broad rule must dominate only its target'
     Assert (@($plan.targets | Where-Object mode -eq 'focused').Count -eq 3) 'Mixed changes must union'
     Clean
-    Put 'shared/src/mcCommon/java/CraftingStatusTableRendererMixin.java' 'only delayed method changed'
+    Put 'shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingStatusTableRendererMixin.java' 'only delayed method changed'
     Assert ((Plan).targets[0].cases.Count -eq 8) 'Never narrow mixed renderers by keywords'
     Clean
     Put $lang '{"text.ae2craftingtime.ttc_delayed":"late","other":"value"}'
@@ -91,7 +92,7 @@ try {
     Invoke-FixtureGit @('rm','versions/1.20.1-forge/src/main/Old.java')
     Assert ((Plan).targets[0].target -eq '1.20.1-forge') 'Deleted path must retain ownership'
     Clean
-    Put 'shared/src/main/java/StallDiagnostic.java' 'committed'
+    Put 'shared/src/main/java/com/ctux/ae2craftingtime/core/StallDiagnostic.java' 'committed'
     Invoke-FixtureGit @('add','.')
     Invoke-FixtureGit @('commit','-m','changed')
     Assert ((Plan).targets[0].cases[0] -eq 'delayed-status') 'Committed change missing'
@@ -107,6 +108,7 @@ try {
     $manual = & $planner -Repository $temp -Target '1.20.1-forge' -Scenario delayed-status
     Assert ($manual.mode -eq 'manual' -and $manual.targets.Count -eq 1) 'Manual scope must remain labelled manual'
     $full = & $planner -Repository $temp
+    Assert ($full.targets[0].graphs.Count -eq 2 -and $full.targets[0].graphs[1].cases.Count -eq 2) 'Full Forge must schedule its separate newest-adapter graph'
     Assert ($full.targets[0].cases.Count -eq 34) 'Expanded Forge suite must contain 34 leaves'
     Assert ($full.targets[1].cases.Count -eq 16) 'Expanded Fabric suite must contain 16 leaves'
     Assert ($full.targets[2].cases.Count -eq 30) 'Expanded NeoForge suite must contain 30 leaves'

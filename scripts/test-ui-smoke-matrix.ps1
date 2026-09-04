@@ -12,6 +12,9 @@ foreach ($file in @('get-ui-smoke-plan.ps1','get-ui-smoke-results.ps1','expand-u
 & git -C $temp -c user.name=Test -c user.email=test@example.invalid -c core.hooksPath=disabled-hooks commit --allow-empty -qm fixture
 if ($LASTEXITCODE -ne 0) { throw 'Could not initialize matrix fixture' }
 @'
+param([string]$Target,[string]$BundleDirectory)
+'@ | Set-Content (Join-Path $scripts 'prepare-ui-smoke-adapters.ps1')
+@'
 param([string]$Target,[switch]$Latest)
 [pscustomobject]@{projectId='ae2';name='AE2';disposition='DIRECT_UI';scenario='standard-ae2';reason='';result='NOT_RUN'}
 '@ | Set-Content (Join-Path $scripts 'get-ui-smoke-coverage.ps1')
@@ -60,11 +63,13 @@ try {
         $report = Get-ChildItem (Join-Path $temp 'build/ui-smoke/campaigns') -File -Recurse -Filter result.json |
             Where-Object { $_.Directory.Name -eq $profile } | Select-Object -Last 1
         $results = (Get-Content $report.FullName -Raw | ConvertFrom-Json).results
-        if ($results.Count -ne 4 -or $results[3].target -ne '26.1.2-neoforge' -or $results[3].result -ne 'PASS') {
+        $fabricIndex = if ($latest) { 1 } else { 2 }
+        $lastIndex = if ($latest) { 3 } else { 4 }
+        if ($results.Count -ne ($lastIndex + 1) -or $results[$lastIndex].target -ne '26.1.2-neoforge' -or $results[$lastIndex].result -ne 'PASS') {
             throw 'An earlier failure skipped a later required target'
         }
         $expected = if ($latest) { 'DIAGNOSTIC_FAILURE' } else { 'FAIL_SETUP' }
-        if ($results[1].result -ne $expected -or $results[1].message -notlike '*intentional resolution failure*') {
+        if ($results[$fabricIndex].result -ne $expected -or $results[$fabricIndex].message -notlike '*intentional resolution failure*') {
             throw 'Failure classification or evidence was lost'
         }
     }

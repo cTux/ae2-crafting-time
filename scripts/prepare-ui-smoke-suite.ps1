@@ -2,6 +2,7 @@ param(
     [ValidateSet("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")][string]$Target = "1.20.1-forge",
     [Parameter(Mandatory)][string]$RuntimeDirectory,
     [Parameter(Mandatory)][string]$OutputDirectory,
+    [switch]$VanillaMetadata,
     [Parameter(Mandatory)][string[]]$Scenarios
 )
 $ErrorActionPreference = 'Stop'
@@ -25,7 +26,7 @@ New-Item -ItemType Directory -Path (Join-Path $runtime 'saves') -Force | Out-Nul
 $cases = foreach ($scenario in $Scenarios) {
     $world = 'ae2ct-' + [guid]::NewGuid().ToString('N')
     $copy = Join-Path $runtime "saves\$world"
-    & (Join-Path $PSScriptRoot 'copy-ui-smoke-fixture.ps1') -Source $fixture -Destination $copy -Target $Target
+    & (Join-Path $PSScriptRoot 'copy-ui-smoke-fixture.ps1') -Source $fixture -Destination $copy -Target $Target -VanillaMetadata:$VanillaMetadata
     $sourceMarker.disposableWorldId = $world
     $sourceMarker | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $copy '.ae2-crafting-time-test-fixture.json') -Encoding UTF8
     [ordered]@{scenario=$scenario;world=$world}

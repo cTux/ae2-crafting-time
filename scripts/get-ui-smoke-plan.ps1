@@ -138,7 +138,12 @@ foreach ($change in $changes) {
         elseif (@($keys | Where-Object { $_ -cne 'text.ae2craftingtime.ttc_delayed' }).Count) { $cases = @('suite'); $reason = 'English keys affect general UI' }
         else { $cases = @('delayed-status'); $reason = 'English delayed label changed' }
     } elseif ($behavior.Count) { $cases = @($behavior.cases | Select-Object -Unique); $reason = $behavior.reason -join '; ' }
-    else { $cases = @('suite'); $fallback = $true; $reason = 'No narrow behavior rule; full consuming suites required' }
+    else {
+        if ($path -cmatch '/resources/assets/ae2craftingtime/lang/en_us\.json$' -and (Test-Path -LiteralPath (Join-Path $Repository $path))) {
+            $null = Read-Language (Get-Content -LiteralPath (Join-Path $Repository $path) -Raw)
+        }
+        $cases = @('suite'); $fallback = $true; $reason = 'No narrow behavior rule; full consuming suites required'
+    }
     $reasons.Add([pscustomobject]@{ path=$path; layer=$change.layer; status=$change.status; targets=@($targets); cases=@($cases); reason=$reason; fallback=$fallback })
     foreach ($id in $targets) {
         if ($cases.Count) { if (!$selection.ContainsKey($id)) { $selection[$id] = @() }; $selection[$id] += $cases }
@@ -153,7 +158,30 @@ foreach ($id in $ids) {
     if ($full) { $requested = @('suite') }
     $cases = @(& "$PSScriptRoot/expand-ui-smoke-groups.ps1" -Target $id -Scenarios $requested -MatrixDirectory $MatrixDirectory)
     $allCases = @(& "$PSScriptRoot/expand-ui-smoke-groups.ps1" -Target $id -Scenarios suite -MatrixDirectory $MatrixDirectory)
-    $entries += [pscustomobject]@{ target=$id; mode=$(if ($full) { 'full' } else { 'focused' }); cases=$cases
+    $graphs = @()
+    $primary = @($cases)
+    $catalogue = Get-Content -LiteralPath (Join-Path $MatrixDirectory 'ui-smoke-groups.json') -Raw | ConvertFrom-Json
+    $clients = Get-Content -LiteralPath (Join-Path $MatrixDirectory 'run-client-versions.json') -Raw | ConvertFrom-Json
+    $coverage = (Get-Content -LiteralPath (Join-Path $MatrixDirectory 'ui-smoke-coverage.json') -Raw | ConvertFrom-Json).$id
+    $client = $clients | Where-Object id -CEQ $id
+    if (!$Latest -and !$ProjectId) {
+        foreach ($project in $client.projects) {
+            $declaration = $coverage.($project.project_id)
+            if ($declaration.disposition -cne 'FOCUSED_BEHAVIOR') { continue }
+            $adapterCases = @($catalogue.adapterCases.($project.mod_id))
+            if (!$adapterCases.Count) { throw "Missing adapter fixture mapping: $($project.mod_id)" }
+            $focused = if ($full) { @($adapterCases) } else { @($primary | Where-Object { $_ -cin $adapterCases }) }
+            if (!$focused.Count) { continue }
+            $primary = @($primary | Where-Object { $_ -cnotin $focused })
+            $graphs += [pscustomobject]@{ id=$project.project_id; profile='latest'; cases=$focused; projectId=@($project.project_id)
+                reason=$declaration.reason; adapterPolicy='newest packaged catalogue variant; verify runtime selection' }
+        }
+    }
+    if ($primary.Count) {
+        $graphs = @([pscustomobject]@{ id='primary'; profile=$(if ($Latest) { 'latest' } else { 'compatible' }); cases=$primary
+            projectId=@($ProjectId); reason='Requested dependency graph'; adapterPolicy='newest packaged catalogue variant for direct cases' }) + $graphs
+    }
+    $entries += [pscustomobject]@{ target=$id; graphs=$graphs; mode=$(if ($full) { 'full' } else { 'focused' }); cases=$cases
         notSelectedCases=@($allCases | Where-Object { $_ -cnotin $cases });
         groups=@($(if ($full -or 'standard-ae2' -cin $requested) { 'standard-ae2' })); profile=$(if ($Latest) { 'latest' } else { 'compatible' }) }
 }

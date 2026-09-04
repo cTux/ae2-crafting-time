@@ -1,6 +1,7 @@
 {
   "schema": 1,
   "ownership": [
+    {"id":"replaced-standard-fixtures", "pattern":"^shared/src/testDriver1201/java/com/ctux/ae2craftingtime/testdriver/(StandardCraftFixture|NoSpaceScenario|NoProviderScenario|NoPowerScenario)\\.java$", "targets":["1.20.1-forge","1.20.1-fabric","1.21.1-neoforge"]},
     {"id":"forge", "pattern":"^versions/1\\.20\\.1-forge/", "targets":["1.20.1-forge"]},
     {"id":"fabric", "pattern":"^versions/1\\.20\\.1-fabric/", "targets":["1.20.1-fabric"]},
     {"id":"neo21", "pattern":"^versions/1\\.21\\.1-neoforge/", "targets":["1.21.1-neoforge"]},
@@ -16,10 +17,10 @@
     {"id":"ukrainian", "pattern":"/resources/assets/ae2craftingtime/lang/uk_ua\\.json$", "reason":"English-only smoke; locale parity checks still required"}
   ],
   "behavior": [
-    {"id":"delayed", "pattern":"/StallDiagnostic\\.java$", "cases":["delayed-status"], "reason":"Dedicated stall diagnostics"},
-    {"id":"no-space", "pattern":"/NoSpaceScenario\\.java$", "cases":["no-space-status"], "reason":"Dedicated no-space fixture"},
-    {"id":"no-provider", "pattern":"/NoProviderScenario\\.java$", "cases":["no-provider-status"], "reason":"Dedicated no-provider fixture"},
-    {"id":"no-power", "pattern":"/NoPowerScenario\\.java$", "cases":["no-power-status"], "reason":"Dedicated no-power fixture"},
-    {"id":"status", "pattern":"/(CraftingStatusTableRendererMixin|CraftingRowState)\\.java$", "cases":["standard-status-controls","waiting-status","running-status","delayed-status","no-space-status","no-provider-status","no-power-status","craft-lifecycle"], "reason":"Mixed status behavior; all status cases required"}
+    {"id":"delayed", "pattern":"^shared/src/main/java/com/ctux/ae2craftingtime/core/StallDiagnostic\\.java$", "cases":["delayed-status"], "reason":"Dedicated stall diagnostics"},
+    {"id":"no-space", "pattern":"^(shared/src/testDriver1201|versions/26\\.1\\.2-neoforge/src/testDriver)/java/com/ctux/ae2craftingtime/testdriver/NoSpaceScenario\\.java$", "cases":["no-space-status"], "reason":"Dedicated no-space fixture"},
+    {"id":"no-provider", "pattern":"^(shared/src/testDriver1201|versions/26\\.1\\.2-neoforge/src/testDriver)/java/com/ctux/ae2craftingtime/testdriver/NoProviderScenario\\.java$", "cases":["no-provider-status"], "reason":"Dedicated no-provider fixture"},
+    {"id":"no-power", "pattern":"^(shared/src/testDriver1201|versions/26\\.1\\.2-neoforge/src/testDriver)/java/com/ctux/ae2craftingtime/testdriver/NoPowerScenario\\.java$", "cases":["no-power-status"], "reason":"Dedicated no-power fixture"},
+    {"id":"status", "pattern":"^(shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingStatusTableRendererMixin|shared/src/main/java/com/ctux/ae2craftingtime/core/CraftingRowState)\\.java$", "cases":["standard-status-controls","waiting-status","running-status","delayed-status","no-space-status","no-provider-status","no-power-status","craft-lifecycle"], "reason":"Mixed status behavior; all status cases required"}
   ]
 }

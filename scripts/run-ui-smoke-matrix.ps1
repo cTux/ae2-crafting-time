@@ -26,31 +26,38 @@ if ($plan.result -eq 'NOT_REQUIRED') { Write-Host 'NOT_REQUIRED: no runtime chan
 $results = @()
 $commit = $plan.headSha
 $stopCampaign = $false
-foreach ($row in $targets) {
-    $Scenario = if ($row.cases.Count -eq 1) { $row.cases[0] } else { 'suite' }
-    $casesBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes((ConvertTo-Json -InputObject @($row.cases) -Compress)))
-    $report = Join-Path $campaign $row.target
+foreach ($targetEntry in $targets) {
+  foreach ($graph in $targetEntry.graphs) {
+    $row = $targetEntry
+    $runCases = @($graph.cases)
+    $runLatest = $graph.profile -eq 'latest'
+    $profile = $graph.profile
+    $runProjects = @($graph.projectId)
+    $Scenario = if ($runCases.Count -eq 1) { $runCases[0] } else { 'suite' }
+    $casesBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes((ConvertTo-Json -InputObject @($runCases) -Compress)))
+    $report = Join-Path $campaign "$($row.target)/$($graph.id)"
     New-Item -ItemType Directory -Path $report -Force | Out-Null
     $started = [DateTime]::UtcNow.ToString('o')
     $result = 'FAIL_SETUP'
     $message = ''
     $coverage = @()
     try {
-        $coverage = @(& (Join-Path $PSScriptRoot 'get-ui-smoke-coverage.ps1') -Target $row.target -Latest:$Latest)
+        $coverage = @(& (Join-Path $PSScriptRoot 'get-ui-smoke-coverage.ps1') -Target $row.target -Latest:$runLatest)
         $coverage | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $report 'coverage.json') -Encoding UTF8
         $null = & (Join-Path $PSScriptRoot 'get-ui-smoke-plan.ps1') @planning -ExpectedFingerprint $plan.fingerprint
-        $cache = Join-Path $root "build/ui-smoke/bundle-cache/$($row.target)/$profile"
-        & (Join-Path $PSScriptRoot 'run-client.ps1') -Target $row.target -Latest:$Latest -ResolveOnly -Packaged -RuntimeDirectory $cache -ProjectId $ProjectId
+        $cache = Join-Path $root "build/ui-smoke/bundle-cache/$($row.target)/$profile/$($graph.id)"
+        & (Join-Path $PSScriptRoot 'run-client.ps1') -Target $row.target -Latest:$runLatest -ResolveOnly -Packaged -RuntimeDirectory $cache -ProjectId $runProjects
         # Guest shares may retain read handles. Each run receives an immutable bundle.
         $bundle = Join-Path $report 'bundle'
         Copy-Item -LiteralPath $cache -Destination $bundle -Recurse
         Get-ChildItem -LiteralPath (Join-Path $bundle 'mods') -Filter '*.jar' -File | ForEach-Object {
             [ordered]@{ file = $_.Name; sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash }
         } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $report 'artifact-hashes.json') -Encoding UTF8
+        & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target $row.target -BundleDirectory $bundle
         $null = & (Join-Path $PSScriptRoot 'get-ui-smoke-plan.ps1') @planning -ExpectedFingerprint $plan.fingerprint
         $plan | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $report 'selection.json') -Encoding UTF8
-        $arguments = @{ Target = $row.target; Latest = $Latest; Scenario = $Scenario
-            CasesBase64 = $casesBase64; BundleDirectory = $bundle; PreparedLaunchRoot = $PreparedLaunchRoot; ProjectId = $ProjectId; Interactive = $Interactive }
+        $arguments = @{ Target = $row.target; Latest = $runLatest; Scenario = $Scenario
+            CasesBase64 = $casesBase64; BundleDirectory = $bundle; PreparedLaunchRoot = $PreparedLaunchRoot; ProjectId = $runProjects; Interactive = $Interactive }
         if ($GuestSourceRoot) { $arguments.GuestSourceRoot = $GuestSourceRoot }
         & (Join-Path $PSScriptRoot 'invoke-ui-smoke-codexvm.ps1') @arguments
         $live = Join-Path $root "build/ui-smoke/$($row.target)/$profile/$Scenario"
@@ -76,7 +83,7 @@ foreach ($row in $targets) {
         if ($Latest) { $result = 'DIAGNOSTIC_FAILURE' }
         Write-Warning "$($row.target) $profile $result`: $message"
     } finally {
-        $leaves = @(& (Join-Path $PSScriptRoot 'get-ui-smoke-results.ps1') -Target $row.target -Profile $profile -Scenarios $row.cases -Evidence (Join-Path $report 'run/evidence'))
+        $leaves = @(& (Join-Path $PSScriptRoot 'get-ui-smoke-results.ps1') -Target $row.target -Profile $profile -Scenarios $runCases -Evidence (Join-Path $report 'run/evidence'))
         $groups = @()
         $catalogue = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json
         foreach ($group in $catalogue.groups.psobject.Properties) {
@@ -96,13 +103,15 @@ foreach ($row in $targets) {
             $message = 'Selected leaf evidence is missing or invalid'
         }
         $coverage | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $report 'coverage.json') -Encoding UTF8
-        $results += [ordered]@{ target = $row.target; profile = $profile; result = $result; message = $message
-            startedAt = $started; finishedAt = [DateTime]::UtcNow.ToString('o'); report = $report; mode = $row.mode; cases = $leaves; groups = $groups }
+        $results += [ordered]@{ target = $row.target; graph = $graph.id; required = !$Latest; profile = $profile; result = $result; message = $message
+            startedAt = $started; finishedAt = [DateTime]::UtcNow.ToString('o'); report = $report; mode = $(if ($graph.id -eq 'primary') { $row.mode } else { 'focused' }); cases = $leaves; groups = $groups }
         [ordered]@{ schema = 1; runId = $runId; commit = $commit; results = $results } |
             ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $campaign 'result.json') -Encoding UTF8
     }
     if ($stopCampaign) { break }
+  }
+  if ($stopCampaign) { break }
 }
 Write-Host "UI smoke campaign: $campaign"
-if (@($results | Where-Object { $_.profile -eq 'compatible' -and $_.result -ne 'PASS' }).Count) { exit 1 }
+if (@($results | Where-Object { $_.required -and $_.result -ne 'PASS' }).Count) { exit 1 }
 exit 0

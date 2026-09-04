@@ -28,5 +28,12 @@
       "checks": ["plan", "submitted", "status", "profile-sample", "completed", "output"],
       "screenshots": ["plan-default.png", "status-default.png", "status-finished-job.png", "status-completed.png"]
     }
+  },
+  "adapterCases": {
+    "ae2ct": ["crafting-tree-screen"],
+    "neoecoae": ["neoeco-cpu", "neoeco-fastpath-cpu"],
+    "advanced_ae": ["advancedae-cpu"],
+    "ae2lt": ["lightningtech-cpu"],
+    "merequester": ["merequester-screen"]
   }
 }
