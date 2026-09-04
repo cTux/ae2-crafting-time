@@ -13,6 +13,7 @@ foreach ($file in @('get-ui-smoke-plan.ps1','get-ui-smoke-results.ps1','expand-u
 if ($LASTEXITCODE -ne 0) { throw 'Could not initialize matrix fixture' }
 @'
 param([string]$Target,[string]$BundleDirectory)
+'{}' | Set-Content (Join-Path $BundleDirectory 'expected-adapters.json')
 '@ | Set-Content (Join-Path $scripts 'prepare-ui-smoke-adapters.ps1')
 @'
 param([string]$Target,[switch]$Latest)
