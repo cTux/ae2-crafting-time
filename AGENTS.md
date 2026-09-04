@@ -1,5 +1,8 @@
 # Repository Workflow
 
+- Include an approximate task-completion percentage and estimated time remaining
+  in every intermediate agent update. Revise estimates as work progresses; if
+  an estimate is unavailable, say so rather than inventing one.
 - Work on a branch. Complete each fix or feature as one conventional commit.
 - Run `scripts/setup-git.ps1` once per clone. Its post-commit hook pushes each
   commit and creates or updates the branch PR.
