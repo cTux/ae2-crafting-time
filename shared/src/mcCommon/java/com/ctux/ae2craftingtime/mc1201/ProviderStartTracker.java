@@ -4,8 +4,8 @@ import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.crafting.ICraftingProvider;
-import appeng.me.service.CraftingService;
 import appeng.me.InWorldGridNode;
+import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.core.PacketLimits;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import java.util.ArrayList;
@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import net.minecraft.core.BlockPos;
 
@@ -66,8 +67,11 @@ public final class ProviderStartTracker {
             return List.of();
         }
         CraftingService crafting;
+        List<IGridNode> nodes;
         try {
             crafting = (CraftingService) grid.getCraftingService();
+            nodes = new ArrayList<>();
+            grid.getNodes().forEach(nodes::add);
         } catch (Exception ignored) {
             return List.of();
         }
@@ -86,7 +90,7 @@ public final class ProviderStartTracker {
                 if (provider == null) {
                     continue;
                 }
-                locate(grid, provider).ifPresent(pos -> {
+                locate(nodes, provider).ifPresent(pos -> {
                     if (!positions.contains(pos)) {
                         positions.add(pos);
                     }
@@ -99,24 +103,18 @@ public final class ProviderStartTracker {
         return List.copyOf(positions);
     }
 
-    private static java.util.Optional<BlockPos> locate(IGrid grid, ICraftingProvider provider) {
-        Iterable<IGridNode> nodes;
-        try {
-            nodes = grid.getNodes();
-        } catch (Exception ignored) {
-            return java.util.Optional.empty();
-        }
+    private static Optional<BlockPos> locate(List<IGridNode> nodes, ICraftingProvider provider) {
         for (var node : nodes) {
             try {
                 if (node instanceof InWorldGridNode inWorld
                         && node.getService(ICraftingProvider.class) == provider) {
-                    return java.util.Optional.of(inWorld.getLocation());
+                    return Optional.of(inWorld.getLocation());
                 }
             } catch (Exception ignored) {
                 // One unreadable node must not hide the rest.
             }
         }
-        return java.util.Optional.empty();
+        return Optional.empty();
     }
 
     private ProviderStartTracker() {

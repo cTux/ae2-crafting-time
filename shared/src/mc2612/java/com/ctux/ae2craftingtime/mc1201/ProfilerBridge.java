@@ -26,6 +26,7 @@ import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import net.minecraft.core.BlockPos;
 
 public final class ProfilerBridge {
     private static final CraftProfiler PROFILER = new CraftProfiler(Ae2CraftingTimeConfig.MAX_SAMPLES.get(),
@@ -41,7 +42,9 @@ public final class ProfilerBridge {
         for (var output : pattern.getOutputs()) {
             outputs.merge(key(networkId, output.what()), output.amount(), Long::sum);
         }
-        ProviderStartTracker.noteDispatch(scope, pattern, outputs);
+        if (isEnabled()) {
+            ProviderStartTracker.noteDispatch(scope, pattern, outputs);
+        }
         PROFILER.observeProviders(scope, pattern, outputs, hasProvider);
     }
 
@@ -210,7 +213,7 @@ public final class ProfilerBridge {
      * Provider positions for a delayed output: freshly resolved through the
      * live grid first, persisted fallback second, empty when not locatable.
      */
-    public static List<net.minecraft.core.BlockPos> locatePositions(Object scope, IGrid grid, ProfileKey key) {
+    public static List<BlockPos> locatePositions(Object scope, IGrid grid, ProfileKey key) {
         if (scope == null || key == null) {
             return List.of();
         }
@@ -223,8 +226,8 @@ public final class ProfilerBridge {
                 .orElse(List.of());
     }
 
-    public static void replaceProviderStart(ProfileKey key, java.util.UUID owner,
-            List<net.minecraft.core.BlockPos> positions, String outputName) {
+    public static void replaceProviderStart(ProfileKey key, UUID owner,
+            List<BlockPos> positions, String outputName) {
         ProviderLocateRecords.replaceStart(key, owner, positions, outputName);
     }
 

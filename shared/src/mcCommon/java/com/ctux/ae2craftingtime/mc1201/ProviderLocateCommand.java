@@ -11,9 +11,9 @@ import net.minecraft.server.level.ServerPlayer;
 
 /**
  * Shared locate command shape. Each loader registers the built tree on its
- * own command event and passes its own highlight sender. Permission level 0
- * keeps the command available to every player; records are still scoped so a
- * click only serves the clicking player's own highlights.
+ * own command event and passes its own highlight sender. The tree is open to
+ * every command source; the handler itself validates the player and record
+ * ownership, and non-player sources get no answer.
  */
 public final class ProviderLocateCommand {
     public static final String ROOT = "ae2craftingtime";

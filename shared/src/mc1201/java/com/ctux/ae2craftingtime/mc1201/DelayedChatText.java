@@ -33,7 +33,8 @@ public final class DelayedChatText {
                 detail);
     }
 
-    private static Component name(String outputName, UUID recordId) {        var name = Component.literal(outputName);
+    private static Component name(String outputName, UUID recordId) {
+        var name = Component.literal(outputName);
         if (recordId == null) {
             return name;
         }

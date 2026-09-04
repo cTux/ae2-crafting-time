@@ -73,8 +73,9 @@ tick: probe(logic).isCantStoreItems + stored/outstanding per output -> poll epis
 status request: NO POWER backup through the same episode memory
 ```
 
-The `NO SPACE` probe reads the AE2-mirrored status methods every CPU logic
-in the mod supports (`isCantStoreItems`, `getAllWaitingFor`, `getStored`,
+Power observation runs on the standard and AdvancedAE dispatch paths, so
+`NO POWER` warnings cover those CPU types. The `NO SPACE` probe reads the
+AE2-mirrored status methods every CPU logic in the mod supports (`isCantStoreItems`, `getAllWaitingFor`, `getStored`,
 `getWaitingFor`) through reflection, so addon-owned logics need no direct
 type reference; logics without those methods simply never report. A key
 counts when stored items exist with nothing still outstanding, mirroring the

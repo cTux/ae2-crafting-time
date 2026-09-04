@@ -88,8 +88,10 @@ This covers [issue #231](https://github.com/cTux/ae2-crafting-time/issues/231).
 - Choosing one provider when several ran the craft's patterns; all resolved
   positions highlight together (bounded).
 - Clickable links for NeoEco and AE2 Lightning Tech CPU jobs: their dispatch
-  paths do not expose patterns yet, so those warnings render plain names
-  until a later change records them.
+  paths do not expose patterns yet, so provider positions never resolve
+  there and names render plain. `NO SPACE` detection still works on every
+  CPU type; `NO POWER` warnings cover the standard and AdvancedAE dispatch
+  paths that observe power.
 - `NO PROVIDER` warnings: missing providers flap during normal play, so only
   `NO SPACE` and `NO POWER` warn.
 - A locate action outside the delayed warning (no hotkey, no screen button).

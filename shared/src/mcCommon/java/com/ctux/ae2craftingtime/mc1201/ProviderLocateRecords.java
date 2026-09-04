@@ -4,7 +4,6 @@ import com.ctux.ae2craftingtime.core.ProfileKey;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
@@ -63,7 +62,7 @@ public final class ProviderLocateRecords {
         }
         var previous = STARTS.get(key);
         var mergedOwner = owner != null ? owner : previous == null ? null : previous.owner();
-        List<net.minecraft.core.BlockPos> mergedPositions;
+        List<BlockPos> mergedPositions;
         if (positions != null && !positions.isEmpty()) {
             mergedPositions = List.copyOf(positions);
         } else if (previous == null) {

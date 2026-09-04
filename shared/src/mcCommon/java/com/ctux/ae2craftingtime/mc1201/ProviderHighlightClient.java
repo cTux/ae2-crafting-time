@@ -41,10 +41,5 @@ public final class ProviderHighlightClient {
         return 0.35f + 0.65f * (0.5f - 0.5f * (float) Math.cos(phase * Math.PI * 2.0));
     }
 
-    public static void clear() {
-        current = null;
-    }
-
     private ProviderHighlightClient() {
     }
-}

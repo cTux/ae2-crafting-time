@@ -63,7 +63,7 @@ public final class NoSpaceProbe {
         try {
             methods = new Methods(type.getMethod("isCantStoreItems"), type.getMethod("getAllWaitingFor", Set.class),
                     type.getMethod("getStored", AEKey.class), type.getMethod("getWaitingFor", AEKey.class));
-        } catch (NoSuchMethodException ignored) {
+        } catch (NoSuchMethodException | RuntimeException ignored) {
             // Logics without the status methods simply never report NO SPACE.
         }
         if (methods != null) {
