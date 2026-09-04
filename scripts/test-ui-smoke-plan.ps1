@@ -45,6 +45,7 @@ try {
     $newlinePlan = Plan
     Assert ($newlinePlan.targets.Count -eq 4) 'Newline filename must select all targets'
     Assert ($newlinePath -cin $newlinePlan.changes.path) 'Newline filename must remain one exact path'
+    Invoke-FixtureGit @('update-index','--force-remove','--',$newlinePath)
     Clean
     Put 'docs/new.md' 'docs'
     Put 'docs/StallDiagnostic.java' 'documented example'
