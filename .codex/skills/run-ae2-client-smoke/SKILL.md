@@ -53,10 +53,9 @@ and the requested smoke checks pass. Create or comment on upstream or local
 issues only when the user requests it; include reproduction evidence and link
 the two issues when both exist.
 
-Immediately before the final complete compatible-profile smoke, fetch `origin`
-and rebase the clean work branch onto `origin/master`. If a later base change
-touches production, build, dependency, fixture, or driver code, rebase and run
-that final smoke again.
+Rebase only when the user explicitly requests it. A rebase alone does not
+require a full smoke run or invalidate completed smoke evidence. Choose any
+additional verification from the actual changes and the requested task scope.
 
 ## Timing Report
 

@@ -36,7 +36,8 @@ running the required verification.
 1. Add the owner-validated Vortex menu and the four bounded request/snapshot/
    locate packet types.
 2. Bump Forge `6` to `7`, add Fabric `vortex_*_v1` payload IDs, and bump both
-   NeoForge registrars `5` to `6` after rebasing; extend packet round-trip,
+   NeoForge registrars `5` to `6` (use the next unused value if already taken);
+   extend packet round-trip,
    size, identifier, enum, amount, stale-container, rate-limit, and forged-owner
    tests.
 3. Build the scrolling Vortex screen with the requested icon, output name and

@@ -93,8 +93,8 @@ inside the guest.
 
 The dispatcher creates or reuses a share for the exact host worktree. Pass `-GuestSourceRoot` to select an existing mapping. Keep the live runtime on local
 NTFS. Archive and inspect every campaign before removing the worktree.
-Fetch and rebase onto `origin/master` before the final compatible smoke; rerun if
-subsequent base changes affect production, build, dependency, fixture or driver code.
+Rebase only when explicitly requested. A rebase alone does not require a full
+smoke run; choose additional verification from the actual changes and task scope.
 
 ## Dependency profiles
 

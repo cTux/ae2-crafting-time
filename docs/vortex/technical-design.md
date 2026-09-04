@@ -111,8 +111,8 @@ Because the packet set is new on every target, bump the current Forge protocol
 from `6` to `7`, give the four Fabric packets new `vortex_*_v1` payload IDs, and
 bump both current NeoForge registrar versions from `5` to `6` in the same
 compatibility-boundary commit. If another approved packet change lands first,
-rebase and increment the then-current boundary once instead of reusing a
-published value.
+increment the then-current boundary once instead of reusing a published value.
+Rebase only when explicitly requested.
 
 ## Problem Targets
 
