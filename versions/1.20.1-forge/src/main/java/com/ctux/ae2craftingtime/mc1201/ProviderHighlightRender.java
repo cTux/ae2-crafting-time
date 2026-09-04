@@ -16,11 +16,23 @@ public final class ProviderHighlightRender {
         if (event.getStage() != RenderLevelStageEvent.Stage.AFTER_TRANSLUCENT_BLOCKS) {
             return;
         }
-        var highlight = ProviderHighlightClient.live();
         var minecraft = Minecraft.getInstance();
         if (minecraft.level == null) {
             return;
         }
+        var levelDimension = minecraft.level.dimension().location().toString();
+        // A broken provider block drops its edge and plate immediately, in
+        // this dimension only.
+        ProviderHighlightClient.trimPositions(levelDimension, pos -> {
+            if (!minecraft.level.isLoaded(pos)) {
+                return true;
+            }
+            if (minecraft.level.getBlockState(pos).isAir()) {
+                return false;
+            }
+            return minecraft.level.getBlockEntity(pos) != null;
+        });
+        var highlight = ProviderHighlightClient.live();
         var camera = minecraft.gameRenderer.getMainCamera().getPosition();
         var poseStack = event.getPoseStack();
         poseStack.pushPose();
@@ -31,8 +43,7 @@ public final class ProviderHighlightRender {
         // Click edges first in their own batch: plate and item writes switch the
         // shared fallback builder to other render types, so a cached lines
         // consumer would not survive until the next position.
-        if (highlight != null
-                && minecraft.level.dimension().location().toString().equals(highlight.dimensionId())) {
+        if (highlight != null && levelDimension.equals(highlight.dimensionId())) {
             var lines = consumers.getBuffer(RenderType.lines());
             for (var pos : highlight.positions()) {
                 ProviderHighlightShapes.renderThickRainbowBox(poseStack, lines, new AABB(pos).inflate(0.002),
@@ -42,7 +53,7 @@ public final class ProviderHighlightRender {
         }
         // Plates persist while their output still reports a stall.
         for (var plate : ProviderHighlightClient.plates()) {
-            if (!minecraft.level.dimension().location().toString().equals(plate.dimensionId())
+            if (!levelDimension.equals(plate.dimensionId())
                     || !ProviderHighlightClient.shouldShowPlates(plate.outputId())) {
                 continue;
             }

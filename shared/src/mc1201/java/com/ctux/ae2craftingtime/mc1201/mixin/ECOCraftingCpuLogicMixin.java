@@ -115,7 +115,8 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
         }
         ae2craftingtime$inserting = false;
         if (ae2craftingtime$deferredFinish) {
-            ProfilerBridge.finishJob(this, ae2craftingtime$deferredSuccess, ae2craftingtime$tick(), System.nanoTime());
+            ProfilerBridge.finishJob(this, ae2craftingtime$deferredSuccess, ae2craftingtime$tick(), System.nanoTime(),
+                    ae2craftingtime$server());
         }
     }
 
@@ -125,7 +126,8 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
             ae2craftingtime$deferredFinish = true;
             ae2craftingtime$deferredSuccess = success;
         } else {
-            ProfilerBridge.finishJob(this, success, ae2craftingtime$tick(), System.nanoTime());
+            ProfilerBridge.finishJob(this, success, ae2craftingtime$tick(), System.nanoTime(),
+                    ae2craftingtime$server());
         }
     }
 

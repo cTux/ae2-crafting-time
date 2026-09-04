@@ -20,6 +20,10 @@ public record ProviderHighlightS2C(String dimensionId, List<BlockPos> positions,
     }
 
     public void handle() {
-        ProviderHighlightClient.show(dimensionId, positions, durationSeconds, outputId);
+        if (durationSeconds <= 0 || positions == null || positions.isEmpty()) {
+            ProviderHighlightClient.clearFor(outputId);
+        } else {
+            ProviderHighlightClient.show(dimensionId, positions, durationSeconds, outputId);
+        }
     }
 }

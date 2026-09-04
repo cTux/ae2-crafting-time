@@ -179,6 +179,27 @@ public final class CraftProfiler {
         return true;
     }
 
+    /**
+     * Every output the scope still tracks: waiting keys plus pending keys.
+     * Snapshot before {@link #clearPending} so finish and cancel paths can
+     * tell clients to drop their highlight plates.
+     */
+    public Set<ProfileKey> scopedKeys(Object scope) {
+        if (scope == null) {
+            return Set.of();
+        }
+        var keys = new HashSet<ProfileKey>();
+        var waitingState = waiting.get(scope);
+        if (waitingState != null) {
+            keys.addAll(waitingState.keys);
+        }
+        var scopedPending = pending.get(scope);
+        if (scopedPending != null) {
+            keys.addAll(scopedPending.keySet());
+        }
+        return Set.copyOf(keys);
+    }
+
     public void clearPending(Object scope) {
         missingProviders.clear(scope);
         dispatchPower.clear(scope);

@@ -28,6 +28,17 @@ public final class ProviderHighlightRender {
         var levelDimension = minecraft.level.dimension().identifier().toString();
         var camera = minecraft.gameRenderer.getMainCamera().position();
         var consumers = minecraft.renderBuffers().bufferSource();
+        // A broken provider block drops its edge and plate immediately, in
+        // this dimension only.
+        ProviderHighlightClient.trimPositions(levelDimension, pos -> {
+            if (!minecraft.level.isLoaded(pos)) {
+                return true;
+            }
+            if (minecraft.level.getBlockState(pos).isAir()) {
+                return false;
+            }
+            return minecraft.level.getBlockEntity(pos) != null;
+        });
         var rainbow = ProviderHighlightClient.rainbowRgb();
         var pulse = ProviderHighlightClient.pulseAlpha();
         var alpha = (int) (pulse * 255);

@@ -260,11 +260,49 @@ public final class ProfilerBridge {
     }
 
     public static void finishJob(Object scope, boolean success, long tick, long nanoTime) {
+        finishJob(scope, success, tick, nanoTime, null);
+    }
+
+    public static void finishJob(Object scope, boolean success, long tick, long nanoTime,
+            net.minecraft.server.MinecraftServer server) {
+        var highlightKeys = scope == null ? Set.<ProfileKey>of() : PROFILER.scopedKeys(scope);
+        var highlightOwner = scope == null ? Optional.<UUID>empty() : PROFILER.jobOwner(scope);
         ACCURACY.finish(scope, success && isEnabled(), tick, nanoTime);
         PROFILER.clearPending(scope);
         ProviderStartTracker.clear(scope);
         BlockReasonNotifier.clear(scope);
+        clearHighlights(server, highlightOwner.orElse(null), highlightKeys);
         persistStatuses();
+    }
+
+    /**
+     * Tells the craft owner to drop every highlight plate for the finished
+     * scope. Empty positions with duration zero is the clear signal the
+     * client routes to {@code ProviderHighlightClient.clearFor}, so plates
+     * vanish even with a closed screen and no snapshot. Best-effort: a
+     * missing server or offline owner only skips the send.
+     */
+    private static void clearHighlights(net.minecraft.server.MinecraftServer server, UUID owner,
+            Set<ProfileKey> keys) {
+        if (server == null || owner == null || keys == null || keys.isEmpty()) {
+            return;
+        }
+        var player = server.getPlayerList().getPlayer(owner);
+        if (player == null) {
+            return;
+        }
+        for (var key : keys) {
+            if (key == null) {
+                continue;
+            }
+            try {
+                StatsNetwork.sendTo(player,
+                        new com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C("", List.of(),
+                                key.outputId(), 0));
+            } catch (Exception ignored) {
+                // One unsendable plate must not hide the rest.
+            }
+        }
     }
 
     public static Optional<ProfileStats> stats(AEKey what) {

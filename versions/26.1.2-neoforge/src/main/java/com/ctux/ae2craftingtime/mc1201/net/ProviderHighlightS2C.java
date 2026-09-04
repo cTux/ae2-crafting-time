@@ -37,7 +37,13 @@ public record ProviderHighlightS2C(String dimensionId, List<BlockPos> positions,
     }
 
     public static void handle(ProviderHighlightS2C packet, IPayloadContext context) {
-        context.enqueueWork(() -> ProviderHighlightClient.show(packet.dimensionId, packet.positions,
-                packet.durationSeconds, packet.outputId));
+        context.enqueueWork(() -> {
+            if (packet.durationSeconds <= 0 || packet.positions == null || packet.positions.isEmpty()) {
+                ProviderHighlightClient.clearFor(packet.outputId);
+            } else {
+                ProviderHighlightClient.show(packet.dimensionId, packet.positions, packet.durationSeconds,
+                        packet.outputId);
+            }
+        });
     }
 }
