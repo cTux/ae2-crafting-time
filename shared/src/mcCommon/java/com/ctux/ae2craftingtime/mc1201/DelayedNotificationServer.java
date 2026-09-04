@@ -2,13 +2,22 @@ package com.ctux.ae2craftingtime.mc1201;
 
 import appeng.api.networking.IGrid;
 import com.ctux.ae2craftingtime.core.ProfileKey;
+import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightCodec;
+import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.BiConsumer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 public final class DelayedNotificationServer {
     public static void maybeNotify(Object scope, IGrid grid, long tick, MinecraftServer server) {
+        maybeNotify(scope, grid, tick, server, defaultHighlightSender());
+    }
+
+    public static void maybeNotify(Object scope, IGrid grid, long tick, MinecraftServer server,
+            BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
         if (scope == null || server == null) {
             return;
         }
@@ -30,7 +39,7 @@ public final class DelayedNotificationServer {
         var dimension = ProfilerBridge.dimensionId(grid);
         for (var event : newlyDelayed) {
             notify(player, scope, grid, dimension, owner, event.key(),
-                    event.diagnostic().idleTicks(), event.diagnostic().typicalDurationTicks());
+                    event.diagnostic().idleTicks(), event.diagnostic().typicalDurationTicks(), highlightSender);
         }
         ProfilerBridge.persistProviderState();
     }
@@ -52,7 +61,8 @@ public final class DelayedNotificationServer {
     }
 
     private static void notify(ServerPlayer player, Object scope, IGrid grid, String dimension, UUID owner,
-            ProfileKey key, long idleTicks, double typicalTicks) {
+            ProfileKey key, long idleTicks, double typicalTicks,
+            BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
         var positions = ProfilerBridge.locatePositions(scope, grid, key);
         var name = ProfilerBridge.displayName(key);
         UUID recordId = null;
@@ -61,7 +71,30 @@ public final class DelayedNotificationServer {
                     player.level().getGameTime()).id();
         }
         ProfilerBridge.replaceProviderStart(key, owner, positions, name);
+        pushAutoHighlight(player, dimension, key, positions, highlightSender);
         player.sendSystemMessage(DelayedChatText.delayedMessage(name, recordId, idleTicks, typicalTicks));
+    }
+
+    /**
+     * Loader-agnostic highlight sender: shared code builds the
+     * {@link ProviderHighlightCodec.Highlight} from already-resolved notify
+     * state, while each loader's {@code StatsNetwork} delivers its own
+     * {@code ProviderHighlightS2C} packet. Never requires an open menu.
+     */
+    public static BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> defaultHighlightSender() {
+        return (player, highlight) -> StatsNetwork.sendTo(player, new ProviderHighlightS2C(
+                highlight.dimensionId(), highlight.positions(), highlight.outputId(),
+                highlight.durationSeconds()));
+    }
+
+    static void pushAutoHighlight(ServerPlayer player, String dimension, ProfileKey key,
+            List<BlockPos> positions, BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
+        if (player == null || key == null || positions == null || positions.isEmpty()
+                || highlightSender == null) {
+            return;
+        }
+        highlightSender.accept(player, new ProviderHighlightCodec.Highlight(dimension, positions,
+                key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS));
     }
 
     private DelayedNotificationServer() {

@@ -20,10 +20,15 @@ public final class ProviderHighlightClient {
         }
     }
 
-    public record Plate(String dimensionId, List<BlockPos> positions, String outputId) {
+    public record Plate(String dimensionId, List<BlockPos> positions, String outputId,
+            long highlightedAtMillis) {
         public Plate {
             positions = positions == null ? List.of() : List.copyOf(positions);
             outputId = outputId == null ? "" : outputId;
+        }
+
+        public Plate(String dimensionId, List<BlockPos> positions, String outputId) {
+            this(dimensionId, positions, outputId, System.currentTimeMillis());
         }
     }
 
@@ -88,13 +93,31 @@ public final class ProviderHighlightClient {
      * entry yet, e.g. the CPU screen is closed so no snapshot ever arrived)
      * still show: only a positive entry without a stall hides the plate.
      * prunePlates drops that case once a snapshot arrives.
+     * A freshly auto-highlighted plate (delayed/blocked ping with no open
+     * window) still shows while its 15-second edge is live, even when a stale
+     * no-stall snapshot entry says otherwise. Once that window lapses the
+     * gate falls back to the stall cache, so stale plates never stick around.
      */
     public static boolean shouldShowPlates(String outputId) {
+        return shouldShowPlatesAt(outputId, System.currentTimeMillis());
+    }
+
+    static boolean shouldShowPlatesAt(String outputId, long nowMillis) {
         if (outputId == null || outputId.isBlank()) {
             return false;
         }
         var key = new ProfileKey(outputId);
-        return ClientStats.CACHE.stall(key).isPresent() || ClientStats.CACHE.get(key).isEmpty();
+        if (ClientStats.CACHE.stall(key).isPresent()) {
+            return true;
+        }
+        if (ClientStats.CACHE.get(key).isEmpty()) {
+            return true;
+        }
+        var plate = PLATES.get(outputId);
+        if (plate == null) {
+            return false;
+        }
+        return nowMillis - plate.highlightedAtMillis() < ProviderLocateCommand.HIGHLIGHT_SECONDS * 1000L;
     }
 
     /**
