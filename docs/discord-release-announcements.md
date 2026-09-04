@@ -6,8 +6,9 @@ repository events, but its message format is fixed and does not guarantee that
 release assets appear in the message.
 
 The workflow runs when a GitHub Release is published. It posts the release page,
-the complete release body, and a direct download link for each JAR. Long
-announcements are sent as ordered messages within Discord's 2,000-character
+the complete release body, and one row per JAR in the form
+`[filename.jar](GitHub URL) ([CF](CurseForge file URL), [MR](Modrinth version URL))`.
+Long announcements are sent as ordered messages within Discord's 2,000-character
 limit. The workflow logs each confirmed message ID and stops on a failed or
 unconfirmed part; inspect those messages before retrying.
 
@@ -91,7 +92,11 @@ The tracked `.github/workflows/discord-release.yml` workflow runs on GitHub's
 `release: published` event. It checks out the trusted default branch and runs
 `scripts/announce-discord-release.sh` with GitHub's read-only job token. The
 script uses each asset's public `browser_download_url` value for the direct
-download link.
+download link, resolves the matching CurseForge file URL via the public
+cfwidget API using the matrix `curseProjectId`, and builds the matching
+Modrinth version URL from the matrix `modrinthProjectId` plus the
+`<modVersion>-<loader>-<minecraftVersion>` version number. If the CurseForge
+lookup fails, the announcement still sends with the available links.
 
 GitHub may start the workflow while `gh release create` is still uploading
 assets. The script reads the expected JAR count from
@@ -108,8 +113,11 @@ real release:
 2. Confirm the announcements channel contains one complete announcement for the
    release, using ordered continuation messages only when necessary.
 3. Compare its JAR links with the assets on the GitHub Release. Every asset whose
-   name ends in `.jar` should appear once.
-4. Open one link and confirm it downloads the named JAR from GitHub.
+   name ends in `.jar` should appear once, kept linked to GitHub, followed by
+   its own `CF` and `MR` links for the same mod version, Minecraft version,
+   and loader.
+4. Open one GitHub link and confirm it downloads the named JAR; open its `CF`
+   and `MR` links and confirm they show the matching file/version.
 5. Compare the complete Discord description with the GitHub Release body;
    every section and change must appear in the same order, without truncation.
 
