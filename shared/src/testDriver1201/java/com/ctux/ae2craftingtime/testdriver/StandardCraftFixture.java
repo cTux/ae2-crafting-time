@@ -25,6 +25,7 @@ import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 final class StandardCraftFixture {
     BlockPos terminal;
     private boolean initialized;
+    boolean returnedStone;
     private int[] initialSamples;
     String checkpoint = "new";
 
@@ -124,6 +125,7 @@ final class StandardCraftFixture {
             var output = furnace.getItem(2);
             if (!output.isEmpty()) {
                 long inserted = storage.insert(AEItemKey.of(output), output.getCount(), Actionable.MODULATE, IActionSource.ofMachine(cpu(player)));
+                if (offset == 4 && inserted > 0) returnedStone = true;
                 furnace.removeItem(2, (int) inserted);
                 furnace.setChanged();
             }

@@ -18,12 +18,12 @@ try {
     $manifest = Join-Path $temp 'launch.json'
     $launch | ConvertTo-Json | Set-Content $manifest
     $parameters = @{LaunchManifest=$manifest;BundleDirectory=$bundle;RuntimeDirectory=$runtime;Target='1.20.1-forge'
-        Profile='compatible';Scenario='standard-ae2';World=('ae2ct-'+'a'*32);Evidence=$evidence}
+        Profile='compatible';Scenario='delayed-status';World=('ae2ct-'+'a'*32);Evidence=$evidence}
     $prepared = & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters
     if ($prepared.executable -ne 'C:\Java17\bin\java.exe') { throw 'Wrong Java executable' }
     $arguments = Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw
     if ($arguments.Contains('old') -or $arguments.Contains('-Xmx1G') -or -not $arguments.Contains('-Xmx8G') -or
-            -not $arguments.Contains('scenario=standard-ae2') -or -not $arguments.Contains('C:\\Native Loader\\client.jar')) {
+            -not $arguments.Contains('scenario=delayed-status') -or -not $arguments.Contains('C:\\Native Loader\\client.jar')) {
         throw 'Native launch lost the installed classpath or retained previous run arguments'
     }
     if ((Get-Content "$runtime/mods/mod.jar" -Raw) -ne (Get-Content "$bundle/mods/mod.jar" -Raw)) { throw 'Artifact changed during staging' }

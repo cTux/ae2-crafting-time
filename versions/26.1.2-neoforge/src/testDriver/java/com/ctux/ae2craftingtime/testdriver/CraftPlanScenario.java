@@ -73,7 +73,7 @@ public final class CraftPlanScenario {
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         DispatchObservation.watch(null, null);
         this.minecraft = minecraft;
-        standard = StandardAe2Scenario.SCENARIO.equals(options.scenario()) ? new StandardAe2Scenario() : null;
+        standard = StandardAe2Scenario.supports(options.scenario()) ? new StandardAe2Scenario(options.scenario()) : null;
         noSpace = NoSpaceScenario.SCENARIO.equals(options.scenario()) ? new NoSpaceScenario() : null;
         noPower = NoPowerScenario.SCENARIO.equals(options.scenario()) ? new NoPowerScenario() : null;
         noProvider = NoProviderScenario.SCENARIO.equals(options.scenario()) ? new NoProviderScenario() : null;

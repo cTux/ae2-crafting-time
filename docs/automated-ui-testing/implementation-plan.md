@@ -113,9 +113,9 @@ After contract checks pass, use `run-ae2-client-smoke` and CodexVM:
    one target in the first case; delayed leaf on all four in the second. Remove
    verification-only edits before the final candidate build. Broad fallback and
    failure paths are covered by deterministic tests, not invented smoke passes.
-4. Fetch/rebase the clean feature branch immediately before final full compatible
-   smoke. Run all four expanded full suites, plus required newest-adapter focused
-   graphs under SP-01/SP-02. Do not demand runtime smoke of older adapters.
+4. Run all four expanded full suites, plus required newest-adapter focused graphs
+   under SP-01/SP-02. Do not rebase automatically or repeat full smoke solely
+   because of a rebase. Do not demand runtime smoke of older adapters.
 5. Review every distinct English screenshot and semantic result, archive evidence,
    confirm fixture hashes, exact PID exit and removal of disposable worlds, and
    verify no driver/planner material entered production JARs. Record measured

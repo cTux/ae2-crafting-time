@@ -4,7 +4,8 @@ param(
     [switch]$Latest,
     [switch]$Interactive,
     [switch]$Stop,
-    [ValidatePattern("^(suite|standard-ae2|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [string]$CasesBase64,
     [string[]]$ProjectId,
     [string]$SshUser = "Codex",
     [string]$SshKeyPath = (Join-Path $env:USERPROFILE ".ssh\codexvm_smoke_ed25519"),
@@ -48,6 +49,10 @@ if ($BundleDirectory) {
     }
     $guestBundle = Join-Path $GuestSourceRoot $bundlePath.Substring($root.Length).TrimStart('\')
     $smokeArguments += @('-BundleDirectory', $guestBundle, '-PreparedLaunchRoot', $PreparedLaunchRoot)
+}
+if ($CasesBase64) {
+    if ($CasesBase64 -cnotmatch '^[A-Za-z0-9+/]+={0,2}$') { throw 'Invalid encoded case list' }
+    $smokeArguments += @('-CasesBase64', $CasesBase64)
 }
 if ($Latest) { $smokeArguments += "-Latest" }
 if ($Interactive) { $smokeArguments += "-Interactive" }

@@ -40,13 +40,18 @@ cover active and scheduled exclusions; the fixture does not simulate a craft.
 
 ## Standard AE2 acceptance scenario
 
-`standard-ae2` runs before the existing cases on every target. Its disposable
-native grid has two vanilla furnaces producing stone and smooth stone. It checks
-real multi-row plan/status ordering, tooltip, Ctrl-click details and Ctrl-Alt-click
-reset with returned chat and server state, real submission, waiting/running/delayed
-rows, header geometry, completion and exact produced quantity. Fuel is held until
-the delayed state is captured; the fixture imports actual furnace output using
-the grid storage API. No production status is injected.
+`standard-ae2` is a host-expanded group of six independently runnable leaves:
+`standard-plan-controls`, `standard-status-controls`, `waiting-status`,
+`running-status`, `delayed-status`, and `craft-lifecycle`. Each has a fresh
+native grid and its own seeded estimates; no case depends on an earlier reset,
+world, job, or cached observation. The host keeps one process for the group.
+
+The [leaf contracts](../automated-ui-testing/technical-design.md#groups-and-independent-standard-flow)
+retain every original assertion. Waiting and running require real dependency
+progress. Delayed checks the active row, bold red label, diagnostic tooltip and
+recovery after actual output. Lifecycle follows terminal, amount, plan, Start,
+status, real furnace output and new samples, then reopens the idle CPU screen.
+The raw JVM property accepts leaf IDs or `suite`; use the host alias for the group.
 
 ## Goal
 

@@ -32,7 +32,10 @@ public record UiSnapshot(
         }
     }
 
-    public record ObservedText(String key, String rendered, List<String> arguments, Rect bounds) {
+    public record ObservedText(String key, String rendered, List<String> arguments, Rect bounds, Integer color, boolean bold) {
+        public ObservedText(String key, String rendered, List<String> arguments, Rect bounds) {
+            this(key, rendered, arguments, bounds, null, false);
+        }
         public ObservedText {
             arguments = List.copyOf(arguments);
         }

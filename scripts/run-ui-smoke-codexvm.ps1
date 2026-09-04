@@ -4,7 +4,8 @@ param(
     [switch]$Interactive,
     [switch]$Scheduled,
     [switch]$Stop,
-    [ValidatePattern("^(suite|standard-ae2|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [string]$CasesBase64,
     [string[]]$ProjectId,
     [string]$LocalRoot,
     [string]$InteractiveUser = "Codex",
@@ -52,6 +53,7 @@ if ($RequestPath) {
     $env:Path = "$(Join-Path $env:JAVA_HOME 'bin');$env:Path"
     $arguments = @{ ReportDirectory = $request.reportDirectory; Scenario = $request.scenario; Target = $request.target }
     if (-not $request.bundleDirectory -or -not $request.preparedLaunch) { throw 'Guest smoke requires host-built artifacts and an installed native loader manifest' }
+    if ($request.casesBase64) { $arguments.CasesBase64 = $request.casesBase64 }
     $arguments.BundleDirectory = $request.bundleDirectory
     $arguments.PreparedLaunch = $request.preparedLaunch
     if ($request.projectId) { $arguments.ProjectId = @($request.projectId) }
@@ -83,6 +85,7 @@ New-Item -ItemType Directory -Path $stage, $report -Force | Out-Null
 if ($LASTEXITCODE -gt 7) { throw "Failed to stage the checkout with robocopy exit $LASTEXITCODE" }
 
 $request = [ordered]@{
+    casesBase64 = $CasesBase64
     target = $Target; stagedRoot = $stage; reportDirectory = $report; scenario = $Scenario
     projectId = @($ProjectId); latest = $Latest.IsPresent; interactive = $Interactive.IsPresent; javaHome = $smokeJava
     bundleDirectory = $BundleDirectory; preparedLaunch = (Join-Path $PreparedLaunchRoot "$Target/launch.json")

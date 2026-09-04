@@ -36,5 +36,6 @@ foreach ($project in $projects) {
         throw "MISSING_FIXTURE: $id requires $($entry.scenario)"
     }
     [pscustomobject]@{ projectId = $id; name = $project.name; disposition = $disposition
+        cases = @(& (Join-Path $PSScriptRoot 'expand-ui-smoke-groups.ps1') -Target $Target -Scenarios $entry.scenario -MatrixDirectory $MatrixDirectory)
         scenario = $entry.scenario; reason = $reason; result = $(if ($disposition -eq 'EXCLUDED') { 'NOT_APPLICABLE' } else { 'NOT_RUN' }) }
 }

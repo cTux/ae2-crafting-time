@@ -23,14 +23,34 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TestDriverCoreTest {
     @Test
     void standardResultCannotOmitAnyRequiredPlanStatusOrOutputCheck() {
-        assertTrue(AddonCpuFixture.supports("standard-ae2"));
-        assertNull(AddonCpuFixture.create("standard-ae2"));
-        for (String missing : StandardAe2Scenario.CHECKS) {
-            var checks = new LinkedHashMap<String, Boolean>();
-            StandardAe2Scenario.CHECKS.stream().filter(key -> !key.equals(missing)).forEach(key -> checks.put(key, true));
-            assertThrows(IllegalArgumentException.class, () -> new DriverResult(1, true, "driver.jar",
-                    "1.20.1-forge", "compatible", "standard-ae2", "PASS", "en_us", java.util.Map.of(), null, checks, List.of(), null));
+        assertFalse(AddonCpuFixture.supports("standard-ae2"));
+        assertEquals(6, StandardAe2Scenario.CHECKS.size());
+        for (var entry : StandardAe2Scenario.CHECKS.entrySet()) {
+            var scenario = entry.getKey();
+            assertTrue(AddonCpuFixture.supports(scenario));
+            assertNull(AddonCpuFixture.create(scenario));
+            assertEquals(entry.getValue(), DriverResult.requiredChecks(scenario));
+            assertTrue(new StandardAe2Scenario(scenario).checkpoint().contains("PREPARE"));
+            new StandardAe2Scenario(scenario).releaseKeys();
+            for (String missing : entry.getValue()) {
+                var checks = new LinkedHashMap<String, Boolean>();
+                entry.getValue().stream().filter(key -> !key.equals(missing)).forEach(key -> checks.put(key, true));
+                assertThrows(IllegalArgumentException.class, () -> new DriverResult(1, true, "driver.jar",
+                        "1.20.1-forge", "compatible", scenario, "PASS", "en_us", java.util.Map.of(), null, checks, List.of(), null));
+            }
         }
+        assertThrows(IllegalArgumentException.class, () -> new StandardAe2Scenario("standard-ae2"));
+    }
+
+    @Test
+    void smokeUsesThePackagedCataloguesOrderForEveryTarget() {
+        assertEquals("batched-long", SmokeAdapterCatalog.newest("1.20.1-forge").get("neoecoae"));
+        assertEquals("batched-int", SmokeAdapterCatalog.newest("1.21.1-neoforge").get("neoecoae"));
+        assertEquals("tree-layout", SmokeAdapterCatalog.newest("1.20.1-fabric").get("ae2ct"));
+        assertEquals(java.util.Map.of("advanced_ae", "advanced-cpu"), SmokeAdapterCatalog.newest("26.1.2-neoforge"));
+        assertTrue(SmokeAdapterCatalog.newest("unknown").isEmpty());
+        assertThrows(IllegalArgumentException.class, () -> SmokeAdapterCatalog.main(new String[0]));
+        SmokeAdapterCatalog.main(new String[] { "unknown" });
     }
 
     @Test

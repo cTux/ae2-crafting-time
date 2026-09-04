@@ -53,10 +53,9 @@ and the requested smoke checks pass. Create or comment on upstream or local
 issues only when the user requests it; include reproduction evidence and link
 the two issues when both exist.
 
-Immediately before the final complete compatible-profile smoke, fetch `origin`
-and rebase the clean work branch onto `origin/master`. If a later base change
-touches production, build, dependency, fixture, or driver code, rebase and run
-that final smoke again.
+Rebase only when the user explicitly requests it. A rebase alone does not
+require a full smoke run or invalidate completed smoke evidence. Choose any
+additional verification from the actual changes and the requested task scope.
 
 ## Timing Report
 
@@ -85,3 +84,10 @@ time. Mark an unavailable duration as `not measured`; do not estimate it.
   gameplay unless the request authorizes it.
 - Never substitute a loader, target, scenario, or profile. Do not reinterpret a
   build or dependency request as permission to launch Minecraft.
+
+For authorized change-focused verification after the PR exists, use
+`scripts/run-ui-smoke.ps1 -Changed -BaseRef origin/master`. Add `-PlanOnly`
+to review scope without builds or VM access. Keep no-argument full mode for
+full/release requests. `standard-ae2` is a host alias for six independent
+leaves; raw JVM launches must use a leaf or an expanded suite. A focused pass
+never replaces full-suite or newest-adapter proof. Archive selection.json.
