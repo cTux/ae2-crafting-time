@@ -153,6 +153,24 @@ Rules:
 - Missing stats or waiting values therefore remove old client state instead of
   leaving stale values behind.
 
+### `ProviderLocateC2S`
+
+Sent from client to server when a delayed row in the crafting CPU screen is
+double-clicked.
+
+Fields:
+
+```text
+outputId: string, at most 128 chars (profile key id)
+```
+
+Rules:
+
+- The server resolves the clicking player's open CPU scope and grid,
+  requires job ownership, and answers with `ProviderHighlightS2C` or the
+  private expiry notice. No locate records are involved.
+- Oversized or malformed ids are rejected before any lookup.
+
 ### `ProviderHighlightS2C`
 
 Sent from server to only the clicking player after a locate click.

@@ -1,11 +1,16 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import com.ctux.ae2craftingtime.core.ProfileKey;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 
 /**
  * Client-side only. Holds the latest provider highlight (dimension, block
- * positions, expiry timestamp) for the per-loader render hooks. Never touched
+ * positions, expiry timestamp) for the per-loader render hooks, plus one
+ * persistent plate per located output. Plates outlive the 15-second edge
+ * highlight and render while the output still reports a stall. Never touched
  * on a dedicated server.
  */
 public final class ProviderHighlightClient {
@@ -15,6 +20,16 @@ public final class ProviderHighlightClient {
         }
     }
 
+    public record Plate(String dimensionId, List<BlockPos> positions, String outputId) {
+        public Plate {
+            positions = positions == null ? List.of() : List.copyOf(positions);
+            outputId = outputId == null ? "" : outputId;
+        }
+    }
+
+    private static final int MAX_PLATES = 32;
+    private static final LinkedHashMap<String, Plate> PLATES = new LinkedHashMap<>();
+
     private static volatile Highlight current;
 
     public static void show(String dimensionId, List<BlockPos> positions, int durationSeconds, String outputId) {
@@ -23,6 +38,14 @@ public final class ProviderHighlightClient {
         }
         current = new Highlight(dimensionId, List.copyOf(positions), outputId,
                 System.currentTimeMillis() + durationSeconds * 1000L);
+        if (outputId != null && !outputId.isBlank()) {
+            PLATES.put(outputId, new Plate(dimensionId, positions, outputId));
+            while (PLATES.size() > MAX_PLATES) {
+                var eldest = PLATES.keySet().iterator();
+                eldest.next();
+                eldest.remove();
+            }
+        }
     }
 
     public static Highlight live() {
@@ -32,6 +55,32 @@ public final class ProviderHighlightClient {
             return null;
         }
         return highlight;
+    }
+
+    /** Persistent plates for the render hooks to filter by dimension and stall. */
+    public static List<Plate> plates() {
+        return new ArrayList<>(PLATES.values());
+    }
+
+    /**
+     * Drops plates whose output no longer reports a stall after a snapshot
+     * for the requested keys was applied. Call right after the client cache
+     * replace, from every loader's snapshot handler.
+     */
+    public static void prunePlates(List<String> requestedKeys) {
+        if (requestedKeys == null || requestedKeys.isEmpty() || PLATES.isEmpty()) {
+            return;
+        }
+        for (var id : requestedKeys) {
+            if (id != null && ClientStats.CACHE.stall(new ProfileKey(id)).isEmpty()) {
+                PLATES.remove(id);
+            }
+        }
+    }
+
+    static void clearPlates() {
+        PLATES.clear();
+        current = null;
     }
 
     /**

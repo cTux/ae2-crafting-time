@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import com.ctux.ae2craftingtime.core.ProfileKey;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.item.ItemModelResolver;
@@ -21,15 +22,11 @@ public final class ProviderHighlightRender {
 
     @net.neoforged.bus.api.SubscribeEvent
     public static void onRenderLevelStage(RenderLevelStageEvent.AfterTranslucentParticles event) {
-        var highlight = ProviderHighlightClient.live();
-        if (highlight == null) {
-            return;
-        }
         var minecraft = Minecraft.getInstance();
-        if (minecraft.level == null
-                || !minecraft.level.dimension().identifier().toString().equals(highlight.dimensionId())) {
+        if (minecraft.level == null) {
             return;
         }
+        var levelDimension = minecraft.level.dimension().identifier().toString();
         var camera = minecraft.gameRenderer.getMainCamera().position();
         var consumers = minecraft.renderBuffers().bufferSource();
         var rainbow = ProviderHighlightClient.rainbowRgb();
@@ -38,22 +35,32 @@ public final class ProviderHighlightRender {
         var argb = alpha << 24 | (int) (rainbow[0] * 255) << 16 | (int) (rainbow[1] * 255) << 8
                 | (int) (rainbow[2] * 255);
         var redArgb = alpha << 24 | 0xFF2626;
-        var lines = consumers.getBuffer(RenderTypes.lines());
-        for (var pos : highlight.positions()) {
-            ProviderHighlightShapes.renderThickRainbowBox(event.getPoseStack(), lines,
-                    pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z, argb,
-                    ProviderHighlightShapes.LINE_WIDTH);
+        // Click edges first in their own batch, then persistent plates.
+        var highlight = ProviderHighlightClient.live();
+        if (highlight != null && levelDimension.equals(highlight.dimensionId())) {
+            var lines = consumers.getBuffer(RenderTypes.lines());
+            for (var pos : highlight.positions()) {
+                ProviderHighlightShapes.renderThickRainbowBox(event.getPoseStack(), lines,
+                        pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z, argb,
+                        ProviderHighlightShapes.LINE_WIDTH);
+            }
+            consumers.endBatch(RenderTypes.lines());
         }
-        consumers.endBatch(RenderTypes.lines());
-        // Plates in their own batch, one render type per pass.
+        // Plates persist while their output still reports a stall.
         var filled = consumers.getBuffer(RenderTypes.debugFilledBox());
-        for (var pos : highlight.positions()) {
-            var originX = pos.getX() - camera.x;
-            var originY = pos.getY() - camera.y;
-            var originZ = pos.getZ() - camera.z;
-            for (var face : ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z)) {
-                ProviderHighlightShapes.renderFacePlate(event.getPoseStack(), filled, originX, originY, originZ,
-                        face, redArgb);
+        for (var plate : ProviderHighlightClient.plates()) {
+            if (!levelDimension.equals(plate.dimensionId())
+                    || ClientStats.CACHE.stall(new ProfileKey(plate.outputId())).isEmpty()) {
+                continue;
+            }
+            for (var pos : plate.positions()) {
+                var originX = pos.getX() - camera.x;
+                var originY = pos.getY() - camera.y;
+                var originZ = pos.getZ() - camera.z;
+                for (var face : ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z)) {
+                    ProviderHighlightShapes.renderFacePlate(event.getPoseStack(), filled, originX, originY,
+                            originZ, face, redArgb);
+                }
             }
         }
         consumers.endBatch(RenderTypes.debugFilledBox());
@@ -61,39 +68,41 @@ public final class ProviderHighlightRender {
 
     @net.neoforged.bus.api.SubscribeEvent
     public static void onSubmitGeometry(SubmitCustomGeometryEvent event) {
-        var highlight = ProviderHighlightClient.live();
-        if (highlight == null) {
-            return;
-        }
         var minecraft = Minecraft.getInstance();
-        if (minecraft.level == null
-                || !minecraft.level.dimension().identifier().toString().equals(highlight.dimensionId())) {
+        if (minecraft.level == null) {
             return;
         }
-        var stack = ProviderHighlightShapes.resolveItem(highlight.outputId());
-        if (stack.isEmpty()) {
-            return;
-        }
+        var levelDimension = minecraft.level.dimension().identifier().toString();
+        var camera = minecraft.gameRenderer.getMainCamera().position();
+        var collector = event.getSubmitNodeCollector();
+        var pose = event.getPoseStack();
         var manager = minecraft.getModelManager();
         if (itemResolver == null || resolverManager != manager) {
             itemResolver = new ItemModelResolver(manager);
             resolverManager = manager;
         }
-        itemResolver.updateForTopItem(ITEM_STATE, stack, ItemDisplayContext.FIXED, minecraft.level, null, 0);
-        if (ITEM_STATE.isEmpty()) {
-            return;
-        }
-        var camera = minecraft.gameRenderer.getMainCamera().position();
-        var collector = event.getSubmitNodeCollector();
-        var pose = event.getPoseStack();
-        for (var pos : highlight.positions()) {
-            var light = LevelRenderer.getLightCoords(minecraft.level, pos);
-            for (var face : ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z)) {
-                pose.pushPose();
-                ProviderHighlightShapes.orientFaceForItem(pose, pos.getX() - camera.x, pos.getY() - camera.y,
-                        pos.getZ() - camera.z, face);
-                ITEM_STATE.submit(pose, collector, light, OverlayTexture.NO_OVERLAY, 0);
-                pose.popPose();
+        for (var plate : ProviderHighlightClient.plates()) {
+            if (!levelDimension.equals(plate.dimensionId())
+                    || ClientStats.CACHE.stall(new ProfileKey(plate.outputId())).isEmpty()) {
+                continue;
+            }
+            var stack = ProviderHighlightShapes.resolveItem(plate.outputId());
+            if (stack.isEmpty()) {
+                continue;
+            }
+            itemResolver.updateForTopItem(ITEM_STATE, stack, ItemDisplayContext.FIXED, minecraft.level, null, 0);
+            if (ITEM_STATE.isEmpty()) {
+                continue;
+            }
+            for (var pos : plate.positions()) {
+                var light = LevelRenderer.getLightCoords(minecraft.level, pos);
+                for (var face : ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z)) {
+                    pose.pushPose();
+                    ProviderHighlightShapes.orientFaceForItem(pose, pos.getX() - camera.x, pos.getY() - camera.y,
+                            pos.getZ() - camera.z, face);
+                    ITEM_STATE.submit(pose, collector, light, OverlayTexture.NO_OVERLAY, 0);
+                    pose.popPose();
+                }
             }
         }
     }

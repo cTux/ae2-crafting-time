@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
@@ -40,12 +41,8 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
         StatsNetwork.registerClient();
         WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
             var highlight = ProviderHighlightClient.live();
-            if (highlight == null) {
-                return;
-            }
             var minecraft = Minecraft.getInstance();
-            if (minecraft.level == null
-                    || !minecraft.level.dimension().location().toString().equals(highlight.dimensionId())) {
+            if (minecraft.level == null) {
                 return;
             }
             var camera = context.camera().getPosition();
@@ -59,18 +56,29 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
             }
             var rainbow = ProviderHighlightClient.rainbowRgb();
             var alpha = ProviderHighlightClient.pulseAlpha();
-            // Edges first: plate and item writes switch the shared fallback
+            // Click edges first: plate and item writes switch the shared fallback
             // builder to other render types, so one pass per type.
-            for (var pos : highlight.positions()) {
-                ProviderHighlightShapes.renderThickRainbowBox(poseStack,
-                        consumers.getBuffer(RenderType.lines()), new AABB(pos).inflate(0.002), rainbow[0],
-                        rainbow[1], rainbow[2], alpha);
+            if (highlight != null
+                    && minecraft.level.dimension().location().toString().equals(highlight.dimensionId())) {
+                for (var pos : highlight.positions()) {
+                    ProviderHighlightShapes.renderThickRainbowBox(poseStack,
+                            consumers.getBuffer(RenderType.lines()), new AABB(pos).inflate(0.002), rainbow[0],
+                            rainbow[1], rainbow[2], alpha);
+                }
             }
-            var stack = ProviderHighlightShapes.resolveItem(highlight.outputId());
-            for (var pos : highlight.positions()) {
-                ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos,
-                        stack, ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z),
-                        LevelRenderer.getLightColor(minecraft.level, pos), alpha);
+            // Plates persist while their output still reports a stall.
+            var levelDimension = minecraft.level.dimension().location().toString();
+            for (var plate : ProviderHighlightClient.plates()) {
+                if (!levelDimension.equals(plate.dimensionId())
+                        || ClientStats.CACHE.stall(new ProfileKey(plate.outputId())).isEmpty()) {
+                    continue;
+                }
+                var stack = ProviderHighlightShapes.resolveItem(plate.outputId());
+                for (var pos : plate.positions()) {
+                    ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos,
+                            stack, ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z),
+                            LevelRenderer.getLightColor(minecraft.level, pos), alpha);
+                }
             }
             if (consumers instanceof net.minecraft.client.renderer.MultiBufferSource.BufferSource source) {
                 source.endBatch(RenderType.lines());

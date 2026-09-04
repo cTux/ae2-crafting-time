@@ -132,27 +132,36 @@ compatibility boundary again in the same commit):
 locate click (command, runs as the clicker, silent)
   -> record lookup (owner must match clicker)
   -> ProviderHighlightS2C(dimension, positions, output id, 15s) to the clicker only
+  -> client draws edges for 15s and pins plates while the output stays delayed
+
+double-click a delayed CPU row (ProviderLocateC2S(output id), no record)
+  -> resolve the clicker's open CPU scope and grid, require job ownership
+  -> live positions resolve -> same highlight packet to the clicker only
+  -> nothing resolves -> private expiry notice
 ```
 
 Adding the packet changes the wire registry. Bump every affected
 compatibility boundary in the same commit:
 
 - 1.20.1 Forge channel protocol: `9` to `10` for the first layout,
-  then `10` to `11` when the output id field lands;
+  then `10` to `11` when the output id field lands, then `11` to `12` for
+  the locate request;
 - 1.20.1 Fabric: new `provider_highlight_v1` channel, then a new
-  `provider_highlight_v2` channel for the output id layout (existing
+  `provider_highlight_v2` channel for the output id layout, then a new
+  `provider_locate_v1` channel for the locate request (existing
   channels keep their versions because their layouts do not change);
 - 1.21.1 and 26.1.2 NeoForge registrar version: `8` to `9`, then `9`
-  to `10`.
+  to `10`, then `10` to `11`.
 
 ## Client behavior
 
 A small client store keeps the latest highlight (dimension, positions,
-output id, expiry timestamp) and prunes it on access. Each loader draws
-thick (2-3x) rainbow-cycling outline boxes while the highlight is live and
-the player is in the same dimension, plus the stuck output's item icon on a
-red plate centered on each camera-facing face
-(see [issue #237](https://github.com/cTux/ae2-crafting-time/issues/237)):
+output id, expiry timestamp) and prunes it on access, plus one persistent
+plate per located output (dimension, positions, output id, capped at 32).
+Each loader draws thick (2-3x) rainbow-cycling outline boxes for the live
+15-second highlight, while plates render on top for as long as the client
+cache still reports a stall for that output — even with no live highlight
+(see [issue #239](https://github.com/cTux/ae2-crafting-time/issues/239)):
 
 - 1.20.1 Forge: game-bus subscriber on the translucent-particles render
   stage;

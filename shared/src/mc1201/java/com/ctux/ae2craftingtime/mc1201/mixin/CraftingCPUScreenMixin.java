@@ -15,6 +15,7 @@ import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.mc1201.ProviderLocateClick;
 import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
 import com.ctux.ae2craftingtime.mc1201.StatsClickHandler;
 import com.ctux.ae2craftingtime.mc1201.TtcBadge;
@@ -68,6 +69,10 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
     @Unique
     private int ae2craftingtime$ttcSortMode = 2;
     @Unique
+    private long ae2craftingtime$lastLocateClickMs;
+    @Unique
+    private String ae2craftingtime$lastLocateOutputId;
+    @Unique
     private Component ae2craftingtime$titleTtc;
     @Unique
     private int ae2craftingtime$titleTtcX;
@@ -84,6 +89,9 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0 && ae2craftingtime$tryLocateDoubleClick(mouseX, mouseY)) {
+            return true;
+        }
         if (TtcDetailsClick.tryHandle(button)
                 || (TtcDetailsKeyMapping.matchesMouse(button) || TtcDetailsKeyMapping.matchesResetMouse(button))
                 && ae2craftingtime$handleClickedStats(mouseX, mouseY, button)) {
@@ -219,6 +227,27 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         StatsChatMessages.show(key, entry.getWhat().getDisplayName().getString(),
                 AeKeyAmounts.normalize(entry.getWhat(), amount));
         return true;
+    }
+
+    @Unique
+    private boolean ae2craftingtime$tryLocateDoubleClick(double mouseX, double mouseY) {
+        if (status == null) {
+            return false;
+        }
+        var entry = ae2craftingtime$clickedEntry(mouseX, mouseY, status.getEntries());
+        if (entry == null || entry.getWhat() == null) {
+            return false;
+        }
+        var outputId = ProfilerBridge.key(entry.getWhat()).outputId();
+        var now = System.currentTimeMillis();
+        if (outputId.equals(ae2craftingtime$lastLocateOutputId)
+                && now - ae2craftingtime$lastLocateClickMs < 400) {
+            ae2craftingtime$lastLocateOutputId = null;
+            return ProviderLocateClick.requestLocate(outputId);
+        }
+        ae2craftingtime$lastLocateClickMs = now;
+        ae2craftingtime$lastLocateOutputId = outputId;
+        return false;
     }
 
     @Unique

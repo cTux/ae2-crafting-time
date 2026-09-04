@@ -15,9 +15,12 @@ should learn about it without watching the status screen.
 This covers [issue #231](https://github.com/cTux/ae2-crafting-time/issues/231).
 
 Highlight style follows
-[issue #237](https://github.com/cTux/ae2-crafting-time/issues/237):
-thick (2-3x) rainbow-cycling edges, plus the stuck output's item icon
-centered on each camera-facing block face on a red background.
+[issue #237](https://github.com/cTux/ae2-crafting-time/issues/237)
+as refined by
+[issue #239](https://github.com/cTux/ae2-crafting-time/issues/239):
+clicks highlight with thick (2-3x) rainbow-cycling edges only, while the
+stuck output's item icon stays centered on each camera-facing block face on
+a red background for as long as the output is delayed.
 (Supersedes the diagonal-rod style from
 [issue #234](https://github.com/cTux/ae2-crafting-time/issues/234), which
 read as messy rectangles in-game.)
@@ -28,10 +31,12 @@ read as messy rectangles in-game.)
   delivery, and once-per-stall rules.
 - The output name renders underlined with a hover hint that invites the click.
 - Clicking the name highlights each resolved provider block for 15 seconds
-  with a thick (2-3x) rainbow-cycling edge outline, plus the stuck output's
-  item icon centered on each camera-facing face on a red background.
-  Non-item outputs show the red plate with no icon.
-  Only the warned player ever receives highlights.
+  with a thick (2-3x) rainbow-cycling edge outline, and pins the stuck
+  output's item icon on a red plate centered on each camera-facing face for
+  as long as the output stays delayed. Non-item outputs show the red plate
+  with no icon. Only the warned player ever receives highlights.
+- Double-clicking a delayed row in the crafting CPU screen locates the same
+  way as clicking the chat link, without needing the chat message.
 - The word "delayed" renders in red in English and Ukrainian.
 - Clicking a link that belongs to another player, or whose record expired or
   was lost across a reload, highlights nothing and answers with a short
@@ -112,9 +117,9 @@ read as messy rectangles in-game.)
 
 - The warned player sees an underlined output name with a hover hint and a
   red "delayed" word.
-- Clicking the name draws thick (2-3x) rainbow-cycling boxes with the stuck
-  item on red face plates on the correct provider block(s) for 15 seconds;
-  other players see nothing.
+- Clicking the name draws thick (2-3x) rainbow-cycling edge boxes on the
+  correct provider block(s) for 15 seconds and pins item-on-red plates
+  there while the output stays delayed; other players see nothing.
 - Clicking another player's or an expired link shows the expiry notice and
   draws nothing.
 - Leaving and re-entering the world keeps the link working for an active

@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C;
+import com.ctux.ae2craftingtime.mc1201.net.ProviderLocateC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsChatC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsRequestC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsSnapshotS2C;
@@ -12,7 +13,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 @SuppressWarnings({ "deprecation", "removal" })
 public final class StatsNetwork {
-    private static final String PROTOCOL = "11";
+    private static final String PROTOCOL = "12";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(Ae2CraftingTime.MOD_ID, "main"),
             () -> PROTOCOL,
@@ -27,8 +28,10 @@ public final class StatsNetwork {
                 StatsSnapshotS2C::handle);
         CHANNEL.registerMessage(id++, StatsChatC2S.class, StatsChatC2S::encode, StatsChatC2S::decode,
                 StatsChatC2S::handle);
-        CHANNEL.registerMessage(id, ProviderHighlightS2C.class, ProviderHighlightS2C::encode,
+        CHANNEL.registerMessage(id++, ProviderHighlightS2C.class, ProviderHighlightS2C::encode,
                 ProviderHighlightS2C::decode, ProviderHighlightS2C::handle);
+        CHANNEL.registerMessage(id, ProviderLocateC2S.class, ProviderLocateC2S::encode,
+                ProviderLocateC2S::decode, ProviderLocateC2S::handle);
     }
 
     public static void sendTo(ServerPlayer player, StatsSnapshotS2C packet) {
@@ -40,6 +43,10 @@ public final class StatsNetwork {
     }
 
     public static void sendToServer(StatsChatC2S packet) {
+        CHANNEL.sendToServer(packet);
+    }
+
+    public static void sendToServer(ProviderLocateC2S packet) {
         CHANNEL.sendToServer(packet);
     }
 

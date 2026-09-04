@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C;
+import com.ctux.ae2craftingtime.mc1201.net.ProviderLocateC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsChatC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsRequestC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsSnapshotS2C;
@@ -19,6 +20,8 @@ public final class StatsNetwork {
     private static final ResourceLocation CHAT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "stats_chat_v2");
     private static final ResourceLocation HIGHLIGHT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
             "provider_highlight_v2");
+    private static final ResourceLocation LOCATE_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
+            "provider_locate_v1");
 
     public static void registerServer() {
         ServerPlayNetworking.registerGlobalReceiver(REQUEST_ID,
@@ -29,6 +32,11 @@ public final class StatsNetwork {
         ServerPlayNetworking.registerGlobalReceiver(CHAT_ID,
                 (server, player, handler, buffer, responseSender) -> {
                     var packet = StatsChatC2S.decode(buffer);
+                    server.execute(() -> packet.handle(player));
+                });
+        ServerPlayNetworking.registerGlobalReceiver(LOCATE_ID,
+                (server, player, handler, buffer, responseSender) -> {
+                    var packet = ProviderLocateC2S.decode(buffer);
                     server.execute(() -> packet.handle(player));
                 });
     }
@@ -52,6 +60,10 @@ public final class StatsNetwork {
 
     public static void sendToServer(StatsChatC2S packet) {
         ClientPlayNetworking.send(CHAT_ID, encode(packet));
+    }
+
+    public static void sendToServer(ProviderLocateC2S packet) {
+        ClientPlayNetworking.send(LOCATE_ID, encode(packet));
     }
 
     public static void sendTo(ServerPlayer player, StatsSnapshotS2C packet) {
@@ -83,6 +95,12 @@ public final class StatsNetwork {
     private static FriendlyByteBuf encode(ProviderHighlightS2C packet) {
         var buffer = PacketByteBufs.create();
         ProviderHighlightS2C.encode(packet, buffer);
+        return buffer;
+    }
+
+    private static FriendlyByteBuf encode(ProviderLocateC2S packet) {
+        var buffer = PacketByteBufs.create();
+        ProviderLocateC2S.encode(packet, buffer);
         return buffer;
     }
 

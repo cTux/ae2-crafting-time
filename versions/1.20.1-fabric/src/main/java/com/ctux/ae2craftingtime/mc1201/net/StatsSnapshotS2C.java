@@ -4,6 +4,7 @@ import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.StatsEntry;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
+import com.ctux.ae2craftingtime.mc1201.ProviderHighlightClient;
 import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entr
 
     public void handle() {
         ClientStats.CACHE.replace(requestedKeys.stream().map(ProfileKey::new).toList(), entries);
+        ProviderHighlightClient.prunePlates(requestedKeys);
         ClientStats.replaceNetworkAmounts(requestedKeys, networkAmounts);
         ClientStats.replaceWaitingTicks(requestedKeys, waitingTicks);
         ClientStats.replaceBlockReasons(requestedKeys, blockReasons, cpuContext);
