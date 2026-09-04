@@ -43,3 +43,4 @@ public final class ProviderHighlightClient {
 
     private ProviderHighlightClient() {
     }
+}
