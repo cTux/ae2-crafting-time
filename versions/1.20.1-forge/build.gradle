@@ -7,7 +7,7 @@ base {
     archivesName = 'ae2-crafting-time-1.20.1-Forge'
 }
 
-def runtimeRunDirectory = providers.gradleProperty('runtimeRunDirectory').getOrElse('run')
+def runtimeRunDirectory = providers.gradleProperty('runtimeRunDirectory').getOrElse('run-dev')
 
 legacyForge {
     enable {
