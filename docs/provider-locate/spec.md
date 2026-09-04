@@ -108,8 +108,9 @@ color.
 
 - The warned player sees an underlined output name with a hover hint and a
   red "delayed" word.
-- Clicking the name draws thick rainbow boxes with matching face diagonals
-  on the correct provider block(s) for 15 seconds; other players see nothing.
+- Clicking the name draws thick (2-3x) rainbow-cycling boxes with matching
+  face diagonals on the correct provider block(s) for 15 seconds; other
+  players see nothing.
 - Clicking another player's or an expired link shows the expiry notice and
   draws nothing.
 - Leaving and re-entering the world keeps the link working for an active

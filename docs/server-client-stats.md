@@ -171,7 +171,7 @@ Rules:
   with a private expiry notice and highlight nothing.
 - The client draws thick (2-3x) rainbow-cycling outline boxes with matching
   face diagonals while in the same dimension until the duration expires
-  (see issue #234).
+  (see [issue #234](https://github.com/cTux/ae2-crafting-time/issues/234)).
 
 ### Provider-start persistence
 
