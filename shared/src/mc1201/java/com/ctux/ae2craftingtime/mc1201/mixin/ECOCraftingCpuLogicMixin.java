@@ -11,6 +11,7 @@ import appeng.api.stacks.AEKey;
 import com.ctux.ae2craftingtime.mc1201.NeoEcoDispatchObserver;
 import appeng.hooks.ticking.TickHandler;
 import appeng.me.service.CraftingService;
+import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -48,7 +49,7 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
         if (cir.getReturnValue().successful()) {
             ae2craftingtime$grid = grid;
             ProfilerBridge.startJob(ProfilerBridge.networkId(grid), this, plan, ae2craftingtime$tick(),
-                    System.nanoTime());
+                    System.nanoTime(), ProfilerBridge.jobOwner(source));
         }
     }
 
@@ -81,8 +82,10 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
     @Inject(method = "tickCraftingLogic", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$finishCapacity(IEnergyService energyService, CraftingService craftingService,
             CallbackInfo ci) {
+        var tick = ae2craftingtime$tick();
         ProfilerBridge.updateCapacity(this, (int) Math.min(ae2craftingtime$usedSlots, ae2craftingtime$totalSlots),
-                ae2craftingtime$totalSlots, ae2craftingtime$tick());
+                ae2craftingtime$totalSlots, tick);
+        DelayedNotificationServer.maybeNotify(this, tick, ae2craftingtime$server());
     }
 
     @Inject(method = "insert", at = @At("HEAD"), remap = false)
@@ -125,5 +128,18 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
     @Unique
     private long ae2craftingtime$tick() {
         return TickHandler.instance().getCurrentTick();
+    }
+
+    @Unique
+    private net.minecraft.server.MinecraftServer ae2craftingtime$server() {
+        try {
+            var grid = ae2craftingtime$grid;
+            if (grid == null || grid.getPivot() == null) {
+                return null;
+            }
+            return grid.getPivot().getLevel().getServer();
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 }

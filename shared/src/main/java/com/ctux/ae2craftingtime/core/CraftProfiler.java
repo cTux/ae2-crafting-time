@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.UUID;
 import java.util.function.Predicate;
 
 public final class CraftProfiler {
@@ -21,6 +22,8 @@ public final class CraftProfiler {
     private final Map<Object, Map<ProfileKey, Long>> lastProgressTicks = new IdentityHashMap<>();
     private final Map<Object, CapacityState> capacities = new IdentityHashMap<>();
     private final Map<Object, WaitingState> waiting = new IdentityHashMap<>();
+    private final Map<Object, UUID> jobOwners = new IdentityHashMap<>();
+    private final Map<Object, Set<ProfileKey>> delayedNotified = new IdentityHashMap<>();
     private final Map<ProfileKey, BusyWindow> busyWindows = new HashMap<>();
     private final Map<ProfileKey, ArrayDeque<CraftSample>> samples = new HashMap<>();
     private final MissingProviderTracker<Object> missingProviders = new MissingProviderTracker<>();
@@ -52,6 +55,8 @@ public final class CraftProfiler {
             capacities.clear();
             waiting.clear();
             busyWindows.clear();
+            jobOwners.clear();
+            delayedNotified.clear();
         }
     }
 
@@ -79,6 +84,8 @@ public final class CraftProfiler {
 
         missingProviders.clear(scope);
         dispatchPower.clear(scope);
+        // A new job starts a fresh delayed-notification episode.
+        delayedNotified.remove(scope);
         var waitingKeys = new HashSet<ProfileKey>();
         for (var key : keys) {
             if (key != null) {
@@ -174,6 +181,8 @@ public final class CraftProfiler {
         lastProgressTicks.remove(scope);
         capacities.remove(scope);
         waiting.remove(scope);
+        jobOwners.remove(scope);
+        delayedNotified.remove(scope);
         if (removed == null) {
             return;
         }
@@ -211,6 +220,62 @@ public final class CraftProfiler {
         return Optional.of(new StallDiagnostic(idleTicks, typicalTicks, queue.size(),
                 capacityIsFresh ? capacity.usedParallelSlots : 0,
                 capacityIsFresh ? capacity.totalParallelSlots : 0));
+    }
+
+    public void setJobOwner(Object scope, UUID owner) {
+        if (scope == null || !enabled) {
+            return;
+        }
+        if (owner == null) {
+            jobOwners.remove(scope);
+        } else {
+            jobOwners.put(scope, owner);
+        }
+        // A new job starts a fresh delayed-notification episode.
+        delayedNotified.remove(scope);
+    }
+
+    public Optional<UUID> jobOwner(Object scope) {
+        if (scope == null || !enabled) {
+            return Optional.empty();
+        }
+        return Optional.ofNullable(jobOwners.get(scope));
+    }
+
+    public record DelayedEvent(ProfileKey key, StallDiagnostic diagnostic) {
+    }
+
+    /**
+     * Returns outputs that newly transitioned to DELAYED since the last poll.
+     * Each delayed output is reported once per delayed episode; progress that
+     * clears the stall makes a later transition eligible again.
+     */
+    public List<DelayedEvent> pollNewlyDelayed(Object scope, long tick) {
+        if (!enabled || scope == null) {
+            return List.of();
+        }
+        var scopedPending = pending.get(scope);
+        if (scopedPending == null) {
+            delayedNotified.remove(scope);
+            return List.of();
+        }
+        var notified = delayedNotified.computeIfAbsent(scope, ignored -> new HashSet<>());
+        var currentlyDelayed = new HashMap<ProfileKey, StallDiagnostic>();
+        for (var key : scopedPending.keySet()) {
+            stall(key, scope, tick).ifPresent(diagnostic -> currentlyDelayed.put(key, diagnostic));
+        }
+        // Progress that clears the stall ends the episode and re-arms notification.
+        notified.retainAll(currentlyDelayed.keySet());
+        var newly = new ArrayList<DelayedEvent>();
+        for (var entry : currentlyDelayed.entrySet()) {
+            if (notified.add(entry.getKey())) {
+                newly.add(new DelayedEvent(entry.getKey(), entry.getValue()));
+            }
+        }
+        if (notified.isEmpty()) {
+            delayedNotified.remove(scope);
+        }
+        return List.copyOf(newly);
     }
 
     public Optional<ProfileStats> stats(ProfileKey key) {
@@ -287,6 +352,8 @@ public final class CraftProfiler {
         pending.values().removeIf(Map::isEmpty);
         lastProgressTicks.values().forEach(scoped -> scoped.remove(key));
         lastProgressTicks.values().removeIf(Map::isEmpty);
+        delayedNotified.values().forEach(notified -> notified.remove(key));
+        delayedNotified.values().removeIf(Set::isEmpty);
         return cleared;
     }
 
@@ -343,6 +410,8 @@ public final class CraftProfiler {
         capacities.clear();
         waiting.clear();
         busyWindows.clear();
+        jobOwners.clear();
+        delayedNotified.clear();
         for (var output : persisted) {
             if (output == null || output.key() == null || output.unit() == null) {
                 continue;

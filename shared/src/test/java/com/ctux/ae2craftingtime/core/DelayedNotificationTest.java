@@ -1,0 +1,184 @@
+package com.ctux.ae2craftingtime.core;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.List;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+
+class DelayedNotificationTest {
+    private static ProfileKey key(String id) {
+        return new ProfileKey(id);
+    }
+
+    private static void seedTypical(CraftProfiler profiler, ProfileKey key, Object seedScope) {
+        profiler.start(key, seedScope, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(key, seedScope, 1, 200);
+    }
+
+    @Test
+    void notifiesOncePerDelayedEpisode() {
+        var profiler = new CraftProfiler(10);
+        var key = key("minecraft:iron_plate");
+        var cpu = new Object();
+        var owner = UUID.randomUUID();
+
+        seedTypical(profiler, key, new Object());
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 300);
+        profiler.setJobOwner(cpu, owner);
+
+        assertTrue(profiler.pollNewlyDelayed(cpu, 400).isEmpty());
+        var first = profiler.pollNewlyDelayed(cpu, 800);
+        assertEquals(1, first.size());
+        assertEquals(key, first.get(0).key());
+        // Repeated polls do not duplicate.
+        assertTrue(profiler.pollNewlyDelayed(cpu, 900).isEmpty());
+        assertTrue(profiler.pollNewlyDelayed(cpu, 1_000).isEmpty());
+    }
+
+    @Test
+    void progressClearsEpisodeAndRearms() {
+        var profiler = new CraftProfiler(10);
+        var key = key("minecraft:iron_plate");
+        var cpu = new Object();
+
+        seedTypical(profiler, key, new Object());
+        profiler.start(key, cpu, 10, ProfileUnit.ITEM, 100);
+        profiler.setJobOwner(cpu, UUID.randomUUID());
+
+        var first = profiler.pollNewlyDelayed(cpu, 800);
+        assertEquals(1, first.size());
+        assertTrue(profiler.pollNewlyDelayed(cpu, 850).isEmpty());
+
+        // Partial progress resets the delay clock and clears the notified episode.
+        profiler.complete(key, cpu, 1, 860);
+        assertTrue(profiler.pollNewlyDelayed(cpu, 900).isEmpty());
+
+        var second = profiler.pollNewlyDelayed(cpu, 1_300);
+        assertEquals(1, second.size());
+    }
+
+    @Test
+    void nullScopeAndDisabledAreSafe() {
+        var profiler = new CraftProfiler(10);
+        var key = key("minecraft:gear");
+        var cpu = new Object();
+
+        seedTypical(profiler, key, new Object());
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 100);
+
+        assertTrue(profiler.pollNewlyDelayed(null, 1_000).isEmpty());
+        assertTrue(profiler.jobOwner(null).isEmpty());
+
+        profiler.setJobOwner(null, UUID.randomUUID());
+        profiler.setJobOwner(cpu, null);
+        assertTrue(profiler.jobOwner(cpu).isEmpty());
+
+        profiler.setJobOwner(cpu, UUID.randomUUID());
+        profiler.setEnabled(false);
+        assertTrue(profiler.pollNewlyDelayed(cpu, 1_000).isEmpty());
+        assertTrue(profiler.jobOwner(cpu).isEmpty());
+        profiler.setJobOwner(cpu, UUID.randomUUID());
+        assertTrue(profiler.jobOwner(cpu).isEmpty());
+        profiler.setEnabled(true);
+    }
+
+    @Test
+    void ownerLifecycle() {
+        var profiler = new CraftProfiler(10);
+        var cpu = new Object();
+        var owner = UUID.randomUUID();
+
+        assertTrue(profiler.jobOwner(cpu).isEmpty());
+        profiler.setJobOwner(cpu, owner);
+        assertEquals(owner, profiler.jobOwner(cpu).orElseThrow());
+        profiler.setJobOwner(cpu, null);
+        assertTrue(profiler.jobOwner(cpu).isEmpty());
+
+        profiler.setJobOwner(cpu, owner);
+        profiler.clearPending(cpu);
+        assertTrue(profiler.jobOwner(cpu).isEmpty());
+        assertTrue(profiler.pollNewlyDelayed(cpu, 10_000).isEmpty());
+    }
+
+    @Test
+    void newJobClearsPreviousEpisode() {
+        var profiler = new CraftProfiler(10);
+        var key = key("minecraft:iron_plate");
+        var cpu = new Object();
+
+        seedTypical(profiler, key, new Object());
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 100);
+        profiler.setJobOwner(cpu, UUID.randomUUID());
+        assertEquals(1, profiler.pollNewlyDelayed(cpu, 800).size());
+
+        // A new job (new waiting set + owner) starts a fresh episode.
+        profiler.startWaiting(cpu, List.of(key), 900);
+        profiler.setJobOwner(cpu, UUID.randomUUID());
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 901);
+        assertEquals(1, profiler.pollNewlyDelayed(cpu, 1_500).size());
+    }
+
+    @Test
+    void multipleOutputsNotifyOnceEach() {
+        var profiler = new CraftProfiler(10);
+        var iron = key("minecraft:iron_plate");
+        var copper = key("minecraft:copper_plate");
+        var cpu = new Object();
+        var seed = new Object();
+
+        seedTypical(profiler, iron, seed);
+        seedTypical(profiler, copper, seed);
+        profiler.start(iron, cpu, 1, ProfileUnit.ITEM, 100);
+        profiler.start(copper, cpu, 1, ProfileUnit.ITEM, 100);
+        profiler.setJobOwner(cpu, UUID.randomUUID());
+
+        var first = profiler.pollNewlyDelayed(cpu, 800);
+        assertEquals(2, first.size());
+        assertTrue(profiler.pollNewlyDelayed(cpu, 900).isEmpty());
+    }
+
+    @Test
+    void clearingStateDropsPendingNotifications() {
+        var profiler = new CraftProfiler(10);
+        var key = key("minecraft:iron_plate");
+        var cpu = new Object();
+
+        seedTypical(profiler, key, new Object());
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 100);
+        profiler.setJobOwner(cpu, UUID.randomUUID());
+        assertEquals(1, profiler.pollNewlyDelayed(cpu, 800).size());
+        profiler.clearSamples(key);
+        assertTrue(profiler.pollNewlyDelayed(cpu, 900).isEmpty());
+
+        seedTypical(profiler, key, new Object());
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 2_000);
+        profiler.setJobOwner(cpu, UUID.randomUUID());
+        assertEquals(1, profiler.pollNewlyDelayed(cpu, 2_800).size());
+        profiler.loadSamples(List.of());
+        assertTrue(profiler.jobOwner(cpu).isEmpty());
+        assertTrue(profiler.pollNewlyDelayed(cpu, 3_000).isEmpty());
+
+        seedTypical(profiler, key, new Object());
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 4_000);
+        profiler.setJobOwner(cpu, UUID.randomUUID());
+        assertEquals(1, profiler.pollNewlyDelayed(cpu, 4_800).size());
+        profiler.setEnabled(false);
+        profiler.setEnabled(true);
+        assertTrue(profiler.jobOwner(cpu).isEmpty());
+        assertTrue(profiler.pollNewlyDelayed(cpu, 5_000).isEmpty());
+    }
+
+    @Test
+    void noPendingMeansNoNotification() {
+        var profiler = new CraftProfiler(10);
+        var cpu = new Object();
+        profiler.setJobOwner(cpu, UUID.randomUUID());
+        assertTrue(profiler.pollNewlyDelayed(cpu, 1_000).isEmpty());
+        assertFalse(profiler.jobOwner(cpu).isEmpty());
+        profiler.clearPending(cpu);
+        assertTrue(profiler.jobOwner(cpu).isEmpty());
+    }
+}

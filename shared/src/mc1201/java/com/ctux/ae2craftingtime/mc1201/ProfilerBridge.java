@@ -19,14 +19,19 @@ import com.ctux.ae2craftingtime.core.TtcAccuracyTracker;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 public final class ProfilerBridge {
     private static final CraftProfiler PROFILER = new CraftProfiler(Ae2CraftingTimeConfig.MAX_SAMPLES.get(),
             Ae2CraftingTimeConfig.OUTLIER_MULTIPLIER.get());
     private static final TtcAccuracyTracker ACCURACY = new TtcAccuracyTracker(Ae2CraftingTimeConfig.MAX_SAMPLES.get());
+    private static final Map<ProfileKey, String> DISPLAY_NAMES = new ConcurrentHashMap<>();
     private static Ae2CraftingTimeSavedData savedData;
 
     public static void observeProviders(String networkId, Object scope, IPatternDetails pattern,
@@ -77,7 +82,13 @@ public final class ProfilerBridge {
         if (what == null || amount <= 0 || !isEnabled()) {
             return;
         }
-        PROFILER.start(key(networkId, what), scope, normalizeAmount(what, amount), unit(what), tick);
+        var profileKey = key(networkId, what);
+        try {
+            DISPLAY_NAMES.put(profileKey, what.getDisplayName().getString());
+        } catch (Exception ignored) {
+            // Display name is best-effort; output id remains the fallback.
+        }
+        PROFILER.start(profileKey, scope, normalizeAmount(what, amount), unit(what), tick);
     }
 
     public static void complete(String networkId, AEKey what, long amount, long tick) {
@@ -94,6 +105,11 @@ public final class ProfilerBridge {
     }
 
     public static void startJob(String networkId, Object scope, ICraftingPlan plan, long tick, long nanoTime) {
+        startJob(networkId, scope, plan, tick, nanoTime, null);
+    }
+
+    public static void startJob(String networkId, Object scope, ICraftingPlan plan, long tick, long nanoTime,
+            UUID owner) {
         if (plan == null || plan.finalOutput() == null || !isEnabled()) {
             return;
         }
@@ -127,8 +143,46 @@ public final class ProfilerBridge {
         }
 
         PROFILER.startWaiting(scope, waitingKeys, tick);
+        PROFILER.setJobOwner(scope, owner);
         ACCURACY.start(key(networkId, plan.finalOutput().what()), scope, predictedSeconds, knownRows, totalRows, tick,
                 nanoTime);
+    }
+
+    public static UUID jobOwner(appeng.api.networking.security.IActionSource source) {
+        if (source == null) {
+            return null;
+        }
+        try {
+            var player = source.player();
+            if (player.isEmpty() || player.get() == null) {
+                return null;
+            }
+            return player.get().getUUID();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    public static Optional<UUID> jobOwner(Object scope) {
+        if (scope == null || !isEnabled()) {
+            return Optional.empty();
+        }
+        return PROFILER.jobOwner(scope);
+    }
+
+    public static List<CraftProfiler.DelayedEvent> pollNewlyDelayed(Object scope, long tick) {
+        if (scope == null || !isEnabled()) {
+            return List.of();
+        }
+        return PROFILER.pollNewlyDelayed(scope, tick);
+    }
+
+    public static String displayName(ProfileKey key) {
+        if (key == null) {
+            return "?";
+        }
+        var name = DISPLAY_NAMES.get(key);
+        return name != null && !name.isBlank() ? name : key.outputId();
     }
 
     public static void finishJob(Object scope, boolean success, long tick, long nanoTime) {

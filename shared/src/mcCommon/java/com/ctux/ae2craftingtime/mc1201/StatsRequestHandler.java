@@ -28,6 +28,12 @@ public final class StatsRequestHandler {
         var context = StatsRequestContext.current(player);
         var networkId = ProfilerBridge.networkId(context.grid());
         var gameTick = player.level().getGameTime();
+        if (context.craftingCpu() != null) {
+            // Backup path: tick notifications already cover closed screens, but a status
+            // request must never duplicate them and must only notify the job owner.
+            DelayedNotificationServer.maybeNotify(context.craftingCpu(), gameTick,
+                    player.level().getServer());
+        }
         var missing = ProfilerBridge.blockReasons(context.craftingCpu(), context.grid(), gameTick);
         var blockReasons = new HashMap<String, CraftingBlockReason>();
         for (var key : keys) {

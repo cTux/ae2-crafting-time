@@ -15,6 +15,7 @@ import appeng.crafting.execution.CraftingCpuLogic;
 import appeng.crafting.inv.ListCraftingInventory;
 import appeng.me.cluster.implementations.CraftingCPUCluster;
 import appeng.me.service.CraftingService;
+import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import java.util.Iterator;
 import org.spongepowered.asm.mixin.Final;
@@ -117,7 +118,9 @@ public abstract class CraftingCpuLogicMixin {
             CraftingService craftingService, CallbackInfo ci) {
         var totalSlots = cluster.getCoProcessors() + 1;
         var usedSlots = Math.min(totalSlots, usedOps[0] + usedOps[1] + usedOps[2]);
-        ProfilerBridge.updateCapacity(cluster, usedSlots, totalSlots, cluster.getLevel().getGameTime());
+        var tick = cluster.getLevel().getGameTime();
+        ProfilerBridge.updateCapacity(cluster, usedSlots, totalSlots, tick);
+        DelayedNotificationServer.maybeNotify(cluster, tick, cluster.getLevel().getServer());
     }
 
     @Inject(method = "trySubmitJob", at = @At("RETURN"), remap = false)
@@ -125,7 +128,7 @@ public abstract class CraftingCpuLogicMixin {
             ICraftingRequester requester, CallbackInfoReturnable<ICraftingSubmitResult> cir) {
         if (cir.getReturnValue().successful()) {
             ProfilerBridge.startJob(ProfilerBridge.networkId(grid), cluster, plan, cluster.getLevel().getGameTime(),
-                    System.nanoTime());
+                    System.nanoTime(), ProfilerBridge.jobOwner(source));
         }
     }
 }

@@ -10,6 +10,7 @@
   "text.ae2craftingtime.chat.details.used": " · використано %s/%s",
   "text.ae2craftingtime.chat.no_cached": "Даних TTC для %s ще немає",
   "text.ae2craftingtime.chat.reset": "Статистику TTC для %s очищено",
+  "text.ae2craftingtime.chat.delayed": "%s затримується: немає виходу протягом %s (зазвичай %s)",
   "text.ae2craftingtime.chat.summary": "%s x%s: %s",
   "text.ae2craftingtime.confidence.low": "низька",
   "text.ae2craftingtime.confidence.low_outliers": "низька (викиди відфільтровано)",

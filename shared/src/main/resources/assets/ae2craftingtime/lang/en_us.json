@@ -10,6 +10,7 @@
   "text.ae2craftingtime.chat.details.used": " · using %s/%s",
   "text.ae2craftingtime.chat.no_cached": "No TTC data for %s yet",
   "text.ae2craftingtime.chat.reset": "Cleared TTC stats for %s",
+  "text.ae2craftingtime.chat.delayed": "%s is delayed: no output for %s (typically %s)",
   "text.ae2craftingtime.chat.summary": "%s x%s: %s",
   "text.ae2craftingtime.confidence.low": "low",
   "text.ae2craftingtime.confidence.low_outliers": "low (outliers filtered)",

@@ -182,6 +182,7 @@ Server config:
 ```text
 enabled = true
 showChatMessages = true
+notifyOnDelayed = true
 ```
 
 Client config:
@@ -191,9 +192,10 @@ showInTree = true
 ```
 
 `showChatMessages` controls the public Ctrl-click TTC details and the private reset confirmation. Reset still works when this is false.
+`notifyOnDelayed` controls the private delayed-output warning sent only to the craft owner. The server owns generation; the recipient remains the job initiator.
 
-Config storage is loader-specific, but ownership stays the same: `enabled` and
-`showChatMessages` affect server behavior, while `showInTree` affects local
+Config storage is loader-specific, but ownership stays the same: `enabled`,
+`showChatMessages`, and `notifyOnDelayed` affect server behavior, while `showInTree` affects local
 display only.
 
 ## Version Layout

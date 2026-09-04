@@ -124,4 +124,21 @@ class TtcTextTest {
         assertEquals(2, lines.size());
         assertTrue(lines.get(1).getString().endsWith("(10)"));
     }
+
+    @Test
+    void delayedChatKeepsMatchingPlaceholders() throws IOException {
+        String key = "text.ae2craftingtime.chat.delayed";
+        String en;
+        String uk;
+        try (var reader = new InputStreamReader(getClass().getResourceAsStream(
+                "/assets/ae2craftingtime/lang/en_us.json"), StandardCharsets.UTF_8)) {
+            en = JsonParser.parseReader(reader).getAsJsonObject().get(key).getAsString();
+        }
+        try (var reader = new InputStreamReader(getClass().getResourceAsStream(
+                "/assets/ae2craftingtime/lang/uk_ua.json"), StandardCharsets.UTF_8)) {
+            uk = JsonParser.parseReader(reader).getAsJsonObject().get(key).getAsString();
+        }
+        assertEquals(3, en.split("%s", -1).length - 1);
+        assertEquals(3, uk.split("%s", -1).length - 1);
+    }
 }

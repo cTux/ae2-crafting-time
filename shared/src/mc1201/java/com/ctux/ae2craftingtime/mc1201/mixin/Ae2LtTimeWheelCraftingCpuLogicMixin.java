@@ -9,6 +9,7 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.hooks.ticking.TickHandler;
 import appeng.me.service.CraftingService;
+import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import java.lang.reflect.Method;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,7 +36,7 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
         if (cir.getReturnValue().successful()) {
             ae2craftingtime$grid = grid;
             ProfilerBridge.startJob(ProfilerBridge.networkId(grid), this, plan, ae2craftingtime$tick(),
-                    System.nanoTime());
+                    System.nanoTime(), ProfilerBridge.jobOwner(source));
         }
     }
 
@@ -78,8 +79,10 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
             remap = false)
     private void ae2craftingtime$trackParallelCapacity(IEnergyService energyService, CraftingService craftingService,
             int maxOps, long maxCopies, @Coerce Object dispatchSchedule, CallbackInfoReturnable<?> cir) {
+        var tick = ae2craftingtime$tick();
         ProfilerBridge.updateCapacity(this, Math.min(maxOps, ae2craftingtime$successfulDispatches(cir.getReturnValue())),
-                maxOps, ae2craftingtime$tick());
+                maxOps, tick);
+        DelayedNotificationServer.maybeNotify(this, tick, ae2craftingtime$server());
     }
 
     @Unique
@@ -97,5 +100,18 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
     @Unique
     private long ae2craftingtime$tick() {
         return TickHandler.instance().getCurrentTick();
+    }
+
+    @Unique
+    private net.minecraft.server.MinecraftServer ae2craftingtime$server() {
+        try {
+            var grid = ae2craftingtime$grid;
+            if (grid == null || grid.getPivot() == null) {
+                return null;
+            }
+            return grid.getPivot().getLevel().getServer();
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 }
