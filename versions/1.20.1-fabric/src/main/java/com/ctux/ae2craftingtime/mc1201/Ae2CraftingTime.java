@@ -9,7 +9,6 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.phys.AABB;
 
@@ -57,10 +56,12 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
                 poseStack.popPose();
                 return;
             }
+            var rainbow = ProviderHighlightClient.rainbowRgb();
+            var alpha = ProviderHighlightClient.pulseAlpha();
             for (var pos : highlight.positions()) {
-                LevelRenderer.renderLineBox(poseStack, consumers.getBuffer(RenderType.lines()),
-                        new AABB(pos).inflate(0.002), 1.0f, 0.33f, 0.33f,
-                        ProviderHighlightClient.pulseAlpha());
+                ProviderHighlightShapes.renderThickRainbowBox(poseStack,
+                        consumers.getBuffer(RenderType.lines()), new AABB(pos).inflate(0.002), rainbow[0],
+                        rainbow[1], rainbow[2], alpha);
             }
             poseStack.popPose();
         });

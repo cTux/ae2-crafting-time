@@ -192,6 +192,25 @@ class ProviderLocateTest {
         }
     }
 
+    @Test
+    void highlightRainbowStaysInVisibleRangeAndCycles() {
+        var seen = new ArrayList<String>();
+        for (var time : new long[] {0L, 500L, 1000L, 1500L, 2000L, 2500L}) {
+            var rainbow = ProviderHighlightClient.rainbowRgb(time);
+            assertEquals(3, rainbow.length);
+            for (var channel : rainbow) {
+                assertTrue(channel >= 0.0f && channel <= 1.0f);
+            }
+            seen.add(rainbow[0] + "," + rainbow[1] + "," + rainbow[2]);
+        }
+        assertTrue(seen.stream().distinct().count() > 1);
+        var live = ProviderHighlightClient.rainbowRgb();
+        assertEquals(3, live.length);
+        for (var channel : live) {
+            assertTrue(channel >= 0.0f && channel <= 1.0f);
+        }
+    }
+
     private static List<BlockPos> positions(int count) {
         var positions = new ArrayList<BlockPos>();
         for (var i = 0; i < count; i++) {

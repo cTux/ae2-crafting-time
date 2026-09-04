@@ -41,6 +41,26 @@ public final class ProviderHighlightClient {
         return 0.35f + 0.65f * (0.5f - 0.5f * (float) Math.cos(phase * Math.PI * 2.0));
     }
 
+    /** Full rainbow color cycle period in milliseconds. */
+    public static final long RAINBOW_PERIOD_MILLIS = 3000L;
+
+    /**
+     * Time-cycling rainbow color shared by every loader's render hook, so the
+     * highlight contrasts with any environment instead of blending into
+     * red-tinted builds. Returns {@code {red, green, blue}} with each
+     * component in {@code [0, 1]}.
+     */
+    public static float[] rainbowRgb() {
+        return rainbowRgb(System.currentTimeMillis());
+    }
+
+    static float[] rainbowRgb(long timeMillis) {
+        var phase = (timeMillis % RAINBOW_PERIOD_MILLIS) / (double) RAINBOW_PERIOD_MILLIS * Math.PI * 2.0;
+        return new float[] {0.5f + 0.5f * (float) Math.cos(phase),
+                0.5f + 0.5f * (float) Math.cos(phase - Math.PI * 2.0 / 3.0),
+                0.5f + 0.5f * (float) Math.cos(phase + Math.PI * 2.0 / 3.0)};
+    }
+
     private ProviderHighlightClient() {
     }
 }

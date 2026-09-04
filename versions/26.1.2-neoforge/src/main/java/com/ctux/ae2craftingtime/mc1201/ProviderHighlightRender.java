@@ -1,9 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ShapeRenderer;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
-import net.minecraft.world.phys.shapes.Shapes;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
@@ -23,11 +21,14 @@ public final class ProviderHighlightRender {
         }
         var camera = minecraft.gameRenderer.getMainCamera().position();
         var consumers = minecraft.renderBuffers().bufferSource();
-        var alpha = (int) (ProviderHighlightClient.pulseAlpha() * 255) << 24 | 0xFF5555;
+        var rainbow = ProviderHighlightClient.rainbowRgb();
+        var alpha = (int) (ProviderHighlightClient.pulseAlpha() * 255);
+        var argb = alpha << 24 | (int) (rainbow[0] * 255) << 16 | (int) (rainbow[1] * 255) << 8
+                | (int) (rainbow[2] * 255);
+        var lines = consumers.getBuffer(RenderTypes.lines());
         for (var pos : highlight.positions()) {
-            ShapeRenderer.renderShape(event.getPoseStack(), consumers.getBuffer(RenderTypes.lines()),
-                    Shapes.block(), pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z, alpha,
-                    2.0f);
+            ProviderHighlightShapes.renderThickRainbowBox(event.getPoseStack(), lines, pos.getX() - camera.x,
+                    pos.getY() - camera.y, pos.getZ() - camera.z, argb, ProviderHighlightShapes.LINE_WIDTH);
         }
         consumers.endBatch(RenderTypes.lines());
     }
