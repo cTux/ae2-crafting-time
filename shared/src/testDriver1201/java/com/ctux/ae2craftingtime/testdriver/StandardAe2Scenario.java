@@ -74,10 +74,12 @@ final class StandardAe2Scenario {
                 var entry = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$repo().getAllEntries().stream()
                         .filter(row -> row.getWhat().getId().toString().equals("minecraft:smooth_stone") && row.isCraftable())
                         .findFirst().orElse(null);
-                if (entry != null) {
+                if (entry != null && frames.observe(screen.getMenu().containerId)) {
                     DriverPlatform.cloneEntry(screen, entry);
-                    phase = Stage.values()[phase.ordinal() + 1];
+                    frames.reset();
                 }
+            } else if (minecraft.screen instanceof CraftAmountScreen) {
+                phase = Stage.AMOUNT;
             }
             return false;
         }
