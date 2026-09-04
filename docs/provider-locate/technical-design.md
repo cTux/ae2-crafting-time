@@ -143,8 +143,10 @@ compatibility boundary in the same commit:
 ## Client behavior
 
 A small client store keeps the latest highlight (dimension, positions,
-expiry timestamp) and prunes it on access. Each loader draws red outline
-boxes while the highlight is live and the player is in the same dimension:
+expiry timestamp) and prunes it on access. Each loader draws thick (2-3x)
+rainbow-cycling outline boxes with matching face diagonals while the
+highlight is live and the player is in the same dimension
+(see [issue #234](https://github.com/cTux/ae2-crafting-time/issues/234)):
 
 - 1.20.1 Forge: game-bus subscriber on the translucent-particles render
   stage;
@@ -152,10 +154,13 @@ boxes while the highlight is live and the player is in the same dimension:
 - 1.21.1 and 26.1.2 NeoForge: game-bus subscriber on the render-level
   stage event.
 
-Plain `LevelRenderer.renderLineBox` boxes are enough for at most 16
-positions over 15 seconds; no extra render library is needed. Every loader
-drives the box opacity from one shared one-second pulse so the highlight
-blinks instead of sitting static.
+Edge color cycles rainbow hues on a time-based phase (instead of static
+red) so the box contrasts with any environment; each block face also gets
+thick diagonals in the same current color as the edges. Vanilla
+`RenderType.lines()` width is fixed, so thicker lines need a custom line
+RenderType, multi-offset strokes, or the `ShapeRenderer` line-width path
+already used on 26.1.2. Every loader keeps driving the box opacity from one
+shared one-second pulse so the highlight blinks instead of sitting static.
 
 The warning message splits the status word out of the sentence so it can be
 styled without breaking translation order:
@@ -183,7 +188,7 @@ output becomes DELAYED, owner online
 
 click (same session)
   -> record lookup, owner must match
-  -> highlight packet -> red boxes for 15 seconds
+  -> highlight packet -> thick rainbow boxes with face diagonals for 15 seconds
 
 click with foreign/missing record
   -> private expiry notice, no highlight
