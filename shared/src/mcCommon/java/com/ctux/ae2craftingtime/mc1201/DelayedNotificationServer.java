@@ -4,6 +4,7 @@ import appeng.api.networking.IGrid;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightCodec;
 import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
@@ -25,10 +26,13 @@ public final class DelayedNotificationServer {
             return;
         }
         var newlyDelayed = ProfilerBridge.pollNewlyDelayed(scope, tick);
-        if (newlyDelayed.isEmpty()) {
+        var resolved = ProfilerBridge.pollResolvedDelayed(scope);
+        if (newlyDelayed.isEmpty() && resolved.isEmpty()) {
             return;
         }
-        var owner = ownerOf(scope, newlyDelayed.stream().map(event -> event.key()).toList());
+        var keys = new ArrayList<>(resolved);
+        keys.addAll(newlyDelayed.stream().map(event -> event.key()).toList());
+        var owner = ownerOf(scope, keys);
         if (owner == null) {
             return;
         }
@@ -40,6 +44,9 @@ public final class DelayedNotificationServer {
         for (var event : newlyDelayed) {
             notify(player, scope, grid, dimension, owner, event.key(),
                     event.diagnostic().idleTicks(), event.diagnostic().typicalDurationTicks(), highlightSender);
+        }
+        for (var key : resolved) {
+            pushClearHighlight(player, key, highlightSender);
         }
         ProfilerBridge.persistProviderState();
     }
@@ -84,7 +91,7 @@ public final class DelayedNotificationServer {
     public static BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> defaultHighlightSender() {
         return (player, highlight) -> StatsNetwork.sendTo(player, new ProviderHighlightS2C(
                 highlight.dimensionId(), highlight.positions(), highlight.outputId(),
-                highlight.durationSeconds()));
+                highlight.durationSeconds(), highlight.plateOnly()));
     }
 
     static void pushAutoHighlight(ServerPlayer player, String dimension, ProfileKey key,
@@ -94,7 +101,22 @@ public final class DelayedNotificationServer {
             return;
         }
         highlightSender.accept(player, new ProviderHighlightCodec.Highlight(dimension, positions,
-                key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS));
+                key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS, true));
+    }
+
+    /**
+     * Tells one player to drop every trace of an output: the empty highlight
+     * routes to {@code ProviderHighlightClient.clearFor}, so the plate and
+     * the edge vanish even with a closed screen and no snapshot. Used when a
+     * stall resolves while the craft still runs.
+     */
+    static void pushClearHighlight(ServerPlayer player, ProfileKey key,
+            BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
+        if (player == null || key == null || highlightSender == null) {
+            return;
+        }
+        highlightSender.accept(player,
+                new ProviderHighlightCodec.Highlight("", List.of(), key.outputId(), 0));
     }
 
     private DelayedNotificationServer() {

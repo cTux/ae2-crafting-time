@@ -117,6 +117,12 @@ public abstract class AdvancedCraftingCpuLogicMixin {
                 cpu.getLevel().getServer());
     }
 
+    @Inject(method = "cancel", at = @At("HEAD"), remap = false, require = 0)
+    private void ae2craftingtime$clearHighlightOnCancel(CallbackInfo ci) {
+        ProfilerBridge.finishJob(cpu, false, cpu.getLevel().getGameTime(), System.nanoTime(),
+                cpu.getLevel().getServer());
+    }
+
     @Inject(method = "trySubmitJob", at = @At("RETURN"), remap = false, require = 0)
     private void ae2craftingtime$startJobAccuracy(IGrid grid, ICraftingPlan plan, IActionSource source,
             ICraftingRequester requester, CallbackInfoReturnable<ICraftingSubmitResult> cir) {

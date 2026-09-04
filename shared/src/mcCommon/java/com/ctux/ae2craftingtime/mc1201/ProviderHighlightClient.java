@@ -50,13 +50,32 @@ public final class ProviderHighlightClient {
         }
         current = new Highlight(dimensionId, List.copyOf(positions), outputId,
                 System.currentTimeMillis() + durationSeconds * 1000L);
-        if (outputId != null && !outputId.isBlank()) {
-            PLATES.put(outputId, new Plate(dimensionId, positions, outputId));
-            while (PLATES.size() > MAX_PLATES) {
-                var eldest = PLATES.keySet().iterator();
-                eldest.next();
-                eldest.remove();
-            }
+        storePlate(dimensionId, positions, outputId);
+    }
+
+    /**
+     * Remembers the red plate (background plus item icon) for one output
+     * without touching the rainbow edge. The server sends exactly this for
+     * automatic delayed pings, so plates appear with no open window and no
+     * edge; manual locates use {@link #show} for edge plus plate.
+     */
+    public static void showPlate(String dimensionId, List<BlockPos> positions, String outputId) {
+        if (dimensionId == null || positions == null || positions.isEmpty() || outputId == null
+                || outputId.isBlank()) {
+            return;
+        }
+        storePlate(dimensionId, positions, outputId);
+    }
+
+    private static void storePlate(String dimensionId, List<BlockPos> positions, String outputId) {
+        if (outputId == null || outputId.isBlank()) {
+            return;
+        }
+        PLATES.put(outputId, new Plate(dimensionId, positions, outputId));
+        while (PLATES.size() > MAX_PLATES) {
+            var eldest = PLATES.keySet().iterator();
+            eldest.next();
+            eldest.remove();
         }
     }
 

@@ -12,7 +12,7 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 import java.util.List;
 
 public record ProviderHighlightS2C(String dimensionId, List<BlockPos> positions, String outputId,
-        int durationSeconds)
+        int durationSeconds, boolean plateOnly)
         implements CustomPacketPayload {
     public static final Type<ProviderHighlightS2C> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath("ae2craftingtime", "provider_highlight"));
@@ -27,19 +27,21 @@ public record ProviderHighlightS2C(String dimensionId, List<BlockPos> positions,
 
     public static void encode(ProviderHighlightS2C packet, FriendlyByteBuf buffer) {
         ProviderHighlightCodec.write(buffer, new ProviderHighlightCodec.Highlight(packet.dimensionId,
-                packet.positions, packet.outputId, packet.durationSeconds));
+                packet.positions, packet.outputId, packet.durationSeconds, packet.plateOnly));
     }
 
     public static ProviderHighlightS2C decode(FriendlyByteBuf buffer) {
         var highlight = ProviderHighlightCodec.read(buffer);
         return new ProviderHighlightS2C(highlight.dimensionId(), highlight.positions(), highlight.outputId(),
-                highlight.durationSeconds());
+                highlight.durationSeconds(), highlight.plateOnly());
     }
 
     public static void handle(ProviderHighlightS2C packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (packet.durationSeconds <= 0 || packet.positions == null || packet.positions.isEmpty()) {
                 ProviderHighlightClient.clearFor(packet.outputId);
+            } else if (packet.plateOnly) {
+                ProviderHighlightClient.showPlate(packet.dimensionId, packet.positions, packet.outputId);
             } else {
                 ProviderHighlightClient.show(packet.dimensionId, packet.positions, packet.durationSeconds,
                         packet.outputId);

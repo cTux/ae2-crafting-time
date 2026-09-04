@@ -24,6 +24,7 @@ public final class CraftProfiler {
     private final Map<Object, WaitingState> waiting = new IdentityHashMap<>();
     private final Map<Object, UUID> jobOwners = new IdentityHashMap<>();
     private final Map<Object, Set<ProfileKey>> delayedNotified = new IdentityHashMap<>();
+    private final Map<Object, Set<ProfileKey>> delayedResolved = new IdentityHashMap<>();
     private final Map<ProfileKey, BusyWindow> busyWindows = new HashMap<>();
     private final Map<ProfileKey, ArrayDeque<CraftSample>> samples = new HashMap<>();
     private final Map<ProfileKey, PersistedOutputStatus> rememberedStatuses = new HashMap<>();
@@ -58,6 +59,7 @@ public final class CraftProfiler {
             busyWindows.clear();
             jobOwners.clear();
             delayedNotified.clear();
+            delayedResolved.clear();
             rememberedStatuses.clear();
         }
     }
@@ -88,6 +90,7 @@ public final class CraftProfiler {
         dispatchPower.clear(scope);
         // A new job starts a fresh delayed-notification episode.
         delayedNotified.remove(scope);
+        delayedResolved.remove(scope);
         var waitingKeys = new HashSet<ProfileKey>();
         for (var key : keys) {
             if (key != null) {
@@ -203,6 +206,7 @@ public final class CraftProfiler {
     public void clearPending(Object scope) {
         missingProviders.clear(scope);
         dispatchPower.clear(scope);
+        delayedResolved.remove(scope);
         var removed = pending.remove(scope);
         lastProgressTicks.remove(scope);
         capacities.remove(scope);
@@ -260,12 +264,12 @@ public final class CraftProfiler {
         } else {
             jobOwners.put(scope, owner);
         }
-        // A new job starts a fresh delayed-notification episode.
+                // A new job starts a fresh delayed-notification episode.
         delayedNotified.remove(scope);
+        delayedResolved.remove(scope);
     }
 
-    public Optional<UUID> jobOwner(Object scope) {
-        if (scope == null || !enabled) {
+    public Optional<UUID> jobOwner(Object scope) {        if (scope == null || !enabled) {
             return Optional.empty();
         }
         return Optional.ofNullable(jobOwners.get(scope));
@@ -277,7 +281,9 @@ public final class CraftProfiler {
     /**
      * Returns outputs that newly transitioned to DELAYED since the last poll.
      * Each delayed output is reported once per delayed episode; progress that
-     * clears the stall makes a later transition eligible again.
+     * clears the stall makes a later transition eligible again. Keys that
+     * leave the delayed set are stashed for {@link #pollResolvedDelayed} so
+     * the server can explicitly clear their highlight while the craft runs.
      */
     public List<DelayedEvent> pollNewlyDelayed(Object scope, long tick) {
         if (!enabled || scope == null) {
@@ -286,6 +292,7 @@ public final class CraftProfiler {
         var scopedPending = pending.get(scope);
         if (scopedPending == null) {
             delayedNotified.remove(scope);
+            delayedResolved.remove(scope);
             return List.of();
         }
         var notified = delayedNotified.computeIfAbsent(scope, ignored -> new HashSet<>());
@@ -294,6 +301,11 @@ public final class CraftProfiler {
             stall(key, scope, tick).ifPresent(diagnostic -> currentlyDelayed.put(key, diagnostic));
         }
         // Progress that clears the stall ends the episode and re-arms notification.
+        var resolved = new HashSet<>(notified);
+        resolved.removeAll(currentlyDelayed.keySet());
+        if (!resolved.isEmpty()) {
+            delayedResolved.computeIfAbsent(scope, ignored -> new HashSet<>()).addAll(resolved);
+        }
         notified.retainAll(currentlyDelayed.keySet());
         var newly = new ArrayList<DelayedEvent>();
         for (var entry : currentlyDelayed.entrySet()) {
@@ -308,6 +320,20 @@ public final class CraftProfiler {
             delayedNotified.remove(scope);
         }
         return List.copyOf(newly);
+    }
+
+    /**
+     * Drains outputs whose stall cleared since the last
+     * {@link #pollNewlyDelayed} poll while the scope still runs. Each key is
+     * reported once; a later delayed transition re-arms it. Empty when the
+     * scope is unknown or nothing resolved.
+     */
+    public List<ProfileKey> pollResolvedDelayed(Object scope) {
+        if (scope == null) {
+            return List.of();
+        }
+        var resolved = delayedResolved.remove(scope);
+        return resolved == null || resolved.isEmpty() ? List.of() : List.copyOf(resolved);
     }
 
     public void rememberStatus(PersistedOutputStatus status) {
@@ -524,6 +550,7 @@ public final class CraftProfiler {
         busyWindows.clear();
         jobOwners.clear();
         delayedNotified.clear();
+        delayedResolved.clear();
         for (var output : persisted) {
             if (output == null || output.key() == null || output.unit() == null) {
                 continue;

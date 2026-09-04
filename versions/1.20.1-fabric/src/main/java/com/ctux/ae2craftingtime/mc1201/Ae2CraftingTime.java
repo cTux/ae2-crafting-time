@@ -25,7 +25,7 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
                 ProviderLocateCommand.build((source, id) -> ProviderLocateCommand.locate(source, id,
                         (player, record) -> StatsNetwork.sendTo(player, new ProviderHighlightS2C(
                                 record.dimensionId(), record.positions(), record.outputId(),
-                                ProviderLocateCommand.HIGHLIGHT_SECONDS))))));
+                                ProviderLocateCommand.HIGHLIGHT_SECONDS, false))))));
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             var data = server.overworld().getDataStorage()
                     .computeIfAbsent(Ae2CraftingTimeSavedData::load, Ae2CraftingTimeSavedData::new,
@@ -39,11 +39,23 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
         KeyBindingHelper.registerKeyBinding(TtcDetailsKeyMapping.showDetails());
         StatsNetwork.registerClient();
         WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
-            var highlight = ProviderHighlightClient.live();
             var minecraft = Minecraft.getInstance();
             if (minecraft.level == null) {
                 return;
             }
+            var levelDimension = minecraft.level.dimension().location().toString();
+            // A broken provider block drops its edge and plate immediately, in
+            // this dimension only.
+            ProviderHighlightClient.trimPositions(levelDimension, pos -> {
+                if (!minecraft.level.isLoaded(pos)) {
+                    return true;
+                }
+                if (minecraft.level.getBlockState(pos).isAir()) {
+                    return false;
+                }
+                return minecraft.level.getBlockEntity(pos) != null;
+            });
+            var highlight = ProviderHighlightClient.live();
             var camera = context.camera().getPosition();
             var poseStack = context.matrixStack();
             poseStack.pushPose();
@@ -66,7 +78,6 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
                 }
             }
             // Plates persist while their output still reports a stall.
-            var levelDimension = minecraft.level.dimension().location().toString();
             for (var plate : ProviderHighlightClient.plates()) {
                 if (!levelDimension.equals(plate.dimensionId())
                         || !ProviderHighlightClient.shouldShowPlates(plate.outputId())) {

@@ -28,7 +28,8 @@ public record ProviderLocateC2S(String outputId) {
                 ProviderLocateServer.locate(player, packet.outputId,
                         (target, highlight) -> com.ctux.ae2craftingtime.mc1201.StatsNetwork.sendTo(target,
                                 new ProviderHighlightS2C(highlight.dimensionId(), highlight.positions(),
-                                        highlight.outputId(), highlight.durationSeconds())));
+                                        highlight.outputId(), highlight.durationSeconds(),
+                                        highlight.plateOnly())));
             }
         });
         context.setPacketHandled(true);

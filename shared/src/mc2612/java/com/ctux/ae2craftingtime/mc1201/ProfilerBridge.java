@@ -205,6 +205,18 @@ public final class ProfilerBridge {
         return PROFILER.pollNewlyDelayed(scope, tick);
     }
 
+    /**
+     * Outputs whose stall cleared while the scope still runs, drained once
+     * per key. The notify path turns these into explicit highlight clears so
+     * plates vanish even with a closed screen and no snapshot.
+     */
+    public static List<ProfileKey> pollResolvedDelayed(Object scope) {
+        if (scope == null || !isEnabled()) {
+            return List.of();
+        }
+        return PROFILER.pollResolvedDelayed(scope);
+    }
+
     public static String displayName(ProfileKey key) {
         if (key == null) {
             return "?";
@@ -298,7 +310,7 @@ public final class ProfilerBridge {
             try {
                 StatsNetwork.sendTo(player,
                         new com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C("", List.of(),
-                                key.outputId(), 0));
+                                key.outputId(), 0, false));
             } catch (Exception ignored) {
                 // One unsendable plate must not hide the rest.
             }

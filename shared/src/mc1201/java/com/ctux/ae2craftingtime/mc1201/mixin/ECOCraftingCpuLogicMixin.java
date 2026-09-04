@@ -131,6 +131,12 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
         }
     }
 
+    @Inject(method = "cancel", at = @At("HEAD"), remap = false, require = 0)
+    private void ae2craftingtime$clearHighlightOnCancel(CallbackInfo ci) {
+        ProfilerBridge.finishJob(this, false, ae2craftingtime$tick(), System.nanoTime(),
+                ae2craftingtime$server());
+    }
+
     @Unique
     private long ae2craftingtime$tick() {
         return TickHandler.instance().getCurrentTick();
