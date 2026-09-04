@@ -14,6 +14,7 @@ import appeng.api.stacks.AEKey;
 import appeng.crafting.inv.ListCraftingInventory;
 import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import java.util.Iterator;
 import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPU;
 import net.pedroksl.advanced_ae.common.logic.AdvCraftingCPULogic;
 import org.spongepowered.asm.mixin.Final;
@@ -65,16 +66,17 @@ public abstract class AdvancedCraftingCpuLogicMixin {
         return extracted;
     }
 
+    // Observe the selected providers after addons wrap or replace the lookup.
     @Redirect(
             method = "executeCrafting",
             at = @At(value = "INVOKE",
-                    target = "Lappeng/me/service/CraftingService;getProviders(Lappeng/api/crafting/IPatternDetails;)Ljava/lang/Iterable;"),
+                    target = "Ljava/lang/Iterable;iterator()Ljava/util/Iterator;"),
             remap = false)
-    private Iterable<ICraftingProvider> ae2craftingtime$observeProviders(CraftingService service,
-            IPatternDetails pattern) {
-        var providers = service.getProviders(pattern);
-        ProfilerBridge.observeProviders(ProfilerBridge.networkId(cpu.getGrid()), cpu, pattern, providers);
-        return providers;
+    private Iterator<ICraftingProvider> ae2craftingtime$observeProviders(Iterable<ICraftingProvider> providers) {
+        var iterator = providers.iterator();
+        ProfilerBridge.observeProviders(ProfilerBridge.networkId(cpu.getGrid()), cpu,
+                ae2craftingtime$dispatchPattern, iterator.hasNext());
+        return iterator;
     }
 
     @Redirect(
