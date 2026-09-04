@@ -7,6 +7,7 @@ public final class Ae2CraftingTimeConfig {
     public static final ModConfigSpec.BooleanValue ENABLED;
     public static final ModConfigSpec.BooleanValue SHOW_IN_TREE;
     public static final ModConfigSpec.BooleanValue SHOW_CHAT_MESSAGES;
+    public static final ModConfigSpec.BooleanValue NOTIFY_ON_DELAYED;
     public static final ModConfigSpec.IntValue MAX_SAMPLES;
     public static final ModConfigSpec.DoubleValue OUTLIER_MULTIPLIER;
 
@@ -24,6 +25,10 @@ public final class Ae2CraftingTimeConfig {
         SHOW_CHAT_MESSAGES = builder
                 .comment("Post Ctrl-click TTC details and reset notices in chat.")
                 .define("showChatMessages", true);
+
+        NOTIFY_ON_DELAYED = builder
+                .comment("Privately notify the craft owner when an output becomes delayed.")
+                .define("notifyOnDelayed", true);
 
         MAX_SAMPLES = builder
                 .comment("How many recent samples to keep for each crafted output.")

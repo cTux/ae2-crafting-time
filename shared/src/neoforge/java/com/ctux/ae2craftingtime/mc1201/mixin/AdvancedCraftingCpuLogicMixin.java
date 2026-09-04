@@ -13,6 +13,7 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.crafting.inv.ListCraftingInventory;
 import appeng.me.service.CraftingService;
+import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import java.util.Iterator;
 import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPU;
@@ -119,7 +120,7 @@ public abstract class AdvancedCraftingCpuLogicMixin {
             ICraftingRequester requester, CallbackInfoReturnable<ICraftingSubmitResult> cir) {
         if (cir.getReturnValue().successful()) {
             ProfilerBridge.startJob(ProfilerBridge.networkId(grid), cpu, plan, cpu.getLevel().getGameTime(),
-                    System.nanoTime());
+                    System.nanoTime(), ProfilerBridge.jobOwner(source));
         }
     }
 
@@ -128,6 +129,8 @@ public abstract class AdvancedCraftingCpuLogicMixin {
             CraftingService craftingService, CallbackInfo ci) {
         var totalSlots = cpu.getCoProcessors() + 1;
         var usedSlots = Math.min(totalSlots, usedOps[0] + usedOps[1] + usedOps[2]);
-        ProfilerBridge.updateCapacity(cpu, usedSlots, totalSlots, cpu.getLevel().getGameTime());
+        var tick = cpu.getLevel().getGameTime();
+        ProfilerBridge.updateCapacity(cpu, usedSlots, totalSlots, tick);
+        DelayedNotificationServer.maybeNotify(cpu, tick, cpu.getLevel().getServer());
     }
 }

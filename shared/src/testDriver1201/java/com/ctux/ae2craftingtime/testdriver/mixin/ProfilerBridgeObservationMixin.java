@@ -11,8 +11,18 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = ProfilerBridge.class, remap = false)
 public abstract class ProfilerBridgeObservationMixin {
-    @Inject(method = "startJob", at = @At("HEAD"))
+    @Inject(method = "startJob(Ljava/lang/String;Ljava/lang/Object;Lappeng/api/networking/crafting/ICraftingPlan;JJ)V", at = @At("HEAD"))
     private static void accepted(String network, Object scope, ICraftingPlan plan, long tick, long nanos, CallbackInfo ci) {
+        acceptedJob(network, scope, plan);
+    }
+
+    @Inject(method = "startJob(Ljava/lang/String;Ljava/lang/Object;Lappeng/api/networking/crafting/ICraftingPlan;JJLjava/util/UUID;)V", at = @At("HEAD"))
+    private static void acceptedWithOwner(String network, Object scope, ICraftingPlan plan, long tick, long nanos,
+            java.util.UUID owner, CallbackInfo ci) {
+        acceptedJob(network, scope, plan);
+    }
+
+    private static void acceptedJob(String network, Object scope, ICraftingPlan plan) {
         if (plan == null || plan.finalOutput() == null) return;
         var finalOutput = plan.finalOutput().what();
         long amount = plan.emittedItems().get(finalOutput);
