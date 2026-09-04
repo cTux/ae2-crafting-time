@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.core.PersistedOutputSamples;
+import com.ctux.ae2craftingtime.core.PersistedOutputStatus;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.saveddata.SavedData;
@@ -12,6 +13,7 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
 
     private List<PersistedOutputSamples> samples = List.of();
     private List<ProviderLocateRecords.StoredStart> providerStarts = List.of();
+    private List<PersistedOutputStatus> statuses = List.of();
 
     public static Ae2CraftingTimeSavedData load(CompoundTag tag) {
         var data = new Ae2CraftingTimeSavedData();
@@ -20,6 +22,9 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
         }
         if (tag.contains("providers", Tag.TAG_LIST)) {
             data.providerStarts = PersistedProviderTag.readStarts(tag.getList("providers", Tag.TAG_COMPOUND));
+        }
+        if (tag.contains("statuses", Tag.TAG_LIST)) {
+            data.statuses = PersistedStatusTag.readStatuses(tag.getList("statuses", Tag.TAG_COMPOUND));
         }
         return data;
     }
@@ -34,6 +39,11 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
         setDirty();
     }
 
+    public void replaceStatuses(List<PersistedOutputStatus> statuses) {
+        this.statuses = statuses == null ? List.of() : List.copyOf(statuses);
+        setDirty();
+    }
+
     public List<PersistedOutputSamples> samples() {
         return samples;
     }
@@ -42,11 +52,16 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
         return providerStarts;
     }
 
+    public List<PersistedOutputStatus> statuses() {
+        return statuses;
+    }
+
     @Override
     public CompoundTag save(CompoundTag tag) {
         tag.putInt("version", PersistedSamplesTag.VERSION);
         tag.put("outputs", PersistedSamplesTag.writeOutputs(samples));
         tag.put("providers", PersistedProviderTag.writeStarts(providerStarts));
+        tag.put("statuses", PersistedStatusTag.writeStatuses(statuses));
         return tag;
     }
 }

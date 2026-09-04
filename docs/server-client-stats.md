@@ -142,13 +142,34 @@ Rules:
   cancelling a CPU job discards its unmatched pending outputs so they cannot
   inflate a future sample.
 - A stall diagnostic is included only for the selected crafting CPU after its
-  no-progress threshold is reached. It is runtime-only and never persisted.
+  no-progress threshold is reached. Live data always wins; after a reload the
+  last remembered stall fills the row until fresh observations arrive (see
+  status persistence below).
 - Waiting ticks are included for requested outputs that the selected crafting
   CPU has not dispatched yet, even when those outputs have no retained stats.
-  The map is bounded to 256 output ids and is never persisted.
+  The map is bounded to 256 output ids. Live data always wins; after a reload
+  remembered waiting rows return until the craft dispatches or finishes.
 - Client drops cache entries for requested keys before applying returned stats.
 - Missing stats or waiting values therefore remove old client state instead of
   leaving stale values behind.
+
+### `ProviderLocateC2S`
+
+Sent from client to server when a delayed row in the crafting CPU screen is
+double-clicked.
+
+Fields:
+
+```text
+outputId: string, at most 128 chars (profile key id)
+```
+
+Rules:
+
+- The server resolves the clicking player's open CPU scope and grid,
+  requires job ownership, and answers with `ProviderHighlightS2C` or the
+  private expiry notice. No locate records are involved.
+- Oversized or malformed ids are rejected before any lookup.
 
 ### `ProviderHighlightS2C`
 
@@ -159,6 +180,7 @@ Fields:
 ```text
 dimensionId: string
 positions: list<BlockPos>, at most 16
+outputId: string, at most 128 chars (profile key id, e.g. an item id)
 durationSeconds: nonnegative int (15)
 ```
 
@@ -169,9 +191,19 @@ Rules:
 - The locate command (`/ae2craftingtime locate <record>`) only serves
   records owned by the clicking player. Missing or foreign records answer
   with a private expiry notice and highlight nothing.
-- The client draws thick (2-3x) rainbow-cycling outline boxes with matching
-  face diagonals while in the same dimension until the duration expires
-  (see [issue #234](https://github.com/cTux/ae2-crafting-time/issues/234)).
+- The client draws thick (2-3x) rainbow-cycling outline boxes while in the
+  same dimension until the duration expires, plus the output item centered
+  on a red plate on each camera-facing face (plate-only when the output id
+  is not an item). On 1.20.1/1.21.1 each plate is one thin filled box
+  flushed with its own batch per face (the strip-mode `debugFilledBox`
+  has no vanilla callers, so faces must never share one strip)
+  (see [issue #241](https://github.com/cTux/ae2-crafting-time/issues/241)).
+- Every locate is also answered with a private "Highlighting <provider> at
+  <coords> in <dimension>" system message naming the provider block,
+  whatever triggered it, with clickable coordinates that teleport to each
+  position
+  (see [issue #241](https://github.com/cTux/ae2-crafting-time/issues/241)).
+  The packet layout is unchanged.
 
 ### Provider-start persistence
 
@@ -181,6 +213,26 @@ section. Old saves without the section load with empty provider state.
 After a reload, resumed crafts warn again with a working link because the
 owner and positions fall back to the persisted copy when live dispatch data
 is absent.
+
+### Status persistence
+
+Per-output statuses (delayed, waiting, no provider, no power) persist in the
+world `SavedData` under a `statuses` section beside samples and provider
+links:
+
+```text
+statuses: [
+  { networkId, key, kind: delayed | waiting | no_provider | no_power,
+    idleTicks, typicalTicks, acceptedAtTick }
+]
+```
+
+Bounded to 256 entries, tolerant reads, no save-version bump; old saves
+load with no remembered statuses. Live dispatch data always wins: any new
+pending craft drops the remembered status for its output, finishing or
+cancelling drops it, and a still-remembered row only shows while nothing
+live contradicts it. `NO SPACE` stays live-only because the client derives
+it from the open CPU screen each frame.
 
 ## UI Flow
 

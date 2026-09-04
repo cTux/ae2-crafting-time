@@ -2,12 +2,15 @@ package com.ctux.ae2craftingtime.mc1201;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import java.util.List;
 import java.util.UUID;
 import java.util.function.BiConsumer;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
 
 /**
  * Shared locate command shape. Each loader registers the built tree on its
@@ -55,7 +58,27 @@ public final class ProviderLocateCommand {
             player.sendSystemMessage(Component.translatable("text.ae2craftingtime.chat.delayed.expired"));
             return;
         }
-        sender.accept(player, record.get());
+        var located = record.get();
+        sender.accept(player, located);
+        player.sendSystemMessage(DelayedChatText.highlightingMessage(
+                providerName(source.getLevel(), located.positions()), located.positions(),
+                located.dimensionId()));
+    }
+
+    /**
+     * Names the provider block at the first resolved position for the
+     * highlight message. Anything unresolvable falls back to the generic
+     * provider name so the message never breaks.
+     */
+    public static Component providerName(Level level, List<BlockPos> positions) {
+        if (level != null && positions != null && !positions.isEmpty()) {
+            try {
+                return level.getBlockState(positions.get(0)).getBlock().getName();
+            } catch (Exception ignored) {
+                // Fall through to the generic provider name.
+            }
+        }
+        return Component.translatable("text.ae2craftingtime.chat.provider");
     }
 
     private static void expired(CommandSourceStack source) {

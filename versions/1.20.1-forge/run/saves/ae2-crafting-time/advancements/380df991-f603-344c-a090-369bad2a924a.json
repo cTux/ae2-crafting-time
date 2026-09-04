@@ -929,11 +929,5 @@
     },
     "done": true
   },
-  "expandedae:recipes/misc/crafting/greater_accel_card": {
-    "criteria": {
-      "has_speed_card": "2026-08-30 23:34:22 +0300"
-    },
-    "done": true
-  },
   "DataVersion": 3465
 }

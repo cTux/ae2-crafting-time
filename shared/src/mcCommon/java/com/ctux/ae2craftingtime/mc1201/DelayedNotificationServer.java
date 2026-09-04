@@ -57,7 +57,7 @@ public final class DelayedNotificationServer {
         var name = ProfilerBridge.displayName(key);
         UUID recordId = null;
         if (!positions.isEmpty()) {
-            recordId = ProviderLocateRecords.create(owner, dimension, positions, name,
+            recordId = ProviderLocateRecords.create(owner, dimension, positions, name, key.outputId(),
                     player.level().getGameTime()).id();
         }
         ProfilerBridge.replaceProviderStart(key, owner, positions, name);

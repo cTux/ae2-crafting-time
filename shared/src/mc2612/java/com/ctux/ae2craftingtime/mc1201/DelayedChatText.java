@@ -1,8 +1,10 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.core.TimeEstimate;
+import java.util.List;
 import java.util.UUID;
 import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.HoverEvent;
@@ -31,6 +33,41 @@ public final class DelayedChatText {
                 name(outputName, recordId),
                 Component.translatable(wordKey).withStyle(ChatFormatting.RED),
                 detail);
+    }
+
+    /**
+     * Private "highlighting here" notice sent after every locate, whatever
+     * triggered it. Names the provider block; every coordinate is an
+     * underlined literal that teleports the clicker to that position.
+     */
+    public static MutableComponent highlightingMessage(Component providerName, List<BlockPos> positions,
+            String dimensionId) {
+        return Component.translatable("text.ae2craftingtime.chat.highlighting",
+                providerName == null ? Component.literal("") : providerName, teleportCoords(positions),
+                dimensionId == null ? "" : dimensionId);
+    }
+
+    private static Component teleportCoords(List<BlockPos> positions) {
+        if (positions == null || positions.isEmpty()) {
+            return Component.literal("");
+        }
+        var coords = Component.empty();
+        var first = true;
+        for (var pos : positions) {
+            if (!first) {
+                coords.append(Component.literal(", "));
+            }
+            first = false;
+            var x = pos.getX();
+            var y = pos.getY();
+            var z = pos.getZ();
+            coords.append(Component.literal("(" + x + ", " + y + ", " + z + ")")
+                    .withStyle(style -> style.withUnderlined(true)
+                            .withClickEvent(new ClickEvent.RunCommand("/tp @s " + x + " " + y + " " + z))
+                            .withHoverEvent(new HoverEvent.ShowText(
+                                    Component.translatable("text.ae2craftingtime.chat.teleport.hint")))));
+        }
+        return coords;
     }
 
     private static Component name(String outputName, UUID recordId) {

@@ -15,6 +15,7 @@ import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.mc1201.ProviderLocateClick;
 import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
 import com.ctux.ae2craftingtime.mc1201.StatsClickHandler;
 import com.ctux.ae2craftingtime.mc1201.TtcBadge;
@@ -84,6 +85,10 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        if (doubleClick && event.button() == 0 && ae2craftingtime$tryLocateDoubleClick(event.x(), event.y())) {
+            getMinecraft().setScreen(null);
+            return true;
+        }
         if (TtcDetailsClick.tryHandle(event)) {
             return true;
         }
@@ -217,6 +222,18 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         StatsChatMessages.show(key, entry.getWhat().getDisplayName().getString(),
                 AeKeyAmounts.normalize(entry.getWhat(), amount));
         return true;
+    }
+
+    @Unique
+    private boolean ae2craftingtime$tryLocateDoubleClick(double mouseX, double mouseY) {
+        if (status == null) {
+            return false;
+        }
+        var entry = ae2craftingtime$clickedEntry(mouseX, mouseY, status.getEntries());
+        if (entry == null || entry.getWhat() == null) {
+            return false;
+        }
+        return ProviderLocateClick.requestLocate(ProfilerBridge.key(entry.getWhat()).outputId());
     }
 
     @Unique

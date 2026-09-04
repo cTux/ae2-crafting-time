@@ -24,7 +24,7 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
         CommandRegistrationCallback.EVENT.register((dispatcher, access, environment) -> dispatcher.register(
                 ProviderLocateCommand.build((source, id) -> ProviderLocateCommand.locate(source, id,
                         (player, record) -> StatsNetwork.sendTo(player, new ProviderHighlightS2C(
-                                record.dimensionId(), record.positions(),
+                                record.dimensionId(), record.positions(), record.outputId(),
                                 ProviderLocateCommand.HIGHLIGHT_SECONDS))))));
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             var data = server.overworld().getDataStorage()
@@ -40,12 +40,8 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
         StatsNetwork.registerClient();
         WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
             var highlight = ProviderHighlightClient.live();
-            if (highlight == null) {
-                return;
-            }
             var minecraft = Minecraft.getInstance();
-            if (minecraft.level == null
-                    || !minecraft.level.dimension().location().toString().equals(highlight.dimensionId())) {
+            if (minecraft.level == null) {
                 return;
             }
             var camera = context.camera().getPosition();
@@ -57,10 +53,35 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
                 poseStack.popPose();
                 return;
             }
-            for (var pos : highlight.positions()) {
-                LevelRenderer.renderLineBox(poseStack, consumers.getBuffer(RenderType.lines()),
-                        new AABB(pos).inflate(0.002), 1.0f, 0.33f, 0.33f,
-                        ProviderHighlightClient.pulseAlpha());
+            var rainbow = ProviderHighlightClient.rainbowRgb();
+            var alpha = ProviderHighlightClient.pulseAlpha();
+            // Click edges first: plate and item writes switch the shared fallback
+            // builder to other render types, so one pass per type.
+            if (highlight != null
+                    && minecraft.level.dimension().location().toString().equals(highlight.dimensionId())) {
+                for (var pos : highlight.positions()) {
+                    ProviderHighlightShapes.renderThickRainbowBox(poseStack,
+                            consumers.getBuffer(RenderType.lines()), new AABB(pos).inflate(0.002), rainbow[0],
+                            rainbow[1], rainbow[2], alpha);
+                }
+            }
+            // Plates persist while their output still reports a stall.
+            var levelDimension = minecraft.level.dimension().location().toString();
+            for (var plate : ProviderHighlightClient.plates()) {
+                if (!levelDimension.equals(plate.dimensionId())
+                        || !ProviderHighlightClient.shouldShowPlates(plate.outputId())) {
+                    continue;
+                }
+                var stack = ProviderHighlightShapes.resolveItem(plate.outputId());
+                for (var pos : plate.positions()) {
+                    ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos,
+                            stack, ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z),
+                            LevelRenderer.getLightColor(minecraft.level, pos), alpha);
+                }
+            }
+            if (consumers instanceof net.minecraft.client.renderer.MultiBufferSource.BufferSource source) {
+                source.endBatch(RenderType.lines());
+                source.endBatch(RenderType.debugFilledBox());
             }
             poseStack.popPose();
         });

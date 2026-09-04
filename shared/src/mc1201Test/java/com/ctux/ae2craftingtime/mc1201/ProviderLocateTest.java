@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.UUID;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -47,12 +48,30 @@ class ProviderLocateTest {
         List<List<BlockPos>> cases = List.of(List.of(),
                 List.of(new BlockPos(1, 2, 3), new BlockPos(-4, 5, -6)));
         for (var positions : cases) {
-            var highlight = new Highlight("minecraft:overworld", positions, 15);
+            var highlight = new Highlight("minecraft:overworld", positions, "minecraft:iron_ingot", 15);
             var buffer = new FriendlyByteBuf(Unpooled.buffer());
             ProviderHighlightCodec.write(buffer, highlight);
             assertEquals(highlight, ProviderHighlightCodec.read(buffer));
             assertEquals(0, buffer.readableBytes());
         }
+    }
+
+    @Test
+    void highlightRoundTripsBlankOutputIdAsEmpty() {
+        var highlight = new Highlight("minecraft:overworld", List.of(new BlockPos(1, 2, 3)), null, 15);
+        var buffer = new FriendlyByteBuf(Unpooled.buffer());
+        ProviderHighlightCodec.write(buffer, highlight);
+        var read = ProviderHighlightCodec.read(buffer);
+        assertEquals("", read.outputId());
+        assertEquals(0, buffer.readableBytes());
+    }
+
+    @Test
+    void highlightRejectsOversizeOutputId() {
+        var buffer = new FriendlyByteBuf(Unpooled.buffer());
+        assertThrows(IllegalArgumentException.class,
+                () -> ProviderHighlightCodec.write(buffer,
+                        new Highlight("minecraft:overworld", List.of(), "x".repeat(129), 15)));
     }
 
     @Test
@@ -63,7 +82,7 @@ class ProviderLocateTest {
         }
         var buffer = new FriendlyByteBuf(Unpooled.buffer());
         ProviderHighlightCodec.write(buffer,
-                new Highlight("minecraft:overworld", many, 15));
+                new Highlight("minecraft:overworld", many, "minecraft:iron_ingot", 15));
         assertEquals(PacketLimits.MAX_HIGHLIGHT_POSITIONS,
                 ProviderHighlightCodec.read(buffer).positions().size());
 
@@ -142,6 +161,49 @@ class ProviderLocateTest {
     }
 
     @Test
+    void highlightingMessageStructureAndCoords() {
+        var message = DelayedChatText.highlightingMessage(Component.literal("Pattern Provider"),
+                List.of(new BlockPos(1, 2, 3), new BlockPos(-4, 5, -6)), "minecraft:overworld");
+        var contents = (TranslatableContents) message.getContents();
+        assertEquals("text.ae2craftingtime.chat.highlighting", contents.getKey());
+        assertEquals(3, contents.getArgs().length);
+        assertEquals("Pattern Provider", ((Component) contents.getArgs()[0]).getString());
+        assertEquals("(1, 2, 3), (-4, 5, -6)", ((Component) contents.getArgs()[1]).getString());
+        assertEquals("minecraft:overworld", contents.getArgs()[2]);
+    }
+
+    @Test
+    void highlightingMessageCoordsTeleportOnClick() {
+        assumeTrue(bootstrapped, "click events need MC registries");
+        var message = DelayedChatText.highlightingMessage(Component.literal("Pattern Provider"),
+                List.of(new BlockPos(1, 2, 3), new BlockPos(-4, 5, -6)), "minecraft:overworld");
+        var coords = (Component) ((TranslatableContents) message.getContents()).getArgs()[1];
+        var clickable = new ArrayList<Component>();
+        for (var sibling : coords.getSiblings()) {
+            if (sibling.getStyle().getClickEvent() != null) {
+                clickable.add(sibling);
+            }
+        }
+        assertEquals(2, clickable.size());
+        assertEquals("(1, 2, 3)", clickable.get(0).getString());
+        assertTrue(clickable.get(0).getStyle().isUnderlined());
+        assertTrue(clickable.get(0).getStyle().getClickEvent().toString().contains("/tp @s 1 2 3"));
+        assertNotNull(clickable.get(0).getStyle().getHoverEvent());
+        assertEquals("(-4, 5, -6)", clickable.get(1).getString());
+        assertTrue(clickable.get(1).getStyle().getClickEvent().toString().contains("/tp @s -4 5 -6"));
+    }
+
+    @Test
+    void highlightingMessageToleratesMissingParts() {
+        var message = DelayedChatText.highlightingMessage(null, null, null);
+        var contents = (TranslatableContents) message.getContents();
+        assertEquals("text.ae2craftingtime.chat.highlighting", contents.getKey());
+        assertEquals("", ((Component) contents.getArgs()[0]).getString());
+        assertEquals("", ((Component) contents.getArgs()[1]).getString());
+        assertEquals("", contents.getArgs()[2]);
+    }
+
+    @Test
     void delayedMessageNameIsClickable() {
         assumeTrue(bootstrapped, "click events need MC registries");
         var message = DelayedChatText.delayedMessage("Basic Control Circuit", UUID.randomUUID(), 640, 320.0);
@@ -190,6 +252,56 @@ class ProviderLocateTest {
             var alpha = ProviderHighlightClient.pulseAlpha();
             assertTrue(alpha >= 0.35f && alpha <= 1.0f);
         }
+    }
+
+    @Test
+    void highlightRainbowStaysInVisibleRangeAndCycles() {
+        var seen = new ArrayList<String>();
+        for (var time : new long[] {0L, 500L, 1000L, 1500L, 2000L, 2500L}) {
+            var rainbow = ProviderHighlightClient.rainbowRgb(time);
+            assertEquals(3, rainbow.length);
+            for (var channel : rainbow) {
+                assertTrue(channel >= 0.0f && channel <= 1.0f);
+            }
+            seen.add(rainbow[0] + "," + rainbow[1] + "," + rainbow[2]);
+        }
+        assertTrue(seen.stream().distinct().count() > 1);
+        var live = ProviderHighlightClient.rainbowRgb();
+        assertEquals(3, live.length);
+        for (var channel : live) {
+            assertTrue(channel >= 0.0f && channel <= 1.0f);
+        }
+    }
+
+    @Test
+    void visibleFacesPointTowardCamera() {
+        var pos = new BlockPos(0, 0, 0);
+        assertEquals(List.of(Direction.UP), ProviderFaceIcons.visibleFaces(pos, 0.5, 10.0, 0.5));
+        assertEquals(List.of(Direction.DOWN), ProviderFaceIcons.visibleFaces(pos, 0.5, -10.0, 0.5));
+        assertEquals(List.of(Direction.NORTH), ProviderFaceIcons.visibleFaces(pos, 0.5, 0.5, -10.0));
+        assertEquals(List.of(Direction.SOUTH), ProviderFaceIcons.visibleFaces(pos, 0.5, 0.5, 10.0));
+        assertEquals(List.of(Direction.WEST), ProviderFaceIcons.visibleFaces(pos, -10.0, 0.5, 0.5));
+        assertEquals(List.of(Direction.EAST), ProviderFaceIcons.visibleFaces(pos, 10.0, 0.5, 0.5));
+        var corner = ProviderFaceIcons.visibleFaces(pos, 10.0, 10.0, 10.0);
+        assertEquals(3, corner.size());
+        assertTrue(corner.contains(Direction.UP));
+        assertTrue(corner.contains(Direction.SOUTH));
+        assertTrue(corner.contains(Direction.EAST));
+    }
+
+    @Test
+    void resolveItemRejectsInvalidIds() {
+        assertTrue(ProviderHighlightShapes.resolveItem(null).isEmpty());
+        assertTrue(ProviderHighlightShapes.resolveItem("").isEmpty());
+        assertTrue(ProviderHighlightShapes.resolveItem("   ").isEmpty());
+        assertTrue(ProviderHighlightShapes.resolveItem("x".repeat(129)).isEmpty());
+        assertTrue(ProviderHighlightShapes.resolveItem("not an id!!").isEmpty());
+    }
+
+    @Test
+    void resolveItemFallsBackToEmptyForUnknownIds() {
+        assumeTrue(bootstrapped, "item registry needs MC registries");
+        assertTrue(ProviderHighlightShapes.resolveItem("minecraft:not_a_real_item_xyz").isEmpty());
     }
 
     private static List<BlockPos> positions(int count) {

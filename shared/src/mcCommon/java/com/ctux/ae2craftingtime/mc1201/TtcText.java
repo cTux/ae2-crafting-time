@@ -76,6 +76,10 @@ public final class TtcText {
         return Component.translatable("text.ae2craftingtime.reset_hint");
     }
 
+    public static MutableComponent locateHint() {
+        return Component.translatable("text.ae2craftingtime.locate_hint");
+    }
+
     public static MutableComponent sortTitle() {
         return Component.translatable("text.ae2craftingtime.sort.title");
     }

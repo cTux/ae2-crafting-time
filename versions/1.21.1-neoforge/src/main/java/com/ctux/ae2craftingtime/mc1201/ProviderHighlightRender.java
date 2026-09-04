@@ -17,12 +17,8 @@ public final class ProviderHighlightRender {
             return;
         }
         var highlight = ProviderHighlightClient.live();
-        if (highlight == null) {
-            return;
-        }
         var minecraft = Minecraft.getInstance();
-        if (minecraft.level == null
-                || !minecraft.level.dimension().location().toString().equals(highlight.dimensionId())) {
+        if (minecraft.level == null) {
             return;
         }
         var camera = minecraft.gameRenderer.getMainCamera().getPosition();
@@ -30,12 +26,34 @@ public final class ProviderHighlightRender {
         poseStack.pushPose();
         poseStack.translate(-camera.x, -camera.y, -camera.z);
         var consumers = minecraft.renderBuffers().bufferSource();
+        var rainbow = ProviderHighlightClient.rainbowRgb();
         var alpha = ProviderHighlightClient.pulseAlpha();
-        for (var pos : highlight.positions()) {
-            LevelRenderer.renderLineBox(poseStack, consumers.getBuffer(RenderType.lines()),
-                    new AABB(pos).inflate(0.002), 1.0f, 0.33f, 0.33f, alpha);
+        // Click edges first in their own batch: plate and item writes switch the
+        // shared fallback builder to other render types, so a cached lines
+        // consumer would not survive until the next position.
+        if (highlight != null
+                && minecraft.level.dimension().location().toString().equals(highlight.dimensionId())) {
+            var lines = consumers.getBuffer(RenderType.lines());
+            for (var pos : highlight.positions()) {
+                ProviderHighlightShapes.renderThickRainbowBox(poseStack, lines, new AABB(pos).inflate(0.002),
+                        rainbow[0], rainbow[1], rainbow[2], alpha);
+            }
+            consumers.endBatch(RenderType.lines());
         }
-        consumers.endBatch(RenderType.lines());
+        // Plates persist while their output still reports a stall.
+        for (var plate : ProviderHighlightClient.plates()) {
+            if (!minecraft.level.dimension().location().toString().equals(plate.dimensionId())
+                    || !ProviderHighlightClient.shouldShowPlates(plate.outputId())) {
+                continue;
+            }
+            var stack = ProviderHighlightShapes.resolveItem(plate.outputId());
+            for (var pos : plate.positions()) {
+                ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos, stack,
+                        ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z),
+                        LevelRenderer.getLightColor(minecraft.level, pos), alpha);
+            }
+        }
+        consumers.endBatch(RenderType.debugFilledBox());
         poseStack.popPose();
     }
 
