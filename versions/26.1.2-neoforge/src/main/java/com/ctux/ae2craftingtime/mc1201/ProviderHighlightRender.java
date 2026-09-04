@@ -39,19 +39,23 @@ public final class ProviderHighlightRender {
                 | (int) (rainbow[2] * 255);
         var redArgb = alpha << 24 | 0xFF2626;
         var lines = consumers.getBuffer(RenderTypes.lines());
+        for (var pos : highlight.positions()) {
+            ProviderHighlightShapes.renderThickRainbowBox(event.getPoseStack(), lines,
+                    pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z, argb,
+                    ProviderHighlightShapes.LINE_WIDTH);
+        }
+        consumers.endBatch(RenderTypes.lines());
+        // Plates in their own batch, one render type per pass.
         var filled = consumers.getBuffer(RenderTypes.debugFilledBox());
         for (var pos : highlight.positions()) {
             var originX = pos.getX() - camera.x;
             var originY = pos.getY() - camera.y;
             var originZ = pos.getZ() - camera.z;
-            ProviderHighlightShapes.renderThickRainbowBox(event.getPoseStack(), lines, originX, originY, originZ,
-                    argb, ProviderHighlightShapes.LINE_WIDTH);
             for (var face : ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z)) {
                 ProviderHighlightShapes.renderFacePlate(event.getPoseStack(), filled, originX, originY, originZ,
                         face, redArgb);
             }
         }
-        consumers.endBatch(RenderTypes.lines());
         consumers.endBatch(RenderTypes.debugFilledBox());
     }
 

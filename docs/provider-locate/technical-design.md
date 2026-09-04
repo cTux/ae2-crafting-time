@@ -175,6 +175,14 @@ the camera render (at most 3 per block). Every loader keeps driving the box
 opacity from one shared one-second pulse so the highlight blinks instead of
 sitting static.
 
+Render hooks batch one render type per pass and never hold a non-fixed
+consumer across other-type writes: on 1.20.1/1.21.1 the line and filled
+buffers share one fallback builder, so writing plates or items and then
+reusing a cached lines/filled consumer hits an ended builder and crashes
+(`BufferBuilder not started`, fixed for issue #237 follow-up). Edges draw
+for all positions first, then plates and icons; the filled buffer is fetched
+fresh before every plate.
+
 The warning message splits the status word out of the sentence so it can be
 styled without breaking translation order:
 

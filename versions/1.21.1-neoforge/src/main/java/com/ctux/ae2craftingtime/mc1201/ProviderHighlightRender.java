@@ -32,16 +32,21 @@ public final class ProviderHighlightRender {
         var consumers = minecraft.renderBuffers().bufferSource();
         var rainbow = ProviderHighlightClient.rainbowRgb();
         var alpha = ProviderHighlightClient.pulseAlpha();
+        // Edges first in their own batch: plate and item writes switch the
+        // shared fallback builder to other render types, so a cached lines
+        // consumer would not survive until the next position.
         var lines = consumers.getBuffer(RenderType.lines());
-        var stack = ProviderHighlightShapes.resolveItem(highlight.outputId());
         for (var pos : highlight.positions()) {
             ProviderHighlightShapes.renderThickRainbowBox(poseStack, lines, new AABB(pos).inflate(0.002),
                     rainbow[0], rainbow[1], rainbow[2], alpha);
+        }
+        consumers.endBatch(RenderType.lines());
+        var stack = ProviderHighlightShapes.resolveItem(highlight.outputId());
+        for (var pos : highlight.positions()) {
             ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos, stack,
                     ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z),
                     LevelRenderer.getLightColor(minecraft.level, pos), alpha);
         }
-        consumers.endBatch(RenderType.lines());
         consumers.endBatch(RenderType.debugFilledBox());
         poseStack.popPose();
     }

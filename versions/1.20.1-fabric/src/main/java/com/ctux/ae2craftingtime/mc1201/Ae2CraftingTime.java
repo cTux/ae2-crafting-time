@@ -59,11 +59,15 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
             }
             var rainbow = ProviderHighlightClient.rainbowRgb();
             var alpha = ProviderHighlightClient.pulseAlpha();
-            var stack = ProviderHighlightShapes.resolveItem(highlight.outputId());
+            // Edges first: plate and item writes switch the shared fallback
+            // builder to other render types, so one pass per type.
             for (var pos : highlight.positions()) {
                 ProviderHighlightShapes.renderThickRainbowBox(poseStack,
                         consumers.getBuffer(RenderType.lines()), new AABB(pos).inflate(0.002), rainbow[0],
                         rainbow[1], rainbow[2], alpha);
+            }
+            var stack = ProviderHighlightShapes.resolveItem(highlight.outputId());
+            for (var pos : highlight.positions()) {
                 ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos,
                         stack, ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z),
                         LevelRenderer.getLightColor(minecraft.level, pos), alpha);

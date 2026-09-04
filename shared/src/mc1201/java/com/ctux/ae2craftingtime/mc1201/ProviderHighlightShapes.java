@@ -51,16 +51,20 @@ public final class ProviderHighlightShapes {
      * Draws a red plate with the stuck output's icon on each given face.
      * Faces must already be culled to the camera side. An empty stack draws
      * plates only (for example fluid outputs).
+     *
+     * <p>The filled buffer is fetched before every plate: item rendering
+     * switches the shared fallback builder to other render types and ends
+     * it, so a cached consumer would write into a dead builder and crash.
      */
     public static void renderFacePlatesAndIcons(PoseStack pose, MultiBufferSource buffers, Level level, BlockPos pos,
             ItemStack stack, List<Direction> faces, int light, float alpha) {
-        var filled = buffers.getBuffer(RenderType.debugFilledBox());
         var items = Minecraft.getInstance().getItemRenderer();
         for (var face : faces) {
             pose.pushPose();
             orientToFace(pose, pos, face);
-            LevelRenderer.addChainedFilledBoxVertices(pose, filled, -PLATE_HALF_SIZE, -PLATE_HALF_SIZE, PLATE_MIN_Z,
-                    PLATE_HALF_SIZE, PLATE_HALF_SIZE, PLATE_MAX_Z, 1.0f, 0.15f, 0.15f, alpha);
+            LevelRenderer.addChainedFilledBoxVertices(pose, buffers.getBuffer(RenderType.debugFilledBox()),
+                    -PLATE_HALF_SIZE, -PLATE_HALF_SIZE, PLATE_MIN_Z, PLATE_HALF_SIZE, PLATE_HALF_SIZE, PLATE_MAX_Z,
+                    1.0f, 0.15f, 0.15f, alpha);
             if (!stack.isEmpty()) {
                 pose.pushPose();
                 pose.translate(0.0, 0.0, ITEM_Z);
