@@ -328,8 +328,11 @@ try {
         $afterHash = Get-TreeHash $source
         $afterMetadata = (Get-FileHash -LiteralPath $metadata).Hash
         [ordered]@{ before = $sourceHash; after = $afterHash; metadataBefore = $metadataHash; metadataAfter = $afterMetadata
+            disposableWorlds = @($worldCopies | ForEach-Object {
+                [ordered]@{ world = Split-Path -Leaf $_; removed = !(Test-Path -LiteralPath $_) }
+            })
             unchanged = ($afterHash -eq $sourceHash -and $afterMetadata -eq $metadataHash) } |
-            ConvertTo-Json | Set-Content -LiteralPath (Join-Path $evidence 'fixture-hashes.json') -Encoding UTF8
+            ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $evidence 'fixture-hashes.json') -Encoding UTF8
         if ($afterHash -ne $sourceHash -or $afterMetadata -ne $metadataHash) { throw "Tracked source fixture changed during UI smoke" }
     }
     Write-Status "passed" "UI smoke passed" $process.ExitCode

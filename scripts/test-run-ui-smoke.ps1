@@ -179,6 +179,10 @@ try {
     Invoke-Case "pass" -Scenario suite -shouldPass $true
     $suiteSaves = Join-Path $temp 'build\ui-smoke\1.20.1-forge\compatible\runtime\saves'
     if (@(Get-ChildItem $suiteSaves -Directory).Count) { throw 'Suite left disposable worlds behind' }
+    $hashes = Get-Content (Join-Path $temp 'build/ui-smoke/1.20.1-forge/compatible/suite/evidence/fixture-hashes.json') -Raw | ConvertFrom-Json
+    if (!$hashes.unchanged -or $hashes.disposableWorlds.Count -ne 34 -or @($hashes.disposableWorlds | Where-Object { !$_.removed }).Count) {
+        throw 'Suite omitted source integrity or disposable-world removal evidence'
+    }
     foreach ($mode in @('suite-missing', 'suite-order', 'suite-fail', 'suite-world', 'schema', 'missing-screenshot', 'fatal')) {
         Invoke-Case $mode -Scenario suite -shouldPass $false
     }
