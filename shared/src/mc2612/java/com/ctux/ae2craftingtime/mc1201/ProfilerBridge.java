@@ -3,7 +3,6 @@ package com.ctux.ae2craftingtime.mc1201;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingPlan;
-import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.api.stacks.KeyCounter;
@@ -31,13 +30,13 @@ public final class ProfilerBridge {
     private static Ae2CraftingTimeSavedData savedData;
 
     public static void observeProviders(String networkId, Object scope, IPatternDetails pattern,
-            Iterable<ICraftingProvider> providers) {
+            boolean hasProvider) {
         isEnabled();
         var outputs = new HashMap<ProfileKey, Long>();
         for (var output : pattern.getOutputs()) {
             outputs.merge(key(networkId, output.what()), output.amount(), Long::sum);
         }
-        PROFILER.observeProviders(scope, pattern, outputs, providers.iterator().hasNext());
+        PROFILER.observeProviders(scope, pattern, outputs, hasProvider);
     }
 
     public static void observeDispatchPower(String networkId, Object scope, IPatternDetails pattern,
