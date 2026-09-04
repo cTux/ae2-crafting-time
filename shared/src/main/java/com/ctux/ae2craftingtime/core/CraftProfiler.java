@@ -333,7 +333,10 @@ public final class CraftProfiler {
             return List.of();
         }
         var resolved = delayedResolved.remove(scope);
-        return resolved == null || resolved.isEmpty() ? List.of() : List.copyOf(resolved);
+        if (resolved == null) {
+            return List.of();
+        }
+        return List.copyOf(resolved);
     }
 
     public void rememberStatus(PersistedOutputStatus status) {

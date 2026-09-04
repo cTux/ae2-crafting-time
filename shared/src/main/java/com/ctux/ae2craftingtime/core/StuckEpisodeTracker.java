@@ -58,7 +58,10 @@ public final class StuckEpisodeTracker {
             return List.of();
         }
         var left = resolved.remove(scope);
-        return left == null || left.isEmpty() ? List.of() : List.copyOf(left);
+        if (left == null) {
+            return List.of();
+        }
+        return List.copyOf(left);
     }
 
     public void clear(Object scope) {

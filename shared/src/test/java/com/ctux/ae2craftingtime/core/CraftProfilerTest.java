@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class CraftProfilerTest {
@@ -748,5 +749,40 @@ class CraftProfilerTest {
         profiler.rememberStatus(new PersistedOutputStatus(key, StatusKind.DELAYED, 300, 20.0, 0));
         profiler.setEnabled(false);
         assertTrue(profiler.snapshotStatuses().isEmpty());
+    }
+
+    @Test
+    void scopedKeysListsWaitingAndPendingOutputs() {
+        var profiler = new CraftProfiler(10);
+        var cpu = new Object();
+        var iron = new ProfileKey("minecraft:iron_plate");
+        var gear = new ProfileKey("minecraft:gear");
+
+        assertTrue(profiler.scopedKeys(null).isEmpty());
+        assertTrue(profiler.scopedKeys(cpu).isEmpty());
+
+        profiler.startWaiting(cpu, List.of(iron), 100);
+        assertEquals(Set.of(iron), profiler.scopedKeys(cpu));
+
+        profiler.start(gear, cpu, 1, ProfileUnit.ITEM, 101);
+        assertEquals(Set.of(iron, gear), profiler.scopedKeys(cpu));
+
+        // Dispatching the waiting key leaves it tracked as pending work.
+        profiler.start(iron, cpu, 1, ProfileUnit.ITEM, 102);
+        assertEquals(Set.of(iron, gear), profiler.scopedKeys(cpu));
+
+        profiler.clearPending(cpu);
+        assertTrue(profiler.scopedKeys(cpu).isEmpty());
+    }
+
+    @Test
+    void scopedKeysListsPendingWithoutWaiting() {
+        var profiler = new CraftProfiler(10);
+        var cpu = new Object();
+        var copper = new ProfileKey("minecraft:copper_plate");
+
+        profiler.start(copper, cpu, 1, ProfileUnit.ITEM, 0);
+
+        assertEquals(Set.of(copper), profiler.scopedKeys(cpu));
     }
 }
