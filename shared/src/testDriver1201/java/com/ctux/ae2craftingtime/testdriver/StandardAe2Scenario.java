@@ -203,7 +203,10 @@ final class StandardAe2Scenario {
                 throw new IllegalStateException("DELAYED must be bold red on the active stone row");
             }
             validateLayout(snapshot);
-            mark(checks, "delayed", true);
+            if (!checks.get("delayed")) {
+                screenshot.accept("status-delayed.png");
+                mark(checks, "delayed", true);
+            }
             mark(checks, "row", true);
             mark(checks, "style", true);
             mark(checks, "layout", true);
@@ -211,7 +214,6 @@ final class StandardAe2Scenario {
                 var row = snapshot.rows().stream().filter(r -> r.outputId().equals("minecraft:stone")).findFirst().orElseThrow();
                 moveMouse.accept(row.cell().centerX(), row.cell().centerY());
                 if (!delayedTooltip(snapshot)) return false;
-                screenshot.accept("status-delayed.png");
                 screenshot.accept("delayed-tooltip.png");
                 mark(checks, "tooltip", true);
             }

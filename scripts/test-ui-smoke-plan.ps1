@@ -37,6 +37,7 @@ try {
     Invoke-FixtureGit @('tag','baseline')
     Assert ((Plan).result -eq 'NOT_REQUIRED') 'Empty diff must not launch'
     Put 'docs/new.md' 'docs'
+    Put 'docs/StallDiagnostic.java' 'documented example'
     Put 'shared/src/test/java/Test.java' 'tests'
     Assert ((Plan).result -eq 'NOT_REQUIRED') 'Docs and tests require no runtime'
     Clean
@@ -47,6 +48,7 @@ try {
         @('shared/src/neoforge/java/Packet.java',2),
         @('shared/src/testDriver1201/java/StandardAe2Scenario.java',4),
         @('shared/src/testDriverAddons/java/Fixture.java',2),
+        @('other/StallDiagnostic.java',4),
         @('unknown space ü.txt',4))) {
         Put $pair[0] 'changed'
         $plan = Plan
@@ -54,6 +56,14 @@ try {
         Assert (@($plan.targets | Where-Object mode -ne 'full').Count -eq 0) 'Unknown runtime must widen'
         Clean
     }
+    Put 'shared/src/testDriver1201/java/com/ctux/ae2craftingtime/testdriver/NoSpaceScenario.java' 'shared fixture'
+    $sharedFixture = Plan
+    Assert ($sharedFixture.targets.Count -eq 3 -and '26.1.2-neoforge' -notin $sharedFixture.targets.target) 'Replaced fixture must exclude 26.1.2'
+    Clean
+    Put 'versions/26.1.2-neoforge/src/testDriver/java/com/ctux/ae2craftingtime/testdriver/NoSpaceScenario.java' 'native fixture'
+    $nativeFixture = Plan
+    Assert ($nativeFixture.targets.Count -eq 1 -and $nativeFixture.targets[0].target -eq '26.1.2-neoforge') 'Native replacement must select only 26.1.2'
+    Clean
     Put 'shared/src/main/java/com/ctux/ae2craftingtime/core/StallDiagnostic.java' 'delayed'
     $plan = Plan
     Assert ($plan.targets.Count -eq 4) 'Dedicated delayed file must reach all targets'
