@@ -143,6 +143,23 @@ class TtcTextTest {
     }
 
     @Test
+    void blockedChatKeepsMatchingPlaceholders() throws IOException {
+        String key = "text.ae2craftingtime.chat.blocked";
+        String en;
+        String uk;
+        try (var reader = new InputStreamReader(getClass().getResourceAsStream(
+                "/assets/ae2craftingtime/lang/en_us.json"), StandardCharsets.UTF_8)) {
+            en = JsonParser.parseReader(reader).getAsJsonObject().get(key).getAsString();
+        }
+        try (var reader = new InputStreamReader(getClass().getResourceAsStream(
+                "/assets/ae2craftingtime/lang/uk_ua.json"), StandardCharsets.UTF_8)) {
+            uk = JsonParser.parseReader(reader).getAsJsonObject().get(key).getAsString();
+        }
+        assertEquals(3, en.split("%s", -1).length - 1);
+        assertEquals(3, uk.split("%s", -1).length - 1);
+    }
+
+    @Test
     void delayedWordAndHintsAreTranslated() throws IOException {
         for (var locale : List.of("en_us", "uk_ua")) {
             try (var reader = new InputStreamReader(getClass().getResourceAsStream(
@@ -150,7 +167,9 @@ class TtcTextTest {
                 var translations = JsonParser.parseReader(reader).getAsJsonObject();
                 for (var key : List.of("text.ae2craftingtime.chat.delayed.word",
                         "text.ae2craftingtime.chat.delayed.hint",
-                        "text.ae2craftingtime.chat.delayed.expired")) {
+                        "text.ae2craftingtime.chat.delayed.expired",
+                        "text.ae2craftingtime.chat.no_power.word",
+                        "text.ae2craftingtime.chat.no_space.word")) {
                     assertTrue(!translations.get(key).getAsString().isBlank(), locale + " " + key);
                 }
             }

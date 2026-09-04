@@ -33,6 +33,8 @@ public final class StatsRequestHandler {
             // request must never duplicate them and must only notify the job owner.
             DelayedNotificationServer.maybeNotify(context.craftingCpu(), context.grid(), gameTick,
                     player.level().getServer());
+            BlockReasonNotifier.maybeNotifyPower(context.craftingCpu(), context.grid(), gameTick,
+                    player.level().getServer());
         }
         var missing = ProfilerBridge.blockReasons(context.craftingCpu(), context.grid(), gameTick);
         var blockReasons = new HashMap<String, CraftingBlockReason>();

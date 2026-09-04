@@ -35,7 +35,7 @@ public final class DelayedNotificationServer {
         ProfilerBridge.persistProviderState();
     }
 
-    private static UUID ownerOf(Object scope, List<ProfileKey> keys) {
+    static UUID ownerOf(Object scope, List<ProfileKey> keys) {
         var live = ProfilerBridge.jobOwner(scope);
         if (live.isPresent()) {
             return live.get();

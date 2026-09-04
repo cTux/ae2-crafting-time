@@ -8,6 +8,10 @@ link that highlights the provider block that ran the craft, in the world, for
 15 seconds. The word "delayed" renders in red. Provider-to-craft links and
 pending delayed warnings survive leaving and re-entering the world.
 
+The same private warning, with the same clickable provider link, also fires
+for `NO SPACE` and `NO POWER` rows: the craft cannot proceed and the owner
+should learn about it without watching the status screen.
+
 This covers [issue #231](https://github.com/cTux/ae2-crafting-time/issues/231).
 
 ## Player behavior
@@ -27,6 +31,16 @@ This covers [issue #231](https://github.com/cTux/ae2-crafting-time/issues/231).
 - Leaving and re-entering the world keeps working links for active crafts. A
   craft that is still delayed after re-entering warns again with a working
   link.
+- A `NO POWER` output warns its owner once while dispatch keeps failing for
+  lack of energy, with a red status word and a clickable provider name when
+  the provider resolves.
+- A `NO SPACE` output warns its owner once while its crafting CPU cannot
+  store finished items, with a red status word and a clickable provider name
+  when the provider resolves.
+- A reason that clears (power restored, storage freed, output unblocked)
+  re-arms that reason, so a later genuine stall warns again.
+- A row that is both delayed and blocked warns once per reason, since each
+  warning names a different problem.
 
 ## State rules
 
@@ -42,6 +56,11 @@ This covers [issue #231](https://github.com/cTux/ae2-crafting-time/issues/231).
 - Links are per crafting CPU and output. A new job replaces the previous
   job's links for that CPU. Finishing, cancelling, disabling the profiler,
   or clearing the scope drops its links.
+- `NO SPACE` mirrors the client row predicate on the server: the CPU reports
+  it cannot store items, and the output has stored items with nothing still
+  outstanding.
+- `NO POWER` reuses the existing per-output dispatch-power diagnostics with
+  their 20-tick freshness window.
 - The persisted copy (output, owner, dimension, provider positions, display
   name) is a fallback, not the authority: live dispatch data wins whenever
   the job ran during this session.
@@ -52,8 +71,8 @@ This covers [issue #231](https://github.com/cTux/ae2-crafting-time/issues/231).
 
 - Support 1.20.1 Forge, 1.20.1 Fabric, 1.21.1 NeoForge, and 26.1.2 NeoForge.
 - Use the same server-owned path in singleplayer and on a dedicated server.
-- No new config option; locating follows the existing `notifyOnDelayed`
-  server setting.
+- No new config option; locating and blocked warnings follow the existing
+  `notifyOnDelayed` server setting, which covers stuck-craft warnings.
 - Update English and Ukrainian text together; the split status word keeps
   matching placeholders.
 - Keep command arguments, packet fields, collection sizes, and decoded
@@ -71,6 +90,8 @@ This covers [issue #231](https://github.com/cTux/ae2-crafting-time/issues/231).
 - Clickable links for NeoEco and AE2 Lightning Tech CPU jobs: their dispatch
   paths do not expose patterns yet, so those warnings render plain names
   until a later change records them.
+- `NO PROVIDER` warnings: missing providers flap during normal play, so only
+  `NO SPACE` and `NO POWER` warn.
 - A locate action outside the delayed warning (no hotkey, no screen button).
 - Changing the 15-second highlight duration in-game.
 - Teleporting the player to the provider.
@@ -86,6 +107,10 @@ This covers [issue #231](https://github.com/cTux/ae2-crafting-time/issues/231).
 - Leaving and re-entering the world keeps the link working for an active
   craft; a still-delayed craft warns again.
 - A craft with no resolvable provider position renders a plain name.
+- A `NO POWER` warning arrives once per power-failure episode and returns
+  after power is restored and fails again.
+- A `NO SPACE` warning arrives once per storage-blocked episode and returns
+  after space is freed and blocks again.
 - World saves from before the feature load with empty provider state and no
   errors.
 - English and Ukrainian messages keep matching placeholders.

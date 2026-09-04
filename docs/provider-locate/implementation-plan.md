@@ -47,7 +47,21 @@ steps in the same commit.
 4. Answer clicks on missing or foreign records with the private expiry
    notice.
 
-## Phase 4: Tests, docs, and verification
+## Phase 4: Blocked warnings (NO SPACE, NO POWER)
+
+1. Add a tiny pure-core episode tracker (one instance per reason) with tests
+   for once-per-episode, re-arm, scope independence, and null safety.
+2. Add the server-side `NO SPACE` probe reading the AE2-mirrored status
+   methods through reflection, with graceful empty results.
+3. Notify per reason from every CPU tick path (power everywhere, space
+   everywhere) plus a power-only backup on status requests, sharing the
+   delayed records, highlight packet, and persistence.
+4. Add the shared three-placeholder blocked sentence with per-reason red
+   status words in both languages; reuse the clickable name.
+5. Extend the message, placeholder, and language tests.
+6. Update the spec, design, and protocol doc sections.
+
+## Phase 5: Tests, docs, and verification
 
 1. Add codec round-trip tests (positions, dimension, duration, oversize
    rejection) and NBT round-trip tests (records, owners, legacy saves).

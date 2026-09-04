@@ -63,6 +63,24 @@ Cap resolved positions at `PacketLimits.MAX_HIGHLIGHT_POSITIONS` (16).
 Dimension comes from the grid pivot level. An empty result means "no
 locatable target": the name renders as plain text.
 
+Blocked warnings (`NO SPACE`, `NO POWER`) reuse the same records, packets,
+and red-word message shape. Their once-per-episode memory lives in a tiny
+pure-core tracker (one instance per reason) keyed by crafting CPU identity:
+
+```text
+tick: blockReasons(scope, grid, tick) filtered to NO POWER -> poll episode
+tick: probe(logic).isCantStoreItems + stored/outstanding per output -> poll episode
+status request: NO POWER backup through the same episode memory
+```
+
+The `NO SPACE` probe reads the AE2-mirrored status methods every CPU logic
+in the mod supports (`isCantStoreItems`, `getAllWaitingFor`, `getStored`,
+`getWaitingFor`) through reflection, so addon-owned logics need no direct
+type reference; logics without those methods simply never report. A key
+counts when stored items exist with nothing still outstanding, mirroring the
+client row predicate. Finishing a job or reloading runtime state clears both
+episode memories beside the other per-scope cleanup.
+
 Locate records live in a bounded server registry:
 
 ```text
@@ -147,7 +165,9 @@ chat.delayed.word: "is delayed" / "затримується" (red)
 ```
 
 The name is underlined with a hover hint while clickable. Placeholder counts
-stay matched between English and Ukrainian.
+stay matched between English and Ukrainian. Blocked warnings use one shared
+three-placeholder sentence with a per-reason red status word and the
+existing reason explanation as detail.
 
 ## State flow
 

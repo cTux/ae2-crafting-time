@@ -25,8 +25,15 @@ public final class DelayedChatText {
                 TimeEstimate.formatTicks(typicalTicks));
     }
 
-    private static Component name(String outputName, UUID recordId) {
-        var name = Component.literal(outputName);
+    public static MutableComponent blockedMessage(String outputName, UUID recordId, String wordKey,
+            Component detail) {
+        return Component.translatable("text.ae2craftingtime.chat.blocked",
+                name(outputName, recordId),
+                Component.translatable(wordKey).withStyle(ChatFormatting.RED),
+                detail);
+    }
+
+    private static Component name(String outputName, UUID recordId) {        var name = Component.literal(outputName);
         if (recordId == null) {
             return name;
         }

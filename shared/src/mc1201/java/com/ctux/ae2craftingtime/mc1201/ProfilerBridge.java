@@ -238,6 +238,7 @@ public final class ProfilerBridge {
         ACCURACY.finish(scope, success && isEnabled(), tick, nanoTime);
         PROFILER.clearPending(scope);
         ProviderStartTracker.clear(scope);
+        BlockReasonNotifier.clear(scope);
     }
 
     public static Optional<ProfileStats> stats(AEKey what) {
@@ -325,6 +326,7 @@ public final class ProfilerBridge {
         PROFILER.loadSamples(data.samples());
         ProviderStartTracker.clearAll();
         ProviderLocateRecords.clearAll();
+        BlockReasonNotifier.clearAll();
         ProviderLocateRecords.restoreStarts(data.providerStarts());
         var migrated = PROFILER.snapshotSamples();
         if (!migrated.equals(data.samples())) {

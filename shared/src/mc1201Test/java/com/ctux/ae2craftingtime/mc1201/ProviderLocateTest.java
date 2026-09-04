@@ -153,6 +153,38 @@ class ProviderLocateTest {
     }
 
     @Test
+    void blockedMessageStructureAndRedWord() {
+        var message = DelayedChatText.blockedMessage("Basic Control Circuit", null,
+                "text.ae2craftingtime.chat.no_power.word",
+                Component.translatable("text.ae2craftingtime.no_power.explanation"));
+        var contents = (TranslatableContents) message.getContents();
+        assertEquals("text.ae2craftingtime.chat.blocked", contents.getKey());
+        assertEquals(3, contents.getArgs().length);
+
+        var name = (Component) contents.getArgs()[0];
+        assertEquals("Basic Control Circuit", name.getString());
+        assertFalse(name.getStyle().isUnderlined());
+        assertNull(name.getStyle().getClickEvent());
+
+        var word = (Component) contents.getArgs()[1];
+        assertEquals(TextColor.fromLegacyFormat(ChatFormatting.RED), word.getStyle().getColor());
+        assertEquals("text.ae2craftingtime.chat.no_power.word",
+                ((TranslatableContents) word.getContents()).getKey());
+    }
+
+    @Test
+    void blockedMessageNameIsClickable() {
+        assumeTrue(bootstrapped, "click events need MC registries");
+        var message = DelayedChatText.blockedMessage("Basic Control Circuit", UUID.randomUUID(),
+                "text.ae2craftingtime.chat.no_space.word",
+                Component.translatable("text.ae2craftingtime.no_space.explanation"));
+        var name = (Component) ((TranslatableContents) message.getContents()).getArgs()[0];
+        assertTrue(name.getStyle().isUnderlined());
+        assertNotNull(name.getStyle().getClickEvent());
+        assertNotNull(name.getStyle().getHoverEvent());
+    }
+
+    @Test
     void highlightPulseStaysInVisibleRange() {
         for (var i = 0; i < 5; i++) {
             var alpha = ProviderHighlightClient.pulseAlpha();

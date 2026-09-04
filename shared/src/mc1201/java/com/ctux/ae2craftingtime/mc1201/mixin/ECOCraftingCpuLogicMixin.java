@@ -11,6 +11,7 @@ import appeng.api.stacks.AEKey;
 import com.ctux.ae2craftingtime.mc1201.NeoEcoDispatchObserver;
 import appeng.hooks.ticking.TickHandler;
 import appeng.me.service.CraftingService;
+import com.ctux.ae2craftingtime.mc1201.BlockReasonNotifier;
 import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import org.spongepowered.asm.mixin.Mixin;
@@ -83,9 +84,12 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
     private void ae2craftingtime$finishCapacity(IEnergyService energyService, CraftingService craftingService,
             CallbackInfo ci) {
         var tick = ae2craftingtime$tick();
+        var server = ae2craftingtime$server();
         ProfilerBridge.updateCapacity(this, (int) Math.min(ae2craftingtime$usedSlots, ae2craftingtime$totalSlots),
                 ae2craftingtime$totalSlots, tick);
-        DelayedNotificationServer.maybeNotify(this, ae2craftingtime$grid, tick, ae2craftingtime$server());
+        DelayedNotificationServer.maybeNotify(this, ae2craftingtime$grid, tick, server);
+        BlockReasonNotifier.maybeNotifyPower(this, ae2craftingtime$grid, tick, server);
+        BlockReasonNotifier.maybeNotifySpace(this, ae2craftingtime$grid, this, server);
     }
 
     @Inject(method = "insert", at = @At("HEAD"), remap = false)
