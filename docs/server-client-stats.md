@@ -169,8 +169,9 @@ Rules:
 - The locate command (`/ae2craftingtime locate <record>`) only serves
   records owned by the clicking player. Missing or foreign records answer
   with a private expiry notice and highlight nothing.
-- The client draws red outline boxes while in the same dimension until the
-  duration expires.
+- The client draws thick (2-3x) rainbow-cycling outline boxes with matching
+  face diagonals while in the same dimension until the duration expires
+  (see [issue #234](https://github.com/cTux/ae2-crafting-time/issues/234)).
 
 ### Provider-start persistence
 

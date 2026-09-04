@@ -14,13 +14,19 @@ should learn about it without watching the status screen.
 
 This covers [issue #231](https://github.com/cTux/ae2-crafting-time/issues/231).
 
+Highlight style follows
+[issue #234](https://github.com/cTux/ae2-crafting-time/issues/234):
+thick (2-3x) rainbow-cycling edges plus thick face diagonals in the same
+color.
+
 ## Player behavior
 
 - The delayed warning keeps its #118 wording, timing context, owner-only
   delivery, and once-per-stall rules.
 - The output name renders underlined with a hover hint that invites the click.
-- Clicking the name highlights each resolved provider block with a blinking
-  red edge stroke for 15 seconds.
+- Clicking the name highlights each resolved provider block with a thick
+  (2-3x) rainbow-cycling edge outline plus thick face diagonals in the same
+  color, for 15 seconds.
   Only the warned player ever receives highlights.
 - The word "delayed" renders in red in English and Ukrainian.
 - Clicking a link that belongs to another player, or whose record expired or
@@ -102,8 +108,9 @@ This covers [issue #231](https://github.com/cTux/ae2-crafting-time/issues/231).
 
 - The warned player sees an underlined output name with a hover hint and a
   red "delayed" word.
-- Clicking the name draws boxes on the correct provider block(s) for
-  15 seconds; other players see nothing.
+- Clicking the name draws thick (2-3x) rainbow-cycling boxes with matching
+  face diagonals on the correct provider block(s) for 15 seconds; other
+  players see nothing.
 - Clicking another player's or an expired link shows the expiry notice and
   draws nothing.
 - Leaving and re-entering the world keeps the link working for an active
