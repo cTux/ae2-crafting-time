@@ -27,7 +27,7 @@ public final class StatsChatServer {
                 return;
             }
             if (ProfilerBridge.clearStats(key) && Ae2CraftingTimeConfig.SHOW_CHAT_MESSAGES.get()) {
-                broadcast(player, Component.translatable("text.ae2craftingtime.chat.reset", outputId));
+                notifyReset(player, Component.translatable("text.ae2craftingtime.chat.reset", outputId));
             }
             return;
         }
@@ -96,6 +96,10 @@ public final class StatsChatServer {
         for (var recipient : server.getPlayerList().getPlayers()) {
             recipient.connection.sendDisguisedChatMessage(message, chatType);
         }
+    }
+
+    private static void notifyReset(ServerPlayer player, Component message) {
+        player.sendSystemMessage(message);
     }
 
     private StatsChatServer() {

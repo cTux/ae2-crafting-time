@@ -45,7 +45,7 @@ The common file is `ae2craftingtime-common.toml` on every loader.
 | --- | --- | --- | --- |
 | `enabled` | `true` | boolean | Enables profiling and server-owned stats. |
 | `showInTree` | `true` | boolean | Enables AE2: Crafting Tree badges, tooltips, spacing, and clicks on pre-26 targets. |
-| `showChatMessages` | `true` | boolean | Enables public Ctrl-click details and reset notices. Reset still happens when false. |
+| `showChatMessages` | `true` | boolean | Enables public Ctrl-click details and the private reset notice. Reset still happens when false. |
 | `maxSamples` | `10` | 1-100 | Sets the retained throughput and runtime accuracy window per output. |
 | `outlierMultiplier` | `4.0` | 1.0-1000.0 | Sets the median-relative throughput outlier boundary. |
 
