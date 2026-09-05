@@ -16,7 +16,7 @@ The screen mixins own totals and sort state:
 
 - `CraftConfirmScreenMixin` sums known plan-row estimates and draws the total
   below CPU details.
-- `CraftingCPUScreenMixin` calculates running total from AE2 elapsed progress
+- `CraftingCPUScreenMixin` renders the server-calculated remaining dependency critical path
   and appends it beside the title only when the measured text fits.
 - both screens start with sort mode `2` and use `TtcSort.copySorted(...)` on a
   copied list; mode `0` returns AE2 order, `1` is shortest first, and `2` is

@@ -22,6 +22,7 @@ import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
 import com.ctux.ae2craftingtime.core.TtcAccuracyTracker;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -183,40 +184,30 @@ public final class ProfilerBridge {
 
     private static Map<ProfileKey, Set<ProfileKey>> dependencies(String networkId, ICraftingPlan plan,
             KeyCounter craftedAmounts) {
-        var crafted = new HashSet<AEKey>();
+        var crafted = new HashSet<ProfileKey>();
         for (var stack : craftedAmounts) {
             if (stack.getLongValue() > 0) {
-                crafted.add(stack.getKey());
+                crafted.add(key(networkId, stack.getKey()));
             }
         }
 
-        var dependencies = new HashMap<ProfileKey, Set<ProfileKey>>();
+        var patterns = new ArrayList<CraftingJobEstimate.Pattern>();
         for (var entry : plan.patternTimes().entrySet()) {
-            if (entry.getValue() <= 0) {
-                continue;
-            }
-            var inputs = new HashSet<ProfileKey>();
+            var inputs = new ArrayList<Set<ProfileKey>>();
             for (var input : entry.getKey().getInputs()) {
                 var candidates = new HashSet<ProfileKey>();
                 for (var possible : input.getPossibleInputs()) {
-                    if (possible != null && crafted.contains(possible.what())) {
-                        candidates.add(key(networkId, possible.what()));
-                    }
+                    candidates.add(key(networkId, possible.what()));
                 }
-                if (candidates.size() == 1) {
-                    inputs.add(candidates.iterator().next());
-                }
+                inputs.add(candidates);
             }
+            var outputs = new ArrayList<ProfileKey>();
             for (var output : entry.getKey().getOutputs()) {
-                if (!crafted.contains(output.what())) {
-                    continue;
-                }
-                var outputKey = key(networkId, output.what());
-                var outputDependencies = dependencies.computeIfAbsent(outputKey, ignored -> new HashSet<>());
-                inputs.stream().filter(input -> !input.equals(outputKey)).forEach(outputDependencies::add);
+                outputs.add(key(networkId, output.what()));
             }
+            patterns.add(new CraftingJobEstimate.Pattern(entry.getValue(), outputs, inputs));
         }
-        return dependencies;
+        return CraftingJobEstimate.dependencies(crafted, patterns);
     }
 
     private static OptionalLong estimateSeconds(ProfileKey key, long amount) {

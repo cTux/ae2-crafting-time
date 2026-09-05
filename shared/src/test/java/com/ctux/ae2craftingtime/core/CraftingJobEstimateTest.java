@@ -3,6 +3,9 @@ package com.ctux.ae2craftingtime.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
 import java.util.Set;
@@ -19,6 +22,20 @@ class CraftingJobEstimateTest {
                 Map.of(ROOT, Set.of(MIDDLE, LEAF), MIDDLE, Set.of(LEAF)));
 
         assertEquals(35, estimate.remainingSeconds(CraftingJobEstimateTest::seconds).orElseThrow());
+    }
+
+    @Test
+    void buildsDependenciesFromUsedPatternsAndOmitsAmbiguousInputs() {
+        var unrelated = new ProfileKey("test:unrelated");
+        var patterns = List.of(
+                new CraftingJobEstimate.Pattern(1, List.of(ROOT),
+                        List.of(Set.of(MIDDLE, unrelated), Set.of(LEAF, MIDDLE), Set.of(ROOT))),
+                new CraftingJobEstimate.Pattern(1, List.of(MIDDLE), List.of(Set.of(LEAF))),
+                new CraftingJobEstimate.Pattern(0, List.of(LEAF), List.of(Set.of(MIDDLE))),
+                new CraftingJobEstimate.Pattern(1, List.of(unrelated), List.of(Set.of(LEAF))));
+
+        assertEquals(Map.of(ROOT, Set.of(MIDDLE), MIDDLE, Set.of(LEAF)),
+                CraftingJobEstimate.dependencies(Set.of(ROOT, MIDDLE, LEAF), patterns));
     }
 
     @Test
@@ -50,6 +67,23 @@ class CraftingJobEstimateTest {
 
         assertEquals(20, estimate.remainingSeconds((key, amount) -> key.equals(ROOT)
                 ? OptionalLong.empty() : seconds(key, amount)).orElseThrow());
+    }
+
+    @Test
+    void boundsPathDepthForPathologicalLadders() {
+        var amounts = new HashMap<ProfileKey, Long>();
+        var dependencies = new HashMap<ProfileKey, Set<ProfileKey>>();
+        var root = new ProfileKey("test:depth_0");
+        var current = root;
+        for (int depth = 0; depth < 600; depth++) {
+            amounts.put(current, 1L);
+            var next = new ProfileKey("test:depth_" + (depth + 1));
+            dependencies.computeIfAbsent(current, ignored -> new HashSet<>()).add(next);
+            current = next;
+        }
+
+        assertEquals(512, new CraftingJobEstimate(root, amounts, dependencies)
+                .remainingSeconds(CraftingJobEstimateTest::seconds).orElseThrow());
     }
 
     private static OptionalLong seconds(ProfileKey key, long amount) {
