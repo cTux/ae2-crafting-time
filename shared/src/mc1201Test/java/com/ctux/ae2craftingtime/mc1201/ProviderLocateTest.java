@@ -34,7 +34,7 @@ class ProviderLocateTest {
 
     @BeforeAll
     static void ensureBootstrapped() {
-        // Building click/hover events touches item registries on some versions.
+        // Item lookup needs registries; constructing click/hover components does not.
         try {
             net.minecraft.server.Bootstrap.bootStrap();
             bootstrapped = true;
@@ -174,7 +174,6 @@ class ProviderLocateTest {
 
     @Test
     void highlightingMessageCoordsTeleportOnClick() {
-        assumeTrue(bootstrapped, "click events need MC registries");
         var message = DelayedChatText.highlightingMessage(Component.literal("Pattern Provider"),
                 List.of(new BlockPos(1, 2, 3), new BlockPos(-4, 5, -6)), "minecraft:overworld");
         var coords = (Component) ((TranslatableContents) message.getContents()).getArgs()[1];
@@ -205,7 +204,6 @@ class ProviderLocateTest {
 
     @Test
     void delayedMessageNameIsClickable() {
-        assumeTrue(bootstrapped, "click events need MC registries");
         var message = DelayedChatText.delayedMessage("Basic Control Circuit", UUID.randomUUID(), 640, 320.0);
         var name = (Component) ((TranslatableContents) message.getContents()).getArgs()[0];
         assertEquals("Basic Control Circuit", name.getString());
@@ -236,7 +234,6 @@ class ProviderLocateTest {
 
     @Test
     void blockedMessageNameIsClickable() {
-        assumeTrue(bootstrapped, "click events need MC registries");
         var message = DelayedChatText.blockedMessage("Basic Control Circuit", UUID.randomUUID(),
                 "text.ae2craftingtime.chat.no_space.word",
                 Component.translatable("text.ae2craftingtime.no_space.explanation"));
