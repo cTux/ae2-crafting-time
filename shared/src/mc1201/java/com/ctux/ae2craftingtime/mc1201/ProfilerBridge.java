@@ -284,7 +284,12 @@ public final class ProfilerBridge {
         ProviderStartTracker.clear(scope);
         BlockReasonNotifier.clear(scope);
         clearHighlights(server, highlightOwner.orElse(null), highlightKeys);
-        persistStatuses();
+        // Finished and cancelled targets must never return after a reload:
+        // forget their provider fallback as well as their statuses.
+        if (!highlightKeys.isEmpty()) {
+            ProviderLocateRecords.removeStarts(highlightKeys);
+        }
+        persistProviderState();
     }
 
     /**
@@ -320,16 +325,21 @@ public final class ProfilerBridge {
     /**
      * Re-sends every remembered delayed plate owned by the joining player, so
      * a craft that became delayed while they were offline still shows red
-     * without opening any window. Chat is never re-sent here: login syncs
-     * plates only, once-per-episode warnings fire on live transitions while
-     * online and honor the chat setting there. Best-effort: missing positions
-     * or dimension simply skip that output.
+     * without opening any window, including after singleplayer reload,
+     * dedicated reconnect, server restart, and full client restart. Chat is
+     * never re-sent here: login syncs plates only, once-per-episode warnings
+     * fire on live transitions while online and honor the chat setting there.
+     * Broken providers (all positions air or without a block entity) are
+     * skipped and forgotten so they never return. Best-effort: missing
+     * positions or dimension simply skip that output.
      */
     public static void resyncPlatesForPlayer(net.minecraft.server.level.ServerPlayer player) {
         if (player == null || !isEnabled()) {
             return;
         }
         var owner = player.getUUID();
+        var broken = new java.util.ArrayList<ProfileKey>();
+        var pruned = false;
         for (var status : PROFILER.snapshotStatuses()) {
             if (status == null || status.kind() != StatusKind.DELAYED || status.key() == null) {
                 continue;
@@ -347,14 +357,73 @@ public final class ProfilerBridge {
             if (dimension.isBlank()) {
                 continue;
             }
+            var kept = filterUnbroken(player, dimension, positions);
+            if (kept.isEmpty()) {
+                broken.add(key);
+                continue;
+            }
+            if (kept.size() != positions.size()) {
+                ProviderLocateRecords.replaceStart(key, owner, kept, start.outputName());
+                pruned = true;
+            }
             try {
                 StatsNetwork.sendTo(player,
-                        new com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C(dimension, positions,
+                        new com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C(dimension, kept,
                                 key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS, true));
             } catch (Exception ignored) {
                 // One unsendable plate must not hide the rest.
             }
         }
+        if (!broken.isEmpty()) {
+            ProviderLocateRecords.removeStarts(broken);
+            pruned = true;
+        }
+        if (pruned) {
+            persistProviderState();
+        }
+    }
+
+    private static List<BlockPos> filterUnbroken(net.minecraft.server.level.ServerPlayer player,
+            String dimensionId, List<BlockPos> positions) {
+        try {
+            var server = player.serverLevel().getServer();
+            for (var level : server.getAllLevels()) {
+                String levelDimension;
+                try {
+                    levelDimension = level.dimension().location().toString();
+                } catch (Exception ignored) {
+                    continue;
+                }
+                if (!dimensionId.equals(levelDimension)) {
+                    continue;
+                }
+                var kept = new java.util.ArrayList<BlockPos>();
+                for (var pos : positions) {
+                    if (pos == null) {
+                        continue;
+                    }
+                    try {
+                        if (!level.isLoaded(pos)) {
+                            kept.add(pos);
+                            continue;
+                        }
+                        if (level.getBlockState(pos).isAir()) {
+                            continue;
+                        }
+                        if (level.getBlockEntity(pos) == null) {
+                            continue;
+                        }
+                        kept.add(pos);
+                    } catch (Exception ignored) {
+                        kept.add(pos);
+                    }
+                }
+                return List.copyOf(kept);
+            }
+        } catch (Exception ignored) {
+            // Unknown dimension or unloaded world: send as-is, client trim handles it.
+        }
+        return positions;
     }
 
     static String dimensionFromNetworkId(String networkId) {

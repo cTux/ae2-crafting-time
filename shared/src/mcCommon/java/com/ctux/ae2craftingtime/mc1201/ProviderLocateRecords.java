@@ -99,15 +99,37 @@ public final class ProviderLocateRecords {
         evictEldest(STARTS, MAX_STARTS);
     }
 
+    /**
+     * Snapshot for world save. Excludes entries with no positions (broken or
+     * unlocatable): they can never produce a plate, so persisting them would
+     * only resurrect stale red after a reload. In-memory keeps empty to avoid
+     * showing an old box via fallback.
+     */
     public static synchronized List<StoredStart> snapshotStarts() {
         var snapshot = new ArrayList<StoredStart>();
         for (var entry : STARTS.entrySet()) {
             var info = entry.getValue();
-            if (info.owner() != null) {
+            if (info.owner() != null && info.positions() != null && !info.positions().isEmpty()) {
                 snapshot.add(new StoredStart(entry.getKey(), info.owner(), info.positions(), info.outputName()));
             }
         }
         return List.copyOf(snapshot);
+    }
+
+    /**
+     * Forgets finished, cancelled, or broken outputs so they never return
+     * after a reload. Called on job finish/cancel for the scope's keys and on
+     * login resync when server-side validation finds all positions broken.
+     */
+    public static synchronized void removeStarts(java.util.Collection<com.ctux.ae2craftingtime.core.ProfileKey> keys) {
+        if (keys == null || keys.isEmpty()) {
+            return;
+        }
+        for (var key : keys) {
+            if (key != null) {
+                STARTS.remove(key);
+            }
+        }
     }
 
     public static synchronized void restoreStarts(List<StoredStart> stored) {

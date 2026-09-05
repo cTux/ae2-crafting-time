@@ -301,10 +301,15 @@ public final class CraftProfiler {
             stall(key, scope, tick).ifPresent(diagnostic -> currentlyDelayed.put(key, diagnostic));
         }
         // Progress that clears the stall ends the episode and re-arms notification.
+        // Drop remembered DELAYED for resolved keys so login resync and world
+        // save never resurrect a recovered plate; a later transition re-adds it.
         var resolved = new HashSet<>(notified);
         resolved.removeAll(currentlyDelayed.keySet());
         if (!resolved.isEmpty()) {
             delayedResolved.computeIfAbsent(scope, ignored -> new HashSet<>()).addAll(resolved);
+            for (var key : resolved) {
+                rememberedStatuses.remove(key);
+            }
         }
         notified.retainAll(currentlyDelayed.keySet());
         var newly = new ArrayList<DelayedEvent>();
