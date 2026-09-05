@@ -14,9 +14,9 @@ the same archive layout:
 Use the host campaign entry point `scripts/run-ui-smoke.ps1`. See
 [Choosing smoke coverage](dev-client.md#choosing-smoke-coverage) for full,
 targeted, grouped and change-based commands. The default full campaign includes
-required focused adapter graphs as well as each target's primary suite. A
-low-level `invoke-ui-smoke-codexvm.ps1 -Scenario suite` invocation runs only the
-requested graph and does not replace that campaign gate.
+required focused adapter graphs as well as each target's primary suite. The
+`invoke-ui-smoke-codexvm.ps1` wrapper also delegates to the campaign runner when
+no internal bundle is supplied; use the documented host options to select scope.
 
 The primary compatible suites currently contain 34 cases for Forge 1.20.1,
 16 for Fabric 1.20.1, 30 for NeoForge 1.21.1 and 19 for NeoForge 26.1.2. Read the
