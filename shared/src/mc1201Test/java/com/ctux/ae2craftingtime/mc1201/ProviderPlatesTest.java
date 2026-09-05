@@ -62,7 +62,7 @@ class ProviderPlatesTest {
     }
 
     @Test
-    void prunePlatesDropsOutputsWithoutStall() {
+    void prunePlatesKeepsServerAuthoritativePlates() {
         var iron = new ProfileKey("minecraft:iron_ingot");
         var copper = new ProfileKey("minecraft:copper_plate");
         ProviderHighlightClient.showPlate("minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
@@ -70,18 +70,18 @@ class ProviderPlatesTest {
         ProviderHighlightClient.showPlate("minecraft:overworld", List.of(new BlockPos(4, 5, 6)),
                 "minecraft:copper_plate");
 
+        // A healthy snapshot from another CPU must not remove still-delayed plates.
         ClientStats.CACHE.replace(List.of(iron, copper),
                 List.of(new StatsEntry(iron, stats(), Optional.empty(),
                         Optional.of(new StallDiagnostic(300, 20.0, 1, 0, 0)))));
         ProviderHighlightClient.prunePlates(List.of("minecraft:iron_ingot", "minecraft:copper_plate"));
 
         var plates = ProviderHighlightClient.plates();
-        assertEquals(1, plates.size());
-        assertEquals("minecraft:iron_ingot", plates.get(0).outputId());
+        assertEquals(2, plates.size());
 
         ProviderHighlightClient.prunePlates(null);
         ProviderHighlightClient.prunePlates(List.of());
-        assertEquals(1, ProviderHighlightClient.plates().size());
+        assertEquals(2, ProviderHighlightClient.plates().size());
     }
 
     @Test
@@ -99,11 +99,11 @@ class ProviderPlatesTest {
     }
 
     @Test
-    void plateGateHidesPositiveEntriesWithoutStall() {
+    void plateGateShowsDespiteHealthySnapshot() {
         var iron = new ProfileKey("minecraft:iron_ingot");
         ClientStats.CACHE.replace(List.of(iron),
                 List.of(new StatsEntry(iron, stats(), Optional.empty(), Optional.empty())));
-        assertFalse(ProviderHighlightClient.shouldShowPlates("minecraft:iron_ingot"));
+        assertTrue(ProviderHighlightClient.shouldShowPlates("minecraft:iron_ingot"));
     }
 
     @Test

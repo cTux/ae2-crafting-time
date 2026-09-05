@@ -1,6 +1,5 @@
 package com.ctux.ae2craftingtime.mc1201;
 
-import com.ctux.ae2craftingtime.core.ProfileKey;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -162,28 +161,20 @@ public final class ProviderHighlightClient {
         emptied.forEach(PLATES::remove);
     }
 
-    /** Persistent plates for the render hooks to filter by dimension and stall. */
+    /** Persistent plates for the render hooks to filter by dimension. Server authoritative. */
     public static List<Plate> plates() {
         return new ArrayList<>(PLATES.values());
     }
 
     /**
-     * Drops plates whose output no longer reports a stall after a snapshot
-     * for the requested keys was applied. Never touches the rainbow edge:
-     * craft-state pruning removes red plates only, so a manually triggered
-     * rainbow survives recovery, finish, and cancel until its own expiry.
-     * Call right after the client cache replace, from every loader's
-     * snapshot handler.
+     * Legacy snapshot hook kept for loader compatibility. Server-owned craft
+     * state is authoritative for plates: snapshots from another CPU, the
+     * planning screen, or a closed window must never remove a still-delayed
+     * plate, so this is now a no-op. Plates disappear only on explicit server
+     * clear (recovery, finish, cancel) or provider break (render trim).
      */
     public static void prunePlates(List<String> requestedKeys) {
-        if (requestedKeys == null || requestedKeys.isEmpty() || PLATES.isEmpty()) {
-            return;
-        }
-        for (var id : requestedKeys) {
-            if (id != null && ClientStats.CACHE.stall(new ProfileKey(id)).isEmpty()) {
-                PLATES.remove(id);
-            }
-        }
+        return;
     }
 
     static void clearPlates() {
@@ -192,27 +183,16 @@ public final class ProviderHighlightClient {
     }
 
     /**
-     * Plate gate for every loader's render hook. Plates live until the craft
-     * ends (explicit server clear), the provider block breaks (render trim),
-     * or a snapshot reports no stall: only a positive entry without a stall
-     * hides the plate. Unknown outputs (no cache entry yet, e.g. the CPU
-     * screen is closed so no snapshot ever arrived) still show; the finish
-     * and cancel clear removes them, so a closed screen never sticks.
-     * Wall-clock plays no role here: the 15-second window gates edges only.
+     * Plate gate for every loader's render hook. Server-owned craft state is
+     * authoritative: any stored plate shows until the server explicitly clears
+     * it (recovery, finish, cancel) or the provider breaks (render trim).
+     * Never consults the general UI stats cache, so opening another CPU, the
+     * planning screen, or closing all windows can no longer hide a
+     * still-delayed plate. Wall-clock plays no role here: the 15-second window
+     * gates edges only.
      */
     public static boolean shouldShowPlates(String outputId) {
-        return shouldShowPlatesAt(outputId, System.currentTimeMillis());
-    }
-
-    static boolean shouldShowPlatesAt(String outputId, long nowMillis) {
-        if (outputId == null || outputId.isBlank()) {
-            return false;
-        }
-        var key = new ProfileKey(outputId);
-        if (ClientStats.CACHE.stall(key).isPresent()) {
-            return true;
-        }
-        return ClientStats.CACHE.get(key).isEmpty();
+        return outputId != null && !outputId.isBlank();
     }
 
     /**
