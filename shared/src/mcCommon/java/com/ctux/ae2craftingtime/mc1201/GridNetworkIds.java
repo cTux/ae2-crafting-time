@@ -12,6 +12,14 @@ final class GridNetworkIds {
         return dimensionId + "|" + anchor.getX() + "," + anchor.getY() + "," + anchor.getZ();
     }
 
+    static String dimensionFromNetworkId(String networkId) {
+        if (networkId == null || networkId.isBlank()) {
+            return "";
+        }
+        var separator = networkId.indexOf('|');
+        return separator < 0 ? networkId : networkId.substring(0, separator);
+    }
+
     @Nullable
     private static BlockPos lowestAnchor(Iterable<BlockPos> controllerAnchors) {
         BlockPos lowest = null;

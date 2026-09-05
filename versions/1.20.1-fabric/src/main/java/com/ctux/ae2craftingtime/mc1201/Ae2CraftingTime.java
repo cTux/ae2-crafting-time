@@ -58,7 +58,6 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
             // unloaded chunks stay unknown so reload never clears intact red.
             ProviderHighlightClient.trimPositions(levelDimension,
                     pos -> ProviderBlockTargets.keepForHighlight(minecraft.level, pos));
-            var highlight = ProviderHighlightClient.live();
             var camera = context.camera().getPosition();
             var poseStack = context.matrixStack();
             poseStack.pushPose();

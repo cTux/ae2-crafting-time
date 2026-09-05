@@ -19,10 +19,11 @@ class ProviderResyncTest {
     @Test
     void dimensionFromNetworkIdSplitsControllerSuffix() {
         assertEquals("minecraft:overworld",
-                ProfilerBridge.dimensionFromNetworkId("minecraft:overworld|1,2,3"));
-        assertEquals("minecraft:the_nether", ProfilerBridge.dimensionFromNetworkId("minecraft:the_nether"));
-        assertEquals("", ProfilerBridge.dimensionFromNetworkId(""));
-        assertEquals("", ProfilerBridge.dimensionFromNetworkId(null));
+                GridNetworkIds.dimensionFromNetworkId("minecraft:overworld|1,2,3"));
+        assertEquals("minecraft:the_nether", GridNetworkIds.dimensionFromNetworkId("minecraft:the_nether"));
+        assertEquals("", GridNetworkIds.dimensionFromNetworkId(""));
+        assertEquals("", GridNetworkIds.dimensionFromNetworkId(null));
+        assertEquals("", GridNetworkIds.dimensionFromNetworkId("   "));
     }
 
     @Test

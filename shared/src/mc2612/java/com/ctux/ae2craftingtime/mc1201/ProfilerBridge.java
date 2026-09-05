@@ -414,7 +414,7 @@ public final class ProfilerBridge {
     private static List<BlockPos> filterUnbroken(net.minecraft.server.level.ServerPlayer player,
             String dimensionId, List<BlockPos> positions) {
         try {
-            var server = player.serverLevel().getServer();
+            var server = player.level().getServer();
             for (var level : server.getAllLevels()) {
                 String levelDimension;
                 try {
@@ -447,11 +447,7 @@ public final class ProfilerBridge {
     }
 
     static String dimensionFromNetworkId(String networkId) {
-        if (networkId == null || networkId.isBlank()) {
-            return "";
-        }
-        var separator = networkId.indexOf('|');
-        return separator < 0 ? networkId : networkId.substring(0, separator);
+        return GridNetworkIds.dimensionFromNetworkId(networkId);
     }
 
     public static Optional<ProfileStats> stats(AEKey what) {

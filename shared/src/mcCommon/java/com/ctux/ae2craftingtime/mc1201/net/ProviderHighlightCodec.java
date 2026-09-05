@@ -23,6 +23,11 @@ public final class ProviderHighlightCodec {
         public Highlight(String dimensionId, List<BlockPos> positions, String outputId, int durationSeconds) {
             this("", dimensionId, positions, outputId, durationSeconds, false);
         }
+
+        public Highlight(String networkId, String dimensionId, List<BlockPos> positions, String outputId,
+                int durationSeconds) {
+            this(networkId, dimensionId, positions, outputId, durationSeconds, false);
+        }
     }
 
     public static void write(FriendlyByteBuf buffer, Highlight highlight) {
