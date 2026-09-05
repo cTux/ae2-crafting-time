@@ -46,8 +46,9 @@ public abstract class ProfilerBridgeObservationMixin {
         DispatchObservation.amount(scope, key.getId().toString(), amount, false);
     }
 
-    @Inject(method = "finishJob", at = @At("HEAD"))
-    private static void finished(Object scope, boolean success, long tick, long nanos, CallbackInfo ci) {
+    @Inject(method = "finishJob(Ljava/lang/Object;ZJJLnet/minecraft/server/MinecraftServer;)V", at = @At("HEAD"))
+    private static void finished(Object scope, boolean success, long tick, long nanos,
+            net.minecraft.server.MinecraftServer server, CallbackInfo ci) {
         DispatchObservation.finished(scope, success);
     }
 

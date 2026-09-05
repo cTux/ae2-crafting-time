@@ -370,6 +370,10 @@ at their pure boundary; verify world switching and cache isolation in CodexVM.
 
 ## UI observation boundaries
 
+The dispatch observer hooks the server-aware `finishJob` overload. The older
+overload delegates to it, so each completed job is counted once regardless of
+which overload the integration calls.
+
 Crafting Tree reuses the plan-opening flow and then clicks its actual toolbar
 button. Its small scenario adapter reads the upstream widget's layout to find
 a crafted node. Final GuiGraphics badge fills and rendered tooltip components

@@ -23,11 +23,23 @@ screenshots and original logs. `scripts/check-startup-diagnostics.ps1` checks
 context, unique inventory, required registration and dedicated-side exclusions;
 its `-OptionalAbsent` check requires all 26 optional rows to be skipped.
 
-Still required before approval: core-only client starts, every available supported
-addon path, transformed-target recoverable failures with subsequent successful
-crafting, and intentional fatal dependency/hook failures. Unavailable Fabric
-Crafting Tree runtime coverage remains unverified. No complete smoke pass or
-merge readiness is claimed.
+At revision `ad2b206a`, enabled and disabled configuration checks passed on all
+four dedicated targets. With profiling disabled, all five core CPU capabilities
+were skipped. Removing AE2 from isolated server profiles preserved the original
+fatal loader diagnostic on Forge, Fabric, and both NeoForge targets. The reports
+are retained under `build/issue193/config-dedicated` and
+`build/issue193/fatal-dedicated` in the task workspace.
+
+Core-only client startup and the real `craft-lifecycle` scenario also passed on
+all four targets with the `ad2b206a` production artifacts. Exact process IDs,
+screenshots, logs, and manifests are retained under `build/issue193/core-clients`.
+
+Still required before approval: every available supported
+addon path, and transformed-target recoverable failures with subsequent successful
+crafting. On 2026-09-05, the Modrinth version API returned no Fabric 1.20.1 release
+for Crafting Tree (`a1RwDz90`); the maintainer explicitly excluded that unavailable cell from merge acceptance.
+The Fabric diagnostic row remains present and its runtime coverage unverified.
+No complete smoke pass or merge readiness is claimed.
 
 For all new campaigns, follow the [smoke policy](automated-ui-testing/spec.md#smoke-policy):
 exercise only the newest adapter per dependency/target and use English (`en_us`)
