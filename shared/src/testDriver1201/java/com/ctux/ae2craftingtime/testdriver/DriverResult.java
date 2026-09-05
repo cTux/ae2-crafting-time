@@ -29,6 +29,9 @@ public record DriverResult(
     public static final List<String> VISUAL_TOOL_CHECKS = List.of("screen", "layout");
     public static final List<String> CRAFTING_TREE_CHECKS = List.of("screen", "node-ttc", "tooltip", "layout", "details", "reset");
     public static final List<String> WIRELESS_RANGE_CHECKS = List.of("screen", "plan-ttc");
+    public static final List<String> READ_RECOVERY_CHECKS = List.of("screen", "host-content", "overlay-absent", "layout");
+    public static final List<String> TREE_RECOVERY_CHECKS = List.of("screen", "host-content", "overlay-absent", "layout",
+            "tooltip", "details-ignored", "reset-ignored");
 
     public DriverResult {
         adapters = Map.copyOf(adapters);
@@ -40,7 +43,9 @@ public record DriverResult(
     }
 
     public static List<String> requiredChecks(String scenario) {
-        return StandardAe2Scenario.supports(scenario) ? StandardAe2Scenario.CHECKS.get(scenario)
+        return scenario.equals(RequesterFixture.RECOVERY) ? READ_RECOVERY_CHECKS
+                : scenario.equals(CraftingTreeScenario.RECOVERY) ? TREE_RECOVERY_CHECKS
+                : StandardAe2Scenario.supports(scenario) ? StandardAe2Scenario.CHECKS.get(scenario)
                 : scenario.equals("craft-plan") ? CRAFT_PLAN_CHECKS
                 : scenario.equals(NoSpaceScenario.SCENARIO) ? NoSpaceScenario.CHECKS
                 : scenario.equals(NoPowerScenario.SCENARIO) ? NoPowerScenario.CHECKS

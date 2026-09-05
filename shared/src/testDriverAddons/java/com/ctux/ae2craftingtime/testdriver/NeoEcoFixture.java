@@ -1,8 +1,13 @@
 package com.ctux.ae2craftingtime.testdriver;
 
+import appeng.api.config.Actionable;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.crafting.ICraftingCPU;
+import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.AEItemKey;
+import appeng.blockentity.storage.DriveBlockEntity;
+import appeng.core.definitions.AEItems;
 import cn.dancingsnow.neoecoae.all.NEMultiBlocks;
 import cn.dancingsnow.neoecoae.blocks.entity.NEBlockEntity;
 import cn.dancingsnow.neoecoae.blocks.entity.computation.ECOComputationDriveBlockEntity;
@@ -13,6 +18,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -36,9 +42,18 @@ class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
         var level = player.serverLevel();
         var terminal = new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z());
         var context = findSpace(level, terminal, NEMultiBlocks.COMPUTATION_SYSTEM_L9);
-
+        var host = (IInWorldGridNodeHost) level.getBlockEntity(terminal);
+        var grid = Arrays.stream(Direction.values()).map(host::getGridNode).filter(Objects::nonNull)
+                .map(node -> node.getGrid()).findFirst().orElseThrow();
+        var drive = grid.getMachines(DriveBlockEntity.class).stream()
+                .filter(candidate -> candidate.getMainNode().isActive()).findFirst().orElseThrow();
+        var inventory = drive.getInternalInventory();
+        var slot = 0;
+        while (slot < inventory.size() && !inventory.getStackInSlot(slot).isEmpty()) slot++;
+        if (slot == inventory.size()) throw new IllegalStateException("NeoEco fixture needs an empty drive slot");
+        inventory.setItemDirect(slot, AEItems.ITEM_CELL_1K.stack());
         context.blocks.forEach((pos, state) -> level.setBlockAndUpdate(pos, state));
-        return new Placement(List.copyOf(context.blocks.keySet()));
+        return new Placement(List.copyOf(context.blocks.keySet()), grid);
     }
 
     @Override
@@ -86,6 +101,13 @@ class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
                 .filter(ECOComputationDriveBlockEntity.class::isInstance)
                 .map(ECOComputationDriveBlockEntity.class::cast)
                 .forEach(drive -> drive.setCellStack(cell));
+        var storage = placement.grid().getStorageService().getInventory();
+        var cobblestone = AEItemKey.of(Items.COBBLESTONE);
+        var source = IActionSource.ofPlayer(player);
+        var missing = 64 - storage.extract(cobblestone, 64, Actionable.SIMULATE, source);
+        if (missing > 0 && storage.insert(cobblestone, missing, Actionable.MODULATE, source) != missing) {
+            throw new IllegalStateException("NeoEco fixture could not store its cobblestone inputs");
+        }
         return true;
     }
 
@@ -97,7 +119,7 @@ class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
                 .findFirst().orElse(null);
     }
 
-    record Placement(List<BlockPos> blocks) {
+    record Placement(List<BlockPos> blocks, IGrid grid) {
     }
 
     static List<BlockPos> placeBlueprint(Level level, BlockPos terminal,

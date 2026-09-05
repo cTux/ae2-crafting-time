@@ -14,6 +14,7 @@ import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.mc1201.BlockReasonNotifier;
 import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Unique;
@@ -51,6 +52,7 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
             ae2craftingtime$grid = grid;
             ProfilerBridge.startJob(ProfilerBridge.networkId(grid), this, plan, ae2craftingtime$tick(),
                     System.nanoTime(), ProfilerBridge.jobOwner(source));
+            IntegrationLog.cpu("neoecoae", "cpu-submit");
         }
     }
 
@@ -65,7 +67,13 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
         if (type == Actionable.MODULATE) {
             ProfilerBridge.start(ProfilerBridge.networkId(ae2craftingtime$grid), this, what, amount,
                     ae2craftingtime$tick());
+            IntegrationLog.cpu("neoecoae", "cpu-dispatch");
         }
+    }
+
+    @Inject(method = "tryPushVerifiedFastPathBatch", at = @At("RETURN"), remap = false, require = 0)
+    private void ae2craftingtime$observeFastPath(CallbackInfoReturnable<Number> cir) {
+        IntegrationLog.positive("neoecoae", "cpu-dispatch-fastpath", cir.getReturnValue().longValue());
     }
 
     @Inject(method = "executeCrafting", at = @At("RETURN"), remap = false)
@@ -87,6 +95,7 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
         var server = ae2craftingtime$server();
         ProfilerBridge.updateCapacity(this, (int) Math.min(ae2craftingtime$usedSlots, ae2craftingtime$totalSlots),
                 ae2craftingtime$totalSlots, tick);
+        IntegrationLog.cpu("neoecoae", "cpu-capacity");
         DelayedNotificationServer.maybeNotify(this, ae2craftingtime$grid, tick, server);
         BlockReasonNotifier.maybeNotifyPower(this, ae2craftingtime$grid, tick, server);
         BlockReasonNotifier.maybeNotifySpace(this, ae2craftingtime$grid, this, server);
@@ -112,11 +121,13 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
         if (accepted > 0) {
             ProfilerBridge.complete(ProfilerBridge.networkId(ae2craftingtime$grid), this, what, accepted,
                     ae2craftingtime$tick());
+            IntegrationLog.cpu("neoecoae", "cpu-output");
         }
         ae2craftingtime$inserting = false;
         if (ae2craftingtime$deferredFinish) {
             ProfilerBridge.finishJob(this, ae2craftingtime$deferredSuccess, ae2craftingtime$tick(), System.nanoTime(),
                     ae2craftingtime$server());
+            IntegrationLog.cpu("neoecoae", "cpu-finish");
         }
     }
 
@@ -128,13 +139,8 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
         } else {
             ProfilerBridge.finishJob(this, success, ae2craftingtime$tick(), System.nanoTime(),
                     ae2craftingtime$server());
+            IntegrationLog.cpu("neoecoae", "cpu-finish");
         }
-    }
-
-    @Inject(method = "cancel", at = @At("HEAD"), remap = false, require = 0)
-    private void ae2craftingtime$clearHighlightOnCancel(CallbackInfo ci) {
-        ProfilerBridge.finishJob(this, false, ae2craftingtime$tick(), System.nanoTime(),
-                ae2craftingtime$server());
     }
 
     @Unique

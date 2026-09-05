@@ -8,6 +8,7 @@ import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
+import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
@@ -44,6 +45,7 @@ public abstract class WirelessTerminalScreenMixin {
                         .ifPresentOrElse(eta -> result.add(TtcText.tooltipTtc(TtcText.ttc(eta))),
                                 () -> result.add(TtcText.tooltipTtc(TtcText.ttcCollectingData()))),
                 () -> result.add(TtcText.tooltipTtc(TtcText.ttcCollectingData())));
+        IntegrationLog.wireless(getClass().getName(), ae2craftingtime$hasImportExportCard());
         return result;
     }
 

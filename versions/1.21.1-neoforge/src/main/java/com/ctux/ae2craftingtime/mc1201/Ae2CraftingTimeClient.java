@@ -9,7 +9,7 @@ import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 public final class Ae2CraftingTimeClient {
     @SubscribeEvent
     public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
-        event.register(TtcDetailsKeyMapping.showDetails());
+        IntegrationLog.required("key-registration", () -> event.register(TtcDetailsKeyMapping.showDetails()));
     }
 
     private Ae2CraftingTimeClient() {

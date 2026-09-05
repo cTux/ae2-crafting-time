@@ -6,7 +6,10 @@ import com.ctux.ae2craftingtime.core.ProfileUnit;
 
 public final class AeKeyAmounts {
     public static long normalize(AEKey key, long amount) {
-        return ProfileAmounts.normalize(key.getId().toString(), key.getAmountPerUnit(), amount);
+        var outputId = key.getId().toString();
+        var normalized = ProfileAmounts.normalize(outputId, key.getAmountPerUnit(), amount);
+        IntegrationLog.normalized(outputId);
+        return normalized;
     }
 
     public static ProfileUnit unit(AEKey key) {

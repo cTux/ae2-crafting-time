@@ -343,6 +343,14 @@ Plan data is stable after the same screen and ordered output IDs are observed
 for three consecutive rendered frames. A new screen, changed row order, or
 changed plan restarts the count.
 
+The focused `crafting-tree-read-recovery` and `merequester-read-recovery` cases
+reuse these fixtures with isolated addon JARs whose reflective read member has
+been renamed together with its upstream references. The driver observes the
+original rendered content and absence of TTC additions; Tree also exercises
+the original tooltip and real details/reset clicks without a stats response.
+Pair each recovery case with `craft-lifecycle` in one suite, then check the
+launcher log for one bounded warning and its original reflection failure.
+
 ## Single-launch orchestration
 
 `TestDriverRuntime` sequences the existing `CraftPlanScenario` instances for an
@@ -369,6 +377,10 @@ evidence. Test plan validation, summary completion/failure, and world-path guard
 at their pure boundary; verify world switching and cache isolation in CodexVM.
 
 ## UI observation boundaries
+
+The dispatch observer hooks the server-aware `finishJob` overload. The older
+overload delegates to it, so each completed job is counted once regardless of
+which overload the integration calls.
 
 Crafting Tree reuses the plan-opening flow and then clicks its actual toolbar
 button. Its small scenario adapter reads the upstream widget's layout to find

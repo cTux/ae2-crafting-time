@@ -8,6 +8,7 @@ import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
+import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import com.ctux.ae2craftingtime.mc1201.TtcColorContext;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -24,7 +25,9 @@ public abstract class CraftConfirmTableRendererMixin {
     @Inject(method = "getEntryDescription", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$appendVisibleTimeToCraft(CraftingPlanSummaryEntry entry,
             CallbackInfoReturnable<List<Component>> cir) {
+        var before = cir.getReturnValue().size();
         ae2craftingtime$appendTtc(entry, cir.getReturnValue());
+        IntegrationLog.growth("plan-row", before, cir.getReturnValue().size());
     }
 
     @Inject(method = "getEntryTooltip", at = @At("RETURN"), remap = false)
@@ -37,6 +40,7 @@ public abstract class CraftConfirmTableRendererMixin {
         ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue());
         cir.getReturnValue().add(TtcText.detailsHint().withStyle(ChatFormatting.GRAY));
         cir.getReturnValue().add(TtcText.resetHint().withStyle(ChatFormatting.GRAY));
+        IntegrationLog.observe("ae2craftingtime", "plan-tooltip");
     }
 
     private static void ae2craftingtime$appendTtc(CraftingPlanSummaryEntry entry, List<Component> lines) {

@@ -6,7 +6,7 @@ param(
     [string]$CasesBase64,
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(suite|standard-ae2|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$ReportDirectory,
     [string]$BundleDirectory,
@@ -228,6 +228,10 @@ try {
         } elseif ($caseScenario -eq "no-provider-status") {
             @("screen", "real-job", "mixed-row", "pattern-removed", "tooltip", "layout",
                 "pattern-restored", "second-provider", "provider-removed", "provider-restored", "cancelled")
+        } elseif ($caseScenario -eq "crafting-tree-read-recovery") {
+            @("screen", "host-content", "overlay-absent", "layout", "tooltip", "details-ignored", "reset-ignored")
+        } elseif ($caseScenario -eq "merequester-read-recovery") {
+            @("screen", "host-content", "overlay-absent", "layout")
         } elseif ($caseScenario -eq "crafting-tree-screen") {
             @("screen", "node-ttc", "tooltip", "layout", "details", "reset")
         } elseif ($caseScenario -eq "ae2networkanalyser-screen") {
@@ -251,7 +255,7 @@ try {
         if ($PreparedLaunch) {
             $catalogue = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json
             $expected = Get-Content -LiteralPath (Join-Path $BundleDirectory 'expected-adapters.json') -Raw | ConvertFrom-Json
-            foreach ($adapter in $catalogue.adapterCases.psobject.Properties) {
+            foreach ($adapter in @($catalogue.adapterCases.psobject.Properties) + @($catalogue.readRecoveryCases.psobject.Properties)) {
                 $dependency = $adapter.Name
                 if ($caseScenario -cin $adapter.Value -and $expected.$dependency -and
                         ($result.adapters.$dependency.variant -cne $expected.$dependency -or $result.adapters.$dependency.reason -cne 'selected')) {
@@ -273,6 +277,10 @@ try {
                 "no-provider-block-restored.png", "no-provider-cancelled.png")
         } elseif ($caseScenario -eq "crafting-tree-screen") {
             @("crafting-tree-screen.png", "crafting-tree-tooltip.png", "crafting-tree-details.png", "crafting-tree-reset.png")
+        } elseif ($caseScenario -eq "crafting-tree-read-recovery") {
+            @("read-recovery-screen.png", "read-recovery-tooltip.png", "read-recovery-details.png", "read-recovery-reset.png")
+        } elseif ($caseScenario -eq "merequester-read-recovery") {
+            @("read-recovery-screen.png")
         } elseif ($caseScenario -eq "ae2networkanalyser-screen") {
             @("ae2networkanalyser-screen.png")
         } elseif ($caseScenario -eq "merequester-screen") {

@@ -4,7 +4,7 @@ param(
     [switch]$Latest,
     [switch]$Interactive,
     [switch]$Stop,
-    [ValidatePattern("^(suite|standard-ae2|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string]$CasesBase64,
     [string[]]$ProjectId,
     [string]$SshUser = "Codex",

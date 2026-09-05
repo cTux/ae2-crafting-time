@@ -82,7 +82,7 @@ public final class CraftPlanScenario {
         baseFixture = standard == null && noSpace == null && noProvider == null && noPower == null ? DriverPlatform.baseFixture(options.scenario()) : null;
         addonFixture = AddonCpuFixture.create(options.scenario());
         wirelessFixture = WirelessTerminalFixture.create(options.scenario());
-        requesterFixture = RequesterFixture.SCENARIO.equals(options.scenario()) ? RequesterFixture.create() : null;
+        requesterFixture = RequesterFixture.supports(options.scenario()) ? RequesterFixture.create() : null;
         networkAnalyserFixture = Ae2NetworkAnalyserFixture.SCENARIO.equals(options.scenario())
                 ? new Ae2NetworkAnalyserFixture() : null;
         DriverResult.requiredChecks(options.scenario()).forEach(key -> checks.put(key, false));
@@ -323,6 +323,11 @@ public final class CraftPlanScenario {
         if (snapshot == null || !snapshot.screen().equals(RequesterFixture.SCREEN)) {
             return;
         }
+        if (options.scenario().equals(RequesterFixture.RECOVERY)) {
+            try { verifyReadRecovery(snapshot, false); }
+            catch (IOException failure) { throw new IllegalStateException("Cannot write recovery result", failure); }
+            return;
+        }
         checks.put("screen", true);
         checks.put("ttc-row", snapshot.text().stream().anyMatch(CraftPlanScenario::isResolvedTtc));
         checks.put("total-ttc", snapshot.text().stream()
@@ -369,7 +374,7 @@ public final class CraftPlanScenario {
     }
 
     private void stabilizePlan() throws IOException {
-        if (CraftingTreeScenario.SCENARIO.equals(options.scenario())) {
+        if (CraftingTreeScenario.supports(options.scenario())) {
             verifyCraftingTree();
             return;
         }
@@ -410,6 +415,11 @@ public final class CraftPlanScenario {
     }
 
     private void verifyCraftingTree() throws IOException {
+        if (options.scenario().equals(CraftingTreeScenario.RECOVERY) && minecraft.screen != null
+                && minecraft.screen.getClass().getName().equals("mezz.jei.gui.recipes.RecipesGui")) {
+            minecraft.screen.onClose();
+            return;
+        }
         var snapshot = UiObservationStore.latest();
         if (minecraft.screen instanceof CraftConfirmScreen screen) {
             if (!stable(snapshot)) {
@@ -427,6 +437,10 @@ public final class CraftPlanScenario {
             return;
         }
         lastFrame = snapshot.frame();
+        if (options.scenario().equals(CraftingTreeScenario.RECOVERY)) {
+            verifyReadRecovery(snapshot, true);
+            return;
+        }
         var target = snapshot.rows().stream().filter(row -> row.outputId().equals(outputId)).findFirst();
         if (target.isEmpty() || (!checks.get("node-ttc") && snapshot.badges().isEmpty())
                 || !stableRows.observe(ids(snapshot))) {
@@ -453,6 +467,44 @@ public final class CraftPlanScenario {
         if (!treeStats.click(minecraft, snapshot, outputId, reset)) return;
         checks.put(reset ? "reset" : "details", true);
         screenshot(reset ? "crafting-tree-reset.png" : "crafting-tree-details.png");
+        treeStats.next();
+        if (reset) writePass();
+    }
+
+    private void verifyReadRecovery(UiSnapshot snapshot, boolean tree) throws IOException {
+        if (!stableRows.observe(ids(snapshot))) return;
+        var target = snapshot.rows().stream().filter(row -> row.outputId().equals(outputId)).findFirst();
+        if (tree ? target.isEmpty() : snapshot.itemCells().isEmpty()) return;
+        checks.put("screen", true);
+        checks.put("host-content", true);
+        checks.put("overlay-absent", snapshot.badges().isEmpty() && snapshot.text().stream()
+                .noneMatch(text -> text.key().startsWith("text.ae2craftingtime.")));
+        checks.put("layout", snapshot.gui().x() >= 0 && snapshot.gui().y() >= 0
+                && snapshot.gui().x() + snapshot.gui().width() <= snapshot.screenWidth()
+                && snapshot.gui().y() + snapshot.gui().height() <= snapshot.screenHeight());
+        if (!checks.get("overlay-absent") || !checks.get("layout")) return;
+        if (!tree) {
+            screenshot("read-recovery-screen.png");
+            writePass();
+            return;
+        }
+        if (!treeHoverStarted) {
+            screenshot("read-recovery-screen.png");
+            moveMouse(target.orElseThrow().cell().centerX(), target.orElseThrow().cell().centerY());
+            treeHoverStarted = true;
+            stableRows.reset();
+            return;
+        }
+        if (!checks.get("tooltip")) {
+            if (snapshot.tooltip().isEmpty() || snapshot.tooltip().stream()
+                    .anyMatch(text -> text.key().startsWith("text.ae2craftingtime."))) return;
+            checks.put("tooltip", true);
+            screenshot("read-recovery-tooltip.png");
+        }
+        boolean reset = checks.get("details-ignored");
+        if (!treeStats.clickWithoutStats(minecraft, snapshot, outputId, reset)) return;
+        checks.put(reset ? "reset-ignored" : "details-ignored", true);
+        screenshot(reset ? "read-recovery-reset.png" : "read-recovery-details.png");
         treeStats.next();
         if (reset) writePass();
     }

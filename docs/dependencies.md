@@ -83,9 +83,19 @@ AdvancedAE's Forge fixture verifies an enclosed Quantum Computer with an
 Accelerator and Data Entangler, exact CPU submission, a fresh sample, and plan TTC.
 It is development coverage, not a declared Forge dependency. Crafting Tree now has
 a Forge `crafting-tree-screen` scenario for node badges, spacing, one copy of each
-tooltip hint, and real details/reset input; Fabric has an eleven-case compatible
-suite. NeoForge 1.21.1 has a 25-case compatible suite, and NeoForge 26.1.2 has a
-fourteen-case compatible suite.
+tooltip hint, and real details/reset input; Fabric has a sixteen-case compatible
+suite. NeoForge 1.21.1 has a 30-case compatible suite, and NeoForge 26.1.2 has a
+nineteen-case compatible suite.
+
+Focused read-recovery scenarios cover Crafting Tree on Forge 1.20.1 and NeoForge
+1.21.1, and ME Requester on all three pre-26 targets. They require isolated addon
+fixtures with a renamed read member, verify that the original screen remains
+usable without TTC additions, and run `craft-lifecycle` afterward in the same
+client process. These negative fixtures are not part of the compatible suite. The NeoEco fixture
+mounts a native item cell and supplies its ingredients so the newest-adapter graph
+does not depend on storage supplied by other addons.
+Fabric Crafting Tree has no available runtime artifact and is excluded from
+issue #193's runtime acceptance by explicit user decision.
 
 `no-provider-status` is a focused native AE2 scenario on all four targets.
 Its historical Forge 1.20.1 smoke checks real pattern/provider removal, bilingual
@@ -132,6 +142,10 @@ optional-mod graph run.
 | Expanded AE (`expandedae`; optional) | `1.2.2` (focused only; excluded from full compatible set) | Yes (`expandedae-cpu`, latest focused profile) | — | — | `2.1.1` (excluded from compatible set) | No | — | — | — | — | Native CPU profiling and Crafting Plan; Forge driver uses a two-thread accelerator. Focused testing only; no OmniSequence coexistence claim. | [CF][expandedae-cf] / [MR][expandedae-mr] |
 
 ## Compatibility boundaries
+
+The AdvancedAE hook also ships on Forge 1.20.1. Its table entry lists only
+loader-declared dependencies; Forge currently has no optional AdvancedAE
+dependency declaration. Runtime diagnostics report the packaged hook separately.
 
 - `NO PROVIDER` observes the standard AE2 dispatch lookup on all four targets
   and AdvancedAE's equivalent lookup on Forge 1.20.1 and both NeoForge targets.
@@ -269,3 +283,20 @@ execution (34/16/30/19 cases for Forge 1.20.1, Fabric 1.20.1, NeoForge 1.21.1,
 and NeoForge 26.1.2). A focused leaf pass does not certify a dependency's full
 standard group. Optional integrations keep their existing scenario names and
 newest-adapter obligations; change selection does not alter dependency pins.
+
+## Runtime integration diagnostics
+
+Startup logs include actual installed versions, target/side skips, pending
+capabilities, and a compact integration summary. Confirmations come from the
+named operation returning successfully. Shared-hook confirmations explicitly
+leave addon-specific crafting unverified; compatibility-only entries make no
+health claim. The [diagnostics design](startup-integration-diagnostics/technical-design.md)
+defines the reporting scope.
+
+ExtendedAE is one reporting row with metadata aliases: Forge's inspected
+1.20-1.4.18-forge uses expatternprovider; inspected NeoForge
+1.21-2.2.35-neoforge and 26.1-1.0.3-neoforge use extendedae.
+Tree package variants use the existing selector's choice. A failed read disables
+only the selected Tree variant's TTC additions, the Requester TTC overlay, or
+AdvancedAE selected-CPU lookup. Host behavior and server samples remain intact.
+This is not recovery from an incompatible CPU adapter or a failed transformation.

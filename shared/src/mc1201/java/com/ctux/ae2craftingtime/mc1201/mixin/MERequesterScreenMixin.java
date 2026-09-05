@@ -24,7 +24,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.lang.reflect.Method;
+import com.ctux.ae2craftingtime.core.IntegrationRead;
+import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
@@ -67,14 +68,19 @@ public abstract class MERequesterScreenMixin {
     @Inject(method = "drawFG", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$drawRequestTtc(GuiGraphics guiGraphics, int offsetX, int offsetY, int mouseX,
             int mouseY, CallbackInfo ci) {
-        if (lines.isEmpty()) {
+        if (!IntegrationLog.available("merequester") || lines.isEmpty()) {
             return;
         }
 
         var estimates = new ArrayList<MERequesterEstimate>();
         var scroll = scrollbar.getCurrentScroll();
-        for (var row = 0; row < rowAmount && scroll + row < lines.size(); row++) {
-            estimates.add(ae2craftingtime$estimate(lines.get(scroll + row)));
+        try {
+            for (var row = 0; row < rowAmount && scroll + row < lines.size(); row++) {
+                estimates.add(ae2craftingtime$estimate(lines.get(scroll + row)));
+            }
+        } catch (IntegrationRead.Failure failure) {
+            IntegrationLog.disable("merequester", failure);
+            return;
         }
 
         var knownSeconds = estimates.stream().flatMapToLong(estimate -> estimate.seconds().stream()).toArray();
@@ -86,12 +92,18 @@ public abstract class MERequesterScreenMixin {
                     ? TtcColor.forSeconds(estimate.seconds().getAsLong(), minSeconds, maxSeconds)
                     : 0xE0E0E0;
             var rowIndex = row;
-            estimate.label().ifPresent(label -> ae2craftingtime$drawRowBadge(guiGraphics, rowIndex, label, color));
+            estimate.label().ifPresent(label -> {
+                ae2craftingtime$drawRowBadge(guiGraphics, rowIndex, label, color);
+                IntegrationLog.observe("merequester", "row");
+            });
         }
 
         TimeEstimate.formatTotal(estimates.stream().map(MERequesterEstimate::seconds).toList())
-                .ifPresent(eta -> ae2craftingtime$drawBadge(guiGraphics, 160, 6, TtcText.totalTtc(eta), 0xE0E0E0,
-                        0.5f, AE2CRAFTINGTIME_TEXT_SCALE, AE2CRAFTINGTIME_LABEL_PADDING));
+                .ifPresent(eta -> {
+                    ae2craftingtime$drawBadge(guiGraphics, 160, 6, TtcText.totalTtc(eta), 0xE0E0E0,
+                            0.5f, AE2CRAFTINGTIME_TEXT_SCALE, AE2CRAFTINGTIME_LABEL_PADDING);
+                    IntegrationLog.observe("merequester", "total");
+                });
     }
 
     @Unique
@@ -129,6 +141,7 @@ public abstract class MERequesterScreenMixin {
         if (key.isEmpty() || amount <= 0) {
             return MERequesterEstimate.empty();
         }
+        IntegrationLog.observe("merequester", "request-read");
 
         var profileKey = ProfilerBridge.key(key.get());
         ClientStatsRequests.request(profileKey);
@@ -149,24 +162,13 @@ public abstract class MERequesterScreenMixin {
 
     @Unique
     private static Optional<AEKey> ae2craftingtime$getKey(Object request) {
-        var key = ae2craftingtime$invoke(request, "getKey");
-        return key instanceof AEKey aeKey ? Optional.of(aeKey) : Optional.empty();
+        return Optional.ofNullable(IntegrationRead.invoke(request, "getKey", AEKey.class));
     }
 
     @Unique
     private static long ae2craftingtime$getLong(Object request, String methodName) {
-        var value = ae2craftingtime$invoke(request, methodName);
-        return value instanceof Number number ? number.longValue() : 0;
-    }
-
-    @Unique
-    private static Object ae2craftingtime$invoke(Object target, String methodName) {
-        try {
-            Method method = target.getClass().getMethod(methodName);
-            return method.invoke(target);
-        } catch (ReflectiveOperationException ignored) {
-            return null;
-        }
+        var value = IntegrationRead.invoke(request, methodName, Number.class);
+        return value == null ? 0 : value.longValue();
     }
 
     @Unique

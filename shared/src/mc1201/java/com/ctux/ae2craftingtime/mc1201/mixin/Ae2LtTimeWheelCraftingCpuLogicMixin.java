@@ -12,6 +12,7 @@ import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.mc1201.BlockReasonNotifier;
 import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import java.lang.reflect.Method;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;
@@ -38,6 +39,7 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
             ae2craftingtime$grid = grid;
             ProfilerBridge.startJob(ProfilerBridge.networkId(grid), this, plan, ae2craftingtime$tick(),
                     System.nanoTime(), ProfilerBridge.jobOwner(source));
+            IntegrationLog.cpu("ae2lt", "cpu-submit");
         }
     }
 
@@ -51,6 +53,7 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
         if (amount > 0) {
             ProfilerBridge.start(ProfilerBridge.networkId(ae2craftingtime$grid), this, what, amount,
                     ae2craftingtime$tick());
+            IntegrationLog.cpu("ae2lt", "cpu-dispatch");
         }
     }
 
@@ -64,18 +67,14 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
         // Standalone final outputs complete waiting demand but fall through to ME storage: insert returns zero.
         ProfilerBridge.complete(ProfilerBridge.networkId(ae2craftingtime$grid), this, what, cir.getReturnValue(),
                 ae2craftingtime$tick());
+        IntegrationLog.positive("ae2lt", "cpu-output", cir.getReturnValue());
     }
 
     @Inject(method = "finishJob", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$finishJob(boolean success, CallbackInfo ci) {
         ProfilerBridge.finishJob(this, success, ae2craftingtime$tick(), System.nanoTime(),
                 ae2craftingtime$server());
-    }
-
-    @Inject(method = "cancel", at = @At("HEAD"), remap = false, require = 0)
-    private void ae2craftingtime$clearHighlightOnCancel(CallbackInfo ci) {
-        ProfilerBridge.finishJob(this, false, ae2craftingtime$tick(), System.nanoTime(),
-                ae2craftingtime$server());
+        IntegrationLog.cpu("ae2lt", "cpu-finish");
     }
 
     @Inject(
@@ -91,6 +90,7 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
         var server = ae2craftingtime$server();
         ProfilerBridge.updateCapacity(this, Math.min(maxOps, ae2craftingtime$successfulDispatches(cir.getReturnValue())),
                 maxOps, tick);
+        IntegrationLog.cpu("ae2lt", "cpu-capacity");
         DelayedNotificationServer.maybeNotify(this, ae2craftingtime$grid, tick, server);
         BlockReasonNotifier.maybeNotifyPower(this, ae2craftingtime$grid, tick, server);
         BlockReasonNotifier.maybeNotifySpace(this, ae2craftingtime$grid, this, server);

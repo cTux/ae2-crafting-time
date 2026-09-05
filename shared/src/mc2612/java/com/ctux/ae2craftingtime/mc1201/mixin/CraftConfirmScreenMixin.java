@@ -15,6 +15,7 @@ import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.StatsClickHandler;
 import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
+import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import com.ctux.ae2craftingtime.mc1201.TtcBadge;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsClick;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsKeyMapping;
@@ -99,8 +100,10 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
             return entries;
         }
 
-        return TtcSort.copySorted(entries, CraftConfirmScreenMixin::ae2craftingtime$seconds, Comparator.naturalOrder(),
+        var sorted = TtcSort.copySorted(entries, CraftConfirmScreenMixin::ae2craftingtime$seconds, Comparator.naturalOrder(),
                 ae2craftingtime$ttcSortMode == 2);
+        IntegrationLog.observe("ae2craftingtime", "plan-sort");
+        return sorted;
     }
 
     @Inject(method = "drawFG", at = @At("RETURN"), remap = false)
@@ -124,6 +127,7 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
             TtcBadge.fillRoundedRect(guiGraphics, textX - 2, 176, textX + totalWidth + 2,
                     178 + font.lineHeight + 2, TtcBadge.BACKGROUND);
             guiGraphics.text(font, text, textX, 178, AE2CRAFTINGTIME_TOTAL_COLOR, true);
+            IntegrationLog.observe("ae2craftingtime", "plan-total");
         });
     }
 
@@ -152,10 +156,12 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
         var key = ProfilerBridge.key(entry.getWhat());
         if (reset) {
             StatsChatMessages.reset(key, entry.getWhat().getDisplayName().getString());
+            IntegrationLog.observe("ae2craftingtime", "plan-reset");
             return true;
         }
         StatsChatMessages.show(key, entry.getWhat().getDisplayName().getString(),
                 AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()));
+        IntegrationLog.observe("ae2craftingtime", "plan-details");
         return true;
     }
 

@@ -15,10 +15,19 @@ final class StatsInteraction {
     private boolean clicked;
     private int chatCount;
     private long nextStatsClick;
+    private long clickedAt;
 
     void next() { clicked = false; }
 
     boolean click(Minecraft minecraft, UiSnapshot snapshot, String output, boolean reset) {
+        return click(minecraft, snapshot, output, reset, true);
+    }
+
+    boolean clickWithoutStats(Minecraft minecraft, UiSnapshot snapshot, String output, boolean reset) {
+        return click(minecraft, snapshot, output, reset, false);
+    }
+
+    private boolean click(Minecraft minecraft, UiSnapshot snapshot, String output, boolean reset, boolean expectResponse) {
         var chat = ((ChatComponentAccessor) minecraft.gui.getChat()).ae2craftingtime_test_driver$messages();
         if (!clicked) {
             if (System.nanoTime() < nextStatsClick) return false;
@@ -38,12 +47,17 @@ final class StatsInteraction {
             DriverPlatform.click(minecraft, row.cell().centerX(), row.cell().centerY());
             releaseKeys();
             clicked = true;
+            clickedAt = System.nanoTime();
             clickPhase = 0;
         }
         String expected = reset ? "Cleared TTC stats for " + output : output + " x1:";
         long matches = chat.size() > chatCount ? chat.subList(0, chat.size() - chatCount).stream()
                 .filter(message -> message.content().getString().contains(expected)).count() : 0;
         if (matches > 1) throw new IllegalStateException("Duplicated stats response: " + expected);
+        if (!expectResponse) {
+            if (matches != 0) throw new IllegalStateException("Disabled read boundary sent stats action: " + expected);
+            return System.nanoTime() - clickedAt > java.util.concurrent.TimeUnit.SECONDS.toNanos(1);
+        }
         boolean received = matches == 1;
         if (received) nextStatsClick = System.nanoTime() + java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(
                 com.ctux.ae2craftingtime.core.PlayerMessageRateLimit.COOLDOWN_MILLIS);

@@ -187,6 +187,13 @@ try {
         $groups | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $groupPath
         Reject { & $planner -Repository $temp -MatrixDirectory $maps } 'Nested, missing and duplicate leaves must fail'
     }
+    $fullPlan = & $planner -Repository $temp -Scenario suite
+    Assert (@($fullPlan.targets.graphs.cases | Where-Object { $_ -like '*-read-recovery' }).Count -eq 0) 'Full campaigns must exclude incompatible read fixtures'
+    $expand = Join-Path $PSScriptRoot 'expand-ui-smoke-groups.ps1'
+    Assert ((& $expand -Target '1.20.1-forge' -Scenarios 'crafting-tree-read-recovery') -ceq 'crafting-tree-read-recovery') 'Forge must accept focused Tree recovery'
+    Assert ((& $expand -Target '1.20.1-fabric' -Scenarios 'merequester-read-recovery') -ceq 'merequester-read-recovery') 'Fabric must accept focused Requester recovery'
+    Reject { & $expand -Target '1.20.1-fabric' -Scenarios 'crafting-tree-read-recovery' } 'Unavailable Fabric Tree must remain unsupported'
+    Reject { & $expand -Target '26.1.2-neoforge' -Scenarios 'merequester-read-recovery' } 'Unavailable 26 Requester must remain unsupported'
     Write-Host 'PASS: diff ownership, union, language keys, aliases, manual modes and freshness'
 } finally {
     $resolved = [IO.Path]::GetFullPath($temp)

@@ -16,11 +16,20 @@ public final class Ae2CraftingTime {
     public static final String COMMON_CONFIG_FILE = "ae2craftingtime-common.toml";
 
     public Ae2CraftingTime(IEventBus modBus, ModContainer modContainer) {
-        modContainer.registerConfig(ModConfig.Type.COMMON, Ae2CraftingTimeConfig.SPEC, COMMON_CONFIG_FILE);
+        IntegrationLog.start("1.21.1-neoforge", net.neoforged.fml.loading.FMLEnvironment.dist.isClient(), "neoforge",
+                id -> net.neoforged.fml.ModList.get().getModContainerById(id).map(mod -> mod.getModInfo().getVersion().toString()).orElse(null));
+        IntegrationLog.required("config-registration", () -> modContainer.registerConfig(ModConfig.Type.COMMON, Ae2CraftingTimeConfig.SPEC, COMMON_CONFIG_FILE));
+        modBus.addListener((net.neoforged.fml.event.config.ModConfigEvent.Loading event) -> {
+            if (event.getConfig().getModId().equals(MOD_ID)) IntegrationLog.configuration();
+        });
+        modBus.addListener((net.neoforged.fml.event.config.ModConfigEvent.Reloading event) -> {
+            if (event.getConfig().getModId().equals(MOD_ID)) IntegrationLog.configuration();
+        });
         modBus.addListener(StatsNetwork::register);
         NeoForge.EVENT_BUS.addListener(this::onServerStarted);
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
         NeoForge.EVENT_BUS.addListener(this::onPlayerLoggedIn);
+        IntegrationLog.summary();
     }
 
     private void onRegisterCommands(RegisterCommandsEvent event) {

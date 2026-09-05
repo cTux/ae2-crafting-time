@@ -20,7 +20,7 @@ foreach ($scenario in $Scenarios) {
                     $data.scenario -cne $scenario -or $data.language -cne 'en_us' -or $data.result -cne 'PASS') { throw 'Failed or mismatched result' }
             if ($ExpectedAdapters) {
                 $expected = Get-Content -LiteralPath $ExpectedAdapters -Raw | ConvertFrom-Json
-                foreach ($adapter in $catalogue.adapterCases.psobject.Properties) {
+                foreach ($adapter in @($catalogue.adapterCases.psobject.Properties) + @($catalogue.readRecoveryCases.psobject.Properties)) {
                     $dependency = $adapter.Name
                     if ($scenario -cin $adapter.Value -and $expected.$dependency -and
                             ($data.adapters.$dependency.variant -cne $expected.$dependency -or $data.adapters.$dependency.reason -cne 'selected')) {

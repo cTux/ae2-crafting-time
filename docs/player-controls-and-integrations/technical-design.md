@@ -104,14 +104,15 @@ Applied Mekanistics needs no UI-specific class reference. `AeKeyAmounts` uses
 the AE key's amount-per-unit contract, so chemical keys follow the same
 millibucket normalization as fluids where the addon is supported.
 
-AdvancedAE uses a NeoForge-only string-target execution mixin. It mirrors the
+AdvancedAE uses a shared string-target execution mixin on Forge and both NeoForge targets. It mirrors the
 standard AE2 CPU dispatch, completion, job-accuracy, finish, and recent-capacity
 events into `ProfilerBridge`. `StatsRequestContext` can resolve the selected
 AdvancedAE CPU for status diagnostics. Missing AdvancedAE classes leave the
 adapter inactive.
 
 AE2 WCWT inherits AE2's `MEStorageScreen` craftable-entry tooltip path. A
-client-only mixin activates only for WCWT's terminal screen, requests the
+client-only mixin filters WCWT and Wireless Crafting Terminal screens plus
+Import Export Card menu contracts. It requests the
 cached stats for the hovered craftable key, and appends the one-item TTC. The
 terminal continues into AE2's normal Crafting Plan and CPU-selection screens.
 
@@ -128,7 +129,7 @@ the same keys. Placeholders and key sets must stay matched.
 - AE2 and optional renderer/input mixins stay under `client`.
 - 1.20.1 and 1.21.1 include Crafting Tree and ME Requester adapters.
 - 1.20.1 Forge and 1.21.1 NeoForge include the AE2 WCWT terminal adapter.
-- both NeoForge targets include the AdvancedAE adapter.
+- Forge and both NeoForge targets include the AdvancedAE adapter.
 - 26.1.2 omits the pre-26 optional UI adapters.
 - loader metadata keeps optional dependencies optional and agrees with
   `docs/dependencies.md`.

@@ -7,6 +7,7 @@ import java.util.Map;
 /** The driver enforces the catalogue's order instead of maintaining another version list. */
 final class AdapterSmokePolicy {
     private static final Map<String, String> DEPENDENCIES = Map.of(
+            "crafting-tree-read-recovery", "ae2ct", "merequester-read-recovery", "merequester",
             "crafting-tree-screen", "ae2ct", "neoeco-cpu", "neoecoae", "advancedae-cpu", "advanced_ae",
             "lightningtech-cpu", "ae2lt", "merequester-screen", "merequester", "neoeco-fastpath-cpu", "neoecoae");
 

@@ -1,5 +1,72 @@
 # UI smoke evidence
 
+## Startup integration diagnostics, 2026-09-05
+
+Issue #193 / PR #256 adds observed integration status and bounded read recovery.
+Shared diagnostics/reflection tests retain 100% line and branch coverage. All
+four production targets build. Runtime revisions and exact artifacts are recorded
+per campaign; the final NeoEco check uses its exact Forge 47.4.23 / 20.4.2 graph.
+
+| Runtime check | Verified targets |
+| --- | --- |
+| Core-only and compatible startup, client and dedicated server | All four |
+| Core-only client crafting and six native AE2 plan/status leaves | All four |
+| Enabled/disabled profiling and original fatal missing-AE2 diagnostic | All four |
+| Transformed Requester read failure, preserved host screen, then core crafting in the same JVM | Forge/Fabric 1.20.1 and NeoForge 1.21.1 |
+| Transformed Tree read failure, restored layout/tooltip/click behavior, then core crafting in the same JVM | Forge 1.20.1 and NeoForge 1.21.1 |
+| Transformed AdvancedAE selected-CPU read failure, retained grid, then core crafting | Forge 1.20.1 and both NeoForge targets |
+
+Five UI recovery runs and three AdvancedAE server runs each retain one WARN with
+the original reflection cause. Core crafting passes afterward. No fixture is
+packaged in production. Fabric's common entrypoint no longer loads client-only
+rendering classes on dedicated startup. The saved Forge fixture's terminal is
+reachable and its stale in-progress jobs were removed without changing its
+other block data.
+
+The full campaign `20260905T152248022Z/compatible` remains **FAIL**. Its primary
+Forge, Fabric and NeoForge 26 runs passed every available addon path before the
+pre-existing `no-provider-status` recovery failure. NeoForge 1.21 exposed a second
+NeoEco completion event; after removing the redundant cancellation observer,
+all 16 remaining scenarios passed. Cancellation already delegates to the required
+finish hook. AdvancedAE, native AE2 and LightningTech use the same single-terminal
+observation rule; the strict completion assertion was not weakened.
+
+The newest Forge NeoEco graph exposed a long return value where its diagnostic
+observer expected an int. The observer now accepts both numeric return types.
+Its isolated fixture mounts a native item cell and supplies ingredients instead
+of relying on other addons' saved storage. Original setup and crash attempts remain
+under `build/issue193/latest-neoeco`, beside the final normal/FastPath evidence.
+
+The NeoForge continuation's runner envelope failed because the manually assembled
+bundle lacked `expected-adapters.json`. Generating the catalogue from the packaged
+driver and independently validating its results passed all 16 cases. The original
+failed envelope is retained. Separate successful runs do not certify the failed
+full campaign or assemble a new full-suite PASS.
+
+The provider-restoration failure was reproduced with the pre-issue `aeee5ac4`
+build and identical Forge graph/driver. The unchanged profiler retains NO_PROVIDER
+after the live reason clears. This gameplay defect is outside the diagnostics fix.
+An older NeoForge 26 re-entry run also logged an upstream AE2 clientbound packet
+error during configuration; the source stack and original log remain recorded.
+Neither failure is presented as a clean runtime result.
+
+Startup inventory and deferred-transition audits passed on all four primary
+client logs and the NeoForge continuation, with zero repeated integration/capability
+confirmations across repeated screens, jobs and world changes. Unused hooks remain
+pending. Shared-hook confirmations retain their addon-specific verification limit.
+
+The maintainer explicitly excluded the unavailable Fabric 1.20.1 Crafting Tree
+runtime cell after the original repository and Modrinth fork exposed no matching
+build. Its diagnostic row remains present and its runtime coverage unverified.
+
+Evidence is retained in the task workspace under `build/issue193` and
+`build/ui-smoke/campaigns`, including inventories, hashes, exact process IDs,
+screenshots, logs, original failures and focused reruns. Automatic approval review
+blocked export to the external archive below; the worktree must be retained until
+that evidence can be archived with authorization. `build/issue193/final-report.md`
+maps checks to artifacts and measured timings. JDT LS was unavailable; no LSP pass
+is claimed. GitHub build/test checks are reported separately in the PR.
+
 For all new campaigns, follow the [smoke policy](automated-ui-testing/spec.md#smoke-policy):
 exercise only the newest adapter per dependency/target and use English (`en_us`)
 for every UI assertion and screenshot. Retained older adapters need non-smoke

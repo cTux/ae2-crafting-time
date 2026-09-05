@@ -80,7 +80,7 @@ class NativeCpuFixture extends AddonCpuFixture<NativeCpuFixture.Placement> {
         if (cpu == null || cpu.isBusy()) {
             return false;
         }
-        return true;
+        return cpu.isActive();
     }
 
     @Override

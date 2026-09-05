@@ -2,7 +2,7 @@ param(
     [Parameter(Mandatory)][string]$ServerDirectory,
     [Parameter(Mandatory)][string]$JavaHome,
     [Parameter(Mandatory)][ValidateSet('1.20.1-forge','1.20.1-fabric','1.21.1-neoforge','26.1.2-neoforge')][string]$Target,
-    [ValidateSet('startup-only','advancedae-cpu','lightningtech-cpu','neoeco-cpu','neoeco-fastpath-cpu')][string]$Scenario = 'startup-only',
+    [ValidateSet('startup-only','advancedae-cpu','advancedae-read-recovery','lightningtech-cpu','neoeco-cpu','neoeco-fastpath-cpu')][string]$Scenario = 'startup-only',
     [Parameter(Mandatory)][string]$ResultDirectory
 )
 $ErrorActionPreference = 'Stop'

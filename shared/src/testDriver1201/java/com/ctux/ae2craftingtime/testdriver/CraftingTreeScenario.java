@@ -4,6 +4,9 @@ import java.util.Set;
 
 final class CraftingTreeScenario {
     static final String SCENARIO = "crafting-tree-screen";
+    static final String RECOVERY = "crafting-tree-read-recovery";
+
+    static boolean supports(String scenario) { return SCENARIO.equals(scenario) || RECOVERY.equals(scenario); }
     private static final Set<String> SCREENS = Set.of(
             "com.neuvillette.ae2ct.gui.CraftingTreeScreen", "com.vcwdfca.ae2ct.gui.CraftingTreeScreen");
 
