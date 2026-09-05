@@ -44,7 +44,10 @@ cover active and scheduled exclusions; the fixture does not simulate a craft.
 `standard-plan-controls`, `standard-status-controls`, `waiting-status`,
 `running-status`, `delayed-status`, and `craft-lifecycle`. Each has a fresh
 native grid and its own seeded estimates; no case depends on an earlier reset,
-world, job, or cached observation. The host keeps one process for the group.
+world, job, or cached observation. Standard leaves copy only world metadata and
+the marker, then generate fresh chunks; importing saved chunks could restore
+incompatible CPU jobs before the driver starts. Other scenarios keep their
+tracked layouts. The host keeps one process for the group.
 
 The [leaf contracts](../automated-ui-testing/technical-design.md#groups-and-independent-standard-flow)
 retain every original assertion. Waiting and running require real dependency

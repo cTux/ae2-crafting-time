@@ -120,7 +120,7 @@ if ($Scenario -eq "suite") {
     # The tracked Forge world names Blood Magic dimensions. Reduced graphs need native metadata.
     $vanillaMetadata = $Target -eq '1.20.1-forge' -and $BundleDirectory -and
         -not (Get-ChildItem -LiteralPath (Join-Path $BundleDirectory 'mods') -Filter 'BloodMagic*.jar')
-    & (Join-Path $PSScriptRoot 'copy-ui-smoke-fixture.ps1') -Source $source -Destination $worldCopy -Target $Target -VanillaMetadata:$vanillaMetadata
+    & (Join-Path $PSScriptRoot 'copy-ui-smoke-fixture.ps1') -Source $source -Destination $worldCopy -Target $Target -Scenario $Scenario -VanillaMetadata:$vanillaMetadata
     $markerPath = Join-Path $worldCopy ".ae2-crafting-time-test-fixture.json"
     $marker = Get-Content -LiteralPath $markerPath -Raw | ConvertFrom-Json
     $marker.disposableWorldId = $world

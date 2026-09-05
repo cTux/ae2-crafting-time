@@ -11,6 +11,11 @@ try {
         $marker = Get-Content "$runtime\saves\$($case.world)\.ae2-crafting-time-test-fixture.json" -Raw | ConvertFrom-Json
         if ($marker.disposableWorldId -ne $case.world -or $marker.sourceFixtureId -ne 'ae2-crafting-time') { throw 'Wrong case marker' }
     }
+    foreach ($case in $plan.cases) {
+        if (!(Get-ChildItem -LiteralPath "$runtime/saves/$($case.world)/region" -Filter '*.mca')) {
+            throw 'Legacy scenarios lost their fixture chunks'
+        }
+    }
     if ($plan.cases[0].world -eq $plan.cases[1].world) { throw 'Worlds are not isolated' }
     $fabric = & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -Target 1.20.1-fabric -RuntimeDirectory $runtime -OutputDirectory "$temporary\fabric-evidence" -Scenarios @('standard-ae2')
     if ($fabric.caseCount -ne 6) { throw 'Standard alias must expand to six worlds' }
@@ -18,8 +23,27 @@ try {
     if ((Get-FileHash -LiteralPath "$runtime/saves/$($fabric.world)/level.dat").Hash -ne (Get-FileHash -LiteralPath $fabricSource).Hash) {
         throw 'Fabric retained Forge-only world metadata'
     }
+    $fabricPlan = Get-Content "$temporary/fabric-evidence/suite-plan.json" -Raw | ConvertFrom-Json
+    foreach ($case in $fabricPlan.cases) {
+        $worldPath = "$runtime/saves/$($case.world)"
+        $names = @(Get-ChildItem -LiteralPath $worldPath -Force | ForEach-Object Name)
+        if ($names.Count -ne 3 -or @($names | Where-Object { $_ -notin @('level.dat', 'level.dat_old', '.ae2-crafting-time-test-fixture.json') }).Count) {
+            throw "Standard scenario copied saved chunks or player data: $($case.scenario)"
+        }
+        foreach ($name in @('level.dat', 'level.dat_old')) {
+            if ((Get-FileHash -LiteralPath "$worldPath/$name").Hash -ne (Get-FileHash -LiteralPath $fabricSource).Hash) {
+                throw "Standard scenario retained Forge metadata: $($case.scenario)/$name"
+            }
+        }
+    }
+    $rejected = $false
+    try {
+        & "$PSScriptRoot/copy-ui-smoke-fixture.ps1" -Source "$runtime/saves/$($plan.cases[0].world)" `
+            -Destination "$runtime/saves/$($fabric.world)" -Target 1.20.1-fabric -Scenario delayed-status
+    } catch { $rejected = $true }
+    if (!$rejected) { throw 'Expected existing fixture destination rejection' }
     $fabricMarker = Get-Content "$runtime/saves/$($fabric.world)/.ae2-crafting-time-test-fixture.json" -Raw | ConvertFrom-Json
-    if ($fabricMarker.terminal.x -ne -13 -or $fabricMarker.terminal.y -ne -59) { throw 'Fabric lost the marked fixture layout' }
+    if ($fabricMarker.terminal.x -ne -13 -or $fabricMarker.terminal.y -ne -59) { throw 'Fabric lost the fixture coordinates' }
     $neo = & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -Target 1.21.1-neoforge -RuntimeDirectory $runtime -OutputDirectory "$temporary\neo-evidence" -Scenarios @('craft-plan')
     $neoMarker = Get-Content "$runtime\saves\$($neo.world)\.ae2-crafting-time-test-fixture.json" -Raw | ConvertFrom-Json
     if ($neoMarker.terminal.x -ne 2 -or $neoMarker.terminal.y -ne 205) { throw 'NeoForge did not copy its native fixture' }
