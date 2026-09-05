@@ -52,6 +52,8 @@ tracked layouts. The host keeps one process for the group.
 
 Plan controls also checks highlight item resolution against the loaded registry:
 known stone resolves correctly; null, malformed, and unknown IDs return empty stacks.
+Before checking plan sort order, wait for both seeded row estimates to render;
+a partial stats reply must restart the stable-frame gate.
 
 The [leaf contracts](../automated-ui-testing/technical-design.md#groups-and-independent-standard-flow)
 retain every original assertion. Waiting and running require real dependency

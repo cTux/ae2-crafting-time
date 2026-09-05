@@ -774,7 +774,7 @@ public final class CraftPlanScenario {
         return true;
     }
 
-    private static boolean isResolvedTtc(UiSnapshot.ObservedText text) {
+    static boolean isResolvedTtc(UiSnapshot.ObservedText text) {
         return text.key().equals("text.ae2craftingtime.ttc")
                 && !text.arguments().contains("text.ae2craftingtime.collecting_data");
     }

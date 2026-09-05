@@ -164,6 +164,10 @@ final class StandardAe2Scenario {
         var snapshot = UiObservationStore.latest();
         if (snapshot == null || snapshot.frame() == lastFrame) return false;
         lastFrame = snapshot.frame();
+        if (phase == Stage.PLAN_SORT && leaf.equals("standard-plan-controls") && !planEstimatesReady(snapshot.rows())) {
+            frames.reset();
+            return false;
+        }
         if (!frames.observe(phase.ordinal() * 10 + sort)) return false;
         boolean plan = phase.ordinal() < Stage.OPEN_STATUS.ordinal();
         String prefix = plan ? "plan" : "status";
@@ -396,6 +400,12 @@ final class StandardAe2Scenario {
         return expected.entrySet().stream().allMatch(entry -> snapshot.tooltip().stream()
                 .anyMatch(text -> text.key().equals(entry.getKey()) && text.rendered().endsWith(": " + entry.getValue())))
                 && snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.stall.improvements"));
+    }
+
+    static boolean planEstimatesReady(List<UiSnapshot.Row> rows) {
+        return List.of("minecraft:stone", "minecraft:smooth_stone").stream().allMatch(id -> rows.stream()
+                .anyMatch(row -> row.outputId().equals(id)
+                        && row.description().stream().anyMatch(CraftPlanScenario::isResolvedTtc)));
     }
 
     private static void mark(Map<String, Boolean> checks, String key, boolean value) {
