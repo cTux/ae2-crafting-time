@@ -13,7 +13,8 @@ implementation agent.
 
 1. Treat the GitHub issue list as the source of truth. Find the matching open
    issue before planning. If none exists, create a tracking issue from the
-   user's stated goal without adding unresolved or inferred behavior.
+   user's stated goal without adding unresolved or inferred behavior. Remove
+   secrets, personal data, private paths, and private server details first.
 2. Read `AGENTS.md`, `docs/architecture.md`, the closest feature documents, and
    the code seams needed to verify current behavior and supported targets.
 3. Resolve the goal, player-visible behavior, boundaries, compatibility, and
