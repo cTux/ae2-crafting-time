@@ -22,7 +22,7 @@ public record ProviderLocateC2S(String outputId) {
     public void handle(ServerPlayer player) {
         ProviderLocateServer.locate(player, outputId,
                 (target, highlight) -> StatsNetwork.sendTo(target, new ProviderHighlightS2C(
-                        highlight.dimensionId(), highlight.positions(), highlight.outputId(),
-                        highlight.durationSeconds(), highlight.plateOnly())));
+                        highlight.networkId(), highlight.dimensionId(), highlight.positions(),
+                        highlight.outputId(), highlight.durationSeconds(), highlight.plateOnly())));
     }
 }
