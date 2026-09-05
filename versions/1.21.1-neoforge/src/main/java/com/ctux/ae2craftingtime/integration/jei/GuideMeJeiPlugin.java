@@ -26,6 +26,7 @@ public final class GuideMeJeiPlugin implements IModPlugin {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public void registerItemSubtypes(ISubtypeRegistration registration) {
         if (ModList.get().isLoaded("guideme")) {
             var guide = createGuide();
