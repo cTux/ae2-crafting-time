@@ -72,8 +72,8 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
     }
 
     @Inject(method = "tryPushVerifiedFastPathBatch", at = @At("RETURN"), remap = false, require = 0)
-    private void ae2craftingtime$observeFastPath(CallbackInfoReturnable<Integer> cir) {
-        IntegrationLog.positive("neoecoae", "cpu-dispatch-fastpath", cir.getReturnValue());
+    private void ae2craftingtime$observeFastPath(CallbackInfoReturnable<Number> cir) {
+        IntegrationLog.positive("neoecoae", "cpu-dispatch-fastpath", cir.getReturnValue().longValue());
     }
 
     @Inject(method = "executeCrafting", at = @At("RETURN"), remap = false)

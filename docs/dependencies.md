@@ -83,15 +83,17 @@ AdvancedAE's Forge fixture verifies an enclosed Quantum Computer with an
 Accelerator and Data Entangler, exact CPU submission, a fresh sample, and plan TTC.
 It is development coverage, not a declared Forge dependency. Crafting Tree now has
 a Forge `crafting-tree-screen` scenario for node badges, spacing, one copy of each
-tooltip hint, and real details/reset input; Fabric has an eleven-case compatible
-suite. NeoForge 1.21.1 has a 25-case compatible suite, and NeoForge 26.1.2 has a
-fourteen-case compatible suite.
+tooltip hint, and real details/reset input; Fabric has a sixteen-case compatible
+suite. NeoForge 1.21.1 has a 30-case compatible suite, and NeoForge 26.1.2 has a
+nineteen-case compatible suite.
 
 Focused read-recovery scenarios cover Crafting Tree on Forge 1.20.1 and NeoForge
 1.21.1, and ME Requester on all three pre-26 targets. They require isolated addon
 fixtures with a renamed read member, verify that the original screen remains
 usable without TTC additions, and run `craft-lifecycle` afterward in the same
-client process. These negative fixtures are not part of the compatible suite.
+client process. These negative fixtures are not part of the compatible suite. The NeoEco fixture
+mounts a native item cell and supplies its ingredients so the newest-adapter graph
+does not depend on storage supplied by other addons.
 Fabric Crafting Tree has no available runtime artifact and is excluded from
 issue #193's runtime acceptance by explicit user decision.
 

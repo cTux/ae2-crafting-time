@@ -2,44 +2,70 @@
 
 ## Startup integration diagnostics, 2026-09-05
 
-Issue #193 / PR #256 remains **verification incomplete**. Shared diagnostics and
-reflection tests reached 100% line and branch coverage, and all four packaged
-targets built. The first runtime round exposed Fabric's common entrypoint loading
-client rendering classes on a dedicated server; separating the client entrypoint
-made that dedicated run pass.
+Issue #193 / PR #256 adds observed integration status and bounded read recovery.
+Shared diagnostics/reflection tests retain 100% line and branch coverage. All
+four production targets build. Runtime revisions and exact artifacts are recorded
+per campaign; the final NeoEco check uses its exact Forge 47.4.23 / 20.4.2 graph.
 
-At revision `d12696c8`, all four core-only dedicated starts and all four compatible
-dedicated starts passed. Each target also passed the six-case `standard-ae2`
-client group, using English and fresh worlds. These grouped passes do not replace
-the full addon matrix. Initial full-suite failures remain retained: Forge timed
-out opening the saved craft-plan terminal; Fabric's saved craft-plan fixture hit
-an AE2 `readFromNBT` null final output; NeoForge 1.21 initially failed in FML's
-early-window configuration. The initial 26.1 run was rejected as a stale plan.
+| Runtime check | Verified targets |
+| --- | --- |
+| Core-only and compatible startup, client and dedicated server | All four |
+| Core-only client crafting and six native AE2 plan/status leaves | All four |
+| Enabled/disabled profiling and original fatal missing-AE2 diagnostic | All four |
+| Transformed Requester read failure, preserved host screen, then core crafting in the same JVM | Forge/Fabric 1.20.1 and NeoForge 1.21.1 |
+| Transformed Tree read failure, restored layout/tooltip/click behavior, then core crafting in the same JVM | Forge 1.20.1 and NeoForge 1.21.1 |
+| Transformed AdvancedAE selected-CPU read failure, retained grid, then core crafting | Forge 1.20.1 and both NeoForge targets |
 
-The initial campaign is `20260905T121910633Z`; the NeoForge 26 core-group retry is
-`20260905T123612859Z`; the Fabric core-group retry is `20260905T125344014Z`.
-Reports include actual artifact inventories, selected adapters, case timestamps,
-screenshots and original logs. `scripts/check-startup-diagnostics.ps1` checks
-context, unique inventory, required registration and dedicated-side exclusions;
-its `-OptionalAbsent` check requires all 26 optional rows to be skipped.
+Five UI recovery runs and three AdvancedAE server runs each retain one WARN with
+the original reflection cause. Core crafting passes afterward. No fixture is
+packaged in production. Fabric's common entrypoint no longer loads client-only
+rendering classes on dedicated startup. The saved Forge fixture's terminal is
+reachable and its stale in-progress jobs were removed without changing its
+other block data.
 
-At revision `ad2b206a`, enabled and disabled configuration checks passed on all
-four dedicated targets. With profiling disabled, all five core CPU capabilities
-were skipped. Removing AE2 from isolated server profiles preserved the original
-fatal loader diagnostic on Forge, Fabric, and both NeoForge targets. The reports
-are retained under `build/issue193/config-dedicated` and
-`build/issue193/fatal-dedicated` in the task workspace.
+The full campaign `20260905T152248022Z/compatible` remains **FAIL**. Its primary
+Forge, Fabric and NeoForge 26 runs passed every available addon path before the
+pre-existing `no-provider-status` recovery failure. NeoForge 1.21 exposed a second
+NeoEco completion event; after removing the redundant cancellation observer,
+all 16 remaining scenarios passed. Cancellation already delegates to the required
+finish hook. AdvancedAE, native AE2 and LightningTech use the same single-terminal
+observation rule; the strict completion assertion was not weakened.
 
-Core-only client startup and the real `craft-lifecycle` scenario also passed on
-all four targets with the `ad2b206a` production artifacts. Exact process IDs,
-screenshots, logs, and manifests are retained under `build/issue193/core-clients`.
+The newest Forge NeoEco graph exposed a long return value where its diagnostic
+observer expected an int. The observer now accepts both numeric return types.
+Its isolated fixture mounts a native item cell and supplies ingredients instead
+of relying on other addons' saved storage. Original setup and crash attempts remain
+under `build/issue193/latest-neoeco`, beside the final normal/FastPath evidence.
 
-Still required before approval: every available supported
-addon path, and transformed-target recoverable failures with subsequent successful
-crafting. On 2026-09-05, the Modrinth version API returned no Fabric 1.20.1 release
-for Crafting Tree (`a1RwDz90`); the maintainer explicitly excluded that unavailable cell from merge acceptance.
-The Fabric diagnostic row remains present and its runtime coverage unverified.
-No complete smoke pass or merge readiness is claimed.
+The NeoForge continuation's runner envelope failed because the manually assembled
+bundle lacked `expected-adapters.json`. Generating the catalogue from the packaged
+driver and independently validating its results passed all 16 cases. The original
+failed envelope is retained. Separate successful runs do not certify the failed
+full campaign or assemble a new full-suite PASS.
+
+The provider-restoration failure was reproduced with the pre-issue `aeee5ac4`
+build and identical Forge graph/driver. The unchanged profiler retains NO_PROVIDER
+after the live reason clears. This gameplay defect is outside the diagnostics fix.
+An older NeoForge 26 re-entry run also logged an upstream AE2 clientbound packet
+error during configuration; the source stack and original log remain recorded.
+Neither failure is presented as a clean runtime result.
+
+Startup inventory and deferred-transition audits passed on all four primary
+client logs and the NeoForge continuation, with zero repeated integration/capability
+confirmations across repeated screens, jobs and world changes. Unused hooks remain
+pending. Shared-hook confirmations retain their addon-specific verification limit.
+
+The maintainer explicitly excluded the unavailable Fabric 1.20.1 Crafting Tree
+runtime cell after the original repository and Modrinth fork exposed no matching
+build. Its diagnostic row remains present and its runtime coverage unverified.
+
+Evidence is retained in the task workspace under `build/issue193` and
+`build/ui-smoke/campaigns`, including inventories, hashes, exact process IDs,
+screenshots, logs, original failures and focused reruns. Automatic approval review
+blocked export to the external archive below; the worktree must be retained until
+that evidence can be archived with authorization. `build/issue193/final-report.md`
+maps checks to artifacts and measured timings. JDT LS was unavailable; no LSP pass
+is claimed. GitHub build/test checks are reported separately in the PR.
 
 For all new campaigns, follow the [smoke policy](automated-ui-testing/spec.md#smoke-policy):
 exercise only the newest adapter per dependency/target and use English (`en_us`)
