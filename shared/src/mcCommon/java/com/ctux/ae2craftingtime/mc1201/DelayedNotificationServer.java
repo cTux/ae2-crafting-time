@@ -54,6 +54,11 @@ public final class DelayedNotificationServer {
                     chatEnabled);
         }
         for (var key : resolved) {
+            // Another scope may still track the same output (identical outputs
+            // on two CPUs/networks): only clear when no scope still needs it.
+            if (key != null && ProfilerBridge.isStillDelayed(key)) {
+                continue;
+            }
             pushClearHighlight(player, key, highlightSender);
         }
         ProfilerBridge.persistProviderState();
@@ -85,7 +90,7 @@ public final class DelayedNotificationServer {
             recordId = ProviderLocateRecords.create(owner, dimension, positions, name, key.outputId(),
                     player.level().getGameTime()).id();
         }
-        ProfilerBridge.replaceProviderStart(key, owner, positions, name);
+        ProfilerBridge.replaceProviderStart(key, owner, dimension, positions, name);
         pushAutoHighlight(player, dimension, key, positions, highlightSender);
         if (chatEnabled) {
             player.sendSystemMessage(DelayedChatText.delayedMessage(name, recordId, idleTicks, typicalTicks));
@@ -100,7 +105,7 @@ public final class DelayedNotificationServer {
      */
     public static BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> defaultHighlightSender() {
         return (player, highlight) -> StatsNetwork.sendTo(player, new ProviderHighlightS2C(
-                highlight.dimensionId(), highlight.positions(), highlight.outputId(),
+                highlight.networkId(), highlight.dimensionId(), highlight.positions(), highlight.outputId(),
                 highlight.durationSeconds(), highlight.plateOnly()));
     }
 
@@ -110,7 +115,7 @@ public final class DelayedNotificationServer {
                 || highlightSender == null) {
             return;
         }
-        highlightSender.accept(player, new ProviderHighlightCodec.Highlight(dimension, positions,
+        highlightSender.accept(player, new ProviderHighlightCodec.Highlight(key.networkId(), dimension, positions,
                 key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS, true));
     }
 
@@ -126,7 +131,7 @@ public final class DelayedNotificationServer {
             return;
         }
         highlightSender.accept(player,
-                new ProviderHighlightCodec.Highlight("", List.of(), key.outputId(), 0));
+                new ProviderHighlightCodec.Highlight(key.networkId(), "", List.of(), key.outputId(), 0));
     }
 
     private DelayedNotificationServer() {

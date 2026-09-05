@@ -195,6 +195,51 @@ class ProviderPlatesTest {
         assertTrue(ProviderHighlightClient.plates().isEmpty());
     }
 
+    @Test
+    void identicalOutputsOnTwoNetworksStayIndependent() {
+        var networkA = "minecraft:overworld|1,2,3";
+        var networkB = "minecraft:overworld|9,9,9";
+        ProviderHighlightClient.showPlate(networkA, "minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.showPlate(networkB, "minecraft:overworld", List.of(new BlockPos(4, 5, 6)),
+                "minecraft:iron_ingot");
+        assertEquals(2, ProviderHighlightClient.plates().size());
+
+        // Finishing one CPU/network clears only its own plate.
+        ProviderHighlightClient.clearFor(networkA, "minecraft:iron_ingot");
+        var remaining = ProviderHighlightClient.plates();
+        assertEquals(1, remaining.size());
+        assertEquals(networkB, remaining.get(0).networkId());
+        assertEquals(List.of(new BlockPos(4, 5, 6)), remaining.get(0).positions());
+    }
+
+    @Test
+    void twoRainbowEdgesStayIndependent() {
+        var networkA = "minecraft:overworld|1,2,3";
+        var networkB = "minecraft:overworld|9,9,9";
+        ProviderHighlightClient.show(networkA, "minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.show(networkB, "minecraft:overworld", List.of(new BlockPos(4, 5, 6)), 15,
+                "minecraft:copper_plate");
+
+        var edges = ProviderHighlightClient.liveEdges();
+        assertEquals(2, edges.size());
+        assertNotNull(ProviderHighlightClient.live());
+
+        ProviderHighlightClient.clearEdgeFor(networkA, "minecraft:iron_ingot");
+        assertEquals(1, ProviderHighlightClient.liveEdges().size());
+        assertNotNull(ProviderHighlightClient.live());
+    }
+
+    @Test
+    void manyPlatesPersistWithoutSilentEviction() {
+        for (var i = 0; i < 40; i++) {
+            ProviderHighlightClient.showPlate("minecraft:overworld|" + i, "minecraft:overworld",
+                    List.of(new BlockPos(i, 2, 3)), "minecraft:item_" + i);
+        }
+        assertEquals(40, ProviderHighlightClient.plates().size());
+    }
+
     private static ProfileStats stats() {
         return new ProfileStats(1, 20.0, 0.05, 1.0, 20, ProfileUnit.ITEM, false, 1, 4.0, List.of(20L),
                 List.of(1L));

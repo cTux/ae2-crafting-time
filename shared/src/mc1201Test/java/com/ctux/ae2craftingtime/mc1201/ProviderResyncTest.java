@@ -40,4 +40,38 @@ class ProviderResyncTest {
         ProviderLocateRecords.removeStarts(List.of(key));
         assertTrue(ProviderLocateRecords.snapshotStarts().isEmpty());
     }
+
+    @Test
+    void storedDimensionSurvivesSnapshotRestore() {
+        var key = new ProfileKey("minecraft:overworld|0,0,0", "minecraft:iron_ingot");
+        var owner = UUID.randomUUID();
+        ProviderLocateRecords.noteStart(key, owner, "minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
+                "Iron");
+        var snapshot = ProviderLocateRecords.snapshotStarts();
+        assertEquals(1, snapshot.size());
+        assertEquals("minecraft:overworld", snapshot.get(0).dimensionId());
+
+        ProviderLocateRecords.clearAll();
+        ProviderLocateRecords.restoreStarts(snapshot);
+        var restored = ProviderLocateRecords.startFor(key).orElseThrow();
+        assertEquals("minecraft:overworld", restored.dimensionId());
+        assertEquals(List.of(new BlockPos(1, 2, 3)), restored.positions());
+    }
+
+    @Test
+    void identicalOutputsOnDifferentNetworksStayIndependent() {
+        var keyA = new ProfileKey("minecraft:overworld|1,2,3", "minecraft:iron_ingot");
+        var keyB = new ProfileKey("minecraft:overworld|9,9,9", "minecraft:iron_ingot");
+        var owner = UUID.randomUUID();
+        ProviderLocateRecords.noteStart(keyA, owner, "minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
+                "Iron");
+        ProviderLocateRecords.noteStart(keyB, owner, "minecraft:overworld", List.of(new BlockPos(4, 5, 6)),
+                "Iron");
+        assertEquals(2, ProviderLocateRecords.snapshotStarts().size());
+
+        ProviderLocateRecords.removeStarts(List.of(keyA));
+        var remaining = ProviderLocateRecords.snapshotStarts();
+        assertEquals(1, remaining.size());
+        assertEquals(keyB, remaining.get(0).key());
+    }
 }

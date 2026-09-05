@@ -46,15 +46,23 @@ public final class ProviderHighlightRender {
         var argb = alpha << 24 | (int) (rainbow[0] * 255) << 16 | (int) (rainbow[1] * 255) << 8
                 | (int) (rainbow[2] * 255);
         var redArgb = alpha << 24 | 0xFF2626;
-        // Click edges first in their own batch, then persistent plates.
-        var highlight = ProviderHighlightClient.live();
-        if (highlight != null && levelDimension.equals(highlight.dimensionId())) {
-            var lines = consumers.getBuffer(RenderTypes.lines());
+        // Click edges first in their own batch, then persistent plates. Each
+        // identity keeps its own edge so two locates within 15s stay independent.
+        var edges = ProviderHighlightClient.liveEdges();
+        var hasEdge = false;
+        var lines = consumers.getBuffer(RenderTypes.lines());
+        for (var highlight : edges) {
+            if (!levelDimension.equals(highlight.dimensionId())) {
+                continue;
+            }
+            hasEdge = true;
             for (var pos : highlight.positions()) {
                 ProviderHighlightShapes.renderThickRainbowBox(event.getPoseStack(), lines,
                         pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z, argb,
                         ProviderHighlightShapes.LINE_WIDTH);
             }
+        }
+        if (hasEdge) {
             consumers.endBatch(RenderTypes.lines());
         }
         // Plates persist while their output still reports a stall.

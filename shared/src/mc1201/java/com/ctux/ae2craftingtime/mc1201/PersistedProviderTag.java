@@ -41,7 +41,8 @@ final class PersistedProviderTag {
             if (name.length() > MAX_NAME_LENGTH) {
                 continue;
             }
-            persisted.add(new StoredStart(key, owner, positions,
+            var dimension = start.contains("dimension", Tag.TAG_STRING) ? start.getString("dimension") : "";
+            persisted.add(new StoredStart(key, owner, dimension, positions,
                     name.isBlank() ? key.outputId() : name));
         }
         return persisted;
@@ -57,6 +58,7 @@ final class PersistedProviderTag {
             tag.putString("networkId", start.key().networkId());
             tag.putString("key", start.key().outputId());
             tag.putString("owner", start.owner().toString());
+            tag.putString("dimension", start.dimensionId() == null ? "" : start.dimensionId());
             var posTags = new ListTag();
             if (start.positions() != null) {
                 for (var pos : start.positions()) {

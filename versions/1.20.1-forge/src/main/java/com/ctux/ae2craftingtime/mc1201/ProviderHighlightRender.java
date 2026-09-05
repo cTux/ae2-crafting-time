@@ -33,7 +33,6 @@ public final class ProviderHighlightRender {
             }
             return minecraft.level.getBlockEntity(pos) != null;
         });
-        var highlight = ProviderHighlightClient.live();
         var camera = minecraft.gameRenderer.getMainCamera().getPosition();
         var poseStack = event.getPoseStack();
         poseStack.pushPose();
@@ -43,13 +42,22 @@ public final class ProviderHighlightRender {
         var alpha = ProviderHighlightClient.pulseAlpha();
         // Click edges first in their own batch: plate and item writes switch the
         // shared fallback builder to other render types, so a cached lines
-        // consumer would not survive until the next position.
-        if (highlight != null && levelDimension.equals(highlight.dimensionId())) {
-            var lines = consumers.getBuffer(RenderType.lines());
+        // consumer would not survive until the next position. Each identity
+        // keeps its own edge so two locates within 15 seconds stay independent.
+        var edges = ProviderHighlightClient.liveEdges();
+        var hasEdge = false;
+        var lines = consumers.getBuffer(RenderType.lines());
+        for (var highlight : edges) {
+            if (!levelDimension.equals(highlight.dimensionId())) {
+                continue;
+            }
+            hasEdge = true;
             for (var pos : highlight.positions()) {
                 ProviderHighlightShapes.renderThickRainbowBox(poseStack, lines, new AABB(pos).inflate(0.002),
                         rainbow[0], rainbow[1], rainbow[2], alpha);
             }
+        }
+        if (hasEdge) {
             consumers.endBatch(RenderType.lines());
         }
         // Plates persist while their output still reports a stall.

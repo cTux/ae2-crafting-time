@@ -10,26 +10,40 @@ import net.minecraft.core.BlockPos;
 
 /**
  * Server-side only. Click-scoped locate records plus the per-output fallback
- * (owner, positions, display name) that survives a world reload. Live
- * dispatch data always wins; the persisted copy only fills gaps after a
- * reload.
+ * (job owner, network, dimension, output, provider positions, display name)
+ * that survives a world reload. Live dispatch data always wins; the persisted
+ * copy only fills gaps after a reload.
  */
 public final class ProviderLocateRecords {
     public record LocateRecord(UUID id, UUID owner, String dimensionId, List<BlockPos> positions,
             String outputName, String outputId, long createdTick) {
     }
 
-    public record ProviderStartInfo(UUID owner, List<BlockPos> positions, String outputName) {
+    public record ProviderStartInfo(UUID owner, String dimensionId, List<BlockPos> positions, String outputName) {
         public ProviderStartInfo {
+            dimensionId = dimensionId == null ? "" : dimensionId;
             positions = positions == null ? List.of() : List.copyOf(positions);
+        }
+
+        public ProviderStartInfo(UUID owner, List<BlockPos> positions, String outputName) {
+            this(owner, "", positions, outputName);
         }
     }
 
-    public record StoredStart(ProfileKey key, UUID owner, List<BlockPos> positions, String outputName) {
+    public record StoredStart(ProfileKey key, UUID owner, String dimensionId, List<BlockPos> positions,
+            String outputName) {
+        public StoredStart {
+            dimensionId = dimensionId == null ? "" : dimensionId;
+            positions = positions == null ? List.of() : List.copyOf(positions);
+        }
+
+        public StoredStart(ProfileKey key, UUID owner, List<BlockPos> positions, String outputName) {
+            this(key, owner, "", positions, outputName);
+        }
     }
 
     private static final int MAX_RECORDS = 256;
-    private static final int MAX_STARTS = 256;
+    private static final int MAX_STARTS = 512;
     private static final LinkedHashMap<UUID, LocateRecord> RECORDS = new LinkedHashMap<>();
     private static final LinkedHashMap<ProfileKey, ProviderStartInfo> STARTS = new LinkedHashMap<>();
 
@@ -53,15 +67,25 @@ public final class ProviderLocateRecords {
     /**
      * Records who started an output and where its providers were last seen.
      * Empty positions or a missing owner never erase a previously stored
-     * entry; only strictly newer information replaces it.
+     * entry; only strictly newer information replaces it. Dimension is merged
+     * the same way so identical outputs on different networks/dimensions stay
+     * independent via their distinct profile keys while the stored dimension
+     * survives for resync.
      */
     public static synchronized void noteStart(ProfileKey key, UUID owner, List<BlockPos> positions,
             String outputName) {
+        noteStart(key, owner, "", positions, outputName);
+    }
+
+    public static synchronized void noteStart(ProfileKey key, UUID owner, String dimensionId,
+            List<BlockPos> positions, String outputName) {
         if (key == null) {
             return;
         }
         var previous = STARTS.get(key);
         var mergedOwner = owner != null ? owner : previous == null ? null : previous.owner();
+        var mergedDimension = dimensionId != null && !dimensionId.isBlank() ? dimensionId
+                : previous == null ? "" : previous.dimensionId();
         List<BlockPos> mergedPositions;
         if (positions != null && !positions.isEmpty()) {
             mergedPositions = List.copyOf(positions);
@@ -75,7 +99,7 @@ public final class ProviderLocateRecords {
         if (mergedOwner == null && mergedPositions.isEmpty()) {
             return;
         }
-        STARTS.put(key, new ProviderStartInfo(mergedOwner, mergedPositions, mergedName));
+        STARTS.put(key, new ProviderStartInfo(mergedOwner, mergedDimension, mergedPositions, mergedName));
         evictEldest(STARTS, MAX_STARTS);
     }
 
@@ -86,14 +110,31 @@ public final class ProviderLocateRecords {
     /**
      * Overwrites one output's fallback with freshly resolved notify-time data,
      * even when the fresh positions are empty: an empty resolution means "no
-     * locatable target right now", not "keep showing an old box".
+     * locatable target right now", not "keep showing an old box". The stored
+     * dimension travels with the fallback so resync never has to re-derive it
+     * from the network id alone.
      */
     public static synchronized void replaceStart(ProfileKey key, UUID owner, List<BlockPos> positions,
             String outputName) {
         if (key == null) {
             return;
         }
+        var previous = STARTS.get(key);
+        var keptDimension = previous == null ? "" : previous.dimensionId();
         STARTS.put(key, new ProviderStartInfo(owner,
+                keptDimension,
+                positions == null ? List.of() : List.copyOf(positions),
+                outputName == null || outputName.isBlank() ? key.outputId() : outputName));
+        evictEldest(STARTS, MAX_STARTS);
+    }
+
+    public static synchronized void replaceStart(ProfileKey key, UUID owner, String dimensionId,
+            List<BlockPos> positions, String outputName) {
+        if (key == null) {
+            return;
+        }
+        STARTS.put(key, new ProviderStartInfo(owner,
+                dimensionId == null ? "" : dimensionId,
                 positions == null ? List.of() : List.copyOf(positions),
                 outputName == null || outputName.isBlank() ? key.outputId() : outputName));
         evictEldest(STARTS, MAX_STARTS);
@@ -103,14 +144,20 @@ public final class ProviderLocateRecords {
      * Snapshot for world save. Excludes entries with no positions (broken or
      * unlocatable): they can never produce a plate, so persisting them would
      * only resurrect stale red after a reload. In-memory keeps empty to avoid
-     * showing an old box via fallback.
+     * showing an old box via fallback. Packet bounds still apply to positions
+     * per entry, but active fallbacks are never silently dropped to fit a cap:
+     * the cap only bounds persistence size.
      */
     public static synchronized List<StoredStart> snapshotStarts() {
         var snapshot = new ArrayList<StoredStart>();
         for (var entry : STARTS.entrySet()) {
             var info = entry.getValue();
             if (info.owner() != null && info.positions() != null && !info.positions().isEmpty()) {
-                snapshot.add(new StoredStart(entry.getKey(), info.owner(), info.positions(), info.outputName()));
+                snapshot.add(new StoredStart(entry.getKey(), info.owner(), info.dimensionId(), info.positions(),
+                        info.outputName()));
+            }
+            if (snapshot.size() >= MAX_STARTS) {
+                break;
             }
         }
         return List.copyOf(snapshot);
@@ -141,7 +188,9 @@ public final class ProviderLocateRecords {
             if (entry == null || entry.key() == null || entry.owner() == null) {
                 continue;
             }
-            noteStart(entry.key(), entry.owner(), entry.positions(), entry.outputName());
+            var dimension = entry.dimensionId() != null && !entry.dimensionId().isBlank() ? entry.dimensionId()
+                    : "";
+            noteStart(entry.key(), entry.owner(), dimension, entry.positions(), entry.outputName());
         }
     }
 

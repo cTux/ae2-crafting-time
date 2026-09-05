@@ -344,6 +344,23 @@ public final class CraftProfiler {
         return List.copyOf(resolved);
     }
 
+    /**
+     * Whether any scope still reports the key as delayed (not yet resolved).
+     * Used to keep an identical output's plate when one CPU/network finishes
+     * or recovers while another still needs red.
+     */
+    public boolean isDelayed(ProfileKey key) {
+        if (key == null) {
+            return false;
+        }
+        for (var notified : delayedNotified.values()) {
+            if (notified != null && notified.contains(key)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public void rememberStatus(PersistedOutputStatus status) {
         if (status == null) {
             return;

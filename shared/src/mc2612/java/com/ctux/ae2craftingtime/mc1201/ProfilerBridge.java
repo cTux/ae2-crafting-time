@@ -258,6 +258,23 @@ public final class ProfilerBridge {
         ProviderLocateRecords.replaceStart(key, owner, positions, outputName);
     }
 
+    public static void replaceProviderStart(ProfileKey key, UUID owner, String dimensionId,
+            List<BlockPos> positions, String outputName) {
+        ProviderLocateRecords.replaceStart(key, owner, dimensionId, positions, outputName);
+    }
+
+    /**
+     * Whether any live scope still reports the key as delayed. Keeps an
+     * identical output's red plate when one CPU/network recovers or finishes
+     * while another still needs it.
+     */
+    public static boolean isStillDelayed(ProfileKey key) {
+        if (key == null || !isEnabled()) {
+            return false;
+        }
+        return PROFILER.isDelayed(key);
+    }
+
     public static void persistProviderState() {
         if (savedData != null) {
             savedData.replaceProviderStarts(ProviderLocateRecords.snapshotStarts());
@@ -283,11 +300,14 @@ public final class ProfilerBridge {
         PROFILER.clearPending(scope);
         ProviderStartTracker.clear(scope);
         BlockReasonNotifier.clear(scope);
-        clearHighlights(server, highlightOwner.orElse(null), highlightKeys);
+        // Identical outputs on another CPU/network still need red: only clear
+        // and forget keys with no remaining live tracking.
+        var releasable = highlightKeys.stream().filter(key -> key != null && !PROFILER.hasPending(key)).toList();
+        clearHighlights(server, highlightOwner.orElse(null), Set.copyOf(releasable));
         // Finished and cancelled targets must never return after a reload:
         // forget their provider fallback as well as their statuses.
-        if (!highlightKeys.isEmpty()) {
-            ProviderLocateRecords.removeStarts(highlightKeys);
+        if (!releasable.isEmpty()) {
+            ProviderLocateRecords.removeStarts(releasable);
         }
         persistProviderState();
     }
@@ -314,8 +334,8 @@ public final class ProfilerBridge {
             }
             try {
                 StatsNetwork.sendTo(player,
-                        new com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C("", List.of(),
-                                key.outputId(), 0, false));
+                        new com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C(key.networkId(), "",
+                                List.of(), key.outputId(), 0, false));
             } catch (Exception ignored) {
                 // One unsendable plate must not hide the rest.
             }
@@ -353,7 +373,9 @@ public final class ProfilerBridge {
             if (positions == null || positions.isEmpty()) {
                 continue;
             }
-            var dimension = dimensionFromNetworkId(key.networkId());
+            var storedDimension = start.dimensionId() != null ? start.dimensionId() : "";
+            var dimension = !storedDimension.isBlank() ? storedDimension
+                    : dimensionFromNetworkId(key.networkId());
             if (dimension.isBlank()) {
                 continue;
             }
@@ -362,14 +384,14 @@ public final class ProfilerBridge {
                 broken.add(key);
                 continue;
             }
-            if (kept.size() != positions.size()) {
-                ProviderLocateRecords.replaceStart(key, owner, kept, start.outputName());
+            if (kept.size() != positions.size() || !dimension.equals(storedDimension)) {
+                ProviderLocateRecords.replaceStart(key, owner, dimension, kept, start.outputName());
                 pruned = true;
             }
             try {
                 StatsNetwork.sendTo(player,
-                        new com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C(dimension, kept,
-                                key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS, true));
+                        new com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C(key.networkId(), dimension,
+                                kept, key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS, true));
             } catch (Exception ignored) {
                 // One unsendable plate must not hide the rest.
             }

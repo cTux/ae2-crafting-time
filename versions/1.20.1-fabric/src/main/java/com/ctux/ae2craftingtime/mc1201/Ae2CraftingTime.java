@@ -76,9 +76,12 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
             var rainbow = ProviderHighlightClient.rainbowRgb();
             var alpha = ProviderHighlightClient.pulseAlpha();
             // Click edges first: plate and item writes switch the shared fallback
-            // builder to other render types, so one pass per type.
-            if (highlight != null
-                    && minecraft.level.dimension().location().toString().equals(highlight.dimensionId())) {
+            // builder to other render types, so one pass per type. Each identity
+            // keeps its own edge so two locates within 15s stay independent.
+            for (var highlight : ProviderHighlightClient.liveEdges()) {
+                if (!minecraft.level.dimension().location().toString().equals(highlight.dimensionId())) {
+                    continue;
+                }
                 for (var pos : highlight.positions()) {
                     ProviderHighlightShapes.renderThickRainbowBox(poseStack,
                             consumers.getBuffer(RenderType.lines()), new AABB(pos).inflate(0.002), rainbow[0],

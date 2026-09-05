@@ -63,6 +63,25 @@ class ProviderHighlightTriggerTest {
     }
 
     @Test
+    void networkIdRoundTripsAndLegacyDefaultsToEmpty() {
+        var network = "minecraft:overworld|1,2,3";
+        var highlight = new Highlight(network, DIMENSION, List.of(new BlockPos(1, 2, 3)), IRON, 15, true);
+        var buffer = new FriendlyByteBuf(Unpooled.buffer());
+        ProviderHighlightCodec.write(buffer, highlight);
+        assertEquals(highlight, ProviderHighlightCodec.read(buffer));
+        assertEquals(0, buffer.readableBytes());
+
+        var legacyPlateOnly = new FriendlyByteBuf(Unpooled.buffer());
+        legacyPlateOnly.writeUtf(DIMENSION);
+        legacyPlateOnly.writeVarInt(1);
+        legacyPlateOnly.writeBlockPos(new BlockPos(1, 2, 3));
+        legacyPlateOnly.writeUtf(IRON);
+        legacyPlateOnly.writeVarInt(15);
+        legacyPlateOnly.writeBoolean(true);
+        assertEquals("", ProviderHighlightCodec.read(legacyPlateOnly).networkId());
+    }
+
+    @Test
     void manualShowSetsEdgeOnly() {
         ProviderHighlightClient.show(DIMENSION, List.of(new BlockPos(1, 2, 3)), 15, IRON);
 
