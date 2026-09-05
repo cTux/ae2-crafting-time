@@ -11,11 +11,16 @@ existing campaigns/drivers and do not require new Ukrainian screenshots.
 Keep screenshot evidence for named modpacks and prepared version clients using
 the same archive layout:
 
-For prepared Forge clients, use `scripts/invoke-ui-smoke-codexvm.ps1 -Scenario suite`
-for the full compatible graph and its 34 expanded cases. Add
-`-Target 1.20.1-fabric` for the 16-case Fabric compatible suite, or `-Target 1.21.1-neoforge`
-for the 30-case NeoForge compatible suite. Use `-Target 26.1.2-neoforge`
-for its 19-case compatible suite.
+Use the host campaign entry point `scripts/run-ui-smoke.ps1`. See
+[Choosing smoke coverage](dev-client.md#choosing-smoke-coverage) for full,
+targeted, grouped and change-based commands. The default full campaign includes
+required focused adapter graphs as well as each target's primary suite. A
+low-level `invoke-ui-smoke-codexvm.ps1 -Scenario suite` invocation runs only the
+requested graph and does not replace that campaign gate.
+
+The primary compatible suites currently contain 34 cases for Forge 1.20.1,
+16 for Fabric 1.20.1, 30 for NeoForge 1.21.1 and 19 for NeoForge 26.1.2. Read the
+expanded plan for the current case list and any separate required graphs.
 
 For multiple scenarios on the same installed mod graph, launch Minecraft once.
 Run the suite sequentially with a fresh disposable world per case, capturing each
@@ -63,3 +68,10 @@ worktree fingerprint, rule hashes, per-path reasons and selected leaves. Keep
 stored under each of the six leaf directories, with a `.json` semantic snapshot
 beside every required `.png`. Group PASS requires all six leaves from this run;
 unselected leaves stay NOT_RUN. Keep historical monolithic evidence unchanged.
+
+For every targeted report, state the selection mode (`manual` or `changed`),
+requested target/group/case, selected graph and cases, and what was not selected.
+Keep `NOT_REQUIRED` separate from PASS. A group result cannot be assembled from
+successful leaves in different runs, and an isolated rerun cannot turn the
+original failed full campaign green. Record missing prepared loader versions
+as setup failures; do not substitute a different loader to complete a plan.
