@@ -28,10 +28,13 @@ try {
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') 'Missing image must fail'
     Set-Content -LiteralPath $image -Value 'fixture-image'
     $snapshot = Join-Path $directory 'delayed-tooltip.json'
+    $validSnapshot = Get-Content -LiteralPath $snapshot -Raw
     Remove-Item -LiteralPath $snapshot
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') 'Missing snapshot must fail'
     Set-Content -LiteralPath $snapshot -Value '{}'
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') 'Invalid snapshot must fail'
+    Set-Content -LiteralPath $snapshot -Value $validSnapshot
+    Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'PASS') 'Restored evidence must pass before testing result fields'
     $file = Join-Path $directory 'result.json'
     $original = Get-Content -LiteralPath $file -Raw
     foreach ($field in @('schema','complete','target','profile','scenario','language','result')) {
@@ -40,6 +43,20 @@ try {
         $data | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $file
         Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') "Invalid $field must fail"
     }
+    foreach ($check in $catalogue.cases.'delayed-status'.checks) {
+        foreach ($mutation in @('missing', 'false')) {
+            $data = $original | ConvertFrom-Json
+            if ($mutation -eq 'missing') { $data.checks.psobject.Properties.Remove($check) }
+            else { $data.checks.$check = $false }
+            $data | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $file
+            $outcome = Read-Results | Where-Object scenario -eq 'delayed-status'
+            Assert ($outcome.result -eq 'FAIL') "$mutation check must fail: $check"
+            $expectedReason = if ($mutation -eq 'missing') { 'Incomplete check set' } else { "Failed check: $check" }
+            Assert ($outcome.reason -eq $expectedReason) "Wrong rejection for $mutation check: $check"
+        }
+    }
+    Set-Content -LiteralPath $file -Value $original
+    Assert (@(Read-Results | Where-Object result -eq 'PASS').Count -eq 6) 'Restoring a failed leaf must restore the complete group'
     Set-Content -LiteralPath $file -Value '{'
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') 'Malformed result must fail'
     $expected = Join-Path $temp 'expected-adapters.json'

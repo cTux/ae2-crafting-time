@@ -98,6 +98,23 @@ class SuitePlanTest {
         assertThrows(Exception.class, () -> SuitePlan.verifyWorld(temporary.resolve("missing"), options()));
     }
 
+    @Test void failureAfterAPassPreservesEarlierEvidenceAndLeavesLaterCasesUnrun() {
+        var third = new SuitePlan.Case("delayed-status", "ae2ct-" + "3".repeat(32));
+        var cases = new SuitePlan(1, List.of(first, second, third)).options(options());
+        var progress = new SuiteProgress(cases);
+        var now = Instant.parse("2026-09-05T00:00:00Z");
+        progress.start(now);
+        assertTrue(progress.finish(true, now.plusSeconds(1)));
+        progress.start(now.plusSeconds(2));
+        assertFalse(progress.finish(false, now.plusSeconds(3)));
+        var result = progress.snapshot(42);
+        assertEquals("FAIL", result.result());
+        assertFalse(result.complete());
+        assertEquals(List.of("PASS", "FAIL", "NOT_RUN"),
+                result.cases().stream().map(SuiteProgress.CaseResult::result).toList());
+        assertEquals(now.toString(), result.cases().get(0).startedAt());
+        assertEquals(now.plusSeconds(1).toString(), result.cases().get(0).finishedAt());
+    }
     @Test void reportsProgressWithoutTurningUnfinishedCasesIntoPasses() throws Exception {
         var cases = new SuitePlan(1, List.of(first, second)).options(options());
         var progress = new SuiteProgress(cases);
