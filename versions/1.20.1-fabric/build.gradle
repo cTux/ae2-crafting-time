@@ -122,6 +122,8 @@ loom {
     createRemapConfigurations(sourceSets.testDriver)
     mixin {
         add sourceSets.main, 'ae2craftingtime.refmap.json'
+        // Loom 1.10 also inspects unit-test compiler outputs while remapping.
+        add sourceSets.test, 'ae2craftingtime_test.refmap.json'
         add sourceSets.testDriver, 'ae2craftingtime_test_driver.refmap.json'
     }
 }
