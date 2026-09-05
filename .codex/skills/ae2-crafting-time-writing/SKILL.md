@@ -37,11 +37,12 @@ before starting repository writing, or create one when none exists.
 - **Changelogs and release copy:** follow the release rules in `AGENTS.md` and
   `docs/release.md`. Include only player-visible features, fixes, and behavior
   changes, and link each GitHub and Discord release-note item to its source
-  GitHub issue. Leave out implementation details, tests, refactors, tooling,
-  and build work. Include at most one image across the release notes. If an
-  image helps, choose the highest-effort player-visible feature or fix and crop
-  its smoke-test evidence to the relevant area instead of using a full
-  screenshot.
+  GitHub issue with a full URL. Leave out implementation details, tests,
+  refactors, tooling, and build work. Include at most one image across the
+  release notes. If an image helps, choose the highest-effort player-visible
+  feature or fix and crop its reviewed smoke-test evidence to the relevant area
+  instead of using a full screenshot. Exclude account data, tokens, chat,
+  server addresses, coordinates, and unrelated worlds.
 - **Translations:** write natural UI text for that locale, keep it short, and
   preserve every placeholder and control name. Update English and Ukrainian
   together.

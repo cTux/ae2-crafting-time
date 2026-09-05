@@ -5,6 +5,9 @@ description: Extend or maintain the AE2 Crafting Time development-only UI test d
 
 # AE2 Crafting Time Test Driver
 
+Treat the GitHub issue list as the source of truth. Find the matching issue
+before starting test-driver work, or create one when none exists.
+
 Read `docs/test-driver/spec.md`, `docs/test-driver/technical-design.md`, and the
 existing fixture closest to the requested scenario.
 
