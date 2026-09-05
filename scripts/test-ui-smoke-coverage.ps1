@@ -3,7 +3,7 @@ $temp = Join-Path ([IO.Path]::GetTempPath()) ('ae2ct-coverage-' + [guid]::NewGui
 New-Item -ItemType Directory -Path $temp | Out-Null
 try {
     Get-ChildItem -LiteralPath $PSScriptRoot -File -Filter '*.json' | Copy-Item -Destination $temp
-    $targets = @(Get-Content (Join-Path $temp 'release-matrix.json') -Raw | ConvertFrom-Json)
+    $targets = Get-Content (Join-Path $temp 'release-matrix.json') -Raw | ConvertFrom-Json
     foreach ($target in $targets.id) {
         foreach ($latest in @($false, $true)) {
             $rows = @(& (Join-Path $PSScriptRoot 'get-ui-smoke-coverage.ps1') -Target $target -Latest:$latest -MatrixDirectory $temp)
