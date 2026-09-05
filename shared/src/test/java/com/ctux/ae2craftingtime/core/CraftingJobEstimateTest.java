@@ -43,6 +43,15 @@ class CraftingJobEstimateTest {
         assertFalse(estimate.remainingSeconds((key, amount) -> OptionalLong.empty()).isPresent());
     }
 
+    @Test
+    void includesKnownDependenciesWhenTheirParentIsUnknown() {
+        var estimate = new CraftingJobEstimate(ROOT, Map.of(ROOT, 5L, LEAF, 20L),
+                Map.of(ROOT, Set.of(LEAF)));
+
+        assertEquals(20, estimate.remainingSeconds((key, amount) -> key.equals(ROOT)
+                ? OptionalLong.empty() : seconds(key, amount)).orElseThrow());
+    }
+
     private static OptionalLong seconds(ProfileKey key, long amount) {
         return amount > 0 ? OptionalLong.of(amount) : OptionalLong.empty();
     }

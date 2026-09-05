@@ -282,14 +282,7 @@ public final class CraftProfiler {
     }
 
     public void setJobEstimate(Object scope, CraftingJobEstimate estimate) {
-        if (!enabled || scope == null) {
-            return;
-        }
-        if (estimate == null) {
-            jobEstimates.remove(scope);
-        } else {
-            jobEstimates.put(scope, estimate);
-        }
+        jobEstimates.put(scope, estimate);
     }
 
     public OptionalLong remainingJobSeconds(Object scope,

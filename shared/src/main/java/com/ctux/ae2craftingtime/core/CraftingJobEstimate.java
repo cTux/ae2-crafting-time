@@ -25,48 +25,40 @@ public final class CraftingJobEstimate {
     }
 
     public OptionalLong remainingSeconds(BiFunction<ProfileKey, Long, OptionalLong> estimate) {
-        var cache = new HashMap<ProfileKey, Path>();
+        var cache = new HashMap<ProfileKey, Long>();
         var critical = path(root, estimate, cache, new HashSet<>());
-        long longestKnownRow = 0;
-        boolean anyKnown = critical.known;
+        long longestKnownRow = -1;
         for (var entry : remainingAmounts.entrySet()) {
             var row = estimate.apply(entry.getKey(), entry.getValue());
             if (row.isPresent()) {
-                anyKnown = true;
                 longestKnownRow = Math.max(longestKnownRow, row.getAsLong());
             }
         }
-        return anyKnown ? OptionalLong.of(Math.max(critical.seconds, longestKnownRow)) : OptionalLong.empty();
+        var total = Math.max(critical, longestKnownRow);
+        return total >= 0 ? OptionalLong.of(total) : OptionalLong.empty();
     }
 
-    private Path path(ProfileKey key, BiFunction<ProfileKey, Long, OptionalLong> estimate,
-            Map<ProfileKey, Path> cache, Set<ProfileKey> visiting) {
+    private long path(ProfileKey key, BiFunction<ProfileKey, Long, OptionalLong> estimate,
+            Map<ProfileKey, Long> cache, Set<ProfileKey> visiting) {
         var cached = cache.get(key);
         if (cached != null) {
             return cached;
         }
         if (!visiting.add(key)) {
-            return new Path(0, false);
+            return -1;
         }
 
         var self = estimate.apply(key, remainingAmounts.getOrDefault(key, 0L));
-        var longestDependency = new Path(0, false);
+        long longestDependency = -1;
         for (var dependency : dependencies.getOrDefault(key, Set.of())) {
-            var candidate = path(dependency, estimate, cache, visiting);
-            if (candidate.seconds > longestDependency.seconds) {
-                longestDependency = candidate;
-            } else if (candidate.seconds == longestDependency.seconds && candidate.known) {
-                longestDependency = candidate;
-            }
+            longestDependency = Math.max(longestDependency, path(dependency, estimate, cache, visiting));
         }
         visiting.remove(key);
 
-        var result = new Path(self.orElse(0) + longestDependency.seconds,
-                self.isPresent() || longestDependency.known);
+        var result = self.isEmpty() && longestDependency < 0
+                ? -1
+                : self.orElse(0) + Math.max(0, longestDependency);
         cache.put(key, result);
         return result;
-    }
-
-    private record Path(long seconds, boolean known) {
     }
 }
