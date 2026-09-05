@@ -52,17 +52,12 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
                 return;
             }
             var levelDimension = minecraft.level.dimension().location().toString();
-            // A broken provider block drops its edge and plate immediately, in
-            // this dimension only.
-            ProviderHighlightClient.trimPositions(levelDimension, pos -> {
-                if (!minecraft.level.isLoaded(pos)) {
-                    return true;
-                }
-                if (minecraft.level.getBlockState(pos).isAir()) {
-                    return false;
-                }
-                return minecraft.level.getBlockEntity(pos) != null;
-            });
+            // A broken provider target drops its edge and plate immediately, in
+            // this dimension only. Replacement with another block entity and a
+            // surviving host without its provider part both count as broken;
+            // unloaded chunks stay unknown so reload never clears intact red.
+            ProviderHighlightClient.trimPositions(levelDimension,
+                    pos -> ProviderBlockTargets.keepForHighlight(minecraft.level, pos));
             var highlight = ProviderHighlightClient.live();
             var camera = context.camera().getPosition();
             var poseStack = context.matrixStack();

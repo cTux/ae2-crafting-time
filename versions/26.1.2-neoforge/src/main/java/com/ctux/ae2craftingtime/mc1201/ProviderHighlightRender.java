@@ -29,17 +29,12 @@ public final class ProviderHighlightRender {
         var levelDimension = minecraft.level.dimension().identifier().toString();
         var camera = minecraft.gameRenderer.getMainCamera().position();
         var consumers = minecraft.renderBuffers().bufferSource();
-        // A broken provider block drops its edge and plate immediately, in
-        // this dimension only.
-        ProviderHighlightClient.trimPositions(levelDimension, pos -> {
-            if (!minecraft.level.isLoaded(pos)) {
-                return true;
-            }
-            if (minecraft.level.getBlockState(pos).isAir()) {
-                return false;
-            }
-            return minecraft.level.getBlockEntity(pos) != null;
-        });
+        // A broken provider target drops its edge and plate immediately, in
+        // this dimension only. Replacement with another block entity and a
+        // surviving host without its provider part both count as broken;
+        // unloaded chunks stay unknown so reload never clears intact red.
+        ProviderHighlightClient.trimPositions(levelDimension,
+                pos -> ProviderBlockTargets.keepForHighlight(minecraft.level, pos));
         var rainbow = ProviderHighlightClient.rainbowRgb();
         var pulse = ProviderHighlightClient.pulseAlpha();
         var alpha = (int) (pulse * 255);

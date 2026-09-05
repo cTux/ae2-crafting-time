@@ -349,9 +349,11 @@ public final class ProfilerBridge {
      * dedicated reconnect, server restart, and full client restart. Chat is
      * never re-sent here: login syncs plates only, once-per-episode warnings
      * fire on live transitions while online and honor the chat setting there.
-     * Broken providers (all positions air or without a block entity) are
-     * skipped and forgotten so they never return. Best-effort: missing
-     * positions or dimension simply skip that output.
+     * Broken provider targets (air, missing block entity, replacement block
+     * entity, or surviving host without provider service) are skipped and
+     * forgotten so they never return; unloaded chunks stay unknown and keep
+     * their plates. Best-effort: missing positions or dimension simply skip
+     * that output.
      */
     public static void resyncPlatesForPlayer(net.minecraft.server.level.ServerPlayer player) {
         if (player == null || !isEnabled()) {
@@ -424,19 +426,11 @@ public final class ProfilerBridge {
                     if (pos == null) {
                         continue;
                     }
-                    try {
-                        if (!level.isLoaded(pos)) {
-                            kept.add(pos);
-                            continue;
-                        }
-                        if (level.getBlockState(pos).isAir()) {
-                            continue;
-                        }
-                        if (level.getBlockEntity(pos) == null) {
-                            continue;
-                        }
-                        kept.add(pos);
-                    } catch (Exception ignored) {
+                    // Shared provider-target check: replacement block entities
+                    // and surviving hosts without provider service drop, while
+                    // unloaded chunks and unreadable grid stay unknown (kept)
+                    // so reload never clears intact red server-side either.
+                    if (ProviderBlockTargets.keepForHighlight(level, pos)) {
                         kept.add(pos);
                     }
                 }
