@@ -46,7 +46,7 @@ tasks.register('checkGuideResources') {
             require(recipe['neoforge:conditions'] == [[type: 'neoforge:mod_loaded', modid: 'guideme']], "Guide recipe must be optional: $target")
 
             def metadata = file("$target/src/main/resources/META-INF/neoforge.mods.toml").getText('UTF-8')
-            require(metadata =~ /(?s)modId="guideme"\s+type="OPTIONAL"\s+versionRange="\[[^"]+,\)"\s+ordering="AFTER"\s+side="BOTH"/, "Wrong GuideME metadata: $target")
+            require((metadata =~ /(?s)modId="guideme"\s+type="OPTIONAL"\s+versionRange="\[[^"]+,\)"\s+ordering="AFTER"\s+side="BOTH"/).find(), "Wrong GuideME metadata: $target")
         }
 
         ['versions/1.20.1-forge', 'versions/1.20.1-fabric'].each { target ->
