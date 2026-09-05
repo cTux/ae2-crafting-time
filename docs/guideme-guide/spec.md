@@ -2,7 +2,7 @@
 
 Issue: [#144](https://github.com/cTux/ae2-crafting-time/issues/144)
 
-Status: approved for implementation, 2026-09-05; not shipped behavior.
+Status: implemented by [#263](https://github.com/cTux/ae2-crafting-time/pull/263), 2026-09-05.
 
 ## Goal and scope
 
