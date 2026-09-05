@@ -61,10 +61,8 @@
   "text.ae2craftingtime.value.seconds": "%ss",
   "text.ae2craftingtime.value.throughput": "%s %s/t, %s %s/s",
   "text.ae2craftingtime.value.used_samples": "%s/%s",
-  "text.ae2craftingtime.stall.no_output": "No output for",
-  "text.ae2craftingtime.stall.typical": "Typical completion",
-  "text.ae2craftingtime.stall.state": "State",
-  "text.ae2craftingtime.stall.parallel_slots": "Parallel slots",
+  "text.ae2craftingtime.stall.delayed": "DELAYED",
+  "text.ae2craftingtime.stall.typical": "Typical",
   "text.ae2craftingtime.stall.improvements": "Things to try:",
   "text.ae2craftingtime.stall.hint.parallel": "• Try more parallel Pattern Providers or machines",
   "text.ae2craftingtime.stall.reason.parallel_one": "  %s slots are free, but only %s batch is running.",
@@ -73,8 +71,5 @@
   "text.ae2craftingtime.stall.reason.speed": "  This craft is taking %sx its usual time.",
   "text.ae2craftingtime.stall.hint.co_processors": "• Try adding Crafting Co-Processors",
   "text.ae2craftingtime.stall.reason.co_processors": "  All %s parallel slots were recently busy, and work is still waiting.",
-  "text.ae2craftingtime.value.delayed_ttc": "%s · DELAYED",
-  "text.ae2craftingtime.value.whole_seconds": "%ss",
-  "text.ae2craftingtime.value.stall_state": "%s active · %s scheduled",
-  "text.ae2craftingtime.value.parallel_slots": "%s/%s recently used"
+  "text.ae2craftingtime.value.whole_seconds": "%ss"
 }
