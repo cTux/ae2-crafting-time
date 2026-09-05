@@ -87,6 +87,14 @@ tooltip hint, and real details/reset input; Fabric has an eleven-case compatible
 suite. NeoForge 1.21.1 has a 25-case compatible suite, and NeoForge 26.1.2 has a
 fourteen-case compatible suite.
 
+Focused read-recovery scenarios cover Crafting Tree on Forge 1.20.1 and NeoForge
+1.21.1, and ME Requester on all three pre-26 targets. They require isolated addon
+fixtures with a renamed read member, verify that the original screen remains
+usable without TTC additions, and run `craft-lifecycle` afterward in the same
+client process. These negative fixtures are not part of the compatible suite.
+Fabric Crafting Tree has no available runtime artifact and is excluded from
+issue #193's runtime acceptance by explicit user decision.
+
 `no-provider-status` is a focused native AE2 scenario on all four targets.
 Its historical Forge 1.20.1 smoke checks real pattern/provider removal, bilingual
 tooltips, recovery, redundant providers, and cancellation. New campaigns use

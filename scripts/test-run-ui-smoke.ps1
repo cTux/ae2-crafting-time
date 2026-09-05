@@ -70,6 +70,11 @@ $checks = if ($contracts.$DriverScenario) {
     [ordered]@{ screen=$true; 'real-job'=$true; 'mixed-row'=$true; 'pattern-removed'=$true; tooltip=$true;
         layout=$true; 'pattern-restored'=$true; 'second-provider'=$true;
         'provider-removed'=$true; 'provider-restored'=$true; cancelled=$true }
+} elseif ($DriverScenario -eq "crafting-tree-read-recovery") {
+    [ordered]@{ screen=$true; 'host-content'=$true; 'overlay-absent'=$true; layout=$true;
+        tooltip=$true; 'details-ignored'=$true; 'reset-ignored'=$true }
+} elseif ($DriverScenario -eq "merequester-read-recovery") {
+    [ordered]@{ screen=$true; 'host-content'=$true; 'overlay-absent'=$true; layout=$true }
 } elseif ($DriverScenario -eq "crafting-tree-screen") {
     [ordered]@{ screen=$true; 'node-ttc'=$true; tooltip=$true; layout=$true; details=$true; reset=$true }
 } elseif ($DriverScenario -eq "ae2networkanalyser-screen") {
@@ -96,6 +101,10 @@ $screenshots = if ($contracts.$DriverScenario) {
         "no-provider-block-restored.png", "no-provider-cancelled.png")
 } elseif ($DriverScenario -eq "crafting-tree-screen") {
     @("crafting-tree-screen.png", "crafting-tree-tooltip.png", "crafting-tree-details.png", "crafting-tree-reset.png")
+} elseif ($DriverScenario -eq "crafting-tree-read-recovery") {
+    @("read-recovery-screen.png", "read-recovery-tooltip.png", "read-recovery-details.png", "read-recovery-reset.png")
+} elseif ($DriverScenario -eq "merequester-read-recovery") {
+    @("read-recovery-screen.png")
 } elseif ($DriverScenario -eq "ae2networkanalyser-screen") {
     @("ae2networkanalyser-screen.png")
 } elseif ($DriverScenario -eq "merequester-screen") {
@@ -112,7 +121,7 @@ $result = [ordered]@{
 }
 $result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $DriverOutputDirectory "result.json") -Encoding UTF8
 foreach ($screenshot in $screenshots) {
-    if ($env:AE2CT_UI_SMOKE_TEST_MODE -ne "missing-screenshot" -or $screenshot -ne $screenshots[-1]) {
+    if ($env:AE2CT_UI_SMOKE_TEST_MODE -ne "missing-screenshot" -or $screenshot -ne @($screenshots)[-1]) {
         Set-Content -LiteralPath (Join-Path $DriverOutputDirectory $screenshot) -Value "png"
         @{screen='fixture-screen';gui=@{x=0;y=0;width=100;height=100}} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $DriverOutputDirectory $screenshot.Replace('.png','.json'))
     }
@@ -200,6 +209,10 @@ try {
     Invoke-Case "pass" -Scenario "crafting-tree-screen" -shouldPass $true
     Invoke-Case "missing-screenshot" -Scenario "crafting-tree-screen" -shouldPass $false
     Invoke-Case "pass" -Scenario "merequester-screen" -ProjectId E6BFl96N -shouldPass $true
+    Invoke-Case "pass" -Scenario "merequester-read-recovery" -ProjectId E6BFl96N -shouldPass $true
+    Invoke-Case "missing-screenshot" -Scenario "merequester-read-recovery" -ProjectId E6BFl96N -shouldPass $false
+    Invoke-Case "pass" -Scenario "crafting-tree-read-recovery" -shouldPass $true
+    Invoke-Case "missing-screenshot" -Scenario "crafting-tree-read-recovery" -shouldPass $false
     Invoke-Case "pass" -Scenario "ae2importexportcard-terminal" -ProjectId qelfSMnn -shouldPass $true
     Invoke-Case "pass" -Scenario "ae2networkanalyser-screen" -ProjectId 961856 -shouldPass $true
     Invoke-Case "pass" -Scenario "aeinfinitybooster-terminal" -ProjectId VQhDBNs8 -shouldPass $true

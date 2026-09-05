@@ -4,6 +4,15 @@ The saved Forge fixture starts within reach of its marked terminal and contains
 no retained CPU jobs. Optional scenarios keep its grid, patterns, and samples.
 Native CPU setup waits for the formed cluster to become active before selection.
 
+## Optional screen read recovery
+
+`crafting-tree-read-recovery` and `merequester-read-recovery` use isolated addon
+JARs with renamed read contracts. They require visible host content and no TTC
+overlay. Tree also retains its original tooltip and ignores TTC SHOW/RESET
+modifier clicks. Each negative case must be followed by `craft-lifecycle` in
+the same process, with one original-cause WARN across both worlds. Positive
+screen scenarios retain their normal TTC assertions.
+
 ## Optional selected-CPU read recovery
 
 `advancedae-read-recovery` runs on an isolated dedicated server with a deliberately

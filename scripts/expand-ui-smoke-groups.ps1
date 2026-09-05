@@ -27,7 +27,9 @@ $supported = @($suite | ForEach-Object { if ($_ -cin $groups) { $catalogue.group
 $coverage = Get-Content -LiteralPath (Join-Path $MatrixDirectory 'ui-smoke-coverage.json') -Raw | ConvertFrom-Json
 $supported += @($coverage.$Target.psobject.Properties.Value.scenario | Where-Object { $_ -cnotin $groups })
 foreach ($adapter in $catalogue.adapterCases.psobject.Properties) {
-    if (@($adapter.Value | Where-Object { $_ -cin $supported }).Count) { $supported += @($adapter.Value) }
+    if (@($adapter.Value | Where-Object { $_ -cin $supported }).Count) {
+        $supported += @($adapter.Value) + @($catalogue.readRecoveryCases.($adapter.Name))
+    }
 }
 $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 $expanded = @($Scenarios | ForEach-Object {

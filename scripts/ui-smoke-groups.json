@@ -35,5 +35,9 @@
     "advanced_ae": ["advancedae-cpu"],
     "ae2lt": ["lightningtech-cpu"],
     "merequester": ["merequester-screen"]
+  },
+  "readRecoveryCases": {
+    "ae2ct": ["crafting-tree-read-recovery"],
+    "merequester": ["merequester-read-recovery"]
   }
 }
