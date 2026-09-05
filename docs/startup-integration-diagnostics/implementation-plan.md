@@ -2,8 +2,8 @@
 
 Implement [issue #193](https://github.com/cTux/ae2-crafting-time/issues/193) from the
 [specification](spec.md) and [technical design](technical-design.md). This document
-plans future code and runtime verification; none of those checks has run as part
-of the planning change.
+retains the implementation sequence. Completed checks and remaining limits are
+recorded in [runtime evidence](../ui-smoke-evidence.md#startup-integration-diagnostics-2026-09-05).
 
 ## 1. Fixed reporting model and inventory
 

@@ -1,6 +1,6 @@
 # Startup Integration Diagnostics Spec
 
-Status: planned; no runtime implementation is included in this planning change.
+Status: implemented; see [runtime evidence and limits](../ui-smoke-evidence.md#startup-integration-diagnostics-2026-09-05).
 Source: [issue #193](https://github.com/cTux/ae2-crafting-time/issues/193).
 Read with the [technical design](technical-design.md) and
 [implementation plan](implementation-plan.md).
