@@ -6,9 +6,9 @@
 </p>
 
 <p align="center">
-  <a href="https://modrinth.com/mod/ae2-crafting-time"><img src="https://img.shields.io/badge/Modrinth-173b27?style=for-the-badge&logo=modrinth&logoColor=1bd96a" alt="Download on Modrinth" height="32"></a>
   <a href="https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-time"><img src="https://img.shields.io/badge/CurseForge-522d1d?style=for-the-badge&logo=curseforge&logoColor=f68440" alt="Download on CurseForge" height="32"></a>
   <a href="https://github.com/cTux/ae2-crafting-time/releases"><img src="https://img.shields.io/badge/GitHub_Releases-30363d?style=for-the-badge&logo=github&logoColor=white" alt="Download from GitHub Releases" height="32"></a>
+  <a href="https://modrinth.com/mod/ae2-crafting-time"><img src="https://img.shields.io/badge/Modrinth-173b27?style=for-the-badge&logo=modrinth&logoColor=1bd96a" alt="Download on Modrinth" height="32"></a>
 </p>
 
 <p align="center">
