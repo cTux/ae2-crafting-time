@@ -56,8 +56,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-all-versions
 - Singleplayer and dedicated server-client play use the same logical-server
   stats request/response flow.
 - Status row TTC estimates use `activeAmount + pendingAmount`.
-- The running-job total uses AE2's elapsed time and overall completed-work
-  remaining dependency critical path instead of summing rows that may execute in parallel.
+- The running-job total uses the selected CPU's remaining dependency critical
+  path instead of summing rows that may execute in parallel.
 - Throughput samples aggregate all concurrent crafting-CPU batches for the same
   network output from the first dispatch until the output becomes idle.
 - Pending batches are scoped by crafting CPU and cleared when its job finishes
