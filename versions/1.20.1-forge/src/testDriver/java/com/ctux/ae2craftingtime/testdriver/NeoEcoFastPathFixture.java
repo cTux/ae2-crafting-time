@@ -48,7 +48,7 @@ final class NeoEcoFastPathFixture extends NeoEcoFixture {
         if (!controller.isFormed()) throw new IllegalStateException("ECO crafting worker did not form");
         var bus = crafting.stream().map(level::getBlockEntity).filter(ECOCraftingPatternBusBlockEntity.class::isInstance)
                 .map(ECOCraftingPatternBusBlockEntity.class::cast).findFirst().orElseThrow();
-        if (bus.getGrid() == null) return false;
+        if (bus.getGridNode() == null) return false;
         var host = (IInWorldGridNodeHost) level.getBlockEntity(terminal);
         IGrid grid = Arrays.stream(Direction.values()).map(host::getGridNode).filter(Objects::nonNull)
                 .map(node -> node.getGrid()).findFirst().orElseThrow();
