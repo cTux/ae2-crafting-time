@@ -14,7 +14,7 @@
       "com.ctux.ae2craftingtime.mc1201.Ae2CraftingTime"
     ],
     "client": [
-      "com.ctux.ae2craftingtime.mc1201.Ae2CraftingTime"
+      "com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeClient"
     ]
   },
   "mixins": [
