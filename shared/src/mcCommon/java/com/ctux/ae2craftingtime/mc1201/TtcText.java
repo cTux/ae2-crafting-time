@@ -35,7 +35,7 @@ public final class TtcText {
 
     public static MutableComponent noSpace() {
         return Component.translatable("text.ae2craftingtime.no_space")
-                .withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
+                .withStyle(ChatFormatting.RED);
     }
 
     public static List<Component> noSpaceTooltip() {
@@ -45,7 +45,7 @@ public final class TtcText {
 
     public static MutableComponent blockReason(CraftingBlockReason reason) {
         return Component.translatable("text.ae2craftingtime." + reason.name().toLowerCase(Locale.ROOT))
-                .withStyle(ChatFormatting.RED, ChatFormatting.BOLD);
+                .withStyle(ChatFormatting.RED);
     }
 
     public static List<Component> blockReasonTooltip(CraftingBlockReason reason) {
@@ -57,7 +57,7 @@ public final class TtcText {
     public static MutableComponent ttcCollectingData() {
         return Component.translatable("text.ae2craftingtime.ttc",
                 Component.translatable("text.ae2craftingtime.collecting_data"))
-                .withStyle(ChatFormatting.GRAY, ChatFormatting.BOLD);
+                .withStyle(ChatFormatting.GRAY);
     }
 
     public static MutableComponent totalTtc(String eta) {
@@ -119,7 +119,7 @@ public final class TtcText {
     public static List<Component> stallLines(String name, long amount, long activeAmount, long scheduledAmount,
             ProfileStats stats, StallDiagnostic stall) {
         var lines = new ArrayList<Component>();
-        lines.add(Component.literal(name).withStyle(ChatFormatting.WHITE, ChatFormatting.BOLD));
+        lines.add(Component.literal(name).withStyle(ChatFormatting.WHITE));
         var eta = TimeEstimate.format(amount, stats).orElse(I18n.get("text.ae2craftingtime.unknown"));
         lines.add(statsLine("text.ae2craftingtime.stats.ttc",
                 I18n.get("text.ae2craftingtime.value.delayed_ttc", eta)));
