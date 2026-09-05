@@ -1,5 +1,19 @@
 # AE2 Crafting Time Test Driver Spec
 
+The saved Forge fixture starts within reach of its marked terminal and contains
+no retained CPU jobs. Optional scenarios keep its grid, patterns, and samples.
+Native CPU setup waits for the formed cluster to become active before selection.
+
+## Optional selected-CPU read recovery
+
+`advancedae-read-recovery` runs on an isolated dedicated server with a deliberately
+renamed AdvancedAE menu field. It constructs a real transformed AE2 crafting
+status menu on the fixture grid, reads the normal server stats context twice,
+and requires the grid to survive with no selected CPU. It then submits a real
+native AE2 job and requires fresh samples and successful completion. The runner
+must retain exactly one WARN and the original missing-field cause. Altered addon
+JARs remain disposable test inputs and never enter production artifacts.
+
 All future smoke follows the [shared policy](../automated-ui-testing/spec.md#smoke-policy):
 newest adapter per dependency/target and English (`en_us`) only. The English-only
 scenario requirements below are the required next state; removing existing

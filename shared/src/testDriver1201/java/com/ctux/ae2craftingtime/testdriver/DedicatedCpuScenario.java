@@ -68,17 +68,19 @@ public final class DedicatedCpuScenario {
             return;
         }
         if (player == null) {
-            if (!Set.of("advancedae-cpu", "lightningtech-cpu", "neoeco-cpu", "neoeco-fastpath-cpu").contains(scenario)) {
+            if (!Set.of("advancedae-cpu", "advancedae-read-recovery", "lightningtech-cpu", "neoeco-cpu", "neoeco-fastpath-cpu").contains(scenario)) {
                 throw new IllegalArgumentException("Unsupported dedicated scenario: " + scenario);
             }
-            AdapterSmokePolicy.verify(target, scenario, "en_us", IntegrationMixinPlugin.snapshot());
+            AdapterSmokePolicy.verify(target, scenario.equals("advancedae-read-recovery") ? "advancedae-cpu" : scenario,
+                    "en_us", IntegrationMixinPlugin.snapshot());
             String loader = target.endsWith("-forge") ? "minecraftforge" : "neoforged.neoforge";
             player = (ServerPlayer) Class.forName("net." + loader + ".common.util.FakePlayerFactory")
                     .getMethod("get", ServerLevel.class, GameProfile.class).invoke(null, level,
                             new GameProfile(UUID.fromString("a27ed489-e2c1-4fa8-a110-ab742882a210"), "AdapterSmoke"));
             // Keep this disposable fixture ticking without a connected graphical client.
             for (int x = 2; x <= 6; x++) for (int z = -2; z <= 2; z++) level.setChunkForced(x, z, true);
-            addon = (AddonCpuFixture<Object>) AddonCpuFixture.create(scenario);
+            addon = (AddonCpuFixture<Object>) (scenario.equals("advancedae-read-recovery")
+                    ? new NativeCpuFixture() : AddonCpuFixture.create(scenario));
         }
         if (!gridFixture.prepare(player, origin)) return;
         var terminal = gridFixture.terminal;
@@ -90,6 +92,21 @@ public final class DedicatedCpuScenario {
             grid = ((IInWorldGridNodeHost) level.getBlockEntity(terminal)).getGridNode(Direction.NORTH).getGrid();
             network = ProfilerBridge.networkId(grid);
             outputId = addon.outputId(placement, marker);
+            if (scenario.equals("advancedae-read-recovery")) {
+                var host = (appeng.api.storage.ITerminalHost) ((appeng.api.parts.IPartHost)
+                        level.getBlockEntity(terminal)).getPart(Direction.NORTH);
+                var previousMenu = player.containerMenu;
+                player.containerMenu = new appeng.menu.me.crafting.CraftingStatusMenu(1, player.getInventory(), host);
+                try {
+                    for (int attempt = 0; attempt < 2; attempt++) {
+                        var context = com.ctux.ae2craftingtime.mc1201.StatsRequestContext.current(player);
+                        if (context.grid() != grid || context.craftingCpu() != null
+                                || !com.ctux.ae2craftingtime.mc1201.IntegrationLog.disabled("advanced_ae", "selected-cpu")) {
+                            throw new IllegalStateException("Selected-CPU recovery did not retain the real grid");
+                        }
+                    }
+                } finally { player.containerMenu = previousMenu; }
+            }
         }
         if (cpu == null) { cpu = addon.cpu(player, placement, grid); if (cpu == null) return; }
         if (calculation == null) {
