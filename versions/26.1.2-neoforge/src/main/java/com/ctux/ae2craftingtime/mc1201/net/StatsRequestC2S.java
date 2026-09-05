@@ -46,7 +46,8 @@ public record StatsRequestC2S(List<String> keys) implements CustomPacketPayload 
             if (response != null) {
                 StatsNetwork.sendTo(player,
                         new StatsSnapshotS2C(packet.keys, response.entries(), response.networkAmounts(),
-                                response.waitingTicks(), response.blockReasons(), response.cpuContext()));
+                                response.waitingTicks(), response.blockReasons(), response.totalTtcSeconds(),
+                                response.cpuContext()));
             }
         });
     }

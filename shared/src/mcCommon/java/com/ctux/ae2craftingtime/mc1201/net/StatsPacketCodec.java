@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 public final class StatsPacketCodec {
     private StatsPacketCodec() {
@@ -71,6 +72,8 @@ public final class StatsPacketCodec {
             buffer.writeBoolean(entry.stall().isPresent());
             entry.stall().ifPresent(value -> StallDiagnosticPacketCodec.write(buffer, value));
         }
+        buffer.writeBoolean(snapshot.totalTtcSeconds().isPresent());
+        snapshot.totalTtcSeconds().ifPresent(buffer::writeVarLong);
         buffer.writeLong(snapshot.cpuContext());
     }
 
@@ -130,10 +133,16 @@ public final class StatsPacketCodec {
                     amountPerSecond, lastDurationTicks, unit, reliableEstimate, usedSampleCount, outlierMultiplier,
                     durations, amounts), accuracy, stall));
         }
-        return new Snapshot(requestedKeys, entries, networkAmounts, waitingTicks, blockReasons, buffer.readLong());
+        var totalTtcSeconds = buffer.readBoolean() ? OptionalLong.of(buffer.readVarLong()) : OptionalLong.empty();
+        if (totalTtcSeconds.isPresent() && totalTtcSeconds.getAsLong() < 0) {
+            throw new IllegalArgumentException("total TTC must not be negative");
+        }
+        return new Snapshot(requestedKeys, entries, networkAmounts, waitingTicks, blockReasons, totalTtcSeconds,
+                buffer.readLong());
     }
 
     public record Snapshot(List<String> requestedKeys, List<StatsEntry> entries, Map<String, Long> networkAmounts,
-            Map<String, Long> waitingTicks, Map<String, CraftingBlockReason> blockReasons, long cpuContext) {
+            Map<String, Long> waitingTicks, Map<String, CraftingBlockReason> blockReasons,
+            OptionalLong totalTtcSeconds, long cpuContext) {
     }
 }

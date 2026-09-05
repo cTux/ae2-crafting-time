@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201.net;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import com.ctux.ae2craftingtime.core.PacketLimits;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 
 class StatsPacketTest {
     @Test
@@ -38,7 +40,7 @@ class StatsPacketTest {
     void snapshotRoundTripsMissingProvidersWithoutLearnedStatsAtBothSizeLimits() {
         for (var count : new int[] {0, PacketLimits.MAX_KEYS}) {
             var keys = java.util.stream.IntStream.range(0, count).mapToObj(i -> "test:output_" + i).toList();
-            var packet = new StatsSnapshotS2C(keys, List.of(), Map.of(), Map.of(), keys.stream().collect(java.util.stream.Collectors.toMap(key -> key, key -> CraftingBlockReason.NO_POWER)), 0x123456789L);
+            var packet = new StatsSnapshotS2C(keys, List.of(), Map.of(), Map.of(), keys.stream().collect(java.util.stream.Collectors.toMap(key -> key, key -> CraftingBlockReason.NO_POWER)), OptionalLong.empty(), 0x123456789L);
             var buffer = new FriendlyByteBuf(Unpooled.buffer());
             StatsSnapshotS2C.encode(packet, buffer);
             assertEquals(packet, StatsSnapshotS2C.decode(buffer));
@@ -99,7 +101,8 @@ class StatsPacketTest {
                 new StatsEntry(new ProfileKey("minecraft:lava"),
                         new ProfileStats(1, 20, 50, 1000, 20, ProfileUnit.MILLIBUCKET))),
                 Map.of("minecraft:water", 8_000L, "minecraft:lava", 0L),
-                Map.of("minecraft:water", 40L), Map.of("minecraft:lava", CraftingBlockReason.NO_PROVIDER), 0x123456789L);
+                Map.of("minecraft:water", 40L), Map.of("minecraft:lava", CraftingBlockReason.NO_PROVIDER),
+                OptionalLong.of(2_445), 0x123456789L);
 
         StatsSnapshotS2C.encode(packet, buffer);
 
@@ -141,7 +144,22 @@ class StatsPacketTest {
         assertEquals(Map.of(), packet.networkAmounts());
         assertEquals(Map.of(), packet.waitingTicks());
         assertEquals(Map.of(), packet.blockReasons());
+        assertFalse(packet.totalTtcSeconds().isPresent());
         assertEquals(-1, packet.cpuContext());
+    }
+
+    @Test
+    void snapshotRejectsNegativeTotalTtc() {
+        var buffer = new FriendlyByteBuf(Unpooled.buffer());
+        buffer.writeVarInt(0);
+        buffer.writeVarInt(0);
+        buffer.writeVarInt(0);
+        buffer.writeVarInt(0);
+        buffer.writeVarInt(0);
+        buffer.writeBoolean(true);
+        buffer.writeVarLong(-1);
+
+        assertThrows(IllegalArgumentException.class, () -> StatsSnapshotS2C.decode(buffer));
     }
 
     @Test

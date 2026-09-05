@@ -11,6 +11,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 public final class CraftProfiler {
@@ -23,6 +24,7 @@ public final class CraftProfiler {
     private final Map<Object, CapacityState> capacities = new IdentityHashMap<>();
     private final Map<Object, WaitingState> waiting = new IdentityHashMap<>();
     private final Map<Object, UUID> jobOwners = new IdentityHashMap<>();
+    private final Map<Object, CraftingJobEstimate> jobEstimates = new IdentityHashMap<>();
     private final Map<Object, Set<ProfileKey>> delayedNotified = new IdentityHashMap<>();
     private final Map<Object, Set<ProfileKey>> delayedResolved = new IdentityHashMap<>();
     private final Map<ProfileKey, BusyWindow> busyWindows = new HashMap<>();
@@ -58,6 +60,7 @@ public final class CraftProfiler {
             waiting.clear();
             busyWindows.clear();
             jobOwners.clear();
+            jobEstimates.clear();
             delayedNotified.clear();
             delayedResolved.clear();
             rememberedStatuses.clear();
@@ -141,6 +144,11 @@ public final class CraftProfiler {
             return false;
         }
 
+        var jobEstimate = jobEstimates.get(scope);
+        if (jobEstimate != null) {
+            jobEstimate.complete(key, amount);
+        }
+
         var scopedPending = pending.get(scope);
         var queue = scopedPending == null ? null : scopedPending.get(key);
         if (queue == null) {
@@ -215,6 +223,7 @@ public final class CraftProfiler {
         capacities.remove(scope);
         waiting.remove(scope);
         jobOwners.remove(scope);
+        jobEstimates.remove(scope);
         delayedNotified.remove(scope);
         if (removed == null) {
             return;
@@ -270,6 +279,16 @@ public final class CraftProfiler {
                 // A new job starts a fresh delayed-notification episode.
         delayedNotified.remove(scope);
         delayedResolved.remove(scope);
+    }
+
+    public void setJobEstimate(Object scope, CraftingJobEstimate estimate) {
+        jobEstimates.put(scope, estimate);
+    }
+
+    public OptionalLong remainingJobSeconds(Object scope,
+            BiFunction<ProfileKey, Long, OptionalLong> estimate) {
+        var jobEstimate = jobEstimates.get(scope);
+        return jobEstimate == null ? OptionalLong.empty() : jobEstimate.remainingSeconds(estimate);
     }
 
     public Optional<UUID> jobOwner(Object scope) {        if (scope == null || !enabled) {
@@ -572,6 +591,7 @@ public final class CraftProfiler {
         waiting.clear();
         busyWindows.clear();
         jobOwners.clear();
+        jobEstimates.clear();
         delayedNotified.clear();
         delayedResolved.clear();
         for (var output : persisted) {

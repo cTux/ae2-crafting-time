@@ -56,6 +56,6 @@ translations. Do not create separate formatting helpers for rows and totals.
 - Plan-row TTC uses `craftAmount`.
 - Unknown or nonpositive rows have no estimate.
 - Plan total adds known row estimates and does not invent values for unknown rows.
-- Running-job total continues to use elapsed progress.
+- Running-job total uses the selected CPU's remaining dependency critical path.
 - Accuracy remains network-scoped and diagnostic-only.
 - Stall thresholds and throughput math do not change.

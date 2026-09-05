@@ -7,10 +7,28 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.OptionalLong;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class CraftProfilerTest {
+    @Test
+    void jobEstimateCountsDownAndClearsWithItsCpu() {
+        var profiler = new CraftProfiler(10);
+        var cpu = new Object();
+        var root = new ProfileKey("test:root");
+        var leaf = new ProfileKey("test:leaf");
+        profiler.setJobEstimate(cpu,
+                new CraftingJobEstimate(root, Map.of(root, 5L, leaf, 20L), Map.of(root, Set.of(leaf))));
+
+        assertEquals(25, profiler.remainingJobSeconds(cpu, (key, amount) -> OptionalLong.of(amount)).orElseThrow());
+        profiler.complete(leaf, cpu, 12, 1);
+        assertEquals(13, profiler.remainingJobSeconds(cpu, (key, amount) -> OptionalLong.of(amount)).orElseThrow());
+        profiler.clearPending(cpu);
+        assertFalse(profiler.remainingJobSeconds(cpu, (key, amount) -> OptionalLong.of(amount)).isPresent());
+    }
+
     @Test
     void rejectsInvalidConfiguration() {
         assertThrows(IllegalArgumentException.class, () -> new CraftProfiler(0));

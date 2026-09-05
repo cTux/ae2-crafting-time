@@ -9,8 +9,21 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 class ClientStatsCacheTest {
+    @Test
+    void totalTtcIsScopedToTheSelectedCpu() {
+        var cache = new ClientStatsCache();
+
+        cache.replaceTotalTtcSeconds(OptionalLong.of(2_445), 7);
+
+        assertEquals(2_445, cache.totalTtcSeconds(7).orElseThrow());
+        assertFalse(cache.totalTtcSeconds(8).isPresent());
+        cache.clearCpuState();
+        assertFalse(cache.totalTtcSeconds(7).isPresent());
+    }
+
     @Test
     void missingProvidersReplaceWithoutStatsAndClearWithCpuState() {
         var cache = new ClientStatsCache();

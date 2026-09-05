@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 
 public final class StatsRequestHandler {
     private static final PlayerRequestRateLimit RATE_LIMIT = new PlayerRequestRateLimit();
@@ -49,6 +50,7 @@ public final class StatsRequestHandler {
                     .ifPresent(value -> waitingTicks.put(key, value));
         }
         return new Response(entries, networkAmounts(context.grid(), keys), waitingTicks, blockReasons,
+                ProfilerBridge.remainingJobSeconds(context.craftingCpu()),
                 StatsRequestContext.cpuContext(player.containerMenu));
     }
 
@@ -69,6 +71,7 @@ public final class StatsRequestHandler {
     }
 
     public record Response(List<StatsEntry> entries, Map<String, Long> networkAmounts,
-            Map<String, Long> waitingTicks, Map<String, CraftingBlockReason> blockReasons, long cpuContext) {
+            Map<String, Long> waitingTicks, Map<String, CraftingBlockReason> blockReasons,
+            OptionalLong totalTtcSeconds, long cpuContext) {
     }
 }

@@ -80,14 +80,27 @@ For the whole ordered craft, use the plan entries and calculate each known row
 with the same formula. Display the total as the sum of known row ETAs. If no row
 has known stats, show no total line and request missing stats.
 
-The running crafting-status screen is different: its total uses AE2's elapsed
-time and overall completed-work progress. It must not sum status rows because
-independent rows and crafting CPUs can run concurrently.
+The running crafting-status screen is different. When AE2 accepts the job, the
+server retains the selected patterns as a dependency graph and tracks the
+remaining amount of each crafted output. Its total is the longest remaining
+dependency path:
+
+```text
+finish(node) = rowTtc(node) + max(finish(dependency))
+totalTtc = max(finish(finalOutput), longestKnownRow)
+```
+
+A dependency ladder therefore adds each sequential step, while independent
+branches contribute only the slowest branch. Shared dependencies are counted
+once per path. Ambiguous substitution inputs are omitted from the graph so a
+partial estimate remains an honest lower bound, and the longest known row keeps
+the header from showing a value below a visible row. The total is scoped to the
+selected crafting CPU and cleared when the job or selection changes.
 
 ## Prediction Accuracy
 
-When AE2 accepts a job, the server freezes the same total TTC that the craft
-plan displays: the sum of estimates for rows with known throughput. It also
+When AE2 accepts a job, the server freezes the running job's critical-path TTC.
+It also
 records how many crafted-output rows had estimates. On successful completion,
 the server compares that frozen prediction with both nominal tick time and
 monotonic wall-clock time. Cancelled jobs, jobs restored after a restart, and

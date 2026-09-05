@@ -11,7 +11,7 @@ and verification.
 | --- | --- |
 | Learned throughput, retained samples, confidence, and outlier filtering | [Profiling and diagnostics spec](profiling-and-diagnostics/spec.md) and [technical design](profiling-and-diagnostics/technical-design.md) |
 | Craft-plan and crafting-status row estimates and totals | [Time To Craft lines](time-to-craft-plan.md) |
-| Running-job total based on elapsed progress | [Time To Craft lines](time-to-craft-plan.md#estimate-formula) |
+| Running-job total based on the remaining dependency critical path | [Time To Craft lines](time-to-craft-plan.md#estimate-formula) |
 | Prediction-accuracy history | [Profiling and diagnostics spec](profiling-and-diagnostics/spec.md) and [technical design](profiling-and-diagnostics/technical-design.md#prediction-accuracy) |
 | Delayed-output warnings and bottleneck hints | [Profiling and diagnostics spec](profiling-and-diagnostics/spec.md) and [technical design](profiling-and-diagnostics/technical-design.md#delayed-output-diagnostics) |
 | Clickable delayed warnings that locate the provider | [Provider locate spec](provider-locate/spec.md) and [technical design](provider-locate/technical-design.md) |
