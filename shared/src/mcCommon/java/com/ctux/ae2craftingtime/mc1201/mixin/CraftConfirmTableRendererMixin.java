@@ -68,7 +68,7 @@ public abstract class CraftConfirmTableRendererMixin {
         var line = TtcText.ttc(eta);
         var color = TtcColorContext.get(key);
         return color.isPresent()
-                ? line.withStyle(style -> style.withColor(TextColor.fromRgb(color.getAsInt())).withBold(true))
-                : line.withStyle(style -> style.withBold(true));
+                ? line.withStyle(style -> style.withColor(TextColor.fromRgb(color.getAsInt())))
+                : line;
     }
 }
