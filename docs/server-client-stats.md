@@ -155,8 +155,8 @@ Rules:
 
 ### `ProviderLocateC2S`
 
-Sent from client to server when a delayed row in the crafting CPU screen is
-double-clicked.
+Sent from client to server when any crafting-item row in the crafting CPU
+screen is double-clicked, including normal TTC rows.
 
 Fields:
 
@@ -166,18 +166,29 @@ outputId: string, at most 128 chars (profile key id)
 
 Rules:
 
-- The server resolves the clicking player's open CPU scope and grid,
-  requires job ownership, and answers with `ProviderHighlightS2C` or the
-  private expiry notice. No locate records are involved.
+- Double-click means "any active crafting item". The client sends for any
+  non-blank id; the server resolves the clicking player's open CPU scope and
+  grid, requires job ownership and live resolvable positions, and answers
+  with edge-only `ProviderHighlightS2C` or the private expiry notice. Manual
+  locates never create or clear red plates. No locate records are involved.
 - Oversized or malformed ids are rejected before any lookup.
 
 ### `ProviderHighlightS2C`
 
-Sent from server to only the clicking player after a locate click.
+Sent from server to only the clicking or delayed player. Two independent
+visuals share positions but never share lifetimes:
+
+| Event | Red plate | Rainbow edge |
+| Craft becomes delayed | Appear automatically, blink | Unchanged |
+| Chat link or double-click | Unchanged | Blink 15s, close originating screen |
+| TTC normal / finish / cancel | Disappear | Continue until expiry |
+| Provider breaks | Remove that plate | Remove that outline |
+| Leave and re-enter | Restore if still delayed | Never restore |
 
 Fields:
 
 ```text
+networkId: string (additive tail, "" for legacy packets)
 dimensionId: string
 positions: list<BlockPos>, at most 16
 outputId: string, at most 128 chars (profile key id, e.g. an item id)
@@ -189,9 +200,26 @@ Rules:
 
 - Positions resolve server-side through live grid nodes at notify time;
   clients never send positions.
-- The locate command (`/ae2craftingtime locate <record>`) only serves
-  records owned by the clicking player. Missing or foreign records answer
-  with a private expiry notice and highlight nothing.
+- Automatic delayed pings (`plateOnly=true`) show the plate with no edge and
+  need no open window. Manual locates (`plateOnly=false`) show the edge with
+  no plate change. Empty positions with zero duration clears one plate and
+  keeps rainbow.
+- Plates are server-authoritative, never UI cache. Snapshots from another
+  CPU, the planning screen, or a closed window never remove a plate. Active
+  plates and edges are never silently evicted; identity is job + network +
+  dimension + output + provider with independent rainbow targets.
+- Session end clears all plates and edges. Plates return only through login
+  resync for still-delayed crafts; rainbow is never serialized or restored.
+- Every loader trims broken targets in that dimension only: air, missing
+  block entity, replacement non-provider, or surviving host without provider
+  service drops. Unloaded chunks and unreadable grid stay unknown and kept.
+- The locate command (`/ae2craftingtime locate <record>`) serves only
+  records owned by the clicking player, resolved against the active job plus
+  still-valid targets. Missing, foreign, finished, cancelled, or broken
+  records answer with a private expiry notice and highlight nothing, and
+  broken records are forgotten.
+- Blocked (`NO POWER` / `NO SPACE`) warnings never send plates or fallback
+  updates; they keep chat with an edge-only record.
 - The client draws thick (2-3x) rainbow-cycling outline boxes while in the
   same dimension until the duration expires, plus the output item centered
   on a red plate on each camera-facing face (plate-only when the output id
@@ -204,16 +232,24 @@ Rules:
   whatever triggered it, with clickable coordinates that teleport to each
   position
   (see [issue #241](https://github.com/cTux/ae2-crafting-time/issues/241)).
-  The packet layout is unchanged.
+  The packet layout is additive (`networkId` tail with tolerant reads).
+
+Wire versions: Forge channel protocol `14`, Fabric
+`provider_highlight_v4` plus `provider_locate_v1`, NeoForge registrars `13`.
 
 ### Provider-start persistence
 
-Per-output provider links (owner, provider positions, display name) persist
-in the world `SavedData` beside throughput samples under a `providers`
-section. Old saves without the section load with empty provider state.
+Per-output provider links (network, owner, dimension, provider positions,
+display name) persist in the world `SavedData` beside throughput samples
+under a `providers` section. Old saves without the section load with empty
+provider state. The stored dimension travels with the fallback so resync
+never re-derives it alone. Rainbow edges are never persisted.
+
 After a reload, resumed crafts warn again with a working link because the
 owner and positions fall back to the persisted copy when live dispatch data
-is absent.
+is absent. Login resync re-sends plates for still-delayed crafts without
+re-sending chat. Finished, cancelled, and fully-broken outputs are forgotten
+so stale links expire instead of recreating red or targeting a replacement.
 
 ### Status persistence
 
@@ -276,7 +312,8 @@ showInTree = true
 ```
 
 `showChatMessages` controls the public Ctrl-click TTC details and the private reset confirmation. Reset still works when this is false.
-`notifyOnDelayed` controls the private delayed-output warning sent only to the craft owner. The server owns generation; the recipient remains the job initiator.
+`notifyOnDelayed` controls chat only: the private delayed and blocked messages
+sent to the craft owner. The server owns generation; the recipient remains the job initiator. Plates, plate clears, and login resync ignore this setting and always sync while the craft stays delayed.
 
 Config storage is loader-specific, but ownership stays the same: `enabled`,
 `showChatMessages`, and `notifyOnDelayed` affect server behavior, while `showInTree` affects local

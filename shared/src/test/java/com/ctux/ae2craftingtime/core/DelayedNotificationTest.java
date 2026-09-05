@@ -209,4 +209,75 @@ class DelayedNotificationTest {
         assertTrue(profiler.pollResolvedDelayed(null).isEmpty());
         assertTrue(profiler.pollResolvedDelayed(new Object()).isEmpty());
     }
+
+    @Test
+    void delayedStatusesPersistForLoginResync() {
+        var profiler = new CraftProfiler(10);
+        var key = key("minecraft:iron_plate");
+        var cpu = new Object();
+
+        seedTypical(profiler, key, new Object());
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 100);
+        profiler.setJobOwner(cpu, UUID.randomUUID());
+
+        assertEquals(1, profiler.pollNewlyDelayed(cpu, 800).size());
+        var statuses = profiler.snapshotStatuses();
+        assertEquals(1, statuses.stream().filter(status -> status.key().equals(key)
+                && status.kind() == StatusKind.DELAYED).count());
+    }
+
+    @Test
+    void resolvedStatusesLeaveNoStaleDelayedForReload() {
+        var profiler = new CraftProfiler(10);
+        var key = key("minecraft:iron_plate");
+        var cpu = new Object();
+
+        seedTypical(profiler, key, new Object());
+        profiler.start(key, cpu, 10, ProfileUnit.ITEM, 100);
+        profiler.setJobOwner(cpu, UUID.randomUUID());
+
+        assertEquals(1, profiler.pollNewlyDelayed(cpu, 800).size());
+        profiler.complete(key, cpu, 1, 860);
+        assertTrue(profiler.pollNewlyDelayed(cpu, 900).isEmpty());
+        assertEquals(List.of(key), profiler.pollResolvedDelayed(cpu));
+
+        assertTrue(profiler.snapshotStatuses().stream()
+                .noneMatch(status -> status.key().equals(key) && status.kind() == StatusKind.DELAYED));
+    }
+
+    @Test
+    void isDelayedIsNullAndEmptySafe() {
+        var profiler = new CraftProfiler(10);
+        var key = key("minecraft:iron_plate");
+
+        assertFalse(profiler.isDelayed(null));
+        assertFalse(profiler.isDelayed(key));
+    }
+
+    @Test
+    void isDelayedKeepsPlateWhileAnotherScopeStillNeedsRed() {
+        var profiler = new CraftProfiler(10);
+        var key = key("minecraft:iron_plate");
+        var other = key("minecraft:copper_plate");
+        var first = new Object();
+        var second = new Object();
+
+        seedTypical(profiler, key, new Object());
+        profiler.start(key, first, 10, ProfileUnit.ITEM, 100);
+        profiler.start(key, second, 10, ProfileUnit.ITEM, 100);
+
+        assertEquals(1, profiler.pollNewlyDelayed(first, 800).size());
+        assertEquals(1, profiler.pollNewlyDelayed(second, 800).size());
+        assertTrue(profiler.isDelayed(key));
+        assertFalse(profiler.isDelayed(other));
+        assertFalse(profiler.isDelayed(null));
+
+        profiler.complete(key, first, 1, 860);
+        assertTrue(profiler.pollNewlyDelayed(first, 900).isEmpty());
+        assertEquals(List.of(key), profiler.pollResolvedDelayed(first));
+        assertTrue(profiler.isDelayed(key));
+
+        profiler.clearPending(second);
+        assertFalse(profiler.isDelayed(key));
+    }
 }

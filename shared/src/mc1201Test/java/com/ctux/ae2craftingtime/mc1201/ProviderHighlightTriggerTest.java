@@ -22,8 +22,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Auto pings remember the red plate only, manual locates refresh the rainbow
- * edge on top of the plate, and every end-of-life path drops both.
+ * Auto pings remember the red plate only, manual locates show the rainbow edge
+ * only, and the two lifetimes stay independent: craft-state clears drop plates
+ * while rainbows survive until expiry or provider break.
  */
 class ProviderHighlightTriggerTest {
     private static final String DIMENSION = "minecraft:overworld";
@@ -62,28 +63,48 @@ class ProviderHighlightTriggerTest {
     }
 
     @Test
-    void manualShowSetsEdgeAndPlate() {
-        ProviderHighlightClient.show(DIMENSION, List.of(new BlockPos(1, 2, 3)), 15, IRON);
+    void networkIdRoundTripsAndLegacyDefaultsToEmpty() {
+        var network = "minecraft:overworld|1,2,3";
+        var highlight = new Highlight(network, DIMENSION, List.of(new BlockPos(1, 2, 3)), IRON, 15, true);
+        var buffer = new FriendlyByteBuf(Unpooled.buffer());
+        ProviderHighlightCodec.write(buffer, highlight);
+        assertEquals(highlight, ProviderHighlightCodec.read(buffer));
+        assertEquals(0, buffer.readableBytes());
 
-        assertNotNull(ProviderHighlightClient.live());
-        assertEquals(1, ProviderHighlightClient.plates().size());
+        var legacyPlateOnly = new FriendlyByteBuf(Unpooled.buffer());
+        legacyPlateOnly.writeUtf(DIMENSION);
+        legacyPlateOnly.writeVarInt(1);
+        legacyPlateOnly.writeBlockPos(new BlockPos(1, 2, 3));
+        legacyPlateOnly.writeUtf(IRON);
+        legacyPlateOnly.writeVarInt(15);
+        legacyPlateOnly.writeBoolean(true);
+        assertEquals("", ProviderHighlightCodec.read(legacyPlateOnly).networkId());
     }
 
     @Test
-    void reShowPreservesPlateAndRefreshesEdge() {
-        ProviderHighlightClient.showPlate(DIMENSION, List.of(new BlockPos(1, 2, 3)), IRON);
-        assertNull(ProviderHighlightClient.live());
-
+    void manualShowSetsEdgeOnly() {
         ProviderHighlightClient.show(DIMENSION, List.of(new BlockPos(1, 2, 3)), 15, IRON);
 
         assertNotNull(ProviderHighlightClient.live());
-        assertEquals(List.of(new BlockPos(1, 2, 3)), ProviderHighlightClient.live().positions());
+        assertTrue(ProviderHighlightClient.plates().isEmpty());
+    }
+
+    @Test
+    void manualShowNeverCreatesOrExtendsPlate() {
+        ProviderHighlightClient.showPlate(DIMENSION, List.of(new BlockPos(1, 2, 3)), IRON);
+        assertNull(ProviderHighlightClient.live());
+
+        ProviderHighlightClient.show(DIMENSION, List.of(new BlockPos(4, 5, 6)), 15, IRON);
+
+        assertNotNull(ProviderHighlightClient.live());
+        assertEquals(List.of(new BlockPos(4, 5, 6)), ProviderHighlightClient.live().positions());
         assertEquals(1, ProviderHighlightClient.plates().size());
         assertEquals(List.of(new BlockPos(1, 2, 3)), ProviderHighlightClient.plates().get(0).positions());
     }
 
     @Test
     void trimPositionsRemovesBoth() {
+        ProviderHighlightClient.showPlate(DIMENSION, List.of(new BlockPos(1, 2, 3)), IRON);
         ProviderHighlightClient.show(DIMENSION, List.of(new BlockPos(1, 2, 3)), 15, IRON);
 
         ProviderHighlightClient.trimPositions(DIMENSION, pos -> false);
@@ -93,20 +114,25 @@ class ProviderHighlightTriggerTest {
     }
 
     @Test
-    void clearForAndEmptyHighlightRemoveBoth() {
+    void clearForRemovesPlateOnlyKeepsRainbow() {
+        ProviderHighlightClient.showPlate(DIMENSION, List.of(new BlockPos(1, 2, 3)), IRON);
         ProviderHighlightClient.show(DIMENSION, List.of(new BlockPos(1, 2, 3)), 15, IRON);
         ProviderHighlightClient.clearFor(IRON);
-        assertNull(ProviderHighlightClient.live());
         assertTrue(ProviderHighlightClient.plates().isEmpty());
-
-        ProviderHighlightClient.show(DIMENSION, List.of(new BlockPos(1, 2, 3)), 15, IRON);
-        ProviderHighlightClient.show(DIMENSION, List.of(), 0, IRON);
-        assertNull(ProviderHighlightClient.live());
-        assertTrue(ProviderHighlightClient.plates().isEmpty());
+        assertNotNull(ProviderHighlightClient.live());
     }
 
     @Test
-    void delayedToCraftingClearRemovesBoth() {
+    void emptyManualShowClearsEdgeOnlyKeepsPlate() {
+        ProviderHighlightClient.showPlate(DIMENSION, List.of(new BlockPos(1, 2, 3)), IRON);
+        ProviderHighlightClient.show(DIMENSION, List.of(new BlockPos(1, 2, 3)), 15, IRON);
+        ProviderHighlightClient.show(DIMENSION, List.of(), 0, IRON);
+        assertNull(ProviderHighlightClient.live());
+        assertEquals(1, ProviderHighlightClient.plates().size());
+    }
+
+    @Test
+    void delayedToCraftingClearRemovesPlateKeepsRainbow() {
         var profiler = new CraftProfiler(10);
         var key = new ProfileKey(IRON);
         var cpu = new Object();
@@ -117,7 +143,8 @@ class ProviderHighlightTriggerTest {
         assertEquals(1, profiler.pollNewlyDelayed(cpu, 800).size());
         assertTrue(profiler.pollResolvedDelayed(cpu).isEmpty());
         ProviderHighlightClient.showPlate(DIMENSION, List.of(new BlockPos(1, 2, 3)), IRON);
-        assertNull(ProviderHighlightClient.live());
+        ProviderHighlightClient.show(DIMENSION, List.of(new BlockPos(1, 2, 3)), 15, IRON);
+        assertNotNull(ProviderHighlightClient.live());
         assertEquals(1, ProviderHighlightClient.plates().size());
 
         // Partial progress resolves the stall while the craft still runs.
@@ -126,10 +153,10 @@ class ProviderHighlightTriggerTest {
         assertEquals(List.of(key), profiler.pollResolvedDelayed(cpu));
         assertTrue(profiler.pollResolvedDelayed(cpu).isEmpty());
 
-        // The explicit server clear drops the plate and the edge alike.
+        // The explicit server clear drops the plate only; the rainbow survives.
         ProviderHighlightClient.clearFor(key.outputId());
-        assertNull(ProviderHighlightClient.live());
         assertTrue(ProviderHighlightClient.plates().isEmpty());
+        assertNotNull(ProviderHighlightClient.live());
     }
 
     @Test

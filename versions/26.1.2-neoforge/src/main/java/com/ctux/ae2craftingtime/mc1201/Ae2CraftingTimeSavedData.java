@@ -20,6 +20,7 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
 
     private List<PersistedOutputSamples> samples = List.of();
     private List<ProviderLocateRecords.StoredStart> providerStarts = List.of();
+    private List<ProviderLocateRecords.LocateRecord> providerRecords = List.of();
     private List<PersistedOutputStatus> statuses = List.of();
 
     private static Ae2CraftingTimeSavedData load(CompoundTag tag) {
@@ -28,6 +29,7 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
             data.samples = PersistedSamplesTag.readOutputs(tag.getListOrEmpty("outputs"));
         }
         data.providerStarts = PersistedProviderTag.readStarts(tag.getListOrEmpty("providers"));
+        data.providerRecords = PersistedProviderTag.readRecords(tag.getListOrEmpty("locateRecords"));
         data.statuses = PersistedStatusTag.readStatuses(tag.getListOrEmpty("statuses"));
         return data;
     }
@@ -39,6 +41,11 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
 
     public void replaceProviderStarts(List<ProviderLocateRecords.StoredStart> starts) {
         this.providerStarts = starts == null ? List.of() : List.copyOf(starts);
+        setDirty();
+    }
+
+    public void replaceProviderRecords(List<ProviderLocateRecords.LocateRecord> records) {
+        this.providerRecords = records == null ? List.of() : List.copyOf(records);
         setDirty();
     }
 
@@ -55,6 +62,10 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
         return providerStarts;
     }
 
+    public List<ProviderLocateRecords.LocateRecord> providerRecords() {
+        return providerRecords;
+    }
+
     public List<PersistedOutputStatus> statuses() {
         return statuses;
     }
@@ -64,6 +75,7 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
         tag.putInt("version", PersistedSamplesTag.VERSION);
         tag.put("outputs", PersistedSamplesTag.writeOutputs(samples));
         tag.put("providers", PersistedProviderTag.writeStarts(providerStarts));
+        tag.put("locateRecords", PersistedProviderTag.writeRecords(providerRecords));
         tag.put("statuses", PersistedStatusTag.writeStatuses(statuses));
         return tag;
     }

@@ -10,6 +10,7 @@ import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 
@@ -28,32 +29,35 @@ public final class ProviderHighlightRender {
         var levelDimension = minecraft.level.dimension().identifier().toString();
         var camera = minecraft.gameRenderer.getMainCamera().position();
         var consumers = minecraft.renderBuffers().bufferSource();
-        // A broken provider block drops its edge and plate immediately, in
-        // this dimension only.
-        ProviderHighlightClient.trimPositions(levelDimension, pos -> {
-            if (!minecraft.level.isLoaded(pos)) {
-                return true;
-            }
-            if (minecraft.level.getBlockState(pos).isAir()) {
-                return false;
-            }
-            return minecraft.level.getBlockEntity(pos) != null;
-        });
+        // A broken provider target drops its edge and plate immediately, in
+        // this dimension only. Replacement with another block entity and a
+        // surviving host without its provider part both count as broken;
+        // unloaded chunks stay unknown so reload never clears intact red.
+        ProviderHighlightClient.trimPositions(levelDimension,
+                pos -> ProviderBlockTargets.keepForHighlight(minecraft.level, pos));
         var rainbow = ProviderHighlightClient.rainbowRgb();
         var pulse = ProviderHighlightClient.pulseAlpha();
         var alpha = (int) (pulse * 255);
         var argb = alpha << 24 | (int) (rainbow[0] * 255) << 16 | (int) (rainbow[1] * 255) << 8
                 | (int) (rainbow[2] * 255);
         var redArgb = alpha << 24 | 0xFF2626;
-        // Click edges first in their own batch, then persistent plates.
-        var highlight = ProviderHighlightClient.live();
-        if (highlight != null && levelDimension.equals(highlight.dimensionId())) {
-            var lines = consumers.getBuffer(RenderTypes.lines());
+        // Click edges first in their own batch, then persistent plates. Each
+        // identity keeps its own edge so two locates within 15s stay independent.
+        var edges = ProviderHighlightClient.liveEdges();
+        var hasEdge = false;
+        var lines = consumers.getBuffer(RenderTypes.lines());
+        for (var highlight : edges) {
+            if (!levelDimension.equals(highlight.dimensionId())) {
+                continue;
+            }
+            hasEdge = true;
             for (var pos : highlight.positions()) {
                 ProviderHighlightShapes.renderThickRainbowBox(event.getPoseStack(), lines,
                         pos.getX() - camera.x, pos.getY() - camera.y, pos.getZ() - camera.z, argb,
                         ProviderHighlightShapes.LINE_WIDTH);
             }
+        }
+        if (hasEdge) {
             consumers.endBatch(RenderTypes.lines());
         }
         // Plates persist while their output still reports a stall.
@@ -115,6 +119,17 @@ public final class ProviderHighlightRender {
                 }
             }
         }
+    }
+
+    /**
+     * Clears all client highlight state when leaving a world or server so a
+     * rainbow cannot survive reconnect and plates never leak into another
+     * world with matching coordinates. Red plates return only via
+     * server-approved resync.
+     */
+    @net.neoforged.bus.api.SubscribeEvent
+    public static void onClientDisconnect(ClientPlayerNetworkEvent.LoggingOut event) {
+        ProviderHighlightClient.onSessionEnd();
     }
 
     private ProviderHighlightRender() {

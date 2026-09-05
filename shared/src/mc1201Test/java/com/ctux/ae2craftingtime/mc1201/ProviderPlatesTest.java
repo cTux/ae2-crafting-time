@@ -47,11 +47,13 @@ class ProviderPlatesTest {
     }
 
     @Test
-    void platesRememberLocatedOutputs() {
-        ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
+    void platesRememberAutoOutputsOnly() {
+        ProviderHighlightClient.showPlate("minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
                 "minecraft:iron_ingot");
-        ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(4, 5, 6)), 15, "");
-        ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(7, 8, 9)), 15, null);
+        ProviderHighlightClient.showPlate("minecraft:overworld", List.of(new BlockPos(4, 5, 6)), "");
+        ProviderHighlightClient.showPlate("minecraft:overworld", List.of(new BlockPos(7, 8, 9)), null);
+        ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(9, 9, 9)), 15,
+                "minecraft:manual_only");
 
         var plates = ProviderHighlightClient.plates();
         assertEquals(1, plates.size());
@@ -60,26 +62,26 @@ class ProviderPlatesTest {
     }
 
     @Test
-    void prunePlatesDropsOutputsWithoutStall() {
+    void prunePlatesKeepsServerAuthoritativePlates() {
         var iron = new ProfileKey("minecraft:iron_ingot");
         var copper = new ProfileKey("minecraft:copper_plate");
-        ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
+        ProviderHighlightClient.showPlate("minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
                 "minecraft:iron_ingot");
-        ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(4, 5, 6)), 15,
+        ProviderHighlightClient.showPlate("minecraft:overworld", List.of(new BlockPos(4, 5, 6)),
                 "minecraft:copper_plate");
 
+        // A healthy snapshot from another CPU must not remove still-delayed plates.
         ClientStats.CACHE.replace(List.of(iron, copper),
                 List.of(new StatsEntry(iron, stats(), Optional.empty(),
                         Optional.of(new StallDiagnostic(300, 20.0, 1, 0, 0)))));
         ProviderHighlightClient.prunePlates(List.of("minecraft:iron_ingot", "minecraft:copper_plate"));
 
         var plates = ProviderHighlightClient.plates();
-        assertEquals(1, plates.size());
-        assertEquals("minecraft:iron_ingot", plates.get(0).outputId());
+        assertEquals(2, plates.size());
 
         ProviderHighlightClient.prunePlates(null);
         ProviderHighlightClient.prunePlates(List.of());
-        assertEquals(1, ProviderHighlightClient.plates().size());
+        assertEquals(2, ProviderHighlightClient.plates().size());
     }
 
     @Test
@@ -97,11 +99,11 @@ class ProviderPlatesTest {
     }
 
     @Test
-    void plateGateHidesPositiveEntriesWithoutStall() {
+    void plateGateShowsDespiteHealthySnapshot() {
         var iron = new ProfileKey("minecraft:iron_ingot");
         ClientStats.CACHE.replace(List.of(iron),
                 List.of(new StatsEntry(iron, stats(), Optional.empty(), Optional.empty())));
-        assertFalse(ProviderHighlightClient.shouldShowPlates("minecraft:iron_ingot"));
+        assertTrue(ProviderHighlightClient.shouldShowPlates("minecraft:iron_ingot"));
     }
 
     @Test
@@ -113,6 +115,8 @@ class ProviderPlatesTest {
 
     @Test
     void expiredEdgeClearsButPlatePersists() {
+        ProviderHighlightClient.showPlate("minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
+                "minecraft:iron_ingot");
         ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
                 "minecraft:iron_ingot");
         var shownAt = System.currentTimeMillis();
@@ -123,34 +127,43 @@ class ProviderPlatesTest {
     }
 
     @Test
-    void clearForRemovesPlateAndMatchingEdge() {
+    void clearForRemovesPlateOnlyKeepsEdge() {
+        ProviderHighlightClient.showPlate("minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.showPlate("minecraft:overworld", List.of(new BlockPos(4, 5, 6)),
+                "minecraft:copper_plate");
         ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
                 "minecraft:iron_ingot");
-        ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(4, 5, 6)), 15,
-                "minecraft:copper_plate");
         ProviderHighlightClient.clearFor("minecraft:iron_ingot");
         assertEquals(1, ProviderHighlightClient.plates().size());
         assertNotNull(ProviderHighlightClient.live());
         ProviderHighlightClient.clearFor("minecraft:copper_plate");
         assertTrue(ProviderHighlightClient.plates().isEmpty());
+        assertNotNull(ProviderHighlightClient.live());
+        ProviderHighlightClient.clearEdgeFor("minecraft:iron_ingot");
         assertNull(ProviderHighlightClient.live());
         ProviderHighlightClient.clearFor(null);
         ProviderHighlightClient.clearFor("   ");
+        ProviderHighlightClient.clearEdgeFor(null);
     }
 
     @Test
-    void emptyHighlightClearsLikeServerFinish() {
+    void serverFinishClearsPlateKeepsRainbow() {
+        ProviderHighlightClient.showPlate("minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
+                "minecraft:iron_ingot");
         ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
                 "minecraft:iron_ingot");
-        ProviderHighlightClient.show("minecraft:overworld", List.of(), 0, "minecraft:iron_ingot");
+        ProviderHighlightClient.clearFor("minecraft:iron_ingot");
         assertTrue(ProviderHighlightClient.plates().isEmpty());
-        assertNull(ProviderHighlightClient.live());
+        assertNotNull(ProviderHighlightClient.live());
     }
 
     @Test
     void trimPositionsDropsBrokenBlocks() {
         var kept = new BlockPos(1, 2, 3);
         var broken = new BlockPos(4, 5, 6);
+        ProviderHighlightClient.showPlate("minecraft:overworld", List.of(kept, broken),
+                "minecraft:iron_ingot");
         ProviderHighlightClient.show("minecraft:overworld", List.of(kept, broken), 15,
                 "minecraft:iron_ingot");
         ProviderHighlightClient.trimPositions("minecraft:overworld", pos -> !pos.equals(broken));
@@ -164,6 +177,132 @@ class ProviderPlatesTest {
         assertTrue(ProviderHighlightClient.plates().isEmpty());
         ProviderHighlightClient.trimPositions(null, pos -> true);
         ProviderHighlightClient.trimPositions("minecraft:overworld", null);
+    }
+
+    @Test
+    void sessionEndClearsRainbowAndPlatesWithoutResurrecting() {
+        ProviderHighlightClient.showPlate("minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
+                "minecraft:iron_ingot");
+        assertNotNull(ProviderHighlightClient.live());
+        assertEquals(1, ProviderHighlightClient.plates().size());
+
+        // Disconnect during rainbow, reconnect before expiry: no rainbow
+        // returns and no old plate leaks into another world.
+        ProviderHighlightClient.onSessionEnd();
+        assertNull(ProviderHighlightClient.live());
+        assertTrue(ProviderHighlightClient.plates().isEmpty());
+    }
+
+    @Test
+    void identicalOutputsOnTwoNetworksStayIndependent() {
+        var networkA = "minecraft:overworld|1,2,3";
+        var networkB = "minecraft:overworld|9,9,9";
+        ProviderHighlightClient.showPlate(networkA, "minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.showPlate(networkB, "minecraft:overworld", List.of(new BlockPos(4, 5, 6)),
+                "minecraft:iron_ingot");
+        assertEquals(2, ProviderHighlightClient.plates().size());
+
+        // Finishing one CPU/network clears only its own plate.
+        ProviderHighlightClient.clearFor(networkA, "minecraft:iron_ingot");
+        var remaining = ProviderHighlightClient.plates();
+        assertEquals(1, remaining.size());
+        assertEquals(networkB, remaining.get(0).networkId());
+        assertEquals(List.of(new BlockPos(4, 5, 6)), remaining.get(0).positions());
+    }
+
+    @Test
+    void twoRainbowEdgesStayIndependent() {
+        var networkA = "minecraft:overworld|1,2,3";
+        var networkB = "minecraft:overworld|9,9,9";
+        ProviderHighlightClient.show(networkA, "minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.show(networkB, "minecraft:overworld", List.of(new BlockPos(4, 5, 6)), 15,
+                "minecraft:copper_plate");
+
+        var edges = ProviderHighlightClient.liveEdges();
+        assertEquals(2, edges.size());
+        assertNotNull(ProviderHighlightClient.live());
+
+        ProviderHighlightClient.clearEdgeFor(networkA, "minecraft:iron_ingot");
+        assertEquals(1, ProviderHighlightClient.liveEdges().size());
+        assertNotNull(ProviderHighlightClient.live());
+    }
+
+    @Test
+    void manyPlatesPersistWithoutSilentEviction() {
+        for (var i = 0; i < 40; i++) {
+            ProviderHighlightClient.showPlate("minecraft:overworld|" + i, "minecraft:overworld",
+                    List.of(new BlockPos(i, 2, 3)), "minecraft:item_" + i);
+        }
+        assertEquals(40, ProviderHighlightClient.plates().size());
+    }
+
+    @Test
+    void delayedPlateSurvivesBlockedEpisodeClear() {
+        // Delayed red and a blocked warning share the same output: clearing
+        // only the blocked episode (edge-only) must leave red until the
+        // delayed lifecycle (recovery, finish, cancel) removes it.
+        var network = "minecraft:overworld|1,2,3";
+        ProviderHighlightClient.showPlate(network, "minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.show(network, "minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
+                "minecraft:iron_ingot");
+
+        ProviderHighlightClient.clearEdgeFor(network, "minecraft:iron_ingot");
+        assertEquals(1, ProviderHighlightClient.plates().size());
+        assertNull(ProviderHighlightClient.live());
+
+        // Only an explicit delayed clear removes red.
+        ProviderHighlightClient.clearFor(network, "minecraft:iron_ingot");
+        assertTrue(ProviderHighlightClient.plates().isEmpty());
+    }
+
+    @Test
+    void networkScopedIndependentExpiryKeepsOtherNetworkIntact() {
+        var networkA = "minecraft:overworld|1,2,3";
+        var networkB = "minecraft:overworld|9,9,9";
+        ProviderHighlightClient.showPlate(networkA, "minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.showPlate(networkB, "minecraft:overworld", List.of(new BlockPos(4, 5, 6)),
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.show(networkA, "minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.show(networkB, "minecraft:overworld", List.of(new BlockPos(4, 5, 6)), 15,
+                "minecraft:iron_ingot");
+        assertEquals(2, ProviderHighlightClient.liveEdges().size());
+
+        // Red clear on A keeps A's rainbow and all of B.
+        ProviderHighlightClient.clearFor(networkA, "minecraft:iron_ingot");
+        assertEquals(1, ProviderHighlightClient.plates().size());
+        assertEquals(networkB, ProviderHighlightClient.plates().get(0).networkId());
+        assertEquals(2, ProviderHighlightClient.liveEdges().size());
+
+        // Rainbow expiry on B keeps B's red and all of A.
+        ProviderHighlightClient.clearEdgeFor(networkB, "minecraft:iron_ingot");
+        assertEquals(1, ProviderHighlightClient.liveEdges().size());
+        assertEquals(1, ProviderHighlightClient.plates().size());
+        assertNotNull(ProviderHighlightClient.live());
+    }
+
+    @Test
+    void emptyShowClearsOnlyMatchingNetworkEdge() {
+        var networkA = "minecraft:overworld|1,2,3";
+        var networkB = "minecraft:overworld|9,9,9";
+        ProviderHighlightClient.showPlate(networkA, "minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.showPlate(networkB, "minecraft:overworld", List.of(new BlockPos(4, 5, 6)),
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.show(networkA, "minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.show(networkB, "minecraft:overworld", List.of(new BlockPos(4, 5, 6)), 15,
+                "minecraft:iron_ingot");
+
+        ProviderHighlightClient.show(networkA, "minecraft:overworld", List.of(), 0, "minecraft:iron_ingot");
+        assertEquals(1, ProviderHighlightClient.liveEdges().size());
+        assertEquals(2, ProviderHighlightClient.plates().size());
     }
 
     private static ProfileStats stats() {

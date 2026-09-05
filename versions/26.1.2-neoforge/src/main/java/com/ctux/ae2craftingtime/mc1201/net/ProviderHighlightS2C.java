@@ -11,9 +11,14 @@ import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 import java.util.List;
 
-public record ProviderHighlightS2C(String dimensionId, List<BlockPos> positions, String outputId,
+public record ProviderHighlightS2C(String networkId, String dimensionId, List<BlockPos> positions, String outputId,
         int durationSeconds, boolean plateOnly)
         implements CustomPacketPayload {
+    public ProviderHighlightS2C(String dimensionId, List<BlockPos> positions, String outputId, int durationSeconds,
+            boolean plateOnly) {
+        this("", dimensionId, positions, outputId, durationSeconds, plateOnly);
+    }
+
     public static final Type<ProviderHighlightS2C> TYPE = new Type<>(
             Identifier.fromNamespaceAndPath("ae2craftingtime", "provider_highlight"));
     public static final StreamCodec<RegistryFriendlyByteBuf, ProviderHighlightS2C> STREAM_CODEC = StreamCodec.ofMember(
@@ -26,25 +31,26 @@ public record ProviderHighlightS2C(String dimensionId, List<BlockPos> positions,
     }
 
     public static void encode(ProviderHighlightS2C packet, FriendlyByteBuf buffer) {
-        ProviderHighlightCodec.write(buffer, new ProviderHighlightCodec.Highlight(packet.dimensionId,
-                packet.positions, packet.outputId, packet.durationSeconds, packet.plateOnly));
+        ProviderHighlightCodec.write(buffer, new ProviderHighlightCodec.Highlight(packet.networkId,
+                packet.dimensionId, packet.positions, packet.outputId, packet.durationSeconds, packet.plateOnly));
     }
 
     public static ProviderHighlightS2C decode(FriendlyByteBuf buffer) {
         var highlight = ProviderHighlightCodec.read(buffer);
-        return new ProviderHighlightS2C(highlight.dimensionId(), highlight.positions(), highlight.outputId(),
-                highlight.durationSeconds(), highlight.plateOnly());
+        return new ProviderHighlightS2C(highlight.networkId(), highlight.dimensionId(), highlight.positions(),
+                highlight.outputId(), highlight.durationSeconds(), highlight.plateOnly());
     }
 
     public static void handle(ProviderHighlightS2C packet, IPayloadContext context) {
         context.enqueueWork(() -> {
             if (packet.durationSeconds <= 0 || packet.positions == null || packet.positions.isEmpty()) {
-                ProviderHighlightClient.clearFor(packet.outputId);
+                ProviderHighlightClient.clearFor(packet.networkId, packet.outputId);
             } else if (packet.plateOnly) {
-                ProviderHighlightClient.showPlate(packet.dimensionId, packet.positions, packet.outputId);
-            } else {
-                ProviderHighlightClient.show(packet.dimensionId, packet.positions, packet.durationSeconds,
+                ProviderHighlightClient.showPlate(packet.networkId, packet.dimensionId, packet.positions,
                         packet.outputId);
+            } else {
+                ProviderHighlightClient.show(packet.networkId, packet.dimensionId, packet.positions,
+                        packet.durationSeconds, packet.outputId);
             }
         });
     }

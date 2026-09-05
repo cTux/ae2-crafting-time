@@ -3,6 +3,7 @@ package com.ctux.ae2craftingtime.mc1201;
 import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
 import net.minecraftforge.fml.ModLoadingContext;
 import net.minecraftforge.fml.common.Mod;
@@ -19,13 +20,15 @@ public final class Ae2CraftingTime {
         StatsNetwork.register();
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarted);
         MinecraftForge.EVENT_BUS.addListener(this::onRegisterCommands);
+        MinecraftForge.EVENT_BUS.addListener(this::onPlayerLoggedIn);
     }
 
     private void onRegisterCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(ProviderLocateCommand.build((source, id) ->
-                ProviderLocateCommand.locate(source, id, (player, record) -> StatsNetwork.sendTo(player,
-                        new ProviderHighlightS2C(record.dimensionId(), record.positions(), record.outputId(),
-                                ProviderLocateCommand.HIGHLIGHT_SECONDS, false)))));
+                ProviderLocateCommand.locate(source, id, (player, highlight) -> StatsNetwork.sendTo(player,
+                        new ProviderHighlightS2C(highlight.networkId(), highlight.dimensionId(),
+                                highlight.positions(), highlight.outputId(), highlight.durationSeconds(),
+                                highlight.plateOnly())))));
     }
 
     private void onServerStarted(ServerStartedEvent event) {
@@ -33,5 +36,11 @@ public final class Ae2CraftingTime {
                 .computeIfAbsent(Ae2CraftingTimeSavedData::load, Ae2CraftingTimeSavedData::new,
                         Ae2CraftingTimeSavedData.FILE_ID);
         ProfilerBridge.load(data);
+    }
+
+    private void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+            ProfilerBridge.resyncPlatesForPlayer(player);
+        }
     }
 }

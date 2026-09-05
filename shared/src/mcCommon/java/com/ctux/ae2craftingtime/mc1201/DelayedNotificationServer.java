@@ -22,7 +22,11 @@ public final class DelayedNotificationServer {
         if (scope == null || server == null) {
             return;
         }
-        if (!Ae2CraftingTimeConfig.NOTIFY_ON_DELAYED.get()) {
+        // Preserve the once-per-episode while the live owner is offline: skip
+        // polling so the transition still fires on reconnect instead of being
+        // consumed with no client to receive the plate.
+        var liveOwner = ProfilerBridge.jobOwner(scope).orElse(null);
+        if (liveOwner != null && server.getPlayerList().getPlayer(liveOwner) == null) {
             return;
         }
         var newlyDelayed = ProfilerBridge.pollNewlyDelayed(scope, tick);
@@ -34,18 +38,27 @@ public final class DelayedNotificationServer {
         keys.addAll(newlyDelayed.stream().map(event -> event.key()).toList());
         var owner = ownerOf(scope, keys);
         if (owner == null) {
+            ProfilerBridge.persistProviderState();
             return;
         }
         var player = server.getPlayerList().getPlayer(owner);
         if (player == null) {
+            ProfilerBridge.persistProviderState();
             return;
         }
         var dimension = ProfilerBridge.dimensionId(grid);
+        var chatEnabled = Ae2CraftingTimeConfig.NOTIFY_ON_DELAYED.get();
         for (var event : newlyDelayed) {
             notify(player, scope, grid, dimension, owner, event.key(),
-                    event.diagnostic().idleTicks(), event.diagnostic().typicalDurationTicks(), highlightSender);
+                    event.diagnostic().idleTicks(), event.diagnostic().typicalDurationTicks(), highlightSender,
+                    chatEnabled);
         }
         for (var key : resolved) {
+            // Another scope may still track the same output (identical outputs
+            // on two CPUs/networks): only clear when no scope still needs it.
+            if (key != null && ProfilerBridge.isStillDelayed(key)) {
+                continue;
+            }
             pushClearHighlight(player, key, highlightSender);
         }
         ProfilerBridge.persistProviderState();
@@ -69,7 +82,7 @@ public final class DelayedNotificationServer {
 
     private static void notify(ServerPlayer player, Object scope, IGrid grid, String dimension, UUID owner,
             ProfileKey key, long idleTicks, double typicalTicks,
-            BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
+            BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender, boolean chatEnabled) {
         var positions = ProfilerBridge.locatePositions(scope, grid, key);
         var name = ProfilerBridge.displayName(key);
         UUID recordId = null;
@@ -77,9 +90,11 @@ public final class DelayedNotificationServer {
             recordId = ProviderLocateRecords.create(owner, dimension, positions, name, key.outputId(),
                     player.level().getGameTime()).id();
         }
-        ProfilerBridge.replaceProviderStart(key, owner, positions, name);
+        ProfilerBridge.replaceProviderStart(key, owner, dimension, positions, name);
         pushAutoHighlight(player, dimension, key, positions, highlightSender);
-        player.sendSystemMessage(DelayedChatText.delayedMessage(name, recordId, idleTicks, typicalTicks));
+        if (chatEnabled) {
+            player.sendSystemMessage(DelayedChatText.delayedMessage(name, recordId, idleTicks, typicalTicks));
+        }
     }
 
     /**
@@ -90,7 +105,7 @@ public final class DelayedNotificationServer {
      */
     public static BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> defaultHighlightSender() {
         return (player, highlight) -> StatsNetwork.sendTo(player, new ProviderHighlightS2C(
-                highlight.dimensionId(), highlight.positions(), highlight.outputId(),
+                highlight.networkId(), highlight.dimensionId(), highlight.positions(), highlight.outputId(),
                 highlight.durationSeconds(), highlight.plateOnly()));
     }
 
@@ -100,15 +115,15 @@ public final class DelayedNotificationServer {
                 || highlightSender == null) {
             return;
         }
-        highlightSender.accept(player, new ProviderHighlightCodec.Highlight(dimension, positions,
+        highlightSender.accept(player, new ProviderHighlightCodec.Highlight(key.networkId(), dimension, positions,
                 key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS, true));
     }
 
     /**
-     * Tells one player to drop every trace of an output: the empty highlight
-     * routes to {@code ProviderHighlightClient.clearFor}, so the plate and
-     * the edge vanish even with a closed screen and no snapshot. Used when a
-     * stall resolves while the craft still runs.
+     * Tells one player to drop one red plate: the empty highlight routes to
+     * {@code ProviderHighlightClient.clearFor}, so the plate vanishes even
+     * with a closed screen and no snapshot while any rainbow survives. Used
+     * when a stall resolves while the craft still runs.
      */
     static void pushClearHighlight(ServerPlayer player, ProfileKey key,
             BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
@@ -116,7 +131,7 @@ public final class DelayedNotificationServer {
             return;
         }
         highlightSender.accept(player,
-                new ProviderHighlightCodec.Highlight("", List.of(), key.outputId(), 0));
+                new ProviderHighlightCodec.Highlight(key.networkId(), "", List.of(), key.outputId(), 0));
     }
 
     private DelayedNotificationServer() {

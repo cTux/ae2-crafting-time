@@ -15,9 +15,15 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 
 /**
- * Server-side only. Warns the craft owner once per stuck episode about
- * NO POWER and NO SPACE rows, with the same private clickable message shape
- * as delayed warnings. Reasons that clear re-arm a later transition.
+ * Server-side only. Warns the craft owner once per stuck episode about NO
+ * POWER and NO SPACE rows, with the same private clickable message shape as
+ * delayed warnings. Reasons that clear re-arm a later transition.
+ *
+ * <p>Red plate lifecycle is driven solely by the delayed/TTC transition in
+ * {@link DelayedNotificationServer}: blocked warnings never create or clear
+ * plates, so clearing one reason (power or space) can never remove red while
+ * the craft remains delayed. Warning messages and clickable locate records are
+ * preserved; only highlight side effects are decoupled.
  */
 public final class BlockReasonNotifier {
     private static final StuckEpisodeTracker NO_POWER = new StuckEpisodeTracker();
@@ -66,39 +72,43 @@ public final class BlockReasonNotifier {
     private static void notifyAll(Object scope, IGrid grid, Set<ProfileKey> keys, MinecraftServer server,
             String wordKey, Component detail, StuckEpisodeTracker tracker,
             BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
-        if (scope == null) {
+        if (scope == null || server == null) {
+            return;
+        }
+        if (!Ae2CraftingTimeConfig.ENABLED.get()) {
             return;
         }
         // Poll even when nothing is currently stuck: an empty set ends the
-        // episode so a later transition warns again.
+        // episode so a later transition warns again. Resolved blocked episodes
+        // deliberately never touch highlights: red stays until the delayed
+        // lifecycle (recovery, finish, cancel) or provider break removes it.
         var newly = tracker.pollNewlyStuck(scope, keys);
-        var resolved = tracker.pollResolved(scope);
-        if (newly.isEmpty() && resolved.isEmpty()) {
+        tracker.pollResolved(scope);
+        if (newly.isEmpty()) {
+            ProfilerBridge.persistProviderState();
             return;
         }
-        var lookup = new HashSet<>(newly);
-        lookup.addAll(resolved);
-        var owner = DelayedNotificationServer.ownerOf(scope, List.copyOf(lookup));
+        var owner = DelayedNotificationServer.ownerOf(scope, List.copyOf(newly));
         if (owner == null) {
+            ProfilerBridge.persistProviderState();
             return;
         }
         var player = server.getPlayerList().getPlayer(owner);
         if (player == null) {
+            ProfilerBridge.persistProviderState();
             return;
         }
         var dimension = ProfilerBridge.dimensionId(grid);
+        var chatEnabled = Ae2CraftingTimeConfig.NOTIFY_ON_DELAYED.get();
         for (var key : newly) {
-            notify(player, scope, grid, dimension, owner, key, wordKey, detail, highlightSender);
-        }
-        for (var key : resolved) {
-            DelayedNotificationServer.pushClearHighlight(player, key, highlightSender);
+            notify(player, scope, grid, dimension, owner, key, wordKey, detail, highlightSender, chatEnabled);
         }
         ProfilerBridge.persistProviderState();
     }
 
     private static void notify(ServerPlayer player, Object scope, IGrid grid, String dimension, UUID owner,
             ProfileKey key, String wordKey, Component detail,
-            BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
+            BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender, boolean chatEnabled) {
         var positions = ProfilerBridge.locatePositions(scope, grid, key);
         var name = ProfilerBridge.displayName(key);
         UUID recordId = null;
@@ -106,14 +116,16 @@ public final class BlockReasonNotifier {
             recordId = ProviderLocateRecords.create(owner, dimension, positions, name, key.outputId(),
                     player.level().getGameTime()).id();
         }
-        ProfilerBridge.replaceProviderStart(key, owner, positions, name);
-        DelayedNotificationServer.pushAutoHighlight(player, dimension, key, positions, highlightSender);
-        player.sendSystemMessage(DelayedChatText.blockedMessage(name, recordId, wordKey, detail));
+        // Intentionally no replaceProviderStart and no highlight send: the
+        // delayed path owns red plates and provider fallback. Blocked warnings
+        // keep chat (and its clickable record for manual edge locates) only.
+        if (chatEnabled) {
+            player.sendSystemMessage(DelayedChatText.blockedMessage(name, recordId, wordKey, detail));
+        }
     }
 
     private static boolean armed(MinecraftServer server) {
-        return server != null && Ae2CraftingTimeConfig.ENABLED.get()
-                && Ae2CraftingTimeConfig.NOTIFY_ON_DELAYED.get();
+        return server != null && Ae2CraftingTimeConfig.ENABLED.get();
     }
 
     public static void clear(Object scope) {

@@ -1,6 +1,5 @@
 package com.ctux.ae2craftingtime.mc1201;
 
-import com.ctux.ae2craftingtime.core.ProfileKey;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -8,75 +7,111 @@ import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 
 /**
- * Client-side only. Holds the latest provider highlight (dimension, block
- * positions, expiry timestamp) for the per-loader render hooks, plus one
- * persistent plate per located output. Edges expire after
- * {@link ProviderLocateCommand#HIGHLIGHT_SECONDS} seconds; plates persist
- * until the craft ends, is cancelled, or the provider block is broken. Never
- * touched on a dedicated server.
+ * Client-side only. Holds independent rainbow edges (network, dimension,
+ * block positions, expiry timestamp) for the per-loader render hooks, plus one
+ * persistent red plate per delayed identity (network, dimension, output).
+ * Edges and plates have independent lifetimes: edges expire after
+ * {@link ProviderLocateCommand#HIGHLIGHT_SECONDS} seconds or when their
+ * provider breaks; plates persist until the craft ends, is cancelled,
+ * recovers, or the provider breaks. Manual locates touch edges only;
+ * craft-state changes touch plates only. Never touched on a dedicated server.
  */
 public final class ProviderHighlightClient {
-    public record Highlight(String dimensionId, List<BlockPos> positions, String outputId, long expiresAtMillis) {
+    public record Highlight(String networkId, String dimensionId, List<BlockPos> positions, String outputId,
+            long expiresAtMillis) {
         public Highlight {
+            networkId = networkId == null ? "" : networkId;
+            positions = positions == null ? List.of() : List.copyOf(positions);
             outputId = outputId == null ? "" : outputId;
+        }
+
+        public Highlight(String dimensionId, List<BlockPos> positions, String outputId, long expiresAtMillis) {
+            this("", dimensionId, positions, outputId, expiresAtMillis);
         }
     }
 
-    public record Plate(String dimensionId, List<BlockPos> positions, String outputId,
+    public record Plate(String networkId, String dimensionId, List<BlockPos> positions, String outputId,
             long highlightedAtMillis) {
         public Plate {
+            networkId = networkId == null ? "" : networkId;
             positions = positions == null ? List.of() : List.copyOf(positions);
             outputId = outputId == null ? "" : outputId;
         }
 
         public Plate(String dimensionId, List<BlockPos> positions, String outputId) {
-            this(dimensionId, positions, outputId, System.currentTimeMillis());
+            this("", dimensionId, positions, outputId, System.currentTimeMillis());
+        }
+
+        public Plate(String dimensionId, List<BlockPos> positions, String outputId, long highlightedAtMillis) {
+            this("", dimensionId, positions, outputId, highlightedAtMillis);
         }
     }
 
-    private static final int MAX_PLATES = 32;
     private static final LinkedHashMap<String, Plate> PLATES = new LinkedHashMap<>();
+    private static final LinkedHashMap<String, Highlight> EDGES = new LinkedHashMap<>();
 
-    private static volatile Highlight current;
+    private static String keyOf(String networkId, String dimensionId, String outputId) {
+        return (networkId == null ? "" : networkId) + "\0" + (dimensionId == null ? "" : dimensionId) + "\0"
+                + (outputId == null ? "" : outputId);
+    }
 
+    /**
+     * Shows the temporary rainbow edge for one manual locate without touching
+     * any red plate. Double-clicks and chat clicks use exactly this, so
+     * recovering, finishing, or cancelling before expiry removes only the
+     * plate. Empty requests clear the matching edge only, never the plate.
+     * Each identity (network, dimension, output) tracks its own edge so two
+     * locates within 15 seconds stay independent instead of replacing one
+     * global target.
+     */
     public static void show(String dimensionId, List<BlockPos> positions, int durationSeconds, String outputId) {
+        show("", dimensionId, positions, durationSeconds, outputId);
+    }
+
+    public static void show(String networkId, String dimensionId, List<BlockPos> positions, int durationSeconds,
+            String outputId) {
         if (outputId != null && !outputId.isBlank()
                 && (durationSeconds <= 0 || positions == null || positions.isEmpty())) {
-            clearFor(outputId);
+            clearEdgeFor(networkId, outputId);
             return;
         }
         if (dimensionId == null || positions == null || positions.isEmpty() || durationSeconds <= 0) {
             return;
         }
-        current = new Highlight(dimensionId, List.copyOf(positions), outputId,
-                System.currentTimeMillis() + durationSeconds * 1000L);
-        storePlate(dimensionId, positions, outputId);
+        if (outputId == null || outputId.isBlank()) {
+            return;
+        }
+        EDGES.put(keyOf(networkId, dimensionId, outputId), new Highlight(networkId, dimensionId,
+                List.copyOf(positions), outputId, System.currentTimeMillis() + durationSeconds * 1000L));
     }
 
     /**
-     * Remembers the red plate (background plus item icon) for one output
-     * without touching the rainbow edge. The server sends exactly this for
-     * automatic delayed pings, so plates appear with no open window and no
-     * edge; manual locates use {@link #show} for edge plus plate.
+     * Remembers the red plate (background plus item icon) for one delayed
+     * identity without touching any rainbow edge. The server sends exactly
+     * this for automatic delayed pings, so plates appear with no open window
+     * and no edge; manual locates use {@link #show} for edge only. Packet
+     * bounds (positions count, id lengths) still apply, but active highlights
+     * are never silently evicted: every identity persists until an explicit
+     * server clear, provider break, or session end.
      */
     public static void showPlate(String dimensionId, List<BlockPos> positions, String outputId) {
+        showPlate("", dimensionId, positions, outputId);
+    }
+
+    public static void showPlate(String networkId, String dimensionId, List<BlockPos> positions, String outputId) {
         if (dimensionId == null || positions == null || positions.isEmpty() || outputId == null
                 || outputId.isBlank()) {
             return;
         }
-        storePlate(dimensionId, positions, outputId);
+        storePlate(networkId, dimensionId, positions, outputId);
     }
 
-    private static void storePlate(String dimensionId, List<BlockPos> positions, String outputId) {
+    private static void storePlate(String networkId, String dimensionId, List<BlockPos> positions, String outputId) {
         if (outputId == null || outputId.isBlank()) {
             return;
         }
-        PLATES.put(outputId, new Plate(dimensionId, positions, outputId));
-        while (PLATES.size() > MAX_PLATES) {
-            var eldest = PLATES.keySet().iterator();
-            eldest.next();
-            eldest.remove();
-        }
+        PLATES.put(keyOf(networkId, dimensionId, outputId),
+                new Plate(networkId, dimensionId, positions, outputId, System.currentTimeMillis()));
     }
 
     public static Highlight live() {
@@ -84,34 +119,92 @@ public final class ProviderHighlightClient {
     }
 
     static Highlight liveAt(long nowMillis) {
-        var highlight = current;
-        if (highlight == null || nowMillis >= highlight.expiresAtMillis()) {
-            current = null;
-            return null;
+        pruneExpiredEdges(nowMillis);
+        Highlight latest = null;
+        for (var edge : EDGES.values()) {
+            latest = edge;
         }
-        return highlight;
+        return latest;
+    }
+
+    /** All live rainbow edges for the render hooks to draw independently. */
+    public static List<Highlight> liveEdges() {
+        return liveEdgesAt(System.currentTimeMillis());
+    }
+
+    static List<Highlight> liveEdgesAt(long nowMillis) {
+        pruneExpiredEdges(nowMillis);
+        return new ArrayList<>(EDGES.values());
+    }
+
+    private static void pruneExpiredEdges(long nowMillis) {
+        var expired = new ArrayList<String>();
+        for (var entry : EDGES.entrySet()) {
+            if (entry.getValue() == null || nowMillis >= entry.getValue().expiresAtMillis()) {
+                expired.add(entry.getKey());
+            }
+        }
+        expired.forEach(EDGES::remove);
     }
 
     /**
-     * Removes every trace of one output: its persistent plate and the live
-     * edge when it belongs to the same output. The server sends an empty
-     * highlight for exactly this on craft finish and cancel, so plates never
-     * stick around with a closed screen and no snapshot.
+     * Removes one identity's persistent red plate without touching any rainbow
+     * edge. The server sends an empty highlight for exactly this on craft
+     * finish, cancel, and stall recovery, so a rainbow triggered just before
+     * survives until its own 15-second expiry or provider break. The legacy
+     * output-only overload clears every network/dimension sharing that output
+     * for backward compatibility; new server code uses the network-aware
+     * overload so finishing one CPU/network leaves the other's plate.
      */
     public static void clearFor(String outputId) {
         if (outputId == null || outputId.isBlank()) {
             return;
         }
-        PLATES.remove(outputId);
-        var highlight = current;
-        if (highlight != null && outputId.equals(highlight.outputId())) {
-            current = null;
+        PLATES.entrySet().removeIf(entry -> outputId.equals(entry.getValue().outputId()));
+    }
+
+    public static void clearFor(String networkId, String outputId) {
+        if (outputId == null || outputId.isBlank()) {
+            return;
         }
+        var wantedNetwork = networkId == null ? "" : networkId;
+        PLATES.entrySet().removeIf(entry -> outputId.equals(entry.getValue().outputId())
+                && wantedNetwork.equals(entry.getValue().networkId()));
+    }
+
+    public static void clearFor(String networkId, String dimensionId, String outputId) {
+        if (outputId == null || outputId.isBlank()) {
+            return;
+        }
+        PLATES.remove(keyOf(networkId, dimensionId, outputId));
+    }
+
+    /**
+     * Clears live rainbow edges for the given output without touching any red
+     * plate. Used for empty manual requests; craft state changes must use
+     * {@link #clearFor} instead so rainbows survive recovery, finish, and
+     * cancel. The legacy overload clears every identity sharing that output;
+     * the network-aware overload clears only that network's edge.
+     */
+    public static void clearEdgeFor(String outputId) {
+        if (outputId == null || outputId.isBlank()) {
+            return;
+        }
+        EDGES.entrySet().removeIf(entry -> outputId.equals(entry.getValue().outputId()));
+    }
+
+    public static void clearEdgeFor(String networkId, String outputId) {
+        if (outputId == null || outputId.isBlank()) {
+            return;
+        }
+        var wantedNetwork = networkId == null ? "" : networkId;
+        EDGES.entrySet().removeIf(entry -> outputId.equals(entry.getValue().outputId())
+                && wantedNetwork.equals(entry.getValue().networkId()));
     }
 
     /**
      * Drops positions the {@code keep} predicate rejects (for example broken
-     * provider blocks observed during render) from the live edge and every
+     * provider blocks observed during render) from every live edge and every
      * plate in the given dimension. Entries left with no positions disappear;
      * other dimensions are untouched.
      */
@@ -119,13 +212,21 @@ public final class ProviderHighlightClient {
         if (dimensionId == null || keep == null) {
             return;
         }
-        var highlight = current;
-        if (highlight != null && dimensionId.equals(highlight.dimensionId())) {
-            var kept = highlight.positions().stream().filter(keep).toList();
-            current = kept.isEmpty() ? null
-                    : new Highlight(highlight.dimensionId(), kept, highlight.outputId(),
-                            highlight.expiresAtMillis());
+        var emptiedEdges = new ArrayList<String>();
+        for (var entry : EDGES.entrySet()) {
+            var edge = entry.getValue();
+            if (!dimensionId.equals(edge.dimensionId())) {
+                continue;
+            }
+            var kept = edge.positions().stream().filter(keep).toList();
+            if (kept.isEmpty()) {
+                emptiedEdges.add(entry.getKey());
+            } else if (kept.size() != edge.positions().size()) {
+                entry.setValue(new Highlight(edge.networkId(), edge.dimensionId(), kept, edge.outputId(),
+                        edge.expiresAtMillis()));
+            }
         }
+        emptiedEdges.forEach(EDGES::remove);
         var emptied = new ArrayList<String>();
         for (var entry : PLATES.entrySet()) {
             var plate = entry.getValue();
@@ -136,66 +237,57 @@ public final class ProviderHighlightClient {
             if (kept.isEmpty()) {
                 emptied.add(entry.getKey());
             } else if (kept.size() != plate.positions().size()) {
-                entry.setValue(new Plate(plate.dimensionId(), kept, plate.outputId(),
+                entry.setValue(new Plate(plate.networkId(), plate.dimensionId(), kept, plate.outputId(),
                         plate.highlightedAtMillis()));
             }
         }
         emptied.forEach(PLATES::remove);
     }
 
-    /** Persistent plates for the render hooks to filter by dimension and stall. */
+    /** Persistent plates for the render hooks to filter by dimension. Server authoritative. */
     public static List<Plate> plates() {
         return new ArrayList<>(PLATES.values());
     }
 
     /**
-     * Drops plates whose output no longer reports a stall after a snapshot
-     * for the requested keys was applied, plus the live edge when it belongs
-     * to a dropped output. Call right after the client cache replace, from
-     * every loader's snapshot handler.
+     * Legacy snapshot hook kept for loader compatibility. Server-owned craft
+     * state is authoritative for plates: snapshots from another CPU, the
+     * planning screen, or a closed window must never remove a still-delayed
+     * plate, so this is now a no-op. Plates disappear only on explicit server
+     * clear (recovery, finish, cancel) or provider break (render trim).
      */
     public static void prunePlates(List<String> requestedKeys) {
-        if (requestedKeys == null || requestedKeys.isEmpty() || (PLATES.isEmpty() && current == null)) {
-            return;
-        }
-        for (var id : requestedKeys) {
-            if (id != null && ClientStats.CACHE.stall(new ProfileKey(id)).isEmpty()) {
-                PLATES.remove(id);
-                var highlight = current;
-                if (highlight != null && id.equals(highlight.outputId())) {
-                    current = null;
-                }
-            }
-        }
+        return;
     }
 
     static void clearPlates() {
-        PLATES.clear();
-        current = null;
+        onSessionEnd();
     }
 
     /**
-     * Plate gate for every loader's render hook. Plates live until the craft
-     * ends (explicit server clear), the provider block breaks (render trim),
-     * or a snapshot reports no stall: only a positive entry without a stall
-     * hides the plate. Unknown outputs (no cache entry yet, e.g. the CPU
-     * screen is closed so no snapshot ever arrived) still show; the finish
-     * and cancel clear removes them, so a closed screen never sticks.
-     * Wall-clock plays no role here: the 15-second window gates edges only.
+     * Drops all client highlight state at session boundaries (disconnect,
+     * world switch). Called by every loader's client disconnect handler so a
+     * rainbow cannot survive reconnect and plates never leak between worlds
+     * with matching coordinates. Red plates return only via explicit
+     * server-approved resync; rainbow timers are never serialized or
+     * restored.
      */
-    public static boolean shouldShowPlates(String outputId) {
-        return shouldShowPlatesAt(outputId, System.currentTimeMillis());
+    public static void onSessionEnd() {
+        PLATES.clear();
+        EDGES.clear();
     }
 
-    static boolean shouldShowPlatesAt(String outputId, long nowMillis) {
-        if (outputId == null || outputId.isBlank()) {
-            return false;
-        }
-        var key = new ProfileKey(outputId);
-        if (ClientStats.CACHE.stall(key).isPresent()) {
-            return true;
-        }
-        return ClientStats.CACHE.get(key).isEmpty();
+    /**
+     * Plate gate for every loader's render hook. Server-owned craft state is
+     * authoritative: any stored plate shows until the server explicitly clears
+     * it (recovery, finish, cancel) or the provider breaks (render trim).
+     * Never consults the general UI stats cache, so opening another CPU, the
+     * planning screen, or closing all windows can no longer hide a
+     * still-delayed plate. Wall-clock plays no role here: the 15-second window
+     * gates edges only.
+     */
+    public static boolean shouldShowPlates(String outputId) {
+        return outputId != null && !outputId.isBlank();
     }
 
     /**

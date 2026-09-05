@@ -7,6 +7,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 
 @Mod(Ae2CraftingTime.MOD_ID)
@@ -19,18 +20,26 @@ public final class Ae2CraftingTime {
         modBus.addListener(StatsNetwork::register);
         NeoForge.EVENT_BUS.addListener(this::onServerStarted);
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
+        NeoForge.EVENT_BUS.addListener(this::onPlayerLoggedIn);
     }
 
     private void onRegisterCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(ProviderLocateCommand.build((source, id) ->
-                ProviderLocateCommand.locate(source, id, (player, record) -> StatsNetwork.sendTo(player,
-                        new ProviderHighlightS2C(record.dimensionId(), record.positions(), record.outputId(),
-                                ProviderLocateCommand.HIGHLIGHT_SECONDS, false)))));
+                ProviderLocateCommand.locate(source, id, (player, highlight) -> StatsNetwork.sendTo(player,
+                        new ProviderHighlightS2C(highlight.networkId(), highlight.dimensionId(),
+                                highlight.positions(), highlight.outputId(), highlight.durationSeconds(),
+                                highlight.plateOnly())))));
     }
 
     private void onServerStarted(ServerStartedEvent event) {
         var data = event.getServer().overworld().getDataStorage()
                 .computeIfAbsent(Ae2CraftingTimeSavedData.TYPE);
         ProfilerBridge.load(data);
+    }
+
+    private void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+            ProfilerBridge.resyncPlatesForPlayer(player);
+        }
     }
 }
