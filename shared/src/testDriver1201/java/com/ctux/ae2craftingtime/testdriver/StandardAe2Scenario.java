@@ -393,12 +393,13 @@ final class StandardAe2Scenario {
         var diagnostic = stall.get();
         // Compare rendered numbers to the synchronized diagnostic, not a seeded warning.
         var seconds = (long) Math.ceil(diagnostic.idleTicks() / 20.0);
-        var expected = Map.of(
-                "text.ae2craftingtime.stall.no_output", net.minecraft.client.resources.language.I18n.get("text.ae2craftingtime.value.whole_seconds", seconds),
-                "text.ae2craftingtime.stall.typical", com.ctux.ae2craftingtime.core.TimeEstimate.formatTicks(diagnostic.typicalDurationTicks()),
-                "text.ae2craftingtime.stall.state", net.minecraft.client.resources.language.I18n.get("text.ae2craftingtime.value.stall_state", 1, 0));
-        return expected.entrySet().stream().allMatch(entry -> snapshot.tooltip().stream()
-                .anyMatch(text -> text.key().equals(entry.getKey()) && text.rendered().endsWith(": " + entry.getValue())))
+        var expected = ", " + net.minecraft.client.resources.language.I18n.get("text.ae2craftingtime.stall.delayed") + ": "
+                + net.minecraft.client.resources.language.I18n.get("text.ae2craftingtime.value.whole_seconds", seconds) + ", "
+                + net.minecraft.client.resources.language.I18n.get("text.ae2craftingtime.stall.typical") + ": "
+                + com.ctux.ae2craftingtime.core.TimeEstimate.formatTicks(diagnostic.typicalDurationTicks());
+        return snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.stats.ttc")
+                && text.rendered().startsWith(net.minecraft.client.resources.language.I18n.get("text.ae2craftingtime.stats.ttc") + ": ")
+                && text.rendered().endsWith(expected))
                 && snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.stall.improvements"));
     }
 

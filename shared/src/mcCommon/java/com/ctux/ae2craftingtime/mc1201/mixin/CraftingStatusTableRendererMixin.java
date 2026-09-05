@@ -104,8 +104,7 @@ public abstract class CraftingStatusTableRendererMixin {
         ClientStats.CACHE.get(key).ifPresent(stats -> {
             var stall = ClientStats.CACHE.stall(key);
             if (stall.isPresent()) {
-                lines.addAll(TtcText.stallLines(entry.getWhat().getDisplayName().getString(), normalized,
-                        entry.getActiveAmount(), entry.getPendingAmount(), stats, stall.get()));
+                lines.addAll(TtcText.stallLines(normalized, entry.getPendingAmount(), stats, stall.get()));
                 lines.add(TtcText.locateHint().withStyle(ChatFormatting.GRAY));
             } else {
                 lines.addAll(TtcText.statsLines(stats, ClientStats.CACHE.accuracy(key)));

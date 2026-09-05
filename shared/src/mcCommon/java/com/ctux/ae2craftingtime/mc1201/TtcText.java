@@ -116,24 +116,17 @@ public final class TtcText {
         return List.copyOf(lines);
     }
 
-    public static List<Component> stallLines(String name, long amount, long activeAmount, long scheduledAmount,
-            ProfileStats stats, StallDiagnostic stall) {
+    public static List<Component> stallLines(long amount, long scheduledAmount, ProfileStats stats, StallDiagnostic stall) {
         var lines = new ArrayList<Component>();
-        lines.add(Component.literal(name).withStyle(ChatFormatting.WHITE));
         var eta = TimeEstimate.format(amount, stats).orElse(I18n.get("text.ae2craftingtime.unknown"));
-        lines.add(statsLine("text.ae2craftingtime.stats.ttc",
-                I18n.get("text.ae2craftingtime.value.delayed_ttc", eta)));
-        lines.add(statsLine("text.ae2craftingtime.stall.no_output",
-                I18n.get("text.ae2craftingtime.value.whole_seconds", secondsRounded(stall.idleTicks()))));
-        lines.add(statsLine("text.ae2craftingtime.stall.typical",
-                TimeEstimate.formatTicks(stall.typicalDurationTicks())));
-        lines.add(statsLine("text.ae2craftingtime.stall.state",
-                I18n.get("text.ae2craftingtime.value.stall_state", activeAmount, scheduledAmount)));
-        if (stall.totalParallelSlots() > 0) {
-            lines.add(statsLine("text.ae2craftingtime.stall.parallel_slots",
-                    I18n.get("text.ae2craftingtime.value.parallel_slots", stall.usedParallelSlots(),
-                            stall.totalParallelSlots())));
-        }
+        lines.add(Component.translatable("text.ae2craftingtime.stats.ttc").withStyle(ChatFormatting.GRAY)
+                .append(Component.literal(": " + eta + ", ").withStyle(ChatFormatting.AQUA))
+                .append(Component.translatable("text.ae2craftingtime.stall.delayed").withStyle(ChatFormatting.RED))
+                .append(Component.literal(": " + I18n.get("text.ae2craftingtime.value.whole_seconds",
+                        secondsRounded(stall.idleTicks())) + ", ").withStyle(ChatFormatting.AQUA))
+                .append(Component.translatable("text.ae2craftingtime.stall.typical").withStyle(ChatFormatting.GRAY))
+                .append(Component.literal(": " + TimeEstimate.formatTicks(stall.typicalDurationTicks()))
+                        .withStyle(ChatFormatting.AQUA)));
         lines.add(Component.empty());
         lines.add(Component.translatable("text.ae2craftingtime.stall.improvements")
                 .withStyle(ChatFormatting.GOLD));
