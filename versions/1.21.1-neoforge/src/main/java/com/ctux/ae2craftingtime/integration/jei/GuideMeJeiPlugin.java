@@ -6,6 +6,7 @@ import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
+import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.registration.IExtraIngredientRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
 import net.minecraft.resources.ResourceLocation;
@@ -31,7 +32,17 @@ public final class GuideMeJeiPlugin implements IModPlugin {
             registration.registerSubtypeInterpreter(
                     VanillaTypes.ITEM_STACK,
                     guide.getItem(),
-                    (ISubtypeInterpreter<ItemStack>) (stack, context) -> stack.getComponentsPatch());
+                    new ISubtypeInterpreter<>() {
+                        @Override
+                        public Object getSubtypeData(ItemStack stack, UidContext context) {
+                            return stack.getComponentsPatch();
+                        }
+
+                        @Override
+                        public String getLegacyStringSubtypeInfo(ItemStack stack, UidContext context) {
+                            return stack.getComponentsPatch().toString();
+                        }
+                    });
         }
     }
 
