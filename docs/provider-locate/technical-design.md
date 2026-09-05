@@ -63,9 +63,16 @@ Cap resolved positions at `PacketLimits.MAX_HIGHLIGHT_POSITIONS` (16).
 Dimension comes from the grid pivot level. An empty result means "no
 locatable target": the name renders as plain text.
 
-Blocked warnings (`NO SPACE`, `NO POWER`) reuse the same records, packets,
-and red-word message shape. Their once-per-episode memory lives in a tiny
-pure-core tracker (one instance per reason) keyed by crafting CPU identity:
+Delayed notify sends two things independently: a plate-only highlight sync
+that never needs chat, and chat itself gated by `notifyOnDelayed`. When the
+owner is offline the transition is not consumed, so it still fires on
+reconnect. Login resync (`ProfilerBridge.resyncPlatesForPlayer`, on every
+loader's join event) re-sends plates for still-delayed crafts with
+server-side broken-target filtering; chat is never re-sent there.
+
+Blocked warnings (`NO SPACE`, `NO POWER`) share the message shape and click
+records but never touch highlights. Their once-per-episode memory lives in a
+tiny pure-core tracker (one instance per reason) keyed by crafting CPU identity:
 
 ```text
 tick: blockReasons(scope, grid, tick) filtered to NO POWER -> poll episode
@@ -80,7 +87,9 @@ AE2-mirrored status methods every CPU logic in the mod supports (`isCantStoreIte
 type reference; logics without those methods simply never report. A key
 counts when stored items exist with nothing still outstanding, mirroring the
 client row predicate. Finishing a job or reloading runtime state clears both
-episode memories beside the other per-scope cleanup.
+episode memories beside the other per-scope cleanup. Clearing a blocked
+episode never clears red: only the delayed lifecycle (recovery, finish,
+cancel) or provider break removes plates.
 
 Locate records live in a bounded server registry:
 
@@ -90,18 +99,22 @@ recordId (UUID) -> owner UUID, dimension id, positions, output name, created tic
 
 Cap the registry at 256 records with eldest eviction. Records are
 click-scoped: a locate click only serves a record owned by the clicking
-player.
+player. Finished, cancelled, and broken records are removed so only live
+links persist and stale chat links expire.
 
-The persisted fallback is per output key, not per record:
+The persisted fallback is per profile key (network + output), not per record:
 
 ```text
-ProfileKey -> owner UUID, dimension id, positions, display name
+ProfileKey(networkId, outputId) -> owner UUID, dimension id, positions, display name
 ```
 
-Cap at 256 entries. Live dispatch data always wins; the persisted copy only
-fills gaps after a reload. Persist it in the existing world `SavedData`
-beside `outputs`, read tolerantly so old saves load with empty provider
-state and no save-version bump is needed.
+Cap at 512 entries for persistence size only; active fallbacks are never
+silently dropped to fit the cap. Live dispatch data always wins; the
+persisted copy only fills gaps after a reload. The stored dimension travels
+with the fallback so login resync never re-derives it from the network id
+alone. Persist it in the existing world `SavedData` beside `outputs`, read
+tolerantly so old saves load with empty provider state and no save-version
+bump is needed. Rainbow edges are never persisted.
 
 ## Command and packet flow
 
@@ -138,23 +151,35 @@ after its highlight. All three send points were reworked for
 No packet layout changes anywhere in that batch, so no compatibility
 boundaries moved.
 
-The highlight packet carries `dimension id, positions, output id, duration
-seconds`; the output id is the profile key id the client resolves to an
-item icon. Each loader wraps it in its own S2C packet following the
-existing snapshot pattern (second layout revision; bump every affected
-compatibility boundary again in the same commit):
+The highlight packet carries `network id, dimension id, positions, output id,
+duration seconds, plateOnly`; the output id is the profile key id the client
+resolves to an item icon. `plateOnly = true` means "red plate only, no
+rainbow edge" (automatic delayed pings and login resync). `plateOnly = false`
+means "rainbow edge only, no plate change" (chat-link and double-click
+locates). An empty-positions packet with duration zero means "clear this
+plate, keep rainbow". Each loader wraps it in its own S2C packet following the
+existing snapshot pattern (additive `networkId` tail with tolerant reads for
+older packets):
 
 ```text
-locate click (command, runs as the clicker, silent)
-  -> record lookup (owner must match clicker)
-  -> ProviderHighlightS2C(dimension, positions, output id, 15s) to the clicker only
-  -> client draws edges for 15s and pins plates while the output stays delayed
+automatic delayed ping (no click, no open window needed)
+  -> ProviderHighlightS2C(network, dimension, positions, output id, 15s, plateOnly=true)
+  -> client shows red plate only
 
- double-click a delayed CPU row (ProviderLocateC2S(output id), no record)
+locate click (command, runs as the clicker, silent)
+  -> record lookup (owner must match clicker) + active-job + valid-target check
+  -> ProviderHighlightS2C(network, dimension, positions, output id, 15s, plateOnly=false)
+  -> client shows rainbow edge only
+
+ double-click any resolvable active crafting item (ProviderLocateC2S(output id), no record)
    -> resolve the clicker's open CPU scope and grid, require job ownership
-   -> live positions resolve -> same highlight packet to the clicker only
+   -> live positions resolve -> same edge-only highlight packet to the clicker only
    -> nothing resolves -> private expiry notice
- ```
+
+ stall recovery / finish / cancel
+   -> ProviderHighlightS2C(network, "", [], output id, 0, plateOnly=false)
+   -> client clears that plate only, rainbow survives until expiry
+  ```
 
  Clicking the chat link closes the chat via a `ChatScreenMixin` (one copy
  per version group, same fully qualified name) that watches vanilla
@@ -163,32 +188,54 @@ locate click (command, runs as the clicker, silent)
  locate closes the CPU screen the same way, right after the request is
  sent.
 
-Adding the packet changes the wire registry. Bump every affected
-compatibility boundary in the same commit:
+Adding the packet changes the wire registry. Current boundaries (same commit):
 
-- 1.20.1 Forge channel protocol: `9` to `10` for the first layout,
-  then `10` to `11` when the output id field lands, then `11` to `12` for
-  the locate request;
-- 1.20.1 Fabric: new `provider_highlight_v1` channel, then a new
-  `provider_highlight_v2` channel for the output id layout, then a new
-  `provider_locate_v1` channel for the locate request (existing
+- 1.20.1 Forge channel protocol: `14`;
+- 1.20.1 Fabric: `provider_highlight_v4` for plates + edges, plus
+  `provider_locate_v1` for the double-click request (existing
   channels keep their versions because their layouts do not change);
-- 1.21.1 and 26.1.2 NeoForge registrar version: `8` to `9`, then `9`
-  to `10`, then `10` to `11`.
+- 1.21.1 and 26.1.2 NeoForge registrar version: `13`.
+
+The `networkId` tail and stored `dimension` are additive with tolerant reads,
+so older packets and saves still decode.
 
 ## Client behavior
 
-A small client store keeps the latest highlight (dimension, positions,
-output id, expiry timestamp) and prunes it on access, plus one persistent
-plate per located output (dimension, positions, output id, capped at 32).
-Each loader draws thick (2-3x) rainbow-cycling outline boxes for the live
-15-second highlight, while plates render while
-`ProviderHighlightClient.shouldShowPlates` allows: a stall present, or no
-cache entry at all (unknown outputs show, e.g. with the CPU screen closed
-so no snapshot ever arrived). A positive entry without a stall hides the
-plate, and `prunePlates` drops that case once a snapshot arrives
-(see [issue #239](https://github.com/cTux/ae2-crafting-time/issues/239)
-and [issue #240](https://github.com/cTux/ae2-crafting-time/issues/240)):
+A small client store keeps independent rainbow edges (network, dimension,
+positions, output, expiry) and persistent red plates (network, dimension,
+positions, output). Identity is job + network + dimension + output +
+provider: identical outputs on different CPUs or networks track
+independently and two rainbow targets never replace each other. Both blink
+on a shared one-second pulse. Manual locates
+touch edges only; craft-state changes touch plates only:
+
+- Automatic delayed ping (`plateOnly=true`) shows the plate with no edge.
+- Chat-link or double-click (`plateOnly=false`) shows the edge for 15
+  seconds with no plate change.
+- Empty-positions clear drops the plate only; rainbow survives until expiry.
+- Empty manual request clears the edge only; the plate survives.
+
+Plates are server-authoritative. `shouldShowPlates` never consults the UI
+stats cache, so opening another CPU, the planning screen, or closing all
+windows cannot hide a still-delayed plate. `prunePlates` is a no-op kept for
+loader compatibility. Active plates and edges are never silently evicted:
+every identity (network, dimension, output) persists until an explicit
+server clear, provider break, or session end. Two locates within 15 seconds
+stay independent.
+
+Session end (disconnect, world switch) clears all plates and edges on every
+loader. Red plates return only through server login resync for crafts still
+delayed; rainbow timers are never serialized or restored.
+
+A broken-provider trim runs in every render hook, in that dimension only:
+positions whose actual target is gone (air, missing block entity,
+replacement non-provider, surviving host without provider service) drop
+from edges and plates. Unloaded chunks and unreadable grid stay unknown and
+keep the highlight, so reload never clears intact red. The same
+`ProviderBlockTargets` check runs on all loaders and on the server during
+login resync and chat-link validation.
+
+Render hooks per loader:
 
 - 1.20.1 Forge: game-bus subscriber on the translucent-particles render
   stage;
@@ -265,7 +312,11 @@ chat.delayed.word: "is delayed" / "затримується" (red)
 The name is underlined with a hover hint while clickable. Placeholder counts
 stay matched between English and Ukrainian. Blocked warnings use one shared
 three-placeholder sentence with a per-reason red status word and the
-existing reason explanation as detail.
+existing reason explanation as detail. Two meanings stay explicit:
+double-click means "any active crafting item" (`ProviderLocateClick`
+accepts any non-blank id; the server validates resolvability), while
+`notifyOnDelayed` means "chat only" and never gates plates, clears, or
+resync.
 
 ## State flow
 
@@ -275,24 +326,38 @@ pattern dispatched
 
 output becomes DELAYED, owner online
   -> resolve provider positions through the live grid
-  -> create locate record, persist per-key fallback
-  -> private warning with clickable red-accented message
+  -> create locate record, persist per-key fallback (network + dimension)
+  -> send plate-only highlight (red plate, no edge) + private warning with
+     clickable red-accented message when notifyOnDelayed allows chat
 
-click (same session)
-  -> record lookup, owner must match
-  -> highlight packet -> thick rainbow boxes with item-on-red face plates for 15 seconds
+manual locate (chat click or double-click any active item)
+  -> record lookup (owner must match) + active-job + valid-target check
+  -> edge-only highlight packet -> thick rainbow boxes for 15s, red unchanged
+  -> private "Highlighting <provider> at <coords>" message, close originating screen
 
-click with foreign/missing record
-  -> private expiry notice, no highlight
+click with foreign/missing/finished/broken record
+  -> private expiry notice, no highlight, forget broken record
 
-world reload
-  -> records registry starts empty; per-key fallback loads from NBT
-  -> resumed dispatches rebuild pending state and re-resolve positions
-  -> still-delayed craft warns again with a fresh working link
-  -> clicking a pre-reload message explains expiry
+TTC returns to normal while craft still runs
+  -> clear plate only, rainbow continues until expiry
 
 job finishes / scope cleared / profiler disabled
-  -> drop live links, records for that scope, and per-key fallback on next save
+  -> clear plates (even with closed screen), drop live links, records for
+     that scope, and per-key fallback on next save; rainbow survives
+
+provider breaks
+  -> render trim (client) and resync/link validation (server) drop only that
+     provider's positions from plates and edges
+
+leave and re-enter world
+  -> client clears all plates and edges; per-key fallback + records load from NBT
+  -> login resync re-sends plates for still-delayed crafts (chat never re-sent)
+  -> rainbow never restored; still-delayed craft warns again when owner is online
+     and offline-delayed crafts resync without needing an open window
+
+blocked (NO POWER / NO SPACE)
+  -> chat with clickable edge-only record, no plate, no fallback update
+  -> clearing the episode never clears red
 ```
 
 ## Failure handling
