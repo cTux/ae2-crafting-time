@@ -44,11 +44,9 @@ shared/src/main/resources/assets/ae2craftingtime/
   lang/uk_ua.json                       # same key
 
 versions/1.21.1-neoforge/src/main/resources/data/ae2craftingtime/
-  recipe/guide_book.json
-  advancement/recipes/misc/guide_book.json
+  recipe/guide_book.json                 # conditioned on GuideME
 versions/26.1.2-neoforge/src/main/resources/data/ae2craftingtime/
-  recipe/guide_book.json
-  advancement/recipes/misc/guide_book.json
+  recipe/guide_book.json                 # conditioned on GuideME
 ```
 
 Shared assets are inert on 1.20.1 without GuideME. Do not share active recipe
@@ -115,32 +113,29 @@ array with:
 ]
 ```
 
-Use vanilla consumption/remainders; no custom serializer. Each target's unlock
-advancement uses parent `minecraft:recipes/root`, an `inventory_changed`
-criterion matching `minecraft:book`, and the standard `recipe_unlocked`
-criterion for `ae2craftingtime:guide_book`. Either criterion is sufficient.
-Reward that recipe; no displayed/toast advancement. Use native item-predicate
-syntax for that Minecraft version and validate through native data loading,
-not just generic JSON parsing.
+Use vanilla consumption/remainders; no custom serializer. Add a
+`neoforge:mod_loaded` condition for `guideme` to each recipe so missing GuideME
+does not produce an unknown-item recipe error. Recipe discovery follows
+Minecraft's normal recipe behavior; no separate advancement is needed.
 
 ## Dependency contract
 
-Add a required `guideme` dependency to each modern module's
+Add an optional `guideme` dependency to each modern module's
 `src/main/resources/META-INF/neoforge.mods.toml`, with `side="BOTH"` and
 `ordering="AFTER"`:
 
 | Target | Range | Build/runtime ownership |
 | --- | --- | --- |
-| 1.21.1 NeoForge | `[21.1.0,21.2.0)` | Keep the existing minimum runtime dependency; latest client preparation supplies its compatible pin. No Java compile dependency. |
-| 26.1.2 NeoForge | `[26.1.10-alpha,26.2.0)` | Existing AE2 transitive resolution supplies the minimum; no bundled copy. |
+| 1.21.1 NeoForge | `[21.1.0,)` | Keep the existing minimum runtime dependency; latest client preparation supplies its compatible pin. No Java compile dependency. |
+| 26.1.2 NeoForge | `[26.1.10-alpha,)` | Existing AE2 transitive resolution supplies the minimum when present; no bundled copy. |
 
-Add GuideME project `Ck4E7v7R` as required in the two modern Modrinth rows of
+Add GuideME project `Ck4E7v7R` as optional in the two modern Modrinth rows of
 `scripts/release-matrix.json`. The current CurseForge uploaders do not send
 file relations. In `Publish-CurseForge` in `scripts/deploy-changed.ps1` and
-`publish_curseforge` in `scripts/deploy-changed.sh`, when the row requires
-GuideME in its Modrinth dependencies, add `relations.projects` with required
-`applied-energistics-2` and `guideme` entries. Each uses `slug` and
-`type: "requiredDependency"`, as defined by the official
+`publish_curseforge` in `scripts/deploy-changed.sh`, when the row lists GuideME,
+add `relations.projects` with required `applied-energistics-2` and optional
+`guideme` entries. Each uses `slug`; the types are `requiredDependency` and
+`optionalDependency`, as defined by the official
 [CurseForge Upload API](https://support.curseforge.com/support/solutions/articles/9000197321).
 Include AE2 explicitly so these file relations retain the base dependency.
 Leave old-row payloads unchanged. Echo these relations in dry-run output and
@@ -149,22 +144,22 @@ both modern inclusion and old-row absence; do not perform a live upload.
 Update `docs/dependencies.md`; mark the book shipped in
 `docs/feature-coverage.md` only when implemented. No old-target dependency.
 
-This changes installation requirements for AE2 19.0.24 users, but not the AE2
-minimum itself. Missing/incompatible GuideME fails through NeoForge metadata
-before recipe use, not an unknown-item recipe error. Verify the required ranges
-against the implementation-time artifacts without silently expanding scope.
+This does not change installation requirements or the AE2 minimum. Missing
+GuideME leaves the book recipe unavailable while the rest of the mod keeps
+working. Verify the optional ranges against the implementation-time artifacts
+without silently expanding scope.
 
 ## Runtime flow and failures
 
-1. GuideME registers its item and component on both logical sides.
-2. Server loads the vanilla recipe/advancement; crafting creates the component-
+1. When installed, GuideME registers its item and component on both logical sides.
+2. Server loads the conditioned vanilla recipe; crafting creates the component-
    bearing stack and syncs it through normal inventory synchronization.
 3. Client resources register our guide, two pages, and localized name.
 4. GuideME reads the ID for rendering/name/use; opening stays client-side.
 5. Vanilla saves the component; GuideME handles native reading history.
 
 Dedicated servers need no guide screen or Markdown parsing to craft the item.
-Install this mod and GuideME on both sides. No external page fetch, custom
+Install GuideME on both sides to use the guide. No external page fetch, custom
 world state, command execution, or new network trust boundary is introduced.
 Client resource reload and server datapack reload must preserve a usable book.
 
@@ -178,7 +173,7 @@ after release.
 Add one root `checkGuideResources` Gradle task using built-in Groovy JSON and
 bounded text checks; attach it to the existing `test` lifecycle. Validate
 definition/name/model, bilingual page topology, relative links, exact recipes
-and result components, unlock IDs, translation keys, metadata, and no old-target
+and result components, conditions, translation keys, metadata, and no old-target
 recipe data. Do not require translated headings to equal English headings.
 
 Native client/server checks establish codec validity, appearance, use,

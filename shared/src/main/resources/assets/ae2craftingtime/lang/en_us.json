@@ -76,5 +76,6 @@
   "text.ae2craftingtime.value.delayed_ttc": "%s · DELAYED",
   "text.ae2craftingtime.value.whole_seconds": "%ss",
   "text.ae2craftingtime.value.stall_state": "%s active · %s scheduled",
-  "text.ae2craftingtime.value.parallel_slots": "%s/%s recently used"
+  "text.ae2craftingtime.value.parallel_slots": "%s/%s recently used",
+  "guide.ae2craftingtime.name": "AE2 Crafting Time Guide"
 }

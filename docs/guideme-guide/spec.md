@@ -2,9 +2,7 @@
 
 Issue: [#144](https://github.com/cTux/ae2-crafting-time/issues/144)
 
-Status: revised proposal, 2026-09-02; not shipped behavior. The current issue
-predates the requested book and recipe. Its proposed replacement is below for
-approval before updating GitHub.
+Status: approved for implementation, 2026-09-05; not shipped behavior.
 
 ## Goal and scope
 
@@ -146,8 +144,8 @@ AE2 Crafting Time показує приблизний час автокрафт�
 
 | Release target | This delivery |
 | --- | --- |
-| 1.21.1 NeoForge | Book, recipe, introduction, chapter one; GuideME required on client and server |
-| 26.1.2 NeoForge | Same player behavior; GuideME required on client and server |
+| 1.21.1 NeoForge | Book, recipe, introduction, chapter one when GuideME is installed |
+| 26.1.2 NeoForge | Same player behavior when GuideME is installed |
 | 1.20.1 Forge | Excluded, retaining issue #144's target scope |
 | 1.20.1 Fabric | Excluded, retaining issue #144's target scope |
 
@@ -157,7 +155,8 @@ using AE2's old internal guidebook.
 
 English is the default; Ukrainian is complete; other languages use GuideME's
 native fallback. Both modern targets work offline after installation.
-Missing GuideME produces a loader dependency error, not a broken recipe.
+GuideME is optional. Without it, AE2 Crafting Time still loads and the guide
+recipe is not added. Install GuideME on both client and server to use the book.
 
 No custom screen, key binding, Java item, packet, profiler change, config,
 custom world data, web export, Ponder scene, or optional-mod integration.
@@ -172,11 +171,11 @@ Do not hijack AE2 item-hover guide targets in this first delivery.
 | A3 | Main-hand and eligible off-hand use opens our guide repeatedly without consumption; save/reload and multiplayer preserve identity. |
 | A4 | Both pages contain the supplied copy, with working reciprocal links, navigation, search, and no unfinished-chapter links. |
 | A5 | Both languages have matching page paths and link/navigation structure, with translated text and names; both themes remain readable. |
-| A6 | Both modern JARs contain the guide, target-correct recipe/unlock data, and required metadata; dedicated servers load and serve the recipe. |
+| A6 | Both modern JARs contain the guide, target-correct conditional recipe data, and optional metadata; dedicated servers with GuideME load and serve the recipe. |
 | A7 | Neither old JAR contains a GuideME recipe, advancement, or required dependency; both 1.20.1 clients still start. |
 | A8 | Resource and targeted game checks pass without new runtime Java or profiler changes. |
 
-## Proposed issue update — exact text for approval
+## Approved GitHub issue text
 
 Title: `[Feature]: Add a craftable GuideME book and first chapter`
 
@@ -196,14 +195,14 @@ Add a craftable AE2 Crafting Time guide book with a short mod introduction and c
 
 ## Technical scope
 
-Reuse GuideME's generic book with our guide ID, title, and the vanilla book model. Use data-driven pages and version-specific vanilla recipes. Require GuideME on both sides for 1.21.1 NeoForge and 26.1.2 NeoForge. Keep 1.20.1 Forge/Fabric outside this delivery.
+Reuse GuideME's generic book with our guide ID, title, and the vanilla book model. Use data-driven pages and version-specific conditional vanilla recipes. Support GuideME as an optional dependency on 1.21.1 NeoForge and 26.1.2 NeoForge. Keep 1.20.1 Forge/Fabric outside this delivery.
 
 ## Acceptance
 
 - Correct and incorrect ingredients, both grids, discovery, and consumption behave as specified.
 - Book appearance and opening work; identity survives storage, save/reload, and multiplayer.
 - Both pages work in both languages and themes, with no broken navigation or links.
-- Modern packages and dedicated servers load correctly; old targets gain no GuideME recipe or dependency.
+- Modern packages and dedicated servers load correctly with or without GuideME; old targets gain no GuideME recipe or dependency.
 - Resource validation and targeted game checks pass.
 
 ## Later work
@@ -212,7 +211,7 @@ The earlier full-guide outline remains future scope: detailed estimates, screens
 
 ## Risks and planning
 
-The oldest supported AE2 1.21.1 artifact does not require GuideME itself; declare it explicitly. Recipe ingredient formats differ between modern targets.
+The oldest supported AE2 1.21.1 artifact does not include GuideME itself; declare the integration as optional and condition its data. Recipe ingredient formats differ between modern targets.
 
 - docs/guideme-guide/spec.md
 - docs/guideme-guide/technical-design.md
