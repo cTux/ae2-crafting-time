@@ -22,16 +22,6 @@ public final class TimeEstimate {
         return Optional.of(stats.reliableEstimate() ? text : text + "?");
     }
 
-    public static OptionalLong progressSeconds(long elapsedNanos, long startAmount, long remainingAmount) {
-        var completedAmount = startAmount - remainingAmount;
-        if (elapsedNanos <= 0 || remainingAmount <= 0 || completedAmount <= 0) {
-            return OptionalLong.empty();
-        }
-
-        return OptionalLong.of((long) Math.ceil(
-                elapsedNanos / 1_000_000_000.0 * remainingAmount / completedAmount));
-    }
-
     public static Optional<String> formatTotal(Iterable<OptionalLong> estimates) {
         long totalSeconds = 0;
         for (var estimate : estimates) {

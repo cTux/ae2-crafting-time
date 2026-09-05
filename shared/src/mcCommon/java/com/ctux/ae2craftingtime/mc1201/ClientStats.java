@@ -45,6 +45,16 @@ public final class ClientStats {
         return CACHE.blockReason(key, context);
     }
 
+    public static OptionalLong totalTtcSeconds() {
+        var context = Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> screen
+                ? StatsRequestContext.cpuContext(screen.getMenu()) : -1;
+        return CACHE.totalTtcSeconds(context);
+    }
+
+    public static void replaceTotalTtcSeconds(OptionalLong value, long cpuContext) {
+        CACHE.replaceTotalTtcSeconds(value, cpuContext);
+    }
+
     private ClientStats() {
     }
 }

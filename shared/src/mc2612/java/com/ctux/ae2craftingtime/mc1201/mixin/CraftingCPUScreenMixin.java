@@ -153,8 +153,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
             return title;
         }
 
-        var eta = TimeEstimate.formatTotal(List.of(TimeEstimate.progressSeconds(
-                status.getElapsedTime(), status.getStartItemCount(), status.getRemainingItemCount())));
+        var eta = TimeEstimate.formatTotal(List.of(ClientStats.totalTtcSeconds()));
         if (eta.isEmpty()) {
             return title;
         }

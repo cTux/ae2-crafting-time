@@ -10,6 +10,7 @@ import appeng.blockentity.networking.ControllerBlockEntity;
 import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.core.CraftProfiler;
 import com.ctux.ae2craftingtime.core.CraftingBlockReason;
+import com.ctux.ae2craftingtime.core.CraftingJobEstimate;
 import com.ctux.ae2craftingtime.core.PersistedOutputStatus;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.ProfileStats;
@@ -141,10 +142,10 @@ public final class ProfilerBridge {
             }
         }
 
-        long predictedSeconds = 0;
         int knownRows = 0;
         int totalRows = 0;
         var waitingKeys = new HashSet<ProfileKey>();
+        var remainingAmounts = new HashMap<ProfileKey, Long>();
         for (var crafted : craftedAmounts) {
             if (crafted.getLongValue() <= 0) {
                 continue;
@@ -152,17 +153,20 @@ public final class ProfilerBridge {
             totalRows++;
             var key = key(networkId, crafted.getKey());
             waitingKeys.add(key);
+            remainingAmounts.put(key, normalizeAmount(crafted.getKey(), crafted.getLongValue()));
             var stats = PROFILER.stats(key);
             var estimate = stats.isEmpty() ? java.util.OptionalLong.empty()
                     : TimeEstimate.seconds(normalizeAmount(crafted.getKey(), crafted.getLongValue()), stats.get());
             if (estimate.isPresent()) {
                 knownRows++;
-                predictedSeconds += estimate.getAsLong();
             }
         }
 
+        var jobEstimate = new CraftingJobEstimate(key(networkId, plan.finalOutput().what()), remainingAmounts,
+                dependencies(networkId, plan, craftedAmounts));
         PROFILER.startWaiting(scope, waitingKeys, tick);
         PROFILER.setJobOwner(scope, owner);
+        PROFILER.setJobEstimate(scope, jobEstimate);
         ProviderStartTracker.clear(scope);
         for (var crafted : craftedAmounts) {
             if (crafted.getLongValue() <= 0) {
@@ -172,8 +176,61 @@ public final class ProfilerBridge {
                     displayNameOf(crafted.getKey()));
         }
         persistProviderState();
+        var predictedSeconds = jobEstimate.remainingSeconds((key, amount) -> estimateSeconds(key, amount)).orElse(0);
         ACCURACY.start(key(networkId, plan.finalOutput().what()), scope, predictedSeconds, knownRows, totalRows, tick,
                 nanoTime);
+    }
+
+    private static Map<ProfileKey, Set<ProfileKey>> dependencies(String networkId, ICraftingPlan plan,
+            KeyCounter craftedAmounts) {
+        var crafted = new HashSet<AEKey>();
+        for (var stack : craftedAmounts) {
+            if (stack.getLongValue() > 0) {
+                crafted.add(stack.getKey());
+            }
+        }
+
+        var dependencies = new HashMap<ProfileKey, Set<ProfileKey>>();
+        for (var entry : plan.patternTimes().entrySet()) {
+            if (entry.getValue() <= 0) {
+                continue;
+            }
+            var inputs = new HashSet<ProfileKey>();
+            for (var input : entry.getKey().getInputs()) {
+                var candidates = new HashSet<ProfileKey>();
+                for (var possible : input.getPossibleInputs()) {
+                    if (possible != null && crafted.contains(possible.what())) {
+                        candidates.add(key(networkId, possible.what()));
+                    }
+                }
+                if (candidates.size() == 1) {
+                    inputs.add(candidates.iterator().next());
+                }
+            }
+            for (var output : entry.getKey().getOutputs()) {
+                if (!crafted.contains(output.what())) {
+                    continue;
+                }
+                var outputKey = key(networkId, output.what());
+                var outputDependencies = dependencies.computeIfAbsent(outputKey, ignored -> new HashSet<>());
+                inputs.stream().filter(input -> !input.equals(outputKey)).forEach(outputDependencies::add);
+            }
+        }
+        return dependencies;
+    }
+
+    private static OptionalLong estimateSeconds(ProfileKey key, long amount) {
+        if (amount <= 0) {
+            return OptionalLong.empty();
+        }
+        var stats = PROFILER.stats(key);
+        return stats.isEmpty() ? OptionalLong.empty() : TimeEstimate.seconds(amount, stats.get());
+    }
+
+    public static OptionalLong remainingJobSeconds(Object scope) {
+        return scope == null || !isEnabled()
+                ? OptionalLong.empty()
+                : PROFILER.remainingJobSeconds(scope, ProfilerBridge::estimateSeconds);
     }
 
     public static UUID jobOwner(appeng.api.networking.security.IActionSource source) {

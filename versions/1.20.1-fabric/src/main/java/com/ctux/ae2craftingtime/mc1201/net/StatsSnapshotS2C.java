@@ -9,23 +9,26 @@ import net.minecraft.network.FriendlyByteBuf;
 
 import java.util.List;
 import java.util.Map;
+import java.util.OptionalLong;
 
 public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entries,
-        Map<String, Long> networkAmounts, Map<String, Long> waitingTicks, Map<String, CraftingBlockReason> blockReasons, long cpuContext) {
+        Map<String, Long> networkAmounts, Map<String, Long> waitingTicks, Map<String, CraftingBlockReason> blockReasons,
+        OptionalLong totalTtcSeconds, long cpuContext) {
     public StatsSnapshotS2C(List<StatsEntry> entries) {
-        this(entries.stream().map(entry -> entry.key().outputId()).toList(), entries, Map.of(), Map.of(), Map.of(), -1);
+        this(entries.stream().map(entry -> entry.key().outputId()).toList(), entries, Map.of(), Map.of(), Map.of(),
+                OptionalLong.empty(), -1);
     }
 
     public static void encode(StatsSnapshotS2C packet, FriendlyByteBuf buffer) {
         StatsPacketCodec.writeSnapshot(buffer,
                 new StatsPacketCodec.Snapshot(packet.requestedKeys, packet.entries, packet.networkAmounts,
-                        packet.waitingTicks, packet.blockReasons, packet.cpuContext));
+                        packet.waitingTicks, packet.blockReasons, packet.totalTtcSeconds, packet.cpuContext));
     }
 
     public static StatsSnapshotS2C decode(FriendlyByteBuf buffer) {
         var snapshot = StatsPacketCodec.readSnapshot(buffer);
         return new StatsSnapshotS2C(snapshot.requestedKeys(), snapshot.entries(), snapshot.networkAmounts(),
-                snapshot.waitingTicks(), snapshot.blockReasons(), snapshot.cpuContext());
+                snapshot.waitingTicks(), snapshot.blockReasons(), snapshot.totalTtcSeconds(), snapshot.cpuContext());
     }
 
     public void handle() {
@@ -34,5 +37,6 @@ public record StatsSnapshotS2C(List<String> requestedKeys, List<StatsEntry> entr
         ClientStats.replaceNetworkAmounts(requestedKeys, networkAmounts);
         ClientStats.replaceWaitingTicks(requestedKeys, waitingTicks);
         ClientStats.replaceBlockReasons(requestedKeys, blockReasons, cpuContext);
+        ClientStats.replaceTotalTtcSeconds(totalTtcSeconds, cpuContext);
     }
 }

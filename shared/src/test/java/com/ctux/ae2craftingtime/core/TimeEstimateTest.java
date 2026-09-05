@@ -68,20 +68,6 @@ class TimeEstimateTest {
     }
 
     @Test
-    void runningJobEtaUsesObservedOverallProgress() {
-        var estimate = TimeEstimate.progressSeconds(10_000_000_000L, 100, 75);
-
-        assertEquals(30, estimate.orElseThrow());
-    }
-
-    @Test
-    void runningJobEtaWaitsForCompletedWork() {
-        assertFalse(TimeEstimate.progressSeconds(0, 100, 50).isPresent());
-        assertFalse(TimeEstimate.progressSeconds(10_000_000_000L, 100, 100).isPresent());
-        assertFalse(TimeEstimate.progressSeconds(10_000_000_000L, 100, 0).isPresent());
-    }
-
-    @Test
     void negativeTicksFormatAsZero() {
         assertEquals("~0s", TimeEstimate.formatTicks(-1));
     }
