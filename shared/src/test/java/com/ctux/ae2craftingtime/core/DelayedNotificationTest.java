@@ -9,6 +9,44 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class DelayedNotificationTest {
+    @Test
+    void immediateCompletionRetainsPlateKeyUntilFinishCleanup() {
+        var profiler = new CraftProfiler(10);
+        var output = key("minecraft:iron_plate");
+        var cpu = new Object();
+        seedTypical(profiler, output, new Object());
+        profiler.start(output, cpu, 1, ProfileUnit.ITEM, 300);
+        assertEquals(1, profiler.pollNewlyDelayed(cpu, 800).size());
+
+        assertTrue(profiler.complete(output, cpu, 1, 801));
+        assertFalse(profiler.hasPending(output));
+        assertEquals(java.util.Set.of(output), profiler.scopedKeys(cpu));
+
+        profiler.clearPending(cpu);
+        assertTrue(profiler.scopedKeys(cpu).isEmpty());
+        assertFalse(profiler.isDelayed(output));
+        assertTrue(profiler.snapshotStatuses().isEmpty());
+    }
+
+    @Test
+    void completionPollQueuesClearUntilDrainedEvenWithoutPendingOutputs() {
+        var profiler = new CraftProfiler(10);
+        var output = key("minecraft:iron_plate");
+        var cpu = new Object();
+        seedTypical(profiler, output, new Object());
+        profiler.start(output, cpu, 1, ProfileUnit.ITEM, 300);
+        assertEquals(1, profiler.pollNewlyDelayed(cpu, 800).size());
+        profiler.complete(output, cpu, 1, 801);
+
+        assertTrue(profiler.pollNewlyDelayed(cpu, 802).isEmpty());
+        assertTrue(profiler.pollNewlyDelayed(cpu, 803).isEmpty());
+        assertFalse(profiler.isDelayed(output));
+        assertEquals(java.util.Set.of(output), profiler.scopedKeys(cpu));
+        assertEquals(List.of(output), profiler.pollResolvedDelayed(cpu));
+        assertTrue(profiler.pollResolvedDelayed(cpu).isEmpty());
+        assertTrue(profiler.scopedKeys(cpu).isEmpty());
+    }
+
     private static ProfileKey key(String id) {
         return new ProfileKey(id);
     }

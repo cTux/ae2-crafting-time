@@ -49,7 +49,15 @@ world, job, or cached observation. The host keeps one process for the group.
 The [leaf contracts](../automated-ui-testing/technical-design.md#groups-and-independent-standard-flow)
 retain every original assertion. Waiting and running require real dependency
 progress. Delayed checks the active row, bold red label, diagnostic tooltip and
-recovery after actual output. Lifecycle follows terminal, amount, plan, Start,
+recovery after actual output. It observes the stone provider plate clear while
+smooth stone remains active, withholds the final furnace output until its own
+delayed plate arrives, then imports that one completed output with all menus
+closed. Require CPU completion, fresh samples, stored output, and client plate
+clearing without an intermediate progressing craft. Capture held-output status,
+world highlight, world completion, and reopened idle status. The world camera
+shows an AE2 terminal directly in front of the final provider to review red
+background and item-icon occlusion. Client plate state proves packet lifecycle;
+inspect world screenshots to verify rendering. Lifecycle follows terminal, amount, plan, Start,
 status, real furnace output and new samples, then reopens the idle CPU screen.
 The raw JVM property accepts leaf IDs or `suite`; use the host alias for the group.
 

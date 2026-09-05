@@ -26,6 +26,7 @@ final class StandardCraftFixture {
     BlockPos terminal;
     private boolean initialized;
     boolean returnedStone;
+    boolean holdFinalOutput;
     private int[] initialSamples;
     String checkpoint = "new";
 
@@ -46,6 +47,11 @@ final class StandardCraftFixture {
             for (int offset : new int[] {4, 8}) {
                 DispatchStatusFixture.place(player, terminal.east(offset), "pattern_provider");
                 level.setBlockAndUpdate(terminal.east(offset).below(), Blocks.FURNACE.defaultBlockState());
+            }
+            if (holdFinalOutput) {
+                var obstruction = terminal.east(8).north();
+                PartHelper.setPart(level, obstruction, null, player, AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT));
+                PartHelper.setPart(level, obstruction, Direction.NORTH, player, AEParts.CRAFTING_TERMINAL.asItem());
             }
             player.teleportTo(terminal.getX() + 0.5, terminal.getY() - 1, terminal.getZ() - 2.5);
             return false;
@@ -116,6 +122,17 @@ final class StandardCraftFixture {
         return initialSamples != null && current[0] > initialSamples[0] && current[1] > initialSamples[1];
     }
 
+    boolean finalOutputReady(ServerPlayer player) {
+        var furnace = (FurnaceBlockEntity) player.serverLevel().getBlockEntity(terminal.east(8).below());
+        return furnace.getItem(2).is(Items.SMOOTH_STONE) && furnace.getItem(2).getCount() == 1;
+    }
+
+    void viewFinalProvider(ServerPlayer player) {
+        player.teleportTo(terminal.getX() + 9, terminal.getY() - 1, terminal.getZ() - 2.5);
+        player.setYRot(9.462f);
+        player.setXRot(2);
+    }
+
     long pump(ServerPlayer player, boolean fuel) {
         if (fuel && initialSamples == null) initialSamples = sampleCounts(player);
         var storage = cpu(player).getMainNode().getGrid().getStorageService().getInventory();
@@ -123,7 +140,7 @@ final class StandardCraftFixture {
             var furnace = (FurnaceBlockEntity) player.serverLevel().getBlockEntity(terminal.east(offset).below());
             if (fuel && furnace.getItem(1).isEmpty()) furnace.setItem(1, new ItemStack(Items.COAL));
             var output = furnace.getItem(2);
-            if (!output.isEmpty()) {
+            if (!output.isEmpty() && !(offset == 8 && holdFinalOutput)) {
                 long inserted = storage.insert(AEItemKey.of(output), output.getCount(), Actionable.MODULATE, IActionSource.ofMachine(cpu(player)));
                 if (offset == 4 && inserted > 0) returnedStone = true;
                 furnace.removeItem(2, (int) inserted);

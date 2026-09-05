@@ -223,6 +223,12 @@ every identity (network, dimension, output) persists until an explicit
 server clear, provider break, or session end. Two locates within 15 seconds
 stay independent.
 
+Finish cleanup includes notified and queued-for-clear outputs, even when the
+last returned item has already removed them from pending work. A notification
+poll with no pending outputs queues their clears instead of discarding them.
+This covers releasing a machine's held final output and finishing in the same
+tick, without an intermediate recovery update or an open terminal screen.
+
 Session end (disconnect, world switch) clears all plates and edges on every
 loader. Red plates return only through server login resync for crafts still
 delayed; rainbow timers are never serialized or restored.
