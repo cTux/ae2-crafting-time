@@ -71,5 +71,6 @@
   "text.ae2craftingtime.stall.reason.speed": "  This craft is taking %sx its usual time.",
   "text.ae2craftingtime.stall.hint.co_processors": "• Try adding Crafting Co-Processors",
   "text.ae2craftingtime.stall.reason.co_processors": "  All %s parallel slots were recently busy, and work is still waiting.",
-  "text.ae2craftingtime.value.whole_seconds": "%ss"
+  "text.ae2craftingtime.value.whole_seconds": "%ss",
+  "guide.ae2craftingtime.name": "AE2 Crafting Time Guide"
 }

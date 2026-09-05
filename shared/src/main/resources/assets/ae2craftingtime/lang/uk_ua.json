@@ -71,5 +71,6 @@
   "text.ae2craftingtime.stall.reason.speed": "  Цей крафт займає у %s разів більше часу, ніж зазвичай.",
   "text.ae2craftingtime.stall.hint.co_processors": "• Спробуйте додати Crafting Co-Processor",
   "text.ae2craftingtime.stall.reason.co_processors": "  Усі %s паралельних слотів нещодавно були зайняті, а частина роботи все ще чекає.",
-  "text.ae2craftingtime.value.whole_seconds": "%sс"
+  "text.ae2craftingtime.value.whole_seconds": "%sс",
+  "guide.ae2craftingtime.name": "Посібник AE2 Crafting Time"
 }

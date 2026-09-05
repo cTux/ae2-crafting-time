@@ -350,14 +350,19 @@ publish_curseforge() {
   local metadata; metadata="$(echo "$entry" | jq -c \
     --arg notes "$notes" \
     --arg name "$name" \
-    '{
+    '({
       changelog: $notes,
       changelogType: "text",
       displayName: $name,
       gameVersionNames: [.minecraftVersion, .loaderName, "Client", "Server"],
       releaseType: .releaseType,
       isMarkedForManualRelease: false
-    }')"
+    } + if any(.modrinthDependencies[]; .project_id == "Ck4E7v7R") then {
+      relations: {projects: [
+        {slug: "applied-energistics-2", type: "requiredDependency"},
+        {slug: "guideme", type: "optionalDependency"}
+      ]}
+    } else {} end)')"
   local metaPath; metaPath="$(mktemp)"
   printf '%s' "$metadata" > "$metaPath"
   curl_run -sS --fail-with-body \
@@ -547,6 +552,9 @@ if [[ "$Deploy" = "1" && "$rc" -gt 0 ]]; then
       deps="$(echo "$rentry" | jq -r '.["modrinthDependencies"] | map("\(.project_id):\(.dependency_type)") | join(", ")')"
       echo "dry-run Modrinth dependencies: $deps"
       echo "dry-run CurseForge versions: $(echo "$rentry" | jq -r .minecraftVersion), $(echo "$rentry" | jq -r .loaderName), Client, Server"
+      if echo "$rentry" | jq -e 'any(.modrinthDependencies[]; .project_id == "Ck4E7v7R")' >/dev/null; then
+        echo "dry-run CurseForge relations: applied-energistics-2:requiredDependency, guideme:optionalDependency"
+      fi
     else
       publish_modrinth "$rentry" "$rver" "$rjar" "$rcl"
       publish_curseforge "$rentry" "$rver" "$rjar" "$rcl"
