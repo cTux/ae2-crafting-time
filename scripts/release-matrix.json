@@ -69,6 +69,7 @@
     "curseProjectId": "1591476",
     "modrinthDependencies": [
       { "project_id": "XxWD5pD3", "dependency_type": "required" },
+      { "project_id": "Ck4E7v7R", "dependency_type": "optional" },
       { "project_id": "a1RwDz90", "dependency_type": "optional" },
       { "project_id": "IiATswDj", "version_id": "TpUCzFaW", "dependency_type": "optional" },
       { "project_id": "545hUrw9", "version_id": "leZwUP1X", "dependency_type": "optional" },
@@ -102,6 +103,7 @@
     "curseProjectId": "1591476",
     "modrinthDependencies": [
       { "project_id": "XxWD5pD3", "dependency_type": "required" },
+      { "project_id": "Ck4E7v7R", "dependency_type": "optional" },
       { "project_id": "rxYaglEe", "dependency_type": "optional" },
       { "project_id": "qPydPwtX", "dependency_type": "optional" },
       { "project_id": "pNabrMMw", "version_id": "ncEqrp7o", "dependency_type": "optional" },

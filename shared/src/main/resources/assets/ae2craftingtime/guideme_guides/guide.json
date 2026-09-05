@@ -1,0 +1,8 @@
+{
+  "item_settings": {
+    "display_name": {
+      "translate": "guide.ae2craftingtime.name"
+    },
+    "model": "minecraft:item/book"
+  }
+}

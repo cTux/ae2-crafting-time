@@ -76,5 +76,6 @@
   "text.ae2craftingtime.value.delayed_ttc": "%s · ЗАТРИМКА",
   "text.ae2craftingtime.value.whole_seconds": "%sс",
   "text.ae2craftingtime.value.stall_state": "%s активних · %s запланованих",
-  "text.ae2craftingtime.value.parallel_slots": "%s/%s нещодавно використано"
+  "text.ae2craftingtime.value.parallel_slots": "%s/%s нещодавно використано",
+  "guide.ae2craftingtime.name": "Посібник AE2 Crafting Time"
 }

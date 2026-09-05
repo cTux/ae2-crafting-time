@@ -31,6 +31,13 @@ ordering="AFTER"
 side="BOTH"
 
 [[dependencies."${mod_id}"]]
+modId="guideme"
+type="OPTIONAL"
+versionRange="[21.1.0,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies."${mod_id}"]]
 modId="ae2ct"
 type="OPTIONAL"
 versionRange="[1.0.1,)"

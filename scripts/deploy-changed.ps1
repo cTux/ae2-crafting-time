@@ -81,6 +81,16 @@ function Resolve-ReleaseEntry($entry) {
     return [pscustomobject]$resolved
 }
 
+function Get-CurseForgeRelations($entry) {
+    if (-not @($entry.modrinthDependencies | Where-Object project_id -eq "Ck4E7v7R")) {
+        return @()
+    }
+    return @(
+        [ordered]@{ slug = "applied-energistics-2"; type = "requiredDependency" },
+        [ordered]@{ slug = "guideme"; type = "optionalDependency" }
+    )
+}
+
 function Next-PatchVersion([string]$version) {
     if ($version -notmatch '^(\d+)\.(\d+)\.(\d+)$') {
         throw "Version '$version' is not x.y.z"
@@ -322,6 +332,10 @@ function Publish-CurseForge($entry, [string]$version, [string]$jarPath, [string]
             releaseType = $entry.releaseType
             isMarkedForManualRelease = $false
         }
+        $relations = @(Get-CurseForgeRelations $entry)
+        if ($relations.Count) {
+            $metadata["relations"] = @{ projects = $relations }
+        }
         Write-Json $metadataPath $metadata
 
         Invoke-Curl @(
@@ -474,6 +488,10 @@ try {
                 Write-Host "dry-run Modrinth version: $($release.version)-$($release.entry.loader)-$($release.entry.minecraftVersion)"
                 Write-Host "dry-run Modrinth dependencies: $((@($release.entry.modrinthDependencies) | ForEach-Object { "$($_.project_id):$($_.dependency_type)" }) -join ', ')"
                 Write-Host "dry-run CurseForge versions: $($release.entry.minecraftVersion), $($release.entry.loaderName), Client, Server"
+                $relations = @(Get-CurseForgeRelations $release.entry)
+                if ($relations.Count) {
+                    Write-Host "dry-run CurseForge relations: $((@($relations) | ForEach-Object { "$($_.slug):$($_.type)" }) -join ', ')"
+                }
                 Write-Host "dry-run changelog $($release.entry.id):"
                 Write-Host $release.changelog
             }

@@ -1,5 +1,70 @@
+import groovy.json.JsonSlurper
+
 plugins {
     id 'java'
+}
+
+tasks.register('checkGuideResources') {
+    group = 'verification'
+    description = 'Checks the optional GuideME book resources and target boundaries.'
+
+    doLast {
+        def require = { boolean condition, String message ->
+            if (!condition) {
+                throw new GradleException(message)
+            }
+        }
+        def parse = { String path -> new JsonSlurper().parse(file(path)) }
+        def guideRoot = 'shared/src/main/resources/assets/ae2craftingtime'
+        def guide = parse("$guideRoot/guideme_guides/guide.json")
+        require(guide.item_settings.display_name.translate == 'guide.ae2craftingtime.name', 'Wrong guide title key')
+        require(guide.item_settings.model == 'minecraft:item/book', 'Guide must use the vanilla book model')
+
+        def english = parse("$guideRoot/lang/en_us.json")
+        def ukrainian = parse("$guideRoot/lang/uk_ua.json")
+        require(english['guide.ae2craftingtime.name'] == 'AE2 Crafting Time Guide', 'Missing English guide name')
+        require(ukrainian['guide.ae2craftingtime.name'] == 'Посібник AE2 Crafting Time', 'Missing Ukrainian guide name')
+
+        ['index.md', 'getting-started.md'].each { page ->
+            def en = file("$guideRoot/guides/ae2craftingtime/guide/$page")
+            def uk = file("$guideRoot/guides/ae2craftingtime/guide/_uk_ua/$page")
+            require(en.isFile() && uk.isFile(), "Missing bilingual guide page: $page")
+            require(en.getText('UTF-8').contains(page == 'index.md' ? '(getting-started.md)' : '(index.md)'), "Broken English guide link: $page")
+            require(uk.getText('UTF-8').contains(page == 'index.md' ? '(getting-started.md)' : '(index.md)'), "Broken Ukrainian guide link: $page")
+        }
+
+        def targets = [
+                'versions/1.21.1-neoforge': ['minecraft:book', 'ae2:certus_quartz_crystal', 'minecraft:clock'],
+                'versions/26.1.2-neoforge': ['minecraft:book', 'ae2:certus_quartz_crystal', 'minecraft:clock']
+        ]
+        targets.each { target, expectedIngredients ->
+            def recipe = parse("$target/src/main/resources/data/ae2craftingtime/recipe/guide_book.json")
+            def ingredients = recipe.ingredients.collect { it instanceof Map ? it.item : it }
+            require(recipe.type == 'minecraft:crafting_shapeless' && ingredients == expectedIngredients, "Wrong guide recipe ingredients: $target")
+            require(recipe.result.id == 'guideme:guide' && recipe.result.count == 1, "Wrong guide recipe result: $target")
+            require(recipe.result.components['guideme:guide_id'] == 'ae2craftingtime:guide', "Missing guide identity: $target")
+            require(recipe['neoforge:conditions'] == [[type: 'neoforge:mod_loaded', modid: 'guideme']], "Guide recipe must be optional: $target")
+
+            def metadata = file("$target/src/main/resources/META-INF/neoforge.mods.toml").getText('UTF-8')
+            require(metadata =~ /(?s)modId="guideme"\s+type="OPTIONAL"\s+versionRange="\[[^"]+,\)"\s+ordering="AFTER"\s+side="BOTH"/, "Wrong GuideME metadata: $target")
+        }
+
+        ['versions/1.20.1-forge', 'versions/1.20.1-fabric'].each { target ->
+            require(!file("$target/src/main/resources/data/ae2craftingtime/recipe/guide_book.json").exists(), "Old target contains the guide recipe: $target")
+        }
+
+        def matrix = parse('scripts/release-matrix.json')
+        matrix.each { row ->
+            def guideDependencies = row.modrinthDependencies.findAll { it.project_id == 'Ck4E7v7R' }
+            def expected = row.id in ['1.21.1-neoforge', '26.1.2-neoforge']
+            require(guideDependencies.size() == (expected ? 1 : 0), "Wrong GuideME release relation: ${row.id}")
+            require(!expected || guideDependencies[0].dependency_type == 'optional', "GuideME must be optional: ${row.id}")
+        }
+    }
+}
+
+tasks.named('test') {
+    dependsOn tasks.named('checkGuideResources')
 }
 
 allprojects {

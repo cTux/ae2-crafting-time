@@ -7,7 +7,7 @@ Implement the [spec](spec.md) using the resource-only
 
 - Read `AGENTS.md`, applicable development/writing/release skills, and these
   documents. Fetch the current base and confirm the minimum artifacts cited.
-- Add the designed required GuideME metadata to both modern module TOMLs.
+- Add the designed optional GuideME metadata to both modern module TOMLs.
   Keep AE2 minimums and old-target metadata unchanged.
 - Extend only modern Modrinth/CurseForge dependency declarations and update
   `docs/dependencies.md`. Keep compatible runtime pins; no broad dependency
@@ -15,8 +15,8 @@ Implement the [spec](spec.md) using the resource-only
 - Use the design's exact PowerShell/Bash upload seams and conditional file
   relations; extend both existing deployment dry-run tests. No live release.
 
-Gate: modern clients and dedicated servers, including AE2 19.0.24 installs,
-are told to install GuideME. No old target requires it. A6–A7.
+Gate: modern clients and dedicated servers load without GuideME and expose the
+book when it is installed. No old target declares it. A6–A7.
 
 ## 2. Add book identity and bilingual content
 
@@ -36,8 +36,8 @@ item class/texture/key/packet or profiler change. A2–A5, A8.
 
 - Add `data/ae2craftingtime/recipe/guide_book.json` in both modern modules:
   object ingredients for 1.21.1, strings for 26.1.2, same component-bearing result.
-- Add each module's `advancement/recipes/misc/guide_book.json`: unlock on an
-  ordinary book, with standard recipe-unlocked criterion/reward as designed.
+- Condition each recipe on GuideME being loaded. Use vanilla recipe discovery;
+  no separate advancement is required.
 - Use exact item inputs; clock is consumed. Keep recipe and advancement data
   out of shared resources and both old modules.
 
@@ -49,7 +49,7 @@ item registration. A1, A6–A7.
 - Add root `checkGuideResources`, wired to `test`, using `JsonSlurper` and
   bounded text checks; no new parser or framework.
 - Check guide ID/name/model, component-bearing result, exact ingredients/count,
-  target JSON shape, recipe/unlock IDs, bilingual keys/page paths, navigation,
+  target JSON shape and condition, bilingual keys/page paths, navigation,
   local links, dependency declarations, and absence of old-target recipe data.
 - Review all changes. Update `docs/feature-coverage.md` to describe the actual
   implemented two-target behavior.
@@ -66,16 +66,15 @@ PR itself must not close #144 as implemented.
   recipe result's guide ID in turn; confirm the task rejects each, restore it,
   and rerun. Never commit broken fixtures.
 - Run the existing PowerShell/Bash deployment checks after updating their
-  relation assertions. Verify required GuideME/AE2 relations on modern rows,
+  relation assertions. Verify optional GuideME and required AE2 relations on modern rows,
   unchanged old-row payloads, and no network upload in dry-run mode.
 - Build the four release-matrix rows through the repository workflow. Inspect
   JAR contents: guide assets in shared resources; recipe/advancement data and
-  required GuideME metadata only on the two modern targets.
+  optional GuideME metadata only on the two modern targets.
 - Start a dedicated server on each modern target. Check native recipe and
   advancement decoding, then datapack reload, with no new warnings/errors.
-- On the 1.21.1 minimum graph, remove GuideME once to confirm a clear loader
-  dependency failure, then restore it. For 26.1.2 confirm our requirement agrees
-  with AE2's existing required dependency.
+- Remove GuideME once on each modern target to confirm the mod still loads and
+  the guide recipe is absent, then restore it.
 
 Gate: structural checks, packages, servers, and dependency boundaries pass
 with exact version sets recorded. A1, A4–A8.
@@ -113,6 +112,6 @@ separately; research checks do not count as runtime evidence.
 - Four distributions preserve target boundaries; both modern client/server
   paths pass; new repository-owned warnings/errors are resolved.
 - Implementation PR links #144 and all three documents, states the new direct
-  GuideME dependency, and reports real local verification and GitHub CI.
+  optional GuideME integration, and reports real local verification and GitHub CI.
 - Issue updates/closure, merge, and release follow their own authorization
   workflows. The planning PR is not feature completion.
