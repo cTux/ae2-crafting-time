@@ -179,6 +179,22 @@ class ProviderPlatesTest {
         ProviderHighlightClient.trimPositions("minecraft:overworld", null);
     }
 
+    @Test
+    void sessionEndClearsRainbowAndPlatesWithoutResurrecting() {
+        ProviderHighlightClient.showPlate("minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.show("minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
+                "minecraft:iron_ingot");
+        assertNotNull(ProviderHighlightClient.live());
+        assertEquals(1, ProviderHighlightClient.plates().size());
+
+        // Disconnect during rainbow, reconnect before expiry: no rainbow
+        // returns and no old plate leaks into another world.
+        ProviderHighlightClient.onSessionEnd();
+        assertNull(ProviderHighlightClient.live());
+        assertTrue(ProviderHighlightClient.plates().isEmpty());
+    }
+
     private static ProfileStats stats() {
         return new ProfileStats(1, 20.0, 0.05, 1.0, 20, ProfileUnit.ITEM, false, 1, 4.0, List.of(20L),
                 List.of(1L));

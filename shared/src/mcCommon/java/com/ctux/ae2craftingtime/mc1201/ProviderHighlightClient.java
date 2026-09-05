@@ -178,6 +178,18 @@ public final class ProviderHighlightClient {
     }
 
     static void clearPlates() {
+        onSessionEnd();
+    }
+
+    /**
+     * Drops all client highlight state at session boundaries (disconnect,
+     * world switch). Called by every loader's client disconnect handler so a
+     * rainbow cannot survive reconnect and plates never leak between worlds
+     * with matching coordinates. Red plates return only via explicit
+     * server-approved resync; rainbow timers are never serialized or
+     * restored.
+     */
+    public static void onSessionEnd() {
         PLATES.clear();
         current = null;
     }

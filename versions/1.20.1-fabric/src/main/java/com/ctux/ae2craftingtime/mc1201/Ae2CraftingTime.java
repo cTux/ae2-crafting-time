@@ -4,6 +4,7 @@ import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -41,6 +42,10 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
     public void onInitializeClient() {
         KeyBindingHelper.registerKeyBinding(TtcDetailsKeyMapping.showDetails());
         StatsNetwork.registerClient();
+        // Drop rainbows and plates when leaving a world or server so they
+        // never leak into another world with matching coordinates. Red plates
+        // return only via server-approved resync.
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ProviderHighlightClient.onSessionEnd());
         WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
             var minecraft = Minecraft.getInstance();
             if (minecraft.level == null) {

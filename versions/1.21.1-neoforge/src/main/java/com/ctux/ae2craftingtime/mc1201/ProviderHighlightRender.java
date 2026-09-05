@@ -7,6 +7,7 @@ import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 
 @EventBusSubscriber(modid = Ae2CraftingTime.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
@@ -66,6 +67,17 @@ public final class ProviderHighlightRender {
         }
         consumers.endBatch(RenderType.debugFilledBox());
         poseStack.popPose();
+    }
+
+    /**
+     * Clears all client highlight state when leaving a world or server so a
+     * rainbow cannot survive reconnect and plates never leak into another
+     * world with matching coordinates. Red plates return only via
+     * server-approved resync.
+     */
+    @SubscribeEvent
+    public static void onClientDisconnect(ClientPlayerNetworkEvent.LoggingOut event) {
+        ProviderHighlightClient.onSessionEnd();
     }
 
     private ProviderHighlightRender() {

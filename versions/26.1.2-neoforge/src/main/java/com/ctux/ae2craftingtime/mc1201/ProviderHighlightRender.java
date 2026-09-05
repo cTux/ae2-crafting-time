@@ -10,6 +10,7 @@ import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 
@@ -115,6 +116,17 @@ public final class ProviderHighlightRender {
                 }
             }
         }
+    }
+
+    /**
+     * Clears all client highlight state when leaving a world or server so a
+     * rainbow cannot survive reconnect and plates never leak into another
+     * world with matching coordinates. Red plates return only via
+     * server-approved resync.
+     */
+    @net.neoforged.bus.api.SubscribeEvent
+    public static void onClientDisconnect(ClientPlayerNetworkEvent.LoggingOut event) {
+        ProviderHighlightClient.onSessionEnd();
     }
 
     private ProviderHighlightRender() {
