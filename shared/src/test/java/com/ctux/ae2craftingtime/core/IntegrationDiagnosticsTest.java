@@ -13,6 +13,7 @@ class IntegrationDiagnosticsTest {
         var events = new ArrayList<IntegrationDiagnostics.Event>();
         var report = new IntegrationDiagnostics("1.20.1-forge", true, id -> "1", Map.of(), events::add);
         assertEquals(26, IntegrationDiagnostics.CATALOG.size());
+        assertFalse(report.disabled("ae2ct", "node"));
         assertEquals(26, IntegrationDiagnostics.CATALOG.stream().map(IntegrationDiagnostics.Entry::id).distinct().count());
         assertEquals(IntegrationDiagnostics.Outcome.PENDING, report.outcome("ae2ct"));
         report.observe("ae2ct", "node");
@@ -39,6 +40,7 @@ class IntegrationDiagnosticsTest {
                         Map.of(), events::add);
                 IntegrationDiagnostics.CATALOG.forEach(entry -> assertEquals(IntegrationDiagnostics.Outcome.SKIPPED, report.outcome(entry.id())));
                 report.observe("ae2ct", "node");
+                report.observe("ae2craftingtime", "cpu-dispatch");
                 report.configured("ae2ct", "node", true);
                 assertFalse(report.available("ae2ct"));
                 report.disable("ae2ct", "irrelevant", null);
