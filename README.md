@@ -76,7 +76,7 @@ If you want the more technical details, start here:
 - [Codex Skills](docs/codex-skills.md)
 - [Dependencies and integrations](docs/dependencies.md)
 - [Client and modpack coverage](docs/mod-automation-coverage.md)
-- [Known Issues](KNOWN_ISSUES.md)
+- [Known Issues](https://github.com/cTux/ae2-crafting-time/issues?q=is%3Aissue%20is%3Aopen%20label%3Abug)
 - [Architecture](docs/architecture.md)
 - [Feature documentation map](docs/feature-coverage.md)
 - [Profiling and diagnostics](docs/profiling-and-diagnostics/spec.md)
