@@ -223,6 +223,12 @@ every identity (network, dimension, output) persists until an explicit
 server clear, provider break, or session end. Two locates within 15 seconds
 stay independent.
 
+Finish cleanup includes notified and queued-for-clear outputs, even when the
+last returned item has already removed them from pending work. A notification
+poll with no pending outputs queues their clears instead of discarding them.
+This covers releasing a machine's held final output and finishing in the same
+tick, without an intermediate recovery update or an open terminal screen.
+
 Session end (disconnect, world switch) clears all plates and edges on every
 loader. Red plates return only through server login resync for crafts still
 delayed; rainbow timers are never serialized or restored.
@@ -245,6 +251,13 @@ Render hooks per loader:
   edges and plates, plus a `SubmitCustomGeometryEvent` subscriber for the
   item icons (the 26.1 submit pipeline requires items to go through its
   collector).
+
+Fabric owns an immediate buffer for this late render hook and flushes all of
+it before returning, including item icons. Vanilla has already flushed its
+world buffers before `AFTER_TRANSLUCENT`; leaving icons in those buffers can
+draw them later with the wrong depth contents, over an intervening terminal.
+The dedicated buffer keeps plates and icons in the current world pass without
+flushing another renderer's queued work.
 
 Edge color cycles rainbow hues on a time-based phase (instead of static
 red) so the box contrasts with any environment. Vanilla

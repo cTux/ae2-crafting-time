@@ -5,6 +5,7 @@ import appeng.client.gui.me.crafting.CraftAmountScreen;
 import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.client.gui.me.crafting.CraftingStatusScreen;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.mc1201.ProviderHighlightClient;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import com.ctux.ae2craftingtime.testdriver.mixin.CraftAmountScreenAccessor;
 import com.ctux.ae2craftingtime.testdriver.mixin.MEStorageScreenAccessor;
@@ -32,11 +33,12 @@ final class StandardAe2Scenario {
             Map.entry("standard-status-controls", List.of("submitted", "status", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout")),
             Map.entry("waiting-status", List.of("submitted", "waiting", "first-dispatch", "recovered", "layout")),
             Map.entry("running-status", List.of("submitted", "running", "progress", "header", "layout")),
-            Map.entry("delayed-status", List.of("submitted", "delayed", "row", "style", "tooltip", "layout", "recovered")),
+            Map.entry("delayed-status", List.of("submitted", "delayed", "row", "style", "tooltip", "layout", "recovered",
+                    "plate-recovered", "final-plate", "completed", "output", "profile-sample", "plate-cleared")),
             Map.entry("craft-lifecycle", List.of("plan", "submitted", "status", "profile-sample", "completed", "output")));
     private enum Stage { PREPARE, TERMINAL, AMOUNT, PLAN_SORT, PLAN_TOOLTIP, PLAN_DETAILS, PLAN_RESET,
         SUBMIT, OPEN_STATUS, ACTIVE, STATUS_SORT, STATUS_TOOLTIP, STATUS_DETAILS, STATUS_RESET,
-        RESTORE, DELAYED, PUMP, FINISHED, REOPEN, EMPTY }
+        RESTORE, DELAYED, PUMP, FINISHED, REOPEN, EMPTY, WORLD_POSITION, WORLD_HIGHLIGHT, WORLD_RELEASE, WORLD_FINISHED }
     private final String leaf;
     StandardAe2Scenario(String leaf) {
         if (!CHECKS.containsKey(leaf)) throw new IllegalArgumentException("Unknown standard leaf: " + leaf);
@@ -52,6 +54,9 @@ final class StandardAe2Scenario {
     private long lastFrame = -1;
     private volatile boolean dispatched;
     private volatile boolean progressed;
+    private volatile boolean finalOutputReady;
+    private boolean stonePlateObserved;
+    private final StableFrames<Boolean> worldFrames = new StableFrames<>(8);
     private final StatsInteraction stats = new StatsInteraction();
 
     String checkpoint() { return "phase=" + phase + " fixture=" + fixture.checkpoint; }
@@ -63,6 +68,7 @@ final class StandardAe2Scenario {
             reportedPhase = phase;
         }
         if (phase == Stage.PREPARE) {
+            fixture.holdFinalOutput = leaf.equals("delayed-status");
             if (server(minecraft, player -> fixture.prepare(player, marker))) phase = Stage.values()[phase.ordinal() + 1];
             return false;
         }
@@ -101,6 +107,49 @@ final class StandardAe2Scenario {
                 phase = Stage.values()[phase.ordinal() + 1];
             }
 
+            return false;
+        }
+        if (phase == Stage.WORLD_POSITION) {
+            if (server(minecraft, player -> { fixture.viewFinalProvider(player); return true; })) {
+                phase = Stage.WORLD_HIGHLIGHT;
+            }
+            return false;
+        }
+        if (phase == Stage.WORLD_HIGHLIGHT) {
+            minecraft.player.setYRot(9.462f);
+            minecraft.player.setXRot(2);
+            if (minecraft.screen != null || !worldFrames.observe(hasPlate("minecraft:smooth_stone", 8))) return false;
+            if (!hasPlate("minecraft:smooth_stone", 8)) return false;
+            screenshot.accept("delayed-world-highlight.png");
+            worldFrames.reset();
+            phase = Stage.WORLD_RELEASE;
+            return false;
+        }
+        if (phase == Stage.WORLD_RELEASE) {
+            if (server(minecraft, player -> {
+                if (!fixture.finalOutputReady(player) || !fixture.cpu(player).getCluster().isBusy()) {
+                    throw new IllegalStateException("Final delayed output was not held in an active craft");
+                }
+                fixture.holdFinalOutput = false;
+                fixture.pump(player, false);
+                return true;
+            })) phase = Stage.WORLD_FINISHED;
+            return false;
+        }
+        if (phase == Stage.WORLD_FINISHED) {
+            if (!server(minecraft, player -> fixture.pump(player, false) == 1
+                    && !fixture.cpu(player).getCluster().isBusy() && fixture.observedNewSamples(player))) return false;
+            boolean cleared = !hasPlate("minecraft:stone", 4) && !hasPlate("minecraft:smooth_stone", 8);
+            if (!worldFrames.observe(cleared) || !cleared) return false;
+            mark(checks, "completed", true);
+            mark(checks, "output", true);
+            mark(checks, "profile-sample", true);
+            mark(checks, "plate-cleared", true);
+            screenshot.accept("delayed-world-finished.png");
+            minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
+                    new BlockHitResult(Vec3.atCenterOf(fixture.terminal.east(8).north()).add(0, 0, -0.5),
+                            Direction.NORTH, fixture.terminal.east(8).north(), false));
+            phase = Stage.REOPEN;
             return false;
         }
         var snapshot = UiObservationStore.latest();
@@ -196,6 +245,7 @@ final class StandardAe2Scenario {
             moveMouse.accept(0, 0);
             if (server(minecraft, player -> { fixture.seed(player); return true; })) phase = Stage.PUMP;
         } else if (phase == Stage.DELAYED) {
+            stonePlateObserved |= hasPlate("minecraft:stone", 4);
             var warning = rowText(snapshot, "minecraft:stone", "text.ae2craftingtime.ttc_delayed");
             if (warning == null) return false;
             if (!warning.bold() || !Integer.valueOf(0xFF5555).equals(warning.color())) {
@@ -216,6 +266,7 @@ final class StandardAe2Scenario {
                 screenshot.accept("delayed-tooltip.png");
                 mark(checks, "tooltip", true);
             }
+            if (!stonePlateObserved) return false;
             moveMouse.accept(0, 0);
             phase = Stage.PUMP;
         } else if (phase == Stage.PUMP) {
@@ -224,8 +275,25 @@ final class StandardAe2Scenario {
                 dispatched = fixture.cpu(player).getCluster().craftingLogic.getWaitingFor(
                         appeng.api.stacks.AEItemKey.of(net.minecraft.world.item.Items.SMOOTH_STONE)) > 0;
                 progressed = fixture.returnedStone;
+                finalOutputReady = fixture.finalOutputReady(player);
                 return output == 1 && !fixture.cpu(player).getCluster().isBusy() && fixture.observedNewSamples(player);
             });
+            if (leaf.equals("delayed-status") && progressed && dispatched) {
+                if (stonePlateObserved && !hasPlate("minecraft:stone", 4)
+                        && !Boolean.TRUE.equals(checks.get("plate-recovered"))) {
+                    mark(checks, "plate-recovered", true);
+                    screenshot.accept("delayed-plate-recovered.png");
+                }
+                if (operation == null && Boolean.TRUE.equals(checks.get("plate-recovered")) && finalOutputReady
+                        && rowText(snapshot, "minecraft:smooth_stone", "text.ae2craftingtime.ttc_delayed") != null
+                        && hasPlate("minecraft:smooth_stone", 8)) {
+                    mark(checks, "final-plate", true);
+                    screenshot.accept("delayed-final-held.png");
+                    minecraft.player.closeContainer();
+                    phase = Stage.WORLD_POSITION;
+                    return false;
+                }
+            }
             if (leaf.equals("waiting-status") && dispatched && progressed
                     && rowText(snapshot, "minecraft:smooth_stone", "text.ae2craftingtime.ttc") != null
                     && rowText(snapshot, "minecraft:smooth_stone", "text.ae2craftingtime.waiting") == null) {
@@ -287,6 +355,11 @@ final class StandardAe2Scenario {
         if (row.isEmpty()) return null;
         return snapshot.text().stream().filter(t -> t.key().equals(key) && t.bounds() != null
                 && t.bounds().inside(row.get().cell())).findFirst().orElse(null);
+    }
+
+    private boolean hasPlate(String output, int providerOffset) {
+        return ProviderHighlightClient.plates().stream().anyMatch(plate -> plate.outputId().equals(output)
+                && plate.positions().contains(fixture.terminal.east(providerOffset)));
     }
 
     private static void validateLayout(UiSnapshot snapshot) {

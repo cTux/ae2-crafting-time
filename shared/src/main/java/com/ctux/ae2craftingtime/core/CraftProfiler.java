@@ -183,7 +183,8 @@ public final class CraftProfiler {
     }
 
     /**
-     * Every output the scope still tracks: waiting keys plus pending keys.
+     * Every output the scope still tracks, including delayed notifications
+     * awaiting a clear after the final output has returned.
      * Snapshot before {@link #clearPending} so finish and cancel paths can
      * tell clients to drop their highlight plates.
      */
@@ -200,6 +201,8 @@ public final class CraftProfiler {
         if (scopedPending != null) {
             keys.addAll(scopedPending.keySet());
         }
+        keys.addAll(delayedNotified.getOrDefault(scope, Set.of()));
+        keys.addAll(delayedResolved.getOrDefault(scope, Set.of()));
         return Set.copyOf(keys);
     }
 
@@ -289,12 +292,7 @@ public final class CraftProfiler {
         if (!enabled || scope == null) {
             return List.of();
         }
-        var scopedPending = pending.get(scope);
-        if (scopedPending == null) {
-            delayedNotified.remove(scope);
-            delayedResolved.remove(scope);
-            return List.of();
-        }
+        var scopedPending = pending.getOrDefault(scope, Map.of());
         var notified = delayedNotified.computeIfAbsent(scope, ignored -> new HashSet<>());
         var currentlyDelayed = new HashMap<ProfileKey, StallDiagnostic>();
         for (var key : scopedPending.keySet()) {

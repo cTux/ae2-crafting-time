@@ -5,6 +5,10 @@
 Extend the private delayed-output warning (issue #118) with two independent
 world highlights that share positions but never share lifetimes.
 
+Red plates also clear when releasing a machine's held final output finishes
+the craft immediately. This does not require another progress update or an
+open terminal screen.
+
 - Red background + item icon (plate): appears automatically when a craft
   becomes delayed, blinks, and lasts while the craft stays delayed.
 - Rainbow edges: appear only after a chat-link click or crafting-item

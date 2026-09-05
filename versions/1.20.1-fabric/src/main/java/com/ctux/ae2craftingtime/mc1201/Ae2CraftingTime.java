@@ -46,6 +46,10 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
         // never leak into another world with matching coordinates. Red plates
         // return only via server-approved resync.
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ProviderHighlightClient.onSessionEnd());
+        // AFTER_TRANSLUCENT runs after vanilla's world-buffer flush. Own and
+        // flush every highlight batch here, including the item's render type.
+        var consumers = net.minecraft.client.renderer.MultiBufferSource.immediate(
+                new com.mojang.blaze3d.vertex.BufferBuilder(256));
         WorldRenderEvents.AFTER_TRANSLUCENT.register(context -> {
             var minecraft = Minecraft.getInstance();
             if (minecraft.level == null) {
@@ -62,11 +66,6 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
             var poseStack = context.matrixStack();
             poseStack.pushPose();
             poseStack.translate(-camera.x, -camera.y, -camera.z);
-            var consumers = context.consumers();
-            if (consumers == null) {
-                poseStack.popPose();
-                return;
-            }
             var rainbow = ProviderHighlightClient.rainbowRgb();
             var alpha = ProviderHighlightClient.pulseAlpha();
             // Click edges first: plate and item writes switch the shared fallback
@@ -95,10 +94,7 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
                             LevelRenderer.getLightColor(minecraft.level, pos), alpha);
                 }
             }
-            if (consumers instanceof net.minecraft.client.renderer.MultiBufferSource.BufferSource source) {
-                source.endBatch(RenderType.lines());
-                source.endBatch(RenderType.debugFilledBox());
-            }
+            consumers.endBatch();
             poseStack.popPose();
         });
     }
