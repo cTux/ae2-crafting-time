@@ -1,44 +1,40 @@
-# AE2 Crafting Time
+![AE2 Crafting Time — Know when your autocrafting will finish.](docs/images/readme-banner.png)
 
-[![Tests](https://github.com/cTux/ae2-crafting-time/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/cTux/ae2-crafting-time/actions/workflows/test.yml)
-[![Coverage](https://codecov.io/gh/cTux/ae2-crafting-time/graph/badge.svg)](https://codecov.io/gh/cTux/ae2-crafting-time)
-[![Modrinth downloads](https://img.shields.io/modrinth/dt/LyDZjvxd?logo=modrinth&label=Modrinth%20downloads)](https://modrinth.com/mod/ae2-crafting-time)
-[![CurseForge downloads](https://img.shields.io/curseforge/dt/1591476?logo=curseforge&label=CurseForge%20downloads)](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-time)
-[![GitHub downloads](https://img.shields.io/github/downloads/cTux/ae2-crafting-time/total?logo=github&label=GitHub%20downloads)](https://github.com/cTux/ae2-crafting-time/releases)
-[![Issues fixed](https://img.shields.io/github/issues-closed/cTux/ae2-crafting-time?logo=github&label=issues%20fixed)](https://github.com/cTux/ae2-crafting-time/issues?q=is%3Aissue%20is%3Aclosed)
-[![Open issues](https://img.shields.io/github/issues/cTux/ae2-crafting-time?logo=github)](https://github.com/cTux/ae2-crafting-time/issues)
-[![Discussions](https://img.shields.io/badge/GitHub-Discussions-8250df?logo=github)](https://github.com/cTux/ae2-crafting-time/discussions)
-[![Latest release](https://img.shields.io/github/v/release/cTux/ae2-crafting-time?logo=github)](https://github.com/cTux/ae2-crafting-time/releases/latest)
-[![License](https://img.shields.io/github/license/cTux/ae2-crafting-time)](LICENSE)
+<p align="center">
+  Time estimates, progress tracking, and bottleneck diagnostics for<br>
+  Applied Energistics 2.
+</p>
 
-AE2 Crafting Time is an unofficial Applied Energistics 2 addon that helps you
-figure out why an autocrafting job is taking forever—or why it looks stuck.
+<p align="center">
+  <a href="https://modrinth.com/mod/ae2-crafting-time"><img src="https://img.shields.io/badge/Modrinth-173b27?style=for-the-badge&logo=modrinth&logoColor=1bd96a" alt="Download on Modrinth" height="32"></a>
+  <a href="https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-time"><img src="https://img.shields.io/badge/CurseForge-522d1d?style=for-the-badge&logo=curseforge&logoColor=f68440" alt="Download on CurseForge" height="32"></a>
+  <a href="https://github.com/cTux/ae2-crafting-time/releases"><img src="https://img.shields.io/badge/GitHub_Releases-30363d?style=for-the-badge&logo=github&logoColor=white" alt="Download from GitHub Releases" height="32"></a>
+</p>
 
-It tracks how crafts actually perform on the server, then uses that data to
-estimate completion times, highlight possible bottlenecks, and point out crafts
-that have stopped making progress.
+<p align="center">
+  <img src="https://img.shields.io/badge/Unofficial_AE2_addon-30363d" alt="Unofficial AE2 addon">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-30363d" alt="MIT license"></a>
+</p>
 
-It is not affiliated with or endorsed by the Applied Energistics 2 team.
+## See what your craft is waiting for
 
-![Delayed crafting job](docs/images/crafting-status-delayed.png)
+<p align="center">
+  <img src="docs/images/crafting-status-delayed.png" alt="AE2 crafting status showing a delayed recipe and a remaining-time estimate" width="705">
+</p>
 
-[See the screenshot gallery](docs/images/README.md) for the other windows,
-tooltips, and TTC states.
+<p align="center">
+  Remaining-time estimates and delayed recipes, directly in AE2.<br>
+  <a href="docs/images/README.md">See the screenshot gallery</a>
+</p>
 
-## Supported Versions
+## From planning to troubleshooting
 
-See [dependencies.md](docs/dependencies.md) for supported Minecraft versions,
-loaders, required dependencies, and optional integrations.
+| 01 Estimate your craft | 02 Track progress | 03 Diagnose delays |
+| --- | --- | --- |
+| See timing estimates before starting. | Follow remaining time as work runs. | Find stalled recipes and bottlenecks. |
 
-## Download
-
-You can grab the latest version from:
-
-- [Latest release](https://github.com/cTux/ae2-crafting-time/releases/latest)
-- [Modrinth](https://modrinth.com/mod/ae2-crafting-time)
-- [CurseForge](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-time)
-
-## What It Does
+<details>
+<summary>More features and integrations</summary>
 
 - Remembers how long your crafts really take, so its time guesses get better the
   more you play.
@@ -63,9 +59,26 @@ You can grab the latest version from:
 - Keeps what it learned inside your world, so it stays smart after you quit and
   come back.
 
+</details>
+
+## Downloads & compatibility
+
+Choose your Minecraft version and loader on the download page.
+
+[Supported versions, dependencies, and optional integrations](docs/dependencies.md)
+
 ## Documentation
 
-If you want the more technical details, start here:
+[Player controls](docs/player-controls-and-integrations/spec.md) ·
+[Screenshot gallery](docs/images/README.md) ·
+[Building](docs/building.md) ·
+[Contributing](docs/working-with-project.md)
+
+[Report a bug](https://github.com/cTux/ae2-crafting-time/issues) ·
+[Ask a question](https://github.com/cTux/ae2-crafting-time/discussions)
+
+<details>
+<summary>All technical documentation</summary>
 
 - [Building It](docs/building.md)
 - [Running a Development Client](docs/dev-client.md)
@@ -91,7 +104,26 @@ If you want the more technical details, start here:
 - [Waiting to start status](docs/waiting-to-start/spec.md)
 - [Provider locate](docs/provider-locate/spec.md)
 
-## Development Disclosure
+</details>
+
+<details>
+<summary>Project health and download statistics</summary>
+
+[![Tests](https://github.com/cTux/ae2-crafting-time/actions/workflows/test.yml/badge.svg?branch=master)](https://github.com/cTux/ae2-crafting-time/actions/workflows/test.yml)
+[![Coverage](https://codecov.io/gh/cTux/ae2-crafting-time/graph/badge.svg)](https://codecov.io/gh/cTux/ae2-crafting-time)
+[![Modrinth downloads](https://img.shields.io/modrinth/dt/LyDZjvxd?logo=modrinth&label=Modrinth%20downloads)](https://modrinth.com/mod/ae2-crafting-time)
+[![CurseForge downloads](https://img.shields.io/curseforge/dt/1591476?logo=curseforge&label=CurseForge%20downloads)](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-time)
+[![GitHub downloads](https://img.shields.io/github/downloads/cTux/ae2-crafting-time/total?logo=github&label=GitHub%20downloads)](https://github.com/cTux/ae2-crafting-time/releases)
+[![Issues fixed](https://img.shields.io/github/issues-closed/cTux/ae2-crafting-time?logo=github&label=issues%20fixed)](https://github.com/cTux/ae2-crafting-time/issues?q=is%3Aissue%20is%3Aclosed)
+[![Open issues](https://img.shields.io/github/issues/cTux/ae2-crafting-time?logo=github)](https://github.com/cTux/ae2-crafting-time/issues)
+[![Discussions](https://img.shields.io/badge/GitHub-Discussions-8250df?logo=github)](https://github.com/cTux/ae2-crafting-time/discussions)
+[![Latest release](https://img.shields.io/github/v/release/cTux/ae2-crafting-time?logo=github)](https://github.com/cTux/ae2-crafting-time/releases/latest)
+[![License](https://img.shields.io/github/license/cTux/ae2-crafting-time)](LICENSE)
+
+</details>
+
+<details>
+<summary>Development disclosure</summary>
 
 Yes, AI helps me write this mod. I'm not really a Java guy, if you know what I
 mean, but I have enough engineering experience to keep it from turning into
@@ -100,8 +132,13 @@ tested, maintainable, scalable, and reusable. I hope that makes it clear where
 AI fits into the project.
 
 The mod does not use generative AI while running and does not include
-AI-generated visual assets.
+AI-generated in-game visual assets. The README branding is separate.
 
-## License
+</details>
 
-AE2 Crafting Time is available under the [MIT License](LICENSE).
+---
+
+<p align="center">
+  Unofficial addon. Not affiliated with or endorsed by the Applied Energistics 2 team.<br>
+  Available under the <a href="LICENSE">MIT License</a>.
+</p>
