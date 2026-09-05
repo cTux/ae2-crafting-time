@@ -80,7 +80,7 @@ public abstract class CraftingStatusTableRendererMixin {
             var waiting = ClientStats.CACHE.waitingTicks(key);
             if (waiting.isPresent()) {
                 lines.add(TtcText.waiting()
-                        .withStyle(style -> style.withColor(TextColor.fromRgb(0xE0E0E0)).withBold(true)));
+                        .withStyle(style -> style.withColor(TextColor.fromRgb(0xE0E0E0))));
                 return;
             }
         }
@@ -115,7 +115,7 @@ public abstract class CraftingStatusTableRendererMixin {
 
     private static Component delayedTtcLine() {
         return TtcText.ttcDelayed()
-                .withStyle(style -> style.withColor(TextColor.fromRgb(0xFF5555)).withBold(true));
+                .withStyle(style -> style.withColor(TextColor.fromRgb(0xFF5555)));
     }
 
     private static boolean ae2craftingtime$noSpace(CraftingStatusEntry entry) {
@@ -134,7 +134,7 @@ public abstract class CraftingStatusTableRendererMixin {
         var line = TtcText.ttc(eta);
         var color = TtcColorContext.get(key);
         return color.isPresent()
-                ? line.withStyle(style -> style.withColor(TextColor.fromRgb(color.getAsInt())).withBold(true))
-                : line.withStyle(style -> style.withBold(true));
+                ? line.withStyle(style -> style.withColor(TextColor.fromRgb(color.getAsInt())))
+                : line;
     }
 }
