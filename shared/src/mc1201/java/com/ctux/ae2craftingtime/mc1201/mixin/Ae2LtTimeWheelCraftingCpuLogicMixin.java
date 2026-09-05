@@ -77,13 +77,6 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
         IntegrationLog.cpu("ae2lt", "cpu-finish");
     }
 
-    @Inject(method = "cancel", at = @At("HEAD"), remap = false, require = 0)
-    private void ae2craftingtime$clearHighlightOnCancel(CallbackInfo ci) {
-        ProfilerBridge.finishJob(this, false, ae2craftingtime$tick(), System.nanoTime(),
-                ae2craftingtime$server());
-        IntegrationLog.cpu("ae2lt", "cpu-finish");
-    }
-
     @Inject(
             method = "tickCraftingLogic(Lappeng/api/networking/energy/IEnergyService;"
                     + "Lappeng/me/service/CraftingService;IJLcom/moakiee/thunderbolt/core/crafting/batch/"

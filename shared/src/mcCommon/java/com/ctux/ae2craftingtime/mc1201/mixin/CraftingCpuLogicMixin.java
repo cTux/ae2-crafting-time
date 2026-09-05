@@ -119,13 +119,6 @@ public abstract class CraftingCpuLogicMixin {
         IntegrationLog.cpu("ae2craftingtime", "cpu-finish");
     }
 
-    @Inject(method = "cancel", at = @At("HEAD"), remap = false)
-    private void ae2craftingtime$clearHighlightOnCancel(CallbackInfo ci) {
-        ProfilerBridge.finishJob(cluster, false, cluster.getLevel().getGameTime(), System.nanoTime(),
-                cluster.getLevel().getServer());
-        IntegrationLog.cpu("ae2craftingtime", "cpu-finish");
-    }
-
     @Inject(method = "tickCraftingLogic", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$trackParallelCapacity(IEnergyService energyService,
             CraftingService craftingService, CallbackInfo ci) {
