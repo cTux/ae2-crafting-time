@@ -8,8 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 
 import java.awt.Point;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -125,49 +123,4 @@ public final class CraftingTreeTtc {
         return colors;
     }
 
-    public static Object readField(Object instance, String name) {
-        try {
-            Field field;
-            try {
-                field = instance.getClass().getField(name);
-            } catch (NoSuchFieldException ignored) {
-                field = instance.getClass().getDeclaredField(name);
-                field.setAccessible(true);
-            }
-            return field.get(instance);
-        } catch (ReflectiveOperationException | ClassCastException ignored) {
-            return null;
-        }
-    }
-
-    public static Object invoke(Object instance, String name, Object... args) {
-        if (instance == null) {
-            return null;
-        }
-        for (var type : new Class<?>[] { instance.getClass(), instance.getClass().getSuperclass() }) {
-            if (type == null) {
-                continue;
-            }
-            for (var method : type.getMethods()) {
-                if (method.getName().equals(name) && method.getParameterCount() == args.length) {
-                    return call(method, instance, args);
-                }
-            }
-            for (var method : type.getDeclaredMethods()) {
-                if (method.getName().equals(name) && method.getParameterCount() == args.length) {
-                    return call(method, instance, args);
-                }
-            }
-        }
-        return null;
-    }
-
-    public static Object call(Method method, Object instance, Object... args) {
-        try {
-            method.setAccessible(true);
-            return method.invoke(instance, args);
-        } catch (ReflectiveOperationException ignored) {
-            return null;
-        }
-    }
 }

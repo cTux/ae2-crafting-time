@@ -12,6 +12,7 @@ import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.TtcColorContext;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
+import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
@@ -28,7 +29,9 @@ public abstract class CraftingStatusTableRendererMixin {
     @Inject(method = "getEntryDescription", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$appendVisibleTimeToCraft(CraftingStatusEntry entry,
             CallbackInfoReturnable<List<Component>> cir) {
+        var before = cir.getReturnValue().size();
         ae2craftingtime$appendTtc(entry, cir.getReturnValue());
+        IntegrationLog.growth("status-row", before, cir.getReturnValue().size());
     }
 
     @Inject(method = "getEntryTooltip", at = @At("RETURN"), remap = false)
@@ -36,6 +39,7 @@ public abstract class CraftingStatusTableRendererMixin {
             CallbackInfoReturnable<List<Component>> cir) {
         if (ae2craftingtime$noSpace(entry)) {
             cir.getReturnValue().addAll(TtcText.noSpaceTooltip());
+            IntegrationLog.observe("ae2craftingtime", "status-tooltip");
             return;
         }
         var amount = entry.getActiveAmount() + entry.getPendingAmount();
@@ -46,11 +50,13 @@ public abstract class CraftingStatusTableRendererMixin {
         var reason = ae2craftingtime$blockReason(entry);
         if (reason != null) {
             cir.getReturnValue().addAll(TtcText.blockReasonTooltip(reason));
+            IntegrationLog.observe("ae2craftingtime", "status-tooltip");
             return;
         }
         ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue());
         cir.getReturnValue().add(TtcText.detailsHint().withStyle(ChatFormatting.GRAY));
         cir.getReturnValue().add(TtcText.resetHint().withStyle(ChatFormatting.GRAY));
+        IntegrationLog.observe("ae2craftingtime", "status-tooltip");
     }
 
     private static void ae2craftingtime$appendTtc(CraftingStatusEntry entry, List<Component> lines) {

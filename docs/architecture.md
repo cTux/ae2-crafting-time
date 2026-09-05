@@ -120,3 +120,17 @@ Retained samples are saved through Minecraft `SavedData` as:
 The saved payload stores `version`, `networkId`, `key`, `unit`, and retained
 `samples`. Pending crafts and first-dispatch waiting state are runtime-only and
 are not persisted.
+
+## Startup and integration diagnostics
+
+IntegrationDiagnostics owns a fixed, process-local capability report.
+IntegrationLog receives actual loader metadata, completed registrations, and
+observed hooks. The startup summary counts integrations once; unexercised hooks
+remain pending. Native integrations report shared AE2 hooks without claiming
+that an addon-specific job was verified. See the
+[startup diagnostics design](startup-integration-diagnostics/technical-design.md).
+
+Only read-only optional UI/selected-CPU lookups recover from incompatible
+reflection contracts. Tree and Requester additions stop after a failed read;
+selected-CPU lookup keeps network aggregates available. These paths never reset
+samples or suppress loader, Mixin, CPU, or persistence failures.

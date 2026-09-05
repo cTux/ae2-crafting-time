@@ -269,3 +269,20 @@ execution (34/16/30/19 cases for Forge 1.20.1, Fabric 1.20.1, NeoForge 1.21.1,
 and NeoForge 26.1.2). A focused leaf pass does not certify a dependency's full
 standard group. Optional integrations keep their existing scenario names and
 newest-adapter obligations; change selection does not alter dependency pins.
+
+## Runtime integration diagnostics
+
+Startup logs include actual installed versions, target/side skips, pending
+capabilities, and a compact integration summary. Confirmations come from the
+named operation returning successfully. Shared-hook confirmations explicitly
+leave addon-specific crafting unverified; compatibility-only entries make no
+health claim. The [diagnostics design](startup-integration-diagnostics/technical-design.md)
+defines the reporting scope.
+
+ExtendedAE is one reporting row with metadata aliases: Forge's inspected
+1.20-1.4.18-forge uses expatternprovider; inspected NeoForge
+1.21-2.2.35-neoforge and 26.1-1.0.3-neoforge use extendedae.
+Tree package variants use the existing selector's choice. A failed read disables
+only the selected Tree variant's TTC additions, the Requester TTC overlay, or
+AdvancedAE selected-CPU lookup. Host behavior and server samples remain intact.
+This is not recovery from an incompatible CPU adapter or a failed transformation.

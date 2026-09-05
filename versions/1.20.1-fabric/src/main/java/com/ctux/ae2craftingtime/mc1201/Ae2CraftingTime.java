@@ -21,8 +21,11 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
 
     @Override
     public void onInitialize() {
-        Ae2CraftingTimeConfig.load(FabricLoader.getInstance().getConfigDir().resolve(COMMON_CONFIG_FILE));
-        StatsNetwork.registerServer();
+        var loader = FabricLoader.getInstance();
+        IntegrationLog.start("1.20.1-fabric", loader.getEnvironmentType() == net.fabricmc.api.EnvType.CLIENT, "fabricloader",
+                id -> loader.getModContainer(id).map(mod -> mod.getMetadata().getVersion().getFriendlyString()).orElse(null));
+        IntegrationLog.required("config-registration", () -> Ae2CraftingTimeConfig.load(FabricLoader.getInstance().getConfigDir().resolve(COMMON_CONFIG_FILE)));
+        IntegrationLog.required("network-registration", StatsNetwork::registerServer);
         CommandRegistrationCallback.EVENT.register((dispatcher, access, environment) -> dispatcher.register(
                 ProviderLocateCommand.build((source, id) -> ProviderLocateCommand.locate(source, id,
                         (player, highlight) -> StatsNetwork.sendTo(player, new ProviderHighlightS2C(
@@ -36,12 +39,13 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
         });
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> ProfilerBridge
                 .resyncPlatesForPlayer(handler.getPlayer()));
+        IntegrationLog.summary();
     }
 
     @Override
     public void onInitializeClient() {
-        KeyBindingHelper.registerKeyBinding(TtcDetailsKeyMapping.showDetails());
-        StatsNetwork.registerClient();
+        IntegrationLog.required("key-registration", () -> KeyBindingHelper.registerKeyBinding(TtcDetailsKeyMapping.showDetails()));
+        IntegrationLog.required("client-network-registration", StatsNetwork::registerClient);
         // Drop rainbows and plates when leaving a world or server so they
         // never leak into another world with matching coordinates. Red plates
         // return only via server-approved resync.

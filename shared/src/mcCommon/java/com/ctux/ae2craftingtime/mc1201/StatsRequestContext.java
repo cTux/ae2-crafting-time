@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import appeng.api.networking.IGrid;
+import com.ctux.ae2craftingtime.core.IntegrationRead;
 import appeng.api.networking.security.IActionHost;
 import appeng.menu.AEBaseMenu;
 import appeng.menu.me.crafting.CraftingCPUMenu;
@@ -30,11 +31,14 @@ public record StatsRequestContext(IGrid grid, Object craftingCpu) {
     }
 
     private static Object optionalAdvancedCpu(CraftingCPUMenu menu) {
+        if (!IntegrationLog.available("advanced_ae") || IntegrationLog.disabled("advanced_ae", "selected-cpu")) return null;
         try {
-            var field = CraftingCPUMenu.class.getDeclaredField("advancedAE$advCpu");
-            field.setAccessible(true);
-            return field.get(menu);
-        } catch (ReflectiveOperationException e) {
+            var cpu = IntegrationRead.field(menu, CraftingCPUMenu.class, "advancedAE$advCpu", Object.class);
+            IntegrationLog.observe("advanced_ae", "selected-cpu");
+            return cpu;
+        } catch (IntegrationRead.Failure failure) {
+            IntegrationLog.fail("advanced_ae", "selected-cpu", failure.getMessage()
+                    + ";retained=network_aggregates,cpu_profiling", false, failure.getCause());
             return null;
         }
     }

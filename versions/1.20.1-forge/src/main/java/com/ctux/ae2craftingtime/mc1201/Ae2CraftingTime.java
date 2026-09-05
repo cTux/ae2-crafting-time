@@ -16,11 +16,14 @@ public final class Ae2CraftingTime {
     public static final String COMMON_CONFIG_FILE = "ae2craftingtime-common.toml";
 
     public Ae2CraftingTime() {
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Ae2CraftingTimeConfig.SPEC, COMMON_CONFIG_FILE);
-        StatsNetwork.register();
+        IntegrationLog.start("1.20.1-forge", net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient(), "forge",
+                id -> net.minecraftforge.fml.ModList.get().getModContainerById(id).map(mod -> mod.getModInfo().getVersion().toString()).orElse(null));
+        IntegrationLog.required("config-registration", () -> ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Ae2CraftingTimeConfig.SPEC, COMMON_CONFIG_FILE));
+        IntegrationLog.required("network-registration", StatsNetwork::register);
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarted);
         MinecraftForge.EVENT_BUS.addListener(this::onRegisterCommands);
         MinecraftForge.EVENT_BUS.addListener(this::onPlayerLoggedIn);
+        IntegrationLog.summary();
     }
 
     private void onRegisterCommands(RegisterCommandsEvent event) {

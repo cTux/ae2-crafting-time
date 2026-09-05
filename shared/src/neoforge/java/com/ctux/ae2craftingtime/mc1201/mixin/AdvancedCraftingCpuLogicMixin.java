@@ -16,6 +16,7 @@ import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.mc1201.BlockReasonNotifier;
 import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import java.util.Iterator;
 import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPU;
 import net.pedroksl.advanced_ae.common.logic.AdvCraftingCPULogic;
@@ -93,6 +94,7 @@ public abstract class AdvancedCraftingCpuLogicMixin {
         if (type == Actionable.MODULATE && amount > 0) {
             ProfilerBridge.start(ProfilerBridge.networkId(cpu.getGrid()), cpu, what, amount,
                     cpu.getLevel().getGameTime());
+            IntegrationLog.cpu("advanced_ae", "cpu-dispatch");
         }
     }
 
@@ -108,6 +110,7 @@ public abstract class AdvancedCraftingCpuLogicMixin {
         if (accepted > 0) {
             ProfilerBridge.complete(ProfilerBridge.networkId(cpu.getGrid()), cpu, what, accepted,
                     cpu.getLevel().getGameTime());
+            IntegrationLog.cpu("advanced_ae", "cpu-output");
         }
     }
 
@@ -115,12 +118,14 @@ public abstract class AdvancedCraftingCpuLogicMixin {
     private void ae2craftingtime$clearPendingOutputs(boolean success, CallbackInfo ci) {
         ProfilerBridge.finishJob(cpu, success, cpu.getLevel().getGameTime(), System.nanoTime(),
                 cpu.getLevel().getServer());
+        IntegrationLog.cpu("advanced_ae", "cpu-finish");
     }
 
     @Inject(method = "cancel", at = @At("HEAD"), remap = false, require = 0)
     private void ae2craftingtime$clearHighlightOnCancel(CallbackInfo ci) {
         ProfilerBridge.finishJob(cpu, false, cpu.getLevel().getGameTime(), System.nanoTime(),
                 cpu.getLevel().getServer());
+        IntegrationLog.cpu("advanced_ae", "cpu-finish");
     }
 
     @Inject(method = "trySubmitJob", at = @At("RETURN"), remap = false, require = 0)
@@ -129,6 +134,7 @@ public abstract class AdvancedCraftingCpuLogicMixin {
         if (cir.getReturnValue().successful()) {
             ProfilerBridge.startJob(ProfilerBridge.networkId(grid), cpu, plan, cpu.getLevel().getGameTime(),
                     System.nanoTime(), ProfilerBridge.jobOwner(source));
+            IntegrationLog.cpu("advanced_ae", "cpu-submit");
         }
     }
 
@@ -140,6 +146,7 @@ public abstract class AdvancedCraftingCpuLogicMixin {
         var tick = cpu.getLevel().getGameTime();
         var server = cpu.getLevel().getServer();
         ProfilerBridge.updateCapacity(cpu, usedSlots, totalSlots, tick);
+        IntegrationLog.cpu("advanced_ae", "cpu-capacity");
         DelayedNotificationServer.maybeNotify(cpu, cpu.getGrid(), tick, server);
         BlockReasonNotifier.maybeNotifyPower(cpu, cpu.getGrid(), tick, server);
         BlockReasonNotifier.maybeNotifySpace(cpu, cpu.getGrid(), this, server);

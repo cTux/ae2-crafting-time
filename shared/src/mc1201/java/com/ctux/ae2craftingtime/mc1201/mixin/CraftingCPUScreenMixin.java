@@ -17,6 +17,7 @@ import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.ProviderLocateClick;
 import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
+import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import com.ctux.ae2craftingtime.mc1201.StatsClickHandler;
 import com.ctux.ae2craftingtime.mc1201.TtcBadge;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsClick;
@@ -131,8 +132,10 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
             return entries;
         }
 
-        return TtcSort.copySorted(entries, CraftingCPUScreenMixin::ae2craftingtime$seconds,
+        var sorted = TtcSort.copySorted(entries, CraftingCPUScreenMixin::ae2craftingtime$seconds,
                 Comparator.naturalOrder(), ae2craftingtime$ttcSortMode == 2);
+        IntegrationLog.observe("ae2craftingtime", "status-sort");
+        return sorted;
     }
 
     @Inject(method = "updateBeforeRender", at = @At("HEAD"), remap = false)
@@ -190,6 +193,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
                 TtcBadge.BACKGROUND);
         guiGraphics.drawString(font, ae2craftingtime$titleTtc, ae2craftingtime$titleTtcX,
                 AE2CRAFTINGTIME_TITLE_TOP, AE2CRAFTINGTIME_TITLE_TTC_COLOR, true);
+        IntegrationLog.observe("ae2craftingtime", "status-total");
     }
 
     @Unique
@@ -223,10 +227,12 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         var key = ProfilerBridge.key(entry.getWhat());
         if (TtcDetailsKeyMapping.matchesResetMouse(button)) {
             StatsChatMessages.reset(key, entry.getWhat().getDisplayName().getString());
+            IntegrationLog.observe("ae2craftingtime", "status-reset");
             return true;
         }
         StatsChatMessages.show(key, entry.getWhat().getDisplayName().getString(),
                 AeKeyAmounts.normalize(entry.getWhat(), amount));
+        IntegrationLog.observe("ae2craftingtime", "status-details");
         return true;
     }
 

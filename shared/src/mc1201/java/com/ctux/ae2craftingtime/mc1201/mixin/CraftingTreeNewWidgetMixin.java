@@ -8,6 +8,8 @@ import com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.mc1201.CraftingTreeTtc;
+import com.ctux.ae2craftingtime.core.IntegrationRead;
+import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
 import com.ctux.ae2craftingtime.mc1201.TtcBadge;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsKeyMapping;
@@ -48,13 +50,18 @@ public abstract class CraftingTreeNewWidgetMixin {
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true, require = 0)
     private void ae2craftingtime$clickStats(double mouseX, double mouseY, int button, CallbackInfo ci) {
+        if (!IntegrationLog.available("ae2ct")) return;
         if ((!TtcDetailsKeyMapping.matchesMouse(button) && !TtcDetailsKeyMapping.matchesResetMouse(button))
                 || !Ae2CraftingTimeConfig.SHOW_IN_TREE.get()) {
             return;
         }
 
-        if (ae2craftingtime$handleClickedStats(mouseX, mouseY, button)) {
-            ci.cancel();
+        try {
+            if (ae2craftingtime$handleClickedStats(mouseX, mouseY, button)) {
+                ci.cancel();
+            }
+        } catch (IntegrationRead.Failure failure) {
+            ae2craftingtime$disable(failure);
         }
     }
 
@@ -62,6 +69,11 @@ public abstract class CraftingTreeNewWidgetMixin {
     private void ae2craftingtime$beginFrame(GuiGraphics guiGraphics, int offsetX, int offsetY, int mouseX, int mouseY,
             CallbackInfo ci) {
         ae2craftingtime$colorRoot = null;
+        ae2craftingtime$secondsByNode = Map.of();
+        ae2craftingtime$colorsByNode = Map.of();
+        if (IntegrationLog.treeEnabled()) {
+            IntegrationLog.observe("ae2ct", "layout");
+        }
     }
 
     @Inject(
@@ -69,25 +81,30 @@ public abstract class CraftingTreeNewWidgetMixin {
             at = @At("RETURN"),
             require = 0)
     private void ae2craftingtime$drawStats(GuiGraphics guiGraphics, @Coerce Object node, CallbackInfo ci) {
-        if (!Ae2CraftingTimeConfig.SHOW_IN_TREE.get()) {
+        if (!IntegrationLog.treeEnabled()) {
             return;
         }
 
-        var data = CraftingTreeTtc.invoke(node, "node");
-        var stack = data == null ? null : (GenericStack) CraftingTreeTtc.invoke(data, "output");
-        var point = (Point) CraftingTreeTtc.invoke(node, "point");
-        if (stack == null || point == null) {
-            return;
-        }
+        try {
+            var data = IntegrationRead.invoke(node, "node", Object.class);
+            var stack = data == null ? null : IntegrationRead.invoke(data, "output", GenericStack.class);
+            var point = IntegrationRead.invoke(node, "point", Point.class);
+            if (stack == null || point == null) {
+                return;
+            }
 
-        ae2craftingtime$refreshColors();
-        var seconds = ae2craftingtime$secondsByNode.get(data);
-        if (seconds == null) {
-            return;
-        }
+            ae2craftingtime$refreshColors();
+            var seconds = ae2craftingtime$secondsByNode.get(data);
+            if (seconds == null) {
+                return;
+            }
 
-        var color = ae2craftingtime$colorsByNode.getOrDefault(data, TtcColor.GREEN);
-        CraftingTreeTtc.drawBadge(guiGraphics, outputX, outputY, spacingX, spacingY, point, seconds, color);
+            var color = ae2craftingtime$colorsByNode.getOrDefault(data, TtcColor.GREEN);
+            CraftingTreeTtc.drawBadge(guiGraphics, outputX, outputY, spacingX, spacingY, point, seconds, color);
+            IntegrationLog.observe("ae2ct", "node");
+        } catch (IntegrationRead.Failure failure) {
+            ae2craftingtime$disable(failure);
+        }
     }
 
     @SuppressWarnings("mapping")
@@ -101,27 +118,35 @@ public abstract class CraftingTreeNewWidgetMixin {
             require = 0)
     private void ae2craftingtime$appendTooltipStats(AEBaseScreen<?> screen, GuiGraphics guiGraphics, int mouseX,
             int mouseY, List<Component> lines) {
-        if (Ae2CraftingTimeConfig.SHOW_IN_TREE.get()) {
-            var data = ae2craftingtime$hoveredDataNode(mouseX + screen.getGuiLeft(), mouseY + screen.getGuiTop());
-            var stack = data == null ? null : (GenericStack) CraftingTreeTtc.invoke(data, "output");
-            if (stack != null) {
-                var seconds = ae2craftingtime$secondsByNode.get(data);
-                if (seconds != null) {
-                    TimeEstimate.formatTotal(List.of(OptionalLong.of(seconds)))
-                            .ifPresent(eta -> lines.add(TtcText.ttc(eta)));
+        var additions = new ArrayList<Component>();
+        try {
+            if (IntegrationLog.treeEnabled()) {
+                var data = ae2craftingtime$hoveredDataNode(mouseX + screen.getGuiLeft(), mouseY + screen.getGuiTop());
+                var stack = data == null ? null : IntegrationRead.invoke(data, "output", GenericStack.class);
+                if (stack != null) {
+                    var seconds = ae2craftingtime$secondsByNode.get(data);
+                    if (seconds != null) {
+                        TimeEstimate.formatTotal(List.of(OptionalLong.of(seconds)))
+                                .ifPresent(eta -> additions.add(TtcText.ttc(eta)));
+                    }
+                    additions.add(TtcText.detailsHint());
+                    additions.add(TtcText.resetHint());
                 }
-                lines.add(TtcText.detailsHint());
-                lines.add(TtcText.resetHint());
             }
+
+            lines.addAll(additions);
+            if (!additions.isEmpty()) IntegrationLog.observe("ae2ct", "tooltip");
+        } catch (IntegrationRead.Failure failure) {
+            ae2craftingtime$disable(failure);
         }
 
         screen.drawTooltipWithHeader(guiGraphics, mouseX, mouseY, lines);
     }
 
     private Object ae2craftingtime$hoveredDataNode(double mouseX, double mouseY) {
-        var entry = CraftingTreeTtc.invoke(this, "getMouseEntry", mouseX, mouseY);
+        var entry = IntegrationRead.invoke(this, "getMouseEntry", Object.class, mouseX, mouseY);
         if (entry != null) {
-            var data = CraftingTreeTtc.invoke(entry, "node");
+            var data = IntegrationRead.invoke(entry, "node", Object.class);
             if (data != null) {
                 return data;
             }
@@ -134,9 +159,9 @@ public abstract class CraftingTreeNewWidgetMixin {
         if (data == null && Minecraft.getInstance().screen instanceof AEBaseScreen<?> screen) {
             data = ae2craftingtime$hoveredDataNode(mouseX + screen.getGuiLeft(), mouseY + screen.getGuiTop());
         }
-        var stack = data == null ? null : (GenericStack) CraftingTreeTtc.invoke(data, "output");
-        var amount = CraftingTreeTtc.invoke(data, "amount");
-        var craftAmount = amount instanceof Number number ? number.longValue() : 0L;
+        var stack = data == null ? null : IntegrationRead.invoke(data, "output", GenericStack.class);
+        var amount = IntegrationRead.invoke(data, "amount", Number.class);
+        var craftAmount = amount == null ? 0L : amount.longValue();
         if (stack == null || craftAmount <= 0) {
             return false;
         }
@@ -144,24 +169,26 @@ public abstract class CraftingTreeNewWidgetMixin {
         var key = new ProfileKey(stack.what().getId().toString());
         if (TtcDetailsKeyMapping.matchesResetMouse(button)) {
             StatsChatMessages.reset(key, stack.what().getDisplayName().getString());
+            IntegrationLog.observe("ae2ct", "reset");
             return true;
         }
         StatsChatMessages.show(key, stack.what().getDisplayName().getString(),
                 AeKeyAmounts.normalize(stack.what(), craftAmount));
+        IntegrationLog.observe("ae2ct", "details");
         return true;
     }
 
     private void ae2craftingtime$refreshColors() {
-        var data = CraftingTreeTtc.readField(this, "activeData");
+        var data = IntegrationRead.field(this, "activeData", Object.class);
         if (data == null) {
-            data = CraftingTreeTtc.readField(this, "baseData");
+            data = IntegrationRead.field(this, "baseData", Object.class);
         }
         if (data == null || data == ae2craftingtime$colorRoot) {
             return;
         }
 
         ae2craftingtime$colorRoot = data;
-        var all = data == null ? null : (List<?>) CraftingTreeTtc.invoke(data, "allNodes");
+        var all = data == null ? null : IntegrationRead.invoke(data, "allNodes", List.class);
         var roots = new ArrayList<Object>();
         if (all != null) {
             for (var node : all) {
@@ -169,17 +196,17 @@ public abstract class CraftingTreeNewWidgetMixin {
             }
         }
         var seconds = CraftingTreeTtc.computeSeconds(roots,
-                d -> (GenericStack) CraftingTreeTtc.invoke(d, "output"),
+                d -> IntegrationRead.invoke(d, "output", GenericStack.class),
                 d -> {
-                    var value = CraftingTreeTtc.invoke(d, "amount");
-                    return value instanceof Number number ? number.longValue() : 0L;
+                    var value = IntegrationRead.invoke(d, "amount", Number.class);
+                    return value == null ? 0L : value.longValue();
                 },
                 d -> {
-                    var processes = (List<?>) CraftingTreeTtc.invoke(d, "inputs");
+                    var processes = IntegrationRead.invoke(d, "inputs", List.class);
                     var result = new ArrayList<Object>();
                     if (processes != null) {
                         for (var process : processes) {
-                            var nodes = (List<?>) CraftingTreeTtc.invoke(process, "inputs");
+                            var nodes = IntegrationRead.invoke(process, "inputs", List.class);
                             if (nodes != null) {
                                 for (var node : nodes) {
                                     result.add(node);
@@ -191,5 +218,11 @@ public abstract class CraftingTreeNewWidgetMixin {
                 });
         ae2craftingtime$secondsByNode = seconds;
         ae2craftingtime$colorsByNode = CraftingTreeTtc.computeColors(seconds);
+    }
+    private void ae2craftingtime$disable(IntegrationRead.Failure failure) {
+        IntegrationLog.disable("ae2ct", failure);
+        ae2craftingtime$colorRoot = null;
+        ae2craftingtime$secondsByNode = Map.of();
+        ae2craftingtime$colorsByNode = Map.of();
     }
 }

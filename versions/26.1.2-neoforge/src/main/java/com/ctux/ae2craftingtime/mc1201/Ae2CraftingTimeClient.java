@@ -10,7 +10,7 @@ public final class Ae2CraftingTimeClient {
     @SubscribeEvent
     public static void registerKeyMappings(RegisterKeyMappingsEvent event) {
         event.registerCategory(TtcDetailsKeyMapping.category());
-        event.register(TtcDetailsKeyMapping.showDetails());
+        IntegrationLog.required("key-registration", () -> event.register(TtcDetailsKeyMapping.showDetails()));
     }
 
     private Ae2CraftingTimeClient() {
