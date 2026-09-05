@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.ctux.ae2craftingtime.core.ProfileStats;
@@ -48,10 +49,10 @@ class TtcTextTest {
 
     @ParameterizedTest
     @CsvSource({"en_us, NO SPACE", "uk_ua, Немає місця"})
-    void noSpaceHasWarningStyleAndTranslatedAdvice(String locale, String expected) throws IOException {
+    void noSpaceHasNormalWarningStyleAndTranslatedAdvice(String locale, String expected) throws IOException {
         var lines = TtcText.noSpaceTooltip();
         assertEquals(3, lines.size());
-        assertTrue(lines.get(0).getStyle().isBold());
+        assertFalse(lines.get(0).getStyle().isBold());
         assertEquals(TextColor.fromLegacyFormat(ChatFormatting.RED), lines.get(0).getStyle().getColor());
         try (var reader = new InputStreamReader(getClass().getResourceAsStream(
                 "/assets/ae2craftingtime/lang/" + locale + ".json"), StandardCharsets.UTF_8)) {
@@ -68,11 +69,11 @@ class TtcTextTest {
     @ParameterizedTest
     @CsvSource({"en_us, NO_PROVIDER, NO PROVIDER", "uk_ua, NO_PROVIDER, Без провайдера",
             "en_us, NO_POWER, NO POWER", "uk_ua, NO_POWER, Немає енергії"})
-    void blockerHasWarningStyleAndTranslatedAdvice(String locale,
+    void blockerHasNormalWarningStyleAndTranslatedAdvice(String locale,
             com.ctux.ae2craftingtime.core.CraftingBlockReason reason, String expected) throws IOException {
         var lines = TtcText.blockReasonTooltip(reason);
         assertEquals(3, lines.size());
-        assertTrue(lines.get(0).getStyle().isBold());
+        assertFalse(lines.get(0).getStyle().isBold());
         assertEquals(TextColor.fromLegacyFormat(ChatFormatting.RED), lines.get(0).getStyle().getColor());
         try (var reader = new InputStreamReader(getClass().getResourceAsStream(
                 "/assets/ae2craftingtime/lang/" + locale + ".json"), StandardCharsets.UTF_8)) {
@@ -103,7 +104,7 @@ class TtcTextTest {
         var nestedContents = (TranslatableContents) ((Component) contents.getArgs()[0]).getContents();
         assertEquals("text.ae2craftingtime.collecting_data", nestedContents.getKey());
 
-        assertTrue(collectingData.getStyle().isBold());
+        assertFalse(collectingData.getStyle().isBold());
         assertEquals(TextColor.fromLegacyFormat(ChatFormatting.GRAY), collectingData.getStyle().getColor());
     }
 
