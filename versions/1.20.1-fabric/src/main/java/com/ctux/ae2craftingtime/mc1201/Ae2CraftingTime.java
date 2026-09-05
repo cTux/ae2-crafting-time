@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
@@ -32,6 +33,8 @@ public final class Ae2CraftingTime implements ModInitializer, ClientModInitializ
                             Ae2CraftingTimeSavedData.FILE_ID);
             ProfilerBridge.load(data);
         });
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> ProfilerBridge
+                .resyncPlatesForPlayer(handler.getPlayer()));
     }
 
     @Override

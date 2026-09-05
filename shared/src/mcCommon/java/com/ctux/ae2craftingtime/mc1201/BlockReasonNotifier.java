@@ -66,7 +66,10 @@ public final class BlockReasonNotifier {
     private static void notifyAll(Object scope, IGrid grid, Set<ProfileKey> keys, MinecraftServer server,
             String wordKey, Component detail, StuckEpisodeTracker tracker,
             BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
-        if (scope == null) {
+        if (scope == null || server == null) {
+            return;
+        }
+        if (!Ae2CraftingTimeConfig.ENABLED.get()) {
             return;
         }
         // Poll even when nothing is currently stuck: an empty set ends the
@@ -80,15 +83,18 @@ public final class BlockReasonNotifier {
         lookup.addAll(resolved);
         var owner = DelayedNotificationServer.ownerOf(scope, List.copyOf(lookup));
         if (owner == null) {
+            ProfilerBridge.persistProviderState();
             return;
         }
         var player = server.getPlayerList().getPlayer(owner);
         if (player == null) {
+            ProfilerBridge.persistProviderState();
             return;
         }
         var dimension = ProfilerBridge.dimensionId(grid);
+        var chatEnabled = Ae2CraftingTimeConfig.NOTIFY_ON_DELAYED.get();
         for (var key : newly) {
-            notify(player, scope, grid, dimension, owner, key, wordKey, detail, highlightSender);
+            notify(player, scope, grid, dimension, owner, key, wordKey, detail, highlightSender, chatEnabled);
         }
         for (var key : resolved) {
             DelayedNotificationServer.pushClearHighlight(player, key, highlightSender);
@@ -98,7 +104,7 @@ public final class BlockReasonNotifier {
 
     private static void notify(ServerPlayer player, Object scope, IGrid grid, String dimension, UUID owner,
             ProfileKey key, String wordKey, Component detail,
-            BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
+            BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender, boolean chatEnabled) {
         var positions = ProfilerBridge.locatePositions(scope, grid, key);
         var name = ProfilerBridge.displayName(key);
         UUID recordId = null;
@@ -108,12 +114,13 @@ public final class BlockReasonNotifier {
         }
         ProfilerBridge.replaceProviderStart(key, owner, positions, name);
         DelayedNotificationServer.pushAutoHighlight(player, dimension, key, positions, highlightSender);
-        player.sendSystemMessage(DelayedChatText.blockedMessage(name, recordId, wordKey, detail));
+        if (chatEnabled) {
+            player.sendSystemMessage(DelayedChatText.blockedMessage(name, recordId, wordKey, detail));
+        }
     }
 
     private static boolean armed(MinecraftServer server) {
-        return server != null && Ae2CraftingTimeConfig.ENABLED.get()
-                && Ae2CraftingTimeConfig.NOTIFY_ON_DELAYED.get();
+        return server != null && Ae2CraftingTimeConfig.ENABLED.get();
     }
 
     public static void clear(Object scope) {

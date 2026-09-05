@@ -317,6 +317,54 @@ public final class ProfilerBridge {
         }
     }
 
+    /**
+     * Re-sends every remembered delayed plate owned by the joining player, so
+     * a craft that became delayed while they were offline still shows red
+     * without opening any window. Chat is never re-sent here: login syncs
+     * plates only, once-per-episode warnings fire on live transitions while
+     * online and honor the chat setting there. Best-effort: missing positions
+     * or dimension simply skip that output.
+     */
+    public static void resyncPlatesForPlayer(net.minecraft.server.level.ServerPlayer player) {
+        if (player == null || !isEnabled()) {
+            return;
+        }
+        var owner = player.getUUID();
+        for (var status : PROFILER.snapshotStatuses()) {
+            if (status == null || status.kind() != StatusKind.DELAYED || status.key() == null) {
+                continue;
+            }
+            var key = status.key();
+            var start = ProviderLocateRecords.startFor(key).orElse(null);
+            if (start == null || !owner.equals(start.owner())) {
+                continue;
+            }
+            var positions = start.positions();
+            if (positions == null || positions.isEmpty()) {
+                continue;
+            }
+            var dimension = dimensionFromNetworkId(key.networkId());
+            if (dimension.isBlank()) {
+                continue;
+            }
+            try {
+                StatsNetwork.sendTo(player,
+                        new com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C(dimension, positions,
+                                key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS, true));
+            } catch (Exception ignored) {
+                // One unsendable plate must not hide the rest.
+            }
+        }
+    }
+
+    static String dimensionFromNetworkId(String networkId) {
+        if (networkId == null || networkId.isBlank()) {
+            return "";
+        }
+        var separator = networkId.indexOf('|');
+        return separator < 0 ? networkId : networkId.substring(0, separator);
+    }
+
     public static Optional<ProfileStats> stats(AEKey what) {
         if (what == null || !isEnabled()) {
             return Optional.empty();

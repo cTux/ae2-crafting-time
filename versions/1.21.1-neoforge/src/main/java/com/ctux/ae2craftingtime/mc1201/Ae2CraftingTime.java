@@ -7,6 +7,7 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 
 @Mod(Ae2CraftingTime.MOD_ID)
@@ -19,6 +20,7 @@ public final class Ae2CraftingTime {
         modBus.addListener(StatsNetwork::register);
         NeoForge.EVENT_BUS.addListener(this::onServerStarted);
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
+        NeoForge.EVENT_BUS.addListener(this::onPlayerLoggedIn);
     }
 
     private void onRegisterCommands(RegisterCommandsEvent event) {
@@ -32,5 +34,11 @@ public final class Ae2CraftingTime {
         var data = event.getServer().overworld().getDataStorage()
                 .computeIfAbsent(Ae2CraftingTimeSavedData.FACTORY, Ae2CraftingTimeSavedData.FILE_ID);
         ProfilerBridge.load(data);
+    }
+
+    private void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
+        if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+            ProfilerBridge.resyncPlatesForPlayer(player);
+        }
     }
 }
