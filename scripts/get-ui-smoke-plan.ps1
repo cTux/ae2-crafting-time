@@ -130,7 +130,7 @@ foreach ($change in $changes) {
     elseif ($path -cmatch '/resources/assets/ae2craftingtime/lang/en_us\.json$' -and $change.status -ceq 'M') {
         $oldRef = if ($change.from -eq ':') { ":$path" } else { "$($change.from):$path" }
         $old = Read-Language (Read-Git @('show',$oldRef,'--'))
-        $newJson = if ($change.to -eq 'worktree') { Get-Content -LiteralPath (Join-Path $Repository $path) -Raw }
+        $newJson = if ($change.to -eq 'worktree') { Get-Content -LiteralPath (Join-Path $Repository $path) -Raw -Encoding UTF8 }
             else { $newRef = if ($change.to -eq ':') { ":$path" } else { "$($change.to):$path" }; Read-Git @('show',$newRef,'--') }
         $new = Read-Language $newJson
         $keys = @(@($old.Keys) + @($new.Keys) | Sort-Object -Unique -CaseSensitive | Where-Object { !$old.ContainsKey($_) -or !$new.ContainsKey($_) -or $old[$_] -cne $new[$_] })
@@ -140,7 +140,7 @@ foreach ($change in $changes) {
     } elseif ($behavior.Count) { $cases = @($behavior.cases | Select-Object -Unique); $reason = $behavior.reason -join '; ' }
     else {
         if ($path -cmatch '/resources/assets/ae2craftingtime/lang/en_us\.json$' -and [IO.File]::Exists((Join-Path $Repository $path))) {
-            $null = Read-Language (Get-Content -LiteralPath (Join-Path $Repository $path) -Raw)
+            $null = Read-Language (Get-Content -LiteralPath (Join-Path $Repository $path) -Raw -Encoding UTF8)
         }
         $cases = @('suite'); $fallback = $true; $reason = 'No narrow behavior rule; full consuming suites required'
     }
