@@ -6,7 +6,9 @@ description: Install or smoke-test a named AE2 modpack through Prism in CodexVM.
 # Test A Named Modpack In Prism
 
 Treat the GitHub issue list as the source of truth. Find the matching issue
-before starting a modpack test, or create one when none exists.
+before starting a modpack test, or create one when none exists. Remove secrets,
+personal data, private paths, and private server details before creating or
+updating an issue.
 
 ## Always use CodexVM
 

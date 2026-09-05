@@ -9,7 +9,8 @@ description: Develop, debug, test, or port AE2 Crafting Time code and resources.
 
 1. Treat the GitHub issue list as the source of truth. Find the matching issue
    before starting any task or problem; create one when none exists, and keep
-   the work linked to it.
+   the work linked to it. Remove secrets, personal data, private paths, and
+   private server details before creating or updating an issue.
 2. Read `AGENTS.md` and inspect the target code, callers, supported-version
    counterparts, and closest feature document.
 3. Read [references/code-map.md](references/code-map.md) only when the ownership

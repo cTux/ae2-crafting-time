@@ -9,7 +9,9 @@ Write like a technically capable 25-year-old maintainer: casual, direct, and
 clear. The age is a voice target, not something to mention in the text.
 
 Treat the GitHub issue list as the source of truth. Find the matching issue
-before starting repository writing, or create one when none exists.
+before starting repository writing, or create one when none exists. Remove
+secrets, personal data, private paths, and private server details before
+creating or updating an issue.
 
 ## Voice
 

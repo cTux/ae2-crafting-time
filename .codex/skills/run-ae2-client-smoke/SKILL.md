@@ -6,7 +6,9 @@ description: Run prepared AE2 Crafting Time repository clients or automated UI s
 # Smoke-Test Prepared AE2 Clients
 
 Treat the GitHub issue list as the source of truth. Find the matching issue
-before starting a smoke-test task, or create one when none exists.
+before starting a smoke-test task, or create one when none exists. Remove
+secrets, personal data, private paths, and private server details before
+creating or updating an issue.
 
 ## Route
 

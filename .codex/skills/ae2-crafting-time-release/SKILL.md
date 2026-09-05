@@ -14,7 +14,9 @@ when preparing artifacts for a client or modpack smoke test.
 
 1. Read `AGENTS.md` and `docs/release.md`; they own the complete release order.
 2. Treat the GitHub issue list as the source of truth. Find the matching issue
-   for release work before starting, or create one when none exists.
+   for release work before starting, or create one when none exists. Remove
+   secrets, personal data, private paths, and private server details before
+   creating or updating an issue.
 3. Read [the writing skill](../ae2-crafting-time-writing/SKILL.md) before
    changing changelogs, release notes, or text published to CurseForge,
    Modrinth, or GitHub.
