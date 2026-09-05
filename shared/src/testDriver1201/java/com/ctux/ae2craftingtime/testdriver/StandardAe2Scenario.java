@@ -6,6 +6,7 @@ import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.client.gui.me.crafting.CraftingStatusScreen;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.ProviderHighlightClient;
+import com.ctux.ae2craftingtime.mc1201.ProviderHighlightShapes;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import com.ctux.ae2craftingtime.testdriver.mixin.CraftAmountScreenAccessor;
 import com.ctux.ae2craftingtime.testdriver.mixin.MEStorageScreenAccessor;
@@ -29,7 +30,7 @@ import java.util.function.Function;
 /** Bounded, real plan -> dispatch -> vanilla processing -> completed output flow. */
 final class StandardAe2Scenario {
     static final Map<String, List<String>> CHECKS = Map.ofEntries(
-            Map.entry("standard-plan-controls", List.of("plan", "plan-sort", "plan-tooltip", "plan-details", "plan-reset", "total-ttc", "layout")),
+            Map.entry("standard-plan-controls", List.of("plan", "plan-sort", "plan-tooltip", "plan-details", "plan-reset", "total-ttc", "layout", "item-resolution")),
             Map.entry("standard-status-controls", List.of("submitted", "status", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout")),
             Map.entry("waiting-status", List.of("submitted", "waiting", "first-dispatch", "recovered", "layout")),
             Map.entry("running-status", List.of("submitted", "running", "progress", "header", "layout")),
@@ -69,7 +70,15 @@ final class StandardAe2Scenario {
         }
         if (phase == Stage.PREPARE) {
             fixture.holdFinalOutput = leaf.equals("delayed-status");
-            if (server(minecraft, player -> fixture.prepare(player, marker))) phase = Stage.values()[phase.ordinal() + 1];
+            if (server(minecraft, player -> fixture.prepare(player, marker))) {
+                if (leaf.equals("standard-plan-controls")) {
+                    mark(checks, "item-resolution", ProviderHighlightShapes.resolveItem(null).isEmpty()
+                            && ProviderHighlightShapes.resolveItem("not an id!!").isEmpty()
+                            && ProviderHighlightShapes.resolveItem("minecraft:not_a_real_item_xyz").isEmpty()
+                            && ProviderHighlightShapes.resolveItem("minecraft:stone").is(net.minecraft.world.item.Items.STONE));
+                }
+                phase = Stage.values()[phase.ordinal() + 1];
+            }
             return false;
         }
         if (phase == Stage.TERMINAL) {
@@ -155,6 +164,10 @@ final class StandardAe2Scenario {
         var snapshot = UiObservationStore.latest();
         if (snapshot == null || snapshot.frame() == lastFrame) return false;
         lastFrame = snapshot.frame();
+        if (phase == Stage.PLAN_SORT && leaf.equals("standard-plan-controls") && !planEstimatesReady(snapshot.rows())) {
+            frames.reset();
+            return false;
+        }
         if (!frames.observe(phase.ordinal() * 10 + sort)) return false;
         boolean plan = phase.ordinal() < Stage.OPEN_STATUS.ordinal();
         String prefix = plan ? "plan" : "status";
@@ -387,6 +400,12 @@ final class StandardAe2Scenario {
         return expected.entrySet().stream().allMatch(entry -> snapshot.tooltip().stream()
                 .anyMatch(text -> text.key().equals(entry.getKey()) && text.rendered().endsWith(": " + entry.getValue())))
                 && snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.stall.improvements"));
+    }
+
+    static boolean planEstimatesReady(List<UiSnapshot.Row> rows) {
+        return List.of("minecraft:stone", "minecraft:smooth_stone").stream().allMatch(id -> rows.stream()
+                .anyMatch(row -> row.outputId().equals(id)
+                        && row.description().stream().anyMatch(CraftPlanScenario::isResolvedTtc)));
     }
 
     private static void mark(Map<String, Boolean> checks, String key, boolean value) {

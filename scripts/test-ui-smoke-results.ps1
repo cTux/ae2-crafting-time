@@ -22,16 +22,47 @@ try {
             ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $directory 'result.json')
     }
     Assert (@(Read-Results | Where-Object result -eq 'PASS').Count -eq 6) 'Complete leaves must pass'
+    foreach ($case in $cases) {
+        $caseFile = Join-Path (Join-Path $temp $case) 'result.json'
+        $valid = Get-Content -LiteralPath $caseFile -Raw
+        $data = $valid | ConvertFrom-Json
+        $reordered = [ordered]@{}
+        foreach ($check in @($data.checks.psobject.Properties.Name | Sort-Object -Descending)) { $reordered[$check] = $true }
+        $data.checks = $reordered
+        $data | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $caseFile
+        Assert ((Read-Results | Where-Object scenario -eq $case).result -eq 'PASS') "JSON check order must not affect $case"
+        foreach ($invalid in @('true', 'false', 1, $null)) {
+            $data = $valid | ConvertFrom-Json
+            $data.complete = $invalid
+            $data | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $caseFile
+            Assert ((Read-Results | Where-Object scenario -eq $case).result -eq 'FAIL') "Non-boolean complete must fail $case"
+            $data = $valid | ConvertFrom-Json
+            $check = $catalogue.cases.$case.checks[0]
+            $data.checks.$check = $invalid
+            $data | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $caseFile
+            Assert ((Read-Results | Where-Object scenario -eq $case).result -eq 'FAIL') "Non-boolean check must fail $case"
+        }
+        $data = $valid | ConvertFrom-Json
+        $check = $catalogue.cases.$case.checks[0]
+        $data.checks.psobject.Properties.Remove($check)
+        $data.checks | Add-Member -NotePropertyName $check.ToUpperInvariant() -NotePropertyValue $true
+        $data | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $caseFile
+        Assert ((Read-Results | Where-Object scenario -eq $case).result -eq 'FAIL') "Wrong check casing must fail $case"
+        Set-Content -LiteralPath $caseFile -Value $valid
+    }
     $directory = Join-Path $temp 'delayed-status'
     $image = Join-Path $directory 'delayed-tooltip.png'
     Remove-Item -LiteralPath $image
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') 'Missing image must fail'
     Set-Content -LiteralPath $image -Value 'fixture-image'
     $snapshot = Join-Path $directory 'delayed-tooltip.json'
+    $validSnapshot = Get-Content -LiteralPath $snapshot -Raw
     Remove-Item -LiteralPath $snapshot
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') 'Missing snapshot must fail'
     Set-Content -LiteralPath $snapshot -Value '{}'
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') 'Invalid snapshot must fail'
+    Set-Content -LiteralPath $snapshot -Value $validSnapshot
+    Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'PASS') 'Restored evidence must pass before testing result fields'
     $file = Join-Path $directory 'result.json'
     $original = Get-Content -LiteralPath $file -Raw
     foreach ($field in @('schema','complete','target','profile','scenario','language','result')) {
@@ -40,6 +71,20 @@ try {
         $data | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $file
         Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') "Invalid $field must fail"
     }
+    foreach ($check in $catalogue.cases.'delayed-status'.checks) {
+        foreach ($mutation in @('missing', 'false')) {
+            $data = $original | ConvertFrom-Json
+            if ($mutation -eq 'missing') { $data.checks.psobject.Properties.Remove($check) }
+            else { $data.checks.$check = $false }
+            $data | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $file
+            $outcome = Read-Results | Where-Object scenario -eq 'delayed-status'
+            Assert ($outcome.result -eq 'FAIL') "$mutation check must fail: $check"
+            $expectedReason = if ($mutation -eq 'missing') { 'Incomplete check set' } else { "Failed check: $check" }
+            Assert ($outcome.reason -eq $expectedReason) "Wrong rejection for $mutation check: $check"
+        }
+    }
+    Set-Content -LiteralPath $file -Value $original
+    Assert (@(Read-Results | Where-Object result -eq 'PASS').Count -eq 6) 'Restoring a failed leaf must restore the complete group'
     Set-Content -LiteralPath $file -Value '{'
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') 'Malformed result must fail'
     $expected = Join-Path $temp 'expected-adapters.json'

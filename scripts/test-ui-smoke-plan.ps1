@@ -98,6 +98,15 @@ try {
     Put $lang '{"text.ae2craftingtime.ttc_delayed":"late","other":"value"}'
     Assert ((Plan).targets[0].mode -eq 'full') 'Index and worktree key changes must union'
     Clean
+    $unicodeLanguage = '{"text.ae2craftingtime.ttc_delayed":"DELAYED","other":"value' + [char]0x2026 + '"}'
+    Put $lang $unicodeLanguage
+    Invoke-FixtureGit @('add','--',$lang)
+    Invoke-FixtureGit @('commit','-m','UTF-8 language baseline')
+    Put $lang ($unicodeLanguage.Replace('DELAYED','LATE'))
+    $unicodePlan = & $planner -Changed -BaseRef HEAD -Repository $temp
+    Assert (@($unicodePlan.targets | Where-Object { $_.cases.Count -ne 1 -or $_.cases[0] -ne 'delayed-status' }).Count -eq 0) 'Unchanged UTF-8 values must not broaden delayed selection'
+    Assert ($unicodePlan.targets.Count -eq 4) 'UTF-8 delayed edit must select all targets'
+    Clean
     foreach ($invalid in @('{', '{"key":"one","key":"two"}', '{"key":2}')) {
         Put $lang $invalid
         Reject { Plan } 'Malformed or duplicate language JSON must fail'

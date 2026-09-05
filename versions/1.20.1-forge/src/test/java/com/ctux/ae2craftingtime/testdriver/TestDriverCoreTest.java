@@ -104,6 +104,23 @@ class TestDriverCoreTest {
         assertFalse(NoPowerScenario.tooltipReady(List.of()));
     }
 
+    @Test
+    void standardPlanWaitsForBothSeededEstimatesBeforeCheckingSortOrder() {
+        var ready = UiObservationStore.observed(List.of(TtcText.ttc("~2s")), null);
+        var pending = UiObservationStore.observed(List.of(TtcText.ttcCollectingData()), null);
+        var stone = new UiSnapshot.Row("minecraft:stone", 1, null, ready);
+        var smooth = new UiSnapshot.Row("minecraft:smooth_stone", 1, null, ready);
+        assertFalse(StandardAe2Scenario.planEstimatesReady(List.of()));
+        assertFalse(StandardAe2Scenario.planEstimatesReady(List.of(stone)));
+        for (var unresolved : List.of(pending, List.<UiSnapshot.ObservedText>of())) {
+            assertFalse(StandardAe2Scenario.planEstimatesReady(List.of(smooth,
+                    new UiSnapshot.Row("minecraft:stone", 1, null, unresolved))));
+            assertFalse(StandardAe2Scenario.planEstimatesReady(List.of(stone,
+                    new UiSnapshot.Row("minecraft:smooth_stone", 1, null, unresolved))));
+        }
+        assertTrue(StandardAe2Scenario.planEstimatesReady(List.of(smooth, stone)));
+    }
+
     @TempDir
     Path temporary;
 

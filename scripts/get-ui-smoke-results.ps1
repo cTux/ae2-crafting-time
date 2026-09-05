@@ -16,7 +16,7 @@ foreach ($scenario in $Scenarios) {
     if (Test-Path -LiteralPath $file -PathType Leaf) {
         try {
             $data = Get-Content -LiteralPath $file -Raw | ConvertFrom-Json
-            if ($data.schema -ne 1 -or !$data.complete -or $data.target -cne $Target -or $data.profile -cne $Profile -or
+            if ($data.schema -ne 1 -or $data.complete -isnot [bool] -or !$data.complete -or $data.target -cne $Target -or $data.profile -cne $Profile -or
                     $data.scenario -cne $scenario -or $data.language -cne 'en_us' -or $data.result -cne 'PASS') { throw 'Failed or mismatched result' }
             if ($ExpectedAdapters) {
                 $expected = Get-Content -LiteralPath $ExpectedAdapters -Raw | ConvertFrom-Json
@@ -29,8 +29,8 @@ foreach ($scenario in $Scenarios) {
                 }
             }
             if ($contracts.$scenario) {
-                if (Compare-Object @($contracts.$scenario.checks) @($data.checks.psobject.Properties.Name) -SyncWindow 0) { throw 'Incomplete check set' }
-                foreach ($check in $contracts.$scenario.checks) { if ($data.checks.$check -ne $true) { throw "Failed check: $check" } }
+                if (Compare-Object @($contracts.$scenario.checks) @($data.checks.psobject.Properties.Name) -CaseSensitive) { throw 'Incomplete check set' }
+                foreach ($check in $contracts.$scenario.checks) { if ($data.checks.$check -isnot [bool] -or !$data.checks.$check) { throw "Failed check: $check" } }
                 foreach ($image in $contracts.$scenario.screenshots) {
                     if ($image -cnotin $data.screenshots -or !(Test-Path -LiteralPath (Join-Path $directory $image) -PathType Leaf) -or
                             !(Test-Path -LiteralPath (Join-Path $directory ($image.Replace('.png','.json'))) -PathType Leaf)) { throw "Missing evidence: $image" }

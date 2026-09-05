@@ -8,6 +8,18 @@ import org.junit.jupiter.api.Test;
 
 class PlayerRequestRateLimitTest {
     @Test
+    void isolatesPlayersAndKeepsWindowAnchoredDespiteRejectedRequests() {
+        var limit = new PlayerRequestRateLimit();
+        var first = UUID.randomUUID();
+        var second = UUID.randomUUID();
+        assertTrue(limit.allow(first, 512, 1000));
+        assertTrue(limit.allow(second, 512, 1500));
+        assertFalse(limit.allow(first, 1, 1999));
+        assertTrue(limit.allow(first, 512, 2000));
+        assertFalse(limit.allow(second, 1, 2000));
+        assertTrue(limit.allow(second, 512, 2500));
+    }
+    @Test
     void permitsNormalBurstAndRejectsExcessUntilNextWindow() {
         var limit = new PlayerRequestRateLimit();
         var player = UUID.randomUUID();

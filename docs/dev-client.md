@@ -140,28 +140,91 @@ ExtendedAE-Plus is included in the Forge 1.20.1 and NeoForge 1.21.1 compatible
 profiles. Expanded AE stays excluded because its Applied Flux pattern-provider
 mixin conflicts with other candidates in both rows.
 
-## Change-based UI smoke
+## Choosing smoke coverage
 
-After the PR exists, use `scripts/run-ui-smoke.ps1 -Changed -BaseRef origin/master`
-for authorized verification of a change. Add `-PlanOnly` to inspect targets,
-expanded cases and reasons without building or accessing the VM. Committed,
-staged, unstaged and untracked changes are unioned from the merge base.
-Missing refs, conflicts and stale fingerprints fail before execution.
+Run these commands from the repository root on the host, after the PR exists.
+Add `-PlanOnly` to any example to print the selected targets, cases, dependency
+graphs and reasons without building or accessing CodexVM. A dependency graph is
+one resolved set of installed mods and loader versions.
 
-No arguments still runs full suites. Explicit `-Target` / `-Scenario` requests
-are manual coverage, and cannot be combined with `-Changed`. A focused pass
-never satisfies a full-suite or release gate. Docs/tests-only plans report
-`NOT_REQUIRED`; their normal checks remain required.
+| What to check | Command |
+|---|---|
+| All supported targets, full coverage | `.\scripts\run-ui-smoke.ps1` |
+| Full coverage on one target | `.\scripts\run-ui-smoke.ps1 -Target 1.20.1-fabric` |
+| Six standard AE2 cases on one target | `.\scripts\run-ui-smoke.ps1 -Target 1.21.1-neoforge -Scenario standard-ae2` |
+| One case on one target | `.\scripts\run-ui-smoke.ps1 -Target 1.20.1-forge -Scenario delayed-status` |
+| One case on every supported target | `.\scripts\run-ui-smoke.ps1 -Scenario delayed-status` |
+| Coverage selected from changes | `.\scripts\run-ui-smoke.ps1 -Changed -BaseRef origin/master` |
 
-`-Scenario standard-ae2` expands to six independent cases in one launch, with
-one fresh world per case. You can run any leaf directly: `standard-plan-controls`,
-`standard-status-controls`, `waiting-status`, `running-status`, `delayed-status`,
-or `craft-lifecycle`. The raw JVM scenario property now accepts the leaves;
-`standard-ae2` is a host alias. Flat suites accept up to 64 unique cases.
+Valid target IDs are `1.20.1-forge`, `1.20.1-fabric`, `1.21.1-neoforge` and
+`26.1.2-neoforge`. Omitting `-Target` selects all targets in manual mode;
+omitting `-Scenario` selects their full suites. `-Scenario` takes one name,
+not a comma-separated list. Use the standard group when you need all six core
+cases, or separate invocations for individual cases. Addon cases must exist in
+the selected target's suite; inspect the plan before launching.
 
-Campaigns retain `selection.json`, bundle hashes, leaf outcomes and group
-results. All six leaves and their screenshots/semantic sidecars must pass for
-`standard-ae2` to pass. Missing and unselected leaves remain `NOT_RUN`.
+### How the standard checks are split
+
+`standard-ae2` is a host-side group that expands in this order:
+
+| Independent case | Behavior checked |
+|---|---|
+| `standard-plan-controls` | Plan sorting, tooltip, details, reset, total TTC, layout and item resolution |
+| `standard-status-controls` | Submitted-job status, sorting, tooltip, details, reset, header and layout |
+| `waiting-status` | Waiting state, first dispatch and recovery |
+| `running-status` | Running state, progress, header and layout |
+| `delayed-status` | Delayed row, tooltip, world highlight, recovery, completion, output and profiling |
+| `craft-lifecycle` | Plan, submission, status, completion, output and profiling |
+
+Each case owns its setup, assertions and evidence, so it can run directly
+without a preceding case. Group execution uses one Minecraft process with a
+fresh disposable world per case. It does not launch six clients. The raw JVM
+scenario property accepts leaf names; `standard-ae2` itself is only a host alias.
+The older `craft-plan` scenario is a separate case, not another name for
+`standard-plan-controls` or the group.
+
+The authoritative case order, assertions and screenshots are in
+[`ui-smoke-groups.json`](../scripts/ui-smoke-groups.json); full target membership
+is in `scripts/ui-smoke-*-suite.json`. Flat suites allow up to 64 unique cases.
+Adding a case also requires updating its evidence contract and the affected
+suite/selection coverage; do not make a new case depend on a previous world.
+
+### Selecting coverage from changes
+
+Preview a change-based plan first:
+
+```powershell
+.\scripts\run-ui-smoke.ps1 -Changed -BaseRef origin/master -PlanOnly
+```
+
+`-BaseRef` must resolve locally. The planner does not fetch it for you; refresh
+the reference separately when needed. It unions committed changes since the
+merge base with staged, unstaged and untracked changes. A docs-only latest
+commit can still select full smoke when earlier commits on the branch changed
+runtime code. Ignored build artifacts are not inputs to change selection.
+
+[`ui-smoke-impact.json`](../scripts/ui-smoke-impact.json) maps paths to consuming
+targets and behavior. A change to only the English `text.ae2craftingtime.ttc_delayed`
+value selects `delayed-status`; other runtime changes without a narrow rule
+select full consuming suites. Multiple changes are combined, and a full-suite
+requirement wins over a narrow selection. Docs/tests-only changes can report
+`NOT_REQUIRED`; normal static and unit checks still apply. This is not a smoke
+PASS.
+
+`-Changed` cannot be combined with `-Target`, `-Scenario`, `-ProjectId`, `-Latest`
+or `-Interactive`. Use a manual command when you explicitly need one target or
+case, and report it as manual coverage. Missing refs, conflicts and stale
+fingerprints fail before execution. If source or rules change after planning,
+replan and rebuild rather than reuse stale evidence.
+
+### Runs, dependency graphs and results
+
+Cases selected for the same target and dependency graph run sequentially in one
+client, each in a fresh world. Separate targets or incompatible dependency graphs
+need separate launches. The runner continues with later graphs/targets after a
+failure, but stops if it cannot confirm the previous client exited. A failed
+case leaves later cases in that client `NOT_RUN`; there are no automatic retries.
+An explicit diagnostic rerun gets new evidence and does not erase the failure.
 
 Full plans also list required focused graphs declared in the coverage matrix.
 For Forge, NeoEco's two direct cases run against its newest graph separately
@@ -170,4 +233,13 @@ reads the ordered catalogue in the exact packaged artifacts. Each native direct
 case must report that newest adapter ID; `latest` alone is not proof. Failure
 of a required focused graph fails a compatible campaign, even though that
 separate graph uses latest dependencies. Core-focused cases retain the full
-compatible graph and do not gain unrelated addon runs.
+compatible graph and do not gain unrelated addon runs. Targeting a case narrows
+checks; it does not automatically remove unrelated installed mods.
+
+Campaigns retain `selection.json`, bundle hashes, leaf outcomes and group
+results under `build/ui-smoke/campaigns`. All six leaves and their required
+screenshots/semantic sidecars from the same run must pass for `standard-ae2` to
+pass. Missing or unselected cases stay `NOT_RUN`. A targeted pass proves only
+its selected checks; it never satisfies a full-suite or release gate. Preserve
+setup failures, crashes and timeouts alongside passing cases. Follow the
+[smoke evidence guide](ui-smoke-evidence.md) for review and archival requirements.
