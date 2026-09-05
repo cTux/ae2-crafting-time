@@ -240,6 +240,26 @@ class ProviderPlatesTest {
         assertEquals(40, ProviderHighlightClient.plates().size());
     }
 
+    @Test
+    void delayedPlateSurvivesBlockedEpisodeClear() {
+        // Delayed red and a blocked warning share the same output: clearing
+        // only the blocked episode (edge-only) must leave red until the
+        // delayed lifecycle (recovery, finish, cancel) removes it.
+        var network = "minecraft:overworld|1,2,3";
+        ProviderHighlightClient.showPlate(network, "minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.show(network, "minecraft:overworld", List.of(new BlockPos(1, 2, 3)), 15,
+                "minecraft:iron_ingot");
+
+        ProviderHighlightClient.clearEdgeFor(network, "minecraft:iron_ingot");
+        assertEquals(1, ProviderHighlightClient.plates().size());
+        assertNull(ProviderHighlightClient.live());
+
+        // Only an explicit delayed clear removes red.
+        ProviderHighlightClient.clearFor(network, "minecraft:iron_ingot");
+        assertTrue(ProviderHighlightClient.plates().isEmpty());
+    }
+
     private static ProfileStats stats() {
         return new ProfileStats(1, 20.0, 0.05, 1.0, 20, ProfileUnit.ITEM, false, 1, 4.0, List.of(20L),
                 List.of(1L));
