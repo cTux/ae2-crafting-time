@@ -50,6 +50,9 @@ then generate fresh chunks; importing saved chunks could restore
 incompatible CPU jobs before the driver starts. Other scenarios keep their
 tracked layouts. The host keeps one process for the group.
 
+Plan controls also checks highlight item resolution against the loaded registry:
+known stone resolves correctly; null, malformed, and unknown IDs return empty stacks.
+
 The [leaf contracts](../automated-ui-testing/technical-design.md#groups-and-independent-standard-flow)
 retain every original assertion. Waiting and running require real dependency
 progress. Delayed checks the active row, bold red label, diagnostic tooltip and
