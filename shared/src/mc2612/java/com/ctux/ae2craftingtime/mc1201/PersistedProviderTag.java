@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.core.PacketLimits;
 import com.ctux.ae2craftingtime.core.ProfileKey;
+import com.ctux.ae2craftingtime.mc1201.ProviderLocateRecords.LocateRecord;
 import com.ctux.ae2craftingtime.mc1201.ProviderLocateRecords.StoredStart;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,5 +79,81 @@ final class PersistedProviderTag {
     }
 
     private PersistedProviderTag() {
+    }
+
+    static List<LocateRecord> readRecords(ListTag tags) {
+        var persisted = new ArrayList<LocateRecord>();
+        for (var recordTag : tags) {
+            if (!(recordTag instanceof CompoundTag record)) {
+                continue;
+            }
+            UUID id;
+            UUID owner;
+            try {
+                id = UUID.fromString(record.getStringOr("id", ""));
+                owner = UUID.fromString(record.getStringOr("owner", ""));
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
+            String outputId;
+            try {
+                outputId = PacketLimits.checkedOutputId(record.getStringOr("outputId", ""));
+            } catch (IllegalArgumentException e) {
+                continue;
+            }
+            var positions = new ArrayList<BlockPos>();
+            for (var posTag : record.getListOrEmpty("positions")) {
+                if (positions.size() >= PacketLimits.MAX_HIGHLIGHT_POSITIONS) {
+                    break;
+                }
+                if (posTag instanceof LongTag longTag) {
+                    positions.add(BlockPos.of(longTag.longValue()));
+                }
+            }
+            var name = record.getStringOr("name", "");
+            if (name.length() > MAX_NAME_LENGTH) {
+                continue;
+            }
+            var dimension = record.getStringOr("dimension", "");
+            var tick = record.getLongOr("tick", 0L);
+            persisted.add(new LocateRecord(id, owner, dimension, positions,
+                    name.isBlank() ? outputId : name, outputId, tick));
+            if (persisted.size() >= 256) {
+                break;
+            }
+        }
+        return persisted;
+    }
+
+    static ListTag writeRecords(List<LocateRecord> records) {
+        var recordTags = new ListTag();
+        for (var record : records) {
+            if (record == null || record.id() == null || record.owner() == null) {
+                continue;
+            }
+            var tag = new CompoundTag();
+            tag.putString("id", record.id().toString());
+            tag.putString("owner", record.owner().toString());
+            tag.putString("dimension", record.dimensionId() == null ? "" : record.dimensionId());
+            var posTags = new ListTag();
+            if (record.positions() != null) {
+                for (var pos : record.positions()) {
+                    if (pos == null || posTags.size() >= PacketLimits.MAX_HIGHLIGHT_POSITIONS) {
+                        continue;
+                    }
+                    posTags.add(LongTag.valueOf(pos.asLong()));
+                }
+            }
+            tag.put("positions", posTags);
+            var name = record.outputName() == null ? "" : record.outputName();
+            tag.putString("name", name.length() > MAX_NAME_LENGTH ? name.substring(0, MAX_NAME_LENGTH) : name);
+            tag.putString("outputId", record.outputId() == null ? "" : record.outputId());
+            tag.putLong("tick", record.createdTick());
+            recordTags.add(tag);
+            if (recordTags.size() >= 256) {
+                break;
+            }
+        }
+        return recordTags;
     }
 }

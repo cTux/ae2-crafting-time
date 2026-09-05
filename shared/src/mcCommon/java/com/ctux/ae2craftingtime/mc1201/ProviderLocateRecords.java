@@ -179,6 +179,111 @@ public final class ProviderLocateRecords {
         }
     }
 
+    /**
+     * All persisted fallbacks owned by the player for the given output id,
+     * across every network. Chat links carry only the output id (no network),
+     * so validation tries each network's fallback and uses the first with
+     * still-valid provider targets instead of the captured record positions.
+     */
+    public static synchronized List<StoredStart> startsForOutput(UUID owner, String outputId) {
+        var matches = new ArrayList<StoredStart>();
+        if (owner == null || outputId == null || outputId.isBlank()) {
+            return List.copyOf(matches);
+        }
+        for (var entry : STARTS.entrySet()) {
+            var key = entry.getKey();
+            var info = entry.getValue();
+            if (key == null || info == null || !outputId.equals(key.outputId())
+                    || !owner.equals(info.owner())) {
+                continue;
+            }
+            matches.add(new StoredStart(key, info.owner(), info.dimensionId(), info.positions(),
+                    info.outputName()));
+        }
+        return List.copyOf(matches);
+    }
+
+    /**
+     * Snapshot click-scoped locate records for world save so active-craft
+     * chat links stay usable across reload. Finished, cancelled, and broken
+     * records are removed on finish and resync, so only live links persist.
+     */
+    public static synchronized List<LocateRecord> snapshotRecords() {
+        var snapshot = new ArrayList<LocateRecord>();
+        for (var record : RECORDS.values()) {
+            if (record == null || record.id() == null || record.owner() == null) {
+                continue;
+            }
+            snapshot.add(new LocateRecord(record.id(), record.owner(),
+                    record.dimensionId() == null ? "" : record.dimensionId(),
+                    record.positions() == null ? List.of() : List.copyOf(record.positions()),
+                    record.outputName() == null ? "" : record.outputName(),
+                    record.outputId() == null ? "" : record.outputId(),
+                    record.createdTick()));
+            if (snapshot.size() >= MAX_RECORDS) {
+                break;
+            }
+        }
+        return List.copyOf(snapshot);
+    }
+
+    public static synchronized void restoreRecords(List<LocateRecord> stored) {
+        RECORDS.clear();
+        if (stored == null) {
+            return;
+        }
+        for (var record : stored) {
+            if (record == null || record.id() == null || record.owner() == null) {
+                continue;
+            }
+            RECORDS.put(record.id(), new LocateRecord(record.id(), record.owner(),
+                    record.dimensionId() == null ? "" : record.dimensionId(),
+                    record.positions() == null ? List.of() : List.copyOf(record.positions()),
+                    record.outputName() == null ? "" : record.outputName(),
+                    record.outputId() == null ? "" : record.outputId(),
+                    record.createdTick()));
+            evictEldest(RECORDS, MAX_RECORDS);
+        }
+    }
+
+    /**
+     * Forgets one click record, for example when its provider targets all
+     * validate as broken. Finished and cancelled jobs forget all of their
+     * owner's records for the scope's outputs via
+     * {@link #removeRecordsForKeys}.
+     */
+    public static synchronized void removeRecord(UUID id) {
+        if (id != null) {
+            RECORDS.remove(id);
+        }
+    }
+
+    /**
+     * Forgets every click record for the finished scope's outputs so
+     * finished and cancelled chat links expire instead of recreating a
+     * highlight. Other owners and other outputs are untouched, so identical
+     * outputs on another player's craft keep working links.
+     */
+    public static synchronized void removeRecordsForKeys(
+            java.util.Collection<com.ctux.ae2craftingtime.core.ProfileKey> keys, UUID owner) {
+        if (keys == null || keys.isEmpty() || owner == null) {
+            return;
+        }
+        var outputIds = new java.util.HashSet<String>();
+        for (var key : keys) {
+            if (key != null && key.outputId() != null && !key.outputId().isBlank()) {
+                outputIds.add(key.outputId());
+            }
+        }
+        if (outputIds.isEmpty()) {
+            return;
+        }
+        RECORDS.entrySet().removeIf(entry -> {
+            var record = entry.getValue();
+            return record != null && owner.equals(record.owner()) && outputIds.contains(record.outputId());
+        });
+    }
+
     public static synchronized void restoreStarts(List<StoredStart> stored) {
         STARTS.clear();
         if (stored == null) {

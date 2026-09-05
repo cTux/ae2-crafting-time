@@ -278,6 +278,7 @@ public final class ProfilerBridge {
     public static void persistProviderState() {
         if (savedData != null) {
             savedData.replaceProviderStarts(ProviderLocateRecords.snapshotStarts());
+            savedData.replaceProviderRecords(ProviderLocateRecords.snapshotRecords());
         }
         persistStatuses();
     }
@@ -305,9 +306,12 @@ public final class ProfilerBridge {
         var releasable = highlightKeys.stream().filter(key -> key != null && !PROFILER.hasPending(key)).toList();
         clearHighlights(server, highlightOwner.orElse(null), Set.copyOf(releasable));
         // Finished and cancelled targets must never return after a reload:
-        // forget their provider fallback as well as their statuses.
+        // forget their provider fallback and their click records as well as
+        // their statuses, so stale chat links expire instead of highlighting
+        // a replacement block or recreating red.
         if (!releasable.isEmpty()) {
             ProviderLocateRecords.removeStarts(releasable);
+            ProviderLocateRecords.removeRecordsForKeys(releasable, highlightOwner.orElse(null));
         }
         persistProviderState();
     }
@@ -547,6 +551,7 @@ public final class ProfilerBridge {
         ProviderLocateRecords.clearAll();
         BlockReasonNotifier.clearAll();
         ProviderLocateRecords.restoreStarts(data.providerStarts());
+        ProviderLocateRecords.restoreRecords(data.providerRecords());
         PROFILER.restoreStatuses(data.statuses());
         var migrated = PROFILER.snapshotSamples();
         if (!migrated.equals(data.samples())) {

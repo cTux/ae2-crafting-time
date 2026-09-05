@@ -25,9 +25,10 @@ public final class Ae2CraftingTime {
 
     private void onRegisterCommands(RegisterCommandsEvent event) {
         event.getDispatcher().register(ProviderLocateCommand.build((source, id) ->
-                ProviderLocateCommand.locate(source, id, (player, record) -> StatsNetwork.sendTo(player,
-                        new ProviderHighlightS2C(record.dimensionId(), record.positions(), record.outputId(),
-                                ProviderLocateCommand.HIGHLIGHT_SECONDS, false)))));
+                ProviderLocateCommand.locate(source, id, (player, highlight) -> StatsNetwork.sendTo(player,
+                        new ProviderHighlightS2C(highlight.networkId(), highlight.dimensionId(),
+                                highlight.positions(), highlight.outputId(), highlight.durationSeconds(),
+                                highlight.plateOnly())))));
     }
 
     private void onServerStarted(ServerStartedEvent event) {
