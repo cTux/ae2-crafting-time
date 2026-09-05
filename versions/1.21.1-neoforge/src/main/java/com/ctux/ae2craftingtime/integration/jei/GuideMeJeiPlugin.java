@@ -4,6 +4,8 @@ import guideme.Guides;
 import java.util.List;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
+import mezz.jei.api.constants.VanillaTypes;
+import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
 import mezz.jei.api.registration.IExtraIngredientRegistration;
 import mezz.jei.api.registration.ISubtypeRegistration;
 import net.minecraft.resources.ResourceLocation;
@@ -27,7 +29,9 @@ public final class GuideMeJeiPlugin implements IModPlugin {
         if (ModList.get().isLoaded("guideme")) {
             var guide = createGuide();
             registration.registerSubtypeInterpreter(
-                    guide.getItem(), (stack, context) -> stack.getComponentsPatch());
+                    VanillaTypes.ITEM_STACK,
+                    guide.getItem(),
+                    (ISubtypeInterpreter<ItemStack>) (stack, context) -> stack.getComponentsPatch());
         }
     }
 
