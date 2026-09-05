@@ -50,6 +50,18 @@ try {
     $neo = & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -Target 26.1.2-neoforge -RuntimeDirectory $runtime -OutputDirectory "$temporary\neo26-evidence" -Scenarios @('craft-plan')
     $neoMarker = Get-Content "$runtime\saves\$($neo.world)\.ae2-crafting-time-test-fixture.json" -Raw | ConvertFrom-Json
     if ($neoMarker.terminal.x -ne 2 -or $neoMarker.terminal.y -ne 205) { throw 'NeoForge did not copy its native fixture' }
+    $neoStandard = & "$PSScriptRoot/prepare-ui-smoke-suite.ps1" -Target 26.1.2-neoforge -RuntimeDirectory $runtime `
+        -OutputDirectory "$temporary/neo26-standard-evidence" -Scenarios @('delayed-status')
+    $neoWorld = "$runtime/saves/$($neoStandard.world)"
+    $generationSource = Join-Path (Split-Path -Parent $PSScriptRoot) 'versions/26.1.2-neoforge/run/saves/ae2-crafting-time/data/minecraft/world_gen_settings.dat'
+    if ((Get-FileHash -LiteralPath "$neoWorld/data/minecraft/world_gen_settings.dat").Hash -ne (Get-FileHash -LiteralPath $generationSource).Hash) {
+        throw 'Standard NeoForge lost native world-generation settings'
+    }
+    $allowedFiles = @('level.dat', 'level.dat_old', '.ae2-crafting-time-test-fixture.json', 'world_gen_settings.dat')
+    if (@(Get-ChildItem -LiteralPath $neoWorld -Recurse -Force -File | Where-Object Name -NotIn $allowedFiles).Count -or
+            (Test-Path -LiteralPath "$neoWorld/region")) {
+        throw 'Standard NeoForge copied saved chunks or jobs'
+    }
     foreach ($invalid in @(@('craft-plan','craft-plan'), @('../escape'))) {
         $rejected = $false
         try { & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -RuntimeDirectory $runtime -OutputDirectory "$temporary\rejected-$([guid]::NewGuid())" -Scenarios $invalid | Out-Null }

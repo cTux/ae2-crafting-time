@@ -45,7 +45,8 @@ cover active and scheduled exclusions; the fixture does not simulate a craft.
 `running-status`, `delayed-status`, and `craft-lifecycle`. Each has a fresh
 native grid and its own seeded estimates; no case depends on an earlier reset,
 world, job, or cached observation. Standard leaves copy only world metadata and
-the marker, then generate fresh chunks; importing saved chunks could restore
+the marker (including separate native world-generation settings when present),
+then generate fresh chunks; importing saved chunks could restore
 incompatible CPU jobs before the driver starts. Other scenarios keep their
 tracked layouts. The host keeps one process for the group.
 

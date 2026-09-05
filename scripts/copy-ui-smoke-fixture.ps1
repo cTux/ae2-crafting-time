@@ -16,6 +16,12 @@ if ($Scenario -cin $standardCases) {
     }
     $backup = Join-Path $Source 'level.dat_old'
     if (Test-Path -LiteralPath $backup) { Copy-Item -LiteralPath $backup -Destination $Destination }
+    $worldGeneration = Join-Path $Source 'data/minecraft/world_gen_settings.dat'
+    if (Test-Path -LiteralPath $worldGeneration) {
+        $metadataDirectory = Join-Path $Destination 'data/minecraft'
+        New-Item -ItemType Directory -Path $metadataDirectory -Force | Out-Null
+        Copy-Item -LiteralPath $worldGeneration -Destination $metadataDirectory
+    }
 } else {
     Copy-Item -LiteralPath $Source -Destination $Destination -Recurse
 }
