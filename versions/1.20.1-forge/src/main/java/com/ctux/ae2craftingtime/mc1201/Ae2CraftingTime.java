@@ -19,6 +19,13 @@ public final class Ae2CraftingTime {
         IntegrationLog.start("1.20.1-forge", net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient(), "forge",
                 id -> net.minecraftforge.fml.ModList.get().getModContainerById(id).map(mod -> mod.getModInfo().getVersion().toString()).orElse(null));
         IntegrationLog.required("config-registration", () -> ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Ae2CraftingTimeConfig.SPEC, COMMON_CONFIG_FILE));
+        var modBus = net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus();
+        modBus.addListener((net.minecraftforge.fml.event.config.ModConfigEvent.Loading event) -> {
+            if (event.getConfig().getModId().equals(MOD_ID)) IntegrationLog.configuration();
+        });
+        modBus.addListener((net.minecraftforge.fml.event.config.ModConfigEvent.Reloading event) -> {
+            if (event.getConfig().getModId().equals(MOD_ID)) IntegrationLog.configuration();
+        });
         IntegrationLog.required("network-registration", StatsNetwork::register);
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarted);
         MinecraftForge.EVENT_BUS.addListener(this::onRegisterCommands);

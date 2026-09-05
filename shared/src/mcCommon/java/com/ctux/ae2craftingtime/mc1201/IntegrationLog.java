@@ -93,5 +93,10 @@ public final class IntegrationLog {
     }
 
     public static void summary() { diagnostics.summary(); }
+
+    public static void configuration() {
+        diagnostics.configureProfiling(Ae2CraftingTimeConfig.ENABLED.get());
+        diagnostics.configureGroup("ae2ct", Ae2CraftingTimeConfig.SHOW_IN_TREE.get());
+    }
     private IntegrationLog() {}
 }

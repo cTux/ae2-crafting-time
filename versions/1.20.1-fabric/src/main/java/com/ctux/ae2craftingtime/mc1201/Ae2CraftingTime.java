@@ -17,6 +17,7 @@ public final class Ae2CraftingTime implements ModInitializer {
         IntegrationLog.start("1.20.1-fabric", loader.getEnvironmentType() == net.fabricmc.api.EnvType.CLIENT, "fabricloader",
                 id -> loader.getModContainer(id).map(mod -> mod.getMetadata().getVersion().getFriendlyString()).orElse(null));
         IntegrationLog.required("config-registration", () -> Ae2CraftingTimeConfig.load(FabricLoader.getInstance().getConfigDir().resolve(COMMON_CONFIG_FILE)));
+        IntegrationLog.configuration();
         IntegrationLog.required("network-registration", StatsNetwork::registerServer);
         CommandRegistrationCallback.EVENT.register((dispatcher, access, environment) -> dispatcher.register(
                 ProviderLocateCommand.build((source, id) -> ProviderLocateCommand.locate(source, id,

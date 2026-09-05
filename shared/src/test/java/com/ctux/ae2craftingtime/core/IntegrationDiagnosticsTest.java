@@ -9,6 +9,25 @@ import java.util.concurrent.Executors;
 import org.junit.jupiter.api.Test;
 
 class IntegrationDiagnosticsTest {
+    @Test void loadedConfigSkipsCaptureHooksUntilReenabled() {
+        var events = new ArrayList<IntegrationDiagnostics.Event>();
+        var report = new IntegrationDiagnostics("1.20.1-forge", true,
+                id -> id.equals("merequester") ? null : "1", Map.of(), events::add);
+        report.configureProfiling(false);
+        for (var capability : IntegrationDiagnostics.CPU) {
+            assertTrue(events.stream().anyMatch(event -> event.message().contains("integration=ae2craftingtime ")
+                    && event.message().contains("capability=" + capability + " state=skipped")));
+        }
+        assertEquals(IntegrationDiagnostics.Outcome.SKIPPED, report.outcome("neoecoae"));
+        assertEquals(IntegrationDiagnostics.Outcome.SKIPPED, report.outcome("merequester"));
+        int count = events.size();
+        report.configureProfiling(false);
+        assertEquals(count, events.size());
+        report.configureProfiling(true);
+        assertEquals(IntegrationDiagnostics.Outcome.PENDING, report.outcome("neoecoae"));
+        assertTrue(events.stream().noneMatch(event -> event.message().contains("state=confirmed")));
+    }
+
     @Test void inventoryAndIndependentHookEvidence() {
         var events = new ArrayList<IntegrationDiagnostics.Event>();
         var report = new IntegrationDiagnostics("1.20.1-forge", true, id -> "1", Map.of(), events::add);
@@ -106,7 +125,7 @@ class IntegrationDiagnosticsTest {
         for (var capability : IntegrationDiagnostics.CPU) report.observe("ae2craftingtime", capability);
         assertEquals(IntegrationDiagnostics.Outcome.INITIALIZED, report.outcome("molecularmanipulator"));
         assertEquals(IntegrationDiagnostics.Outcome.PENDING, report.outcome("appbot"));
-        assertTrue(events.stream().anyMatch(event -> event.message().contains("shared_hooks_observed;addon_job_not_verified")));
+        assertTrue(events.stream().anyMatch(event -> event.message().contains("shared_hooks_observed;addon_job_and_resource_contract_not_verified")));
         report.observe("ae2craftingtime", "key-normalization");
         report.observe("ae2craftingtime", "mana-normalization");
         assertEquals(IntegrationDiagnostics.Outcome.INITIALIZED, report.outcome("appbot"));

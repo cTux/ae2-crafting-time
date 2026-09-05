@@ -138,10 +138,10 @@ public abstract class MERequesterScreenMixin {
     private static MERequesterEstimate ae2craftingtime$estimate(Object request) {
         var key = ae2craftingtime$getKey(request);
         var amount = ae2craftingtime$getLong(request, "getAmount");
-        IntegrationLog.observe("merequester", "request-read");
         if (key.isEmpty() || amount <= 0) {
             return MERequesterEstimate.empty();
         }
+        IntegrationLog.observe("merequester", "request-read");
 
         var profileKey = ProfilerBridge.key(key.get());
         ClientStatsRequests.request(profileKey);

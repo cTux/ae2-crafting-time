@@ -1,5 +1,34 @@
 # UI smoke evidence
 
+## Startup integration diagnostics, 2026-09-05
+
+Issue #193 / PR #256 remains **verification incomplete**. Shared diagnostics and
+reflection tests reached 100% line and branch coverage, and all four packaged
+targets built. The first runtime round exposed Fabric's common entrypoint loading
+client rendering classes on a dedicated server; separating the client entrypoint
+made that dedicated run pass.
+
+At revision `d12696c8`, all four core-only dedicated starts and all four compatible
+dedicated starts passed. Each target also passed the six-case `standard-ae2`
+client group, using English and fresh worlds. These grouped passes do not replace
+the full addon matrix. Initial full-suite failures remain retained: Forge timed
+out opening the saved craft-plan terminal; Fabric's saved craft-plan fixture hit
+an AE2 `readFromNBT` null final output; NeoForge 1.21 initially failed in FML's
+early-window configuration. The initial 26.1 run was rejected as a stale plan.
+
+The initial campaign is `20260905T121910633Z`; the NeoForge 26 core-group retry is
+`20260905T123612859Z`; the Fabric core-group retry is `20260905T125344014Z`.
+Reports include actual artifact inventories, selected adapters, case timestamps,
+screenshots and original logs. `scripts/check-startup-diagnostics.ps1` checks
+context, unique inventory, required registration and dedicated-side exclusions;
+its `-OptionalAbsent` check requires all 26 optional rows to be skipped.
+
+Still required before approval: core-only client starts, every available supported
+addon path, transformed-target recoverable failures with subsequent successful
+crafting, and intentional fatal dependency/hook failures. Unavailable Fabric
+Crafting Tree runtime coverage remains unverified. No complete smoke pass or
+merge readiness is claimed.
+
 For all new campaigns, follow the [smoke policy](automated-ui-testing/spec.md#smoke-policy):
 exercise only the newest adapter per dependency/target and use English (`en_us`)
 for every UI assertion and screenshot. Retained older adapters need non-smoke

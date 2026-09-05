@@ -124,7 +124,7 @@ public final class IntegrationDiagnostics {
             for (var integration : integrations.values()) {
                 if (integration.entry.mode().equals("shared-hooks") && integration.capabilities.containsKey(capability)) {
                     transition(integration.entry.id(), capability, State.CONFIRMED,
-                            "shared_hooks_observed;addon_job_not_verified", false, null);
+                            "shared_hooks_observed;addon_job_and_resource_contract_not_verified", false, null);
                 }
             }
         }
@@ -171,6 +171,15 @@ public final class IntegrationDiagnostics {
         if (!integration.eligible || Boolean.valueOf(enabled).equals(integration.configured)) return;
         integration.configured = enabled;
         for (var capability : integration.entry.capabilities()) configured(id, capability, enabled);
+    }
+
+    public synchronized void configureProfiling(boolean enabled) {
+        for (var integration : integrations.values()) {
+            if (!integration.eligible) continue;
+            for (var capability : plus(CPU, List.of("cpu-dispatch-fastpath"))) {
+                if (integration.capabilities.containsKey(capability)) configured(integration.entry.id(), capability, enabled);
+            }
+        }
     }
 
     public synchronized void positive(String id, String capability, long amount, boolean enabled) {
