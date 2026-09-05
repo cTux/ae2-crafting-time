@@ -252,6 +252,13 @@ Render hooks per loader:
   item icons (the 26.1 submit pipeline requires items to go through its
   collector).
 
+Fabric owns an immediate buffer for this late render hook and flushes all of
+it before returning, including item icons. Vanilla has already flushed its
+world buffers before `AFTER_TRANSLUCENT`; leaving icons in those buffers can
+draw them later with the wrong depth contents, over an intervening terminal.
+The dedicated buffer keeps plates and icons in the current world pass without
+flushing another renderer's queued work.
+
 Edge color cycles rainbow hues on a time-based phase (instead of static
 red) so the box contrasts with any environment. Vanilla
 `RenderType.lines()` width is fixed, so thicker edges use multi-offset
