@@ -7,17 +7,20 @@ description: Develop, debug, test, or port AE2 Crafting Time code and resources.
 
 ## Start Here
 
-1. Read `AGENTS.md` and inspect the target code, callers, supported-version
+1. Treat the GitHub issue list as the source of truth. Find the matching issue
+   before starting any task or problem; create one when none exists, and keep
+   the work linked to it.
+2. Read `AGENTS.md` and inspect the target code, callers, supported-version
    counterparts, and closest feature document.
-2. Read [references/code-map.md](references/code-map.md) only when the ownership
+3. Read [references/code-map.md](references/code-map.md) only when the ownership
    or cross-version path is unclear.
-3. Before changing executable behavior, read
+4. Before changing executable behavior, read
    [references/testing-and-change-workflow.md](references/testing-and-change-workflow.md).
-4. When the task changes repo-owned text, read
+5. When the task changes repo-owned text, read
    [the writing skill](../ae2-crafting-time-writing/SKILL.md) before editing it.
-5. For test-driver implementation or extension, use
+6. For test-driver implementation or extension, use
    [the test-driver skill](../ae2-crafting-time-test-driver/SKILL.md).
-6. Trace the real path end to end. Reuse an existing helper, source set, packet
+7. Trace the real path end to end. Reuse an existing helper, source set, packet
    codec, resource, test pattern, or loader adapter before adding code.
 
 ## Non-Negotiable Design Rules

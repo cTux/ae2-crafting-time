@@ -76,6 +76,10 @@ release state, and pushes the branch.
 - Write changelogs for players, not as raw commit logs. Use natural sentences
   grouped under `ADDED`, `FIXED`, `IMPROVED`, `DELETED`, or `CHANGED`; skip empty
   categories.
+- Link every GitHub and Discord release-note item to its source GitHub issue.
+- Include zero or one image across the release notes. When using one, choose the
+  release's highest-effort player-visible feature or fix and crop its smoke-test
+  evidence to the relevant area instead of using a full screenshot.
 - Conventional commit subjects are converted into those categories and stripped
   of commit types, scopes, and hashes. A manual `-Changelog` must already use the
   same `### CATEGORY` Markdown headings.

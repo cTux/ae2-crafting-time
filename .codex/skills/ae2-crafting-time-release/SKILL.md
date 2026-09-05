@@ -13,31 +13,37 @@ follow [host build and VM staging](../../../docs/dev-client.md#host-build-and-vm
 when preparing artifacts for a client or modpack smoke test.
 
 1. Read `AGENTS.md` and `docs/release.md`; they own the complete release order.
-2. Read [the writing skill](../ae2-crafting-time-writing/SKILL.md) before
+2. Treat the GitHub issue list as the source of truth. Find the matching issue
+   for release work before starting, or create one when none exists.
+3. Read [the writing skill](../ae2-crafting-time-writing/SKILL.md) before
    changing changelogs, release notes, or text published to CurseForge,
    Modrinth, or GitHub.
-3. Treat `scripts/release-matrix.json` as the source of truth.
-4. Keep jar names loader-explicit. Do not add a matrix row until its module
+4. Treat `scripts/release-matrix.json` as the source of truth.
+5. Keep jar names loader-explicit. Do not add a matrix row until its module
    builds a real jar.
-5. Run the release self-check after script or matrix edits.
-6. Before retrying an upload, inspect the platform error and confirm whether it
+6. Run the release self-check after script or matrix edits.
+7. Before retrying an upload, inspect the platform error and confirm whether it
    created a partial version, GitHub release, local state, or version bump.
-7. Write multipart JSON only through the script's BOM-free `Write-Json` helper.
+8. Write multipart JSON only through the script's BOM-free `Write-Json` helper.
    Keep the no-BOM regression check in `test-deploy-changed.ps1`.
-8. In a managed environment, check GitHub authentication and user-scoped tokens
+9. In a managed environment, check GitHub authentication and user-scoped tokens
    with the same elevated permissions as the real deploy. Treat a sandbox-only
    failure as non-authoritative and never print token values.
-9. Before the dry run, read the relevant commit subjects as player copy. If
+10. Before the dry run, read the relevant commit subjects as player copy. If
     automatic conversion would still sound like a commit log, prepare a manual
     categorized changelog in the project voice. Use `-Changelog` only when every
     affected row has the same notes. Otherwise use `-ChangelogPath` with common
     notes under `all` and row-specific notes under exact release-matrix ids;
     never send a loader- or Minecraft-specific note to an unrelated JAR.
-10. After the dry run, get explicit user approval for the exact GitHub Release
+11. Link every GitHub and Discord release-note item to its source GitHub issue.
+    Include zero or one image; when using one, select the release's highest-effort
+    player-visible feature or fix and use a focused crop from its smoke-test
+    evidence, not a full screenshot.
+12. After the dry run, get explicit user approval for the exact GitHub Release
     title and body and for every affected versioned JAR's changelog shown on
     CurseForge and Modrinth. Do not upload until all text is approved; rerun the
     preview and approval if the text or affected JAR set changes.
-11. In the final report, immediately after the completed-work list, list every
+13. In the final report, immediately after the completed-work list, list every
     versioned JAR deployed to CurseForge or Modrinth with its changelog. When
     both services received the same JAR and changelog, list the file once, name
     both services, and show the changelog once. Split entries only when the

@@ -8,6 +8,9 @@ description: Write AE2 Crafting Time docs and player-facing text. Use for skills
 Write like a technically capable 25-year-old maintainer: casual, direct, and
 clear. The age is a voice target, not something to mention in the text.
 
+Treat the GitHub issue list as the source of truth. Find the matching issue
+before starting repository writing, or create one when none exists.
+
 ## Voice
 
 - Use normal words, short sentences, and contractions where they sound natural.
@@ -33,8 +36,12 @@ clear. The age is a voice target, not something to mention in the text.
   permission boundary, and stopping condition intact.
 - **Changelogs and release copy:** follow the release rules in `AGENTS.md` and
   `docs/release.md`. Include only player-visible features, fixes, and behavior
-  changes. Leave out implementation details, tests, refactors, tooling, and
-  build work.
+  changes, and link each GitHub and Discord release-note item to its source
+  GitHub issue. Leave out implementation details, tests, refactors, tooling,
+  and build work. Include at most one image across the release notes. If an
+  image helps, choose the highest-effort player-visible feature or fix and crop
+  its smoke-test evidence to the relevant area instead of using a full
+  screenshot.
 - **Translations:** write natural UI text for that locale, keep it short, and
   preserve every placeholder and control name. Update English and Ukrainian
   together.
