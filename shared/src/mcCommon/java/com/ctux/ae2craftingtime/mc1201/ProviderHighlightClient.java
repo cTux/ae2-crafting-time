@@ -8,12 +8,14 @@ import java.util.function.Predicate;
 import net.minecraft.core.BlockPos;
 
 /**
- * Client-side only. Holds the latest provider highlight (dimension, block
+ * Client-side only. Holds the latest rainbow edge (dimension, block
  * positions, expiry timestamp) for the per-loader render hooks, plus one
- * persistent plate per located output. Edges expire after
- * {@link ProviderLocateCommand#HIGHLIGHT_SECONDS} seconds; plates persist
- * until the craft ends, is cancelled, or the provider block is broken. Never
- * touched on a dedicated server.
+ * persistent red plate per delayed output. Edges and plates have independent
+ * lifetimes: edges expire after {@link ProviderLocateCommand#HIGHLIGHT_SECONDS}
+ * seconds or when their provider breaks; plates persist until the craft ends,
+ * is cancelled, recovers, or the provider breaks. Manual locates touch the
+ * edge only; craft-state changes touch plates only. Never touched on a
+ * dedicated server.
  */
 public final class ProviderHighlightClient {
     public record Highlight(String dimensionId, List<BlockPos> positions, String outputId, long expiresAtMillis) {
@@ -39,10 +41,16 @@ public final class ProviderHighlightClient {
 
     private static volatile Highlight current;
 
+    /**
+     * Shows the temporary rainbow edge for one manual locate without touching
+     * any red plate. Double-clicks and chat clicks use exactly this, so
+     * recovering, finishing, or cancelling before expiry removes only the
+     * plate. Empty requests clear the matching edge only, never the plate.
+     */
     public static void show(String dimensionId, List<BlockPos> positions, int durationSeconds, String outputId) {
         if (outputId != null && !outputId.isBlank()
                 && (durationSeconds <= 0 || positions == null || positions.isEmpty())) {
-            clearFor(outputId);
+            clearEdgeFor(outputId);
             return;
         }
         if (dimensionId == null || positions == null || positions.isEmpty() || durationSeconds <= 0) {
@@ -50,14 +58,13 @@ public final class ProviderHighlightClient {
         }
         current = new Highlight(dimensionId, List.copyOf(positions), outputId,
                 System.currentTimeMillis() + durationSeconds * 1000L);
-        storePlate(dimensionId, positions, outputId);
     }
 
     /**
      * Remembers the red plate (background plus item icon) for one output
      * without touching the rainbow edge. The server sends exactly this for
      * automatic delayed pings, so plates appear with no open window and no
-     * edge; manual locates use {@link #show} for edge plus plate.
+     * edge; manual locates use {@link #show} for edge only.
      */
     public static void showPlate(String dimensionId, List<BlockPos> positions, String outputId) {
         if (dimensionId == null || positions == null || positions.isEmpty() || outputId == null
@@ -93,16 +100,28 @@ public final class ProviderHighlightClient {
     }
 
     /**
-     * Removes every trace of one output: its persistent plate and the live
-     * edge when it belongs to the same output. The server sends an empty
-     * highlight for exactly this on craft finish and cancel, so plates never
-     * stick around with a closed screen and no snapshot.
+     * Removes one output's persistent red plate without touching any rainbow
+     * edge. The server sends an empty highlight for exactly this on craft
+     * finish, cancel, and stall recovery, so a rainbow triggered just before
+     * survives until its own 15-second expiry or provider break.
      */
     public static void clearFor(String outputId) {
         if (outputId == null || outputId.isBlank()) {
             return;
         }
         PLATES.remove(outputId);
+    }
+
+    /**
+     * Clears the live rainbow edge when it belongs to the given output,
+     * without touching any red plate. Used for empty manual requests; craft
+     * state changes must use {@link #clearFor} instead so rainbows survive
+     * recovery, finish, and cancel.
+     */
+    public static void clearEdgeFor(String outputId) {
+        if (outputId == null || outputId.isBlank()) {
+            return;
+        }
         var highlight = current;
         if (highlight != null && outputId.equals(highlight.outputId())) {
             current = null;
@@ -150,21 +169,19 @@ public final class ProviderHighlightClient {
 
     /**
      * Drops plates whose output no longer reports a stall after a snapshot
-     * for the requested keys was applied, plus the live edge when it belongs
-     * to a dropped output. Call right after the client cache replace, from
-     * every loader's snapshot handler.
+     * for the requested keys was applied. Never touches the rainbow edge:
+     * craft-state pruning removes red plates only, so a manually triggered
+     * rainbow survives recovery, finish, and cancel until its own expiry.
+     * Call right after the client cache replace, from every loader's
+     * snapshot handler.
      */
     public static void prunePlates(List<String> requestedKeys) {
-        if (requestedKeys == null || requestedKeys.isEmpty() || (PLATES.isEmpty() && current == null)) {
+        if (requestedKeys == null || requestedKeys.isEmpty() || PLATES.isEmpty()) {
             return;
         }
         for (var id : requestedKeys) {
             if (id != null && ClientStats.CACHE.stall(new ProfileKey(id)).isEmpty()) {
                 PLATES.remove(id);
-                var highlight = current;
-                if (highlight != null && id.equals(highlight.outputId())) {
-                    current = null;
-                }
             }
         }
     }
