@@ -55,8 +55,9 @@ view. Stop and ask the user if a decision still remains.
 
 Draft one issue title and body covering the problem, resulting behavior,
 non-goals, acceptance criteria, relevant risks, and the three document paths.
-Show the exact title and body and get explicit approval before replacing the
-tracking issue's text. Any later issue-text change requires fresh approval.
+Remove secrets, personal data, private paths, and private server details. Show
+the exact title and body and get explicit approval before replacing the tracking
+issue's text. Any later issue-text change requires fresh approval.
 
 Update the approved issue with `gh issue edit` using a body file, then read it
 back. Add its URL to the spec and rerun consistency review across the issue and
