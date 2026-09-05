@@ -5,6 +5,11 @@ description: Run prepared AE2 Crafting Time repository clients or automated UI s
 
 # Smoke-Test Prepared AE2 Clients
 
+Treat the GitHub issue list as the source of truth. Find the matching issue
+before starting a smoke-test task, or create one when none exists. Remove
+secrets, personal data, private paths, and private server details before
+creating or updating an issue.
+
 ## Route
 
 - Build production and test-driver JARs only on the host. Follow
@@ -49,9 +54,10 @@ exclude it only from `compatible` with a concrete `reason` and any `issue_url`
 or `upstream_issue_url`.
 
 Promote versions into `compatible` only after the complete target graph starts
-and the requested smoke checks pass. Create or comment on upstream or local
-issues only when the user requests it; include reproduction evidence and link
-the two issues when both exist.
+and the requested smoke checks pass. Find or create a local issue for every
+reproduced problem and include its evidence. Create or comment on an upstream
+issue only when the user requests it; link the local and upstream issues when
+both exist.
 
 Rebase only when the user explicitly requests it. A rebase alone does not
 require a full smoke run or invalidate completed smoke evidence. Choose any
