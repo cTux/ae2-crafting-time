@@ -354,7 +354,7 @@ public final class CraftProfiler {
             return false;
         }
         for (var notified : delayedNotified.values()) {
-            if (notified != null && notified.contains(key)) {
+            if (notified.contains(key)) {
                 return true;
             }
         }

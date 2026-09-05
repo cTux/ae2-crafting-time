@@ -244,4 +244,40 @@ class DelayedNotificationTest {
         assertTrue(profiler.snapshotStatuses().stream()
                 .noneMatch(status -> status.key().equals(key) && status.kind() == StatusKind.DELAYED));
     }
+
+    @Test
+    void isDelayedIsNullAndEmptySafe() {
+        var profiler = new CraftProfiler(10);
+        var key = key("minecraft:iron_plate");
+
+        assertFalse(profiler.isDelayed(null));
+        assertFalse(profiler.isDelayed(key));
+    }
+
+    @Test
+    void isDelayedKeepsPlateWhileAnotherScopeStillNeedsRed() {
+        var profiler = new CraftProfiler(10);
+        var key = key("minecraft:iron_plate");
+        var other = key("minecraft:copper_plate");
+        var first = new Object();
+        var second = new Object();
+
+        seedTypical(profiler, key, new Object());
+        profiler.start(key, first, 10, ProfileUnit.ITEM, 100);
+        profiler.start(key, second, 10, ProfileUnit.ITEM, 100);
+
+        assertEquals(1, profiler.pollNewlyDelayed(first, 800).size());
+        assertEquals(1, profiler.pollNewlyDelayed(second, 800).size());
+        assertTrue(profiler.isDelayed(key));
+        assertFalse(profiler.isDelayed(other));
+        assertFalse(profiler.isDelayed(null));
+
+        profiler.complete(key, first, 1, 860);
+        assertTrue(profiler.pollNewlyDelayed(first, 900).isEmpty());
+        assertEquals(List.of(key), profiler.pollResolvedDelayed(first));
+        assertTrue(profiler.isDelayed(key));
+
+        profiler.clearPending(second);
+        assertFalse(profiler.isDelayed(key));
+    }
 }
