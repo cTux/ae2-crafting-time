@@ -22,6 +22,34 @@ try {
             ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $directory 'result.json')
     }
     Assert (@(Read-Results | Where-Object result -eq 'PASS').Count -eq 6) 'Complete leaves must pass'
+    foreach ($case in $cases) {
+        $caseFile = Join-Path (Join-Path $temp $case) 'result.json'
+        $valid = Get-Content -LiteralPath $caseFile -Raw
+        $data = $valid | ConvertFrom-Json
+        $reordered = [ordered]@{}
+        foreach ($check in @($data.checks.psobject.Properties.Name | Sort-Object -Descending)) { $reordered[$check] = $true }
+        $data.checks = $reordered
+        $data | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $caseFile
+        Assert ((Read-Results | Where-Object scenario -eq $case).result -eq 'PASS') "JSON check order must not affect $case"
+        foreach ($invalid in @('true', 'false', 1, $null)) {
+            $data = $valid | ConvertFrom-Json
+            $data.complete = $invalid
+            $data | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $caseFile
+            Assert ((Read-Results | Where-Object scenario -eq $case).result -eq 'FAIL') "Non-boolean complete must fail $case"
+            $data = $valid | ConvertFrom-Json
+            $check = $catalogue.cases.$case.checks[0]
+            $data.checks.$check = $invalid
+            $data | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $caseFile
+            Assert ((Read-Results | Where-Object scenario -eq $case).result -eq 'FAIL') "Non-boolean check must fail $case"
+        }
+        $data = $valid | ConvertFrom-Json
+        $check = $catalogue.cases.$case.checks[0]
+        $data.checks.psobject.Properties.Remove($check)
+        $data.checks | Add-Member -NotePropertyName $check.ToUpperInvariant() -NotePropertyValue $true
+        $data | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath $caseFile
+        Assert ((Read-Results | Where-Object scenario -eq $case).result -eq 'FAIL') "Wrong check casing must fail $case"
+        Set-Content -LiteralPath $caseFile -Value $valid
+    }
     $directory = Join-Path $temp 'delayed-status'
     $image = Join-Path $directory 'delayed-tooltip.png'
     Remove-Item -LiteralPath $image
