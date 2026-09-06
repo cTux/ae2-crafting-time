@@ -16,6 +16,7 @@ public final class TestDriverRuntime implements AutoCloseable {
     private final SuiteProgress progress;
     private int index;
     private boolean switching;
+    private boolean switchingInProgress;
     private boolean finished;
 
     public TestDriverRuntime(DriverOptions options, String driverFile) throws Exception {
@@ -36,10 +37,11 @@ public final class TestDriverRuntime implements AutoCloseable {
     }
 
     public void tick() {
-        if (finished) {
+        if (finished || switchingInProgress) {
             return;
         }
         if (switching) {
+            switchingInProgress = true;
             switchCase();
             return;
         }
@@ -76,6 +78,7 @@ public final class TestDriverRuntime implements AutoCloseable {
             writeProgress();
             DriverPlatform.openWorld(minecraft, item.world());
             switching = false;
+            switchingInProgress = false;
         } catch (Exception error) {
             finished = true;
             throw new IllegalStateException("Cannot advance UI smoke suite", error);
