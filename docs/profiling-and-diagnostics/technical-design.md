@@ -1,5 +1,7 @@
 # Profiling And Diagnostics Technical Design
 
+The sections above the planned #114 design describe the current runtime.
+
 ## Ownership
 
 `CraftProfiler`, `TtcAccuracyTracker`, and their immutable values live in
@@ -114,124 +116,167 @@ branches belong in the covered pure-Java core.
 
 ## Planned design for #114: per-unit sample presentation
 
-Status: not implemented. See [spec N1–N8](spec.md#requirements) and the
-[implementation plan](implementation-plan.md). Source inspection baseline:
+Status: not implemented. This section includes live completion-interval learning
+and supersedes the baseline Production Windows behavior above. See
+[requirements N1–N12](spec.md#requirements) and the
+[implementation plan](implementation-plan.md). Inspected runtime baseline:
 `493d277757489ef4d1f0970509c0cfbb5a8bbdb6`.
 
-### Evidence and decision
+### Evidence and ownership
 
-Paths below are relative to the repository root.
+Paths are repository-relative. Existing seams verified from source:
 
-| Existing component | Verified behavior | Consequence |
+| Component | Current behavior | Planned responsibility |
 | --- | --- | --- |
-| `shared/src/main/java/com/ctux/ae2craftingtime/core/CraftProfiler.java`, `start`, `complete` | CPU-scoped pending queues feed a network/output busy window; one sample is retained when all matching pending work ends | A sample does not count provider insertions |
-| Same file, `stats`, `filteredSamples` | Outliers already use duration/amount; rate is weighted amount divided by weighted duration | Raw bulk samples are already normalized for TTC math |
-| Same file, `inProgressStats`, `stall` | Preview is temporary; stall uses raw average window duration | Do not change these fields to per-item durations |
-| `shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/TtcText.java`, `windows`, `compactMessages` | Sample list prints raw amount/duration; compact details print raw average/latest window times | Change presentation and its explicitly named derived values |
-| Same directory, `StatsChatServer.java`, `details` | Public details are independently assembled on the server | Updating client text alone misses the real Ctrl-click path |
-| `shared/src/main/java/com/ctux/ae2craftingtime/core/ProfileStats.java` | Snapshot already has aligned raw duration and amount lists | No new packet or persisted fields are needed |
-| `shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/net/StatsPacketCodec.java` | Encodes those lists as bounded integer values | Keep wire representation exact and unchanged |
-| `shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/PersistedSamplesTag.java` and its `mc2612` counterpart | Persist positive raw `amount` and `durationTicks` | Existing saves already contain the necessary evidence |
+| `shared/src/main/java/com/ctux/ae2craftingtime/core/CraftProfiler.java` | CPU pending queues, network busy window; retains only at network/output idle | Retain completion intervals while queues remain nonempty |
+| Same file, `stats`, `filteredSamples` | Weighted amount/time; outliers on time/unit; reliable at three unfiltered samples | Reuse formulas against new observations |
+| Same file, `clearPending`, `rebuildBusyWindow` | Rebuilds unfinished whole windows after scope cleanup | Preserve interval cursor and accepted bucket when other scopes survive |
+| `shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/ProfilerBridge.java` and `mc2612` copy | Saves on `complete` returning true; entry prefers retained history to preview | Finalize and snapshot from server tick, irrespective of GUI requests |
+| `versions/<target>/src/main/java/com/ctux/ae2craftingtime/mc1201/Ae2CraftingTime.java` | Owns loader lifecycle registration | Register one logical-server end-tick flush per target |
+| Same target directory, `ClientStatsRequests.java` | One-second per-key cooldown | Preserve visible requests, including cached entries |
+| `shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/StatsRequestHandler.java` | Collects current entries and server remaining-job total | Return newly retained rate on next response |
+| Same shared directory, `TtcText.java` and `StatsChatServer.java` | Client tooltip and independent server chat format raw durations | Both show normalized details |
+| `shared/src/main/java/com/ctux/ae2craftingtime/core/ProfileStats.java` | Raw amount/duration lists exist | Derive ratios without new DTO fields |
+| Shared `net/StatsPacketCodec.java` and both `PersistedSamplesTag.java` adapters | Bounded raw integer pairs | Keep layout; finalized intervals use existing representation |
 
-The standard `CraftingCpuLogicMixin` records expected outputs and CPU-accepted
-returns through `ProfilerBridge`. AdvancedAE and other supported CPU adapters
-route observations into the same core. None of these events identifies the
-instant a machine slot starts processing. Treating dispatch-to-return latency
-as service time would include queued work; duplicating parallel durations would
-also distort rates if fed into the current estimator.
+All state stays on the logical server thread. Existing standard/optional CPU
+mixins continue reporting dispatch and accepted output. No machine hooks or
+client-authored samples. The whole-order baseline and temporary preview cannot
+remain a competing source of newly retained samples.
 
-The confirmed requirement is therefore a presentation correction with derived
-per-unit values. Preserve the collector and estimator. A display-only change
-must not claim to improve prediction accuracy numerically.
+### Collection algorithm
 
-### Derived values and rounding
+Keep CPU-identity pending queues for attribution. Replace the throughput role of
+`BusyWindow` with one runtime `CompletionInterval` per `ProfileKey`: `unit`,
+`anchorTick`, optional `returnTick`, and `returnedAmount`. A dirty-key set contains
+positive unflushed returns, so normal flushing visits changed keys only. There
+is no object or loop per completed output unit.
 
-Keep all `ProfileStats` record fields and constructor signatures unchanged.
-Add these computed methods to that existing pure-Java type:
+1. First positive dispatch in an idle episode establishes `anchorTick = tick`.
+   Later dispatches in the active episode do not move it. Waiting state still
+   clears on actual dispatch.
+2. Accepted output consumes only its CPU's pending queue, capped at expected
+   amount. Add only consumed output to the key's bucket. Unmatched excess and
+   simulation add nothing. Progress/job-remaining bookkeeping runs once per event.
+3. Same-key returns in the same tick add to the same bucket across CPUs and
+   callbacks, including another same-tick dispatch after a queue emptied.
+   Do not expose a retained sample inside `complete`.
+4. At end server tick, `CraftProfiler.flushCompletedSamples()` finalizes each
+   positive bucket once as `(returnedAmount, max(1, returnTick - anchorTick))`,
+   using existing `addSample` retention. Return whether retained history changed.
+   Repeated flushes with no new output are no-ops.
+5. If pending work survives, advance the cursor to `returnTick` and clear the
+   bucket. Otherwise remove interval state. Next idle episode starts at its
+   actual dispatch, excluding idle time.
+6. No return means no sample and no cursor advance. The next return includes
+   active waiting time. Do not emit zero-output samples or reuse a cumulative
+   prefix as another observation.
 
-- `sampleTicksPerUnit(int index): OptionalDouble` returns `(double) duration /
-  amount` for a valid pair. Invalid index, unequal list lengths, or nonpositive
-  amount/duration returns empty.
-- `averageTicksPerUnit(): OptionalDouble` returns the arithmetic mean of all
-  retained ratios, including observations excluded from rate estimation. Return
-  empty for empty lists or if any pair is invalid; do not silently average a
-  different history.
-- `latestTicksPerUnit(): OptionalDouble` derives the last pair only. Return empty
-  when the lists are empty, unequal, or the last pair is invalid.
+Flush after world/CPU processing at the loader's end-server-tick phase, using
+its latest supported listener ordering. Do not flush on individual CPU ticks:
+that splits cross-CPU returns. Integration tests must prove ordering with a late
+optional CPU callback. Use event timestamps, not another dimension's clock.
 
-These methods neither mutate history nor change `averageDurationTicks` and
-`lastDurationTicks`. Those raw fields still serve diagnostics. Cast before
-division. Do not sum raw longs to compute the per-unit average.
+If an event has a newer tick while an older bucket remains unflushed, finalize
+the old bucket before accepting the new event and mark history dirty for the
+bridge flush. Tick regression discards unfinalized state for that key and
+re-anchors surviving work at the current event tick, adding no negative sample.
+Use checked bucket addition; overflow discards that interval and re-anchors,
+never creating wrapped or saturated evidence.
 
-Add `TimeEstimate.formatSampleTicks(double): Optional<String>` as a numeric
-formatter usable on both server and client. Reject nonpositive/nonfinite values;
-render positive values below 0.001 as `<0.001`; otherwise use
-`BigDecimal.valueOf(value).setScale(3, RoundingMode.HALF_UP)`, strip trailing zeros,
-and emit plain decimal text. This is presentation rounding only. Do not reuse
-`formatTicks`, which rounds to whole seconds, or feed rounded text into TTC.
+`complete` may retain its boolean signature, but its documented result becomes
+positive matched progress. Bridges stop treating it as a serialization signal.
+Flush reports history changes, including defensive finalization on newer events.
 
-For raw pairs `(A_i, D_i)`, retain the existing estimator:
+### Lifecycle and persistence
 
-```text
-sample detail = D_i / A_i ticks per unit
-compact average = sum(D_i / A_i) / retained observation count
-compact latest = D_last / A_last
-weighted rate = sum(w_i * A_i) / sum(w_i * D_i), over existing usable observations
-```
+- Finish/cancel clears its CPU's unmatched work and job diagnostics. Keep accepted
+  buckets until flush; these outputs remain valid evidence after cancellation.
+  Do not append a whole-order sample. If other CPUs survive, preserve their
+  cursor; rebuilding from original dispatch would count time twice.
+- Cancellation with no surviving work or accepted bucket removes the interval.
+  A later dispatch starts a fresh episode.
+- Output reset removes history, bucket, cursor, dirty-key entry, and any tail
+  reference together. Later flush cannot restore reset evidence. Existing reset
+  invalidation of pending queues stays; unmatched later returns are ignored.
+- Disable discards unfinalized state and pending work, preserving finalized
+  history. Load clears runtime queues/buckets; restored outputs are not replayed.
+- Both bridge copies snapshot/replace SavedData once after all changed keys
+  finalize, never per item, CPU, or callback. Skip unchanged ticks. This updates
+  an in-memory snapshot and dirty flag; Minecraft keeps its disk-save cadence.
+- Before world-save serialization and graceful server stop, flush positive
+  buckets. Use the four SavedData `save` methods before reading sample fields,
+  and a server-stopping callback before final save. Never invoke save recursively.
 
-Example A10 intentionally has a different inverse average and weighted rate.
-Do not replace the weighted ratio with an average of inverse sample durations.
+A save may occur mid-tick. Keep a same-key/return-tick reference to the most
+recent retained tail until the next tick. If another same-tick return follows
+an early flush, add its amount to that tail; do not change its duration, position,
+or sample count. This amendment also applies to late end-tick callbacks, preserving
+one observation per key/tick. Mark the amended history dirty for the next snapshot.
+A same-tick tail amendment bypasses new interval creation; keep the cursor at
+that return tick if pending work survives. Reset/load/disable clears references.
+Bound references to keys touched in the current tick and prune on tick advance,
+including idle keys. Tests must cover save, more output, and repeat save in one tick.
 
-### Presentation ownership
+Old raw records stay as broader observations until normal eviction. No source-kind
+field or schema bump: labels say observations, never exact executions. Identical
+raw histories keep identical math; newly collected finer intervals can change
+rate and confidence. Preserve saved statuses/provider records unchanged.
 
-`TtcText.windows` calls the computed ratio and numeric formatter for each raw
-pair, preserving oldest-to-newest order and the existing count suffix. Skip an
-invalid pair; omit the sample line if no valid pairs remain. Rename the label to
-`Samples (per unit)` and add one short tooltip explanation: `Effective throughput,
-not single-item processing time.` Do not repeat the explanation for every sample.
+### Confidence, remaining TTC, and delay
 
-Reuse `text.ae2craftingtime.value.window` with three string arguments: literal
-`1`, the unit's per-unit label, and formatted ticks. Add a dedicated singular item
-key; do not change the plural item label used by the production-rate field.
-Use the existing mB/mana labels for their per-unit forms.
+After each finalized/amended observation, `stats` recalculates rate, used count,
+and `reliableEstimate`. Three clean observations suffice; five or more activate
+existing outlier filtering. `?` may disappear, persist, or return. Do not promote
+a preview or duplicate a batch to reach three. `maxSamples < 3` stays unreliable.
 
-Both `TtcText.compactMessages` and `StatsChatServer.details` use the same numeric
-methods. Replace ambiguous average/latest labels with `average per unit` and
-`latest per unit`, each containing the complete `1 <unit> / <ticks> ticks` value.
-When either derived summary is unavailable, use a new rate-only details
-translation with sample count, rate, and unit; never fall back to raw window time
-under a per-unit label. Keep used-sample and low-confidence suffixes.
+Remove cumulative `inProgressStats` from throughput lookup when the interval
+collector is installed: the first real interval is retained at end tick and
+provides the useful one-sample estimate. Before then, use retained history or
+existing missing-data text. No repeated prefix contributes confidence.
 
-`StatsChatServer` must keep building translatable components on the server.
-Do not call client-only `I18n` or `TtcText` from it. Share calculations and numeric
-formatting through the pure core, not a new UI dependency.
+`ProfilerBridge.estimateSeconds` already uses retained stats, so the dependency-
+path remaining-job total uses the new rate without a graph change. `startJob`
+still freezes prediction accuracy at submission; never refresh that prediction.
 
-Update shared `en_us.json` and `uk_ua.json` together. Suggested Ukrainian labels
-are `Зразки (на одиницю)`, `середнє на одиницю`, `останнє на одиницю`, and singular
-`предмет`. Explanation: `Ефективна пропускна здатність, а не час обробки одного
-предмета.` Retain translated tick/mB/mana conventions and match placeholders.
+Keep `stall`'s `max(200, ceil(averageDurationTicks * 2))` and progress reset. The raw
+average now means completion interval, including legacy broad observations until
+eviction. Never divide the diagnostic baseline by amount. During implementation,
+correct baseline references to 600 ticks: inspected runtime already uses 200.
+This constant is not a new threshold; its learned-duration input changes meaning.
 
-### Compatibility, state, and limits
+### UI and normalized values
 
-No new runtime state, event hooks, per-item arrays, packets, schema versions,
-configuration, or dependencies. Keep `maxSamples` and packet bounds unchanged;
-formatting is O(retained samples), never O(output amount). A billion-item
-observation still produces one displayed sample.
+Visible status rows already call `ClientStatsRequests.request` before cache lookup.
+Preserve this with all four wrappers. `ClientStatsCache` replaces requested stats,
+including confidence; the next render recomputes `TimeEstimate.format`. Verify
+polling with a populated cache and no hover. No packet-per-item push or new
+subscription is needed. If a blocked row skips polling, its existing blocker
+refresh must allow it to resume polling when production resumes.
 
-Old samples and live previews are normalized from their existing raw evidence.
-The preview remains low confidence and unpersisted. Reset, disable, cancellation,
-network isolation, selected-CPU diagnostics, saved statuses, accuracy, and
-SavedData dirtying retain their current behavior. Server validation, chat
-cooldown, visibility settings, and reset authority remain unchanged.
+Add computed `ProfileStats.sampleTicksPerUnit(index)`, `averageTicksPerUnit()`,
+and `latestTicksPerUnit()` returning OptionalDouble. Use double division of
+positive raw pairs. Unequal/empty arrays yield no aggregate detail; a bad pair
+omits that pair and makes average unavailable. Latest needs a valid final pair.
+Average includes all retained observations; filtering applies to weighted rate.
+Keep raw fields/constructors and wire types. Do not sum raw longs for the average.
 
-All four release-matrix targets share the affected core, `mcCommon` text, and
-resources. Version bridges, saved-data codecs, and loader packet wrappers need
-verification, not changes. Optional Crafting Tree details and any shared text
-consumers inherit the format where they already expose details; ME Requester
-and terminal TTC-only surfaces need no new sample list. AdvancedAE, ECO,
-AE2-LT, Applied Mekanistics, and mana support retain their existing registrations
-and unit normalization. No new dependency on Mekanism or Iron Furnaces is added.
+`TimeEstimate.formatSampleTicks(double)` returns Optional<String>: reject
+nonpositive/nonfinite input, use `<0.001` below that bound, otherwise BigDecimal
+half-up at scale three, stripped zeros, plain decimal output. Do not use the
+whole-second `formatTicks` path or feed rounded text back into calculations.
 
-The separate proposed CPU-bound stats design keeps raw windows too; #114 can
-apply to whichever scope supplied a snapshot without adding that feature. Do
-not implement its proposed key or persistence changes as part of this work.
+Both `TtcText` and `StatsChatServer.details` use the derived values. Reuse the
+three-argument `value.window` text with `1`, singular unit, formatted ticks. Add
+singular item without changing the rate's plural unit. Label the list `Samples
+(per unit)` and explain effective throughput once. Average/latest contain the
+complete per-unit value; when either is missing, use rate/count-only text.
+Server messages remain translatable components, without client-only I18n.
+English/Ukrainian keys and placeholders match. Explain that new samples arrive
+while crafting and that the sample limit is not the reliability threshold.
+
+All four targets share core/text/resources. Existing AdvancedAE, ECO, AE2-LT,
+fluid/chemical, and mana adapters feed this collector where supported. Do not
+change availability. Existing optional details inherit normalization; TTC-only
+surfaces need no new sample list. The proposed CPU-bound stats design must adopt
+interval collection if implemented later; this plan adds no persistent CPU keys.
