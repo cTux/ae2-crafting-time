@@ -162,6 +162,7 @@ public final class CraftProfiler {
             return false;
         }
 
+        advanceTick(key, tick);
         var remaining = amount;
         long consumedTotal = 0;
         while (remaining > 0 && !queue.isEmpty()) {
@@ -667,7 +668,6 @@ public final class CraftProfiler {
     }
 
     private void recordCompleted(ProfileKey key, long amount, long tick) {
-        advanceTick(key, tick);
         var tailTick = retainedTailTicks.get(key);
         if (tailTick != null && tailTick == tick) {
             var queue = samples.get(key);
