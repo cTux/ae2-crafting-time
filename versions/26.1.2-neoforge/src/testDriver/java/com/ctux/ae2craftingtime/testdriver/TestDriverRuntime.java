@@ -85,9 +85,9 @@ public final class TestDriverRuntime implements AutoCloseable {
             scenario = new CraftPlanScenario(minecraft, item, driverFile);
             progress.start(Instant.now());
             writeProgress();
-            DriverPlatform.openWorld(minecraft, item.world());
             switching = false;
             switchingInProgress = false;
+            DriverPlatform.openWorld(minecraft, item.world());
         } catch (Exception error) {
             finished = true;
             throw new IllegalStateException("Cannot advance UI smoke suite", error);
