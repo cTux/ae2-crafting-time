@@ -49,6 +49,23 @@ provider, provider removal, and cancellation checkpoints. Keep the scenario
 available across the shared 1.20.1/1.21.1 driver and the 26.1.2 API counterpart;
 a passing smoke result applies only to the target actually launched.
 
+## Provider-dispatch status scenarios
+
+`no-target-status`, `input-blocked-status`, and `locked-status` reuse the same
+real 64-output processing job. NO TARGET removes and restores the provider's
+adjacent inventory. INPUT BLOCKED exercises both blocking mode and a completely
+full target, then proves recovery through disabled blocking and partial target
+capacity. LOCKED exercises while-low, while-high, until-pulse, and until-result
+provider modes through redstone changes and an item returned through the
+provider return inventory. Every warning is observed in a mixed active/scheduled
+row with its English label, explanation, suggestion, qualifier, and contained
+badge; every recovery happens in the open screen.
+
+All four native targets run the three leaves. The Forge 1.20.1, NeoForge 1.21.1,
+and NeoForge 26.1.2 AdvancedAE graphs repeat them with a job submitted directly
+to an AdvancedAE CPU. Driver code detects that graph from the loaded addon and
+does not link AdvancedAE classes in native or Fabric runs.
+
 
 ## No-space status scenario
 

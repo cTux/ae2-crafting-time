@@ -71,8 +71,9 @@ class SuitePlanTest {
                 "omnicells-cpu", "projectcell-cpu", "appliede-cpu", "appflux-cpu", "appmek-cpu",
                 "modern-ae2-additions-cpu", "omnisequence-cpu", "ae2wcwt-terminal", "ae2wtlib-terminal",
                 "ae2importexportcard-terminal", "aeinfinitybooster-terminal", "merequester-screen",
-                "ae2networkanalyser-screen", "no-space-status", "no-provider-status", "no-power-status");
-        for (int count : List.of(1, 32, 34)) {
+                "ae2networkanalyser-screen", "no-space-status", "no-provider-status", "no-power-status",
+                "no-target-status", "input-blocked-status", "locked-status");
+        for (int count : List.of(1, 32, 37)) {
             var cases = java.util.stream.IntStream.range(0, count).mapToObj(index -> new SuitePlan.Case(
                     names.get(index), index == 0 ? FIRST : String.format("ae2ct-%032x", index))).toList();
             assertEquals(count, new SuitePlan(1, cases).options(options()).size());

@@ -24,7 +24,7 @@ import java.util.OptionalLong;
 class StatsPacketTest {
     @Test
     void snapshotRejectsUnknownBlockReason() {
-        for (var reason : new int[] {-1, 2}) {
+        for (var reason : new int[] {-1, CraftingBlockReason.values().length}) {
             var buffer = new FriendlyByteBuf(Unpooled.buffer());
             StatsPacketCodec.writeKeys(buffer, List.of("minecraft:iron_ingot"));
             buffer.writeVarInt(0);
@@ -33,6 +33,17 @@ class StatsPacketTest {
             buffer.writeUtf("minecraft:iron_ingot");
             buffer.writeVarInt(reason);
             assertThrows(RuntimeException.class, () -> StatsSnapshotS2C.decode(buffer));
+        }
+    }
+
+    @Test
+    void snapshotRoundTripsEveryBlockReason() {
+        for (var reason : CraftingBlockReason.values()) {
+            var packet = new StatsSnapshotS2C(List.of("minecraft:iron_ingot"), List.of(), Map.of(), Map.of(),
+                    Map.of("minecraft:iron_ingot", reason), OptionalLong.empty(), 7);
+            var buffer = new FriendlyByteBuf(Unpooled.buffer());
+            StatsSnapshotS2C.encode(packet, buffer);
+            assertEquals(packet, StatsSnapshotS2C.decode(buffer));
         }
     }
 

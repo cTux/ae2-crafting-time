@@ -7,6 +7,7 @@ param(
     [Parameter(Mandatory)][string]$Scenario,
     [Parameter(Mandatory)][string]$World,
     [Parameter(Mandatory)][string]$Evidence,
+    [string[]]$ProjectId,
     [switch]$Interactive
 )
 $ErrorActionPreference = 'Stop'
@@ -49,6 +50,7 @@ for ($i = 0; $i -lt $launch.arguments.Count; $i++) {
 }
 $arguments.Insert(0, '-Xmx8G')
 if ($Interactive) { $arguments.Insert(0, '-Dae2craftingtime.test.interactive=true') }
+if ('rxYaglEe' -in @($ProjectId)) { $arguments.Insert(0, '-Dae2craftingtime.test.advancedStatus=true') }
 foreach ($property in @("scenario=$Scenario", "profile=$Profile", "world=$World", "output=$Evidence", 'vmTextureProbe=true')) {
     $arguments.Insert(0, "-Dae2craftingtime.test.$property")
 }

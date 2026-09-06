@@ -19,6 +19,7 @@ import com.ctux.ae2craftingtime.mc1201.BlockReasonNotifier;
 import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
+import com.ctux.ae2craftingtime.mc1201.ProviderDispatchObserver;
 import java.util.Iterator;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -44,15 +45,29 @@ public abstract class CraftingCpuLogicMixin {
     @Unique
     private IPatternDetails ae2craftingtime$dispatchPattern;
 
+    @Unique
+    private ProviderDispatchObserver ae2craftingtime$dispatchObserver;
+
+    @Inject(method = "executeCrafting", at = @At("HEAD"), remap = false)
+    private void ae2craftingtime$beginDispatchEvaluation(int operations, CraftingService craftingService,
+            IEnergyService energyService, net.minecraft.world.level.Level level,
+            CallbackInfoReturnable<Integer> cir) {
+        ae2craftingtime$finishDispatchEvaluation();
+    }
+
     // Capture the execution local even when an addon supplies providers without calling the original lookup.
     @ModifyVariable(method = "executeCrafting", at = @At("STORE"), ordinal = 0, remap = false)
     private IPatternDetails ae2craftingtime$captureDispatchPattern(IPatternDetails pattern) {
+        ae2craftingtime$finishDispatchEvaluation();
         ae2craftingtime$dispatchPattern = pattern;
+        ae2craftingtime$dispatchObserver = new ProviderDispatchObserver(
+                ProfilerBridge.networkId(cluster.getGrid()), cluster, pattern, cluster.getLevel().getGameTime());
         return pattern;
     }
 
     @Inject(method = "executeCrafting", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$clearDispatchPattern(CallbackInfoReturnable<Integer> cir) {
+        ae2craftingtime$finishDispatchEvaluation();
         ae2craftingtime$dispatchPattern = null;
     }
 
@@ -74,10 +89,35 @@ public abstract class CraftingCpuLogicMixin {
                     target = "Ljava/lang/Iterable;iterator()Ljava/util/Iterator;"),
             remap = false)
     private Iterator<ICraftingProvider> ae2craftingtime$observeProviders(Iterable<ICraftingProvider> providers) {
-        var iterator = providers.iterator();
-        ProfilerBridge.observeProviders(ProfilerBridge.networkId(cluster.getGrid()), cluster,
-                ae2craftingtime$dispatchPattern, iterator.hasNext());
-        return iterator;
+        return ae2craftingtime$dispatchObserver == null
+                ? providers.iterator()
+                : ae2craftingtime$dispatchObserver.iterator(providers);
+    }
+
+    @Redirect(method = "executeCrafting", at = @At(value = "INVOKE",
+            target = "Lappeng/api/networking/crafting/ICraftingProvider;isBusy()Z"), remap = false)
+    private boolean ae2craftingtime$observeProviderBusy(ICraftingProvider provider) {
+        return ae2craftingtime$dispatchObserver == null
+                ? provider.isBusy()
+                : ae2craftingtime$dispatchObserver.busy(provider);
+    }
+
+    @Redirect(method = "executeCrafting", at = @At(value = "INVOKE",
+            target = "Lappeng/api/networking/crafting/ICraftingProvider;pushPattern(Lappeng/api/crafting/IPatternDetails;[Lappeng/api/stacks/KeyCounter;)Z"),
+            remap = false)
+    private boolean ae2craftingtime$observeProviderPush(ICraftingProvider provider, IPatternDetails pattern,
+            appeng.api.stacks.KeyCounter[] input) {
+        return ae2craftingtime$dispatchObserver == null
+                ? provider.pushPattern(pattern, input)
+                : ae2craftingtime$dispatchObserver.push(provider, pattern, input);
+    }
+
+    @Unique
+    private void ae2craftingtime$finishDispatchEvaluation() {
+        if (ae2craftingtime$dispatchObserver != null) {
+            ae2craftingtime$dispatchObserver.finish();
+            ae2craftingtime$dispatchObserver = null;
+        }
     }
 
     @Redirect(

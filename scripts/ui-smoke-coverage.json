@@ -26,8 +26,10 @@
       "scenario": "lightningtech-cpu"
     },
     "rxYaglEe": {
-      "disposition": "DIRECT_BEHAVIOR",
-      "scenario": "advancedae-cpu"
+      "disposition": "FOCUSED_BEHAVIOR",
+      "scenario": "advancedae-cpu",
+      "profile": "compatible",
+      "reason": "Run AdvancedAE CPU dispatch and provider statuses in an isolated direct graph."
     },
     "JiOqfoFM": {
       "disposition": "DIRECT_BEHAVIOR",
@@ -166,8 +168,10 @@
       "scenario": "appmek-cpu"
     },
     "rxYaglEe": {
-      "disposition": "DIRECT_BEHAVIOR",
-      "scenario": "advancedae-cpu"
+      "disposition": "FOCUSED_BEHAVIOR",
+      "scenario": "advancedae-cpu",
+      "profile": "compatible",
+      "reason": "Run AdvancedAE CPU dispatch and provider statuses in an isolated direct graph."
     },
     "E6BFl96N": {
       "disposition": "DIRECT_UI",
@@ -256,8 +260,10 @@
   },
   "26.1.2-neoforge": {
     "rxYaglEe": {
-      "disposition": "DIRECT_BEHAVIOR",
-      "scenario": "advancedae-cpu"
+      "disposition": "FOCUSED_BEHAVIOR",
+      "scenario": "advancedae-cpu",
+      "profile": "compatible",
+      "reason": "Run AdvancedAE CPU dispatch and provider statuses in an isolated direct graph."
     },
     "ArHeh5Fz": {
       "disposition": "DIRECT_BEHAVIOR",

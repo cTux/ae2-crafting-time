@@ -20,7 +20,7 @@ legacyForge {
         client {
             client()
             jvmArgument '-Xmx8G'
-            ['scenario', 'profile', 'world', 'output', 'interactive'].each { name ->
+            ['scenario', 'profile', 'world', 'output', 'interactive', 'advancedStatus'].each { name ->
                 def property = providers.gradleProperty("testDriver${name.capitalize()}")
                 if (property.isPresent()) {
                     systemProperty "ae2craftingtime.test.${name}", property.get()
@@ -100,6 +100,8 @@ repositories {
 }
 
 dependencies {
+    compileOnly(annotationProcessor('io.github.llamalad7:mixinextras-common:0.5.5'))
+    implementation(jarJar('io.github.llamalad7:mixinextras-forge:0.5.5'))
     modImplementation "appeng:appliedenergistics2-forge:${providers.gradleProperty('runtimeAe2Forge1201Version').getOrElse('15.0.10')}"
     compileOnly 'maven.modrinth:advancedae:1.3.6-1.20.1'
     compileOnly 'maven.modrinth:qelfSMnn:v8c3El4q'

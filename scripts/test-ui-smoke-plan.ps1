@@ -86,7 +86,7 @@ try {
     Assert (@($plan.targets | Where-Object mode -eq 'focused').Count -eq 3) 'Mixed changes must union'
     Clean
     Put 'shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingStatusTableRendererMixin.java' 'only delayed method changed'
-    Assert ((Plan).targets[0].cases.Count -eq 8) 'Never narrow mixed renderers by keywords'
+    Assert ((Plan).targets[0].cases.Count -eq 11) 'Never narrow mixed renderers by keywords'
     Clean
     Put $lang '{"text.ae2craftingtime.ttc_delayed":"late","other":"value"}'
     Assert ((Plan).targets[0].cases[0] -eq 'delayed-status') 'English delayed value must narrow'
@@ -138,11 +138,14 @@ try {
     $manual = & $planner -Repository $temp -Target '1.20.1-forge' -Scenario delayed-status
     Assert ($manual.mode -eq 'manual' -and $manual.targets.Count -eq 1) 'Manual scope must remain labelled manual'
     $full = & $planner -Repository $temp
-    Assert ($full.targets[0].graphs.Count -eq 2 -and $full.targets[0].graphs[1].cases.Count -eq 2) 'Full Forge must schedule its separate newest-adapter graph'
-    Assert ($full.targets[0].cases.Count -eq 34) 'Expanded Forge suite must contain 34 leaves'
-    Assert ($full.targets[1].cases.Count -eq 16) 'Expanded Fabric suite must contain 16 leaves'
-    Assert ($full.targets[2].cases.Count -eq 30) 'Expanded NeoForge suite must contain 30 leaves'
-    Assert ($full.targets[3].cases.Count -eq 19) 'Expanded 26.1.2 suite must contain 19 leaves'
+    $forgeGraphs = @($full.targets[0].graphs)
+    $advancedGraphs = @($full.targets.graphs | Where-Object id -eq 'rxYaglEe')
+    Assert ($forgeGraphs.Count -eq 3 -and $forgeGraphs[1].cases.Count -eq 2) 'Full Forge must schedule its separate newest-adapter graph'
+    Assert ($advancedGraphs.Count -eq 3 -and @($advancedGraphs | Where-Object { $_.cases.Count -ne 4 }).Count -eq 0) 'AdvancedAE must repeat all provider status leaves on three targets'
+    Assert ($full.targets[0].cases.Count -eq 37) 'Expanded Forge suite must contain 37 leaves'
+    Assert ($full.targets[1].cases.Count -eq 19) 'Expanded Fabric suite must contain 19 leaves'
+    Assert ($full.targets[2].cases.Count -eq 33) 'Expanded NeoForge suite must contain 33 leaves'
+    Assert ($full.targets[3].cases.Count -eq 22) 'Expanded 26.1.2 suite must contain 22 leaves'
     Invoke-FixtureGit @('checkout','-b','conflict-side')
     Put 'README.md' 'theirs'
     Invoke-FixtureGit @('add','.')

@@ -8,6 +8,8 @@
     "AdvancedCraftingCpuLogicMixin",
     "CraftingCPUMenuAccessor",
     "CraftingCpuLogicMixin",
+    "PatternProviderLogicMixin",
+    "PatternProviderExternalPushMixin",
     "Ae2LtTimeWheelCraftingCpuLogicMixin",
     "ECOCraftingCpuLogicMixin",
     "NeoEcoPendingDispatchMixin",

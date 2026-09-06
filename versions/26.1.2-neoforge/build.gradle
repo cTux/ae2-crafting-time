@@ -20,7 +20,7 @@ neoForge {
         client {
             client()
             jvmArgument '-Xmx8G'
-            ['scenario', 'profile', 'world', 'output', 'interactive'].each { name ->
+            ['scenario', 'profile', 'world', 'output', 'interactive', 'advancedStatus'].each { name ->
                 def property = providers.gradleProperty("testDriver${name.capitalize()}")
                 if (property.isPresent()) jvmArgument "-Dae2craftingtime.test.${name}=${property.get()}"
             }
@@ -138,8 +138,10 @@ ext.testDriverLoader = 'neoforge'
 tasks.register('testDriverUnmappedJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar)
 apply from: rootProject.file('scripts/test-driver.gradle')
 sourceSets.testDriver.java.exclude { element ->
-    element.file.path.replace('\\', '/').contains('/shared/src/testDriver1201/') &&
-            element.file.name in ['CraftPlanScenario.java', 'StandardCraftFixture.java', 'ChatComponentAccessor.java', 'TestDriverRuntime.java', 'UiObservationStore.java', 'NoSpaceScenario.java', 'NoProviderScenario.java', 'NoPowerScenario.java', 'DispatchStatusFixture.java', 'NativeCpuFixture.java', 'WirelessTerminalFixture.java', 'Ae2wtlibTerminalFixture.java', 'Ae2ImportExportCardFixture.java', 'AeInfinityBoosterFixture.java', 'Ae2NetworkAnalyserFixture.java', 'ExtendedAeFixture.java', 'InteractiveMcpServer.java', 'AppliedBotanicsFixture.java', 'Ae2ThingsFixture.java', 'MegaCellsFixture.java', 'MeRequesterFixture.java', 'GuiGraphicsMixin.java', 'AbstractTableRendererMixin.java', 'AEBaseScreenMixin.java', 'AEKeyRenderingMixin.java', 'RenderSystemMixin.java', 'MEStorageScreenAccessor.java']
+    def path = element.file.path.replace('\\', '/')
+    (path.contains('/shared/src/testDriver1201/') &&
+            element.file.name in ['CraftPlanScenario.java', 'StandardCraftFixture.java', 'ChatComponentAccessor.java', 'TestDriverRuntime.java', 'UiObservationStore.java', 'NoSpaceScenario.java', 'NoProviderScenario.java', 'NoPowerScenario.java', 'DispatchStatusFixture.java', 'NativeCpuFixture.java', 'WirelessTerminalFixture.java', 'Ae2wtlibTerminalFixture.java', 'Ae2ImportExportCardFixture.java', 'AeInfinityBoosterFixture.java', 'Ae2NetworkAnalyserFixture.java', 'ExtendedAeFixture.java', 'InteractiveMcpServer.java', 'AppliedBotanicsFixture.java', 'Ae2ThingsFixture.java', 'MegaCellsFixture.java', 'MeRequesterFixture.java', 'GuiGraphicsMixin.java', 'AbstractTableRendererMixin.java', 'AEBaseScreenMixin.java', 'AEKeyRenderingMixin.java', 'RenderSystemMixin.java', 'MEStorageScreenAccessor.java']) ||
+            (path.contains('/shared/src/testDriverAddons/') && element.file.name == 'AdvancedAeStatusFixture.java')
 }
 sourceSets.testDriver.resources.setSrcDirs(['src/testDriver/resources'])
 

@@ -8,7 +8,8 @@
   "mixins": [
     "ProfilerBridgeObservationMixin",
     "DedicatedScenarioMixin",
-    "CraftConfirmMenuAccessor"
+    "CraftConfirmMenuAccessor",
+    "CraftingCPUMenuAccessor"
   ],
   "client": [
     "AEBaseScreenMixin",

@@ -170,11 +170,14 @@ foreach ($id in $ids) {
             if ($declaration.disposition -cne 'FOCUSED_BEHAVIOR') { continue }
             $adapterCases = @($catalogue.adapterCases.($project.mod_id))
             if (!$adapterCases.Count) { throw "Missing adapter fixture mapping: $($project.mod_id)" }
-            $focused = if ($full) { @($adapterCases) } else { @($primary | Where-Object { $_ -cin $adapterCases }) }
+            $behaviorCases = @($catalogue.adapterBehaviorCases.($project.mod_id))
+            $focusedCases = @(@($adapterCases) + @($behaviorCases) | Where-Object { $_ })
+            $focused = if ($full) { @($focusedCases) } else { @($primary | Where-Object { $_ -cin $focusedCases }) }
             if (!$focused.Count) { continue }
-            $primary = @($primary | Where-Object { $_ -cnotin $focused })
-            $graphs += [pscustomobject]@{ id=$project.project_id; profile='latest'; cases=$focused; projectId=@($project.project_id)
-                reason=$declaration.reason; adapterPolicy='newest packaged catalogue variant; verify runtime selection' }
+            $primary = @($primary | Where-Object { $_ -cnotin $adapterCases })
+            $focusedProfile = if ($declaration.profile -ceq 'compatible') { 'compatible' } else { 'latest' }
+            $graphs += [pscustomobject]@{ id=$project.project_id; profile=$focusedProfile; cases=$focused; projectId=@($project.project_id)
+                reason=$declaration.reason; adapterPolicy="$focusedProfile packaged catalogue variant; verify runtime selection" }
         }
     }
     if ($primary.Count) {

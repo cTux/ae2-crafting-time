@@ -6,7 +6,7 @@ param(
     [string]$CasesBase64,
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(suite|standard-ae2|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|craft-plan|no-space-status|no-provider-status|no-power-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|craft-plan|no-space-status|no-provider-status|no-power-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$ReportDirectory,
     [string]$BundleDirectory,
@@ -170,7 +170,7 @@ try {
         if ($PreparedLaunch) {
             $launch = & (Join-Path $PSScriptRoot 'prepare-ui-smoke-launch.ps1') -LaunchManifest $PreparedLaunch `
                 -BundleDirectory $BundleDirectory -RuntimeDirectory $runtime -Target $Target -Profile $profile `
-                -Scenario $Scenario -World $world -Evidence $evidence -Interactive:$Interactive
+                -Scenario $Scenario -World $world -Evidence $evidence -ProjectId $ProjectId -Interactive:$Interactive
             $executable = $launch.executable
             $arguments = $launch.arguments
         }
@@ -220,7 +220,9 @@ try {
         $driverName = "ae2-crafting-time-$modVersion-$loader-$game-test-driver.jar"
         $standardContracts = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json).cases
         $requiredChecks = if ($standardContracts.$caseScenario) {
-            @($standardContracts.$caseScenario.checks)
+            if ($result.checks.'advanced-cpu' -is [bool] -and $standardContracts.$caseScenario.advancedChecks) {
+                @($standardContracts.$caseScenario.advancedChecks)
+            } else { @($standardContracts.$caseScenario.checks) }
         } elseif ($caseScenario -eq "no-space-status") {
             @("screen", "external-machine", "warning", "tooltip", "layout", "recovered")
         } elseif ($caseScenario -eq "no-power-status") {
@@ -255,7 +257,9 @@ try {
         if ($PreparedLaunch) {
             $catalogue = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json
             $expected = Get-Content -LiteralPath (Join-Path $BundleDirectory 'expected-adapters.json') -Raw | ConvertFrom-Json
-            foreach ($adapter in @($catalogue.adapterCases.psobject.Properties) + @($catalogue.readRecoveryCases.psobject.Properties)) {
+            $adapterPolicies = @($catalogue.adapterCases.psobject.Properties) +
+                @($catalogue.adapterBehaviorCases.psobject.Properties) + @($catalogue.readRecoveryCases.psobject.Properties)
+            foreach ($adapter in $adapterPolicies) {
                 $dependency = $adapter.Name
                 if ($caseScenario -cin $adapter.Value -and $expected.$dependency -and
                         ($result.adapters.$dependency.variant -cne $expected.$dependency -or $result.adapters.$dependency.reason -cne 'selected')) {
@@ -267,7 +271,9 @@ try {
         if (Compare-Object $requiredChecks $actualChecks -SyncWindow 0) { throw "Invalid UI-smoke check set" }
         foreach ($check in $requiredChecks) { if (-not $result.checks.$check) { throw "Failed UI-smoke check: $check" } }
         $requiredScreenshots = if ($standardContracts.$caseScenario) {
-            @($standardContracts.$caseScenario.screenshots)
+            if ($result.checks.'advanced-cpu' -is [bool] -and $standardContracts.$caseScenario.advancedScreenshots) {
+                @($standardContracts.$caseScenario.advancedScreenshots)
+            } else { @($standardContracts.$caseScenario.screenshots) }
         } elseif ($caseScenario -eq "no-space-status") {
             @("no-space-before.png", "no-space-en-us.png", "no-space-recovered.png")
         } elseif ($caseScenario -eq "no-power-status") {

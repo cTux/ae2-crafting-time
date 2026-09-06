@@ -3,7 +3,9 @@ package com.ctux.ae2craftingtime.core;
 public final class CraftingRowState {
     private static final java.util.Set<String> BADGE_KEYS = java.util.Set.of(
             "text.ae2craftingtime.ttc", "text.ae2craftingtime.ttc_delayed", "text.ae2craftingtime.waiting",
-            "text.ae2craftingtime.no_space", "text.ae2craftingtime.no_provider", "text.ae2craftingtime.no_power");
+            "text.ae2craftingtime.no_space", "text.ae2craftingtime.no_provider", "text.ae2craftingtime.no_power",
+            "text.ae2craftingtime.no_target", "text.ae2craftingtime.input_blocked",
+            "text.ae2craftingtime.locked");
 
     public static boolean isBadge(String translationKey) {
         return BADGE_KEYS.contains(translationKey);
