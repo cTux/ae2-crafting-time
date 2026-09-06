@@ -49,7 +49,6 @@ public final class TestDriverRuntime implements AutoCloseable {
                 boolean next = progress.finish(scenario.state() == ScenarioState.RESULT_WRITTEN, Instant.now());
                 writeProgress();
                 if (next) {
-                    minecraft.level.disconnect(net.minecraft.network.chat.Component.literal("Next smoke case"));
                     DriverPlatform.clearLevel(minecraft);
                     UiObservationStore.reset();
                     var item = cases.get(++index);
