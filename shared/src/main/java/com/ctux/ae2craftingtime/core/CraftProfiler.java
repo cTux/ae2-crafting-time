@@ -187,9 +187,6 @@ public final class CraftProfiler {
             lastProgressTicks.get(scope).put(key, tick);
         }
 
-        if (consumedTotal == 0) {
-            return false;
-        }
         recordCompleted(key, consumedTotal, tick);
         rememberedStatuses.remove(key);
         return true;
@@ -252,10 +249,10 @@ public final class CraftProfiler {
         for (var key : removed.keySet()) {
             if (!hasPending(key)) {
                 rememberedStatuses.remove(key);
-            }
-            var interval = completionIntervals.get(key);
-            if (!hasPending(key) && (interval == null || interval.returnedAmount == 0)) {
-                completionIntervals.remove(key);
+                var interval = completionIntervals.get(key);
+                if (interval.returnedAmount == 0) {
+                    completionIntervals.remove(key);
+                }
             }
         }
     }
@@ -644,7 +641,7 @@ public final class CraftProfiler {
 
     private void advanceTick(ProfileKey key, long tick) {
         if (tick > newestEventTick) {
-            retainedTailTicks.entrySet().removeIf(entry -> entry.getValue() < tick);
+            retainedTailTicks.clear();
             newestEventTick = tick;
         }
         var interval = completionIntervals.get(key);
@@ -657,7 +654,7 @@ public final class CraftProfiler {
             retainedTailTicks.remove(key);
             return;
         }
-        if (interval.returnTick != null && tick > interval.returnTick && interval.returnedAmount > 0) {
+        if (interval.returnTick != null && tick > interval.returnTick) {
             finalizeInterval(key, interval);
             dirtySampleKeys.add(key);
         }
@@ -669,7 +666,7 @@ public final class CraftProfiler {
 
     private void recordCompleted(ProfileKey key, long amount, long tick) {
         var tailTick = retainedTailTicks.get(key);
-        if (tailTick != null && tailTick == tick) {
+        if (tailTick != null) {
             var queue = samples.get(key);
             var tail = queue.removeLast();
             try {

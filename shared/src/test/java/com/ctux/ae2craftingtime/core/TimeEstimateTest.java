@@ -103,5 +103,17 @@ class TimeEstimateTest {
         var invalid = new ProfileStats(1, 1, 1, 1, 1, ProfileUnit.ITEM, true, 1, 4,
                 List.of(0L), List.of(1L));
         assertFalse(invalid.averageTicksPerUnit().isPresent());
+
+        var zeroAmount = new ProfileStats(1, 1, 1, 1, 1, ProfileUnit.ITEM, true, 1, 4,
+                List.of(1L), List.of(0L));
+        assertFalse(zeroAmount.sampleTicksPerUnit(0).isPresent());
+
+        var mismatched = new ProfileStats(2, 1, 1, 1, 1, ProfileUnit.ITEM, true, 2, 4,
+                List.of(1L), List.of(1L, 1L));
+        assertFalse(mismatched.averageTicksPerUnit().isPresent());
+
+        var missingDuration = new ProfileStats(1, 1, 1, 1, 1, ProfileUnit.ITEM, true, 1, 4,
+                List.of(), List.of(1L));
+        assertFalse(missingDuration.sampleTicksPerUnit(0).isPresent());
     }
 }

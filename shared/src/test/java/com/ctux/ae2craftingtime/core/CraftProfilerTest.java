@@ -921,6 +921,10 @@ class CraftProfilerTest {
         profiler.loadSamples(List.of());
         assertFalse(profiler.flushCompletedSamples());
         assertFalse(profiler.stats(key).isPresent());
+
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 600);
+        profiler.clearPending(cpu);
+        assertFalse(profiler.flushCompletedSamples());
     }
 
     @Test
@@ -945,16 +949,80 @@ class CraftProfilerTest {
     void checkedSameTickOverflowDiscardsTheCorruptInterval() {
         var profiler = new CraftProfiler(10);
         var key = new ProfileKey("minecraft:iron_ingot");
+        var finishedKey = new ProfileKey("minecraft:gold_ingot");
         var first = new Object();
         var second = new Object();
+        var third = new Object();
 
         profiler.start(key, first, Long.MAX_VALUE, ProfileUnit.ITEM, 0);
         profiler.start(key, second, 1, ProfileUnit.ITEM, 0);
+        profiler.start(key, third, 1, ProfileUnit.ITEM, 0);
         profiler.complete(key, first, Long.MAX_VALUE, 20);
         profiler.flushCompletedSamples();
         profiler.complete(key, second, 1, 20);
         profiler.flushCompletedSamples();
+        profiler.complete(key, third, 1, 40);
+        profiler.flushCompletedSamples();
 
-        assertFalse(profiler.stats(key).isPresent());
+        var stats = profiler.stats(key).orElseThrow();
+        assertEquals(List.of(1L), stats.sampleAmounts());
+        assertEquals(List.of(20L), stats.sampleDurationTicks());
+
+        profiler.start(finishedKey, third, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(finishedKey, third, 1, 10);
+        profiler.flushCompletedSamples();
+        profiler.start(finishedKey, first, Long.MAX_VALUE, ProfileUnit.ITEM, 50);
+        profiler.start(finishedKey, second, 1, ProfileUnit.ITEM, 50);
+        profiler.complete(finishedKey, first, Long.MAX_VALUE, 70);
+        profiler.flushCompletedSamples();
+        profiler.complete(finishedKey, second, 1, 70);
+        profiler.flushCompletedSamples();
+        assertEquals(List.of(1L), profiler.stats(finishedKey).orElseThrow().sampleAmounts());
+    }
+
+    @Test
+    void clockRegressionAfterAnUnflushedReturnStartsFreshEvidence() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_ingot");
+        var first = new Object();
+        var second = new Object();
+
+        profiler.start(key, first, 2, ProfileUnit.ITEM, 0);
+        profiler.complete(key, first, 1, 100);
+        profiler.start(key, second, 1, ProfileUnit.ITEM, 50);
+        profiler.complete(key, first, 1, 60);
+        profiler.flushCompletedSamples();
+
+        var stats = profiler.stats(key).orElseThrow();
+        assertEquals(List.of(1L), stats.sampleAmounts());
+        assertEquals(List.of(10L), stats.sampleDurationTicks());
+    }
+
+    @Test
+    void checkedIntervalOverflowResetsWhilePendingAndDropsWhenFinished() {
+        var profiler = new CraftProfiler(10);
+        var pendingKey = new ProfileKey("minecraft:iron_ingot");
+        var finishedKey = new ProfileKey("minecraft:gold_ingot");
+        var first = new Object();
+        var second = new Object();
+        var third = new Object();
+
+        profiler.start(pendingKey, first, Long.MAX_VALUE, ProfileUnit.ITEM, 0);
+        profiler.start(pendingKey, second, 1, ProfileUnit.ITEM, 0);
+        profiler.start(pendingKey, third, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(pendingKey, first, Long.MAX_VALUE, 20);
+        profiler.complete(pendingKey, second, 1, 20);
+        profiler.complete(pendingKey, third, 1, 40);
+
+        profiler.start(finishedKey, first, Long.MAX_VALUE, ProfileUnit.ITEM, 50);
+        profiler.start(finishedKey, second, 1, ProfileUnit.ITEM, 50);
+        profiler.complete(finishedKey, first, Long.MAX_VALUE, 70);
+        profiler.complete(finishedKey, second, 1, 70);
+        profiler.flushCompletedSamples();
+
+        var stats = profiler.stats(pendingKey).orElseThrow();
+        assertEquals(List.of(1L), stats.sampleAmounts());
+        assertEquals(List.of(20L), stats.sampleDurationTicks());
+        assertFalse(profiler.stats(finishedKey).isPresent());
     }
 }
