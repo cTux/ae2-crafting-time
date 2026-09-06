@@ -1,7 +1,6 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.TitleScreen;
 import org.lwjgl.glfw.GLFW;
 import java.time.Instant;
 import java.util.List;
@@ -17,6 +16,8 @@ public final class TestDriverRuntime implements AutoCloseable {
     private int index;
     private boolean switching;
     private boolean switchingInProgress;
+    private boolean switchingNow;
+    private net.minecraft.server.MinecraftServer stoppingServer;
     private boolean finished;
 
     public TestDriverRuntime(DriverOptions options, String driverFile) throws Exception {
@@ -37,11 +38,10 @@ public final class TestDriverRuntime implements AutoCloseable {
     }
 
     public void tick() {
-        if (finished || switchingInProgress) {
+        if (finished || switchingNow) {
             return;
         }
         if (switching) {
-            switchingInProgress = true;
             switchCase();
             return;
         }
@@ -68,20 +68,35 @@ public final class TestDriverRuntime implements AutoCloseable {
     }
 
     private void switchCase() {
+        switchingNow = true;
         try {
-            DriverPlatform.clearLevel(minecraft);
-            UiObservationStore.reset();
+            if (!switchingInProgress) {
+                switchingInProgress = true;
+                stoppingServer = minecraft.getSingleplayerServer();
+                if (stoppingServer != null) {
+                    stoppingServer.halt(false);
+                }
+                DriverPlatform.clearLevel(minecraft);
+                UiObservationStore.reset();
+                return;
+            }
+            if (stoppingServer != null && stoppingServer.getRunningThread().isAlive()) {
+                return;
+            }
+            stoppingServer = null;
             var item = cases.get(++index);
             SuitePlan.verifyWorld(minecraft.gameDirectory.toPath().resolve("saves"), item);
             scenario = new CraftPlanScenario(minecraft, item, driverFile);
             progress.start(Instant.now());
             writeProgress();
-            DriverPlatform.openWorld(minecraft, item.world());
             switching = false;
             switchingInProgress = false;
+            DriverPlatform.openWorld(minecraft, item.world());
         } catch (Exception error) {
             finished = true;
             throw new IllegalStateException("Cannot advance UI smoke suite", error);
+        } finally {
+            switchingNow = false;
         }
     }
 
