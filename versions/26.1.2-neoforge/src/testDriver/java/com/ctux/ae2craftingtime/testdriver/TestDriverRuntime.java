@@ -75,7 +75,7 @@ public final class TestDriverRuntime implements AutoCloseable {
                 return;
             }
             var server = minecraft.getSingleplayerServer();
-            if (server != null && !server.isStopped()) {
+            if (server != null && server.getRunningThread().isAlive()) {
                 return;
             }
             var item = cases.get(++index);
