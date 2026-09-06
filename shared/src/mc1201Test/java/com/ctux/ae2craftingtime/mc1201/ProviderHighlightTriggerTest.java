@@ -149,6 +149,7 @@ class ProviderHighlightTriggerTest {
 
         // Partial progress resolves the stall while the craft still runs.
         profiler.complete(key, cpu, 1, 860);
+        profiler.flushCompletedSamples();
         assertTrue(profiler.pollNewlyDelayed(cpu, 900).isEmpty());
         assertEquals(List.of(key), profiler.pollResolvedDelayed(cpu));
         assertTrue(profiler.pollResolvedDelayed(cpu).isEmpty());
@@ -183,5 +184,6 @@ class ProviderHighlightTriggerTest {
         var seed = new Object();
         profiler.start(key, seed, 1, ProfileUnit.ITEM, 0);
         profiler.complete(key, seed, 1, 200);
+        profiler.flushCompletedSamples();
     }
 }

@@ -16,9 +16,8 @@ an edge case.
 ## What the code does today
 
 - `CraftProfiler.stats(...)` returns retained stats after the first completed
-  production sample. While the first continuous production window is still
-  active, completed output within that window can provide a live low-confidence
-  preview without becoming a retained sample.
+  output interval. End-of-tick flushing retains that interval while the order
+  is still active, so it can provide a live low-confidence estimate.
 - Three clean samples make an estimate reliable. One or two samples still show
   an estimate, but `TimeEstimate.format(...)` adds `?` to mark low confidence.
 - The Crafting Plan and Crafting Status table mixins request stats when the
@@ -56,8 +55,8 @@ craft will make progress.
    without waiting for a server response.
 2. Keep requesting stats through the existing one-second request cooldown.
 3. Replace the placeholder automatically when cached stats produce an estimate.
-   For a first continuous production window, completed output must make a live
-   low-confidence estimate available before the whole order becomes idle.
+   A completed output interval must make a live low-confidence estimate
+   available before the whole order becomes idle.
 4. Keep the existing low-confidence `?`, three-sample reliability rule, outlier
    handling, colors, sorting, totals, and `Waiting` and `DELAYED` priorities
    unchanged.

@@ -47,13 +47,19 @@ public final class StatsChatServer {
         broadcast(player, summary);
     }
 
-    private static Component details(ProfileStats stats) {
-        var component = Component.translatable("text.ae2craftingtime.chat.details", stats.sampleCount(),
-                Component.translatable("text.ae2craftingtime.value.seconds",
-                        decimal(stats.averageDurationTicks() / 20.0)),
-                Component.translatable("text.ae2craftingtime.value.seconds",
-                        decimal(stats.lastDurationTicks() / 20.0)),
-                decimal(stats.amountPerSecond()), Component.translatable(stats.unit().translationKey()));
+    static Component details(ProfileStats stats) {
+        var average = stats.averageTicksPerUnit();
+        var latest = stats.latestTicksPerUnit();
+        var unit = Component.translatable(stats.unit() == com.ctux.ae2craftingtime.core.ProfileUnit.ITEM
+                ? "text.ae2craftingtime.unit.item.singular"
+                : stats.unit().translationKey());
+        var component = average.isPresent() && latest.isPresent()
+                ? Component.translatable("text.ae2craftingtime.chat.details", stats.sampleCount(), unit,
+                        TimeEstimate.formatSampleTicks(average.getAsDouble()).orElse("?"), unit,
+                        TimeEstimate.formatSampleTicks(latest.getAsDouble()).orElse("?"),
+                        decimal(stats.amountPerSecond()), Component.translatable(stats.unit().translationKey()))
+                : Component.translatable("text.ae2craftingtime.chat.details.rate", stats.sampleCount(),
+                        decimal(stats.amountPerSecond()), Component.translatable(stats.unit().translationKey()));
         if (stats.usedSampleCount() != stats.sampleCount()) {
             component.append(Component.translatable("text.ae2craftingtime.chat.details.used",
                     stats.usedSampleCount(), stats.sampleCount()));

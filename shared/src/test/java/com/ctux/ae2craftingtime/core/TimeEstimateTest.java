@@ -71,4 +71,37 @@ class TimeEstimateTest {
     void negativeTicksFormatAsZero() {
         assertEquals("~0s", TimeEstimate.formatTicks(-1));
     }
+
+    @Test
+    void formatsPerUnitTicksWithoutLosingSmallOrFractionalValues() {
+        assertEquals("10", TimeEstimate.formatSampleTicks(10).orElseThrow());
+        assertEquals("41.1", TimeEstimate.formatSampleTicks(41.1).orElseThrow());
+        assertEquals("0.063", TimeEstimate.formatSampleTicks(1.0 / 16.0).orElseThrow());
+        assertEquals("0.001", TimeEstimate.formatSampleTicks(0.001).orElseThrow());
+        assertEquals("<0.001", TimeEstimate.formatSampleTicks(0.0001).orElseThrow());
+        assertFalse(TimeEstimate.formatSampleTicks(0).isPresent());
+        assertFalse(TimeEstimate.formatSampleTicks(Double.POSITIVE_INFINITY).isPresent());
+        assertFalse(TimeEstimate.formatSampleTicks(Double.NaN).isPresent());
+    }
+
+    @Test
+    void derivesPerUnitDetailsWithoutChangingRawSamples() {
+        var stats = new ProfileStats(2, 95, 0.1, 2, 100, ProfileUnit.ITEM, true, 2, 4,
+                List.of(90L, 100L), List.of(9L, 1L));
+
+        assertEquals(10, stats.sampleTicksPerUnit(0).orElseThrow());
+        assertEquals(100, stats.latestTicksPerUnit().orElseThrow());
+        assertEquals(55, stats.averageTicksPerUnit().orElseThrow());
+        assertFalse(stats.sampleTicksPerUnit(-1).isPresent());
+        assertFalse(stats.sampleTicksPerUnit(2).isPresent());
+
+        var unequal = new ProfileStats(1, 1, 1, 1, 1, ProfileUnit.ITEM, true, 1, 4,
+                List.of(1L), List.of());
+        assertFalse(unequal.averageTicksPerUnit().isPresent());
+        assertFalse(unequal.latestTicksPerUnit().isPresent());
+
+        var invalid = new ProfileStats(1, 1, 1, 1, 1, ProfileUnit.ITEM, true, 1, 4,
+                List.of(0L), List.of(1L));
+        assertFalse(invalid.averageTicksPerUnit().isPresent());
+    }
 }

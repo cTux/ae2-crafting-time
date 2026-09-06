@@ -32,7 +32,8 @@ world still has a logical server.
 ```text
 AE2 CraftingCpuLogic mixins on the server
   -> ProfilerBridge
-  -> CraftProfiler retained samples
+  -> CraftProfiler tick-batched completion intervals
+  -> end-server-tick SavedData snapshot
   -> per-CPU first-dispatch waiting timers
   -> frozen job TTC versus successful completion accuracy
   -> delayed-output diagnostics and recent parallel-dispatch capacity
@@ -56,7 +57,7 @@ samples or displayed TTC calculations.
 Stall diagnostics are also runtime-only. For the selected crafting CPU, the
 server tracks the last accepted output and AE2's rolling pattern-dispatch use.
 An output is delayed after at least 10 seconds without progress and at least
-twice its learned average production-window duration. Partial output resets the
+twice its learned average completion-interval duration. Partial output resets the
 timer. The client only renders the server snapshot alongside AE2's active and
 scheduled amounts.
 
@@ -118,8 +119,9 @@ Retained samples are saved through Minecraft `SavedData` as:
 ```
 
 The saved payload stores `version`, `networkId`, `key`, `unit`, and retained
-`samples`. Pending crafts and first-dispatch waiting state are runtime-only and
-are not persisted.
+`samples`. Returns from the same tick become one observation, even across CPUs.
+Pending crafts, unfinalized intervals, and first-dispatch waiting state are
+runtime-only and are not persisted.
 
 ## Startup and integration diagnostics
 

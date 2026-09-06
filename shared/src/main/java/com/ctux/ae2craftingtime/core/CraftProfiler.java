@@ -27,12 +27,15 @@ public final class CraftProfiler {
     private final Map<Object, CraftingJobEstimate> jobEstimates = new IdentityHashMap<>();
     private final Map<Object, Set<ProfileKey>> delayedNotified = new IdentityHashMap<>();
     private final Map<Object, Set<ProfileKey>> delayedResolved = new IdentityHashMap<>();
-    private final Map<ProfileKey, BusyWindow> busyWindows = new HashMap<>();
+    private final Map<ProfileKey, CompletionInterval> completionIntervals = new HashMap<>();
+    private final Set<ProfileKey> dirtySampleKeys = new HashSet<>();
+    private final Map<ProfileKey, Long> retainedTailTicks = new HashMap<>();
     private final Map<ProfileKey, ArrayDeque<CraftSample>> samples = new HashMap<>();
     private final Map<ProfileKey, PersistedOutputStatus> rememberedStatuses = new HashMap<>();
     private final MissingProviderTracker<Object> missingProviders = new MissingProviderTracker<>();
     private final DispatchPowerTracker dispatchPower = new DispatchPowerTracker();
     private boolean enabled = true;
+    private long newestEventTick = Long.MIN_VALUE;
 
     public CraftProfiler(int maxSamples) {
         this(maxSamples, 4.0);
@@ -58,7 +61,10 @@ public final class CraftProfiler {
             lastProgressTicks.clear();
             capacities.clear();
             waiting.clear();
-            busyWindows.clear();
+            completionIntervals.clear();
+            dirtySampleKeys.clear();
+            retainedTailTicks.clear();
+            newestEventTick = Long.MIN_VALUE;
             jobOwners.clear();
             jobEstimates.clear();
             delayedNotified.clear();
@@ -122,6 +128,7 @@ public final class CraftProfiler {
         if (!enabled || amount <= 0) {
             return;
         }
+        advanceTick(key, tick);
         // Fresh live observations supersede any remembered status for the key.
         rememberedStatuses.remove(key);
         var waitingState = waiting.get(scope);
@@ -132,7 +139,7 @@ public final class CraftProfiler {
                 .computeIfAbsent(key, ignored -> new ArrayDeque<>())
                 .addLast(new PendingCraft(amount, unit, tick));
         lastProgressTicks.computeIfAbsent(scope, ignored -> new HashMap<>()).putIfAbsent(key, tick);
-        busyWindows.computeIfAbsent(key, ignored -> new BusyWindow(unit, tick));
+        completionIntervals.computeIfAbsent(key, ignored -> new CompletionInterval(unit, tick));
     }
 
     public boolean complete(ProfileKey key, long amount, long tick) {
@@ -155,14 +162,14 @@ public final class CraftProfiler {
             return false;
         }
 
-        var window = busyWindows.get(key);
         var remaining = amount;
+        long consumedTotal = 0;
         while (remaining > 0 && !queue.isEmpty()) {
             var craft = queue.peekFirst();
             var consumed = Math.min(remaining, craft.remainingAmount);
             craft.remainingAmount -= consumed;
             remaining -= consumed;
-            window.completedAmount += consumed;
+            consumedTotal = Math.addExact(consumedTotal, consumed);
 
             if (craft.remainingAmount == 0) {
                 queue.removeFirst();
@@ -179,15 +186,28 @@ public final class CraftProfiler {
             lastProgressTicks.get(scope).put(key, tick);
         }
 
-        if (hasPending(key)) {
+        if (consumedTotal == 0) {
             return false;
         }
-
-        busyWindows.remove(key);
+        recordCompleted(key, consumedTotal, tick);
         rememberedStatuses.remove(key);
-        addSample(key, new CraftSample(window.completedAmount, window.unit,
-                Math.max(1, tick - window.startedTick)));
         return true;
+    }
+
+    public boolean flushCompletedSamples() {
+        if (dirtySampleKeys.isEmpty()) {
+            return false;
+        }
+        var changed = false;
+        for (var key : List.copyOf(dirtySampleKeys)) {
+            var interval = completionIntervals.get(key);
+            if (interval != null && interval.returnedAmount > 0) {
+                finalizeInterval(key, interval);
+            }
+            changed = true;
+        }
+        dirtySampleKeys.clear();
+        return changed;
     }
 
     /**
@@ -232,7 +252,10 @@ public final class CraftProfiler {
             if (!hasPending(key)) {
                 rememberedStatuses.remove(key);
             }
-            rebuildBusyWindow(key);
+            var interval = completionIntervals.get(key);
+            if (!hasPending(key) && (interval == null || interval.returnedAmount == 0)) {
+                completionIntervals.remove(key);
+            }
         }
     }
 
@@ -509,31 +532,11 @@ public final class CraftProfiler {
                 sampleAmounts));
     }
 
-    public Optional<ProfileStats> inProgressStats(ProfileKey key, long tick) {
-        var window = busyWindows.get(key);
-        if (window == null || window.completedAmount <= 0) {
-            return Optional.empty();
-        }
-
-        var duration = Math.max(1, tick - window.startedTick);
-        var amountPerTick = (double) window.completedAmount / duration;
-        return Optional.of(new ProfileStats(
-                1,
-                duration,
-                amountPerTick,
-                amountPerTick * 20.0,
-                duration,
-                window.unit,
-                false,
-                1,
-                outlierMultiplier,
-                List.of(duration),
-                List.of(window.completedAmount)));
-    }
-
     public boolean clearSamples(ProfileKey key) {
         var cleared = samples.remove(key) != null;
-        busyWindows.remove(key);
+        completionIntervals.remove(key);
+        dirtySampleKeys.remove(key);
+        retainedTailTicks.remove(key);
         rememberedStatuses.remove(key);
         pending.values().forEach(scoped -> scoped.remove(key));
         pending.values().removeIf(Map::isEmpty);
@@ -597,7 +600,10 @@ public final class CraftProfiler {
         lastProgressTicks.clear();
         capacities.clear();
         waiting.clear();
-        busyWindows.clear();
+        completionIntervals.clear();
+        dirtySampleKeys.clear();
+        retainedTailTicks.clear();
+        newestEventTick = Long.MIN_VALUE;
         jobOwners.clear();
         jobEstimates.clear();
         delayedNotified.clear();
@@ -635,34 +641,94 @@ public final class CraftProfiler {
         }
     }
 
-    private void rebuildBusyWindow(ProfileKey key) {
-        BusyWindow rebuilt = null;
-        for (var scoped : pending.values()) {
-            var queue = scoped.get(key);
-            if (queue == null) {
-                continue;
-            }
-            for (var craft : queue) {
-                if (rebuilt == null || craft.startedTick < rebuilt.startedTick) {
-                    rebuilt = new BusyWindow(craft.unit, craft.startedTick);
-                }
-            }
+    private void advanceTick(ProfileKey key, long tick) {
+        if (tick > newestEventTick) {
+            retainedTailTicks.entrySet().removeIf(entry -> entry.getValue() < tick);
+            newestEventTick = tick;
         }
-        if (rebuilt == null) {
-            busyWindows.remove(key);
-        } else {
-            busyWindows.put(key, rebuilt);
+        var interval = completionIntervals.get(key);
+        if (interval == null) {
+            return;
+        }
+        if (tick < interval.anchorTick || interval.returnTick != null && tick < interval.returnTick) {
+            completionIntervals.put(key, new CompletionInterval(interval.unit, tick));
+            dirtySampleKeys.remove(key);
+            retainedTailTicks.remove(key);
+            return;
+        }
+        if (interval.returnTick != null && tick > interval.returnTick && interval.returnedAmount > 0) {
+            finalizeInterval(key, interval);
+            dirtySampleKeys.add(key);
+        }
+        var tailTick = retainedTailTicks.get(key);
+        if (tailTick != null && tick > tailTick) {
+            retainedTailTicks.remove(key);
         }
     }
 
-    private static final class BusyWindow {
-        private final ProfileUnit unit;
-        private final long startedTick;
-        private long completedAmount;
+    private void recordCompleted(ProfileKey key, long amount, long tick) {
+        advanceTick(key, tick);
+        var tailTick = retainedTailTicks.get(key);
+        if (tailTick != null && tailTick == tick) {
+            var queue = samples.get(key);
+            var tail = queue.removeLast();
+            try {
+                queue.addLast(new CraftSample(Math.addExact(tail.amount, amount), tail.unit, tail.durationTicks));
+            } catch (ArithmeticException ignored) {
+                if (queue.isEmpty()) {
+                    samples.remove(key);
+                }
+                retainedTailTicks.remove(key);
+                if (hasPending(key)) {
+                    completionIntervals.put(key, new CompletionInterval(tail.unit, tick));
+                } else {
+                    completionIntervals.remove(key);
+                }
+            }
+            dirtySampleKeys.add(key);
+            if (!hasPending(key)) {
+                completionIntervals.remove(key);
+            }
+            return;
+        }
+        var interval = completionIntervals.get(key);
+        try {
+            interval.returnedAmount = Math.addExact(interval.returnedAmount, amount);
+            interval.returnTick = tick;
+            dirtySampleKeys.add(key);
+        } catch (ArithmeticException ignored) {
+            if (hasPending(key)) {
+                completionIntervals.put(key, new CompletionInterval(interval.unit, tick));
+            } else {
+                completionIntervals.remove(key);
+            }
+            dirtySampleKeys.add(key);
+        }
+    }
 
-        private BusyWindow(ProfileUnit unit, long startedTick) {
+    private void finalizeInterval(ProfileKey key, CompletionInterval interval) {
+        var returnTick = interval.returnTick;
+        addSample(key, new CraftSample(interval.returnedAmount, interval.unit,
+                Math.max(1, returnTick - interval.anchorTick)));
+        retainedTailTicks.put(key, returnTick);
+        if (hasPending(key)) {
+            interval.anchorTick = returnTick;
+            interval.returnTick = null;
+            interval.returnedAmount = 0;
+        } else {
+            completionIntervals.remove(key);
+        }
+    }
+
+    private static final class CompletionInterval {
+        private final ProfileUnit unit;
+        private long anchorTick;
+        private Long returnTick;
+        private long returnedAmount;
+
+        private CompletionInterval(ProfileUnit unit, long startedTick) {
             this.unit = unit;
-            this.startedTick = startedTick;
+            this.anchorTick = startedTick;
         }
     }
 

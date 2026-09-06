@@ -29,30 +29,30 @@ Do not use:
 
 ## Record both scopes
 
-The current profiler builds one network-wide busy window per output while pending
-batches from any CPU remain. Keep that behavior.
+The current profiler builds one network-wide completion interval per output and
+batches same-tick returns across CPUs. Keep that behavior.
 
 For a CPU with a durable id, each expected-output and accepted-output event goes
 through two keys with the same CPU object as the pending scope:
 
 ```text
-(networkId, "", outputId)       -> existing network production window
-(networkId, cpuId, outputId)    -> this CPU's production window
+(networkId, "", outputId)       -> existing network completion interval
+(networkId, cpuId, outputId)    -> this CPU's completion interval
 ```
 
 The network call keeps aggregating concurrent CPUs. The CPU call has a separate
-busy window because `cpuId` is part of the key. If no durable id exists, make only
-the network call.
+completion interval because `cpuId` is part of the key. If no durable id exists,
+make only the network call.
 
-Run both completion calls before replacing the SavedData snapshot. Save once when
-either call closes a production window, so the CPU sample cannot miss the same
-world-save update as its network sample.
+Run both completion calls before the shared end-server-tick flush. Snapshot once
+after both keys finalize, so the CPU sample cannot miss the same world-save
+update as its network sample.
 
 This dual write is required. Replacing the network key with the CPU key would
 freeze migrated fallback data and leave fresh worlds without a network fallback.
 
 `finishJob(scope)` still clears unmatched pending entries for both keys. Reset
-must clear only the requested key and rebuild any affected busy window as today.
+must clear only the requested key and its unfinalized interval state.
 
 ## Resolve the selected CPU on the server
 

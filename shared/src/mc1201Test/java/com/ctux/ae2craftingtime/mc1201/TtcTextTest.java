@@ -122,8 +122,8 @@ class TtcTextTest {
 
         var lines = TtcText.statsLines(stats, Optional.empty());
 
-        assertEquals(2, lines.size());
-        assertTrue(lines.get(1).getString().endsWith("(10)"));
+        assertEquals(3, lines.size());
+        assertTrue(lines.get(1).getString().contains("1 item / 50 ticks"));
     }
 
     @Test
