@@ -107,7 +107,7 @@ public abstract class CraftingStatusTableRendererMixin {
                 lines.addAll(TtcText.stallLines(normalized, entry.getPendingAmount(), stats, stall.get()));
                 lines.add(TtcText.locateHint().withStyle(ChatFormatting.GRAY));
             } else {
-                lines.addAll(TtcText.statsLines(stats, ClientStats.CACHE.accuracy(key)));
+                lines.addAll(TtcText.statsLines(stats));
             }
         });
     }
