@@ -16,6 +16,7 @@ public final class TestDriverRuntime implements AutoCloseable {
     private int index;
     private boolean switching;
     private boolean switchingInProgress;
+    private boolean switchingNow;
     private net.minecraft.server.MinecraftServer stoppingServer;
     private boolean finished;
 
@@ -37,7 +38,7 @@ public final class TestDriverRuntime implements AutoCloseable {
     }
 
     public void tick() {
-        if (finished) {
+        if (finished || switchingNow) {
             return;
         }
         if (switching) {
@@ -67,6 +68,7 @@ public final class TestDriverRuntime implements AutoCloseable {
     }
 
     private void switchCase() {
+        switchingNow = true;
         try {
             if (!switchingInProgress) {
                 switchingInProgress = true;
@@ -91,6 +93,8 @@ public final class TestDriverRuntime implements AutoCloseable {
         } catch (Exception error) {
             finished = true;
             throw new IllegalStateException("Cannot advance UI smoke suite", error);
+        } finally {
+            switchingNow = false;
         }
     }
 
