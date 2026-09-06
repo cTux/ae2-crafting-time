@@ -36,7 +36,11 @@ public final class TestDriverRuntime implements AutoCloseable {
     }
 
     public void tick() {
-        if (switching || finished) {
+        if (finished) {
+            return;
+        }
+        if (switching) {
+            switchCase();
             return;
         }
         scenario.tick();
@@ -49,14 +53,7 @@ public final class TestDriverRuntime implements AutoCloseable {
                 boolean next = progress.finish(scenario.state() == ScenarioState.RESULT_WRITTEN, Instant.now());
                 writeProgress();
                 if (next) {
-                    DriverPlatform.clearLevel(minecraft);
-                    UiObservationStore.reset();
-                    var item = cases.get(++index);
-                    SuitePlan.verifyWorld(minecraft.gameDirectory.toPath().resolve("saves"), item);
-                    scenario = new CraftPlanScenario(minecraft, item, driverFile);
-                    progress.start(Instant.now());
-                    writeProgress();
-                    DriverPlatform.openWorld(minecraft, item.world());
+                    switching = true;
                 } else {
                     finished = true;
                     minecraft.stop();
@@ -64,9 +61,24 @@ public final class TestDriverRuntime implements AutoCloseable {
             } catch (Exception error) {
                 finished = true;
                 throw new IllegalStateException("Cannot advance UI smoke suite", error);
-            } finally {
-                switching = false;
             }
+        }
+    }
+
+    private void switchCase() {
+        switching = false;
+        try {
+            DriverPlatform.clearLevel(minecraft);
+            UiObservationStore.reset();
+            var item = cases.get(++index);
+            SuitePlan.verifyWorld(minecraft.gameDirectory.toPath().resolve("saves"), item);
+            scenario = new CraftPlanScenario(minecraft, item, driverFile);
+            progress.start(Instant.now());
+            writeProgress();
+            DriverPlatform.openWorld(minecraft, item.world());
+        } catch (Exception error) {
+            finished = true;
+            throw new IllegalStateException("Cannot advance UI smoke suite", error);
         }
     }
 
