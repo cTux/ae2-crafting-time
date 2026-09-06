@@ -149,9 +149,13 @@ if ($LASTEXITCODE -ne 0 -or $fabricChangelog -notmatch 'Shared release note' -or
 }
 
 $invalidChangelog = "### FIXED`n`n- Link wraps the whole sentence."
-$invalidOutput = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" `
-    -StatePath $StatePath -VersionPath $versionPath -Deploy -DryRun `
-    -ModrinthProjectId test-project -CurseProjectId 1591476 -Changelog $invalidChangelog 2>&1
+$preference = $ErrorActionPreference
+try {
+    $ErrorActionPreference = "Continue"
+    $invalidOutput = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" `
+        -StatePath $StatePath -VersionPath $versionPath -Deploy -DryRun `
+        -ModrinthProjectId test-project -CurseProjectId 1591476 -Changelog $invalidChangelog 2>&1
+} finally { $ErrorActionPreference = $preference }
 if ($LASTEXITCODE -eq 0 -or ($invalidOutput -join "`n") -notmatch 'must end with a linked GitHub reference') {
     throw "Release script did not reject a manual changelog without end-of-line GitHub references"
 }
