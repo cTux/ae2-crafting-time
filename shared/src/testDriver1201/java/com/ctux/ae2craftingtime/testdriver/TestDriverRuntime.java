@@ -16,6 +16,7 @@ public final class TestDriverRuntime implements AutoCloseable {
     private final SuiteProgress progress;
     private int index;
     private boolean switching;
+    private boolean switchingInProgress;
     private boolean finished;
 
     public TestDriverRuntime(DriverOptions options, String driverFile) throws Exception {
@@ -36,7 +37,12 @@ public final class TestDriverRuntime implements AutoCloseable {
     }
 
     public void tick() {
-        if (switching || finished) {
+        if (finished || switchingInProgress) {
+            return;
+        }
+        if (switching) {
+            switchingInProgress = true;
+            switchCase();
             return;
         }
         scenario.tick();
@@ -49,15 +55,7 @@ public final class TestDriverRuntime implements AutoCloseable {
                 boolean next = progress.finish(scenario.state() == ScenarioState.RESULT_WRITTEN, Instant.now());
                 writeProgress();
                 if (next) {
-                    minecraft.level.disconnect();
-                    DriverPlatform.clearLevel(minecraft);
-                    UiObservationStore.reset();
-                    var item = cases.get(++index);
-                    SuitePlan.verifyWorld(minecraft.gameDirectory.toPath().resolve("saves"), item);
-                    scenario = new CraftPlanScenario(minecraft, item, driverFile);
-                    progress.start(Instant.now());
-                    writeProgress();
-                    DriverPlatform.openWorld(minecraft, item.world());
+                    switching = true;
                 } else {
                     finished = true;
                     minecraft.stop();
@@ -65,9 +63,25 @@ public final class TestDriverRuntime implements AutoCloseable {
             } catch (Exception error) {
                 finished = true;
                 throw new IllegalStateException("Cannot advance UI smoke suite", error);
-            } finally {
-                switching = false;
             }
+        }
+    }
+
+    private void switchCase() {
+        try {
+            DriverPlatform.clearLevel(minecraft);
+            UiObservationStore.reset();
+            var item = cases.get(++index);
+            SuitePlan.verifyWorld(minecraft.gameDirectory.toPath().resolve("saves"), item);
+            scenario = new CraftPlanScenario(minecraft, item, driverFile);
+            progress.start(Instant.now());
+            writeProgress();
+            DriverPlatform.openWorld(minecraft, item.world());
+            switching = false;
+            switchingInProgress = false;
+        } catch (Exception error) {
+            finished = true;
+            throw new IllegalStateException("Cannot advance UI smoke suite", error);
         }
     }
 
