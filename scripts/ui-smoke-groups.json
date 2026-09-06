@@ -1,7 +1,8 @@
 {
   "schema": 1,
   "groups": {
-    "standard-ae2": ["standard-plan-controls", "standard-status-controls", "waiting-status", "running-status", "delayed-status", "craft-lifecycle"]
+    "standard-ae2": ["standard-plan-controls", "standard-status-controls", "waiting-status", "running-status", "delayed-status", "craft-lifecycle"],
+    "provider-dispatch-statuses": ["no-target-status", "input-blocked-status", "locked-status"]
   },
   "cases": {
     "standard-plan-controls": {
@@ -27,6 +28,20 @@
     "craft-lifecycle": {
       "checks": ["plan", "submitted", "status", "profile-sample", "completed", "output"],
       "screenshots": ["plan-default.png", "status-default.png", "status-finished-job.png", "status-completed.png"]
+    },
+    "no-target-status": {
+      "checks": ["screen", "real-job", "mixed-row", "tooltip", "layout", "target-removed", "target-restored"],
+      "screenshots": ["no-target-en-us.png", "no-target-restored.png"]
+    },
+    "input-blocked-status": {
+      "checks": ["screen", "real-job", "mixed-row", "tooltip", "layout", "blocking-mode", "blocking-recovered", "zero-insertion", "partial-capacity"],
+      "screenshots": ["input-blocked-en-us.png", "input-blocked-recovered.png", "input-blocked-zero-insertion.png", "input-blocked-partial-capacity.png"]
+    },
+    "locked-status": {
+      "checks": ["screen", "real-job", "mixed-row", "tooltip", "layout", "lock-while-low", "low-recovered", "lock-while-high", "high-recovered", "pulse-lock", "pulse-recovered", "result-lock", "result-returned"],
+      "advancedChecks": ["screen", "real-job", "tooltip", "layout", "advanced-cpu", "lock-while-low", "low-recovered"],
+      "screenshots": ["locked-en-us.png", "locked-result-wait.png", "locked-recovered.png"],
+      "advancedScreenshots": ["locked-en-us.png"]
     }
   },
   "adapterCases": {
@@ -35,6 +50,9 @@
     "advanced_ae": ["advancedae-cpu"],
     "ae2lt": ["lightningtech-cpu"],
     "merequester": ["merequester-screen"]
+  },
+  "adapterBehaviorCases": {
+    "advanced_ae": ["no-target-status", "input-blocked-status", "locked-status"]
   },
   "readRecoveryCases": {
     "ae2ct": ["crafting-tree-read-recovery"],

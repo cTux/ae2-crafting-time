@@ -68,12 +68,15 @@ class TtcTextTest {
 
     @ParameterizedTest
     @CsvSource({"en_us, NO_PROVIDER, NO PROVIDER", "uk_ua, NO_PROVIDER, Без провайдера",
-            "en_us, NO_POWER, NO POWER", "uk_ua, NO_POWER, Немає енергії"})
-    void blockerHasNormalWarningStyleAndTranslatedAdvice(String locale,
+            "en_us, NO_POWER, NO POWER", "uk_ua, NO_POWER, Немає енергії",
+            "en_us, NO_TARGET, NO TARGET", "uk_ua, NO_TARGET, Немає приймача",
+            "en_us, INPUT_BLOCKED, INPUT BLOCKED", "uk_ua, INPUT_BLOCKED, Вхід заблоковано",
+            "en_us, LOCKED, LOCKED", "uk_ua, LOCKED, Заблоковано"})
+    void blockerHasBoldWarningStyleAndTranslatedAdvice(String locale,
             com.ctux.ae2craftingtime.core.CraftingBlockReason reason, String expected) throws IOException {
         var lines = TtcText.blockReasonTooltip(reason);
         assertEquals(3, lines.size());
-        assertFalse(lines.get(0).getStyle().isBold());
+        assertTrue(lines.get(0).getStyle().isBold());
         assertEquals(TextColor.fromLegacyFormat(ChatFormatting.RED), lines.get(0).getStyle().getColor());
         try (var reader = new InputStreamReader(getClass().getResourceAsStream(
                 "/assets/ae2craftingtime/lang/" + locale + ".json"), StandardCharsets.UTF_8)) {
@@ -85,6 +88,23 @@ class TtcTextTest {
                 assertEquals(0, contents.getArgs().length);
             }
         }
+    }
+
+    @Test
+    void mixedRowQualifierAppearsOnlyForTransientDispatchReasons() {
+        for (var reason : com.ctux.ae2craftingtime.core.CraftingBlockReason.values()) {
+            var lines = TtcText.blockReasonTooltip(reason, true);
+            var transientReason = reason == com.ctux.ae2craftingtime.core.CraftingBlockReason.NO_TARGET
+                    || reason == com.ctux.ae2craftingtime.core.CraftingBlockReason.INPUT_BLOCKED
+                    || reason == com.ctux.ae2craftingtime.core.CraftingBlockReason.LOCKED;
+            assertEquals(transientReason ? 4 : 3, lines.size());
+            if (transientReason) {
+                assertEquals("text.ae2craftingtime.dispatch_status.scheduled_only",
+                        ((TranslatableContents) lines.get(3).getContents()).getKey());
+            }
+        }
+        assertEquals(3, TtcText.blockReasonTooltip(
+                com.ctux.ae2craftingtime.core.CraftingBlockReason.LOCKED, false).size());
     }
 
     @Test

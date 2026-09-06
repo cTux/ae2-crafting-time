@@ -50,6 +50,7 @@ public record DriverResult(
                 : scenario.equals(NoSpaceScenario.SCENARIO) ? NoSpaceScenario.CHECKS
                 : scenario.equals(NoPowerScenario.SCENARIO) ? NoPowerScenario.CHECKS
                 : scenario.equals(NoProviderScenario.SCENARIO) ? NoProviderScenario.CHECKS
+                : ProviderDispatchStatusScenario.supports(scenario) ? ProviderDispatchStatusScenario.checks(scenario)
                 : scenario.equals(CraftingTreeScenario.SCENARIO) ? CRAFTING_TREE_CHECKS
                 : scenario.equals(RequesterFixture.SCENARIO) ? ME_REQUESTER_CHECKS
                 : scenario.equals(Ae2NetworkAnalyserFixture.SCENARIO) ? VISUAL_TOOL_CHECKS

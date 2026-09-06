@@ -189,7 +189,7 @@ try {
     $suiteSaves = Join-Path $temp 'build\ui-smoke\1.20.1-forge\compatible\runtime\saves'
     if (@(Get-ChildItem $suiteSaves -Directory).Count) { throw 'Suite left disposable worlds behind' }
     $hashes = Get-Content (Join-Path $temp 'build/ui-smoke/1.20.1-forge/compatible/suite/evidence/fixture-hashes.json') -Raw | ConvertFrom-Json
-    if (!$hashes.unchanged -or $hashes.disposableWorlds.Count -ne 34 -or @($hashes.disposableWorlds | Where-Object { !$_.removed }).Count) {
+    if (!$hashes.unchanged -or $hashes.disposableWorlds.Count -ne 37 -or @($hashes.disposableWorlds | Where-Object { !$_.removed }).Count) {
         throw 'Suite omitted source integrity or disposable-world removal evidence'
     }
     foreach ($mode in @('suite-missing', 'suite-order', 'suite-fail', 'suite-world', 'schema', 'missing-screenshot', 'fatal')) {
@@ -205,6 +205,10 @@ try {
     Invoke-Case "missing-screenshot" -Scenario "no-power-status" -shouldPass $false
     Invoke-Case "pass" -Scenario "no-provider-status" -shouldPass $true
     Invoke-Case "missing-screenshot" -Scenario "no-provider-status" -shouldPass $false
+    foreach ($scenario in @('no-target-status','input-blocked-status','locked-status')) {
+        Invoke-Case "pass" -Scenario $scenario -shouldPass $true
+        Invoke-Case "missing-screenshot" -Scenario $scenario -shouldPass $false
+    }
     Invoke-Case "pass" -Scenario "neoeco-cpu" -shouldPass $true
     Invoke-Case "pass" -Scenario "crafting-tree-screen" -shouldPass $true
     Invoke-Case "missing-screenshot" -Scenario "crafting-tree-screen" -shouldPass $false

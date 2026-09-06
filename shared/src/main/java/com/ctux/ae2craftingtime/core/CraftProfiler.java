@@ -34,6 +34,7 @@ public final class CraftProfiler {
     private final Map<ProfileKey, PersistedOutputStatus> rememberedStatuses = new HashMap<>();
     private final MissingProviderTracker<Object> missingProviders = new MissingProviderTracker<>();
     private final DispatchPowerTracker dispatchPower = new DispatchPowerTracker();
+    private final ProviderDispatchTracker providerDispatch = new ProviderDispatchTracker();
     private boolean enabled = true;
     private long newestEventTick = Long.MIN_VALUE;
 
@@ -56,6 +57,7 @@ public final class CraftProfiler {
         this.enabled = enabled;
         missingProviders.setEnabled(enabled);
         dispatchPower.setEnabled(enabled);
+        providerDispatch.setEnabled(enabled);
         if (!enabled) {
             pending.clear();
             lastProgressTicks.clear();
@@ -86,8 +88,15 @@ public final class CraftProfiler {
         dispatchPower.observe(scope, pattern, outputs, required, extracted, tick);
     }
 
+    public void observeProviderDispatch(Object scope, Object pattern, Map<ProfileKey, Long> outputs,
+            CraftingBlockReason reason, long tick) {
+        providerDispatch.observe(scope, pattern, outputs, reason, tick);
+    }
+
     public Map<ProfileKey, CraftingBlockReason> blockReasons(Object scope, long tick, Set<ProfileKey> missing) {
-        return dispatchPower.reasons(scope, tick, missing);
+        var reasons = new HashMap<>(providerDispatch.reasons(scope, tick));
+        reasons.putAll(dispatchPower.reasons(scope, tick, missing));
+        return reasons;
     }
 
     public void startWaiting(Object scope, Iterable<ProfileKey> keys, long tick) {
@@ -97,6 +106,7 @@ public final class CraftProfiler {
 
         missingProviders.clear(scope);
         dispatchPower.clear(scope);
+        providerDispatch.clear(scope);
         // A new job starts a fresh delayed-notification episode.
         delayedNotified.remove(scope);
         delayedResolved.remove(scope);
@@ -235,6 +245,7 @@ public final class CraftProfiler {
     public void clearPending(Object scope) {
         missingProviders.clear(scope);
         dispatchPower.clear(scope);
+        providerDispatch.clear(scope);
         delayedResolved.remove(scope);
         var removed = pending.remove(scope);
         lastProgressTicks.remove(scope);
@@ -404,6 +415,15 @@ public final class CraftProfiler {
             return;
         }
         rememberedStatuses.put(status.key(), status);
+    }
+
+    public void rememberBlockReason(ProfileKey key, CraftingBlockReason reason, long tick) {
+        var kind = reason == CraftingBlockReason.NO_PROVIDER
+                ? StatusKind.NO_PROVIDER
+                : reason == CraftingBlockReason.NO_POWER ? StatusKind.NO_POWER : null;
+        if (kind != null) {
+            rememberStatus(new PersistedOutputStatus(key, kind, 0, 0, tick));
+        }
     }
 
     /**
@@ -594,6 +614,7 @@ public final class CraftProfiler {
         rememberedStatuses.clear();
         missingProviders.clear();
         dispatchPower.clear();
+        providerDispatch.clear();
         pending.clear();
         lastProgressTicks.clear();
         capacities.clear();

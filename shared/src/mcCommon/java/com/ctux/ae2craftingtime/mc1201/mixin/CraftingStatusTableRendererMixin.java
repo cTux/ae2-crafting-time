@@ -49,7 +49,8 @@ public abstract class CraftingStatusTableRendererMixin {
 
         var reason = ae2craftingtime$blockReason(entry);
         if (reason != null) {
-            cir.getReturnValue().addAll(TtcText.blockReasonTooltip(reason));
+            cir.getReturnValue().addAll(TtcText.blockReasonTooltip(reason,
+                    entry.getActiveAmount() > 0 && entry.getPendingAmount() > 0));
             IntegrationLog.observe("ae2craftingtime", "status-tooltip");
             return;
         }

@@ -6,16 +6,13 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.VarInsnNode;
 
 class ProviderObservationInjectionTest {
     private static final String ITERATOR = "Ljava/lang/Iterable;iterator()Ljava/util/Iterator;";
@@ -30,39 +27,81 @@ class ProviderObservationInjectionTest {
         assertEquals(1, lookups.size());
         assertEquals(1, iterators.size(), "Only the provider loop uses Iterable.iterator");
         assertEquals(calls.indexOf(lookups.get(0)) + 1, calls.indexOf(iterators.get(0)));
-        assertIteratorHook(method(readClass(MIXINS + "CraftingCpuLogicMixin"), "ae2craftingtime$observeProviders"));
+        assertRedirect(method(readClass(MIXINS + "CraftingCpuLogicMixin"), "ae2craftingtime$observeProviders"),
+                ITERATOR);
     }
 
     @Test
-    void bothCpuHooksReturnTheSameIteratorWithoutConsumingProvidersOrRepeatingTheLookup() throws IOException {
+    void bothCpuHooksDelegateIterationBusyAndPushObservationWithoutRepeatingCalls() throws IOException {
         for (var name : List.of("CraftingCpuLogicMixin", "AdvancedCraftingCpuLogicMixin")) {
-            // AdvancedAE is not packaged on Fabric.
             if (name.startsWith("Advanced") && getClass().getResource("/" + MIXINS + name + ".class") == null) {
                 continue;
             }
-            var handler = method(readClass(MIXINS + name), "ae2craftingtime$observeProviders");
-            assertIteratorHook(handler);
-            var calls = calls(handler);
-            assertEquals(1, calls.stream().filter(call -> signature(call).equals(ITERATOR)).count());
-            assertEquals(1, calls.stream().filter(call -> call.owner.equals("java/util/Iterator")
-                    && call.name.equals("hasNext")).count());
-            assertFalse(calls.stream().anyMatch(call -> call.name.equals("next") || call.name.equals("getProviders")));
-            assertTrue(calls.stream().anyMatch(call -> call.name.equals("observeProviders")
-                    && call.desc.endsWith("IPatternDetails;Z)V")));
-            var locals = Arrays.stream(handler.instructions.toArray()).filter(VarInsnNode.class::isInstance)
-                    .map(VarInsnNode.class::cast).toList();
-            var stored = locals.stream().filter(instruction -> instruction.getOpcode() == Opcodes.ASTORE).toList();
-            assertEquals(1, stored.size());
-            assertEquals(stored.get(0).var, locals.get(locals.size() - 1).var, "Return the observed iterator");
+            var type = readClass(MIXINS + name);
+            assertDelegates(type, "ae2craftingtime$observeProviders", ITERATOR, "iterator");
+            assertDelegates(type, "ae2craftingtime$observeProviderBusy",
+                    "Lappeng/api/networking/crafting/ICraftingProvider;isBusy()Z", "busy");
+            assertDelegates(type, "ae2craftingtime$observeProviderPush",
+                    "Lappeng/api/networking/crafting/ICraftingProvider;pushPattern(Lappeng/api/crafting/IPatternDetails;[Lappeng/api/stacks/KeyCounter;)Z",
+                    "push");
         }
     }
 
-    private static void assertIteratorHook(MethodNode handler) {
-        var redirect = handler.visibleAnnotations.stream().filter(a -> a.desc.endsWith("/Redirect;"))
-                .findFirst().orElseThrow();
+    @Test
+    void providerHooksMatchEveryPinnedPushPatternCallSite() throws IOException {
+        var target = method(readClass("appeng/helpers/patternprovider/PatternProviderLogic"), "pushPattern");
+        var targetCalls = calls(target).stream().map(ProviderObservationInjectionTest::signature).toList();
+        var mixin = readClass(MIXINS + "PatternProviderLogicMixin");
+        var handlers = mixin.methods.stream().filter(method -> method.name.startsWith("ae2craftingtime$observe"))
+                .toList();
+        assertEquals(6, handlers.size());
+        for (var handler : handlers) {
+            if (handler.name.equals("ae2craftingtime$observeBlocking")) {
+                var expression = annotation(handler, "/ModifyExpressionValue;");
+                assertEquals(List.of("pushPattern"), value(expression, "method"));
+                var at = (AnnotationNode) ((List<?>) value(expression, "at")).get(0);
+                assertTrue(targetCalls.contains((String) value(at, "target")));
+                continue;
+            }
+            var redirect = annotation(handler, "/Redirect;");
+            assertEquals(List.of("pushPattern"), value(redirect, "method"));
+            var targetSignature = (String) value((AnnotationNode) value(redirect, "at"), "target");
+            assertTrue(targetCalls.contains(targetSignature), targetSignature);
+            assertFalse(redirect.values.contains("require"));
+        }
+        assertEquals(2, mixin.methods.stream().filter(method -> method.name.startsWith("ae2craftingtime$")
+                && method.visibleAnnotations != null
+                && method.visibleAnnotations.stream().anyMatch(a -> a.desc.endsWith("/Invoker;"))).count());
+        var external = getClass().getResource("/" + MIXINS + "PatternProviderExternalPushMixin.class");
+        if (external != null) {
+            var handler = method(readClass(MIXINS + "PatternProviderExternalPushMixin"),
+                    "ae2craftingtime$observeExternalPush");
+            var redirect = annotation(handler, "/Redirect;");
+            assertTrue(targetCalls.contains((String) value((AnnotationNode) value(redirect, "at"), "target")));
+            assertFalse(redirect.values.contains("require"));
+        }
+    }
+
+    private static void assertDelegates(ClassNode type, String methodName, String target, String observerCall) {
+        var handler = method(type, methodName);
+        assertRedirect(handler, target);
+        var calls = calls(handler);
+        assertEquals(1, calls.stream().filter(call -> call.owner.endsWith("ProviderDispatchObserver")
+                && call.name.equals(observerCall)).count());
+        assertFalse(calls.stream().anyMatch(call -> call.name.equals("getProviders") || call.name.equals("hasNext")));
+    }
+
+    private static void assertRedirect(MethodNode handler, String target) {
+        var redirect = annotation(handler, "/Redirect;");
         assertEquals(List.of("executeCrafting"), value(redirect, "method"));
-        assertEquals(ITERATOR, value((AnnotationNode) value(redirect, "at"), "target"));
-        assertFalse(redirect.values.contains("require"), "Keep the required injection check");
+        assertEquals(target, value((AnnotationNode) value(redirect, "at"), "target"));
+        assertFalse(redirect.values.contains("require"));
+    }
+
+    private static AnnotationNode annotation(MethodNode handler, String suffix) {
+        var redirect = handler.visibleAnnotations.stream().filter(a -> a.desc.endsWith(suffix))
+                .findFirst().orElseThrow();
+        return redirect;
     }
 
     private static Object value(AnnotationNode annotation, String key) {
@@ -74,7 +113,7 @@ class ProviderObservationInjectionTest {
     }
 
     private static List<MethodInsnNode> calls(MethodNode method) {
-        return Arrays.stream(method.instructions.toArray()).filter(MethodInsnNode.class::isInstance)
+        return java.util.Arrays.stream(method.instructions.toArray()).filter(MethodInsnNode.class::isInstance)
                 .map(MethodInsnNode.class::cast).toList();
     }
 

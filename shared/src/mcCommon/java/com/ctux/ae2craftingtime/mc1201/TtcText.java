@@ -45,13 +45,29 @@ public final class TtcText {
 
     public static MutableComponent blockReason(CraftingBlockReason reason) {
         return Component.translatable("text.ae2craftingtime." + reason.name().toLowerCase(Locale.ROOT))
-                .withStyle(ChatFormatting.RED);
+                .withStyle(style -> style.withColor(ChatFormatting.RED).withBold(true));
     }
 
     public static List<Component> blockReasonTooltip(CraftingBlockReason reason) {
+        return blockReasonTooltip(reason, false);
+    }
+
+    public static List<Component> blockReasonTooltip(CraftingBlockReason reason, boolean mixedActiveAndScheduled) {
         var key = "text.ae2craftingtime." + reason.name().toLowerCase(Locale.ROOT);
-        return List.of(blockReason(reason), Component.translatable(key + ".explanation"),
-                Component.translatable(key + ".suggestion"));
+        var lines = new ArrayList<Component>();
+        lines.add(blockReason(reason));
+        lines.add(Component.translatable(key + ".explanation"));
+        lines.add(Component.translatable(key + ".suggestion"));
+        if (mixedActiveAndScheduled && isDispatchReason(reason)) {
+            lines.add(Component.translatable("text.ae2craftingtime.dispatch_status.scheduled_only"));
+        }
+        return List.copyOf(lines);
+    }
+
+    private static boolean isDispatchReason(CraftingBlockReason reason) {
+        return reason == CraftingBlockReason.NO_TARGET
+                || reason == CraftingBlockReason.INPUT_BLOCKED
+                || reason == CraftingBlockReason.LOCKED;
     }
 
     public static MutableComponent ttcCollectingData() {

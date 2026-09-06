@@ -29,9 +29,15 @@ foreach ($scenario in $Scenarios) {
                 }
             }
             if ($contracts.$scenario) {
-                if (Compare-Object @($contracts.$scenario.checks) @($data.checks.psobject.Properties.Name) -CaseSensitive) { throw 'Incomplete check set' }
-                foreach ($check in $contracts.$scenario.checks) { if ($data.checks.$check -isnot [bool] -or !$data.checks.$check) { throw "Failed check: $check" } }
-                foreach ($image in $contracts.$scenario.screenshots) {
+                $contractChecks = if ($data.checks.'advanced-cpu' -is [bool] -and $contracts.$scenario.advancedChecks) {
+                    @($contracts.$scenario.advancedChecks)
+                } else { @($contracts.$scenario.checks) }
+                if (Compare-Object $contractChecks @($data.checks.psobject.Properties.Name) -CaseSensitive) { throw 'Incomplete check set' }
+                foreach ($check in $contractChecks) { if ($data.checks.$check -isnot [bool] -or !$data.checks.$check) { throw "Failed check: $check" } }
+                $contractScreenshots = if ($data.checks.'advanced-cpu' -is [bool] -and $contracts.$scenario.advancedScreenshots) {
+                    @($contracts.$scenario.advancedScreenshots)
+                } else { @($contracts.$scenario.screenshots) }
+                foreach ($image in $contractScreenshots) {
                     if ($image -cnotin $data.screenshots -or !(Test-Path -LiteralPath (Join-Path $directory $image) -PathType Leaf) -or
                             !(Test-Path -LiteralPath (Join-Path $directory ($image.Replace('.png','.json'))) -PathType Leaf)) { throw "Missing evidence: $image" }
                     $snapshot = Get-Content -LiteralPath (Join-Path $directory ($image.Replace('.png','.json'))) -Raw | ConvertFrom-Json

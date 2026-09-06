@@ -64,6 +64,16 @@ public final class ProfilerBridge {
         PROFILER.observeDispatchPower(scope, pattern, outputs, required, extracted, tick);
     }
 
+    public static void observeProviderDispatch(String networkId, Object scope, IPatternDetails pattern,
+            CraftingBlockReason reason, long tick) {
+        isEnabled();
+        var outputs = new HashMap<ProfileKey, Long>();
+        for (var output : pattern.getOutputs()) {
+            outputs.merge(key(networkId, output.what()), output.amount(), Long::sum);
+        }
+        PROFILER.observeProviderDispatch(scope, pattern, outputs, reason, tick);
+    }
+
     public static java.util.Map<ProfileKey, com.ctux.ae2craftingtime.core.CraftingBlockReason> blockReasons(
             Object scope, IGrid grid, long tick) {
         if (grid == null) {
@@ -71,9 +81,7 @@ public final class ProfilerBridge {
         }
         var live = PROFILER.blockReasons(scope, tick, missingProviders(scope, grid));
         for (var entry : live.entrySet()) {
-            PROFILER.rememberStatus(new PersistedOutputStatus(entry.getKey(),
-                    entry.getValue() == CraftingBlockReason.NO_POWER ? StatusKind.NO_POWER : StatusKind.NO_PROVIDER, 0,
-                    0, tick));
+            PROFILER.rememberBlockReason(entry.getKey(), entry.getValue(), tick);
         }
         var merged = new java.util.HashMap<>(live);
         PROFILER.rememberedReasons(scope).forEach(merged::putIfAbsent);

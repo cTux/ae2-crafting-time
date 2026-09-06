@@ -29,6 +29,8 @@ try {
     if ((Get-Content "$runtime/mods/mod.jar" -Raw) -ne (Get-Content "$bundle/mods/mod.jar" -Raw)) { throw 'Artifact changed during staging' }
     & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -Interactive | Out-Null
     if (-not (Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw).Contains('interactive=true')) { throw 'Interactive mode was discarded' }
+    & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -ProjectId rxYaglEe | Out-Null
+    if (-not (Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw).Contains('advancedStatus=true')) { throw 'AdvancedAE status mode was discarded' }
     function Assert-Rejected([string]$expected) {
         try { & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters | Out-Null }
         catch { if ($_.Exception.Message -like "*$expected*") { return }; throw }

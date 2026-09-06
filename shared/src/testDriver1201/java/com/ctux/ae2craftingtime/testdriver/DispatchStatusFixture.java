@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.api.config.Actionable;
+import appeng.api.config.LockCraftingMode;
 import appeng.api.config.Settings;
 import appeng.api.config.YesNo;
 import appeng.api.networking.GridHelper;
@@ -33,9 +34,18 @@ final class DispatchStatusFixture {
     BlockPos cpuPosition;
     private Future<ICraftingPlan> calculation;
     private final int inputAmount;
+    private final LockCraftingMode initialLock;
+    private final boolean initialBlocking;
+    private Object advancedCpu;
 
     DispatchStatusFixture(int inputAmount) {
+        this(inputAmount, LockCraftingMode.NONE, true);
+    }
+
+    DispatchStatusFixture(int inputAmount, LockCraftingMode initialLock, boolean initialBlocking) {
         this.inputAmount = inputAmount;
+        this.initialLock = initialLock;
+        this.initialBlocking = initialBlocking;
     }
 
     boolean prepare(int phase, ServerPlayer player, FixtureMarker marker) {
@@ -73,11 +83,15 @@ final class DispatchStatusFixture {
             if (!cpu.getCluster().isActive()) {
                 return false;
             }
+            if (!prepareAdvancedCpu(player, marker)) return false;
             var drive = (DriveBlockEntity) level.getBlockEntity(cpuPosition.east(4));
             drive.getInternalInventory().setItemDirect(0,
                     new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.tryParse("ae2:item_storage_cell_1k"))));
             drive.getCellInventory(0).insert(AEItemKey.of(Items.COBBLESTONE), 64L * inputAmount, Actionable.MODULATE, IActionSource.empty());
-            provider(player, 6).getLogic().getConfigManager().putSetting(Settings.BLOCKING_MODE, YesNo.YES);
+            provider(player, 6).getLogic().getConfigManager().putSetting(Settings.BLOCKING_MODE,
+                    initialBlocking ? YesNo.YES : YesNo.NO);
+            provider(player, 6).getLogic().getConfigManager().putSetting(Settings.LOCK_CRAFTING_MODE,
+                    advancedCpu == null ? LockCraftingMode.NONE : initialLock);
             provider(player, 6).getLogic().getPatternInv().setItemDirect(0, pattern());
             calculation = cpu.getMainNode().getGrid().getCraftingService().beginCraftingCalculation(level,
                     () -> IActionSource.ofMachine(cpu), AEItemKey.of(Items.DIAMOND), 64, CalculationStrategy.REPORT_MISSING_ITEMS);
@@ -87,7 +101,9 @@ final class DispatchStatusFixture {
             return false;
         }
         try {
-            if (!cpu.getCluster().isBusy()) {
+            if (advancedCpu != null) {
+                invokeAdvanced("submit", new Class<?>[] { ServerPlayer.class, ICraftingPlan.class }, player, calculation.get());
+            } else if (!cpu.getCluster().isBusy()) {
                 var result = cpu.getMainNode().getGrid().getCraftingService().submitJob(calculation.get(), null,
                         cpu.getCluster(), false, IActionSource.ofMachine(cpu));
                 if (!result.successful()) {
@@ -96,6 +112,10 @@ final class DispatchStatusFixture {
             }
         } catch (Exception error) {
             throw new IllegalStateException("fixture calculation/submission failed", error);
+        }
+        if (advancedCpu != null) {
+            invokeAdvanced("open", new Class<?>[] { ServerPlayer.class, CraftingBlockEntity.class }, player, cpu);
+            return true;
         }
         var active = cpu.getCluster().craftingLogic.getWaitingFor(AEItemKey.of(Items.DIAMOND));
         if (active <= 0) {
@@ -137,5 +157,35 @@ final class DispatchStatusFixture {
     static void place(ServerPlayer player, BlockPos pos, String id) {
         player.serverLevel().setBlockAndUpdate(pos,
                 BuiltInRegistries.BLOCK.get(ResourceLocation.tryParse("ae2:" + id)).defaultBlockState());
+    }
+
+    private boolean prepareAdvancedCpu(ServerPlayer player, FixtureMarker marker) {
+        if (!Boolean.getBoolean("ae2craftingtime.test.advancedStatus")) return true;
+        if (advancedCpu == null) {
+            try {
+                Class.forName("net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity");
+                advancedCpu = Class.forName("com.ctux.ae2craftingtime.testdriver.AdvancedAeStatusFixture")
+                        .getDeclaredConstructor().newInstance();
+            } catch (ClassNotFoundException | NoClassDefFoundError ignored) {
+                return true;
+            } catch (ReflectiveOperationException error) {
+                throw new IllegalStateException("cannot create AdvancedAE status fixture", error);
+            }
+        }
+        var provider = cpuPosition.east(6);
+        var advancedMarker = new FixtureMarker(1, "craft-plan", "ae2-crafting-time", marker.disposableWorldId(),
+                new FixtureMarker.Position(provider.getX(), provider.getY(), provider.getZ(), "UP"), "minecraft:diamond");
+        return (boolean) invokeAdvanced("prepare", new Class<?>[] { ServerPlayer.class, FixtureMarker.class },
+                player, advancedMarker);
+    }
+
+    private Object invokeAdvanced(String method, Class<?>[] parameters, Object... arguments) {
+        try {
+            var declared = advancedCpu.getClass().getDeclaredMethod(method, parameters);
+            declared.setAccessible(true);
+            return declared.invoke(advancedCpu, arguments);
+        } catch (ReflectiveOperationException error) {
+            throw new IllegalStateException("AdvancedAE status fixture failed: " + method, error);
+        }
     }
 }

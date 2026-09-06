@@ -37,14 +37,14 @@ abstract class AddonCpuFixture<P> {
     private CompletableFuture<Boolean> setupFuture;
 
     static boolean supports(String scenario) {
-        return ("craft-plan".equals(scenario) || StandardAe2Scenario.supports(scenario)) || NoSpaceScenario.SCENARIO.equals(scenario) || NoProviderScenario.SCENARIO.equals(scenario) || NoPowerScenario.SCENARIO.equals(scenario) || CraftingTreeScenario.supports(scenario) || RequesterFixture.supports(scenario)
+        return ("craft-plan".equals(scenario) || StandardAe2Scenario.supports(scenario)) || NoSpaceScenario.SCENARIO.equals(scenario) || NoProviderScenario.SCENARIO.equals(scenario) || NoPowerScenario.SCENARIO.equals(scenario) || ProviderDispatchStatusScenario.supports(scenario) || CraftingTreeScenario.supports(scenario) || RequesterFixture.supports(scenario)
                 || Ae2NetworkAnalyserFixture.SCENARIO.equals(scenario)
                 || WirelessTerminalFixture.supports(scenario)
                 || FIXTURES.containsKey(scenario);
     }
 
     static AddonCpuFixture<?> create(String scenario) {
-        if (("craft-plan".equals(scenario) || StandardAe2Scenario.supports(scenario)) || NoSpaceScenario.SCENARIO.equals(scenario) || NoProviderScenario.SCENARIO.equals(scenario) || NoPowerScenario.SCENARIO.equals(scenario) || CraftingTreeScenario.supports(scenario) || RequesterFixture.supports(scenario)
+        if (("craft-plan".equals(scenario) || StandardAe2Scenario.supports(scenario)) || NoSpaceScenario.SCENARIO.equals(scenario) || NoProviderScenario.SCENARIO.equals(scenario) || NoPowerScenario.SCENARIO.equals(scenario) || ProviderDispatchStatusScenario.supports(scenario) || CraftingTreeScenario.supports(scenario) || RequesterFixture.supports(scenario)
                 || Ae2NetworkAnalyserFixture.SCENARIO.equals(scenario)
                 || WirelessTerminalFixture.supports(scenario)) {
             return null;
