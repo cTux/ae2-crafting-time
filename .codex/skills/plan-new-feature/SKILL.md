@@ -17,6 +17,10 @@ implementation agent.
    secrets, personal data, private paths, and private server details first. Use
    `gh issue create` with a body file, then read the created issue back. If the
    result is uncertain, stop instead of retrying blindly.
+   Add at least one `area/<context>` label, exactly one
+   `priority/<low|medium|high>` label, and exactly one
+   `effort/<low|medium|high>` label. Reuse an existing label or create the
+   missing label before opening the issue.
 2. Read `AGENTS.md`, `docs/architecture.md`, the closest feature documents, and
    the code seams needed to verify current behavior and supported targets.
 3. Resolve the goal, player-visible behavior, boundaries, compatibility, and

@@ -17,6 +17,10 @@ when preparing artifacts for a client or modpack smoke test.
    for release work before starting, or create one when none exists. Remove
    secrets, personal data, private paths, and private server details before
    creating or updating an issue.
+   Add at least one `area/<context>` label, exactly one
+   `priority/<low|medium|high>` label, and exactly one
+   `effort/<low|medium|high>` label. Reuse an existing label or create the
+   missing label before opening the issue.
 3. Read [the writing skill](../ae2-crafting-time-writing/SKILL.md) before
    changing changelogs, release notes, or text published to CurseForge,
    Modrinth, or GitHub.

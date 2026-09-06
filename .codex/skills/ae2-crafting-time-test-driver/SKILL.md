@@ -9,6 +9,10 @@ Treat the GitHub issue list as the source of truth. Find the matching issue
 before starting test-driver work, or create one when none exists. Remove
 secrets, personal data, private paths, and private server details before
 creating or updating an issue.
+For each issue you create, add at least one `area/<context>` label, exactly one
+`priority/<low|medium|high>` label, and exactly one
+`effort/<low|medium|high>` label. Reuse an existing label or create the missing
+label before opening the issue.
 
 Read `docs/test-driver/spec.md`, `docs/test-driver/technical-design.md`, and the
 existing fixture closest to the requested scenario.
