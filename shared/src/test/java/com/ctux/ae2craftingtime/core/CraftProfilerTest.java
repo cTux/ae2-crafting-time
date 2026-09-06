@@ -357,7 +357,7 @@ class CraftProfilerTest {
         var key = new ProfileKey("minecraft:iron_ingot");
         var cpu = new Object();
 
-        profiler.start(key, cpu, 2, ProfileUnit.ITEM, 0);
+        profiler.start(key, cpu, 3, ProfileUnit.ITEM, 0);
         profiler.complete(key, cpu, 1, 20);
 
         assertFalse(profiler.stats(key).isPresent());
@@ -929,7 +929,7 @@ class CraftProfilerTest {
         var key = new ProfileKey("minecraft:iron_ingot");
         var cpu = new Object();
 
-        profiler.start(key, cpu, 3, ProfileUnit.ITEM, 0);
+        profiler.start(key, cpu, 2, ProfileUnit.ITEM, 0);
         profiler.complete(key, cpu, 1, 100);
         profiler.complete(key, cpu, 1, 300);
         profiler.flushCompletedSamples();
