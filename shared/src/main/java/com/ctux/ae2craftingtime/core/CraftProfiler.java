@@ -443,6 +443,9 @@ public final class CraftProfiler {
     public Map<ProfileKey, CraftingBlockReason> rememberedReasons() {
         var reasons = new HashMap<ProfileKey, CraftingBlockReason>();
         for (var status : rememberedStatuses.values()) {
+            if (hasPending(status.key())) {
+                continue;
+            }
             if (status.kind() == StatusKind.NO_POWER) {
                 reasons.put(status.key(), CraftingBlockReason.NO_POWER);
             } else if (status.kind() == StatusKind.NO_PROVIDER) {
