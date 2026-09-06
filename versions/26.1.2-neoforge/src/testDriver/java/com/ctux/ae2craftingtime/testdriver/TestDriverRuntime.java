@@ -66,7 +66,6 @@ public final class TestDriverRuntime implements AutoCloseable {
     }
 
     private void switchCase() {
-        switching = false;
         try {
             DriverPlatform.clearLevel(minecraft);
             UiObservationStore.reset();
@@ -76,6 +75,7 @@ public final class TestDriverRuntime implements AutoCloseable {
             progress.start(Instant.now());
             writeProgress();
             DriverPlatform.openWorld(minecraft, item.world());
+            switching = false;
         } catch (Exception error) {
             finished = true;
             throw new IllegalStateException("Cannot advance UI smoke suite", error);
