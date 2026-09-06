@@ -10,7 +10,9 @@ themes. This is a Markdown document, not a custom website.
 ## Banner
 
 - Canvas: 1600 by 420 pixels; scales to the available README width.
-- Background: `#11191f`, with a quiet 24-pixel grid and cyan edge accents.
+- Background: AE2's Sky Stone Small Bricks texture, tiled at an integer scale
+  and darkened for readable text.
+- Frame: AE2 Crafting CPU ring side and corner textures at an integer scale.
 - Title: `#f0f6fc`; tagline: `#48e6ee`; shadow: `#080e12`.
 - Artwork: `project-icon.png`, the user's original 512-pixel PNG, unchanged.
 - Lettering: the actual default ASCII bitmap glyphs in Minecraft 1.20.1,
@@ -38,17 +40,33 @@ native focus/hover states. No motion or scripts are needed.
 
 The hourglass was supplied as `ae2-crafting-time-512-optimized.png`. Its original
 bytes are retained as `project-icon.png`; it is a README branding asset, not an
-in-game asset. Minecraft's font atlas is read from a locally installed client
-JAR and is not included separately in this repository.
+in-game asset. Minecraft's font atlas and AE2's textures are read from locally
+installed JARs and are not included separately in this repository.
 
 On Windows, from the repository root:
 
 ```powershell
-./scripts/render-readme-banner.ps1 -MinecraftClientJar 'path/to/minecraft-1.20.1-client.jar'
+./scripts/render-readme-banner.ps1 `
+    -MinecraftClientJar 'path/to/minecraft-1.20.1-client.jar' `
+    -Ae2Jar 'path/to/appliedenergistics2-forge-15.4.10.jar'
 ```
 
 This writes `docs/images/readme-banner.png`. The script uses Windows' built-in
 System.Drawing library and does not download anything.
+
+## AE2 texture attribution
+
+The banner background and frame use modified copies of these Applied Energistics
+2 textures from version 15.4.10:
+
+- `sky_stone_small_brick.png`
+- `crafting/ring_side_hor.png`
+- `crafting/ring_side_ver.png`
+- `crafting/ring_corner.png`
+
+Applied Energistics 2 textures and models are copyright (c) 2020 Ridanisaurus
+Rid and copyright (c) 2013-2020 AlgorithmX2 et al. The modified banner is
+licensed under [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 
 ## Verification scope
 

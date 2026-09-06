@@ -1,19 +1,41 @@
 param(
     [Parameter(Mandatory = $true)]
-    [string]$MinecraftClientJar
+    [string]$MinecraftClientJar,
+
+    [Parameter(Mandatory = $true)]
+    [string]$Ae2Jar
 )
 
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $root = Split-Path -Parent $PSScriptRoot
-$jar = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $MinecraftClientJar))
+$jar = $null
+$ae2 = $null
 $atlas = $null
 $icon = $null
+$background = $null
+$ringSideHorizontal = $null
+$ringSideVertical = $null
+$ringCorner = $null
 $canvas = $null
 $graphics = $null
 $fontStream = $null
 try {
+    $jar = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $MinecraftClientJar))
+    $ae2 = [IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $Ae2Jar))
+
+    function Read-Png($Archive, [string]$EntryName) {
+        $entry = $Archive.GetEntry($EntryName)
+        if (-not $entry) { throw "The archive does not contain $EntryName." }
+        $stream = $entry.Open()
+        try {
+            $source = [Drawing.Bitmap]::new($stream)
+            try { return [Drawing.Bitmap]::new($source) }
+            finally { $source.Dispose() }
+        } finally { $stream.Dispose() }
+    }
+
     $entry = $jar.GetEntry('assets/minecraft/textures/font/ascii.png')
     if (-not $entry) { throw 'The client JAR does not contain the Minecraft ASCII font atlas.' }
     $fontStream = $entry.Open()
@@ -21,24 +43,35 @@ try {
     if ($atlas.Width -ne 128 -or $atlas.Height -ne 128) {
         throw 'Expected the Minecraft 1.20.1 128-by-128 ASCII atlas.'
     }
+    $background = Read-Png $ae2 'assets/ae2/textures/block/sky_stone_small_brick.png'
+    $ringSideHorizontal = Read-Png $ae2 'assets/ae2/textures/block/crafting/ring_side_hor.png'
+    $ringSideVertical = Read-Png $ae2 'assets/ae2/textures/block/crafting/ring_side_ver.png'
+    $ringCorner = Read-Png $ae2 'assets/ae2/textures/block/crafting/ring_corner.png'
     $icon = [Drawing.Image]::FromFile((Join-Path $root 'docs/images/project-icon.png'))
     $canvas = [Drawing.Bitmap]::new(1600, 420)
     $graphics = [Drawing.Graphics]::FromImage($canvas)
-    $graphics.Clear([Drawing.ColorTranslator]::FromHtml('#11191f'))
-    $grid = [Drawing.SolidBrush]::new([Drawing.ColorTranslator]::FromHtml('#151f26'))
-    try {
-        for ($y = 0; $y -lt 420; $y += 24) {
-            for ($x = 0; $x -lt 1600; $x += 24) {
-                $graphics.FillRectangle($grid, $x + 2, $y + 2, 20, 20)
-            }
+    $graphics.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
+    $graphics.PixelOffsetMode = [Drawing.Drawing2D.PixelOffsetMode]::Half
+    for ($y = 0; $y -lt 420; $y += 64) {
+        for ($x = 0; $x -lt 1600; $x += 64) {
+            $graphics.DrawImage($background, [Drawing.Rectangle]::new($x, $y, 64, 64))
         }
-    } finally { $grid.Dispose() }
-    $accent = [Drawing.SolidBrush]::new([Drawing.ColorTranslator]::FromHtml('#203d48'))
+    }
+    $shade = [Drawing.SolidBrush]::new([Drawing.Color]::FromArgb(150, 5, 14, 18))
     try {
-        foreach ($point in @(@(24,120), @(48,96), @(72,144), @(24,264), @(72,288), @(1512,72), @(1536,48), @(1560,96), @(1536,312))) {
-            $graphics.FillRectangle($accent, $point[0] + 2, $point[1] + 2, 20, 20)
-        }
-    } finally { $accent.Dispose() }
+        $graphics.FillRectangle($shade, 0, 0, 1600, 420)
+    } finally { $shade.Dispose() }
+    for ($x = 32; $x -lt 1568; $x += 32) {
+        $graphics.DrawImage($ringSideHorizontal, [Drawing.Rectangle]::new($x, 0, 32, 32))
+        $graphics.DrawImage($ringSideHorizontal, [Drawing.Rectangle]::new($x, 388, 32, 32))
+    }
+    for ($y = 32; $y -lt 388; $y += 32) {
+        $graphics.DrawImage($ringSideVertical, [Drawing.Rectangle]::new(0, $y, 32, 32))
+        $graphics.DrawImage($ringSideVertical, [Drawing.Rectangle]::new(1568, $y, 32, 32))
+    }
+    foreach ($point in @(@(0,0), @(1568,0), @(0,388), @(1568,388))) {
+        $graphics.DrawImage($ringCorner, [Drawing.Rectangle]::new($point[0], $point[1], 32, 32))
+    }
     $graphics.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
     $graphics.DrawImage($icon, [Drawing.Rectangle]::new(32, 18, 384, 384))
 
@@ -79,5 +112,10 @@ try {
     if ($icon) { $icon.Dispose() }
     if ($atlas) { $atlas.Dispose() }
     if ($fontStream) { $fontStream.Dispose() }
-    $jar.Dispose()
+    if ($ringCorner) { $ringCorner.Dispose() }
+    if ($ringSideVertical) { $ringSideVertical.Dispose() }
+    if ($ringSideHorizontal) { $ringSideHorizontal.Dispose() }
+    if ($background) { $background.Dispose() }
+    if ($ae2) { $ae2.Dispose() }
+    if ($jar) { $jar.Dispose() }
 }
