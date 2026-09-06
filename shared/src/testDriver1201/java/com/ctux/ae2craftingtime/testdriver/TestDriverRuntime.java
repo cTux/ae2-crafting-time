@@ -71,6 +71,9 @@ public final class TestDriverRuntime implements AutoCloseable {
             if (!switchingInProgress) {
                 switchingInProgress = true;
                 stoppingServer = minecraft.getSingleplayerServer();
+                if (stoppingServer != null) {
+                    stoppingServer.halt(false);
+                }
                 DriverPlatform.clearLevel(minecraft);
                 UiObservationStore.reset();
                 return;
