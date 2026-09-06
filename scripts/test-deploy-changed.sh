@@ -131,6 +131,8 @@ partial="$("$script" \
   -CurseProjectId 1591476 2>&1)"
 assert_contains "$partial" 'dry-run GitHub Release: 1.0.5' \
   "Partial release did not publish only the affected jar at the development version"
+assert_contains "$partial" 'dry-run GitHub tag: release-1.0.5' \
+  "Partial release did not use a deterministic version tag"
 assert_contains "$partial" 'dry-run GitHub assets: ae2-crafting-time-1.0.4-forge-1.20.1.jar, ae2-crafting-time-1.0.5-fabric-1.20.1.jar, ae2-crafting-time-1.0.4-neoforge-1.21.1.jar, ae2-crafting-time-1.0.4-neoforge-26.1.2.jar' \
   "Partial release did not attach every latest jar to GitHub"
 assert_contains "$partial" 'dry-run Modrinth version: 1.0.5-fabric-1.20.1' \

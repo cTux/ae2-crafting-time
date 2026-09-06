@@ -42,7 +42,8 @@ Assemble title/link, complete body, then JAR links in that order. Prefer one
 message; split longer content into sequential parts within Discord's 2,000
 character content limit, preferring paragraph/line boundaries. Preserve Unicode
 and split oversized individual lines without dropping text. Account for any
-continuation labels in the limit. Disable allowed mentions in every payload.
+continuation labels in the limit. Disable allowed mentions and link-preview
+embeds in every payload.
 Use webhook server confirmation (`wait=true`), record returned message IDs per
 part, and stop on failure so partial delivery can be inspected before retrying.
 These limits and confirmation behavior come from the
@@ -51,8 +52,9 @@ the release text comes from [GitHub's release response](https://docs.github.com/
 
 Acceptance: existing shell tests capture payloads with no live posting and prove
 short, multiline, empty, exact-limit, over-limit, Unicode, and long-line bodies
-remain complete and ordered; each JAR URL appears once; mentions stay disabled;
-and a failed middle part stops delivery without reporting success. Compare
+remain complete and ordered; each JAR URL appears once; mentions and link
+previews stay disabled; and a failed middle part stops delivery without
+reporting success. Compare
 reconstructed description text with the release `body`, allowing only transport
 formatting. Verify actual Discord content after the next approved real release,
 not by publishing a throwaway release. Local regression checks capture payloads

@@ -76,14 +76,16 @@ release state, and pushes the branch.
 - Write changelogs for players, not as raw commit logs. Use natural sentences
   grouped under `ADDED`, `FIXED`, `IMPROVED`, `DELETED`, or `CHANGED`; skip empty
   categories.
-- Link every GitHub and Discord release-note item to its source GitHub issue
-  with a full URL so Discord keeps it clickable. Use a manual changelog when
-  automatic commit conversion does not produce those links.
-- Include zero or one image across the release notes. When using one, choose the
+- End every GitHub and Discord release-note item with its linked source GitHub
+  issue, for example `- Something was fixed ([#111](https://github.com/cTux/ae2-crafting-time/issues/111))`.
+  Use a manual changelog when automatic commit conversion does not produce those links.
+- Include one image when reviewed smoke evidence exists for a player-visible
+  change; otherwise include none. Choose the
   release's highest-effort player-visible feature or fix and crop its reviewed
   smoke-test evidence to the relevant area instead of using a full screenshot.
   Inspect the crop before publishing and exclude account data, tokens, chat,
-  server addresses, coordinates, and unrelated worlds.
+  server addresses, coordinates, and unrelated worlds. The exact image is part
+  of the release-body approval preview.
 - Conventional commit subjects are converted into those categories and stripped
   of commit types, scopes, and hashes. A manual `-Changelog` must already use the
   same `### CATEGORY` Markdown headings.
@@ -99,7 +101,8 @@ release state, and pushes the branch.
   mention compatibility that matters, and leave out hype or generic AI wording.
 - Name the GitHub Release with only the mod version, for example `1.0.5`. Put
   loader, Minecraft version, artifact, and categorized changelog details in the
-  release body.
+  release body. Use the deterministic `release-<mod-version>` tag so a repeated
+  deploy cannot publish the same version twice.
 
 After it succeeds:
 

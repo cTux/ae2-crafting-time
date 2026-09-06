@@ -134,7 +134,7 @@ while content:
             if boundary >= 0:
                 end = boundary + len(separator)
                 break
-    print(json.dumps({"content": content[:end], "allowed_mentions": {"parse": []}}))
+    print(json.dumps({"content": content[:end], "allowed_mentions": {"parse": []}, "flags": 4}))
     content = content[end:]
 ' <<<"$release_json")"
 

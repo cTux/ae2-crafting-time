@@ -236,9 +236,16 @@ function Format-Changelog($subjects) {
     }) -join "`n`n")
 }
 
-function Assert-Changelog([string]$text) {
+function Assert-Changelog([string]$text, [switch]$RequireLinks) {
     if ($text -notmatch '(?m)^### (ADDED|FIXED|IMPROVED|DELETED|CHANGED)$') {
         throw "Changelog must use human-readable ### ADDED, FIXED, IMPROVED, DELETED, or CHANGED categories"
+    }
+    if ($RequireLinks) {
+        foreach ($line in @($text -split "`r?`n" | Where-Object { $_ -match '^- ' })) {
+            if ($line -notmatch '\(\[#\d+\]\(https://github\.com/cTux/ae2-crafting-time/(issues|pull)/\d+\)\)$') {
+                throw "Every manual changelog item must end with a linked GitHub reference such as ([#111](https://github.com/cTux/ae2-crafting-time/issues/111))"
+            }
+        }
     }
     return $text
 }
@@ -250,8 +257,8 @@ function Get-EntryChangelogs($entry, $previous) {
         if (-not $common -and -not $specific) {
             throw "Scoped changelog has no 'all' or '$($entry.id)' entry"
         }
-        $common = if ($common) { Assert-Changelog $common } else { $null }
-        $specific = if ($specific) { Assert-Changelog $specific } else { $null }
+        $common = if ($common) { Assert-Changelog $common -RequireLinks } else { $null }
+        $specific = if ($specific) { Assert-Changelog $specific -RequireLinks } else { $null }
         return [pscustomobject]@{
             common = $common
             specific = $specific
@@ -260,7 +267,7 @@ function Get-EntryChangelogs($entry, $previous) {
     }
 
     $notes = if ($Changelog) {
-        Assert-Changelog $Changelog
+        Assert-Changelog $Changelog -RequireLinks
     }
     elseif (-not ($previous -and $previous.commit)) {
         Assert-Changelog $entry.changelog
@@ -352,9 +359,8 @@ function Publish-CurseForge($entry, [string]$version, [string]$jarPath, [string]
 }
 
 function Publish-GitHubRelease($releases, $jars, [string]$sourceCommit) {
-    $stamp = (Get-Date).ToUniversalTime().ToString("yyyyMMdd-HHmmss")
-    $tag = "release-$stamp"
     $title = $releases[0].version
+    $tag = "release-$title"
     if ($scopedChangelogs) {
         $sections = @()
         if ($releases[0].commonChangelog) {
@@ -380,6 +386,7 @@ function Publish-GitHubRelease($releases, $jars, [string]$sourceCommit) {
 
     if ($DryRun) {
         Write-Host "dry-run GitHub Release: $title"
+        Write-Host "dry-run GitHub tag: $tag"
         Write-Host "dry-run GitHub assets: $(($jars | ForEach-Object { Split-Path -Leaf $_.jarPath }) -join ', ')"
         Write-Host $notes
         return
