@@ -119,10 +119,18 @@ public final class ProfilerBridge {
         if (what == null || !isEnabled()) {
             return;
         }
-        if (PROFILER.complete(key(networkId, what), scope, normalizeAmount(what, amount), tick) && savedData != null) {
+        PROFILER.complete(key(networkId, what), scope, normalizeAmount(what, amount), tick);
+    }
+
+    public static boolean flushCompletedSamples() {
+        if (!isEnabled() || !PROFILER.flushCompletedSamples()) {
+            return false;
+        }
+        if (savedData != null) {
             savedData.replaceFrom(PROFILER.snapshotSamples());
             persistStatuses();
         }
+        return true;
     }
 
     public static void startJob(String networkId, Object scope, ICraftingPlan plan, long tick, long nanoTime) {

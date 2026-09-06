@@ -54,6 +54,7 @@ class DelayedNotificationTest {
     private static void seedTypical(CraftProfiler profiler, ProfileKey key, Object seedScope) {
         profiler.start(key, seedScope, 1, ProfileUnit.ITEM, 0);
         profiler.complete(key, seedScope, 1, 200);
+        profiler.flushCompletedSamples();
     }
 
     @Test

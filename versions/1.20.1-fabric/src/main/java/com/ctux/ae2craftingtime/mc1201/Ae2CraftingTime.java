@@ -4,6 +4,7 @@ import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 
@@ -30,6 +31,8 @@ public final class Ae2CraftingTime implements ModInitializer {
                             Ae2CraftingTimeSavedData.FILE_ID);
             ProfilerBridge.load(data);
         });
+        ServerTickEvents.END_SERVER_TICK.register(server -> ProfilerBridge.flushCompletedSamples());
+        ServerLifecycleEvents.SERVER_STOPPING.register(server -> ProfilerBridge.flushCompletedSamples());
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> ProfilerBridge
                 .resyncPlatesForPlayer(handler.getPlayer()));
         IntegrationLog.summary();

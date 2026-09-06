@@ -71,6 +71,9 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
 
     @Override
     public CompoundTag save(CompoundTag tag) {
+        if (Ae2CraftingTimeConfig.SPEC.isLoaded()) {
+            ProfilerBridge.flushCompletedSamples();
+        }
         tag.putInt("version", PersistedSamplesTag.VERSION);
         tag.put("outputs", PersistedSamplesTag.writeOutputs(samples));
         tag.put("providers", PersistedProviderTag.writeStarts(providerStarts));

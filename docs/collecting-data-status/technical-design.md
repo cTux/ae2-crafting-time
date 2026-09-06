@@ -78,18 +78,17 @@ sample count would be misleading.
 
 ## Unchanged boundaries
 
-- `CraftProfiler` keeps collecting and retaining completed samples on the
-  server. If no retained sample exists, `ProfilerBridge.entry(...)` may expose
-  completed progress from the current busy window as a non-persisted,
-  low-confidence preview. The normal one-second client request loop replaces
-  `No data yet` as soon as that preview exists.
+- `CraftProfiler` retains completed output intervals at the end of each server
+  tick, including while more work remains. The normal one-second client request
+  loop replaces `No data yet` as soon as the first interval is retained.
 - `ProfileStats.reliableEstimate()` stays true only with at least three samples
   and no filtered outlier.
 - `TimeEstimate` keeps formatting low-confidence estimates with `?`.
 - `StatsRequestC2S`, `StatsSnapshotS2C`, packet codecs, and packet limits do not
   change.
 - `ClientStatsCache` keeps representing unknown stats as an absent entry.
-- SavedData and its version do not change.
+- SavedData and its version do not change. Saving flushes the current positive
+  bucket before reading the existing raw sample pairs.
 - Sorting and totals keep treating a missing estimate as unknown.
 
 ## Files expected to change during implementation

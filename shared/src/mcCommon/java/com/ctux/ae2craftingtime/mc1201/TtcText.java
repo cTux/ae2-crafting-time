@@ -103,8 +103,13 @@ public final class TtcText {
                             stats.sampleCount())));
         }
         if (!stats.sampleDurationTicks().isEmpty()) {
-            lines.add(statsLine("text.ae2craftingtime.stats.samples",
-                    windows(stats) + " (" + stats.sampleCount() + ")"));
+            var windows = windows(stats);
+            if (!windows.isEmpty()) {
+                lines.add(statsLine("text.ae2craftingtime.stats.samples",
+                        windows + " (" + stats.sampleCount() + ")"));
+                lines.add(Component.translatable("text.ae2craftingtime.stats.samples.explanation")
+                        .withStyle(ChatFormatting.GRAY));
+            }
         }
         if (!stats.reliableEstimate()) {
             lines.add(statsLine("text.ae2craftingtime.stats.confidence", confidence(stats)));
@@ -142,9 +147,7 @@ public final class TtcText {
         messages.add(I18n.get("text.ae2craftingtime.chat.summary", name, amount,
                 TimeEstimate.format(amount, stats).orElse(I18n.get("text.ae2craftingtime.unknown"))));
 
-        var details = I18n.get("text.ae2craftingtime.chat.details", stats.sampleCount(),
-                seconds(stats.averageDurationTicks()), seconds(stats.lastDurationTicks()),
-                rate(stats.amountPerSecond()), unitName(stats));
+        var details = normalizedDetails(stats);
         if (stats.usedSampleCount() != stats.sampleCount()) {
             details += I18n.get("text.ae2craftingtime.chat.details.used", stats.usedSampleCount(),
                     stats.sampleCount());
@@ -177,12 +180,10 @@ public final class TtcText {
         return I18n.get(stats.unit().translationKey());
     }
 
-    private static String seconds(double ticks) {
-        return I18n.get("text.ae2craftingtime.value.seconds", tickSeconds(ticks));
-    }
-
-    private static String tickSeconds(double ticks) {
-        return String.format(Locale.ROOT, "%.2f", ticks / 20.0);
+    private static String singularUnitName(ProfileStats stats) {
+        return I18n.get(stats.unit() == com.ctux.ae2craftingtime.core.ProfileUnit.ITEM
+                ? "text.ae2craftingtime.unit.item.singular"
+                : stats.unit().translationKey());
     }
 
     private static long secondsRounded(long ticks) {
@@ -225,10 +226,26 @@ public final class TtcText {
     private static String windows(ProfileStats stats) {
         var values = new ArrayList<String>();
         for (var i = 0; i < stats.sampleDurationTicks().size(); i++) {
-            values.add(I18n.get("text.ae2craftingtime.value.window", stats.sampleAmounts().get(i), unitName(stats),
-                    stats.sampleDurationTicks().get(i)));
+            var ticks = stats.sampleTicksPerUnit(i);
+            if (ticks.isPresent()) {
+                TimeEstimate.formatSampleTicks(ticks.getAsDouble()).ifPresent(value -> values.add(
+                        I18n.get("text.ae2craftingtime.value.window", 1, singularUnitName(stats), value)));
+            }
         }
         return String.join(", ", values);
+    }
+
+    private static String normalizedDetails(ProfileStats stats) {
+        var average = stats.averageTicksPerUnit();
+        var latest = stats.latestTicksPerUnit();
+        if (average.isEmpty() || latest.isEmpty()) {
+            return I18n.get("text.ae2craftingtime.chat.details.rate", stats.sampleCount(),
+                    rate(stats.amountPerSecond()), unitName(stats));
+        }
+        return I18n.get("text.ae2craftingtime.chat.details", stats.sampleCount(), singularUnitName(stats),
+                TimeEstimate.formatSampleTicks(average.getAsDouble()).orElse("?"), singularUnitName(stats),
+                TimeEstimate.formatSampleTicks(latest.getAsDouble()).orElse("?"),
+                rate(stats.amountPerSecond()), unitName(stats));
     }
 
     private static String confidence(ProfileStats stats) {

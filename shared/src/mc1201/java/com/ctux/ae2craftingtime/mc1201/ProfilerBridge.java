@@ -119,10 +119,18 @@ public final class ProfilerBridge {
         if (what == null || !isEnabled()) {
             return;
         }
-        if (PROFILER.complete(key(networkId, what), scope, normalizeAmount(what, amount), tick) && savedData != null) {
+        PROFILER.complete(key(networkId, what), scope, normalizeAmount(what, amount), tick);
+    }
+
+    public static boolean flushCompletedSamples() {
+        if (!isEnabled() || !PROFILER.flushCompletedSamples()) {
+            return false;
+        }
+        if (savedData != null) {
             savedData.replaceFrom(PROFILER.snapshotSamples());
             persistStatuses();
         }
+        return true;
     }
 
     public static void startJob(String networkId, Object scope, ICraftingPlan plan, long tick, long nanoTime) {
@@ -538,7 +546,7 @@ public final class ProfilerBridge {
     }
 
     public static Optional<StatsEntry> entry(ProfileKey lookupKey, ProfileKey displayKey, Object scope, long tick) {
-        return stats(lookupKey).or(() -> PROFILER.inProgressStats(lookupKey, tick)).map(stats -> {
+        return stats(lookupKey).map(stats -> {
             var stall = scope == null ? Optional.<StallDiagnostic>empty()
                     : PROFILER.stall(lookupKey, scope, tick);
             if (stall.isEmpty()) {

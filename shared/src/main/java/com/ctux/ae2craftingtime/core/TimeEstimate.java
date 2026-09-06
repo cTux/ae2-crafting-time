@@ -1,5 +1,7 @@
 package com.ctux.ae2craftingtime.core;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.Optional;
 import java.util.OptionalLong;
 
@@ -34,6 +36,17 @@ public final class TimeEstimate {
 
     public static String formatTicks(double ticks) {
         return formatSeconds((long) Math.ceil(Math.max(0, ticks) / 20.0));
+    }
+
+    public static Optional<String> formatSampleTicks(double ticks) {
+        if (!Double.isFinite(ticks) || ticks <= 0) {
+            return Optional.empty();
+        }
+        if (ticks < 0.001) {
+            return Optional.of("<0.001");
+        }
+        return Optional.of(BigDecimal.valueOf(ticks).setScale(3, RoundingMode.HALF_UP)
+                .stripTrailingZeros().toPlainString());
     }
 
     private static String formatSeconds(long seconds) {

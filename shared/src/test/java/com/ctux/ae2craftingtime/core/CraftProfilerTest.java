@@ -42,10 +42,13 @@ class CraftProfilerTest {
 
         profiler.start(ironPlate, 1, ProfileUnit.ITEM, 10);
         profiler.complete(ironPlate, 1, 20);
+        profiler.flushCompletedSamples();
         profiler.start(ironPlate, 1, ProfileUnit.ITEM, 30);
         profiler.complete(ironPlate, 1, 50);
+        profiler.flushCompletedSamples();
         profiler.start(ironPlate, 1, ProfileUnit.ITEM, 60);
         profiler.complete(ironPlate, 1, 100);
+        profiler.flushCompletedSamples();
 
         var stats = profiler.stats(ironPlate).orElseThrow();
 
@@ -63,8 +66,10 @@ class CraftProfilerTest {
 
         profiler.start(ironPlate, 1, ProfileUnit.ITEM, 0);
         profiler.complete(ironPlate, 1, 100);
+        profiler.flushCompletedSamples();
         profiler.start(ironPlate, 1, ProfileUnit.ITEM, 100);
         profiler.complete(ironPlate, 1, 110);
+        profiler.flushCompletedSamples();
 
         var stats = profiler.stats(ironPlate).orElseThrow();
 
@@ -79,12 +84,15 @@ class CraftProfilerTest {
 
         profiler.start(ironPlate, 1, ProfileUnit.ITEM, 0);
         profiler.complete(ironPlate, 1, 1);
+        profiler.flushCompletedSamples();
         for (var i = 0; i < 4; i++) {
             profiler.start(ironPlate, 1, ProfileUnit.ITEM, 20 + i * 20L);
             profiler.complete(ironPlate, 1, 30 + i * 20L);
+            profiler.flushCompletedSamples();
         }
         profiler.start(ironPlate, 1, ProfileUnit.ITEM, 120);
         profiler.complete(ironPlate, 1, 1_120);
+        profiler.flushCompletedSamples();
 
         var stats = profiler.stats(ironPlate).orElseThrow();
 
@@ -101,9 +109,11 @@ class CraftProfilerTest {
         for (var i = 0; i < 4; i++) {
             profiler.start(ironPlate, 1, ProfileUnit.ITEM, i * 20L);
             profiler.complete(ironPlate, 1, i * 20L + 10);
+            profiler.flushCompletedSamples();
         }
         profiler.start(ironPlate, 1, ProfileUnit.ITEM, 100);
         profiler.complete(ironPlate, 1, 1_100);
+        profiler.flushCompletedSamples();
 
         var stats = profiler.stats(ironPlate).orElseThrow();
 
@@ -117,6 +127,7 @@ class CraftProfilerTest {
 
         profiler.start(ironPlate, 1, ProfileUnit.ITEM, 10);
         profiler.complete(ironPlate, 1, 30);
+        profiler.flushCompletedSamples();
 
         var stats = profiler.stats(ironPlate).orElseThrow();
 
@@ -132,6 +143,7 @@ class CraftProfilerTest {
         for (var i = 1; i <= 11; i++) {
             profiler.start(ironPlate, 1, ProfileUnit.ITEM, 0);
             profiler.complete(ironPlate, 1, i);
+            profiler.flushCompletedSamples();
         }
 
         var stats = profiler.stats(ironPlate).orElseThrow();
@@ -146,6 +158,7 @@ class CraftProfilerTest {
         var profiler = new CraftProfiler(10);
         profiler.start(key, 2, ProfileUnit.ITEM, 5);
         profiler.complete(key, 2, 25);
+        profiler.flushCompletedSamples();
 
         var restored = new CraftProfiler(10);
         restored.loadSamples(profiler.snapshotSamples());
@@ -185,6 +198,7 @@ class CraftProfilerTest {
         var oldSession = new CraftProfiler(10);
         oldSession.start(key, 1, ProfileUnit.ITEM, 1);
         oldSession.complete(key, 1, 2);
+        oldSession.flushCompletedSamples();
 
         var newSession = new CraftProfiler(10);
 
@@ -198,8 +212,10 @@ class CraftProfilerTest {
 
         profiler.start(ironPlate, 1, ProfileUnit.ITEM, 0);
         profiler.complete(ironPlate, 1, 10);
+        profiler.flushCompletedSamples();
         profiler.start(ironPlate, 1, ProfileUnit.ITEM, 100);
         profiler.complete(ironPlate, 1, 130);
+        profiler.flushCompletedSamples();
 
         var stats = profiler.stats(ironPlate).orElseThrow();
         assertEquals(2, stats.sampleCount());
@@ -214,6 +230,7 @@ class CraftProfilerTest {
 
         profiler.start(networkA, 1, ProfileUnit.ITEM, 0);
         profiler.complete(networkA, 1, 10);
+        profiler.flushCompletedSamples();
 
         assertEquals(1, profiler.stats(networkA).orElseThrow().sampleCount());
         assertFalse(profiler.stats(networkB).isPresent());
@@ -282,6 +299,7 @@ class CraftProfilerTest {
         profiler.complete(ironPlate, 1, 10);
         profiler.start(copperPlate, 1, ProfileUnit.ITEM, 0);
         profiler.complete(copperPlate, 1, 20);
+        profiler.flushCompletedSamples();
 
         profiler.clearSamples(ironPlate);
 
@@ -290,22 +308,25 @@ class CraftProfilerTest {
     }
 
     @Test
-    void waitsForPartialCompletionsBeforeRecordingSample() {
+    void recordsCompletedIntervalsWhileWorkRemains() {
         var profiler = new CraftProfiler(10);
         var fluid = new ProfileKey("minecraft:water");
 
         profiler.start(fluid, 1000, ProfileUnit.MILLIBUCKET, 5);
         profiler.complete(fluid, 250, 10);
+        assertTrue(profiler.flushCompletedSamples());
 
-        assertFalse(profiler.stats(fluid).isPresent());
+        var first = profiler.stats(fluid).orElseThrow();
+        assertEquals(List.of(250L), first.sampleAmounts());
+        assertEquals(List.of(5L), first.sampleDurationTicks());
 
         profiler.complete(fluid, 750, 25);
+        assertTrue(profiler.flushCompletedSamples());
 
         var stats = profiler.stats(fluid).orElseThrow();
         assertEquals(ProfileUnit.MILLIBUCKET, stats.unit());
-        assertEquals(20.0, stats.averageDurationTicks());
-        assertEquals(50.0, stats.amountPerTick());
-        assertEquals(1000.0, stats.amountPerSecond());
+        assertEquals(List.of(250L, 750L), stats.sampleAmounts());
+        assertEquals(List.of(5L, 15L), stats.sampleDurationTicks());
     }
 
     @Test
@@ -322,6 +343,7 @@ class CraftProfilerTest {
         assertFalse(profiler.stats(key).isPresent());
 
         profiler.complete(key, cpuB, 64, 20);
+        profiler.flushCompletedSamples();
 
         var stats = profiler.stats(key).orElseThrow();
         assertEquals(128.0, stats.amountPerSecond());
@@ -330,26 +352,26 @@ class CraftProfilerTest {
     }
 
     @Test
-    void previewsProgressBeforeContinuousProductionBecomesIdle() {
+    void flushesRealProgressBeforeContinuousProductionBecomesIdle() {
         var profiler = new CraftProfiler(10);
         var key = new ProfileKey("minecraft:iron_ingot");
         var cpu = new Object();
 
-        assertFalse(profiler.inProgressStats(key, 0).isPresent());
         profiler.start(key, cpu, 3, ProfileUnit.ITEM, 0);
-        assertFalse(profiler.inProgressStats(key, 0).isPresent());
         profiler.complete(key, cpu, 1, 20);
 
         assertFalse(profiler.stats(key).isPresent());
-        var preview = profiler.inProgressStats(key, 20).orElseThrow();
-        assertEquals(1.0, preview.amountPerSecond());
-        assertFalse(preview.reliableEstimate());
-        assertTrue(profiler.snapshotSamples().isEmpty());
+        assertTrue(profiler.flushCompletedSamples());
+        var retained = profiler.stats(key).orElseThrow();
+        assertEquals(1.0, retained.amountPerSecond());
+        assertFalse(retained.reliableEstimate());
+        assertEquals(List.of(1L), retained.sampleAmounts());
 
         var sameTickKey = new ProfileKey("minecraft:copper_ingot");
         profiler.start(sameTickKey, cpu, 2, ProfileUnit.ITEM, 20);
         profiler.complete(sameTickKey, cpu, 1, 20);
-        assertEquals(20.0, profiler.inProgressStats(sameTickKey, 20).orElseThrow().amountPerSecond());
+        profiler.flushCompletedSamples();
+        assertEquals(20.0, profiler.stats(sameTickKey).orElseThrow().amountPerSecond());
     }
 
     @Test
@@ -361,6 +383,7 @@ class CraftProfilerTest {
         profiler.start(key, cpu, 32, ProfileUnit.ITEM, 0);
         profiler.start(key, cpu, 32, ProfileUnit.ITEM, 0);
         profiler.complete(key, cpu, 64, 20);
+        profiler.flushCompletedSamples();
 
         var stats = profiler.stats(key).orElseThrow();
         assertEquals(64.0, stats.amountPerSecond());
@@ -378,6 +401,7 @@ class CraftProfilerTest {
         profiler.clearPending(cancelledCpu);
         profiler.start(key, nextCpu, 64, ProfileUnit.ITEM, 1_000);
         profiler.complete(key, nextCpu, 64, 1_020);
+        profiler.flushCompletedSamples();
 
         var stats = profiler.stats(key).orElseThrow();
         assertEquals(20.0, stats.averageDurationTicks());
@@ -391,6 +415,7 @@ class CraftProfilerTest {
 
         profiler.start(key, 64, ProfileUnit.ITEM, 10);
         profiler.complete(key, 64, 10);
+        profiler.flushCompletedSamples();
 
         var stats = profiler.stats(key).orElseThrow();
         assertEquals(1.0, stats.averageDurationTicks());
@@ -457,6 +482,7 @@ class CraftProfilerTest {
         profiler.start(otherKey, unrelated, 1, ProfileUnit.ITEM, 0);
         profiler.clearPending(cancelled);
         assertTrue(profiler.complete(key, retained, 3, 30));
+        profiler.flushCompletedSamples();
 
         var stats = profiler.stats(key).orElseThrow();
         assertEquals(30.0, stats.averageDurationTicks());
@@ -484,6 +510,7 @@ class CraftProfilerTest {
 
         profiler.start(key, scope, 1, ProfileUnit.ITEM, 0);
         profiler.complete(key, scope, 1, 20);
+        profiler.flushCompletedSamples();
         profiler.start(key, scope, 1, ProfileUnit.ITEM, 100);
         profiler.updateCapacity(scope, 10, 4, 700);
 
@@ -500,6 +527,7 @@ class CraftProfilerTest {
 
         profiler.start(key, cpu, 1, ProfileUnit.ITEM, 0);
         profiler.complete(key, cpu, 1, 200);
+        profiler.flushCompletedSamples();
         profiler.start(key, cpu, 1, ProfileUnit.ITEM, 300);
         profiler.updateCapacity(cpu, 1, 4, 300);
 
@@ -522,6 +550,7 @@ class CraftProfilerTest {
 
         profiler.start(key, cpu, 1, ProfileUnit.ITEM, 0);
         profiler.complete(key, cpu, 1, 20);
+        profiler.flushCompletedSamples();
         profiler.start(key, cpu, 1, ProfileUnit.ITEM, 100);
 
         assertFalse(profiler.stall(key, cpu, 299).isPresent());
@@ -536,6 +565,7 @@ class CraftProfilerTest {
 
         profiler.start(key, cpu, 1, ProfileUnit.ITEM, 0);
         profiler.complete(key, cpu, 1, 20);
+        profiler.flushCompletedSamples();
         profiler.start(key, cpu, 10, ProfileUnit.ITEM, 100);
         profiler.complete(key, cpu, 1, 650);
 
@@ -551,6 +581,7 @@ class CraftProfilerTest {
 
         profiler.start(key, cpu, 1, ProfileUnit.ITEM, 0);
         profiler.complete(key, cpu, 1, 20);
+        profiler.flushCompletedSamples();
         profiler.start(key, cpu, 1, ProfileUnit.ITEM, 100);
         profiler.updateCapacity(cpu, 4, 4, 100);
 
@@ -659,6 +690,7 @@ class CraftProfilerTest {
 
         profiler.start(key, cpu, 1, ProfileUnit.ITEM, 0);
         profiler.complete(key, cpu, 1, 20);
+        profiler.flushCompletedSamples();
         profiler.start(key, cpu, 1, ProfileUnit.ITEM, 100);
         assertEquals(1, profiler.pollNewlyDelayed(cpu, 400).size());
 
@@ -824,5 +856,173 @@ class CraftProfilerTest {
         profiler.start(copper, cpu, 1, ProfileUnit.ITEM, 0);
 
         assertEquals(Set.of(copper), profiler.scopedKeys(cpu));
+    }
+
+    @Test
+    void batchesSameTickReturnsAndAdvancesTheIntervalCursor() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_ingot");
+        var first = new Object();
+        var second = new Object();
+
+        profiler.start(key, first, 10, ProfileUnit.ITEM, 0);
+        profiler.start(key, second, 10, ProfileUnit.ITEM, 0);
+        profiler.complete(key, first, 4, 90);
+        profiler.complete(key, second, 5, 90);
+        assertTrue(profiler.flushCompletedSamples());
+        assertFalse(profiler.flushCompletedSamples());
+
+        profiler.complete(key, first, 1, 190);
+        profiler.flushCompletedSamples();
+
+        var stats = profiler.stats(key).orElseThrow();
+        assertEquals(List.of(9L, 1L), stats.sampleAmounts());
+        assertEquals(List.of(90L, 100L), stats.sampleDurationTicks());
+    }
+
+    @Test
+    void earlyFlushAmendsTheSameTickTailWithoutDuplicatingIt() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_ingot");
+        var cpu = new Object();
+
+        profiler.start(key, cpu, 9, ProfileUnit.ITEM, 0);
+        profiler.complete(key, cpu, 4, 90);
+        profiler.flushCompletedSamples();
+        profiler.complete(key, cpu, 5, 90);
+        profiler.flushCompletedSamples();
+
+        var stats = profiler.stats(key).orElseThrow();
+        assertEquals(1, stats.sampleCount());
+        assertEquals(List.of(9L), stats.sampleAmounts());
+        assertEquals(List.of(90L), stats.sampleDurationTicks());
+    }
+
+    @Test
+    void cancellationKeepsAcceptedEvidenceButResetAndReloadDropPendingBuckets() {
+        var key = new ProfileKey("minecraft:iron_ingot");
+        var profiler = new CraftProfiler(10);
+        var cpu = new Object();
+
+        profiler.start(key, cpu, 10, ProfileUnit.ITEM, 0);
+        profiler.complete(key, cpu, 1, 100);
+        profiler.clearPending(cpu);
+        profiler.flushCompletedSamples();
+        assertEquals(List.of(1L), profiler.stats(key).orElseThrow().sampleAmounts());
+
+        profiler.start(key, cpu, 10, ProfileUnit.ITEM, 200);
+        profiler.complete(key, cpu, 1, 300);
+        assertTrue(profiler.clearSamples(key));
+        assertFalse(profiler.flushCompletedSamples());
+        assertFalse(profiler.stats(key).isPresent());
+
+        profiler.start(key, cpu, 10, ProfileUnit.ITEM, 400);
+        profiler.complete(key, cpu, 1, 500);
+        profiler.loadSamples(List.of());
+        assertFalse(profiler.flushCompletedSamples());
+        assertFalse(profiler.stats(key).isPresent());
+
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 600);
+        profiler.clearPending(cpu);
+        assertFalse(profiler.flushCompletedSamples());
+    }
+
+    @Test
+    void newerEventsDefensivelyFinalizeOlderReturnsAndClockRegressionStaysPositive() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_ingot");
+        var cpu = new Object();
+
+        profiler.start(key, cpu, 2, ProfileUnit.ITEM, 0);
+        profiler.complete(key, cpu, 1, 100);
+        profiler.complete(key, cpu, 1, 300);
+        profiler.flushCompletedSamples();
+        assertEquals(List.of(100L, 200L), profiler.stats(key).orElseThrow().sampleDurationTicks());
+
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 500);
+        profiler.complete(key, cpu, 1, 400);
+        profiler.flushCompletedSamples();
+        assertEquals(1L, profiler.stats(key).orElseThrow().lastDurationTicks());
+    }
+
+    @Test
+    void checkedSameTickOverflowDiscardsTheCorruptInterval() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_ingot");
+        var finishedKey = new ProfileKey("minecraft:gold_ingot");
+        var first = new Object();
+        var second = new Object();
+        var third = new Object();
+
+        profiler.start(key, first, Long.MAX_VALUE, ProfileUnit.ITEM, 0);
+        profiler.start(key, second, 1, ProfileUnit.ITEM, 0);
+        profiler.start(key, third, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(key, first, Long.MAX_VALUE, 20);
+        profiler.flushCompletedSamples();
+        profiler.complete(key, second, 1, 20);
+        profiler.flushCompletedSamples();
+        profiler.complete(key, third, 1, 40);
+        profiler.flushCompletedSamples();
+
+        var stats = profiler.stats(key).orElseThrow();
+        assertEquals(List.of(1L), stats.sampleAmounts());
+        assertEquals(List.of(20L), stats.sampleDurationTicks());
+
+        profiler.start(finishedKey, third, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(finishedKey, third, 1, 10);
+        profiler.flushCompletedSamples();
+        profiler.start(finishedKey, first, Long.MAX_VALUE, ProfileUnit.ITEM, 50);
+        profiler.start(finishedKey, second, 1, ProfileUnit.ITEM, 50);
+        profiler.complete(finishedKey, first, Long.MAX_VALUE, 70);
+        profiler.flushCompletedSamples();
+        profiler.complete(finishedKey, second, 1, 70);
+        profiler.flushCompletedSamples();
+        assertEquals(List.of(1L), profiler.stats(finishedKey).orElseThrow().sampleAmounts());
+    }
+
+    @Test
+    void clockRegressionAfterAnUnflushedReturnStartsFreshEvidence() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:iron_ingot");
+        var first = new Object();
+        var second = new Object();
+
+        profiler.start(key, first, 2, ProfileUnit.ITEM, 0);
+        profiler.complete(key, first, 1, 100);
+        profiler.start(key, second, 1, ProfileUnit.ITEM, 50);
+        profiler.complete(key, first, 1, 60);
+        profiler.flushCompletedSamples();
+
+        var stats = profiler.stats(key).orElseThrow();
+        assertEquals(List.of(1L), stats.sampleAmounts());
+        assertEquals(List.of(10L), stats.sampleDurationTicks());
+    }
+
+    @Test
+    void checkedIntervalOverflowResetsWhilePendingAndDropsWhenFinished() {
+        var profiler = new CraftProfiler(10);
+        var pendingKey = new ProfileKey("minecraft:iron_ingot");
+        var finishedKey = new ProfileKey("minecraft:gold_ingot");
+        var first = new Object();
+        var second = new Object();
+        var third = new Object();
+
+        profiler.start(pendingKey, first, Long.MAX_VALUE, ProfileUnit.ITEM, 0);
+        profiler.start(pendingKey, second, 1, ProfileUnit.ITEM, 0);
+        profiler.start(pendingKey, third, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(pendingKey, first, Long.MAX_VALUE, 20);
+        profiler.complete(pendingKey, second, 1, 20);
+        profiler.complete(pendingKey, third, 1, 40);
+
+        profiler.start(finishedKey, first, Long.MAX_VALUE, ProfileUnit.ITEM, 50);
+        profiler.start(finishedKey, second, 1, ProfileUnit.ITEM, 50);
+        profiler.complete(finishedKey, first, Long.MAX_VALUE, 70);
+        profiler.complete(finishedKey, second, 1, 70);
+        profiler.flushCompletedSamples();
+
+        var stats = profiler.stats(pendingKey).orElseThrow();
+        assertEquals(List.of(1L), stats.sampleAmounts());
+        assertEquals(List.of(20L), stats.sampleDurationTicks());
+        assertFalse(profiler.stats(finishedKey).isPresent());
     }
 }

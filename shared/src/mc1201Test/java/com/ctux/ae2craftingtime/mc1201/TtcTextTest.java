@@ -122,8 +122,23 @@ class TtcTextTest {
 
         var lines = TtcText.statsLines(stats);
 
-        assertEquals(2, lines.size());
-        assertTrue(lines.get(1).getString().endsWith("(10)"));
+        assertEquals(3, lines.size());
+        assertEquals("text.ae2craftingtime.stats.samples",
+                ((TranslatableContents) lines.get(1).getContents()).getKey());
+        assertEquals("text.ae2craftingtime.stats.samples.explanation",
+                ((TranslatableContents) lines.get(2).getContents()).getKey());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"en_us, 1 item / 50 ticks", "uk_ua, 1 предм. / 50 тіків"})
+    void normalizedSamplesUseLocalizedSingularUnits(String locale, String expected) throws IOException {
+        try (var reader = new InputStreamReader(getClass().getResourceAsStream(
+                "/assets/ae2craftingtime/lang/" + locale + ".json"), StandardCharsets.UTF_8)) {
+            var translations = JsonParser.parseReader(reader).getAsJsonObject();
+            var window = translations.get("text.ae2craftingtime.value.window").getAsString();
+            var unit = translations.get("text.ae2craftingtime.unit.item.singular").getAsString();
+            assertEquals(expected, String.format(window, 1, unit, "50"));
+        }
     }
 
     @Test
