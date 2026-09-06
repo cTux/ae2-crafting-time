@@ -1,7 +1,6 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.TitleScreen;
 import org.lwjgl.glfw.GLFW;
 import java.time.Instant;
 import java.util.List;
@@ -72,9 +71,6 @@ public final class TestDriverRuntime implements AutoCloseable {
                 switchingInProgress = true;
                 DriverPlatform.clearLevel(minecraft);
                 UiObservationStore.reset();
-                return;
-            }
-            if (minecraft.level != null || !(minecraft.screen instanceof TitleScreen)) {
                 return;
             }
             var item = cases.get(++index);
