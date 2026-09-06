@@ -441,9 +441,14 @@ public final class CraftProfiler {
     }
 
     public Map<ProfileKey, CraftingBlockReason> rememberedReasons() {
+        return rememberedReasons(null);
+    }
+
+    public Map<ProfileKey, CraftingBlockReason> rememberedReasons(Object liveScope) {
         var reasons = new HashMap<ProfileKey, CraftingBlockReason>();
+        var livePending = liveScope == null ? null : pending.get(liveScope);
         for (var status : rememberedStatuses.values()) {
-            if (hasPending(status.key())) {
+            if (livePending != null && livePending.containsKey(status.key())) {
                 continue;
             }
             if (status.kind() == StatusKind.NO_POWER) {

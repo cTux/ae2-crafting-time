@@ -76,7 +76,7 @@ public final class ProfilerBridge {
                     0, tick));
         }
         var merged = new java.util.HashMap<>(live);
-        PROFILER.rememberedReasons().forEach(merged::putIfAbsent);
+        PROFILER.rememberedReasons(scope).forEach(merged::putIfAbsent);
         return merged;
     }
 

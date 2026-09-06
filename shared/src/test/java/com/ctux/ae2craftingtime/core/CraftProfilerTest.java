@@ -765,13 +765,15 @@ class CraftProfilerTest {
         var cpu = new Object();
         var provider = new ProfileKey("minecraft:iron_plate");
         var power = new ProfileKey("minecraft:copper_plate");
+        var restored = new ProfileKey("minecraft:gold_plate");
 
         profiler.start(provider, cpu, 1, ProfileUnit.ITEM, 0);
         profiler.start(power, cpu, 1, ProfileUnit.ITEM, 0);
         profiler.rememberStatus(new PersistedOutputStatus(provider, StatusKind.NO_PROVIDER, 0, 0, 0));
         profiler.rememberStatus(new PersistedOutputStatus(power, StatusKind.NO_POWER, 0, 0, 0));
+        profiler.rememberStatus(new PersistedOutputStatus(restored, StatusKind.NO_PROVIDER, 0, 0, 0));
 
-        assertTrue(profiler.rememberedReasons().isEmpty());
+        assertEquals(Map.of(restored, CraftingBlockReason.NO_PROVIDER), profiler.rememberedReasons(cpu));
         assertEquals(Map.of(provider, CraftingBlockReason.NO_PROVIDER),
                 profiler.blockReasons(cpu, 1, Set.of(provider)));
         profiler.observeDispatchPower(cpu, "pattern", Map.of(power, 1L), 10, 0, 1);
