@@ -2,7 +2,10 @@
 
 Issue: [#216](https://github.com/cTux/ae2-crafting-time/issues/216).
 
-Status: planning approved on 2026-09-03; implementation has not started.
+Status: original planning approved on 2026-09-03; researched again on
+2026-09-06 against `51edf0f8f531c8f12fe4e192f934669359011390`.
+This refresh updates the implementation boundaries; the three statuses are
+still unimplemented. See the [research findings](technical-design.md#repository-changes-since-the-original-plan).
 
 ## Goal
 
@@ -45,7 +48,9 @@ delayed label only when the server has direct evidence for the new status.
   clear it on the next existing status refresh. Recovery without a new attempt
   therefore takes at most 20 server ticks plus one refresh, not a fixed
   wall-clock promise during server lag. Job replacement, finish, cancellation,
-  disable, and runtime reload clear all related state.
+  disable, and runtime reload clear all related state. These three reasons
+  remain runtime-only: saving/reopening a world must not restore them, including
+  as a different status through the existing remembered-status fallback.
 
 ## Compatibility and boundaries
 
@@ -58,7 +63,9 @@ delayed label only when the server has direct evidence for the new status.
 - **PD-11:** Keep logical-server ownership, selected-CPU/network isolation,
   bounded packets, existing request authorization/rate limits, and optional
   dependency behavior. Client/server protocol versions advance together;
-  stored samples and dependency minimum versions do not change.
+  stored samples and dependency minimum versions do not change. Preserve live
+  completion-interval learning, current total-TTC calculation, and recovery
+  from remembered NO PROVIDER/NO POWER statuses.
 - **PD-12:** Add English and Ukrainian together. Ukrainian labels are
   `Немає приймача`, `Вхід заблоковано`, and `Заблоковано`. Keep translations
   semantically equivalent. Runtime smoke is English only and exercises only
@@ -73,7 +80,10 @@ Do not infer machine power, fuel, recipe validity, chunk loading, channels, or
 output capacity. NO SPACE keeps its CPU-to-ME-storage meaning. Craft Plan,
 Crafting Tree, and ME Requester gain no new status display. New adapters for
 NeoEco, LightningTech, or custom provider implementations are outside this
-feature; their existing TTC/profiling support must remain unchanged.
+feature; their existing TTC/profiling support must remain unchanged. The three
+new reasons do not add chat notifications, provider-locate records, or red
+provider plates. Existing delayed warnings, locate clicks, and plate recovery
+keep their current behavior. Do not restore removed accuracy tooltip rows.
 
 ## Acceptance criteria
 
@@ -81,10 +91,10 @@ feature; their existing TTC/profiling support must remain unchanged.
 | --- | --- | --- |
 | AC-01 | An attempted processing dispatch with no eligible destination shows NO TARGET; attaching a usable destination clears it. A recognized machine rejecting a craft never becomes NO TARGET. | PD-01, PD-04, PD-09 |
 | AC-02 | Blocking-mode rejection and simulated zero-input acceptance each show INPUT BLOCKED; clearing the condition removes it. Partial acceptance followed by a successful dispatch is not INPUT BLOCKED. | PD-02, PD-04, PD-09 |
-| AC-03 | Active high/low redstone locks, pulse locks, and result-return locks show LOCKED; inactive configured locks do not. Unlocking clears it. | PD-03, PD-09 |
+| AC-03 | Active high/low redstone locks, pulse locks, and result-return locks show LOCKED; inactive configured locks do not. Unlocking through that AE2 version's actual pulse/result behavior clears it. | PD-03, PD-09 |
 | AC-04 | A healthy alternate side/provider prevents each warning. Busy, unknown, unvisited, and mixed-cause alternatives produce no new warning. Missing ingredients and generic machine rejection do not become any new status. | PD-04, PD-05 |
-| AC-05 | Shared-output and mixed active/pending rows retain exact-pattern evidence, show the scheduling qualifier, and follow documented priority and sorting. Existing statuses and total TTC do not regress. | PD-06, PD-07, PD-08 |
-| AC-06 | CPU/network switches, late previous-CPU replies, lifecycle cleanup, no learned samples, expiry, and backwards game ticks cannot leak or retain warnings. | PD-09, PD-11 |
+| AC-05 | Shared-output and mixed active/pending rows retain exact-pattern evidence, show the scheduling qualifier, and follow documented priority and sorting. Existing statuses, live learning, total TTC, locate/plate behavior, and compact tooltips do not regress. | PD-06, PD-07, PD-08, PD-11 |
+| AC-06 | CPU/network switches, late previous-CPU replies, lifecycle cleanup, no learned samples, expiry, and backwards game ticks cannot leak or retain warnings. Save/reopen cannot restore these reasons or convert them to NO PROVIDER; existing remembered-status recovery stays fixed. | PD-09, PD-11 |
 | AC-07 | Every target passes changed logic/packet/contract coverage and focused live status/recovery smoke. AdvancedAE cases cover its three targets; unsupported paths remain unchanged. | PD-10, PD-12 |
 | AC-08 | Both locales have matching keys/placeholders, the visible English badges/tooltips fit, malformed payloads are rejected, and player JARs exclude the driver. | PD-08, PD-11, PD-12 |
 
