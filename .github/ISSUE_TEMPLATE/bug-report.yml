@@ -1,6 +1,6 @@
 name: Bug report
 description: Something went wrong? Tell me what happened.
-title: "[Bug]: "
+title: ""
 labels:
   - bug
 body:

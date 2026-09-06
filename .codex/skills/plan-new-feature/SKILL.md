@@ -21,6 +21,8 @@ implementation agent.
    `priority/<low|medium|high>` label, and exactly one
    `effort/<low|medium|high>` label. Reuse an existing label or create the
    missing label before opening the issue.
+   Do not start the title with the issue type, such as `[Feature]` or `[Bug]`.
+   Add the type as a plain label instead, such as `feature`, `bug`, or `tests`.
 2. Read `AGENTS.md`, `docs/architecture.md`, the closest feature documents, and
    the code seams needed to verify current behavior and supported targets.
 3. Resolve the goal, player-visible behavior, boundaries, compatibility, and
