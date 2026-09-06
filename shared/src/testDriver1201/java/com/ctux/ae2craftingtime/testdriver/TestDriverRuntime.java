@@ -37,11 +37,10 @@ public final class TestDriverRuntime implements AutoCloseable {
     }
 
     public void tick() {
-        if (finished || switchingInProgress) {
+        if (finished) {
             return;
         }
         if (switching) {
-            switchingInProgress = true;
             switchCase();
             return;
         }
@@ -69,8 +68,16 @@ public final class TestDriverRuntime implements AutoCloseable {
 
     private void switchCase() {
         try {
-            DriverPlatform.clearLevel(minecraft);
-            UiObservationStore.reset();
+            if (!switchingInProgress) {
+                switchingInProgress = true;
+                DriverPlatform.clearLevel(minecraft);
+                UiObservationStore.reset();
+                return;
+            }
+            if (minecraft.level != null || minecraft.getSingleplayerServer() != null
+                    || !(minecraft.screen instanceof TitleScreen)) {
+                return;
+            }
             var item = cases.get(++index);
             SuitePlan.verifyWorld(minecraft.gameDirectory.toPath().resolve("saves"), item);
             scenario = new CraftPlanScenario(minecraft, item, driverFile);
