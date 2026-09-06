@@ -144,6 +144,15 @@ optional-mod graph run.
 
 ## Compatibility boundaries
 
+### Known conflicts
+
+- **AE Crafting Tracker `0.2.2` conflicts with AE2 Crafting Time `1.2.2`
+  on NeoForge 1.21.1.** Both mods redirect the same provider `isBusy()` and
+  `pushPattern()` calls in standard AE2 and AdvancedAE crafting logic. When
+  installed together, mixin application can fail and crash the server. Do not
+  install these versions together until [#295](https://github.com/cTux/ae2-crafting-time/issues/295)
+  is resolved.
+
 The AdvancedAE hook also ships on Forge 1.20.1. Its table entry lists only
 loader-declared dependencies; Forge currently has no optional AdvancedAE
 dependency declaration. Runtime diagnostics report the packaged hook separately.
