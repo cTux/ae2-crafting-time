@@ -16,6 +16,7 @@ public final class TestDriverRuntime implements AutoCloseable {
     private int index;
     private boolean switching;
     private boolean switchingInProgress;
+    private net.minecraft.server.MinecraftServer stoppingServer;
     private boolean finished;
 
     public TestDriverRuntime(DriverOptions options, String driverFile) throws Exception {
@@ -69,14 +70,15 @@ public final class TestDriverRuntime implements AutoCloseable {
         try {
             if (!switchingInProgress) {
                 switchingInProgress = true;
+                stoppingServer = minecraft.getSingleplayerServer();
                 DriverPlatform.clearLevel(minecraft);
                 UiObservationStore.reset();
                 return;
             }
-            var server = minecraft.getSingleplayerServer();
-            if (server != null && server.getRunningThread().isAlive()) {
+            if (stoppingServer != null && stoppingServer.getRunningThread().isAlive()) {
                 return;
             }
+            stoppingServer = null;
             var item = cases.get(++index);
             SuitePlan.verifyWorld(minecraft.gameDirectory.toPath().resolve("saves"), item);
             scenario = new CraftPlanScenario(minecraft, item, driverFile);
