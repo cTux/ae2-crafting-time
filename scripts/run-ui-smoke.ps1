@@ -40,7 +40,7 @@ if ($Scenario -eq "suite" -and ($Interactive -or ($ProjectId -and !$CasesBase64)
     throw "The prepared suite requires the full compatible profile and non-interactive execution"
 }
 $root = Split-Path -Parent $PSScriptRoot
-$fixtureTarget = if ($Target -like "*-neoforge") { $Target } else { "1.20.1-forge" }
+$fixtureTarget = $Target
 $source = Join-Path $root "versions\$fixtureTarget\run\saves\ae2-crafting-time"
 $game, $loader = $Target.Split("-", 2)
 $modsDirectory = if ($Target -eq "1.20.1-forge" -and -not $PreparedLaunch) { "resolved-mods" } else { "mods" }

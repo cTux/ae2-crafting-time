@@ -14,6 +14,8 @@ foreach ($file in @('expand-ui-smoke-groups.ps1','release-matrix.json','ui-smoke
  "terminal":{"x":1,"y":2,"z":3,"face":"SOUTH"},"outputId":"minecraft:furnace"}
 '@, [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $source "level.dat"), "fixture", [Text.UTF8Encoding]::new($false))
+New-Item -ItemType Directory -Path (Join-Path $source 'region') | Out-Null
+[IO.File]::WriteAllText((Join-Path $source 'region\r.0.0.mca'), 'Forge chunks', [Text.UTF8Encoding]::new($false))
 $neoFixture = Join-Path $temp "versions\1.21.1-neoforge\run\saves\ae2-crafting-time"
 New-Item -ItemType Directory -Path (Split-Path $neoFixture) -Force | Out-Null
 Copy-Item $source $neoFixture -Recurse
@@ -21,8 +23,10 @@ $newFixture = Join-Path $temp "versions\26.1.2-neoforge\run\saves\ae2-crafting-t
 New-Item -ItemType Directory -Path (Split-Path $newFixture) -Force | Out-Null
 Copy-Item $source $newFixture -Recurse
 $fabricFixture = Join-Path $temp 'versions/1.20.1-fabric/run/saves/ae2-crafting-time'
-New-Item -ItemType Directory -Path $fabricFixture -Force | Out-Null
+New-Item -ItemType Directory -Path (Split-Path $fabricFixture) -Force | Out-Null
+Copy-Item -LiteralPath $source -Destination $fabricFixture -Recurse
 Set-Content -LiteralPath (Join-Path $fabricFixture 'level.dat') -Value 'native Fabric metadata'
+[IO.File]::WriteAllText((Join-Path $fabricFixture 'region\r.0.0.mca'), 'native Fabric chunks', [Text.UTF8Encoding]::new($false))
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'copy-ui-smoke-fixture.ps1') -Destination $scripts
 [IO.File]::WriteAllText((Join-Path $scripts "run-client.ps1"), @'
 param(
@@ -33,7 +37,8 @@ param(
 )
 if ([IO.Path]::GetFullPath((Get-Location).Path) -ne [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))) { exit 8 }
 if ((Get-Content (Join-Path $RuntimeDirectory 'options.txt') -Raw) -notmatch '(?m)^onboardAccessibility:false\r?$') { exit 9 }
-if ($Target -eq '1.20.1-fabric' -and (Get-Content (Join-Path $RuntimeDirectory "saves/$DriverWorld/level.dat") -Raw).Trim() -ne 'native Fabric metadata') { exit 10 }
+if ($Target -eq '1.20.1-fabric' -and $DriverScenario -eq 'craft-plan' -and ((Get-Content (Join-Path $RuntimeDirectory "saves/$DriverWorld/level.dat") -Raw).Trim() -ne 'native Fabric metadata' -or
+        (Get-Content (Join-Path $RuntimeDirectory "saves/$DriverWorld/region/r.0.0.mca") -Raw) -ne 'native Fabric chunks')) { exit 10 }
 $profile = if ($Latest) { "latest" } else { "compatible" }
 $loader = $Target.Split("-", 2)[1]
 $modsDirectory = if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mods" }
