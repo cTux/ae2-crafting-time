@@ -65,6 +65,9 @@ if (($releaseDryRun -join "`n") -notmatch '### FIXED\s+- The total TTC now sits 
 if (($releaseDryRun -join "`n") -notmatch 'dry-run next development version: 1\.0\.5') {
     throw "Release dry run did not advance the development version"
 }
+if (($releaseDryRun -join "`n") -notmatch 'dry-run GitHub tag: release-1\.0\.4') {
+    throw "Release dry run did not use a deterministic version tag"
+}
 $releaseOutput = $releaseDryRun -join "`n"
 $releaseMatrix = Get-Content -LiteralPath (Join-Path $PSScriptRoot "release-matrix.json") -Raw | ConvertFrom-Json
 foreach ($entry in $releaseMatrix) {
@@ -102,7 +105,7 @@ try {
     Remove-Item -LiteralPath $duplicateMatrixPath, "$StatePath.duplicate" -Force -ErrorAction SilentlyContinue
 }
 
-$sharedChangelog = "### CHANGED`n`n- Shared release note."
+$sharedChangelog = "### CHANGED`n`n- Shared release note ([#111](https://github.com/cTux/ae2-crafting-time/issues/111))"
 $groupedDryRun = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" `
     -StatePath $StatePath `
     -VersionPath $versionPath `
@@ -114,14 +117,14 @@ $groupedDryRun = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScrip
 $groupedOutput = $groupedDryRun -join "`n"
 $groupedGitHubOutput = [regex]::Match($groupedOutput, '(?s)dry-run GitHub Release:.*').Value
 if ($LASTEXITCODE -ne 0 -or $groupedGitHubOutput -notmatch '## All versions' -or
-    ([regex]::Matches($groupedGitHubOutput, [regex]::Escape('- Shared release note.')).Count -ne 1)) {
+    ([regex]::Matches($groupedGitHubOutput, [regex]::Escape('- Shared release note ([#111]')).Count -ne 1)) {
     throw "GitHub Release did not group a shared changelog once for all versions"
 }
 
 $scopedChangelogPath = "$StatePath.changelog.json"
 [ordered]@{
-    all = "### IMPROVED`n`n- Shared release note."
-    '1.21.1-neoforge' = "### FIXED`n`n- NeoForge 1.21.1-only note."
+    all = "### IMPROVED`n`n- Shared release note ([#111](https://github.com/cTux/ae2-crafting-time/issues/111))"
+    '1.21.1-neoforge' = "### FIXED`n`n- NeoForge 1.21.1-only note ([#112](https://github.com/cTux/ae2-crafting-time/issues/112))"
 } | ConvertTo-Json | Set-Content -LiteralPath $scopedChangelogPath -Encoding UTF8
 $scopedDryRun = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" `
     -StatePath $StatePath `
@@ -141,8 +144,20 @@ if ($LASTEXITCODE -ne 0 -or $fabricChangelog -notmatch 'Shared release note' -or
     $neoForgeChangelog -notmatch 'Shared release note' -or
     $neoForgeChangelog -notmatch 'NeoForge 1\.21\.1-only note' -or
     $scopedOutput -notmatch '## NeoForge 1\.21\.1' -or
-    ([regex]::Matches($scopedOutput, [regex]::Escape('- NeoForge 1.21.1-only note.')).Count -ne 2)) {
+    ([regex]::Matches($scopedOutput, [regex]::Escape('- NeoForge 1.21.1-only note ([#112]')).Count -ne 2)) {
     throw "Scoped changelog leaked a version-specific note or built the wrong GitHub sections"
+}
+
+$invalidChangelog = "### FIXED`n`n- Link wraps the whole sentence."
+$preference = $ErrorActionPreference
+try {
+    $ErrorActionPreference = "Continue"
+    $invalidOutput = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" `
+        -StatePath $StatePath -VersionPath $versionPath -Deploy -DryRun `
+        -ModrinthProjectId test-project -CurseProjectId 1591476 -Changelog $invalidChangelog 2>&1
+} finally { $ErrorActionPreference = $preference }
+if ($LASTEXITCODE -eq 0 -or ($invalidOutput -join "`n") -notmatch 'must end with a linked GitHub reference') {
+    throw "Release script did not reject a manual changelog without end-of-line GitHub references"
 }
 
 $first = & powershell -NoProfile -ExecutionPolicy Bypass -File "$PSScriptRoot\deploy-changed.ps1" `

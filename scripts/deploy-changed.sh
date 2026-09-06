@@ -214,9 +214,13 @@ get_input_fingerprint() {
 }
 
 assert_changelog() {
-  local text="$1"
+  local text="$1" require_links="${2:-0}"
   if ! printf '%s\n' "$text" | grep -Eq '^### (ADDED|FIXED|IMPROVED|DELETED|CHANGED)$'; then
     echo "Changelog must use human-readable ### ADDED, FIXED, IMPROVED, DELETED, or CHANGED categories" >&2
+    return 1
+  fi
+  if [[ "$require_links" = "1" ]] && printf '%s\n' "$text" | grep -E '^- ' | grep -Evq '\(\[#[0-9]+\]\(https://github\.com/cTux/ae2-crafting-time/(issues|pull)/[0-9]+\)\)$'; then
+    echo "Every manual changelog item must end with a linked GitHub reference such as ([#111](https://github.com/cTux/ae2-crafting-time/issues/111))" >&2
     return 1
   fi
   printf '%s\n' "$text"
@@ -277,7 +281,7 @@ format_changelog() {
 get_entry_changelog() {
   local entry="$1" previous="$2"
   if [[ -n "$Changelog" ]]; then
-    assert_changelog "$Changelog"
+    assert_changelog "$Changelog" 1
     return $?
   fi
   if [[ "$previous" = "null" ]] || [[ -z "$(echo "$previous" | jq -r '.commit // empty')" ]]; then
@@ -375,15 +379,15 @@ publish_curseforge() {
 
 publish_github_release() {
   local releases_json="$1" sourceCommit="$2"
-  local stamp; stamp="$(date -u +%Y%m%d-%H%M%S)"
-  local tag="release-$stamp"
   local title; title="$(echo "$releases_json" | jq -r '.[0].version')"
+  local tag="release-$title"
   local notes; notes="$(echo "$releases_json" | jq -r '
     map("## " + (.entry.modName + "-" + .version + "-" + .entry.loader + "-" + .entry.minecraftVersion + ".jar") + "\n\n" + .changelog)
     | join("\n\n")')"
 
   if [[ "$DryRun" = "1" ]]; then
     echo "dry-run GitHub Release: $title"
+    echo "dry-run GitHub tag: $tag"
     local assets; assets="$(echo "$releases_json" | jq -r '.[].jarPath | sub(".*/";"")' | paste -sd ', ' -)"
     echo "dry-run GitHub assets: $assets"
     echo "$notes"

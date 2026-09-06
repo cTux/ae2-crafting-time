@@ -38,10 +38,10 @@ creating or updating an issue.
   permission boundary, and stopping condition intact.
 - **Changelogs and release copy:** follow the release rules in `AGENTS.md` and
   `docs/release.md`. Include only player-visible features, fixes, and behavior
-  changes, and link each GitHub and Discord release-note item to its source
-  GitHub issue with a full URL. Leave out implementation details, tests,
-  refactors, tooling, and build work. Include at most one image across the
-  release notes. If an image helps, choose the highest-effort player-visible
+  changes, and end each GitHub and Discord release-note item with its linked
+  source GitHub issue. Leave out implementation details, tests, refactors,
+  tooling, and build work. Include one image when reviewed smoke evidence exists
+  for a player-visible change; otherwise include none. Choose the highest-effort player-visible
   feature or fix and crop its reviewed smoke-test evidence to the relevant area
   instead of using a full screenshot. Exclude account data, tokens, chat,
   server addresses, coordinates, and unrelated worlds.

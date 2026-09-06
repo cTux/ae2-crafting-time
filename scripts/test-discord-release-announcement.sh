@@ -91,6 +91,7 @@ path, case = pathlib.Path(sys.argv[1]), sys.argv[2]
 payloads = [json.loads(line) for line in (path / "payloads.jsonl").read_text().splitlines()]
 assert all(0 < len(p["content"].encode("utf-16-le")) // 2 <= 2000 for p in payloads), case
 assert all(p["allowed_mentions"] == {"parse": []} for p in payloads), case
+assert all(p["flags"] == 4 for p in payloads), case
 joined = "".join(p["content"] for p in payloads)
 assert joined == (path / "expected.txt").read_text(encoding="utf-8"), case
 assert joined.count("https://example/forge.jar") == joined.count("https://example/fabric.jar") == 1
@@ -160,6 +161,7 @@ path = pathlib.Path(sys.argv[1])
 payloads = [json.loads(line) for line in (path / "payloads.jsonl").read_text().splitlines()]
 assert all(0 < len(p["content"].encode("utf-16-le")) // 2 <= 2000 for p in payloads)
 assert all(p["allowed_mentions"] == {"parse": []} for p in payloads)
+assert all(p["flags"] == 4 for p in payloads)
 joined = "".join(p["content"] for p in payloads)
 assert "[mystery-9.9.9.jar](https://example/mystery.jar)" in joined
 mystery_row = [line for line in joined.splitlines() if "mystery-9.9.9.jar" in line][0]
