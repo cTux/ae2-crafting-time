@@ -69,6 +69,7 @@ public final class TestDriverRuntime implements AutoCloseable {
 
     private void switchCase() {
         try {
+            minecraft.packetProcessor().processQueuedPackets();
             DriverPlatform.clearLevel(minecraft);
             UiObservationStore.reset();
             var item = cases.get(++index);
