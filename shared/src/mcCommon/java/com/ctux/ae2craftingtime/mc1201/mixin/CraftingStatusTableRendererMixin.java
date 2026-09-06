@@ -114,7 +114,7 @@ public abstract class CraftingStatusTableRendererMixin {
 
     private static Component delayedTtcLine() {
         return TtcText.ttcDelayed()
-                .withStyle(style -> style.withColor(TextColor.fromRgb(0xFF5555)));
+                .withStyle(style -> style.withColor(TextColor.fromRgb(0xFF5555)).withBold(true));
     }
 
     private static boolean ae2craftingtime$noSpace(CraftingStatusEntry entry) {
