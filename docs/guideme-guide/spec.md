@@ -177,7 +177,7 @@ Do not hijack AE2 item-hover guide targets in this first delivery.
 
 ## Approved GitHub issue text
 
-Title: `[Feature]: Add a craftable GuideME book and first chapter`
+Title: `Add a craftable GuideME book and first chapter`
 
 Body:
 
