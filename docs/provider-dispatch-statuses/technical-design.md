@@ -5,16 +5,38 @@ are part of this planning task.
 
 ## Evidence and version boundaries
 
-Repository baseline: `728e279e`, inspected 2026-09-03. Existing seams:
+Repository baseline: [`51edf0f8f531c8f12fe4e192f934669359011390`](https://github.com/cTux/ae2-crafting-time/tree/51edf0f8f531c8f12fe4e192f934669359011390),
+fetched and inspected 2026-09-06. This replaces the original `728e279e`
+research baseline. Existing seams:
 
 - `CraftingCpuLogicMixin` and `AdvancedCraftingCpuLogicMixin` capture the exact
-  dispatch pattern and observe provider lookup and simulated dispatch energy.
+  dispatch pattern and observe the selected provider iterable and simulated
+  dispatch energy. The hook is at `Iterable.iterator()`, after addon lookup
+  wrappers/replacements, rather than at `CraftingService.getProviders()`.
 - Both `ProfilerBridge` variants feed runtime-only `CraftProfiler` state.
   `DispatchPowerTracker` already expires observations after 20 ticks;
   `MissingProviderTracker` separately revalidates missing providers.
 - `StatsRequestHandler`, `StatsPacketCodec`, the four `StatsSnapshotS2C`
   wrappers, and `ClientStatsCache` carry a bounded output-to-`CraftingBlockReason`
   map with menu/CPU context. The renderer and sorting already consult that map.
+
+### Repository changes since the original plan
+
+Paths below are relative to the repository root. These are source findings,
+not a claim that the proposed hooks have passed compiled or runtime tests.
+
+| Verified current code | Consequence for #216 |
+| --- | --- |
+| `shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingCpuLogicMixin.java` and `shared/src/neoforge/java/com/ctux/ae2craftingtime/mc1201/mixin/AdvancedCraftingCpuLogicMixin.java`: capture the pattern local and redirect the selected iterable's `iterator()` call. | Extend the existing observation point. Do not enumerate the original service lookup separately or add a competing redirect. The current `hasNext` boolean alone does not establish all alternatives. |
+| Both `shared/src/{mc1201,mc2612}/java/com/ctux/ae2craftingtime/mc1201/ProfilerBridge.java` variants: `observeProviders` also calls `ProviderStartTracker.noteDispatch`; `blockReasons` remembers every live reason as either NO POWER or NO PROVIDER. | Preserve provider-locate observation. Explicitly whitelist the two old reasons for persistence before adding new enum values, or every new reason would be saved as NO PROVIDER. |
+| `CraftProfiler.rememberedReasons(scope)` and both bridges, fixed in [#284](https://github.com/cTux/ae2-crafting-time/pull/284). | Preserve selected-scope suppression of remembered reasons for live pending outputs. Test recovery with remembered old reasons present. |
+| `CraftProfiler`, `ProfileStats`, and `StatsPacketCodec`, updated in [#287](https://github.com/cTux/ae2-crafting-time/pull/287); `CraftingJobEstimate`, updated in [#272](https://github.com/cTux/ae2-crafting-time/pull/272). | Keep tick-batched live completion intervals, sample amounts on the wire, and the server's critical-path total TTC. Dispatch failure is not a completed output or a throughput sample. |
+| `TtcText` and renderer changes in [#288](https://github.com/cTux/ae2-crafting-time/pull/288); `BlockReasonNotifier` and `DelayedNotificationServer`. | Add only the requested badge/tooltips. Keep accuracy rows removed; new reasons do not create chat or locate/plate transitions. |
+| `scripts/get-ui-smoke-plan.ps1`, `ui-smoke-groups.json`, `ui-smoke-impact.json`, and both `TestDriverRuntime` variants. | Register new leaf scenarios in the driver and host planner, with evidence requirements and change-impact selection. Preserve fresh-world and terminal-screen waits between suite cases. |
+
+The four AE2 dependency defaults in `versions/*/build.gradle` are unchanged
+from the original research. All four pinned `PatternProviderLogic` source
+files below were fetched again on 2026-09-06.
 
 Read the pinned upstream `PatternProviderLogic` sources, not only latest main:
 
@@ -32,6 +54,13 @@ insertion rejects when an input accepts zero. Positive partial acceptance can
 still lead to success with leftovers queued. Source evidence establishes the
 design; exact compiled injection descriptors and addon overrides still need
 contract checks before implementation is considered complete.
+
+Pulse handling also crosses a version boundary: AE2 15 uses `PULSE`, whereas
+19 and 26 distinguish `REDSTONE_POWER` and `REDSTONE_PULSE`. When dispatch
+starts with redstone already high, the newer versions require the signal to
+fall and rise before unlocking. Fixtures must follow each pinned version's
+`onPushPatternSuccess`/`updateRedstoneState` flow. Classification still uses
+the returned `LockCraftingMode`, never an inferred internal event.
 
 ## Observe execution without repeating it
 
@@ -70,11 +99,16 @@ never proof of missing target or blocked input.
 
 ## Aggregate by attempt, then pattern, then row
 
-Keep a candidate-identity set for the current exact-pattern evaluation from
-the actual provider lookup. Preserve the original iterable and iteration
-order. If another mod bypasses that lookup and a complete candidate set is
-unavailable, suppress the new classification. Observe visited busy checks and
-push results, without calling them extra times.
+Observe the iterator returned by the existing CPU redirect, delegating each
+normal `hasNext`/`next` call exactly once and preserving order. Record visited
+provider identities, busy results, and push outcomes for this exact-pattern
+evaluation. A naturally observed exhausted iterator proves that all selected
+alternatives were visited; an early exit does not. Do not copy, pre-enumerate,
+or obtain a second iterator from a possibly lazy addon iterable. An addon
+replacement remains eligible when it uses this observed traversal; bypassing
+the traversal leaves unknown evidence. Preserve the existing
+`observeProviders` call and its `ProviderStartTracker` side effect. Add no
+extra busy checks or pushes and no competing redirect at the same call site.
 
 Use one evaluation per outer task visit, starting at the stored pattern local.
 Repeated batches within that visit share the evaluation: any success suppresses
@@ -102,13 +136,30 @@ power observation behavior intact. Do not use enum ordinal as priority.
 Snapshots never dispatch work or discover a new failure. They only read,
 expire, combine, and filter observations to requested keys and current network.
 
+Both bridges now persist existing live block reasons before merging remembered
+fallbacks. Replace their binary NO POWER/otherwise NO PROVIDER conversion
+with an explicit whitelist for those two existing reasons. Do not add the
+three new reasons to `StatusKind`, `PersistedOutputStatus`, or
+`PersistedStatusTag`. Keep `rememberedReasons(scope)` rather than its unscoped
+overload, preserving #284. Test that new reasons never enter saved statuses,
+including when `BlockReasonNotifier.maybeNotifyPower` reads the same map.
+Expiry/recovery must leave neither a new warning nor a newly persisted
+NO PROVIDER alias. Existing unrelated remembered entries retain their policy.
+
+Do not call `start`, `complete`, or sample-reset methods to clear a diagnostic.
+The live completion intervals introduced by #287 are independent of dispatch
+evidence. Preserve `ProviderStartTracker`, delayed notification episodes,
+locate records, and red-plate lifecycle; these statuses add no new side effects
+to those systems.
+
 ## Transport, UI, and compatibility
 
 Append `NO_TARGET`, `INPUT_BLOCKED`, and `LOCKED` to `CraftingBlockReason`.
 Reuse the current map; do not add a second packet or a detail DTO. Generic
 two-line tooltips are intentional: subtype diagnosis is outside this scope.
-Advance Forge protocol 9 -> 10, Fabric stats_snapshot_v7 -> v8, and both
-NeoForge registrars 8 -> 9 together. If another feature has advanced the base
+Advance Forge protocol 15 -> 16, Fabric stats_snapshot_v8 -> v9, and both
+NeoForge registrars 14 -> 15 together. These are the current `StatsNetwork`
+values on the research baseline. If another feature has advanced the base
 before implementation, advance that current boundary once instead; never
 reuse a protocol identifier for incompatible enum values. Preserve Fabric's
 capability check and the existing mismatched-peer behavior.
