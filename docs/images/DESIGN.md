@@ -15,7 +15,8 @@ themes. This is a Markdown document, not a custom website.
 - Artwork: `project-icon.png`, the user's original 512-pixel PNG, unchanged.
 - Lettering: the actual default ASCII bitmap glyphs in Minecraft 1.20.1,
   rendered at integer scales. No installed font or generated lettering.
-- Copy: “AE2 Crafting Time” and “Know when your autocrafting will finish.”
+- Copy: “It's AE2 Crafting Time!” and “Autocrafting adventure you might want to
+  understand in details”.
 
 ## Page structure and primitives
 

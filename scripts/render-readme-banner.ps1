@@ -66,10 +66,10 @@ try {
         } finally { $brush.Dispose() }
     }
 
-    Draw-MinecraftText 'AE2 Crafting Time' 454 136 11 '#080e12'
-    Draw-MinecraftText 'AE2 Crafting Time' 448 130 11 '#f0f6fc'
-    Draw-MinecraftText 'Know when your autocrafting will finish.' 451 261 5 '#080e12'
-    Draw-MinecraftText 'Know when your autocrafting will finish.' 448 258 5 '#48e6ee'
+    Draw-MinecraftText "It's AE2 Crafting Time!" 452 146 8 '#080e12'
+    Draw-MinecraftText "It's AE2 Crafting Time!" 448 142 8 '#f0f6fc'
+    Draw-MinecraftText 'Autocrafting adventure you might want to understand in details' 451 273 3 '#080e12'
+    Draw-MinecraftText 'Autocrafting adventure you might want to understand in details' 448 270 3 '#48e6ee'
     $output = Join-Path $root 'docs/images/readme-banner.png'
     $canvas.Save($output, [Drawing.Imaging.ImageFormat]::Png)
     Write-Host "Rendered Minecraft bitmap lettering to $output"
