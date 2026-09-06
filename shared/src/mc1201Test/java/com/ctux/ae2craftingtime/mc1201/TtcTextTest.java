@@ -112,7 +112,7 @@ class TtcTextTest {
     void statsLinesOnlyShowProductionRateWithoutRecordedSamples() {
         var stats = new ProfileStats(4, 646.5, 0.01, 0.18, 109, ProfileUnit.ITEM);
 
-        assertEquals(1, TtcText.statsLines(stats, Optional.empty()).size());
+        assertEquals(1, TtcText.statsLines(stats).size());
     }
 
     @Test
@@ -120,7 +120,7 @@ class TtcTextTest {
         var stats = new ProfileStats(10, 100, 0.02, 0.4, 100, ProfileUnit.ITEM,
                 true, 10, 4.0, List.of(100L), List.of(2L));
 
-        var lines = TtcText.statsLines(stats, Optional.empty());
+        var lines = TtcText.statsLines(stats);
 
         assertEquals(2, lines.size());
         assertTrue(lines.get(1).getString().endsWith("(10)"));
