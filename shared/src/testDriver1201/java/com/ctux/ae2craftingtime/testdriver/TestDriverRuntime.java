@@ -73,6 +73,10 @@ public final class TestDriverRuntime implements AutoCloseable {
                 UiObservationStore.reset();
                 return;
             }
+            var server = minecraft.getSingleplayerServer();
+            if (server != null && !server.isStopped()) {
+                return;
+            }
             var item = cases.get(++index);
             SuitePlan.verifyWorld(minecraft.gameDirectory.toPath().resolve("saves"), item);
             scenario = new CraftPlanScenario(minecraft, item, driverFile);
