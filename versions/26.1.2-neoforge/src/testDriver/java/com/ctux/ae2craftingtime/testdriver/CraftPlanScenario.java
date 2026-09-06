@@ -262,6 +262,10 @@ public final class CraftPlanScenario {
             }
             return;
         }
+        if (minecraft.screen instanceof MEStorageScreen<?>) {
+            advance(ScenarioState.TERMINAL_OPEN);
+            return;
+        }
         if (minecraft.screen != null) {
             return;
         }
@@ -272,7 +276,6 @@ public final class CraftPlanScenario {
                 : new BlockHitResult(Vec3.atCenterOf(position).add(Vec3.atLowerCornerOf(face.getUnitVec3i()).scale(0.5)),
                         face, position, false);
         minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND, hit);
-        advance(ScenarioState.TERMINAL_OPEN);
     }
 
     private void selectTarget() {
