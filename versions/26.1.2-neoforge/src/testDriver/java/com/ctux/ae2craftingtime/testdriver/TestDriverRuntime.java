@@ -75,8 +75,7 @@ public final class TestDriverRuntime implements AutoCloseable {
                 UiObservationStore.reset();
                 return;
             }
-            if (minecraft.level != null || minecraft.getSingleplayerServer() != null
-                    || !(minecraft.screen instanceof TitleScreen)) {
+            if (minecraft.level != null || !(minecraft.screen instanceof TitleScreen)) {
                 return;
             }
             var item = cases.get(++index);
