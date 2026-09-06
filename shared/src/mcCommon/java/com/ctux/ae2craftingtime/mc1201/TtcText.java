@@ -92,7 +92,7 @@ public final class TtcText {
         });
     }
 
-    public static List<Component> statsLines(ProfileStats stats, Optional<TtcAccuracyStats> accuracy) {
+    public static List<Component> statsLines(ProfileStats stats) {
         var lines = new ArrayList<Component>();
         lines.add(statsLine("text.ae2craftingtime.stats.throughput",
                 I18n.get("text.ae2craftingtime.value.throughput", rate(stats.amountPerTick()), unitName(stats),
@@ -109,10 +109,6 @@ public final class TtcText {
         if (!stats.reliableEstimate()) {
             lines.add(statsLine("text.ae2craftingtime.stats.confidence", confidence(stats)));
         }
-        accuracy.ifPresent(value -> {
-            lines.add(statsLine("text.ae2craftingtime.stats.accuracy", accuracy(value)));
-            lines.add(statsLine("text.ae2craftingtime.stats.latest_accuracy", latestAccuracy(value)));
-        });
         return List.copyOf(lines);
     }
 

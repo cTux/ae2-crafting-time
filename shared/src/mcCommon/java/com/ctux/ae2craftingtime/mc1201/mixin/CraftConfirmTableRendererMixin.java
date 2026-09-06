@@ -60,7 +60,7 @@ public abstract class CraftConfirmTableRendererMixin {
     private static void ae2craftingtime$appendStatsTooltip(CraftingPlanSummaryEntry entry, List<Component> lines) {
         var key = ProfilerBridge.key(entry.getWhat());
         ClientStats.CACHE.get(key).ifPresentOrElse(stats -> {
-            lines.addAll(TtcText.statsLines(stats, ClientStats.CACHE.accuracy(key)));
+            lines.addAll(TtcText.statsLines(stats));
         }, () -> ClientStatsRequests.request(key));
     }
 
