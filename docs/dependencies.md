@@ -49,6 +49,21 @@ for its JAR.
 | `1.21.1 NeoForge` | Minecraft `[1.21.1]`, NeoForge `[21.1.1,)`, Applied Energistics 2 `[19.0.24,20.0.0)`; GuideME `[21.1.0,)` is optional for the in-game guide |
 | `26.1.2 NeoForge` | Minecraft `[26.1.2]`, NeoForge `[26.1.2.71,)`, Java `>=25`, Applied Energistics 2 `[26.1.10-beta,27.0.0)`; GuideME `[26.1.10-alpha,)` is optional for the in-game guide |
 
+### Why the 1.20.1 JARs are larger
+
+The Fabric and Forge 1.20.1 JARs embed MixinExtras `0.5.5`; the NeoForge
+JARs use the copy included with NeoForge. Fabric keeps its own copy because
+the supported Fabric Loader minimum, `0.14.21`, predates Loader's built-in
+MixinExtras. Version `0.5.5` also prevents world-entry crashes when newer
+Fabric Mixin versions compile `Redirect.at` as an array. Forge uses the
+library's recommended Jar-in-Jar setup.
+
+MixinExtras is intentionally not a separate player-installed dependency.
+Externalizing it would mostly move the same bytes into another JAR and add a
+missing-dependency failure point. The Fabric copy could be removed by raising
+the minimum Fabric Loader version to `0.15.0`, but Forge 1.20.1 would still
+bundle it. See the [MixinExtras setup instructions][mixinextras-setup].
+
 ## Dependency and integration matrix
 
 Optional addons are not required to run AE2 Crafting Time. Declared optional
@@ -68,10 +83,6 @@ initialization order matches a normal installed client. With random dev order,
 ExtendedAE `1.20-1.0.2-fabric` can call AE2WTLib `15.2.1` before its universal
 terminal item exists and crash in `WUTHandler.addTerminal`. This is a development
 profile setting, not an upstream addon fix; all pinned addons remain installed.
-
-The Fabric development runtime also loads MixinExtras `0.5.5`. It fixes world-entry
-crashes when newer Fabric Mixin versions compile `Redirect.at` as an array.
-This runtime-only dependency is not bundled in the published mod JAR.
 
 `Yes (base)` means the Forge driver exercises the dependency in its base AE2
 scenario; `Yes (scenario)` or a scenario name means a dedicated driver exists.
@@ -273,6 +284,7 @@ and loader metadata. Client pins come from
 [ae2things-mr]: https://modrinth.com/mod/ae2things
 [expandedae-cf]: https://www.curseforge.com/minecraft/mc-mods/expanded-ae
 [expandedae-mr]: https://modrinth.com/mod/expanded-ae
+[mixinextras-setup]: https://github.com/LlamaLad7/MixinExtras/blob/master/README.MD#setup
 
 The native AE2 and supported AdvancedAE dispatch hooks now share the NO PROVIDER /
 NO POWER status transport. NO POWER observes only the real simulated AE network
