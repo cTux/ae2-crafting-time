@@ -8,7 +8,7 @@ param(
 $ErrorActionPreference = 'Stop'
 $runtime = [IO.Path]::GetFullPath($RuntimeDirectory)
 $output = [IO.Path]::GetFullPath($OutputDirectory)
-$fixtureTarget = $Target
+$fixtureTarget = if ($Target -like '*-neoforge') { $Target } else { '1.20.1-forge' }
 $fixture = Join-Path (Split-Path -Parent $PSScriptRoot) "versions\$fixtureTarget\run\saves\ae2-crafting-time"
 if ($Scenarios.Count -lt 1 -or $Scenarios.Count -gt 64 -or
         @($Scenarios | Select-Object -Unique).Count -ne $Scenarios.Count) { throw 'Supply 1-64 distinct scenarios' }

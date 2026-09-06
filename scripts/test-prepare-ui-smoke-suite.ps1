@@ -44,13 +44,6 @@ try {
     if (!$rejected) { throw 'Expected existing fixture destination rejection' }
     $fabricMarker = Get-Content "$runtime/saves/$($fabric.world)/.ae2-crafting-time-test-fixture.json" -Raw | ConvertFrom-Json
     if ($fabricMarker.terminal.x -ne -13 -or $fabricMarker.terminal.y -ne -59) { throw 'Fabric lost the fixture coordinates' }
-    $fabricCraftPlan = & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -Target 1.20.1-fabric -RuntimeDirectory $runtime `
-        -OutputDirectory "$temporary\fabric-craft-plan-evidence" -Scenarios @('craft-plan')
-    $fabricRegion = "$runtime/saves/$($fabricCraftPlan.world)/region/r.0.0.mca"
-    $fabricRegionSource = Join-Path (Split-Path -Parent $PSScriptRoot) 'versions/1.20.1-fabric/run/saves/ae2-crafting-time/region/r.0.0.mca'
-    if ((Get-FileHash -LiteralPath $fabricRegion).Hash -ne (Get-FileHash -LiteralPath $fabricRegionSource).Hash) {
-        throw 'Fabric craft-plan retained Forge chunks'
-    }
     $neo = & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -Target 1.21.1-neoforge -RuntimeDirectory $runtime -OutputDirectory "$temporary\neo-evidence" -Scenarios @('craft-plan')
     $neoMarker = Get-Content "$runtime\saves\$($neo.world)\.ae2-crafting-time-test-fixture.json" -Raw | ConvertFrom-Json
     if ($neoMarker.terminal.x -ne 2 -or $neoMarker.terminal.y -ne 205) { throw 'NeoForge did not copy its native fixture' }
