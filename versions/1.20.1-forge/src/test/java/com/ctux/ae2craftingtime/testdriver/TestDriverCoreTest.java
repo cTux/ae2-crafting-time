@@ -91,7 +91,7 @@ class TestDriverCoreTest {
     void providerStatusWaitsForTheSelectedCpuRowsBeforeMutatingTheFixture() {
         assertFalse(ProviderDispatchStatusScenario.statusRowsReady(List.of()));
         assertTrue(ProviderDispatchStatusScenario.statusRowsReady(List.of(
-                new UiSnapshot.Row("minecraft:diamond", 64, null, List.of()))));
+                new UiSnapshot.Row("minecraft:diamond", 64, 0, null, List.of()))));
     }
 
     @Test
@@ -115,15 +115,15 @@ class TestDriverCoreTest {
     void standardPlanWaitsForBothSeededEstimatesBeforeCheckingSortOrder() {
         var ready = UiObservationStore.observed(List.of(TtcText.ttc("~2s")), null);
         var pending = UiObservationStore.observed(List.of(TtcText.ttcCollectingData()), null);
-        var stone = new UiSnapshot.Row("minecraft:stone", 1, null, ready);
-        var smooth = new UiSnapshot.Row("minecraft:smooth_stone", 1, null, ready);
+        var stone = new UiSnapshot.Row("minecraft:stone", 1, 0, null, ready);
+        var smooth = new UiSnapshot.Row("minecraft:smooth_stone", 1, 0, null, ready);
         assertFalse(StandardAe2Scenario.planEstimatesReady(List.of()));
         assertFalse(StandardAe2Scenario.planEstimatesReady(List.of(stone)));
         for (var unresolved : List.of(pending, List.<UiSnapshot.ObservedText>of())) {
             assertFalse(StandardAe2Scenario.planEstimatesReady(List.of(smooth,
-                    new UiSnapshot.Row("minecraft:stone", 1, null, unresolved))));
+                    new UiSnapshot.Row("minecraft:stone", 1, 0, null, unresolved))));
             assertFalse(StandardAe2Scenario.planEstimatesReady(List.of(stone,
-                    new UiSnapshot.Row("minecraft:smooth_stone", 1, null, unresolved))));
+                    new UiSnapshot.Row("minecraft:smooth_stone", 1, 0, null, unresolved))));
         }
         assertTrue(StandardAe2Scenario.planEstimatesReady(List.of(smooth, stone)));
     }

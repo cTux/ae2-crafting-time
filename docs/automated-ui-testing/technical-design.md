@@ -153,7 +153,7 @@ ServerDriverPlatform handle target API differences, including 26.1.2.
 
 | Leaf | Fixture and assertion route; old checks retained |
 | --- | --- |
-| `standard-plan-controls` | Prepare seeded distinct estimates; open plan; run plan controls. Retains `plan`, `plan-sort`, `plan-tooltip`, `plan-details`, `plan-reset`; verify total and plan badge bounds. |
+| `standard-plan-controls` | Prepare seeded distinct estimates with one real missing input; open plan; run plan controls. Retains `plan`, `plan-sort`, `plan-tooltip`, `plan-details`, `plan-reset`; verify missing items remain first through every sort mode plus total and plan badge bounds. |
 | `standard-status-controls` | Prepare, submit, open status; assert controls while real job remains busy. Retains `status`, `status-sort`, `status-tooltip`, `status-details`, `status-reset`, `header`, `layout`. Restore samples locally when reset would prevent a later assertion. |
 | `waiting-status` | Withhold input completion for smooth stone after stone is dispatched; assert waiting row, then fuel/import stone and observe first dispatch clearing WAITING. Retains `waiting`; no sort/reset prerequisite. |
 | `running-status` | Prepare and submit with seeded durations; observe active stone TTC and pending smooth stone, then fuel/import progress. Retains `running` and checks status/header bounds. |
@@ -173,7 +173,7 @@ means three separately required files, not one literal slash-containing name.
 
 | Leaf | Required check keys | Required screenshots |
 | --- | --- | --- |
-| `standard-plan-controls` | `plan`, `plan-sort`, `plan-tooltip`, `plan-details`, `plan-reset`, `total-ttc`, `layout` | `plan-default.png`, `plan-sort-1/2/3.png`, `plan-tooltip.png`, `plan-details.png`, `plan-reset.png` |
+| `standard-plan-controls` | `plan`, `plan-sort`, `missing-first`, `plan-tooltip`, `plan-details`, `plan-reset`, `total-ttc`, `layout`, `item-resolution` | `plan-default.png`, `plan-sort-1/2/3.png`, `plan-tooltip.png`, `plan-details.png`, `plan-reset.png` |
 | `standard-status-controls` | `submitted`, `status`, `status-sort`, `status-tooltip`, `status-details`, `status-reset`, `header`, `layout` | `status-default.png`, `status-sort-1/2/3.png`, `status-tooltip.png`, `status-details.png`, `status-reset.png`, `status-progress.png` |
 | `waiting-status` | `submitted`, `waiting`, `first-dispatch`, `recovered`, `layout` | `status-waiting-running.png`, `waiting-recovered.png` |
 | `running-status` | `submitted`, `running`, `progress`, `header`, `layout` | `status-waiting-running.png`, `running-progress.png` |
