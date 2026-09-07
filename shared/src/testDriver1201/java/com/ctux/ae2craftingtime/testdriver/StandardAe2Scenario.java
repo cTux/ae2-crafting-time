@@ -351,9 +351,6 @@ final class StandardAe2Scenario {
         } else if (phase == Stage.FINISHED) {
             // Older AE2 can retain its last incremental row after the CPU becomes idle.
             // Preserve that view, then reopen through the actual return/status buttons.
-            if (leaf.equals("craft-lifecycle") && snapshot.rows().stream().anyMatch(row -> row.craftAmount() > 0)) {
-                return false;
-            }
             if (leaf.equals("craft-lifecycle") && snapshot.text().stream()
                     .anyMatch(t -> t.key().equals("text.ae2craftingtime.ttc") && t.bounds() != null
                             && t.bounds().y() < snapshot.gui().y() + 19)) {
