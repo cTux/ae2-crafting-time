@@ -1,14 +1,18 @@
 package com.ctux.ae2craftingtime.testdriver;
 
+import appeng.api.config.Actionable;
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.crafting.ICraftingCPU;
+import appeng.api.networking.security.IActionSource;
+import appeng.api.stacks.AEItemKey;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.Items;
 import net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPUCalculator;
 import net.pedroksl.advanced_ae.common.entities.AdvCraftingBlockEntity;
 import appeng.menu.me.crafting.CraftConfirmMenu;
@@ -129,6 +133,13 @@ final class AdvancedAeFixture extends AddonCpuFixture<AdvancedAeFixture.Placemen
         }
         if (hostNode.getGrid() != coreNode.getGrid()) {
             GridHelper.createConnection(hostNode, coreNode);
+        }
+        var storage = hostNode.getGrid().getStorageService().getInventory();
+        var cobblestone = AEItemKey.of(Items.COBBLESTONE);
+        var source = IActionSource.ofPlayer(player);
+        var missing = 64 - storage.extract(cobblestone, 64, Actionable.SIMULATE, source);
+        if (missing > 0 && storage.insert(cobblestone, missing, Actionable.MODULATE, source) != missing) {
+            throw new IllegalStateException("AdvancedAE fixture could not store its cobblestone inputs");
         }
         return true;
     }
