@@ -15,7 +15,7 @@ try {
         foreach ($check in $contract.checks) { $checks[$check] = $true }
         foreach ($image in $contract.screenshots) {
             Set-Content -LiteralPath (Join-Path $directory $image) -Value 'fixture-image'
-            @{screen='fixture';gui=@{x=0;y=0;width=100;height=100}} | ConvertTo-Json |
+            @{screen='fixture';screenWidth=100;screenHeight=100;guiScale=2;gui=@{x=0;y=0;width=100;height=100}} | ConvertTo-Json |
                 Set-Content -LiteralPath (Join-Path $directory $image.Replace('.png','.json'))
         }
         @{schema=1;complete=$true;target='1.20.1-forge';profile='compatible';scenario=$case;language='en_us';result='PASS';checks=$checks;screenshots=$contract.screenshots} |
@@ -62,7 +62,24 @@ try {
     Set-Content -LiteralPath $snapshot -Value '{}'
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') 'Invalid snapshot must fail'
     Set-Content -LiteralPath $snapshot -Value $validSnapshot
+    $data = $validSnapshot | ConvertFrom-Json
+    $data.guiScale = 1.5
+    $data | ConvertTo-Json | Set-Content -LiteralPath $snapshot
+    Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'PASS') 'Positive fractional GUI scale must pass'
+    Set-Content -LiteralPath $snapshot -Value $validSnapshot
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'PASS') 'Restored evidence must pass before testing result fields'
+    foreach ($mutation in @('guiScale', 'booleanScale', 'stringScale', 'screenWidth', 'fractionalWidth', 'unsafeWidth', 'screenHeight', 'gui')) {
+        $data = $validSnapshot | ConvertFrom-Json
+        if ($mutation -eq 'gui') { $data.gui.x = 1; $data.gui.width = 100 }
+        elseif ($mutation -eq 'booleanScale') { $data.guiScale = $true }
+        elseif ($mutation -eq 'stringScale') { $data.guiScale = '2' }
+        elseif ($mutation -eq 'fractionalWidth') { $data.screenWidth = 99.5 }
+        elseif ($mutation -eq 'unsafeWidth') { $data.screenWidth = 9007199254740992 }
+        else { $data.$mutation = 0 }
+        $data | ConvertTo-Json | Set-Content -LiteralPath $snapshot
+        Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') "Invalid $mutation must fail"
+    }
+    Set-Content -LiteralPath $snapshot -Value $validSnapshot
     $file = Join-Path $directory 'result.json'
     $original = Get-Content -LiteralPath $file -Raw
     foreach ($field in @('schema','complete','target','profile','scenario','language','result')) {
@@ -87,9 +104,30 @@ try {
     Assert (@(Read-Results | Where-Object result -eq 'PASS').Count -eq 6) 'Restoring a failed leaf must restore the complete group'
     Set-Content -LiteralPath $file -Value '{'
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') 'Malformed result must fail'
+    $focused = Join-Path $temp 'focused'
+    New-Item -ItemType Directory -Path $focused | Out-Null
+    Set-Content -LiteralPath (Join-Path $focused 'focused.png') -Value 'fixture-image'
+    @{screen='fixture';screenWidth=100;screenHeight=100;guiScale=$true;gui=@{x=0;y=0;width=100;height=100}} |
+        ConvertTo-Json | Set-Content -LiteralPath (Join-Path $focused 'focused.json')
+    @{schema=1;complete=$true;target='1.20.1-forge';profile='compatible';scenario='no-space-status';language='en_us';result='PASS';screenshots=@('focused.png')} |
+        ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $focused 'result.json')
+    Assert ((& "$PSScriptRoot/get-ui-smoke-results.ps1" -Target 1.20.1-forge -Profile compatible -Scenarios no-space-status -Evidence $focused).result -eq 'FAIL') 'Focused invalid snapshot must fail'
+    foreach ($screenshots in @($null, @(), 'focused.png')) {
+        @{schema=1;complete=$true;target='1.20.1-forge';profile='compatible';scenario='no-space-status';language='en_us';result='PASS';screenshots=$screenshots} |
+            ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $focused 'result.json')
+        Assert ((& "$PSScriptRoot/get-ui-smoke-results.ps1" -Target 1.20.1-forge -Profile compatible -Scenarios no-space-status -Evidence $focused).result -eq 'FAIL') 'Missing or scalar screenshot list must fail'
+    }
+    foreach ($entry in @($false, '', '../outside.png')) {
+        @{schema=1;complete=$true;target='1.20.1-forge';profile='compatible';scenario='no-space-status';language='en_us';result='PASS';screenshots=@($entry)} |
+            ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $focused 'result.json')
+        Assert ((& "$PSScriptRoot/get-ui-smoke-results.ps1" -Target 1.20.1-forge -Profile compatible -Scenarios no-space-status -Evidence $focused).result -eq 'FAIL') 'Malformed screenshot entry must fail'
+    }
     $expected = Join-Path $temp 'expected-adapters.json'
     @{neoecoae='batched-long'} | ConvertTo-Json | Set-Content -LiteralPath $expected
-    $adapterResult = @{schema=1;complete=$true;target='1.20.1-forge';profile='latest';scenario='neoeco-cpu';language='en_us';result='PASS';adapters=@{neoecoae=@{variant='pending-accounting';reason='selected'}}}
+    Set-Content -LiteralPath (Join-Path $temp 'adapter.png') -Value 'fixture-image'
+    @{screen='fixture';screenWidth=100;screenHeight=100;guiScale=2;gui=@{x=0;y=0;width=100;height=100}} |
+        ConvertTo-Json | Set-Content -LiteralPath (Join-Path $temp 'adapter.json')
+    $adapterResult = @{schema=1;complete=$true;target='1.20.1-forge';profile='latest';scenario='neoeco-cpu';language='en_us';result='PASS';screenshots=@('adapter.png');adapters=@{neoecoae=@{variant='pending-accounting';reason='selected'}}}
     function Read-Adapter { & "$PSScriptRoot/get-ui-smoke-results.ps1" -Target 1.20.1-forge -Profile latest -Scenarios neoeco-cpu -Evidence $temp -ExpectedAdapters $expected }
     $adapterResult | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $temp 'result.json')
     Assert ((Read-Adapter).result -eq 'FAIL') 'Older adapter must fail leaf coverage'

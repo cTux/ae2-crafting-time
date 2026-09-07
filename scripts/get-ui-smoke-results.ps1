@@ -6,6 +6,23 @@ param(
     [string]$ExpectedAdapters
 )
 $ErrorActionPreference = 'Stop'
+
+function Test-UiSnapshotBounds($snapshot) {
+    if ($null -eq $snapshot.guiScale -or $snapshot.guiScale -is [bool] -or $snapshot.guiScale -is [string]) { return $false }
+    try { $scale = [double]$snapshot.guiScale } catch { return $false }
+    if ([double]::IsNaN($scale) -or $scale -eq [double]::PositiveInfinity -or $scale -eq [double]::NegativeInfinity -or $scale -le 0) { return $false }
+    $values = @($snapshot.screenWidth, $snapshot.screenHeight, $snapshot.gui.x,
+        $snapshot.gui.y, $snapshot.gui.width, $snapshot.gui.height)
+    foreach ($value in $values) {
+        if ($null -eq $value -or $value -is [bool] -or $value -is [string]) { return $false }
+        try { $number = [double]$value } catch { return $false }
+        if ($number -ne [math]::Truncate($number) -or $number -lt [int]::MinValue -or $number -gt [int]::MaxValue) { return $false }
+    }
+    $screenWidth, $screenHeight, $x, $y, $width, $height = $values | ForEach-Object { [long][double]$_ }
+    return $screenWidth -gt 0 -and $screenHeight -gt 0 -and $x -ge 0 -and $y -ge 0 -and
+        $width -gt 0 -and $height -gt 0 -and $x + $width -le $screenWidth -and $y + $height -le $screenHeight
+}
+
 $catalogue = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json
 $contracts = $catalogue.cases
 foreach ($scenario in $Scenarios) {
@@ -18,6 +35,15 @@ foreach ($scenario in $Scenarios) {
             $data = Get-Content -LiteralPath $file -Raw | ConvertFrom-Json
             if ($data.schema -ne 1 -or $data.complete -isnot [bool] -or !$data.complete -or $data.target -cne $Target -or $data.profile -cne $Profile -or
                     $data.scenario -cne $scenario -or $data.language -cne 'en_us' -or $data.result -cne 'PASS') { throw 'Failed or mismatched result' }
+            if ($data.screenshots -isnot [array] -or $data.screenshots.Count -eq 0) { throw 'Missing screenshot evidence' }
+            foreach ($image in $data.screenshots) {
+                if ($image -isnot [string] -or [string]::IsNullOrWhiteSpace($image) -or
+                        [IO.Path]::GetFileName($image) -cne $image -or !$image.EndsWith('.png', [StringComparison]::Ordinal)) { throw 'Invalid screenshot entry' }
+                $sidecar = Join-Path $directory ($image.Replace('.png','.json'))
+                if (!(Test-Path -LiteralPath (Join-Path $directory $image) -PathType Leaf) -or !(Test-Path -LiteralPath $sidecar -PathType Leaf)) { throw "Missing evidence: $image" }
+                $snapshot = Get-Content -LiteralPath $sidecar -Raw | ConvertFrom-Json
+                if (!$snapshot.screen -or !$snapshot.gui -or !(Test-UiSnapshotBounds $snapshot)) { throw "Invalid snapshot: $image" }
+            }
             if ($ExpectedAdapters) {
                 $expected = Get-Content -LiteralPath $ExpectedAdapters -Raw | ConvertFrom-Json
                 foreach ($adapter in @($catalogue.adapterCases.psobject.Properties) + @($catalogue.readRecoveryCases.psobject.Properties)) {
@@ -38,10 +64,7 @@ foreach ($scenario in $Scenarios) {
                     @($contracts.$scenario.advancedScreenshots)
                 } else { @($contracts.$scenario.screenshots) }
                 foreach ($image in $contractScreenshots) {
-                    if ($image -cnotin $data.screenshots -or !(Test-Path -LiteralPath (Join-Path $directory $image) -PathType Leaf) -or
-                            !(Test-Path -LiteralPath (Join-Path $directory ($image.Replace('.png','.json'))) -PathType Leaf)) { throw "Missing evidence: $image" }
-                    $snapshot = Get-Content -LiteralPath (Join-Path $directory ($image.Replace('.png','.json'))) -Raw | ConvertFrom-Json
-                    if (!$snapshot.screen -or !$snapshot.gui) { throw "Invalid snapshot: $image" }
+                    if ($image -cnotin $data.screenshots) { throw "Missing evidence: $image" }
                 }
             }
             $result = 'PASS'; $reason = ''

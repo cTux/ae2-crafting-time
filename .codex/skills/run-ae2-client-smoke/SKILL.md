@@ -45,6 +45,8 @@ Add the type as a plain label instead, such as `feature`, `bug`, or `tests`.
 - Maximize the exact Minecraft window before visual inspection. Test-driver
   scenarios may maximize themselves, but verify the captured result. Confirm
   the exact client stopped before continuing; never kill Java processes broadly.
+- The shared runner writes `guiScale:0` before launch. Review every captured
+  sidecar's effective scale, scaled dimensions, and contained GUI bounds.
 
 Run 1.20.1 clients on Java 17, 1.21.1 on Java 21, and 26.1.2 on Java 25.
 Resolve the launch machine's `JAVA_HOME_17`, `JAVA_HOME_21`, or `JAVA_HOME_25`
