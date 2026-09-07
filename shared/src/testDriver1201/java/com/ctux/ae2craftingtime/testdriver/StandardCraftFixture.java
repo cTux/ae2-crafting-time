@@ -27,6 +27,7 @@ final class StandardCraftFixture {
     private boolean initialized;
     boolean returnedStone;
     boolean holdFinalOutput;
+    boolean missingPlanInput;
     private int[] initialSamples;
     String checkpoint = "new";
 
@@ -78,7 +79,10 @@ final class StandardCraftFixture {
         if (!initialized) {
             var drive = (DriveBlockEntity) level.getBlockEntity(terminal.east(2));
             drive.getInternalInventory().setItemDirect(0, appeng.core.definitions.AEItems.ITEM_CELL_1K.stack());
-            drive.getCellInventory(0).insert(AEItemKey.of(Items.COBBLESTONE), 2, Actionable.MODULATE, IActionSource.empty());
+            if (!missingPlanInput) {
+                drive.getCellInventory(0).insert(AEItemKey.of(Items.COBBLESTONE), 2, Actionable.MODULATE,
+                        IActionSource.empty());
+            }
             pattern(player, 4, Items.COBBLESTONE, Items.STONE);
             pattern(player, 8, Items.STONE, Items.SMOOTH_STONE);
             seed(player);

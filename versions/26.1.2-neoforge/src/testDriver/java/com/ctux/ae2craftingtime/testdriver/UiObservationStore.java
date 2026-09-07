@@ -73,7 +73,8 @@ public final class UiObservationStore {
             }
             var cell = new Rect(active.gui.x() + TABLE_X + visibleIndex % 3 * PITCH_X,
                     active.gui.y() + TABLE_Y + visibleIndex / 3 * PITCH_Y, CELL_WIDTH, CELL_HEIGHT);
-            active.rows.add(new PendingRow(entry.getWhat().getId().toString(), entry.getCraftAmount(), cell));
+            active.rows.add(new PendingRow(entry.getWhat().getId().toString(), entry.getCraftAmount(),
+                    entry.getMissingAmount(), cell));
             active.itemCells.add(new Rect(cell.x() + CELL_WIDTH - 19, cell.y() + 3, 16, 16));
         }
     }
@@ -130,7 +131,7 @@ public final class UiObservationStore {
                     var cell = new Rect(active.gui.x() + 9 + visible % 3 * 68,
                             active.gui.y() + 19 + visible / 3 * 23, 67, 22);
                     active.rows.add(new PendingRow(entry.getWhat().getId().toString(),
-                            entry.getActiveAmount() + entry.getPendingAmount(), cell));
+                            entry.getActiveAmount() + entry.getPendingAmount(), 0, cell));
                     active.itemCells.add(new Rect(cell.x() + CELL_WIDTH - 19, cell.y() + 3, 16, 16));
                 }
             }
@@ -145,7 +146,8 @@ public final class UiObservationStore {
                         new Rect(widget.getX(), widget.getY(), widget.getWidth(), widget.getHeight()), List.of()));
             }
         }
-        var rows = active.rows.stream().map(row -> new UiSnapshot.Row(row.outputId, row.craftAmount, row.cell,
+        var rows = active.rows.stream().map(row -> new UiSnapshot.Row(row.outputId, row.craftAmount,
+                row.missingAmount, row.cell,
                 active.descriptions.getOrDefault(row.outputId, List.of()))).toList();
         latest = new UiSnapshot(active.screen, active.menu, active.gui, active.screenWidth, active.screenHeight,
                 active.guiScale, ++sequence, active.scroll, rows, active.text, merge(active.badges), active.widgets,
@@ -176,7 +178,7 @@ public final class UiObservationStore {
     public static void treeNode(GuiGraphicsExtractor graphics, AEKey key, int x, int y) {
         if (active != null && CraftingTreeScenario.isScreen(active.screen)) {
             var bounds = transformed(graphics, x, y, x + 16, y + 16);
-            active.rows.add(new PendingRow(key.getId().toString(), 0, bounds));
+            active.rows.add(new PendingRow(key.getId().toString(), 0, 0, bounds));
             active.itemCells.add(bounds);
         }
     }
@@ -247,7 +249,7 @@ public final class UiObservationStore {
         return List.copyOf(merged);
     }
 
-    private record PendingRow(String outputId, long craftAmount, Rect cell) {
+    private record PendingRow(String outputId, long craftAmount, long missingAmount, Rect cell) {
     }
 
     private static final class Frame {

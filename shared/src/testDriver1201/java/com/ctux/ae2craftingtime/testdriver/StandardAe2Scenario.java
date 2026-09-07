@@ -30,7 +30,8 @@ import java.util.function.Function;
 /** Bounded, real plan -> dispatch -> vanilla processing -> completed output flow. */
 final class StandardAe2Scenario {
     static final Map<String, List<String>> CHECKS = Map.ofEntries(
-            Map.entry("standard-plan-controls", List.of("plan", "plan-sort", "plan-tooltip", "plan-details", "plan-reset", "total-ttc", "layout", "item-resolution")),
+            Map.entry("standard-plan-controls", List.of("plan", "plan-sort", "missing-first", "plan-tooltip",
+                    "plan-details", "plan-reset", "total-ttc", "layout", "item-resolution")),
             Map.entry("standard-status-controls", List.of("submitted", "status", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout")),
             Map.entry("waiting-status", List.of("submitted", "waiting", "first-dispatch", "recovered", "layout")),
             Map.entry("running-status", List.of("submitted", "running", "progress", "header", "layout")),
@@ -70,6 +71,7 @@ final class StandardAe2Scenario {
         }
         if (phase == Stage.PREPARE) {
             fixture.holdFinalOutput = leaf.equals("delayed-status");
+            fixture.missingPlanInput = leaf.equals("standard-plan-controls");
             if (server(minecraft, player -> fixture.prepare(player, marker))) {
                 if (leaf.equals("standard-plan-controls")) {
                     mark(checks, "item-resolution", ProviderHighlightShapes.resolveItem(null).isEmpty()
@@ -180,6 +182,9 @@ final class StandardAe2Scenario {
         } else if (phase == Stage.PLAN_SORT || phase == Stage.STATUS_SORT) {
             var rows = snapshot.rows().stream().filter(row -> row.craftAmount() > 0).map(UiSnapshot.Row::outputId).toList();
             if (!rows.containsAll(List.of("minecraft:stone", "minecraft:smooth_stone"))) return false;
+            if (plan && !missingFirst(snapshot.rows())) {
+                throw new IllegalStateException("Crafting Plan missing rows are not first: " + snapshot.rows());
+            }
             if (sort == 0) {
                 mark(checks, prefix, true);
                 if (plan && !snapshot.text().stream().anyMatch(t -> t.key().equals("text.ae2craftingtime.total_ttc"))) return false;
@@ -207,6 +212,7 @@ final class StandardAe2Scenario {
                 DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
             } else {
                 mark(checks, prefix + "-sort", true);
+                if (plan) mark(checks, "missing-first", true);
                 sort = 0;
                 phase = Stage.values()[phase.ordinal() + 1];
             }
@@ -361,6 +367,20 @@ final class StandardAe2Scenario {
             return true;
         }
         return false;
+    }
+
+    private static boolean missingFirst(List<UiSnapshot.Row> rows) {
+        var foundMissing = false;
+        var foundNonMissing = false;
+        for (var row : rows) {
+            if (row.missingAmount() > 0) {
+                foundMissing = true;
+                if (foundNonMissing) return false;
+            } else {
+                foundNonMissing = true;
+            }
+        }
+        return foundMissing;
     }
 
     private static UiSnapshot.ObservedText rowText(UiSnapshot snapshot, String output, String key) {

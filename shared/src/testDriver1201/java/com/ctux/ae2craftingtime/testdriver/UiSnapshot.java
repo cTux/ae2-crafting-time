@@ -26,7 +26,7 @@ public record UiSnapshot(
         tooltip = List.copyOf(tooltip);
     }
 
-    public record Row(String outputId, long craftAmount, Rect cell, List<ObservedText> description) {
+    public record Row(String outputId, long craftAmount, long missingAmount, Rect cell, List<ObservedText> description) {
         public Row {
             description = List.copyOf(description);
         }

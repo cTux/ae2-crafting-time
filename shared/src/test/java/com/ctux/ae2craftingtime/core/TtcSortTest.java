@@ -67,6 +67,34 @@ class TtcSortTest {
                 TtcSort.copyPrioritizedSorted(entries, Entry::priority, Entry::seconds, Comparator.comparing(Entry::name), true, true));
     }
 
+    @Test
+    void priorityGroupsKeepEqualTtcFallbackOrder() {
+        var entries = List.of(entry("missing-b", OptionalLong.of(2), true),
+                entry("normal-b", OptionalLong.of(2), false), entry("missing-a", OptionalLong.of(2), true),
+                entry("normal-a", OptionalLong.of(2), false));
+
+        assertNames(List.of("missing-a", "missing-b", "normal-a", "normal-b"),
+                TtcSort.copyPrioritizedSorted(entries, Entry::priority, Entry::seconds,
+                        Comparator.comparing(Entry::name), true, false));
+    }
+
+    @Test
+    void arrivingStatsReorderOnlyInsidePriorityGroups() {
+        var entries = List.of(entry("normal", OptionalLong.empty(), false),
+                entry("missing-unknown", OptionalLong.empty(), true),
+                entry("missing-known", OptionalLong.of(5), true));
+
+        assertNames(List.of("missing-known", "missing-unknown", "normal"),
+                TtcSort.copyPrioritizedSorted(entries, Entry::priority, Entry::seconds,
+                        Comparator.comparing(Entry::name), true, true));
+        var refreshed = List.of(entry("normal", OptionalLong.of(20), false),
+                entry("missing-unknown", OptionalLong.of(10), true),
+                entry("missing-known", OptionalLong.of(5), true));
+        assertNames(List.of("missing-unknown", "missing-known", "normal"),
+                TtcSort.copyPrioritizedSorted(refreshed, Entry::priority, Entry::seconds,
+                        Comparator.comparing(Entry::name), true, true));
+    }
+
     private static void assertNames(List<String> expected, List<Entry> entries) {
         assertEquals(expected, entries.stream().map(Entry::name).toList());
     }

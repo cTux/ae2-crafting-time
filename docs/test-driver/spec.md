@@ -94,6 +94,8 @@ Plan controls also checks highlight item resolution against the loaded registry:
 known stone resolves correctly; null, malformed, and unknown IDs return empty stacks.
 Before checking plan sort order, wait for both seeded row estimates to render;
 a partial stats reply must restart the stable-frame gate.
+Its plan intentionally lacks one input and checks that the missing row stays ahead
+of the two craftable rows in AE2 order and both TTC directions.
 
 The [leaf contracts](../automated-ui-testing/technical-design.md#groups-and-independent-standard-flow)
 retain every original assertion. Waiting and running require real dependency
