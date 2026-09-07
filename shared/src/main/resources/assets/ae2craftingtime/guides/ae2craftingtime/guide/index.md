@@ -11,4 +11,6 @@ AE2 Crafting Time shows estimates for your AE2 autocrafting jobs and helps you n
 
 Open Crafting Plan before starting a job, or Crafting Status while it runs, to see the available time estimates. TTC means “time to craft.” These times are estimates, not deadlines: your machines, shared workload, and server performance can change the result.
 
-Start with [Chapter 1: Your first estimate](getting-started.md).
+Start with [Chapter 1: Your first estimate](getting-started.md), explore
+[Chapter 2: Features](features/index.md), or look up a label in
+[Chapter 3: Statuses](statuses/index.md).
