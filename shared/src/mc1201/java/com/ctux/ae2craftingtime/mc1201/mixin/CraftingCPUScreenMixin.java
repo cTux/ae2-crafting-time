@@ -158,7 +158,9 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         if (status == null) {
             return title;
         }
-        if (status.getEntries().stream().noneMatch(entry -> entry.getActiveAmount() > 0 || entry.getPendingAmount() > 0)) {
+        if (status.getRemainingItemCount() <= 0
+                || status.getEntries().stream().noneMatch(entry -> entry.getActiveAmount() > 0
+                        || entry.getPendingAmount() > 0)) {
             return title;
         }
 
