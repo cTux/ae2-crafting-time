@@ -35,7 +35,7 @@
     },
     "input-blocked-status": {
       "checks": ["screen", "real-job", "mixed-row", "tooltip", "layout", "blocking-mode", "blocking-recovered", "zero-insertion", "partial-capacity"],
-      "screenshots": ["input-blocked-en-us.png", "input-blocked-recovered.png", "input-blocked-zero-insertion.png", "input-blocked-partial-capacity.png"]
+      "screenshots": ["input-blocked-status-en-us.png", "input-blocked-recovered.png", "input-blocked-zero-insertion.png", "input-blocked-partial-capacity.png"]
     },
     "locked-status": {
       "checks": ["screen", "real-job", "mixed-row", "tooltip", "layout", "lock-while-low", "low-recovered", "lock-while-high", "high-recovered", "pulse-lock", "pulse-recovered", "result-lock", "result-returned"],
