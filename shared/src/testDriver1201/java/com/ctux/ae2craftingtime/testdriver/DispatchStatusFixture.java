@@ -31,11 +31,14 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 final class DispatchStatusFixture {
+    private static final long DEFAULT_OUTPUT_AMOUNT = 64;
+    private static final long ADVANCED_OUTPUT_AMOUNT = 4096;
     BlockPos cpuPosition;
     private Future<ICraftingPlan> calculation;
     private final int inputAmount;
     private final LockCraftingMode initialLock;
     private final boolean initialBlocking;
+    private final long outputAmount;
     private Object advancedCpu;
 
     DispatchStatusFixture(int inputAmount) {
@@ -46,6 +49,8 @@ final class DispatchStatusFixture {
         this.inputAmount = inputAmount;
         this.initialLock = initialLock;
         this.initialBlocking = initialBlocking;
+        outputAmount = Boolean.getBoolean("ae2craftingtime.test.advancedStatus")
+                ? ADVANCED_OUTPUT_AMOUNT : DEFAULT_OUTPUT_AMOUNT;
     }
 
     boolean prepare(int phase, ServerPlayer player, FixtureMarker marker) {
@@ -87,14 +92,16 @@ final class DispatchStatusFixture {
             var drive = (DriveBlockEntity) level.getBlockEntity(cpuPosition.east(4));
             drive.getInternalInventory().setItemDirect(0,
                     new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.tryParse("ae2:item_storage_cell_1k"))));
-            drive.getCellInventory(0).insert(AEItemKey.of(Items.COBBLESTONE), 64L * inputAmount, Actionable.MODULATE, IActionSource.empty());
+            drive.getCellInventory(0).insert(AEItemKey.of(Items.COBBLESTONE), outputAmount * inputAmount,
+                    Actionable.MODULATE, IActionSource.empty());
             provider(player, 6).getLogic().getConfigManager().putSetting(Settings.BLOCKING_MODE,
                     initialBlocking ? YesNo.YES : YesNo.NO);
             provider(player, 6).getLogic().getConfigManager().putSetting(Settings.LOCK_CRAFTING_MODE,
                     advancedCpu == null ? LockCraftingMode.NONE : initialLock);
             provider(player, 6).getLogic().getPatternInv().setItemDirect(0, pattern());
             calculation = cpu.getMainNode().getGrid().getCraftingService().beginCraftingCalculation(level,
-                    () -> IActionSource.ofMachine(cpu), AEItemKey.of(Items.DIAMOND), 64, CalculationStrategy.REPORT_MISSING_ITEMS);
+                    () -> IActionSource.ofMachine(cpu), AEItemKey.of(Items.DIAMOND), outputAmount,
+                    CalculationStrategy.REPORT_MISSING_ITEMS);
             return true;
         }
         if (!calculation.isDone()) {
@@ -121,7 +128,7 @@ final class DispatchStatusFixture {
         if (active <= 0) {
             return false;
         }
-        if (active >= 64) {
+        if (active >= outputAmount) {
             throw new IllegalStateException("fixture has no remaining scheduled batches");
         }
         MenuOpener.open(CraftingCPUMenu.TYPE, player, MenuLocators.forBlockEntity(cpu));
