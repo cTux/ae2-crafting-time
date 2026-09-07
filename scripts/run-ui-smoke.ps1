@@ -14,20 +14,19 @@ param(
 )
 
 function Test-UiSnapshotBounds($snapshot) {
-    $values = @($snapshot.guiScale, $snapshot.screenWidth, $snapshot.screenHeight,
-        $snapshot.gui.x, $snapshot.gui.y, $snapshot.gui.width, $snapshot.gui.height)
+    if ($null -eq $snapshot.guiScale -or $snapshot.guiScale -is [bool] -or $snapshot.guiScale -is [string]) { return $false }
+    try { $scale = [double]$snapshot.guiScale } catch { return $false }
+    if ([double]::IsNaN($scale) -or $scale -eq [double]::PositiveInfinity -or $scale -eq [double]::NegativeInfinity -or $scale -le 0) { return $false }
+    $values = @($snapshot.screenWidth, $snapshot.screenHeight, $snapshot.gui.x,
+        $snapshot.gui.y, $snapshot.gui.width, $snapshot.gui.height)
     foreach ($value in $values) {
         if ($null -eq $value -or $value -is [bool] -or $value -is [string]) { return $false }
         try { $number = [double]$value } catch { return $false }
-        if ([double]::IsNaN($number) -or $number -eq [double]::PositiveInfinity -or
-                $number -eq [double]::NegativeInfinity -or $number -ne [math]::Truncate($number)) { return $false }
+        if ($number -ne [math]::Truncate($number) -or $number -lt [int]::MinValue -or $number -gt [int]::MaxValue) { return $false }
     }
-    return [double]$snapshot.guiScale -gt 0 -and [double]$snapshot.screenWidth -gt 0 -and
-        [double]$snapshot.screenHeight -gt 0 -and [double]$snapshot.gui.x -ge 0 -and
-        [double]$snapshot.gui.y -ge 0 -and [double]$snapshot.gui.width -gt 0 -and
-        [double]$snapshot.gui.height -gt 0 -and
-        [double]$snapshot.gui.x + [double]$snapshot.gui.width -le [double]$snapshot.screenWidth -and
-        [double]$snapshot.gui.y + [double]$snapshot.gui.height -le [double]$snapshot.screenHeight
+    $screenWidth, $screenHeight, $x, $y, $width, $height = $values | ForEach-Object { [long][double]$_ }
+    return $screenWidth -gt 0 -and $screenHeight -gt 0 -and $x -ge 0 -and $y -ge 0 -and
+        $width -gt 0 -and $height -gt 0 -and $x + $width -le $screenWidth -and $y + $height -le $screenHeight
 }
 
 $ErrorActionPreference = "Stop"
@@ -320,12 +319,10 @@ try {
             if ($screenshot -notin $result.screenshots -or -not (Test-Path -LiteralPath (Join-Path $caseEvidence $screenshot))) {
                 throw "Missing required screenshot $screenshot"
             }
-            if ($standardContracts.$caseScenario) {
-                $sidecar = Join-Path $caseEvidence $screenshot.Replace('.png','.json')
-                if (!(Test-Path -LiteralPath $sidecar -PathType Leaf)) { throw "Missing semantic snapshot $screenshot" }
-                $snapshot = Get-Content -LiteralPath $sidecar -Raw | ConvertFrom-Json
-                if (!$snapshot.screen -or !$snapshot.gui -or !(Test-UiSnapshotBounds $snapshot)) { throw "Invalid semantic snapshot $screenshot" }
-            }
+            $sidecar = Join-Path $caseEvidence $screenshot.Replace('.png','.json')
+            if (!(Test-Path -LiteralPath $sidecar -PathType Leaf)) { throw "Missing semantic snapshot $screenshot" }
+            $snapshot = Get-Content -LiteralPath $sidecar -Raw | ConvertFrom-Json
+            if (!$snapshot.screen -or !$snapshot.gui -or !(Test-UiSnapshotBounds $snapshot)) { throw "Invalid semantic snapshot $screenshot" }
         }
     }
     $manifest = Join-Path $runtime "$modsDirectory\.ae2-crafting-time-run-mods.json"

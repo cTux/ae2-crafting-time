@@ -193,6 +193,7 @@ try {
     foreach ($mode in @('boolean-scale','invalid-dimensions','uncontained-gui')) {
         Invoke-Case $mode -Scenario 'standard-plan-controls' -shouldPass $false
     }
+    Invoke-Case 'boolean-scale' -Scenario 'no-space-status' -shouldPass $false
     $cacheMarker = Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\runtime\cache-marker.txt"
     Set-Content -LiteralPath $cacheMarker -Value "keep"
     Invoke-Case "pass" -shouldPass $true
