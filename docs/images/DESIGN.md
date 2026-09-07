@@ -10,10 +10,11 @@ themes. This is a Markdown document, not a custom website.
 ## Banner
 
 - Canvas: 1600 by 420 pixels; scales to the available README width.
-- Background: AE2's Sky Stone Small Bricks texture, tiled at an integer scale
-  and darkened for readable text.
-- Frame: AE2 Crafting CPU ring side and corner textures at an integer scale.
-- Title: `#f0f6fc`; tagline: `#48e6ee`; shadow: `#080e12`.
+- Background and beveled frame: AE2's terminal GUI background, expanded as a
+  nine-slice so the original corners and edge thickness stay intact.
+- Terminal details: empty storage-slot rows and the side column from AE2's
+  terminal GUI texture, rendered at an integer scale.
+- Title: `#3f3f3f`; tagline: `#008c95`.
 - Artwork: `project-icon.png`, the user's original 512-pixel PNG, unchanged.
 - Lettering: the actual default ASCII bitmap glyphs in Minecraft 1.20.1,
   rendered at integer scales. No installed font or generated lettering.
@@ -56,13 +57,11 @@ System.Drawing library and does not download anything.
 
 ## AE2 texture attribution
 
-The banner background and frame use modified copies of these Applied Energistics
-2 textures from version 15.4.10:
+The banner background, frame, and slot details use modified copies of these
+Applied Energistics 2 textures from version 15.4.10:
 
-- `sky_stone_small_brick.png`
-- `crafting/ring_side_hor.png`
-- `crafting/ring_side_ver.png`
-- `crafting/ring_corner.png`
+- `guis/background.png`
+- `guis/terminal.png`
 
 Applied Energistics 2 textures and models are copyright (c) 2020 Ridanisaurus
 Rid and copyright (c) 2013-2020 AlgorithmX2 et al. The modified banner is

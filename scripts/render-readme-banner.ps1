@@ -14,10 +14,8 @@ $jar = $null
 $ae2 = $null
 $atlas = $null
 $icon = $null
-$background = $null
-$ringSideHorizontal = $null
-$ringSideVertical = $null
-$ringCorner = $null
+$terminalBackground = $null
+$terminal = $null
 $canvas = $null
 $graphics = $null
 $fontStream = $null
@@ -43,35 +41,30 @@ try {
     if ($atlas.Width -ne 128 -or $atlas.Height -ne 128) {
         throw 'Expected the Minecraft 1.20.1 128-by-128 ASCII atlas.'
     }
-    $background = Read-Png $ae2 'assets/ae2/textures/block/sky_stone_small_brick.png'
-    $ringSideHorizontal = Read-Png $ae2 'assets/ae2/textures/block/crafting/ring_side_hor.png'
-    $ringSideVertical = Read-Png $ae2 'assets/ae2/textures/block/crafting/ring_side_ver.png'
-    $ringCorner = Read-Png $ae2 'assets/ae2/textures/block/crafting/ring_corner.png'
+    $terminalBackground = Read-Png $ae2 'assets/ae2/textures/guis/background.png'
+    $terminal = Read-Png $ae2 'assets/ae2/textures/guis/terminal.png'
     $icon = [Drawing.Image]::FromFile((Join-Path $root 'docs/images/project-icon.png'))
     $canvas = [Drawing.Bitmap]::new(1600, 420)
     $graphics = [Drawing.Graphics]::FromImage($canvas)
     $graphics.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::NearestNeighbor
     $graphics.PixelOffsetMode = [Drawing.Drawing2D.PixelOffsetMode]::Half
-    for ($y = 0; $y -lt 420; $y += 64) {
-        for ($x = 0; $x -lt 1600; $x += 64) {
-            $graphics.DrawImage($background, [Drawing.Rectangle]::new($x, $y, 64, 64))
-        }
+    $graphics.DrawImage($terminalBackground, [Drawing.Rectangle]::new(0, 0, 12, 12), [Drawing.Rectangle]::new(0, 0, 3, 3), [Drawing.GraphicsUnit]::Pixel)
+    $graphics.DrawImage($terminalBackground, [Drawing.Rectangle]::new(12, 0, 1576, 12), [Drawing.Rectangle]::new(3, 0, 250, 3), [Drawing.GraphicsUnit]::Pixel)
+    $graphics.DrawImage($terminalBackground, [Drawing.Rectangle]::new(1588, 0, 12, 12), [Drawing.Rectangle]::new(253, 0, 3, 3), [Drawing.GraphicsUnit]::Pixel)
+    $graphics.DrawImage($terminalBackground, [Drawing.Rectangle]::new(0, 12, 12, 396), [Drawing.Rectangle]::new(0, 3, 3, 250), [Drawing.GraphicsUnit]::Pixel)
+    $graphics.DrawImage($terminalBackground, [Drawing.Rectangle]::new(12, 12, 1576, 396), [Drawing.Rectangle]::new(3, 3, 250, 250), [Drawing.GraphicsUnit]::Pixel)
+    $graphics.DrawImage($terminalBackground, [Drawing.Rectangle]::new(1588, 12, 12, 396), [Drawing.Rectangle]::new(253, 3, 3, 250), [Drawing.GraphicsUnit]::Pixel)
+    $graphics.DrawImage($terminalBackground, [Drawing.Rectangle]::new(0, 408, 12, 12), [Drawing.Rectangle]::new(0, 253, 3, 3), [Drawing.GraphicsUnit]::Pixel)
+    $graphics.DrawImage($terminalBackground, [Drawing.Rectangle]::new(12, 408, 1576, 12), [Drawing.Rectangle]::new(3, 253, 250, 3), [Drawing.GraphicsUnit]::Pixel)
+    $graphics.DrawImage($terminalBackground, [Drawing.Rectangle]::new(1588, 408, 12, 12), [Drawing.Rectangle]::new(253, 253, 3, 3), [Drawing.GraphicsUnit]::Pixel)
+    for ($x = 432; $x -lt 1548; $x += 324) {
+        $width = [Math]::Min(324, 1548 - $x)
+        $sourceWidth = [int]($width / 2)
+        $graphics.DrawImage($terminal, [Drawing.Rectangle]::new($x, 28, $width, 36), [Drawing.Rectangle]::new(7, 18, $sourceWidth, 18), [Drawing.GraphicsUnit]::Pixel)
+        $graphics.DrawImage($terminal, [Drawing.Rectangle]::new($x, 356, $width, 36), [Drawing.Rectangle]::new(7, 18, $sourceWidth, 18), [Drawing.GraphicsUnit]::Pixel)
     }
-    $shade = [Drawing.SolidBrush]::new([Drawing.Color]::FromArgb(150, 5, 14, 18))
-    try {
-        $graphics.FillRectangle($shade, 0, 0, 1600, 420)
-    } finally { $shade.Dispose() }
-    for ($x = 32; $x -lt 1568; $x += 32) {
-        $graphics.DrawImage($ringSideHorizontal, [Drawing.Rectangle]::new($x, 0, 32, 32))
-        $graphics.DrawImage($ringSideHorizontal, [Drawing.Rectangle]::new($x, 388, 32, 32))
-    }
-    for ($y = 32; $y -lt 388; $y += 32) {
-        $graphics.DrawImage($ringSideVertical, [Drawing.Rectangle]::new(0, $y, 32, 32))
-        $graphics.DrawImage($ringSideVertical, [Drawing.Rectangle]::new(1568, $y, 32, 32))
-    }
-    foreach ($point in @(@(0,0), @(1568,0), @(0,388), @(1568,388))) {
-        $graphics.DrawImage($ringCorner, [Drawing.Rectangle]::new($point[0], $point[1], 32, 32))
-    }
+    $graphics.DrawImage($terminal, [Drawing.Rectangle]::new(1548, 76, 36, 106), [Drawing.Rectangle]::new(174, 18, 18, 53), [Drawing.GraphicsUnit]::Pixel)
+    $graphics.DrawImage($terminal, [Drawing.Rectangle]::new(1548, 196, 36, 94), [Drawing.Rectangle]::new(174, 78, 18, 47), [Drawing.GraphicsUnit]::Pixel)
     $graphics.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
     $graphics.DrawImage($icon, [Drawing.Rectangle]::new(32, 18, 384, 384))
 
@@ -99,10 +92,8 @@ try {
         } finally { $brush.Dispose() }
     }
 
-    Draw-MinecraftText "It's AE2 Crafting Time!" 452 146 8 '#080e12'
-    Draw-MinecraftText "It's AE2 Crafting Time!" 448 142 8 '#f0f6fc'
-    Draw-MinecraftText 'Autocrafting adventure you might want to understand in details' 451 273 3 '#080e12'
-    Draw-MinecraftText 'Autocrafting adventure you might want to understand in details' 448 270 3 '#48e6ee'
+    Draw-MinecraftText "It's AE2 Crafting Time!" 448 142 8 '#3f3f3f'
+    Draw-MinecraftText 'Autocrafting adventure you might want to understand in details' 448 270 3 '#008c95'
     $output = Join-Path $root 'docs/images/readme-banner.png'
     $canvas.Save($output, [Drawing.Imaging.ImageFormat]::Png)
     Write-Host "Rendered Minecraft bitmap lettering to $output"
@@ -112,10 +103,8 @@ try {
     if ($icon) { $icon.Dispose() }
     if ($atlas) { $atlas.Dispose() }
     if ($fontStream) { $fontStream.Dispose() }
-    if ($ringCorner) { $ringCorner.Dispose() }
-    if ($ringSideVertical) { $ringSideVertical.Dispose() }
-    if ($ringSideHorizontal) { $ringSideHorizontal.Dispose() }
-    if ($background) { $background.Dispose() }
+    if ($terminal) { $terminal.Dispose() }
+    if ($terminalBackground) { $terminalBackground.Dispose() }
     if ($ae2) { $ae2.Dispose() }
     if ($jar) { $jar.Dispose() }
 }
