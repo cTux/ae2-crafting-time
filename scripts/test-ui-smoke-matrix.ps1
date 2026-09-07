@@ -38,7 +38,7 @@ foreach ($case in $cases) {
     foreach ($check in $contracts.$case.checks) { $checks[$check] = $true }
     foreach ($image in $contracts.$case.screenshots) {
         Set-Content (Join-Path $evidence $image) 'fixture-image'
-        @{screen='fixture-screen';gui=@{x=0;y=0;width=100;height=100}} | ConvertTo-Json | Set-Content (Join-Path $evidence $image.Replace('.png','.json'))
+        @{screen='fixture-screen';screenWidth=100;screenHeight=100;guiScale=2;gui=@{x=0;y=0;width=100;height=100}} | ConvertTo-Json | Set-Content (Join-Path $evidence $image.Replace('.png','.json'))
     }
     @{schema=1;complete=$true;target=$Target;profile=$profile;scenario=$case;language='en_us';result='PASS';checks=$checks;screenshots=@($contracts.$case.screenshots)} |
         ConvertTo-Json -Depth 6 | Set-Content "$evidence/result.json"

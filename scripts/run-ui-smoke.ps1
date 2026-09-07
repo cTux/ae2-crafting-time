@@ -132,7 +132,7 @@ fullscreen:false
 onboardAccessibility:false
 overrideWidth:854
 overrideHeight:480
-guiScale:2
+guiScale:0
 lang:en_us
 maxFps:60
 pauseOnLostFocus:false
@@ -307,7 +307,10 @@ try {
                 $sidecar = Join-Path $caseEvidence $screenshot.Replace('.png','.json')
                 if (!(Test-Path -LiteralPath $sidecar -PathType Leaf)) { throw "Missing semantic snapshot $screenshot" }
                 $snapshot = Get-Content -LiteralPath $sidecar -Raw | ConvertFrom-Json
-                if (!$snapshot.screen -or !$snapshot.gui) { throw "Invalid semantic snapshot $screenshot" }
+                if (!$snapshot.screen -or !$snapshot.gui -or ![double]::IsFinite([double]$snapshot.guiScale) -or [double]$snapshot.guiScale -le 0 -or
+                        [int]$snapshot.screenWidth -le 0 -or [int]$snapshot.screenHeight -le 0 -or [int]$snapshot.gui.x -lt 0 -or [int]$snapshot.gui.y -lt 0 -or
+                        [int]$snapshot.gui.width -le 0 -or [int]$snapshot.gui.height -le 0 -or [int]$snapshot.gui.x + [int]$snapshot.gui.width -gt [int]$snapshot.screenWidth -or
+                        [int]$snapshot.gui.y + [int]$snapshot.gui.height -gt [int]$snapshot.screenHeight) { throw "Invalid semantic snapshot $screenshot" }
             }
         }
     }

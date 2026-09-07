@@ -10,6 +10,10 @@ Read this after an eligible named-modpack instance exists in Prism's **Codex** g
   there for the campaign. Java watch registration fails on VMware's shared
   filesystem with `java.io.IOException: Incorrect function`.
 - Keep the staged instance in **Codex** too. Never stage a pack from another group.
+- Resolve the staged Minecraft runtime, then replace every `guiScale:` line in
+  its `options.txt` with one `guiScale:0` line. Preserve all unrelated options
+  and verify readback contains exactly that one automatic-scale line before a
+  screenshot-bearing launch. Stop if the runtime or readback is uncertain.
 - After testing, sync logs and crash reports to the shared instance, restore
   Prism's normal shared root, and remove only the marked temporary copy.
 

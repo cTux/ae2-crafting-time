@@ -33,6 +33,8 @@ param(
 )
 if ([IO.Path]::GetFullPath((Get-Location).Path) -ne [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))) { exit 8 }
 if ((Get-Content (Join-Path $RuntimeDirectory 'options.txt') -Raw) -notmatch '(?m)^onboardAccessibility:false\r?$') { exit 9 }
+if (@((Get-Content (Join-Path $RuntimeDirectory 'options.txt') | Where-Object { $_ -ceq 'guiScale:0' })).Count -ne 1 -or
+        @((Get-Content (Join-Path $RuntimeDirectory 'options.txt') | Where-Object { $_ -cmatch '^guiScale:' })).Count -ne 1) { exit 11 }
 if ($Target -eq '1.20.1-fabric' -and (Get-Content (Join-Path $RuntimeDirectory "saves/$DriverWorld/level.dat") -Raw).Trim() -ne 'native Fabric metadata') { exit 10 }
 $profile = if ($Latest) { "latest" } else { "compatible" }
 $loader = $Target.Split("-", 2)[1]
@@ -123,7 +125,7 @@ $result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $Driver
 foreach ($screenshot in $screenshots) {
     if ($env:AE2CT_UI_SMOKE_TEST_MODE -ne "missing-screenshot" -or $screenshot -ne @($screenshots)[-1]) {
         Set-Content -LiteralPath (Join-Path $DriverOutputDirectory $screenshot) -Value "png"
-        @{screen='fixture-screen';gui=@{x=0;y=0;width=100;height=100}} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $DriverOutputDirectory $screenshot.Replace('.png','.json'))
+        @{screen='fixture-screen';screenWidth=100;screenHeight=100;guiScale=2;gui=@{x=0;y=0;width=100;height=100}} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $DriverOutputDirectory $screenshot.Replace('.png','.json'))
     }
 }
 if ($Interactive -and $env:AE2CT_UI_SMOKE_TEST_MODE -eq "interactive-token" -and

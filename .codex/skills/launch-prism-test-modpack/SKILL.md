@@ -73,6 +73,11 @@ For every UI smoke run, read and follow
 [the screenshot archive contract](../../../docs/ui-smoke-evidence.md). Keep
 evidence per mod and integration checkpoint, including failed attempts.
 
+Before every screenshot-bearing launch, set `guiScale:0` only in the exact
+disposable staged instance and verify its readback as described in
+[launch-and-verify.md](references/launch-and-verify.md). Never change the
+managed Prism source instance or global settings.
+
 Start a wall-clock timer before the first smoke-test action. Record each material
 phase from actual timestamps, including setup, installation or staging, launch,
 UI verification, retries, evidence collection, and cleanup. End every smoke-test

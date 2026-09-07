@@ -15,7 +15,7 @@ try {
         foreach ($check in $contract.checks) { $checks[$check] = $true }
         foreach ($image in $contract.screenshots) {
             Set-Content -LiteralPath (Join-Path $directory $image) -Value 'fixture-image'
-            @{screen='fixture';gui=@{x=0;y=0;width=100;height=100}} | ConvertTo-Json |
+            @{screen='fixture';screenWidth=100;screenHeight=100;guiScale=2;gui=@{x=0;y=0;width=100;height=100}} | ConvertTo-Json |
                 Set-Content -LiteralPath (Join-Path $directory $image.Replace('.png','.json'))
         }
         @{schema=1;complete=$true;target='1.20.1-forge';profile='compatible';scenario=$case;language='en_us';result='PASS';checks=$checks;screenshots=$contract.screenshots} |
@@ -63,6 +63,14 @@ try {
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') 'Invalid snapshot must fail'
     Set-Content -LiteralPath $snapshot -Value $validSnapshot
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'PASS') 'Restored evidence must pass before testing result fields'
+    foreach ($mutation in @('guiScale', 'screenWidth', 'screenHeight', 'gui')) {
+        $data = $validSnapshot | ConvertFrom-Json
+        if ($mutation -eq 'gui') { $data.gui.x = 1; $data.gui.width = 100 }
+        else { $data.$mutation = 0 }
+        $data | ConvertTo-Json | Set-Content -LiteralPath $snapshot
+        Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') "Invalid $mutation must fail"
+    }
+    Set-Content -LiteralPath $snapshot -Value $validSnapshot
     $file = Join-Path $directory 'result.json'
     $original = Get-Content -LiteralPath $file -Raw
     foreach ($field in @('schema','complete','target','profile','scenario','language','result')) {

@@ -123,6 +123,12 @@ Record pass, fail, blocked, or not tested for every requested integration point.
 Capture the current failure screen when possible. Never reuse another run's
 image as evidence or mark missing driver coverage as a pass.
 
+For screenshot-bearing runs, record the maximized framebuffer, `guiScale:0`
+configuration, effective sidecar GUI scale, scaled width and height, and whether
+the GUI bounds are contained. Compare a representative prepared client and
+named modpack at the same framebuffer when verifying a scale change; keep the
+screen, text, item cells, buttons, and tooltips readable and unclipped.
+
 Record the exact pack/project/release or client target/profile, Minecraft and
 loader versions, enabled mod inventory, tested commit, production and driver
 JAR hashes, scenario, attempt, and timestamps. Preserve logs and result files
