@@ -36,7 +36,7 @@ final class StandardAe2Scenario {
             Map.entry("running-status", List.of("submitted", "running", "progress", "header", "layout")),
             Map.entry("delayed-status", List.of("submitted", "delayed", "row", "style", "tooltip", "layout", "recovered",
                     "plate-recovered", "final-plate", "completed", "output", "profile-sample", "plate-cleared")),
-            Map.entry("craft-lifecycle", List.of("plan", "submitted", "status", "profile-sample", "completed", "output")));
+            Map.entry("craft-lifecycle", List.of("plan", "submitted", "status", "profile-sample", "total-cleared", "completed", "output")));
     private enum Stage { PREPARE, TERMINAL, AMOUNT, PLAN_SORT, PLAN_TOOLTIP, PLAN_DETAILS, PLAN_RESET,
         SUBMIT, OPEN_STATUS, ACTIVE, STATUS_SORT, STATUS_TOOLTIP, STATUS_DETAILS, STATUS_RESET,
         RESTORE, DELAYED, PUMP, FINISHED, REOPEN, EMPTY, WORLD_POSITION, WORLD_HIGHLIGHT, WORLD_RELEASE, WORLD_FINISHED }
@@ -345,6 +345,15 @@ final class StandardAe2Scenario {
         } else if (phase == Stage.FINISHED) {
             // Older AE2 can retain its last incremental row after the CPU becomes idle.
             // Preserve that view, then reopen through the actual return/status buttons.
+            if (leaf.equals("craft-lifecycle") && snapshot.rows().stream().anyMatch(row -> row.craftAmount() > 0)) {
+                return false;
+            }
+            if (leaf.equals("craft-lifecycle") && snapshot.text().stream()
+                    .anyMatch(t -> t.key().equals("text.ae2craftingtime.ttc") && t.bounds() != null
+                            && t.bounds().y() < snapshot.gui().y() + 19)) {
+                throw new IllegalStateException("completed crafting status still shows total TTC");
+            }
+            if (leaf.equals("craft-lifecycle")) mark(checks, "total-cleared", true);
             if (leaf.equals("craft-lifecycle")) screenshot.accept("status-finished-job.png");
             var button = minecraft.screen.children().stream().filter(appeng.client.gui.widgets.TabButton.class::isInstance)
                     .map(appeng.client.gui.widgets.TabButton.class::cast).filter(w -> w.visible).findFirst().orElseThrow();
