@@ -7,6 +7,8 @@ import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
+import appeng.blockentity.storage.DriveBlockEntity;
+import appeng.core.definitions.AEItems;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.resources.ResourceLocation;
@@ -39,6 +41,13 @@ final class AdvancedAeFixture extends AddonCpuFixture<AdvancedAeFixture.Placemen
                 .filter(Objects::nonNull)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("fixture terminal grid is unavailable"));
+        var drive = grid.getMachines(DriveBlockEntity.class).stream()
+                .filter(candidate -> candidate.getMainNode().isActive()).findFirst().orElseThrow();
+        var inventory = drive.getInternalInventory();
+        var slot = 0;
+        while (slot < inventory.size() && !inventory.getStackInSlot(slot).isEmpty()) slot++;
+        if (slot == inventory.size()) throw new IllegalStateException("AdvancedAE fixture needs an empty drive slot");
+        inventory.setItemDirect(slot, AEItems.ITEM_CELL_1K.stack());
         var core = level.registryAccess().registryOrThrow(Registries.BLOCK).get(ResourceLocation.tryBuild("advanced_ae", "quantum_core"));
         if (core == null) {
             throw new IllegalStateException("AdvancedAE quantum core is unavailable");
