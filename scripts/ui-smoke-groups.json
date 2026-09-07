@@ -26,7 +26,7 @@
       "screenshots": ["status-delayed.png", "delayed-tooltip.png", "delayed-recovered.png", "delayed-plate-recovered.png", "delayed-final-held.png", "delayed-world-highlight.png", "delayed-world-finished.png"]
     },
     "craft-lifecycle": {
-      "checks": ["plan", "submitted", "status", "profile-sample", "completed", "output"],
+      "checks": ["plan", "submitted", "status", "profile-sample", "total-cleared", "completed", "output"],
       "screenshots": ["plan-default.png", "status-default.png", "status-finished-job.png", "status-completed.png"]
     },
     "no-target-status": {
