@@ -63,9 +63,12 @@ try {
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') 'Invalid snapshot must fail'
     Set-Content -LiteralPath $snapshot -Value $validSnapshot
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'PASS') 'Restored evidence must pass before testing result fields'
-    foreach ($mutation in @('guiScale', 'screenWidth', 'screenHeight', 'gui')) {
+    foreach ($mutation in @('guiScale', 'booleanScale', 'stringScale', 'screenWidth', 'fractionalWidth', 'screenHeight', 'gui')) {
         $data = $validSnapshot | ConvertFrom-Json
         if ($mutation -eq 'gui') { $data.gui.x = 1; $data.gui.width = 100 }
+        elseif ($mutation -eq 'booleanScale') { $data.guiScale = $true }
+        elseif ($mutation -eq 'stringScale') { $data.guiScale = '2' }
+        elseif ($mutation -eq 'fractionalWidth') { $data.screenWidth = 99.5 }
         else { $data.$mutation = 0 }
         $data | ConvertTo-Json | Set-Content -LiteralPath $snapshot
         Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') "Invalid $mutation must fail"

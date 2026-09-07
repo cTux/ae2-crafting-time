@@ -32,9 +32,16 @@ param(
     [switch]$Interactive, [Parameter(ValueFromRemainingArguments = $true)][string[]]$Rest
 )
 if ([IO.Path]::GetFullPath((Get-Location).Path) -ne [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))) { exit 8 }
-if ((Get-Content (Join-Path $RuntimeDirectory 'options.txt') -Raw) -notmatch '(?m)^onboardAccessibility:false\r?$') { exit 9 }
-if (@((Get-Content (Join-Path $RuntimeDirectory 'options.txt') | Where-Object { $_ -ceq 'guiScale:0' })).Count -ne 1 -or
-        @((Get-Content (Join-Path $RuntimeDirectory 'options.txt') | Where-Object { $_ -cmatch '^guiScale:' })).Count -ne 1) { exit 11 }
+$optionsPath = Join-Path $RuntimeDirectory 'options.txt'
+switch ($env:AE2CT_UI_SMOKE_TEST_MODE) {
+    'fixed-scale' { (Get-Content $optionsPath) -replace '^guiScale:0$', 'guiScale:2' | Set-Content $optionsPath }
+    'missing-scale' { Set-Content $optionsPath @(Get-Content $optionsPath | Where-Object { $_ -cnotmatch '^guiScale:' }) }
+    'duplicate-scale' { Add-Content $optionsPath ([Environment]::NewLine + 'guiScale:0') }
+    'malformed-scale' { (Get-Content $optionsPath) -replace '^guiScale:0$', 'guiScale:auto' | Set-Content $optionsPath }
+}
+$options = Get-Content $optionsPath
+if (($options -join [Environment]::NewLine) -notmatch '(?m)^onboardAccessibility:false\r?$') { exit 9 }
+if (@($options | Where-Object { $_ -ceq 'guiScale:0' }).Count -ne 1 -or @($options | Where-Object { $_ -cmatch '^guiScale:' }).Count -ne 1) { exit 11 }
 if ($Target -eq '1.20.1-fabric' -and (Get-Content (Join-Path $RuntimeDirectory "saves/$DriverWorld/level.dat") -Raw).Trim() -ne 'native Fabric metadata') { exit 10 }
 $profile = if ($Latest) { "latest" } else { "compatible" }
 $loader = $Target.Split("-", 2)[1]
@@ -125,7 +132,13 @@ $result | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $Driver
 foreach ($screenshot in $screenshots) {
     if ($env:AE2CT_UI_SMOKE_TEST_MODE -ne "missing-screenshot" -or $screenshot -ne @($screenshots)[-1]) {
         Set-Content -LiteralPath (Join-Path $DriverOutputDirectory $screenshot) -Value "png"
-        @{screen='fixture-screen';screenWidth=100;screenHeight=100;guiScale=2;gui=@{x=0;y=0;width=100;height=100}} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $DriverOutputDirectory $screenshot.Replace('.png','.json'))
+        $snapshot = @{screen='fixture-screen';screenWidth=100;screenHeight=100;guiScale=2;gui=@{x=0;y=0;width=100;height=100}}
+        switch ($env:AE2CT_UI_SMOKE_TEST_MODE) {
+            'boolean-scale' { $snapshot.guiScale = $true }
+            'invalid-dimensions' { $snapshot.screenWidth = 0 }
+            'uncontained-gui' { $snapshot.gui.x = 1 }
+        }
+        $snapshot | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $DriverOutputDirectory $screenshot.Replace('.png','.json'))
     }
 }
 if ($Interactive -and $env:AE2CT_UI_SMOKE_TEST_MODE -eq "interactive-token" -and
@@ -174,6 +187,12 @@ try {
     Invoke-Case "missing-screenshot" -Target "1.21.1-neoforge" -Scenario suite -shouldPass $false
     Invoke-Case "pass" -Target "unsupported" -shouldPass $false
     Invoke-Case "pass" -shouldPass $true
+    foreach ($mode in @('fixed-scale','missing-scale','duplicate-scale','malformed-scale')) {
+        Invoke-Case $mode -shouldPass $false
+    }
+    foreach ($mode in @('boolean-scale','invalid-dimensions','uncontained-gui')) {
+        Invoke-Case $mode -Scenario 'standard-plan-controls' -shouldPass $false
+    }
     $cacheMarker = Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\runtime\cache-marker.txt"
     Set-Content -LiteralPath $cacheMarker -Value "keep"
     Invoke-Case "pass" -shouldPass $true

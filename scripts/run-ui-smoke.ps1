@@ -13,6 +13,23 @@ param(
     [string]$PreparedLaunch
 )
 
+function Test-UiSnapshotBounds($snapshot) {
+    $values = @($snapshot.guiScale, $snapshot.screenWidth, $snapshot.screenHeight,
+        $snapshot.gui.x, $snapshot.gui.y, $snapshot.gui.width, $snapshot.gui.height)
+    foreach ($value in $values) {
+        if ($null -eq $value -or $value -is [bool] -or $value -is [string]) { return $false }
+        try { $number = [double]$value } catch { return $false }
+        if ([double]::IsNaN($number) -or $number -eq [double]::PositiveInfinity -or
+                $number -eq [double]::NegativeInfinity -or $number -ne [math]::Truncate($number)) { return $false }
+    }
+    return [double]$snapshot.guiScale -gt 0 -and [double]$snapshot.screenWidth -gt 0 -and
+        [double]$snapshot.screenHeight -gt 0 -and [double]$snapshot.gui.x -ge 0 -and
+        [double]$snapshot.gui.y -ge 0 -and [double]$snapshot.gui.width -gt 0 -and
+        [double]$snapshot.gui.height -gt 0 -and
+        [double]$snapshot.gui.x + [double]$snapshot.gui.width -le [double]$snapshot.screenWidth -and
+        [double]$snapshot.gui.y + [double]$snapshot.gui.height -le [double]$snapshot.screenHeight
+}
+
 $ErrorActionPreference = "Stop"
 if (-not $PreparedLaunch -and -not $ReportDirectory) {
     if ($CasesBase64) { throw 'Case-list transport is internal to native execution' }
@@ -307,10 +324,7 @@ try {
                 $sidecar = Join-Path $caseEvidence $screenshot.Replace('.png','.json')
                 if (!(Test-Path -LiteralPath $sidecar -PathType Leaf)) { throw "Missing semantic snapshot $screenshot" }
                 $snapshot = Get-Content -LiteralPath $sidecar -Raw | ConvertFrom-Json
-                if (!$snapshot.screen -or !$snapshot.gui -or [double]$snapshot.guiScale -ne [double]$snapshot.guiScale -or [double]$snapshot.guiScale -eq [double]::PositiveInfinity -or [double]$snapshot.guiScale -eq [double]::NegativeInfinity -or [double]$snapshot.guiScale -le 0 -or
-                        [int]$snapshot.screenWidth -le 0 -or [int]$snapshot.screenHeight -le 0 -or [int]$snapshot.gui.x -lt 0 -or [int]$snapshot.gui.y -lt 0 -or
-                        [int]$snapshot.gui.width -le 0 -or [int]$snapshot.gui.height -le 0 -or [int]$snapshot.gui.x + [int]$snapshot.gui.width -gt [int]$snapshot.screenWidth -or
-                        [int]$snapshot.gui.y + [int]$snapshot.gui.height -gt [int]$snapshot.screenHeight) { throw "Invalid semantic snapshot $screenshot" }
+                if (!$snapshot.screen -or !$snapshot.gui -or !(Test-UiSnapshotBounds $snapshot)) { throw "Invalid semantic snapshot $screenshot" }
             }
         }
     }
