@@ -112,6 +112,11 @@ try {
     @{schema=1;complete=$true;target='1.20.1-forge';profile='compatible';scenario='no-space-status';language='en_us';result='PASS';screenshots=@('focused.png')} |
         ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $focused 'result.json')
     Assert ((& "$PSScriptRoot/get-ui-smoke-results.ps1" -Target 1.20.1-forge -Profile compatible -Scenarios no-space-status -Evidence $focused).result -eq 'FAIL') 'Focused invalid snapshot must fail'
+    foreach ($entry in @($false, '', '../outside.png')) {
+        @{schema=1;complete=$true;target='1.20.1-forge';profile='compatible';scenario='no-space-status';language='en_us';result='PASS';screenshots=@($entry)} |
+            ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $focused 'result.json')
+        Assert ((& "$PSScriptRoot/get-ui-smoke-results.ps1" -Target 1.20.1-forge -Profile compatible -Scenarios no-space-status -Evidence $focused).result -eq 'FAIL') 'Malformed screenshot entry must fail'
+    }
     $expected = Join-Path $temp 'expected-adapters.json'
     @{neoecoae='batched-long'} | ConvertTo-Json | Set-Content -LiteralPath $expected
     $adapterResult = @{schema=1;complete=$true;target='1.20.1-forge';profile='latest';scenario='neoeco-cpu';language='en_us';result='PASS';adapters=@{neoecoae=@{variant='pending-accounting';reason='selected'}}}
