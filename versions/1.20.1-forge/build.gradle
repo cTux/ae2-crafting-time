@@ -117,7 +117,7 @@ dependencies {
     testDriverCompileOnly 'maven.modrinth:extendedae-plus:1.5.5'
     testDriverCompileOnly 'maven.modrinth:bmaddon:1.0.4'
     testDriverCompileOnly 'curse.maven:blood-magic-224791:7956981'
-    testDriverCompileOnly 'maven.modrinth:anaGQD2Q:KwFCuLdA'
+    testDriverCompileOnly 'maven.modrinth:anaGQD2Q:JK2VlwKh'
     testDriverCompileOnly 'maven.modrinth:4inoel9g:RFT2nmVb'
     testDriverCompileOnly 'maven.modrinth:pNabrMMw:z8QXeyI0'
     testDriverCompileOnly 'maven.modrinth:neoecoae:20.3.0'

@@ -107,14 +107,14 @@ public abstract class AdvancedCraftingCpuLogicMixin {
                 : ae2craftingtime$dispatchObserver.busy(provider);
     }
 
-    @Redirect(method = "executeCrafting", at = @At(value = "INVOKE",
+    @WrapOperation(method = "executeCrafting", at = @At(value = "INVOKE",
             target = "Lappeng/api/networking/crafting/ICraftingProvider;pushPattern(Lappeng/api/crafting/IPatternDetails;[Lappeng/api/stacks/KeyCounter;)Z"),
             remap = false)
     private boolean ae2craftingtime$observeProviderPush(ICraftingProvider provider, IPatternDetails pattern,
-            appeng.api.stacks.KeyCounter[] input) {
+            appeng.api.stacks.KeyCounter[] input, Operation<Boolean> original) {
         return ae2craftingtime$dispatchObserver == null
-                ? provider.pushPattern(pattern, input)
-                : ae2craftingtime$dispatchObserver.push(provider, pattern, input);
+                ? original.call(provider, pattern, input)
+                : ae2craftingtime$dispatchObserver.push(provider, pattern, input, original);
     }
 
     @Unique
