@@ -152,6 +152,9 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         if (status == null) {
             return title;
         }
+        if (status.getEntries().stream().noneMatch(entry -> entry.getActiveAmount() > 0 || entry.getPendingAmount() > 0)) {
+            return title;
+        }
 
         var eta = TimeEstimate.formatTotal(List.of(ClientStats.totalTtcSeconds()));
         if (eta.isEmpty()) {
