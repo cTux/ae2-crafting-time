@@ -35,15 +35,14 @@ foreach ($scenario in $Scenarios) {
             $data = Get-Content -LiteralPath $file -Raw | ConvertFrom-Json
             if ($data.schema -ne 1 -or $data.complete -isnot [bool] -or !$data.complete -or $data.target -cne $Target -or $data.profile -cne $Profile -or
                     $data.scenario -cne $scenario -or $data.language -cne 'en_us' -or $data.result -cne 'PASS') { throw 'Failed or mismatched result' }
-            if ($null -ne $data.screenshots) {
-                foreach ($image in @($data.screenshots)) {
-                    if ($image -isnot [string] -or [string]::IsNullOrWhiteSpace($image) -or
-                            [IO.Path]::GetFileName($image) -cne $image -or !$image.EndsWith('.png', [StringComparison]::Ordinal)) { throw 'Invalid screenshot entry' }
-                    $sidecar = Join-Path $directory ($image.Replace('.png','.json'))
-                    if (!(Test-Path -LiteralPath (Join-Path $directory $image) -PathType Leaf) -or !(Test-Path -LiteralPath $sidecar -PathType Leaf)) { throw "Missing evidence: $image" }
-                    $snapshot = Get-Content -LiteralPath $sidecar -Raw | ConvertFrom-Json
-                    if (!$snapshot.screen -or !$snapshot.gui -or !(Test-UiSnapshotBounds $snapshot)) { throw "Invalid snapshot: $image" }
-                }
+            if ($data.screenshots -isnot [array] -or $data.screenshots.Count -eq 0) { throw 'Missing screenshot evidence' }
+            foreach ($image in $data.screenshots) {
+                if ($image -isnot [string] -or [string]::IsNullOrWhiteSpace($image) -or
+                        [IO.Path]::GetFileName($image) -cne $image -or !$image.EndsWith('.png', [StringComparison]::Ordinal)) { throw 'Invalid screenshot entry' }
+                $sidecar = Join-Path $directory ($image.Replace('.png','.json'))
+                if (!(Test-Path -LiteralPath (Join-Path $directory $image) -PathType Leaf) -or !(Test-Path -LiteralPath $sidecar -PathType Leaf)) { throw "Missing evidence: $image" }
+                $snapshot = Get-Content -LiteralPath $sidecar -Raw | ConvertFrom-Json
+                if (!$snapshot.screen -or !$snapshot.gui -or !(Test-UiSnapshotBounds $snapshot)) { throw "Invalid snapshot: $image" }
             }
             if ($ExpectedAdapters) {
                 $expected = Get-Content -LiteralPath $ExpectedAdapters -Raw | ConvertFrom-Json

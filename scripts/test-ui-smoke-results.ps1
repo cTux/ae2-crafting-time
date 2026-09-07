@@ -112,6 +112,11 @@ try {
     @{schema=1;complete=$true;target='1.20.1-forge';profile='compatible';scenario='no-space-status';language='en_us';result='PASS';screenshots=@('focused.png')} |
         ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $focused 'result.json')
     Assert ((& "$PSScriptRoot/get-ui-smoke-results.ps1" -Target 1.20.1-forge -Profile compatible -Scenarios no-space-status -Evidence $focused).result -eq 'FAIL') 'Focused invalid snapshot must fail'
+    foreach ($screenshots in @($null, @(), 'focused.png')) {
+        @{schema=1;complete=$true;target='1.20.1-forge';profile='compatible';scenario='no-space-status';language='en_us';result='PASS';screenshots=$screenshots} |
+            ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $focused 'result.json')
+        Assert ((& "$PSScriptRoot/get-ui-smoke-results.ps1" -Target 1.20.1-forge -Profile compatible -Scenarios no-space-status -Evidence $focused).result -eq 'FAIL') 'Missing or scalar screenshot list must fail'
+    }
     foreach ($entry in @($false, '', '../outside.png')) {
         @{schema=1;complete=$true;target='1.20.1-forge';profile='compatible';scenario='no-space-status';language='en_us';result='PASS';screenshots=@($entry)} |
             ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $focused 'result.json')
@@ -119,7 +124,10 @@ try {
     }
     $expected = Join-Path $temp 'expected-adapters.json'
     @{neoecoae='batched-long'} | ConvertTo-Json | Set-Content -LiteralPath $expected
-    $adapterResult = @{schema=1;complete=$true;target='1.20.1-forge';profile='latest';scenario='neoeco-cpu';language='en_us';result='PASS';adapters=@{neoecoae=@{variant='pending-accounting';reason='selected'}}}
+    Set-Content -LiteralPath (Join-Path $temp 'adapter.png') -Value 'fixture-image'
+    @{screen='fixture';screenWidth=100;screenHeight=100;guiScale=2;gui=@{x=0;y=0;width=100;height=100}} |
+        ConvertTo-Json | Set-Content -LiteralPath (Join-Path $temp 'adapter.json')
+    $adapterResult = @{schema=1;complete=$true;target='1.20.1-forge';profile='latest';scenario='neoeco-cpu';language='en_us';result='PASS';screenshots=@('adapter.png');adapters=@{neoecoae=@{variant='pending-accounting';reason='selected'}}}
     function Read-Adapter { & "$PSScriptRoot/get-ui-smoke-results.ps1" -Target 1.20.1-forge -Profile latest -Scenarios neoeco-cpu -Evidence $temp -ExpectedAdapters $expected }
     $adapterResult | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $temp 'result.json')
     Assert ((Read-Adapter).result -eq 'FAIL') 'Older adapter must fail leaf coverage'
