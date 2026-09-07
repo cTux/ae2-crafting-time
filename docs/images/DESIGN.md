@@ -10,12 +10,15 @@ themes. This is a Markdown document, not a custom website.
 ## Banner
 
 - Canvas: 1600 by 420 pixels; scales to the available README width.
-- Background: `#11191f`, with a quiet 24-pixel grid and cyan edge accents.
-- Title: `#f0f6fc`; tagline: `#48e6ee`; shadow: `#080e12`.
+- Background and beveled frame: AE2's terminal GUI background, expanded as a
+  nine-slice so the original corners and edge thickness stay intact.
+- Title: `#f0f0f0` at 10x scale; tagline: `#00a5ad` at 6x scale over two lines.
+  Both use a `#202020` pixel shadow.
 - Artwork: `project-icon.png`, the user's original 512-pixel PNG, unchanged.
 - Lettering: the actual default ASCII bitmap glyphs in Minecraft 1.20.1,
   rendered at integer scales. No installed font or generated lettering.
-- Copy: “AE2 Crafting Time” and “Know when your autocrafting will finish.”
+- Copy: “It's AE2 Crafting Time!” and “Autocrafting adventure you might want to
+  understand in details”.
 
 ## Page structure and primitives
 
@@ -37,17 +40,30 @@ native focus/hover states. No motion or scripts are needed.
 
 The hourglass was supplied as `ae2-crafting-time-512-optimized.png`. Its original
 bytes are retained as `project-icon.png`; it is a README branding asset, not an
-in-game asset. Minecraft's font atlas is read from a locally installed client
-JAR and is not included separately in this repository.
+in-game asset. Minecraft's font atlas and AE2's textures are read from locally
+installed JARs and are not included separately in this repository.
 
 On Windows, from the repository root:
 
 ```powershell
-./scripts/render-readme-banner.ps1 -MinecraftClientJar 'path/to/minecraft-1.20.1-client.jar'
+./scripts/render-readme-banner.ps1 `
+    -MinecraftClientJar 'path/to/minecraft-1.20.1-client.jar' `
+    -Ae2Jar 'path/to/appliedenergistics2-forge-15.4.10.jar'
 ```
 
 This writes `docs/images/readme-banner.png`. The script uses Windows' built-in
 System.Drawing library and does not download anything.
+
+## AE2 texture attribution
+
+The banner background and frame use a modified copy of this Applied Energistics
+2 texture from version 15.4.10:
+
+- `guis/background.png`
+
+Applied Energistics 2 textures and models are copyright (c) 2020 Ridanisaurus
+Rid and copyright (c) 2013-2020 AlgorithmX2 et al. The modified banner is
+licensed under [CC BY-NC-SA 3.0](https://creativecommons.org/licenses/by-nc-sa/3.0/).
 
 ## Verification scope
 

@@ -1,4 +1,4 @@
-![AE2 Crafting Time — Know when your autocrafting will finish.](docs/images/readme-banner.png)
+![It's AE2 Crafting Time! Autocrafting adventure you might want to understand in details.](docs/images/readme-banner.png)
 
 <p align="center">
   Time estimates, progress tracking, and bottleneck diagnostics for<br>
