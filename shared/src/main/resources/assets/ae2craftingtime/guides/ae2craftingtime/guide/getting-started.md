@@ -25,4 +25,5 @@ A row's time describes the requested crafting amount for that output, not just o
 
 The mod learns on the server, including in singleplayer, and saves its timing history with the world. Reading this guide does not start crafts, clear samples, or change your network.
 
-[Back to the introduction](index.md)
+[Back to the introduction](index.md) | [Next: Features](features/index.md) |
+[Statuses](statuses/index.md)

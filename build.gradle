@@ -7,7 +7,8 @@ plugins {
 tasks.register('checkGuideResources') {
     group = 'verification'
     description = 'Checks the optional GuideME book resources and target boundaries.'
-    dependsOn ':fabric_1_20_1:processResources', ':mc_1_20_1_forge:processResources'
+    dependsOn ':fabric_1_20_1:processResources', ':mc_1_20_1_forge:processResources',
+            ':mc_1_21_1_neoforge:processResources', ':mc_26_1_2_neoforge:processResources'
 
     doLast {
         def require = { boolean condition, String message ->
@@ -28,12 +29,122 @@ tasks.register('checkGuideResources') {
         require(english['item.ae2craftingtime.guide'] == english['guide.ae2craftingtime.name'], 'Wrong English Fabric guide name')
         require(ukrainian['item.ae2craftingtime.guide'] == ukrainian['guide.ae2craftingtime.name'], 'Wrong Ukrainian Fabric guide name')
 
-        ['index.md', 'getting-started.md'].each { page ->
-            def en = file("$guideRoot/guides/ae2craftingtime/guide/$page")
-            def uk = file("$guideRoot/guides/ae2craftingtime/guide/_uk_ua/$page")
-            require(en.isFile() && uk.isFile(), "Missing bilingual guide page: $page")
-            require(en.getText('UTF-8').contains(page == 'index.md' ? '(getting-started.md)' : '(index.md)'), "Broken English guide link: $page")
-            require(uk.getText('UTF-8').contains(page == 'index.md' ? '(getting-started.md)' : '(index.md)'), "Broken Ukrainian guide link: $page")
+        def guideDirectory = file("$guideRoot/guides/ae2craftingtime/guide")
+        def featurePages = [
+                'time-estimates.md', 'learning-throughput.md', 'confidence.md', 'job-accuracy.md',
+                'delay-diagnostics.md', 'sorting-and-colors.md', 'details-and-reset.md',
+                'saved-history.md', 'configuration.md', 'crafting-tree.md', 'me-requester.md',
+                'addon-support.md', 'guide-book.md'
+        ]
+        def relativePath = { File base, File child ->
+            base.toPath().relativize(child.toPath()).toString().replace(File.separatorChar, '/' as char)
+        }
+        def resolveLink = { String page, String target ->
+            def parent = java.nio.file.Paths.get(page).parent
+            (parent == null ? java.nio.file.Paths.get(target) : parent.resolve(target))
+                    .normalize().toString().replace(File.separatorChar, '/' as char)
+        }
+        def links = { String text ->
+            (text =~ /\]\(([^)#]+)(?:#[^)]+)?\)/).collect { it[1] }
+        }
+        def frontmatter = { String text, String key ->
+            def match = text =~ /(?m)^\s{2}${key}:\s*"?([^"\r\n]+)"?\s*$/
+            match.find() ? match.group(1).trim() : null
+        }
+        def validateFeatureChapter = { Map<String, String> texts, Set<String> binaries ->
+            def errors = []
+            def check = { boolean condition, String message -> if (!condition) errors << message }
+            def expectedTextPages = ['index.md', 'getting-started.md', 'features/index.md', 'statuses/index.md'] +
+                    featurePages.collect { "features/$it".toString() }
+            expectedTextPages.each { page ->
+                check(texts.containsKey(page), "Missing English guide page: $page")
+                check(texts.containsKey("_uk_ua/$page".toString()), "Missing Ukrainian guide page: $page")
+            }
+            if (errors) return errors
+
+            check(frontmatter(texts['getting-started.md'], 'position') == '0', 'Chapter 1 must use root position 0')
+            check(frontmatter(texts['features/index.md'], 'parent') == '../index.md', 'Features parent must be the guide root')
+            check(frontmatter(texts['features/index.md'], 'position') == '1', 'Features must use root position 1')
+            check(frontmatter(texts['features/index.md'], 'icon') == 'minecraft:clock', 'Features must use the clock icon')
+            check(frontmatter(texts['statuses/index.md'], 'position') == '2', 'Statuses must use root position 2')
+
+            ['index.md', 'getting-started.md', 'features/index.md', 'statuses/index.md'].each { page ->
+                check(links(texts[page]).any { resolveLink(page, it) == (page == 'index.md' ? 'getting-started.md' : 'index.md') },
+                        "Missing root navigation link: $page")
+            }
+
+            ['features/index.md', '_uk_ua/features/index.md'].each { landing ->
+                def prefix = landing.startsWith('_uk_ua/') ? '_uk_ua/features/' : 'features/'
+                def children = links(texts[landing]).collect { resolveLink(landing, it) }
+                        .findAll { it.startsWith(prefix) && it != "${prefix}index.md" }
+                check(children == featurePages.collect { "$prefix$it".toString() }, "Wrong feature landing order: $landing")
+            }
+
+            featurePages.eachWithIndex { page, position ->
+                def enPath = "features/$page".toString()
+                def ukPath = "_uk_ua/features/$page".toString()
+                def en = texts[enPath]
+                def uk = texts[ukPath]
+                check(frontmatter(en, 'parent') == 'index.md', "Wrong feature parent: $enPath")
+                check(frontmatter(en, 'position') == position.toString(), "Wrong feature position: $enPath")
+                check(frontmatter(uk, 'parent') == 'index.md', "Wrong Ukrainian feature parent: $ukPath")
+                check(frontmatter(uk, 'position') == position.toString(), "Wrong Ukrainian feature position: $ukPath")
+
+                def enLinks = links(en)
+                def ukLinks = links(uk)
+                check(enLinks == ukLinks, "Guide links differ by locale: $page")
+                check(enLinks.count { it.endsWith('.md') } >= 3, "Feature needs three guide links: $enPath")
+                check(enLinks.any { resolveLink(enPath, it) == 'features/index.md' }, "Feature must return to landing: $enPath")
+                if (position > 0) {
+                    check(enLinks.any { resolveLink(enPath, it) == "features/${featurePages[position - 1]}" },
+                            "Feature must link to previous page: $enPath")
+                }
+                if (position < featurePages.size() - 1) {
+                    check(enLinks.any { resolveLink(enPath, it) == "features/${featurePages[position + 1]}" },
+                            "Feature must link to next page: $enPath")
+                }
+
+                def enImages = enLinks.findAll { it.endsWith('.png') }
+                def ukImages = ukLinks.findAll { it.endsWith('.png') }
+                check(enImages.size() >= 1 && enImages == ukImages, "Feature image differs by locale: $page")
+                enImages.each { image ->
+                    check(binaries.contains(resolveLink(enPath, image)), "Missing English feature image: $image")
+                    check(binaries.contains(resolveLink(ukPath, image)), "Missing Ukrainian feature image: $image")
+                }
+            }
+
+            texts.findAll { path, ignored -> path.endsWith('.md') }.each { page, text ->
+                links(text).findAll { it.endsWith('.md') }.each { link ->
+                    check(texts.containsKey(resolveLink(page, link)), "Broken guide link from $page: $link")
+                }
+            }
+            errors
+        }
+
+        def guideTexts = [:]
+        def guideBinaries = [] as Set
+        fileTree(guideDirectory).files.each { resource ->
+            def path = relativePath(guideDirectory, resource)
+            if (path.endsWith('.md')) guideTexts[path] = resource.getText('UTF-8')
+            else guideBinaries << path
+        }
+        def guideErrors = validateFeatureChapter(guideTexts, guideBinaries)
+        require(guideErrors.empty, guideErrors.join('\n'))
+
+        def expectRejected = { String name, Closure mutation ->
+            def texts = new LinkedHashMap<>(guideTexts)
+            def binaries = new LinkedHashSet<>(guideBinaries)
+            mutation(texts, binaries)
+            require(!validateFeatureChapter(texts, binaries).empty, "Guide validator accepted $name")
+        }
+        expectRejected('a missing page') { texts, ignored -> texts.remove('features/confidence.md') }
+        expectRejected('a missing translation') { texts, ignored -> texts.remove('_uk_ua/features/confidence.md') }
+        expectRejected('a missing image') { ignored, binaries -> binaries.remove('features/images/ttc-low-confidence.png') }
+        expectRejected('a missing return link') { texts, ignored ->
+            texts['features/confidence.md'] = texts['features/confidence.md'].replace('(index.md)', '(missing.md)')
+        }
+        expectRejected('an incorrect position') { texts, ignored ->
+            texts['features/confidence.md'] = texts['features/confidence.md'].replace('position: 2', 'position: 99')
         }
 
         def targets = [
@@ -72,12 +183,17 @@ tasks.register('checkGuideResources') {
         require(parse("$fabricTarget/src/main/resources/assets/ae2craftingtime/models/item/guide.json").parent == 'minecraft:item/book', 'Fabric guide must use the vanilla book model')
         require(!file("$fabricTarget/src/main/resources/fabric.mod.json").getText('UTF-8').contains('guideme'), 'Fabric must not declare GuideME')
 
-        ['index.md', 'getting-started.md', '_uk_ua/index.md', '_uk_ua/getting-started.md'].each { page ->
-            def source = file("$guideRoot/guides/ae2craftingtime/guide/$page")
-            def forgeOutput = file("$forgeTarget/build/resources/main/assets/ae2craftingtime/guides/ae2craftingtime/guide/$page")
-            def fabricOutput = file("$fabricTarget/build/resources/main/assets/ae2craftingtime/ae2guide/$page")
-            require(forgeOutput.isFile() && Arrays.equals(source.bytes, forgeOutput.bytes), "Wrong Forge guide output: $page")
-            require(fabricOutput.isFile() && Arrays.equals(source.bytes, fabricOutput.bytes), "Wrong Fabric guide output: $page")
+        fileTree(guideDirectory).files.each { source ->
+            def page = relativePath(guideDirectory, source)
+            def outputs = [
+                    forge: file("$forgeTarget/build/resources/main/assets/ae2craftingtime/guides/ae2craftingtime/guide/$page"),
+                    fabric: file("$fabricTarget/build/resources/main/assets/ae2craftingtime/ae2guide/$page"),
+                    neoforge1211: file("versions/1.21.1-neoforge/build/resources/main/assets/ae2craftingtime/guides/ae2craftingtime/guide/$page"),
+                    neoforge2612: file("versions/26.1.2-neoforge/build/resources/main/assets/ae2craftingtime/guides/ae2craftingtime/guide/$page")
+            ]
+            outputs.each { target, output ->
+                require(output.isFile() && Arrays.equals(source.bytes, output.bytes), "Wrong $target guide output: $page")
+            }
         }
 
         def matrix = parse('scripts/release-matrix.json')
