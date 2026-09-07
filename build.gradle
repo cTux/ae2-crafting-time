@@ -55,10 +55,10 @@ tasks.register('checkGuideResources') {
             def errors = []
             def check = { boolean condition, String message -> if (!condition) errors << message }
             def expectedTextPages = ['index.md', 'getting-started.md', 'features/index.md', 'statuses/index.md'] +
-                    featurePages.collect { "features/$it" }
+                    featurePages.collect { "features/$it".toString() }
             expectedTextPages.each { page ->
                 check(texts.containsKey(page), "Missing English guide page: $page")
-                check(texts.containsKey("_uk_ua/$page"), "Missing Ukrainian guide page: $page")
+                check(texts.containsKey("_uk_ua/$page".toString()), "Missing Ukrainian guide page: $page")
             }
             if (errors) return errors
 
@@ -77,12 +77,12 @@ tasks.register('checkGuideResources') {
                 def prefix = landing.startsWith('_uk_ua/') ? '_uk_ua/features/' : 'features/'
                 def children = links(texts[landing]).collect { resolveLink(landing, it) }
                         .findAll { it.startsWith(prefix) && it != "${prefix}index.md" }
-                check(children == featurePages.collect { "$prefix$it" }, "Wrong feature landing order: $landing")
+                check(children == featurePages.collect { "$prefix$it".toString() }, "Wrong feature landing order: $landing")
             }
 
             featurePages.eachWithIndex { page, position ->
-                def enPath = "features/$page"
-                def ukPath = "_uk_ua/features/$page"
+                def enPath = "features/$page".toString()
+                def ukPath = "_uk_ua/features/$page".toString()
                 def en = texts[enPath]
                 def uk = texts[ukPath]
                 check(frontmatter(en, 'parent') == 'index.md', "Wrong feature parent: $enPath")
