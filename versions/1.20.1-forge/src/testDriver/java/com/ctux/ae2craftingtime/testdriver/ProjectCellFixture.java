@@ -7,12 +7,13 @@ import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
 import appeng.blockentity.storage.DriveBlockEntity;
-import com.prc.projectcell.ProjectCell;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -50,8 +51,11 @@ final class ProjectCellFixture extends AddonCpuFixture<ProjectCellFixture.Placem
         var source = IActionSource.ofPlayer(player);
         var cobblestone = AEItemKey.of(Blocks.COBBLESTONE);
         grid.getStorageService().getInventory().extract(cobblestone, Long.MAX_VALUE, Actionable.MODULATE, source);
-        var cell = new ItemStack(ProjectCell.EMC_STORAGE_CELL.get());
-        ProjectCell.setOwnerUUID(cell, player.getUUID());
+        var cellItem = Objects.requireNonNull(
+                ForgeRegistries.ITEMS.getValue(new ResourceLocation("projectcell", "emc_storage_cell")),
+                "ProjectCell EMC Storage Cell is unavailable");
+        var cell = new ItemStack(cellItem);
+        cell.getOrCreateTag().putUUID("owner_uuid", player.getUUID());
         inventory.setItemDirect(slot, cell);
         drive.onChangeInventory(inventory, slot);
         return new Placement(drive, slot, grid, source, cobblestone);
