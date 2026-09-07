@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Addon support
-  parent: index.md
+  parent: features/index.md
   position: 11
 ---
 

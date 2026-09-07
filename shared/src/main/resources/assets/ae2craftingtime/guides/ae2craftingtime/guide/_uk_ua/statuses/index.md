@@ -1,7 +1,7 @@
 ---
 navigation:
   title: "Розділ 3: Стани"
-  parent: ../index.md
+  parent: index.md
   icon: minecraft:comparator
   position: 2
 ---

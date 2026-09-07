@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Confidence
-  parent: index.md
+  parent: features/index.md
   position: 2
 ---
 

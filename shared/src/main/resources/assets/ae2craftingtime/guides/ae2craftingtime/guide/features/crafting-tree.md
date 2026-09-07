@@ -1,7 +1,7 @@
 ---
 navigation:
   title: "AE2: Crafting Tree"
-  parent: index.md
+  parent: features/index.md
   position: 9
 ---
 

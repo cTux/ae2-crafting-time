@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Сортування та кольори
-  parent: index.md
+  parent: features/index.md
   position: 5
 ---
 

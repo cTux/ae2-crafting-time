@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Оцінки часу
-  parent: index.md
+  parent: features/index.md
   position: 0
 ---
 

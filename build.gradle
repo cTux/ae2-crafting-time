@@ -63,9 +63,10 @@ tasks.register('checkGuideResources') {
             if (errors) return errors
 
             check(frontmatter(texts['getting-started.md'], 'position') == '0', 'Chapter 1 must use root position 0')
-            check(frontmatter(texts['features/index.md'], 'parent') == '../index.md', 'Features parent must be the guide root')
+            check(frontmatter(texts['features/index.md'], 'parent') == 'index.md', 'Features parent must be the guide root')
             check(frontmatter(texts['features/index.md'], 'position') == '1', 'Features must use root position 1')
             check(frontmatter(texts['features/index.md'], 'icon') == 'minecraft:clock', 'Features must use the clock icon')
+            check(frontmatter(texts['statuses/index.md'], 'parent') == 'index.md', 'Statuses parent must be the guide root')
             check(frontmatter(texts['statuses/index.md'], 'position') == '2', 'Statuses must use root position 2')
 
             ['index.md', 'getting-started.md', 'features/index.md', 'statuses/index.md'].each { page ->
@@ -85,9 +86,9 @@ tasks.register('checkGuideResources') {
                 def ukPath = "_uk_ua/features/$page".toString()
                 def en = texts[enPath]
                 def uk = texts[ukPath]
-                check(frontmatter(en, 'parent') == 'index.md', "Wrong feature parent: $enPath")
+                check(frontmatter(en, 'parent') == 'features/index.md', "Wrong feature parent: $enPath")
                 check(frontmatter(en, 'position') == position.toString(), "Wrong feature position: $enPath")
-                check(frontmatter(uk, 'parent') == 'index.md', "Wrong Ukrainian feature parent: $ukPath")
+                check(frontmatter(uk, 'parent') == 'features/index.md', "Wrong Ukrainian feature parent: $ukPath")
                 check(frontmatter(uk, 'position') == position.toString(), "Wrong Ukrainian feature position: $ukPath")
 
                 def enLinks = links(en)

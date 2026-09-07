@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Learning throughput
-  parent: index.md
+  parent: features/index.md
   position: 1
 ---
 

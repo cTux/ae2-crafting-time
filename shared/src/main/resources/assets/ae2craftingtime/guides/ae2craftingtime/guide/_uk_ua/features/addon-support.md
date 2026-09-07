@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Підтримка аддонів
-  parent: index.md
+  parent: features/index.md
   position: 11
 ---
 

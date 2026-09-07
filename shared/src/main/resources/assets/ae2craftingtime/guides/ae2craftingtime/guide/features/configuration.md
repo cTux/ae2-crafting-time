@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Configuration
-  parent: index.md
+  parent: features/index.md
   position: 8
 ---
 

@@ -1,7 +1,7 @@
 ---
 navigation:
   title: "Chapter 3: Statuses"
-  parent: ../index.md
+  parent: index.md
   icon: minecraft:comparator
   position: 2
 ---

@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Точність завдання
-  parent: index.md
+  parent: features/index.md
   position: 3
 ---
 

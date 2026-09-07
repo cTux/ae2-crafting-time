@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Діагностика затримок
-  parent: index.md
+  parent: features/index.md
   position: 4
 ---
 

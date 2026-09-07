@@ -1,7 +1,7 @@
 ---
 navigation:
   title: "Chapter 2: Features"
-  parent: ../index.md
+  parent: index.md
   icon: minecraft:clock
   position: 1
 ---

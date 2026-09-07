@@ -1,7 +1,7 @@
 ---
 navigation:
   title: "Розділ 2: Можливості"
-  parent: ../index.md
+  parent: index.md
   icon: minecraft:clock
   position: 1
 ---

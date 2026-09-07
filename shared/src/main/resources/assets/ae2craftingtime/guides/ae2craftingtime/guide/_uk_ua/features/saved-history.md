@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Збережена історія
-  parent: index.md
+  parent: features/index.md
   position: 7
 ---
 

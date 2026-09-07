@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Time estimates
-  parent: index.md
+  parent: features/index.md
   position: 0
 ---
 
