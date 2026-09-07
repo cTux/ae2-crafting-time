@@ -89,7 +89,7 @@ assert_contains "$releaseDryRun" 'The total TTC now sits in the crafting status 
   "Release dry run did not create a categorized human-readable changelog"
 assert_contains "$releaseDryRun" 'dry-run next development version: 1.0.5' \
   "Release dry run did not advance the development version"
-assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: XxWD5pD3:required, a1RwDz90:optional, IiATswDj:optional, E6BFl96N:optional, udZtKfzP:optional, ArHeh5Fz:optional, anaGQD2Q:optional, 4inoel9g:optional, xr109llC:optional' \
+assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: XxWD5pD3:required, Ck4E7v7R:optional, a1RwDz90:optional, IiATswDj:optional, E6BFl96N:optional, udZtKfzP:optional, ArHeh5Fz:optional, anaGQD2Q:optional, 4inoel9g:optional, xr109llC:optional' \
   "Release dry run did not include Forge Modrinth dependencies"
 assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: P7dR8mSH:required, XxWD5pD3:required, a1RwDz90:optional, E6BFl96N:optional' \
   "Release dry run did not include Fabric Modrinth dependencies"
@@ -97,8 +97,8 @@ assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: XxWD5pD3:requir
   "Release dry run did not include NeoForge Modrinth dependencies"
 assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: XxWD5pD3:required, Ck4E7v7R:optional, rxYaglEe:optional' \
   "Release dry run did not include 26.1.2 NeoForge Modrinth dependencies"
-if [ "$(printf '%s\n' "$releaseDryRun" | grep -cF 'dry-run CurseForge relations: applied-energistics-2:requiredDependency, guideme:optionalDependency')" -ne 2 ]; then
-  echo "Release dry run did not scope GuideME CurseForge relations to modern targets" >&2
+if [ "$(printf '%s\n' "$releaseDryRun" | grep -cF 'dry-run CurseForge relations: applied-energistics-2:requiredDependency, guideme:optionalDependency')" -ne 3 ]; then
+  echo "Release dry run did not scope GuideME CurseForge relations to supported targets" >&2
   exit 1
 fi
 

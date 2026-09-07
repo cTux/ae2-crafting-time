@@ -24,7 +24,7 @@
       { "name": "AEInfinityBooster", "project_id": "VQhDBNs8" },
       { "name": "Advanced Peripherals", "project_id": "SOw6jD6x" },
       { "name": "Expanded AE", "project_id": "ayN3DZKb", "modrinth_dependencies": ["rxYaglEe", "JiOqfoFM", "pNabrMMw"], "compatible": false, "reason": "Its Applied Flux pattern-provider mixin conflicts with OmniSequence 1.3.9's batching mixin." },
-      { "name": "GuideME", "project_id": "Ck4E7v7R" },
+      { "name": "GuideME", "project_id": "Ck4E7v7R", "mod_id": "guideme" },
       { "name": "JEI", "project_id": "u6dRKJwZ" }
     ],
     "compatible": {

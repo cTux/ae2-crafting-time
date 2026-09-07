@@ -91,6 +91,10 @@ def distModVersion = project.version.toString()
 tasks.named('processResources', ProcessResources).configure {
     inputs.property 'version', distModVersion
 
+    from('../../shared/src/main/resources/assets/ae2craftingtime/guides/ae2craftingtime/guide') {
+        into 'assets/ae2craftingtime/ae2guide'
+    }
+
     filesMatching('fabric.mod.json') {
         expand version: distModVersion
     }
