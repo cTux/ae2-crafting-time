@@ -48,7 +48,7 @@ sort cycle.
 
 - After the hook-created implementation PR exists, run the development skill's
   shared tests and all four release-matrix build checks.
-- Run prepared-client `craft-plan` smoke on Minecraft 1.20.1 Forge, Minecraft
+- Run prepared-client `standard-plan-controls` smoke on Minecraft 1.20.1 Forge, Minecraft
   1.20.1 Fabric, Minecraft 1.21.1 NeoForge, and Minecraft 26.1.2 NeoForge.
 - Run documentation/link checks and `git diff --check`; verify GitHub CI
   separately.

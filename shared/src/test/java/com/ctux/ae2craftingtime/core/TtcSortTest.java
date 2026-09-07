@@ -53,10 +53,60 @@ class TtcSortTest {
         assertEquals(List.of("a", "b"), sorted.stream().map(Entry::name).toList());
     }
 
-    private static Entry entry(String name, OptionalLong seconds) {
-        return new Entry(name, seconds);
+    @Test
+    void priorityRowsStayFirstInAe2OrderAndBothTtcDirections() {
+        var entries = List.of(entry("normal-unknown", OptionalLong.empty(), false),
+                entry("missing-fast", OptionalLong.of(2), true), entry("normal-slow", OptionalLong.of(10), false),
+                entry("missing-slow", OptionalLong.of(8), true), entry("missing-unknown", OptionalLong.empty(), true));
+
+        assertNames(List.of("missing-fast", "missing-slow", "missing-unknown", "normal-unknown", "normal-slow"),
+                TtcSort.copyPrioritizedSorted(entries, Entry::priority, Entry::seconds, Comparator.comparing(Entry::name), false, false));
+        assertNames(List.of("missing-fast", "missing-slow", "missing-unknown", "normal-slow", "normal-unknown"),
+                TtcSort.copyPrioritizedSorted(entries, Entry::priority, Entry::seconds, Comparator.comparing(Entry::name), true, false));
+        assertNames(List.of("missing-slow", "missing-fast", "missing-unknown", "normal-slow", "normal-unknown"),
+                TtcSort.copyPrioritizedSorted(entries, Entry::priority, Entry::seconds, Comparator.comparing(Entry::name), true, true));
     }
 
-    private record Entry(String name, OptionalLong seconds) {
+    @Test
+    void priorityGroupsKeepEqualTtcFallbackOrder() {
+        var entries = List.of(entry("missing-b", OptionalLong.of(2), true),
+                entry("normal-b", OptionalLong.of(2), false), entry("missing-a", OptionalLong.of(2), true),
+                entry("normal-a", OptionalLong.of(2), false));
+
+        assertNames(List.of("missing-a", "missing-b", "normal-a", "normal-b"),
+                TtcSort.copyPrioritizedSorted(entries, Entry::priority, Entry::seconds,
+                        Comparator.comparing(Entry::name), true, false));
+    }
+
+    @Test
+    void arrivingStatsReorderOnlyInsidePriorityGroups() {
+        var entries = List.of(entry("normal", OptionalLong.empty(), false),
+                entry("missing-unknown", OptionalLong.empty(), true),
+                entry("missing-known", OptionalLong.of(5), true));
+
+        assertNames(List.of("missing-known", "missing-unknown", "normal"),
+                TtcSort.copyPrioritizedSorted(entries, Entry::priority, Entry::seconds,
+                        Comparator.comparing(Entry::name), true, true));
+        var refreshed = List.of(entry("normal", OptionalLong.of(20), false),
+                entry("missing-unknown", OptionalLong.of(10), true),
+                entry("missing-known", OptionalLong.of(5), true));
+        assertNames(List.of("missing-unknown", "missing-known", "normal"),
+                TtcSort.copyPrioritizedSorted(refreshed, Entry::priority, Entry::seconds,
+                        Comparator.comparing(Entry::name), true, true));
+    }
+
+    private static void assertNames(List<String> expected, List<Entry> entries) {
+        assertEquals(expected, entries.stream().map(Entry::name).toList());
+    }
+
+    private static Entry entry(String name, OptionalLong seconds) {
+        return entry(name, seconds, false);
+    }
+
+    private static Entry entry(String name, OptionalLong seconds, boolean priority) {
+        return new Entry(name, seconds, priority);
+    }
+
+    private record Entry(String name, OptionalLong seconds, boolean priority) {
     }
 }

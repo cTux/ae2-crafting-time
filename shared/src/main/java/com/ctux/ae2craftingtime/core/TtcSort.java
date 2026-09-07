@@ -5,12 +5,24 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.OptionalLong;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public final class TtcSort {
     public static <T> List<T> copySorted(List<T> entries, Function<T, OptionalLong> seconds, Comparator<T> fallback,
             boolean descending) {
         var sorted = new ArrayList<>(entries);
         sorted.sort((left, right) -> compare(left, right, seconds, fallback, descending));
+        return sorted;
+    }
+
+    public static <T> List<T> copyPrioritizedSorted(List<T> entries, Predicate<T> priority,
+            Function<T, OptionalLong> seconds, Comparator<T> fallback, boolean sortByTtc, boolean descending) {
+        var sorted = new ArrayList<>(entries);
+        sorted.sort((left, right) -> {
+            var priorityResult = Boolean.compare(priority.test(right), priority.test(left));
+            return priorityResult != 0 || !sortByTtc ? priorityResult
+                    : compare(left, right, seconds, fallback, descending);
+        });
         return sorted;
     }
 

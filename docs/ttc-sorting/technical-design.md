@@ -83,7 +83,7 @@ language key, optional integration, or dedicated-server class path changes.
 | TTC precedence inside groups | unit checks cover ascending, descending, unknown, equal, and arriving-stat cases |
 | AE2 order | unit check proves stable relative order in both groups when TTC sorting is off |
 | Screen targeting | existing Crafting Plan click path is exercised after the same prioritized sort |
-| Cross-version UI | prepared-client `craft-plan` smoke observes missing-first order and the full sort cycle on all four targets |
+| Cross-version UI | prepared-client `standard-plan-controls` smoke observes missing-first order and the full sort cycle on all four targets |
 | Client-only boundary | existing mixin placement and release-matrix builds remain green |
 
 ## Rejected alternatives
