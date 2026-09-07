@@ -36,6 +36,18 @@ tasks.register('checkGuideResources') {
                 'saved-history.md', 'configuration.md', 'crafting-tree.md', 'me-requester.md',
                 'addon-support.md', 'guide-book.md'
         ]
+        def statusPages = [
+                'no-space.md': 'text.ae2craftingtime.no_space',
+                'no-provider.md': 'text.ae2craftingtime.no_provider',
+                'no-power.md': 'text.ae2craftingtime.no_power',
+                'locked.md': 'text.ae2craftingtime.locked',
+                'input-blocked.md': 'text.ae2craftingtime.input_blocked',
+                'no-target.md': 'text.ae2craftingtime.no_target',
+                'waiting.md': 'text.ae2craftingtime.waiting',
+                'delayed.md': 'text.ae2craftingtime.ttc_delayed',
+                'no-data-yet.md': 'text.ae2craftingtime.no_stats',
+                'estimated.md': null
+        ]
         def relativePath = { File base, File child ->
             base.toPath().relativize(child.toPath()).toString().replace(File.separatorChar, '/' as char)
         }
@@ -55,7 +67,8 @@ tasks.register('checkGuideResources') {
             def errors = []
             def check = { boolean condition, String message -> if (!condition) errors << message }
             def expectedTextPages = ['index.md', 'getting-started.md', 'features/index.md', 'statuses/index.md'] +
-                    featurePages.collect { "features/$it".toString() }
+                    featurePages.collect { "features/$it".toString() } +
+                    statusPages.keySet().collect { "statuses/$it".toString() }
             expectedTextPages.each { page ->
                 check(texts.containsKey(page), "Missing English guide page: $page")
                 check(texts.containsKey("_uk_ua/$page".toString()), "Missing Ukrainian guide page: $page")
@@ -79,6 +92,13 @@ tasks.register('checkGuideResources') {
                 def children = links(texts[landing]).collect { resolveLink(landing, it) }
                         .findAll { it.startsWith(prefix) && it != "${prefix}index.md" }
                 check(children == featurePages.collect { "$prefix$it".toString() }, "Wrong feature landing order: $landing")
+            }
+
+            ['statuses/index.md', '_uk_ua/statuses/index.md'].each { landing ->
+                def prefix = landing.startsWith('_uk_ua/') ? '_uk_ua/statuses/' : 'statuses/'
+                def children = links(texts[landing]).collect { resolveLink(landing, it) }
+                        .findAll { it.startsWith(prefix) && it != "${prefix}index.md" }
+                check(children == statusPages.keySet().collect { "$prefix$it".toString() }, "Wrong status landing order: $landing")
             }
 
             featurePages.eachWithIndex { page, position ->
@@ -114,6 +134,44 @@ tasks.register('checkGuideResources') {
                 }
             }
 
+            statusPages.eachWithIndex { page, labelKey, position ->
+                def enPath = "statuses/$page".toString()
+                def ukPath = "_uk_ua/statuses/$page".toString()
+                def en = texts[enPath]
+                def uk = texts[ukPath]
+                check(frontmatter(en, 'parent') == 'statuses/index.md', "Wrong status parent: $enPath")
+                check(frontmatter(en, 'position') == position.toString(), "Wrong status position: $enPath")
+                check(frontmatter(uk, 'parent') == 'statuses/index.md', "Wrong Ukrainian status parent: $ukPath")
+                check(frontmatter(uk, 'position') == position.toString(), "Wrong Ukrainian status position: $ukPath")
+
+                def enLinks = links(en)
+                def ukLinks = links(uk)
+                check(enLinks == ukLinks, "Guide links differ by locale: $page")
+                check(enLinks.count { it.endsWith('.md') } >= 3, "Status needs three guide links: $enPath")
+                check(enLinks.any { resolveLink(enPath, it) == 'statuses/index.md' }, "Status must return to landing: $enPath")
+                if (position > 0) {
+                    def previous = statusPages.keySet().toList()[position - 1]
+                    check(enLinks.any { resolveLink(enPath, it) == "statuses/$previous" }, "Status must link to previous page: $enPath")
+                }
+                if (position < statusPages.size() - 1) {
+                    def next = statusPages.keySet().toList()[position + 1]
+                    check(enLinks.any { resolveLink(enPath, it) == "statuses/$next" }, "Status must link to next page: $enPath")
+                }
+
+                def enImages = enLinks.findAll { it.endsWith('.png') }
+                def ukImages = ukLinks.findAll { it.endsWith('.png') }
+                check(enImages.size() == 1 && enImages == ukImages, "Status image differs by locale: $page")
+                enImages.each { image ->
+                    check(binaries.contains(resolveLink(enPath, image)), "Missing English status image: $image")
+                    check(binaries.contains(resolveLink(ukPath, image)), "Missing Ukrainian status image: $image")
+                }
+
+                def enLabel = labelKey == null ? '~12s' : english[labelKey]
+                def ukLabel = labelKey == null ? '~12 с' : ukrainian[labelKey]
+                check(en.contains("**Label:** `$enLabel`"), "Stale English status label: $enPath")
+                check(uk.contains("**Позначка:** `$ukLabel`"), "Stale Ukrainian status label: $ukPath")
+            }
+
             texts.findAll { path, ignored -> path.endsWith('.md') }.each { page, text ->
                 links(text).findAll { it.endsWith('.md') }.each { link ->
                     check(texts.containsKey(resolveLink(page, link)), "Broken guide link from $page: $link")
@@ -146,6 +204,18 @@ tasks.register('checkGuideResources') {
         }
         expectRejected('an incorrect position') { texts, ignored ->
             texts['features/confidence.md'] = texts['features/confidence.md'].replace('position: 2', 'position: 99')
+        }
+        expectRejected('a missing status page') { texts, ignored -> texts.remove('statuses/locked.md') }
+        expectRejected('a missing status translation') { texts, ignored -> texts.remove('_uk_ua/statuses/locked.md') }
+        expectRejected('a missing status image') { ignored, binaries -> binaries.remove('statuses/images/crafting-status-locked.png') }
+        expectRejected('a missing status return link') { texts, ignored ->
+            texts['statuses/locked.md'] = texts['statuses/locked.md'].replace('(index.md)', '(missing.md)')
+        }
+        expectRejected('a stale status label') { texts, ignored ->
+            texts['statuses/locked.md'] = texts['statuses/locked.md'].replace('**Label:** `LOCKED`', '**Label:** `STALE`')
+        }
+        expectRejected('an incorrect status position') { texts, ignored ->
+            texts['statuses/locked.md'] = texts['statuses/locked.md'].replace('position: 3', 'position: 99')
         }
 
         def targets = [

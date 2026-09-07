@@ -51,6 +51,21 @@ the row shows NO POWER and suggests increasing generation or stored energy:
 
 ![NO POWER warning and ME network energy advice](crafting-status-no-power.png)
 
+When no enabled provider side has a compatible destination, the scheduled row
+shows NO TARGET:
+
+![NO TARGET warning and destination advice](crafting-status-no-target.png)
+
+When the destination exists but refuses this pattern's inputs, the row shows
+INPUT BLOCKED:
+
+![INPUT BLOCKED warning and input advice](crafting-status-input-blocked.png)
+
+When an active Pattern Provider crafting lock prevents dispatch, the row shows
+LOCKED:
+
+![LOCKED warning and crafting-lock advice](crafting-status-locked.png)
+
 ## Timing details
 
 The first sample is marked as low confidence:
@@ -122,6 +137,11 @@ processing job with one active output and 63 scheduled outputs, with too little
 ME energy for the next dispatch. Restoring sufficient energy clears the warning
 without reopening the screen. An unfuelled external machine alone doesn't
 trigger it. The unfinished fixture's native AE2 title timer isn't a TTC estimate.
+
+The NO TARGET, INPUT BLOCKED, and LOCKED examples come from the prepared Forge
+provider-dispatch scenarios. Each tooltip shows the observed scheduled-batch
+condition and recovery advice. The disposable fixture world contains no account,
+server address, coordinates, or private player data.
 
 To refresh a crop, open the target UI and run `scripts/capture-ui-region.ps1`
 inside the same interactive Windows session. Supply the output PNG path and
