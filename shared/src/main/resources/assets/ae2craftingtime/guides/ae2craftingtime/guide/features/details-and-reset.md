@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Details and reset
-  parent: index.md
+  parent: features/index.md
   position: 6
 ---
 

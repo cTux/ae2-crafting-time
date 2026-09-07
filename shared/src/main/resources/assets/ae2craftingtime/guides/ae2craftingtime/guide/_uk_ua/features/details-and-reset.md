@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Подробиці та скидання
-  parent: index.md
+  parent: features/index.md
   position: 6
 ---
 

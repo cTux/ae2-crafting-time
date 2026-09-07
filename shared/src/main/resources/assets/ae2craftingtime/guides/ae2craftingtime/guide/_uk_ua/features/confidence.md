@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Достовірність
-  parent: index.md
+  parent: features/index.md
   position: 2
 ---
 

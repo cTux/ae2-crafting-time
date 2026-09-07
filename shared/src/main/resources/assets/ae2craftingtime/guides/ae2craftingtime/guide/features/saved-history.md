@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Saved history
-  parent: index.md
+  parent: features/index.md
   position: 7
 ---
 

@@ -1,7 +1,7 @@
 ---
 navigation:
   title: The guide book
-  parent: index.md
+  parent: features/index.md
   position: 12
 ---
 

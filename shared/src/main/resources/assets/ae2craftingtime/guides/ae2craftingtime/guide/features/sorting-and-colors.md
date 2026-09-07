@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Sorting and colors
-  parent: index.md
+  parent: features/index.md
   position: 5
 ---
 

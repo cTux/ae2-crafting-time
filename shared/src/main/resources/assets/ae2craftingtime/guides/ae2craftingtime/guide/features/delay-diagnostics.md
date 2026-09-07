@@ -1,7 +1,7 @@
 ---
 navigation:
   title: Delay diagnostics
-  parent: index.md
+  parent: features/index.md
   position: 4
 ---
 
