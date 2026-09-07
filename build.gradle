@@ -37,12 +37,12 @@ tasks.register('checkGuideResources') {
                 'addon-support.md', 'guide-book.md'
         ]
         def relativePath = { File base, File child ->
-            base.toPath().relativize(child.toPath()).toString().replace('\\', '/')
+            base.toPath().relativize(child.toPath()).toString().replace(File.separatorChar, '/' as char)
         }
         def resolveLink = { String page, String target ->
             def parent = java.nio.file.Paths.get(page).parent
             (parent == null ? java.nio.file.Paths.get(target) : parent.resolve(target))
-                    .normalize().toString().replace('\\', '/')
+                    .normalize().toString().replace(File.separatorChar, '/' as char)
         }
         def links = { String text ->
             (text =~ /\]\(([^)#]+)(?:#[^)]+)?\)/).collect { it[1] }
