@@ -20,6 +20,8 @@ import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import com.ctux.ae2craftingtime.mc1201.ProviderDispatchObserver;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import java.util.Iterator;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -102,14 +104,14 @@ public abstract class CraftingCpuLogicMixin {
                 : ae2craftingtime$dispatchObserver.busy(provider);
     }
 
-    @Redirect(method = "executeCrafting", at = @At(value = "INVOKE",
+    @WrapOperation(method = "executeCrafting", at = @At(value = "INVOKE",
             target = "Lappeng/api/networking/crafting/ICraftingProvider;pushPattern(Lappeng/api/crafting/IPatternDetails;[Lappeng/api/stacks/KeyCounter;)Z"),
             remap = false)
     private boolean ae2craftingtime$observeProviderPush(ICraftingProvider provider, IPatternDetails pattern,
-            appeng.api.stacks.KeyCounter[] input) {
+            appeng.api.stacks.KeyCounter[] input, Operation<Boolean> original) {
         return ae2craftingtime$dispatchObserver == null
-                ? provider.pushPattern(pattern, input)
-                : ae2craftingtime$dispatchObserver.push(provider, pattern, input);
+                ? original.call(provider, pattern, input)
+                : ae2craftingtime$dispatchObserver.push(provider, pattern, input, original);
     }
 
     @Unique

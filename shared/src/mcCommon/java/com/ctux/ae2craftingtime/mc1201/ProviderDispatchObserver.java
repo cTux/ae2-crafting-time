@@ -4,6 +4,7 @@ import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.crafting.ICraftingProvider;
 import appeng.api.stacks.KeyCounter;
 import com.ctux.ae2craftingtime.core.ProviderDispatchTracker.Evaluation;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import java.util.Iterator;
 
 public final class ProviderDispatchObserver {
@@ -59,9 +60,10 @@ public final class ProviderDispatchObserver {
         return busy;
     }
 
-    public boolean push(ICraftingProvider provider, IPatternDetails dispatchedPattern, KeyCounter[] input) {
+    public boolean push(ICraftingProvider provider, IPatternDetails dispatchedPattern, KeyCounter[] input,
+            Operation<Boolean> original) {
         try (var context = ProviderDispatchContext.begin(provider)) {
-            var accepted = provider.pushPattern(dispatchedPattern, input);
+            var accepted = original.call(provider, dispatchedPattern, input);
             evaluation.attempt(context.finish(accepted));
             if (evaluation.succeeded()) {
                 complete(null);

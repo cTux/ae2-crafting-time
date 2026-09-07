@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.mc1201;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -41,10 +42,14 @@ class ProviderObservationInjectionTest {
             assertDelegates(type, "ae2craftingtime$observeProviders", ITERATOR, "iterator");
             assertDelegates(type, "ae2craftingtime$observeProviderBusy",
                     "Lappeng/api/networking/crafting/ICraftingProvider;isBusy()Z", "busy");
-            assertDelegates(type, "ae2craftingtime$observeProviderPush",
+            assertWraps(type, "ae2craftingtime$observeProviderPush",
                     "Lappeng/api/networking/crafting/ICraftingProvider;pushPattern(Lappeng/api/crafting/IPatternDetails;[Lappeng/api/stacks/KeyCounter;)Z",
                     "push");
         }
+        var observerPush = method(readClass("com/ctux/ae2craftingtime/mc1201/ProviderDispatchObserver"), "push");
+        assertEquals(1, calls(observerPush).stream().filter(call -> call.owner.endsWith("/Operation")
+                && call.name.equals("call")).count());
+        assertFalse(calls(observerPush).stream().anyMatch(call -> call.name.equals("pushPattern")));
     }
 
     @Test
@@ -89,6 +94,20 @@ class ProviderObservationInjectionTest {
         assertEquals(1, calls.stream().filter(call -> call.owner.endsWith("ProviderDispatchObserver")
                 && call.name.equals(observerCall)).count());
         assertFalse(calls.stream().anyMatch(call -> call.name.equals("getProviders") || call.name.equals("hasNext")));
+    }
+
+    private static void assertWraps(ClassNode type, String methodName, String target, String observerCall) {
+        var handler = method(type, methodName);
+        var wrap = annotation(handler, "/WrapOperation;");
+        assertEquals(List.of("executeCrafting"), value(wrap, "method"));
+        var at = assertInstanceOf(List.class, value(wrap, "at"));
+        assertEquals(1, at.size());
+        assertEquals(target, value(assertInstanceOf(AnnotationNode.class, at.get(0)), "target"));
+        var calls = calls(handler);
+        assertEquals(1, calls.stream().filter(call -> call.owner.endsWith("ProviderDispatchObserver")
+                && call.name.equals(observerCall)).count());
+        assertEquals(1, calls.stream().filter(call -> call.owner.endsWith("/Operation")
+                && call.name.equals("call")).count());
     }
 
     private static void assertRedirect(MethodNode handler, String target) {

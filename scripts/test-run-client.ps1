@@ -1,6 +1,12 @@
 $ErrorActionPreference = "Stop"
 $script = Join-Path $PSScriptRoot "run-client.ps1"
 $matrix = Get-Content -LiteralPath (Join-Path $PSScriptRoot "run-client-versions.json") -Raw | ConvertFrom-Json
+$forge = $matrix | Where-Object id -eq "1.20.1-forge"
+$crazyAe2 = $forge.projects | Where-Object project_id -eq "anaGQD2Q"
+if ("p19vrgc2" -notin @($crazyAe2.modrinth_dependencies) -or
+        "p19vrgc2" -notin @($forge.compatible.versions.project_id)) {
+    throw "Crazy AE2 Addons 2.6.2 compatible graph must include its required Fusion dependency"
+}
 $temp = Join-Path ([IO.Path]::GetTempPath()) ("ae2ct-run-client-" + [guid]::NewGuid().ToString("N"))
 $bytes = [Text.Encoding]::UTF8.GetBytes("test mod")
 $sha512 = [Security.Cryptography.SHA512]::Create()
@@ -100,7 +106,7 @@ try {
         if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) {
             $game, $loader = $entry.id.Split("-", 2)
             $leaf = if ($loader -eq "forge") { "resolved-mods" } else { "mods" }
-            $stale = Join-Path $temp "versions\$($entry.id)\run\$leaf\ae2-crafting-time-old-$loader-$game-test-driver.jar"
+            $stale = Join-Path $temp "versions\$($entry.id)\run-dev\$leaf\ae2-crafting-time-old-$loader-$game-test-driver.jar"
             New-Item -ItemType Directory -Path (Split-Path -Parent $stale) -Force | Out-Null
             Set-Content -LiteralPath $stale -Value "stale"
         }
@@ -123,11 +129,11 @@ try {
             $_.compatible -ne $false -and $_.project_id -notin $replacedProjects
         })
         foreach ($project in $compatibleProjects.project_id) { Assert-Line $output "mod $project.jar" }
-        $extraProjects = @($entry.curseforge.modrinth_dependencies | Where-Object {
+        $extraProjects = @(@($entry.curseforge.modrinth_dependencies) + @($entry.projects.modrinth_dependencies) | Where-Object {
             $_ -and $_ -notin $compatibleProjects.project_id
         } | Sort-Object -Unique)
         foreach ($project in $extraProjects) { Assert-Line $output "mod $project.jar" }
-        $mods = Join-Path $temp "versions\$($entry.id)\run\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
+        $mods = Join-Path $temp "versions\$($entry.id)\run-dev\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
         $manifest = Get-Content -LiteralPath (Join-Path $mods ".ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
         $curseCount = @($entry.curseforge | Where-Object { $_ }).Count
         $driverCount = if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) { 1 } else { 0 }
@@ -247,7 +253,7 @@ try {
         if ($_.Exception.Message -ne "Test-driver build failed") { throw }
     } finally { Remove-Item Env:\AE2CT_DRIVER_BUILD_FAIL -ErrorAction SilentlyContinue }
 
-    $badFile = Join-Path $temp "versions\1.20.1-forge\run\resolved-mods\a1RwDz90.jar"
+    $badFile = Join-Path $temp "versions\1.20.1-forge\run-dev\resolved-mods\a1RwDz90.jar"
     Remove-Item -LiteralPath $badFile -Force
     $global:Ae2CtBadDownload = $true
     try {
