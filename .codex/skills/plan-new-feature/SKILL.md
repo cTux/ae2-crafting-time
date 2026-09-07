@@ -26,6 +26,8 @@ implementation agent.
    when it is missing. Reassess the model label if the approved scope changes.
    Do not start the title with the issue type, such as `[Feature]` or `[Bug]`.
    Add the type as a plain label instead, such as `feature`, `bug`, or `tests`.
+   Link every known blocking issue and describe its impact in the new issue body
+   so the dependency is visible.
 2. Read `AGENTS.md`, `docs/architecture.md`, the closest feature documents, and
    the code seams needed to verify current behavior and supported targets.
 3. Resolve the goal, player-visible behavior, boundaries, compatibility, and
