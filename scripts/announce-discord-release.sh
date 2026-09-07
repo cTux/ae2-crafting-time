@@ -40,7 +40,7 @@ export MATRIX_PATH="$matrix_path"
 export CF_DIR="$cf_dir"
 
 payloads="$(python3 -c '
-import json, os, sys
+import json, os, re, sys
 
 release = json.load(sys.stdin)
 matrix_path = os.environ.get("MATRIX_PATH", "scripts/release-matrix.json")
@@ -121,21 +121,30 @@ body = release.get("body") or ""
 if body:
     content += body + "\n\n"
 content += "**JAR downloads**\n" + "\n".join(rows)
-while content:
-    end, units = 0, 0
-    for char in content:
-        units += 2 if ord(char) > 0xffff else 1
-        if units > 2000:
-            break
-        end += 1
-    if end < len(content):
-        for separator in ("\n\n", "\n"):
-            boundary = content.rfind(separator, 0, end)
-            if boundary >= 0:
-                end = boundary + len(separator)
+image_line = re.compile(r"(?m)^!\[[^\]\r\n]*\]\(https?://[^\s)\r\n]+\)[ \t]*(?:\r?\n|$)")
+segments, start = [], 0
+for match in image_line.finditer(content):
+    segments.append((content[start:match.start()], 4))
+    segments.append((match.group(0), 0))
+    start = match.end()
+segments.append((content[start:], 4))
+
+for segment, flags in segments:
+    while segment:
+        end, units = 0, 0
+        for char in segment:
+            units += 2 if ord(char) > 0xffff else 1
+            if units > 2000:
                 break
-    print(json.dumps({"content": content[:end], "allowed_mentions": {"parse": []}, "flags": 4}))
-    content = content[end:]
+            end += 1
+        if end < len(segment):
+            for separator in ("\n\n", "\n"):
+                boundary = segment.rfind(separator, 0, end)
+                if boundary >= 0:
+                    end = boundary + len(separator)
+                    break
+        print(json.dumps({"content": segment[:end], "allowed_mentions": {"parse": []}, "flags": flags}))
+        segment = segment[end:]
 ' <<<"$release_json")"
 
 separator='?'

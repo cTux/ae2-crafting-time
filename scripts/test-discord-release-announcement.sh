@@ -54,7 +54,7 @@ export RELEASE_ID=1
 export REPOSITORY=cTux/ae2-crafting-time
 export MATRIX_PATH="$test_dir/matrix.json"
 
-for case_name in short multiline empty null exact over unicode long; do
+for case_name in short multiline image empty null exact over unicode long; do
   python3 - "$test_dir" "$case_name" <<'PY'
 import json, pathlib, sys
 path, case = pathlib.Path(sys.argv[1]), sys.argv[2]
@@ -74,6 +74,7 @@ exact = 2000 - len(prefix + "\n\n" + suffix)
 body = {
     "short": "### FIXED\n\n- Clearer status.",
     "multiline": "### ADDED\n\n- First line.\n- @everyone <@123> <@&456>\n\n### FIXED\n\n- Last line.\n",
+    "image": "### FIXED\n\n- Clearer status. ([#308](https://github.com/cTux/ae2-crafting-time/issues/308))\n\n![Crafting status showing the LOCKED provider warning](https://github.com/cTux/ae2-crafting-time/releases/download/release-1.2.2/locked-en-us.png)",
     "empty": "", "null": None,
     "exact": "x" * exact, "over": "x" * (exact + 1),
     "unicode": "### ADDED\n\n" + "Немає енергії 😀\n" * 400,
@@ -91,7 +92,13 @@ path, case = pathlib.Path(sys.argv[1]), sys.argv[2]
 payloads = [json.loads(line) for line in (path / "payloads.jsonl").read_text().splitlines()]
 assert all(0 < len(p["content"].encode("utf-16-le")) // 2 <= 2000 for p in payloads), case
 assert all(p["allowed_mentions"] == {"parse": []} for p in payloads), case
-assert all(p["flags"] == 4 for p in payloads), case
+image_payloads = [p for p in payloads if p["flags"] == 0]
+if case == "image":
+    assert len(image_payloads) == 1, case
+    assert image_payloads[0]["content"].strip() == "![Crafting status showing the LOCKED provider warning](https://github.com/cTux/ae2-crafting-time/releases/download/release-1.2.2/locked-en-us.png)", case
+    assert all(p["flags"] == 4 for p in payloads if p not in image_payloads), case
+else:
+    assert not image_payloads and all(p["flags"] == 4 for p in payloads), case
 joined = "".join(p["content"] for p in payloads)
 assert joined == (path / "expected.txt").read_text(encoding="utf-8"), case
 assert joined.count("https://example/forge.jar") == joined.count("https://example/fabric.jar") == 1
