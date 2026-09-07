@@ -33,7 +33,7 @@ side = "BOTH"
 [[dependencies."${mod_id}"]]
 modId = "guideme"
 mandatory = false
-versionRange = "[20.1.15,20.2.0)"
+versionRange = "[20.1.15,)"
 ordering = "AFTER"
 side = "BOTH"
 

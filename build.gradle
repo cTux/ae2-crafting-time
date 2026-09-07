@@ -62,7 +62,7 @@ tasks.register('checkGuideResources') {
                 && forgeInner.ingredients*.item == ['minecraft:book', 'ae2:certus_quartz_crystal', 'minecraft:clock'], 'Wrong Forge guide ingredients')
         require(forgeInner.result == [item: 'guideme:guide', count: 1, nbt: '{guideId:"ae2craftingtime:guide"}'], 'Wrong Forge legacy guide identity')
         def forgeMetadata = file("$forgeTarget/src/main/resources/META-INF/mods.toml").getText('UTF-8')
-        require((forgeMetadata =~ /(?s)modId = "guideme"\s+mandatory = false\s+versionRange = "\[20\.1\.15,20\.2\.0\)"\s+ordering = "AFTER"\s+side = "BOTH"/).find(), 'Wrong Forge GuideME metadata')
+        require((forgeMetadata =~ /(?s)modId = "guideme"\s+mandatory = false\s+versionRange = "\[20\.1\.15,\)"\s+ordering = "AFTER"\s+side = "BOTH"/).find(), 'Wrong Forge GuideME metadata')
 
         def fabricTarget = 'versions/1.20.1-fabric'
         def fabricRecipe = parse("$fabricTarget/src/main/resources/data/ae2craftingtime/recipes/guide_book.json")
