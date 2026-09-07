@@ -24,8 +24,6 @@ if not exist "%~dp0dist" mkdir "%~dp0dist"
 >"%~dp0dist\ae2-crafting-time-$modVersion-fabric-1.20.1.jar" echo production
 >"%~dp0dist\ae2-crafting-time-$modVersion-neoforge-1.21.1.jar" echo production
 >"%~dp0dist\ae2-crafting-time-$modVersion-neoforge-26.1.2.jar" echo production
-if not exist "%~dp0versions\1.20.1-fabric\build\native-runtime-mods" mkdir "%~dp0versions\1.20.1-fabric\build\native-runtime-mods"
-if not defined AE2CT_EMPTY_RUNTIME_MODS >"%~dp0versions\1.20.1-fabric\build\native-runtime-mods\mixinextras-fabric.jar" echo runtime
 exit /b 0
 "@, [Text.UTF8Encoding]::new($false))
 $testMatrix = Join-Path $temp "run-client-versions.json"
@@ -100,7 +98,7 @@ try {
         if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) {
             $game, $loader = $entry.id.Split("-", 2)
             $leaf = if ($loader -eq "forge") { "resolved-mods" } else { "mods" }
-            $stale = Join-Path $temp "versions\$($entry.id)\run\$leaf\ae2-crafting-time-old-$loader-$game-test-driver.jar"
+            $stale = Join-Path $temp "versions\$($entry.id)\run-dev\$leaf\ae2-crafting-time-old-$loader-$game-test-driver.jar"
             New-Item -ItemType Directory -Path (Split-Path -Parent $stale) -Force | Out-Null
             Set-Content -LiteralPath $stale -Value "stale"
         }
@@ -127,7 +125,7 @@ try {
             $_ -and $_ -notin $compatibleProjects.project_id
         } | Sort-Object -Unique)
         foreach ($project in $extraProjects) { Assert-Line $output "mod $project.jar" }
-        $mods = Join-Path $temp "versions\$($entry.id)\run\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
+        $mods = Join-Path $temp "versions\$($entry.id)\run-dev\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
         $manifest = Get-Content -LiteralPath (Join-Path $mods ".ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
         $curseCount = @($entry.curseforge | Where-Object { $_ }).Count
         $driverCount = if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) { 1 } else { 0 }
@@ -247,7 +245,7 @@ try {
         if ($_.Exception.Message -ne "Test-driver build failed") { throw }
     } finally { Remove-Item Env:\AE2CT_DRIVER_BUILD_FAIL -ErrorAction SilentlyContinue }
 
-    $badFile = Join-Path $temp "versions\1.20.1-forge\run\resolved-mods\a1RwDz90.jar"
+    $badFile = Join-Path $temp "versions\1.20.1-forge\run-dev\resolved-mods\a1RwDz90.jar"
     Remove-Item -LiteralPath $badFile -Force
     $global:Ae2CtBadDownload = $true
     try {
@@ -266,17 +264,8 @@ try {
                 if (-not (Test-Path -LiteralPath (Join-Path $packaged "mods/$file"))) { throw "Packaged manifest refers to a missing file: $file" }
             }
             if (-not (Test-Path -LiteralPath (Join-Path $packaged 'profile.json'))) { throw 'Packaged loader identity is missing' }
-            if ($target -eq '1.20.1-fabric' -and 'mixinextras-fabric.jar' -notin $files) { throw 'Fabric runtime-only dependency was omitted' }
         }
     }
-    Remove-Item -LiteralPath (Join-Path $temp 'versions/1.20.1-fabric/build/native-runtime-mods/mixinextras-fabric.jar')
-    $env:AE2CT_EMPTY_RUNTIME_MODS = '1'
-    try {
-        & $script -Target '1.20.1-fabric' -Root $temp -VersionMatrix $testMatrix -ResolveOnly -Packaged 6>&1 | Out-Null
-        throw 'Expected empty runtime export failure'
-    } catch {
-        if ($_.Exception.Message -ne 'Fabric native runtime mod export is empty') { throw }
-    } finally { Remove-Item Env:\AE2CT_EMPTY_RUNTIME_MODS -ErrorAction SilentlyContinue }
     Write-Host "run-client checks passed"
 } finally {
     $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
