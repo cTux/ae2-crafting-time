@@ -7,6 +7,7 @@ plugins {
 tasks.register('checkGuideResources') {
     group = 'verification'
     description = 'Checks the optional GuideME book resources and target boundaries.'
+    dependsOn ':fabric_1_20_1:processResources', ':mc_1_20_1_forge:processResources'
 
     doLast {
         def require = { boolean condition, String message ->
@@ -24,6 +25,8 @@ tasks.register('checkGuideResources') {
         def ukrainian = parse("$guideRoot/lang/uk_ua.json")
         require(english['guide.ae2craftingtime.name'] == 'AE2 Crafting Time Guide', 'Missing English guide name')
         require(ukrainian['guide.ae2craftingtime.name'] == 'Посібник AE2 Crafting Time', 'Missing Ukrainian guide name')
+        require(english['item.ae2craftingtime.guide'] == english['guide.ae2craftingtime.name'], 'Wrong English Fabric guide name')
+        require(ukrainian['item.ae2craftingtime.guide'] == ukrainian['guide.ae2craftingtime.name'], 'Wrong Ukrainian Fabric guide name')
 
         ['index.md', 'getting-started.md'].each { page ->
             def en = file("$guideRoot/guides/ae2craftingtime/guide/$page")
@@ -49,14 +52,38 @@ tasks.register('checkGuideResources') {
             require((metadata =~ /(?s)modId="guideme"\s+type="OPTIONAL"\s+versionRange="\[[^"]+,\)"\s+ordering="AFTER"\s+side="BOTH"/).find(), "Wrong GuideME metadata: $target")
         }
 
-        ['versions/1.20.1-forge', 'versions/1.20.1-fabric'].each { target ->
-            require(!file("$target/src/main/resources/data/ae2craftingtime/recipe/guide_book.json").exists(), "Old target contains the guide recipe: $target")
+        def forgeTarget = 'versions/1.20.1-forge'
+        def forgeRecipe = parse("$forgeTarget/src/main/resources/data/ae2craftingtime/recipes/guide_book.json")
+        require(forgeRecipe.type == 'forge:conditional' && forgeRecipe.recipes.size() == 1, 'Forge guide recipe must be conditional')
+        def forgeEntry = forgeRecipe.recipes[0]
+        require(forgeEntry.conditions == [[type: 'forge:mod_loaded', modid: 'guideme']], 'Forge guide recipe must require GuideME')
+        def forgeInner = forgeEntry.recipe
+        require(forgeInner.type == 'minecraft:crafting_shapeless'
+                && forgeInner.ingredients*.item == ['minecraft:book', 'ae2:certus_quartz_crystal', 'minecraft:clock'], 'Wrong Forge guide ingredients')
+        require(forgeInner.result == [item: 'guideme:guide', count: 1, nbt: '{guideId:"ae2craftingtime:guide"}'], 'Wrong Forge legacy guide identity')
+        def forgeMetadata = file("$forgeTarget/src/main/resources/META-INF/mods.toml").getText('UTF-8')
+        require((forgeMetadata =~ /(?s)modId = "guideme"\s+mandatory = false\s+versionRange = "\[20\.1\.15,20\.2\.0\)"\s+ordering = "AFTER"\s+side = "BOTH"/).find(), 'Wrong Forge GuideME metadata')
+
+        def fabricTarget = 'versions/1.20.1-fabric'
+        def fabricRecipe = parse("$fabricTarget/src/main/resources/data/ae2craftingtime/recipes/guide_book.json")
+        require(fabricRecipe.type == 'minecraft:crafting_shapeless'
+                && fabricRecipe.ingredients*.item == ['minecraft:book', 'ae2:certus_quartz_crystal', 'minecraft:clock'], 'Wrong Fabric guide ingredients')
+        require(fabricRecipe.result == [item: 'ae2craftingtime:guide', count: 1], 'Wrong Fabric guide result')
+        require(parse("$fabricTarget/src/main/resources/assets/ae2craftingtime/models/item/guide.json").parent == 'minecraft:item/book', 'Fabric guide must use the vanilla book model')
+        require(!file("$fabricTarget/src/main/resources/fabric.mod.json").getText('UTF-8').contains('guideme'), 'Fabric must not declare GuideME')
+
+        ['index.md', 'getting-started.md', '_uk_ua/index.md', '_uk_ua/getting-started.md'].each { page ->
+            def source = file("$guideRoot/guides/ae2craftingtime/guide/$page")
+            def forgeOutput = file("$forgeTarget/build/resources/main/assets/ae2craftingtime/guides/ae2craftingtime/guide/$page")
+            def fabricOutput = file("$fabricTarget/build/resources/main/assets/ae2craftingtime/ae2guide/$page")
+            require(forgeOutput.isFile() && Arrays.equals(source.bytes, forgeOutput.bytes), "Wrong Forge guide output: $page")
+            require(fabricOutput.isFile() && Arrays.equals(source.bytes, fabricOutput.bytes), "Wrong Fabric guide output: $page")
         }
 
         def matrix = parse('scripts/release-matrix.json')
         matrix.each { row ->
             def guideDependencies = row.modrinthDependencies.findAll { it.project_id == 'Ck4E7v7R' }
-            def expected = row.id in ['1.21.1-neoforge', '26.1.2-neoforge']
+            def expected = row.id in ['1.20.1-forge', '1.21.1-neoforge', '26.1.2-neoforge']
             require(guideDependencies.size() == (expected ? 1 : 0), "Wrong GuideME release relation: ${row.id}")
             require(!expected || guideDependencies[0].dependency_type == 'optional', "GuideME must be optional: ${row.id}")
         }

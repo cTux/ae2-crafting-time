@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    { "item": "minecraft:book" },
+    { "item": "ae2:certus_quartz_crystal" },
+    { "item": "minecraft:clock" }
+  ],
+  "result": {
+    "item": "ae2craftingtime:guide",
+    "count": 1
+  }
+}

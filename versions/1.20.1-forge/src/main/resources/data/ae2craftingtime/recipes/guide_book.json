@@ -1,0 +1,26 @@
+{
+  "type": "forge:conditional",
+  "recipes": [
+    {
+      "conditions": [
+        {
+          "type": "forge:mod_loaded",
+          "modid": "guideme"
+        }
+      ],
+      "recipe": {
+        "type": "minecraft:crafting_shapeless",
+        "ingredients": [
+          { "item": "minecraft:book" },
+          { "item": "ae2:certus_quartz_crystal" },
+          { "item": "minecraft:clock" }
+        ],
+        "result": {
+          "item": "guideme:guide",
+          "count": 1,
+          "nbt": "{guideId:\"ae2craftingtime:guide\"}"
+        }
+      }
+    }
+  ]
+}

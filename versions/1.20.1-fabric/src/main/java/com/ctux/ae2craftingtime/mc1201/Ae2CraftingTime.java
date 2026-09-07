@@ -7,10 +7,15 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
 
 public final class Ae2CraftingTime implements ModInitializer {
     public static final String MOD_ID = "ae2craftingtime";
     public static final String COMMON_CONFIG_FILE = "ae2craftingtime-common.toml";
+    public static final CraftingTimeGuideItem GUIDE = Registry.register(BuiltInRegistries.ITEM,
+            new ResourceLocation(MOD_ID, "guide"), new CraftingTimeGuideItem());
 
     @Override
     public void onInitialize() {
