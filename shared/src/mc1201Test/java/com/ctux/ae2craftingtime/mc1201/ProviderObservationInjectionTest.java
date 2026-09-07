@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.mc1201;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -99,7 +100,9 @@ class ProviderObservationInjectionTest {
         var handler = method(type, methodName);
         var wrap = annotation(handler, "/WrapOperation;");
         assertEquals(List.of("executeCrafting"), value(wrap, "method"));
-        assertEquals(target, value((AnnotationNode) value(wrap, "at"), "target"));
+        var at = assertInstanceOf(List.class, value(wrap, "at"));
+        assertEquals(1, at.size());
+        assertEquals(target, value(assertInstanceOf(AnnotationNode.class, at.get(0)), "target"));
         var calls = calls(handler);
         assertEquals(1, calls.stream().filter(call -> call.owner.endsWith("ProviderDispatchObserver")
                 && call.name.equals(observerCall)).count());
