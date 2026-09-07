@@ -53,10 +53,32 @@ class TtcSortTest {
         assertEquals(List.of("a", "b"), sorted.stream().map(Entry::name).toList());
     }
 
-    private static Entry entry(String name, OptionalLong seconds) {
-        return new Entry(name, seconds);
+    @Test
+    void priorityRowsStayFirstInAe2OrderAndBothTtcDirections() {
+        var entries = List.of(entry("normal-unknown", OptionalLong.empty(), false),
+                entry("missing-fast", OptionalLong.of(2), true), entry("normal-slow", OptionalLong.of(10), false),
+                entry("missing-slow", OptionalLong.of(8), true), entry("missing-unknown", OptionalLong.empty(), true));
+
+        assertNames(List.of("missing-fast", "missing-slow", "missing-unknown", "normal-unknown", "normal-slow"),
+                TtcSort.copyPrioritizedSorted(entries, Entry::priority, Entry::seconds, Comparator.comparing(Entry::name), false, false));
+        assertNames(List.of("missing-fast", "missing-slow", "missing-unknown", "normal-slow", "normal-unknown"),
+                TtcSort.copyPrioritizedSorted(entries, Entry::priority, Entry::seconds, Comparator.comparing(Entry::name), true, false));
+        assertNames(List.of("missing-slow", "missing-fast", "missing-unknown", "normal-slow", "normal-unknown"),
+                TtcSort.copyPrioritizedSorted(entries, Entry::priority, Entry::seconds, Comparator.comparing(Entry::name), true, true));
     }
 
-    private record Entry(String name, OptionalLong seconds) {
+    private static void assertNames(List<String> expected, List<Entry> entries) {
+        assertEquals(expected, entries.stream().map(Entry::name).toList());
+    }
+
+    private static Entry entry(String name, OptionalLong seconds) {
+        return entry(name, seconds, false);
+    }
+
+    private static Entry entry(String name, OptionalLong seconds, boolean priority) {
+        return new Entry(name, seconds, priority);
+    }
+
+    private record Entry(String name, OptionalLong seconds, boolean priority) {
     }
 }

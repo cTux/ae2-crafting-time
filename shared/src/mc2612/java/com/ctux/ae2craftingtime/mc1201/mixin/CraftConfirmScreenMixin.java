@@ -96,12 +96,9 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
             index = 3,
             remap = false)
     private List<CraftingPlanSummaryEntry> ae2craftingtime$sortPlanByTtc(List<CraftingPlanSummaryEntry> entries) {
-        if (ae2craftingtime$ttcSortMode == 0) {
-            return entries;
-        }
-
-        var sorted = TtcSort.copySorted(entries, CraftConfirmScreenMixin::ae2craftingtime$seconds, Comparator.naturalOrder(),
-                ae2craftingtime$ttcSortMode == 2);
+        var sorted = TtcSort.copyPrioritizedSorted(entries, entry -> entry.getMissingAmount() > 0,
+                CraftConfirmScreenMixin::ae2craftingtime$seconds, Comparator.naturalOrder(),
+                ae2craftingtime$ttcSortMode != 0, ae2craftingtime$ttcSortMode == 2);
         IntegrationLog.observe("ae2craftingtime", "plan-sort");
         return sorted;
     }
