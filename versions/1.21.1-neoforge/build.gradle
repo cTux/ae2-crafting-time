@@ -199,10 +199,13 @@ tasks.register('checkTestDriverArtifacts') {
         def driver = tasks.named('testDriverUnmappedJar').get().archiveFile.get().asFile
         def productionEntries = zipTree(production).files.collect { it.path.replace('\\', '/') }
         def driverEntries = zipTree(driver).files.collect { it.path.replace('\\', '/') }
+        def driverMixins = new groovy.json.JsonSlurper().parseText(
+                zipTree(driver).matching { include 'ae2craftingtime_test_driver.mixins.json' }.singleFile.text)
         if (productionEntries.any { it.contains('testdriver/') || it.contains('ae2craftingtime_test_driver') }
                 || driverEntries.any { it.contains('/mc1201/Ae2CraftingTime.class') }
                 || !driverEntries.any { it.endsWith('/testdriver/TestDriverMod.class') }
-                || !driverEntries.any { it.endsWith('/META-INF/neoforge.mods.toml') }) {
+                || !driverEntries.any { it.endsWith('/META-INF/neoforge.mods.toml') }
+                || !driverMixins.mixins.contains('CraftingCPUMenuAccessor')) {
             throw new GradleException('Invalid isolated NeoForge test-driver artifact')
         }
     }

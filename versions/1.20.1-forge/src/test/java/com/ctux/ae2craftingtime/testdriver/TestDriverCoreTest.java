@@ -88,6 +88,13 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void providerStatusWaitsForTheSelectedCpuRowsBeforeMutatingTheFixture() {
+        assertFalse(ProviderDispatchStatusScenario.statusRowsReady(List.of()));
+        assertTrue(ProviderDispatchStatusScenario.statusRowsReady(List.of(
+                new UiSnapshot.Row("minecraft:diamond", 64, null, List.of()))));
+    }
+
+    @Test
     void noPowerRequiresTheRenderedWarningAndBothAdviceLines() {
         assertTrue(AddonCpuFixture.supports(NoPowerScenario.SCENARIO));
         assertNull(AddonCpuFixture.create(NoPowerScenario.SCENARIO));

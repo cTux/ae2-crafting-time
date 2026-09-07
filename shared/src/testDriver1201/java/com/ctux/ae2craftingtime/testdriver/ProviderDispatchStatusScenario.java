@@ -49,6 +49,10 @@ final class ProviderDispatchStatusScenario {
         return NO_TARGET.equals(scenario) || INPUT_BLOCKED.equals(scenario) || LOCKED.equals(scenario);
     }
 
+    static boolean statusRowsReady(List<UiSnapshot.Row> rows) {
+        return !rows.isEmpty();
+    }
+
     static List<String> checks(String scenario) {
         var checks = new java.util.ArrayList<>(BASE_CHECKS);
         if (advancedFixture()) checks.add("advanced-cpu");
@@ -72,7 +76,8 @@ final class ProviderDispatchStatusScenario {
         }
         var snapshot = UiObservationStore.latest();
         if (!(minecraft.screen instanceof CraftingCPUScreen<?> screen) || snapshot == null
-                || !snapshot.screen().equals(screen.getClass().getName()) || !frames.observe(phase)) return false;
+                || !snapshot.screen().equals(screen.getClass().getName()) || !statusRowsReady(snapshot.rows())
+                || !frames.observe(phase)) return false;
         if (phase == 3) {
             checks.put("screen", true);
             checks.put("real-job", true);
