@@ -15,7 +15,6 @@ $ae2 = $null
 $atlas = $null
 $icon = $null
 $terminalBackground = $null
-$terminal = $null
 $canvas = $null
 $graphics = $null
 $fontStream = $null
@@ -42,7 +41,6 @@ try {
         throw 'Expected the Minecraft 1.20.1 128-by-128 ASCII atlas.'
     }
     $terminalBackground = Read-Png $ae2 'assets/ae2/textures/guis/background.png'
-    $terminal = Read-Png $ae2 'assets/ae2/textures/guis/terminal.png'
     $icon = [Drawing.Image]::FromFile((Join-Path $root 'docs/images/project-icon.png'))
     $canvas = [Drawing.Bitmap]::new(1600, 420)
     $graphics = [Drawing.Graphics]::FromImage($canvas)
@@ -57,14 +55,6 @@ try {
     $graphics.DrawImage($terminalBackground, [Drawing.Rectangle]::new(0, 408, 12, 12), [Drawing.Rectangle]::new(0, 253, 3, 3), [Drawing.GraphicsUnit]::Pixel)
     $graphics.DrawImage($terminalBackground, [Drawing.Rectangle]::new(12, 408, 1576, 12), [Drawing.Rectangle]::new(3, 253, 250, 3), [Drawing.GraphicsUnit]::Pixel)
     $graphics.DrawImage($terminalBackground, [Drawing.Rectangle]::new(1588, 408, 12, 12), [Drawing.Rectangle]::new(253, 253, 3, 3), [Drawing.GraphicsUnit]::Pixel)
-    for ($x = 432; $x -lt 1548; $x += 324) {
-        $width = [Math]::Min(324, 1548 - $x)
-        $sourceWidth = [int]($width / 2)
-        $graphics.DrawImage($terminal, [Drawing.Rectangle]::new($x, 28, $width, 36), [Drawing.Rectangle]::new(7, 18, $sourceWidth, 18), [Drawing.GraphicsUnit]::Pixel)
-        $graphics.DrawImage($terminal, [Drawing.Rectangle]::new($x, 356, $width, 36), [Drawing.Rectangle]::new(7, 18, $sourceWidth, 18), [Drawing.GraphicsUnit]::Pixel)
-    }
-    $graphics.DrawImage($terminal, [Drawing.Rectangle]::new(1548, 76, 36, 106), [Drawing.Rectangle]::new(174, 18, 18, 53), [Drawing.GraphicsUnit]::Pixel)
-    $graphics.DrawImage($terminal, [Drawing.Rectangle]::new(1548, 196, 36, 94), [Drawing.Rectangle]::new(174, 78, 18, 47), [Drawing.GraphicsUnit]::Pixel)
     $graphics.InterpolationMode = [Drawing.Drawing2D.InterpolationMode]::HighQualityBicubic
     $graphics.DrawImage($icon, [Drawing.Rectangle]::new(32, 18, 384, 384))
 
@@ -92,8 +82,12 @@ try {
         } finally { $brush.Dispose() }
     }
 
-    Draw-MinecraftText "It's AE2 Crafting Time!" 448 142 8 '#3f3f3f'
-    Draw-MinecraftText 'Autocrafting adventure you might want to understand in details' 448 270 3 '#008c95'
+    Draw-MinecraftText "It's AE2 Crafting Time!" 454 76 10 '#202020'
+    Draw-MinecraftText "It's AE2 Crafting Time!" 448 70 10 '#f0f0f0'
+    Draw-MinecraftText 'Autocrafting adventure you' 452 210 6 '#202020'
+    Draw-MinecraftText 'Autocrafting adventure you' 448 206 6 '#00a5ad'
+    Draw-MinecraftText 'might want to understand in details' 452 282 6 '#202020'
+    Draw-MinecraftText 'might want to understand in details' 448 278 6 '#00a5ad'
     $output = Join-Path $root 'docs/images/readme-banner.png'
     $canvas.Save($output, [Drawing.Imaging.ImageFormat]::Png)
     Write-Host "Rendered Minecraft bitmap lettering to $output"
@@ -103,7 +97,6 @@ try {
     if ($icon) { $icon.Dispose() }
     if ($atlas) { $atlas.Dispose() }
     if ($fontStream) { $fontStream.Dispose() }
-    if ($terminal) { $terminal.Dispose() }
     if ($terminalBackground) { $terminalBackground.Dispose() }
     if ($ae2) { $ae2.Dispose() }
     if ($jar) { $jar.Dispose() }

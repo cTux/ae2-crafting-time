@@ -12,9 +12,8 @@ themes. This is a Markdown document, not a custom website.
 - Canvas: 1600 by 420 pixels; scales to the available README width.
 - Background and beveled frame: AE2's terminal GUI background, expanded as a
   nine-slice so the original corners and edge thickness stay intact.
-- Terminal details: empty storage-slot rows and the side column from AE2's
-  terminal GUI texture, rendered at an integer scale.
-- Title: `#3f3f3f`; tagline: `#008c95`.
+- Title: `#f0f0f0` at 10x scale; tagline: `#00a5ad` at 6x scale over two lines.
+  Both use a `#202020` pixel shadow.
 - Artwork: `project-icon.png`, the user's original 512-pixel PNG, unchanged.
 - Lettering: the actual default ASCII bitmap glyphs in Minecraft 1.20.1,
   rendered at integer scales. No installed font or generated lettering.
@@ -57,11 +56,10 @@ System.Drawing library and does not download anything.
 
 ## AE2 texture attribution
 
-The banner background, frame, and slot details use modified copies of these
-Applied Energistics 2 textures from version 15.4.10:
+The banner background and frame use a modified copy of this Applied Energistics
+2 texture from version 15.4.10:
 
 - `guis/background.png`
-- `guis/terminal.png`
 
 Applied Energistics 2 textures and models are copyright (c) 2020 Ridanisaurus
 Rid and copyright (c) 2013-2020 AlgorithmX2 et al. The modified banner is
