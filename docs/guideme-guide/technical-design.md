@@ -187,8 +187,9 @@ readers add an unnecessary UI and dependency. None is needed here.
 ## Screenshot exports
 
 Book screenshots are cropped from reviewed smoke evidence for the requested
-pack. The gallery stores native-size JPEG crops; book copies use the same source
-rectangle; book JPEG quality is 75. Both locales carry identical image bytes.
+pack. The gallery stores native-size JPEG crops, while book copies use PNG so
+GuideME's in-game texture path decodes them reliably. Book copies use the same
+source rectangle, and both locales carry identical image bytes.
 `docs/images/sources.json` records the source run, SHA-256 and physical-pixel
 rectangle, and `scripts/export-guide-image.ps1` reproduces an export without
 changing the raw evidence.
@@ -204,13 +205,15 @@ up a narrow crafting-tree diagram while wider tooltips fill the page. This
 compensates for image layout; it does not add source detail or replace the
 renderer. The page's normal flow and scrolling continue to own image placement.
 
-Validate packaged links with `checkGuideResources` and inspect every screenshot
-page in the running book at 1920x1080. Confirm image decoding, readable text,
-page-width use, scrolling and navigation; a successful JPEG export alone does
-not prove in-game readability. See [issue 343](https://github.com/cTux/ae2-crafting-time/issues/343).
+Validate packaged links and PNG signatures with `checkGuideResources`, then
+inspect every screenshot page in the running book at 1920x1080. Confirm image
+decoding, readable text, page-width use, scrolling and navigation; a successful
+export alone does not prove in-game readability. See
+[issue 343](https://github.com/cTux/ae2-crafting-time/issues/343) and
+[issue 358](https://github.com/cTux/ae2-crafting-time/issues/358).
 
 For GuideME 20.1.15 at 1920x1080 with automatic GUI scale 4, the 480-pixel
 virtual screen leaves approximately 355 logical pixels for the document after
 navigation. A 1600-pixel image starts at 400 logical pixels and fills that area;
-2400-pixel exports add bytes without improving this view. Book quality 75 keeps
-colored text legible in the inspected exports; gallery quality remains 90.
+2400-pixel exports add bytes without improving this view. PNG preserves the
+colored UI text without a quality setting; gallery JPEG quality remains 90.

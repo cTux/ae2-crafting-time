@@ -169,7 +169,7 @@ Do not hijack AE2 item-hover guide targets in this first delivery.
 | A1 | Both grids produce one correctly named guide from exactly the specified inputs in any position. Incorrect inputs fail; discovery and consumption work. |
 | A2 | Inventory, held, and dropped result looks like a vanilla book. Ordinary books and AE2's own guide remain unchanged. |
 | A3 | Main-hand and eligible off-hand use opens our guide repeatedly without consumption; save/reload and multiplayer preserve identity. |
-| A4 | Both pages contain the supplied copy, with working reciprocal links, navigation, search, and no unfinished-chapter links. |
+| A4 | Every page contains the supplied copy and locally referenced PNG screenshots decode at a readable size, with working reciprocal links, navigation, search, and no unfinished-chapter links. |
 | A5 | Both languages have matching page paths and link/navigation structure, with translated text and names; both themes remain readable. |
 | A6 | Both modern JARs contain the guide, target-correct conditional recipe data, and optional metadata; dedicated servers with GuideME load and serve the recipe. |
 | A7 | Neither old JAR contains a GuideME recipe, advancement, or required dependency; both 1.20.1 clients still start. |
