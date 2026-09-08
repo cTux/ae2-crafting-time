@@ -24,7 +24,7 @@ they are applied when the profiler is created. Invalid Fabric values keep the
 current/default value, and out-of-range numbers are clamped; Forge and NeoForge
 use their native config validation.
 
-![Crafting Tree with TTC display enabled](images/crafting-tree-tooltip.jpg)
+![Crafting Tree with TTC display enabled](images/crafting-tree-tooltip.png)
 
 *The seeded tooltip shows the Crafting Tree display controlled by `showInTree`.*
 

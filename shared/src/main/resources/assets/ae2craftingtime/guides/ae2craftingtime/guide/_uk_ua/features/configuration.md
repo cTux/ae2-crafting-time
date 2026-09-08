@@ -22,7 +22,7 @@ navigation:
 значення лишають поточне або типове значення, а числа за межами діапазону
 обрізаються. Forge і NeoForge використовують власну перевірку конфігурації.
 
-![Crafting Tree з увімкненим TTC](images/crafting-tree-tooltip.jpg)
+![Crafting Tree з увімкненим TTC](images/crafting-tree-tooltip.png)
 
 *Тестова підказка показує відображення Crafting Tree, яким керує `showInTree`.*
 

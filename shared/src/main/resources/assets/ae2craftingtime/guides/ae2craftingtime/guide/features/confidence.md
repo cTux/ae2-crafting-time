@@ -19,7 +19,7 @@ be ignored instead of making every later estimate look slow. The tooltip shows
 retained and used sample counts. A low configured sample limit can prevent an
 estimate from ever becoming reliable.
 
-![Low-confidence TTC tooltip](images/ttc-low-confidence.jpg)
+![Low-confidence TTC tooltip](images/ttc-low-confidence.png)
 
 *The seeded first sample remains useful, but the question mark warns that confidence is low.*
 

@@ -12,8 +12,9 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $inputPath = (Resolve-Path -LiteralPath $Source).Path
 $outputPath = [IO.Path]::GetFullPath($Destination)
-if ($inputPath -eq $outputPath -or [IO.Path]::GetExtension($outputPath) -ne '.jpg') {
-    throw 'Destination must be a separate .jpg file.'
+$extension = [IO.Path]::GetExtension($outputPath).ToLowerInvariant()
+if ($inputPath -eq $outputPath -or $extension -notin @('.jpg', '.png')) {
+    throw 'Destination must be a separate .jpg or .png file.'
 }
 $original = [Drawing.Bitmap]::FromFile($inputPath)
 try {
@@ -30,11 +31,15 @@ try {
             $graphics.PixelOffsetMode = [Drawing.Drawing2D.PixelOffsetMode]::Half
             $graphics.DrawImage($original, [Drawing.Rectangle]::new(0, 0, $targetWidth, $targetHeight), $X, $Y, $Width, $Height, [Drawing.GraphicsUnit]::Pixel)
         } finally { $graphics.Dispose() }
-        $codec = [Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object MimeType -eq 'image/jpeg'
-        $parameters = [Drawing.Imaging.EncoderParameters]::new(1)
-        try {
-            $parameters.Param[0] = [Drawing.Imaging.EncoderParameter]::new([Drawing.Imaging.Encoder]::Quality, [long]$Quality)
-            $bitmap.Save($outputPath, $codec, $parameters)
-        } finally { $parameters.Dispose() }
+        if ($extension -eq '.png') {
+            $bitmap.Save($outputPath, [Drawing.Imaging.ImageFormat]::Png)
+        } else {
+            $codec = [Drawing.Imaging.ImageCodecInfo]::GetImageEncoders() | Where-Object MimeType -eq 'image/jpeg'
+            $parameters = [Drawing.Imaging.EncoderParameters]::new(1)
+            try {
+                $parameters.Param[0] = [Drawing.Imaging.EncoderParameter]::new([Drawing.Imaging.Encoder]::Quality, [long]$Quality)
+                $bitmap.Save($outputPath, $codec, $parameters)
+            } finally { $parameters.Dispose() }
+        }
     } finally { $bitmap.Dispose() }
 } finally { $original.Dispose() }

@@ -19,7 +19,7 @@ row is the fast end and the thirty-second row is the slow end. The colors compar
 the current list; red does not automatically mean a delay. An actual delay uses
 the separate red **DELAYED** label.
 
-![Crafting Plan sorted by longest TTC](images/ttc-sort-longest.jpg)
+![Crafting Plan sorted by longest TTC](images/ttc-sort-longest.png)
 
 *Seeded values show longest-first order and relative fast-to-slow colors.*
 

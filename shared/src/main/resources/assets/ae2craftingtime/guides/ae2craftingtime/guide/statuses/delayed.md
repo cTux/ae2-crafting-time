@@ -24,7 +24,7 @@ cancelling, resetting that output, or reloading also clears runtime delay state.
 The threshold needs learned history, and a delay points to the recipe flow rather
 than proving which machine caused it.
 
-![DELAYED row after output stops](images/crafting-status-delayed.jpg)
+![DELAYED row after output stops](images/crafting-status-delayed.png)
 
 *A processing recipe has exceeded both parts of its learned delay threshold.*
 

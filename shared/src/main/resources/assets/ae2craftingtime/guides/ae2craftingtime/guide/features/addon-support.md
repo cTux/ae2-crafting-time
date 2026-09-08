@@ -20,7 +20,7 @@ screens do not automatically gain badges unless a dedicated UI integration is
 listed separately. Installed addon versions may require a restart before the
 compatible integration is selected.
 
-![Optional Crafting Tree integration using shared TTC data](images/crafting-tree-tooltip.jpg)
+![Optional Crafting Tree integration using shared TTC data](images/crafting-tree-tooltip.png)
 
 *The seeded Crafting Tree tooltip demonstrates an optional addon reading the same server-owned statistics.*
 
