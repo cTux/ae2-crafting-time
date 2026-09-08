@@ -48,17 +48,17 @@ spec order. Statuses reserves root position `2`; Chapter 1 stays `0`.
 
 | Page | Factual source | Initial image |
 | --- | --- | --- |
-| Time estimates | `docs/time-to-craft-plan.md` | `crafting-plan-estimate.png` |
-| Learning throughput | profiling spec/design | `crafting-status-running.png` |
-| Confidence | profiling spec/design | `ttc-low-confidence.png` |
+| Time estimates | `docs/time-to-craft-plan.md` | `crafting-plan-estimate.jpg` |
+| Learning throughput | profiling spec/design | `crafting-status-running.jpg` |
+| Confidence | profiling spec/design | `ttc-low-confidence.jpg` |
 | Job accuracy | profiling spec/design | `ttc-job-accuracy.png` |
-| Delay diagnostics | profiling/provider-locate docs | `crafting-status-ttc-bottleneck-diagnostics.png` |
-| Sorting and colors | TTC sorting/color docs | `ttc-sort-longest.png` |
+| Delay diagnostics | profiling/provider-locate docs | `crafting-status-ttc-bottleneck-diagnostics.jpg` |
+| Sorting and colors | TTC sorting/color docs | `ttc-sort-longest.jpg` |
 | Details and reset | player-controls docs | `ttc-details-chat.png` |
 | Saved history | world-save persistence docs | new focused capture |
 | Configuration | player-controls docs/current config | new focused capture |
-| Crafting Tree | player-controls docs | `crafting-tree-estimate.png` |
-| ME Requester | player-controls docs | `me-requester-estimate.png` |
+| Crafting Tree | player-controls docs | `crafting-tree-estimate.jpg` |
+| ME Requester | player-controls docs | `me-requester-estimate.jpg` |
 | Addon support | addon-integration docs | new supported-addon capture |
 | Guide book | guide-book spec | new inventory/guide capture |
 

@@ -10,6 +10,10 @@ final class DriverPlatform {
         return level.getDataStorage().computeIfAbsent(com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeSavedData.FACTORY, com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeSavedData.FILE_ID);
     }
 
+    static void openChat(net.minecraft.client.Minecraft minecraft) {
+        minecraft.setScreen(new net.minecraft.client.gui.screens.ChatScreen(""));
+    }
+
     static boolean modifiers(net.minecraft.client.Minecraft minecraft, boolean reset) {
         return net.minecraft.client.gui.screens.Screen.hasControlDown()
                 && net.minecraft.client.gui.screens.Screen.hasAltDown() == reset;

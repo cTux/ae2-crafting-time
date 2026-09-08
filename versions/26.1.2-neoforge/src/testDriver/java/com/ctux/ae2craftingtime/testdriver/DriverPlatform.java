@@ -10,6 +10,10 @@ final class DriverPlatform {
         return level.getDataStorage().computeIfAbsent(com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeSavedData.TYPE);
     }
 
+    static void openChat(net.minecraft.client.Minecraft minecraft) {
+        minecraft.setScreen(new net.minecraft.client.gui.screens.ChatScreen("", false));
+    }
+
     static boolean modifiers(net.minecraft.client.Minecraft minecraft, boolean reset) {
         long window = minecraft.getWindow().handle();
         boolean control = org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL) != 0;

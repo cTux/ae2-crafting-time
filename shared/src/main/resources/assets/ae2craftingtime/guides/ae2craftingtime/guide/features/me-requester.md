@@ -19,7 +19,7 @@ data yet**. Visible rows use the same relative colors as AE2 screens. This
 optional integration is not available on the 26.1.2 target and has no effect
 when ME Requester is absent.
 
-![ME Requester row and total TTC](images/me-requester-estimate.png)
+![ME Requester row and total TTC](images/me-requester-estimate.jpg)
 
 *A seeded diamond request shows a two-second row estimate and its total hint.*
 

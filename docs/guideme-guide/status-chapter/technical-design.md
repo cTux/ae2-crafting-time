@@ -47,16 +47,16 @@ positions `0..9` in spec order. Features owns position `1`; Chapter 1 remains `0
 
 | Page | Source | Image |
 | --- | --- | --- |
-| NO SPACE | no-space docs | `crafting-status-no-space.png` |
-| NO PROVIDER | no-provider docs | `crafting-status-no-provider.png` |
-| NO POWER | no-power docs | `crafting-status-no-power.png` |
+| NO SPACE | no-space docs | `crafting-status-no-space.jpg` |
+| NO PROVIDER | no-provider docs | `crafting-status-no-provider.jpg` |
+| NO POWER | no-power docs | `crafting-status-no-power.jpg` |
 | LOCKED | provider-dispatch docs/current code | new focused capture |
 | INPUT BLOCKED | provider-dispatch docs/current code | new focused capture |
 | NO TARGET | provider-dispatch docs/current code | new focused capture |
-| Waiting | waiting-to-start docs | `crafting-status-waiting.png` |
+| Waiting | waiting-to-start docs | `crafting-status-waiting.jpg` |
 | DELAYED | profiling docs | delayed and diagnostics gallery images |
 | No data yet | TTC/profiling docs | `crafting-plan-no-data.png` |
-| Estimated | TTC docs | `crafting-status-running.png` |
+| Estimated | TTC docs | `crafting-status-running.jpg` |
 
 Copy retained images without recompression. New captures follow the gallery
 design, are visually reviewed, enter `docs/images/README.md`, and identify

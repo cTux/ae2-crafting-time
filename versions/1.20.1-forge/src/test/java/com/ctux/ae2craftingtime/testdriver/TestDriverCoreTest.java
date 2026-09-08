@@ -128,6 +128,38 @@ class TestDriverCoreTest {
         assertTrue(StandardAe2Scenario.planEstimatesReady(List.of(smooth, stone)));
     }
 
+    @Test
+    void galleryPlansDistinguishUnknownRowsFromMissingObservations() {
+        var known = UiObservationStore.observed(List.of(TtcText.ttc("~2s")), null);
+        var unknown = UiObservationStore.observed(List.of(TtcText.ttcCollectingData()), null);
+        var stone = new UiSnapshot.Row("minecraft:stone", 1, 0, null, unknown);
+        var smooth = new UiSnapshot.Row("minecraft:smooth_stone", 1, 0, null, unknown);
+        assertTrue(StandardAe2Scenario.galleryPlanReady(List.of(stone, smooth), 0));
+        assertFalse(StandardAe2Scenario.galleryPlanReady(List.of(stone, smooth), 1));
+        assertFalse(StandardAe2Scenario.galleryPlanReady(List.of(stone), 0));
+        assertFalse(StandardAe2Scenario.galleryPlanReady(List.of(stone,
+                new UiSnapshot.Row("minecraft:smooth_stone", 1, 0, null, List.of())), 0));
+        var profiledStone = new UiSnapshot.Row("minecraft:stone", 1, 0, null, known);
+        assertTrue(StandardAe2Scenario.galleryPlanReady(List.of(profiledStone, smooth), 1));
+        assertFalse(StandardAe2Scenario.galleryPlanReady(List.of(profiledStone, smooth), 0));
+        assertFalse(StandardAe2Scenario.galleryPlanReady(List.of(
+                new UiSnapshot.Row("minecraft:stone", 0, 0, null, known), smooth), 1));
+    }
+
+    @Test
+    void galleryAccuracyRequiresExactlyOneRealCompletedJobWithExpectedCoverage() {
+        var full = new com.ctux.ae2craftingtime.core.TtcAccuracyStats(1, 1, 1, 0, 0, 1, 7, 20, 20, 2, 2);
+        var partial = new com.ctux.ae2craftingtime.core.TtcAccuracyStats(1, 0, .5, 0, 0, 0, 10, 20, 20, 1, 2);
+        assertTrue(StandardAe2Scenario.galleryAccuracyReady(full, false));
+        assertTrue(StandardAe2Scenario.galleryAccuracyReady(partial, true));
+        assertFalse(StandardAe2Scenario.galleryAccuracyReady(full, true));
+        assertFalse(StandardAe2Scenario.galleryAccuracyReady(partial, false));
+        assertFalse(StandardAe2Scenario.galleryAccuracyReady(new com.ctux.ae2craftingtime.core.TtcAccuracyStats(
+                2, 1, .75, 0, 0, 1, 10, 20, 20, 1, 2), true));
+        assertFalse(StandardAe2Scenario.galleryAccuracyReady(new com.ctux.ae2craftingtime.core.TtcAccuracyStats(
+                1, 1, 1, 0, 0, 1, 7, 0, 0, 2, 2), false));
+    }
+
     @TempDir
     Path temporary;
 

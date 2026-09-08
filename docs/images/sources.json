@@ -1,0 +1,220 @@
+﻿{
+    "pack":  "Project Infinity",
+    "release":  "0.0.52.0",
+    "run":  "20260908T111040712Z-e9ac1b5d",
+    "sourceCommit":  "81f53a5735b07ba1127b547e071fa9306b0d4cc9",
+    "quality":  90,
+    "guideOutputWidth":  1600,
+    "images":  [
+                   {
+                       "image":  "crafting-plan-estimate.jpg",
+                       "source":  "craft-lifecycle/plan-default.png",
+                       "sha256":  "c9ed6c56e0f2675d3a580ab6f15d1442e8c0e32a9cb202fe1030c7742a126ee6",
+                       "crop":  [
+                                    804,
+                                    136,
+                                    948,
+                                    820
+                                ]
+                   },
+                   {
+                       "image":  "crafting-status-running.jpg",
+                       "source":  "running-status/running-progress.png",
+                       "sha256":  "898905fde09cd3a5329722a7775c03bd2bdd04d7902bde5ee69af637ee2a8ee9",
+                       "crop":  [
+                                    808,
+                                    184,
+                                    860,
+                                    168
+                                ]
+                   },
+                   {
+                       "image":  "crafting-status-waiting.jpg",
+                       "source":  "waiting-status/status-waiting-running.png",
+                       "sha256":  "f1fd07a7bb1b73d17e91424a36542ed671f304242499ae15ac525a1d3e9b6825",
+                       "crop":  [
+                                    836,
+                                    252,
+                                    552,
+                                    100
+                                ]
+                   },
+                   {
+                       "image":  "crafting-status-delayed.jpg",
+                       "source":  "delayed-status/status-delayed.png",
+                       "sha256":  "fd8ce318c6710017047c187401fb09dc6ec3183830dd6ebab91bee1abd4c5f37",
+                       "crop":  [
+                                    836,
+                                    252,
+                                    552,
+                                    100
+                                ]
+                   },
+                   {
+                       "image":  "crafting-status-ttc-bottleneck-diagnostics.jpg",
+                       "source":  "delayed-status/delayed-tooltip.png",
+                       "sha256":  "4c007de6a47b64275ac4586f8cab65eba4904a8fc1dfa2aff8d2ade167c54d5e",
+                       "crop":  [
+                                    1004,
+                                    236,
+                                    1044,
+                                    556
+                                ]
+                   },
+                   {
+                       "image":  "crafting-status-no-space.jpg",
+                       "source":  "no-space-status/no-space-en-us.png",
+                       "sha256":  "0ab3846a4c5bfb02e0dbff37663aaeb52930c524be33b42334b21298ec9f554a",
+                       "crop":  [
+                                    996,
+                                    236,
+                                    1048,
+                                    276
+                                ]
+                   },
+                   {
+                       "image":  "crafting-status-no-provider.jpg",
+                       "source":  "no-provider-status/no-provider-en-us.png",
+                       "sha256":  "b6822a308e174500df50140d17065598b10f08edb62e95aac83c431b1f84e957",
+                       "crop":  [
+                                    996,
+                                    236,
+                                    1116,
+                                    436
+                                ]
+                   },
+                   {
+                       "image":  "crafting-status-no-power.jpg",
+                       "source":  "no-power-status/no-power-en-us.png",
+                       "sha256":  "4d1f2f85def30b2714bced44385ddc58d9cc078be7e685f23054a18d85449ba7",
+                       "crop":  [
+                                    996,
+                                    236,
+                                    1144,
+                                    356
+                                ]
+                   },
+                   {
+                       "image":  "crafting-status-no-target.jpg",
+                       "source":  "no-target-status/no-target-en-us.png",
+                       "sha256":  "8a54d8f0562993c3b7d52b2ba1577a98f94251f05f5317c1392a939598a20d69",
+                       "crop":  [
+                                    992,
+                                    256,
+                                    1028,
+                                    476
+                                ]
+                   },
+                   {
+                       "image":  "crafting-status-input-blocked.jpg",
+                       "source":  "input-blocked-status/input-blocked-status-en-us.png",
+                       "sha256":  "c52a27cc3b608702099c3a55eeb7426e253e94adb7ab80f3dc15b48ecec6a299",
+                       "crop":  [
+                                    968,
+                                    256,
+                                    1112,
+                                    476
+                                ]
+                   },
+                   {
+                       "image":  "crafting-status-locked.jpg",
+                       "source":  "locked-status/locked-en-us.png",
+                       "sha256":  "132c468a4c6ce628162dd265e255ca1583ca367b8368677bd67f8ec9402fc839",
+                       "crop":  [
+                                    1012,
+                                    256,
+                                    1076,
+                                    516
+                                ]
+                   },
+                   {
+                       "image":  "ttc-low-confidence.jpg",
+                       "source":  "standard-plan-controls/plan-tooltip.png",
+                       "sha256":  "36afddc09de3a1b129cda814aa3585cde6e82dac75a8f975f4d5709701c843ea",
+                       "crop":  [
+                                    1276,
+                                    192,
+                                    1120,
+                                    512
+                                ]
+                   },
+                   {
+                       "image":  "ttc-production-sample-details.jpg",
+                       "source":  "craft-plan/craft-plan-tooltip.png",
+                       "sha256":  "15cc74ecb64b1067c177fa8e3eda6e950ac7ff9eca97f65f33edafcd79f45f12",
+                       "crop":  [
+                                    1004,
+                                    192,
+                                    1160,
+                                    556
+                                ]
+                   },
+                   {
+                       "image":  "ttc-sort-ae2.jpg",
+                       "source":  "standard-plan-controls/plan-sort-1.png",
+                       "sha256":  "c2ba26245e4c0adfa59556d5f92dcf72fbb2377b20cd1bcc55629c6075ab0f42",
+                       "crop":  [
+                                    716,
+                                    136,
+                                    1036,
+                                    268
+                                ]
+                   },
+                   {
+                       "image":  "ttc-sort-longest.jpg",
+                       "source":  "standard-plan-controls/plan-sort-3.png",
+                       "sha256":  "a16117c9e5ebe5b0721dc442960b50e004bf9ff99b61d6c02c754d03fe0dc6b0",
+                       "crop":  [
+                                    716,
+                                    136,
+                                    1036,
+                                    268
+                                ]
+                   },
+                   {
+                       "image":  "ttc-sort-shortest.jpg",
+                       "source":  "standard-plan-controls/plan-sort-2.png",
+                       "sha256":  "20d961a0d1bcb494e1eef9c3f0e237cb975e51353b8c84f7da7cc8ca0ad05934",
+                       "crop":  [
+                                    716,
+                                    136,
+                                    1036,
+                                    268
+                                ]
+                   },
+                   {
+                       "image":  "crafting-tree-estimate.jpg",
+                       "source":  "crafting-tree-screen/crafting-tree-screen.png",
+                       "sha256":  "0a930ca742c089174dcd22a3a415bada83f20cc9880ce5476d44f6047c119350",
+                       "crop":  [
+                                    748,
+                                    296,
+                                    132,
+                                    268
+                                ]
+                   },
+                   {
+                       "image":  "crafting-tree-tooltip.jpg",
+                       "source":  "crafting-tree-screen/crafting-tree-tooltip.png",
+                       "sha256":  "458dbd38eff6489e155ddc48850263967a3e9ca712016737454110d3c398995c",
+                       "crop":  [
+                                    764,
+                                    284,
+                                    772,
+                                    280
+                                ]
+                   },
+                   {
+                       "image":  "me-requester-estimate.jpg",
+                       "source":  "merequester-screen/merequester-screen.png",
+                       "sha256":  "69687903d89b6a9527cc83b56873340a7cbd013fdffc6ff1f29cdc5eb2d83ef9",
+                       "crop":  [
+                                    888,
+                                    8,
+                                    776,
+                                    152
+                                ]
+                   }
+               ],
+    "guideQuality":  75
+}

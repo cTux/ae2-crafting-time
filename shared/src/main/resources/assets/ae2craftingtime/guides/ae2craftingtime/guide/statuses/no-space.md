@@ -23,7 +23,7 @@ The label clears when the stored output enters the ME network. Adding space can
 clear it while the screen remains open. It does not identify which cell is full,
 and it does not mean a processing machine lacks output space.
 
-![NO SPACE row and storage advice](images/crafting-status-no-space.png)
+![NO SPACE row and storage advice](images/crafting-status-no-space.jpg)
 
 *A retained CPU output cannot return to the full ME storage network.*
 

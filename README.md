@@ -19,7 +19,7 @@
 ## See what your craft is waiting for
 
 <p align="center">
-  <img src="docs/images/crafting-status-delayed.png" alt="AE2 crafting status showing a delayed recipe and a remaining-time estimate" width="705">
+  <img src="docs/images/crafting-status-delayed.jpg" alt="AE2 crafting status showing a delayed recipe and a remaining-time estimate" width="705">
 </p>
 
 <p align="center">

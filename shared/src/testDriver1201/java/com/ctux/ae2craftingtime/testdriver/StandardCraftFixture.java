@@ -28,6 +28,7 @@ final class StandardCraftFixture {
     boolean returnedStone;
     boolean holdFinalOutput;
     boolean missingPlanInput;
+    boolean unprofiledPlan;
     private int[] initialSamples;
     String checkpoint = "new";
 
@@ -85,7 +86,7 @@ final class StandardCraftFixture {
             }
             pattern(player, 4, Items.COBBLESTONE, Items.STONE);
             pattern(player, 8, Items.STONE, Items.SMOOTH_STONE);
-            seed(player);
+            if (!unprofiledPlan) seed(player);
             initialized = true;
         }
         checkpoint = "craftable";
@@ -93,14 +94,26 @@ final class StandardCraftFixture {
     }
 
     void seed(ServerPlayer player) {
+        seed(player, Items.STONE);
+        seed(player, Items.SMOOTH_STONE);
+    }
+
+    void seed(ServerPlayer player, net.minecraft.world.item.Item item) {
         var grid = cpu(player).getMainNode().getGrid();
         var network = ProfilerBridge.networkId(grid);
         var tick = player.serverLevel().getGameTime();
-        for (var item : java.util.List.of(Items.STONE, Items.SMOOTH_STONE)) {
-            var key = AEItemKey.of(item);
-            ProfilerBridge.start(network, this, key, 1, tick);
-            ProfilerBridge.complete(network, this, key, 1, tick + (item == Items.STONE ? 100 : 40));
-        }
+        var key = AEItemKey.of(item);
+        ProfilerBridge.start(network, this, key, 1, tick);
+        ProfilerBridge.complete(network, this, key, 1, tick + (item == Items.STONE ? 100 : 40));
+    }
+
+    void preparePartialJob(ServerPlayer player) {
+        var grid = cpu(player).getMainNode().getGrid();
+        grid.getStorageService().getInventory().extract(AEItemKey.of(Items.SMOOTH_STONE),
+                Long.MAX_VALUE, Actionable.MODULATE, IActionSource.empty());
+        ProfilerBridge.clearStats(ProfilerBridge.key(ProfilerBridge.networkId(grid), AEItemKey.of(Items.SMOOTH_STONE)));
+        initialSamples = null;
+        returnedStone = false;
     }
 
     private void pattern(ServerPlayer player, int offset, net.minecraft.world.item.Item input, net.minecraft.world.item.Item output) {

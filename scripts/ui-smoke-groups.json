@@ -26,8 +26,8 @@
       "screenshots": ["status-delayed.png", "delayed-tooltip.png", "delayed-recovered.png", "delayed-plate-recovered.png", "delayed-final-held.png", "delayed-world-highlight.png", "delayed-world-finished.png"]
     },
     "craft-lifecycle": {
-      "checks": ["plan", "submitted", "status", "profile-sample", "total-cleared", "completed", "output"],
-      "screenshots": ["plan-default.png", "status-default.png", "status-finished-job.png", "status-completed.png"]
+      "checks": ["plan", "submitted", "status", "profile-sample", "total-cleared", "completed", "output", "plan-no-data", "plan-partial", "accuracy-full", "accuracy-partial", "details-chat"],
+      "screenshots": ["plan-no-data.png", "plan-partial.png", "plan-default.png", "status-default.png", "status-finished-job.png", "status-completed.png", "job-accuracy-full.png", "details-chat.png", "plan-partial-job.png", "status-partial-job.png", "status-partial-finished.png", "status-partial-completed.png", "job-accuracy-partial.png"]
     },
     "no-target-status": {
       "checks": ["screen", "real-job", "mixed-row", "tooltip", "layout", "target-removed", "target-restored"],

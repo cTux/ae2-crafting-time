@@ -18,7 +18,7 @@ navigation:
 версії 26.1.2; без Crafting Tree вона нічого не змінює. `showInTree = false`
 також ховає позначки та взаємодію.
 
-![AE2 Crafting Tree з рекурсивною позначкою TTC](images/crafting-tree-estimate.png)
+![AE2 Crafting Tree з рекурсивною позначкою TTC](images/crafting-tree-estimate.jpg)
 
 *Тестові зразки демонструють оцінку під вузлом Crafting Tree.*
 

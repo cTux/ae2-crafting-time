@@ -24,7 +24,7 @@ The estimate disappears when history is cleared or no longer retained, and it
 updates as new intervals are learned. It is not a deadline: machine upgrades,
 shared load, recipe changes, and server performance can change the result.
 
-![Running Crafting Status with a TTC estimate](images/crafting-status-running.png)
+![Running Crafting Status with a TTC estimate](images/crafting-status-running.jpg)
 
 *The visible TTC uses learned throughput for the remaining recipe amount.*
 

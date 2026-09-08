@@ -19,7 +19,7 @@ Crafting Co-Processors, and the active machine may need attention. When a
 clickable provider hint appears, click it to highlight the relevant provider.
 A warning points to where work stopped; it does not prove a machine is broken.
 
-![Delayed output diagnostics tooltip](images/crafting-status-ttc-bottleneck-diagnostics.png)
+![Delayed output diagnostics tooltip](images/crafting-status-ttc-bottleneck-diagnostics.jpg)
 
 *A deliberately unfuelled furnace demonstrates the delayed row and its bottleneck hints.*
 
