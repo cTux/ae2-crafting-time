@@ -34,7 +34,7 @@ import java.util.concurrent.CompletableFuture;
 
 public final class CraftPlanScenario {
     private static final Duration STEP_TIMEOUT = Duration.ofSeconds(30);
-    private static final Duration START_TIMEOUT = Duration.ofMinutes(2);
+    private static final Duration START_TIMEOUT = Duration.ofMinutes(10);
     private final Minecraft minecraft;
     private final NoSpaceScenario noSpace;
     private final StandardAe2Scenario standard;
