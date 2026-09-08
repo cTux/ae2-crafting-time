@@ -18,7 +18,7 @@ own history. Items use item counts; fluids and supported chemicals use
 millibuckets. A new output can show **No data yet** until a usable window has
 completed, and changing machines affects only later samples.
 
-![Running crafting job producing learned output](images/crafting-status-running.png)
+![Running crafting job producing learned output](images/crafting-status-running.jpg)
 
 *A live job produces the outputs that become timing history after a completed window.*
 

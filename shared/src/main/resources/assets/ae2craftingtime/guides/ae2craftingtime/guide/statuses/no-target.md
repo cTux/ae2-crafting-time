@@ -24,7 +24,7 @@ otherwise it expires after 20 server ticks and a refresh. A destination that is
 present but rejects inputs is not `NO TARGET`, and busy or unvisited alternatives
 do not prove this status. The state is not saved with the world.
 
-![NO TARGET row and destination advice](images/crafting-status-no-target.png)
+![NO TARGET row and destination advice](images/crafting-status-no-target.jpg)
 
 *No compatible destination was found for the next scheduled batch.*
 

@@ -566,3 +566,18 @@ Every full compatible suite includes this scenario and the NO PROVIDER
 regression. Driver checks observe final frames and real AE2 state, never seed
 production diagnostics. Shared pure tests cover threshold, expiry, priority,
 CPU switching and lifecycle; packet tests cover the shared transport boundary.
+
+## Screenshot refresh checkpoints
+
+For issue #343, `craft-lifecycle` also captures an unprofiled two-row plan,
+then a plan with only the stone dependency profiled. It seeds both rows before
+the first real two-furnace job. After completion it requests the final output's
+actual details through Ctrl-click and captures the open chat with full job
+coverage. It removes the completed output, clears only smooth-stone history,
+and completes a second real job with partial prediction coverage. A second
+Ctrl-click captures the resulting partial-coverage chat. Accuracy must come
+from normal CPU submission and completion, never seeded accuracy samples.
+Keep the original lifecycle checkpoints and add stable PNG/sidecar pairs for
+each new context. Chat captures preserve the original response; published crops
+exclude the player attribution. Single-case interactive mode may retain this
+world for subsequent manual book checks; suites remain non-interactive.

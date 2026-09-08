@@ -24,7 +24,7 @@ it expires after 20 server ticks and a refresh. Partial acceptance followed by a
 successful dispatch is not blocked input. The label does not identify which
 slot, side, or filter rejected the ingredients.
 
-![INPUT BLOCKED row and destination advice](images/crafting-status-input-blocked.png)
+![INPUT BLOCKED row and destination advice](images/crafting-status-input-blocked.jpg)
 
 *The destination exists, but it is not accepting this pattern's inputs.*
 

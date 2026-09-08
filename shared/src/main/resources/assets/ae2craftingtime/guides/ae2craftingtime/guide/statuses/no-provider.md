@@ -23,7 +23,7 @@ The label clears after the next status refresh finds that exact pattern again,
 or when the job finishes or is cancelled. It does not name a specific provider,
 and another healthy recipe for the same output does not clear the missing one.
 
-![NO PROVIDER row and provider advice](images/crafting-status-no-provider.png)
+![NO PROVIDER row and provider advice](images/crafting-status-no-provider.jpg)
 
 *The active batch can finish, but the remaining scheduled batches lost their pattern.*
 

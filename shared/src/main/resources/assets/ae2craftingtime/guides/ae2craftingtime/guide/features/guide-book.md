@@ -20,7 +20,7 @@ renderer. Modern NeoForge uses GuideME. Without the optional renderer on Forge
 or NeoForge, the rest of AE2 Crafting Time still works and no broken recipe is
 shown.
 
-![Crafting Plan first-estimate example explained by the guide](images/crafting-plan-no-data.png)
+![Crafting Plan first-estimate example explained by the guide](images/crafting-plan-no-data.jpg)
 
 *This real in-game screen is the no-history example linked from Chapter 1.*
 

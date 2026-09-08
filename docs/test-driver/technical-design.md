@@ -619,3 +619,16 @@ CPU is idle, output is stored, new samples exist, and both plates are absent,
 capture `delayed-world-finished.png` before reopening idle status. World stages
 run independently of the menu-frame observer, which has no fresh frames when
 menus are closed. Rendering correctness still requires image review.
+
+## Lifecycle gallery evidence
+
+`StandardAe2Scenario` extends the existing lifecycle leaf, without a new runner
+or scenario identifier. Before dispatch, fixture sample preparation controls
+zero, one, then two known recipe rows; observations wait for the corresponding
+rendered no-data/estimate state. Both jobs run the existing real furnace pump.
+The second job removes the first stored output and clears the final recipe's
+sample and accuracy history, retaining dependency history. Verify the server's
+accuracy sample has respectively 2/2 and 1/2 known rows before Ctrl-clicking the
+final recipe in a reopened plan. Clear unrelated chat before that real request,
+close the menu, open ChatScreen and wait for rendered frames before capture.
+The screenshot helper records current-screen sidecars even without an AE2 menu.

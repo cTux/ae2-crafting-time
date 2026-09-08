@@ -183,3 +183,34 @@ persistence, navigation, translation, and search. The
 A Java book duplicates GuideME behavior. A renamed vanilla book cannot open
 the guide. A global model override affects other books. Patchouli/custom
 readers add an unnecessary UI and dependency. None is needed here.
+
+## Screenshot exports
+
+Book screenshots are cropped from reviewed smoke evidence for the requested
+pack. The gallery stores native-size JPEG crops; book copies use the same source
+rectangle; book JPEG quality is 75. Both locales carry identical image bytes.
+`docs/images/sources.json` records the source run, SHA-256 and physical-pixel
+rectangle, and `scripts/export-guide-image.ps1` reproduces an export without
+changing the raw evidence.
+
+GuideME's `LytImage.computeLayout` divides intrinsic width and height by four,
+then reduces an image to the available page width. This behavior exists in
+[21.1.0](https://github.com/AppliedEnergistics/GuideME/blob/v21.1.0/src/main/java/guideme/document/block/LytImage.java)
+and [26.1.10-alpha](https://github.com/AppliedEnergistics/GuideME/blob/v26.1.10-alpha/src/main/java/guideme/document/block/LytImage.java).
+A tightly cropped image at its native dimensions therefore becomes too small in
+the book. Book exports use a width of `min(1600, cropWidth * 4)` pixels with
+nearest-neighbor scaling and the original aspect ratio. The cap avoids blowing
+up a narrow crafting-tree diagram while wider tooltips fill the page. This
+compensates for image layout; it does not add source detail or replace the
+renderer. The page's normal flow and scrolling continue to own image placement.
+
+Validate packaged links with `checkGuideResources` and inspect every screenshot
+page in the running book at 1920x1080. Confirm image decoding, readable text,
+page-width use, scrolling and navigation; a successful JPEG export alone does
+not prove in-game readability. See [issue 343](https://github.com/cTux/ae2-crafting-time/issues/343).
+
+For GuideME 20.1.15 at 1920x1080 with automatic GUI scale 4, the 480-pixel
+virtual screen leaves approximately 355 logical pixels for the document after
+navigation. A 1600-pixel image starts at 400 logical pixels and fills that area;
+2400-pixel exports add bytes without improving this view. Book quality 75 keeps
+colored text legible in the inspected exports; gallery quality remains 90.

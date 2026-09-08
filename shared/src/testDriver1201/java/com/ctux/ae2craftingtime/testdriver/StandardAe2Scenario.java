@@ -37,10 +37,12 @@ final class StandardAe2Scenario {
             Map.entry("running-status", List.of("submitted", "running", "progress", "header", "layout")),
             Map.entry("delayed-status", List.of("submitted", "delayed", "row", "style", "tooltip", "layout", "recovered",
                     "plate-recovered", "final-plate", "completed", "output", "profile-sample", "plate-cleared")),
-            Map.entry("craft-lifecycle", List.of("plan", "submitted", "status", "profile-sample", "total-cleared", "completed", "output")));
+            Map.entry("craft-lifecycle", List.of("plan", "submitted", "status", "profile-sample", "total-cleared", "completed", "output",
+                    "plan-no-data", "plan-partial", "accuracy-full", "accuracy-partial", "details-chat")));
     private enum Stage { PREPARE, TERMINAL, AMOUNT, PLAN_SORT, PLAN_TOOLTIP, PLAN_DETAILS, PLAN_RESET,
         SUBMIT, OPEN_STATUS, ACTIVE, STATUS_SORT, STATUS_TOOLTIP, STATUS_DETAILS, STATUS_RESET,
-        RESTORE, DELAYED, PUMP, FINISHED, REOPEN, EMPTY, WORLD_POSITION, WORLD_HIGHLIGHT, WORLD_RELEASE, WORLD_FINISHED }
+        RESTORE, DELAYED, PUMP, FINISHED, REOPEN, EMPTY, WORLD_POSITION, WORLD_HIGHLIGHT, WORLD_RELEASE, WORLD_FINISHED,
+        GALLERY_PARTIAL_PLAN, GALLERY_PROFILED_PLAN, GALLERY_DETAILS, GALLERY_CHAT, GALLERY_NEXT_JOB }
     private final String leaf;
     StandardAe2Scenario(String leaf) {
         if (!CHECKS.containsKey(leaf)) throw new IllegalArgumentException("Unknown standard leaf: " + leaf);
@@ -53,6 +55,9 @@ final class StandardAe2Scenario {
     private Stage phase = Stage.PREPARE;
     private Stage reportedPhase;
     private int sort;
+    private boolean partialJob;
+    private boolean reviewJob;
+    private boolean chatCleared;
     private long lastFrame = -1;
     private volatile boolean dispatched;
     private volatile boolean progressed;
@@ -72,6 +77,7 @@ final class StandardAe2Scenario {
         if (phase == Stage.PREPARE) {
             fixture.holdFinalOutput = leaf.equals("delayed-status");
             fixture.missingPlanInput = leaf.equals("standard-plan-controls");
+            fixture.unprofiledPlan = leaf.equals("craft-lifecycle");
             if (server(minecraft, player -> fixture.prepare(player, marker))) {
                 if (leaf.equals("standard-plan-controls")) {
                     mark(checks, "item-resolution", ProviderHighlightShapes.resolveItem(null).isEmpty()
@@ -163,6 +169,29 @@ final class StandardAe2Scenario {
             phase = Stage.REOPEN;
             return false;
         }
+        if (phase == Stage.GALLERY_CHAT) {
+            if (!(minecraft.screen instanceof net.minecraft.client.gui.screens.ChatScreen)
+                    || !worldFrames.observe(true)) return false;
+            screenshot.accept(partialJob ? "job-accuracy-partial.png" : "job-accuracy-full.png");
+            mark(checks, partialJob ? "accuracy-partial" : "accuracy-full", true);
+            if (!partialJob) {
+                screenshot.accept("details-chat.png");
+                mark(checks, "details-chat", true);
+            }
+            minecraft.setScreen(null);
+            worldFrames.reset();
+            if (partialJob) return true;
+            phase = Stage.GALLERY_NEXT_JOB;
+            return false;
+        }
+        if (phase == Stage.GALLERY_NEXT_JOB) {
+            if (server(minecraft, player -> { fixture.preparePartialJob(player); return true; })) {
+                partialJob = true;
+                reviewJob = false;
+                phase = Stage.TERMINAL;
+            }
+            return false;
+        }
         var snapshot = UiObservationStore.latest();
         if (snapshot == null || snapshot.frame() == lastFrame) return false;
         lastFrame = snapshot.frame();
@@ -170,15 +199,75 @@ final class StandardAe2Scenario {
             frames.reset();
             return false;
         }
-        if (!frames.observe(List.of(phase, sort, CaptureEvidence.readiness(snapshot)))) return false;
+        var planDescriptions = leaf.equals("craft-lifecycle") && minecraft.screen instanceof CraftConfirmScreen
+                ? snapshot.rows().stream().map(UiSnapshot.Row::description).toList() : List.of();
+        if (!frames.observe(List.of(phase, sort, CaptureEvidence.readiness(snapshot), planDescriptions))) return false;
         boolean plan = phase.ordinal() < Stage.OPEN_STATUS.ordinal();
         String prefix = plan ? "plan" : "status";
         if (phase == Stage.PLAN_SORT && !leaf.equals("standard-plan-controls")) {
             if (!(minecraft.screen instanceof CraftConfirmScreen) || snapshot.rows().stream()
                     .filter(row -> row.craftAmount() > 0).count() < 2) return false;
-            mark(checks, "plan", true);
-            if (leaf.equals("craft-lifecycle")) screenshot.accept("plan-default.png");
+            if (leaf.equals("craft-lifecycle")) {
+                if (reviewJob) {
+                    phase = Stage.GALLERY_DETAILS;
+                    return false;
+                }
+                if (!galleryPlanReady(snapshot.rows(), partialJob ? 1 : 0)) return false;
+                moveMouse.accept(0, 0);
+                if (!snapshot.tooltip().isEmpty()) return false;
+                if (partialJob) {
+                    screenshot.accept("plan-partial-job.png");
+                    phase = Stage.SUBMIT;
+                } else {
+                    screenshot.accept("plan-no-data.png");
+                    mark(checks, "plan-no-data", true);
+                    phase = Stage.GALLERY_PARTIAL_PLAN;
+                }
+            } else {
+                mark(checks, "plan", true);
+                phase = Stage.SUBMIT;
+            }
+        } else if (phase == Stage.GALLERY_PARTIAL_PLAN) {
+            if (!server(minecraft, player -> { fixture.seed(player, net.minecraft.world.item.Items.STONE); return true; })) return false;
+            phase = Stage.GALLERY_PROFILED_PLAN;
+        } else if (phase == Stage.GALLERY_PROFILED_PLAN) {
+            if (!Boolean.TRUE.equals(checks.get("plan-partial"))) {
+                if (!galleryPlanReady(snapshot.rows(), 1) || !snapshot.tooltip().isEmpty()) return false;
+                screenshot.accept("plan-partial.png");
+                mark(checks, "plan-partial", true);
+            }
+            if (!Boolean.TRUE.equals(checks.get("plan"))) {
+                if (!server(minecraft, player -> { fixture.seed(player, net.minecraft.world.item.Items.SMOOTH_STONE); return true; })) return false;
+                mark(checks, "plan", true);
+                return false;
+            }
+            if (!planEstimatesReady(snapshot.rows())) return false;
+            screenshot.accept("plan-default.png");
             phase = Stage.SUBMIT;
+        } else if (phase == Stage.GALLERY_DETAILS) {
+            if (!server(minecraft, player -> {
+                var key = ProfilerBridge.key(ProfilerBridge.networkId(fixture.cpu(player).getMainNode().getGrid()),
+                        appeng.api.stacks.AEItemKey.of(net.minecraft.world.item.Items.SMOOTH_STONE));
+                var accuracy = ProfilerBridge.accuracy(key).orElseThrow(() -> new IllegalStateException("Completed job has no accuracy sample"));
+                if (!galleryAccuracyReady(accuracy, partialJob)) throw new IllegalStateException("Unexpected real job coverage: " + accuracy);
+                return true;
+            })) return false;
+            if (!chatCleared) {
+                minecraft.gui.getChat().clearMessages(false);
+                chatCleared = true;
+                stats.next();
+            }
+            if (!stats.click(minecraft, snapshot, "minecraft:smooth_stone", false)) return false;
+            var messages = ((com.ctux.ae2craftingtime.testdriver.mixin.ChatComponentAccessor) minecraft.gui.getChat())
+                    .ae2craftingtime_test_driver$messages();
+            if (messages.stream().noneMatch(message -> message.content().getString()
+                    .endsWith("coverage " + (partialJob ? "1/2" : "2/2")))) {
+                throw new IllegalStateException("Stats chat did not report the completed job coverage");
+            }
+            minecraft.player.closeContainer();
+            DriverPlatform.openChat(minecraft);
+            chatCleared = false;
+            phase = Stage.GALLERY_CHAT;
         } else if (phase == Stage.PLAN_SORT || phase == Stage.STATUS_SORT) {
             var rows = snapshot.rows().stream().filter(row -> row.craftAmount() > 0).map(UiSnapshot.Row::outputId).toList();
             if (!rows.containsAll(List.of("minecraft:stone", "minecraft:smooth_stone"))) return false;
@@ -236,7 +325,7 @@ final class StandardAe2Scenario {
             if (reset && plan) return true;
         } else if (phase == Stage.SUBMIT) {
             moveMouse.accept(0, 0);
-            if (!server(minecraft, player -> { fixture.seed(player); return true; })) return false;
+            if (!leaf.equals("craft-lifecycle") && !server(minecraft, player -> { fixture.seed(player); return true; })) return false;
             var start = minecraft.screen.children().stream().filter(AbstractWidget.class::isInstance)
                     .map(AbstractWidget.class::cast).filter(w -> w.active && w.getMessage().getString().equals("Start"))
                     .findFirst().orElseThrow(() -> new IllegalStateException("Crafting Plan Start button is missing"));
@@ -249,7 +338,7 @@ final class StandardAe2Scenario {
             if (leaf.equals("standard-status-controls")) { phase = Stage.STATUS_SORT; return false; }
             if (leaf.equals("craft-lifecycle")) {
                 mark(checks, "status", true);
-                screenshot.accept("status-default.png");
+                screenshot.accept(partialJob ? "status-partial-job.png" : "status-default.png");
                 phase = Stage.PUMP;
             } else if (leaf.equals("delayed-status")) { phase = Stage.DELAYED; }
             else if (waiting != null && running != null) {
@@ -357,7 +446,7 @@ final class StandardAe2Scenario {
                 throw new IllegalStateException("completed crafting status still shows total TTC");
             }
             if (leaf.equals("craft-lifecycle")) mark(checks, "total-cleared", true);
-            if (leaf.equals("craft-lifecycle")) screenshot.accept("status-finished-job.png");
+            if (leaf.equals("craft-lifecycle")) screenshot.accept(partialJob ? "status-partial-finished.png" : "status-finished-job.png");
             var button = minecraft.screen.children().stream().filter(appeng.client.gui.widgets.TabButton.class::isInstance)
                     .map(appeng.client.gui.widgets.TabButton.class::cast).filter(w -> w.visible).findFirst().orElseThrow();
             DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
@@ -369,10 +458,36 @@ final class StandardAe2Scenario {
                 if (snapshot.text().stream().anyMatch(t -> t.key().equals("text.ae2craftingtime.ttc_delayed"))) return false;
                 mark(checks, "recovered", true);
                 screenshot.accept("delayed-recovered.png");
-            } else { screenshot.accept("status-completed.png"); }
+            } else { screenshot.accept(partialJob ? "status-partial-completed.png" : "status-completed.png"); }
+            if (leaf.equals("craft-lifecycle")) {
+                minecraft.player.closeContainer();
+                reviewJob = true;
+                phase = Stage.TERMINAL;
+                return false;
+            }
             return true;
         }
         return false;
+    }
+
+    static boolean galleryPlanReady(List<UiSnapshot.Row> rows, int knownRows) {
+        var ids = List.of("minecraft:stone", "minecraft:smooth_stone");
+        for (int index = 0; index < ids.size(); index++) {
+            String id = ids.get(index);
+            var row = rows.stream().filter(value -> value.outputId().equals(id) && value.craftAmount() > 0).findFirst();
+            if (row.isEmpty()) return false;
+            boolean known = index < knownRows;
+            if (row.get().description().stream().noneMatch(text -> known ? CraftPlanScenario.isResolvedTtc(text)
+                    : text.key().equals("text.ae2craftingtime.ttc")
+                            && text.arguments().contains("text.ae2craftingtime.collecting_data"))) return false;
+        }
+        return true;
+    }
+
+    static boolean galleryAccuracyReady(com.ctux.ae2craftingtime.core.TtcAccuracyStats accuracy, boolean partial) {
+        return accuracy.sampleCount() == 1 && accuracy.fullyCoveredSampleCount() == (partial ? 0 : 1)
+                && accuracy.lastKnownRows() == (partial ? 1 : 2) && accuracy.lastTotalRows() == 2
+                && accuracy.lastPredictedSeconds() > 0 && accuracy.lastActualWallSeconds() > 0;
     }
 
     private static boolean missingFirst(List<UiSnapshot.Row> rows) {
