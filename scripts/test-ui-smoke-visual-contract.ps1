@@ -27,7 +27,7 @@ function Read-Visual {
 }
 try {
     $unknown = Read-Visual
-    Assert ($unknown[0].result -eq 'REVIEW_REQUIRED') 'Unqualified valid screenshot must require review'
+    Assert ($unknown[0].result -eq 'REVIEW_REQUIRED') ("Unqualified valid screenshot must require review: " + ($unknown | ConvertTo-Json -Depth 8 -Compress))
     $contract = @{scenario='craft-plan';image='checkpoint.png';environmentId=$unknown[0].environmentId;disposition='automatic';revision=1;qualification='synthetic-negative-test';regions=@(@{baseline='baseline.png';sha256=(Get-FileHash $baseline).Hash;rect=@(0,0,16,16);masks=@()})}
     $contracts.checkpoints=@($contract); Write-Json $contractPath $contracts
     Assert ((Read-Visual)[0].result -eq 'PASS') 'Identical qualified image must pass'
@@ -47,7 +47,7 @@ try {
     foreach ($field in @('world','scenario','profile','id','schema','frame','width','height','renderer')) {
         $old=$data.capture[$field]; $data.capture[$field]=if($old -is [int]) {0} else {'wrong'}; Write-Json $sidecar $data
         if ($field -eq 'renderer') { Assert ((Read-Visual)[0].result -eq 'REVIEW_REQUIRED') 'New renderer must require review' }
-        else { Assert ((Read-Visual)[0].result -eq 'FAIL') "Invalid $field must fail" }
+        else { Assert ((Read-Visual)[0].result -eq 'FAIL') ("Invalid $field must fail: " + ((Read-Visual) | ConvertTo-Json -Depth 8 -Compress)) }
         $data.capture[$field]=$old
     }
     Write-Json $sidecar $data

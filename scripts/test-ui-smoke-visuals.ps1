@@ -46,7 +46,7 @@ $outcomes = foreach ($scenario in $Scenarios) {
             $capture = $snapshot.capture
             if ($capture.schema -ne 1 -or $capture.world -cne $case[0].world -or $capture.scenario -cne $scenario -or
                     $capture.profile -cne $Profile -or $capture.id -cne "$($case[0].world)/$image" -or
-                    !$ids.Add($capture.id) -or $capture.frame -isnot [long] -and $capture.frame -isnot [int] -or
+                    !$ids.Add($capture.id) -or ($capture.frame -isnot [long] -and $capture.frame -isnot [int]) -or
                     $capture.frame -lt 1 -or !$capture.renderer) { throw 'Invalid or stale capture identity' }
             if ((Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ine $capture.sha256) { throw 'PNG hash does not match captured frame' }
             $bitmap = [SmokePixels]::Read($file)
@@ -90,7 +90,7 @@ $outcomes = foreach ($scenario in $Scenarios) {
             }
         } catch { $verdict = 'FAIL'; $reason = $_.Exception.Message }
         finally { if ($bitmap) { $bitmap.Dispose() } }
-        [ordered]@{scenario=$scenario;image=$image;result=$verdict;reason=$reason;environmentId=$environmentId;regions=$regions}
+        [pscustomobject][ordered]@{scenario=$scenario;image=$image;result=$verdict;reason=$reason;environmentId=$environmentId;regions=$regions}
     }
 }
 [ordered]@{schema=1;checkpoints=@($outcomes)} | ConvertTo-Json -Depth 20 |

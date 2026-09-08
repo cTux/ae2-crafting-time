@@ -13,7 +13,7 @@ $stream.Dispose()
 Remove-Item -LiteralPath $probe
 if ($Preflight) { return }
 $campaign = [IO.Path]::GetFullPath($CampaignDirectory)
-if ($archiveRootPath.StartsWith($campaign.TrimEnd('/','\') + [IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) { throw 'Archive cannot be inside the campaign' }
+if ($archiveRootPath.TrimEnd('/','\') -ieq $campaign.TrimEnd('/','\') -or $archiveRootPath.StartsWith($campaign.TrimEnd('/','\') + [IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) { throw 'Archive cannot be inside the campaign' }
 $gatePath = Join-Path $campaign 'gate.json'
 if (Test-Path -LiteralPath $gatePath) { throw 'Campaign is already finalized; preserve its gate and use a new attempt' }
 $clock = [Diagnostics.Stopwatch]::StartNew()
@@ -26,6 +26,7 @@ foreach ($run in $raw.results) {
         $report = [IO.Path]::GetFullPath($run.report)
         if (!$report.StartsWith($campaign.TrimEnd('/','\') + [IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) { throw 'Report is outside campaign' }
         $status = Get-Content -LiteralPath (Join-Path $report 'run/status.json') -Raw | ConvertFrom-Json
+        if ($run.result -eq 'PASS' -and (!$status.pid -or $null -eq $status.exitCode -or $status.exitCode -ne 0)) { $gate.cleanupResult = 'FAIL'; throw 'Passing run lacks a confirmed successful client exit' }
         if ($status.pid -and $null -eq $status.exitCode) { $gate.cleanupResult = 'FAIL'; throw 'Client exit is unconfirmed' }
         $cases = @($run.cases | ForEach-Object scenario)
         $evidence = Join-Path $report 'run/evidence'
@@ -53,7 +54,8 @@ try {
     $manifest = @()
     foreach ($file in Get-ChildItem -LiteralPath $campaign -Recurse -File) {
         $relative = $file.FullName.Substring($campaign.Length).TrimStart('/','\')
-        if ($relative -match '(^|[/\])(bundle|runtime)([/\]|$)') { continue }
+        $normalized = $relative.Replace('\','/')
+        if ($normalized -match '(^|/)(bundle|runtime)(/|$)' -and $normalized -notmatch '/bundle/expected-adapters\.json$') { continue }
         $copy = Join-Path $pending $relative
         New-Item -ItemType Directory -Path (Split-Path -Parent $copy) -Force | Out-Null
         Copy-Item -LiteralPath $file.FullName -Destination $copy

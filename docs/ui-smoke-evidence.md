@@ -26,10 +26,10 @@ For a named Prism campaign, normalize its results into the same campaign layout
 and use `scripts/complete-ui-smoke-evidence.ps1`; launch and graph eligibility
 still follow the named-modpack skill. Keep the pack's original mods and resources.
 
-Planned automation: [faster unattended smoke research](automated-ui-testing/automation-research.md)
-and [#347](https://github.com/cTux/ae2-crafting-time/issues/347) describe automatic
-visual validation and archiving. They do not change the current image-inspection
-or archive requirements below; those change only with qualified implementation.
+The [unattended smoke research](automated-ui-testing/automation-research.md)
+and [#347](https://github.com/cTux/ae2-crafting-time/issues/347) explain the design.
+The gate above changes image review only for explicitly qualified checkpoints;
+the remaining inspection and archive requirements still apply.
 
 ## Startup integration diagnostics, 2026-09-05
 
