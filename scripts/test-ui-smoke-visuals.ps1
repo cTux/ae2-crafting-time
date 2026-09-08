@@ -17,7 +17,11 @@ function Read-Rect($value) {
     return ,([int[]]$value)
 }
 Add-Type -AssemblyName System.Drawing
-if (-not ('SmokePixels' -as [type])) { Add-Type -Path (Join-Path $PSScriptRoot 'ui-smoke-image.cs') -ReferencedAssemblies System.Drawing }
+if (-not ('SmokePixels' -as [type])) {
+    $drawingReferences = @(@([Drawing.Bitmap],[Drawing.Color]) + [Drawing.Bitmap].GetInterfaces() |
+        ForEach-Object { $_.Assembly.Location } | Select-Object -Unique) + @('System.Runtime')
+    Add-Type -Path (Join-Path $PSScriptRoot 'ui-smoke-image.cs') -ReferencedAssemblies $drawingReferences
+}
 $contracts = Get-Content -LiteralPath $ContractsFile -Raw | ConvertFrom-Json
 $plan = Get-Content -LiteralPath $SuitePlan -Raw | ConvertFrom-Json
 $environment = Get-Content -LiteralPath $EnvironmentFile -Raw | ConvertFrom-Json
