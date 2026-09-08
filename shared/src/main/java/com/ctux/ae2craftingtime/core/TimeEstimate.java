@@ -34,6 +34,10 @@ public final class TimeEstimate {
         return totalSeconds == 0 ? Optional.empty() : Optional.of(formatSeconds(totalSeconds));
     }
 
+    public static boolean hasMeasuredProgress(long startItems, long remainingItems) {
+        return remainingItems < startItems;
+    }
+
     public static String formatTicks(double ticks) {
         return formatSeconds((long) Math.ceil(Math.max(0, ticks) / 20.0));
     }

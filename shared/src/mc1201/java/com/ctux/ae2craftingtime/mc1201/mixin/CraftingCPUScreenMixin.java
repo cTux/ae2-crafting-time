@@ -5,6 +5,7 @@ import appeng.client.gui.me.crafting.CraftingCPUScreen;
 import appeng.client.gui.me.crafting.CraftingStatusScreen;
 import appeng.client.gui.style.ScreenStyle;
 import appeng.client.gui.widgets.Scrollbar;
+import appeng.core.localization.GuiText;
 import appeng.menu.me.crafting.CraftingCPUMenu;
 import appeng.menu.me.crafting.CraftingStatus;
 import appeng.menu.me.crafting.CraftingStatusEntry;
@@ -24,6 +25,7 @@ import com.ctux.ae2craftingtime.mc1201.TtcDetailsClick;
 import com.ctux.ae2craftingtime.mc1201.TtcDetailsKeyMapping;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
@@ -157,6 +159,14 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         ae2craftingtime$titleTtc = null;
         if (status == null) {
             return title;
+        }
+        if ((Object) this instanceof CraftingStatusScreen && !TimeEstimate.hasMeasuredProgress(
+                status.getStartItemCount(), status.getRemainingItemCount())) {
+            title = GuiText.CraftingStatus.text();
+            if (menu.isCantStoreItems()) {
+                title = title.copy().append(" - ")
+                        .append(GuiText.CantStoreItems.text().withStyle(ChatFormatting.RED));
+            }
         }
         if (status.getRemainingItemCount() <= 0
                 || status.getEntries().stream().noneMatch(entry -> entry.getActiveAmount() > 0
