@@ -23,6 +23,7 @@ public final class TestDriverRuntime implements AutoCloseable {
     private boolean switchingInProgress;
     private boolean switchingNow;
     private net.minecraft.server.MinecraftServer stoppingServer;
+    private boolean finalCleanup;
     private boolean finished;
 
     public TestDriverRuntime(DriverOptions options, String driverFile) throws Exception {
@@ -81,9 +82,13 @@ public final class TestDriverRuntime implements AutoCloseable {
         if (scenario.evidenceReady() && (scenario.state() == ScenarioState.RESULT_WRITTEN || scenario.state() == ScenarioState.FAILED)) {
             switching = true;
             try {
-                boolean next = progress.finish(scenario.state() == ScenarioState.RESULT_WRITTEN, Instant.now());
+                boolean passed = scenario.state() == ScenarioState.RESULT_WRITTEN;
+                boolean next = progress.finish(passed, Instant.now());
                 writeProgress();
                 if (next) {
+                    switching = true;
+                } else if (passed && oneWorld) {
+                    finalCleanup = true;
                     switching = true;
                 } else {
                     finished = true;
@@ -122,6 +127,11 @@ public final class TestDriverRuntime implements AutoCloseable {
                 com.ctux.ae2craftingtime.mc1201.ClientStatsRequests.clear();
                 com.ctux.ae2craftingtime.mc1201.ProviderHighlightClient.onSessionEnd();
                 UiObservationStore.reset();
+                if (finalCleanup) {
+                    finished = true;
+                    minecraft.stop();
+                    return;
+                }
                 var item = cases.get(++index);
                 scenario = new CraftPlanScenario(minecraft, item, driverFile);
                 progress.start(Instant.now());
