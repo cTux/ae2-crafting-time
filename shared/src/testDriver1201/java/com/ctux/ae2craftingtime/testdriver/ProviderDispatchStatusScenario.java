@@ -40,7 +40,7 @@ final class ProviderDispatchStatusScenario {
         if (!supports(scenario)) throw new IllegalArgumentException("unsupported provider status scenario: " + scenario);
         this.scenario = scenario;
         key = "text.ae2craftingtime." + scenario.replace("-status", "").replace('-', '_');
-        fixture = new DispatchStatusFixture(INPUT_BLOCKED.equals(scenario) ? 2 : 1,
+        fixture = new DispatchStatusFixture(INPUT_BLOCKED.equals(scenario) ? 128 : 1,
                 LOCKED.equals(scenario) ? LockCraftingMode.LOCK_WHILE_LOW : LockCraftingMode.NONE,
                 INPUT_BLOCKED.equals(scenario));
     }
@@ -142,13 +142,14 @@ final class ProviderDispatchStatusScenario {
             if (serverStep(minecraft, player -> {
                 var target = (Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north());
                 for (int slot = 0; slot < target.getContainerSize(); slot++) target.setItem(slot, new ItemStack(Items.COBBLESTONE, 64));
+                target.setItem(0, ItemStack.EMPTY);
                 return true;
             })) phase++;
         } else if (phase == 6 && hasWarning(snapshot)) {
             checks.put("zero-insertion", true);
             screenshot.accept("input-blocked-zero-insertion.png");
             if (serverStep(minecraft, player -> {
-                ((Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north())).setItem(0, new ItemStack(Items.COBBLESTONE, 63));
+                ((Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north())).setItem(0, ItemStack.EMPTY);
                 return true;
             })) { changedAt = System.nanoTime(); phase++; }
         } else if (phase == 7 && recovered(snapshot)) {
