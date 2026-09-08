@@ -4,12 +4,14 @@ $source = Join-Path $temp "source"
 $stage = Join-Path $temp "stage"
 $scripts = Join-Path $source "scripts"
 New-Item -ItemType Directory -Path $scripts -Force | Out-Null
+New-Item -ItemType Directory -Path (Join-Path $source 'bundle') -Force | Out-Null
+'{"loader":"1.20.1-47.4.23"}' | Set-Content (Join-Path $source 'bundle/profile.json')
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "run-ui-smoke-codexvm.ps1") -Destination $scripts
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'get-java-home.ps1') -Destination $scripts
 [IO.File]::WriteAllText((Join-Path $scripts "run-ui-smoke.ps1"), @'
 param([string]$CasesBase64,[string]$BundleDirectory, [string]$PreparedLaunch, [string]$Target, [string]$ReportDirectory, [string]$Scenario, [string[]]$ProjectId, [switch]$Latest, [switch]$Interactive)
 New-Item -ItemType Directory -Path $ReportDirectory -Force | Out-Null
-[ordered]@{ casesBase64=$CasesBase64; target=$Target; scenario=$Scenario; projectId=@($ProjectId); latest=$Latest.IsPresent; interactive=$Interactive.IsPresent; javaHome=$env:JAVA_HOME } |
+[ordered]@{ casesBase64=$CasesBase64; preparedLaunch=$PreparedLaunch; target=$Target; scenario=$Scenario; projectId=@($ProjectId); latest=$Latest.IsPresent; interactive=$Interactive.IsPresent; javaHome=$env:JAVA_HOME } |
     ConvertTo-Json | Set-Content -LiteralPath (Join-Path $ReportDirectory "wrapper-result.json") -Encoding UTF8
 '@, [Text.UTF8Encoding]::new($false))
 
@@ -23,6 +25,23 @@ try {
         throw "CodexVM wrapper dropped smoke arguments"
     }
 
+    $prepared = Join-Path $temp 'prepared'
+    $versioned = Join-Path $prepared '1.20.1-forge/1.20.1-47.4.23/launch.json'
+    New-Item -ItemType Directory -Path (Split-Path -Parent $versioned) -Force | Out-Null
+    '{}' | Set-Content $versioned
+    & (Join-Path $scripts 'run-ui-smoke-codexvm.ps1') -BundleDirectory (Join-Path $source 'bundle') -LocalRoot $stage -PreparedLaunchRoot $prepared -Latest -Scenario aeinfinitybooster-terminal
+    $result = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json
+    if ($result.preparedLaunch -ne $versioned) { throw 'Resolved loader did not select its versioned manifest' }
+    Remove-Item -LiteralPath $versioned
+    & (Join-Path $scripts 'run-ui-smoke-codexvm.ps1') -BundleDirectory (Join-Path $source 'bundle') -LocalRoot $stage -PreparedLaunchRoot $prepared -Latest -Scenario aeinfinitybooster-terminal
+    $result = Get-Content -LiteralPath $resultPath -Raw | ConvertFrom-Json
+    if ($result.preparedLaunch -ne (Join-Path $prepared '1.20.1-forge/launch.json')) { throw 'Existing default manifest route changed' }
+    '{"loader":"../escape"}' | Set-Content (Join-Path $source 'bundle/profile.json')
+    try {
+        & (Join-Path $scripts 'run-ui-smoke-codexvm.ps1') -BundleDirectory (Join-Path $source 'bundle') -LocalRoot $stage
+        throw 'Accepted loader path traversal'
+    } catch { if ($_.Exception.Message -ne 'Invalid prepared loader version') { throw } }
+    '{"loader":"1.20.1-47.4.23"}' | Set-Content (Join-Path $source 'bundle/profile.json')
     $cacheMarker = Join-Path $stage "build\cache-marker.txt"
     New-Item -ItemType Directory -Path (Split-Path -Parent $cacheMarker) -Force | Out-Null
     Set-Content -LiteralPath $cacheMarker -Value "keep"

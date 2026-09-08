@@ -73,6 +73,12 @@ if ($Stop) {
     exit 0
 }
 if (-not $BundleDirectory) { throw 'Build the bundle on the host through invoke-ui-smoke-codexvm.ps1' }
+$loader = (Get-Content -LiteralPath (Join-Path $BundleDirectory 'profile.json') -Raw | ConvertFrom-Json).loader
+if ($loader -cnotmatch '^[A-Za-z0-9][A-Za-z0-9._+-]*$') { throw 'Invalid prepared loader version' }
+$preparedLaunch = Join-Path $PreparedLaunchRoot "$Target/$loader/launch.json"
+if (!(Test-Path -LiteralPath $preparedLaunch -PathType Leaf)) {
+    $preparedLaunch = Join-Path $PreparedLaunchRoot "$Target/launch.json"
+}
 
 $taskName = "AE2 Crafting Time UI Smoke $workspaceId"
 $existing = if ($Scheduled) { Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue } else { $null }
@@ -88,7 +94,7 @@ $request = [ordered]@{
     casesBase64 = $CasesBase64
     target = $Target; stagedRoot = $stage; reportDirectory = $report; scenario = $Scenario
     projectId = @($ProjectId); latest = $Latest.IsPresent; interactive = $Interactive.IsPresent; javaHome = $smokeJava
-    bundleDirectory = $BundleDirectory; preparedLaunch = (Join-Path $PreparedLaunchRoot "$Target/launch.json")
+    bundleDirectory = $BundleDirectory; preparedLaunch = $preparedLaunch
 }
 $requestFile = Join-Path $stage "ui-smoke-request.json"
 [IO.File]::WriteAllText($requestFile, ($request | ConvertTo-Json), [Text.UTF8Encoding]::new($false))

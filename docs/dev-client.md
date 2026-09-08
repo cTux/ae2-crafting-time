@@ -101,6 +101,12 @@ are setup failures, or diagnostics for latest profiles. Pass `-PreparedLaunchRoo
 to use another prepared installation. Neither preparation nor launch runs Gradle
 inside the guest.
 
+For a matrix containing different loader versions, install each additional
+manifest at `<target>/<resolved-loader>/launch.json` under the same prepared
+root, for example `1.20.1-forge/1.20.1-47.4.23/launch.json`. The dispatcher
+prefers that exact version and otherwise uses `<target>/launch.json`. The
+existing strict loader check still rejects a mismatched installation.
+
 The dispatcher creates or reuses a share for the exact host worktree. Pass `-GuestSourceRoot` to select an existing mapping. Keep the live runtime on local
 NTFS. Archive and inspect every campaign before removing the worktree.
 Rebase only when explicitly requested. A rebase alone does not require a full
