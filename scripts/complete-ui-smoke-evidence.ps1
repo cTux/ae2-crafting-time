@@ -52,24 +52,46 @@ $archiveClock = [Diagnostics.Stopwatch]::StartNew()
 try {
     New-Item -ItemType Directory -Path $pending -ErrorAction Stop | Out-Null
     $manifest = @()
-    foreach ($file in Get-ChildItem -LiteralPath $campaign -Recurse -File) {
+    $files = @(foreach ($file in Get-ChildItem -LiteralPath $campaign -Recurse -File) {
         $relative = $file.FullName.Substring($campaign.Length).TrimStart('/','\')
         $normalized = $relative.Replace('\','/')
         if ($normalized -match '(^|/)(bundle|runtime)(/|$)' -and $normalized -notmatch '/bundle/expected-adapters\.json$') { continue }
-        $copy = Join-Path $pending $relative
+        [pscustomobject]@{source=$file.FullName;relative=$normalized}
+    })
+    $files += [pscustomobject]@{source=[IO.Path]::GetFullPath($ContractsFile);relative='visual-contracts/scripts/catalogue.json'}
+    $baselineRoot = Join-Path (Split-Path -Parent $ContractsFile) '../test-fixtures/ui-smoke-visuals'
+    if (Test-Path -LiteralPath $baselineRoot) {
+        $files += @(Get-ChildItem -LiteralPath $baselineRoot -File -Filter '*.png' | ForEach-Object {
+            [pscustomobject]@{source=$_.FullName;relative="visual-contracts/test-fixtures/ui-smoke-visuals/$($_.Name)"}
+        })
+    }
+    foreach ($file in $files) {
+        $copy = Join-Path $pending $file.relative
         New-Item -ItemType Directory -Path (Split-Path -Parent $copy) -Force | Out-Null
-        Copy-Item -LiteralPath $file.FullName -Destination $copy
-        $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
+        if (Test-Path -LiteralPath $copy) { throw 'Archive path collision' }
+        Copy-Item -LiteralPath $file.source -Destination $copy
+        $hash = (Get-FileHash -LiteralPath $file.source -Algorithm SHA256).Hash
         if ((Get-FileHash -LiteralPath $copy -Algorithm SHA256).Hash -cne $hash) { throw 'Archive copy hash mismatch' }
-        $manifest += [ordered]@{path=$relative.Replace('\','/');sha256=$hash;bytes=$file.Length}
+        $manifest += [ordered]@{path=$file.relative;sha256=$hash;bytes=(Get-Item -LiteralPath $copy).Length}
     }
     $gate.archiveMs = $archiveClock.ElapsedMilliseconds
     $gate.archiveResult = 'PASS'; $gate.overall = $overall
     $gate | ConvertTo-Json -Depth 30 | Set-Content -LiteralPath (Join-Path $pending 'gate.json') -Encoding UTF8
     $manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $pending 'manifest.json') -Encoding UTF8
     $reportText = @('# UI smoke result', '', "Result: $overall", "Commit: $($raw.commit)", '', '| Target / graph | Runtime result |', '|---|---|')
-    foreach ($run in $raw.results) { $reportText += "| $($run.target) / $($run.graph) | $($run.result) |" }
-    $reportText += @('', "Visual validation: $($gate.validationMs) ms", "Archive copy: $($gate.archiveMs) ms", '', '[Structured gate](gate.json)', '[Archive hashes](manifest.json)')
+    foreach ($run in $raw.results) {
+        $reportText += "| $($run.target) / $($run.graph) | $($run.result) |"
+    }
+    $reportText += @('', '| Case | Result | Evidence |', '|---|---|---|')
+    foreach ($run in $raw.results) {
+        $relativeReport = [IO.Path]::GetFullPath($run.report).Substring($campaign.Length).TrimStart('/','\').Replace('\','/')
+        foreach ($case in $run.cases) {
+            $leaf = "$relativeReport/run/evidence/" + $(if ($run.cases.Count -gt 1) { "$($case.scenario)/" } else { '' }) + 'result.json'
+            $link = if (Test-Path -LiteralPath (Join-Path $pending $leaf)) { "[Result]($($leaf.Replace(' ','%20')))" } else { 'Not captured' }
+            $reportText += "| $($run.target) / $($run.graph) / $($case.scenario) | $($case.result) | $link |"
+        }
+    }
+    $reportText += @('', "Visual validation: $($gate.validationMs) ms", "Archive copy: $($gate.archiveMs) ms", '', '[Structured gate](gate.json)', '[Archive hashes](manifest.json)', '[Visual contracts](visual-contracts/scripts/catalogue.json)')
     $reportText | Set-Content -LiteralPath (Join-Path $pending 'report.md') -Encoding UTF8
     [IO.Directory]::Move($pending,$destination)
     $gate.archive = $destination

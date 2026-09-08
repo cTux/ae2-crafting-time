@@ -69,6 +69,8 @@ try {
         $expected=switch($mode){'review'{'REVIEW_REQUIRED'} 'automatic'{'PASS'} 'diagnostic'{'PASS'} default{'FAIL'}}
         Assert ($result.overall -eq $expected) ("$mode must produce $expected, got " + ($result|ConvertTo-Json -Depth 12 -Compress))
         Assert (Test-Path (Join-Path $result.archive 'forge/bundle/expected-adapters.json')) 'Archive must retain adapter validation contract'
+        Assert ((Get-FileHash (Join-Path $result.archive 'visual-contracts/scripts/catalogue.json')).Hash -eq (Get-FileHash $catalogue).Hash) 'Archive must retain the visual contract'
+        Assert ((Get-FileHash (Join-Path $result.archive 'visual-contracts/test-fixtures/ui-smoke-visuals/baseline.png')).Hash -eq (Get-FileHash (Join-Path $references 'baseline.png')).Hash) 'Archive must retain baseline pixels'
     }
     Write-Host 'PASS: archive preflight, gate verdicts, cleanup, manifests and immutable attempts'
 } finally {
