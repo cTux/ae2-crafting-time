@@ -145,7 +145,7 @@ public final class CraftPlanScenario {
             minecraft.reloadResourcePacks();
             return;
         }
-        if (minecraft.level == null || minecraft.player == null || minecraft.gameMode == null
+        if (minecraft.screen != null || minecraft.level == null || minecraft.player == null || minecraft.gameMode == null
                 || minecraft.getSingleplayerServer() == null || minecraft.getCurrentServer() != null) {
             return;
         }
