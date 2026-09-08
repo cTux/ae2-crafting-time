@@ -1,5 +1,57 @@
 # Automated UI Testing Spec
 
+## Unattended evidence gate
+
+Planned extension, researched 2026-09-08 for
+[#347](https://github.com/cTux/ae2-crafting-time/issues/347). See the
+[research](automation-research.md),
+[design](technical-design.md#unattended-evidence-gate-design), and
+[plan](implementation-plan.md#unattended-evidence-gate-implementation).
+The runner, independent standard leaves and change selection already exist at
+`7b127be8`; #218's planning sections below are retained historical design.
+This extension is not implemented, and current image-review policy still applies.
+
+- **UA-01:** A known selected campaign completes through one host invocation,
+  with zero agent/controller decisions between launch and result. Progress
+  reporting never blocks driver actions. Unknown scenarios fail preflight.
+- **UA-02:** Actions advance on expected rendered/game state with bounded
+  deadlines, not agent interpretation or fixed sleeps. Preserve actual UI input,
+  server responses, real crafting and production delay thresholds.
+- **UA-03:** Validate every required PNG as a decodable image of the expected
+  framebuffer dimensions, paired with a matching completed-frame snapshot.
+  Preserve required semantic, layout, adapter, language and fatal-log checks.
+- **UA-04:** Every checkpoint has an explicit visual disposition. An approved,
+  matching visual contract may pass automatically; missing baselines, unknown
+  environments and unsupported visual regions require review. Pixel mismatches
+  fail. No automatic baseline acceptance, broad masks or weakened assertions.
+- **UA-05:** Preserve raw leaf outcomes and add a campaign gate: `PASS`, `FAIL`,
+  `REVIEW_REQUIRED`, or `NOT_REQUIRED`. Only fully checked selected coverage can
+  PASS. Review-required and failed runs exit nonzero; docs-only selection stays
+  NOT_REQUIRED. Latest diagnostics retain their separate classification.
+- **UA-06:** Archive immutable attempts automatically before reporting PASS.
+  Include selection, artifacts, logs, semantic results, full images, visual
+  contracts/diffs, timings and exact-process cleanup. Archive failure prevents
+  PASS and preserves local evidence. Never overwrite a prior attempt.
+- **UA-07:** Keep all four release targets, newest-adapter proof, English,
+  fresh worlds, exact prepared loaders, sequential clients and one launch per
+  graph. A focused pass never certifies a full suite. No production test hooks,
+  published driver, automatic retries, or automatic modpack substitutions.
+- **UA-08:** Publish measured cold/warm phase durations, controller-decision
+  count and before/after coverage. Qualify each automatic visual contract with
+  repeat runs and deliberate corrupt/missing/mismatched evidence and visible
+  defect checks. No estimated speedup may be reported as an observed result.
+
+Acceptance: one qualified known campaign passes without controller decisions;
+a wrong screen, clipped badge, moved tooltip, wrong color, stale/missing image,
+wrong adapter, capture failure or unconfirmed client exit cannot pass; a new
+appearance requires review. First-time visual review happens after scenario
+execution, not between actions. Existing manual review remains mandatory until
+implementation, qualification and policy updates ship together.
+
+Non-goals: arbitrary UI exploration, zero game/render waiting, replacing tests
+with images, universal screenshot approval, parallel Minecraft clients, or a
+GitHub-to-personal-VM scheduler. This docs PR does not implement UA-01 to UA-08.
+
 ## Goal
 
 Provide one unattended smoke suite that launches every supported development
