@@ -1,5 +1,95 @@
 # Automated UI Testing Implementation Plan
 
+## Unattended evidence gate implementation
+
+Future implementation for [#347](https://github.com/cTux/ae2-crafting-time/issues/347).
+This PR delivers research and documents only. Follow [UA-01 to UA-08](spec.md#unattended-evidence-gate)
+and the [design](technical-design.md#unattended-evidence-gate-design).
+The older #218 plan below is historical; selection and independent leaves already
+exist and must be reused. No new smoke run or performance result is claimed here.
+
+### 1. Establish measured baseline and bounded readiness
+
+Ownership: `scripts/run-ui-smoke-matrix.ps1`, shared `StandardAe2Scenario`, shared
+and 26.1.2 `CraftPlanScenario`, their existing driver tests.
+
+- Record run-correlated host/guest phase durations and controller decisions.
+  Capture one cold and five warm baseline runs using the research protocol.
+- Add checkpoint-specific readiness observations after actual input/server
+  completion, retaining current frame counts and timeout limits initially.
+- Test missing screen, wrong row, stale frame, incomplete server response and
+  timeout. Prove real delayed/craft thresholds are unchanged.
+- Resolve #344 before using its affected graph for acceptance; do not broaden
+  that reported named-pack limitation into an assumed failure of every target.
+
+Gate: UA-01/UA-02 routes are deterministic, baseline timings are real, and no
+agent is needed between known actions. A driver hang produces bounded evidence.
+
+### 2. Bind captures and add the independent visual validator
+
+Ownership: both capture paths, `UiSnapshot`/sidecar serialization as needed,
+`scripts/test-ui-smoke-visuals.ps1`, `test-ui-smoke-visual-contract.ps1`,
+`scripts/ui-smoke-visuals.json`, `test-fixtures/ui-smoke-visuals/`.
+
+- Bind run/case/frame IDs, framebuffer dimensions and hashes to completed PNGs.
+  Keep the 26.1.2 callback completion barrier; test an intentionally changing
+  screen to establish that JSON and pixels describe the same frame.
+- Implement bounded decoding, exact crop comparison, explicit masks and
+  baseline identity validation. Default every unqualified checkpoint to review.
+- Qualify plan/status controls and tooltip references with five repeats and
+  rendered-defect checks. Check corrupt/truncated images, missing sidecars,
+  wrong dimensions, stale IDs/hashes, clipped/moved text and wrong badge colors.
+- Verify a valid semantic result plus broken pixels fails. A new baseline or
+  render identity requires review; changing source SHA alone still compares.
+- Cover both shared older-target capture and native 26.1.2 async capture.
+
+Gate: UA-03/UA-04 hold; no fixture enters player JARs, no automatically accepted
+baseline, no claimed automatic coverage for unqualified world/addon checkpoints.
+
+### 3. Produce the final gate and archive in the host command
+
+Ownership: `run-ui-smoke.ps1`, `run-ui-smoke-matrix.ps1`, existing result/runner
+contract tests and the new visual contract tests.
+
+- Compose semantic, visual, archive and cleanup outcomes into `gate.json`
+  without changing raw leaf schemas. Implement exits 0/1/2 and explicit reasons.
+- Forward `-ArchiveRoot`, preflight it, finalize immutable attempt copies with
+  verified hashes, and produce a concise report linking every required result.
+- Test partial suites, missing cases, wrong adapters, fatal logs, visual
+  mismatches, unknown baselines, partial/colliding archives and interrupted
+  writes. Preserve local evidence on failure and never retry to obtain green.
+- Test NOT_REQUIRED, focused/manual/full scope and latest diagnostic semantics
+  separately; unconfirmed client exit always prevents another launch.
+- If measured, reduce host status-detection delay to the design's 250 ms loop;
+  retain the deadline and transient-file handling. Do not change in-game timing.
+
+Gate: UA-05/UA-06 hold through one invocation. A result cannot become PASS before
+all selected evidence is validated, archived and client cleanup is confirmed.
+
+### 4. Qualify targets and update the workflow policy
+
+Ownership: `docs/ui-smoke-evidence.md`, `docs/dev-client.md`,
+`docs/test-driver/technical-design.md`, the smoke skill, these feature documents,
+and qualification records linked from the issue.
+
+- After the implementation commit's hook-created PR exists, run affected host
+  contract and driver tests, packaging checks, then authorized VM smoke.
+- Run all four compatible targets and required newest-adapter graphs
+  sequentially. Preserve English, fresh worlds and exact graph/loader identity.
+- Repeat the matched cold/warm measurement on the representative graph and
+  publish every sample plus median/range. Separate runtime from total review
+  task time; do not claim an improvement unless observed.
+- Demonstrate zero controller decisions in qualified passing runs, one final
+  review queue for new visuals, and nonzero failure for each negative boundary.
+- Change mandatory image-review policy only for qualified automatic
+  checkpoints. Full suites with unqualified checkpoints still require review.
+  Keep release full-coverage requirements and manual exception diagnostics.
+- Self-review requirement/design/test mapping and report GitHub CI separately.
+
+Completion: UA-01 through UA-08 satisfied with retained artifacts and measured
+results. Close #347 only after this implementation gate, not after merging the
+research PR. No percentage speedup target substitutes for correctness evidence.
+
 ## Planned change-based selection and standard-case split
 
 This is the next feature, not a claim that the historical slices below are

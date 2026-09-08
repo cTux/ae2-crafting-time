@@ -1,5 +1,144 @@
 # Automated UI Testing Technical Design
 
+## Unattended evidence gate design
+
+Planned for [#347](https://github.com/cTux/ae2-crafting-time/issues/347),
+implementing [UA-01 through UA-08](spec.md#unattended-evidence-gate).
+The [research](automation-research.md) records source evidence and alternatives.
+The existing #218 sections below describe the earlier selection implementation;
+reuse that implementation rather than repeating it.
+
+### Execution and ownership
+
+Keep `run-ui-smoke.ps1` -> `run-ui-smoke-matrix.ps1` -> existing VM dispatcher
+and native loader -> `TestDriverRuntime` -> scenario state machines. One
+controller invocation owns the campaign. Interactive MCP remains diagnostics;
+it is not part of the passing action path. No new service or runtime dependency.
+
+Add stage timing at existing transitions, not per-frame log spam. Retain separate
+host/guest monotonic durations plus UTC and a common run ID. Capture stage name,
+case, graph and checkpoint; do not log tokens, private absolute paths or accounts.
+Record controller decisions outside the driver in the campaign/report workflow;
+a quiet client log alone cannot establish that an agent did not intervene.
+
+Use checkpoint-specific readiness predicates in the shared `StandardAe2Scenario`
+and both `CraftPlanScenario` variants. Require a new completed frame after an
+input, expected screen/menu, expected rows/text/geometry and completed server
+future. Keep the current frame minimums initially. Reset readiness on relevant
+changes; do not treat an unchanged stage counter as an unchanged rendered image.
+World-only checkpoints need their own readiness path because menu observations
+are absent. Never retain live game objects across client/server threads.
+
+### Capture and validation
+
+Extend each checkpoint's sidecar with a capture ID, run/case ID, frame ID,
+framebuffer dimensions and PNG SHA-256 after writing. Retain existing fields.
+Capture the immutable semantic snapshot when requesting that exact frame, not
+later in an asynchronous callback. Freeze scenario advancement until the PNG,
+sidecar and hash are complete. On 26.1.2 retain `DriverScreenshots`' future barrier;
+verify callback/frame association with a deliberately changing screen test.
+Temporary files become final only after successful writes; incomplete pairs fail.
+
+Add `scripts/test-ui-smoke-visuals.ps1` as the host validator, with pure boundary
+tests in `scripts/test-ui-smoke-visual-contract.ps1`. Use Windows' available .NET
+image decoder for this Windows host workflow, disposing images/locks. This is a
+validator naming convention, not a unit-test runner. Decode with bounded file
+size and dimensions before processing; reject malformed images, nonlocal paths,
+duplicate capture IDs, unknown contract schemas and missing expected checkpoints.
+The validator cross-checks current campaign identity, sidecar hash and dimensions
+as well as existing `get-ui-smoke-results.ps1` checks. Hashes establish pairing,
+not independent proof of rendering; actual pixel comparisons remain required.
+
+### Visual contracts and baselines
+
+Add `scripts/ui-smoke-visuals.json`, keyed by scenario/checkpoint, with explicit
+`automatic` or `review` disposition. No absent entry defaults to automatic.
+An automatic contract names fixed framebuffer-coordinate crops, expected
+dimensions, baseline PNG SHA-256, environment identity and any reviewed masks.
+Store small reviewed crop PNGs under `test-fixtures/ui-smoke-visuals/`; keep full
+campaign PNGs in the archive, not Git. These are test fixtures, never production
+resources. A separate contract is required for each supported render identity.
+
+Identity includes target, loader/dependency hashes and selected adapters,
+fixture/checkpoint revision, `en_us`, framebuffer, effective GUI scale, font/
+resource hashes and OS/GPU/driver environment. Source/JAR hashes identify the
+tested candidate separately so a code edit does not invalidate all comparisons.
+Check identity before comparing. Missing baseline or a new identity yields
+`REVIEW_REQUIRED`; an unreadable or hash-mismatched approved baseline is `FAIL`.
+
+For the first version use exact RGB pixel comparison within each crop after
+explicit masks; alpha is not compared for opaque framebuffer captures. Do not
+resize, align or derive the crop from the candidate's moved widget, which could
+hide displacement. Preserve surrounding margins. Each mask must name a dynamic
+field, a fixed bounded rectangle, a reason and a required semantic assertion.
+No tolerance knob in v1. Unstable checkpoints stay `review` until their fixture
+is deterministic. Compare all required regions; emit expected/actual/diff crops
+on mismatch and retain full originals. Missing geometry is always failure even
+if a masked pixel region would match.
+
+Initially qualify stable plan/status controls and tooltips. Dynamic world
+highlights and unqualified addon screens remain review-required, so a full suite
+can still need a final review. Promote each only after five repeat passes per
+render identity plus negative tests for absent text, clipping, wrong badge color,
+moved widgets/tooltips and stale/wrong-frame captures. Also mutate the rendered
+test output in a development-only validation fixture to prove the image gate
+catches a defect when semantic observations still pass. Never seed a production
+PASS or regenerate a baseline from a failing candidate. Baseline and mask changes
+are reviewed source changes with a separate verified reference capture.
+
+### Campaign result and archiving
+
+Leave schema-1 leaf and suite results unchanged. Write a new schema-1
+`gate.json` beside campaign `result.json`, containing run ID, tested SHA,
+selection/hash identities, `semanticResult`, checkpoint `visualResults`,
+`archiveResult`, `cleanupResult`, `overall`, reasons and evidence-relative paths.
+Write atomically. Reject unknown schemas in consumers.
+
+For compatible selected coverage, precedence is:
+
+1. Existing setup/assertion/log/identity/evidence failure, visual mismatch,
+   archive failure or unconfirmed process exit -> `FAIL` (exit 1).
+2. Otherwise any unqualified/missing visual baseline -> `REVIEW_REQUIRED` (exit 2).
+3. Otherwise all selected cases/checkpoints passed, archived and cleaned ->
+   `PASS` (exit 0).
+4. Planner's original docs-only/empty selection -> `NOT_REQUIRED` (exit 0),
+   without launching or claiming a smoke pass.
+
+Keep raw latest `DIAGNOSTIC_FAILURE` results and required=false semantics.
+Latest-only campaigns may report diagnostic failures without blocking compatible
+release results, but never become a compatible PASS. A diagnostic run's evidence
+or archive failure remains visible; inability to confirm process exit always
+stops subsequent launches. Report raw diagnostic outcome beside the new gate.
+
+Integrate archiving in `run-ui-smoke-matrix.ps1`, using the existing evidence
+archive root and UTC attempt layout. Accept an explicit `-ArchiveRoot` forwarded
+by the public host entrypoint; default to the documented archive. Preflight
+writability before launch. Copy into a new temporary attempt directory, verify
+file hashes, write the manifest and atomically finalize on the same volume.
+Only then set `archiveResult=PASS`. Keep a local gate/report pointing at the
+archive. If copying/finalizing fails, retain local evidence and emit a nonzero
+gate; never clean the sole copy or overwrite an old attempt. An inaccessible
+archive is an environment setup failure, not a reason to launch anyway.
+
+Update `docs/ui-smoke-evidence.md`, `docs/test-driver/technical-design.md`,
+`docs/dev-client.md` and the smoke skill only with the verified implementation.
+The new rule exempts only automatically passed checkpoints from individual
+image interpretation; review all review-required checkpoints and mismatches.
+Generate one report with counts, links, timings and failure details, so the
+agent does not reconstruct it screenshot by screenshot. Preserve raw results
+when a maintainer later accepts an intentional baseline change; rerun under the
+new reviewed contract instead of rewriting an old failure.
+
+### Verification mapping
+
+| Requirements | Implementation boundary | Required evidence |
+| --- | --- | --- |
+| UA-01, UA-02 | Campaign dispatch, scenarios, readiness and timings | Known run with zero controller decisions; wrong/missing state times out |
+| UA-03, UA-04 | Both capture adapters, PNG validator and contracts | Positive reference plus corrupt, clipped, wrong-frame/color/geometry negatives |
+| UA-05, UA-06 | Campaign aggregation, gate writer and archive | Missing case, new baseline, unwritable archive and unconfirmed PID cannot PASS |
+| UA-07 | Existing planner, suite isolation, adapters and packaging | Four target campaigns, focused/full distinction, clean production JARs |
+| UA-08 | Timing report and qualification records | Matched cold/warm samples, complete coverage and negative-test results |
+
 ## Change-based selection research and design
 
 Planned extension for CS-01 through CS-09 in the [specification](spec.md).

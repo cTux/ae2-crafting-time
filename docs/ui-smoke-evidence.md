@@ -1,5 +1,10 @@
 # UI smoke evidence
 
+Planned automation: [faster unattended smoke research](automated-ui-testing/automation-research.md)
+and [#347](https://github.com/cTux/ae2-crafting-time/issues/347) describe automatic
+visual validation and archiving. They do not change the current image-inspection
+or archive requirements below; those change only with qualified implementation.
+
 ## Startup integration diagnostics, 2026-09-05
 
 Issue #193 / PR #256 adds observed integration status and bounded read recovery.
