@@ -61,9 +61,6 @@ final class ModernAe2AdditionsFixture
         if (!storage.getMainNode().isReady()) {
             return false;
         }
-        if (!accelerator.getMainNode().isReady()) {
-            return false;
-        }
         if (!storage.isFormed()) {
             var min = new BlockPos(Math.min(placement.storage().getX(), placement.accelerator().getX()),
                     Math.min(placement.storage().getY(), placement.accelerator().getY()),
