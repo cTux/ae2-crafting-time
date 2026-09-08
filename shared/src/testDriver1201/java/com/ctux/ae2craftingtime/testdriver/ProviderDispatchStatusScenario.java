@@ -40,9 +40,10 @@ final class ProviderDispatchStatusScenario {
         if (!supports(scenario)) throw new IllegalArgumentException("unsupported provider status scenario: " + scenario);
         this.scenario = scenario;
         key = "text.ae2craftingtime." + scenario.replace("-status", "").replace('-', '_');
-        fixture = new DispatchStatusFixture(1,
+        fixture = new DispatchStatusFixture(INPUT_BLOCKED.equals(scenario) ? 2 : 1,
                 LOCKED.equals(scenario) ? LockCraftingMode.LOCK_WHILE_LOW : LockCraftingMode.NONE,
-                INPUT_BLOCKED.equals(scenario));
+                INPUT_BLOCKED.equals(scenario),
+                INPUT_BLOCKED.equals(scenario) || advancedFixture() ? 4096 : 64);
     }
 
     static boolean supports(String scenario) {
@@ -136,19 +137,24 @@ final class ProviderDispatchStatusScenario {
             ((Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north())).clearContent();
             return true;
         })) { changedAt = System.nanoTime(); phase++; }
-        else if (phase == 5 && recovered(snapshot)) {
+        else if (phase == 5 && (operation != null || recovered(snapshot))) {
             checks.put("blocking-recovered", true);
-            screenshot.accept("input-blocked-recovered.png");
+            if (operation == null) screenshot.accept("input-blocked-recovered.png");
             if (serverStep(minecraft, player -> {
                 var target = (Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north());
-                for (int slot = 0; slot < target.getContainerSize(); slot++) target.setItem(slot, new ItemStack(Items.COBBLESTONE, 64));
+                long pending = pendingInput(fixture.provider(player, 6).getLogic());
+                System.out.println("AE2CT input-fixture pending=" + pending + " slots=" + target.getContainerSize());
+                for (int slot = 0; slot < target.getContainerSize(); slot++) {
+                    target.setItem(slot, new ItemStack(Items.COBBLESTONE,
+                            occupiedSlotCount(slot, target.getContainerSize(), pending)));
+                }
                 return true;
             })) phase++;
-        } else if (phase == 6 && hasWarning(snapshot)) {
+        } else if (phase == 6 && (operation != null || hasWarning(snapshot))) {
             checks.put("zero-insertion", true);
-            screenshot.accept("input-blocked-zero-insertion.png");
+            if (operation == null) screenshot.accept("input-blocked-zero-insertion.png");
             if (serverStep(minecraft, player -> {
-                ((Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north())).setItem(0, ItemStack.EMPTY);
+                ((Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north())).setItem(0, new ItemStack(Items.COBBLESTONE, 63));
                 return true;
             })) { changedAt = System.nanoTime(); phase++; }
         } else if (phase == 7 && recovered(snapshot)) {
@@ -157,6 +163,31 @@ final class ProviderDispatchStatusScenario {
             return true;
         }
         return false;
+    }
+
+    static int occupiedSlotCount(int slot, int slots, long pending) {
+        if (slots <= 0 || slot < 0 || slot >= slots || pending < 0 || pending > (long) slots * 64) {
+            throw new IllegalArgumentException("pending input exceeds fixture capacity or slot is invalid");
+        }
+        return 64 - (int) Math.min(64, Math.max(0, pending - (long) slot * 64));
+    }
+
+    private static long pendingInput(appeng.helpers.patternprovider.PatternProviderLogic logic) {
+        try {
+            var field = appeng.helpers.patternprovider.PatternProviderLogic.class.getDeclaredField("sendList");
+            field.setAccessible(true);
+            long pending = 0;
+            for (var entry : (List<?>) field.get(logic)) {
+                if (!(entry instanceof appeng.api.stacks.GenericStack stack)
+                        || !stack.what().equals(AEItemKey.of(Items.COBBLESTONE)) || stack.amount() < 0) {
+                    throw new IllegalStateException("unexpected queued fixture input: " + entry);
+                }
+                pending = Math.addExact(pending, stack.amount());
+            }
+            return pending;
+        } catch (ReflectiveOperationException error) {
+            throw new IllegalStateException("cannot inspect queued fixture input", error);
+        }
     }
 
     private boolean tickLocked(Minecraft minecraft, UiSnapshot snapshot, Map<String, Boolean> checks,
@@ -189,6 +220,8 @@ final class ProviderDispatchStatusScenario {
             if (serverStep(minecraft, player -> {
                 fixture.provider(player, 6).getLogic().getConfigManager().putSetting(
                         Settings.LOCK_CRAFTING_MODE, LockCraftingMode.LOCK_UNTIL_PULSE);
+                // Notify the provider of LOW before the later rising edge (AE2 15 caches redstone state).
+                player.level().setBlockAndUpdate(power, Blocks.STONE.defaultBlockState());
                 return true;
             })) phase++;
         } else if (phase == 8 && hasWarning(snapshot)) {

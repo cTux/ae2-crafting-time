@@ -31,8 +31,6 @@ import java.util.List;
 import java.util.concurrent.Future;
 
 final class DispatchStatusFixture {
-    private static final long DEFAULT_OUTPUT_AMOUNT = 64;
-    private static final long ADVANCED_OUTPUT_AMOUNT = 4096;
     BlockPos cpuPosition;
     private Future<ICraftingPlan> calculation;
     private final int inputAmount;
@@ -42,15 +40,14 @@ final class DispatchStatusFixture {
     private Object advancedCpu;
 
     DispatchStatusFixture(int inputAmount) {
-        this(inputAmount, LockCraftingMode.NONE, true);
+        this(inputAmount, LockCraftingMode.NONE, true, 64);
     }
 
-    DispatchStatusFixture(int inputAmount, LockCraftingMode initialLock, boolean initialBlocking) {
+    DispatchStatusFixture(int inputAmount, LockCraftingMode initialLock, boolean initialBlocking, long outputAmount) {
         this.inputAmount = inputAmount;
         this.initialLock = initialLock;
         this.initialBlocking = initialBlocking;
-        outputAmount = Boolean.getBoolean("ae2craftingtime.test.advancedStatus")
-                ? ADVANCED_OUTPUT_AMOUNT : DEFAULT_OUTPUT_AMOUNT;
+        this.outputAmount = outputAmount;
     }
 
     boolean prepare(int phase, ServerPlayer player, FixtureMarker marker) {
@@ -61,7 +58,7 @@ final class DispatchStatusFixture {
                 level.setBlockAndUpdate(pos, pos.getY() < cpuPosition.getY()
                         ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState());
             }
-            place(player, cpuPosition, "16k_crafting_storage");
+            place(player, cpuPosition, "64k_crafting_storage");
             place(player, cpuPosition.east(2), "creative_energy_cell");
             place(player, cpuPosition.east(4), "drive");
             place(player, cpuPosition.east(6), "pattern_provider");
@@ -91,7 +88,7 @@ final class DispatchStatusFixture {
             if (!prepareAdvancedCpu(player, marker)) return false;
             var drive = (DriveBlockEntity) level.getBlockEntity(cpuPosition.east(4));
             drive.getInternalInventory().setItemDirect(0,
-                    new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.tryParse("ae2:item_storage_cell_1k"))));
+                    new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.tryParse("ae2:item_storage_cell_4k"))));
             drive.getCellInventory(0).insert(AEItemKey.of(Items.COBBLESTONE), outputAmount * inputAmount,
                     Actionable.MODULATE, IActionSource.empty());
             provider(player, 6).getLogic().getConfigManager().putSetting(Settings.BLOCKING_MODE,

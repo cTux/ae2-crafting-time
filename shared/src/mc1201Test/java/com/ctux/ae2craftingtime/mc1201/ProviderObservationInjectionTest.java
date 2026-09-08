@@ -14,6 +14,7 @@ import org.objectweb.asm.tree.AnnotationNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
+import org.spongepowered.asm.mixin.injection.struct.MemberInfo;
 
 class ProviderObservationInjectionTest {
     private static final String ITERATOR = "Ljava/lang/Iterable;iterator()Ljava/util/Iterator;";
@@ -71,7 +72,12 @@ class ProviderObservationInjectionTest {
             var redirect = annotation(handler, "/Redirect;");
             assertEquals(List.of("pushPattern"), value(redirect, "method"));
             var targetSignature = (String) value((AnnotationNode) value(redirect, "at"), "target");
-            assertTrue(targetCalls.contains(targetSignature), targetSignature);
+            var selector = MemberInfo.parse(targetSignature, null).validate();
+            assertEquals(1, calls(target).stream().filter(call ->
+                    selector.matches(call.owner, call.name, call.desc).isExactMatch()).count(), targetSignature);
+            assertEquals(1, calls(target).stream().filter(call -> selector.matches(call.owner, call.name,
+                    call.desc.replace("Lnet/minecraft/core/Direction;", "Lnet/minecraft/class_2350;"))
+                    .isExactMatch()).count(), "Fabric intermediary: " + targetSignature);
             assertFalse(redirect.values.contains("require"));
         }
         assertEquals(2, mixin.methods.stream().filter(method -> method.name.startsWith("ae2craftingtime$")

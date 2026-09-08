@@ -299,7 +299,7 @@ try {
             }
         }
         $actualChecks = @($result.checks.psobject.Properties.Name)
-        if (Compare-Object $requiredChecks $actualChecks -SyncWindow 0) { throw "Invalid UI-smoke check set" }
+        if (Compare-Object $requiredChecks $actualChecks -CaseSensitive) { throw "Invalid UI-smoke check set: $caseScenario" }
         foreach ($check in $requiredChecks) { if (-not $result.checks.$check) { throw "Failed UI-smoke check: $check" } }
         $requiredScreenshots = if ($standardContracts.$caseScenario) {
             if ($result.checks.'advanced-cpu' -is [bool] -and $standardContracts.$caseScenario.advancedScreenshots) {

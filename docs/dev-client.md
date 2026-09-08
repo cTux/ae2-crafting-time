@@ -158,6 +158,9 @@ mixin conflicts with other candidates in both rows.
 
 ## Choosing smoke coverage
 
+See the [measured four-client smoke](automated-ui-testing/prepared-clients-2026-09-08.md)
+for full coverage, per-phase timings and evidence limits.
+
 Run these commands from the repository root on the host, after the PR exists.
 Add `-PlanOnly` to any example to print the selected targets, cases, dependency
 graphs and reasons without building or accessing CodexVM. A dependency graph is
@@ -246,7 +249,7 @@ An explicit diagnostic rerun gets new evidence and does not erase the failure.
 
 Full plans also list required focused graphs declared in the coverage matrix.
 For Forge, NeoEco's two direct cases run against its newest graph separately
-from the 34-case compatible suite. After host build, `SmokeAdapterCatalog`
+from the 36-case compatible suite. After host build, `SmokeAdapterCatalog`
 reads the ordered catalogue in the exact packaged artifacts. Each native direct
 case must report that newest adapter ID; `latest` alone is not proof. Failure
 of a required focused graph fails a compatible campaign, even though that
