@@ -35,6 +35,10 @@ try {
     Assert ((Read-Visual)[0].result -eq 'FAIL') 'Shared-world suite must reject legacy capture IDs'
     $data.capture.schema=2; $data.capture.id="$world/craft-plan/checkpoint.png"; Write-Json $sidecar $data
     Assert ((Read-Visual)[0].result -eq 'PASS') 'Shared-world capture identity must pass'
+    Write-Json (Join-Path $temp 'result.json') @{target='1.20.1-forge';profile='compatible';scenario='craft-plan';language='en_us';screenshots=@('checkpoint.png','checkpoint.png');checks=@{clock=$true}}
+    $repeated = @(Read-Visual)
+    Assert ($repeated.Count -eq 1 -and $repeated[0].result -eq 'PASS') 'Repeated references to one saved checkpoint must validate that file once'
+    Write-Json (Join-Path $temp 'result.json') @{target='1.20.1-forge';profile='compatible';scenario='craft-plan';language='en_us';screenshots=@('checkpoint.png');checks=@{clock=$true}}
     Write-Json $plan @{schema=1;cases=@(@{scenario='craft-plan';world=$world})}
     Assert ((Read-Visual)[0].result -eq 'PASS') 'New capture identity must work in legacy suites and single runs'
     Write-Json $plan @{schema=2;cases=@(@{scenario='craft-plan';world=$world},@{scenario='crafting-tree-screen';world=$world})}

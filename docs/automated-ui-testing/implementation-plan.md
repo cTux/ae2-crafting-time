@@ -22,15 +22,17 @@ per-case world reload steps below; historical acceptance records stay unchanged.
 5. Record actual coverage and timings, including interrupted older attempts.
    Review the final diff, wait for required green CI and merge the authorized PR.
 
-Qualification is pending. One-world execution does not waive other release-target
-or newest-adapter gates, and a partial run must never be reported as full smoke.
+The exact-pack one-world run is complete: [36/36 cases in 15m 6.975s](project-infinity-0.0.52.0.md),
+with all 87 screenshots reviewed after execution. Automatic visual references,
+the four-target/newest-adapter campaign and matched cold/warm qualification remain
+pending. One-world execution does not waive those separate gates.
 
 ## Unattended evidence gate implementation
 
 Implementation for [#347](https://github.com/cTux/ae2-crafting-time/issues/347)
 is in [PR #349](https://github.com/cTux/ae2-crafting-time/pull/349).
-The evidence gate and capture bindings are implemented; runtime qualification
-and measured comparisons are in progress. Follow [UA-01 to UA-08](spec.md#unattended-evidence-gate)
+The evidence gate and capture bindings are implemented; exact-pack measurement
+is recorded above and broader qualification remains pending. Follow [UA-01 to UA-08](spec.md#unattended-evidence-gate)
 and the [design](technical-design.md#unattended-evidence-gate-design).
 The older #218 plan below is historical; selection and independent leaves already
 exist and must be reused. The research-only PR #348 did not claim runtime results.

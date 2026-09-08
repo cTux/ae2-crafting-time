@@ -10,8 +10,10 @@ Extension researched 2026-09-08 for
 The runner, independent standard leaves and change selection already exist at
 `7b127be8`; #218's planning sections below are retained historical design.
 Implementation is in [PR #349](https://github.com/cTux/ae2-crafting-time/pull/349).
-Runtime qualification is in progress. Current image-review policy still applies
-to every checkpoint without a qualified automatic contract.
+The [Project Infinity one-run measurement](project-infinity-0.0.52.0.md) records
+36 passing cases in 15m 6.975s. Broader runtime and visual-reference qualification
+remain pending. Current image-review policy still applies to every checkpoint
+without a qualified automatic contract.
 
 - **UA-01:** A known selected campaign completes through one host invocation,
   with zero agent/controller decisions between launch and result. Progress

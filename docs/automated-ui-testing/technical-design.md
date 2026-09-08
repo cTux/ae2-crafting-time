@@ -544,3 +544,5 @@ release-facing runs.
 
 Screenshots require visual review, not pixel equality. The permanent archive
 and timing contract is documented in [UI smoke evidence](../ui-smoke-evidence.md).
+
+The [Project Infinity measurement](project-infinity-0.0.52.0.md) records the completed one-world run and its evidence-gate limits.

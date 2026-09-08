@@ -41,7 +41,7 @@ $outcomes = foreach ($scenario in $Scenarios) {
     $result = Get-Content -LiteralPath (Join-Path $directory 'result.json') -Raw | ConvertFrom-Json
     if ($result.target -cne $Target -or $result.profile -cne $Profile -or $result.scenario -cne $scenario -or
             $result.screenshots -isnot [array] -or !$result.screenshots.Count) { throw 'Mismatched visual result identity' }
-    foreach ($image in $result.screenshots) {
+    foreach ($image in @($result.screenshots | Select-Object -Unique)) {
         $verdict = 'FAIL'; $reason = ''; $bitmap = $null; $regions = @(); $environmentId = $null
         try {
             if ($image -isnot [string] -or $image -cnotmatch '^[a-z0-9][a-z0-9-]*\.png$') { throw 'Invalid image name' }
