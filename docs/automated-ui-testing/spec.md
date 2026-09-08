@@ -65,7 +65,8 @@ the suite and leaves remaining cases `NOT_RUN`. Retain every assertion and image
 Project Infinity 0.0.52.0 qualification must run all 36 selected cases on its exact
 inspected graph without agent actions between launch and result. Report initial
 loading, resets, UI execution and collection separately, along with the single
-PID and world identity. Runtime qualification is pending; no speedup is claimed.
+PID and world identity. The exact-pack run is complete in the linked measurement;
+broader qualification remains pending, and no controlled speedup ratio is claimed.
 
 Non-goals: arbitrary UI exploration, zero game/render waiting, replacing tests
 with images, universal screenshot approval, parallel Minecraft clients, or a
