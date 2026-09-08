@@ -17,6 +17,9 @@ Read this after an eligible named-modpack instance exists in Prism's **Codex** g
   exists. Write only the staged file, read it back, and require exactly one
   `guiScale:` line whose exact value is `guiScale:0` before a screenshot-bearing
   launch. Stop if the runtime, write target, encoding, or readback is uncertain.
+- For an automated suite, also set and verify `pauseOnLostFocus:false` in that
+  staged file before launch. Prism can take focus during startup; Minecraft's
+  default auto-pause would otherwise stop the integrated server and UI driver.
 - After testing, sync logs and crash reports to the shared instance, restore
   Prism's normal shared root, and remove only the marked temporary copy.
 

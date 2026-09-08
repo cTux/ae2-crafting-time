@@ -55,7 +55,8 @@ try {
     $files = @(foreach ($file in Get-ChildItem -LiteralPath $campaign -Recurse -File) {
         $relative = $file.FullName.Substring($campaign.Length).TrimStart('/','\')
         $normalized = $relative.Replace('\','/')
-        if ($normalized -match '(^|/)(bundle|runtime)(/|$)' -and $normalized -notmatch '/bundle/expected-adapters\.json$') { continue }
+        if ($normalized -match '(^|/)runtime(/|$)') { continue }
+        if ($normalized -match '(^|/)bundle(/|$)' -and $normalized -notmatch '/bundle/(expected-adapters\.json|mods/[^/]+\.jar)$') { continue }
         [pscustomobject]@{source=$file.FullName;relative=$normalized}
     })
     $files += [pscustomobject]@{source=[IO.Path]::GetFullPath($ContractsFile);relative='visual-contracts/scripts/catalogue.json'}

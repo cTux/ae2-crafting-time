@@ -47,6 +47,9 @@ try {
         @{schema=1;cases=@(@{scenario='advancedae-cpu';world=$world})}|ConvertTo-Json -Depth 8|Set-Content (Join-Path $evidence 'suite-plan.json')
         @{schema=1;target='1.20.1-forge';graphSha256='graph';fixtureSha256='fixture';resourceSha256='resource';os='fixture';gpuDriver='fixture'}|ConvertTo-Json|Set-Content (Join-Path $graph 'environment.json')
         '{}'|Set-Content (Join-Path $graph 'bundle/expected-adapters.json')
+        New-Item -ItemType Directory -Path (Join-Path $graph 'bundle/mods'),(Join-Path $graph 'runtime')|Out-Null
+        [IO.File]::WriteAllBytes((Join-Path $graph 'bundle/mods/test-artifact.jar'),[byte[]](80,75,3,4))
+        'excluded runtime data'|Set-Content (Join-Path $graph 'runtime/options.txt')
         $status=@{pid=123;exitCode=0}
         if($mode -eq 'missing-pid'){$status.pid=$null}
         if($mode -eq 'unconfirmed-exit'){$status.exitCode=$null}
@@ -69,6 +72,8 @@ try {
         $expected=switch($mode){'review'{'REVIEW_REQUIRED'} 'automatic'{'PASS'} 'diagnostic'{'PASS'} default{'FAIL'}}
         Assert ($result.overall -eq $expected) ("$mode must produce $expected, got " + ($result|ConvertTo-Json -Depth 12 -Compress))
         Assert (Test-Path (Join-Path $result.archive 'forge/bundle/expected-adapters.json')) 'Archive must retain adapter validation contract'
+        Assert ((Get-FileHash (Join-Path $result.archive 'forge/bundle/mods/test-artifact.jar')).Hash -eq (Get-FileHash (Join-Path $graph 'bundle/mods/test-artifact.jar')).Hash) 'Archive must retain exact tested artifacts'
+        Assert (!(Test-Path (Join-Path $result.archive 'forge/runtime'))) 'Archive must exclude the live runtime'
         Assert ((Get-FileHash (Join-Path $result.archive 'visual-contracts/scripts/catalogue.json')).Hash -eq (Get-FileHash $catalogue).Hash) 'Archive must retain the visual contract'
         Assert ((Get-FileHash (Join-Path $result.archive 'visual-contracts/test-fixtures/ui-smoke-visuals/baseline.png')).Hash -eq (Get-FileHash (Join-Path $references 'baseline.png')).Hash) 'Archive must retain baseline pixels'
     }
