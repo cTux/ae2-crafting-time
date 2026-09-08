@@ -68,6 +68,8 @@ public final class CraftPlanScenario {
     private CompletableFuture<ItemStack> networkAnalyserSetup;
     private boolean wirelessHoverStarted;
     private boolean wirelessOpenRequested;
+    private boolean terminalOpenRequested;
+    private boolean amountSubmitted;
     private boolean treeHoverStarted;
     private final StatsInteraction treeStats = new StatsInteraction();
 
@@ -276,10 +278,10 @@ public final class CraftPlanScenario {
         }
         var position = new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z());
         var face = Direction.valueOf(marker.terminal().face());
-        var hit = minecraft.hitResult instanceof BlockHitResult current && current.getBlockPos().equals(position)
-                ? current
-                : new BlockHitResult(Vec3.atCenterOf(position).add(Vec3.atLowerCornerOf(face.getNormal()).scale(0.5)),
-                        face, position, false);
+        if (terminalOpenRequested) return;
+        var hit = new BlockHitResult(Vec3.atCenterOf(position).add(Vec3.atLowerCornerOf(face.getNormal()).scale(0.5)),
+                face, position, false);
+        terminalOpenRequested = true;
         minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND, hit);
     }
 
@@ -379,6 +381,8 @@ public final class CraftPlanScenario {
 
     private void openPlan() {
         if (minecraft.screen instanceof CraftAmountScreen amount) {
+            if (amountSubmitted) return;
+            amountSubmitted = true;
             if (addonFixture != null) addonFixture.configureAmount(amount);
             ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next().onPress();
             return;
@@ -622,6 +626,8 @@ public final class CraftPlanScenario {
 
     private void verifyAddonTtc() throws IOException {
         if (minecraft.screen instanceof CraftAmountScreen amount) {
+            if (amountSubmitted) return;
+            amountSubmitted = true;
             if (addonFixture != null) addonFixture.configureAmount(amount);
             ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next().onPress();
             return;
@@ -856,6 +862,7 @@ public final class CraftPlanScenario {
         }
         System.out.println("AE2CT phase " + java.time.Instant.now() + " case=" + options.scenario()
                 + " from=" + state + " to=" + next + " durationNanos=" + elapsed().toNanos());
+        amountSubmitted = false;
         state = next;
         stateStarted = System.nanoTime();
     }
