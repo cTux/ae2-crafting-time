@@ -20,6 +20,7 @@ final class SuiteFixture {
     private final BlockPos min;
     private final BlockPos max;
     private final StructureTemplate blocks = new StructureTemplate();
+    private final boolean emptyBlocks;
     private final Ae2CraftingTimeSavedData data;
     private final List<com.ctux.ae2craftingtime.core.PersistedOutputSamples> samples;
     private final List<ItemStack> inventory = new ArrayList<>();
@@ -34,6 +35,9 @@ final class SuiteFixture {
         max = new BlockPos(terminal.x() + 80, terminal.y() + 12, terminal.z() + 32);
         DriverPlatform.captureSuite(blocks, level, min, new Vec3i(max.getX() - min.getX() + 1,
                 max.getY() - min.getY() + 1, max.getZ() - min.getZ() + 1));
+        emptyBlocks = BlockPos.betweenClosedStream(min, max)
+                .allMatch(position -> level.getBlockState(position).is(Blocks.AIR));
+        System.out.println("AE2CT suite fixture-captured emptyBlocks=" + emptyBlocks + " utc=" + java.time.Instant.now());
         data = DriverPlatform.suiteSavedData(level);
         samples = List.copyOf(data.samples());
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) {
@@ -54,7 +58,8 @@ final class SuiteFixture {
         for (var entity : level.getEntities(player, new AABB(min.getX(), min.getY(), min.getZ(), max.getX() + 1, max.getY() + 1, max.getZ() + 1))) {
             if (!(entity instanceof net.minecraft.world.entity.player.Player)) entity.discard();
         }
-        if (!blocks.placeInWorld(level, min, min, new StructurePlaceSettings(), level.getRandom(), 3)) {
+        // Native templates reject an empty palette; clearing already restores an all-air fixture.
+        if (!emptyBlocks && !blocks.placeInWorld(level, min, min, new StructurePlaceSettings(), level.getRandom(), 3)) {
             throw new IllegalStateException("Cannot restore suite fixture");
         }
         data.replaceFrom(samples);
