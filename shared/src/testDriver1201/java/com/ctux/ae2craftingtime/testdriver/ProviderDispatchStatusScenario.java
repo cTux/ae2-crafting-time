@@ -220,6 +220,8 @@ final class ProviderDispatchStatusScenario {
             if (serverStep(minecraft, player -> {
                 fixture.provider(player, 6).getLogic().getConfigManager().putSetting(
                         Settings.LOCK_CRAFTING_MODE, LockCraftingMode.LOCK_UNTIL_PULSE);
+                // Notify the provider of LOW before the later rising edge (AE2 15 caches redstone state).
+                player.level().setBlockAndUpdate(power, Blocks.STONE.defaultBlockState());
                 return true;
             })) phase++;
         } else if (phase == 8 && hasWarning(snapshot)) {
