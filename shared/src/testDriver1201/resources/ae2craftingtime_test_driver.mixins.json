@@ -12,6 +12,7 @@
     "CraftingCPUMenuAccessor"
   ],
   "client": [
+    "ClientStatsAccessor",
     "AEBaseScreenMixin",
     "AEKeyRenderingMixin",
     "AbstractTableRendererMixin",

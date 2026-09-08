@@ -25,7 +25,7 @@ if (-not ('SmokePixels' -as [type])) {
 $contracts = Get-Content -LiteralPath $ContractsFile -Raw | ConvertFrom-Json
 $plan = Get-Content -LiteralPath $SuitePlan -Raw | ConvertFrom-Json
 $environment = Get-Content -LiteralPath $EnvironmentFile -Raw | ConvertFrom-Json
-if ($contracts.schema -ne 1 -or $contracts.checkpoints -isnot [array] -or $plan.schema -ne 1 -or $plan.cases -isnot [array] -or $environment.schema -ne 1) { throw 'Unsupported visual input schema' }
+if ($contracts.schema -ne 1 -or $contracts.checkpoints -isnot [array] -or $plan.schema -notin @(1,2) -or $plan.cases -isnot [array] -or $environment.schema -ne 1) { throw 'Unsupported visual input schema' }
 foreach ($field in @('target','graphSha256','fixtureSha256','resourceSha256','os','gpuDriver')) {
     if (!$environment.$field) { throw "Missing render environment: $field" }
 }
@@ -48,8 +48,10 @@ $outcomes = foreach ($scenario in $Scenarios) {
             $file = Join-Path $directory $image
             $snapshot = Get-Content -LiteralPath (Join-Path $directory ($image.Replace('.png','.json'))) -Raw | ConvertFrom-Json
             $capture = $snapshot.capture
-            if ($capture.schema -ne 1 -or $capture.world -cne $case[0].world -or $capture.scenario -cne $scenario -or
-                    $capture.profile -cne $Profile -or $capture.id -cne "$($case[0].world)/$image" -or
+            $expectedId = if ($capture.schema -eq 2) { "$($case[0].world)/$scenario/$image" } else { "$($case[0].world)/$image" }
+            if ($capture.schema -notin @(1,2) -or ($plan.schema -eq 2 -and $capture.schema -ne 2) -or
+                    $capture.world -cne $case[0].world -or $capture.scenario -cne $scenario -or
+                    $capture.profile -cne $Profile -or $capture.id -cne $expectedId -or
                     !$ids.Add($capture.id) -or ($capture.frame -isnot [long] -and $capture.frame -isnot [int]) -or
                     $capture.frame -lt 1 -or !$capture.renderer) { throw 'Invalid or stale capture identity' }
             if ((Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ine $capture.sha256) { throw 'PNG hash does not match captured frame' }

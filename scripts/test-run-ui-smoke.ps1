@@ -211,7 +211,7 @@ try {
     $suiteSaves = Join-Path $temp 'build\ui-smoke\1.20.1-forge\compatible\runtime\saves'
     if (@(Get-ChildItem $suiteSaves -Directory).Count) { throw 'Suite left disposable worlds behind' }
     $hashes = Get-Content (Join-Path $temp 'build/ui-smoke/1.20.1-forge/compatible/suite/evidence/fixture-hashes.json') -Raw | ConvertFrom-Json
-    if (!$hashes.unchanged -or $hashes.disposableWorlds.Count -ne 37 -or @($hashes.disposableWorlds | Where-Object { !$_.removed }).Count) {
+    if (!$hashes.unchanged -or $hashes.disposableWorlds.Count -ne 1 -or @($hashes.disposableWorlds | Where-Object { !$_.removed }).Count) {
         throw 'Suite omitted source integrity or disposable-world removal evidence'
     }
     foreach ($mode in @('suite-missing', 'suite-order', 'suite-fail', 'suite-world', 'schema', 'missing-screenshot', 'fatal')) {

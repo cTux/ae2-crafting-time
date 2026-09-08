@@ -30,7 +30,9 @@ Add the type as a plain label instead, such as `feature`, `bug`, or `tests`.
 - Copy the host-built JARs into the exact guest-local prepared client, then
   launch its installed loader directly. Preserve the requested target, profile,
   and scenario. Use the single-launch suite for the full compatible graph,
-  with a fresh world and screenshots per case. Run clients sequentially.
+  with one loaded disposable world, pristine fixture resets and screenshots per
+  case. Use schema-1 world reloads only for explicit isolation diagnostics. Run
+  clients sequentially.
 - Run `scripts/run-ui-smoke.ps1` on the host for all four compatible suites.
   Use `run-ui-smoke-matrix.ps1 -Target <id>` for one target or `-Latest` for
   diagnostics. These commands build on the host and dispatch only packaged

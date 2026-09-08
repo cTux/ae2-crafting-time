@@ -133,7 +133,7 @@ if ($Scenario -eq "suite") {
     $suite = & (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1") -Target $Target -RuntimeDirectory $runtime -OutputDirectory $evidence -Scenarios $scenarios -VanillaMetadata:($Target -eq '1.20.1-forge' -and $BundleDirectory -and !(Get-ChildItem -LiteralPath (Join-Path $BundleDirectory 'mods') -Filter 'BloodMagic*.jar'))
     $world = $suite.world
     $plan = Get-Content -LiteralPath (Join-Path $evidence "suite-plan.json") -Raw | ConvertFrom-Json
-    $worldCopies = @($plan.cases | ForEach-Object { Join-Path $runtime "saves\$($_.world)" })
+    $worldCopies = @($plan.cases | ForEach-Object { Join-Path $runtime "saves\$($_.world)" } | Select-Object -Unique)
 } else {
     # The tracked Forge world names Blood Magic dimensions. Reduced graphs need native metadata.
     $vanillaMetadata = $Target -eq '1.20.1-forge' -and $BundleDirectory -and

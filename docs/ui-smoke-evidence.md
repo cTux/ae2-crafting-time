@@ -121,11 +121,17 @@ The primary compatible suites currently contain 34 cases for Forge 1.20.1,
 expanded plan for the current case list and any separate required graphs.
 
 For multiple scenarios on the same installed mod graph, launch Minecraft once.
-Run the suite sequentially with a fresh disposable world per case, capturing each
+Run the suite sequentially in one loaded disposable world with pristine fixture,
+player, profiler and client-cache resets between cases, capturing each
 case's screenshots before advancing. Retain the suite plan, one process ID,
 ordered timestamps, and overall result alongside the per-mod evidence. A crash
 or failed case leaves later cases `NOT_RUN`; do not hide it with automatic retries.
 Different mod graphs or incompatible original/fork artifacts require separate runs.
+
+Record the suite-plan schema and shared world ID. Schema 2 requires one world
+load; a schema-1 diagnostic reload run must not be described as the one-world
+benchmark. Include reset durations separately from initial world loading and UI
+assertions. A stopped or partially completed run is not a full-suite timing.
 
 ```text
 E:/games/mc-instances/.codex-test-results/ui-smoke/

@@ -26,7 +26,7 @@ class CaptureEvidenceTest {
         assertEquals(9, json.get("frame").getAsLong());
         var capture = json.getAsJsonObject("capture");
         assertEquals(10, capture.get("frame").getAsLong());
-        assertEquals(world + "/checkpoint.png", capture.get("id").getAsString());
+        assertEquals(world + "/craft-plan/checkpoint.png", capture.get("id").getAsString());
         assertEquals(CaptureEvidence.sha256(new byte[]{1,2,3}), capture.get("sha256").getAsString());
         assertEquals(160, capture.get("width").getAsInt());
         assertEquals(120, capture.get("height").getAsInt());

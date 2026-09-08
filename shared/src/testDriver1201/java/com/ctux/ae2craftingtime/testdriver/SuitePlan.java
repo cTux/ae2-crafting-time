@@ -19,7 +19,7 @@ record SuitePlan(int schema, List<Case> cases) {
     }
 
     List<DriverOptions> options(DriverOptions options) {
-        if (schema != 1 || cases == null || cases.isEmpty() || cases.size() > 64 || options.interactive()) {
+        if ((schema != 1 && schema != 2) || cases == null || cases.isEmpty() || cases.size() > 64 || options.interactive()) {
             throw new IllegalArgumentException("invalid suite schema, case count, or interactive mode");
         }
         var scenarios = new HashSet<String>();
@@ -27,7 +27,8 @@ record SuitePlan(int schema, List<Case> cases) {
         for (var item : cases) {
             if (item == null || item.scenario == null || !AddonCpuFixture.supports(item.scenario)
                     || item.world == null || !item.world.matches("ae2ct-[a-f0-9]{32}")
-                    || !scenarios.add(item.scenario) || !worlds.add(item.world)) {
+                    || !scenarios.add(item.scenario)
+                    || (schema == 1 ? !worlds.add(item.world) : !item.world.equals(options.world()))) {
                 throw new IllegalArgumentException("invalid or duplicate suite case");
             }
         }

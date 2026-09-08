@@ -16,14 +16,23 @@ try {
             throw 'Legacy scenarios lost their fixture chunks'
         }
     }
-    if ($plan.cases[0].world -eq $plan.cases[1].world) { throw 'Worlds are not isolated' }
+    if ($plan.schema -ne 2 -or $plan.cases[0].world -ne $plan.cases[1].world -or
+            @(Get-ChildItem -LiteralPath "$runtime/saves" -Directory).Count -ne 1) { throw 'Default suite must share one disposable world' }
+    & "$PSScriptRoot/prepare-ui-smoke-suite.ps1" -RuntimeDirectory $runtime -OutputDirectory "$temporary/fresh-evidence" `
+        -Scenarios @('craft-plan','merequester-screen') -FreshWorldPerCase | Out-Null
+    $freshPlan = Get-Content "$temporary/fresh-evidence/suite-plan.json" -Raw | ConvertFrom-Json
+    if ($freshPlan.schema -ne 1 -or $freshPlan.cases[0].world -eq $freshPlan.cases[1].world) { throw 'Diagnostic suite must retain separate worlds' }
+    $mixed = & "$PSScriptRoot/prepare-ui-smoke-suite.ps1" -RuntimeDirectory $runtime -OutputDirectory "$temporary/mixed-evidence" `
+        -Scenarios @('standard-ae2','craft-plan')
+    if (!(Get-ChildItem -LiteralPath "$runtime/saves/$($mixed.world)/region" -Filter '*.mca')) { throw 'Mixed suite must retain the legacy fixture chunks' }
     $fabric = & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -Target 1.20.1-fabric -RuntimeDirectory $runtime -OutputDirectory "$temporary\fabric-evidence" -Scenarios @('standard-ae2')
-    if ($fabric.caseCount -ne 6) { throw 'Standard alias must expand to six worlds' }
+    if ($fabric.caseCount -ne 6) { throw 'Standard alias must expand to six cases' }
     $fabricSource = Join-Path (Split-Path -Parent $PSScriptRoot) 'versions/1.20.1-fabric/run/saves/ae2-crafting-time/level.dat'
     if ((Get-FileHash -LiteralPath "$runtime/saves/$($fabric.world)/level.dat").Hash -ne (Get-FileHash -LiteralPath $fabricSource).Hash) {
         throw 'Fabric retained Forge-only world metadata'
     }
     $fabricPlan = Get-Content "$temporary/fabric-evidence/suite-plan.json" -Raw | ConvertFrom-Json
+    if ($fabricPlan.schema -ne 2 -or @($fabricPlan.cases.world | Select-Object -Unique).Count -ne 1) { throw 'Standard suite must use one world' }
     foreach ($case in $fabricPlan.cases) {
         $worldPath = "$runtime/saves/$($case.world)"
         $names = @(Get-ChildItem -LiteralPath $worldPath -Force | ForEach-Object Name)
@@ -76,7 +85,7 @@ try {
     try { & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -RuntimeDirectory $runtime -OutputDirectory "$temporary\too-many" -Scenarios (1..65 | ForEach-Object {"case-$_"}) | Out-Null }
     catch { $rejected = $true }
     if (!$rejected) { throw 'Expected bounded suite rejection' }
-    Write-Host 'PASS: suite copies, launch identity, markers, unique worlds, and invalid inputs'
+    Write-Host 'PASS: shared and diagnostic worlds, mixed and standard fixtures, launch identity, markers, and invalid inputs'
 } finally {
     $resolved = (Resolve-Path -LiteralPath $temporary).Path
     if (!$resolved.StartsWith([IO.Path]::GetFullPath([IO.Path]::GetTempPath()), [StringComparison]::OrdinalIgnoreCase) -or

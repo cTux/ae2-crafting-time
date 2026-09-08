@@ -31,6 +31,26 @@ try {
     $contract = @{scenario='craft-plan';image='checkpoint.png';environmentId=$unknown[0].environmentId;disposition='automatic';revision=1;qualification='synthetic-negative-test';regions=@(@{baseline='baseline.png';sha256=(Get-FileHash $baseline).Hash;rect=@(0,0,16,16);masks=@()})}
     $contracts.checkpoints=@($contract); Write-Json $contractPath $contracts
     Assert ((Read-Visual)[0].result -eq 'PASS') 'Identical qualified image must pass'
+    Write-Json $plan @{schema=2;cases=@(@{scenario='craft-plan';world=$world})}
+    Assert ((Read-Visual)[0].result -eq 'FAIL') 'Shared-world suite must reject legacy capture IDs'
+    $data.capture.schema=2; $data.capture.id="$world/craft-plan/checkpoint.png"; Write-Json $sidecar $data
+    Assert ((Read-Visual)[0].result -eq 'PASS') 'Shared-world capture identity must pass'
+    Write-Json $plan @{schema=1;cases=@(@{scenario='craft-plan';world=$world})}
+    Assert ((Read-Visual)[0].result -eq 'PASS') 'New capture identity must work in legacy suites and single runs'
+    Write-Json $plan @{schema=2;cases=@(@{scenario='craft-plan';world=$world},@{scenario='crafting-tree-screen';world=$world})}
+    foreach ($scenario in @('craft-plan','crafting-tree-screen')) {
+        $directory=Join-Path $temp $scenario
+        New-Item -ItemType Directory -Path $directory | Out-Null
+        Copy-Item $image (Join-Path $directory 'checkpoint.png')
+        $data.capture.scenario=$scenario; $data.capture.id="$world/$scenario/checkpoint.png"
+        Write-Json (Join-Path $directory 'checkpoint.json') $data
+        Write-Json (Join-Path $directory 'result.json') @{target='1.20.1-forge';profile='compatible';scenario=$scenario;language='en_us';screenshots=@('checkpoint.png');checks=@{clock=$true}}
+    }
+    $shared=@(& "$PSScriptRoot/test-ui-smoke-visuals.ps1" -Evidence $temp -Target 1.20.1-forge -Profile compatible `
+        -Scenarios @('craft-plan','crafting-tree-screen') -SuitePlan $plan -EnvironmentFile $environment -ContractsFile $contractPath -OutputDirectory (Join-Path $temp 'shared-visuals'))
+    Assert ($shared.Count -eq 2 -and $shared[0].result -eq 'PASS' -and $shared[1].result -eq 'REVIEW_REQUIRED') 'Same image basename across shared-world cases must have independent identities'
+    $data.capture.scenario='craft-plan'; $data.capture.id="$world/craft-plan/checkpoint.png"; Write-Json $sidecar $data
+    Write-Json $plan @{schema=2;cases=@(@{scenario='craft-plan';world=$world})}
     $changed=[Drawing.Bitmap]::new($image)
     try {$changed.SetPixel(3,3,[Drawing.Color]::Blue); $changed.Save((Join-Path $temp 'changed.png'),[Drawing.Imaging.ImageFormat]::Png)} finally {$changed.Dispose()}
     Copy-Item (Join-Path $temp 'changed.png') $image -Force

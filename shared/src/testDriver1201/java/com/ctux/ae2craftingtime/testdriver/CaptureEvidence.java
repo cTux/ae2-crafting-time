@@ -25,8 +25,8 @@ public final class CaptureEvidence {
             int width, int height, long frame, String renderer, long started) throws IOException {
         var data = new Gson().toJsonTree(snapshot).getAsJsonObject();
         var capture = new com.google.gson.JsonObject();
-        capture.addProperty("schema", 1);
-        capture.addProperty("id", options.world() + "/" + image.getFileName());
+        capture.addProperty("schema", 2);
+        capture.addProperty("id", options.world() + "/" + options.scenario() + "/" + image.getFileName());
         capture.addProperty("world", options.world());
         capture.addProperty("scenario", options.scenario());
         capture.addProperty("profile", options.profile());

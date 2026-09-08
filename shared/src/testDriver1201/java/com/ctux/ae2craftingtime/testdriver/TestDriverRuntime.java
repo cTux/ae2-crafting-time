@@ -14,6 +14,10 @@ public final class TestDriverRuntime implements AutoCloseable {
     private final String driverFile;
     private final List<DriverOptions> cases;
     private final SuiteProgress progress;
+    private final boolean oneWorld;
+    private java.util.concurrent.CompletableFuture<SuiteFixture> fixture;
+    private java.util.concurrent.CompletableFuture<Integer> reset;
+    private long resetStarted;
     private int index;
     private boolean switching;
     private boolean switchingInProgress;
@@ -26,6 +30,8 @@ public final class TestDriverRuntime implements AutoCloseable {
         this.driverFile = driverFile;
         cases = options.scenario().equals("suite") ? SuitePlan.read(options) : List.of(options);
         progress = options.scenario().equals("suite") ? new SuiteProgress(cases) : null;
+        oneWorld = progress != null && new com.google.gson.Gson().fromJson(
+                java.nio.file.Files.readString(options.output().resolve("suite-plan.json")), SuitePlan.class).schema() == 2;
         if (progress != null) {
             for (var item : cases) {
                 SuitePlan.verifyWorld(minecraft.gameDirectory.toPath().resolve("saves"), item);
@@ -46,6 +52,27 @@ public final class TestDriverRuntime implements AutoCloseable {
         if (switching) {
             switchCase();
             return;
+        }
+        if (oneWorld && minecraft.screen == null && minecraft.level != null && minecraft.player != null
+                && minecraft.getSingleplayerServer() != null) {
+            if (fixture == null) {
+                var server = minecraft.getSingleplayerServer();
+                var playerId = minecraft.player.getUUID();
+                fixture = server.submit(() -> {
+                    try {
+                    SuitePlan.verifyWorld(minecraft.gameDirectory.toPath().resolve("saves"), options);
+                    var world = minecraft.gameDirectory.toPath().resolve("saves").resolve(options.world());
+                    if (!server.getWorldPath(net.minecraft.world.level.storage.LevelResource.ROOT).toRealPath().equals(world.toRealPath())) {
+                        throw new IllegalStateException("Suite reset requires the requested disposable world");
+                    }
+                    return new SuiteFixture(server.overworld(), server.getPlayerList().getPlayer(playerId), FixtureMarker.read(world));
+                    } catch (java.io.IOException error) {
+                        throw new java.io.UncheckedIOException(error);
+                    }
+                });
+            }
+            if (!fixture.isDone()) return;
+            fixture.join();
         }
         scenario.tick();
         if (progress == null) {
@@ -72,6 +99,39 @@ public final class TestDriverRuntime implements AutoCloseable {
     private void switchCase() {
         switchingNow = true;
         try {
+            if (oneWorld) {
+                var server = minecraft.getSingleplayerServer();
+                if (reset == null) {
+                    resetStarted = System.nanoTime();
+                    minecraft.player.closeContainer();
+                    minecraft.setScreen(null);
+                    var playerId = minecraft.player.getUUID();
+                    reset = server.submit(() -> {
+                        fixture.join().restore(server.getPlayerList().getPlayer(playerId));
+                        return server.getTickCount();
+                    });
+                    return;
+                }
+                if (System.nanoTime() - resetStarted > java.time.Duration.ofSeconds(30).toNanos()) {
+                    throw new IllegalStateException("Suite fixture reset timed out");
+                }
+                if (!reset.isDone() || server.getTickCount() < reset.join() + 2) return;
+                minecraft.gui.getChat().clearMessages(true);
+                com.ctux.ae2craftingtime.testdriver.mixin.ClientStatsAccessor.ae2craftingtime_test_driver$networkAmounts().clear();
+                com.ctux.ae2craftingtime.mc1201.ClientStats.CACHE.clear();
+                com.ctux.ae2craftingtime.mc1201.ClientStatsRequests.clear();
+                com.ctux.ae2craftingtime.mc1201.ProviderHighlightClient.onSessionEnd();
+                UiObservationStore.reset();
+                var item = cases.get(++index);
+                scenario = new CraftPlanScenario(minecraft, item, driverFile);
+                progress.start(Instant.now());
+                writeProgress();
+                System.out.println("AE2CT suite fixture-reset case=" + item.scenario() + " world=" + item.world()
+                        + " durationNanos=" + (System.nanoTime() - resetStarted) + " utc=" + Instant.now());
+                reset = null;
+                switching = false;
+                return;
+            }
             if (!switchingInProgress) {
                 switchingInProgress = true;
                 stoppingServer = minecraft.getSingleplayerServer();

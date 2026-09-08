@@ -47,7 +47,7 @@ class SuitePlanTest {
     }
 
     @Test void rejectsInvalidPlansBeforeOpeningAnyWorld() {
-        for (var plan : List.of(new SuitePlan(2, List.of(first)), new SuitePlan(1, null),
+        for (var plan : List.of(new SuitePlan(3, List.of(first)), new SuitePlan(1, null),
                 new SuitePlan(1, List.of()), new SuitePlan(1, Collections.nCopies(65, first)),
                 new SuitePlan(1, Arrays.asList((SuitePlan.Case) null)),
                 new SuitePlan(1, List.of(new SuitePlan.Case(null, FIRST))),
@@ -63,6 +63,14 @@ class SuitePlanTest {
                 new DriverOptions("suite", "compatible", FIRST, temporary, true)));
     }
 
+    @Test void sharedWorldPlanRequiresOneIdentityAndDistinctScenarios() {
+        var secondHere = new SuitePlan.Case("merequester-screen", FIRST);
+        var cases = new SuitePlan(2, List.of(first, secondHere)).options(options());
+        assertEquals(List.of(FIRST, FIRST), cases.stream().map(DriverOptions::world).toList());
+        assertNotEquals(cases.get(0).output(), cases.get(1).output());
+        assertThrows(IllegalArgumentException.class, () -> new SuitePlan(2, List.of(first, second)).options(options()));
+        assertThrows(IllegalArgumentException.class, () -> new SuitePlan(2, List.of(first, first)).options(options()));
+    }
     @Test void expandedSuitesReachCaseValidationThroughSixtyFourEntries() {
         var names = List.of("standard-plan-controls", "standard-status-controls", "waiting-status",
                 "running-status", "delayed-status", "craft-lifecycle", "craft-plan", "crafting-tree-screen",

@@ -2,7 +2,8 @@
 
 ## Unattended evidence gate design
 
-Planned for [#347](https://github.com/cTux/ae2-crafting-time/issues/347),
+Implemented in [PR #349](https://github.com/cTux/ae2-crafting-time/pull/349) for
+[#347](https://github.com/cTux/ae2-crafting-time/issues/347), with runtime qualification in progress,
 implementing [UA-01 through UA-08](spec.md#unattended-evidence-gate).
 The [research](automation-research.md) records source evidence and alternatives.
 The existing #218 sections below describe the earlier selection implementation;
@@ -28,6 +29,38 @@ future. Keep the current frame minimums initially. Reset readiness on relevant
 changes; do not treat an unchanged stage counter as an unchanged rendered image.
 World-only checkpoints need their own readiness path because menu observations
 are absent. Never retain live game objects across client/server threads.
+
+### One loaded world: research and decision
+
+The existing suite already avoids JVM restarts. It still unloads and opens a
+world for every case, repeating mod world-join work. The new schema-2 suite
+keeps the integrated server and world loaded and restores pristine case state.
+
+[Forge's GameTest documentation](https://docs.minecraftforge.net/en/latest/misc/gametest/)
+describes initial scenes supplied by structure templates and setup/teardown on
+the current level. This supports fixture isolation without a client restart;
+it does not establish that templates reset mod caches or profiler data.
+[Fabric's automated testing documentation](https://docs.fabricmc.net/develop/automatic-testing)
+also documents game and client testing. Migrating this cross-version UI driver
+to another framework is unnecessary: retain its actual screen inputs, assertions
+and screenshots and reuse Minecraft's structure support for bounded reset.
+
+Before the first case, capture pristine fixture block and block-entity state.
+Between cases, close menus, restore the fixture on the server thread, remove
+case jobs/entities, restore player and profiler state, then clear client caches
+and observations. Await completion before creating the next scenario. Keep the
+source fixture read-only. Do not carry live objects across thread boundaries or
+accept a reset timeout. A new scenario must not inherit an earlier case's samples
+or packets. Existing production reset APIs may be reused; add no production test
+hooks. Normal readiness predicates still gate actions after reset.
+
+`suite-plan.json` schema 2 requires one shared marked world and unique scenario
+IDs; schema 1 retains distinct worlds for explicit reload diagnostics. The case
+limit remains 64. Leaf evidence stays per scenario and keeps its existing schema.
+Record plan schema, world identity, one PID and case/reset timings. A complete
+one-world result requires all selected cases and no intervening world reopen.
+Qualify the exact 36-case Project Infinity 0.0.52.0 graph before reporting its
+runtime. This decision supersedes older reload-isolation descriptions below.
 
 ### Capture and validation
 
@@ -171,7 +204,7 @@ External research supports two narrow decisions:
   these facilities instead of parsing human-readable diff headings.
 - [Playwright isolation guidance](https://playwright.dev/docs/best-practices#make-tests-as-isolated-as-possible)
   explains why tests need their own state and should run independently. Apply
-  that principle to fresh Minecraft worlds using our existing suite runtime;
+  that principle to pristine Minecraft fixture state using our existing suite runtime;
   do not introduce Playwright or a new test framework.
 
 ### Public command contract
@@ -304,7 +337,7 @@ validator, with parity tests. Reuse existing names within each leaf directory;
 add `waiting-recovered.png`, `running-progress.png`, `delayed-tooltip.png`, and
 `delayed-recovered.png` for new distinct checkpoints. Setup observations are
 not results for an unselected case. Preserve modifier release, focus handling,
-server-thread mutation, snapshot reset, and fresh per-world profiler identity.
+server-thread mutation, snapshot reset, and pristine profiler state for each case.
 
 The exact new leaf contracts are below. Each check must be true; screenshots
 also require their existing semantic snapshot sidecars. A `sort-1/2/3` entry
@@ -421,7 +454,7 @@ a later build cannot replace files while a guest reads them.
 | `get-ui-smoke-coverage.ps1` | Matrix parity, explicit project dispositions, exclusions and required scenarios |
 | `run-ui-smoke-codexvm.ps1` | Interactive guest task, worktree staging and recorded-process stop |
 | `run-ui-smoke.ps1` | Disposable fixtures, runtime lock, native launch, result validation and cleanup |
-| `prepare-ui-smoke-suite.ps1` | One fresh marked world for each scenario in a single client session |
+| `prepare-ui-smoke-suite.ps1` | One marked shared world with pristine fixture resets; schema 1 retains per-case worlds for diagnostics |
 | Driver Java | Bounded scenarios, final UI observations, server outcome assertions and atomic results |
 | Target adapters | Loader activation, Minecraft input APIs, fixture APIs and framebuffer capture |
 

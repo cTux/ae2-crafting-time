@@ -194,7 +194,7 @@ the selected target's suite; inspect the plan before launching.
 
 Each case owns its setup, assertions and evidence, so it can run directly
 without a preceding case. Group execution uses one Minecraft process with a
-fresh disposable world per case. It does not launch six clients. The raw JVM
+single loaded disposable world with a pristine fixture reset per case. The raw JVM
 scenario property accepts leaf names; `standard-ae2` itself is only a host alias.
 The older `craft-plan` scenario is a separate case, not another name for
 `standard-plan-controls` or the group.
@@ -236,7 +236,9 @@ replan and rebuild rather than reuse stale evidence.
 ### Runs, dependency graphs and results
 
 Cases selected for the same target and dependency graph run sequentially in one
-client, each in a fresh world. Separate targets or incompatible dependency graphs
+client and one loaded world, with fixture, player, profiler and client-cache resets
+between cases. Schema-1 world-reload suites are explicit isolation diagnostics.
+Separate targets or incompatible dependency graphs
 need separate launches. The runner continues with later graphs/targets after a
 failure, but stops if it cannot confirm the previous client exited. A failed
 case leaves later cases in that client `NOT_RUN`; there are no automatic retries.

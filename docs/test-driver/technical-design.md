@@ -371,16 +371,21 @@ launcher log for one bounded warning and its original reflection failure.
 ## Single-launch orchestration
 
 `TestDriverRuntime` sequences the existing `CraftPlanScenario` instances for an
-explicit suite plan. `SuitePlan` validates bounded, unique scenario/world IDs,
+explicit suite plan. `SuitePlan` validates bounded, unique scenario IDs,
 the matching first world, and non-interactive execution. Output paths are derived
 from validated scenario names. Preflight every fixture marker and reject linked
 world paths before loading any suite world.
 
 After a case reaches `RESULT_WRITTEN`, intercept its normal quit transition.
-Write the suite progress atomically, disconnect the level, and use Minecraft's
-normal `clearLevel` / world-open flow for the next pre-created copy. Construct a
-fresh scenario and reset driver UI observations. Normal server unload/load hooks
-own production cache and profiler reset; no production test hooks are added.
+Write the suite progress atomically. In schema 2, keep the integrated server and
+world loaded. Restore the pristine bounded fixture on the server thread, including
+block entities and inventories; remove case jobs and entities, restore player and
+profiler state, and clear client caches and driver observations before constructing
+the next scenario. Capture the pristine state before the first case mutates it.
+Do not snapshot a completed case as the next case's baseline. Await reset completion
+and normal rendered readiness with bounded deadlines; reset failure aborts the
+suite. No production test hooks are added. Schema 1 keeps distinct world IDs and
+the normal `clearLevel` / world-open flow for explicit isolation diagnostics.
 Verify the running server's actual save path, not just a marker in another folder.
 
 The final case closes normally. A failed case aborts the suite; untouched cases
@@ -391,7 +396,7 @@ require drawn TTC badges and total text, not only populated row data.
 
 The normal per-case result files and screenshots remain the source of assertion
 evidence. Test plan validation, summary completion/failure, and world-path guards
-at their pure boundary; verify world switching and cache isolation in CodexVM.
+at their pure boundary; verify shared-world resets and cache isolation in CodexVM.
 
 ## UI observation boundaries
 
@@ -596,7 +601,8 @@ fixture preparation for every leaf. Both target runtime implementations use
 the same dispatch and exact check contracts. The 26.1.2 fixture/observer adapters
 retain their native APIs. `ui-smoke-groups.json` owns host alias expansion and
 required evidence; Java `DriverResult` enforces the matching check sets.
-`SuitePlan` and the host accept 1–64 unique cases/worlds. Group results live in
+`SuitePlan` and the host accept 1–64 unique cases. Schema 2 shares one marked
+world; schema 1 requires unique worlds for explicit diagnostics. Group results live in
 the campaign report; existing schema-1 leaf and flat-suite reports are preserved.
 Runtime acceptance still requires independent, group and full-suite evidence
 on all four targets; code or contract tests alone do not establish a UI pass.
