@@ -124,6 +124,7 @@ public final class CraftPlanScenario {
                 }
             }
         } catch (Exception | LinkageError error) {
+            error.printStackTrace();
             fail("exception", state.name(), ReportText.failure(error));
         }
     }
