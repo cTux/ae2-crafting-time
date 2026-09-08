@@ -217,3 +217,12 @@ read as messy rectangles in-game.)
   errors.
 - English and Ukrainian messages keep matching placeholders.
 - Packet, NBT, and message-component round trips have full test coverage.
+
+## Planned fluid and gas icon correction
+
+[Issue #376](https://github.com/cTux/ae2-crafting-time/issues/376) tracks the
+item-only world icon limitation. Its [resource icon spec](resource-icons/spec.md),
+[research and design](resource-icons/technical-design.md), and
+[implementation plan](resource-icons/implementation-plan.md) extend this feature
+to fluid and supported gas/chemical icons. These documents describe a planned
+fix; the existing red plate may currently appear without a non-item icon.
