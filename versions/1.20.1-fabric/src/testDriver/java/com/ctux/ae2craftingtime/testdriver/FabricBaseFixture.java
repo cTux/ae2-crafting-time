@@ -35,26 +35,32 @@ final class FabricBaseFixture extends NativeCpuFixture {
         var face = Direction.valueOf(marker.terminal().face());
         player.teleportTo(placement.terminal().getX() + 0.5 + face.getStepX() * 2,
                 placement.terminal().getY() - 1, placement.terminal().getZ() + 0.5 + face.getStepZ() * 2);
-        var host = (IInWorldGridNodeHost) player.serverLevel().getBlockEntity(placement.terminal());
-        grid = Arrays.stream(Direction.values()).map(host::getGridNode).filter(Objects::nonNull)
-                .map(node -> node.getGrid()).filter(Objects::nonNull).findFirst().orElseThrow();
-        drive = grid.getMachines(DriveBlockEntity.class).stream()
-                .filter(candidate -> candidate.getMainNode().isActive()).findFirst().orElseThrow();
-        var inventory = drive.getInternalInventory();
-        for (var slot = 0; slot < inventory.size(); slot++) {
-            if (inventory.getStackInSlot(slot).isEmpty()) {
-                inventory.setItemDirect(slot, AEItems.ITEM_CELL_1K.stack());
-                drive.onChangeInventory(inventory, slot);
-                cellSlot = slot;
-                return placement;
-            }
-        }
-        throw new IllegalStateException("Fabric fixture needs an empty drive slot");
+        return placement;
     }
 
     @Override
     protected boolean finish(ServerPlayer player, Placement placement) {
         if (addCpu && !super.finish(player, placement)) return false;
+        if (drive == null) {
+            var host = (IInWorldGridNodeHost) player.serverLevel().getBlockEntity(placement.terminal());
+            grid = Arrays.stream(Direction.values()).map(host::getGridNode).filter(Objects::nonNull)
+                    .map(node -> node.getGrid()).filter(Objects::nonNull).findFirst().orElse(null);
+            if (grid == null) return false;
+            drive = grid.getMachines(DriveBlockEntity.class).stream()
+                    .filter(candidate -> candidate.getMainNode().isActive()).findFirst().orElse(null);
+            if (drive == null) return false;
+            var inventory = drive.getInternalInventory();
+            cellSlot = -1;
+            for (var slot = 0; slot < inventory.size(); slot++) {
+                if (inventory.getStackInSlot(slot).isEmpty()) {
+                    inventory.setItemDirect(slot, AEItems.ITEM_CELL_1K.stack());
+                    drive.onChangeInventory(inventory, slot);
+                    cellSlot = slot;
+                    break;
+                }
+            }
+            if (cellSlot < 0) throw new IllegalStateException("Fabric fixture needs an empty drive slot");
+        }
         var cell = drive.getOriginalCellInventory(cellSlot);
         if (cell == null) return false;
         var source = IActionSource.ofPlayer(player);

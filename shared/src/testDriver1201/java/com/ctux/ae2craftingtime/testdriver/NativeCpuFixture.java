@@ -68,7 +68,8 @@ class NativeCpuFixture extends AddonCpuFixture<NativeCpuFixture.Placement> {
             throw new IllegalStateException("native CPU fixture terminal is unavailable");
         }
         var terminalNode = Arrays.stream(Direction.values()).map(terminalHost::getGridNode)
-                .filter(Objects::nonNull).findFirst().orElseThrow();
+                .filter(Objects::nonNull).findFirst().orElse(null);
+        if (terminalNode == null) return false;
         var storageNode = storage.getMainNode().getNode();
         if (storageNode == null) {
             return false;
