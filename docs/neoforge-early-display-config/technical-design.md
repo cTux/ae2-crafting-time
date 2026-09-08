@@ -22,15 +22,16 @@ comparison.
 `prepare-ui-smoke-launch.ps1` owns native-runtime staging. For NeoForge targets,
 it will snapshot any existing `config/fml.toml` into the current graph's
 evidence directory, remove only that disposable runtime file, and record an
-explicit absence marker when no file exists. The native loader then creates its
-own version-matched config. After the process exits, `run-ui-smoke.ps1` copies
-the resulting file into the same evidence directory or records that it is
-absent.
+explicit absence marker when no file exists. It then copies `config/fml.toml`
+from the exact prepared installation named by the validated launch manifest.
+After the process exits, `run-ui-smoke.ps1` copies the resulting file into the
+same evidence directory or records that it is absent.
 
-The runner does not parse, patch, or supply `earlyWindowSquir`. Deleting the one
-loader-owned file is smaller and safer than copying a version-specific template:
-FML remains the source of defaults, and future loader keys need no runner
-change. The prepared launcher and other config files remain untouched.
+The runner does not parse, patch, or supply `earlyWindowSquir`. FML generated
+the prepared installation's template, so it remains the source of defaults and
+future loader keys need no runner change. The prepared launcher and other
+config files remain untouched. A missing template is a setup failure instead of
+falling back to invented values.
 
 ## Data flow
 
@@ -38,6 +39,7 @@ change. The prepared launcher and other config files remain untouched.
 existing disposable runtime/config/fml.toml
   -> prelaunch evidence copy or absent marker
   -> remove runtime fml.toml
+  -> copy exact prepared installation fml.toml
   -> launch exact prepared NeoForge loader
   -> postlaunch evidence copy or absent marker
   -> existing semantic, visual, archive and exit gates
@@ -45,7 +47,7 @@ existing disposable runtime/config/fml.toml
 
 ## Failure handling
 
-- A snapshot or removal failure stops before launch.
+- A snapshot, removal, missing-template, or staging failure stops before launch.
 - The post-launch capture runs for both success and failure and does not replace
   the original launcher log.
 - Evidence filenames are fixed and graph-local, so later graphs cannot overwrite

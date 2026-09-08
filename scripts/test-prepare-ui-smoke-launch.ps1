@@ -12,7 +12,7 @@ try {
     $profile | ConvertTo-Json | Set-Content "$bundle/profile.json"
     Set-Content "$bundle/mods/mod.jar" 'unchanged artifact'
     '["mod.jar"]' | Set-Content "$bundle/mods/.ae2-crafting-time-run-mods.json"
-    $launch = @{target='1.20.1-forge';java=17;arguments=@('-Xmx1G','-Dae2craftingtime.test.world=old',
+    $launch = @{target='1.20.1-forge';java=17;guest=(Join-Path $temp 'prepared');arguments=@('-Xmx1G','-Dae2craftingtime.test.world=old',
         '-cp','C:\Native Loader\client.jar','example.Client','--version','1.20.1-forge-47.4.10',
         '--gameDir','C:\Old Game','--quickPlaySingleplayer','old')}
     $manifest = Join-Path $temp 'launch.json'
@@ -37,17 +37,23 @@ try {
     $launch | ConvertTo-Json | Set-Content $manifest
     $parameters.Target = '1.21.1-neoforge'
     $config = Join-Path $runtime 'config/fml.toml'
+    $template = Join-Path $launch.guest 'config/fml.toml'
     New-Item -ItemType Directory -Path (Split-Path $config) -Force | Out-Null
+    New-Item -ItemType Directory -Path (Split-Path $template) -Force | Out-Null
     $configBytes = [byte[]](0, 1, 2, 255)
+    $templateBytes = [byte[]](4, 5, 6, 255)
     [IO.File]::WriteAllBytes($config, $configBytes)
+    [IO.File]::WriteAllBytes($template, $templateBytes)
     & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters | Out-Null
-    if (Test-Path -LiteralPath $config) { throw 'Inherited NeoForge FML config was retained' }
+    if (Compare-Object $templateBytes ([IO.File]::ReadAllBytes($config)) -SyncWindow 0) { throw 'Version-matched FML config was not staged' }
     if (Compare-Object $configBytes ([IO.File]::ReadAllBytes((Join-Path $evidence 'fml-prelaunch.toml'))) -SyncWindow 0) {
         throw 'Pre-launch FML config evidence changed bytes'
     }
+    Remove-Item -LiteralPath $config -Force
     & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters | Out-Null
     if (-not (Test-Path -LiteralPath (Join-Path $evidence 'fml-prelaunch.absent')) -or
             (Test-Path -LiteralPath (Join-Path $evidence 'fml-prelaunch.toml'))) { throw 'Missing pre-launch FML config was not recorded' }
+    if (Compare-Object $templateBytes ([IO.File]::ReadAllBytes($config)) -SyncWindow 0) { throw 'Missing runtime FML config was not initialized from the prepared loader' }
     $profile.target = '1.20.1-forge'; $profile.java = 17; $profile.loader = '47.4.10'
     $profile | ConvertTo-Json | Set-Content "$bundle/profile.json"
     $launch.target = '1.20.1-forge'; $launch.java = 17; $launch.arguments[-5] = '1.20.1-forge-47.4.10'
