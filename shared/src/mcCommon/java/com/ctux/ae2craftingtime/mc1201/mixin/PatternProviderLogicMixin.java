@@ -40,7 +40,7 @@ public abstract class PatternProviderLogicMixin {
     }
 
     @Redirect(method = "pushPattern", at = @At(value = "INVOKE",
-            target = "Lappeng/api/implementations/blockentities/ICraftingMachine;pushPattern(Lappeng/api/crafting/IPatternDetails;[Lappeng/api/stacks/KeyCounter;Lnet/minecraft/core/Direction;)Z"),
+            target = "Lappeng/api/implementations/blockentities/ICraftingMachine;pushPattern"),
             remap = false)
     private boolean ae2craftingtime$observeDedicatedResult(ICraftingMachine machine, IPatternDetails pattern,
             KeyCounter[] input, Direction direction) {
@@ -50,7 +50,7 @@ public abstract class PatternProviderLogicMixin {
     }
 
     @Redirect(method = "pushPattern", at = @At(value = "INVOKE",
-            target = "Lappeng/helpers/patternprovider/PatternProviderLogic;findAdapter(Lnet/minecraft/core/Direction;)Lappeng/helpers/patternprovider/PatternProviderTarget;"),
+            target = "Lappeng/helpers/patternprovider/PatternProviderLogic;findAdapter"),
             remap = false)
     private PatternProviderTarget ae2craftingtime$observeTarget(PatternProviderLogic provider, Direction direction) {
         var target = ae2craftingtime$findAdapter(direction);
