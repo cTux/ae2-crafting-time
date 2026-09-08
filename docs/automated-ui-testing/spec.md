@@ -2,14 +2,18 @@
 
 ## Unattended evidence gate
 
-Planned extension, researched 2026-09-08 for
+Extension researched 2026-09-08 for
 [#347](https://github.com/cTux/ae2-crafting-time/issues/347). See the
 [research](automation-research.md),
 [design](technical-design.md#unattended-evidence-gate-design), and
 [plan](implementation-plan.md#unattended-evidence-gate-implementation).
 The runner, independent standard leaves and change selection already exist at
 `7b127be8`; #218's planning sections below are retained historical design.
-This extension is not implemented, and current image-review policy still applies.
+Implementation is in [PR #349](https://github.com/cTux/ae2-crafting-time/pull/349).
+The [Project Infinity one-run measurement](project-infinity-0.0.52.0.md) records
+36 passing cases in 15m 6.975s. Broader runtime and visual-reference qualification
+remain pending. Current image-review policy still applies to every checkpoint
+without a qualified automatic contract.
 
 - **UA-01:** A known selected campaign completes through one host invocation,
   with zero agent/controller decisions between launch and result. Progress
@@ -33,7 +37,7 @@ This extension is not implemented, and current image-review policy still applies
   contracts/diffs, timings and exact-process cleanup. Archive failure prevents
   PASS and preserves local evidence. Never overwrite a prior attempt.
 - **UA-07:** Keep all four release targets, newest-adapter proof, English,
-  fresh worlds, exact prepared loaders, sequential clients and one launch per
+  fresh fixture state, exact prepared loaders, sequential clients and one launch per
   graph. A focused pass never certifies a full suite. No production test hooks,
   published driver, automatic retries, or automatic modpack substitutions.
 - **UA-08:** Publish measured cold/warm phase durations, controller-decision
@@ -48,9 +52,25 @@ appearance requires review. First-time visual review happens after scenario
 execution, not between actions. Existing manual review remains mandatory until
 implementation, qualification and policy updates ship together.
 
+### One loaded world per graph
+
+The 2026-09-08 update to #347 replaces per-case world reloads with pristine
+fixture resets. It supersedes older fresh-world-per-case wording below. Each
+selected graph uses one client and one loaded marked disposable world; schema-1
+reload suites remain explicit diagnostics. Schema 2 accepts 1–64 unique scenarios
+sharing that world. Reset blocks, block entities, jobs, player inventory and pose,
+profiler state and client observations before the next case. A failed reset stops
+the suite and leaves remaining cases `NOT_RUN`. Retain every assertion and image.
+
+Project Infinity 0.0.52.0 qualification must run all 36 selected cases on its exact
+inspected graph without agent actions between launch and result. Report initial
+loading, resets, UI execution and collection separately, along with the single
+PID and world identity. The exact-pack run is complete in the linked measurement;
+broader qualification remains pending, and no controlled speedup ratio is claimed.
+
 Non-goals: arbitrary UI exploration, zero game/render waiting, replacing tests
 with images, universal screenshot approval, parallel Minecraft clients, or a
-GitHub-to-personal-VM scheduler. This docs PR does not implement UA-01 to UA-08.
+GitHub-to-personal-VM scheduler. Research PR #348 did not implement UA-01 to UA-08.
 
 ## Goal
 
@@ -101,8 +121,8 @@ details below; the original behavior, evidence and safety requirements remain.
 ### Independently runnable standard cases
 
 - **CS-05:** `standard-ae2` becomes an ordered group of the six cases below.
-  Each can run alone on all four release targets, with its own marked fresh
-  world, setup, assertions, screenshots, cleanup, and result. No case consumes
+  Each can run alone on all four release targets, with its own pristine fixture
+  state, setup, assertions, screenshots, cleanup, and result. No case consumes
   another case's world, job, cached observation, or profiler sample.
 - **CS-06:** Group execution uses one client process per target and dependency
   graph. Preserve the existing full journey through real UI submission and

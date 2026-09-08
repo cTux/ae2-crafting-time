@@ -1,6 +1,15 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 final class DriverPlatform {
+    static void captureSuite(net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate template,
+            net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos min, net.minecraft.core.Vec3i size) {
+        template.fillFromWorld(level, min, size, false, java.util.List.of(net.minecraft.world.level.block.Blocks.AIR));
+    }
+
+    static com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeSavedData suiteSavedData(net.minecraft.server.level.ServerLevel level) {
+        return level.getDataStorage().computeIfAbsent(com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeSavedData.TYPE);
+    }
+
     static boolean modifiers(net.minecraft.client.Minecraft minecraft, boolean reset) {
         long window = minecraft.getWindow().handle();
         boolean control = org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL) != 0;

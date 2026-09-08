@@ -42,7 +42,8 @@ Add the type as a plain label instead, such as `feature`, `bug`, or `tests`.
 
 For multiple scenarios on one installed mod graph, use the
 [single-launch suite](../../../docs/test-driver/spec.md#single-launch-suites).
-Prepare fresh case worlds once, launch Prism once, and collect each case's
+Prepare one marked disposable world, launch Prism once, restore pristine fixture,
+player, profiler and client-cache state between cases, and collect each case's
 screenshots before advancing. Do not relaunch the pack for every integration.
 
 1. Resolve the canonical CurseForge or Modrinth project and an exact release
@@ -103,7 +104,8 @@ runtime separate from total task time. Mark an unavailable duration as
   completion, record the install as blocked and continue the batch.
 
 For a standard group in an explicitly requested pack, pass `standard-ae2`
-through `prepare-ui-smoke-suite.ps1` so it expands into six leaves and fresh
-worlds before the one Prism launch. Do not pass that alias to the raw JVM
+through `prepare-ui-smoke-suite.ps1` so it expands into six leaves sharing one
+loaded disposable world before the one Prism launch. Use schema-1 world reloads
+only for explicit isolation diagnostics. Do not pass that alias to the raw JVM
 scenario property. This does not change the inspected pack graph or authorize
 automatic pack selection from a source diff.

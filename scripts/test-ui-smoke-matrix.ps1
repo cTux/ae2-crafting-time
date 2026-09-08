@@ -36,11 +36,12 @@ foreach ($case in $cases) {
     New-Item -ItemType Directory -Path $evidence -Force | Out-Null
     $checks = [ordered]@{}
     foreach ($check in $contracts.$case.checks) { $checks[$check] = $true }
-    foreach ($image in $contracts.$case.screenshots) {
+    $images = if ($contracts.$case) { @($contracts.$case.screenshots) } else { @('fixture.png') }
+    foreach ($image in $images) {
         Set-Content (Join-Path $evidence $image) 'fixture-image'
         @{screen='fixture-screen';screenWidth=100;screenHeight=100;guiScale=2;gui=@{x=0;y=0;width=100;height=100}} | ConvertTo-Json | Set-Content (Join-Path $evidence $image.Replace('.png','.json'))
     }
-    @{schema=1;complete=$true;target=$Target;profile=$profile;scenario=$case;language='en_us';result='PASS';checks=$checks;screenshots=@($contracts.$case.screenshots)} |
+    @{schema=1;complete=$true;target=$Target;profile=$profile;scenario=$case;language='en_us';result='PASS';checks=$checks;screenshots=@($images)} |
         ConvertTo-Json -Depth 6 | Set-Content "$evidence/result.json"
 }
 @{phase='passed';message='';pid=123;exitCode=0} | ConvertTo-Json | Set-Content "$live/status.json"
@@ -56,6 +57,17 @@ if ($env:AE2CT_UNCONFIRMED_EXIT) {
     @{phase='failed';message='termination failed';pid=123;exitCode=$null} | ConvertTo-Json | Set-Content "$live/status.json"
 }
 '@ | Set-Content (Join-Path $scripts 'invoke-ui-smoke-codexvm.ps1')
+@'
+param([string]$Target,[string]$ArtifactHashes,[string]$Evidence,[string]$FixtureDirectory)
+@{schema=1}
+'@ | Set-Content (Join-Path $scripts 'get-ui-smoke-environment.ps1')
+@'
+param([string]$CampaignDirectory,[string]$ArchiveRoot,[switch]$Preflight)
+if ($Preflight) { return }
+$raw=Get-Content (Join-Path $CampaignDirectory 'result.json') -Raw | ConvertFrom-Json
+@{overall=$(if(@($raw.results | Where-Object { $_.required -and $_.result -ne 'PASS' }).Count){'FAIL'}else{'PASS'});archive='fixture'}
+'@ | Set-Content (Join-Path $scripts 'complete-ui-smoke-evidence.ps1')
+
 Set-Content -LiteralPath (Join-Path $temp '.gitignore') 'build/'
 try {
     $preview = & powershell.exe -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -PlanOnly
@@ -72,13 +84,16 @@ try {
         $report = Get-ChildItem (Join-Path $temp 'build/ui-smoke/campaigns') -File -Recurse -Filter result.json |
             Where-Object { $_.Directory.Name -eq $profile } | Select-Object -Last 1
         $results = (Get-Content $report.FullName -Raw | ConvertFrom-Json).results
-        $fabricIndex = if ($latest) { 1 } else { 2 }
-        $lastIndex = if ($latest) { 3 } else { 4 }
-        if ($results.Count -ne ($lastIndex + 1) -or $results[$lastIndex].target -ne '26.1.2-neoforge' -or $results[$lastIndex].result -ne 'PASS') {
-            throw 'An earlier failure skipped a later required target'
-        }
+        $expectedPlan = if ($latest) {
+            (& powershell.exe -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -Latest -PlanOnly) -join "`n" | ConvertFrom-Json
+        } else { $previewPlan }
+        $expectedGraphs = @($expectedPlan.targets | ForEach-Object { $targetId=$_.target; $_.graphs | ForEach-Object { "$targetId/$($_.id)" } })
+        $observedGraphs = @($results | ForEach-Object { "$($_.target)/$($_.graph)" })
+        if (Compare-Object $expectedGraphs $observedGraphs -SyncWindow 0) { throw 'An earlier failure skipped or reordered a planned graph' }
+        if ($results[-1].target -ne '26.1.2-neoforge' -or $results[-1].result -ne 'PASS') { throw ("Last planned target did not finish: " + ($results[-1] | Select-Object target,graph,result,message,cases | ConvertTo-Json -Depth 4 -Compress)) }
         $expected = if ($latest) { 'DIAGNOSTIC_FAILURE' } else { 'FAIL_SETUP' }
-        if ($results[$fabricIndex].result -ne $expected -or $results[$fabricIndex].message -notlike '*intentional resolution failure*') {
+        $fabricResult = @($results | Where-Object target -eq '1.20.1-fabric')
+        if ($fabricResult.Count -ne 1 -or $fabricResult[0].result -ne $expected -or $fabricResult[0].message -notlike '*intentional resolution failure*') {
             throw 'Failure classification or evidence was lost'
         }
     }

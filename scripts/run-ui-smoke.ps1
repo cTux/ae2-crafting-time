@@ -8,6 +8,7 @@ param(
     [switch]$Interactive,
     [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|craft-plan|no-space-status|no-provider-status|no-power-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
+    [string]$ArchiveRoot,
     [string]$ReportDirectory,
     [string]$BundleDirectory,
     [string]$PreparedLaunch
@@ -35,6 +36,7 @@ if (-not $PreparedLaunch -and -not $ReportDirectory) {
     if ($BundleDirectory) { throw 'A native bundle requires its prepared launch manifest' }
     $campaign = @{ Latest = $Latest; ProjectId = $ProjectId; Target = $Target; Interactive = $Interactive }
     if ($PSBoundParameters.ContainsKey('Scenario')) { $campaign.Scenario = $Scenario }
+    if ($ArchiveRoot) { $campaign.ArchiveRoot = $ArchiveRoot }
     $campaign.Changed = $Changed; $campaign.BaseRef = $BaseRef; $campaign.PlanOnly = $PlanOnly
     & (Join-Path $PSScriptRoot 'run-ui-smoke-matrix.ps1') @campaign
     exit $LASTEXITCODE
@@ -131,7 +133,7 @@ if ($Scenario -eq "suite") {
     $suite = & (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1") -Target $Target -RuntimeDirectory $runtime -OutputDirectory $evidence -Scenarios $scenarios -VanillaMetadata:($Target -eq '1.20.1-forge' -and $BundleDirectory -and !(Get-ChildItem -LiteralPath (Join-Path $BundleDirectory 'mods') -Filter 'BloodMagic*.jar'))
     $world = $suite.world
     $plan = Get-Content -LiteralPath (Join-Path $evidence "suite-plan.json") -Raw | ConvertFrom-Json
-    $worldCopies = @($plan.cases | ForEach-Object { Join-Path $runtime "saves\$($_.world)" })
+    $worldCopies = @($plan.cases | ForEach-Object { Join-Path $runtime "saves\$($_.world)" } | Select-Object -Unique)
 } else {
     # The tracked Forge world names Blood Magic dimensions. Reduced graphs need native metadata.
     $vanillaMetadata = $Target -eq '1.20.1-forge' -and $BundleDirectory -and
@@ -154,6 +156,19 @@ maxFps:60
 pauseOnLostFocus:false
 soundCategory_master:0.0
 "@, [Text.UTF8Encoding]::new($false))
+
+if ($Scenario -ne 'suite') {
+    [ordered]@{schema=1;cases=@(@{scenario=$Scenario;world=$world})} | ConvertTo-Json -Depth 5 |
+        Set-Content -LiteralPath (Join-Path $evidence 'suite-plan.json') -Encoding UTF8
+}
+$resourceHashes = @()
+$resourceDirectory = Join-Path $runtime 'resourcepacks'
+if (Test-Path -LiteralPath $resourceDirectory) {
+    $resourceHashes = @(Get-ChildItem -LiteralPath $resourceDirectory -Recurse -File | Sort-Object FullName | ForEach-Object {
+        [ordered]@{file=$_.FullName.Substring($resourceDirectory.Length).TrimStart('\');sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
+    })
+}
+[ordered]@{files=@($resourceHashes);selection=@(Get-Content -LiteralPath (Join-Path $runtime 'options.txt') | Where-Object { $_ -match '^(resourcePacks|incompatibleResourcePacks):' })} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $evidence 'resource-hashes.json') -Encoding UTF8
 
 $arguments = @(
     "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", "`"$(Join-Path $PSScriptRoot 'run-client.ps1')`"",

@@ -84,11 +84,12 @@ cover active and scheduled exclusions; the fixture does not simulate a craft.
 `standard-plan-controls`, `standard-status-controls`, `waiting-status`,
 `running-status`, `delayed-status`, and `craft-lifecycle`. Each has a fresh
 native grid and its own seeded estimates; no case depends on an earlier reset,
-world, job, or cached observation. Standard leaves copy only world metadata and
+world, job, or cached observation. Standalone standard leaves copy only world metadata and
 the marker (including separate native world-generation settings when present),
 then generate fresh chunks; importing saved chunks could restore
 incompatible CPU jobs before the driver starts. Other scenarios keep their
-tracked layouts. The host keeps one process for the group.
+tracked layouts. Shared-world suites restore pristine fixture state between
+leaves instead of copying a world per leaf. The host keeps one process for the group.
 
 Plan controls also checks highlight item resolution against the loaded registry:
 known stone resolves correctly; null, malformed, and unknown IDs return empty stacks.
@@ -136,10 +137,10 @@ This covers [issue #126](https://github.com/cTux/ae2-crafting-time/issues/126).
 ## Fabric full-client suite
 
 Run `scripts/invoke-ui-smoke-codexvm.ps1 -Target 1.20.1-fabric -Scenario suite`.
-The full pinned compatible graph runs in one maximized 8 GiB client with eight
-cases: Crafting Plan, ExtendedAE, Applied Botanics, AE2 Things DISK storage,
-MEGA Cells, AE2 Wireless Terminals, ME Requester, and NO SPACE. Each case gets a fresh
-copy of the tracked 1.20.1 fixture, screenshots, and checked semantic results.
+The full pinned compatible graph runs in one maximized 8 GiB client. The expanded
+suite manifest owns the case list, including Crafting Plan, ExtendedAE, Applied Botanics, AE2 Things DISK storage,
+MEGA Cells, AE2 Wireless Terminals, ME Requester, and NO SPACE. Each case gets a
+pristine fixture reset in the shared world, screenshots, and checked semantic results.
 JEI and transitive libraries load with the graph but have no dedicated assertions.
 Crafting Tree and Network Analyser are not pinned in this Fabric graph.
 
@@ -152,9 +153,9 @@ installed into `run/mods` or `run-latest/mods`. Player JARs stay independent.
 
 Run `scripts/invoke-ui-smoke-codexvm.ps1 -Target 1.21.1-neoforge -Scenario suite`.
 Use JDK 21 and the complete pinned compatible graph in one maximized 8 GiB
-client. The 22 cases in `scripts/ui-smoke-neoforge-suite.json` cover the base
+client. The expanded cases in `scripts/ui-smoke-neoforge-suite.json` cover the base
 plan, Crafting Tree, all pinned CPU/provider fixtures, four wireless-terminal
-flows, ME Requester, and NO SPACE. Each case uses a fresh copy of the native 1.21.1 world and retains
+flows, ME Requester, and NO SPACE. Each case uses a pristine fixture reset in the shared native 1.21.1 world and retains
 its own semantic results and screenshots. JEI, GuideME, and transitive libraries
 load with the graph but have no dedicated UI assertions. Expanded AE remains
 excluded from the compatible graph because of its recorded OmniSequence conflict.
@@ -169,13 +170,13 @@ scenario options and never enters the production JAR or `dist`.
 ## NeoForge 26.1.2 full-client suite
 
 Run `scripts/invoke-ui-smoke-codexvm.ps1 -Target 26.1.2-neoforge -Scenario suite`.
-The pinned compatible graph runs eleven cases in one maximized 8 GiB client:
+The pinned compatible graph runs its expanded suite in one maximized 8 GiB client, including
 Crafting Plan, AdvancedAE, ExtendedAE, BM Addon, Lightning Tech, OMNI Cells,
 Applied Flux, AE2 Wireless Terminals, Import Export Card, Infinity Booster,
 and NO SPACE. Neo Vitae supports the BM Addon recipe; GuideME, JEI, and
 transitive libraries load with the graph without dedicated assertions.
 
-Each case uses a fresh disposable copy of the native 26.1.2 world. The driver
+Each case uses a pristine fixture reset in one disposable native 26.1.2 world. The driver
 builds a native AE2 grid in that copy and checks real crafting, new profiling
 samples, final UI observations, and checkpoint screenshots. The Gradle launcher
 uses JDK 21 and selects the JDK 25 client toolchain. The exact companion JAR
@@ -287,15 +288,18 @@ This is a regression check for standalone outputs that go directly to ME storage
 ## Single-launch suites
 
 A named-pack or prepared-client campaign runs all selected scenarios in one Minecraft process.
-Load mods and textures once, then run each case, save its screenshots and result,
-unload its world normally, and open the next fresh disposable fixture copy.
-World reloads isolate blocks, inventories, jobs, and saved profiler data without
-restarting the client. Never reuse a mutated world for another case.
+The normal suite also keeps one disposable world loaded. Before each case, restore
+the pristine fixture, player and profiler state, and clear client observations.
+Save each case's screenshots and result before resetting. No case may consume a
+previous case's blocks, inventory, job, sample or cached response. Schema-1 world
+reload suites remain available for explicit isolation diagnostics.
 
 Use `scenario=suite` with the usual profile, output directory, and first world
-properties. The output directory contains `suite-plan.json`: schema 1 and a
-`cases` array of unique `{scenario, world}` entries (1–32 cases). All worlds must
-be pre-created, marked disposable copies. Validate the whole plan before acting.
+properties. The output directory contains `suite-plan.json`: schema 2 and a
+`cases` array of `{scenario, world}` entries (1–64 unique scenarios) sharing one
+marked disposable world. Schema 1 requires distinct worlds instead. All referenced
+worlds must be pre-created, marked disposable copies. Reject unknown schemas and
+mixed-world schema-2 plans. Validate the whole plan before acting.
 Interactive mode remains single-case only.
 
 Each case writes under `<output>/<scenario>/`. The root `result.json` records
@@ -315,7 +319,7 @@ quick-play world. The helper never changes the pack's mod graph.
 
 For the full prepared Forge compatible graph, run
 `scripts/invoke-ui-smoke-codexvm.ps1 -Scenario suite`. The ordered cases live in
-`scripts/ui-smoke-forge-suite.json`; each uses a fresh world in one client run.
+`scripts/ui-smoke-forge-suite.json`; each uses a reset fixture in one loaded world.
 The wrapper validates every per-case result and screenshot plus the overall
 suite result, retains shared logs, and cleans all disposable worlds. The suite
 allows 40 minutes including dependency resolution/build; single cases keep their

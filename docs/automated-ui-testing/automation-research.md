@@ -158,3 +158,5 @@ install a framework, launch Minecraft, create baselines, change smoke policy or
 claim any speedup. Implement the ordered slices in the
 [implementation plan](implementation-plan.md#unattended-evidence-gate-implementation),
 then enable automatic approval only for checkpoints that pass qualification.
+
+Measured result: [Project Infinity 0.0.52.0](project-infinity-0.0.52.0.md), 36 cases in one world; visual-reference qualification remains pending.

@@ -1,5 +1,15 @@
 # Running a Development Client
 
+## Unattended evidence results
+
+Known smoke scenarios run without controller decisions between actions. The
+host command now returns an additional evidence gate and archives completed
+attempts. Use `-ArchiveRoot <directory>` when the default archive is unavailable.
+See [automated evidence](ui-smoke-evidence.md#automated-evidence-gate) for PASS,
+FAIL and REVIEW_REQUIRED meanings. Missing visual references require review;
+they never become a full automatic pass. Existing full/focused coverage and
+native-loader requirements still apply.
+
 Build all production and test-driver JARs on the host. CodexVM only runs the
 client and smoke checks using copied artifacts. Keep the live Minecraft runtime
 on guest-local NTFS, give it an 8 GiB maximum heap, and maximize the exact
@@ -91,6 +101,12 @@ are setup failures, or diagnostics for latest profiles. Pass `-PreparedLaunchRoo
 to use another prepared installation. Neither preparation nor launch runs Gradle
 inside the guest.
 
+For a matrix containing different loader versions, install each additional
+manifest at `<target>/<resolved-loader>/launch.json` under the same prepared
+root, for example `1.20.1-forge/1.20.1-47.4.23/launch.json`. The dispatcher
+prefers that exact version and otherwise uses `<target>/launch.json`. The
+existing strict loader check still rejects a mismatched installation.
+
 The dispatcher creates or reuses a share for the exact host worktree. Pass `-GuestSourceRoot` to select an existing mapping. Keep the live runtime on local
 NTFS. Archive and inspect every campaign before removing the worktree.
 Rebase only when explicitly requested. A rebase alone does not require a full
@@ -178,7 +194,7 @@ the selected target's suite; inspect the plan before launching.
 
 Each case owns its setup, assertions and evidence, so it can run directly
 without a preceding case. Group execution uses one Minecraft process with a
-fresh disposable world per case. It does not launch six clients. The raw JVM
+single loaded disposable world with a pristine fixture reset per case. The raw JVM
 scenario property accepts leaf names; `standard-ae2` itself is only a host alias.
 The older `craft-plan` scenario is a separate case, not another name for
 `standard-plan-controls` or the group.
@@ -220,7 +236,9 @@ replan and rebuild rather than reuse stale evidence.
 ### Runs, dependency graphs and results
 
 Cases selected for the same target and dependency graph run sequentially in one
-client, each in a fresh world. Separate targets or incompatible dependency graphs
+client and one loaded world, with fixture, player, profiler and client-cache resets
+between cases. Schema-1 world-reload suites are explicit isolation diagnostics.
+Separate targets or incompatible dependency graphs
 need separate launches. The runner continues with later graphs/targets after a
 failure, but stops if it cannot confirm the previous client exited. A failed
 case leaves later cases in that client `NOT_RUN`; there are no automatic retries.

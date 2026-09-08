@@ -1,9 +1,35 @@
 # UI smoke evidence
 
-Planned automation: [faster unattended smoke research](automated-ui-testing/automation-research.md)
-and [#347](https://github.com/cTux/ae2-crafting-time/issues/347) describe automatic
-visual validation and archiving. They do not change the current image-inspection
-or archive requirements below; those change only with qualified implementation.
+## Automated evidence gate
+
+The host campaign now writes `gate.json` and an immutable archive report after
+native semantic/log checks. Exit 0 means PASS (or the planner's NOT_REQUIRED),
+exit 1 means failure, and exit 2 means visual review is still required. Raw
+scenario outcomes stay unchanged. `-ArchiveRoot` selects an explicit archive
+location; it must be writable before any client starts.
+
+Each new capture pairs its PNG hash, case/world ID, render-frame ID, framebuffer
+size and renderer with the frozen semantic snapshot. The host decodes the PNG
+and compares only explicitly qualified regions from `scripts/ui-smoke-visuals.json`.
+Unqualified checkpoints remain REVIEW_REQUIRED; an empty catalogue approves no
+images. Baselines and masks are reviewed test fixtures, never generated from a
+candidate automatically. A mismatch, corrupt image or stale identity cannot pass.
+
+Inspect every REVIEW_REQUIRED checkpoint and every mismatch. A checkpoint with
+PASS from a qualified automatic contract needs no separate image interpretation.
+This exception applies only to that checkpoint and render identity. Preserve
+all full images and results, including failures. Review happens after the suite,
+not between actions. Historical campaigns without capture bindings retain the
+manual workflow and cannot receive an automatic gate retroactively.
+
+For a named Prism campaign, normalize its results into the same campaign layout
+and use `scripts/complete-ui-smoke-evidence.ps1`; launch and graph eligibility
+still follow the named-modpack skill. Keep the pack's original mods and resources.
+
+The [unattended smoke research](automated-ui-testing/automation-research.md)
+and [#347](https://github.com/cTux/ae2-crafting-time/issues/347) explain the design.
+The gate above changes image review only for explicitly qualified checkpoints;
+the remaining inspection and archive requirements still apply.
 
 ## Startup integration diagnostics, 2026-09-05
 
@@ -95,11 +121,17 @@ The primary compatible suites currently contain 34 cases for Forge 1.20.1,
 expanded plan for the current case list and any separate required graphs.
 
 For multiple scenarios on the same installed mod graph, launch Minecraft once.
-Run the suite sequentially with a fresh disposable world per case, capturing each
+Run the suite sequentially in one loaded disposable world with pristine fixture,
+player, profiler and client-cache resets between cases, capturing each
 case's screenshots before advancing. Retain the suite plan, one process ID,
 ordered timestamps, and overall result alongside the per-mod evidence. A crash
 or failed case leaves later cases `NOT_RUN`; do not hide it with automatic retries.
 Different mod graphs or incompatible original/fork artifacts require separate runs.
+
+Record the suite-plan schema and shared world ID. Schema 2 requires one world
+load; a schema-1 diagnostic reload run must not be described as the one-world
+benchmark. Include reset durations separately from initial world loading and UI
+assertions. A stopped or partially completed run is not a full-suite timing.
 
 ```text
 E:/games/mc-instances/.codex-test-results/ui-smoke/

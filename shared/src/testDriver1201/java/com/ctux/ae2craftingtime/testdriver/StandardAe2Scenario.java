@@ -48,7 +48,7 @@ final class StandardAe2Scenario {
     }
     static boolean supports(String scenario) { return CHECKS.containsKey(scenario); }
     private final StandardCraftFixture fixture = new StandardCraftFixture();
-    private final StableFrames<Integer> frames = new StableFrames<>(8);
+    private final StableFrames<Object> frames = new StableFrames<>(8);
     private CompletableFuture<Boolean> operation;
     private Stage phase = Stage.PREPARE;
     private Stage reportedPhase;
@@ -170,7 +170,7 @@ final class StandardAe2Scenario {
             frames.reset();
             return false;
         }
-        if (!frames.observe(phase.ordinal() * 10 + sort)) return false;
+        if (!frames.observe(List.of(phase, sort, CaptureEvidence.readiness(snapshot)))) return false;
         boolean plan = phase.ordinal() < Stage.OPEN_STATUS.ordinal();
         String prefix = plan ? "plan" : "status";
         if (phase == Stage.PLAN_SORT && !leaf.equals("standard-plan-controls")) {

@@ -1,12 +1,41 @@
 # Automated UI Testing Implementation Plan
 
+## One loaded world follow-up for #347
+
+The user requested one client and one loaded world on 2026-09-08. This supersedes
+per-case world reload steps below; historical acceptance records stay unchanged.
+
+1. Add schema-2 validation and preparation for one shared marked disposable world;
+   retain schema 1 as an explicit world-reload diagnostic. Test unique scenarios,
+   shared-world identity, invalid schemas, safety markers and fail-closed results.
+2. Capture pristine fixture state before case execution. Restore it on the server
+   thread between cases, including block entities, jobs, player and profiler state;
+   clear client caches and observations. Keep one integrated server loaded and
+   await bounded reset/readiness before constructing the next scenario.
+3. Carry shared-world preparation through prepared-client and Prism scripts.
+   Retain all leaf checks, screenshots, immutable attempts and exact PID cleanup.
+   Update docs and skills consistently; no automatic retries or baseline approval.
+4. Run relevant host contracts, driver tests and packaging checks after the PR
+   exists. Run all 36 selected cases for exact Project Infinity 0.0.52.0 once in
+   the new mode. Record launch, initial world load, resets, UI checks, collection
+   and cleanup separately. Review unqualified images after execution.
+5. Record actual coverage and timings, including interrupted older attempts.
+   Review the final diff, wait for required green CI and merge the authorized PR.
+
+The exact-pack one-world run is complete: [36/36 cases in 15m 6.975s](project-infinity-0.0.52.0.md),
+with all 87 screenshots reviewed after execution. Automatic visual references,
+the four-target/newest-adapter campaign and matched cold/warm qualification remain
+pending. One-world execution does not waive those separate gates.
+
 ## Unattended evidence gate implementation
 
-Future implementation for [#347](https://github.com/cTux/ae2-crafting-time/issues/347).
-This PR delivers research and documents only. Follow [UA-01 to UA-08](spec.md#unattended-evidence-gate)
+Implementation for [#347](https://github.com/cTux/ae2-crafting-time/issues/347)
+is in [PR #349](https://github.com/cTux/ae2-crafting-time/pull/349).
+The evidence gate and capture bindings are implemented; exact-pack measurement
+is recorded above and broader qualification remains pending. Follow [UA-01 to UA-08](spec.md#unattended-evidence-gate)
 and the [design](technical-design.md#unattended-evidence-gate-design).
 The older #218 plan below is historical; selection and independent leaves already
-exist and must be reused. No new smoke run or performance result is claimed here.
+exist and must be reused. The research-only PR #348 did not claim runtime results.
 
 ### 1. Establish measured baseline and bounded readiness
 
@@ -75,7 +104,7 @@ and qualification records linked from the issue.
 - After the implementation commit's hook-created PR exists, run affected host
   contract and driver tests, packaging checks, then authorized VM smoke.
 - Run all four compatible targets and required newest-adapter graphs
-  sequentially. Preserve English, fresh worlds and exact graph/loader identity.
+  sequentially. Preserve English, pristine fixture resets and exact graph/loader identity.
 - Repeat the matched cold/warm measurement on the representative graph and
   publish every sample plus median/range. Separate runtime from total review
   task time; do not claim an improvement unless observed.
@@ -196,7 +225,7 @@ After contract checks pass, use `run-ae2-client-smoke` and CodexVM:
 1. Run each of the six leaves as an independent invocation on each of the four
    targets. They must succeed without a prior leaf run or retained world.
 2. Run `standard-ae2` as a group on each target and verify the six leaf outcomes,
-   fresh worlds and single recorded PID. Compare check coverage with the old
+   pristine fixture resets and single recorded PID. Compare check coverage with the old
    18-check standard contract, not historical screenshot pixels.
 3. Exercise a genuine target-local change and a shared delayed-specific change
    in disposable verification branches. Capture plan and actual launch identities:

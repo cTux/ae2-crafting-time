@@ -3,6 +3,7 @@ param(
     [Parameter(Mandatory)][string]$RuntimeDirectory,
     [Parameter(Mandatory)][string]$OutputDirectory,
     [switch]$VanillaMetadata,
+    [switch]$FreshWorldPerCase,
     [Parameter(Mandatory)][string[]]$Scenarios
 )
 $ErrorActionPreference = 'Stop'
@@ -23,13 +24,19 @@ if ($sourceMarker.sourceFixtureId -ne 'ae2-crafting-time' -or $sourceMarker.disp
 }
 New-Item -ItemType Directory -Path $output -ErrorAction Stop | Out-Null
 New-Item -ItemType Directory -Path (Join-Path $runtime 'saves') -Force | Out-Null
+$standardCases = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json).groups.'standard-ae2'
+$sharedFixtureScenario = if (@($Scenarios | Where-Object { $_ -cnotin $standardCases }).Count) { 'craft-plan' } else { $Scenarios[0] }
+$world = $null
 $cases = foreach ($scenario in $Scenarios) {
-    $world = 'ae2ct-' + [guid]::NewGuid().ToString('N')
-    $copy = Join-Path $runtime "saves\$world"
-    & (Join-Path $PSScriptRoot 'copy-ui-smoke-fixture.ps1') -Source $fixture -Destination $copy -Target $Target -Scenario $scenario -VanillaMetadata:$VanillaMetadata
-    $sourceMarker.disposableWorldId = $world
-    $sourceMarker | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $copy '.ae2-crafting-time-test-fixture.json') -Encoding UTF8
+    if (!$world -or $FreshWorldPerCase) {
+        $world = 'ae2ct-' + [guid]::NewGuid().ToString('N')
+        $copy = Join-Path $runtime "saves\$world"
+        $copyScenario = if ($FreshWorldPerCase) { $scenario } else { $sharedFixtureScenario }
+        & (Join-Path $PSScriptRoot 'copy-ui-smoke-fixture.ps1') -Source $fixture -Destination $copy -Target $Target -Scenario $copyScenario -VanillaMetadata:$VanillaMetadata
+        $sourceMarker.disposableWorldId = $world
+        $sourceMarker | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $copy '.ae2-crafting-time-test-fixture.json') -Encoding UTF8
+    }
     [ordered]@{scenario=$scenario;world=$world}
 }
-[ordered]@{schema=1;cases=@($cases)} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'suite-plan.json') -Encoding UTF8
+[ordered]@{schema=$(if ($FreshWorldPerCase) { 1 } else { 2 });cases=@($cases)} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $output 'suite-plan.json') -Encoding UTF8
 [pscustomobject]@{scenario='suite';world=@($cases)[0].world;output=$output;caseCount=@($cases).Count}

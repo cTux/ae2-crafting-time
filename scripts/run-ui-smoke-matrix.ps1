@@ -7,6 +7,7 @@ param(
     [switch]$Interactive,
     [string]$Scenario = 'suite',
     [string[]]$ProjectId,
+    [string]$ArchiveRoot = 'E:/games/mc-instances/.codex-test-results/ui-smoke/clients',
     [string]$GuestSourceRoot,
     [string]$PreparedLaunchRoot = 'C:\Users\Public\Documents\AE2CraftingTimeSmoke\prepared'
 )
@@ -23,6 +24,7 @@ $campaign = Join-Path $root "build/ui-smoke/campaigns/$runId/$profile"
 New-Item -ItemType Directory -Path $campaign -Force | Out-Null
 $plan | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $campaign 'selection.json') -Encoding UTF8
 if ($plan.result -eq 'NOT_REQUIRED') { Write-Host 'NOT_REQUIRED: no runtime changes; normal checks still required'; return }
+& (Join-Path $PSScriptRoot 'complete-ui-smoke-evidence.ps1') -ArchiveRoot $ArchiveRoot -Preflight
 $results = @()
 $commit = $plan.headSha
 $stopCampaign = $false
@@ -87,6 +89,10 @@ foreach ($targetEntry in $targets) {
         }
         $clientExitConfirmed = $true
         if ($status.phase -ne 'passed') { $result = 'FAIL'; throw $status.message }
+        $fixtureTarget = if ($row.target -like '*-neoforge') { $row.target } else { '1.20.1-forge' }
+        & (Join-Path $PSScriptRoot 'get-ui-smoke-environment.ps1') -Target $row.target -ArtifactHashes (Join-Path $report 'artifact-hashes.json') -Evidence (Join-Path $report 'run/evidence') -FixtureDirectory (Join-Path $root "versions/$fixtureTarget/run/saves/ae2-crafting-time") |
+            ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $report 'environment.json') -Encoding UTF8
+
         $result = 'PASS'
     } catch {
         if (!$clientExitConfirmed) { $stopCampaign = $true }
@@ -124,5 +130,8 @@ foreach ($targetEntry in $targets) {
   if ($stopCampaign) { break }
 }
 Write-Host "UI smoke campaign: $campaign"
-if (@($results | Where-Object { $_.required -and $_.result -ne 'PASS' }).Count) { exit 1 }
+$gate = & (Join-Path $PSScriptRoot 'complete-ui-smoke-evidence.ps1') -CampaignDirectory $campaign -ArchiveRoot $ArchiveRoot
+Write-Host "Evidence gate: $($gate.overall); archive: $($gate.archive)"
+if ($gate.overall -eq 'FAIL') { exit 1 }
+if ($gate.overall -eq 'REVIEW_REQUIRED') { exit 2 }
 exit 0
