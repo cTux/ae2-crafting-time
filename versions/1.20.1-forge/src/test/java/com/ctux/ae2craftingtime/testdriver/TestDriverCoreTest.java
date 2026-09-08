@@ -22,6 +22,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
     @Test
+    void blockedInputReservesExactlyTheProvidersPendingQueue() {
+        for (long pending : new long[] { 0, 1, 64, 65, 128, 27 * 64 }) {
+            long free = 0;
+            for (int slot = 0; slot < 27; slot++) {
+                int occupied = ProviderDispatchStatusScenario.occupiedSlotCount(slot, 27, pending);
+                assertTrue(occupied >= 0 && occupied <= 64);
+                free += 64 - occupied;
+            }
+            assertEquals(pending, free);
+        }
+        assertEquals(63, ProviderDispatchStatusScenario.occupiedSlotCount(1, 27, 65));
+        assertThrows(IllegalArgumentException.class,
+                () -> ProviderDispatchStatusScenario.occupiedSlotCount(0, 27, 27 * 64 + 1));
+        assertThrows(IllegalArgumentException.class,
+                () -> ProviderDispatchStatusScenario.occupiedSlotCount(0, 27, Long.MAX_VALUE));
+        assertThrows(IllegalArgumentException.class,
+                () -> ProviderDispatchStatusScenario.occupiedSlotCount(0, 27, -1));
+    }
+
+    @Test
     void standardResultCannotOmitAnyRequiredPlanStatusOrOutputCheck() {
         assertFalse(AddonCpuFixture.supports("standard-ae2"));
         assertEquals(6, StandardAe2Scenario.CHECKS.size());
