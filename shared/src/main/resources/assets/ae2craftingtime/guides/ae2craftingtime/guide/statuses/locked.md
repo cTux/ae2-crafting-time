@@ -24,7 +24,7 @@ otherwise it expires after 20 server ticks and a refresh. Configuring a lock is
 not enough: the mod must observe it actively preventing a dispatch. The state is
 runtime-only and is not restored after reopening the world.
 
-![LOCKED row and crafting-lock advice](images/crafting-status-locked.jpg)
+![LOCKED row and crafting-lock advice](images/crafting-status-locked.png)
 
 *An active Pattern Provider lock prevents the next scheduled batch.*
 

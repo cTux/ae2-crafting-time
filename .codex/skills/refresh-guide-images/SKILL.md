@@ -17,8 +17,9 @@ account names, coordinates, and server details. Do not redraw, retouch, or
 compose UI evidence. Keep raw PNGs and sidecars unchanged in the smoke archive.
 
 Use `scripts/export-guide-image.ps1` from the repository root. Supply `Source`,
-`Destination` ending in `.jpg`, and physical-pixel `X`, `Y`, `Width`, `Height`.
-The default quality is 90; inspect small colored text for compression damage.
+`Destination`, and physical-pixel `X`, `Y`, `Width`, `Height`. Gallery exports
+end in `.jpg`; book exports end in `.png`. The default JPEG quality is 90;
+inspect small colored text for compression damage.
 Record the source run, relative capture path, SHA-256, and crop rectangle in
 `docs/images` so a later maintainer can reproduce the exports.
 
@@ -41,7 +42,7 @@ every page that embeds an image, including both locales; exports alone do not
 verify in-game rendering. Report actual byte sizes and link the reviewed smoke
 provenance with the issue. Close or merge only when the task authorizes it.
 
-For compact book copies, start at `-Quality 75`; keep gallery quality 90.
-Compare actual totals with the previous files and disclose any increase needed
-for readability. Do not claim JPEG is always smaller than PNG for pixel art.
+Keep gallery JPEG quality 90. Book PNGs ignore `-Quality`. Compare actual totals
+with the previous files and disclose any increase needed for readability. Do
+not claim JPEG is always smaller than PNG for pixel art.
 The export self-test is `powershell -NoProfile -File scripts/test-export-guide-image.ps1`.

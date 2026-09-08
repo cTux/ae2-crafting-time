@@ -20,7 +20,7 @@ leave harmless saved entries, but those entries are not shown when the output
 no longer exists. Use the reset control when you intentionally want to remove
 one output's retained history.
 
-![Retained production samples in the TTC tooltip](images/ttc-production-sample-details.jpg)
+![Retained production samples in the TTC tooltip](images/ttc-production-sample-details.png)
 
 *Seeded retained windows show the bounded history that survives a world save.*
 

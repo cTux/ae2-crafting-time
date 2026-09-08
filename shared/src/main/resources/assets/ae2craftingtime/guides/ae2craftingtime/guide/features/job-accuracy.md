@@ -19,7 +19,7 @@ show coverage and latest-job context, but they do not affect aggregate error.
 Cancelled, restored, or unpredicted jobs are excluded. Accuracy is diagnostic
 only and never changes learned throughput automatically.
 
-![Completed job accuracy in chat](images/ttc-job-accuracy.jpg)
+![Completed job accuracy in chat](images/ttc-job-accuracy.png)
 
 *One real completed job shows full coverage, prediction error, and the actual-to-TTC ratio.*
 

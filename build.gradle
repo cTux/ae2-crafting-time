@@ -129,6 +129,7 @@ tasks.register('checkGuideResources') {
                 def ukImages = ukLinks.findAll { it.endsWith('.png') || it.endsWith('.jpg') }
                 check(enImages.size() >= 1 && enImages == ukImages, "Feature image differs by locale: $page")
                 enImages.each { image ->
+                    check(image.endsWith('.png'), "Feature image must be PNG: $image")
                     check(binaries.contains(resolveLink(enPath, image)), "Missing English feature image: $image")
                     check(binaries.contains(resolveLink(ukPath, image)), "Missing Ukrainian feature image: $image")
                 }
@@ -162,6 +163,7 @@ tasks.register('checkGuideResources') {
                 def ukImages = ukLinks.findAll { it.endsWith('.png') || it.endsWith('.jpg') }
                 check(enImages.size() == 1 && enImages == ukImages, "Status image differs by locale: $page")
                 enImages.each { image ->
+                    check(image.endsWith('.png'), "Status image must be PNG: $image")
                     check(binaries.contains(resolveLink(enPath, image)), "Missing English status image: $image")
                     check(binaries.contains(resolveLink(ukPath, image)), "Missing Ukrainian status image: $image")
                 }
@@ -189,6 +191,15 @@ tasks.register('checkGuideResources') {
         }
         def guideErrors = validateFeatureChapter(guideTexts, guideBinaries)
         require(guideErrors.empty, guideErrors.join('\n'))
+        fileTree(guideDirectory).matching { include '**/images/*.png' }.files.each { image ->
+            def signature = image.bytes.take(8).collect { String.format('%02x', it & 0xff) }.join()
+            require(signature == '89504e470d0a1a0a', "Invalid PNG signature: ${relativePath(guideDirectory, image)}")
+            def path = relativePath(guideDirectory, image)
+            if (!path.startsWith('_uk_ua/')) {
+                def translated = file("$guideDirectory/_uk_ua/$path")
+                require(translated.isFile() && Arrays.equals(image.bytes, translated.bytes), "Guide image differs by locale: $path")
+            }
+        }
 
         def expectRejected = { String name, Closure mutation ->
             def texts = new LinkedHashMap<>(guideTexts)
@@ -198,7 +209,10 @@ tasks.register('checkGuideResources') {
         }
         expectRejected('a missing page') { texts, ignored -> texts.remove('features/confidence.md') }
         expectRejected('a missing translation') { texts, ignored -> texts.remove('_uk_ua/features/confidence.md') }
-        expectRejected('a missing image') { ignored, binaries -> binaries.remove('features/images/ttc-low-confidence.jpg') }
+        expectRejected('a missing image') { ignored, binaries -> binaries.remove('features/images/ttc-low-confidence.png') }
+        expectRejected('a JPEG image') { texts, ignored ->
+            texts['features/confidence.md'] = texts['features/confidence.md'].replace('.png)', '.jpg)')
+        }
         expectRejected('a missing return link') { texts, ignored ->
             texts['features/confidence.md'] = texts['features/confidence.md'].replace('(index.md)', '(missing.md)')
         }
@@ -207,7 +221,7 @@ tasks.register('checkGuideResources') {
         }
         expectRejected('a missing status page') { texts, ignored -> texts.remove('statuses/locked.md') }
         expectRejected('a missing status translation') { texts, ignored -> texts.remove('_uk_ua/statuses/locked.md') }
-        expectRejected('a missing status image') { ignored, binaries -> binaries.remove('statuses/images/crafting-status-locked.jpg') }
+        expectRejected('a missing status image') { ignored, binaries -> binaries.remove('statuses/images/crafting-status-locked.png') }
         expectRejected('a missing status return link') { texts, ignored ->
             texts['statuses/locked.md'] = texts['statuses/locked.md'].replace('(index.md)', '(missing.md)')
         }

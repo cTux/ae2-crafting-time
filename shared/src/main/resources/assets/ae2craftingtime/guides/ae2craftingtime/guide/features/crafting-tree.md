@@ -19,7 +19,7 @@ than inventing a duration. The integration is absent on the 26.1.2 target and
 disappears cleanly when Crafting Tree is not installed. `showInTree = false`
 also hides its badges and interactions.
 
-![AE2 Crafting Tree with a recursive TTC badge](images/crafting-tree-estimate.jpg)
+![AE2 Crafting Tree with a recursive TTC badge](images/crafting-tree-estimate.png)
 
 *Seeded sample values demonstrate the estimate below a Crafting Tree node.*
 

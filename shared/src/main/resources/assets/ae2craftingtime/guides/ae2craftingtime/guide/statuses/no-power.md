@@ -24,7 +24,7 @@ out after 20 server ticks and the next refresh. Server lag can make that longer
 than one wall-clock second. An idle or unpowered external machine alone is not
 proof of this status.
 
-![NO POWER row and energy advice](images/crafting-status-no-power.jpg)
+![NO POWER row and energy advice](images/crafting-status-no-power.png)
 
 *The network has scheduled work but cannot pay the energy cost of its next dispatch.*
 

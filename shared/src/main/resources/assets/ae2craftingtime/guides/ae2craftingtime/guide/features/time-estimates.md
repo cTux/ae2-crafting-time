@@ -19,7 +19,7 @@ can still finish in about ten seconds, while two dependent steps take about
 twenty. Estimates are not deadlines: machine speed, other work, and server load
 can change the result.
 
-![Crafting Plan with row and total TTC](images/crafting-plan-estimate.jpg)
+![Crafting Plan with row and total TTC](images/crafting-plan-estimate.png)
 
 *Seeded test values show two learned recipe estimates and their known total.*
 

@@ -149,6 +149,6 @@ the initial run fields. Chat crops omit the account-name line and retain the
 throughput and job-coverage details without altering the captured text.
 
 The 24 gallery JPEGs total 1,191,066 bytes (previous PNGs: 1,270,916 bytes).
-The 44 enlarged book JPEGs total 4,269,248 bytes (previous small PNGs:
-2,535,204 bytes). Book readability increases the total despite JPEG compression;
-book exports use quality 75 and gallery exports use quality 90.
+The 44 enlarged book PNGs total 2,671,574 bytes (previous JPEGs: 4,269,248
+bytes). Book exports use lossless PNG for GuideME compatibility; gallery exports
+keep JPEG quality 90.
