@@ -40,7 +40,7 @@ final class ProviderDispatchStatusScenario {
         if (!supports(scenario)) throw new IllegalArgumentException("unsupported provider status scenario: " + scenario);
         this.scenario = scenario;
         key = "text.ae2craftingtime." + scenario.replace("-status", "").replace('-', '_');
-        fixture = new DispatchStatusFixture(1,
+        fixture = new DispatchStatusFixture(INPUT_BLOCKED.equals(scenario) ? 2 : 1,
                 LOCKED.equals(scenario) ? LockCraftingMode.LOCK_WHILE_LOW : LockCraftingMode.NONE,
                 INPUT_BLOCKED.equals(scenario));
     }
@@ -148,7 +148,7 @@ final class ProviderDispatchStatusScenario {
             checks.put("zero-insertion", true);
             screenshot.accept("input-blocked-zero-insertion.png");
             if (serverStep(minecraft, player -> {
-                ((Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north())).setItem(0, ItemStack.EMPTY);
+                ((Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north())).setItem(0, new ItemStack(Items.COBBLESTONE, 63));
                 return true;
             })) { changedAt = System.nanoTime(); phase++; }
         } else if (phase == 7 && recovered(snapshot)) {

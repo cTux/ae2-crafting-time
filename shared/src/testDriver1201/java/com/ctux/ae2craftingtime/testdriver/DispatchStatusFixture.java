@@ -91,7 +91,7 @@ final class DispatchStatusFixture {
             if (!prepareAdvancedCpu(player, marker)) return false;
             var drive = (DriveBlockEntity) level.getBlockEntity(cpuPosition.east(4));
             drive.getInternalInventory().setItemDirect(0,
-                    new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.tryParse("ae2:item_storage_cell_1k"))));
+                    new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.tryParse("ae2:item_storage_cell_4k"))));
             drive.getCellInventory(0).insert(AEItemKey.of(Items.COBBLESTONE), outputAmount * inputAmount,
                     Actionable.MODULATE, IActionSource.empty());
             provider(player, 6).getLogic().getConfigManager().putSetting(Settings.BLOCKING_MODE,
