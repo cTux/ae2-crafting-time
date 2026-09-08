@@ -71,6 +71,14 @@ Rebase only when the user explicitly requests it. A rebase alone does not
 require a full smoke run or invalidate completed smoke evidence. Choose any
 additional verification from the actual changes and the requested task scope.
 
+## Automatic evidence review
+
+Read the current campaign's `gate.json` and archive report. Only checkpoints
+with PASS from a qualified automatic visual contract can skip individual image
+interpretation. Inspect every REVIEW_REQUIRED checkpoint and mismatch after
+execution; never pause known scenarios for agent screenshot decisions. Keep
+full PNGs and raw failures. An empty or missing baseline is not a visual pass.
+The host accepts `-ArchiveRoot` and returns exit 2 when visual review is needed.
 ## Timing Report
 
 For every UI smoke run, read and follow

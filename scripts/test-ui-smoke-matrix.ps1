@@ -56,6 +56,17 @@ if ($env:AE2CT_UNCONFIRMED_EXIT) {
     @{phase='failed';message='termination failed';pid=123;exitCode=$null} | ConvertTo-Json | Set-Content "$live/status.json"
 }
 '@ | Set-Content (Join-Path $scripts 'invoke-ui-smoke-codexvm.ps1')
+@'
+param([string]$Target,[string]$ArtifactHashes,[string]$Evidence,[string]$FixtureDirectory)
+@{schema=1}
+'@ | Set-Content (Join-Path $scripts 'get-ui-smoke-environment.ps1')
+@'
+param([string]$CampaignDirectory,[string]$ArchiveRoot,[switch]$Preflight)
+if ($Preflight) { return }
+$raw=Get-Content (Join-Path $CampaignDirectory 'result.json') -Raw | ConvertFrom-Json
+@{overall=$(if(@($raw.results | Where-Object { $_.required -and $_.result -ne 'PASS' }).Count){'FAIL'}else{'PASS'});archive='fixture'}
+'@ | Set-Content (Join-Path $scripts 'complete-ui-smoke-evidence.ps1')
+
 Set-Content -LiteralPath (Join-Path $temp '.gitignore') 'build/'
 try {
     $preview = & powershell.exe -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -PlanOnly

@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.List;
 
 public final class TestDriverRuntime implements AutoCloseable {
+    static long renderedFrames;
     private final Minecraft minecraft = Minecraft.getInstance();
     private CraftPlanScenario scenario;
     private final InteractiveMcpServer endpoint;
@@ -38,6 +39,7 @@ public final class TestDriverRuntime implements AutoCloseable {
     }
 
     public void tick() {
+        renderedFrames++;
         if (finished || switchingNow) {
             return;
         }

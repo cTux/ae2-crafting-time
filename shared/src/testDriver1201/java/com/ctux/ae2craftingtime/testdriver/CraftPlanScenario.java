@@ -779,11 +779,15 @@ public final class CraftPlanScenario {
 
     private void screenshot(String name) throws IOException {
         Files.createDirectories(options.output());
+        var window = minecraft.getWindow();
+        var snapshot = CaptureEvidence.snapshot(UiObservationStore.latest(), minecraft.screen == null ? "world" : minecraft.screen.getClass().getName(),
+                window.getGuiScaledWidth(), window.getGuiScaledHeight(), window.getGuiScale(), TestDriverRuntime.renderedFrames);
+        long started = System.nanoTime();
         try (NativeImage image = Screenshot.takeScreenshot(minecraft.getMainRenderTarget())) {
             image.writeToFile(options.output().resolve(name));
+            CaptureEvidence.write(options.output().resolve(name), options, snapshot, image.getWidth(), image.getHeight(),
+                    TestDriverRuntime.renderedFrames, (org.lwjgl.opengl.GL11.glGetString(org.lwjgl.opengl.GL11.GL_RENDERER) + " " + org.lwjgl.opengl.GL11.glGetString(org.lwjgl.opengl.GL11.GL_VERSION)), started);
         }
-        Files.writeString(options.output().resolve(name.replace(".png", ".json")),
-                new com.google.gson.Gson().toJson(UiObservationStore.latest()));
         screenshots.add(name);
     }
 
@@ -850,6 +854,8 @@ public final class CraftPlanScenario {
         if (!ScenarioFlow.allows(state, next)) {
             throw new IllegalStateException("invalid scenario transition " + state + " -> " + next);
         }
+        System.out.println("AE2CT phase " + java.time.Instant.now() + " case=" + options.scenario()
+                + " from=" + state + " to=" + next + " durationNanos=" + elapsed().toNanos());
         state = next;
         stateStarted = System.nanoTime();
     }

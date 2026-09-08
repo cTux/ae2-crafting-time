@@ -1,5 +1,15 @@
 # Running a Development Client
 
+## Unattended evidence results
+
+Known smoke scenarios run without controller decisions between actions. The
+host command now returns an additional evidence gate and archives completed
+attempts. Use `-ArchiveRoot <directory>` when the default archive is unavailable.
+See [automated evidence](ui-smoke-evidence.md#automated-evidence-gate) for PASS,
+FAIL and REVIEW_REQUIRED meanings. Missing visual references require review;
+they never become a full automatic pass. Existing full/focused coverage and
+native-loader requirements still apply.
+
 Build all production and test-driver JARs on the host. CodexVM only runs the
 client and smoke checks using copied artifacts. Keep the live Minecraft runtime
 on guest-local NTFS, give it an 8 GiB maximum heap, and maximize the exact

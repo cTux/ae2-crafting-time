@@ -1,5 +1,31 @@
 # UI smoke evidence
 
+## Automated evidence gate
+
+The host campaign now writes `gate.json` and an immutable archive report after
+native semantic/log checks. Exit 0 means PASS (or the planner's NOT_REQUIRED),
+exit 1 means failure, and exit 2 means visual review is still required. Raw
+scenario outcomes stay unchanged. `-ArchiveRoot` selects an explicit archive
+location; it must be writable before any client starts.
+
+Each new capture pairs its PNG hash, case/world ID, render-frame ID, framebuffer
+size and renderer with the frozen semantic snapshot. The host decodes the PNG
+and compares only explicitly qualified regions from `scripts/ui-smoke-visuals.json`.
+Unqualified checkpoints remain REVIEW_REQUIRED; an empty catalogue approves no
+images. Baselines and masks are reviewed test fixtures, never generated from a
+candidate automatically. A mismatch, corrupt image or stale identity cannot pass.
+
+Inspect every REVIEW_REQUIRED checkpoint and every mismatch. A checkpoint with
+PASS from a qualified automatic contract needs no separate image interpretation.
+This exception applies only to that checkpoint and render identity. Preserve
+all full images and results, including failures. Review happens after the suite,
+not between actions. Historical campaigns without capture bindings retain the
+manual workflow and cannot receive an automatic gate retroactively.
+
+For a named Prism campaign, normalize its results into the same campaign layout
+and use `scripts/complete-ui-smoke-evidence.ps1`; launch and graph eligibility
+still follow the named-modpack skill. Keep the pack's original mods and resources.
+
 Planned automation: [faster unattended smoke research](automated-ui-testing/automation-research.md)
 and [#347](https://github.com/cTux/ae2-crafting-time/issues/347) describe automatic
 visual validation and archiving. They do not change the current image-inspection
