@@ -65,6 +65,9 @@ PR itself must not close #144 as implemented.
   checks. Temporarily remove one Ukrainian page, break one link, and omit a
   recipe result's guide ID in turn; confirm the task rejects each, restore it,
   and rerun. Never commit broken fixtures.
+- Require every book image reference to end in `.png`, verify its PNG signature,
+  and keep English/Ukrainian image bytes identical. Export book copies as PNG;
+  gallery JPEGs remain unchanged.
 - Run the existing PowerShell/Bash deployment checks after updating their
   relation assertions. Verify optional GuideME and required AE2 relations on modern rows,
   unchanged old-row payloads, and no network upload in dry-run mode.
@@ -92,6 +95,7 @@ launchers. No new broad driver framework is required.
 | Appearance/use | Inventory/hand/dropped appearance matches vanilla book with no glint. Main-hand and eligible off-hand use opens our guide repeatedly without consuming it. Ordinary book and AE2 guide unchanged. | A2–A3 |
 | Reading | First opening shows introduction; navigate to chapter and back, close/reopen, use Home, and search chapter text without parser/model errors. | A3–A4 |
 | Language/themes | English (`en_us`) names and complete pages in both themes; links, navigation, and resource reload work. Check Ukrainian page/key parity and fallback structurally, without another smoke language. | A4–A5 |
+| Screenshot pages | Open every image-bearing page on 1.21.1 NeoForge and confirm no missing-texture pattern, readable text, page-width use, scrolling, and navigation. | A4, A8 |
 | Save/multiplayer | Store crafted book in chest, reload world, retrieve/open. On each modern dedicated server, craft/drop/pick up, reconnect, and reopen. Inspect persisted component and correct guide destination. | A3, A6 |
 | Old targets | Start 1.20.1 Forge/Fabric without adding GuideME for this feature; no new recipe errors or dependency requirement. | A7 |
 
