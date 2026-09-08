@@ -9,7 +9,7 @@ The book uses larger exports of the same crops to keep its text readable.
 
 Before any timing history exists:
 
-![Crafting plan with no timing data](crafting-plan-no-data.png)
+![Crafting plan with no timing data](crafting-plan-no-data.jpg)
 
 With timing history available:
 
@@ -17,7 +17,7 @@ With timing history available:
 
 When only part of the plan has history, the total covers the known work:
 
-![Crafting plan with one known and one unknown recipe](crafting-plan-partial-estimate.png)
+![Crafting plan with one known and one unknown recipe](crafting-plan-partial-estimate.jpg)
 
 ## Live crafting status
 
@@ -27,7 +27,7 @@ Active recipes, scheduled work, and the remaining-time estimate:
 
 Scheduled work waits for its ingredient to finish:
 
-![Delayed ingredient and waiting output](crafting-status-waiting.jpg)
+![Active ingredient and waiting output](crafting-status-waiting.jpg)
 
 The delayed state after a processing machine stops producing output:
 
@@ -80,16 +80,17 @@ The sample-history tooltip also shows throughput:
 Ctrl-click expands timing details in chat. Ctrl-Alt-click clears that item's
 history and confirms the reset:
 
-![Expanded TTC details and reset feedback](ttc-details-chat.png)
+![Expanded TTC details in chat](ttc-details-chat.jpg)
 
-A completed job with only partial timing coverage is reported separately:
+A completed job with partial timing coverage appears in chat as one tracked job
+with no fully covered plan yet:
 
-![Completed-job accuracy with partial coverage](ttc-job-accuracy-partial.png)
+![Completed-job accuracy with partial coverage](ttc-job-accuracy-partial.jpg)
 
-After a fully covered job completes, the details include prediction error and
-the actual-to-estimated duration ratio:
+After a fully covered job completes, chat shows one of one jobs fully covered,
+prediction error, and the actual-to-estimated duration ratio:
 
-![Completed-job accuracy details with a fully covered result](ttc-job-accuracy.png)
+![Completed-job accuracy details with a fully covered result](ttc-job-accuracy.jpg)
 
 ## Sorting
 
@@ -140,3 +141,14 @@ export gallery crops at native size and book copies at
 `min(1600, cropWidth * 4)` pixels wide. Inspect the actual book at 1920x1080
 before accepting a refresh. See the
 [GuideME sizing notes](../guideme-guide/technical-design.md#screenshot-exports).
+
+The five no-data, partial-plan, and chat contexts were captured in the focused
+`20260908T120437Z-gallery-02` lifecycle run on the same pack (12 checks passed,
+13 raw captures). Per-image run and commit fields in `sources.json` override
+the initial run fields. Chat crops omit the account-name line and retain the
+throughput and job-coverage details without altering the captured text.
+
+The 24 gallery JPEGs total 1,191,066 bytes (previous PNGs: 1,270,916 bytes).
+The 44 enlarged book JPEGs total 4,269,248 bytes (previous small PNGs:
+2,535,204 bytes). Book readability increases the total despite JPEG compression;
+book exports use quality 75 and gallery exports use quality 90.

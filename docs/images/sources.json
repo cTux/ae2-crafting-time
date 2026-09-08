@@ -214,6 +214,76 @@
                                     776,
                                     152
                                 ]
+                   },
+                   {
+                       "image":  "crafting-plan-no-data.jpg",
+                       "source":  "plan-no-data.png",
+                       "sha256":  "0b8b81cd28f18b5b232a6fddcff76a14aafc8a85d42de9551a523c36e2473146",
+                       "crop":  [
+                                    488,
+                                    116,
+                                    948,
+                                    816
+                                ],
+                       "run":  "20260908T120437Z-gallery-02",
+                       "sourceCommit":  "0c07e64bf00cfd408936d3f1029d74288e167a52",
+                       "capturedAt":  "2026-09-08T12:15:31.844238200Z"
+                   },
+                   {
+                       "image":  "crafting-plan-partial-estimate.jpg",
+                       "source":  "plan-partial.png",
+                       "sha256":  "a94ccdec964731acf77f9e3f880fe058174d403a1b1a2f7a35d1afc94568a290",
+                       "crop":  [
+                                    488,
+                                    116,
+                                    948,
+                                    816
+                                ],
+                       "run":  "20260908T120437Z-gallery-02",
+                       "sourceCommit":  "0c07e64bf00cfd408936d3f1029d74288e167a52",
+                       "capturedAt":  "2026-09-08T12:15:34.168474900Z"
+                   },
+                   {
+                       "image":  "ttc-details-chat.jpg",
+                       "source":  "details-chat.png",
+                       "sha256":  "ffd4eb4f7af415169039618ba9979e406aebd4a6821bb39c9b09374611ce34e1",
+                       "crop":  [
+                                    24,
+                                    744,
+                                    1296,
+                                    148
+                                ],
+                       "run":  "20260908T120437Z-gallery-02",
+                       "sourceCommit":  "0c07e64bf00cfd408936d3f1029d74288e167a52",
+                       "capturedAt":  "2026-09-08T12:16:05.659345600Z"
+                   },
+                   {
+                       "image":  "ttc-job-accuracy.jpg",
+                       "source":  "job-accuracy-full.png",
+                       "sha256":  "ffd4eb4f7af415169039618ba9979e406aebd4a6821bb39c9b09374611ce34e1",
+                       "crop":  [
+                                    24,
+                                    780,
+                                    1296,
+                                    112
+                                ],
+                       "run":  "20260908T120437Z-gallery-02",
+                       "sourceCommit":  "0c07e64bf00cfd408936d3f1029d74288e167a52",
+                       "capturedAt":  "2026-09-08T12:16:05.499406600Z"
+                   },
+                   {
+                       "image":  "ttc-job-accuracy-partial.jpg",
+                       "source":  "job-accuracy-partial.png",
+                       "sha256":  "9d1766d6cb5e46b254a0fcd98bb70d945308ee1b36a5661d0a6934484612c5ec",
+                       "crop":  [
+                                    24,
+                                    780,
+                                    1296,
+                                    112
+                                ],
+                       "run":  "20260908T120437Z-gallery-02",
+                       "sourceCommit":  "0c07e64bf00cfd408936d3f1029d74288e167a52",
+                       "capturedAt":  "2026-09-08T12:16:31.964179Z"
                    }
                ],
     "guideQuality":  75

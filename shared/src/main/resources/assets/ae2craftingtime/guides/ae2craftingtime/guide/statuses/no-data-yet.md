@@ -23,7 +23,7 @@ The label clears after a completed production interval creates usable history.
 Samples are server- and world-owned, retained for a limited history window, and
 keyed to the ME network and output. The first sample can still be low confidence.
 
-![Crafting Plan before timing history exists](images/crafting-plan-no-data.png)
+![Crafting Plan before timing history exists](images/crafting-plan-no-data.jpg)
 
 *These plan rows have no retained timing sample yet.*
 

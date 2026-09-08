@@ -23,7 +23,7 @@ The label clears when the first batch dispatches, a more specific blocker is
 observed, or the scheduled work ends. It is not proof that a machine is broken,
 and it has no learned timing threshold.
 
-![Waiting row behind a delayed ingredient](images/crafting-status-waiting.jpg)
+![Waiting row behind an active ingredient](images/crafting-status-waiting.jpg)
 
 *The output is scheduled behind work that has not produced its required input yet.*
 

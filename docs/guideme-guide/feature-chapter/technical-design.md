@@ -35,7 +35,7 @@ shared/src/main/resources/assets/ae2craftingtime/guides/ae2craftingtime/guide/
     me-requester.md
     addon-support.md
     guide-book.md
-    images/*.png
+    images/*.jpg
   _uk_ua/features/*.md                # identical paths and shared images
 ```
 
@@ -51,10 +51,10 @@ spec order. Statuses reserves root position `2`; Chapter 1 stays `0`.
 | Time estimates | `docs/time-to-craft-plan.md` | `crafting-plan-estimate.jpg` |
 | Learning throughput | profiling spec/design | `crafting-status-running.jpg` |
 | Confidence | profiling spec/design | `ttc-low-confidence.jpg` |
-| Job accuracy | profiling spec/design | `ttc-job-accuracy.png` |
+| Job accuracy | profiling spec/design | `ttc-job-accuracy.jpg` |
 | Delay diagnostics | profiling/provider-locate docs | `crafting-status-ttc-bottleneck-diagnostics.jpg` |
 | Sorting and colors | TTC sorting/color docs | `ttc-sort-longest.jpg` |
-| Details and reset | player-controls docs | `ttc-details-chat.png` |
+| Details and reset | player-controls docs | `ttc-details-chat.jpg` |
 | Saved history | world-save persistence docs | new focused capture |
 | Configuration | player-controls docs/current config | new focused capture |
 | Crafting Tree | player-controls docs | `crafting-tree-estimate.jpg` |

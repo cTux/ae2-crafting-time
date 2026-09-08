@@ -35,7 +35,7 @@ shared/src/main/resources/assets/ae2craftingtime/guides/ae2craftingtime/guide/
     delayed.md
     no-data-yet.md
     estimated.md
-    images/*.png
+    images/*.jpg
   _uk_ua/statuses/*.md
 ```
 
@@ -55,7 +55,7 @@ positions `0..9` in spec order. Features owns position `1`; Chapter 1 remains `0
 | NO TARGET | provider-dispatch docs/current code | new focused capture |
 | Waiting | waiting-to-start docs | `crafting-status-waiting.jpg` |
 | DELAYED | profiling docs | delayed and diagnostics gallery images |
-| No data yet | TTC/profiling docs | `crafting-plan-no-data.png` |
+| No data yet | TTC/profiling docs | `crafting-plan-no-data.jpg` |
 | Estimated | TTC docs | `crafting-status-running.jpg` |
 
 Copy retained images without recompression. New captures follow the gallery

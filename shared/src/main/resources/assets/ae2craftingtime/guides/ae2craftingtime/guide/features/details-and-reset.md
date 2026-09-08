@@ -19,9 +19,9 @@ Reset is server-validated, works only for an eligible target with retained
 samples, and has a short per-player message cooldown. Turning chat messages off
 hides both details and the reset confirmation, but the reset still happens.
 
-![TTC details and reset messages in chat](images/ttc-details-chat.png)
+![TTC details in chat](images/ttc-details-chat.jpg)
 
-*Seeded history demonstrates a Ctrl-click report followed by a confirmed reset.*
+*A Ctrl-click report shows learned throughput and accuracy for a real completed job.*
 
 [Previous: Sorting and colors](sorting-and-colors.md) | [Features](index.md) |
 [Next: Saved history](saved-history.md) | [Confidence](confidence.md)
