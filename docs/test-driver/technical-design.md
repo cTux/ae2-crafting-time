@@ -21,6 +21,39 @@ Apply the [planned smoke-policy enforcement](../automated-ui-testing/technical-d
 to shared and version-specific scenarios. English-only requirements below do
 not claim the current bilingual driver states have already been removed.
 
+## Single-world fixtures and transitions
+
+The [four-client qualification](../automated-ui-testing/prepared-clients-2026-09-08.md)
+exposed boundaries that matter when cases reuse one loaded world:
+
+- Clear blocks, entities and retained fixture state on every reset. An all-air
+  structure needs clearing, not `StructureTemplate.placeInWorld`; failed
+  placement of a nonempty structure still fails the suite.
+- Open a terminal or submit its amount once per transition. Poll for the server
+  response instead of pressing again each frame. Reset the submission guard
+  only when entering the next transition.
+- Place native fixture blocks first, then poll grid, drive and CPU readiness in
+  the existing bounded completion phase. A missing node immediately after a
+  reset is not proof of incompatibility. Do not suppress exceptions or count
+  incomplete readiness as success.
+- Once a server operation starts, keep polling that same future even if the UI
+  warning changes while it runs. Capture each checkpoint once before advancing.
+- Choose output quantity explicitly and supply enough inputs, storage and CPU
+  bytes for that quantity. A large recovery workload must not silently become
+  the default for unrelated cases. Drain the provider's exact pending inputs
+  before testing a fresh rejection. Use a multi-item input batch with less than
+  one batch of free space to demonstrate partial insertion.
+- Establish a real LOW neighbor notification before the later HIGH pulse.
+  Setting AIR where AIR already exists is not a new edge. Preserve native lock
+  behavior and the existing recovery bound. Lock recovery means LOCKED clears;
+  INPUT BLOCKED may then be correct if the destination is still full.
+
+Shared and 26.1.2-native implementations must preserve the same behavior while
+using their own Minecraft APIs. For a packaged Fabric injection failure, compare
+the actual target invocation with named and intermediary descriptors; retain
+required injection counts and verify both mappings. A successful compile does
+not establish that the packaged native client can load the mixin.
+
 ## No-provider status scenario
 
 `NoProviderScenario` owns an isolated native CPU, drive, energy cell, and two
@@ -63,11 +96,13 @@ in the companion. The driver metadata requires the exact production version.
 The existing launcher and VM dispatch chain carry `-Target` through status,
 runtime paths, suite selection, and result validation. Forge keeps its default
 and `resolved-mods`; Fabric uses `mods`. Both reuse the same marked source world,
-copying it separately for every case. Fabric provisions an item cell and, unless
+copying it once per schema-2 suite and restoring it between cases. Schema-1
+per-case copies are explicit isolation diagnostics. Fabric provisions an item cell and, unless
 the scenario builds its own CPU, a native AE2 CPU because the source world uses
 Forge-only addons. The DISK scenario then removes that supply and must craft
-from its own DISK. The prepared Fabric suite has seven cases
-in `scripts/ui-smoke-fabric-suite.json`; unavailable Forge-only addons stay out.
+from its own DISK. `scripts/ui-smoke-fabric-suite.json` owns the current Fabric case list;
+unavailable Forge-only addons stay out. Read the expanded campaign plan for
+required cases and separate dependency graphs instead of relying on an old count.
 The common ExtendedAE fixture checks the actual registered assembler block and
 its AE2 node, avoiding the upstream package-name difference between loaders.
 
