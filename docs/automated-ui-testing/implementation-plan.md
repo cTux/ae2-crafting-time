@@ -415,3 +415,14 @@ owned by that slice, then read GitHub CI separately. Before completion:
 
 Done means **A1** through **A8** pass, CI is green, every required scenario is
 runnable, and no test-driver file can enter a published artifact.
+
+## Prepared-client qualification, 2026-09-08
+
+The [measured four-client run](prepared-clients-2026-09-08.md) completed 122 cases
+across eight required dependency graphs, with one client and one loaded world
+per graph. It records source identities, successful phase timings, preserved
+failed attempts, final focused verification and review boundaries.
+
+This completes the prepared-target coverage portion of #351. Automatic visual
+references and matched cold/warm measurements remain open; manual review does
+not change `REVIEW_REQUIRED` into an approved baseline.

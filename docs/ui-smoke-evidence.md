@@ -116,9 +116,11 @@ required focused adapter graphs as well as each target's primary suite. The
 `invoke-ui-smoke-codexvm.ps1` wrapper also delegates to the campaign runner when
 no internal bundle is supplied; use the documented host options to select scope.
 
-The primary compatible suites currently contain 34 cases for Forge 1.20.1,
-16 for Fabric 1.20.1, 30 for NeoForge 1.21.1 and 19 for NeoForge 26.1.2. Read the
-expanded plan for the current case list and any separate required graphs.
+The primary compatible suites currently contain 36 cases for Forge 1.20.1,
+19 for Fabric 1.20.1, 32 for NeoForge 1.21.1 and 21 for NeoForge 26.1.2. Read the
+expanded plan for the current case list and any separate required graphs. The
+[2026-09-08 prepared-client report](automated-ui-testing/prepared-clients-2026-09-08.md)
+records 122 passing cases across eight graphs, phase timings and remaining qualification work.
 
 For multiple scenarios on the same installed mod graph, launch Minecraft once.
 Run the suite sequentially in one loaded disposable world with pristine fixture,
