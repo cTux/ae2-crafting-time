@@ -83,15 +83,34 @@ try {
     foreach ($run in $raw.results) {
         $reportText += "| $($run.target) / $($run.graph) | $($run.result) |"
     }
-    $reportText += @('', '| Case | Result | Evidence |', '|---|---|---|')
     foreach ($run in $raw.results) {
-        $relativeReport = [IO.Path]::GetFullPath($run.report).Substring($campaign.Length).TrimStart('/','\').Replace('\','/')
+        $reportPath = [IO.Path]::GetFullPath($run.report)
+        if (!$reportPath.StartsWith($campaign.TrimEnd('/','\') + [IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) { continue }
+        $relativeReport = $reportPath.Substring($campaign.Length).TrimStart('/','\').Replace('\','/')
+        $reportText += @('', "### $($run.target) / $($run.graph) cases", '', '| Case | Result | Evidence |', '|---|---|---|')
         foreach ($case in $run.cases) {
             $leaf = "$relativeReport/run/evidence/" + $(if ($run.cases.Count -gt 1) { "$($case.scenario)/" } else { '' }) + 'result.json'
             $link = if (Test-Path -LiteralPath (Join-Path $pending $leaf)) { "[Result]($($leaf.Replace(' ','%20')))" } else { 'Not captured' }
             $reportText += "| $($run.target) / $($run.graph) / $($case.scenario) | $($case.result) | $link |"
         }
+        $checkpoints = @($gate.visualResults | Where-Object { $_.target -eq $run.target -and $_.graph -eq $run.graph } | ForEach-Object checkpoints)
+        if ($checkpoints.Count) {
+            $reportText += @('', "### $($run.target) / $($run.graph) visual review", '', '| Checkpoint | Verdict | Evidence | Reason |', '|---|---|---|---|')
+            foreach ($checkpoint in $checkpoints) {
+                $leaf = "$relativeReport/run/evidence/" + $(if ($run.cases.Count -gt 1) { "$($checkpoint.scenario)/" } else { '' })
+                $image = ($leaf + $checkpoint.image).Replace(' ','%20')
+                $links = "[Image]($image) / [Snapshot]($($image.Replace('.png','.json')))"
+                foreach ($region in $checkpoint.regions | Where-Object changedPixels -gt 0) {
+                    $diff = "$relativeReport/visuals/$($checkpoint.scenario)-$($checkpoint.image.Replace('.png',''))-$($region.index).diff.png"
+                    $links += " / [Diff]($($diff.Replace(' ','%20')))"
+                }
+                $reason = $checkpoint.reason.Replace('|','\|').Replace("`r",' ').Replace("`n",' ')
+                $reportText += "| $($checkpoint.scenario) / $($checkpoint.image) | $($checkpoint.result) | $links | $reason |"
+            }
+        }
     }
+    $counts = @($gate.visualResults | ForEach-Object checkpoints | Group-Object result | ForEach-Object { "$($_.Name): $($_.Count)" })
+    $reportText += @('', "Visual checkpoints: $($counts -join '; ')")
     $reportText += @('', "Visual validation: $($gate.validationMs) ms", "Archive copy: $($gate.archiveMs) ms", '', '[Structured gate](gate.json)', '[Archive hashes](manifest.json)', '[Visual contracts](visual-contracts/scripts/catalogue.json)')
     $reportText | Set-Content -LiteralPath (Join-Path $pending 'report.md') -Encoding UTF8
     [IO.Directory]::Move($pending,$destination)

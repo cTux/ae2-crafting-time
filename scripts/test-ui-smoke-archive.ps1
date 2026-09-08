@@ -74,6 +74,11 @@ try {
         Assert (Test-Path (Join-Path $result.archive 'forge/bundle/expected-adapters.json')) 'Archive must retain adapter validation contract'
         Assert ((Get-FileHash (Join-Path $result.archive 'forge/bundle/mods/test-artifact.jar')).Hash -eq (Get-FileHash (Join-Path $graph 'bundle/mods/test-artifact.jar')).Hash) 'Archive must retain exact tested artifacts'
         Assert (!(Test-Path (Join-Path $result.archive 'forge/runtime'))) 'Archive must exclude the live runtime'
+        $reportText=Get-Content (Join-Path $result.archive 'report.md') -Raw
+        if($mode -notin @('missing-pid','unconfirmed-exit')) {
+            Assert ($reportText.Contains('[Image](forge/run/evidence/checkpoint.png)') -and $reportText.Contains('[Snapshot](forge/run/evidence/checkpoint.json)')) 'Review queue must link actual image and snapshot'
+        }
+        if($mode -eq 'mismatch'){Assert ($reportText.Contains('[Diff](forge/visuals/advancedae-cpu-checkpoint-1.diff.png)')) 'Mismatch must link its retained diff'}
         Assert ((Get-FileHash (Join-Path $result.archive 'visual-contracts/scripts/catalogue.json')).Hash -eq (Get-FileHash $catalogue).Hash) 'Archive must retain the visual contract'
         Assert ((Get-FileHash (Join-Path $result.archive 'visual-contracts/test-fixtures/ui-smoke-visuals/baseline.png')).Hash -eq (Get-FileHash (Join-Path $references 'baseline.png')).Hash) 'Archive must retain baseline pixels'
     }
