@@ -82,6 +82,10 @@ sourceSets.test.runtimeClasspath += sourceSets.main.runtimeClasspath
 
 repositories {
     mavenCentral()
+    exclusiveContent {
+        forRepository { mavenCentral() }
+        filter { includeModule 'net.jodah', 'typetools' }
+    }
     maven { url = 'https://api.modrinth.com/maven' }
     ivy {
         url = uri("$runtimeRunDirectory/resolved-mods")
