@@ -31,10 +31,12 @@
     },
     "no-target-status": {
       "checks": ["screen", "real-job", "mixed-row", "tooltip", "layout", "target-removed", "target-restored"],
+      "advancedChecks": ["screen", "real-job", "tooltip", "layout", "advanced-cpu", "target-removed", "target-restored"],
       "screenshots": ["no-target-en-us.png", "no-target-restored.png"]
     },
     "input-blocked-status": {
       "checks": ["screen", "real-job", "mixed-row", "tooltip", "layout", "blocking-mode", "blocking-recovered", "zero-insertion", "partial-capacity"],
+      "advancedChecks": ["screen", "real-job", "tooltip", "layout", "advanced-cpu", "blocking-mode", "blocking-recovered", "zero-insertion", "partial-capacity"],
       "screenshots": ["input-blocked-status-en-us.png", "input-blocked-recovered.png", "input-blocked-zero-insertion.png", "input-blocked-partial-capacity.png"]
     },
     "locked-status": {
