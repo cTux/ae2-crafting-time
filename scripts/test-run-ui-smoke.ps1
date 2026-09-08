@@ -99,6 +99,16 @@ $checks = if ($contracts.$DriverScenario) {
 } else {
     [ordered]@{ screen=$true; 'ttc-row'=$true; 'total-ttc'=$true; 'sort-cycle'=$true; tooltip=$true; layout=$true }
 }
+if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq 'reordered-checks') {
+    $reordered = [ordered]@{}
+    foreach ($key in @($checks.Keys | Sort-Object -Descending)) { $reordered[$key] = $checks[$key] }
+    $checks = $reordered
+}
+switch ($env:AE2CT_UI_SMOKE_TEST_MODE) {
+    'missing-check' { $checks.Remove('screen') }
+    'extra-check' { $checks['unexpected'] = $true }
+    'wrong-check-case' { $checks.Remove('screen'); $checks['SCREEN'] = $true }
+}
 $screenshots = if ($contracts.$DriverScenario) {
     @($contracts.$DriverScenario.screenshots)
 } elseif ($DriverScenario -eq "no-space-status") {
@@ -186,6 +196,10 @@ try {
     Invoke-Case "wrong-target" -Target "1.21.1-neoforge" -shouldPass $false
     Invoke-Case "missing-screenshot" -Target "1.21.1-neoforge" -Scenario suite -shouldPass $false
     Invoke-Case "pass" -Target "unsupported" -shouldPass $false
+    Invoke-Case 'reordered-checks' -Scenario no-target-status -shouldPass $true
+    foreach ($mode in @('missing-check', 'extra-check', 'wrong-check-case')) {
+        Invoke-Case $mode -Scenario no-target-status -shouldPass $false
+    }
     Invoke-Case "pass" -shouldPass $true
     foreach ($mode in @('fixed-scale','missing-scale','duplicate-scale','malformed-scale')) {
         Invoke-Case $mode -shouldPass $false
