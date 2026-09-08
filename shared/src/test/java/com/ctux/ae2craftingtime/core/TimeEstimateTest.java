@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import java.util.OptionalLong;
@@ -65,6 +66,13 @@ class TimeEstimateTest {
 
         assertEquals("~13s", total.orElseThrow());
         assertFalse(TimeEstimate.formatTotal(List.of(OptionalLong.empty())).isPresent());
+    }
+
+    @Test
+    void nativeEtaNeedsMeasuredProgress() {
+        assertFalse(TimeEstimate.hasMeasuredProgress(Integer.MAX_VALUE, Integer.MAX_VALUE));
+        assertFalse(TimeEstimate.hasMeasuredProgress(1, 2));
+        assertTrue(TimeEstimate.hasMeasuredProgress(Integer.MAX_VALUE, Integer.MAX_VALUE - 1));
     }
 
     @Test
