@@ -42,7 +42,8 @@ final class ProviderDispatchStatusScenario {
         key = "text.ae2craftingtime." + scenario.replace("-status", "").replace('-', '_');
         fixture = new DispatchStatusFixture(INPUT_BLOCKED.equals(scenario) ? 2 : 1,
                 LOCKED.equals(scenario) ? LockCraftingMode.LOCK_WHILE_LOW : LockCraftingMode.NONE,
-                INPUT_BLOCKED.equals(scenario));
+                INPUT_BLOCKED.equals(scenario),
+                INPUT_BLOCKED.equals(scenario) || advancedFixture() ? 4096 : 64);
     }
 
     static boolean supports(String scenario) {

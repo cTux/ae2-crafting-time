@@ -41,14 +41,14 @@ final class DispatchStatusFixture {
     private Object advancedCpu;
 
     DispatchStatusFixture(int inputAmount) {
-        this(inputAmount, LockCraftingMode.NONE, true);
+        this(inputAmount, LockCraftingMode.NONE, true, 64);
     }
 
-    DispatchStatusFixture(int inputAmount, LockCraftingMode initialLock, boolean initialBlocking) {
+    DispatchStatusFixture(int inputAmount, LockCraftingMode initialLock, boolean initialBlocking, long outputAmount) {
         this.inputAmount = inputAmount;
         this.initialLock = initialLock;
         this.initialBlocking = initialBlocking;
-        outputAmount = initialBlocking || Boolean.getBoolean("ae2craftingtime.test.advancedStatus") ? 4096 : 64;
+        this.outputAmount = outputAmount;
     }
 
     boolean prepare(int phase, ServerPlayer player, FixtureMarker marker) {
