@@ -135,6 +135,33 @@ load; a schema-1 diagnostic reload run must not be described as the one-world
 benchmark. Include reset durations separately from initial world loading and UI
 assertions. A stopped or partially completed run is not a full-suite timing.
 
+### Timing and provenance
+
+Publish timings after each completed target, including its required dependency
+graphs. Read phase boundaries from the campaign, native status and driver logs.
+Capture-write durations are already inside UI time; gate validation and archive
+costs are already inside the campaign wrapper. Do not add them twice. If build,
+dependency resolution and staging lack separate boundaries, report combined
+preparation rather than inventing individual durations. Keep resets separate
+from initial loading and UI work. Concurrent review windows are elapsed windows,
+not additive client time; mark unmeasured work explicitly.
+
+Count unique original PNGs separately from screenshot references: several checks
+may point to one capture. Keep both the mapping and every original sidecar.
+
+Bind each run to its captured source and JAR hashes. A later documentation-only
+commit does not retag old captures. Verification of a small runtime change may
+reuse earlier full coverage only after checking the actual delta and running
+its affected checks; state both sources and the focused scope. A focused pass
+never repairs a failed full-suite result or satisfies a requested new full run.
+
+A host-validator defect may be checked against unchanged archived evidence with
+the complete corrected validator. Retain the original verdict and write a new
+receipt with the validator revision, artifact hashes and all checked conditions.
+Do not rewrite the archive or describe that receipt as a new native execution.
+Result check keys are exact and case-sensitive; JSON property order is not part
+of the contract. Missing, extra or false checks remain failures.
+
 ```text
 E:/games/mc-instances/.codex-test-results/ui-smoke/
   <modpacks|clients>/<pack-release-or-target>/<UTC-run-id>/

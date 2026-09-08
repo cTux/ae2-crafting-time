@@ -73,6 +73,17 @@ Rebase only when the user explicitly requests it. A rebase alone does not
 require a full smoke run or invalidate completed smoke evidence. Choose any
 additional verification from the actual changes and the requested task scope.
 
+## Campaign discipline
+
+Keep source, coverage rules and dependency inputs unchanged while a selected
+campaign runs. Do documentation and review preparation outside tracked inputs
+until the last required graph finishes. A `STALE_PLAN` rejection requires a new
+plan and build; never bypass its fingerprint or reuse the rejected campaign.
+Report each completed target's timings before continuing to the next target.
+Use the existing timestamped receipts; the
+[timing and provenance rules](../../../docs/ui-smoke-evidence.md#timing-and-provenance)
+explain overlapping costs, unique captures and verification of later changes.
+
 ## Automatic evidence review
 
 Read the current campaign's `gate.json` and archive report. Only checkpoints

@@ -39,6 +39,15 @@ existing fixture closest to the requested scenario.
 For a different UI flow, update the spec and design first. Reuse the current
 driver artifact and runner unless the new target proves a loader boundary.
 
+## Repeated cases in one world
+
+Follow the [fixture and transition rules](../../../docs/test-driver/technical-design.md#single-world-fixtures-and-transitions)
+when extending shared or version-specific drivers. Send each asynchronous UI
+action once, poll native readiness within the existing deadline, and preserve
+pending server operations until completion. Size inputs and CPU capacity for
+the requested job; exercise real partial insertion and redstone transitions.
+Validate both affected shared consumers and any separate native implementation.
+
 ## Run it
 
 Follow [the screenshot archive contract](../../../docs/ui-smoke-evidence.md)
