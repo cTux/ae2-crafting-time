@@ -58,7 +58,7 @@ final class DispatchStatusFixture {
                 level.setBlockAndUpdate(pos, pos.getY() < cpuPosition.getY()
                         ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState());
             }
-            place(player, cpuPosition, "16k_crafting_storage");
+            place(player, cpuPosition, "64k_crafting_storage");
             place(player, cpuPosition.east(2), "creative_energy_cell");
             place(player, cpuPosition.east(4), "drive");
             place(player, cpuPosition.east(6), "pattern_provider");
