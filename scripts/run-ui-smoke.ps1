@@ -357,6 +357,17 @@ try {
     ) -SimpleMatch
         if ($fatal) { throw "Fatal loader, mixin, resource, or crash signature in latest.log" }
     } finally {
+        if ($Target -like '*-neoforge') {
+            $fmlConfig = Join-Path $runtime 'config/fml.toml'
+            $snapshot = Join-Path $evidence 'fml-postlaunch.toml'
+            $absent = Join-Path $evidence 'fml-postlaunch.absent'
+            Remove-Item -LiteralPath $snapshot, $absent -Force -ErrorAction SilentlyContinue
+            if (Test-Path -LiteralPath $fmlConfig -PathType Leaf) {
+                Copy-Item -LiteralPath $fmlConfig -Destination $snapshot
+            } else {
+                [IO.File]::WriteAllText($absent, '', [Text.UTF8Encoding]::new($false))
+            }
+        }
         $manifest = Join-Path $runtime "$modsDirectory\.ae2-crafting-time-run-mods.json"
         if (Test-Path -LiteralPath $manifest) { Copy-Item -LiteralPath $manifest -Destination (Join-Path $evidence 'resolved-mods.json') -Force }
         $latestLog = Join-Path $runtime "logs\latest.log"

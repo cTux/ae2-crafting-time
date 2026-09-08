@@ -26,6 +26,18 @@ if (-not $runtime.StartsWith($ownedRoot.TrimEnd('\') + '\', [StringComparison]::
 }
 $mods = Join-Path $runtime 'mods'
 New-Item -ItemType Directory -Path $mods -Force | Out-Null
+if ($Target -like '*-neoforge') {
+    $fmlConfig = Join-Path $runtime 'config/fml.toml'
+    $snapshot = Join-Path $Evidence 'fml-prelaunch.toml'
+    $absent = Join-Path $Evidence 'fml-prelaunch.absent'
+    Remove-Item -LiteralPath $snapshot, $absent -Force -ErrorAction SilentlyContinue
+    if (Test-Path -LiteralPath $fmlConfig -PathType Leaf) {
+        Copy-Item -LiteralPath $fmlConfig -Destination $snapshot
+        Remove-Item -LiteralPath $fmlConfig -Force
+    } else {
+        [IO.File]::WriteAllText($absent, '', [Text.UTF8Encoding]::new($false))
+    }
+}
 $manifest = Get-Content -LiteralPath (Join-Path $BundleDirectory 'mods/.ae2-crafting-time-run-mods.json') -Raw | ConvertFrom-Json
 foreach ($name in $manifest) {
     if ([IO.Path]::GetFileName($name) -ne $name -or $name -notlike '*.jar') { throw 'Invalid bundle filename' }
