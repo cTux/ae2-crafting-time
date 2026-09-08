@@ -22,12 +22,13 @@ starts. Tracking issue: [#357](https://github.com/cTux/ae2-crafting-time/issues/
 
 ## Acceptance criteria
 
-- A NeoForge 1.21.1 launch with no `fml.toml` creates a complete loader config
-  and reaches normal startup.
+- A NeoForge 1.21.1 launch with no runtime `fml.toml` stages the config generated
+  by the exact prepared loader installation and reaches normal startup.
 - Repeating the same primary graph uses a newly isolated loader config and
   reaches the same startup state.
 - Evidence identifies the loader version and shows whether `earlyWindowSquir`
-  existed before and after launch. The runner never invents a default value.
+  existed before and after launch. The runner never invents a default value or
+  copies a config from a different loader installation.
 - The complete 32-case NeoForge 1.21.1 primary graph passes in one client and
   one loaded disposable world, followed by a confirmed normal process exit.
 - The runner's focused contract test covers absent and existing loader config

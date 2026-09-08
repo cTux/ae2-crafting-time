@@ -6,9 +6,10 @@ defined in [the spec](spec.md) for
 
 ## 1. Preserve and isolate loader config
 
-1. Add the smallest helper in `prepare-ui-smoke-launch.ps1` that, for NeoForge
+1. Add the smallest path in `prepare-ui-smoke-launch.ps1` that, for NeoForge
    only, copies an existing runtime `config/fml.toml` to graph-local evidence,
-   records absence otherwise, then removes only the runtime file.
+   records absence otherwise, then replaces only the runtime file with the FML
+   config from the exact prepared installation in the launch manifest.
 2. After native process completion in `run-ui-smoke.ps1`, copy the generated
    `fml.toml` to graph-local evidence or record absence.
 3. Keep loader config evidence out of semantic PASS decisions; startup, cases,

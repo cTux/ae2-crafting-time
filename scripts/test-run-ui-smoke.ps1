@@ -49,6 +49,12 @@ $modsDirectory = if ($Target -eq "1.20.1-forge") { "resolved-mods" } else { "mod
 $driver = "ae2-crafting-time-1.1.0-$loader-$($Target.Split("-")[0])-test-driver.jar"
 New-Item -ItemType Directory -Path $DriverOutputDirectory, (Join-Path $RuntimeDirectory $modsDirectory),
     (Join-Path $RuntimeDirectory "logs") -Force | Out-Null
+if ($Target -like '*-neoforge') {
+    $fml = Join-Path $RuntimeDirectory 'config/fml.toml'
+    New-Item -ItemType Directory -Path (Split-Path $fml) -Force | Out-Null
+    if ($env:AE2CT_UI_SMOKE_TEST_MODE -eq 'missing-fml') { Remove-Item -LiteralPath $fml -Force -ErrorAction SilentlyContinue }
+    else { Set-Content -LiteralPath $fml -Value 'earlyWindowSquir = false' }
+}
 if ($DriverScenario -eq "suite") {
     $plan = Get-Content (Join-Path $DriverOutputDirectory 'suite-plan.json') -Raw | ConvertFrom-Json
     $cases = foreach ($case in $plan.cases) {
@@ -193,6 +199,13 @@ try {
     Invoke-Case "missing-screenshot" -Target "26.1.2-neoforge" -Scenario suite -shouldPass $false
     Invoke-Case "pass" -Target "1.21.1-neoforge" -Scenario suite -shouldPass $true
     Invoke-Case "pass" -Target "1.21.1-neoforge" -Latest -shouldPass $true
+    $neoEvidence = Join-Path $temp 'build/ui-smoke/1.21.1-neoforge/latest/craft-plan/evidence'
+    if ((Get-Content (Join-Path $neoEvidence 'fml-postlaunch.toml') -Raw) -notmatch 'earlyWindowSquir = false') {
+        throw 'Post-launch FML config evidence was not retained'
+    }
+    Invoke-Case "missing-fml" -Target "1.21.1-neoforge" -Latest -shouldPass $true
+    if (-not (Test-Path -LiteralPath (Join-Path $neoEvidence 'fml-postlaunch.absent')) -or
+            (Test-Path -LiteralPath (Join-Path $neoEvidence 'fml-postlaunch.toml'))) { throw 'Missing post-launch FML config was not recorded' }
     Invoke-Case "wrong-target" -Target "1.21.1-neoforge" -shouldPass $false
     Invoke-Case "missing-screenshot" -Target "1.21.1-neoforge" -Scenario suite -shouldPass $false
     Invoke-Case "pass" -Target "unsupported" -shouldPass $false
