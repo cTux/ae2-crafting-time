@@ -31,6 +31,17 @@ final class FabricBaseFixture extends NativeCpuFixture {
         // CPU-specific scenarios place their own block after the supply is ready.
         var placement = addCpu ? super.place(player, marker)
                 : new Placement(null, new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z()));
+        if (addCpu) {
+            var host = (IInWorldGridNodeHost) player.serverLevel().getBlockEntity(placement.terminal());
+            var immediateGrid = Arrays.stream(Direction.values()).map(host::getGridNode).filter(Objects::nonNull)
+                    .map(node -> node.getGrid()).filter(Objects::nonNull).findFirst().orElse(null);
+            if (immediateGrid == null) {
+                System.out.println("AE2CT Fabric fixture terminal grid is not ready after native CPU placement");
+            } else if (immediateGrid.getMachines(DriveBlockEntity.class).stream()
+                    .noneMatch(candidate -> candidate.getMainNode().isActive())) {
+                System.out.println("AE2CT Fabric fixture drive is not active after native CPU placement");
+            }
+        }
         // Fabric level metadata has a different saved player position from the copied block layout.
         var face = Direction.valueOf(marker.terminal().face());
         player.teleportTo(placement.terminal().getX() + 0.5 + face.getStepX() * 2,
