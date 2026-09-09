@@ -123,14 +123,20 @@ final class CpuListTtcScenario {
                 next(Stage.SCROLL_DOWN);
             }
             case SCROLL_DOWN -> {
-                if (snapshot.scroll() != 1 || !totalsMatch(snapshot)) return false;
+                var firstCpu = originalJobs.keySet().iterator().next();
+                if (snapshot.cpuCards().stream().anyMatch(card -> card.serial() == firstCpu)
+                        || snapshot.cpuCards().stream().noneMatch(card -> card.name().equals("Idle CPU 7"))
+                        || !totalsMatch(snapshot)) return false;
                 mark(checks, "scroll-down");
                 screenshot.accept("cpu-list-total-ttc-scroll-down.png");
                 CpuListScrollControl.scrollTo(0);
                 next(Stage.SCROLL_UP);
             }
             case SCROLL_UP -> {
-                if (snapshot.scroll() != 0 || !totalsMatch(snapshot)) return false;
+                var firstCpu = originalJobs.keySet().iterator().next();
+                if (snapshot.cpuCards().stream().noneMatch(card -> card.serial() == firstCpu)
+                        || snapshot.cpuCards().stream().anyMatch(card -> card.name().equals("Idle CPU 7"))
+                        || !totalsMatch(snapshot)) return false;
                 mark(checks, "scroll-up");
                 screenshot.accept("cpu-list-total-ttc-scroll-up.png");
                 if (server(minecraft, "partial", player -> { first.makeCpuListPartial(player); return true; })) next(Stage.PARTIAL);
