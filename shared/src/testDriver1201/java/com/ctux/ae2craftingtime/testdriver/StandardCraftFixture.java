@@ -190,8 +190,9 @@ final class StandardCraftFixture {
         if (cpuListPlans == null) {
             var jobs = java.util.List.of(new CpuJob(Items.SMOOTH_STONE, 4), new CpuJob(Items.SMOOTH_STONE, 8),
                     new CpuJob(Items.SMOOTH_STONE, 12), new CpuJob(Items.GLASS, 16));
+            var source = IActionSource.ofMachine(cpu(player));
             cpuListPlans = jobs.stream().map(job ->
-                    service.beginCraftingCalculation(player.serverLevel(), () -> IActionSource.ofMachine(cpu(player)),
+                    service.beginCraftingCalculation(player.serverLevel(), () -> source,
                             AEItemKey.of(job.item()), job.amount(),
                             appeng.api.networking.crafting.CalculationStrategy.REPORT_MISSING_ITEMS)).toList();
             return false;
