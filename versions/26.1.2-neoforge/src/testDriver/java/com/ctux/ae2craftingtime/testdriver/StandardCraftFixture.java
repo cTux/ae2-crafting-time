@@ -80,7 +80,8 @@ final class StandardCraftFixture {
             return false;
         }
         checkpoint = "terminal-node";
-        var node = ((IInWorldGridNodeHost) level.getBlockEntity(terminal)).getGridNode(Direction.NORTH);
+        var node = ((IInWorldGridNodeHost) level.getBlockEntity(terminal))
+                .getGridNode(cpuListScenario ? null : Direction.NORTH);
         if (node == null) return false;
         checkpoint = "cpu";
         var cpu = cpu(player);
