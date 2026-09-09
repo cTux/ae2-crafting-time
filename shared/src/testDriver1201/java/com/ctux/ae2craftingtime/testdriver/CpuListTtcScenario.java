@@ -351,18 +351,20 @@ final class CpuListTtcScenario {
             case RECONNECT_CLOSE -> {
                 if (connectedDedicated) {
                     if (CpuListTtcControl.request("reconnect")) {
-                        DriverPlatform.reconnect(minecraft);
                         next(Stage.RECONNECT_OPEN);
+                        DriverPlatform.reconnect(minecraft);
                     }
                 } else if (minecraft.level != null && !reconnectStarted) {
                     reconnectStarted = true;
+                    next(Stage.RECONNECT_OPEN);
                     DriverPlatform.clearLevel(minecraft);
                 }
                 else next(Stage.RECONNECT_OPEN);
             }
             case RECONNECT_OPEN -> {
                 if (connectedDedicated) {
-                    if (minecraft.level != null && minecraft.getCurrentServer() != null) next(Stage.RECONNECT_SCREEN);
+                    if (minecraft.level == null) opening = true;
+                    else if (opening && minecraft.getCurrentServer() != null) next(Stage.RECONNECT_SCREEN);
                 } else if (minecraft.level == null && !opening) {
                     opening = true;
                     DriverPlatform.openWorld(minecraft, world);
