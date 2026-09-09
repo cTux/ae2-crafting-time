@@ -60,6 +60,7 @@ final class StandardAe2Scenario {
     private CompletableFuture<Boolean> operation;
     private Stage phase = Stage.PREPARE;
     private Stage reportedPhase;
+    private String reportedCheckpoint;
     private int sort;
     private boolean partialJob;
     private boolean reviewJob;
@@ -77,9 +78,11 @@ final class StandardAe2Scenario {
 
     boolean tick(Minecraft minecraft, FixtureMarker marker, Map<String, Boolean> checks,
             Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) throws Exception {
-        if (reportedPhase != phase) {
-            System.out.println("AE2CT standard checkpoint " + java.time.Instant.now() + " " + checkpoint());
+        var currentCheckpoint = checkpoint();
+        if (reportedPhase != phase || !currentCheckpoint.equals(reportedCheckpoint)) {
+            System.out.println("AE2CT standard checkpoint " + java.time.Instant.now() + " " + currentCheckpoint);
             reportedPhase = phase;
+            reportedCheckpoint = currentCheckpoint;
         }
         // Menu-free close/reopen and reconnect transitions are owned by this state machine.
         if (phase == Stage.ACTIVE && cpuList != null) {

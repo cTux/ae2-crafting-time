@@ -188,7 +188,9 @@ final class StandardCraftFixture {
             seed(player);
         }
         var cpus = cpuListCpus(player);
-        if (cpus.stream().anyMatch(cpu -> !cpu.getCluster().isActive())) return false;
+        var activeCpuCount = cpus.stream().filter(cpu -> cpu.getCluster().isActive()).count();
+        checkpoint = "cpu-list-active=" + activeCpuCount + "/" + cpus.size();
+        if (activeCpuCount != cpus.size()) return false;
         var service = cpu(player).getMainNode().getGrid().getCraftingService();
         if (cpuListPlans == null) {
             var jobs = java.util.List.of(new CpuJob(Items.SMOOTH_STONE, 4), new CpuJob(Items.SMOOTH_STONE, 8),
@@ -198,10 +200,13 @@ final class StandardCraftFixture {
                     service.beginCraftingCalculation(player.serverLevel(), () -> source,
                             AEItemKey.of(job.item()), job.amount(),
                             appeng.api.networking.crafting.CalculationStrategy.REPORT_MISSING_ITEMS)).toList();
+            checkpoint = "cpu-list-calculating";
             return false;
         }
+        checkpoint = "cpu-list-calculating";
         if (cpuListPlans.stream().anyMatch(plan -> !plan.isDone())) return false;
         if (!cpuListSubmitted) {
+            checkpoint = "cpu-list-submitting";
             for (var i = 0; i < 4; i++) {
                 try {
                     var result = service.submitJob(cpuListPlans.get(i).get(), null, cpus.get(i).getCluster(), false,
@@ -213,7 +218,9 @@ final class StandardCraftFixture {
             }
             cpuListSubmitted = true;
         }
-        return cpus.subList(0, 4).stream().allMatch(cpu -> cpu.getCluster().isBusy());
+        var busyCpuCount = cpus.subList(0, 4).stream().filter(cpu -> cpu.getCluster().isBusy()).count();
+        checkpoint = "cpu-list-busy=" + busyCpuCount + "/4";
+        return busyCpuCount == 4;
     }
 
     void makeCpuListPartial(ServerPlayer player) {
