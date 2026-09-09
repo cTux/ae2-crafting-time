@@ -296,7 +296,6 @@ final class CpuListTtcScenario {
             case SECOND_PREPARE -> {
                 if (server(minecraft, "second-grid", player -> {
                     if (!second.prepare(player, marker) || !second.prepareCpuListJobs(player)) return false;
-                    second.renameCpuList(player);
                     return true;
                 })) {
                     if (connectedDedicated) {
