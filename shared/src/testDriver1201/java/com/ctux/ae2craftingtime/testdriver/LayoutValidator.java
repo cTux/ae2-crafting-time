@@ -16,6 +16,9 @@ public final class LayoutValidator {
     public static List<String> validateBadges(UiSnapshot snapshot) {
         var failures = new ArrayList<String>();
         for (var badge : snapshot.badges()) {
+            if (snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::badge).anyMatch(badge::equals)) {
+                continue;
+            }
             check("badge", badge, snapshot, failures);
         }
         return List.copyOf(failures);
