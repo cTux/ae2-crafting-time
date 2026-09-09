@@ -69,6 +69,8 @@ final class DriverPlatform {
         minecraft.disconnect(new net.minecraft.client.gui.screens.TitleScreen(), false);
     }
 
+    static void resizeDisplay(net.minecraft.client.Minecraft minecraft) { minecraft.resizeGui(); }
+
     static void openWorld(net.minecraft.client.Minecraft minecraft, String world) {
         minecraft.createWorldOpenFlows().openWorld(world, () -> minecraft.setScreen(new net.minecraft.client.gui.screens.TitleScreen()));
     }

@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(AbstractContainerScreen.class)
 public abstract class AbstractContainerScreenCpuTtcMixin {
-    @Inject(method = "removed", at = @At("HEAD"))
+    @Inject(method = "removed", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$clearCpuTtcOnClose(CallbackInfo ci) {
         if (((AbstractContainerScreen<?>) (Object) this).getMenu() instanceof CraftingStatusMenu menu) {
             CpuTtcClient.close(menu);

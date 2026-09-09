@@ -317,7 +317,7 @@ final class CpuListTtcScenario {
                 mark(checks, "second-grid");
                 screenshot.accept("cpu-list-total-ttc-second-grid.png");
                 minecraft.options.guiScale().set(1);
-                minecraft.resizeDisplay();
+                DriverPlatform.resizeDisplay(minecraft);
                 next(Stage.SCALE_SMALL);
             }
             case SCALE_SMALL -> {
@@ -326,7 +326,7 @@ final class CpuListTtcScenario {
                 mark(checks, "small-scale");
                 screenshot.accept("cpu-list-total-ttc-smallest-scale.png");
                 minecraft.options.guiScale().set(0);
-                minecraft.resizeDisplay();
+                DriverPlatform.resizeDisplay(minecraft);
                 next(Stage.SCALE_LARGE);
             }
             case SCALE_LARGE -> {
@@ -334,7 +334,7 @@ final class CpuListTtcScenario {
                 if (!fits(snapshot)) {
                     if (snapshot.guiScale() <= 1) throw new IllegalStateException("No GUI scale fits the CPU-list screen");
                     minecraft.options.guiScale().set((int) snapshot.guiScale() - 1);
-                    minecraft.resizeDisplay();
+                    DriverPlatform.resizeDisplay(minecraft);
                     return false;
                 }
                 validateLayout(snapshot);

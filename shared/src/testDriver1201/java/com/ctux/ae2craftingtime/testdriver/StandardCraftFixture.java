@@ -230,7 +230,7 @@ final class StandardCraftFixture {
         return !cpuListCpus(player).get(0).getCluster().isBusy();
     }
 
-    void cancelSecondCpu(ServerPlayer player) { cpuListCpus(player).get(1).getCluster().cancelJob(); }
+    void cancelSecondCpu(ServerPlayer player) { cpuListCpus(player).get(1).getCluster().craftingLogic.cancel(); }
 
     boolean replaceSecondCpu(ServerPlayer player) {
         var replacementCpu = cpuListCpus(player).get(1);

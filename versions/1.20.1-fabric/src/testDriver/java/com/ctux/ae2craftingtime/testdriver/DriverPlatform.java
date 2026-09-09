@@ -61,6 +61,8 @@ final class DriverPlatform {
         minecraft.clearLevel(new net.minecraft.client.gui.screens.TitleScreen());
     }
 
+    static void resizeDisplay(net.minecraft.client.Minecraft minecraft) { minecraft.resizeDisplay(); }
+
     static void openWorld(net.minecraft.client.Minecraft minecraft, String world) {
         minecraft.createWorldOpenFlows().loadLevel(new net.minecraft.client.gui.screens.TitleScreen(), world);
     }
