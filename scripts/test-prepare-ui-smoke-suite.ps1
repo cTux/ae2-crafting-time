@@ -26,7 +26,7 @@ try {
         -Scenarios @('standard-ae2','craft-plan')
     if (!(Get-ChildItem -LiteralPath "$runtime/saves/$($mixed.world)/region" -Filter '*.mca')) { throw 'Mixed suite must retain the legacy fixture chunks' }
     $fabric = & "$PSScriptRoot\prepare-ui-smoke-suite.ps1" -Target 1.20.1-fabric -RuntimeDirectory $runtime -OutputDirectory "$temporary\fabric-evidence" -Scenarios @('standard-ae2')
-    if ($fabric.caseCount -ne 6) { throw 'Standard alias must expand to six cases' }
+    if ($fabric.caseCount -ne 7) { throw 'Standard alias must expand to seven cases' }
     $fabricSource = Join-Path (Split-Path -Parent $PSScriptRoot) 'versions/1.20.1-fabric/run/saves/ae2-crafting-time/level.dat'
     if ((Get-FileHash -LiteralPath "$runtime/saves/$($fabric.world)/level.dat").Hash -ne (Get-FileHash -LiteralPath $fabricSource).Hash) {
         throw 'Fabric retained Forge-only world metadata'

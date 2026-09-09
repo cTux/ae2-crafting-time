@@ -142,10 +142,10 @@ try {
     $advancedGraphs = @($full.targets.graphs | Where-Object id -eq 'rxYaglEe')
     Assert ($forgeGraphs.Count -eq 3 -and $forgeGraphs[1].cases.Count -eq 2) 'Full Forge must schedule its separate newest-adapter graph'
     Assert ($advancedGraphs.Count -eq 3 -and @($advancedGraphs | Where-Object { $_.cases.Count -ne 4 }).Count -eq 0) 'AdvancedAE must repeat all provider status leaves on three targets'
-    Assert ($full.targets[0].cases.Count -eq 37) 'Expanded Forge suite must contain 37 leaves'
-    Assert ($full.targets[1].cases.Count -eq 19) 'Expanded Fabric suite must contain 19 leaves'
-    Assert ($full.targets[2].cases.Count -eq 33) 'Expanded NeoForge suite must contain 33 leaves'
-    Assert ($full.targets[3].cases.Count -eq 22) 'Expanded 26.1.2 suite must contain 22 leaves'
+    Assert ($full.targets[0].cases.Count -eq 38) 'Expanded Forge suite must contain 38 leaves'
+    Assert ($full.targets[1].cases.Count -eq 20) 'Expanded Fabric suite must contain 20 leaves'
+    Assert ($full.targets[2].cases.Count -eq 34) 'Expanded NeoForge suite must contain 34 leaves'
+    Assert ($full.targets[3].cases.Count -eq 23) 'Expanded 26.1.2 suite must contain 23 leaves'
     Invoke-FixtureGit @('checkout','-b','conflict-side')
     Put 'README.md' 'theirs'
     Invoke-FixtureGit @('add','.')
