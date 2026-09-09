@@ -71,12 +71,36 @@ and prepared-client smoke skills when executing this plan.
 - After PR creation, run focused shared/cache/codec/loader tests and required
   builds/checks through the development skill, plus `git diff --check`.
   Record GitHub tests, coverage, builds, and review separately from local checks.
+- Inspect `scripts/run-ui-smoke.ps1 -Changed -BaseRef origin/master -PlanOnly`
+  before runtime verification, then execute its required selection. Current
+  CS-02/CA-04 policy selects full affected-target suites for shared wire changes
+  unless a reviewed mapping proves narrower coverage. The new scenario adds
+  feature evidence; running it alone does not satisfy those broader gates.
+  Preserve `selection.json` and report required broader coverage explicitly.
 
 ## 6. Exercise real screens
 
-Extend the existing driver with one multi-CPU scenario under
-`shared/src/testDriver1201` and the 26.1.2 test-driver boundary. Run through the
-prepared-client smoke skill; no named modpack is needed for native QA.
+Before changing driver code, update `docs/test-driver/spec.md` and
+`docs/test-driver/technical-design.md` with the A1-A5 fixture, transitions,
+observations, and connected dedicated-server case described here. Extend the
+existing driver with the `cpu-list-total-ttc` scenario under
+`shared/src/testDriver1201` and the 26.1.2 test-driver boundary, and register it
+through the existing scenario/coverage path. This scenario is planned, not an
+existing runnable command. Use the prepared-client smoke skill and these exact
+target/profile pairs:
+
+| Minecraft / loader | Prepared target | Profile | Feature scenario |
+| --- | --- | --- | --- |
+| 1.20.1 Forge | `1.20.1-forge` | `compatible` | `cpu-list-total-ttc` |
+| 1.20.1 Fabric | `1.20.1-fabric` | `compatible` | `cpu-list-total-ttc` |
+| 1.21.1 NeoForge | `1.21.1-neoforge` | `compatible` | `cpu-list-total-ttc` |
+| 26.1.2 NeoForge | `26.1.2-neoforge` | `compatible` | `cpu-list-total-ttc` |
+
+Resolve the native launch manifest from the configured `PreparedLaunchRoot`
+using the target and resolved loader as documented in
+[prepared UI smoke](../dev-client.md#prepared-ui-smoke). Record dependency and
+selected adapter identities; keep any required newest-adapter fixture separate
+when the compatible graph reaches an older adapter. Run clients sequentially.
 
 - Start three jobs with distinct learned totals, one idle CPU, and one unknown
   estimate. Include partial and stalled estimates. Assert badges before
@@ -86,13 +110,23 @@ prepared-client smoke skill; no named modpack is needed for native QA.
   CPU. Confirm tooltip names and row selection through the badge.
 - Open another grid with overlapping names/serials, close/reopen, reconnect,
   and delay/drop responses to test expiry. Confirm no stale totals.
-- Capture selected/unselected cards with long names/times, English/Ukrainian,
-  and the smallest/largest GUI scales where the screen fits. Verify name,
-  icon, amount, progress bar, and scrollbar remain unobstructed.
+- Capture selected/unselected cards with long names/times in English (`en_us`)
+  only, at the smallest/largest GUI scales where the screen fits. Verify name,
+  icon, amount, progress bar, and scrollbar remain unobstructed. Preserve
+  English/Ukrainian static key/placeholder checks and layout cases for long
+  Cyrillic CPU names; do not switch runtime language or duplicate screenshots.
 - Run integrated and dedicated-server cases on all four targets. Include
   supported addon scopes when installed; unknown scopes stay blank. Record
   target/dependency versions, assertions, screenshots, and logs. Builds alone
   do not demonstrate runtime support.
+- For each dedicated case, connect the matching prepared client to a disposable
+  dedicated server with matching production/driver artifacts. Prepare the real
+  multi-CPU grid on the server and exercise A1-A5 through that client's menu,
+  including reconnect and expiry. Reuse the scenario's fixture/observation
+  logic and existing launch tools; add only the missing driver connection and
+  server-fixture boundary needed for this case. Record the connection, both
+  artifact identities, server estimates, and matching client snapshots. The
+  existing headless `DedicatedCpuScenario` does not provide this UI evidence.
 
 ## Completion gate
 

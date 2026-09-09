@@ -144,10 +144,26 @@ peer rejection. Use matching client/server builds for acceptance tests.
 | Criteria | Required evidence |
 | --- | --- |
 | A1-A3 | Distinct CPU totals; unknown/zero/disabled/partial/stalled cases; title and card share cache; unchanged estimate math. |
-| A4 | Four-target screenshots with long names/times, selected/unselected cards, English/Ukrainian, and smallest/largest usable GUI scales. |
+| A4 | Four-target `en_us` screenshots with long names/times, selected/unselected cards, and smallest/largest usable GUI scales; static resource/layout checks cover English and Ukrainian text, including long Cyrillic names. |
 | A5 | Ordering/session/expiry tests; real scrolling, same-output replacement, cancellation, removal, reopen, network switch. |
 | A6 | Malformed/max/duplicate/negative codec cases; wrong menu/grid; both rate limits and disconnect cleanup. |
 | A7 | Four-target tests/builds and integrated/dedicated UI evidence with target/mod versions. |
+
+Use the planned `cpu-list-total-ttc` driver scenario in each target's prepared
+`compatible` profile. The scenario is not implemented yet. Extend the existing
+driver contracts before its code, and follow the
+[smoke policy and change-selection gates](../automated-ui-testing/spec.md).
+Record the selected adapter identity; use a focused prepared fixture when the
+compatible graph does not exercise the newest implemented adapter.
+
+Dedicated UI evidence requires a connected prepared client opening the real
+status menu on a matching disposable dedicated server. The existing
+`DedicatedCpuScenario` runs headless addon-profiler checks with a fake player;
+it cannot prove card rendering, selection, or client snapshot lifecycle. Reuse
+the multi-CPU fixture and client observations for the connected case. Record
+client/server artifact identities and server-side estimates alongside the
+rendered card/title snapshot. Never substitute an integrated-server screenshot
+or a headless pass for this evidence.
 
 Copying the selected total misidentifies jobs. Deriving TTC from elapsed time or
 progress changes semantics. Cycling selection changes player state. Broadcasting
