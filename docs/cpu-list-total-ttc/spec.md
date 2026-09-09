@@ -43,7 +43,10 @@ when the existing profiler knows their CPU scope. Unknown addon CPU scopes show
 no estimate. Separate addon screens are outside this change.
 
 Reuse existing TTC text and the CPU tooltip; no new translated wording or
-configuration is needed. Verify English and Ukrainian layouts. This feature
+configuration is needed. Preserve English and Ukrainian support through static
+resource and layout checks, including long Cyrillic CPU names. Runtime smoke
+uses English (`en_us`) only, following the
+[shared smoke policy](../automated-ui-testing/spec.md#smoke-policy). This feature
 adds no save data and does not reconstruct estimates for jobs restored without
 a retained runtime dependency graph.
 
@@ -61,7 +64,7 @@ and does not close the implementation issue.
 | A1 | Three busy CPUs with different totals show their own badges without being selected first. |
 | A2 | Selected card and title show identical formatted totals from the same snapshot; title placement remains unchanged. |
 | A3 | Idle, unknown, zero, and expired values produce no badge; partial/stalled estimates retain title semantics. |
-| A4 | Badges fit at the top right on selected and unselected cards; long names/times, English/Ukrainian, and GUI scales do not overlap other content. |
+| A4 | Badges fit at the top right on selected and unselected cards; long names/times, English/Ukrainian text, and GUI scales do not overlap other content. Static resource/layout checks preserve both languages; runtime UI evidence uses `en_us` only. |
 | A5 | Scrolling, list reordering/removal, same-output job replacement, completion/cancellation, menu reopen, network changes, and reconnects never reuse another context's total. |
 | A6 | Requests only read CPUs from the requesting player's current menu/network; malformed, excessive, or stale requests cannot leak other grids or create unbounded work. |
 | A7 | All four targets build and pass the focused regression tests; integrated and dedicated-server UI evidence demonstrates A1-A5. |
