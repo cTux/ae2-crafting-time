@@ -82,16 +82,6 @@ final class StandardCraftFixture {
         checkpoint = "terminal-node";
         var node = ((IInWorldGridNodeHost) level.getBlockEntity(terminal)).getGridNode(Direction.NORTH);
         if (node == null) return false;
-        var nodes = new java.util.ArrayList<>(java.util.List.of(terminal.west(2), terminal.east(2), terminal.below(),
-                terminal.east(4), terminal.east(8)));
-        if (cpuListScenario) nodes.add(terminal.east(12));
-        if (cpuListScenario) for (int offset : new int[] { 4, 6, 8, 10, 12, 14 }) nodes.add(terminal.west(offset));
-        for (var pos : nodes) {
-            checkpoint = "node " + pos;
-            var other = ((IInWorldGridNodeHost) level.getBlockEntity(pos)).getGridNode(Direction.UP);
-            if (other == null) return false;
-            if (node.getGrid() != other.getGrid()) GridHelper.createConnection(node, other);
-        }
         checkpoint = "cpu";
         var cpu = cpu(player);
         if (!cpu.isFormed()) {
@@ -115,6 +105,16 @@ final class StandardCraftFixture {
             if (index == 7 && cpuListIdentities == null) {
                 cpuListIdentities = cpuListCpus(player);
             }
+        }
+        var nodes = new java.util.ArrayList<>(java.util.List.of(terminal.west(2), terminal.east(2), terminal.below(),
+                terminal.east(4), terminal.east(8)));
+        if (cpuListScenario) nodes.add(terminal.east(12));
+        if (cpuListScenario) for (int offset : new int[] { 4, 6, 8, 10, 12, 14 }) nodes.add(terminal.west(offset));
+        for (var pos : nodes) {
+            checkpoint = "node " + pos;
+            var other = ((IInWorldGridNodeHost) level.getBlockEntity(pos)).getGridNode(Direction.UP);
+            if (other == null) return false;
+            if (node.getGrid() != other.getGrid()) GridHelper.createConnection(node, other);
         }
         checkpoint = "cpu-active";
         if (!cpu.getCluster().isActive()) return false;
