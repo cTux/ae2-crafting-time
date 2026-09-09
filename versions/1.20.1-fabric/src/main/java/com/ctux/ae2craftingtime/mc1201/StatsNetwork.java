@@ -1,6 +1,8 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C;
+import com.ctux.ae2craftingtime.mc1201.net.CpuTtcRequestC2S;
+import com.ctux.ae2craftingtime.mc1201.net.CpuTtcSnapshotS2C;
 import com.ctux.ae2craftingtime.mc1201.net.ProviderLocateC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsChatC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsRequestC2S;
@@ -22,6 +24,10 @@ public final class StatsNetwork {
             "provider_highlight_v4");
     private static final ResourceLocation LOCATE_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
             "provider_locate_v1");
+    private static final ResourceLocation CPU_TTC_REQUEST_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
+            "cpu_ttc_request_v1");
+    private static final ResourceLocation CPU_TTC_SNAPSHOT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
+            "cpu_ttc_snapshot_v1");
 
     public static void registerServer() {
         ServerPlayNetworking.registerGlobalReceiver(REQUEST_ID,
@@ -39,6 +45,11 @@ public final class StatsNetwork {
                     var packet = ProviderLocateC2S.decode(buffer);
                     server.execute(() -> packet.handle(player));
                 });
+        ServerPlayNetworking.registerGlobalReceiver(CPU_TTC_REQUEST_ID,
+                (server, player, handler, buffer, responseSender) -> {
+                    var packet = CpuTtcRequestC2S.decode(buffer);
+                    server.execute(() -> packet.handle(player));
+                });
     }
 
     public static void registerClient() {
@@ -50,6 +61,11 @@ public final class StatsNetwork {
         ClientPlayNetworking.registerGlobalReceiver(HIGHLIGHT_ID,
                 (client, handler, buffer, responseSender) -> {
                     var packet = ProviderHighlightS2C.decode(buffer);
+                    client.execute(packet::handle);
+                });
+        ClientPlayNetworking.registerGlobalReceiver(CPU_TTC_SNAPSHOT_ID,
+                (client, handler, buffer, responseSender) -> {
+                    var packet = CpuTtcSnapshotS2C.decode(buffer);
                     client.execute(packet::handle);
                 });
     }
@@ -66,12 +82,24 @@ public final class StatsNetwork {
         ClientPlayNetworking.send(LOCATE_ID, encode(packet));
     }
 
+    public static boolean canSendCpuTtc() {
+        return ClientPlayNetworking.canSend(CPU_TTC_REQUEST_ID);
+    }
+
+    public static void sendToServer(CpuTtcRequestC2S packet) {
+        ClientPlayNetworking.send(CPU_TTC_REQUEST_ID, encode(packet));
+    }
+
     public static void sendTo(ServerPlayer player, StatsSnapshotS2C packet) {
         ServerPlayNetworking.send(player, SNAPSHOT_ID, encode(packet));
     }
 
     public static void sendTo(ServerPlayer player, ProviderHighlightS2C packet) {
         ServerPlayNetworking.send(player, HIGHLIGHT_ID, encode(packet));
+    }
+
+    public static void sendTo(ServerPlayer player, CpuTtcSnapshotS2C packet) {
+        ServerPlayNetworking.send(player, CPU_TTC_SNAPSHOT_ID, encode(packet));
     }
 
     private static FriendlyByteBuf encode(StatsRequestC2S packet) {
@@ -101,6 +129,18 @@ public final class StatsNetwork {
     private static FriendlyByteBuf encode(ProviderLocateC2S packet) {
         var buffer = PacketByteBufs.create();
         ProviderLocateC2S.encode(packet, buffer);
+        return buffer;
+    }
+
+    private static FriendlyByteBuf encode(CpuTtcRequestC2S packet) {
+        var buffer = PacketByteBufs.create();
+        CpuTtcRequestC2S.encode(packet, buffer);
+        return buffer;
+    }
+
+    private static FriendlyByteBuf encode(CpuTtcSnapshotS2C packet) {
+        var buffer = PacketByteBufs.create();
+        CpuTtcSnapshotS2C.encode(packet, buffer);
         return buffer;
     }
 

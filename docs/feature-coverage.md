@@ -11,6 +11,7 @@ and verification.
 | --- | --- |
 | Learned throughput, retained samples, confidence, and outlier filtering | [Profiling and diagnostics spec](profiling-and-diagnostics/spec.md) and [technical design](profiling-and-diagnostics/technical-design.md) |
 | Craft-plan and crafting-status row estimates and totals | [Time To Craft lines](time-to-craft-plan.md) |
+| Remaining total TTC in every visible Crafting CPU card | [CPU-list total TTC spec](cpu-list-total-ttc/spec.md) and [technical design](cpu-list-total-ttc/technical-design.md) |
 | Running-job total based on the remaining dependency critical path | [Time To Craft lines](time-to-craft-plan.md#estimate-formula) |
 | Prediction-accuracy history | [Profiling and diagnostics spec](profiling-and-diagnostics/spec.md) and [technical design](profiling-and-diagnostics/technical-design.md#prediction-accuracy) |
 | Delayed-output warnings and bottleneck hints | [Profiling and diagnostics spec](profiling-and-diagnostics/spec.md) and [technical design](profiling-and-diagnostics/technical-design.md#delayed-output-diagnostics) |

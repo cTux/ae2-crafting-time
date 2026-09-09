@@ -8,6 +8,7 @@
   "mixins": [
     "Ae2LtTimeWheelCraftingCpuLogicMixin",
     "CraftingCPUMenuAccessor",
+    "CraftingStatusMenuAccessor",
     "CraftingCpuLogicMixin",
     "PatternProviderLogicMixin",
     "ECOCraftingCpuLogicMixin",
@@ -16,6 +17,8 @@
     "NeoEcoIntBatchDispatchMixin"
   ],
   "client": [
+    "AbstractContainerScreenCpuTtcMixin",
+    "CPUSelectionListMixin",
     "AbstractTableRendererMixin",
     "ChatScreenMixinSrg",
     "CraftingCPUScreenMixin",

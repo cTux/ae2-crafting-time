@@ -32,6 +32,10 @@ final class DriverPlatform {
     static void click(net.minecraft.client.Minecraft minecraft, double x, double y) {
         minecraft.screen.mouseClicked(x, y, 0);
     }
+    static void clickAndRelease(net.minecraft.client.Minecraft minecraft, double x, double y) {
+        click(minecraft, x, y);
+        minecraft.screen.mouseReleased(x, y, 0);
+    }
 
     static final String IMPORT_EXPORT_ID = "ae2insertexportcard";
     static final String EXTENDED_AE_ID = "expatternprovider";
@@ -59,6 +63,13 @@ final class DriverPlatform {
 
     static void openWorld(net.minecraft.client.Minecraft minecraft, String world) {
         minecraft.createWorldOpenFlows().loadLevel(new net.minecraft.client.gui.screens.TitleScreen(), world);
+    }
+
+    static void reconnect(net.minecraft.client.Minecraft minecraft) {
+        var server = minecraft.getCurrentServer();
+        clearLevel(minecraft);
+        net.minecraft.client.gui.screens.ConnectScreen.startConnecting(new net.minecraft.client.gui.screens.TitleScreen(),
+                minecraft, net.minecraft.client.multiplayer.resolver.ServerAddress.parseString(server.ip), server, false);
     }
 
     static void configureRequester(com.almostreliable.merequester.requester.RequesterBlockEntity requester,

@@ -3,6 +3,7 @@ package com.ctux.ae2craftingtime.testdriver;
 import java.nio.file.Path;
 
 public record DriverOptions(String scenario, String profile, String world, Path output, boolean interactive) {
+    public boolean connectedDedicated() { return Boolean.getBoolean("ae2craftingtime.test.connectedDedicated"); }
     public static DriverOptions load() {
         var scenario = System.getProperty("ae2craftingtime.test.scenario", "");
         if (scenario.isEmpty()) {

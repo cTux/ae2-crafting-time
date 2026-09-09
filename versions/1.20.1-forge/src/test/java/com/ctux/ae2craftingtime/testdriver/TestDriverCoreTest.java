@@ -44,14 +44,14 @@ class TestDriverCoreTest {
     @Test
     void standardResultCannotOmitAnyRequiredPlanStatusOrOutputCheck() {
         assertFalse(AddonCpuFixture.supports("standard-ae2"));
-        assertEquals(6, StandardAe2Scenario.CHECKS.size());
+        assertEquals(7, StandardAe2Scenario.CHECKS.size());
         for (var entry : StandardAe2Scenario.CHECKS.entrySet()) {
             var scenario = entry.getKey();
             assertTrue(AddonCpuFixture.supports(scenario));
             assertNull(AddonCpuFixture.create(scenario));
             assertEquals(entry.getValue(), DriverResult.requiredChecks(scenario));
-            assertTrue(new StandardAe2Scenario(scenario).checkpoint().contains("PREPARE"));
-            new StandardAe2Scenario(scenario).releaseKeys();
+            assertTrue(new StandardAe2Scenario(scenario, "world", temporary, false).checkpoint().contains("PREPARE"));
+            new StandardAe2Scenario(scenario, "world", temporary, false).releaseKeys();
             for (String missing : entry.getValue()) {
                 var checks = new LinkedHashMap<String, Boolean>();
                 entry.getValue().stream().filter(key -> !key.equals(missing)).forEach(key -> checks.put(key, true));
@@ -59,7 +59,34 @@ class TestDriverCoreTest {
                         "1.20.1-forge", "compatible", scenario, "PASS", "en_us", java.util.Map.of(), null, checks, List.of(), null));
             }
         }
-        assertThrows(IllegalArgumentException.class, () -> new StandardAe2Scenario("standard-ae2"));
+        assertThrows(IllegalArgumentException.class, () -> new StandardAe2Scenario("standard-ae2", "world", temporary, false));
+    }
+
+    @Test
+    void cpuListScenarioRequiresEveryA5AndA7RuntimeTransition() {
+        assertTrue(StandardAe2Scenario.supports("cpu-list-total-ttc"));
+        assertEquals(CpuListTtcScenario.CHECKS, DriverResult.requiredChecks("cpu-list-total-ttc"));
+        assertTrue(CpuListTtcScenario.CHECKS.containsAll(List.of("initial-distinct", "unknown-hidden", "idle-hidden",
+                "badge-select", "selected-title", "tooltip", "scroll-down", "scroll-up", "partial", "stalled",
+                "reordered", "finished", "cancelled", "replacement", "removed", "drop-expiry", "delayed-expiry",
+                "close-reopen", "second-grid", "small-scale", "large-scale", "reconnect", "layout")));
+    }
+
+    @Test
+    void connectedServerRefusesSourceUnmarkedAndMismatchedFixtures() throws Exception {
+        assertThrows(IllegalStateException.class,
+                () -> CpuListTtcControl.validateDisposableServer(temporary, "1.20.1-forge"));
+        var marker = temporary.resolve(".ae2-crafting-time-dedicated-fixture.json");
+        var valid = "{\"schema\":1,\"sourceFixtureId\":\"ae2-crafting-time\",\"role\":\"disposable\",\"target\":\"1.20.1-forge\"}";
+        Files.writeString(marker, valid);
+        CpuListTtcControl.validateDisposableServer(temporary, "1.20.1-forge");
+        for (var invalid : List.of("null", valid.replace("schema\":1", "schema\":2"),
+                valid.replace("ae2-crafting-time", "other"), valid.replace("disposable", "source"),
+                valid.replace("1.20.1-forge", "1.20.1-fabric"))) {
+            Files.writeString(marker, invalid);
+            assertThrows(IllegalStateException.class,
+                    () -> CpuListTtcControl.validateDisposableServer(temporary, "1.20.1-forge"));
+        }
     }
 
     @Test

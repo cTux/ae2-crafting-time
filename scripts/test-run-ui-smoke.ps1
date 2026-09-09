@@ -295,7 +295,7 @@ try {
     $failedStatus = Get-Content -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\craft-plan\status.json") -Raw | ConvertFrom-Json
     if ($failedStatus.phase -ne "failed" -or -not $failedStatus.message) { throw "Smoke failure status was incomplete" }
 
-    foreach ($leaf in @('standard-plan-controls','standard-status-controls','waiting-status','running-status','delayed-status','craft-lifecycle')) {
+    foreach ($leaf in @('standard-plan-controls','standard-status-controls','waiting-status','running-status','delayed-status','craft-lifecycle','cpu-list-total-ttc')) {
         Invoke-Case "pass" -Scenario $leaf -shouldPass $true
     }
     Invoke-Case "pass" -Scenario standard-ae2 -shouldPass $true

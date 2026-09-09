@@ -31,6 +31,14 @@ try {
     if (-not (Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw).Contains('interactive=true')) { throw 'Interactive mode was discarded' }
     & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -ProjectId rxYaglEe | Out-Null
     if (-not (Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw).Contains('advancedStatus=true')) { throw 'AdvancedAE status mode was discarded' }
+    $control = Join-Path $temp 'connected-control'
+    & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -DedicatedAddress '127.0.0.1:25565' -ControlDirectory $control | Out-Null
+    $connectedArguments = Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw
+    if (-not $connectedArguments.Contains('connectedDedicated=true') -or
+            -not $connectedArguments.Contains('--quickPlayMultiplayer') -or
+            $connectedArguments.Contains('--quickPlaySingleplayer')) {
+        throw 'Connected dedicated launch did not replace the integrated quick-play boundary'
+    }
     $profile.target = '1.21.1-neoforge'; $profile.java = 21; $profile.loader = '21.1.238'
     $profile | ConvertTo-Json | Set-Content "$bundle/profile.json"
     $launch.target = '1.21.1-neoforge'; $launch.java = 21; $launch.arguments[-5] = '1.21.1-21.1.238'

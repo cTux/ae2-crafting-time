@@ -1,0 +1,96 @@
+$ErrorActionPreference = 'Stop'
+$temporary = Join-Path ([IO.Path]::GetTempPath()) ('ae2 ct connected runner ' + [Guid]::NewGuid())
+try {
+    $source = Join-Path $temporary 'prepared server source'
+    $bundle = Join-Path $temporary 'matching bundle'
+    $report = Join-Path $temporary 'report with spaces'
+    $javaHome = Join-Path $temporary 'java home'
+    New-Item -ItemType Directory -Path (Join-Path $source 'libraries/net/minecraftforge/forge/1.20.1-47.4.10'),(Join-Path $source 'mods'),(Join-Path $bundle 'mods'),(Join-Path $javaHome 'bin') -Force | Out-Null
+    [ordered]@{schema=1;sourceFixtureId='ae2-crafting-time';role='source';target='1.20.1-forge'} |
+        ConvertTo-Json | Set-Content -LiteralPath (Join-Path $source '.ae2-crafting-time-dedicated-fixture.json')
+    Set-Content -LiteralPath (Join-Path $source 'libraries/net/minecraftforge/forge/1.20.1-47.4.10/win_args.txt') -Value 'fixture'
+    Set-Content -LiteralPath (Join-Path $bundle 'profile.json') -Value '{"target":"1.20.1-forge","java":17,"loader":"1.20.1-47.4.10"}'
+    Set-Content -LiteralPath (Join-Path $bundle 'mods/ae2-crafting-time-1-forge-1.20.1.jar') -Value 'production'
+    Set-Content -LiteralPath (Join-Path $bundle 'mods/ae2-crafting-time-1-forge-1.20.1-test-driver.jar') -Value 'driver'
+    Set-Content -LiteralPath (Join-Path $javaHome 'bin/java.exe') -Value 'java'
+    $prepared = Join-Path $temporary 'prepared launch.json'
+    Set-Content -LiteralPath $prepared -Value '{"target":"1.20.1-forge","java":17}'
+    & (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Target 1.20.1-forge `
+        -ServerDirectory $source -PreparedLaunch $prepared -BundleDirectory $bundle -ReportDirectory $report `
+        -JavaHome $javaHome -Address '127.0.0.1:25575' -PlanOnly
+    $plan = Get-Content -LiteralPath (Join-Path $report 'connected-runner-plan.json') -Raw | ConvertFrom-Json
+    if ($plan.sourceServer -eq $plan.disposableServer -or !$plan.disposableServer.StartsWith($report)) { throw 'Plan did not isolate a disposable server copy' }
+    $args = Get-Content -LiteralPath $plan.argumentFile
+    if (@($args | Where-Object { $_ -match 'serverResult=.*report with spaces' }).Count -ne 1 -or
+            @($args | Where-Object { $_ -match 'serverControl=.*report with spaces' }).Count -ne 1) {
+        throw 'Java argument file did not preserve paths with spaces'
+    }
+    if (Test-Path -LiteralPath (Join-Path $source 'eula.txt')) { throw 'Runner mutated its source fixture' }
+    if ($plan.launchArguments.Count -ne 3 -or $plan.launchArguments[1] -ne '@libraries/net/minecraftforge/forge/1.20.1-47.4.10/win_args.txt') {
+        throw 'Loader argument files must be separate launcher arguments, not nested in an argument file'
+    }
+    if (!(Get-Content -LiteralPath (Join-Path $plan.disposableServer 'server.properties')).Contains('server-port=25575')) {
+        throw 'Custom server port was not applied'
+    }
+    foreach ($case in @(
+        @{target='1.20.1-fabric'; java=17; loader='0.19.4'; launcher='fabric-server-launch.jar'},
+        @{target='1.21.1-neoforge'; java=21; loader='21.1.238'; launcher='libraries/net/neoforged/neoforge/21.1.238/win_args.txt'},
+        @{target='26.1.2-neoforge'; java=25; loader='26.1.2.99'; launcher='libraries/net/neoforged/neoforge/26.1.2.99/win_args.txt'})) {
+        $caseSource = Join-Path $temporary ('source-' + $case.target)
+        $caseBundle = Join-Path $temporary ('bundle-' + $case.target)
+        $caseReport = Join-Path $temporary ('report-' + $case.target)
+        $casePrepared = Join-Path $temporary ($case.target + '-launch.json')
+        $caseLauncher = Join-Path $caseSource $case.launcher
+        New-Item -ItemType Directory -Path (Split-Path -Parent $caseLauncher),(Join-Path $caseBundle 'mods') -Force | Out-Null
+        Set-Content -LiteralPath $caseLauncher -Value 'fixture'
+        @{schema=1;sourceFixtureId='ae2-crafting-time';role='source';target=$case.target} |
+            ConvertTo-Json | Set-Content -LiteralPath (Join-Path $caseSource '.ae2-crafting-time-dedicated-fixture.json')
+        $case | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $caseBundle 'profile.json')
+        $case | ConvertTo-Json | Set-Content -LiteralPath $casePrepared
+        $parts = $case.target.Split('-')
+        foreach ($suffix in @('', '-test-driver')) {
+            Set-Content -LiteralPath (Join-Path $caseBundle "mods/ae2-crafting-time-1-$($parts[1])-$($parts[0])$suffix.jar") -Value 'artifact'
+        }
+        & (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Target $case.target `
+            -ServerDirectory $caseSource -PreparedLaunch $casePrepared -BundleDirectory $caseBundle `
+            -ReportDirectory $caseReport -JavaHome $javaHome -PlanOnly
+        $casePlan = Get-Content -LiteralPath (Join-Path $caseReport 'connected-runner-plan.json') -Raw | ConvertFrom-Json
+        $expectedCount = if ($case.target -like '*-fabric') { 1 } else { 3 }
+        if ($casePlan.launchArguments.Count -ne $expectedCount) { throw 'Wrong target-specific Java launch argument contract' }
+        if (Test-Path -LiteralPath (Join-Path $caseSource 'server.properties')) { throw 'Runner changed a source server' }
+    }
+    foreach ($refusal in @(
+        @{report=$report; address='127.0.0.1:25565'; expected='new report'},
+        @{report=(Join-Path $source 'nested-report'); address='127.0.0.1:25565'; expected='outside'},
+        @{report=(Join-Path $temporary 'remote-refused'); address='192.0.2.1:25565'; expected='loopback'})) {
+        $rejected = $false
+        try { & (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Target 1.20.1-forge `
+            -ServerDirectory $source -PreparedLaunch $prepared -BundleDirectory $bundle -ReportDirectory $refusal.report `
+            -JavaHome $javaHome -Address $refusal.address -PlanOnly }
+        catch { $rejected = $_.Exception.Message -match $refusal.expected }
+        if (!$rejected) { throw 'Connected runner did not reject an unsafe input' }
+    }
+    $marker = Get-Content -LiteralPath (Join-Path $source '.ae2-crafting-time-dedicated-fixture.json') -Raw | ConvertFrom-Json
+    $marker.role = 'disposable'; $marker | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $source '.ae2-crafting-time-dedicated-fixture.json')
+    $refused = $false
+    try { & (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Target 1.20.1-forge `
+        -ServerDirectory $source -PreparedLaunch $prepared -BundleDirectory $bundle -ReportDirectory (Join-Path $temporary 'refused') `
+        -JavaHome $javaHome -PlanOnly } catch { $refused = $_.Exception.Message -match 'marker' }
+    if (!$refused) { throw 'Runner accepted an unmarked source fixture' }
+    $marker.role = 'source'; $marker | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $source '.ae2-crafting-time-dedicated-fixture.json')
+    Set-Content -LiteralPath (Join-Path $bundle 'mods/ae2-crafting-time-duplicate-forge-1.20.1.jar') -Value 'duplicate'
+    $artifactReport = Join-Path $temporary 'artifact refused'
+    $artifactRefused = $false
+    try { & (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Target 1.20.1-forge `
+        -ServerDirectory $source -PreparedLaunch $prepared -BundleDirectory $bundle -ReportDirectory $artifactReport `
+        -JavaHome $javaHome -PlanOnly } catch { $artifactRefused = $_.Exception.Message -match 'exactly one' }
+    if (!$artifactRefused -or (Test-Path -LiteralPath $artifactReport)) {
+        throw 'Runner did not refuse invalid artifacts before mutating its report directory'
+    }
+    Write-Host 'connected dedicated runner checks passed'
+} finally {
+    $resolved = [IO.Path]::GetFullPath($temporary); $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
+    if ($resolved.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $resolved)) {
+        Remove-Item -LiteralPath $resolved -Recurse -Force
+    }
+}

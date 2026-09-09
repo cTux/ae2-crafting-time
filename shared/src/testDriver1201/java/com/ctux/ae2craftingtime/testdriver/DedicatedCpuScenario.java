@@ -44,6 +44,10 @@ public final class DedicatedCpuScenario {
     private boolean submitted;
     private boolean ready;
     private boolean done;
+    private long connectedAck;
+    private StandardCraftFixture connectedSecond;
+    private boolean connectedPrepared;
+    private boolean connectedValidated;
     private final long started = System.nanoTime();
 
     public void tick(MinecraftServer server) {
@@ -65,6 +69,10 @@ public final class DedicatedCpuScenario {
         var level = server.overworld();
         if (scenario.equals("startup-only")) {
             finish(server, "PASS", "");
+            return;
+        }
+        if (scenario.equals("cpu-list-total-ttc-connected")) {
+            stepConnected(server, level);
             return;
         }
         if (player == null) {
@@ -142,6 +150,54 @@ public final class DedicatedCpuScenario {
             throw new IllegalStateException("Dedicated job did not record a fresh sample");
         }
         finish(server, "PASS", "");
+    }
+
+    private void stepConnected(MinecraftServer server, ServerLevel level) {
+        if (!connectedValidated) {
+            CpuListTtcControl.validateDisposableServer(Path.of(""), target);
+            connectedValidated = true;
+        }
+        player = server.getPlayerList().getPlayers().stream().findFirst().orElse(null);
+        if (player == null) return;
+        if (!connectedPrepared) {
+            gridFixture.cpuListScenario = true;
+            if (!gridFixture.prepare(player, origin) || !gridFixture.prepareCpuListJobs(player)) return;
+            connectedPrepared = true;
+        }
+        var command = CpuListTtcControl.command();
+        var active = connectedSecond == null ? gridFixture : connectedSecond;
+        if (command.sequence() > connectedAck) {
+            boolean complete = switch (command.action()) {
+                case "partial" -> { gridFixture.makeCpuListPartial(player); yield true; }
+                case "restore" -> { gridFixture.restoreCpuListSamples(player); yield true; }
+                case "rename" -> { gridFixture.renameCpuList(player); yield true; }
+                case "finish" -> gridFixture.finishFirstCpu(player);
+                case "cancel" -> { gridFixture.cancelSecondCpu(player); yield true; }
+                case "replace" -> gridFixture.replaceSecondCpu(player);
+                case "restart" -> gridFixture.restartSecondCpu(player);
+                case "remove" -> { gridFixture.removeThirdCpu(player); yield true; }
+                case "second-grid" -> {
+                    if (connectedSecond == null) connectedSecond = gridFixture.secondGrid();
+                    if (!connectedSecond.prepare(player, origin) || !connectedSecond.prepareCpuListJobs(player)) yield false;
+                    connectedSecond.renameCpuList(player);
+                    yield true;
+                }
+                case "reconnect" -> true;
+                case "complete" -> {
+                    connectedAck = command.sequence();
+                    CpuListTtcControl.publish(connectedAck, "complete", active.terminal,
+                            active.cpuListServerEstimates(player), active.cpuListServerState(player));
+                    finish(server, "PASS", "");
+                    yield false;
+                }
+                default -> command.action().isEmpty();
+            };
+            if (!complete) return;
+            connectedAck = command.sequence();
+            active = connectedSecond == null ? gridFixture : connectedSecond;
+        }
+        CpuListTtcControl.publish(connectedAck, connectedSecond == null ? "first-grid" : "second-grid",
+                active.terminal, active.cpuListServerEstimates(player), active.cpuListServerState(player));
     }
 
     private void finish(MinecraftServer server, String result, String error) {

@@ -8,6 +8,8 @@ param(
     [Parameter(Mandatory)][string]$World,
     [Parameter(Mandatory)][string]$Evidence,
     [string[]]$ProjectId,
+    [string]$DedicatedAddress,
+    [string]$ControlDirectory,
     [switch]$Interactive
 )
 $ErrorActionPreference = 'Stop'
@@ -61,7 +63,7 @@ $arguments = [Collections.Generic.List[string]]::new()
 for ($i = 0; $i -lt $launch.arguments.Count; $i++) {
     $argument = [string]$launch.arguments[$i]
     if ($argument -match '^-Dae2craftingtime.test\.' -or $argument -match '^-Xm[xs]') { continue }
-    if ($argument -in @('--gameDir', '--quickPlaySingleplayer')) { $i++; continue }
+    if ($argument -in @('--gameDir', '--quickPlaySingleplayer', '--quickPlayMultiplayer')) { $i++; continue }
     $arguments.Add($argument)
 }
 $arguments.Insert(0, '-Xmx8G')
@@ -70,8 +72,14 @@ if ('rxYaglEe' -in @($ProjectId)) { $arguments.Insert(0, '-Dae2craftingtime.test
 foreach ($property in @("scenario=$Scenario", "profile=$Profile", "world=$World", "output=$Evidence", 'vmTextureProbe=true')) {
     $arguments.Insert(0, "-Dae2craftingtime.test.$property")
 }
+if ($DedicatedAddress) {
+    if (-not $ControlDirectory) { throw 'Connected dedicated launch requires a control directory' }
+    $arguments.Insert(0, '-Dae2craftingtime.test.connectedDedicated=true')
+    $arguments.Insert(0, "-Dae2craftingtime.test.control=$([IO.Path]::GetFullPath($ControlDirectory))")
+}
 $arguments.Add('--gameDir'); $arguments.Add($runtime)
-$arguments.Add('--quickPlaySingleplayer'); $arguments.Add($World)
+if ($DedicatedAddress) { $arguments.Add('--quickPlayMultiplayer'); $arguments.Add($DedicatedAddress) }
+else { $arguments.Add('--quickPlaySingleplayer'); $arguments.Add($World) }
 $argsFile = Join-Path $runtime 'ui-smoke-java.args'
 $quoted = @($arguments | ForEach-Object { '"' + $_.Replace('\', '\\').Replace('"', '\"') + '"' })
 [IO.File]::WriteAllLines($argsFile, $quoted, [Text.UTF8Encoding]::new($false))

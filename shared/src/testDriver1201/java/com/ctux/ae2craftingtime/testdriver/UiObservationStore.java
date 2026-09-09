@@ -97,7 +97,8 @@ public final class UiObservationStore {
             return;
         }
         var observed = observed(component, transformed(graphics, x, y, x + width, y + height));
-        if (observed.key().startsWith("text.ae2craftingtime.")) {
+        if (observed.key().startsWith("text.ae2craftingtime.")
+                || active.cpuCards.stream().anyMatch(card -> observed.bounds().inside(card.nameArea))) {
             active.text.add(observed);
         }
     }
@@ -105,6 +106,25 @@ public final class UiObservationStore {
     public static void fill(GuiGraphics graphics, int x1, int y1, int x2, int y2, int color) {
         if (active != null && color == 0xB0000000) {
             active.badges.add(transformed(graphics, x1, y1, x2, y2));
+        }
+    }
+
+    public static void cpuCards(List<appeng.menu.me.crafting.CraftingStatusMenu.CraftingCpuListEntry> entries,
+            int scroll, int selectedSerial, int x, int y, int width, int height) {
+        if (active == null) return;
+        active.cpuCards.clear();
+        active.scroll = scroll;
+        for (int index = scroll; index < Math.min(entries.size(), scroll + 6); index++) {
+            var cpu = entries.get(index);
+            var job = cpu.currentJob();
+            var name = cpu.name() == null ? "CPU #" + cpu.serial() : cpu.name().getString();
+            var bounds = new Rect(x, y + (index - scroll) * (height + 1), width, height);
+            active.cpuCards.add(new PendingCpuCard(cpu.serial(), name,
+                    job == null ? null : job.what().getId().toString(), job == null ? 0 : job.amount(),
+                    cpu.elapsedTimeNanos(), cpu.serial() == selectedSerial, bounds,
+                    new Rect(bounds.x() + 3, bounds.y() + 3, Math.max(0, width - 6), 9),
+                    new Rect(bounds.x() + 2, bounds.y() + height - 12, Math.max(0, width - 4), 10),
+                    new Rect(bounds.x() + 1, bounds.y() + height - 2, Math.max(0, width - 2), 1)));
         }
     }
 
@@ -149,9 +169,17 @@ public final class UiObservationStore {
         var rows = active.rows.stream().map(row -> new UiSnapshot.Row(row.outputId, row.craftAmount,
                 row.missingAmount, row.cell,
                 active.descriptions.getOrDefault(row.outputId, List.of()))).toList();
+        var mergedBadges = merge(active.badges);
+        var cpuCards = active.cpuCards.stream().map(card -> {
+            var ttc = active.text.stream().filter(text -> text.key().equals("text.ae2craftingtime.ttc")
+                    && text.bounds() != null && text.bounds().inside(card.bounds)).findFirst().orElse(null);
+            var badge = mergedBadges.stream().filter(rect -> rect.inside(card.bounds)).findFirst().orElse(null);
+            return new UiSnapshot.CpuCard(card.serial, card.name, card.jobId, card.amount, card.elapsedNanos,
+                    card.selected, card.bounds, card.nameArea, card.infoArea, card.progressArea, ttc, badge);
+        }).toList();
         latest = new UiSnapshot(active.screen, active.menu, active.gui, active.screenWidth, active.screenHeight,
-                active.guiScale, ++sequence, active.scroll, rows, active.text, merge(active.badges), active.widgets,
-                active.itemCells, active.tooltip);
+                active.guiScale, ++sequence, active.scroll, rows, active.text, mergedBadges, active.widgets,
+                active.itemCells, active.tooltip, cpuCards);
         active = null;
     }
 
@@ -252,6 +280,10 @@ public final class UiObservationStore {
     private record PendingRow(String outputId, long craftAmount, long missingAmount, Rect cell) {
     }
 
+    private record PendingCpuCard(int serial, String name, String jobId, long amount, long elapsedNanos,
+            boolean selected, Rect bounds, Rect nameArea, Rect infoArea, Rect progressArea) {
+    }
+
     private static final class Frame {
         private final String screen;
         private final String menu;
@@ -267,6 +299,7 @@ public final class UiObservationStore {
         private final List<UiSnapshot.Widget> widgets = new ArrayList<>();
         private final List<Rect> itemCells = new ArrayList<>();
         private final List<UiSnapshot.ObservedText> tooltip = new ArrayList<>();
+        private final List<PendingCpuCard> cpuCards = new ArrayList<>();
 
         private Frame(String screen, String menu, Rect gui, int screenWidth, int screenHeight, double guiScale) {
             this.screen = screen;

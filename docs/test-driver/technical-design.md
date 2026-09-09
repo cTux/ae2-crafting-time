@@ -21,6 +21,40 @@ Apply the [planned smoke-policy enforcement](../automated-ui-testing/technical-d
 to shared and version-specific scenarios. English-only requirements below do
 not claim the current bilingual driver states have already been removed.
 
+## CPU-list total TTC scenario
+
+`CpuListTtcScenario` owns one bounded multi-CPU fixture and reuses the normal
+Crafting Status menu, final-frame observation store, screenshot writer, suite
+reset, and result model. The fixture submits real jobs to specific native CPUs,
+seeds only the retained throughput samples needed to make their totals distinct,
+and records the authoritative server estimate for each CPU. It never inserts a
+client snapshot or calls a production renderer.
+
+The CPU-list observation mixin records each rendered card's serial, full tooltip
+name, current-job identity, bounds, final TTC text, and badge rectangle after
+the production mixin runs. Assertions bind by serial plus current job, not row
+index or name. Request delay/drop is driver transport control around the real
+packet boundary; the production cache still owns sequence, session, replacement,
+and expiry decisions.
+
+Integrated and connected dedicated modes share fixture transitions and client
+assertions. Dedicated setup runs on the disposable server, then the matching
+prepared client opens that grid normally. Both modes record target, profile,
+dependency/adapter identity, artifact hashes, server totals, and client values.
+The 1.20.1/1.21.1 implementation lives in `shared/src/testDriver1201`; the
+26.1.2 source set keeps only its changed registry, rendering, and connection APIs.
+
+Connected mode uses an atomic properties-file rendezvous inside the disposable
+run directory. Commands only ask the server fixture to perform the next real
+mutation; acknowledgements carry the active terminal and authoritative totals.
+The production request/snapshot packets remain the only source of client values.
+Reconnect uses Minecraft's normal server connection screen while the disposable
+server and fixture persist.
+The connected runner never mutates the prepared server. It requires a target-
+matched source marker, validates launch and artifact identities before copying,
+writes a disposable marker in a report-owned runtime, and launches Java through
+a UTF-8 argument file so result/control paths containing spaces remain one argument.
+
 ## Single-world fixtures and transitions
 
 The [four-client qualification](../automated-ui-testing/prepared-clients-2026-09-08.md)
