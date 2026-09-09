@@ -63,8 +63,10 @@ class CpuTtcCacheTest {
     void amountOnlyChangeAndMembershipChangeInvalidateWithoutBypassingOneSecond() {
         var cache = new CpuTtcCache();
         cache.open(1, 8);
-        cache.refresh(List.of(view(1, "same", 4)), 0).orElseThrow();
+        cache.refresh(List.of(view(1, "same", 4, 10)), 0).orElseThrow();
         assertTrue(cache.apply(1, 0, List.of(entry(1, 12)), 1));
+        assertTrue(cache.refresh(List.of(view(1, "same", 4, 1)), 50).isEmpty());
+        assertFalse(cache.seconds(1, 50).isPresent());
         assertTrue(cache.refresh(List.of(view(1, "same", 8), view(2, "new", 1)), 100).isEmpty());
         assertFalse(cache.seconds(1, 100).isPresent());
         assertEquals(List.of(1, 2), cache.refresh(List.of(view(1, "same", 8), view(2, "new", 1)), 1_000)
