@@ -55,8 +55,8 @@ final class StandardCraftFixture {
                 level.setBlockAndUpdate(pos, pos.getY() == terminal.getY() - 2
                         ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState());
             }
-            PartHelper.setPart(level, terminal, null, player, (cpuListScenario
-                    ? AEParts.COVERED_DENSE_CABLE : AEParts.GLASS_CABLE).item(appeng.api.util.AEColor.TRANSPARENT));
+            PartHelper.setPart(level, terminal, null, player,
+                    AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT));
             PartHelper.setPart(level, terminal, Direction.NORTH, player, AEParts.CRAFTING_TERMINAL.get());
             DispatchStatusFixture.place(player, terminal.west(2), "16k_crafting_storage");
             if (cpuListScenario) for (int offset : new int[] { 4, 6, 8, 10, 12, 14 })
@@ -81,8 +81,9 @@ final class StandardCraftFixture {
             return false;
         }
         checkpoint = "terminal-node";
-        var node = ((IInWorldGridNodeHost) level.getBlockEntity(terminal))
-                .getGridNode(cpuListScenario ? null : Direction.NORTH);
+        var node = ((IInWorldGridNodeHost) level.getBlockEntity(
+                cpuListScenario ? terminal.south(2) : terminal)).getGridNode(
+                        cpuListScenario ? Direction.UP : Direction.NORTH);
         if (node == null) return false;
         checkpoint = "cpu";
         var cpu = cpu(player);
@@ -110,7 +111,7 @@ final class StandardCraftFixture {
         }
         var nodes = new java.util.ArrayList<>(java.util.List.of(terminal.west(2), terminal.east(2), terminal.below(),
                 terminal.east(4), terminal.east(8)));
-        if (cpuListScenario) nodes.add(0, terminal.south(2));
+        if (cpuListScenario) nodes.add(0, terminal);
         if (cpuListScenario) nodes.add(terminal.east(12));
         if (cpuListScenario) for (int offset : new int[] { 4, 6, 8, 10, 12, 14 }) nodes.add(terminal.west(offset));
         for (var pos : nodes) {
