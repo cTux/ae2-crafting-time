@@ -367,14 +367,17 @@ final class CpuListTtcScenario {
                 else next(Stage.RECONNECT_OPEN);
             }
             case RECONNECT_OPEN -> {
-                if (!disconnectReturned) return false;
                 if (connectedDedicated) {
-                    if (minecraft.level != null && minecraft.getCurrentServer() != null) next(Stage.RECONNECT_SCREEN);
+                    if (disconnectReturned && minecraft.level != null && minecraft.getCurrentServer() != null) {
+                        next(Stage.RECONNECT_SCREEN);
+                    }
                 } else if (minecraft.level == null && !opening) {
                     opening = true;
                     DriverPlatform.openWorld(minecraft, world);
                     openReturned = true;
-                } else if (openReturned && minecraft.level != null && minecraft.player != null) next(Stage.RECONNECT_PREPARE);
+                } else if (disconnectReturned && openReturned && minecraft.level != null && minecraft.player != null) {
+                    next(Stage.RECONNECT_PREPARE);
+                }
             }
             case RECONNECT_PREPARE -> {
                 if (server(minecraft, "restore-connections", player -> {
