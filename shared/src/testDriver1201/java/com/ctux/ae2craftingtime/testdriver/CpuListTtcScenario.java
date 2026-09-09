@@ -51,6 +51,8 @@ final class CpuListTtcScenario {
     private long replacedElapsed;
     private boolean opening;
     private boolean reconnectStarted;
+    private boolean disconnectReturned;
+    private boolean openReturned;
     private java.util.List<Long> stalledProgress;
     private volatile String authoritativeState;
 
@@ -353,22 +355,26 @@ final class CpuListTtcScenario {
                     if (CpuListTtcControl.request("reconnect")) {
                         next(Stage.RECONNECT_OPEN);
                         DriverPlatform.reconnect(minecraft);
+                        disconnectReturned = true;
+                        openReturned = true;
                     }
                 } else if (minecraft.level != null && !reconnectStarted) {
                     reconnectStarted = true;
                     next(Stage.RECONNECT_OPEN);
                     DriverPlatform.clearLevel(minecraft);
+                    disconnectReturned = true;
                 }
                 else next(Stage.RECONNECT_OPEN);
             }
             case RECONNECT_OPEN -> {
+                if (!disconnectReturned) return false;
                 if (connectedDedicated) {
-                    if (minecraft.level == null) opening = true;
-                    else if (opening && minecraft.getCurrentServer() != null) next(Stage.RECONNECT_SCREEN);
+                    if (minecraft.level != null && minecraft.getCurrentServer() != null) next(Stage.RECONNECT_SCREEN);
                 } else if (minecraft.level == null && !opening) {
                     opening = true;
                     DriverPlatform.openWorld(minecraft, world);
-                } else if (minecraft.level != null && minecraft.player != null) next(Stage.RECONNECT_PREPARE);
+                    openReturned = true;
+                } else if (openReturned && minecraft.level != null && minecraft.player != null) next(Stage.RECONNECT_PREPARE);
             }
             case RECONNECT_PREPARE -> {
                 if (server(minecraft, "restore-connections", player -> {
