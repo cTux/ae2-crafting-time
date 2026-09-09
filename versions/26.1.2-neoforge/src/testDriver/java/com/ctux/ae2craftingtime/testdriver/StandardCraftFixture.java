@@ -63,6 +63,7 @@ final class StandardCraftFixture {
                 DispatchStatusFixture.place(player, terminal.west(offset), "16k_crafting_storage");
             DispatchStatusFixture.place(player, terminal.east(2), "drive");
             DispatchStatusFixture.place(player, terminal.below(), "creative_energy_cell");
+            if (cpuListScenario) DispatchStatusFixture.place(player, terminal.south(2), "controller");
             for (int offset : new int[] {4, 8}) {
                 DispatchStatusFixture.place(player, terminal.east(offset), "pattern_provider");
                 level.setBlockAndUpdate(terminal.east(offset).below(), Blocks.FURNACE.defaultBlockState());
@@ -109,6 +110,7 @@ final class StandardCraftFixture {
         }
         var nodes = new java.util.ArrayList<>(java.util.List.of(terminal.west(2), terminal.east(2), terminal.below(),
                 terminal.east(4), terminal.east(8)));
+        if (cpuListScenario) nodes.add(0, terminal.south(2));
         if (cpuListScenario) nodes.add(terminal.east(12));
         if (cpuListScenario) for (int offset : new int[] { 4, 6, 8, 10, 12, 14 }) nodes.add(terminal.west(offset));
         for (var pos : nodes) {
