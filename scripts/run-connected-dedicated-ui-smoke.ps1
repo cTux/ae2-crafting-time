@@ -162,9 +162,16 @@ $runnerPlan |
     ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $planPath -Encoding UTF8
 if ($PlanOnly) { Write-Host "Connected runner plan validated: $planPath"; return }
 
-$javaIdentity = (& $java -version 2>&1) -join "`n"
+$javaVersionOut = Join-Path $report 'java-version.stdout.log'
+$javaVersionErr = Join-Path $report 'java-version.stderr.log'
+$javaVersionProcess = Start-Process -FilePath $java -ArgumentList '-version' -Wait -PassThru -WindowStyle Hidden `
+    -RedirectStandardOutput $javaVersionOut -RedirectStandardError $javaVersionErr
+$javaIdentity = @(
+    Get-Content -LiteralPath $javaVersionOut
+    Get-Content -LiteralPath $javaVersionErr
+) -join "`n"
 $javaMajorPattern = '(?:version |openjdk )"?{0}(?:\.|\")' -f $expectedJava
-if ($LASTEXITCODE -ne 0 -or $javaIdentity -notmatch $javaMajorPattern) {
+if ($javaVersionProcess.ExitCode -ne 0 -or $javaIdentity -notmatch $javaMajorPattern) {
     throw "Dedicated Java runtime does not match required major $expectedJava"
 }
 $sourceIdentity.javaVersion = $javaIdentity
