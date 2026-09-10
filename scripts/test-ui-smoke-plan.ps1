@@ -85,8 +85,20 @@ try {
     Assert (($plan.targets | Where-Object target -eq '1.20.1-forge').mode -eq 'full') 'Broad rule must dominate only its target'
     Assert (@($plan.targets | Where-Object mode -eq 'focused').Count -eq 3) 'Mixed changes must union'
     Clean
-    Put 'shared/src/main/java/com/ctux/ae2craftingtime/core/CpuTtcCache.java' 'cpu list'
-    Put 'scripts/run-ui-smoke.ps1' 'cpu-list relaunch runner'
+    foreach ($path in @(
+            'shared/src/main/java/com/ctux/ae2craftingtime/core/CpuTtcCache.java',
+            'shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/ClientStats.java',
+            'shared/src/testDriver1201/java/com/ctux/ae2craftingtime/testdriver/TestDriverRuntime.java',
+            'shared/src/testDriver1201/resources/ae2craftingtime_test_driver.mixins.json',
+            'versions/1.20.1-fabric/src/main/java/com/ctux/ae2craftingtime/mc1201/Ae2CraftingTimeClient.java',
+            'versions/1.20.1-forge/src/testDriver/java/com/ctux/ae2craftingtime/testdriver/DriverPlatform.java',
+            'versions/1.21.1-neoforge/build.gradle',
+            'versions/26.1.2-neoforge/src/testDriver/java/com/ctux/ae2craftingtime/testdriver/TestDriverRuntime.java',
+            'scripts/run-client.ps1',
+            'scripts/run-connected-dedicated-ui-smoke.ps1',
+            'scripts/ui-smoke-scheduled-java.ps1')) {
+        Put $path 'cpu-list implementation boundary'
+    }
     $cpuPlan = Plan
     Assert ($cpuPlan.targets.Count -eq 4) 'CPU-list feature must reach all four targets'
     Assert (@($cpuPlan.targets | Where-Object { $_.cases.Count -ne 1 -or $_.cases[0] -ne 'cpu-list-total-ttc' }).Count -eq 0) `
