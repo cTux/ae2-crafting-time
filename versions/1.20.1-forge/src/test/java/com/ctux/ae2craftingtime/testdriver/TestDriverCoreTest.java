@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.TimeoutException;
@@ -51,6 +52,37 @@ class TestDriverCoreTest {
         assertTrue(retained.startsWith("{") && retained.endsWith("}"));
         assertEquals("phase=ACTIVE", com.google.gson.JsonParser.parseString(retained)
                 .getAsJsonObject().get("checkpoint").getAsString());
+    }
+
+    @Test
+    void cpuListControlRetriesOnlyTransientWindowsReplaceFailures() throws Exception {
+        var values = new Properties();
+        values.setProperty("phase", "first-grid");
+        var transientState = temporary.resolve("transient-control/state.properties");
+        var transientAttempts = new AtomicInteger();
+        CpuListTtcControl.write(transientState, values, (source, target) -> {
+            if (transientAttempts.incrementAndGet() == 1) throw new AccessDeniedException(target.toString());
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+        });
+        assertEquals(2, transientAttempts.get());
+        var written = new Properties();
+        try (var input = Files.newInputStream(transientState)) { written.load(input); }
+        assertEquals("first-grid", written.getProperty("phase"));
+
+        var persistentState = temporary.resolve("persistent-control/state.properties");
+        var persistentAttempts = new AtomicInteger();
+        var error = assertThrows(IllegalStateException.class, () -> CpuListTtcControl.write(
+                persistentState, values, (source, target) -> {
+                    persistentAttempts.incrementAndGet();
+                    throw new AccessDeniedException(target.toString());
+                }));
+        assertTrue(error.getCause() instanceof AccessDeniedException);
+        assertEquals(DriverProgress.MOVE_ATTEMPTS, persistentAttempts.get());
+        var retained = new Properties();
+        try (var input = Files.newInputStream(persistentState.resolveSibling("state.properties.tmp"))) {
+            retained.load(input);
+        }
+        assertEquals("first-grid", retained.getProperty("phase"));
     }
 
     @Test

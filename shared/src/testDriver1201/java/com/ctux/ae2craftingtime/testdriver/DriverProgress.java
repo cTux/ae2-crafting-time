@@ -64,11 +64,11 @@ final class DriverProgress {
         value.put("checkpoint", checkpoint);
         var temporary = output.resolve("driver-progress.json.tmp");
         Files.writeString(temporary, new GsonBuilder().create().toJson(value), StandardCharsets.UTF_8);
-        move(temporary, output.resolve("driver-progress.json"));
+        moveWithAccessDeniedRetry(temporary, output.resolve("driver-progress.json"), mover);
         lastWrite = System.nanoTime();
     }
 
-    private void move(Path source, Path target) throws IOException {
+    static void moveWithAccessDeniedRetry(Path source, Path target, ProgressMover mover) throws IOException {
         for (int attempt = 1; ; attempt++) {
             try {
                 mover.move(source, target);
@@ -79,7 +79,7 @@ final class DriverProgress {
                     Thread.sleep(10);
                 } catch (InterruptedException interrupted) {
                     Thread.currentThread().interrupt();
-                    throw new IOException("Interrupted while publishing UI-smoke progress", interrupted);
+                    throw new IOException("Interrupted while replacing UI-smoke file", interrupted);
                 }
             }
         }

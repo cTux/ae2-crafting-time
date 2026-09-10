@@ -119,11 +119,16 @@ public final class CpuListTtcControl {
     }
 
     private static void write(Path path, Properties values) {
+        write(path, values, (source, target) -> Files.move(source, target,
+                StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE));
+    }
+
+    static void write(Path path, Properties values, DriverProgress.ProgressMover mover) {
         try {
             Files.createDirectories(path.getParent());
             var temporary = path.resolveSibling(path.getFileName() + ".tmp");
             try (var output = Files.newOutputStream(temporary)) { values.store(output, null); }
-            Files.move(temporary, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            DriverProgress.moveWithAccessDeniedRetry(temporary, path, mover);
         } catch (IOException error) { throw new IllegalStateException("Cannot write connected smoke control " + path, error); }
     }
 
