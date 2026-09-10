@@ -7,6 +7,10 @@ if ($runnerText.Contains('(& $java -version 2>&1)') -or
 if ($runnerText -notmatch 'clientParameters\.HeadSha = \$HeadSha') {
     throw 'Connected runner must forward an explicit immutable head to the staged client runner'
 }
+if ($runnerText -notmatch 'clientParameters\.ScheduledJava = \$true' -or
+        $runnerText -notmatch 'clientParameters\.InteractiveUser = \$InteractiveUser') {
+    throw 'Connected runner must support the prepared interactive Java session used by CodexVM'
+}
 function Write-SourceMarker([string]$source, [string]$target, [int]$java, [string]$loader, [string]$launcher) {
     $dependency = Join-Path $source 'mods/dependency.jar'
     New-Item -ItemType Directory -Path (Split-Path -Parent $dependency) -Force | Out-Null

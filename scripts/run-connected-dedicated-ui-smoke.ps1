@@ -7,6 +7,8 @@ param(
     [ValidatePattern('^[a-f0-9]{40}$')][string]$HeadSha,
     [string]$Address = '127.0.0.1:25565',
     [string]$JavaHome,
+    [switch]$ScheduledJava,
+    [string]$InteractiveUser = 'Codex',
     [switch]$PlanOnly
 )
 $ErrorActionPreference = 'Stop'
@@ -161,6 +163,7 @@ $sourceIdentity = [ordered]@{ markerSha256=(Get-FileHash -LiteralPath $markerPat
 $runnerPlan = [ordered]@{ target=$Target; headSha=$HeadSha; campaignId=$campaignId; connectionEpoch=$connectionEpoch
     sourceServer=$sourceServer; disposableServer=$resolvedServer; java=$java
     sourceIdentity=$sourceIdentity; relaunch=[ordered]@{required=$true;minimumProcesses=2}
+    scheduledJava=$ScheduledJava.IsPresent; interactiveUser=$InteractiveUser
     argumentFile=$argsFile; arguments=$serverArgs; launchArguments=$launchArguments
     launchCommandLine=$launchCommandLine; preparedLaunch=$prepared; address=$Address }
 $runnerPlan |
@@ -214,6 +217,7 @@ try {
         BundleDirectory=$bundle; PreparedLaunch=$prepared; DedicatedAddress=$Address
         ControlDirectory=$control; CampaignId=$connectionEpoch }
     if ($HeadSha) { $clientParameters.HeadSha = $HeadSha }
+    if ($ScheduledJava) { $clientParameters.ScheduledJava = $true; $clientParameters.InteractiveUser = $InteractiveUser }
     & (Join-Path $PSScriptRoot 'run-ui-smoke.ps1') @clientParameters
     if ($LASTEXITCODE) { throw "Connected client smoke exited $LASTEXITCODE" }
     if (!$serverProcess.WaitForExit(60000)) { throw 'Dedicated server did not finish after client evidence completed' }
