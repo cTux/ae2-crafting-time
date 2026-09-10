@@ -95,11 +95,11 @@ if ($ResumeOnly) {
 if ($DedicatedAddress) {
     if (-not $ControlDirectory) { throw 'Connected dedicated launch requires a control directory' }
     $arguments.Insert(0, '-Dae2craftingtime.test.connectedDedicated=true')
+    $arguments.Insert(0, "-Dae2craftingtime.test.dedicatedAddress=$DedicatedAddress")
     $arguments.Insert(0, "-Dae2craftingtime.test.control=$([IO.Path]::GetFullPath($ControlDirectory))")
 }
 $arguments.Add('--gameDir'); $arguments.Add($runtime)
-if ($DedicatedAddress) { $arguments.Add('--quickPlayMultiplayer'); $arguments.Add($DedicatedAddress) }
-else { $arguments.Add('--quickPlaySingleplayer'); $arguments.Add($World) }
+if (-not $DedicatedAddress) { $arguments.Add('--quickPlaySingleplayer'); $arguments.Add($World) }
 $argsFile = Join-Path $runtime 'ui-smoke-java.args'
 $quoted = @($arguments | ForEach-Object { '"' + $_.Replace('\', '\\').Replace('"', '\"') + '"' })
 [IO.File]::WriteAllLines($argsFile, $quoted, [Text.UTF8Encoding]::new($false))

@@ -50,9 +50,10 @@ try {
     & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -DedicatedAddress '127.0.0.1:25565' -ControlDirectory $control | Out-Null
     $connectedArguments = Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw
     if (-not $connectedArguments.Contains('connectedDedicated=true') -or
-            -not $connectedArguments.Contains('--quickPlayMultiplayer') -or
+            -not $connectedArguments.Contains('dedicatedAddress=127.0.0.1:25565') -or
+            $connectedArguments.Contains('--quickPlayMultiplayer') -or
             $connectedArguments.Contains('--quickPlaySingleplayer')) {
-        throw 'Connected dedicated launch did not replace the integrated quick-play boundary'
+        throw 'Connected dedicated launch did not defer connection until the test driver is ready'
     }
     $profile.target = '1.21.1-neoforge'; $profile.java = 21; $profile.loader = '21.1.238'
     $profile | ConvertTo-Json | Set-Content "$bundle/profile.json"

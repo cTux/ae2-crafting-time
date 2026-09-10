@@ -4,6 +4,7 @@ import java.nio.file.Path;
 
 public record DriverOptions(String scenario, String profile, String world, Path output, boolean interactive) {
     public boolean connectedDedicated() { return Boolean.getBoolean("ae2craftingtime.test.connectedDedicated"); }
+    public String dedicatedAddress() { return required("ae2craftingtime.test.dedicatedAddress"); }
     public String campaign() { return System.getProperty("ae2craftingtime.test.campaign", "local"); }
     public Path continuation() {
         var value = System.getProperty("ae2craftingtime.test.continuation", "");

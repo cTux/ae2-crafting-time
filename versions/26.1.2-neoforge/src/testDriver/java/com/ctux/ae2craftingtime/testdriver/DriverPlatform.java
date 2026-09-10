@@ -91,4 +91,9 @@ final class DriverPlatform {
                 minecraft, net.minecraft.client.multiplayer.resolver.ServerAddress.parseString(server.ip), server, false, null);
     }
 
+    static net.minecraft.client.multiplayer.ServerData server(String address) {
+        return new net.minecraft.client.multiplayer.ServerData("AE2CT dedicated smoke", address,
+                net.minecraft.client.multiplayer.ServerData.Type.OTHER);
+    }
+
 }
