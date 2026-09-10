@@ -3,6 +3,8 @@ $ErrorActionPreference = 'Stop'
 
 $full = @(Get-UiSmokeJavaLaunchPhases -Scenario cpu-list-total-ttc)
 if (Compare-Object @(1, 2) $full -SyncWindow 0) { throw 'Full relaunch does not require exactly two Java launches' }
+$suite = @(Get-UiSmokeJavaLaunchPhases -Scenario suite -ContainsCpuList)
+if (Compare-Object @(1, 2) $suite -SyncWindow 0) { throw 'A suite containing the CPU-list case does not require two Java launches' }
 $resume = @(Get-UiSmokeJavaLaunchPhases -Scenario cpu-list-total-ttc -ResumeOnly)
 if (Compare-Object @(2) $resume -SyncWindow 0) { throw 'Resume-only does not require exactly one phase-2 Java launch' }
 if (@(Get-UiSmokeJavaLaunchPhases -Scenario cpu-list-total-ttc -PrepareOnly).Count -ne 0) {

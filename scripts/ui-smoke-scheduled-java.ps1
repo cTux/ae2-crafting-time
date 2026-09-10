@@ -1,12 +1,13 @@
 function Get-UiSmokeJavaLaunchPhases {
     param(
         [Parameter(Mandatory)][string]$Scenario,
+        [switch]$ContainsCpuList,
         [switch]$ResumeOnly,
         [switch]$PrepareOnly
     )
     if ($PrepareOnly) { return @() }
     if ($ResumeOnly) { return @(2) }
-    if ($Scenario -eq 'cpu-list-total-ttc') { return @(1, 2) }
+    if ($Scenario -eq 'cpu-list-total-ttc' -or $ContainsCpuList) { return @(1, 2) }
     return @(1)
 }
 
@@ -16,7 +17,9 @@ function Assert-UiSmokeJavaPhaseIdentities {
         [Parameter(Mandatory)][int[]]$ExpectedPhases,
         [switch]$FinalApproval
     )
-    if ($Processes.Count -ne $ExpectedPhases.Count) { throw 'UI-smoke Java launch count does not match the phase plan' }
+    if ($Processes.Count -ne $ExpectedPhases.Count) {
+        throw "UI-smoke Java launch count does not match the phase plan: expected $($ExpectedPhases.Count), observed $($Processes.Count)"
+    }
     for ($index = 0; $index -lt $ExpectedPhases.Count; $index++) {
         $process = $Processes[$index]
         if ($process.phase -ne $ExpectedPhases[$index] -or $process.pid -le 0 -or !$process.startedAt -or

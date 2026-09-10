@@ -109,7 +109,9 @@ $processes = @()
 $scheduledTaskName = $null
 $preservePreparedWorld = $false
 . (Join-Path $PSScriptRoot 'ui-smoke-scheduled-java.ps1')
-$plannedPhases = @(Get-UiSmokeJavaLaunchPhases -Scenario $Scenario -ResumeOnly:([bool]$resumeState) -PrepareOnly:$PrepareOnly)
+$plannedPhases = @(Get-UiSmokeJavaLaunchPhases -Scenario $Scenario `
+    -ContainsCpuList:($selectedCases -contains 'cpu-list-total-ttc') `
+    -ResumeOnly:([bool]$resumeState) -PrepareOnly:$PrepareOnly)
 
 function Get-TreeHash([string]$path) {
     $sha = [Security.Cryptography.SHA256]::Create()
