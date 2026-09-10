@@ -69,15 +69,24 @@ final class DriverPlatform {
         minecraft.disconnect(new net.minecraft.client.gui.screens.TitleScreen(), false);
     }
 
+    static void disconnectLevel(net.minecraft.client.Minecraft minecraft) {
+        var connection = minecraft.getConnection().getConnection();
+        var before = connection.isConnected();
+        minecraft.level.disconnect(net.minecraft.network.chat.Component.translatable("multiplayer.status.quitting"));
+        var afterTransport = connection.isConnected();
+        clearLevel(minecraft);
+        System.out.println("AE2CT normal disconnect target=" + TARGET + " before=" + before
+                + " afterTransport=" + afterTransport + " afterClear=" + connection.isConnected());
+    }
+
     static void resizeDisplay(net.minecraft.client.Minecraft minecraft) { minecraft.resizeGui(); }
 
     static void openWorld(net.minecraft.client.Minecraft minecraft, String world) {
         minecraft.createWorldOpenFlows().openWorld(world, () -> minecraft.setScreen(new net.minecraft.client.gui.screens.TitleScreen()));
     }
 
-    static void reconnect(net.minecraft.client.Minecraft minecraft) {
-        var server = minecraft.getCurrentServer();
-        clearLevel(minecraft);
+    static void connectServer(net.minecraft.client.Minecraft minecraft,
+            net.minecraft.client.multiplayer.ServerData server) {
         net.minecraft.client.gui.screens.ConnectScreen.startConnecting(new net.minecraft.client.gui.screens.TitleScreen(),
                 minecraft, net.minecraft.client.multiplayer.resolver.ServerAddress.parseString(server.ip), server, false, null);
     }

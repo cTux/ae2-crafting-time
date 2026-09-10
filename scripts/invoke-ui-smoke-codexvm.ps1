@@ -13,6 +13,12 @@ param(
     [string]$CredentialPath = (Join-Path $env:APPDATA "Codex\codexvm-smoke.credential.xml"),
     [string]$GuestSourceRoot,
     [string]$BundleDirectory,
+    [string]$ReportDirectory,
+    [string]$ResumeBundleDirectory,
+    [switch]$CaptureResumeOnly,
+    [int]$CallbackTimeoutSeconds = 20,
+    [int]$CheckpointTimeoutSeconds = 60,
+    [int]$StartupTimeoutSeconds = 300,
     [string]$PreparedLaunchRoot = 'C:\Users\Public\Documents\AE2CraftingTimeSmoke\prepared'
 )
 
@@ -20,6 +26,8 @@ $ErrorActionPreference = "Stop"
 $vmx = "F:\VMs\Codex-Windows11\Codex-Windows11.vmx"
 $vmrun = "C:\Program Files\VMware\VMware Workstation\vmrun.exe"
 $root = Split-Path -Parent $PSScriptRoot
+$headSha = (& git -C $root rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0 -or $headSha -cnotmatch '^[a-f0-9]{40}$') { throw 'Cannot bind CodexVM dispatch to Git HEAD' }
 if (-not $Stop -and -not $BundleDirectory) {
     $campaign = @{ Target = $Target; Scenario = $Scenario; Latest = $Latest; PreparedLaunchRoot = $PreparedLaunchRoot
         ProjectId = $ProjectId; Interactive = $Interactive }
@@ -42,14 +50,40 @@ if (-not $GuestSourceRoot) {
 }
 $guestScript = Join-Path $GuestSourceRoot "scripts\run-ui-smoke-codexvm.ps1"
 $smokeArguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $guestScript, "-Target", $Target, "-Scenario", $Scenario)
+$smokeArguments += @('-HeadSha', $headSha)
 if ($BundleDirectory) {
     $bundlePath = [IO.Path]::GetFullPath($BundleDirectory)
     if (-not $bundlePath.StartsWith($root.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
         throw 'Bundle must be inside the shared worktree'
     }
+    if (-not $Stop) {
+        & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target $Target -BundleDirectory $bundlePath
+        if (-not (Test-Path -LiteralPath (Join-Path $bundlePath 'expected-adapters.json') -PathType Leaf)) {
+            throw 'Focused bundle adapter expectations were not prepared'
+        }
+    }
     $guestBundle = Join-Path $GuestSourceRoot $bundlePath.Substring($root.Length).TrimStart('\')
     $smokeArguments += @('-BundleDirectory', $guestBundle, '-PreparedLaunchRoot', $PreparedLaunchRoot)
 }
+if ($ReportDirectory) {
+    $reportPath = [IO.Path]::GetFullPath($ReportDirectory)
+    if (-not $reportPath.StartsWith($root.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Report directory must be inside the shared worktree'
+    }
+    $guestReport = Join-Path $GuestSourceRoot $reportPath.Substring($root.Length).TrimStart('\')
+    $smokeArguments += @('-ReportDirectory', $guestReport)
+}
+if ($ResumeBundleDirectory) {
+    $resumePath = [IO.Path]::GetFullPath($ResumeBundleDirectory)
+    if (-not $resumePath.StartsWith($root.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'Resume bundle must be inside the shared worktree'
+    }
+    $guestResume = Join-Path $GuestSourceRoot $resumePath.Substring($root.Length).TrimStart('\')
+    $smokeArguments += @('-ResumeBundleDirectory', $guestResume)
+}
+if ($CaptureResumeOnly) { $smokeArguments += '-CaptureResumeOnly' }
+$smokeArguments += @('-StartupTimeoutSeconds', [string]$StartupTimeoutSeconds)
+$smokeArguments += @('-CallbackTimeoutSeconds', $CallbackTimeoutSeconds, '-CheckpointTimeoutSeconds', $CheckpointTimeoutSeconds)
 if ($CasesBase64) {
     if ($CasesBase64 -cnotmatch '^[A-Za-z0-9+/]+={0,2}$') { throw 'Invalid encoded case list' }
     $smokeArguments += @('-CasesBase64', $CasesBase64)
@@ -62,7 +96,7 @@ if ($Stop) { $smokeArguments += "-Stop" } else { $smokeArguments += @("-Schedule
 if ($Transport -eq "OpenSSH") {
     $ip = (& $vmrun -T ws getGuestIPAddress $vmx -wait).Trim()
     if ($LASTEXITCODE -ne 0 -or $ip -notmatch '^\d{1,3}(?:\.\d{1,3}){3}$') { throw "Could not resolve the CodexVM guest IP" }
-    $remote = '& powershell.exe ' + (($smokeArguments | ForEach-Object { "'" + $_.Replace("'", "''") + "'" }) -join ' ')
+    $remote = '& powershell.exe ' + (($smokeArguments | ForEach-Object { "'" + ([string]$_).Replace("'", "''") + "'" }) -join ' ')
     $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($remote))
     & ssh.exe -i $SshKeyPath -o BatchMode=yes -o ConnectTimeout=10 "$SshUser@$ip" powershell.exe -NoProfile -EncodedCommand $encoded
     if ($LASTEXITCODE -ne 0) { throw "OpenSSH UI-smoke dispatch failed with exit $LASTEXITCODE" }

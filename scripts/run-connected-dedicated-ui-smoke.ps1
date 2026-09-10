@@ -31,7 +31,7 @@ if (!(Test-Path -LiteralPath $prepared -PathType Leaf)) { throw "Missing prepare
 $markerPath = Join-Path $sourceServer '.ae2-crafting-time-dedicated-fixture.json'
 if (!(Test-Path -LiteralPath $markerPath -PathType Leaf)) { throw 'Prepared server is not marked as an AE2 Crafting Time source fixture' }
 $marker = Get-Content -LiteralPath $markerPath -Raw | ConvertFrom-Json
-if ($marker.schema -ne 1 -or $marker.sourceFixtureId -ne 'ae2-crafting-time' -or
+if ($marker.schema -ne 2 -or $marker.sourceFixtureId -ne 'ae2-crafting-time' -or
         $marker.role -ne 'source' -or $marker.target -ne $Target) {
     throw 'Prepared server marker does not match the requested source fixture and target'
 }
@@ -67,12 +67,35 @@ $loaderVersion = $profile.loader -replace ('^' + [regex]::Escape($targetParts[0]
 $loader = if ($Target -eq '1.20.1-forge') { "net/minecraftforge/forge/1.20.1-$loaderVersion" }
     elseif ($Target -like '*-neoforge') { "net/neoforged/neoforge/$($profile.loader)" }
     else { $null }
-$launcher = if ($Target -eq '1.20.1-fabric') { Join-Path $sourceServer 'fabric-server-launch.jar' }
-    else { Join-Path $sourceServer "libraries/$loader/win_args.txt" }
+$launcherRelative = if ($Target -eq '1.20.1-fabric') { 'fabric-server-launch.jar' }
+    else { "libraries/$loader/win_args.txt" }
+$launcher = Join-Path $sourceServer $launcherRelative
 if (!(Test-Path -LiteralPath $launcher -PathType Leaf)) { throw "Prepared server launcher is missing: $launcher" }
+$sourceArtifacts = @(Get-ChildItem -LiteralPath (Join-Path $sourceServer 'mods') -File -Filter 'ae2-crafting-time-*.jar' -ErrorAction SilentlyContinue)
+if ($sourceArtifacts.Count) { throw 'Prepared source fixture must not contain AE2 Crafting Time artifacts' }
+$sourceDependencies = @(Get-ChildItem -LiteralPath (Join-Path $sourceServer 'mods') -File -Filter '*.jar' | Sort-Object Name | ForEach-Object {
+    [ordered]@{name=$_.Name;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
+})
+$bundleDependencies = @(Get-ChildItem -LiteralPath (Join-Path $bundle 'mods') -File -Filter '*.jar' | Where-Object {
+    $_.Name -notlike 'ae2-crafting-time-*.jar'
+} | Sort-Object Name | ForEach-Object {
+    [ordered]@{name=$_.Name;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
+})
+$sourceDependencyKeys = @($sourceDependencies | ForEach-Object { "$($_.name)|$($_.sha256)" })
+$bundleDependencyKeys = @($bundleDependencies | ForEach-Object { "$($_.name)|$($_.sha256)" })
+$markerDependencyKeys = @($marker.dependencies | Sort-Object name | ForEach-Object { "$($_.name)|$($_.sha256)" })
+if ($marker.javaMajor -ne $expectedJava -or $marker.loader -ne $profile.loader -or
+        $marker.launcher.path -ne $launcherRelative.Replace('\\', '/') -or
+        $marker.launcher.sha256 -ne (Get-FileHash -LiteralPath $launcher -Algorithm SHA256).Hash -or
+        @(Compare-Object $sourceDependencyKeys $bundleDependencyKeys -SyncWindow 0).Count -or
+        @(Compare-Object $sourceDependencyKeys $markerDependencyKeys -SyncWindow 0).Count) {
+    throw 'Prepared source loader, Java, launcher, or dependency identity does not match its marker and connected bundle'
+}
 if (!$JavaHome) { $JavaHome = & (Join-Path $PSScriptRoot 'get-java-home.ps1') -Major $profile.java }
 $java = Join-Path ([IO.Path]::GetFullPath($JavaHome)) 'bin/java.exe'
 if (!(Test-Path -LiteralPath $java -PathType Leaf)) { throw "Java executable is missing: $java" }
+$campaignId = [guid]::NewGuid().ToString('N')
+$connectionEpoch = [guid]::NewGuid().ToString('N')
 
 # All inputs are validated before the disposable copy is created or mutated.
 New-Item -ItemType Directory -Path $report -Force | Out-Null
@@ -85,7 +108,7 @@ if (!$resolvedServer.StartsWith($resolvedRuntime.TrimEnd('\') + '\', [StringComp
 }
 New-Item -ItemType Directory -Path $runtimeRoot -Force | Out-Null
 Copy-Item -LiteralPath $sourceServer -Destination $resolvedServer -Recurse
-$copyMarker = [ordered]@{ schema=1; sourceFixtureId='ae2-crafting-time'; role='disposable'; target=$Target
+$copyMarker = [ordered]@{ schema=2; sourceFixtureId='ae2-crafting-time'; role='disposable'; target=$Target
     source=[IO.Path]::GetFullPath($sourceServer); createdAt=[DateTime]::UtcNow.ToString('o') }
 $copyMarker | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $resolvedServer '.ae2-crafting-time-dedicated-fixture.json') -Encoding UTF8
 $validatedCopy = Get-Content -LiteralPath (Join-Path $resolvedServer '.ae2-crafting-time-dedicated-fixture.json') -Raw | ConvertFrom-Json
@@ -119,7 +142,7 @@ Set-Content -LiteralPath (Join-Path $resolvedServer 'eula.txt') -Value 'eula=tru
 
 $serverArgs = @("-Dae2ct.testDriver.serverScenario=cpu-list-total-ttc-connected",
     "-Dae2ct.testDriver.serverTarget=$Target", "-Dae2ct.testDriver.serverResult=$serverResult",
-    "-Dae2ct.testDriver.serverControl=$control", '-Xmx4G')
+    "-Dae2ct.testDriver.serverControl=$control", "-Dae2ct.testDriver.serverCampaign=$connectionEpoch", '-Xmx4G')
 if ($Target -eq '1.20.1-fabric') { $serverArgs += @('-jar','fabric-server-launch.jar','nogui') }
 $argsFile = Join-Path $report 'dedicated-java.args'
 $serverArgs | ForEach-Object { '"' + $_.Replace('\', '\\').Replace('"', '\"') + '"' } |
@@ -127,10 +150,25 @@ $serverArgs | ForEach-Object { '"' + $_.Replace('\', '\\').Replace('"', '\"') + 
 $launchArguments = @("@$argsFile")
 if ($Target -ne '1.20.1-fabric') { $launchArguments += @("@libraries/$loader/win_args.txt", 'nogui') }
 $planPath = Join-Path $report 'connected-runner-plan.json'
-[ordered]@{ target=$Target; sourceServer=$sourceServer; disposableServer=$resolvedServer; java=$java
-    argumentFile=$argsFile; arguments=$serverArgs; launchArguments=$launchArguments; preparedLaunch=$prepared; address=$Address } |
+$sourceIdentity = [ordered]@{ markerSha256=(Get-FileHash -LiteralPath $markerPath -Algorithm SHA256).Hash
+    launcherSha256=(Get-FileHash -LiteralPath $launcher -Algorithm SHA256).Hash
+    loader=$profile.loader; javaMajor=$expectedJava; javaPath=$java; javaVersion="required-$expectedJava"
+    dependencies=$sourceDependencies }
+$runnerPlan = [ordered]@{ target=$Target; campaignId=$campaignId; connectionEpoch=$connectionEpoch
+    sourceServer=$sourceServer; disposableServer=$resolvedServer; java=$java
+    sourceIdentity=$sourceIdentity; relaunch=[ordered]@{required=$true;minimumProcesses=2}
+    argumentFile=$argsFile; arguments=$serverArgs; launchArguments=$launchArguments; preparedLaunch=$prepared; address=$Address }
+$runnerPlan |
     ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $planPath -Encoding UTF8
 if ($PlanOnly) { Write-Host "Connected runner plan validated: $planPath"; return }
+
+$javaIdentity = (& $java -version 2>&1) -join "`n"
+$javaMajorPattern = '(?:version |openjdk )"?{0}(?:\.|\")' -f $expectedJava
+if ($LASTEXITCODE -ne 0 -or $javaIdentity -notmatch $javaMajorPattern) {
+    throw "Dedicated Java runtime does not match required major $expectedJava"
+}
+$sourceIdentity.javaVersion = $javaIdentity
+$runnerPlan | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $planPath -Encoding UTF8
 
 $portReservation = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, $serverPort)
 try { $portReservation.Start() } catch { throw "Dedicated smoke port $serverPort is already in use" }
@@ -162,7 +200,7 @@ try {
     if ([DateTime]::UtcNow -ge $deadline) { throw 'Dedicated server did not become ready' }
     & (Join-Path $PSScriptRoot 'run-ui-smoke.ps1') -Target $Target -Scenario cpu-list-total-ttc `
         -ReportDirectory (Join-Path $report 'client') -BundleDirectory $bundle -PreparedLaunch $prepared `
-        -DedicatedAddress $Address -ControlDirectory $control
+        -DedicatedAddress $Address -ControlDirectory $control -CampaignId $connectionEpoch
     if ($LASTEXITCODE) { throw "Connected client smoke exited $LASTEXITCODE" }
     if (!$serverProcess.WaitForExit(60000)) { throw 'Dedicated server did not finish after client evidence completed' }
     if (!(Test-Path -LiteralPath $serverResult -PathType Leaf)) { throw 'Connected server produced no result artifact' }

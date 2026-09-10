@@ -1,6 +1,6 @@
 # Total TTC in the Crafting CPU list
 
-Status: planned; this PR contains documentation only.
+Status: implementation in progress in [PR #381](https://github.com/cTux/ae2-crafting-time/pull/381).
 Tracking issue: [#324](https://github.com/cTux/ae2-crafting-time/issues/324).
 
 ## Goal
@@ -54,10 +54,25 @@ a retained runtime dependency graph.
 
 Do not change TTC math or learning, sort CPUs by TTC, change item-row statuses,
 add interactions/tooltips/settings, change crafting execution, create a network
-monitor, or publish a release. This planning PR does not implement the feature
-and does not close the implementation issue.
+monitor, or publish a release. The implementation issue remains open until the
+feature PR is merged and its completion evidence is verified.
 
 ## Acceptance criteria
+
+### Verification runtime
+
+Focused debugging may start at phase 2 from a validated immutable phase-1
+continuation/world/artifact bundle. That result is diagnostic only; acceptance
+still requires a complete two-phase run at the committed head. Stalls fail with
+bound callback/checkpoint evidence, and the report records phase durations and
+launch count. Changed verification selects this scenario directly for the four
+required targets without unrelated standard cases or optional-addon graphs. A
+resume bundle is compatible only when its world marker records the same base or
+catalogue mode and the same managed JAR name/hash catalogue as the selected
+bundle; mismatch fails before Minecraft launches.
+Current-PID callbacks must remain live throughout startup and execution. The
+absolute startup deadline covers loader, world, and fixture preparation; the
+60-second no-checkpoint deadline begins only in the active scenario phase.
 
 | ID | Observable result |
 | --- | --- |

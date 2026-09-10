@@ -194,8 +194,7 @@ final class StandardCraftFixture {
         if (activeCpuCount != cpus.size()) return false;
         var service = cpu(player).getMainNode().getGrid().getCraftingService();
         if (cpuListPlans == null) {
-            var jobs = java.util.List.of(new CpuJob(Items.SMOOTH_STONE, 4), new CpuJob(Items.SMOOTH_STONE, 8),
-                    new CpuJob(Items.SMOOTH_STONE, 12), new CpuJob(Items.GLASS, 16));
+            var jobs = cpuListJobs();
             var source = IActionSource.ofMachine(cpu(player));
             cpuListPlans = jobs.stream().map(job ->
                     service.beginCraftingCalculation(player.serverLevel(), () -> source,
@@ -283,7 +282,7 @@ final class StandardCraftFixture {
     StandardCraftFixture secondGrid() {
         var fixture = new StandardCraftFixture();
         fixture.cpuListScenario = true;
-        fixture.sampleMultiplier = sampleMultiplier * 3;
+        fixture.sampleMultiplier = sampleMultiplier * 4;
         fixture.originShift = 24;
         return fixture;
     }
@@ -334,7 +333,24 @@ final class StandardCraftFixture {
                 .toList();
     }
 
-    private record CpuJob(net.minecraft.world.item.Item item, long amount) { }
+    static java.util.List<CpuJob> cpuListJobs() {
+        return java.util.List.of(new CpuJob("minecraft:glass", 4), new CpuJob("minecraft:smooth_stone", 8),
+                new CpuJob("minecraft:smooth_stone", 12), new CpuJob("minecraft:smooth_stone", 16));
+    }
+
+    static int[] pumpOffsets(boolean cpuListScenario) {
+        return cpuListScenario ? new int[] { 4, 8, 12 } : new int[] { 4, 8 };
+    }
+
+    record CpuJob(String itemId, long amount) {
+        net.minecraft.world.item.Item item() {
+            return switch (itemId) {
+                case "minecraft:glass" -> Items.GLASS;
+                case "minecraft:smooth_stone" -> Items.SMOOTH_STONE;
+                default -> throw new IllegalArgumentException("Unsupported CPU-list job output: " + itemId);
+            };
+        }
+    }
 
     private int[] sampleCounts(ServerPlayer player) {
         var network = ProfilerBridge.networkId(cpu(player).getMainNode().getGrid());
@@ -362,7 +378,7 @@ final class StandardCraftFixture {
     long pump(ServerPlayer player, boolean fuel) {
         if (fuel && initialSamples == null) initialSamples = sampleCounts(player);
         var storage = cpu(player).getMainNode().getGrid().getStorageService().getInventory();
-        for (int offset : new int[] {4, 8}) {
+        for (int offset : pumpOffsets(cpuListScenario)) {
             var furnace = (FurnaceBlockEntity) player.serverLevel().getBlockEntity(terminal.east(offset).below());
             if (fuel && furnace.getItem(1).isEmpty()) furnace.setItem(1, new ItemStack(Items.COAL));
             var output = furnace.getItem(2);

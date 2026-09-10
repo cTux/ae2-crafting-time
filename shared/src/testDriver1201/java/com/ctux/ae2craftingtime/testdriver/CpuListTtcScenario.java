@@ -22,13 +22,14 @@ final class CpuListTtcScenario {
             "initial-distinct", "unknown-hidden", "idle-hidden", "badge-select", "selected-title", "tooltip",
             "scroll-down", "scroll-up", "partial", "stalled", "reordered", "finished", "cancelled",
             "replacement", "removed", "drop-expiry", "delayed-expiry", "close-reopen", "second-grid",
-            "small-scale", "large-scale", "reconnect", "layout");
+            "small-scale", "large-scale", "same-jvm-clear", "process-relaunch", "reconnect", "layout");
 
     private enum Stage { INITIAL, SELECTED, TOOLTIP, SCROLL_DOWN, SCROLL_UP, PARTIAL, RESTORE, STALLED,
         RENAME, FINISH, CANCEL, REPLACE_EMPTY, REPLACE_STARTED, REPLACE, RESTART, RESTART_CLEARED, RESTART_FRESH,
         REMOVE_SCROLL, REMOVE, DROP, DROP_EXPIRED, HOLD, HOLD_EXPIRED, HOLD_RELEASED,
         REOPEN, REOPENED, SECOND_PREPARE, SECOND_OPEN, SECOND_SCREEN, SCALE_SMALL, SCALE_LARGE,
-        RECONNECT_CLOSE, RECONNECT_OPEN, RECONNECT_PREPARE, RECONNECT_SCREEN, DONE }
+        REJOIN_REQUEST, REJOIN_PREPARE, REJOIN_OPEN, REJOIN_EMPTY, REJOIN_REFRESH, REJOIN_FRESH, RELAUNCH_READY,
+        RELAUNCH_PREPARE, RELAUNCH_OPEN, RELAUNCH_EMPTY, RELAUNCH_REFRESH, RELAUNCH_FRESH, DONE }
 
     private final StandardCraftFixture first;
     private final String world;
@@ -42,7 +43,10 @@ final class CpuListTtcScenario {
     private CompletableFuture<String> observation;
     private Stage stage = Stage.INITIAL;
     private long stageStarted = System.nanoTime();
+    private int firstVisibleSerial = -1;
     private int selectedSerial = -1;
+    private int finishSerial = -1;
+    private int removeSerial = -1;
     private long stalledElapsed;
     private String activeAction;
     private boolean actionComplete;
@@ -50,24 +54,56 @@ final class CpuListTtcScenario {
     private long releasedFrame = -1;
     private long replacedElapsed;
     private boolean opening;
-    private boolean reconnectStarted;
-    private boolean disconnectReturned;
-    private boolean openReturned;
+    private boolean reconnectRequested;
+    private boolean continuationWritten;
+    private final CpuListContinuation continuation;
     private java.util.List<Long> stalledProgress;
     private volatile String authoritativeState;
+    private CpuListTtcControl.ServerState partialState;
 
     CpuListTtcScenario(StandardCraftFixture first, String world, java.nio.file.Path output, boolean connectedDedicated) {
         this.first = first;
         this.world = world;
-        this.evidence = output.resolve("cpu-list-checkpoints.jsonl");
         this.connectedDedicated = connectedDedicated;
+        var path = System.getProperty("ae2craftingtime.test.continuation", "");
+        this.evidence = output.resolve(checkpointFile(!path.isBlank()));
+        if (path.isBlank()) {
+            continuation = null;
+        } else {
+            try {
+                continuation = CpuListContinuation.read(java.nio.file.Path.of(path), world,
+                        System.getProperty("ae2craftingtime.test.campaign", "local"));
+            } catch (java.io.IOException error) {
+                throw new IllegalStateException("Cannot read CPU-list relaunch continuation", error);
+            }
+            first.cpuListScenario = true;
+            first.bindTerminal(new net.minecraft.core.BlockPos(
+                    continuation.terminalX(), continuation.terminalY(), continuation.terminalZ()));
+            second = first;
+            authoritativeState = continuation.serverState();
+            captured.addAll(continuation.screenshots());
+            CpuTtcPacketControl.holdLatest();
+            stage = Stage.RELAUNCH_PREPARE;
+        }
+    }
+
+    static String checkpointFile(boolean resumed) {
+        return resumed ? "cpu-list-checkpoints.phase-2.jsonl" : "cpu-list-checkpoints.jsonl";
     }
 
     String checkpoint() { return "cpu-list=" + stage; }
+    boolean resumed() { return continuation != null; }
+    boolean reconnectRequested() { return reconnectRequested; }
+    void reconnected() {
+        reconnectRequested = false;
+        if (second != null) second.refreshCpuIdentities();
+        next(Stage.REJOIN_PREPARE);
+    }
 
     boolean tick(Minecraft minecraft, FixtureMarker marker, Map<String, Boolean> checks,
             Consumer<String> capture, BiConsumer<Integer, Integer> moveMouse) {
         Consumer<String> screenshot = name -> { if (captured.add(name)) capture.accept(name); };
+        if (continuation != null) continuation.checks().forEach(check -> mark(checks, check));
         var snapshot = UiObservationStore.latest();
         if (requiresObservation(stage)) {
             if (!(minecraft.screen instanceof CraftingStatusScreen) || snapshot == null
@@ -91,11 +127,14 @@ final class CpuListTtcScenario {
                     originalJobs.put(card.serial(), job(card));
                     originalTotals.put(card.serial(), card.ttc().rendered());
                 });
-                selectedSerial = known.get(1).serial();
+                firstVisibleSerial = firstVisibleSerial(snapshot.cpuCards());
+                selectedSerial = serialForJob(snapshot.cpuCards(), "minecraft:smooth_stone", 8);
+                finishSerial = serialForJob(snapshot.cpuCards(), "minecraft:glass", 4);
+                removeSerial = serialForJob(snapshot.cpuCards(), "minecraft:smooth_stone", 12);
                 validateLayout(snapshot);
                 mark(checks, "initial-distinct", "unknown-hidden", "idle-hidden", "layout");
                 screenshot.accept("cpu-list-total-ttc-unselected-large.png");
-                var badge = known.get(1).badge();
+                var badge = selectionBadge(snapshot.cpuCards(), selectedSerial);
                 releasedFrame = snapshot.frame();
                 DriverPlatform.clickAndRelease(minecraft, badge.centerX(), badge.centerY());
                 next(Stage.SELECTED);
@@ -125,8 +164,7 @@ final class CpuListTtcScenario {
                 next(Stage.SCROLL_DOWN);
             }
             case SCROLL_DOWN -> {
-                var firstCpu = originalJobs.keySet().iterator().next();
-                if (snapshot.cpuCards().stream().anyMatch(card -> card.serial() == firstCpu)
+                if (snapshot.cpuCards().stream().anyMatch(card -> card.serial() == firstVisibleSerial)
                         || snapshot.cpuCards().stream().noneMatch(card -> card.name().equals("Idle CPU 7"))
                         || !totalsMatch(snapshot)) return false;
                 mark(checks, "scroll-down");
@@ -135,8 +173,7 @@ final class CpuListTtcScenario {
                 next(Stage.SCROLL_UP);
             }
             case SCROLL_UP -> {
-                var firstCpu = originalJobs.keySet().iterator().next();
-                if (snapshot.cpuCards().stream().noneMatch(card -> card.serial() == firstCpu)
+                if (snapshot.cpuCards().stream().noneMatch(card -> card.serial() == firstVisibleSerial)
                         || snapshot.cpuCards().stream().anyMatch(card -> card.name().equals("Idle CPU 7"))
                         || !totalsMatch(snapshot)) return false;
                 mark(checks, "scroll-up");
@@ -144,14 +181,14 @@ final class CpuListTtcScenario {
                 if (server(minecraft, "partial", player -> { first.makeCpuListPartial(player); return true; })) next(Stage.PARTIAL);
             }
             case PARTIAL -> {
-                if (snapshot.cpuCards().stream().filter(card -> "minecraft:smooth_stone".equals(card.jobId()))
-                        .noneMatch(card -> card.ttc() != null)) return false;
                 var state = serverState();
-                if (!state.stoneProfile() || state.smoothProfile()
-                        || state.cpus().stream().filter(cpu -> "minecraft:smooth_stone".equals(cpu.jobId()))
-                                .anyMatch(cpu -> cpu.seconds() == null))
-                    throw new IllegalStateException("partial profile lost its known dependency estimates");
-                if (!totalsMatch(snapshot)) return false;
+                if (partialState == null && state.stoneProfile() && !state.smoothProfile()
+                        && state.cpus().stream().filter(cpu -> "minecraft:smooth_stone".equals(cpu.jobId()))
+                                .noneMatch(cpu -> cpu.seconds() == null)) partialState = state;
+                if (partialState == null
+                        || snapshot.cpuCards().stream().filter(card -> "minecraft:smooth_stone".equals(card.jobId()))
+                                .noneMatch(card -> card.ttc() != null)
+                        || !totalsMatch(snapshot, partialState)) return false;
                 mark(checks, "partial");
                 screenshot.accept("cpu-list-total-ttc-partial.png");
                 if (server(minecraft, "restore", player -> { first.restoreCpuListSamples(player); return true; })) {
@@ -184,7 +221,7 @@ final class CpuListTtcScenario {
             }
             case FINISH -> {
                 if (!server(minecraft, "finish", first::finishFirstCpu)) return false;
-                if (snapshot.cpuCards().stream().filter(card -> card.serial() == originalJobs.keySet().iterator().next())
+                if (snapshot.cpuCards().stream().filter(card -> card.serial() == finishSerial)
                         .anyMatch(card -> card.jobId() != null || card.ttc() != null)) return false;
                 mark(checks, "finished");
                 screenshot.accept("cpu-list-total-ttc-finished.png");
@@ -235,14 +272,12 @@ final class CpuListTtcScenario {
                 next(Stage.REMOVE_SCROLL);
             }
             case REMOVE_SCROLL -> {
-                var removed = originalJobs.keySet().stream().skip(2).findFirst().orElseThrow();
-                if (snapshot.cpuCards().stream().noneMatch(card -> card.serial() == removed)) return false;
+                if (snapshot.cpuCards().stream().noneMatch(card -> card.serial() == removeSerial)) return false;
                 next(Stage.REMOVE);
             }
             case REMOVE -> {
-                var removed = originalJobs.keySet().stream().skip(2).findFirst().orElseThrow();
                 if (!server(minecraft, "remove", player -> { first.removeThirdCpu(player); return true; })) return false;
-                if (snapshot.cpuCards().stream().anyMatch(card -> card.serial() == removed)) return false;
+                if (snapshot.cpuCards().stream().anyMatch(card -> card.serial() == removeSerial)) return false;
                 mark(checks, "removed");
                 screenshot.accept("cpu-list-total-ttc-removed.png");
                 CpuTtcPacketControl.drop();
@@ -348,57 +383,86 @@ final class CpuListTtcScenario {
                 mark(checks, "large-scale");
                 screenshot.accept("cpu-list-total-ttc-largest-scale.png");
                 minecraft.player.closeContainer();
-                next(Stage.RECONNECT_CLOSE);
+                CpuTtcPacketControl.holdLatest();
+                next(Stage.REJOIN_REQUEST);
             }
-            case RECONNECT_CLOSE -> {
-                if (connectedDedicated) {
-                    if (CpuListTtcControl.request("reconnect")) {
-                        next(Stage.RECONNECT_OPEN);
-                        DriverPlatform.reconnect(minecraft);
-                        disconnectReturned = true;
-                        openReturned = true;
-                    }
-                } else if (minecraft.level != null && !reconnectStarted) {
-                    reconnectStarted = true;
-                    next(Stage.RECONNECT_OPEN);
-                    DriverPlatform.clearLevel(minecraft);
-                    disconnectReturned = true;
-                }
-                else next(Stage.RECONNECT_OPEN);
+            case REJOIN_REQUEST -> {
+                reconnectRequested = true;
             }
-            case RECONNECT_OPEN -> {
-                if (connectedDedicated) {
-                    if (disconnectReturned && minecraft.level != null && minecraft.getCurrentServer() != null) {
-                        next(Stage.RECONNECT_SCREEN);
-                    }
-                } else if (minecraft.level == null && !opening) {
-                    opening = true;
-                    DriverPlatform.openWorld(minecraft, world);
-                    openReturned = true;
-                } else if (disconnectReturned && openReturned && minecraft.level != null && minecraft.player != null) {
-                    next(Stage.RECONNECT_PREPARE);
+            case REJOIN_PREPARE, RELAUNCH_PREPARE -> {
+                var action = stage == Stage.REJOIN_PREPARE ? "rejoin-prepare" : "relaunch-prepare";
+                var prepared = server(minecraft, action, player -> second.prepare(player, marker));
+                if (prepared) {
+                    next(stage == Stage.REJOIN_PREPARE ? Stage.REJOIN_OPEN : Stage.RELAUNCH_OPEN);
                 }
             }
-            case RECONNECT_PREPARE -> {
-                if (server(minecraft, "restore-connections", player -> {
-                    second.refreshCpuIdentities();
-                    return second.prepare(player, marker);
-                })) next(Stage.RECONNECT_SCREEN);
-            }
-            case RECONNECT_SCREEN -> {
-                if (minecraft.player == null || minecraft.gameMode == null) return false;
+            case REJOIN_OPEN, RELAUNCH_OPEN -> {
+                if (minecraft.player == null || minecraft.gameMode == null) {
+                    return false;
+                }
                 openTerminal(minecraft, second);
                 if (minecraft.screen instanceof MEStorageScreen<?> screen) {
                     var button = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$statusButton();
+                    next(stage == Stage.REJOIN_OPEN ? Stage.REJOIN_EMPTY : Stage.RELAUNCH_EMPTY);
                     DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
-                } else if (minecraft.screen instanceof CraftingStatusScreen && snapshot != null
-                        && snapshot.frame() != lastFrame
-                        && !snapshot.cpuCards().isEmpty()) {
-                    if (!observe(minecraft)) return false;
-                    if (connectedDedicated ? !totalsMatch(snapshot)
-                            : snapshot.cpuCards().stream().anyMatch(card -> card.ttc() != null)) return false;
-                    lastFrame = snapshot.frame();
-                    retain(snapshot);
+                }
+            }
+            case REJOIN_EMPTY, RELAUNCH_EMPTY -> {
+                if (snapshot.cpuCards().isEmpty() || !CpuTtcPacketControl.hasHeld()) return false;
+                if (snapshot.cpuCards().stream().anyMatch(card -> card.ttc() != null)) {
+                    throw new IllegalStateException("reconnected menu inherited TTC before a fresh response");
+                }
+                if (stage == Stage.REJOIN_EMPTY) {
+                    mark(checks, "same-jvm-clear");
+                    screenshot.accept("cpu-list-total-ttc-disconnect-cleared.png");
+                    CpuTtcPacketControl.releaseHeld();
+                    next(Stage.REJOIN_REFRESH);
+                } else {
+                    if (!samePhysicalJobs(new com.google.gson.Gson().fromJson(
+                            continuation.serverState(), CpuListTtcControl.ServerState.class), serverState())) {
+                        throw new IllegalStateException("relaunch changed the physical CPU, network, or job identity");
+                    }
+                    mark(checks, "process-relaunch");
+                    screenshot.accept("cpu-list-total-ttc-relaunch-cleared.png");
+                    CpuTtcPacketControl.releaseHeld();
+                    next(Stage.RELAUNCH_REFRESH);
+                }
+            }
+            case REJOIN_REFRESH, RELAUNCH_REFRESH -> {
+                var state = serverState();
+                if (requiresJobRefresh(connectedDedicated, state)) {
+                    var action = stage == Stage.REJOIN_REFRESH ? "rejoin-refresh" : "relaunch-refresh";
+                    if (!server(minecraft, action, second::restartSecondCpu)) return false;
+                }
+                next(stage == Stage.REJOIN_REFRESH ? Stage.REJOIN_FRESH : Stage.RELAUNCH_FRESH);
+            }
+            case REJOIN_FRESH -> {
+                if (snapshot.cpuCards().stream().noneMatch(card -> card.ttc() != null) || !totalsMatch(snapshot)) return false;
+                screenshot.accept("cpu-list-total-ttc-rejoin-fresh.png");
+                next(Stage.RELAUNCH_READY);
+            }
+            case RELAUNCH_READY -> {
+                if (!continuationWritten) {
+                    var state = connectedDedicated ? CpuListTtcControl.state() : null;
+                    var serverSequence = state == null ? 0 : state.ack();
+                    var clientSequence = Math.max(serverSequence + 1, CpuListTtcControl.clientSequence() + 1);
+                    try {
+                        CpuListContinuation.write(evidence.resolveSibling("cpu-list-continuation.json"),
+                                new CpuListContinuation(1, "relaunch-ready", world,
+                                        System.getProperty("ae2craftingtime.test.campaign", "local"),
+                                        authoritativeState, second.terminal.getX(), second.terminal.getY(), second.terminal.getZ(),
+                                        checks.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).toList(),
+                                        captured.stream().sorted().toList(), serverSequence, clientSequence));
+                    } catch (java.io.IOException error) {
+                        throw new IllegalStateException("Cannot save CPU-list relaunch continuation", error);
+                    }
+                    continuationWritten = true;
+                    minecraft.stop();
+                }
+            }
+            case RELAUNCH_FRESH -> {
+                if (snapshot.cpuCards().stream().noneMatch(card -> card.ttc() != null) || !totalsMatch(snapshot)) return false;
+                if (observe(minecraft)) {
                     mark(checks, "reconnect");
                     screenshot.accept("cpu-list-total-ttc-reconnect.png");
                     next(Stage.DONE);
@@ -459,6 +523,18 @@ final class CpuListTtcScenario {
         return snapshot.cpuCards().stream().filter(value -> value.serial() == serial).findFirst()
                 .orElseThrow(() -> new IllegalStateException("CPU serial " + serial + " is not visible"));
     }
+    static Rect selectionBadge(java.util.List<UiSnapshot.CpuCard> cards, int serial) {
+        return cards.stream().filter(value -> value.serial() == serial).findFirst()
+                .orElseThrow(() -> new IllegalStateException("CPU serial " + serial + " is not visible")).badge();
+    }
+    static int firstVisibleSerial(java.util.List<UiSnapshot.CpuCard> cards) {
+        return cards.stream().findFirst().orElseThrow(() -> new IllegalStateException("CPU list is empty")).serial();
+    }
+    static int serialForJob(java.util.List<UiSnapshot.CpuCard> cards, String jobId, long amount) {
+        return cards.stream().filter(value -> jobId.equals(value.jobId()) && value.amount() == amount)
+                .mapToInt(UiSnapshot.CpuCard::serial).findFirst()
+                .orElseThrow(() -> new IllegalStateException("CPU job " + jobId + " x" + amount + " is not visible"));
+    }
     private static UiSnapshot.ObservedText title(UiSnapshot snapshot) {
         return snapshot.text().stream().filter(text -> text.key().equals("text.ae2craftingtime.ttc")
                 && text.bounds() != null && text.bounds().y() < snapshot.gui().y() + 19).findFirst().orElse(null);
@@ -488,8 +564,12 @@ final class CpuListTtcScenario {
     }
 
     private boolean totalsMatch(UiSnapshot snapshot) {
+        return totalsMatch(snapshot, serverState());
+    }
+
+    private static boolean totalsMatch(UiSnapshot snapshot, CpuListTtcControl.ServerState state) {
         for (var card : snapshot.cpuCards()) {
-            var cpu = serverState().cpus().stream().filter(value -> value.serial() == card.serial()).findFirst().orElse(null);
+            var cpu = state.cpus().stream().filter(value -> value.serial() == card.serial()).findFirst().orElse(null);
             if (cpu == null || !java.util.Objects.equals(cpu.jobId(), card.jobId()) || cpu.amount() != card.amount()) return false;
             var expected = com.ctux.ae2craftingtime.core.TimeEstimate.formatTotal(java.util.List.of(
                     cpu.seconds() == null ? java.util.OptionalLong.empty() : java.util.OptionalLong.of(cpu.seconds())))
@@ -497,6 +577,24 @@ final class CpuListTtcScenario {
             if (!java.util.Objects.equals(expected, card.ttc() == null ? null : card.ttc().rendered())) return false;
         }
         return true;
+    }
+
+    static boolean samePhysicalJobs(CpuListTtcControl.ServerState before, CpuListTtcControl.ServerState after) {
+        if (before == null || after == null || !java.util.Objects.equals(before.network(), after.network())) return false;
+        var first = before.cpus().stream().map(CpuListTtcScenario::physicalJob).sorted().toList();
+        var second = after.cpus().stream().map(CpuListTtcScenario::physicalJob).sorted().toList();
+        return first.equals(second);
+    }
+
+    static boolean requiresJobRefresh(boolean connectedDedicated, CpuListTtcControl.ServerState state) {
+        return !connectedDedicated && state != null
+                && state.cpus().stream().anyMatch(CpuListTtcControl.CpuState::busy)
+                && state.cpus().stream().filter(CpuListTtcControl.CpuState::busy)
+                        .noneMatch(cpu -> cpu.seconds() != null);
+    }
+
+    private static String physicalJob(CpuListTtcControl.CpuState state) {
+        return state.position() + "|" + state.jobId() + "|" + state.amount() + "|" + state.live() + "|" + state.busy();
     }
 
     private boolean observe(Minecraft minecraft) {
@@ -521,7 +619,8 @@ final class CpuListTtcScenario {
         return switch (value) {
             case INITIAL, SELECTED, TOOLTIP, SCROLL_DOWN, SCROLL_UP, PARTIAL, STALLED, RENAME, FINISH,
                     CANCEL, REPLACE_EMPTY, REPLACE_STARTED, REPLACE, RESTART_CLEARED, RESTART_FRESH, REMOVE_SCROLL,
-                    REMOVE, DROP_EXPIRED, HOLD, HOLD_EXPIRED, HOLD_RELEASED, REOPENED, SECOND_SCREEN, SCALE_SMALL, SCALE_LARGE -> true;
+                    REMOVE, DROP_EXPIRED, HOLD, HOLD_EXPIRED, HOLD_RELEASED, REOPENED, SECOND_SCREEN, SCALE_SMALL,
+                    SCALE_LARGE, REJOIN_EMPTY, REJOIN_FRESH, RELAUNCH_EMPTY, RELAUNCH_FRESH -> true;
             default -> false;
         };
     }

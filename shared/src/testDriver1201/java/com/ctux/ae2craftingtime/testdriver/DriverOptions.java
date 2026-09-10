@@ -4,6 +4,11 @@ import java.nio.file.Path;
 
 public record DriverOptions(String scenario, String profile, String world, Path output, boolean interactive) {
     public boolean connectedDedicated() { return Boolean.getBoolean("ae2craftingtime.test.connectedDedicated"); }
+    public String campaign() { return System.getProperty("ae2craftingtime.test.campaign", "local"); }
+    public Path continuation() {
+        var value = System.getProperty("ae2craftingtime.test.continuation", "");
+        return value.isBlank() ? null : Path.of(value).toAbsolutePath().normalize();
+    }
     public static DriverOptions load() {
         var scenario = System.getProperty("ae2craftingtime.test.scenario", "");
         if (scenario.isEmpty()) {

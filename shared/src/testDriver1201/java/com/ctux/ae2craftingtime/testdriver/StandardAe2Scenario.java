@@ -54,6 +54,7 @@ final class StandardAe2Scenario {
         this.leaf = leaf;
         this.connectedDedicated = connectedDedicated;
         cpuList = leaf.equals("cpu-list-total-ttc") ? new CpuListTtcScenario(fixture, world, output, connectedDedicated) : null;
+        if (cpuList != null && cpuList.resumed()) phase = Stage.ACTIVE;
     }
     static boolean supports(String scenario) { return CHECKS.containsKey(scenario); }
     private final StableFrames<Object> frames = new StableFrames<>(8);
@@ -76,6 +77,9 @@ final class StandardAe2Scenario {
     String checkpoint() { return "phase=" + phase + " fixture=" + fixture.checkpoint
             + (cpuList == null ? "" : " " + cpuList.checkpoint()); }
 
+    boolean reconnectRequested() { return cpuList != null && cpuList.reconnectRequested(); }
+    void reconnected() { cpuList.reconnected(); }
+
     boolean tick(Minecraft minecraft, FixtureMarker marker, Map<String, Boolean> checks,
             Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) throws Exception {
         var currentCheckpoint = checkpoint();
@@ -86,7 +90,8 @@ final class StandardAe2Scenario {
         }
         // Menu-free close/reopen and reconnect transitions are owned by this state machine.
         if (phase == Stage.ACTIVE && cpuList != null) {
-            return cpuList.tick(minecraft, marker, checks, screenshot, moveMouse);
+            var complete = cpuList.tick(minecraft, marker, checks, screenshot, moveMouse);
+            return complete;
         }
         if (phase == Stage.PREPARE) {
             fixture.cpuListScenario = leaf.equals("cpu-list-total-ttc");

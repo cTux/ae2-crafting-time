@@ -4,6 +4,7 @@ $scripts = Join-Path $temp 'scripts'
 New-Item -ItemType Directory -Path $scripts -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'run-ui-smoke-matrix.ps1'), (Join-Path $PSScriptRoot 'release-matrix.json') -Destination $scripts
 foreach ($file in @('get-ui-smoke-plan.ps1','get-ui-smoke-results.ps1','expand-ui-smoke-groups.ps1','run-client-versions.json',
+        'use-ui-smoke-bundle-cache.ps1',
         'ui-smoke-impact.json','ui-smoke-groups.json','ui-smoke-coverage.json','ui-smoke-forge-suite.json',
         'ui-smoke-fabric-suite.json','ui-smoke-neoforge-suite.json','ui-smoke-neoforge-26.1.2-suite.json')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination $scripts
@@ -20,8 +21,10 @@ param([string]$Target,[switch]$Latest)
 [pscustomobject]@{projectId='ae2';name='AE2';disposition='DIRECT_UI';scenario='standard-ae2';reason='';result='NOT_RUN'}
 '@ | Set-Content (Join-Path $scripts 'get-ui-smoke-coverage.ps1')
 @'
-param([string]$Target,[switch]$Latest,[switch]$ResolveOnly,[switch]$Packaged,[string]$RuntimeDirectory)
+param([string]$Target,[switch]$Latest,[switch]$ResolveOnly,[switch]$Packaged,[string]$RuntimeDirectory,[string[]]$ProjectId,[switch]$BaseOnly)
 if (-not $ResolveOnly -or -not $Packaged) { throw 'Guest build path selected' }
+if ((Split-Path -Leaf $RuntimeDirectory) -eq 'primary' -and -not $BaseOnly) { throw 'Primary graph omitted base-only resolution' }
+if ((Split-Path -Leaf $RuntimeDirectory) -ne 'primary' -and $BaseOnly) { throw 'Focused graph incorrectly used base-only resolution' }
 if ($Target -eq '1.20.1-fabric') { throw 'intentional resolution failure' }
 New-Item -ItemType Directory -Path (Join-Path $RuntimeDirectory 'mods') -Force | Out-Null
 '@ | Set-Content (Join-Path $scripts 'run-client.ps1')

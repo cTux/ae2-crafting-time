@@ -145,6 +145,9 @@ public final class CraftPlanScenario {
         return failure;
     }
 
+    boolean reconnectRequested() { return standard != null && standard.reconnectRequested(); }
+    void reconnected() { standard.reconnected(); }
+
     public long elapsedMillis() {
         return Duration.ofNanos(System.nanoTime() - stateStarted).toMillis();
     }

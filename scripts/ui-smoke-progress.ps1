@@ -1,0 +1,44 @@
+function Get-UiSmokeProgressDecision {
+    param(
+        [Parameter(Mandatory)][DateTime]$Now,
+        [Parameter(Mandatory)][DateTime]$CallbackAt,
+        [Parameter(Mandatory)][DateTime]$CheckpointAt,
+        [Parameter(Mandatory)][int]$CallbackTimeoutSeconds,
+        [Parameter(Mandatory)][int]$CheckpointTimeoutSeconds,
+        [int]$ProcessId = 0,
+        [int]$ProgressProcessId = 0,
+        [long]$CallbackSequence = -1,
+        [DateTime]$StartedAt = [DateTime]::MinValue,
+        [int]$StartupTimeoutSeconds = 300,
+        [string]$Checkpoint = ''
+    )
+    if ($ProcessId -gt 0 -and $ProgressProcessId -ne $ProcessId) {
+        if ($StartedAt -eq [DateTime]::MinValue -or
+                ($Now.ToUniversalTime() - $StartedAt.ToUniversalTime()).TotalSeconds -le $StartupTimeoutSeconds) {
+            return $null
+        }
+        return 'no-callback'
+    }
+    if ($ProcessId -gt 0 -and $ProgressProcessId -eq $ProcessId -and $CallbackSequence -le 0) {
+        if ($StartupTimeoutSeconds -gt 0 -and
+                ($Now.ToUniversalTime() - $CallbackAt.ToUniversalTime()).TotalSeconds -gt $StartupTimeoutSeconds) {
+            return 'no-callback'
+        }
+        return $null
+    }
+    if ($CallbackTimeoutSeconds -gt 0 -and ($Now.ToUniversalTime() - $CallbackAt.ToUniversalTime()).TotalSeconds -gt $CallbackTimeoutSeconds) {
+        return 'no-callback'
+    }
+    $activeScenario = $ProcessId -le 0 -or $Checkpoint -match '(^|\s)phase=ACTIVE(\s|$)'
+    if (!$activeScenario) {
+        if ($StartupTimeoutSeconds -gt 0 -and $StartedAt -ne [DateTime]::MinValue -and
+                ($Now.ToUniversalTime() - $StartedAt.ToUniversalTime()).TotalSeconds -gt $StartupTimeoutSeconds) {
+            return 'startup-timeout'
+        }
+        return $null
+    }
+    if ($CheckpointTimeoutSeconds -gt 0 -and ($Now.ToUniversalTime() - $CheckpointAt.ToUniversalTime()).TotalSeconds -gt $CheckpointTimeoutSeconds) {
+        return 'no-checkpoint'
+    }
+    return $null
+}

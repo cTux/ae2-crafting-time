@@ -17,6 +17,7 @@
     "NeoEcoIntBatchDispatchMixin"
   ],
   "client": [
+    "AbstractContainerScreenCpuTtcMixin",
     "AbstractTableRendererMixin",
     "ChatScreenMixin",
     "CraftingCPUScreenMixin",

@@ -48,14 +48,24 @@ foreach ($targetEntry in $targets) {
         $coverage = @(& (Join-Path $PSScriptRoot 'get-ui-smoke-coverage.ps1') -Target $row.target -Latest:$runLatest)
         $coverage | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $report 'coverage.json') -Encoding UTF8
         $null = & (Join-Path $PSScriptRoot 'get-ui-smoke-plan.ps1') @planning -ExpectedFingerprint $plan.fingerprint
-        $cache = Join-Path $root "build/ui-smoke/bundle-cache/$($row.target)/$profile/$($graph.id)"
-        & (Join-Path $PSScriptRoot 'run-client.ps1') -Target $row.target -Latest:$runLatest -ResolveOnly -Packaged -RuntimeDirectory $cache -ProjectId $runProjects
+        $dependencyMode = if ($graph.baseOnly) { 'base' } else { 'catalogue' }
+        # Keep the Windows cache path below the legacy directory-length limit;
+        # the full immutable identities are still validated inside the seal.
+        $cache = Join-Path $root "build/ui-smoke/bundle-cache/$($commit.Substring(0,12))/$($plan.fingerprint.Substring(0,12))/$($row.target)/$profile/$dependencyMode/$($graph.id)"
+        $cacheParameters = @{CacheDirectory=$cache;HeadSha=$commit;Fingerprint=$plan.fingerprint;Target=$row.target;Profile=$profile;GraphId=$graph.id;BaseOnly=[bool]$graph.baseOnly}
+        if (Test-Path -LiteralPath (Join-Path $cache 'bundle-identity.json') -PathType Leaf) {
+            $cacheIdentity = & (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') @cacheParameters -Mode Reuse
+        } else {
+            & (Join-Path $PSScriptRoot 'run-client.ps1') -Target $row.target -Latest:$runLatest -ResolveOnly -Packaged -RuntimeDirectory $cache -ProjectId $runProjects -BaseOnly:([bool]$graph.baseOnly)
+            $cacheIdentity = & (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') @cacheParameters -Mode Seal
+        }
         # Guest shares may retain read handles. Each run receives an immutable bundle.
         $bundle = Join-Path $report 'bundle'
         Copy-Item -LiteralPath $cache -Destination $bundle -Recurse
         Get-ChildItem -LiteralPath (Join-Path $bundle 'mods') -Filter '*.jar' -File | ForEach-Object {
             [ordered]@{ file = $_.Name; sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash }
         } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $report 'artifact-hashes.json') -Encoding UTF8
+        $cacheIdentity | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $report 'bundle-reuse.json') -Encoding UTF8
         & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target $row.target -BundleDirectory $bundle
         $null = & (Join-Path $PSScriptRoot 'get-ui-smoke-plan.ps1') @planning -ExpectedFingerprint $plan.fingerprint
         $plan | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $report 'selection.json') -Encoding UTF8

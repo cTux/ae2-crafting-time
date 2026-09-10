@@ -122,7 +122,8 @@ expanded plan for the current case list and any separate required graphs. The
 [2026-09-08 prepared-client report](automated-ui-testing/prepared-clients-2026-09-08.md)
 records 122 passing cases across eight graphs, phase timings and remaining qualification work.
 
-For multiple scenarios on the same installed mod graph, launch Minecraft once.
+For multiple scenarios on the same installed mod graph, launch Minecraft once,
+except for the `cpu-list-total-ttc` process-relaunch boundary described below.
 Run the suite sequentially in one loaded disposable world with pristine fixture,
 player, profiler and client-cache resets between cases, capturing each
 case's screenshots before advancing. Retain the suite plan, one process ID,
@@ -134,6 +135,39 @@ Record the suite-plan schema and shared world ID. Schema 2 requires one world
 load; a schema-1 diagnostic reload run must not be described as the one-world
 benchmark. Include reset durations separately from initial world loading and UI
 assertions. A stopped or partially completed run is not a full-suite timing.
+
+The CPU-list regression deliberately uses two client processes. The first process
+also performs one normal same-JVM disconnect/rejoin through the outer driver
+lifecycle guard, with responses held, to prove the disconnect hook clears client
+TTC state. It then writes an atomic continuation record and exits. The runner must
+observe that exit before starting a second process and must reject a reused PID or
+start time. The second process loads the same marked disposable save (or reconnects
+to the same report-owned dedicated server), treats menu IDs, CPU serials, frames,
+and monotonic time as phase-local, and matches the persisted physical network,
+CPU-position and job identities. Its first status menu is captured while responses
+remain held; only a later fresh authoritative response may restore totals. Retain
+`relaunch-evidence.json`, the continuation hash, both process identities and logs,
+the world and campaign/connection epoch, server/client sequences, all JAR hashes,
+and the phase-local `cpu-list-checkpoints*.jsonl` ledgers.
+
+Diagnostic resume provenance also includes the bundle's `base` or `catalogue`
+mode and an ordinal hash of every managed JAR name and SHA-256. Phase 1 writes
+both into the disposable world marker. Capture and restore must match them to
+the selected bundle before scheduling Java; a world created by an addon graph
+cannot be relabelled as a reduced-graph continuation.
+
+Connected-dedicated source fixtures live under one explicitly chosen host root,
+with one child per supported target. Each child is reusable only when its source
+marker has schema 2, `sourceFixtureId: ae2-crafting-time`, role `source`, the
+exact target, loader, required Java major, loader-launcher path/hash, and the
+sorted dependency JAR name/hash set. The installed dependency set must exactly
+match the sealed client bundle after excluding the production and test-driver
+JARs, which are injected only into the disposable copy. The runner validates all inputs before copying,
+never starts or mutates the source, and creates the only writable server beneath a
+new report directory with a role `disposable` marker. Delete or replace only that
+validated report-owned copy; preserve the marked sources for later campaigns. An
+unmarked directory, a link, a mismatched loader/dependency set, or an existing
+report is a setup failure rather than permission to repair the source in place.
 
 ### Timing and provenance
 

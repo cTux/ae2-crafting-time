@@ -9,6 +9,7 @@ import java.util.Properties;
 /** Small file rendezvous shared by a connected smoke client and its disposable server. */
 public final class CpuListTtcControl {
     private static long clientSequence;
+    private static long pendingSequence;
     private static String pending;
     private static String lastPublished;
 
@@ -18,7 +19,7 @@ public final class CpuListTtcControl {
         try {
             var marker = new com.google.gson.Gson().fromJson(Files.readString(
                     root.resolve(".ae2-crafting-time-dedicated-fixture.json")), ServerMarker.class);
-            if (marker == null || marker.schema() != 1 || !"ae2-crafting-time".equals(marker.sourceFixtureId())
+            if (marker == null || marker.schema() != 2 || !"ae2-crafting-time".equals(marker.sourceFixtureId())
                     || !"disposable".equals(marker.role()) || !target.equals(marker.target())) {
                 throw new IllegalStateException("Connected CPU-list driver requires a matching disposable server marker");
             }
@@ -37,7 +38,8 @@ public final class CpuListTtcControl {
     public static State state() {
         var values = read(directory().resolve("state.properties"));
         return new State(Boolean.parseBoolean(values.getProperty("ready", "false")),
-                Long.parseLong(values.getProperty("ack", "0")), values.getProperty("phase", ""),
+                values.getProperty("epoch", ""), Long.parseLong(values.getProperty("ack", "0")),
+                values.getProperty("action", ""), values.getProperty("phase", ""),
                 Integer.parseInt(values.getProperty("x", "0")), Integer.parseInt(values.getProperty("y", "0")),
                 Integer.parseInt(values.getProperty("z", "0")), values.getProperty("serverEstimates", ""),
                 values.getProperty("serverState", ""));
@@ -46,27 +48,49 @@ public final class CpuListTtcControl {
     public static boolean request(String action) {
         if (!action.equals(pending)) {
             pending = action;
-            clientSequence++;
+            clientSequence = nextSequence(clientSequence, state().ack());
+            pendingSequence = clientSequence;
             var command = new Properties();
-            command.setProperty("sequence", Long.toString(clientSequence));
+            command.setProperty("epoch", epoch());
+            command.setProperty("sequence", Long.toString(pendingSequence));
             command.setProperty("action", action);
             write(directory().resolve("command.properties"), command);
         }
-        if (state().ack() < clientSequence) return false;
+        if (!acknowledges(state(), epoch(), pendingSequence, action)) return false;
         pending = null;
         return true;
     }
 
-    public static Command command() {
-        var values = read(directory().resolve("command.properties"));
-        return new Command(Long.parseLong(values.getProperty("sequence", "0")), values.getProperty("action", ""));
+    static long nextSequence(long current, long acknowledged) {
+        return Math.max(current, acknowledged) + 1;
     }
 
-    public static void publish(long ack, String phase, net.minecraft.core.BlockPos terminal, String estimates,
+    static boolean acknowledges(State state, String epoch, long sequence, String action) {
+        return state.ready() && state.epoch().equals(epoch) && state.ack() == sequence
+                && state.action().equals(action);
+    }
+
+    static long clientSequence() { return clientSequence; }
+    static String epoch() {
+        var value = System.getProperty("ae2craftingtime.test.campaign",
+                System.getProperty("ae2ct.testDriver.serverCampaign", ""));
+        if (value.isBlank()) throw new IllegalStateException("CPU-list connected campaign identity is missing");
+        return value;
+    }
+
+    public static Command command() {
+        var values = read(directory().resolve("command.properties"));
+        return new Command(values.getProperty("epoch", ""),
+                Long.parseLong(values.getProperty("sequence", "0")), values.getProperty("action", ""));
+    }
+
+    public static void publish(long ack, String action, String phase, net.minecraft.core.BlockPos terminal, String estimates,
             String serverState) {
         var state = new Properties();
         state.setProperty("ready", "true");
+        state.setProperty("epoch", epoch());
         state.setProperty("ack", Long.toString(ack));
+        state.setProperty("action", action);
         state.setProperty("phase", phase);
         state.setProperty("x", Integer.toString(terminal.getX()));
         state.setProperty("y", Integer.toString(terminal.getY()));
@@ -74,12 +98,13 @@ public final class CpuListTtcControl {
         state.setProperty("serverEstimates", estimates);
         state.setProperty("serverState", serverState);
         write(directory().resolve("state.properties"), state);
-        var fingerprint = ack + "|" + phase + "|" + serverState;
+        var fingerprint = epoch() + "|" + ack + "|" + action + "|" + phase + "|" + serverState;
         if (!fingerprint.equals(lastPublished)) {
             lastPublished = fingerprint;
             try {
                 var encoded = java.util.Base64.getEncoder().encodeToString(serverState.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                Files.writeString(directory().resolve("server-checkpoints.log"), ack + "\t" + phase + "\t" + encoded + "\n",
+                Files.writeString(directory().resolve("server-checkpoints.log"), epoch() + "\t" + ack + "\t"
+                        + action + "\t" + phase + "\t" + encoded + "\n",
                         java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
             } catch (IOException error) { throw new IllegalStateException("Cannot retain server checkpoint", error); }
         }
@@ -102,9 +127,10 @@ public final class CpuListTtcControl {
         } catch (IOException error) { throw new IllegalStateException("Cannot write connected smoke control " + path, error); }
     }
 
-    public record State(boolean ready, long ack, String phase, int x, int y, int z, String serverEstimates,
+    public record State(boolean ready, String epoch, long ack, String action, String phase,
+            int x, int y, int z, String serverEstimates,
             String serverState) { }
-    public record Command(long sequence, String action) { }
+    public record Command(String epoch, long sequence, String action) { }
     public record CpuState(String position, int serial, String jobId, long amount, boolean live, boolean busy,
             Long seconds, long elapsedNanos, long progress) { }
     public record ServerState(String network, int container, boolean stoneProfile, boolean smoothProfile,

@@ -45,6 +45,7 @@ public final class DedicatedCpuScenario {
     private boolean ready;
     private boolean done;
     private long connectedAck;
+    private String connectedAction = "";
     private StandardCraftFixture connectedSecond;
     private boolean connectedPrepared;
     private boolean connectedValidated;
@@ -54,7 +55,7 @@ public final class DedicatedCpuScenario {
         if (done) return;
         try {
             if (!server.isDedicatedServer()) throw new IllegalStateException("Dedicated test requires a dedicated server");
-            if (System.nanoTime() - started > java.util.concurrent.TimeUnit.MINUTES.toNanos(5)) {
+            if (System.nanoTime() - started > java.util.concurrent.TimeUnit.MINUTES.toNanos(timeoutMinutes(scenario))) {
                 throw new IllegalStateException("Dedicated CPU timeout: " + scenario + " " + DispatchObservation.snapshot());
             }
             step(server);
@@ -152,6 +153,10 @@ public final class DedicatedCpuScenario {
         finish(server, "PASS", "");
     }
 
+    static int timeoutMinutes(String value) {
+        return "cpu-list-total-ttc-connected".equals(value) ? 40 : 5;
+    }
+
     private void stepConnected(MinecraftServer server, ServerLevel level) {
         if (!connectedValidated) {
             CpuListTtcControl.validateDisposableServer(Path.of(""), target);
@@ -166,7 +171,7 @@ public final class DedicatedCpuScenario {
         }
         var command = CpuListTtcControl.command();
         var active = connectedSecond == null ? gridFixture : connectedSecond;
-        if (command.sequence() > connectedAck) {
+        if (command.epoch().equals(CpuListTtcControl.epoch()) && command.sequence() > connectedAck) {
             boolean complete = switch (command.action()) {
                 case "partial" -> { gridFixture.makeCpuListPartial(player); yield true; }
                 case "restore" -> { gridFixture.restoreCpuListSamples(player); yield true; }
@@ -182,10 +187,12 @@ public final class DedicatedCpuScenario {
                     connectedSecond.renameCpuList(player);
                     yield true;
                 }
+                case "rejoin-prepare", "relaunch-prepare" -> active.prepare(player, origin);
                 case "reconnect" -> true;
                 case "complete" -> {
                     connectedAck = command.sequence();
-                    CpuListTtcControl.publish(connectedAck, "complete", active.terminal,
+                    connectedAction = command.action();
+                    CpuListTtcControl.publish(connectedAck, connectedAction, "complete", active.terminal,
                             active.cpuListServerEstimates(player), active.cpuListServerState(player));
                     finish(server, "PASS", "");
                     yield false;
@@ -194,9 +201,11 @@ public final class DedicatedCpuScenario {
             };
             if (!complete) return;
             connectedAck = command.sequence();
+            connectedAction = command.action();
             active = connectedSecond == null ? gridFixture : connectedSecond;
         }
-        CpuListTtcControl.publish(connectedAck, connectedSecond == null ? "first-grid" : "second-grid",
+        CpuListTtcControl.publish(connectedAck, connectedAction,
+                connectedSecond == null ? "first-grid" : "second-grid",
                 active.terminal, active.cpuListServerEstimates(player), active.cpuListServerState(player));
     }
 

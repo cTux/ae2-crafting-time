@@ -138,6 +138,9 @@ public final class CraftPlanScenario {
         return failure;
     }
 
+    boolean reconnectRequested() { return standard != null && standard.reconnectRequested(); }
+    void reconnected() { standard.reconnected(); }
+
     public long elapsedMillis() {
         return Duration.ofNanos(System.nanoTime() - stateStarted).toMillis();
     }
@@ -208,7 +211,8 @@ public final class CraftPlanScenario {
     private void openTerminal() throws IOException {
         if (standard != null) {
             try {
-                if (standard.tick(minecraft, marker, checks, this::screenshotUnchecked, this::moveMouse)) {
+                var complete = standard.tick(minecraft, marker, checks, this::screenshotUnchecked, this::moveMouse);
+                if (complete) {
                     advance(ScenarioState.TERMINAL_OPEN);
                     writePass();
                 }
@@ -899,6 +903,10 @@ public final class CraftPlanScenario {
         var screen = minecraft.screen.getClass().getName();
         var snapshot = UiObservationStore.latest();
         return state == ScenarioState.PLAN_STABLE && snapshot != null ? screen + " rows=" + ids(snapshot) : screen;
+    }
+
+    String checkpoint() {
+        return "state=" + state + " " + currentScreen();
     }
 
 }

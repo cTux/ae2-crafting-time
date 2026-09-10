@@ -85,6 +85,17 @@ try {
     Assert (($plan.targets | Where-Object target -eq '1.20.1-forge').mode -eq 'full') 'Broad rule must dominate only its target'
     Assert (@($plan.targets | Where-Object mode -eq 'focused').Count -eq 3) 'Mixed changes must union'
     Clean
+    Put 'shared/src/main/java/com/ctux/ae2craftingtime/core/CpuTtcCache.java' 'cpu list'
+    Put 'scripts/run-ui-smoke.ps1' 'cpu-list relaunch runner'
+    $cpuPlan = Plan
+    Assert ($cpuPlan.targets.Count -eq 4) 'CPU-list feature must reach all four targets'
+    Assert (@($cpuPlan.targets | Where-Object { $_.cases.Count -ne 1 -or $_.cases[0] -ne 'cpu-list-total-ttc' }).Count -eq 0) `
+        'CPU-list feature must not add unrelated standard cases'
+    Assert (@($cpuPlan.targets | Where-Object { $_.graphs.Count -ne 1 -or $_.graphs[0].id -ne 'primary' }).Count -eq 0) `
+        'CPU-list feature must not add optional-addon graphs'
+    Assert (@($cpuPlan.targets | Where-Object { !$_.graphs[0].baseOnly }).Count -eq 0) `
+        'CPU-list primary graph must resolve only AE2 and the test driver'
+    Clean
     Put 'shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingStatusTableRendererMixin.java' 'only delayed method changed'
     Assert ((Plan).targets[0].cases.Count -eq 11) 'Never narrow mixed renderers by keywords'
     Clean

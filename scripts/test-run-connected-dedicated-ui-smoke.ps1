@@ -1,4 +1,16 @@
 $ErrorActionPreference = 'Stop'
+function Write-SourceMarker([string]$source, [string]$target, [int]$java, [string]$loader, [string]$launcher) {
+    $dependency = Join-Path $source 'mods/dependency.jar'
+    New-Item -ItemType Directory -Path (Split-Path -Parent $dependency) -Force | Out-Null
+    Set-Content -LiteralPath $dependency -Value "dependency-$target"
+    $relativeLauncher = $launcher.Replace('\\', '/')
+    [ordered]@{
+        schema=2; sourceFixtureId='ae2-crafting-time'; role='source'; target=$target
+        javaMajor=$java; loader=$loader
+        launcher=[ordered]@{path=$relativeLauncher;sha256=(Get-FileHash -LiteralPath (Join-Path $source $launcher) -Algorithm SHA256).Hash}
+        dependencies=@([ordered]@{name='dependency.jar';sha256=(Get-FileHash -LiteralPath $dependency -Algorithm SHA256).Hash})
+    } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $source '.ae2-crafting-time-dedicated-fixture.json')
+}
 $temporary = Join-Path ([IO.Path]::GetTempPath()) ('ae2 ct connected runner ' + [Guid]::NewGuid())
 try {
     $source = Join-Path $temporary 'prepared server source'
@@ -6,12 +18,12 @@ try {
     $report = Join-Path $temporary 'report with spaces'
     $javaHome = Join-Path $temporary 'java home'
     New-Item -ItemType Directory -Path (Join-Path $source 'libraries/net/minecraftforge/forge/1.20.1-47.4.10'),(Join-Path $source 'mods'),(Join-Path $bundle 'mods'),(Join-Path $javaHome 'bin') -Force | Out-Null
-    [ordered]@{schema=1;sourceFixtureId='ae2-crafting-time';role='source';target='1.20.1-forge'} |
-        ConvertTo-Json | Set-Content -LiteralPath (Join-Path $source '.ae2-crafting-time-dedicated-fixture.json')
     Set-Content -LiteralPath (Join-Path $source 'libraries/net/minecraftforge/forge/1.20.1-47.4.10/win_args.txt') -Value 'fixture'
     Set-Content -LiteralPath (Join-Path $bundle 'profile.json') -Value '{"target":"1.20.1-forge","java":17,"loader":"1.20.1-47.4.10"}'
     Set-Content -LiteralPath (Join-Path $bundle 'mods/ae2-crafting-time-1-forge-1.20.1.jar') -Value 'production'
     Set-Content -LiteralPath (Join-Path $bundle 'mods/ae2-crafting-time-1-forge-1.20.1-test-driver.jar') -Value 'driver'
+    Set-Content -LiteralPath (Join-Path $bundle 'mods/dependency.jar') -Value 'dependency-1.20.1-forge'
+    Write-SourceMarker $source '1.20.1-forge' 17 '1.20.1-47.4.10' 'libraries/net/minecraftforge/forge/1.20.1-47.4.10/win_args.txt'
     Set-Content -LiteralPath (Join-Path $javaHome 'bin/java.exe') -Value 'java'
     $prepared = Join-Path $temporary 'prepared launch.json'
     Set-Content -LiteralPath $prepared -Value '{"target":"1.20.1-forge","java":17}'
@@ -20,6 +32,16 @@ try {
         -JavaHome $javaHome -Address '127.0.0.1:25575' -PlanOnly
     $plan = Get-Content -LiteralPath (Join-Path $report 'connected-runner-plan.json') -Raw | ConvertFrom-Json
     if ($plan.sourceServer -eq $plan.disposableServer -or !$plan.disposableServer.StartsWith($report)) { throw 'Plan did not isolate a disposable server copy' }
+    if (!$plan.campaignId -or !$plan.connectionEpoch -or !$plan.relaunch.required -or $plan.relaunch.minimumProcesses -ne 2) {
+        throw 'Connected plan omitted the campaign-bound two-process relaunch contract'
+    }
+    if (!$plan.sourceIdentity.markerSha256 -or !$plan.sourceIdentity.launcherSha256 -or !$plan.sourceIdentity.javaVersion) {
+        throw 'Connected plan omitted source marker, loader launcher, or Java identity'
+    }
+    if ($plan.sourceIdentity.loader -ne '1.20.1-47.4.10' -or $plan.sourceIdentity.javaMajor -ne 17 -or
+            $plan.sourceIdentity.dependencies.Count -ne 1) {
+        throw 'Connected plan omitted the verified loader, Java, or dependency identities'
+    }
     $args = Get-Content -LiteralPath $plan.argumentFile
     if (@($args | Where-Object { $_ -match 'serverResult=.*report with spaces' }).Count -ne 1 -or
             @($args | Where-Object { $_ -match 'serverControl=.*report with spaces' }).Count -ne 1) {
@@ -43,14 +65,14 @@ try {
         $caseLauncher = Join-Path $caseSource $case.launcher
         New-Item -ItemType Directory -Path (Split-Path -Parent $caseLauncher),(Join-Path $caseBundle 'mods') -Force | Out-Null
         Set-Content -LiteralPath $caseLauncher -Value 'fixture'
-        @{schema=1;sourceFixtureId='ae2-crafting-time';role='source';target=$case.target} |
-            ConvertTo-Json | Set-Content -LiteralPath (Join-Path $caseSource '.ae2-crafting-time-dedicated-fixture.json')
         $case | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $caseBundle 'profile.json')
         $case | ConvertTo-Json | Set-Content -LiteralPath $casePrepared
         $parts = $case.target.Split('-')
         foreach ($suffix in @('', '-test-driver')) {
             Set-Content -LiteralPath (Join-Path $caseBundle "mods/ae2-crafting-time-1-$($parts[1])-$($parts[0])$suffix.jar") -Value 'artifact'
         }
+        Set-Content -LiteralPath (Join-Path $caseBundle 'mods/dependency.jar') -Value "dependency-$($case.target)"
+        Write-SourceMarker $caseSource $case.target $case.java $case.loader $case.launcher
         & (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Target $case.target `
             -ServerDirectory $caseSource -PreparedLaunch $casePrepared -BundleDirectory $caseBundle `
             -ReportDirectory $caseReport -JavaHome $javaHome -PlanOnly
@@ -78,6 +100,16 @@ try {
         -JavaHome $javaHome -PlanOnly } catch { $refused = $_.Exception.Message -match 'marker' }
     if (!$refused) { throw 'Runner accepted an unmarked source fixture' }
     $marker.role = 'source'; $marker | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $source '.ae2-crafting-time-dedicated-fixture.json')
+    Set-Content -LiteralPath (Join-Path $source 'mods/dependency.jar') -Value 'changed dependency'
+    $dependencyReport = Join-Path $temporary 'dependency refused'
+    $dependencyRefused = $false
+    try { & (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Target 1.20.1-forge `
+        -ServerDirectory $source -PreparedLaunch $prepared -BundleDirectory $bundle -ReportDirectory $dependencyReport `
+        -JavaHome $javaHome -PlanOnly } catch { $dependencyRefused = $_.Exception.Message -match 'dependency' }
+    if (!$dependencyRefused -or (Test-Path -LiteralPath $dependencyReport)) {
+        throw 'Runner accepted a source dependency that no longer matches its marker and bundle'
+    }
+    Set-Content -LiteralPath (Join-Path $source 'mods/dependency.jar') -Value 'dependency-1.20.1-forge'
     Set-Content -LiteralPath (Join-Path $bundle 'mods/ae2-crafting-time-duplicate-forge-1.20.1.jar') -Value 'duplicate'
     $artifactReport = Join-Path $temporary 'artifact refused'
     $artifactRefused = $false

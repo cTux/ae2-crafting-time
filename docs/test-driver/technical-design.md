@@ -140,6 +140,27 @@ required cases and separate dependency graphs instead of relying on an old count
 The common ExtendedAE fixture checks the actual registered assembler block and
 its AE2 node, avoiding the upstream package-name difference between loaders.
 
+For phase-2 diagnosis, `prepare-ui-smoke-resume.ps1` atomically captures and
+validates the phase-1 world/evidence continuation against the exact staged
+bundle. The bundle profile declares `base` or `catalogue`; the runner hashes the
+ordinal managed JAR name/hash set and writes both values into the disposable
+world marker. Capture and restore compare those values before any Java process
+can start, so a reduced graph cannot relabel a world created with addon data.
+`run-ui-smoke.ps1` restores validated inputs into a new runtime copy and
+passes `resumeOnly=true`; that path has one launch and can never produce final
+approval. `driver-progress.json` is atomically refreshed from the runtime tick
+boundary and advances a separate checkpoint timestamp only when the scenario
+checkpoint changes. The host watchdog retains PID, process start, head, bundle,
+campaign, world, and last progress values before terminating a stalled client.
+It checks callback liveness for every current-PID stage. Loader, world, and
+fixture preparation use the absolute startup deadline; only
+`state=WORLD_READY phase=ACTIVE` arms the 60-second checkpoint-stall deadline.
+
+`use-ui-smoke-bundle-cache.ps1` seals a relative-path artifact hash tree under
+head/fingerprint/target/profile/graph. Reuse recomputes that tree; it never
+silently rebuilds or accepts changed bytes. Final approval bypasses the
+diagnostic shortcut and executes the complete two-process flow.
+
 ## NeoForge 1.21.1 port
 
 Reuse the shared driver state machine, observations, result checks, and suite

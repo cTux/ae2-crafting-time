@@ -237,6 +237,26 @@ The driver artifact is written under `build/test-driver`, never `dist`. It does
 not embed production AE2 Crafting Time classes. Player JARs and published
 artifacts must not contain driver classes, resources, metadata, or dependencies.
 
+### Diagnostic relaunch fast path
+
+`cpu-list-total-ttc` may resume phase 2 from a captured phase-1 bundle only for
+diagnosis. The bundle binds the marked disposable world, continuation and
+screenshots, campaign/world identity, Git head, exact artifact-tree hash,
+dependency mode, and an ordinal JAR-name/hash catalogue. Phase 1 writes that
+dependency identity into the disposable world marker. Capture and restore reject
+a marker from any other dependency graph before scheduling Java;
+any mismatch is rejected. A resume-only result is explicitly non-final. Final
+approval still runs both client processes and proves their distinct PID/start
+identities. The runner records launch counts and per-phase timings and may fail
+early when callbacks stop advancing. While the loader, world, or fixture is
+still preparing, the absolute startup deadline remains authoritative; the
+60-second no-checkpoint deadline begins only after the driver reports
+`state=WORLD_READY phase=ACTIVE`.
+
+Changed selection maps this feature directly to `cpu-list-total-ttc` on all
+four required targets, one primary graph each. A sealed bundle is built once per
+immutable head/selection fingerprint and hash-verified on every reuse.
+
 ## Development client installation
 
 `scripts-run/run-1.20.1-forge.bat` builds and installs the matching driver JAR

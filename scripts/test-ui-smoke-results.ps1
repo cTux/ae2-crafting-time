@@ -6,7 +6,7 @@ $cases = @($catalogue.groups.'standard-ae2')
 function Read-Results { @(& "$PSScriptRoot/get-ui-smoke-results.ps1" -Target 1.20.1-forge -Profile compatible -Scenarios $cases -Evidence $temp) }
 function Assert([bool]$condition, [string]$message) { if (!$condition) { throw $message } }
 try {
-    Assert (@(Read-Results | Where-Object result -eq 'NOT_RUN').Count -eq 6) 'Missing results must remain unrun'
+    Assert (@(Read-Results | Where-Object result -eq 'NOT_RUN').Count -eq $cases.Count) 'Missing results must remain unrun'
     foreach ($case in $cases) {
         $directory = Join-Path $temp $case
         New-Item -ItemType Directory -Path $directory | Out-Null
@@ -21,7 +21,7 @@ try {
         @{schema=1;complete=$true;target='1.20.1-forge';profile='compatible';scenario=$case;language='en_us';result='PASS';checks=$checks;screenshots=$contract.screenshots} |
             ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $directory 'result.json')
     }
-    Assert (@(Read-Results | Where-Object result -eq 'PASS').Count -eq 6) 'Complete leaves must pass'
+    Assert (@(Read-Results | Where-Object result -eq 'PASS').Count -eq $cases.Count) 'Complete leaves must pass'
     foreach ($case in $cases) {
         $caseFile = Join-Path (Join-Path $temp $case) 'result.json'
         $valid = Get-Content -LiteralPath $caseFile -Raw
@@ -101,7 +101,7 @@ try {
         }
     }
     Set-Content -LiteralPath $file -Value $original
-    Assert (@(Read-Results | Where-Object result -eq 'PASS').Count -eq 6) 'Restoring a failed leaf must restore the complete group'
+    Assert (@(Read-Results | Where-Object result -eq 'PASS').Count -eq $cases.Count) 'Restoring a failed leaf must restore the complete group'
     Set-Content -LiteralPath $file -Value '{'
     Assert ((Read-Results | Where-Object scenario -eq 'delayed-status').result -eq 'FAIL') 'Malformed result must fail'
     $focused = Join-Path $temp 'focused'
