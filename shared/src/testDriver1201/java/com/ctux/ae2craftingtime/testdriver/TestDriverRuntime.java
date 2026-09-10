@@ -31,6 +31,7 @@ public final class TestDriverRuntime implements AutoCloseable {
     private boolean initialDedicatedConnectionStarted;
     private boolean initialDedicatedConnectionComplete;
     private long initialDedicatedReadyAt;
+    private net.minecraft.client.gui.screens.Screen initialDedicatedParent;
     private int reconnectStep;
     private net.minecraft.client.multiplayer.ServerData reconnectServer;
 
@@ -136,6 +137,14 @@ public final class TestDriverRuntime implements AutoCloseable {
             initialDedicatedConnectionComplete = true;
             return false;
         }
+        if (initialDedicatedParent != null) {
+            if (!initialDedicatedConnectionStarted && minecraft.screen == initialDedicatedParent) {
+                DriverPlatform.connectServer(minecraft, initialDedicatedParent,
+                        DriverPlatform.server(options.dedicatedAddress()));
+                initialDedicatedConnectionStarted = true;
+            }
+            return true;
+        }
         boolean ready = minecraft.getOverlay() == null
                 && minecraft.screen instanceof net.minecraft.client.gui.screens.TitleScreen;
         if (!ready) {
@@ -146,8 +155,7 @@ public final class TestDriverRuntime implements AutoCloseable {
             initialDedicatedReadyAt = System.nanoTime();
         } else if (!initialDedicatedConnectionStarted
                 && System.nanoTime() - initialDedicatedReadyAt >= INITIAL_DEDICATED_READY_NANOS) {
-            DriverPlatform.connectServer(minecraft, DriverPlatform.server(options.dedicatedAddress()));
-            initialDedicatedConnectionStarted = true;
+            initialDedicatedParent = DriverPlatform.prepareInitialDedicatedConnect(minecraft);
         }
         return true;
     }

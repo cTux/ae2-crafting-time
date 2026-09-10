@@ -79,7 +79,20 @@ final class DriverPlatform {
 
     static void connectServer(net.minecraft.client.Minecraft minecraft,
             net.minecraft.client.multiplayer.ServerData server) {
-        net.minecraft.client.gui.screens.ConnectScreen.startConnecting(new net.minecraft.client.gui.screens.TitleScreen(),
+        connectServer(minecraft, new net.minecraft.client.gui.screens.TitleScreen(), server);
+    }
+
+    static net.minecraft.client.gui.screens.Screen prepareInitialDedicatedConnect(
+            net.minecraft.client.Minecraft minecraft) {
+        var multiplayer = new net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen(
+                new net.minecraft.client.gui.screens.TitleScreen());
+        minecraft.setScreen(multiplayer);
+        return multiplayer;
+    }
+
+    static void connectServer(net.minecraft.client.Minecraft minecraft,
+            net.minecraft.client.gui.screens.Screen parent, net.minecraft.client.multiplayer.ServerData server) {
+        net.minecraft.client.gui.screens.ConnectScreen.startConnecting(parent,
                 minecraft, net.minecraft.client.multiplayer.resolver.ServerAddress.parseString(server.ip), server, false, null);
     }
 
