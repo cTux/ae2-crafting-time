@@ -51,6 +51,10 @@ try {
         throw 'Connected plan omitted the verified loader, Java, or dependency identities'
     }
     $args = Get-Content -LiteralPath $plan.argumentFile
+    $argsBytes = [IO.File]::ReadAllBytes($plan.argumentFile)
+    if ($argsBytes.Length -ge 3 -and $argsBytes[0] -eq 0xEF -and $argsBytes[1] -eq 0xBB -and $argsBytes[2] -eq 0xBF) {
+        throw 'Java argument file must use BOM-free UTF-8 under Windows PowerShell 5.1'
+    }
     if (@($args | Where-Object { $_ -match 'serverResult=.*report with spaces' }).Count -ne 1 -or
             @($args | Where-Object { $_ -match 'serverControl=.*report with spaces' }).Count -ne 1) {
         throw 'Java argument file did not preserve paths with spaces'

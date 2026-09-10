@@ -146,8 +146,8 @@ $serverArgs = @("-Dae2ct.testDriver.serverScenario=cpu-list-total-ttc-connected"
     "-Dae2ct.testDriver.serverControl=$control", "-Dae2ct.testDriver.serverCampaign=$connectionEpoch", '-Xmx4G')
 if ($Target -eq '1.20.1-fabric') { $serverArgs += @('-jar','fabric-server-launch.jar','nogui') }
 $argsFile = Join-Path $report 'dedicated-java.args'
-$serverArgs | ForEach-Object { '"' + $_.Replace('\', '\\').Replace('"', '\"') + '"' } |
-    Set-Content -LiteralPath $argsFile -Encoding UTF8
+$quotedServerArgs = @($serverArgs | ForEach-Object { '"' + $_.Replace('\', '\\').Replace('"', '\"') + '"' })
+[IO.File]::WriteAllLines($argsFile, $quotedServerArgs, [Text.UTF8Encoding]::new($false))
 $launchArguments = @("@$argsFile")
 if ($Target -ne '1.20.1-fabric') { $launchArguments += @("@libraries/$loader/win_args.txt", 'nogui') }
 $launchCommandLine = ($launchArguments | ForEach-Object {
