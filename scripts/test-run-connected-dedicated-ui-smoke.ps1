@@ -4,6 +4,9 @@ if ($runnerText.Contains('(& $java -version 2>&1)') -or
         $runnerText -notmatch 'RedirectStandardOutput.+RedirectStandardError') {
     throw 'Connected runner must capture Java version output without promoting native stderr to a terminating error'
 }
+if ($runnerText -notmatch 'clientParameters\.HeadSha = \$HeadSha') {
+    throw 'Connected runner must forward an explicit immutable head to the staged client runner'
+}
 function Write-SourceMarker([string]$source, [string]$target, [int]$java, [string]$loader, [string]$launcher) {
     $dependency = Join-Path $source 'mods/dependency.jar'
     New-Item -ItemType Directory -Path (Split-Path -Parent $dependency) -Force | Out-Null

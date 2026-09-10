@@ -4,6 +4,7 @@ param(
     [Parameter(Mandatory)][string]$PreparedLaunch,
     [Parameter(Mandatory)][string]$BundleDirectory,
     [Parameter(Mandatory)][string]$ReportDirectory,
+    [ValidatePattern('^[a-f0-9]{40}$')][string]$HeadSha,
     [string]$Address = '127.0.0.1:25565',
     [string]$JavaHome,
     [switch]$PlanOnly
@@ -154,7 +155,7 @@ $sourceIdentity = [ordered]@{ markerSha256=(Get-FileHash -LiteralPath $markerPat
     launcherSha256=(Get-FileHash -LiteralPath $launcher -Algorithm SHA256).Hash
     loader=$profile.loader; javaMajor=$expectedJava; javaPath=$java; javaVersion="required-$expectedJava"
     dependencies=$sourceDependencies }
-$runnerPlan = [ordered]@{ target=$Target; campaignId=$campaignId; connectionEpoch=$connectionEpoch
+$runnerPlan = [ordered]@{ target=$Target; headSha=$HeadSha; campaignId=$campaignId; connectionEpoch=$connectionEpoch
     sourceServer=$sourceServer; disposableServer=$resolvedServer; java=$java
     sourceIdentity=$sourceIdentity; relaunch=[ordered]@{required=$true;minimumProcesses=2}
     argumentFile=$argsFile; arguments=$serverArgs; launchArguments=$launchArguments; preparedLaunch=$prepared; address=$Address }
@@ -205,9 +206,11 @@ try {
         } catch { $ready = $false } finally { $probe.Dispose() }
     }
     if ([DateTime]::UtcNow -ge $deadline) { throw 'Dedicated server did not become ready' }
-    & (Join-Path $PSScriptRoot 'run-ui-smoke.ps1') -Target $Target -Scenario cpu-list-total-ttc `
-        -ReportDirectory (Join-Path $report 'client') -BundleDirectory $bundle -PreparedLaunch $prepared `
-        -DedicatedAddress $Address -ControlDirectory $control -CampaignId $connectionEpoch
+    $clientParameters = @{ Target=$Target; Scenario='cpu-list-total-ttc'; ReportDirectory=(Join-Path $report 'client')
+        BundleDirectory=$bundle; PreparedLaunch=$prepared; DedicatedAddress=$Address
+        ControlDirectory=$control; CampaignId=$connectionEpoch }
+    if ($HeadSha) { $clientParameters.HeadSha = $HeadSha }
+    & (Join-Path $PSScriptRoot 'run-ui-smoke.ps1') @clientParameters
     if ($LASTEXITCODE) { throw "Connected client smoke exited $LASTEXITCODE" }
     if (!$serverProcess.WaitForExit(60000)) { throw 'Dedicated server did not finish after client evidence completed' }
     if (!(Test-Path -LiteralPath $serverResult -PathType Leaf)) { throw 'Connected server produced no result artifact' }
