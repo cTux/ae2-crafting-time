@@ -213,6 +213,16 @@ try {
         } catch { $ready = $false } finally { $probe.Dispose() }
     }
     if ([DateTime]::UtcNow -ge $deadline) { throw 'Dedicated server did not become ready' }
+    $ready = $false
+    $serverLog = Join-Path $resolvedServer 'logs/latest.log'
+    while ([DateTime]::UtcNow -lt $deadline -and !$ready) {
+        if ($serverProcess.HasExited) { throw "Dedicated server exited $($serverProcess.ExitCode) during startup" }
+        if (Test-Path -LiteralPath $serverLog -PathType Leaf) {
+            $ready = [bool](Select-String -LiteralPath $serverLog -SimpleMatch ']: Done (' -Quiet)
+        }
+        if (!$ready) { Start-Sleep -Milliseconds 250 }
+    }
+    if (!$ready) { throw 'Dedicated server did not finish startup' }
     $clientParameters = @{ Target=$Target; Scenario='cpu-list-total-ttc'; ReportDirectory=(Join-Path $report 'client')
         BundleDirectory=$bundle; PreparedLaunch=$prepared; DedicatedAddress=$Address
         ControlDirectory=$control; CampaignId=$connectionEpoch }

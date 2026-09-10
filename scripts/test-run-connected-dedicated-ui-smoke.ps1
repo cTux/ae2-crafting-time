@@ -11,6 +11,11 @@ if ($runnerText -notmatch 'clientParameters\.ScheduledJava = \$true' -or
         $runnerText -notmatch 'clientParameters\.InteractiveUser = \$InteractiveUser') {
     throw 'Connected runner must support the prepared interactive Java session used by CodexVM'
 }
+if ($runnerText.IndexOf("-SimpleMatch ']: Done ('", [StringComparison]::Ordinal) -lt 0 -or
+        $runnerText.IndexOf("'run-ui-smoke.ps1'", [StringComparison]::Ordinal) -lt
+            $runnerText.IndexOf("-SimpleMatch ']: Done ('", [StringComparison]::Ordinal)) {
+    throw 'Connected client must wait for the dedicated server startup-complete marker'
+}
 function Write-SourceMarker([string]$source, [string]$target, [int]$java, [string]$loader, [string]$launcher) {
     $dependency = Join-Path $source 'mods/dependency.jar'
     New-Item -ItemType Directory -Path (Split-Path -Parent $dependency) -Force | Out-Null
