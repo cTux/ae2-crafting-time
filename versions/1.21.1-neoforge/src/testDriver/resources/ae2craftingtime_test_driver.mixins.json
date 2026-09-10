@@ -11,6 +11,7 @@
     "CraftingCPUMenuAccessor"
   ],
   "client": [
+    "CpuTtcClientMixin",
     "ClientStatsAccessor",
     "AEBaseScreenMixin",
     "AEKeyRenderingMixin",
@@ -23,7 +24,8 @@
     "MouseHandlerAccessor",
     "RenderSystemMixin",
     "ChatComponentAccessor",
-    "CraftingStatusAccessor"
+    "CraftingStatusAccessor",
+    "CPUSelectionListObservationMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -206,7 +206,9 @@ tasks.register('checkTestDriverArtifacts') {
                 || driverEntries.any { it.contains('/mc1201/Ae2CraftingTime.class') }
                 || !driverEntries.any { it.endsWith('/testdriver/TestDriverMod.class') }
                 || !driverEntries.any { it.endsWith('/META-INF/neoforge.mods.toml') }
-                || !driverMixins.mixins.contains('CraftingCPUMenuAccessor')) {
+                || !driverMixins.mixins.contains('CraftingCPUMenuAccessor')
+                || !driverMixins.client.contains('CpuTtcClientMixin')
+                || !driverMixins.client.contains('CPUSelectionListObservationMixin')) {
             throw new GradleException('Invalid isolated NeoForge test-driver artifact')
         }
     }
