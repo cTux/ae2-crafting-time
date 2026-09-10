@@ -37,6 +37,7 @@ final class CpuListTtcScenario {
     private final boolean connectedDedicated;
     private final Map<Integer, String> originalJobs = new LinkedHashMap<>();
     private final Map<Integer, String> originalTotals = new LinkedHashMap<>();
+    private final java.util.Set<Integer> secondGridKnownSerials = new java.util.LinkedHashSet<>();
     private final java.util.Set<String> captured = new java.util.HashSet<>();
     private StandardCraftFixture second;
     private CompletableFuture<Boolean> operation;
@@ -353,11 +354,16 @@ final class CpuListTtcScenario {
                 }
             }
             case SECOND_SCREEN -> {
-                if (!secondScreenReady(snapshot)) return false;
+                if (secondGridKnownSerials.isEmpty() && snapshot.scroll() != 0) {
+                    secondScreenReady(snapshot, secondGridKnownSerials);
+                    return false;
+                }
+                if (!totalsMatch(snapshot)) return false;
                 if (snapshot.cpuCards().stream().filter(card -> card.ttc() != null)
                         .anyMatch(card -> originalTotals.get(card.serial()) != null
                                 && originalTotals.get(card.serial()).equals(card.ttc().rendered())))
                     throw new IllegalStateException("second grid accepted first-grid total for an overlapping serial");
+                if (!secondScreenReady(snapshot, secondGridKnownSerials)) return false;
                 mark(checks, "second-grid");
                 screenshot.accept("cpu-list-total-ttc-second-grid.png");
                 minecraft.options.guiScale().set(1);
@@ -587,12 +593,23 @@ final class CpuListTtcScenario {
         return first.equals(second);
     }
 
-    static boolean secondScreenReady(UiSnapshot snapshot) {
+    static boolean secondScreenReady(UiSnapshot snapshot, java.util.Set<Integer> knownSerials) {
+        if (knownSerials.isEmpty() && snapshot.scroll() != 0) {
+            CpuListScrollControl.scrollTo(0);
+            return false;
+        }
+        snapshot.cpuCards().stream().filter(card -> card.ttc() != null)
+                .map(UiSnapshot.CpuCard::serial).forEach(knownSerials::add);
+        if (knownSerials.size() < 3) {
+            if (snapshot.scroll() == 0) CpuListScrollControl.scrollTo(1);
+            return false;
+        }
+        if (knownSerials.size() > 3) throw new IllegalStateException("second grid exposed more than three known totals");
         if (snapshot.scroll() != 0) {
             CpuListScrollControl.scrollTo(0);
             return false;
         }
-        return snapshot.cpuCards().stream().filter(card -> card.ttc() != null).count() == 3;
+        return true;
     }
 
     static boolean requiresJobRefresh(boolean connectedDedicated, CpuListTtcControl.ServerState state) {
