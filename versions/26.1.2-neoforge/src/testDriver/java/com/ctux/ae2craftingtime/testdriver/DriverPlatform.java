@@ -98,6 +98,14 @@ final class DriverPlatform {
         return multiplayer;
     }
 
+    static void connectInitialDedicatedServer(
+            net.minecraft.client.gui.screens.Screen parent, net.minecraft.client.multiplayer.ServerData server) {
+        var multiplayer = (net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen) parent;
+        var accessor = (com.ctux.ae2craftingtime.testdriver.mixin.JoinMultiplayerScreenAccessor) multiplayer;
+        accessor.ae2craftingtime_test_driver$setEditingServer(server);
+        accessor.ae2craftingtime_test_driver$directJoinCallback(true);
+    }
+
     static void connectServer(net.minecraft.client.Minecraft minecraft,
             net.minecraft.client.gui.screens.Screen parent, net.minecraft.client.multiplayer.ServerData server) {
         net.minecraft.client.gui.screens.ConnectScreen.startConnecting(parent,

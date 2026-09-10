@@ -81,7 +81,7 @@ public final class TestDriverRuntime implements AutoCloseable {
         }
         if (initialDedicatedParent != null) {
             if (!initialDedicatedConnectionStarted && minecraft.screen == initialDedicatedParent) {
-                DriverPlatform.connectServer(minecraft, initialDedicatedParent,
+                DriverPlatform.connectInitialDedicatedServer(initialDedicatedParent,
                         DriverPlatform.server(options.dedicatedAddress()));
                 initialDedicatedConnectionStarted = true;
             }

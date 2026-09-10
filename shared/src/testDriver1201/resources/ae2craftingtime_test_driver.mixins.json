@@ -21,6 +21,7 @@
     "ContainerScreenAccessor",
     "CraftConfirmTableRendererMixin",
     "GuiGraphicsMixin",
+    "JoinMultiplayerScreenAccessor",
     "MEStorageScreenAccessor",
     "MouseHandlerAccessor",
     "RenderSystemMixin",
