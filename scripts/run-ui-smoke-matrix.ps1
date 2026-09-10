@@ -40,6 +40,7 @@ foreach ($targetEntry in $targets) {
     $report = Join-Path $campaign "$($row.target)/$($graph.id)"
     New-Item -ItemType Directory -Path $report -Force | Out-Null
     $started = [DateTime]::UtcNow.ToString('o')
+    $live = Join-Path $root "build/ui-smoke/$($row.target)/$profile/$Scenario"
     $result = 'FAIL_SETUP'
     $message = ''
     $coverage = @()
@@ -74,7 +75,6 @@ foreach ($targetEntry in $targets) {
         if ($GuestSourceRoot) { $arguments.GuestSourceRoot = $GuestSourceRoot }
         $clientExitConfirmed = $false
         & (Join-Path $PSScriptRoot 'invoke-ui-smoke-codexvm.ps1') @arguments
-        $live = Join-Path $root "build/ui-smoke/$($row.target)/$profile/$Scenario"
         $deadline = [DateTime]::UtcNow.AddMinutes(45)
         do {
             if ([DateTime]::UtcNow -gt $deadline) {
@@ -110,6 +110,28 @@ foreach ($targetEntry in $targets) {
         if ($Latest) { $result = 'DIAGNOSTIC_FAILURE' }
         Write-Warning "$($row.target) $profile $result`: $message"
     } finally {
+        $runReport = Join-Path $report 'run'
+        if (!(Test-Path -LiteralPath $runReport) -and (Test-Path -LiteralPath (Join-Path $live 'status.json') -PathType Leaf)) {
+            try {
+                $liveStatus = Get-Content -LiteralPath (Join-Path $live 'status.json') -Raw | ConvertFrom-Json
+                $currentStatus = $liveStatus.target -ceq $row.target -and $liveStatus.profile -ceq $profile `
+                    -and $liveStatus.scenario -ceq $Scenario -and $liveStatus.startedAt `
+                    -and [DateTimeOffset]::Parse($liveStatus.startedAt) -ge [DateTimeOffset]::Parse($started)
+                if ($currentStatus) {
+                    Copy-Item -LiteralPath $live -Destination $runReport -Recurse
+                }
+            } catch {
+                Write-Warning "Could not retain failed live evidence: $($_.Exception.Message)"
+            }
+        }
+        if ($result -ne 'PASS' -and (Test-Path -LiteralPath (Join-Path $runReport 'status.json') -PathType Leaf)) {
+            $recordedStatus = Get-Content -LiteralPath (Join-Path $runReport 'status.json') -Raw | ConvertFrom-Json
+            if ($recordedStatus.phase -eq 'failed' -and $null -ne $recordedStatus.exitCode) {
+                if ($recordedStatus.message) { $message = $recordedStatus.message }
+                $result = if ($Latest) { 'DIAGNOSTIC_FAILURE' } else { 'FAIL' }
+                $clientExitConfirmed = $true
+            }
+        }
         $leaves = @(& (Join-Path $PSScriptRoot 'get-ui-smoke-results.ps1') -Target $row.target -Profile $profile -Scenarios $runCases -Evidence (Join-Path $report 'run/evidence') -ExpectedAdapters (Join-Path $report 'bundle/expected-adapters.json'))
         $groups = @()
         $catalogue = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json

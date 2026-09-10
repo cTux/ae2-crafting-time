@@ -24,7 +24,7 @@ final class CpuListTtcScenario {
             "replacement", "removed", "drop-expiry", "delayed-expiry", "close-reopen", "second-grid",
             "small-scale", "large-scale", "same-jvm-clear", "process-relaunch", "reconnect", "layout");
 
-    private enum Stage { INITIAL, SELECTED, TOOLTIP, SCROLL_DOWN, SCROLL_UP, PARTIAL, RESTORE, STALLED,
+    enum Stage { INITIAL, SELECTED, TOOLTIP, SCROLL_DOWN, SCROLL_UP, PARTIAL, RESTORE, STALLED,
         RENAME, FINISH, CANCEL, REPLACE_EMPTY, REPLACE_STARTED, REPLACE, RESTART, RESTART_CLEARED, RESTART_FRESH,
         REMOVE_SCROLL, REMOVE, DROP, DROP_EXPIRED, HOLD, HOLD_EXPIRED, HOLD_RELEASED,
         REOPEN, REOPENED, SECOND_PREPARE, SECOND_OPEN, SECOND_SCREEN, SCALE_SMALL, SCALE_LARGE,
@@ -463,12 +463,11 @@ final class CpuListTtcScenario {
                 }
             }
             case RELAUNCH_FRESH -> {
-                if (snapshot.cpuCards().stream().noneMatch(card -> card.ttc() != null) || !totalsMatch(snapshot)) return false;
-                if (observe(minecraft)) {
-                    mark(checks, "reconnect");
-                    screenshot.accept("cpu-list-total-ttc-reconnect.png");
-                    next(Stage.DONE);
-                }
+                var nextStage = afterRelaunchFreshObservation(snapshot, serverState());
+                if (nextStage != Stage.DONE) return false;
+                mark(checks, "reconnect");
+                screenshot.accept("cpu-list-total-ttc-reconnect.png");
+                next(nextStage);
             }
             case DONE -> {
                 if (connectedDedicated && !CpuListTtcControl.request("complete")) return false;
@@ -593,6 +592,11 @@ final class CpuListTtcScenario {
                 && state.cpus().stream().anyMatch(CpuListTtcControl.CpuState::busy)
                 && state.cpus().stream().filter(CpuListTtcControl.CpuState::busy)
                         .noneMatch(cpu -> cpu.seconds() != null);
+    }
+
+    static Stage afterRelaunchFreshObservation(UiSnapshot snapshot, CpuListTtcControl.ServerState state) {
+        return snapshot.cpuCards().stream().anyMatch(card -> card.ttc() != null) && totalsMatch(snapshot, state)
+                ? Stage.DONE : Stage.RELAUNCH_FRESH;
     }
 
     private static String physicalJob(CpuListTtcControl.CpuState state) {

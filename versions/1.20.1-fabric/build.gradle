@@ -154,8 +154,16 @@ tasks.register('checkTestDriverArtifacts') {
         [production: 'ae2craftingtime.refmap.json', driver: 'ae2craftingtime_test_driver.refmap.json'].each { name, refmap ->
             def artifact = name == 'production' ? production : driver
             def mappings = zipTree(artifact).matching { include refmap }.singleFile
-            if (!new groovy.json.JsonSlurper().parse(mappings).mappings) {
+            def parsedMappings = new groovy.json.JsonSlurper().parse(mappings).mappings
+            if (!parsedMappings) {
                 throw new GradleException("Missing mixin mappings in ${artifact}")
+            }
+            if (name == 'production') {
+                def cpuListMappings = parsedMappings['com/ctux/ae2craftingtime/mc1201/mixin/CPUSelectionListMixin']
+                def getCpuName = 'Lappeng/client/gui/widgets/CPUSelectionList;getCpuName(Lappeng/menu/me/crafting/CraftingStatusMenu$CraftingCpuListEntry;)Lnet/minecraft/network/chat/Component;'
+                if (!cpuListMappings?.get(getCpuName)?.endsWith('Lnet/minecraft/class_2561;')) {
+                    throw new GradleException("CPU list invocation descriptor is not remapped for Fabric: ${artifact}")
+                }
             }
         }
         def productionEntries = zipTree(production).files.collect { it.path.replace('\\', '/') }

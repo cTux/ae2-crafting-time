@@ -49,7 +49,8 @@ public abstract class CPUSelectionListMixin {
     }
 
     @WrapOperation(method = "drawBackgroundLayer", at = @At(value = "INVOKE",
-            target = "Lappeng/client/gui/widgets/CPUSelectionList;getCpuName(Lappeng/menu/me/crafting/CraftingStatusMenu$CraftingCpuListEntry;)Lnet/minecraft/network/chat/Component;"), remap = false)
+            target = "Lappeng/client/gui/widgets/CPUSelectionList;getCpuName(Lappeng/menu/me/crafting/CraftingStatusMenu$CraftingCpuListEntry;)Lnet/minecraft/network/chat/Component;",
+            remap = true), remap = false)
     private Component ae2craftingtime$drawTtc(CPUSelectionList instance,
             CraftingStatusMenu.CraftingCpuListEntry cpu, Operation<Component> original,
             @Local(argsOnly = true) GuiGraphics guiGraphics, @Local(ordinal = 0) int x,

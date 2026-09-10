@@ -306,6 +306,22 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void completedPreambleObservationAdvancesRelaunchFreshWithoutAnotherObservation() {
+        var state = new CpuListTtcControl.ServerState("network", 1, true, true, List.of(
+                new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:smooth_stone", 8,
+                        true, true, 3600L, 9, 10)));
+        var rendered = TtcText.ttc("~1:00:00").getString();
+        var card = new UiSnapshot.CpuCard(4, "CPU", "minecraft:smooth_stone", 8, 9, false,
+                null, null, null, null,
+                new UiSnapshot.ObservedText("text.ae2craftingtime.ttc", rendered, List.of(rendered), null), null);
+        var snapshot = new UiSnapshot("screen", "menu", null, 100, 100, 2, 1, 0,
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(card));
+
+        assertEquals(CpuListTtcScenario.Stage.DONE,
+                CpuListTtcScenario.afterRelaunchFreshObservation(snapshot, state));
+    }
+
+    @Test
     void connectedRelaunchUsesTheTwoProcessScenarioBudget() {
         assertEquals(40, DedicatedCpuScenario.timeoutMinutes("cpu-list-total-ttc-connected"));
         assertEquals(5, DedicatedCpuScenario.timeoutMinutes("startup-only"));
