@@ -79,18 +79,23 @@ if ($LASTEXITCODE -gt 7) { throw "Failed to stage the checkout with robocopy exi
 
 $env:JAVA_HOME = $smokeJava
 $env:Path = "$(Join-Path $smokeJava 'bin');$env:Path"
-$arguments = @{ ReportDirectory=$report; Scenario=$Scenario; Target=$Target; HeadSha=$HeadSha
-    BundleDirectory=$BundleDirectory; PreparedLaunch=$preparedLaunch; CallbackTimeoutSeconds=$CallbackTimeoutSeconds
-    CheckpointTimeoutSeconds=$CheckpointTimeoutSeconds; StartupTimeoutSeconds=$StartupTimeoutSeconds }
-if ($CasesBase64) { $arguments.CasesBase64 = $CasesBase64 }
-if ($ProjectId) { $arguments.ProjectId = @($ProjectId) }
-if ($Latest) { $arguments.Latest = $true }
-if ($Interactive) { $arguments.Interactive = $true }
-if ($ResumeBundleDirectory) { $arguments.ResumeBundleDirectory = $ResumeBundleDirectory }
-if ($CaptureResumeOnly) { $arguments.CaptureResumeOnly = $true }
-if ($Scheduled) { $arguments.ScheduledJava = $true; $arguments.InteractiveUser = $InteractiveUser }
+$arguments = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $stage 'scripts\run-ui-smoke.ps1'),
+    '-ReportDirectory', $report, '-Scenario', $Scenario, '-Target', $Target, '-HeadSha', $HeadSha,
+    '-BundleDirectory', $BundleDirectory, '-PreparedLaunch', $preparedLaunch,
+    '-CallbackTimeoutSeconds', [string]$CallbackTimeoutSeconds,
+    '-CheckpointTimeoutSeconds', [string]$CheckpointTimeoutSeconds,
+    '-StartupTimeoutSeconds', [string]$StartupTimeoutSeconds)
+if ($CasesBase64) { $arguments += @('-CasesBase64', $CasesBase64) }
+if ($ProjectId) { $arguments += @('-ProjectId') + @($ProjectId) }
+if ($Latest) { $arguments += '-Latest' }
+if ($Interactive) { $arguments += '-Interactive' }
+if ($ResumeBundleDirectory) { $arguments += @('-ResumeBundleDirectory', $ResumeBundleDirectory) }
+if ($CaptureResumeOnly) { $arguments += '-CaptureResumeOnly' }
+if ($Scheduled) { $arguments += @('-ScheduledJava', '-InteractiveUser', $InteractiveUser) }
+$innerExitCode = 0
 try {
-    & (Join-Path $stage "scripts\run-ui-smoke.ps1") @arguments
+    & powershell.exe @arguments
+    $innerExitCode = $LASTEXITCODE
 } finally {
     if (Test-Path -LiteralPath $report -PathType Container) {
         New-Item -ItemType Directory -Path $destinationReport -Force | Out-Null
@@ -98,4 +103,4 @@ try {
         if ($LASTEXITCODE -gt 7) { throw "Failed to retain CodexVM smoke report with robocopy exit $LASTEXITCODE" }
     }
 }
-exit 0
+exit $innerExitCode

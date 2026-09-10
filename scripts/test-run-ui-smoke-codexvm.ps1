@@ -13,6 +13,11 @@ param([string]$CasesBase64,[string]$BundleDirectory, [string]$PreparedLaunch, [s
 New-Item -ItemType Directory -Path $ReportDirectory -Force | Out-Null
 [ordered]@{ casesBase64=$CasesBase64; preparedLaunch=$PreparedLaunch; target=$Target; scenario=$Scenario; projectId=@($ProjectId); latest=$Latest.IsPresent; interactive=$Interactive.IsPresent; javaHome=$env:JAVA_HOME; scheduledJava=$ScheduledJava.IsPresent; interactiveUser=$InteractiveUser; localReport=$ReportDirectory; startupTimeoutSeconds=$StartupTimeoutSeconds; callbackTimeoutSeconds=$CallbackTimeoutSeconds; checkpointTimeoutSeconds=$CheckpointTimeoutSeconds; headSha=$HeadSha } |
     ConvertTo-Json | Set-Content -LiteralPath (Join-Path $ReportDirectory "wrapper-result.json") -Encoding UTF8
+if ($env:AE2CT_UI_SMOKE_TEST_INNER_EXIT) {
+    [ordered]@{ phase='failed'; exitCode=[int]$env:AE2CT_UI_SMOKE_TEST_INNER_EXIT; message='fixture failure' } |
+        ConvertTo-Json | Set-Content -LiteralPath (Join-Path $ReportDirectory 'status.json') -Encoding UTF8
+    exit ([int]$env:AE2CT_UI_SMOKE_TEST_INNER_EXIT)
+}
 '@, [Text.UTF8Encoding]::new($false))
 
 try {
@@ -106,6 +111,19 @@ try {
     if ($scheduled.startupTimeoutSeconds -ne 300 -or $scheduled.callbackTimeoutSeconds -ne 20 -or
             $scheduled.checkpointTimeoutSeconds -ne 60 -or $scheduled.headSha -ne $head) {
         throw 'CodexVM runner dropped watchdog or immutable-head parameters'
+    }
+    $previousInnerExit = $env:AE2CT_UI_SMOKE_TEST_INNER_EXIT
+    $env:AE2CT_UI_SMOKE_TEST_INNER_EXIT = '7'
+    try {
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $scripts 'run-ui-smoke-codexvm.ps1') `
+            -HeadSha $head -BundleDirectory (Join-Path $source 'bundle') -LocalRoot $stage -Scenario no-space-status
+        if ($LASTEXITCODE -ne 7) { throw "CodexVM runner changed inner exit code: $LASTEXITCODE" }
+        $failedStatus = Get-Content -LiteralPath (Join-Path $source 'build/ui-smoke/1.20.1-forge/compatible/no-space-status/status.json') -Raw | ConvertFrom-Json
+        if ($failedStatus.phase -ne 'failed' -or $failedStatus.exitCode -ne 7) {
+            throw 'CodexVM runner did not retain the failing inner report'
+        }
+    } finally {
+        $env:AE2CT_UI_SMOKE_TEST_INNER_EXIT = $previousInnerExit
     }
     Write-Host "run-ui-smoke-codexvm checks passed"
 } finally {

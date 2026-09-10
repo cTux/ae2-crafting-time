@@ -50,10 +50,15 @@ final class StandardAe2Scenario {
     private final CpuListTtcScenario cpuList;
     private final boolean connectedDedicated;
     StandardAe2Scenario(String leaf, String world, java.nio.file.Path output, boolean connectedDedicated) {
+        this(leaf, world, output, connectedDedicated, new java.util.ArrayList<>());
+    }
+    StandardAe2Scenario(String leaf, String world, java.nio.file.Path output, boolean connectedDedicated,
+            List<String> resultScreenshots) {
         if (!CHECKS.containsKey(leaf)) throw new IllegalArgumentException("Unknown standard leaf: " + leaf);
         this.leaf = leaf;
         this.connectedDedicated = connectedDedicated;
-        cpuList = leaf.equals("cpu-list-total-ttc") ? new CpuListTtcScenario(fixture, world, output, connectedDedicated) : null;
+        cpuList = leaf.equals("cpu-list-total-ttc")
+                ? new CpuListTtcScenario(fixture, world, output, connectedDedicated, resultScreenshots) : null;
         if (cpuList != null && cpuList.resumed()) phase = Stage.ACTIVE;
     }
     static boolean supports(String scenario) { return CHECKS.containsKey(scenario); }

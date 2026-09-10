@@ -61,7 +61,8 @@ final class CpuListTtcScenario {
     private volatile String authoritativeState;
     private CpuListTtcControl.ServerState partialState;
 
-    CpuListTtcScenario(StandardCraftFixture first, String world, java.nio.file.Path output, boolean connectedDedicated) {
+    CpuListTtcScenario(StandardCraftFixture first, String world, java.nio.file.Path output, boolean connectedDedicated,
+            java.util.List<String> resultScreenshots) {
         this.first = first;
         this.world = world;
         this.connectedDedicated = connectedDedicated;
@@ -82,6 +83,7 @@ final class CpuListTtcScenario {
             second = first;
             authoritativeState = continuation.serverState();
             captured.addAll(continuation.screenshots());
+            resultScreenshots.addAll(continuation.screenshots());
             CpuTtcPacketControl.holdLatest();
             stage = Stage.RELAUNCH_PREPARE;
         }

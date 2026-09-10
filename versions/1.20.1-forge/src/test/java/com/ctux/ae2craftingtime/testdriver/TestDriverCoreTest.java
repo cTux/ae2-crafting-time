@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.Executor;
@@ -265,6 +266,26 @@ class TestDriverCoreTest {
         try {
             assertTrue(new StandardAe2Scenario("cpu-list-total-ttc", world, temporary, false)
                     .checkpoint().startsWith("phase=ACTIVE "));
+        } finally {
+            System.clearProperty("ae2craftingtime.test.continuation");
+            System.clearProperty("ae2craftingtime.test.campaign");
+        }
+    }
+
+    @Test
+    void resumedCpuListMergesContinuationScreenshotsIntoTheFinalResultList() throws Exception {
+        var world = "ae2ct-" + "a".repeat(32);
+        var path = temporary.resolve("cpu-list-continuation.json");
+        CpuListContinuation.write(path, new CpuListContinuation(1, "relaunch-ready", world, "campaign-a",
+                "server-state", 1, 2, 3, List.of("same-jvm-clear"),
+                List.of("phase-1-first.png", "phase-1-last.png"), 8, 9));
+        System.setProperty("ae2craftingtime.test.continuation", path.toString());
+        System.setProperty("ae2craftingtime.test.campaign", "campaign-a");
+        try {
+            var resultScreenshots = new ArrayList<String>();
+            new StandardAe2Scenario("cpu-list-total-ttc", world, temporary, false, resultScreenshots);
+            resultScreenshots.add("phase-2.png");
+            assertEquals(List.of("phase-1-first.png", "phase-1-last.png", "phase-2.png"), resultScreenshots);
         } finally {
             System.clearProperty("ae2craftingtime.test.continuation");
             System.clearProperty("ae2craftingtime.test.campaign");
