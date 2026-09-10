@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.List;
 
 public final class TestDriverRuntime implements AutoCloseable {
+    private static final long INITIAL_DEDICATED_READY_NANOS = java.time.Duration.ofSeconds(10).toNanos();
     static long renderedFrames;
     private final Minecraft minecraft = Minecraft.getInstance();
     private CraftPlanScenario scenario;
@@ -29,6 +30,7 @@ public final class TestDriverRuntime implements AutoCloseable {
     private boolean finished;
     private boolean initialDedicatedConnectionStarted;
     private boolean initialDedicatedConnectionComplete;
+    private long initialDedicatedReadyAt;
     private int reconnectStep;
     private net.minecraft.client.multiplayer.ServerData reconnectServer;
 
@@ -134,8 +136,16 @@ public final class TestDriverRuntime implements AutoCloseable {
             initialDedicatedConnectionComplete = true;
             return false;
         }
-        if (!initialDedicatedConnectionStarted && minecraft.getOverlay() == null
-                && minecraft.screen instanceof net.minecraft.client.gui.screens.TitleScreen) {
+        boolean ready = minecraft.getOverlay() == null
+                && minecraft.screen instanceof net.minecraft.client.gui.screens.TitleScreen;
+        if (!ready) {
+            initialDedicatedReadyAt = 0;
+            return true;
+        }
+        if (initialDedicatedReadyAt == 0) {
+            initialDedicatedReadyAt = System.nanoTime();
+        } else if (!initialDedicatedConnectionStarted
+                && System.nanoTime() - initialDedicatedReadyAt >= INITIAL_DEDICATED_READY_NANOS) {
             DriverPlatform.connectServer(minecraft, DriverPlatform.server(options.dedicatedAddress()));
             initialDedicatedConnectionStarted = true;
         }
