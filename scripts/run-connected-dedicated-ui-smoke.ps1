@@ -150,6 +150,9 @@ $serverArgs | ForEach-Object { '"' + $_.Replace('\', '\\').Replace('"', '\"') + 
     Set-Content -LiteralPath $argsFile -Encoding UTF8
 $launchArguments = @("@$argsFile")
 if ($Target -ne '1.20.1-fabric') { $launchArguments += @("@libraries/$loader/win_args.txt", 'nogui') }
+$launchCommandLine = ($launchArguments | ForEach-Object {
+    '"' + ($_ -replace '(\\*)"', '$1$1\"' -replace '(\\+)$', '$1$1') + '"'
+}) -join ' '
 $planPath = Join-Path $report 'connected-runner-plan.json'
 $sourceIdentity = [ordered]@{ markerSha256=(Get-FileHash -LiteralPath $markerPath -Algorithm SHA256).Hash
     launcherSha256=(Get-FileHash -LiteralPath $launcher -Algorithm SHA256).Hash
@@ -158,7 +161,8 @@ $sourceIdentity = [ordered]@{ markerSha256=(Get-FileHash -LiteralPath $markerPat
 $runnerPlan = [ordered]@{ target=$Target; headSha=$HeadSha; campaignId=$campaignId; connectionEpoch=$connectionEpoch
     sourceServer=$sourceServer; disposableServer=$resolvedServer; java=$java
     sourceIdentity=$sourceIdentity; relaunch=[ordered]@{required=$true;minimumProcesses=2}
-    argumentFile=$argsFile; arguments=$serverArgs; launchArguments=$launchArguments; preparedLaunch=$prepared; address=$Address }
+    argumentFile=$argsFile; arguments=$serverArgs; launchArguments=$launchArguments
+    launchCommandLine=$launchCommandLine; preparedLaunch=$prepared; address=$Address }
 $runnerPlan |
     ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $planPath -Encoding UTF8
 if ($PlanOnly) { Write-Host "Connected runner plan validated: $planPath"; return }
@@ -184,7 +188,7 @@ finally { $portReservation.Stop() }
 
 $start = [Diagnostics.ProcessStartInfo]::new()
 $start.FileName = $java
-foreach ($argument in $launchArguments) { $start.ArgumentList.Add($argument) }
+$start.Arguments = $launchCommandLine
 $start.WorkingDirectory = $resolvedServer
 $start.UseShellExecute = $false
 $start.CreateNoWindow = $true

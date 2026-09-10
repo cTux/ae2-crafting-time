@@ -59,6 +59,29 @@ try {
     if ($plan.launchArguments.Count -ne 3 -or $plan.launchArguments[1] -ne '@libraries/net/minecraftforge/forge/1.20.1-47.4.10/win_args.txt') {
         throw 'Loader argument files must be separate launcher arguments, not nested in an argument file'
     }
+    $expectedCommandLine = ($plan.launchArguments | ForEach-Object {
+        '"' + ($_ -replace '(\\*)"', '$1$1\"' -replace '(\\+)$', '$1$1') + '"'
+    }) -join ' '
+    if ($plan.launchCommandLine -cne $expectedCommandLine -or $runnerText -match 'ArgumentList\.Add') {
+        throw 'Connected runner did not render a PowerShell 5.1-compatible native argument string'
+    }
+    $capture = Join-Path $temporary 'capture native arguments.ps1'
+    $captured = Join-Path $temporary 'captured native arguments.json'
+    Set-Content -LiteralPath $capture -Value @'
+param([string]$OutputPath)
+[IO.File]::WriteAllText($OutputPath, ($args | ConvertTo-Json -Compress), [Text.UTF8Encoding]::new($false))
+'@
+    $captureStart = [Diagnostics.ProcessStartInfo]::new()
+    $captureStart.FileName = 'powershell.exe'
+    $captureStart.UseShellExecute = $false
+    $captureStart.Arguments = '-NoProfile -ExecutionPolicy Bypass -File "' + $capture + '" "' + $captured + '" ' + $plan.launchCommandLine
+    $captureProcess = [Diagnostics.Process]::Start($captureStart)
+    $captureProcess.WaitForExit()
+    $capturedArguments = [object[]](Get-Content -LiteralPath $captured -Raw | ConvertFrom-Json)
+    if ($captureProcess.ExitCode -ne 0 -or (Compare-Object @($plan.launchArguments) $capturedArguments -SyncWindow 0)) {
+        throw "PowerShell 5.1 native child invocation changed arguments: $($capturedArguments -join ' | ')"
+    }
+    $captureProcess.Dispose()
     if (!(Get-Content -LiteralPath (Join-Path $plan.disposableServer 'server.properties')).Contains('server-port=25575')) {
         throw 'Custom server port was not applied'
     }
