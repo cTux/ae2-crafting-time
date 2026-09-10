@@ -191,8 +191,8 @@ final class StandardCraftFixture {
         if (activeCpuCount != cpus.size()) return false;
         var service = cpu(player).getMainNode().getGrid().getCraftingService();
         if (cpuListPlans == null) {
-            var jobs = java.util.List.of(new CpuJob(Items.SMOOTH_STONE, 4), new CpuJob(Items.SMOOTH_STONE, 8),
-                    new CpuJob(Items.SMOOTH_STONE, 12), new CpuJob(Items.GLASS, 16));
+            var jobs = java.util.List.of(new CpuJob(Items.GLASS, 4), new CpuJob(Items.SMOOTH_STONE, 8),
+                    new CpuJob(Items.SMOOTH_STONE, 12), new CpuJob(Items.SMOOTH_STONE, 16));
             var source = IActionSource.ofMachine(cpu(player));
             cpuListPlans = jobs.stream().map(job ->
                     service.beginCraftingCalculation(player.level(), () -> source,
@@ -359,7 +359,7 @@ final class StandardCraftFixture {
     long pump(ServerPlayer player, boolean fuel) {
         if (fuel && initialSamples == null) initialSamples = sampleCounts(player);
         var storage = cpu(player).getMainNode().getGrid().getStorageService().getInventory();
-        for (int offset : new int[] {4, 8}) {
+        for (int offset : cpuListScenario ? new int[] {4, 8, 12} : new int[] {4, 8}) {
             var furnace = (FurnaceBlockEntity) player.level().getBlockEntity(terminal.east(offset).below());
             if (fuel && furnace.getItem(1).isEmpty()) furnace.setItem(1, new ItemStack(Items.COAL));
             var output = furnace.getItem(2);
