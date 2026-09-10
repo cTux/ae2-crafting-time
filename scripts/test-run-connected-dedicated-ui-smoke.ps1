@@ -95,8 +95,12 @@ param([string]$OutputPath)
         throw "PowerShell 5.1 native child invocation changed arguments: $($capturedArguments -join ' | ')"
     }
     $captureProcess.Dispose()
-    if (!(Get-Content -LiteralPath (Join-Path $plan.disposableServer 'server.properties')).Contains('server-port=25575')) {
+    $serverProperties = Get-Content -LiteralPath (Join-Path $plan.disposableServer 'server.properties')
+    if (!$serverProperties.Contains('server-port=25575')) {
         throw 'Custom server port was not applied'
+    }
+    if (!$serverProperties.Contains('enforce-secure-profile=false')) {
+        throw 'Offline dedicated smoke must accept the prepared client profile'
     }
     foreach ($case in @(
         @{target='1.20.1-fabric'; java=17; loader='0.19.4'; launcher='fabric-server-launch.jar'},

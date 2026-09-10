@@ -139,7 +139,7 @@ foreach ($artifact in $artifacts) { Copy-Item -LiteralPath $artifact.path -Desti
         [ordered]@{name=$_.Name;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
     }) } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $report 'dedicated-artifacts.json') -Encoding UTF8
 Set-Content -LiteralPath (Join-Path $resolvedServer 'eula.txt') -Value 'eula=true' -Encoding Ascii
-@('level-name=ae2ct-cpu-list-connected','online-mode=false', 'server-ip=127.0.0.1', "server-port=$serverPort",
+@('level-name=ae2ct-cpu-list-connected','online-mode=false','enforce-secure-profile=false', 'server-ip=127.0.0.1', "server-port=$serverPort",
     'pause-when-empty-seconds=-1','view-distance=6','simulation-distance=6') |
     Set-Content -LiteralPath (Join-Path $resolvedServer 'server.properties') -Encoding Ascii
 
