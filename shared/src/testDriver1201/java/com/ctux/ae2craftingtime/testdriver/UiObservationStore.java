@@ -122,7 +122,7 @@ public final class UiObservationStore {
             active.cpuCards.add(new PendingCpuCard(cpu.serial(), name,
                     job == null ? null : job.what().getId().toString(), job == null ? 0 : job.amount(),
                     cpu.elapsedTimeNanos(), cpu.serial() == selectedSerial, bounds,
-                    new Rect(bounds.x() + 3, bounds.y() + 3, Math.max(0, width - 6), 9),
+                    new Rect(bounds.x() + 2, bounds.y() + 2, Math.max(0, width - 4), 10),
                     new Rect(bounds.x() + 2, bounds.y() + height - 12, Math.max(0, width - 4), 10),
                     new Rect(bounds.x() + 1, bounds.y() + height - 2, Math.max(0, width - 2), 1)));
         }
