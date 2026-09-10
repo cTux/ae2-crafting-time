@@ -353,7 +353,7 @@ final class CpuListTtcScenario {
                 }
             }
             case SECOND_SCREEN -> {
-                if (snapshot.cpuCards().stream().filter(card -> card.ttc() != null).count() != 3) return false;
+                if (!secondScreenReady(snapshot)) return false;
                 if (snapshot.cpuCards().stream().filter(card -> card.ttc() != null)
                         .anyMatch(card -> originalTotals.get(card.serial()) != null
                                 && originalTotals.get(card.serial()).equals(card.ttc().rendered())))
@@ -585,6 +585,14 @@ final class CpuListTtcScenario {
         var first = before.cpus().stream().map(CpuListTtcScenario::physicalJob).sorted().toList();
         var second = after.cpus().stream().map(CpuListTtcScenario::physicalJob).sorted().toList();
         return first.equals(second);
+    }
+
+    static boolean secondScreenReady(UiSnapshot snapshot) {
+        if (snapshot.scroll() != 0) {
+            CpuListScrollControl.scrollTo(0);
+            return false;
+        }
+        return snapshot.cpuCards().stream().filter(card -> card.ttc() != null).count() == 3;
     }
 
     static boolean requiresJobRefresh(boolean connectedDedicated, CpuListTtcControl.ServerState state) {

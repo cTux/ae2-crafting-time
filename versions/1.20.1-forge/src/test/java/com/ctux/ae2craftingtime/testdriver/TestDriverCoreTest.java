@@ -184,6 +184,28 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void secondCpuGridResetsTheExistingViewportBeforeEvaluatingVisibleCards() {
+        var scrollbar = new appeng.client.gui.widgets.Scrollbar();
+        scrollbar.setRange(0, 1, 1);
+        scrollbar.setCurrentScroll(1);
+        CpuListScrollControl.bind(scrollbar);
+        var ttc = new UiSnapshot.ObservedText("text.ae2craftingtime.ttc", "~1:00", List.of("~1:00"),
+                new Rect(0, 0, 1, 1));
+        var cards = java.util.stream.IntStream.range(0, 3)
+                .mapToObj(serial -> new UiSnapshot.CpuCard(serial, "CPU", "minecraft:stone", 1, 1, false,
+                        new Rect(0, 0, 1, 1), new Rect(0, 0, 1, 1), new Rect(0, 0, 1, 1),
+                        new Rect(0, 0, 1, 1), ttc, null))
+                .toList();
+        var scrolled = new UiSnapshot("screen", "menu", new Rect(0, 0, 1, 1), 1, 1, 1, 1, 1,
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), cards);
+        assertFalse(CpuListTtcScenario.secondScreenReady(scrolled));
+        assertEquals(0, scrollbar.getCurrentScroll());
+        var reset = new UiSnapshot("screen", "menu", new Rect(0, 0, 1, 1), 1, 1, 1, 2, 0,
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), cards);
+        assertTrue(CpuListTtcScenario.secondScreenReady(reset));
+    }
+
+    @Test
     void lifecycleGuardRejectsRecursiveTicksAndReopensAfterExit() {
         var guard = new TestDriverLifecycleGuard();
         assertTrue(guard.enter());
