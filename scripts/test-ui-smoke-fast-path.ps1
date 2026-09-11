@@ -125,8 +125,13 @@ try {
     $fabricDisconnected = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-1) `
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
         -CallbackSequence 2001 -StartedAt $now.AddSeconds(-10) -StartupTimeoutSeconds 120 `
-        -Checkpoint 'state=WORLD_READY phase=ACTIVE fixture=ready cpu-list=REJOIN_REQUEST screen=net.minecraft.class_435'
+        -Checkpoint 'state=WORLD_READY phase=ACTIVE fixture=ready cpu-list=REJOIN_REQUEST screen=net.minecraft.class_419'
     if ($fabricDisconnected -ne 'terminal-disconnect') { throw 'Fabric 1.20.1 intermediary disconnect remained live' }
+    $fabricProgress = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-1) `
+        -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
+        -CallbackSequence 2002 -StartedAt $now.AddSeconds(-10) -StartupTimeoutSeconds 120 `
+        -Checkpoint 'state=STARTING phase=PREPARE fixture=new cpu-list=INITIAL screen=net.minecraft.class_435'
+    if ($fabricProgress) { throw 'Fabric 1.20.1 ProgressScreen was misclassified as a terminal disconnect' }
     $staleDisconnect = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-1) `
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 41 `
         -CallbackSequence 2001 -StartedAt $now.AddSeconds(-10) -StartupTimeoutSeconds 120 `

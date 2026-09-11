@@ -13,7 +13,7 @@ function Get-UiSmokeProgressDecision {
         [string]$Checkpoint = ''
     )
     if ($ProcessId -gt 0 -and $ProgressProcessId -eq $ProcessId -and
-            $Checkpoint -match 'screen=(?:net\.minecraft\.client\.gui\.screens\.DisconnectedScreen|net\.minecraft\.class_435)$') {
+            $Checkpoint -match 'screen=(?:net\.minecraft\.client\.gui\.screens\.DisconnectedScreen|net\.minecraft\.class_419)$') {
         return 'terminal-disconnect'
     }
     if ($ProcessId -gt 0 -and $ProgressProcessId -ne $ProcessId) {
