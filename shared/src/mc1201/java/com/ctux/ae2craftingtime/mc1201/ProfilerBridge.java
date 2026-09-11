@@ -240,6 +240,12 @@ public final class ProfilerBridge {
                 : PROFILER.remainingJobSeconds(scope, ProfilerBridge::estimateSeconds);
     }
 
+    public static void rebindJobEstimate(Object previousScope, Object currentScope) {
+        if (isEnabled()) {
+            PROFILER.rebindJobEstimate(previousScope, currentScope);
+        }
+    }
+
     public static UUID jobOwner(appeng.api.networking.security.IActionSource source) {
         if (source == null) {
             return null;

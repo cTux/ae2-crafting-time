@@ -188,7 +188,7 @@ public final class DedicatedCpuScenario {
                     yield true;
                 }
                 case "rejoin-prepare", "relaunch-prepare" -> {
-                    refreshCpuIdentitiesForReconnect(active);
+                    active.refreshCpuIdentities(player);
                     yield active.prepare(player, origin);
                 }
                 case "reconnect" -> true;

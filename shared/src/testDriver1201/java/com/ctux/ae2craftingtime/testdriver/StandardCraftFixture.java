@@ -44,6 +44,19 @@ final class StandardCraftFixture {
 
     void bindTerminal(BlockPos value) { terminal = value; }
     void refreshCpuIdentities() { cpuListIdentities = null; }
+    void refreshCpuIdentities(ServerPlayer player) {
+        var previous = cpuListIdentities;
+        cpuListIdentities = null;
+        var current = cpuListCpus(player);
+        if (previous != null) {
+            for (var currentCpu : current) {
+                previous.stream().filter(oldCpu -> oldCpu.getBlockPos().equals(currentCpu.getBlockPos()))
+                        .findFirst().ifPresent(oldCpu -> ProfilerBridge.rebindJobEstimate(
+                                oldCpu.getCluster(), currentCpu.getCluster()));
+            }
+        }
+        cpuListIdentities = current;
+    }
 
     boolean prepare(ServerPlayer player, FixtureMarker marker) {
         var level = player.serverLevel();

@@ -30,6 +30,22 @@ class CraftProfilerTest {
     }
 
     @Test
+    void jobEstimateFollowsAReplacementCpuScope() {
+        var profiler = new CraftProfiler(10);
+        var previousCpu = new Object();
+        var currentCpu = new Object();
+        var output = new ProfileKey("test:output");
+        profiler.setJobEstimate(previousCpu,
+                new CraftingJobEstimate(output, Map.of(output, 12L), Map.of()));
+
+        profiler.rebindJobEstimate(previousCpu, currentCpu);
+
+        assertFalse(profiler.remainingJobSeconds(previousCpu, (key, amount) -> OptionalLong.of(amount)).isPresent());
+        assertEquals(12, profiler.remainingJobSeconds(currentCpu,
+                (key, amount) -> OptionalLong.of(amount)).orElseThrow());
+    }
+
+    @Test
     void rejectsInvalidConfiguration() {
         assertThrows(IllegalArgumentException.class, () -> new CraftProfiler(0));
         assertThrows(IllegalArgumentException.class, () -> new CraftProfiler(1, 0.5));
