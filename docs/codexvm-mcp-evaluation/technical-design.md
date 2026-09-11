@@ -27,7 +27,7 @@ The password fallback in the dispatcher imports an encrypted credential and
 passes its plaintext value to `vmrun -gp`. Do not use that fallback in this
 evaluation. One-time [`prepare-codexvm-ui-smoke.ps1`](../../scripts/prepare-codexvm-ui-smoke.ps1)
 creates credentials and a temporary provisioning file; it must not be rerun
-when existing SSH already works. No caller or script needs modification.
+when existing SSH already works. No transport caller or script needs modification.
 
 ## Reviewed sources and rejection
 
@@ -120,5 +120,48 @@ than inventing manual GUI tasks. No MCP runtime performance is measured.
 
 Follow [dev-client.md](../dev-client.md), the prepared-client skill and
 [evidence contract](../ui-smoke-evidence.md) for the clean Forge smoke. The
-implementation only adds final evaluation documentation and links, so no
-production version/loader matrix or test-driver behavior changes are required.
+evaluation adds documentation and the bounded driver prerequisite below; no
+production behavior or version/loader matrix changes are required. The driver-only readiness correction is defined below.
+
+## Proven readiness blocker and bounded correction
+
+At verification SHA `2c8b196fa3b3c8d56bb6f52c932abe98b03bca33`, both retained
+Forge logs place the joining player near `(1.9,84,42)`. The fixture marker points
+to terminal `(-13,-59,5)`, face `SOUTH`. Read-only Anvil/NBT inspection of the
+tracked Forge source region `r.-1.0.mca`, chunk `(-1,0)`, confirms that exact
+block is `ae2:cable_bus`; its block entity contains a `south` part with
+`id=ae2:crafting_terminal` and an `ae2:fluix_smart_cable`. The terminal is not
+merely an assumed marker coordinate. Saved NBT does not prove the copied live
+grid is active; the post-fix GUI smoke must establish that boundary.
+
+Shared `CraftPlanScenario.start()` verifies the disposable world and marker,
+but Forge `DriverPlatform.baseFixture()` returns null. No fixture setup moves
+the player for `craft-plan`. `openTerminal()` sends `useItemOn` against the
+faraway terminal and permanently sets `terminalOpenRequested`. Subsequent ticks
+cannot retry before the 30-second `WORLD_READY` timeout. This establishes the
+missing reach prerequisite; it does not prove positioning alone cures every
+possible grid or menu problem.
+
+Reuse the server-submit/retained-future pattern in shared `AddonCpuFixture.setup`
+for the plain block-terminal path. Prefer a small reusable readiness operation
+with covered pending/completed/failed transitions over duplicated loader fixes.
+Position beside the terminal using its interaction face, not a fixed offset
+that puts a SOUTH terminal behind its cable. Wait for the client to observe a
+reachable position and loaded terminal before committing the one-shot use.
+Missing player/terminal or failed positioning must produce an actionable bounded
+failure. Preserve the normal menu-open observation as the success condition.
+
+Place this gate only on the shared block-terminal interaction route; specialized
+standard/status flows, requester/analyser routes, wireless fixtures that
+intentionally move beyond normal range, and connected-dedicated setup must keep
+their current ownership. Existing base/addon positioning should not be repeated
+or overridden when the player already satisfies reach. Do not rebuild the grid,
+change its stored player data or move a real user's player outside the validated
+disposable test world.
+
+The shared `CraftPlanScenario` is consumed by Forge 1.20.1, Fabric 1.20.1 and
+NeoForge 1.21.1. The 26.1.2 module excludes that source file and supplies its own
+scenario with native base-fixture positioning. Do not port an unproven fix to
+that separate implementation. If a new common helper is compiled there, verify
+compilation without changing the native behavior. The behavioral change is
+confined to development-driver artifacts, never production JARs.
