@@ -106,7 +106,7 @@ and every failed attempt, with missing values explicitly `not measured`.
 Before the documentation commit, self-review links, facts, criterion coverage
 and the diff. Do not run tests until the hook-created PR exists. Afterward,
 check Markdown links/format and the repository's applicable CI; no new test
-framework or production test suite is justified for these docs-only changes.
+framework is justified. The readiness amendment below requires focused behavioral tests and unchanged coverage gates.
 
 ## Disabled future example and rollback
 
@@ -137,8 +137,56 @@ and remove only its recorded files. Preserve SSH, credentials and localhost VNC.
 
 ## Completion
 
-All VM-01 through VM-06 evidence must be present. Blocked/unmeasured cells stay
+All VM-01 through VM-07 evidence must be present. Blocked/unmeasured cells stay
 explicit; no speed comparison or working MCP setup is claimed. The documented
 no-adoption decision plus measured existing paths and real smoke fulfills this
 safety-gated evaluation. An unperformed baseline benchmark or failed/unperformed
 smoke remains a blocker to issue completion.
+
+## Readiness restoration before the next smoke
+
+Merge this three-document scope amendment before changing executable behavior.
+Keep the completed baseline measurements; correct estimated phase durations to
+`not measured` rather than treating them as timing receipts. The next runtime
+commit is a test-driver prerequisite, not a VMware/MCP integration.
+
+1. Recheck shared `CraftPlanScenario`, `AddonCpuFixture`, all three consuming
+   `DriverPlatform` implementations and the separate 26.1.2 implementation.
+   Introduce the smallest retained asynchronous readiness operation used by the
+   shared block-terminal route. Preserve all existing specialized early routes.
+2. Add a behavioral regression at the existing driver test boundary. A controlled
+   executor/future must prove: an initially distant player schedules one move;
+   repeated pending ticks neither resubmit nor interact; completed server work
+   alone does not interact until client reach/terminal readiness is observed;
+   readiness then permits exactly one interaction; already-reachable state does
+   not move unnecessarily; missing player/terminal and exceptional completion
+   fail without interaction. Cover relevant face/position boundaries as well.
+   A coordinate formula test alone does not prove the broken state transition.
+3. Keep Minecraft calls as thin owning-thread adapters and give new decisions
+   100% line/branch coverage using the repository's existing shared/driver test
+   homes and unchanged gates. Extend `TestDriverCoreTest` where appropriate;
+   inspect `scripts/test-driver.gradle` for its coverage task/class selection.
+   Do not hide new driver logic outside the coverage set or add a framework.
+4. After the updated implementation PR exists, run focused regression tests and
+   required coverage, then compile the driver for Forge 1.20.1, Fabric 1.20.1
+   and NeoForge 1.21.1 (plus any newly compiled common-helper consumer). Review
+   changed-target plan selection; an automatically broader plan is evidence to
+   assess, not a reason to silently skip an affected consumer.
+5. Run the original clean Forge compatible `craft-plan` smoke first. Its retained
+   distant saved spawn is the real regression input. Capture terminal presence,
+   player readiness and the normal plan GUI checkpoints, archive/visual gate and
+   exact-client exit at the new SHA. If this fails, inspect the new boundary
+   evidence before another launch; do not repeatedly teleport or increase timeouts.
+6. Because shared readiness has existing-base-fixture consumers, also run one
+   focused Fabric 1.20.1 compatible `craft-plan` smoke after Forge passes. This
+   checks that native base positioning is preserved. Compile and regression
+   coverage cover NeoForge 1.21.1's same shared gate; no separate 26.1.2 scenario
+   smoke is required without changing its implementation. Use the existing
+   matrix command with `-Target 1.20.1-fabric -Scenario craft-plan` and a separate
+   archive destination, sequentially, with the same visual/exit criteria.
+
+Allow one clean launch per selected target initially, using the existing bounded
+startup/progress checks and 45-minute per-campaign ceiling. Keep both original
+failed attempts and their SHA unchanged. VM-07 passes only with behavioral
+regression coverage and real UI proof; a successful positioning callback alone
+cannot satisfy VM-06 or close the issue.

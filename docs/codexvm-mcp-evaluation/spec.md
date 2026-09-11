@@ -12,7 +12,8 @@ Rejecting a candidate before execution is a valid safety outcome, not a successf
 MCP benchmark. No comparative speed claim follows from that rejection.
 
 This work changes documentation and a short prepared-client skill reference.
-It does not change Minecraft code, loaders, smoke execution, credentials, VM
+A verified smoke blocker also permits the bounded test-driver-only readiness
+restoration below. It does not change production Minecraft behavior, loaders, credentials, VM
 configuration or installed dependencies. Do not create a replacement MCP server,
 third-party patch, test shim or benchmark framework. Do not reboot or stop the VM
 for measurements, or disrupt an active client.
@@ -64,3 +65,20 @@ for measurements, or disrupt an active client.
 Benchmarks and smoke are pending until their actual artifacts exist. A source
 review alone does not complete this issue. See the
 [design](technical-design.md) and [implementation plan](implementation-plan.md).
+
+## Verified smoke prerequisite amendment
+
+Two clean-input Forge attempts at `2c8b196fa3b3c8d56bb6f52c932abe98b03bca33`
+failed at `WORLD_READY`. **VM-07:** Before the shared scenario sends its one-shot
+block-terminal interaction, establish the marked disposable world's terminal
+and a reachable player position. Queue positioning on the integrated-server
+thread once, retain the pending operation across ticks, and wait for completion
+and client-side reach/readiness before interaction. Failure must remain bounded
+and diagnostic; do not mark a successful teleport as a successful terminal GUI.
+
+This exception permits only the smallest shared test-driver readiness correction
+and its behavioral regression coverage. Preserve existing custom fixture,
+wireless-range and connected-dedicated behavior; do not rewrite the saved world
+or relax assertions, coverage, timeouts, source-fixture protections or visual
+proof. VM-01 through VM-06 and no MCP adoption remain unchanged. Real Forge smoke
+must pass after the fix; the two failed attempts remain failed evidence.
