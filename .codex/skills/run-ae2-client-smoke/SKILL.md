@@ -7,7 +7,7 @@ description: Run prepared AE2 Crafting Time repository clients or automated UI s
 
 Keep CodexVM on the existing key-based SSH, `vmrun`, and localhost VNC paths.
 The [VMware MCP evaluation](../../../docs/codexvm-mcp-evaluation/results.md)
-records the rejected candidates, pending measurements, and rollback boundary.
+records the rejected candidates, measured existing-path baseline, and rollback boundary.
 
 Treat the GitHub issue list as the source of truth. Find the matching issue
 before starting a smoke-test task, or create one when none exists. Remove
