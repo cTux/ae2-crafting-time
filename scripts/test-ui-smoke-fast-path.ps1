@@ -122,6 +122,11 @@ try {
         -CallbackSequence 2001 -StartedAt $now.AddSeconds(-10) -StartupTimeoutSeconds 120 `
         -Checkpoint 'state=WORLD_READY phase=ACTIVE fixture=ready cpu-list=REJOIN_REQUEST screen=net.minecraft.client.gui.screens.DisconnectedScreen'
     if ($disconnected -ne 'terminal-disconnect') { throw 'Fresh callbacks kept a terminal disconnect alive' }
+    $fabricDisconnected = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-1) `
+        -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
+        -CallbackSequence 2001 -StartedAt $now.AddSeconds(-10) -StartupTimeoutSeconds 120 `
+        -Checkpoint 'state=WORLD_READY phase=ACTIVE fixture=ready cpu-list=REJOIN_REQUEST screen=net.minecraft.class_435'
+    if ($fabricDisconnected -ne 'terminal-disconnect') { throw 'Fabric 1.20.1 intermediary disconnect remained live' }
     $staleDisconnect = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-1) `
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 41 `
         -CallbackSequence 2001 -StartedAt $now.AddSeconds(-10) -StartupTimeoutSeconds 120 `

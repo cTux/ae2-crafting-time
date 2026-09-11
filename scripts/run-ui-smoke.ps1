@@ -359,7 +359,7 @@ try {
                         } catch { }
                     }
                     if ($FailOnInitialDisconnect -and $phase -eq 1 -and $progressPid -eq $process.Id -and
-                            $checkpoint -match '^state=STARTING .* screen=net\.minecraft\.client\.gui\.screens\.DisconnectedScreen$') {
+                            $checkpoint -match '^state=STARTING .* screen=(?:net\.minecraft\.client\.gui\.screens\.DisconnectedScreen|net\.minecraft\.class_435)$') {
                         $watchdogReason = 'initial-disconnect'
                         break
                     }
