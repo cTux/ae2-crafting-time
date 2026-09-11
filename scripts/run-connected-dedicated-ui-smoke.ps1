@@ -259,7 +259,7 @@ try {
         $startupDisconnect = $null -ne $clientError -and $status.phase -eq 'failed' -and
             $processes.Count -eq 1 -and $processes[0].phase -eq 1 -and
             $progress.pid -eq $processes[0].pid -and
-            $progress.checkpoint -match '^state=STARTING .* screen=net\.minecraft\.client\.gui\.screens\.DisconnectedScreen$' -and
+            $status.message -eq 'UI-smoke phase 1 watchdog: initial-disconnect' -and
             !(Test-Path -LiteralPath (Join-Path $attemptReport 'evidence/result.json')) -and
             !(Test-Path -LiteralPath (Join-Path $attemptReport 'evidence/relaunch-evidence.json'))
         $processAlive = $processes.Count -and $null -ne (Get-Process -Id $processes[0].pid -ErrorAction SilentlyContinue)
