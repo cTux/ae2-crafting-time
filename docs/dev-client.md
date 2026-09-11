@@ -1,5 +1,8 @@
 # Running a Development Client
 
+For the reviewed VMware MCP options and why CodexVM keeps its existing SSH,
+`vmrun`, and VNC paths, see the [CodexVM VMware MCP evaluation](codexvm-mcp-evaluation/results.md).
+
 ## Unattended evidence results
 
 Known smoke scenarios run without controller decisions between actions. The
