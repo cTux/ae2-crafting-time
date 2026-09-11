@@ -5,6 +5,10 @@ description: Run prepared AE2 Crafting Time repository clients or automated UI s
 
 # Smoke-Test Prepared AE2 Clients
 
+Keep CodexVM on the existing key-based SSH, `vmrun`, and localhost VNC paths.
+The [VMware MCP evaluation](../../../docs/codexvm-mcp-evaluation/results.md)
+records the rejected candidates, measured existing-path baseline, and rollback boundary.
+
 Treat the GitHub issue list as the source of truth. Find the matching issue
 before starting a smoke-test task, or create one when none exists. Remove
 secrets, personal data, private paths, and private server details before

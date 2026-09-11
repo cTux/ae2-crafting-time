@@ -276,3 +276,38 @@ sourceSets.testDriver.java.srcDir '../../shared/src/testDriverAddons/java'
 tasks.named('testDriverUnmappedJar') {
     manifest.attributes 'MixinConfigs': 'ae2craftingtime_test_driver.mixins.json,ae2craftingtime_test_driver_neoeco.mixins.json'
 }
+
+def coveredTestDriverClasses = sourceSets.testDriver.output.classesDirs.asFileTree.matching {
+    include 'com/ctux/ae2craftingtime/testdriver/CraftPlanScenario$BlockTerminalReadiness.class'
+    include 'com/ctux/ae2craftingtime/testdriver/SortObservation.class'
+}
+tasks.named('jacocoTestReport', JacocoReport).configure {
+    classDirectories.from(coveredTestDriverClasses)
+}
+tasks.named('jacocoTestCoverageVerification', JacocoCoverageVerification).configure {
+    classDirectories.from(coveredTestDriverClasses)
+    violationRules.rule {
+        element = 'CLASS'
+        includes = ['com.ctux.ae2craftingtime.testdriver.CraftPlanScenario$BlockTerminalReadiness']
+        limit {
+            counter = 'LINE'
+            minimum = 1.0
+        }
+        limit {
+            counter = 'BRANCH'
+            minimum = 1.0
+        }
+    }
+    violationRules.rule {
+        element = 'CLASS'
+        includes = ['com.ctux.ae2craftingtime.testdriver.SortObservation']
+        limit {
+            counter = 'LINE'
+            minimum = 1.0
+        }
+        limit {
+            counter = 'BRANCH'
+            minimum = 1.0
+        }
+    }
+}

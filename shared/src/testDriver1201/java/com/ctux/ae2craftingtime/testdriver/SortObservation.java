@@ -5,6 +5,22 @@ import java.util.HashSet;
 import java.util.List;
 
 public final class SortObservation {
+    public static List<String> sortableIds(List<UiSnapshot.Row> rows) {
+        return rows.stream().filter(row -> row.craftAmount() > 0).map(UiSnapshot.Row::outputId).toList();
+    }
+
+    public static boolean missingFirst(List<UiSnapshot.Row> rows) {
+        var foundNonMissing = false;
+        for (var row : rows) {
+            if (row.missingAmount() > 0) {
+                if (foundNonMissing) return false;
+            } else {
+                foundNonMissing = true;
+            }
+        }
+        return true;
+    }
+
     public static boolean valid(List<String> ae2Order, List<String> ascending, List<String> descending,
             List<String> ascendingKnown, List<String> descendingKnown) {
         if (ae2Order.isEmpty() || ascendingKnown.isEmpty() || ascending.size() != descending.size()
