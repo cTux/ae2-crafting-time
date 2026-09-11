@@ -36,6 +36,47 @@ function Assert-UiSmokeJavaPhaseIdentities {
     }
 }
 
+function Write-UiSmokeRelaunchEvidence {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$CampaignId,
+        [Parameter(Mandatory)][string]$Target,
+        [Parameter(Mandatory)][string]$Profile,
+        [Parameter(Mandatory)][string]$Scenario,
+        [Parameter(Mandatory)][string]$World,
+        [AllowNull()][string]$ConnectionEpoch,
+        [Parameter(Mandatory)][string]$PredecessorCheckpointSha256,
+        [Parameter(Mandatory)][object[]]$Processes,
+        [Parameter(Mandatory)][object[]]$Artifacts,
+        [AllowNull()][string]$DependencyMode,
+        [AllowNull()][string]$DependencyCatalogueSha256,
+        [Parameter(Mandatory)][string]$ControlStatePath,
+        [switch]$ResumeOnly,
+        [switch]$FinalApproval,
+        [int]$MaxControlStateBytes = 65536
+    )
+    $controlFile = Get-Item -LiteralPath $ControlStatePath
+    if ($controlFile.Length -gt $MaxControlStateBytes) {
+        throw "UI-smoke control state exceeds $MaxControlStateBytes bytes"
+    }
+    $controlState = @([IO.File]::ReadAllLines($controlFile.FullName))
+    $processEvidence = @($Processes | ForEach-Object {
+        [ordered]@{ phase=[int]$_.phase; pid=[int]$_.pid; startedAt=[string]$_.startedAt
+            stdout=[string]$_.stdout; stderr=[string]$_.stderr; taskName=[string]$_.taskName
+            executable=[string]$_.executable; argumentFile=[string]$_.argumentFile
+            exitCode=[int]$_.exitCode; exitedAt=[string]$_.exitedAt }
+    })
+    $artifactEvidence = @($Artifacts | ForEach-Object {
+        [ordered]@{ name=[string]$_.name; sha256=[string]$_.sha256 }
+    })
+    $payload = [ordered]@{ schema=1; campaignId=$CampaignId; target=$Target; profile=$Profile; scenario=$Scenario
+        world=$World; connectionEpoch=$ConnectionEpoch; predecessorCheckpointSha256=$PredecessorCheckpointSha256
+        processes=$processEvidence; artifacts=$artifactEvidence; dependencyMode=$DependencyMode
+        dependencyCatalogueSha256=$DependencyCatalogueSha256; resumeOnly=[bool]$ResumeOnly
+        finalApproval=[bool]$FinalApproval; launchCount=$processEvidence.Count; controlState=$controlState }
+    [IO.File]::WriteAllText($Path, ($payload | ConvertTo-Json -Depth 5), [Text.UTF8Encoding]::new($false))
+}
+
 function Start-UiSmokeScheduledJava {
     param(
         [Parameter(Mandatory)][string]$Executable,

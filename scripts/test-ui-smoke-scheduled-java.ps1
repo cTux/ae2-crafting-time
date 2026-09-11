@@ -16,6 +16,44 @@ $processes = @(
     [pscustomobject]@{phase=2;pid=11;startedAt='2026-09-10T00:02:00Z';exitCode=0;exitedAt='2026-09-10T00:03:00Z'}
 )
 Assert-UiSmokeJavaPhaseIdentities -Processes $processes -ExpectedPhases $full -FinalApproval
+
+$temp = Join-Path ([IO.Path]::GetTempPath()) ('ae2ct-relaunch-evidence-' + [guid]::NewGuid().ToString('N'))
+New-Item -ItemType Directory -Path $temp -Force | Out-Null
+try {
+    $control = Join-Path $temp 'state.properties'
+    [IO.File]::WriteAllLines($control, @('schema=1', 'state=DONE'), [Text.UTF8Encoding]::new($false))
+    $runtimeProcesses = @($processes | ForEach-Object {
+        [pscustomobject]@{ phase=$_.phase; pid=$_.pid; startedAt=$_.startedAt; stdout='stdout'; stderr='stderr'
+            taskName='task'; executable='java.exe'; argumentFile='args'; exitCode=$_.exitCode; exitedAt=$_.exitedAt
+            runtimeObject=(Get-Item -LiteralPath $control) }
+    })
+    $output = Join-Path $temp 'relaunch-evidence.json'
+    $watch = [Diagnostics.Stopwatch]::StartNew()
+    Write-UiSmokeRelaunchEvidence -Path $output -CampaignId campaign -Target '1.20.1-forge' `
+        -Profile compatible -Scenario cpu-list-total-ttc -World world -ConnectionEpoch campaign `
+        -PredecessorCheckpointSha256 ('a' * 64) -Processes $runtimeProcesses `
+        -Artifacts @([pscustomobject]@{name='mod.jar';sha256=('b' * 64);runtimeObject=(Get-Item $control)}) `
+        -DependencyMode base -DependencyCatalogueSha256 ('c' * 64) -ControlStatePath $control -FinalApproval
+    $watch.Stop()
+    $written = Get-Content -LiteralPath $output -Raw | ConvertFrom-Json
+    if ($watch.Elapsed.TotalSeconds -ge 2 -or $written.schema -ne 1 -or $written.launchCount -ne 2 -or
+            @($written.controlState).Count -ne 2 -or $written.processes[0].psobject.Properties.Name -contains 'runtimeObject' -or
+            $written.artifacts[0].psobject.Properties.Name -contains 'runtimeObject') {
+        throw 'Relaunch evidence did not remain bounded and primitive'
+    }
+    [IO.File]::WriteAllText($control, ('x' * 65537), [Text.UTF8Encoding]::new($false))
+    try {
+        Write-UiSmokeRelaunchEvidence -Path $output -CampaignId campaign -Target '1.20.1-forge' `
+            -Profile compatible -Scenario cpu-list-total-ttc -World world -PredecessorCheckpointSha256 ('a' * 64) `
+            -Processes $runtimeProcesses -Artifacts @([pscustomobject]@{name='mod.jar';sha256=('b' * 64)}) `
+            -ControlStatePath $control -FinalApproval
+        throw 'Oversized control state was accepted'
+    } catch {
+        if ($_.Exception.Message -notlike 'UI-smoke control state exceeds *') { throw }
+    }
+} finally {
+    Remove-Item -LiteralPath $temp -Recurse -Force
+}
 try {
     Assert-UiSmokeJavaPhaseIdentities -Processes @($processes[1]) -ExpectedPhases $resume -FinalApproval
     throw 'Resume-only phase was accepted for final approval'

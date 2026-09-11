@@ -436,17 +436,17 @@ try {
             }
             $artifactHashes = if ($BundleDirectory) { @(Get-ChildItem -LiteralPath (Join-Path $BundleDirectory 'mods') -File -Filter '*.jar' |
                 Sort-Object Name | ForEach-Object { [ordered]@{name=$_.Name;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} }) } else { @() }
-            $controlState = if ($ControlDirectory -and (Test-Path -LiteralPath (Join-Path $ControlDirectory 'state.properties'))) {
-                Get-Content -LiteralPath (Join-Path $ControlDirectory 'state.properties')
-            } else { @() }
-            [ordered]@{ schema=1; campaignId=$campaignId; target=$Target; profile=$profile; scenario=$Scenario
-                world=$world; connectionEpoch=$(if($DedicatedAddress){$campaignId}else{$null})
-                predecessorCheckpointSha256=$predecessorHash; processes=@($processes); artifacts=$artifactHashes
-                dependencyMode=$(if($dependencyIdentity){$dependencyIdentity.mode}else{$null})
-                dependencyCatalogueSha256=$(if($dependencyIdentity){$dependencyIdentity.catalogueSha256}else{$null})
-                resumeOnly=[bool]$resumeState; finalApproval=(-not [bool]$resumeState); launchCount=$processes.Count
-                controlState=@($controlState) } | ConvertTo-Json -Depth 8 |
-                Set-Content -LiteralPath (Join-Path $evidence 'relaunch-evidence.json') -Encoding UTF8
+            $controlStatePath = if ($ControlDirectory) { Join-Path $ControlDirectory 'state.properties' } else { $null }
+            if (!$controlStatePath -or !(Test-Path -LiteralPath $controlStatePath -PathType Leaf)) {
+                throw 'Relaunch evidence requires the connected control state'
+            }
+            Write-UiSmokeRelaunchEvidence -Path (Join-Path $evidence 'relaunch-evidence.json') `
+                -CampaignId $campaignId -Target $Target -Profile $profile -Scenario $Scenario -World $world `
+                -ConnectionEpoch $(if($DedicatedAddress){$campaignId}else{$null}) `
+                -PredecessorCheckpointSha256 $predecessorHash -Processes @($processes) -Artifacts $artifactHashes `
+                -DependencyMode $(if($dependencyIdentity){$dependencyIdentity.mode}else{$null}) `
+                -DependencyCatalogueSha256 $(if($dependencyIdentity){$dependencyIdentity.catalogueSha256}else{$null}) `
+                -ControlStatePath $controlStatePath -ResumeOnly:([bool]$resumeState) -FinalApproval:(-not [bool]$resumeState)
         }
 
     $caseScenarios = @($Scenario)
