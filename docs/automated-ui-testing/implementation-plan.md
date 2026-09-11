@@ -1,5 +1,29 @@
 # Automated UI Testing Implementation Plan
 
+## Minecraft MCP research delivery
+
+Complete [#382](https://github.com/cTux/ae2-crafting-time/issues/382) as docs-only
+work under [the research scope](spec.md#minecraft-mcp-research) and
+[design](technical-design.md#minecraft-mcp-research-design):
+
+1. Record dated primary sources for candidate capabilities, releases, supported
+   loaders/versions, licenses, maintenance and security boundaries. Check all
+   four prepared targets explicitly; artifact availability is not a smoke pass.
+2. Write the short `minecraft-mcp-research.md` comparison and recommendation.
+   Cover the required UI/lifecycle actions, existing driver and endpoint ownership,
+   unsupported or unverified claims, bounded savings and implementation risks.
+3. Describe a conditional minimal proof-of-concept only when evidence justifies
+   one. Identify prerequisite connection/runtime qualification and the separate
+   follow-up issue needed before implementation; do not install, launch or benchmark.
+4. After the documentation commit's hook-created PR exists, check whitespace and
+   Markdown links/anchors, then review the note against every research criterion
+   and its primary sources. Report GitHub CI separately. No local Minecraft or
+   runtime tests are needed for this documentation-only change.
+
+Done means the source-linked note satisfies the research scope, including an
+honest recommendation or no-go and explicit unmeasured savings. It does not mean
+an MCP has been adopted or the existing smoke policy has changed.
+
 ## One loaded world follow-up for #347
 
 The user requested one client and one loaded world on 2026-09-08. This supersedes

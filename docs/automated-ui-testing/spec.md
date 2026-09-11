@@ -1,5 +1,27 @@
 # Automated UI Testing Spec
 
+## Minecraft MCP research
+
+[#382](https://github.com/cTux/ae2-crafting-time/issues/382) adds a short
+`minecraft-mcp-research.md` note in this directory. It evaluates whether MCP can
+reduce prepared-client smoke coordination; it does not change the smoke pipeline.
+
+- Check every candidate claim against dated primary documentation or source.
+  Include Numen, MCP Bridge/MCP Forge, Mineflayer servers and relevant alternatives;
+  compare control model, installation, transport, license, maintenance and trust.
+- Evaluate 1.20.1 Forge, 1.20.1 Fabric, 1.21.1 NeoForge and 26.1.2 NeoForge
+  separately. Distinguish published support, unsupported targets and unverified
+  runtime compatibility.
+- Check client launch/attachment, fixture loading, screen navigation/input,
+  visible state, screenshots, logs/game state and structured results. World or
+  companion control alone does not prove interaction with the player's real GUI.
+- Give an evidence-backed recommendation that preserves the existing driver's
+  scenario, fixture, assertion and evidence ownership. Identify the smallest
+  useful integration seam and a conditional proof-of-concept only if justified.
+- Install no MCP into prepared clients. This issue performs no runtime experiment
+  or benchmark; clearly bound expected savings, state what is unmeasured, and
+  identify risks and follow-up work requiring a separate implementation issue.
+
 ## Unattended evidence gate
 
 Extension researched 2026-09-08 for

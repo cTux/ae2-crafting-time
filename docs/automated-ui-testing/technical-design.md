@@ -1,5 +1,31 @@
 # Automated UI Testing Technical Design
 
+## Minecraft MCP research design
+
+For [#382](https://github.com/cTux/ae2-crafting-time/issues/382), compare candidates
+against the existing flow at `eebd492ba74d6f5f3a28d590e0a644a85b1c8bb0`:
+[matrix runner](../../scripts/run-ui-smoke-matrix.ps1) → prepared guest launch →
+[driver runtime](../../shared/src/testDriver1201/java/com/ctux/ae2craftingtime/testdriver/TestDriverRuntime.java)
+→ result validation and evidence archive. The runner owns selection and process
+lifecycle; the driver owns world readiness, deterministic actions and assertions.
+
+Inspect the existing [interactive endpoint](../../shared/src/testDriver1201/java/com/ctux/ae2craftingtime/testdriver/InteractiveMcpServer.java)
+and its [26.1.2 implementation](../../versions/26.1.2-neoforge/src/testDriver/java/com/ctux/ae2craftingtime/testdriver/InteractiveMcpServer.java)
+before proposing another bridge. They expose state, screen, UI snapshot,
+screenshot, logs and quit tools, not arbitrary clicks or fixture loading. Keep
+their interactive-only, authenticated loopback boundary separate from normal
+campaign execution. Guest loopback access needs a guest-local client or a
+separately qualified connection; source inspection does not prove runtime access.
+
+The research note must link candidate version/artifact and capability evidence,
+including exact source revisions where available. Separate client GUI tools from
+server commands and bot inventories; check network binding and authentication
+against source when available. Compare determinism, failure diagnosis, runtime
+and maintenance cost across all four targets. Missing source or runtime evidence
+stays explicit. Any future facade should reuse runner inputs/results without
+duplicating scenario logic or weakening fixture, cleanup and evidence checks.
+No endpoint, launcher, dependency or security-policy change belongs to this issue.
+
 ## Unattended evidence gate design
 
 Implemented in [PR #349](https://github.com/cTux/ae2-crafting-time/pull/349) for
