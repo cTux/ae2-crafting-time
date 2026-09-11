@@ -64,6 +64,10 @@ try {
     if ($resumeValidationIndex -lt 0 -or $scheduledLaunchIndex -lt 0 -or $resumeValidationIndex -gt $scheduledLaunchIndex) {
         throw 'Resume compatibility validation does not precede scheduled Java launch'
     }
+    if (!$runnerText.Contains('$deadline = [DateTime]::UtcNow.Add($timeout)') -or
+            !$runnerText.Contains('while ([DateTime]::UtcNow -lt $deadline)')) {
+        throw 'The UI-smoke phase no longer has a bounded absolute deadline'
+    }
     Add-Content -LiteralPath (Join-Path $resume 'evidence/cpu-list-continuation.json') -Value 'tampered'
     try {
         & (Join-Path $PSScriptRoot 'prepare-ui-smoke-resume.ps1') -Mode Restore -ResumeDirectory $resume `
@@ -108,11 +112,11 @@ try {
         -CallbackSequence 2000 -StartedAt $now.AddSeconds(-121) -StartupTimeoutSeconds 120 `
         -Checkpoint 'state=WORLD_READY phase=PREPARE fixture=placing cpu-list=INITIAL screen=none'
     if ($placingExpired -ne 'startup-timeout') { throw 'Fixture preparation escaped the absolute startup deadline' }
-    $activeStalled = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-61) `
+    $activeLive = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-61) `
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
         -CallbackSequence 2000 -StartedAt $now.AddSeconds(-121) -StartupTimeoutSeconds 120 `
         -Checkpoint 'state=WORLD_READY phase=ACTIVE fixture=ready cpu-list=RELAUNCH_OPEN screen=none'
-    if ($activeStalled -ne 'no-checkpoint') { throw 'Active scenario checkpoint stalls no longer fail fast' }
+    if ($activeLive) { throw 'Fresh current-process callbacks did not keep the active phase alive' }
     Write-Host 'UI smoke fast-path checks passed'
 } finally {
     $resolved = [IO.Path]::GetFullPath($temporary)

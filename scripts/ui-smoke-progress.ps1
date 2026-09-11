@@ -37,6 +37,9 @@ function Get-UiSmokeProgressDecision {
         }
         return $null
     }
+    if ($ProcessId -gt 0 -and $ProgressProcessId -eq $ProcessId -and $CallbackSequence -gt 0) {
+        return $null
+    }
     if ($CheckpointTimeoutSeconds -gt 0 -and ($Now.ToUniversalTime() - $CheckpointAt.ToUniversalTime()).TotalSeconds -gt $CheckpointTimeoutSeconds) {
         return 'no-checkpoint'
     }
