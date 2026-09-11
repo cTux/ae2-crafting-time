@@ -189,18 +189,8 @@ $portReservation = [Net.Sockets.TcpListener]::new([Net.IPAddress]::Loopback, $se
 try { $portReservation.Start() } catch { throw "Dedicated smoke port $serverPort is already in use" }
 finally { $portReservation.Stop() }
 
-$start = [Diagnostics.ProcessStartInfo]::new()
-$start.FileName = $java
-$start.Arguments = $launchCommandLine
-$start.WorkingDirectory = $resolvedServer
-$start.UseShellExecute = $false
-$start.CreateNoWindow = $true
-$start.WindowStyle = [Diagnostics.ProcessWindowStyle]::Hidden
-$start.RedirectStandardOutput = $true
-$start.RedirectStandardError = $true
-$serverProcess = [Diagnostics.Process]::new(); $serverProcess.StartInfo = $start
-if (!$serverProcess.Start()) { throw 'Dedicated server did not start' }
-$outTask = $serverProcess.StandardOutput.ReadToEndAsync(); $errTask = $serverProcess.StandardError.ReadToEndAsync()
+$serverProcess = Start-Process -FilePath $java -ArgumentList $launchCommandLine -WorkingDirectory $resolvedServer `
+    -PassThru -WindowStyle Hidden -RedirectStandardOutput $serverOut -RedirectStandardError $serverErr
 try {
     $deadline = [DateTime]::UtcNow.AddMinutes(3)
     $ready = $false
@@ -298,7 +288,5 @@ try {
     Copy-Item -LiteralPath (Join-Path $control 'state.properties') -Destination (Join-Path $report 'server-estimates.properties')
 } finally {
     if (!$serverProcess.HasExited) { $serverProcess.Kill(); $serverProcess.WaitForExit() }
-    $outTask.Result | Set-Content -LiteralPath $serverOut -Encoding UTF8
-    $errTask.Result | Set-Content -LiteralPath $serverErr -Encoding UTF8
     $serverProcess.Dispose()
 }

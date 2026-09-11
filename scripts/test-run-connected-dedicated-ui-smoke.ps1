@@ -4,6 +4,10 @@ if ($runnerText.Contains('(& $java -version 2>&1)') -or
         $runnerText -notmatch 'RedirectStandardOutput.+RedirectStandardError') {
     throw 'Connected runner must capture Java version output without promoting native stderr to a terminating error'
 }
+if ($runnerText -match 'ReadToEndAsync' -or
+        $runnerText -notmatch '(?s)Start-Process -FilePath \$java -ArgumentList \$launchCommandLine.+-RedirectStandardOutput \$serverOut -RedirectStandardError \$serverErr') {
+    throw 'Connected runner must stream dedicated output to files instead of retaining it in memory'
+}
 if ($runnerText -notmatch 'clientParameters\.HeadSha = \$HeadSha') {
     throw 'Connected runner must forward an explicit immutable head to the staged client runner'
 }
