@@ -187,7 +187,10 @@ public final class DedicatedCpuScenario {
                     connectedSecond.renameCpuList(player);
                     yield true;
                 }
-                case "rejoin-prepare", "relaunch-prepare" -> active.prepare(player, origin);
+                case "rejoin-prepare", "relaunch-prepare" -> {
+                    refreshCpuIdentitiesForReconnect(active);
+                    yield active.prepare(player, origin);
+                }
                 case "reconnect" -> true;
                 case "complete" -> {
                     connectedAck = command.sequence();
@@ -207,6 +210,10 @@ public final class DedicatedCpuScenario {
         CpuListTtcControl.publish(connectedAck, connectedAction,
                 connectedSecond == null ? "first-grid" : "second-grid",
                 active.terminal, active.cpuListServerEstimates(player), active.cpuListServerState(player));
+    }
+
+    static void refreshCpuIdentitiesForReconnect(StandardCraftFixture fixture) {
+        fixture.refreshCpuIdentities();
     }
 
     private void finish(MinecraftServer server, String result, String error) {

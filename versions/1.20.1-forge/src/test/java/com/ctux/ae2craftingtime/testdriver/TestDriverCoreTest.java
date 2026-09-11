@@ -364,6 +364,18 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void dedicatedReconnectDropsStaleServerCpuIdentities() throws Exception {
+        var fixture = new StandardCraftFixture();
+        var identities = StandardCraftFixture.class.getDeclaredField("cpuListIdentities");
+        identities.setAccessible(true);
+        identities.set(fixture, new ArrayList<>());
+
+        DedicatedCpuScenario.refreshCpuIdentitiesForReconnect(fixture);
+
+        assertNull(identities.get(fixture));
+    }
+
+    @Test
     void completedPreambleObservationAdvancesRelaunchFreshWithoutAnotherObservation() {
         var state = new CpuListTtcControl.ServerState("network", 1, true, true, List.of(
                 new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:smooth_stone", 8,
