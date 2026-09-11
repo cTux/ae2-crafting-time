@@ -50,7 +50,9 @@ Add the type as a plain label instead, such as `feature`, `bug`, or `tests`.
   for a player-visible change; otherwise include none. Choose the highest-effort player-visible
   feature or fix and crop its reviewed smoke-test evidence to the relevant area
   instead of using a full screenshot. Exclude account data, tokens, chat,
-  server addresses, coordinates, and unrelated worlds.
+  server addresses, coordinates, and unrelated worlds. Keep the Discord copy
+  within its single-message content limit and upload the image as an inline
+  attachment in that same message; never split, truncate, or post only its link.
 - **Translations:** write natural UI text for that locale, keep it short, and
   preserve every placeholder and control name. Update English and Ukrainian
   together.

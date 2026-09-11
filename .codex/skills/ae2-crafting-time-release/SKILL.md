@@ -47,7 +47,11 @@ when preparing artifacts for a client or modpack smoke test.
 11. End every GitHub and Discord release-note item with its linked source GitHub
     issue, for example `([#111](https://github.com/cTux/ae2-crafting-time/issues/111))`.
     Include one image when reviewed smoke evidence exists for a player-visible
-    change; otherwise include none. Take release screenshots only from reviewed
+    change; otherwise include none. Discord must receive exactly one message;
+    upload that image in the same webhook request so it appears as an inline
+    attachment, never only as a remote Markdown link. Reject an announcement
+    that exceeds Discord's content limit before posting instead of splitting or
+    truncating it. Take release screenshots only from reviewed
     UI smoke-test results; never generate or reconstruct them. Select the release's
     highest-effort player-visible feature or fix and use a focused crop from that
     evidence, not a full screenshot. Inspect the crop before publishing and

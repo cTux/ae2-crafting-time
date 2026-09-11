@@ -39,8 +39,9 @@ done < <(jq -r '.[].curseProjectId // empty' "$matrix_path" | sort -u)
 export MATRIX_PATH="$matrix_path"
 export CF_DIR="$cf_dir"
 
-payloads="$(python3 -c '
+if ! announcement="$(python3 -c '
 import json, os, re, sys
+from urllib.parse import urlsplit
 
 release = json.load(sys.stdin)
 matrix_path = os.environ.get("MATRIX_PATH", "scripts/release-matrix.json")
@@ -118,52 +119,64 @@ for asset in release["assets"]:
 name = release.get("name") or release["tag_name"]
 content = "**AE2 Crafting Time " + name + "**\n" + release["html_url"] + "\n\n"
 body = release.get("body") or ""
+image_line = re.compile(r"(?m)^!\[[^\]\r\n]*\]\((https?://[^\s)\r\n]+)\)[ \t]*(?:\r?\n|$)")
+images = image_line.findall(body)
+if len(images) > 1:
+    raise SystemExit("Discord announcement has more than one image; announcement not sent.")
+image_url = images[0] if images else None
+image_name = None
+if image_url:
+    image_name = os.path.basename(urlsplit(image_url).path)
+    if not re.fullmatch(r"[A-Za-z0-9._-]+\.(?:png|jpe?g|gif|webp)", image_name, re.IGNORECASE):
+        raise SystemExit("Discord release image needs a safe PNG, JPEG, GIF, or WebP filename; announcement not sent.")
+    body = image_line.sub("", body).rstrip()
 if body:
     content += body + "\n\n"
 content += "**JAR downloads**\n" + "\n".join(rows)
-image_line = re.compile(r"(?m)^!\[[^\]\r\n]*\]\(https?://[^\s)\r\n]+\)[ \t]*(?:\r?\n|$)")
-segments, start = [], 0
-for match in image_line.finditer(content):
-    segments.append((content[start:match.start()], 4))
-    segments.append((match.group(0), 0))
-    start = match.end()
-segments.append((content[start:], 4))
-
-for segment, flags in segments:
-    while segment:
-        end, units = 0, 0
-        for char in segment:
-            units += 2 if ord(char) > 0xffff else 1
-            if units > 2000:
-                break
-            end += 1
-        if end < len(segment):
-            for separator in ("\n\n", "\n"):
-                boundary = segment.rfind(separator, 0, end)
-                if boundary >= 0:
-                    end = boundary + len(separator)
-                    break
-        print(json.dumps({"content": segment[:end], "allowed_mentions": {"parse": []}, "flags": flags}))
-        segment = segment[end:]
-' <<<"$release_json")"
+units = len(content.encode("utf-16-le")) // 2
+if units > 2000:
+    raise SystemExit(f"Discord announcement is {units} UTF-16 units; limit is 2000 and announcement was not sent.")
+print(json.dumps({
+    "payload": {"content": content, "allowed_mentions": {"parse": []}, "flags": 4},
+    "image_url": image_url,
+    "image_name": image_name,
+}))
+' <<<"$release_json")"; then
+  exit 1
+fi
 
 separator='?'
 [[ "$DISCORD_WEBHOOK_URL" == *\?* ]] && separator='&'
-part=0
-while IFS= read -r payload; do
-  part=$((part + 1))
+payload="$(jq -c '.payload' <<<"$announcement")"
+image_url="$(jq -r '.image_url // empty' <<<"$announcement")"
+image_name="$(jq -r '.image_name // empty' <<<"$announcement")"
+
+if [[ -n "$image_url" ]]; then
+  image_path="$cf_dir/$image_name"
+  if ! curl --location --silent --show-error --fail-with-body --output "$image_path" "$image_url"; then
+    echo "Discord release image download failed; announcement not sent." >&2
+    exit 1
+  fi
+  if ! response="$(curl --silent --show-error --fail-with-body \
+    -F "payload_json=$payload" \
+    -F "files[0]=@$image_path;filename=$image_name" \
+    "${DISCORD_WEBHOOK_URL}${separator}wait=true")"; then
+    printf '%s\n' "$response" >&2
+    echo "Discord message failed; inspect delivery before retrying." >&2
+    exit 1
+  fi
+else
   if ! response="$(curl --silent --show-error --fail-with-body \
     -H "Content-Type: application/json" \
     --data-binary "$payload" \
     "${DISCORD_WEBHOOK_URL}${separator}wait=true")"; then
     printf '%s\n' "$response" >&2
-    echo "Discord part $part failed; inspect earlier confirmed message IDs before retrying." >&2
+    echo "Discord message failed; inspect delivery before retrying." >&2
     exit 1
   fi
-  if ! message_id="$(jq -er '.id | strings | select(test("^[0-9]+$"))' <<<"$response")"; then
-    echo "Discord part $part has no confirmed message ID; inspect delivery before retrying." >&2
-    exit 1
-  fi
-  echo "Discord part $part confirmed: message $message_id"
-done <<<"$payloads"
-echo "Discord announcement complete: $part part(s)."
+fi
+if ! message_id="$(jq -er '.id | strings | select(test("^[0-9]+$"))' <<<"$response")"; then
+  echo "Discord message has no confirmed message ID; inspect delivery before retrying." >&2
+  exit 1
+fi
+echo "Discord announcement complete: message $message_id"

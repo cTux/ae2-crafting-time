@@ -85,7 +85,9 @@ release state, and pushes the branch.
   smoke-test evidence to the relevant area instead of using a full screenshot.
   Inspect the crop before publishing and exclude account data, tokens, chat,
   server addresses, coordinates, and unrelated worlds. The exact image is part
-  of the release-body approval preview.
+  of the release-body approval preview. Discord must upload it as an inline
+  attachment in the release's single message, not leave it as a remote image
+  link or send it separately.
 - Conventional commit subjects are converted into those categories and stripped
   of commit types, scopes, and hashes. A manual `-Changelog` must already use the
   same `### CATEGORY` Markdown headings.
@@ -114,7 +116,10 @@ After it succeeds:
 To mirror each published GitHub Release into Discord, include its same full
 release description, GitHub link, and direct links to every JAR. Follow
 [Discord release announcements](discord-release-announcements.md), including
-the planned full-body delivery requirement; a link-only post is insufficient.
+the one-message and attached-image requirements; a link-only post is
+insufficient. If the complete announcement exceeds Discord's content limit,
+revise and reapprove the release body before publishing it instead of splitting
+or truncating the Discord copy.
 
 If an upload fails, start with the response body printed by the script. Before
 retrying, check the platform, GitHub Releases, `.release-state.json`, and the
