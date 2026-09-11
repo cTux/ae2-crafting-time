@@ -5,31 +5,32 @@ direct links to every `.jar`. Discord's built-in GitHub webhook can announce
 repository events, but its message format is fixed and does not guarantee that
 release assets appear in the message.
 
-The workflow runs when a GitHub Release is published. It posts the release page,
-the complete release body, and one row per JAR in the form
+The workflow runs when a GitHub Release is published. In exactly one message, it
+posts the release page, the complete release-body prose, and one row per JAR in the form
 `[filename.jar](GitHub URL) ([CF](CurseForge file URL), [MR](Modrinth version URL))`.
-Long announcements are sent as ordered messages within Discord's 2,000-character
-limit. The workflow logs each confirmed message ID and stops on a failed or
-unconfirmed part; inspect those messages before retrying.
+It uploads the approved release image in that same webhook request so Discord
+shows the file inline instead of relying on its remote Markdown URL. An
+over-limit announcement fails before posting anything.
 
 ## Full release description requirement
 
-Requirements updated 2026-09-03:
+Requirements updated 2026-09-11:
 
 - **DR-01:** The Discord announcement must contain the same complete description
   as the published GitHub Release, as well as its GitHub link and all JAR links.
   Use that release's `body` verbatim as the source; do not generate a summary,
   reconstruct notes from commits, or repeat common notes per target/JAR.
 - **DR-02:** Preserve the description's wording, order, headings, lists, and
-  links. Discord rendering may differ from GitHub. Transport-only continuation
-  labels or balanced formatting must not remove or rewrite release text.
-- **DR-03:** If the announcement exceeds Discord's message limit, send ordered
-  continuation messages containing the whole description. Never truncate it or
+  links. Replace only the standalone approved image Markdown with that exact
+  image uploaded as an inline attachment. Discord rendering may differ from
+  GitHub.
+- **DR-03:** Send exactly one Discord message. If the complete announcement
+  exceeds Discord's 2,000-character content limit, fail before the webhook post
+  so the release body can be revised and reapproved. Never split, truncate, or
   replace the remaining text with a link or an attachment-only description.
 - **DR-04:** Keep the existing complete-JAR-set check. Report success only after
-  every part is confirmed sent. Preserve failure/partial-delivery evidence and
-  do not blindly resend already posted parts. Do not turn release text into
-  unintended mentions.
+  the single message is confirmed sent. Do not turn release text into unintended
+  mentions.
 
 ## Implementation and acceptance
 
@@ -38,28 +39,27 @@ Requirements updated 2026-09-03:
 already-fetched release JSON's `body` field. A null/empty GitHub body has no
 description to mirror; keep the title and links without invented notes.
 
-Assemble title/link, complete body, then JAR links in that order. Prefer one
-message; split longer content into sequential parts within Discord's 2,000
-character content limit, preferring paragraph/line boundaries. Preserve Unicode
-and split oversized individual lines without dropping text. Account for any
-continuation labels in the limit. Disable allowed mentions in every payload.
-Isolate standalone approved image lines so Discord can render them, and suppress
-link-preview embeds in every other payload.
-Use webhook server confirmation (`wait=true`), record returned message IDs per
-part, and stop on failure so partial delivery can be inspected before retrying.
+Assemble title/link, complete body prose, then JAR links in that order. Remove
+the standalone approved image Markdown from the content and upload that exact
+file in the same multipart webhook request. Reject multiple images, unsupported
+image filenames, or content over Discord's 2,000 UTF-16-unit limit before the
+webhook post. Disable allowed mentions and suppress remote link previews; neither
+setting may hide the uploaded attachment.
+Use webhook server confirmation (`wait=true`), record the returned message ID,
+and report success only for that one confirmed message.
 These limits and confirmation behavior come from the
 [Discord webhook API](https://docs.discord.com/developers/resources/webhook#execute-webhook);
 the release text comes from [GitHub's release response](https://docs.github.com/en/rest/releases/releases#get-a-release).
 
-Acceptance: existing shell tests capture payloads with no live posting and prove
-short, multiline, image, empty, exact-limit, over-limit, Unicode, and long-line
-bodies remain complete and ordered; the approved image is the only unsuppressed
-embed; each JAR URL appears once; mentions and other link previews stay disabled;
-and a failed middle part stops delivery without reporting success. Compare
-reconstructed description text with the release `body`, allowing only transport
-formatting. Verify actual Discord content after the next approved real release,
-not by publishing a throwaway release. Local regression checks capture payloads
-without posting to Discord.
+Acceptance: existing shell tests capture requests with no live posting and prove
+short, multiline, image, empty, and exact-limit bodies produce one message; the
+approved image is downloaded and included as that message's file attachment;
+each JAR URL appears once; and mentions and remote link previews stay disabled.
+Over-limit and multi-image bodies must fail before any webhook request. Compare
+the sent description text with the release `body`, allowing only removal of the
+standalone image Markdown that the attachment replaces. Verify actual Discord
+content after the next approved real release, not by publishing a throwaway
+release.
 
 ## Create the Discord webhook
 
@@ -116,7 +116,7 @@ real release:
 1. Open the **Announce release in Discord** run in the GitHub **Actions** tab and
    confirm it passed.
 2. Confirm the announcements channel contains one complete announcement for the
-   release, using ordered continuation messages only when necessary.
+   release and its image appears inline as an uploaded attachment.
 3. Compare its JAR links with the assets on the GitHub Release. Every asset whose
    name ends in `.jar` should appear once, kept linked to GitHub, followed by
    its own `CF` and `MR` links for the same mod version, Minecraft version,
