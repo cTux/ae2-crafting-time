@@ -3,6 +3,11 @@
 Status: implementation in progress in [PR #381](https://github.com/cTux/ae2-crafting-time/pull/381).
 Tracking issue: [#324](https://github.com/cTux/ae2-crafting-time/issues/324).
 
+Planned follow-up: [active-order TTC sorting](../ttc-sorting/cpu-list/spec.md)
+extends these badges with full-list collection and ordering in TTC modes. Its
+explicit freshness rules apply to that future extension; this document records
+the original badge behavior.
+
 ## Goal
 
 Compare the remaining time of running crafts without selecting every CPU.
