@@ -43,6 +43,14 @@ class CraftProfilerTest {
         assertFalse(profiler.remainingJobSeconds(previousCpu, (key, amount) -> OptionalLong.of(amount)).isPresent());
         assertEquals(12, profiler.remainingJobSeconds(currentCpu,
                 (key, amount) -> OptionalLong.of(amount)).orElseThrow());
+
+        profiler.rebindJobEstimate(null, currentCpu);
+        profiler.rebindJobEstimate(previousCpu, null);
+        profiler.rebindJobEstimate(currentCpu, currentCpu);
+        profiler.rebindJobEstimate(new Object(), currentCpu);
+
+        assertEquals(12, profiler.remainingJobSeconds(currentCpu,
+                (key, amount) -> OptionalLong.of(amount)).orElseThrow());
     }
 
     @Test
