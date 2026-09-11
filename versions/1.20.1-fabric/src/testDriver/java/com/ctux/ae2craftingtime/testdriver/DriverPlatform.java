@@ -79,7 +79,9 @@ final class DriverPlatform {
 
     static void connectServer(net.minecraft.client.Minecraft minecraft,
             net.minecraft.client.multiplayer.ServerData server) {
-        connectServer(minecraft, new net.minecraft.client.gui.screens.TitleScreen(), server);
+        java.util.concurrent.CompletableFuture.delayedExecutor(1, java.util.concurrent.TimeUnit.SECONDS).execute(
+                () -> minecraft.execute(() -> connectServer(
+                        minecraft, new net.minecraft.client.gui.screens.TitleScreen(), server)));
     }
 
     static net.minecraft.client.gui.screens.Screen prepareInitialDedicatedConnect(

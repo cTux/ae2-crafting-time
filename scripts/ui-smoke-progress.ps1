@@ -14,8 +14,15 @@ function Get-UiSmokeProgressDecision {
     )
     $plannedFabricRejoin = $Checkpoint -match 'cpu-list=REJOIN_REQUEST(?:\s|$)' -and
         $Checkpoint -match 'screen=net\.minecraft\.class_419$'
+    if ($plannedFabricRejoin -and
+            ($Now.ToUniversalTime() - $CheckpointAt.ToUniversalTime()).TotalSeconds -le 20) {
+        return $null
+    }
     if ($ProcessId -gt 0 -and $ProgressProcessId -eq $ProcessId -and !$plannedFabricRejoin -and
             $Checkpoint -match 'screen=(?:net\.minecraft\.client\.gui\.screens\.DisconnectedScreen|net\.minecraft\.class_419)$') {
+        return 'terminal-disconnect'
+    }
+    if ($ProcessId -gt 0 -and $ProgressProcessId -eq $ProcessId -and $plannedFabricRejoin) {
         return 'terminal-disconnect'
     }
     if ($ProcessId -gt 0 -and $ProgressProcessId -ne $ProcessId) {

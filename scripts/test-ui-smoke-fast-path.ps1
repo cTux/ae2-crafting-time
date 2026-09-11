@@ -127,11 +127,16 @@ try {
         -CallbackSequence 2001 -StartedAt $now.AddSeconds(-10) -StartupTimeoutSeconds 120 `
         -Checkpoint 'state=WORLD_READY phase=ACTIVE fixture=ready cpu-list=REJOIN_FRESH screen=net.minecraft.class_419'
     if ($fabricDisconnected -ne 'terminal-disconnect') { throw 'Fabric 1.20.1 intermediary disconnect remained live' }
-    $fabricPlannedRejoin = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-1) `
+    $fabricPlannedRejoin = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-19) `
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
         -CallbackSequence 2002 -StartedAt $now.AddSeconds(-10) -StartupTimeoutSeconds 120 `
         -Checkpoint 'state=WORLD_READY phase=ACTIVE fixture=ready cpu-list=REJOIN_REQUEST screen=net.minecraft.class_419'
     if ($fabricPlannedRejoin) { throw 'Fabric planned rejoin disconnect was classified as terminal' }
+    $fabricExpiredRejoin = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-21) `
+        -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
+        -CallbackSequence 9000 -StartedAt $now.AddSeconds(-30) -StartupTimeoutSeconds 120 `
+        -Checkpoint 'state=WORLD_READY phase=ACTIVE fixture=ready cpu-list=REJOIN_REQUEST screen=net.minecraft.class_419'
+    if ($fabricExpiredRejoin -ne 'terminal-disconnect') { throw 'Fresh callbacks extended the planned Fabric rejoin grace' }
     $fabricProgress = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-1) `
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
         -CallbackSequence 2003 -StartedAt $now.AddSeconds(-10) -StartupTimeoutSeconds 120 `

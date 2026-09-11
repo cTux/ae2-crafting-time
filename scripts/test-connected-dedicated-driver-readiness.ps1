@@ -38,6 +38,12 @@ foreach ($relative in $platforms) {
     }
 }
 
+$fabricPlatform = Get-Content -LiteralPath (Join-Path $root $platforms[1]) -Raw
+if ($fabricPlatform -notmatch 'CompletableFuture\.delayedExecutor\(1, java\.util\.concurrent\.TimeUnit\.SECONDS\)' -or
+    $fabricPlatform -notmatch '\(\) -> minecraft\.execute\(\(\) -> connectServer\(') {
+    throw 'Fabric reconnect does not wait for the dedicated server to finish the prior disconnect'
+}
+
 $accessorText = Get-Content -LiteralPath (Join-Path $root $accessor) -Raw
 if ($accessorText -notmatch '@Accessor\("editingServer"\)' -or
     $accessorText -notmatch '@Invoker\("directJoinCallback"\)') {
