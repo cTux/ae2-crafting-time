@@ -12,6 +12,10 @@ function Get-UiSmokeProgressDecision {
         [int]$StartupTimeoutSeconds = 300,
         [string]$Checkpoint = ''
     )
+    if ($ProcessId -gt 0 -and $ProgressProcessId -eq $ProcessId -and
+            $Checkpoint -match 'screen=(?:net\.minecraft\.client\.gui\.screens\.)?DisconnectedScreen$') {
+        return 'terminal-disconnect'
+    }
     if ($ProcessId -gt 0 -and $ProgressProcessId -ne $ProcessId) {
         if ($StartedAt -eq [DateTime]::MinValue -or
                 ($Now.ToUniversalTime() - $StartedAt.ToUniversalTime()).TotalSeconds -le $StartupTimeoutSeconds) {

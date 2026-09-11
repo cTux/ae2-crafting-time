@@ -363,12 +363,14 @@ try {
                         $watchdogReason = 'initial-disconnect'
                         break
                     }
-                    $watchdogReason = Get-UiSmokeProgressDecision -Now ([DateTime]::UtcNow) -CallbackAt $lastCallback `
-                        -CheckpointAt $lastCheckpoint -CallbackTimeoutSeconds $CallbackTimeoutSeconds `
-                        -CheckpointTimeoutSeconds $CheckpointTimeoutSeconds -ProcessId $process.Id `
-                        -ProgressProcessId $progressPid -CallbackSequence $callbackSequence `
-                        -StartedAt $process.StartTime.ToUniversalTime() -StartupTimeoutSeconds $StartupTimeoutSeconds `
-                        -Checkpoint $checkpoint
+                    if (!$watchdogReason) {
+                        $watchdogReason = Get-UiSmokeProgressDecision -Now ([DateTime]::UtcNow) -CallbackAt $lastCallback `
+                            -CheckpointAt $lastCheckpoint -CallbackTimeoutSeconds $CallbackTimeoutSeconds `
+                            -CheckpointTimeoutSeconds $CheckpointTimeoutSeconds -ProcessId $process.Id `
+                            -ProgressProcessId $progressPid -CallbackSequence $callbackSequence `
+                            -StartedAt $process.StartTime.ToUniversalTime() -StartupTimeoutSeconds $StartupTimeoutSeconds `
+                            -Checkpoint $checkpoint
+                    }
                     if ($watchdogReason) { break }
                 }
             }
