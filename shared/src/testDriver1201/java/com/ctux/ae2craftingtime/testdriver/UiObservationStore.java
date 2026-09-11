@@ -98,7 +98,7 @@ public final class UiObservationStore {
         }
         var observed = observed(component, transformed(graphics, x, y, x + width, y + height));
         if (observed.key().startsWith("text.ae2craftingtime.")
-                || active.cpuCards.stream().anyMatch(card -> observed.bounds().inside(card.nameArea))) {
+                || active.cpuCards.stream().anyMatch(card -> observed.bounds().overlaps(card.nameArea))) {
             active.text.add(observed);
         }
     }

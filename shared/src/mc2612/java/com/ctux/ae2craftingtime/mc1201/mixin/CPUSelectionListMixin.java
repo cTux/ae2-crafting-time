@@ -15,6 +15,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Final;
@@ -54,8 +55,9 @@ public abstract class CPUSelectionListMixin {
             @Local(ordinal = 1) int y) {
         var name = original.call(instance, cpu);
         var eta = TimeEstimate.formatTotal(java.util.List.of(CpuTtcClient.seconds(cpu.serial())));
-        if (eta.isEmpty()) return name;
         var font = Minecraft.getInstance().font;
+        if (eta.isEmpty()) return ae2craftingtime$fitName(name, font,
+                CpuTtcLayout.badge(buttonBg.getSrcWidth(), buttonBg.getSrcHeight(), 0, 0.666).availableNameWidth());
         var text = TtcText.ttc(eta.get());
         var layout = CpuTtcLayout.badge(buttonBg.getSrcWidth(), buttonBg.getSrcHeight(), font.width(text), 0.666);
         var scale = (float) layout.scale();
@@ -69,7 +71,10 @@ public abstract class CPUSelectionListMixin {
         pose.scale(scale);
         guiGraphics.text(font, text, 0, 0, 0xFFE0E0E0, true);
         pose.popMatrix();
-        var available = layout.availableNameWidth();
+        return ae2craftingtime$fitName(name, font, layout.availableNameWidth());
+    }
+
+    private static Component ae2craftingtime$fitName(Component name, Font font, int available) {
         if (font.width(name) <= available) return name;
         if (available < font.width("...")) return Component.empty();
         return Component.literal(font.plainSubstrByWidth(name.getString(), available - font.width("...")) + "...");

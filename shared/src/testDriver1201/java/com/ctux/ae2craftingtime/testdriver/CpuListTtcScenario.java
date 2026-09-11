@@ -548,14 +548,25 @@ final class CpuListTtcScenario {
     }
     private static void validateLayout(UiSnapshot snapshot) {
         if (!fits(snapshot)) throw new IllegalStateException("CPU-list screen does not fit the viewport");
-        for (var card : snapshot.cpuCards()) if (card.ttc() != null) {
+        for (var card : snapshot.cpuCards()) {
+            var name = snapshot.text().stream().filter(text -> text.bounds() != null
+                    && text.bounds().overlaps(card.nameArea()) && renderedName(card.name(), text.rendered()))
+                    .findFirst().orElseThrow(() -> new IllegalStateException(
+                            "CPU name was not observed for serial " + card.serial()));
+            if (!name.bounds().inside(card.nameArea()))
+                throw new IllegalStateException("CPU name escapes its card for serial " + card.serial());
+            if (card.ttc() == null) continue;
             if (card.badge() == null || !card.badge().inside(card.bounds()) || !card.ttc().bounds().inside(card.badge())
                     || card.badge().overlaps(card.infoArea()) || card.badge().overlaps(card.progressArea()))
                 throw new IllegalStateException("CPU card layout collision for serial " + card.serial());
-            if (snapshot.text().stream().filter(text -> text != card.ttc() && text.bounds() != null
-                    && text.bounds().inside(card.nameArea())).anyMatch(text -> text.bounds().overlaps(card.badge())))
+            if (name.bounds().overlaps(card.badge()))
                 throw new IllegalStateException("CPU name overlaps its TTC badge");
         }
+    }
+
+    private static boolean renderedName(String name, String rendered) {
+        return name.equals(rendered) || rendered.endsWith("...")
+                && name.startsWith(rendered.substring(0, rendered.length() - 3));
     }
     private static void mark(Map<String, Boolean> checks, String... names) {
         for (var name : names) if (checks.containsKey(name)) checks.put(name, true);
