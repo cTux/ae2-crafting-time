@@ -56,6 +56,7 @@ public final class CraftPlanScenario {
     private final List<String> screenshots = new ArrayList<>();
     private final List<List<String>> orders = new ArrayList<>();
     private final List<List<String>> knownOrders = new ArrayList<>();
+    private boolean sortMissingFirst = true;
     private ScenarioState state = ScenarioState.STARTING;
     private long stateStarted;
     private FixtureMarker marker;
@@ -489,7 +490,7 @@ public final class CraftPlanScenario {
             selectAddonCpu();
             return;
         }
-        orders.add(ids(snapshot));
+        orders.add(SortObservation.sortableIds(snapshot.rows()));
         knownOrders.add(knownIds(snapshot));
         checks.put("screen", snapshot.screen().equals(CraftConfirmScreen.class.getName()));
         checks.put("ttc-row", snapshot.rows().stream().filter(row -> row.outputId().equals(outputId))
@@ -721,8 +722,9 @@ public final class CraftPlanScenario {
         if (!stable(snapshot)) {
             return;
         }
-        orders.add(ids(snapshot));
+        orders.add(SortObservation.sortableIds(snapshot.rows()));
         knownOrders.add(knownIds(snapshot));
+        sortMissingFirst &= SortObservation.missingFirst(snapshot.rows());
         sortStage++;
         screenshotUnchecked("craft-plan-sort-" + sortStage + ".png");
         if (sortStage < 3) {
@@ -732,8 +734,8 @@ public final class CraftPlanScenario {
         }
         var ascending = knownOrders.get(2);
         var descending = knownOrders.get(3);
-        checks.put("sort-cycle", SortObservation.valid(orders.get(1), orders.get(2), orders.get(3),
-                ascending, descending));
+        checks.put("sort-cycle", sortMissingFirst && SortObservation.valid(
+                orders.get(1), orders.get(2), orders.get(3), ascending, descending));
         var target = snapshot.rows().stream().filter(row -> row.outputId().equals(outputId)).findFirst()
                 .orElseThrow(() -> new IllegalStateException("target row is not visible"));
         moveMouse(target.cell().centerX(), target.cell().centerY());

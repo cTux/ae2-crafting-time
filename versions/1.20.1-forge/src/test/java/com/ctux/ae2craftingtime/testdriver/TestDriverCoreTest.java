@@ -804,6 +804,41 @@ class TestDriverCoreTest {
                 List.of("a", "b"), List.of("b", "a")));
         assertFalse(SortObservation.valid(List.of("a", "b"), List.of("a", "b"), List.of("a", "b"),
                 List.of("a", "b"), List.of("a", "b")));
+        assertFalse(SortObservation.valid(List.of("a"), List.of("a"), List.of("a"), List.of(), List.of()));
+        assertFalse(SortObservation.valid(List.of("a"), List.of("a"), List.of("a"), List.of("a", "b"),
+                List.of("a")));
+        assertFalse(SortObservation.valid(List.of("a"), List.of("a"), List.of("a"), List.of("a"),
+                List.of("a", "b")));
+        assertFalse(SortObservation.valid(List.of("a"), List.of("a"), List.of("b"), List.of("a"),
+                List.of("b")));
+        assertFalse(SortObservation.valid(List.of("b"), List.of("a"), List.of("a"), List.of("a"),
+                List.of("a")));
+        assertFalse(SortObservation.valid(List.of("a", "b"), List.of("a", "b"), List.of("b", "a"),
+                List.of("a", "b"), List.of("a", "b")));
+        assertFalse(SortObservation.valid(List.of("a", "b"), List.of("b", "a"), List.of("a", "b"),
+                List.of("a"), List.of("a")));
+        assertFalse(SortObservation.valid(List.of("a", "b"), List.of("a", "b"), List.of("b", "a"),
+                List.of("a"), List.of("a")));
+        assertFalse(SortObservation.valid(List.of("a", "b", "c"), List.of("a", "b", "c"),
+                List.of("c", "b", "a"), List.of("a"), List.of("a")));
+        assertFalse(SortObservation.valid(List.of("a", "b", "c"), List.of("a", "b", "c"),
+                List.of("a", "c", "b"), List.of("a"), List.of("a")));
+    }
+
+    @Test
+    void sortObservationSeparatesMissingRowsFromTtcOrder() {
+        var missing = new UiSnapshot.Row("missing", 0, 8, new Rect(0, 0, 1, 1), List.of());
+        var timed = new UiSnapshot.Row("timed", 1, 0, new Rect(0, 0, 1, 1), List.of());
+        var unknown = new UiSnapshot.Row("unknown", 2, 0, new Rect(0, 0, 1, 1), List.of());
+
+        var missingFirst = List.of(missing, timed, unknown);
+        assertEquals(List.of("timed", "unknown"), SortObservation.sortableIds(missingFirst));
+        assertTrue(SortObservation.missingFirst(missingFirst));
+        assertFalse(SortObservation.missingFirst(List.of(timed, missing)));
+        assertTrue(SortObservation.missingFirst(List.of(timed, unknown)));
+        assertTrue(SortObservation.missingFirst(List.of()));
+        assertTrue(SortObservation.valid(List.of("timed"), List.of("timed"), List.of("timed"),
+                List.of("timed"), List.of("timed")));
     }
 
     @Test
