@@ -29,5 +29,21 @@ $runner = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'run-ui-smoke.ps1') 
 if ($runner -notmatch 'if \(\$Scenario -eq ''cpu-list-total-ttc''\) \{\s*\$progressPath') {
     throw 'The progress watchdog does not cover every CPU-list process'
 }
+$running = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test -ProcessLookup {
+    param($id)
+    if ($id -eq 42) { [pscustomobject]@{ Id = $id } }
+}
+if ($running.state -ne 'running') { throw 'A present scheduled Java process was reported missing' }
+$exited = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test `
+    -ProcessLookup { param($id) $null } -TaskLookup { param($name) [pscustomobject]@{State='Ready'} } `
+    -InfoLookup { param($task) [pscustomobject]@{LastTaskResult=0} }
+if ($exited.state -ne 'exited' -or $exited.exitCode -ne 0) { throw 'A completed scheduled Java task was not accepted' }
+$disappeared = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test `
+    -ProcessLookup { param($id) $null } -TaskLookup { param($name) $null }
+if ($disappeared.state -ne 'disappeared') { throw 'A disappeared scheduled Java process was not detected' }
+if ($runner -notmatch 'throw "Scheduled UI-smoke client process \$\(\$process\.Id\) disappeared' -or
+        $runner -notmatch 'Write-Status ''validating'' "client phase \$phase exited; validating evidence"') {
+    throw 'The runner does not fail closed and publish post-exit status'
+}
 
 Write-Host 'UI smoke scheduled-Java checks passed'

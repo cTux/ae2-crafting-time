@@ -83,3 +83,20 @@ function Remove-UiSmokeScheduledJava {
     Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
     Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
 }
+
+function Get-UiSmokeScheduledJavaProcessState {
+    param(
+        [Parameter(Mandatory)][int]$ProcessId,
+        [Parameter(Mandatory)][string]$TaskName,
+        [scriptblock]$ProcessLookup = { param($id) Get-Process -Id $id -ErrorAction SilentlyContinue },
+        [scriptblock]$TaskLookup = { param($name) Get-ScheduledTask -TaskName $name -ErrorAction SilentlyContinue },
+        [scriptblock]$InfoLookup = { param($task) $task | Get-ScheduledTaskInfo }
+    )
+    if ($null -ne (& $ProcessLookup $ProcessId)) { return [pscustomobject]@{state='running';exitCode=$null} }
+    $task = & $TaskLookup $TaskName
+    if ($null -eq $task -or $task.State -ne 'Ready') {
+        return [pscustomobject]@{state='disappeared';exitCode=$null}
+    }
+    $info = & $InfoLookup $task
+    return [pscustomobject]@{state='exited';exitCode=[int]$info.LastTaskResult}
+}

@@ -105,6 +105,9 @@ $campaignId = if ($resumeState) { $resumeState.campaignId } elseif ($CampaignId)
 if ($campaignId -cnotmatch '^[A-Za-z0-9._-]{1,128}$') { throw 'Invalid UI-smoke campaign identity' }
 $startedAt = [DateTime]::UtcNow.ToString("o")
 $process = $null
+$processDisappeared = $false
+$processExitObserved = $false
+$observedExitCode = $null
 $processes = @()
 $scheduledTaskName = $null
 $preservePreparedWorld = $false
@@ -323,7 +326,23 @@ try {
             $progressPid = 0
             $callbackSequence = 0
             $checkpoint = ''
-            while (!$process.WaitForExit(1000) -and [DateTime]::UtcNow -lt $deadline) {
+            $processExitObserved = $false
+            $scheduledExitCode = $null
+            while ([DateTime]::UtcNow -lt $deadline) {
+                if ($ScheduledJava) {
+                    $scheduledState = Get-UiSmokeScheduledJavaProcessState -ProcessId $process.Id -TaskName $scheduledTaskName
+                    if ($scheduledState.state -eq 'disappeared') {
+                        $processDisappeared = $true
+                        break
+                    }
+                    if ($scheduledState.state -eq 'exited') {
+                        $scheduledExitCode = [int]$scheduledState.exitCode
+                        break
+                    }
+                    Start-Sleep -Seconds 1
+                } elseif ($process.WaitForExit(1000)) {
+                    break
+                }
                 if ($Scenario -eq 'cpu-list-total-ttc') {
                     $progressPath = Join-Path $evidence 'driver-progress.json'
                     if (Test-Path -LiteralPath $progressPath -PathType Leaf) {
@@ -347,7 +366,10 @@ try {
                     if ($watchdogReason) { break }
                 }
             }
-            if (!$process.HasExited) {
+            if ($processDisappeared) {
+                throw "Scheduled UI-smoke client process $($process.Id) disappeared before exit could be observed"
+            }
+            if ($null -eq $scheduledExitCode -and !$process.HasExited) {
                 $null = $process.CloseMainWindow()
                 if (-not $process.WaitForExit(10000)) {
                     & taskkill.exe /PID $process.Id /T /F | Out-Null
@@ -367,14 +389,17 @@ try {
                 }
                 throw "UI-smoke client phase $phase exceeded $($timeout.TotalMinutes) minutes"
             }
-            $identity['exitCode'] = $process.ExitCode
+            $observedExitCode = if ($null -ne $scheduledExitCode) { $scheduledExitCode } else { $process.ExitCode }
+            $processExitObserved = $true
+            $identity['exitCode'] = $observedExitCode
             $identity['exitedAt'] = [DateTime]::UtcNow.ToString('o')
             if ($scheduledTaskName) {
                 Remove-UiSmokeScheduledJava -TaskName $scheduledTaskName
                 $scheduledTaskName = $null
             }
-            if ($process.ExitCode -ne 0) {
-                throw "UI-smoke $profile-profile phase $phase failed with launcher exit $($process.ExitCode); see $phaseStderr"
+            Write-Status 'validating' "client phase $phase exited; validating evidence" $observedExitCode
+            if ($observedExitCode -ne 0) {
+                throw "UI-smoke $profile-profile phase $phase failed with launcher exit $observedExitCode; see $phaseStderr"
             }
             if ($phase -eq 1 -and (Test-Path -LiteralPath $continuationPath -PathType Leaf)) {
                 if (!$PreparedLaunch) { throw 'Runner-owned relaunch requires a prepared native client' }
@@ -569,7 +594,8 @@ try {
         if ($previousToken) { $env:AE2CT_TEST_DRIVER_TOKEN = $previousToken }
         else { Remove-Item Env:\AE2CT_TEST_DRIVER_TOKEN -ErrorAction SilentlyContinue }
         foreach ($copy in $worldCopies) {
-            if (!$preservePreparedWorld -and (-not $process -or $process.HasExited) -and (Test-Path -LiteralPath $copy)) {
+            if (!$preservePreparedWorld -and (-not $process -or $processDisappeared -or $processExitObserved -or $process.HasExited) -and
+                    (Test-Path -LiteralPath $copy)) {
                 Remove-Item -LiteralPath $copy -Recurse -Force
             }
         }
@@ -583,12 +609,14 @@ try {
             ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $evidence 'fixture-hashes.json') -Encoding UTF8
         if ($afterHash -ne $sourceHash -or $afterMetadata -ne $metadataHash) { throw "Tracked source fixture changed during UI smoke" }
     }
-    Write-Status "passed" "UI smoke passed" $process.ExitCode
+    Write-Status "passed" "UI smoke passed" $observedExitCode
     $runtimeLock.Dispose()
     Write-Host "UI smoke passed: $evidence"
 } catch {
     if ($scheduledTaskName) { Remove-UiSmokeScheduledJava -TaskName $scheduledTaskName }
-    $exitCode = if ($process -and $process.HasExited) { [Nullable[int]]$process.ExitCode } else { $null }
+    $exitCode = if ($processExitObserved) { [Nullable[int]]$observedExitCode }
+        elseif ($process -and !$processDisappeared -and $process.HasExited) { [Nullable[int]]$process.ExitCode }
+        else { $null }
     Write-Status "failed" $_.Exception.Message $exitCode
     $runtimeLock.Dispose()
     throw
