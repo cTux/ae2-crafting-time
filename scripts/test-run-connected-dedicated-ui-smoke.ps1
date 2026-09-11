@@ -16,6 +16,34 @@ if ($runnerText.IndexOf("-SimpleMatch ']: Done ('", [StringComparison]::Ordinal)
             $runnerText.IndexOf("-SimpleMatch ']: Done ('", [StringComparison]::Ordinal)) {
     throw 'Connected client must wait for the dedicated server startup-complete marker'
 }
+if ($runnerText -notmatch '\$maxAttempts = 3' -or
+        $runnerText -notmatch 'FailOnInitialDisconnect=\$true' -or
+        $runnerText -notmatch "initial-disconnect-cap-exhausted" -or
+        $runnerText -notmatch '\$progress\.checkpoint -match ''\^state=STARTING') {
+    throw 'Connected runner omitted the bounded startup-only disconnect retry contract'
+}
+function Invoke-StartupRetryPolicy([string[]]$checkpoints) {
+    $attempt = 0
+    foreach ($checkpoint in $checkpoints) {
+        $attempt++
+        if ($checkpoint -eq 'PASS') { return [pscustomobject]@{ attempts=$attempt; result='pass' } }
+        $startupDisconnect = $checkpoint -match '^state=STARTING .* screen=net\.minecraft\.client\.gui\.screens\.DisconnectedScreen$'
+        if (!$startupDisconnect) { return [pscustomobject]@{ attempts=$attempt; result='fail-closed' } }
+        if ($attempt -eq 3) { return [pscustomobject]@{ attempts=$attempt; result='cap-exhausted' } }
+    }
+    return [pscustomobject]@{ attempts=$attempt; result='pass' }
+}
+$transient = Invoke-StartupRetryPolicy @(
+    'state=STARTING phase=PREPARE fixture=new cpu-list=INITIAL screen=net.minecraft.client.gui.screens.DisconnectedScreen',
+    'PASS')
+if ($transient.attempts -ne 2 -or $transient.result -ne 'pass') { throw 'Immediate disconnect did not consume exactly one retry' }
+$exhausted = Invoke-StartupRetryPolicy @(1..3 | ForEach-Object {
+    'state=STARTING phase=PREPARE fixture=new cpu-list=INITIAL screen=net.minecraft.client.gui.screens.DisconnectedScreen'
+})
+if ($exhausted.attempts -ne 3 -or $exhausted.result -ne 'cap-exhausted') { throw 'Startup disconnect retry cap was not enforced' }
+$started = Invoke-StartupRetryPolicy @(
+    'state=WORLD_READY phase=ACTIVE fixture=craftable cpu-list=INITIAL screen=net.minecraft.client.gui.screens.TitleScreen')
+if ($started.attempts -ne 1 -or $started.result -ne 'fail-closed') { throw 'Scenario progress incorrectly remained retryable' }
 function Write-SourceMarker([string]$source, [string]$target, [int]$java, [string]$loader, [string]$launcher) {
     $dependency = Join-Path $source 'mods/dependency.jar'
     New-Item -ItemType Directory -Path (Split-Path -Parent $dependency) -Force | Out-Null

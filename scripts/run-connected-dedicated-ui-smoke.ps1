@@ -225,11 +225,68 @@ try {
     if (!$ready) { throw 'Dedicated server did not finish startup' }
     $clientParameters = @{ Target=$Target; Scenario='cpu-list-total-ttc'; ReportDirectory=(Join-Path $report 'client')
         BundleDirectory=$bundle; PreparedLaunch=$prepared; DedicatedAddress=$Address
-        ControlDirectory=$control; CampaignId=$connectionEpoch }
+        ControlDirectory=$control; CampaignId=$connectionEpoch; FailOnInitialDisconnect=$true }
     if ($HeadSha) { $clientParameters.HeadSha = $HeadSha }
     if ($ScheduledJava) { $clientParameters.ScheduledJava = $true; $clientParameters.InteractiveUser = $InteractiveUser }
-    & (Join-Path $PSScriptRoot 'run-ui-smoke.ps1') @clientParameters
-    if ($LASTEXITCODE) { throw "Connected client smoke exited $LASTEXITCODE" }
+    $attempts = @()
+    $attemptLedger = Join-Path $report 'client-attempts.json'
+    $clientPassed = $false
+    $maxAttempts = 3
+    for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
+        $attemptReport = Join-Path $report "client-attempt-$attempt"
+        $clientParameters.ReportDirectory = $attemptReport
+        $clientError = $null
+        try {
+            & (Join-Path $PSScriptRoot 'run-ui-smoke.ps1') @clientParameters
+            if ($LASTEXITCODE) { throw "Connected client smoke exited $LASTEXITCODE" }
+            $clientPassed = $true
+        } catch {
+            $clientError = $_
+        }
+        $statusPath = Join-Path $attemptReport 'status.json'
+        $progressPath = Join-Path $attemptReport 'evidence/driver-progress.json'
+        $fixturePath = Join-Path $attemptReport 'evidence/fixture-hashes.json'
+        $status = if (Test-Path -LiteralPath $statusPath -PathType Leaf) {
+            Get-Content -LiteralPath $statusPath -Raw | ConvertFrom-Json
+        } else { $null }
+        $progress = if (Test-Path -LiteralPath $progressPath -PathType Leaf) {
+            Get-Content -LiteralPath $progressPath -Raw | ConvertFrom-Json
+        } else { $null }
+        $fixture = if (Test-Path -LiteralPath $fixturePath -PathType Leaf) {
+            Get-Content -LiteralPath $fixturePath -Raw | ConvertFrom-Json
+        } else { $null }
+        $processes = @($status.processes)
+        $startupDisconnect = $null -ne $clientError -and $status.phase -eq 'failed' -and
+            $processes.Count -eq 1 -and $processes[0].phase -eq 1 -and
+            $progress.pid -eq $processes[0].pid -and
+            $progress.checkpoint -match '^state=STARTING .* screen=net\.minecraft\.client\.gui\.screens\.DisconnectedScreen$' -and
+            !(Test-Path -LiteralPath (Join-Path $attemptReport 'evidence/result.json')) -and
+            !(Test-Path -LiteralPath (Join-Path $attemptReport 'evidence/relaunch-evidence.json'))
+        $processAlive = $processes.Count -and $null -ne (Get-Process -Id $processes[0].pid -ErrorAction SilentlyContinue)
+        $taskAlive = $ScheduledJava -and $processes.Count -and $processes[0].taskName -and
+            $null -ne (Get-ScheduledTask -TaskName $processes[0].taskName -ErrorAction SilentlyContinue)
+        $worldsRemoved = $fixture -and @($fixture.disposableWorlds | Where-Object { !$_.removed }).Count -eq 0
+        $retry = $startupDisconnect -and !$processAlive -and !$taskAlive -and $worldsRemoved -and $attempt -lt $maxAttempts
+        $reason = if ($clientPassed) { 'PASS' }
+            elseif ($startupDisconnect -and $attempt -eq $maxAttempts) { 'initial-disconnect-cap-exhausted' }
+            elseif ($retry) { 'initial-disconnect-retry' }
+            else { $clientError.Exception.Message }
+        $attempts += [ordered]@{ attempt=$attempt; report=$(if($clientPassed){'client'}else{Split-Path -Leaf $attemptReport}); result=$(if($clientPassed){'PASS'}else{'FAIL'})
+            reason=$reason; checkpoint=$(if($progress){$progress.checkpoint}else{$null}); processes=@($processes | ForEach-Object {
+                [ordered]@{ phase=$_.phase; pid=$_.pid; startedAt=$_.startedAt; exitedAt=$_.exitedAt; exitCode=$_.exitCode }
+            }) }
+        ConvertTo-Json -InputObject @($attempts) -Depth 5 | Set-Content -LiteralPath $attemptLedger -Encoding UTF8
+        if ($clientPassed) {
+            Move-Item -LiteralPath $attemptReport -Destination (Join-Path $report 'client')
+            break
+        }
+        if ($retry) { continue }
+        if ($startupDisconnect -and $attempt -eq $maxAttempts) {
+            throw "Connected client exhausted $maxAttempts startup disconnect attempts"
+        }
+        throw $clientError
+    }
+    if (!$clientPassed) { throw 'Connected client smoke did not pass' }
     if (!$serverProcess.WaitForExit(60000)) { throw 'Dedicated server did not finish after client evidence completed' }
     if (!(Test-Path -LiteralPath $serverResult -PathType Leaf)) { throw 'Connected server produced no result artifact' }
     $result = Get-Content -LiteralPath $serverResult -Raw | ConvertFrom-Json

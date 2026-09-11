@@ -23,7 +23,8 @@ param(
     [string]$InteractiveUser = 'Codex',
     [int]$CallbackTimeoutSeconds = 20,
     [int]$CheckpointTimeoutSeconds = 60,
-    [int]$StartupTimeoutSeconds = 300
+    [int]$StartupTimeoutSeconds = 300,
+    [switch]$FailOnInitialDisconnect
 )
 
 function Test-UiSnapshotBounds($snapshot) {
@@ -356,6 +357,11 @@ try {
                                 if ($progress.checkpoint) { $checkpoint = [string]$progress.checkpoint }
                             }
                         } catch { }
+                    }
+                    if ($FailOnInitialDisconnect -and $phase -eq 1 -and $progressPid -eq $process.Id -and
+                            $checkpoint -match '^state=STARTING .* screen=net\.minecraft\.client\.gui\.screens\.DisconnectedScreen$') {
+                        $watchdogReason = 'initial-disconnect'
+                        break
                     }
                     $watchdogReason = Get-UiSmokeProgressDecision -Now ([DateTime]::UtcNow) -CallbackAt $lastCallback `
                         -CheckpointAt $lastCheckpoint -CallbackTimeoutSeconds $CallbackTimeoutSeconds `
