@@ -4,6 +4,8 @@ import appeng.client.gui.me.common.MEStorageScreen;
 import appeng.client.gui.me.common.RepoSlot;
 import appeng.client.gui.me.crafting.CraftAmountScreen;
 import appeng.client.gui.me.crafting.CraftConfirmScreen;
+import appeng.api.parts.IPartHost;
+import appeng.api.storage.ITerminalHost;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
@@ -27,10 +29,14 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 public final class CraftPlanScenario {
     private static final Duration STEP_TIMEOUT = Duration.ofSeconds(30);
@@ -68,7 +74,7 @@ public final class CraftPlanScenario {
     private CompletableFuture<ItemStack> networkAnalyserSetup;
     private boolean wirelessHoverStarted;
     private boolean wirelessOpenRequested;
-    private boolean terminalOpenRequested;
+    private final BlockTerminalReadiness blockTerminalReadiness = new BlockTerminalReadiness();
     private boolean amountSubmitted;
     private boolean treeHoverStarted;
     private final StatsInteraction treeStats = new StatsInteraction();
@@ -297,11 +303,53 @@ public final class CraftPlanScenario {
         }
         var position = new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z());
         var face = Direction.valueOf(marker.terminal().face());
-        if (terminalOpenRequested) return;
         var hit = new BlockHitResult(Vec3.atCenterOf(position).add(Vec3.atLowerCornerOf(face.getNormal()).scale(0.5)),
                 face, position, false);
-        terminalOpenRequested = true;
-        minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND, hit);
+        var range = DriverPlatform.blockInteractionRange(minecraft);
+        blockTerminalReadiness.tick(
+                () -> prepareBlockTerminal(position, face, hit.getLocation(), range),
+                () -> blockTerminalClientReady(position, face, hit.getLocation(), range),
+                () -> {
+                    var distance = minecraft.player.getEyePosition().distanceTo(hit.getLocation());
+                    System.out.println("AE2CT terminal readiness client marker=" + position + " face=" + face
+                            + " player=" + minecraft.player.position() + " distance=" + distance + " range=" + range
+                            + " loaded=true action=use utc=" + Instant.now());
+                    minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND, hit);
+                });
+    }
+
+    private CompletableFuture<Void> prepareBlockTerminal(BlockPos position, Direction face, Vec3 hit, double range) {
+        var server = BlockTerminalReadiness.requirePresent(minecraft.getSingleplayerServer(),
+                "fixture integrated server is unavailable");
+        var playerId = minecraft.player.getUUID();
+        return server.submit(() -> {
+            var player = BlockTerminalReadiness.requirePresent(server.getPlayerList().getPlayer(playerId),
+                    "fixture player is unavailable for terminal " + position);
+            var blockEntity = player.serverLevel().getBlockEntity(position);
+            BlockTerminalReadiness.requireTerminal(blockEntity instanceof IPartHost,
+                    () -> ((IPartHost) blockEntity).getPart(face) instanceof ITerminalHost,
+                    "fixture terminal is unavailable at " + position + " face=" + face);
+            var before = player.getEyePosition().distanceTo(hit);
+            var moved = BlockTerminalReadiness.moveIfOutsideReach(player.getEyePosition(), hit, range, () -> {
+                var destination = BlockTerminalReadiness.standingPosition(position, face);
+                player.teleportTo(destination.x, destination.y, destination.z);
+            });
+            var after = player.getEyePosition().distanceTo(hit);
+            System.out.println("AE2CT terminal readiness server marker=" + position + " face=" + face
+                    + " player=" + player.position() + " distanceBefore=" + before + " distanceAfter=" + after
+                    + " range=" + range + " moved=" + moved + " utc=" + Instant.now());
+        });
+    }
+
+    private boolean blockTerminalClientReady(BlockPos position, Direction face, Vec3 hit, double range) {
+        return BlockTerminalReadiness.clientReady(minecraft.level, minecraft.player,
+                () -> minecraft.level.hasChunkAt(position),
+                () -> {
+                    var blockEntity = minecraft.level.getBlockEntity(position);
+                    return BlockTerminalReadiness.terminalPresent(blockEntity instanceof IPartHost,
+                            () -> ((IPartHost) blockEntity).getPart(face) instanceof ITerminalHost);
+                },
+                () -> BlockTerminalReadiness.withinReach(minecraft.player.getEyePosition(), hit, range));
     }
 
     private void selectTarget() {
@@ -908,6 +956,62 @@ public final class CraftPlanScenario {
 
     String checkpoint() {
         return "state=" + state + " " + currentScreen();
+    }
+
+    static final class BlockTerminalReadiness {
+        private CompletableFuture<Void> serverReadiness;
+        private boolean interactionRequested;
+
+        static <T> T requirePresent(T value, String message) {
+            if (value == null) throw new IllegalStateException(message);
+            return value;
+        }
+
+        static boolean terminalPresent(boolean hostPresent, BooleanSupplier partPresent) {
+            return hostPresent && partPresent.getAsBoolean();
+        }
+
+        static void requireTerminal(boolean hostPresent, BooleanSupplier partPresent, String message) {
+            if (!terminalPresent(hostPresent, partPresent)) throw new IllegalStateException(message);
+        }
+
+        static boolean clientReady(Object level, Object player, BooleanSupplier chunkLoaded,
+                BooleanSupplier terminalPresent, BooleanSupplier withinReach) {
+            return level != null && player != null && chunkLoaded.getAsBoolean()
+                    && terminalPresent.getAsBoolean() && withinReach.getAsBoolean();
+        }
+
+        void tick(Supplier<CompletableFuture<Void>> prepareServer, BooleanSupplier clientReady,
+                Runnable interact) {
+            if (serverReadiness == null) {
+                serverReadiness = Objects.requireNonNull(prepareServer.get(), "terminal readiness future");
+                return;
+            }
+            if (!serverReadiness.isDone()) return;
+            serverReadiness.join();
+            if (interactionRequested || !clientReady.getAsBoolean()) return;
+            interactionRequested = true;
+            interact.run();
+        }
+
+        static boolean withinReach(Vec3 eye, Vec3 hit, double range) {
+            return !outsideReach(eye, hit, range);
+        }
+
+        static boolean outsideReach(Vec3 eye, Vec3 hit, double range) {
+            return eye.distanceToSqr(hit) > range * range;
+        }
+
+        static boolean moveIfOutsideReach(Vec3 eye, Vec3 hit, double range, Runnable move) {
+            if (!outsideReach(eye, hit, range)) return false;
+            move.run();
+            return true;
+        }
+
+        static Vec3 standingPosition(BlockPos terminal, Direction face) {
+            return Vec3.atCenterOf(terminal).add(face.getStepX() * 2.0, face.getStepY() * 2.0 - 1.5,
+                    face.getStepZ() * 2.0);
+        }
     }
 
 }

@@ -15,14 +15,19 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Properties;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.TimeoutException;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -664,6 +669,107 @@ class TestDriverCoreTest {
     void scenarioClockStartsOnFirstObservation() {
         assertEquals(7, CraftPlanScenario.startTime(0, 7));
         assertEquals(3, CraftPlanScenario.startTime(3, 7));
+    }
+
+    @Test
+    void blockTerminalReadinessWaitsForServerAndClientBeforeOneInteraction() {
+        var readiness = new CraftPlanScenario.BlockTerminalReadiness();
+        var server = new CompletableFuture<Void>();
+        var preparations = new AtomicInteger();
+        var interactions = new AtomicInteger();
+
+        readiness.tick(() -> {
+            preparations.incrementAndGet();
+            return server;
+        }, () -> false, interactions::incrementAndGet);
+        readiness.tick(() -> {
+            preparations.incrementAndGet();
+            return server;
+        }, () -> true, interactions::incrementAndGet);
+        assertEquals(1, preparations.get());
+        assertEquals(0, interactions.get());
+
+        server.complete(null);
+        readiness.tick(() -> server, () -> false, interactions::incrementAndGet);
+        assertEquals(0, interactions.get());
+        readiness.tick(() -> server, () -> true, interactions::incrementAndGet);
+        readiness.tick(() -> server, () -> true, interactions::incrementAndGet);
+        assertEquals(1, interactions.get());
+    }
+
+    @Test
+    void blockTerminalReadinessPropagatesPreparationFailuresWithoutInteraction() {
+        var unreadPart = (java.util.function.BooleanSupplier) () -> {
+            throw new AssertionError("missing host must not read a part");
+        };
+        var validations = List.<Runnable>of(
+                () -> CraftPlanScenario.BlockTerminalReadiness.requirePresent(null, "missing server"),
+                () -> CraftPlanScenario.BlockTerminalReadiness.requirePresent(null, "missing player"),
+                () -> CraftPlanScenario.BlockTerminalReadiness.requireTerminal(false, unreadPart, "missing host"),
+                () -> CraftPlanScenario.BlockTerminalReadiness.requireTerminal(true, () -> false, "missing part"));
+        for (var validation : validations) {
+            var readiness = new CraftPlanScenario.BlockTerminalReadiness();
+            var interactions = new AtomicInteger();
+            readiness.tick(() -> CompletableFuture.runAsync(validation, Runnable::run),
+                    () -> true, interactions::incrementAndGet);
+            var failure = assertThrows(CompletionException.class,
+                    () -> readiness.tick(() -> { throw new AssertionError("resubmitted"); },
+                            () -> true, interactions::incrementAndGet));
+            assertInstanceOf(IllegalStateException.class, failure.getCause());
+            assertTrue(failure.getCause().getMessage().startsWith("missing "));
+            assertEquals(0, interactions.get());
+        }
+        var player = new Object();
+        assertSame(player, CraftPlanScenario.BlockTerminalReadiness.requirePresent(player, "missing player"));
+        assertDoesNotThrow(() -> CraftPlanScenario.BlockTerminalReadiness.requireTerminal(
+                true, () -> true, "missing part"));
+    }
+
+    @Test
+    void blockTerminalClientReadinessChecksEveryBoundaryInOrder() {
+        var present = new Object();
+        var unread = (java.util.function.BooleanSupplier) () -> {
+            throw new AssertionError("unready boundary must short circuit");
+        };
+        assertFalse(CraftPlanScenario.BlockTerminalReadiness.clientReady(null, present, unread, unread, unread));
+        assertFalse(CraftPlanScenario.BlockTerminalReadiness.clientReady(present, null, unread, unread, unread));
+        assertFalse(CraftPlanScenario.BlockTerminalReadiness.clientReady(
+                present, present, () -> false, unread, unread));
+        assertFalse(CraftPlanScenario.BlockTerminalReadiness.clientReady(
+                present, present, () -> true, () -> false, unread));
+        assertFalse(CraftPlanScenario.BlockTerminalReadiness.clientReady(
+                present, present, () -> true, () -> true, () -> false));
+        assertTrue(CraftPlanScenario.BlockTerminalReadiness.clientReady(
+                present, present, () -> true, () -> true, () -> true));
+    }
+
+    @Test
+    void blockTerminalReadinessUsesNativeReachBoundaryAndTerminalFace() {
+        var eye = new net.minecraft.world.phys.Vec3(0, 0, 0);
+        var moves = new AtomicInteger();
+        assertTrue(CraftPlanScenario.BlockTerminalReadiness.withinReach(eye,
+                new net.minecraft.world.phys.Vec3(0, 0, 5), 5));
+        assertFalse(CraftPlanScenario.BlockTerminalReadiness.withinReach(eye,
+                new net.minecraft.world.phys.Vec3(0, 0, 5.01), 5));
+        assertFalse(CraftPlanScenario.BlockTerminalReadiness.moveIfOutsideReach(eye,
+                new net.minecraft.world.phys.Vec3(0, 0, 5), 5, moves::incrementAndGet));
+        assertTrue(CraftPlanScenario.BlockTerminalReadiness.moveIfOutsideReach(eye,
+                new net.minecraft.world.phys.Vec3(0, 0, 5.01), 5, moves::incrementAndGet));
+        assertEquals(1, moves.get());
+
+        var terminal = new net.minecraft.core.BlockPos(10, 20, 30);
+        assertEquals(new net.minecraft.world.phys.Vec3(10.5, 19, 32.5),
+                CraftPlanScenario.BlockTerminalReadiness.standingPosition(terminal, net.minecraft.core.Direction.SOUTH));
+        assertEquals(new net.minecraft.world.phys.Vec3(10.5, 19, 28.5),
+                CraftPlanScenario.BlockTerminalReadiness.standingPosition(terminal, net.minecraft.core.Direction.NORTH));
+        assertEquals(new net.minecraft.world.phys.Vec3(12.5, 19, 30.5),
+                CraftPlanScenario.BlockTerminalReadiness.standingPosition(terminal, net.minecraft.core.Direction.EAST));
+        assertEquals(new net.minecraft.world.phys.Vec3(8.5, 19, 30.5),
+                CraftPlanScenario.BlockTerminalReadiness.standingPosition(terminal, net.minecraft.core.Direction.WEST));
+        assertEquals(new net.minecraft.world.phys.Vec3(10.5, 21, 30.5),
+                CraftPlanScenario.BlockTerminalReadiness.standingPosition(terminal, net.minecraft.core.Direction.UP));
+        assertEquals(new net.minecraft.world.phys.Vec3(10.5, 17, 30.5),
+                CraftPlanScenario.BlockTerminalReadiness.standingPosition(terminal, net.minecraft.core.Direction.DOWN));
     }
 
     @Test
