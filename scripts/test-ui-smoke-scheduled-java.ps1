@@ -41,10 +41,30 @@ try {
             $written.artifacts[0].psobject.Properties.Name -contains 'runtimeObject') {
         throw 'Relaunch evidence did not remain bounded and primitive'
     }
+    $integratedOutput = Join-Path $temp 'integrated-relaunch-evidence.json'
+    Write-UiSmokeRelaunchEvidence -Path $integratedOutput -CampaignId campaign -Target '1.20.1-forge' `
+        -Profile compatible -Scenario cpu-list-total-ttc -World world -ConnectionEpoch $null `
+        -PredecessorCheckpointSha256 ('a' * 64) -Processes $runtimeProcesses `
+        -Artifacts @([pscustomobject]@{name='mod.jar';sha256=('b' * 64)}) -FinalApproval
+    $integrated = Get-Content -LiteralPath $integratedOutput -Raw | ConvertFrom-Json
+    if ($null -ne $integrated.connectionEpoch -or @($integrated.controlState).Count -ne 0 -or
+            !$integrated.finalApproval -or $integrated.launchCount -ne 2) {
+        throw 'Integrated relaunch evidence claimed a connected control handshake'
+    }
+    try {
+        Write-UiSmokeRelaunchEvidence -Path $output -CampaignId campaign -Target '1.20.1-forge' `
+            -Profile compatible -Scenario cpu-list-total-ttc -World world -ConnectionEpoch campaign `
+            -PredecessorCheckpointSha256 ('a' * 64) -Processes $runtimeProcesses `
+            -Artifacts @([pscustomobject]@{name='mod.jar';sha256=('b' * 64)}) -FinalApproval
+        throw 'Dedicated relaunch evidence accepted missing control state'
+    } catch {
+        if ($_.Exception.Message -ne 'Relaunch evidence requires the connected control state') { throw }
+    }
     [IO.File]::WriteAllText($control, ('x' * 65537), [Text.UTF8Encoding]::new($false))
     try {
         Write-UiSmokeRelaunchEvidence -Path $output -CampaignId campaign -Target '1.20.1-forge' `
-            -Profile compatible -Scenario cpu-list-total-ttc -World world -PredecessorCheckpointSha256 ('a' * 64) `
+            -Profile compatible -Scenario cpu-list-total-ttc -World world -ConnectionEpoch campaign `
+            -PredecessorCheckpointSha256 ('a' * 64) `
             -Processes $runtimeProcesses -Artifacts @([pscustomobject]@{name='mod.jar';sha256=('b' * 64)}) `
             -ControlStatePath $control -FinalApproval
         throw 'Oversized control state was accepted'

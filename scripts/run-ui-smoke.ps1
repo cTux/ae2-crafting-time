@@ -439,7 +439,7 @@ try {
             $artifactHashes = if ($BundleDirectory) { @(Get-ChildItem -LiteralPath (Join-Path $BundleDirectory 'mods') -File -Filter '*.jar' |
                 Sort-Object Name | ForEach-Object { [ordered]@{name=$_.Name;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} }) } else { @() }
             $controlStatePath = if ($ControlDirectory) { Join-Path $ControlDirectory 'state.properties' } else { $null }
-            if (!$controlStatePath -or !(Test-Path -LiteralPath $controlStatePath -PathType Leaf)) {
+            if ($DedicatedAddress -and (!$controlStatePath -or !(Test-Path -LiteralPath $controlStatePath -PathType Leaf))) {
                 throw 'Relaunch evidence requires the connected control state'
             }
             Write-UiSmokeRelaunchEvidence -Path (Join-Path $evidence 'relaunch-evidence.json') `
