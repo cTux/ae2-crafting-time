@@ -4,6 +4,37 @@ The saved Forge fixture starts within reach of its marked terminal and contains
 no retained CPU jobs. Optional scenarios keep its grid, patterns, and samples.
 Native CPU setup waits for the formed cluster to become active before selection.
 
+## CPU-list total TTC scenario
+
+`cpu-list-total-ttc` opens the real Crafting Status screen on a grid with more
+than six native CPUs. Three jobs have distinct retained critical-path totals;
+one CPU is idle and one busy CPU has no estimate. The driver requires all three
+busy badges before it selects a CPU, then compares that card with the unchanged
+title total from the same received snapshot.
+
+The scenario scrolls both directions, uses long English and Cyrillic fixture
+names for static layout checks, and exercises reorder, removal, completion,
+cancellation, and same-output replacement. It closes and reopens the menu,
+switches to a second grid with overlapping names and serials, expires a delayed
+reply, and reconnects without accepting stale totals. Runtime screenshots stay
+English (`en_us`) and cover selected/unselected cards at the smallest and
+largest GUI scales where the screen fits. Every card keeps its icon, amount,
+progress bar, click area, tooltip, and scrollbar clear.
+
+Run the same checks against integrated and connected disposable dedicated
+servers on all four compatible targets. Record production/driver artifacts,
+dependencies, selected adapters, server estimates, and matching client card
+snapshots. A headless server check is not UI evidence.
+
+The connected path is `scripts/run-connected-dedicated-ui-smoke.ps1`. It takes
+one prepared server and the matching prepared client launch, stages only the
+matching production and driver artifacts into the server, and retains separate
+server/client logs, hashes, authoritative estimates, and semantic screenshots.
+The prepared server is an immutable source marked by
+`.ae2-crafting-time-dedicated-fixture.json`; the runner validates its target,
+launch files, profile, and exactly one production/driver artifact pair before
+creating a separately marked disposable copy below the report directory.
+
 ## Optional screen read recovery
 
 `crafting-tree-read-recovery` and `merequester-read-recovery` use isolated addon
@@ -80,9 +111,9 @@ cover active and scheduled exclusions; the fixture does not simulate a craft.
 
 ## Standard AE2 acceptance scenario
 
-`standard-ae2` is a host-expanded group of six independently runnable leaves:
+`standard-ae2` is a host-expanded group of seven independently runnable leaves:
 `standard-plan-controls`, `standard-status-controls`, `waiting-status`,
-`running-status`, `delayed-status`, and `craft-lifecycle`. Each has a fresh
+`running-status`, `delayed-status`, `craft-lifecycle`, and `cpu-list-total-ttc`. Each has a fresh
 native grid and its own seeded estimates; no case depends on an earlier reset,
 world, job, or cached observation. Standalone standard leaves copy only world metadata and
 the marker (including separate native world-generation settings when present),
@@ -205,6 +236,26 @@ compatible and latest development profiles.
 The driver artifact is written under `build/test-driver`, never `dist`. It does
 not embed production AE2 Crafting Time classes. Player JARs and published
 artifacts must not contain driver classes, resources, metadata, or dependencies.
+
+### Diagnostic relaunch fast path
+
+`cpu-list-total-ttc` may resume phase 2 from a captured phase-1 bundle only for
+diagnosis. The bundle binds the marked disposable world, continuation and
+screenshots, campaign/world identity, Git head, exact artifact-tree hash,
+dependency mode, and an ordinal JAR-name/hash catalogue. Phase 1 writes that
+dependency identity into the disposable world marker. Capture and restore reject
+a marker from any other dependency graph before scheduling Java;
+any mismatch is rejected. A resume-only result is explicitly non-final. Final
+approval still runs both client processes and proves their distinct PID/start
+identities. The runner records launch counts and per-phase timings and may fail
+early when callbacks stop advancing. While the loader, world, or fixture is
+still preparing, the absolute startup deadline remains authoritative; the
+60-second no-checkpoint deadline begins only after the driver reports
+`state=WORLD_READY phase=ACTIVE`.
+
+Changed selection maps this feature directly to `cpu-list-total-ttc` on all
+four required targets, one primary graph each. A sealed bundle is built once per
+immutable head/selection fingerprint and hash-verified on every reuse.
 
 ## Development client installation
 
@@ -437,11 +488,12 @@ thread and fails on a bounded timeout.
 The driver may act only when all of these are true:
 
 - the explicit test-driver launch option is present;
-- the connection is singleplayer;
+- the connection is singleplayer, or the explicitly selected CPU-list connected
+  scenario uses the runner-created loopback dedicated server and control directory;
 - the opened world is the runner-created disposable copy; and
 - the world contains the expected test-fixture marker and scenario data.
 
-It refuses multiplayer, an unmarked world, the tracked source fixture, or a
+It refuses other multiplayer sessions, an unmarked world, the tracked source fixture, or a
 world opened without test-driver mode. After a timeout it records failure and
 stops taking scenario actions. The runner owns copying and deleting the
 disposable world; the driver changes only the running copy.
@@ -519,7 +571,8 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 ## Not included
 
 - Optional-addon behavior outside the registered CPU fixture contract.
-- Dedicated-server or multiplayer support.
+- General dedicated-server or multiplayer support outside the bounded connected
+  CPU-list scenario and registered server fixtures.
 - General-purpose UI automation, arbitrary world setup, or remote control.
 - Pixel-perfect full-frame comparisons.
 - Publishing the driver on GitHub, CurseForge, or Modrinth.
@@ -534,7 +587,9 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
   versions, and stop if installation fails.
 - Both loaders refuse a driver paired with the wrong AE2 Crafting Time version.
 - The driver remains inactive without the explicit test option and refuses
-  multiplayer, the tracked fixture, and unmarked worlds.
+  other multiplayer sessions, the tracked fixture, and unmarked worlds. The
+  connected CPU-list exception requires the marked disposable server and explicit
+  control-directory launch options described above.
 - One command copies the fixture, runs the compatible Crafting Plan scenario,
   validates the result and logs, saves five screenshots, closes the exact
   client, and returns zero only on a complete pass.

@@ -6,12 +6,25 @@ param(
     [string]$CasesBase64,
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|craft-plan|no-space-status|no-provider-status|no-power-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$ArchiveRoot,
     [string]$ReportDirectory,
     [string]$BundleDirectory,
-    [string]$PreparedLaunch
+    [string]$PreparedLaunch,
+    [string]$DedicatedAddress,
+    [string]$ControlDirectory,
+    [string]$CampaignId,
+    [string]$HeadSha,
+    [string]$ResumeBundleDirectory,
+    [switch]$CaptureResumeOnly,
+    [switch]$PrepareOnly,
+    [switch]$ScheduledJava,
+    [string]$InteractiveUser = 'Codex',
+    [int]$CallbackTimeoutSeconds = 20,
+    [int]$CheckpointTimeoutSeconds = 60,
+    [int]$StartupTimeoutSeconds = 300,
+    [switch]$FailOnInitialDisconnect
 )
 
 function Test-UiSnapshotBounds($snapshot) {
@@ -67,15 +80,42 @@ $base = Join-Path $root "build\ui-smoke\$Target\$profile"
 $report = if ($ReportDirectory) { [IO.Path]::GetFullPath($ReportDirectory) } else { Join-Path $base $Scenario }
 $runtime = Join-Path $base "runtime"
 $evidence = Join-Path $report "evidence"
-$world = "ae2ct-$([guid]::NewGuid().ToString('N'))"
+$headSha = $HeadSha
+if (!$headSha) {
+    $headSha = (& git -C $root rev-parse HEAD).Trim()
+    if ($LASTEXITCODE -ne 0) { throw 'Cannot bind UI smoke to Git HEAD' }
+}
+if ($headSha -cnotmatch '^[a-f0-9]{40}$') { throw 'Cannot bind UI smoke to Git HEAD' }
+. (Join-Path $PSScriptRoot 'ui-smoke-dependency-identity.ps1')
+$dependencyIdentity = if ($BundleDirectory) { Get-UiSmokeDependencyIdentity $BundleDirectory } else { $null }
+$resumeState = if ($ResumeBundleDirectory) {
+    if (!$PreparedLaunch -or !$BundleDirectory -or $Scenario -ne 'cpu-list-total-ttc' -or $CaptureResumeOnly) {
+        throw 'Resume-only execution requires one prepared CPU-list launch and cannot capture simultaneously'
+    }
+    & (Join-Path $PSScriptRoot 'prepare-ui-smoke-resume.ps1') -Mode Restore -ResumeDirectory $ResumeBundleDirectory `
+        -BundleDirectory $BundleDirectory -Target $Target -Profile $profile -Scenario $Scenario -HeadSha $headSha
+} else { $null }
+$world = if ($resumeState) { $resumeState.world } else { "ae2ct-$([guid]::NewGuid().ToString('N'))" }
 $worldCopy = Join-Path $runtime "saves\$world"
 $worldCopies = @($worldCopy)
 $stdout = Join-Path $report "launcher.stdout.log"
 $stderr = Join-Path $report "launcher.stderr.log"
 $statusPath = Join-Path $report "status.json"
 $runId = [guid]::NewGuid().ToString("N")
+$campaignId = if ($resumeState) { $resumeState.campaignId } elseif ($CampaignId) { $CampaignId } else { [guid]::NewGuid().ToString('N') }
+if ($campaignId -cnotmatch '^[A-Za-z0-9._-]{1,128}$') { throw 'Invalid UI-smoke campaign identity' }
 $startedAt = [DateTime]::UtcNow.ToString("o")
 $process = $null
+$processDisappeared = $false
+$processExitObserved = $false
+$observedExitCode = $null
+$processes = @()
+$scheduledTaskName = $null
+$preservePreparedWorld = $false
+. (Join-Path $PSScriptRoot 'ui-smoke-scheduled-java.ps1')
+$plannedPhases = @(Get-UiSmokeJavaLaunchPhases -Scenario $Scenario `
+    -ContainsCpuList:($selectedCases -contains 'cpu-list-total-ttc') `
+    -ResumeOnly:([bool]$resumeState) -PrepareOnly:$PrepareOnly)
 
 function Get-TreeHash([string]$path) {
     $sha = [Security.Cryptography.SHA256]::Create()
@@ -89,11 +129,17 @@ function Get-TreeHash([string]$path) {
 
 function Write-Status([string]$phase, [string]$message = "", [Nullable[int]]$exitCode = $null) {
     $status = [ordered]@{
-        schema = 1; runId = $runId; target = $Target; profile = $profile; scenario = $Scenario
+        schema = 2; runId = $runId; campaignId = $campaignId; target = $Target; profile = $profile; scenario = $Scenario
         phase = $phase; pid = $(if ($process) { $process.Id } else { $null }); exitCode = $exitCode
         startedAt = $startedAt; updatedAt = [DateTime]::UtcNow.ToString("o"); javaHome = $env:JAVA_HOME
         stagedRoot = $root; stdout = $stdout; stderr = $stderr; evidence = $evidence; message = $message
         processStartedAt = $(if ($process) { $process.StartTime.ToUniversalTime().ToString('o') } else { $null })
+        processes = @($processes)
+        world = $world
+        dependencyMode = $(if($dependencyIdentity){$dependencyIdentity.mode}else{$null})
+        dependencyCatalogueSha256 = $(if($dependencyIdentity){$dependencyIdentity.catalogueSha256}else{$null})
+        watchdog = [ordered]@{ startupTimeoutSeconds=$StartupTimeoutSeconds; callbackTimeoutSeconds=$CallbackTimeoutSeconds
+            checkpointTimeoutSeconds=$CheckpointTimeoutSeconds }
         argumentFile = $(if ($PreparedLaunch) { Join-Path $runtime 'ui-smoke-java.args' } else { $null })
     }
     $temporary = "$statusPath.$runId.tmp"
@@ -101,6 +147,8 @@ function Write-Status([string]$phase, [string]$message = "", [Nullable[int]]$exi
     Move-Item -LiteralPath $temporary -Destination $statusPath -Force
 }
 
+New-Item -ItemType Directory -Path $report -Force | Out-Null
+Write-Status 'preparing' 'validating source fixture'
 if (-not (Test-Path -LiteralPath (Join-Path $source ".ae2-crafting-time-test-fixture.json") -PathType Leaf)) {
     throw "Missing tracked $fixtureTarget test fixture"
 }
@@ -110,6 +158,7 @@ if ($sourceMarker.schema -ne 1 -or $sourceMarker.scenario -ne "craft-plan" -or
     throw "Tracked source fixture marker is invalid or executable"
 }
 $sourceHash = Get-TreeHash $source
+Write-Status 'preparing' 'validating fixture metadata'
 $metadata = Join-Path $root "versions/$Target/run/saves/ae2-crafting-time/level.dat"
 $metadataHash = (Get-FileHash -LiteralPath $metadata).Hash
 $buildRoot = [IO.Path]::GetFullPath((Join-Path $root "build\ui-smoke"))
@@ -117,6 +166,7 @@ $resolvedBase = [IO.Path]::GetFullPath($base)
 if (-not $resolvedBase.StartsWith($buildRoot, [StringComparison]::OrdinalIgnoreCase)) {
     throw "UI-smoke output escapes build directory"
 }
+Write-Status 'preparing' 'creating isolated runtime directories'
 New-Item -ItemType Directory -Path $base, $report, (Split-Path -Parent $worldCopy) -Force | Out-Null
 try {
     $runtimeLock = [IO.File]::Open((Join-Path $base "runtime.lock"), "OpenOrCreate", "ReadWrite", "None")
@@ -124,7 +174,9 @@ try {
     throw "Another $profile UI-smoke scenario is already using this workspace runtime"
 }
 if (Test-Path -LiteralPath $evidence) { Remove-Item -LiteralPath $evidence -Recurse -Force }
-if ($Scenario -ne "suite") { New-Item -ItemType Directory -Path $evidence -Force | Out-Null }
+if ($resumeState) {
+    Copy-Item -LiteralPath $resumeState.evidenceDirectory -Destination $evidence -Recurse
+} elseif ($Scenario -ne "suite") { New-Item -ItemType Directory -Path $evidence -Force | Out-Null }
 Remove-Item -LiteralPath $stdout, $stderr -Force -ErrorAction SilentlyContinue
 Write-Status "preparing"
 if ($Scenario -eq "suite") {
@@ -134,6 +186,9 @@ if ($Scenario -eq "suite") {
     $world = $suite.world
     $plan = Get-Content -LiteralPath (Join-Path $evidence "suite-plan.json") -Raw | ConvertFrom-Json
     $worldCopies = @($plan.cases | ForEach-Object { Join-Path $runtime "saves\$($_.world)" } | Select-Object -Unique)
+} elseif ($resumeState) {
+    if (Test-Path -LiteralPath $worldCopy) { Remove-Item -LiteralPath $worldCopy -Recurse -Force }
+    Copy-Item -LiteralPath $resumeState.worldDirectory -Destination $worldCopy -Recurse
 } else {
     # The tracked Forge world names Blood Magic dimensions. Reduced graphs need native metadata.
     $vanillaMetadata = $Target -eq '1.20.1-forge' -and $BundleDirectory -and
@@ -142,6 +197,10 @@ if ($Scenario -eq "suite") {
     $markerPath = Join-Path $worldCopy ".ae2-crafting-time-test-fixture.json"
     $marker = Get-Content -LiteralPath $markerPath -Raw | ConvertFrom-Json
     $marker.disposableWorldId = $world
+    if ($dependencyIdentity) {
+        $marker | Add-Member -NotePropertyName dependencyMode -NotePropertyValue $dependencyIdentity.mode -Force
+        $marker | Add-Member -NotePropertyName dependencyCatalogueSha256 -NotePropertyValue $dependencyIdentity.catalogueSha256 -Force
+    }
     [IO.File]::WriteAllText($markerPath, ($marker | ConvertTo-Json -Depth 10), [Text.UTF8Encoding]::new($false))
 }
 [IO.File]::WriteAllText((Join-Path $runtime "options.txt"), @"
@@ -197,31 +256,199 @@ if ($Interactive) {
 
 try {
     try {
-        $executable = 'powershell.exe'
-        if ($PreparedLaunch) {
-            $launch = & (Join-Path $PSScriptRoot 'prepare-ui-smoke-launch.ps1') -LaunchManifest $PreparedLaunch `
-                -BundleDirectory $BundleDirectory -RuntimeDirectory $runtime -Target $Target -Profile $profile `
-                -Scenario $Scenario -World $world -Evidence $evidence -ProjectId $ProjectId -Interactive:$Interactive
-            $executable = $launch.executable
-            $arguments = $launch.arguments
+        $continuationPath = if ($Scenario -eq 'suite') {
+            Join-Path $evidence 'cpu-list-total-ttc/cpu-list-continuation.json'
+        } else { Join-Path $evidence 'cpu-list-continuation.json' }
+        $phase = if ($resumeState) { 2 } else { 1 }
+        $predecessorHash = if ($resumeState) { $resumeState.predecessorSha256 } else { $null }
+        $capturedOnly = $false
+        . (Join-Path $PSScriptRoot 'ui-smoke-progress.ps1')
+        if ($PrepareOnly) {
+            if (!$PreparedLaunch) { throw 'Prepare-only mode requires a native launch manifest' }
+            $phase = if ($resumeState) { 2 } else { 1 }
+            $launchParameters = @{ LaunchManifest=$PreparedLaunch; BundleDirectory=$BundleDirectory
+                RuntimeDirectory=$runtime; Target=$Target; Profile=$profile; Scenario=$Scenario; World=$world
+                Evidence=$evidence; ProjectId=$ProjectId; Interactive=$Interactive; DedicatedAddress=$DedicatedAddress
+                ControlDirectory=$ControlDirectory; CampaignId=$campaignId }
+            if ($phase -eq 2) { $launchParameters.ContinuationPath=$continuationPath; $launchParameters.ResumeOnly=$true }
+            $launch = & (Join-Path $PSScriptRoot 'prepare-ui-smoke-launch.ps1') @launchParameters
+            [ordered]@{schema=1;phase=$phase;world=$world;campaignId=$campaignId;executable=$launch.executable
+                arguments=$launch.arguments;finalApproval=$launch.finalApproval;runtime=$runtime;evidence=$evidence} | ConvertTo-Json -Depth 5 |
+                Set-Content -LiteralPath (Join-Path $report 'prepared-only.json') -Encoding UTF8
+            $preservePreparedWorld = $true
+            Write-Status 'diagnostic-prepared' 'native launch prepared without starting a client' 0
+            return
         }
-        $workingDirectory = if ($PreparedLaunch) { $runtime } else { $root }
-        $process = Start-Process -FilePath $executable -ArgumentList $arguments -PassThru -WindowStyle Hidden `
-            -WorkingDirectory $workingDirectory `
-            -RedirectStandardOutput $stdout -RedirectStandardError $stderr
-        $null = $process.Handle
-        Write-Status "running"
-        $timeout = if ($Interactive) { [TimeSpan]::FromMinutes(30) } elseif ($Scenario -eq "suite") { [TimeSpan]::FromMinutes(40) } else { [TimeSpan]::FromMinutes(8) }
-        if (-not $process.WaitForExit([int]$timeout.TotalMilliseconds)) {
-            $null = $process.CloseMainWindow()
-            if (-not $process.WaitForExit(10000)) {
-                & taskkill.exe /PID $process.Id /T /F | Out-Null
-                if (-not $process.WaitForExit(10000)) { throw 'Recorded smoke client did not exit after termination' }
+        do {
+            $executable = 'powershell.exe'
+            $phaseArguments = $arguments
+            if ($PreparedLaunch) {
+                $launchParameters = @{ LaunchManifest=$PreparedLaunch; BundleDirectory=$BundleDirectory
+                    RuntimeDirectory=$runtime; Target=$Target; Profile=$profile; Scenario=$Scenario; World=$world
+                    Evidence=$evidence; ProjectId=$ProjectId; Interactive=$Interactive; DedicatedAddress=$DedicatedAddress
+                    ControlDirectory=$ControlDirectory; CampaignId=$campaignId }
+                if ($phase -eq 2) {
+                    $launchParameters.ContinuationPath = $continuationPath
+                    if ($resumeState) { $launchParameters.ResumeOnly = $true }
+                }
+                $launch = & (Join-Path $PSScriptRoot 'prepare-ui-smoke-launch.ps1') @launchParameters
+                $executable = $launch.executable
+                $phaseArguments = $launch.arguments
             }
-            throw "UI-smoke client exceeded $($timeout.TotalMinutes) minutes"
+            $workingDirectory = if ($PreparedLaunch) { $runtime } else { $root }
+            $phaseStdout = if ($phase -eq 1) { $stdout } else { Join-Path $report "launcher.phase-$phase.stdout.log" }
+            $phaseStderr = if ($phase -eq 1) { $stderr } else { Join-Path $report "launcher.phase-$phase.stderr.log" }
+            $scheduledIdentity = $null
+            if ($ScheduledJava) {
+                if (!$PreparedLaunch) { throw 'Scheduled Java execution requires a prepared native client' }
+                $scheduledTaskName = "AE2 Crafting Time Java $runId Phase $phase"
+                $scheduledIdentity = Start-UiSmokeScheduledJava -Executable $executable -Arguments ([string]$phaseArguments) `
+                    -WorkingDirectory $workingDirectory -TaskName $scheduledTaskName -InteractiveUser $InteractiveUser
+                $process = $scheduledIdentity.process
+            } else {
+                $process = Start-Process -FilePath $executable -ArgumentList $phaseArguments -PassThru -WindowStyle Hidden `
+                    -WorkingDirectory $workingDirectory `
+                    -RedirectStandardOutput $phaseStdout -RedirectStandardError $phaseStderr
+                $null = $process.Handle
+            }
+            $identity = [ordered]@{ phase=$phase; pid=$process.Id
+                startedAt=$process.StartTime.ToUniversalTime().ToString('o'); stdout=$phaseStdout; stderr=$phaseStderr
+                taskName=$(if($scheduledIdentity){$scheduledIdentity.taskName}else{$null})
+                executable=$executable; argumentFile=$(Join-Path $runtime 'ui-smoke-java.args') }
+            $processes += $identity
+            Write-Status "running" "client phase $phase"
+            $timeout = if ($Interactive) { [TimeSpan]::FromMinutes(30) }
+                elseif ($Scenario -in @("suite", "cpu-list-total-ttc")) { [TimeSpan]::FromMinutes(40) }
+                else { [TimeSpan]::FromMinutes(8) }
+            $deadline = [DateTime]::UtcNow.Add($timeout)
+            $watchdogReason = $null
+            $lastCallback = $process.StartTime.ToUniversalTime()
+            $lastCheckpoint = $lastCallback
+            $progressPid = 0
+            $callbackSequence = 0
+            $checkpoint = ''
+            $processExitObserved = $false
+            $scheduledExitCode = $null
+            while ([DateTime]::UtcNow -lt $deadline) {
+                if ($ScheduledJava) {
+                    $scheduledState = Get-UiSmokeScheduledJavaProcessState -ProcessId $process.Id -TaskName $scheduledTaskName
+                    if ($scheduledState.state -eq 'disappeared') {
+                        $processDisappeared = $true
+                        break
+                    }
+                    if ($scheduledState.state -eq 'exited') {
+                        $scheduledExitCode = [int]$scheduledState.exitCode
+                        break
+                    }
+                    Start-Sleep -Seconds 1
+                } elseif ($process.WaitForExit(1000)) {
+                    break
+                }
+                if ($Scenario -eq 'cpu-list-total-ttc') {
+                    $progressPath = Join-Path $evidence 'driver-progress.json'
+                    if (Test-Path -LiteralPath $progressPath -PathType Leaf) {
+                        try {
+                            $progress = Get-Content -LiteralPath $progressPath -Raw | ConvertFrom-Json
+                            $progressPid = [int]$progress.pid
+                            $callbackSequence = [long]$progress.callbackSequence
+                            if ($progressPid -eq $process.Id) {
+                                if ($progress.callbackAt) { $lastCallback = [DateTime]::Parse($progress.callbackAt).ToUniversalTime() }
+                                if ($progress.checkpointAt) { $lastCheckpoint = [DateTime]::Parse($progress.checkpointAt).ToUniversalTime() }
+                                if ($progress.checkpoint) { $checkpoint = [string]$progress.checkpoint }
+                            }
+                        } catch { }
+                    }
+                    if ($FailOnInitialDisconnect -and $phase -eq 1 -and $progressPid -eq $process.Id -and
+                            $checkpoint -match '^state=STARTING .* screen=(?:net\.minecraft\.client\.gui\.screens\.DisconnectedScreen|net\.minecraft\.class_419)$') {
+                        $watchdogReason = 'initial-disconnect'
+                        break
+                    }
+                    if (!$watchdogReason) {
+                        $watchdogReason = Get-UiSmokeProgressDecision -Now ([DateTime]::UtcNow) -CallbackAt $lastCallback `
+                            -CheckpointAt $lastCheckpoint -CallbackTimeoutSeconds $CallbackTimeoutSeconds `
+                            -CheckpointTimeoutSeconds $CheckpointTimeoutSeconds -ProcessId $process.Id `
+                            -ProgressProcessId $progressPid -CallbackSequence $callbackSequence `
+                            -StartedAt $process.StartTime.ToUniversalTime() -StartupTimeoutSeconds $StartupTimeoutSeconds `
+                            -Checkpoint $checkpoint
+                    }
+                    if ($watchdogReason) { break }
+                }
+            }
+            if ($processDisappeared) {
+                throw "Scheduled UI-smoke client process $($process.Id) disappeared before exit could be observed"
+            }
+            if ($null -eq $scheduledExitCode -and !$process.HasExited) {
+                $null = $process.CloseMainWindow()
+                if (-not $process.WaitForExit(10000)) {
+                    & taskkill.exe /PID $process.Id /T /F | Out-Null
+                    if (-not $process.WaitForExit(10000)) { throw 'Recorded smoke client did not exit after termination' }
+                }
+                if ($watchdogReason) {
+                    [ordered]@{schema=1;reason=$watchdogReason;campaignId=$campaignId;world=$world;pid=$identity.pid
+                        processStartedAt=$identity.startedAt;headSha=$headSha;bundleSha256=$(if($resumeState){$resumeState.bundleSha256}else{$null})
+                        dependencyMode=$(if($dependencyIdentity){$dependencyIdentity.mode}else{$null})
+                        dependencyCatalogueSha256=$(if($dependencyIdentity){$dependencyIdentity.catalogueSha256}else{$null})
+                        callbackAt=$lastCallback.ToString('o');checkpointAt=$lastCheckpoint.ToString('o');launchCount=$processes.Count
+                        progressPid=$progressPid;callbackSequence=$callbackSequence;checkpoint=$checkpoint;startupTimeoutSeconds=$StartupTimeoutSeconds
+                        callbackTimeoutSeconds=$CallbackTimeoutSeconds;checkpointTimeoutSeconds=$CheckpointTimeoutSeconds
+                        capturedAt=[DateTime]::UtcNow.ToString('o')} |
+                        ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $evidence 'watchdog-evidence.json') -Encoding UTF8
+                    throw "UI-smoke phase $phase watchdog: $watchdogReason"
+                }
+                throw "UI-smoke client phase $phase exceeded $($timeout.TotalMinutes) minutes"
+            }
+            $observedExitCode = if ($null -ne $scheduledExitCode) { $scheduledExitCode } else { $process.ExitCode }
+            $processExitObserved = $true
+            $identity['exitCode'] = $observedExitCode
+            $identity['exitedAt'] = [DateTime]::UtcNow.ToString('o')
+            if ($scheduledTaskName) {
+                Remove-UiSmokeScheduledJava -TaskName $scheduledTaskName
+                $scheduledTaskName = $null
+            }
+            Write-Status 'validating' "client phase $phase exited; validating evidence" $observedExitCode
+            if ($observedExitCode -ne 0) {
+                throw "UI-smoke $profile-profile phase $phase failed with launcher exit $observedExitCode; see $phaseStderr"
+            }
+            if ($phase -eq 1 -and (Test-Path -LiteralPath $continuationPath -PathType Leaf)) {
+                if (!$PreparedLaunch) { throw 'Runner-owned relaunch requires a prepared native client' }
+                $predecessorHash = (Get-FileHash -LiteralPath $continuationPath -Algorithm SHA256).Hash
+                if ($CaptureResumeOnly) {
+                    $resumeOutput = Join-Path $report 'resume'
+                    & (Join-Path $PSScriptRoot 'prepare-ui-smoke-resume.ps1') -Mode Capture -ResumeDirectory $resumeOutput `
+                        -WorldDirectory $worldCopy -EvidenceDirectory $evidence -BundleDirectory $BundleDirectory `
+                        -Target $Target -Profile $profile -Scenario $Scenario -CampaignId $campaignId -HeadSha $headSha | Out-Null
+                    $capturedOnly = $true
+                    break
+                }
+                $phase = 2
+                continue
+            }
+            break
+        } while ($phase -le 2)
+        if ($capturedOnly) {
+            Write-Status 'diagnostic-captured' 'immutable phase-1 resume bundle captured' 0
+            return
         }
-        if ($process.ExitCode -ne 0) {
-            throw "UI-smoke $profile-profile setup/startup failed with launcher exit $($process.ExitCode); see $stderr"
+        Assert-UiSmokeJavaPhaseIdentities -Processes @($processes) -ExpectedPhases $plannedPhases `
+            -FinalApproval:($Scenario -eq 'cpu-list-total-ttc' -and !$resumeState)
+        if ($phase -eq 2) {
+            if (!$resumeState -and ($processes.Count -ne 2 -or $processes[0].pid -eq $processes[1].pid -or
+                    $processes[0].startedAt -eq $processes[1].startedAt)) {
+                throw 'Relaunch did not produce a distinct second client process identity'
+            }
+            $artifactHashes = if ($BundleDirectory) { @(Get-ChildItem -LiteralPath (Join-Path $BundleDirectory 'mods') -File -Filter '*.jar' |
+                Sort-Object Name | ForEach-Object { [ordered]@{name=$_.Name;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash} }) } else { @() }
+            $controlStatePath = if ($ControlDirectory) { Join-Path $ControlDirectory 'state.properties' } else { $null }
+            if ($DedicatedAddress -and (!$controlStatePath -or !(Test-Path -LiteralPath $controlStatePath -PathType Leaf))) {
+                throw 'Relaunch evidence requires the connected control state'
+            }
+            Write-UiSmokeRelaunchEvidence -Path (Join-Path $evidence 'relaunch-evidence.json') `
+                -CampaignId $campaignId -Target $Target -Profile $profile -Scenario $Scenario -World $world `
+                -ConnectionEpoch $(if($DedicatedAddress){$campaignId}else{$null}) `
+                -PredecessorCheckpointSha256 $predecessorHash -Processes @($processes) -Artifacts $artifactHashes `
+                -DependencyMode $(if($dependencyIdentity){$dependencyIdentity.mode}else{$null}) `
+                -DependencyCatalogueSha256 $(if($dependencyIdentity){$dependencyIdentity.catalogueSha256}else{$null}) `
+                -ControlStatePath $controlStatePath -ResumeOnly:([bool]$resumeState) -FinalApproval:(-not [bool]$resumeState)
         }
 
     $caseScenarios = @($Scenario)
@@ -375,7 +602,8 @@ try {
         if ($previousToken) { $env:AE2CT_TEST_DRIVER_TOKEN = $previousToken }
         else { Remove-Item Env:\AE2CT_TEST_DRIVER_TOKEN -ErrorAction SilentlyContinue }
         foreach ($copy in $worldCopies) {
-            if ((-not $process -or $process.HasExited) -and (Test-Path -LiteralPath $copy)) {
+            if (!$preservePreparedWorld -and (-not $process -or $processDisappeared -or $processExitObserved -or $process.HasExited) -and
+                    (Test-Path -LiteralPath $copy)) {
                 Remove-Item -LiteralPath $copy -Recurse -Force
             }
         }
@@ -389,11 +617,14 @@ try {
             ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $evidence 'fixture-hashes.json') -Encoding UTF8
         if ($afterHash -ne $sourceHash -or $afterMetadata -ne $metadataHash) { throw "Tracked source fixture changed during UI smoke" }
     }
-    Write-Status "passed" "UI smoke passed" $process.ExitCode
+    Write-Status "passed" "UI smoke passed" $observedExitCode
     $runtimeLock.Dispose()
     Write-Host "UI smoke passed: $evidence"
 } catch {
-    $exitCode = if ($process -and $process.HasExited) { [Nullable[int]]$process.ExitCode } else { $null }
+    if ($scheduledTaskName) { Remove-UiSmokeScheduledJava -TaskName $scheduledTaskName }
+    $exitCode = if ($processExitObserved) { [Nullable[int]]$observedExitCode }
+        elseif ($process -and !$processDisappeared -and $process.HasExited) { [Nullable[int]]$process.ExitCode }
+        else { $null }
     Write-Status "failed" $_.Exception.Message $exitCode
     $runtimeLock.Dispose()
     throw

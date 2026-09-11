@@ -130,6 +130,7 @@ public final class ProviderHighlightRender {
     @net.neoforged.bus.api.SubscribeEvent
     public static void onClientDisconnect(ClientPlayerNetworkEvent.LoggingOut event) {
         ProviderHighlightClient.onSessionEnd();
+        CpuTtcClient.clear();
     }
 
     private ProviderHighlightRender() {

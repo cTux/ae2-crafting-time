@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "groups": {
-    "standard-ae2": ["standard-plan-controls", "standard-status-controls", "waiting-status", "running-status", "delayed-status", "craft-lifecycle"],
+    "standard-ae2": ["standard-plan-controls", "standard-status-controls", "waiting-status", "running-status", "delayed-status", "craft-lifecycle", "cpu-list-total-ttc"],
     "provider-dispatch-statuses": ["no-target-status", "input-blocked-status", "locked-status"]
   },
   "cases": {
@@ -28,6 +28,10 @@
     "craft-lifecycle": {
       "checks": ["plan", "submitted", "status", "profile-sample", "total-cleared", "completed", "output", "plan-no-data", "plan-partial", "accuracy-full", "accuracy-partial", "details-chat"],
       "screenshots": ["plan-no-data.png", "plan-partial.png", "plan-default.png", "status-default.png", "status-finished-job.png", "status-completed.png", "job-accuracy-full.png", "details-chat.png", "plan-partial-job.png", "status-partial-job.png", "status-partial-finished.png", "status-partial-completed.png", "job-accuracy-partial.png"]
+    },
+    "cpu-list-total-ttc": {
+      "checks": ["initial-distinct", "unknown-hidden", "idle-hidden", "badge-select", "selected-title", "tooltip", "scroll-down", "scroll-up", "partial", "stalled", "reordered", "finished", "cancelled", "replacement", "removed", "drop-expiry", "delayed-expiry", "close-reopen", "second-grid", "small-scale", "large-scale", "same-jvm-clear", "process-relaunch", "reconnect", "layout"],
+      "screenshots": ["cpu-list-total-ttc-unselected-large.png", "cpu-list-total-ttc-selected-large.png", "cpu-list-total-ttc-tooltip.png", "cpu-list-total-ttc-scroll-down.png", "cpu-list-total-ttc-scroll-up.png", "cpu-list-total-ttc-partial.png", "cpu-list-total-ttc-stalled.png", "cpu-list-total-ttc-reordered.png", "cpu-list-total-ttc-finished.png", "cpu-list-total-ttc-cancelled.png", "cpu-list-total-ttc-restart-cleared.png", "cpu-list-total-ttc-replacement.png", "cpu-list-total-ttc-removed.png", "cpu-list-total-ttc-drop-expiry.png", "cpu-list-total-ttc-delayed-expiry.png", "cpu-list-total-ttc-close-reopen.png", "cpu-list-total-ttc-second-grid.png", "cpu-list-total-ttc-smallest-scale.png", "cpu-list-total-ttc-largest-scale.png", "cpu-list-total-ttc-disconnect-cleared.png", "cpu-list-total-ttc-rejoin-fresh.png", "cpu-list-total-ttc-relaunch-cleared.png", "cpu-list-total-ttc-reconnect.png"]
     },
     "no-target-status": {
       "checks": ["screen", "real-job", "mixed-row", "tooltip", "layout", "target-removed", "target-restored"],

@@ -76,7 +76,9 @@ public final class CraftPlanScenario {
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         DispatchObservation.watch(null, null);
         this.minecraft = minecraft;
-        standard = StandardAe2Scenario.supports(options.scenario()) ? new StandardAe2Scenario(options.scenario()) : null;
+        standard = StandardAe2Scenario.supports(options.scenario())
+                ? new StandardAe2Scenario(options.scenario(), options.world(), options.output(),
+                        options.connectedDedicated(), screenshots) : null;
         noSpace = NoSpaceScenario.SCENARIO.equals(options.scenario()) ? new NoSpaceScenario() : null;
         noPower = NoPowerScenario.SCENARIO.equals(options.scenario()) ? new NoPowerScenario() : null;
         noProvider = NoProviderScenario.SCENARIO.equals(options.scenario()) ? new NoProviderScenario() : null;
@@ -137,6 +139,9 @@ public final class CraftPlanScenario {
         return failure;
     }
 
+    boolean reconnectRequested() { return standard != null && standard.reconnectRequested(); }
+    void reconnected() { standard.reconnected(); }
+
     public long elapsedMillis() {
         return Duration.ofNanos(System.nanoTime() - stateStarted).toMillis();
     }
@@ -149,7 +154,19 @@ public final class CraftPlanScenario {
             return;
         }
         if (minecraft.screen != null || minecraft.level == null || minecraft.player == null || minecraft.gameMode == null
-                || minecraft.getSingleplayerServer() == null || minecraft.getCurrentServer() != null) {
+                || (!options.connectedDedicated() && (minecraft.getSingleplayerServer() == null || minecraft.getCurrentServer() != null))
+                || (options.connectedDedicated() && (minecraft.getSingleplayerServer() != null || minecraft.getCurrentServer() == null))) {
+            return;
+        }
+        if (options.connectedDedicated()) {
+            AdapterSmokePolicy.verify(DriverPlatform.TARGET, options.scenario(),
+                    minecraft.getLanguageManager().getSelected(),
+                    com.ctux.ae2craftingtime.integration.IntegrationMixinPlugin.snapshot());
+            var state = CpuListTtcControl.state();
+            if (!state.ready()) return;
+            marker = new FixtureMarker(1, "craft-plan", "ae2-crafting-time", options.world(),
+                    new FixtureMarker.Position(state.x(), state.y(), state.z(), "NORTH"), "minecraft:smooth_stone");
+            advance(ScenarioState.WORLD_READY);
             return;
         }
         var world = minecraft.gameDirectory.toPath().resolve("saves").resolve(options.world()).normalize();
@@ -195,7 +212,8 @@ public final class CraftPlanScenario {
     private void openTerminal() throws IOException {
         if (standard != null) {
             try {
-                if (standard.tick(minecraft, marker, checks, this::screenshotUnchecked, this::moveMouse)) {
+                var complete = standard.tick(minecraft, marker, checks, this::screenshotUnchecked, this::moveMouse);
+                if (complete) {
                     advance(ScenarioState.TERMINAL_OPEN);
                     writePass();
                 }
@@ -886,6 +904,10 @@ public final class CraftPlanScenario {
         var screen = minecraft.screen.getClass().getName();
         var snapshot = UiObservationStore.latest();
         return state == ScenarioState.PLAN_STABLE && snapshot != null ? screen + " rows=" + ids(snapshot) : screen;
+    }
+
+    String checkpoint() {
+        return "state=" + state + " " + currentScreen();
     }
 
 }

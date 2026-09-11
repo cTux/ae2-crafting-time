@@ -100,6 +100,27 @@ function Assert-Line([string]$text, [string]$expected) {
 }
 
 try {
+    $baseRuntime = Join-Path $temp 'base-only-runtime'
+    $baseOutput = (& $script -Target '1.20.1-forge' -Root $temp -VersionMatrix $testMatrix -RuntimeDirectory $baseRuntime `
+        -DriverScenario cpu-list-total-ttc -DriverOutputDirectory $temp -DriverWorld ae2ct-00000000000000000000000000000000 `
+        -ResolveOnly -Packaged -BaseOnly 6>&1 | Out-String)
+    Assert-Line $baseOutput 'base-only dependencies'
+    $baseProfile = Get-Content (Join-Path $baseRuntime 'profile.json') -Raw | ConvertFrom-Json
+    if ($baseProfile.dependencyMode -ne 'base') { throw 'Base-only profile omitted its dependency mode' }
+    $baseManifest = @((Get-Content (Join-Path $baseRuntime 'mods/.ae2-crafting-time-run-mods.json') -Raw | ConvertFrom-Json).ForEach({ [string]$_ }))
+    if (@($baseManifest | Where-Object { $_ -match '^(anaGQD2Q|pNabrMMw|rxYaglEe|u6dRKJwZ|1605404|1624558)\.jar$' }).Count) {
+        throw "Base-only profile loaded optional catalogue projects: $($baseManifest -join ', ')"
+    }
+    if (@($baseManifest | Where-Object { $_ -like '*test-driver.jar' }).Count -ne 1 -or
+            @($baseManifest | Where-Object { $_ -like 'ae2-crafting-time-*.jar' -and $_ -notlike '*test-driver.jar' }).Count -ne 1 -or
+            'XxWD5pD3.jar' -notin $baseManifest) {
+        throw "Base-only packaged profile omitted AE2, production, or driver artifacts: $($baseManifest -join ', ')"
+    }
+    try {
+        & $script -Target '1.20.1-forge' -Root $temp -VersionMatrix $testMatrix -ResolveOnly -BaseOnly -ProjectId pNabrMMw 6>&1 | Out-Null
+        throw 'Base-only profile accepted an optional project'
+    } catch { if ($_.Exception.Message -eq 'Base-only profile accepted an optional project') { throw } }
+
     foreach ($entry in $matrix) {
         if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) {
             $game, $loader = $entry.id.Split("-", 2)
@@ -270,6 +291,8 @@ try {
                 if (-not (Test-Path -LiteralPath (Join-Path $packaged "mods/$file"))) { throw "Packaged manifest refers to a missing file: $file" }
             }
             if (-not (Test-Path -LiteralPath (Join-Path $packaged 'profile.json'))) { throw 'Packaged loader identity is missing' }
+            $packagedProfile = Get-Content -LiteralPath (Join-Path $packaged 'profile.json') -Raw | ConvertFrom-Json
+            if ($packagedProfile.dependencyMode -ne 'catalogue') { throw 'Catalogue profile omitted its dependency mode' }
         }
     }
     Write-Host "run-client checks passed"

@@ -153,6 +153,20 @@ Rules:
 - Missing stats or waiting values therefore remove old client state instead of
   leaving stale values behind.
 
+### CPU-list TTC packets
+
+`CpuTtcRequestC2S` carries the open container id, a per-screen session id, a
+monotonic sequence, and at most 32 positive, unique CPU serials. The client sends
+the visible six plus the selected CPU at most once per second. The server accepts
+four packets and 128 serials per player per second, then resolves only CPUs in
+the current Crafting Status menu's existing serial map and live grid CPU set.
+
+`CpuTtcSnapshotS2C` echoes session and sequence and returns one present-or-empty
+total for every requested serial. The client accepts only the latest outstanding
+request for the active screen, replaces the whole batch, and expires it after
+three seconds. Idle, unknown, zero, removed, replaced, or foreign CPUs stay
+blank. The selected card and title read this same batch.
+
 ### `ProviderLocateC2S`
 
 Sent from client to server when any crafting-item row in the crafting CPU
@@ -234,8 +248,9 @@ Rules:
   (see [issue #241](https://github.com/cTux/ae2-crafting-time/issues/241)).
   The packet layout is additive (`networkId` tail with tolerant reads).
 
-Wire versions: Forge channel protocol `14`, Fabric
-`provider_highlight_v4` plus `provider_locate_v1`, NeoForge registrars `13`.
+Wire versions: Forge channel protocol `17`; Fabric keeps its existing channels
+and adds `cpu_ttc_request_v1` plus `cpu_ttc_snapshot_v1`; NeoForge registrars are
+`16`.
 
 ### Provider-start persistence
 

@@ -7,11 +7,14 @@
   "mixins": [
     "AdvancedCraftingCpuLogicMixin",
     "CraftingCPUMenuAccessor",
+    "CraftingStatusMenuAccessor",
     "CraftingCpuLogicMixin",
     "PatternProviderLogicMixin",
     "PatternProviderExternalPushMixin"
   ],
   "client": [
+    "AbstractContainerScreenCpuTtcMixin",
+    "CPUSelectionListMixin",
     "AbstractTableRendererMixin",
     "ChatScreenMixin",
     "CraftingCPUScreenMixin",

@@ -1,6 +1,8 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C;
+import com.ctux.ae2craftingtime.mc1201.net.CpuTtcRequestC2S;
+import com.ctux.ae2craftingtime.mc1201.net.CpuTtcSnapshotS2C;
 import com.ctux.ae2craftingtime.mc1201.net.ProviderLocateC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsChatC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsRequestC2S;
@@ -15,13 +17,15 @@ public final class StatsNetwork {
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("15");
+        var registrar = event.registrar("16");
         registrar.playToServer(StatsRequestC2S.TYPE, StatsRequestC2S.STREAM_CODEC, StatsRequestC2S::handle);
         registrar.playToServer(StatsChatC2S.TYPE, StatsChatC2S.STREAM_CODEC, StatsChatC2S::handle);
         registrar.playToClient(StatsSnapshotS2C.TYPE, StatsSnapshotS2C.STREAM_CODEC, StatsSnapshotS2C::handle);
         registrar.playToClient(ProviderHighlightS2C.TYPE, ProviderHighlightS2C.STREAM_CODEC,
                 ProviderHighlightS2C::handle);
         registrar.playToServer(ProviderLocateC2S.TYPE, ProviderLocateC2S.STREAM_CODEC, ProviderLocateC2S::handle);
+        registrar.playToServer(CpuTtcRequestC2S.TYPE, CpuTtcRequestC2S.STREAM_CODEC, CpuTtcRequestC2S::handle);
+        registrar.playToClient(CpuTtcSnapshotS2C.TYPE, CpuTtcSnapshotS2C.STREAM_CODEC, CpuTtcSnapshotS2C::handle);
     }
 
     public static void sendTo(ServerPlayer player, StatsSnapshotS2C packet) {
@@ -29,6 +33,10 @@ public final class StatsNetwork {
     }
 
     public static void sendTo(ServerPlayer player, ProviderHighlightS2C packet) {
+        PacketDistributor.sendToPlayer(player, packet);
+    }
+
+    public static void sendTo(ServerPlayer player, CpuTtcSnapshotS2C packet) {
         PacketDistributor.sendToPlayer(player, packet);
     }
 

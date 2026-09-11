@@ -1,6 +1,7 @@
 # CPU-list total TTC technical design
 
-Status: planned. Implements [the specification](spec.md) for
+Status: implementation in progress in [PR #381](https://github.com/cTux/ae2-crafting-time/pull/381).
+Implements [the specification](spec.md) for
 [issue #324](https://github.com/cTux/ae2-crafting-time/issues/324).
 
 ## Verified seams
@@ -149,9 +150,8 @@ peer rejection. Use matching client/server builds for acceptance tests.
 | A6 | Malformed/max/duplicate/negative codec cases; wrong menu/grid; both rate limits and disconnect cleanup. |
 | A7 | Four-target tests/builds and integrated/dedicated UI evidence with target/mod versions. |
 
-Use the planned `cpu-list-total-ttc` driver scenario in each target's prepared
-`compatible` profile. The scenario is not implemented yet. Extend the existing
-driver contracts before its code, and follow the
+Use the `cpu-list-total-ttc` driver scenario in each target's prepared
+`compatible` profile. Follow the
 [smoke policy and change-selection gates](../automated-ui-testing/spec.md).
 Record the selected adapter identity; use a focused prepared fixture when the
 compatible graph does not exercise the newest implemented adapter.
@@ -164,6 +164,24 @@ the multi-CPU fixture and client observations for the connected case. Record
 client/server artifact identities and server-side estimates alongside the
 rendered card/title snapshot. Never substitute an integrated-server screenshot
 or a headless pass for this evidence.
+
+The relaunch runner supports a non-final resume bundle for focused phase-2
+diagnosis. Its manifest binds Git head, campaign, disposable world, continuation
+hash, retained evidence tree, production/driver bundle tree, dependency mode,
+and managed JAR catalogue hash. Phase 1 records the latter two values in the
+disposable world marker; restore rejects a mismatch before scheduling Java.
+Restore copies the world and evidence into a fresh runtime and launches only phase 2. A
+progress heartbeat distinguishes missing callback delivery from an unchanged
+scenario checkpoint and causes a fast evidence-bearing failure. Callback
+liveness is enforced throughout the process, while loader/world/fixture
+preparation remains governed by the absolute startup deadline. The 60-second
+checkpoint deadline starts only after `state=WORLD_READY phase=ACTIVE`. Final
+verification always starts at phase 1 and requires the distinct relaunched PID.
+
+The Changed impact map owns this feature as the single
+`cpu-list-total-ttc` leaf on each supported target. The compatible primary
+bundle for an immutable head/fingerprint is sealed once and hash-verified for
+integrated and connected-dedicated reuse.
 
 Copying the selected total misidentifies jobs. Deriving TTC from elapsed time or
 progress changes semantics. Cycling selection changes player state. Broadcasting

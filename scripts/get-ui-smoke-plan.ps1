@@ -176,13 +176,13 @@ foreach ($id in $ids) {
             if (!$focused.Count) { continue }
             $primary = @($primary | Where-Object { $_ -cnotin $adapterCases })
             $focusedProfile = if ($declaration.profile -ceq 'compatible') { 'compatible' } else { 'latest' }
-            $graphs += [pscustomobject]@{ id=$project.project_id; profile=$focusedProfile; cases=$focused; projectId=@($project.project_id)
+            $graphs += [pscustomobject]@{ id=$project.project_id; profile=$focusedProfile; cases=$focused; projectId=@($project.project_id); baseOnly=$false
                 reason=$declaration.reason; adapterPolicy="$focusedProfile packaged catalogue variant; verify runtime selection" }
         }
     }
     if ($primary.Count) {
         $graphs = @([pscustomobject]@{ id='primary'; profile=$(if ($Latest) { 'latest' } else { 'compatible' }); cases=$primary
-            projectId=@($ProjectId); reason='Requested dependency graph'; adapterPolicy='newest packaged catalogue variant for direct cases' }) + $graphs
+            projectId=@($ProjectId); baseOnly=[bool](!$ProjectId); reason='Requested dependency graph'; adapterPolicy='base AE2 graph for direct cases' }) + $graphs
     }
     $entries += [pscustomobject]@{ target=$id; graphs=$graphs; mode=$(if ($full) { 'full' } else { 'focused' }); cases=$cases
         notSelectedCases=@($allCases | Where-Object { $_ -cnotin $cases });

@@ -85,6 +85,29 @@ try {
     Assert (($plan.targets | Where-Object target -eq '1.20.1-forge').mode -eq 'full') 'Broad rule must dominate only its target'
     Assert (@($plan.targets | Where-Object mode -eq 'focused').Count -eq 3) 'Mixed changes must union'
     Clean
+    foreach ($path in @(
+            'shared/src/main/java/com/ctux/ae2craftingtime/core/CpuTtcCache.java',
+            'shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/ClientStats.java',
+            'shared/src/testDriver1201/java/com/ctux/ae2craftingtime/testdriver/TestDriverRuntime.java',
+            'shared/src/testDriver1201/resources/ae2craftingtime_test_driver.mixins.json',
+            'versions/1.20.1-fabric/src/main/java/com/ctux/ae2craftingtime/mc1201/Ae2CraftingTimeClient.java',
+            'versions/1.20.1-forge/src/testDriver/java/com/ctux/ae2craftingtime/testdriver/DriverPlatform.java',
+            'versions/1.21.1-neoforge/build.gradle',
+            'versions/26.1.2-neoforge/src/testDriver/java/com/ctux/ae2craftingtime/testdriver/TestDriverRuntime.java',
+            'scripts/run-client.ps1',
+            'scripts/run-connected-dedicated-ui-smoke.ps1',
+            'scripts/ui-smoke-scheduled-java.ps1')) {
+        Put $path 'cpu-list implementation boundary'
+    }
+    $cpuPlan = Plan
+    Assert ($cpuPlan.targets.Count -eq 4) 'CPU-list feature must reach all four targets'
+    Assert (@($cpuPlan.targets | Where-Object { $_.cases.Count -ne 1 -or $_.cases[0] -ne 'cpu-list-total-ttc' }).Count -eq 0) `
+        'CPU-list feature must not add unrelated standard cases'
+    Assert (@($cpuPlan.targets | Where-Object { $_.graphs.Count -ne 1 -or $_.graphs[0].id -ne 'primary' }).Count -eq 0) `
+        'CPU-list feature must not add optional-addon graphs'
+    Assert (@($cpuPlan.targets | Where-Object { !$_.graphs[0].baseOnly }).Count -eq 0) `
+        'CPU-list primary graph must resolve only AE2 and the test driver'
+    Clean
     Put 'shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingStatusTableRendererMixin.java' 'only delayed method changed'
     Assert ((Plan).targets[0].cases.Count -eq 11) 'Never narrow mixed renderers by keywords'
     Clean
@@ -142,10 +165,10 @@ try {
     $advancedGraphs = @($full.targets.graphs | Where-Object id -eq 'rxYaglEe')
     Assert ($forgeGraphs.Count -eq 3 -and $forgeGraphs[1].cases.Count -eq 2) 'Full Forge must schedule its separate newest-adapter graph'
     Assert ($advancedGraphs.Count -eq 3 -and @($advancedGraphs | Where-Object { $_.cases.Count -ne 4 }).Count -eq 0) 'AdvancedAE must repeat all provider status leaves on three targets'
-    Assert ($full.targets[0].cases.Count -eq 37) 'Expanded Forge suite must contain 37 leaves'
-    Assert ($full.targets[1].cases.Count -eq 19) 'Expanded Fabric suite must contain 19 leaves'
-    Assert ($full.targets[2].cases.Count -eq 33) 'Expanded NeoForge suite must contain 33 leaves'
-    Assert ($full.targets[3].cases.Count -eq 22) 'Expanded 26.1.2 suite must contain 22 leaves'
+    Assert ($full.targets[0].cases.Count -eq 38) 'Expanded Forge suite must contain 38 leaves'
+    Assert ($full.targets[1].cases.Count -eq 20) 'Expanded Fabric suite must contain 20 leaves'
+    Assert ($full.targets[2].cases.Count -eq 34) 'Expanded NeoForge suite must contain 34 leaves'
+    Assert ($full.targets[3].cases.Count -eq 23) 'Expanded 26.1.2 suite must contain 23 leaves'
     Invoke-FixtureGit @('checkout','-b','conflict-side')
     Put 'README.md' 'theirs'
     Invoke-FixtureGit @('add','.')

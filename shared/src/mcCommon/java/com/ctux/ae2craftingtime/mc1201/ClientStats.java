@@ -5,6 +5,7 @@ import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import appeng.menu.me.crafting.CraftingStatusMenu;
 
 import java.util.HashMap;
 import java.util.List;
@@ -46,6 +47,10 @@ public final class ClientStats {
     }
 
     public static OptionalLong totalTtcSeconds() {
+        if (Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> screen
+                && screen.getMenu() instanceof CraftingStatusMenu status && CpuTtcRequests.enabled()) {
+            return CpuTtcClient.seconds(status.getSelectedCpuSerial());
+        }
         var context = Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> screen
                 ? StatsRequestContext.cpuContext(screen.getMenu()) : -1;
         return CACHE.totalTtcSeconds(context);

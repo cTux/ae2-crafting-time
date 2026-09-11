@@ -317,6 +317,16 @@ public final class CraftProfiler {
         jobEstimates.put(scope, estimate);
     }
 
+    public void rebindJobEstimate(Object previousScope, Object currentScope) {
+        if (previousScope == null || currentScope == null || previousScope == currentScope) {
+            return;
+        }
+        var estimate = jobEstimates.remove(previousScope);
+        if (estimate != null) {
+            jobEstimates.put(currentScope, estimate);
+        }
+    }
+
     public OptionalLong remainingJobSeconds(Object scope,
             BiFunction<ProfileKey, Long, OptionalLong> estimate) {
         var jobEstimate = jobEstimates.get(scope);

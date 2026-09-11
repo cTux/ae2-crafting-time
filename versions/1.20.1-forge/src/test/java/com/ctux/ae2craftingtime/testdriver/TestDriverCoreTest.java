@@ -6,14 +6,20 @@ import net.minecraft.network.chat.Component;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.Duration;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.TimeoutException;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -21,6 +27,110 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
+    @Test
+    void driverProgressRetriesOnlyTransientWindowsReplaceFailures() throws Exception {
+        var transientOutput = temporary.resolve("transient-progress");
+        var transientAttempts = new AtomicInteger();
+        new DriverProgress(transientOutput, "phase=ACTIVE", (source, target) -> {
+            if (transientAttempts.incrementAndGet() == 1) throw new AccessDeniedException(target.toString());
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+        });
+        assertEquals(2, transientAttempts.get());
+        assertEquals("phase=ACTIVE", com.google.gson.JsonParser.parseString(
+                Files.readString(transientOutput.resolve("driver-progress.json")))
+                .getAsJsonObject().get("checkpoint").getAsString());
+
+        var persistentOutput = temporary.resolve("persistent-progress");
+        var persistentAttempts = new AtomicInteger();
+        assertThrows(AccessDeniedException.class, () -> new DriverProgress(persistentOutput, "phase=ACTIVE",
+                (source, target) -> {
+                    persistentAttempts.incrementAndGet();
+                    throw new AccessDeniedException(target.toString());
+                }));
+        assertEquals(DriverProgress.MOVE_ATTEMPTS, persistentAttempts.get());
+        var retained = Files.readString(persistentOutput.resolve("driver-progress.json.tmp"));
+        assertTrue(retained.startsWith("{") && retained.endsWith("}"));
+        assertEquals("phase=ACTIVE", com.google.gson.JsonParser.parseString(retained)
+                .getAsJsonObject().get("checkpoint").getAsString());
+    }
+
+    @Test
+    void cpuListControlRetriesOnlyTransientWindowsReplaceFailures() throws Exception {
+        var values = new Properties();
+        values.setProperty("phase", "first-grid");
+        var transientState = temporary.resolve("transient-control/state.properties");
+        var transientAttempts = new AtomicInteger();
+        CpuListTtcControl.write(transientState, values, (source, target) -> {
+            if (transientAttempts.incrementAndGet() == 1) throw new AccessDeniedException(target.toString());
+            Files.move(source, target, StandardCopyOption.REPLACE_EXISTING);
+        });
+        assertEquals(2, transientAttempts.get());
+        var written = new Properties();
+        try (var input = Files.newInputStream(transientState)) { written.load(input); }
+        assertEquals("first-grid", written.getProperty("phase"));
+
+        var persistentState = temporary.resolve("persistent-control/state.properties");
+        var persistentAttempts = new AtomicInteger();
+        var error = assertThrows(IllegalStateException.class, () -> CpuListTtcControl.write(
+                persistentState, values, (source, target) -> {
+                    persistentAttempts.incrementAndGet();
+                    throw new AccessDeniedException(target.toString());
+                }));
+        assertTrue(error.getCause() instanceof AccessDeniedException);
+        assertEquals(DriverProgress.MOVE_ATTEMPTS, persistentAttempts.get());
+        var retained = new Properties();
+        try (var input = Files.newInputStream(persistentState.resolveSibling("state.properties.tmp"))) {
+            retained.load(input);
+        }
+        assertEquals("first-grid", retained.getProperty("phase"));
+    }
+
+    @Test
+    void cpuListCompletionUsesTheUniqueFirstOutputAndPumpsItsProvider() {
+        var jobs = StandardCraftFixture.cpuListJobs();
+        assertEquals("minecraft:glass", jobs.get(0).itemId());
+        assertEquals(4, jobs.get(0).amount());
+        assertEquals(List.of("minecraft:smooth_stone", "minecraft:smooth_stone", "minecraft:smooth_stone"),
+                jobs.subList(1, 4).stream().map(StandardCraftFixture.CpuJob::itemId).toList());
+        assertEquals(List.of(8L, 12L, 16L),
+                jobs.subList(1, 4).stream().map(StandardCraftFixture.CpuJob::amount).toList());
+        assertArrayEquals(new int[] { 4, 8, 12 }, StandardCraftFixture.pumpOffsets(true));
+        assertArrayEquals(new int[] { 4, 8 }, StandardCraftFixture.pumpOffsets(false));
+    }
+
+    @Test
+    void cpuListSelectionFollowsTheDerivedSerialWhenKnownCardsReorder() {
+        var expected = new Rect(20, 30, 8, 6);
+        var cards = List.of(
+                new UiSnapshot.CpuCard(4, "Delta", "minecraft:smooth_stone", 16, 0, false,
+                        null, null, null, null, null, new Rect(1, 2, 3, 4)),
+                new UiSnapshot.CpuCard(2, "Beta", "minecraft:smooth_stone", 8, 0, false,
+                        null, null, null, null, null, expected));
+        assertEquals(expected, CpuListTtcScenario.selectionBadge(cards, 2));
+    }
+
+    @Test
+    void cpuListScrollTracksTheActualFirstVisibleCard() {
+        var cards = List.of(
+                new UiSnapshot.CpuCard(7, "Alpha", "minecraft:glass", 4, 0, false,
+                        null, null, null, null, null, null),
+                new UiSnapshot.CpuCard(2, "Beta", "minecraft:smooth_stone", 8, 0, false,
+                        null, null, null, null, null, null));
+        assertEquals(7, CpuListTtcScenario.firstVisibleSerial(cards));
+    }
+
+    @Test
+    void cpuListRemovalTracksTheAmountTwelveSmoothStoneCpu() {
+        var cards = List.of(
+                new UiSnapshot.CpuCard(4, "Delta", "minecraft:smooth_stone", 16, 0, false,
+                        null, null, null, null, null, null),
+                new UiSnapshot.CpuCard(5, "Gamma", "minecraft:smooth_stone", 12, 0, false,
+                        null, null, null, null, null, null),
+                new UiSnapshot.CpuCard(2, "Beta", "minecraft:smooth_stone", 8, 0, false,
+                        null, null, null, null, null, null));
+        assertEquals(5, CpuListTtcScenario.serialForJob(cards, "minecraft:smooth_stone", 12));
+    }
+
     @Test
     void blockedInputReservesExactlyTheProvidersPendingQueue() {
         for (long pending : new long[] { 0, 1, 64, 65, 128, 27 * 64 }) {
@@ -44,14 +154,14 @@ class TestDriverCoreTest {
     @Test
     void standardResultCannotOmitAnyRequiredPlanStatusOrOutputCheck() {
         assertFalse(AddonCpuFixture.supports("standard-ae2"));
-        assertEquals(6, StandardAe2Scenario.CHECKS.size());
+        assertEquals(7, StandardAe2Scenario.CHECKS.size());
         for (var entry : StandardAe2Scenario.CHECKS.entrySet()) {
             var scenario = entry.getKey();
             assertTrue(AddonCpuFixture.supports(scenario));
             assertNull(AddonCpuFixture.create(scenario));
             assertEquals(entry.getValue(), DriverResult.requiredChecks(scenario));
-            assertTrue(new StandardAe2Scenario(scenario).checkpoint().contains("PREPARE"));
-            new StandardAe2Scenario(scenario).releaseKeys();
+            assertTrue(new StandardAe2Scenario(scenario, "world", temporary, false).checkpoint().contains("PREPARE"));
+            new StandardAe2Scenario(scenario, "world", temporary, false).releaseKeys();
             for (String missing : entry.getValue()) {
                 var checks = new LinkedHashMap<String, Boolean>();
                 entry.getValue().stream().filter(key -> !key.equals(missing)).forEach(key -> checks.put(key, true));
@@ -59,7 +169,232 @@ class TestDriverCoreTest {
                         "1.20.1-forge", "compatible", scenario, "PASS", "en_us", java.util.Map.of(), null, checks, List.of(), null));
             }
         }
-        assertThrows(IllegalArgumentException.class, () -> new StandardAe2Scenario("standard-ae2"));
+        assertThrows(IllegalArgumentException.class, () -> new StandardAe2Scenario("standard-ae2", "world", temporary, false));
+    }
+
+    @Test
+    void cpuListScenarioRequiresEveryA5AndA7RuntimeTransition() {
+        assertTrue(StandardAe2Scenario.supports("cpu-list-total-ttc"));
+        assertEquals(CpuListTtcScenario.CHECKS, DriverResult.requiredChecks("cpu-list-total-ttc"));
+        assertTrue(CpuListTtcScenario.CHECKS.containsAll(List.of("initial-distinct", "unknown-hidden", "idle-hidden",
+                "badge-select", "selected-title", "tooltip", "scroll-down", "scroll-up", "partial", "stalled",
+                "reordered", "finished", "cancelled", "replacement", "removed", "drop-expiry", "delayed-expiry",
+                "close-reopen", "second-grid", "small-scale", "large-scale", "same-jvm-clear", "process-relaunch",
+                "reconnect", "layout")));
+    }
+
+    @Test
+    void secondCpuGridObservesAllKnownIdentitiesAcrossItsTwoPages() {
+        var scrollbar = new appeng.client.gui.widgets.Scrollbar();
+        scrollbar.setRange(0, 1, 1);
+        CpuListScrollControl.bind(scrollbar);
+        var ttc = new UiSnapshot.ObservedText("text.ae2craftingtime.ttc", "~1:00", List.of("~1:00"),
+                new Rect(0, 0, 1, 1));
+        var all = java.util.stream.IntStream.range(0, 7)
+                .mapToObj(serial -> new UiSnapshot.CpuCard(serial, "CPU", "minecraft:stone", 1, 1, false,
+                        new Rect(0, 0, 1, 1), new Rect(0, 0, 1, 1), new Rect(0, 0, 1, 1),
+                        new Rect(0, 0, 1, 1), serial == 0 || serial == 1 || serial == 6 ? ttc : null, null))
+                .toList();
+        var observed = new java.util.LinkedHashSet<Integer>();
+        var firstPage = new UiSnapshot("screen", "menu", new Rect(0, 0, 1, 1), 1, 1, 1, 1, 0,
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), all.subList(0, 6));
+        assertFalse(CpuListTtcScenario.secondScreenReady(firstPage, observed));
+        assertEquals(java.util.Set.of(0, 1), observed);
+        assertEquals(1, scrollbar.getCurrentScroll());
+        var secondPage = new UiSnapshot("screen", "menu", new Rect(0, 0, 1, 1), 1, 1, 1, 2, 1,
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), all.subList(1, 7));
+        assertFalse(CpuListTtcScenario.secondScreenReady(secondPage, observed));
+        assertEquals(java.util.Set.of(0, 1, 6), observed);
+        assertEquals(0, scrollbar.getCurrentScroll());
+        assertTrue(CpuListTtcScenario.secondScreenReady(firstPage, observed));
+    }
+
+    @Test
+    void lifecycleGuardRejectsRecursiveTicksAndReopensAfterExit() {
+        var guard = new TestDriverLifecycleGuard();
+        assertTrue(guard.enter());
+        assertFalse(guard.enter());
+        guard.exit();
+        assertTrue(guard.enter());
+    }
+
+    @Test
+    void containerCloseMixinRemapsTheMinecraftLifecycleMethod() throws Exception {
+        var mixin = Class.forName("com.ctux.ae2craftingtime.mc1201.mixin.AbstractContainerScreenCpuTtcMixinSrg");
+        var method = java.util.Arrays.stream(mixin.getDeclaredMethods())
+                .filter(value -> value.getName().contains("clearCpuTtcOnClose"))
+                .findFirst().orElseThrow();
+        var inject = method.getAnnotation(org.spongepowered.asm.mixin.injection.Inject.class);
+        assertTrue(inject.remap());
+    }
+
+    @Test
+    void reconnectPacketHoldTracksTheNewestOutstandingResponse() {
+        var first = new com.ctux.ae2craftingtime.mc1201.net.CpuTtcPacketCodec.Snapshot(1, 1, List.of());
+        var latest = new com.ctux.ae2craftingtime.mc1201.net.CpuTtcPacketCodec.Snapshot(1, 2, List.of());
+        CpuTtcPacketControl.holdLatest();
+        assertFalse(CpuTtcPacketControl.intercept(first));
+        assertFalse(CpuTtcPacketControl.intercept(latest));
+        assertEquals(2, CpuTtcPacketControl.heldSequence());
+        CpuTtcPacketControl.resume();
+
+        CpuTtcPacketControl.hold();
+        assertFalse(CpuTtcPacketControl.intercept(first));
+        assertFalse(CpuTtcPacketControl.intercept(latest));
+        assertEquals(1, CpuTtcPacketControl.heldSequence());
+        CpuTtcPacketControl.resume();
+    }
+
+    @Test
+    void connectedServerRefusesSourceUnmarkedAndMismatchedFixtures() throws Exception {
+        assertThrows(IllegalStateException.class,
+                () -> CpuListTtcControl.validateDisposableServer(temporary, "1.20.1-forge"));
+        var marker = temporary.resolve(".ae2-crafting-time-dedicated-fixture.json");
+        var valid = "{\"schema\":2,\"sourceFixtureId\":\"ae2-crafting-time\",\"role\":\"disposable\",\"target\":\"1.20.1-forge\"}";
+        Files.writeString(marker, valid);
+        CpuListTtcControl.validateDisposableServer(temporary, "1.20.1-forge");
+        for (var invalid : List.of("null", valid.replace("schema\":2", "schema\":1"),
+                valid.replace("ae2-crafting-time", "other"), valid.replace("disposable", "source"),
+                valid.replace("1.20.1-forge", "1.20.1-fabric"))) {
+            Files.writeString(marker, invalid);
+            assertThrows(IllegalStateException.class,
+                    () -> CpuListTtcControl.validateDisposableServer(temporary, "1.20.1-forge"));
+        }
+    }
+
+    @Test
+    void connectedControlResumesAboveRetainedAckAndRequiresTheExactEpochActionAndSequence() {
+        assertEquals(8, CpuListTtcControl.nextSequence(0, 7));
+        assertEquals(9, CpuListTtcControl.nextSequence(8, 7));
+        var exact = new CpuListTtcControl.State(true, "campaign-a", 8, "reconnect", "second-grid",
+                1, 2, 3, "4,5", "state");
+        assertTrue(CpuListTtcControl.acknowledges(exact, "campaign-a", 8, "reconnect"));
+        assertFalse(CpuListTtcControl.acknowledges(exact, "campaign-b", 8, "reconnect"));
+        assertFalse(CpuListTtcControl.acknowledges(exact, "campaign-a", 7, "reconnect"));
+        assertFalse(CpuListTtcControl.acknowledges(exact, "campaign-a", 8, "complete"));
+    }
+
+    @Test
+    void relaunchContinuationRejectsAnotherWorldEpochOrIncompletePredecessor() throws Exception {
+        var path = temporary.resolve("cpu-list-continuation.json");
+        var world = "ae2ct-" + "a".repeat(32);
+        var continuation = new CpuListContinuation(1, "relaunch-ready", world, "campaign-a", "server-state",
+                1, 2, 3, List.of("initial-distinct", "same-jvm-clear"), List.of("before.png"), 8, 9);
+        CpuListContinuation.write(path, continuation);
+        assertEquals(continuation, CpuListContinuation.read(path, world, "campaign-a"));
+        assertThrows(IllegalArgumentException.class,
+                () -> CpuListContinuation.read(path, "ae2ct-" + "b".repeat(32), "campaign-a"));
+        assertThrows(IllegalArgumentException.class,
+                () -> CpuListContinuation.read(path, world, "campaign-b"));
+        Files.writeString(path, Files.readString(path).replace("relaunch-ready", "running"));
+        assertThrows(IllegalArgumentException.class, () -> CpuListContinuation.read(path, world, "campaign-a"));
+    }
+
+    @Test
+    void relaunchIdentityIgnoresPhaseLocalSerialAndElapsedButNotPhysicalJobIdentity() {
+        var firstCpu = new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:stone", 8,
+                true, true, 10L, 11, 12);
+        var nextCpu = new CpuListTtcControl.CpuState("1,2,3", 99, "minecraft:stone", 8,
+                true, true, 9L, 999, 13);
+        var before = new CpuListTtcControl.ServerState("network", 1, true, true, List.of(firstCpu));
+        var after = new CpuListTtcControl.ServerState("network", 77, true, true, List.of(nextCpu));
+        assertTrue(CpuListTtcScenario.samePhysicalJobs(before, after));
+        assertFalse(CpuListTtcScenario.samePhysicalJobs(before,
+                new CpuListTtcControl.ServerState("other", 77, true, true, List.of(nextCpu))));
+        assertFalse(CpuListTtcScenario.samePhysicalJobs(before,
+                new CpuListTtcControl.ServerState("network", 77, true, true, List.of(
+                        new CpuListTtcControl.CpuState("1,2,4", 99, "minecraft:stone", 8,
+                                true, true, 9L, 999, 13)))));
+    }
+
+    @Test
+    void relaunchWritesToAPhaseLocalCheckpointLedger() {
+        assertEquals("cpu-list-checkpoints.jsonl", CpuListTtcScenario.checkpointFile(false));
+        assertEquals("cpu-list-checkpoints.phase-2.jsonl", CpuListTtcScenario.checkpointFile(true));
+    }
+
+    @Test
+    void resumedCpuListStartsAtTheCpuOwnedActiveStage() throws Exception {
+        var world = "ae2ct-" + "a".repeat(32);
+        var path = temporary.resolve("cpu-list-continuation.json");
+        CpuListContinuation.write(path, new CpuListContinuation(1, "relaunch-ready", world, "campaign-a",
+                "server-state", 1, 2, 3, List.of("same-jvm-clear"), List.of("before.png"), 8, 9));
+        System.setProperty("ae2craftingtime.test.continuation", path.toString());
+        System.setProperty("ae2craftingtime.test.campaign", "campaign-a");
+        try {
+            assertTrue(new StandardAe2Scenario("cpu-list-total-ttc", world, temporary, false)
+                    .checkpoint().startsWith("phase=ACTIVE "));
+        } finally {
+            System.clearProperty("ae2craftingtime.test.continuation");
+            System.clearProperty("ae2craftingtime.test.campaign");
+        }
+    }
+
+    @Test
+    void resumedCpuListMergesContinuationScreenshotsIntoTheFinalResultList() throws Exception {
+        var world = "ae2ct-" + "a".repeat(32);
+        var path = temporary.resolve("cpu-list-continuation.json");
+        CpuListContinuation.write(path, new CpuListContinuation(1, "relaunch-ready", world, "campaign-a",
+                "server-state", 1, 2, 3, List.of("same-jvm-clear"),
+                List.of("phase-1-first.png", "phase-1-last.png"), 8, 9));
+        System.setProperty("ae2craftingtime.test.continuation", path.toString());
+        System.setProperty("ae2craftingtime.test.campaign", "campaign-a");
+        try {
+            var resultScreenshots = new ArrayList<String>();
+            new StandardAe2Scenario("cpu-list-total-ttc", world, temporary, false, resultScreenshots);
+            resultScreenshots.add("phase-2.png");
+            assertEquals(List.of("phase-1-first.png", "phase-1-last.png", "phase-2.png"), resultScreenshots);
+        } finally {
+            System.clearProperty("ae2craftingtime.test.continuation");
+            System.clearProperty("ae2craftingtime.test.campaign");
+        }
+    }
+
+    @Test
+    void onlyIntegratedRestoredJobsNeedOneFreshRuntimeGraph() {
+        var restored = new CpuListTtcControl.ServerState("network", 1, true, true, List.of(
+                new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:stone", 8,
+                        true, true, null, 9, 10)));
+        var live = new CpuListTtcControl.ServerState("network", 1, true, true, List.of(
+                new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:stone", 8,
+                        true, true, 7L, 9, 10)));
+        assertTrue(CpuListTtcScenario.requiresJobRefresh(false, restored));
+        assertFalse(CpuListTtcScenario.requiresJobRefresh(true, restored));
+        assertFalse(CpuListTtcScenario.requiresJobRefresh(false, live));
+    }
+
+    @Test
+    void dedicatedReconnectDropsStaleServerCpuIdentities() throws Exception {
+        var fixture = new StandardCraftFixture();
+        var identities = StandardCraftFixture.class.getDeclaredField("cpuListIdentities");
+        identities.setAccessible(true);
+        identities.set(fixture, new ArrayList<>());
+
+        DedicatedCpuScenario.refreshCpuIdentitiesForReconnect(fixture);
+
+        assertNull(identities.get(fixture));
+    }
+
+    @Test
+    void completedPreambleObservationAdvancesRelaunchFreshWithoutAnotherObservation() {
+        var state = new CpuListTtcControl.ServerState("network", 1, true, true, List.of(
+                new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:smooth_stone", 8,
+                        true, true, 3600L, 9, 10)));
+        var rendered = TtcText.ttc("~1:00:00").getString();
+        var card = new UiSnapshot.CpuCard(4, "CPU", "minecraft:smooth_stone", 8, 9, false,
+                null, null, null, null,
+                new UiSnapshot.ObservedText("text.ae2craftingtime.ttc", rendered, List.of(rendered), null), null);
+        var snapshot = new UiSnapshot("screen", "menu", null, 100, 100, 2, 1, 0,
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(card));
+
+        assertEquals(CpuListTtcScenario.Stage.DONE,
+                CpuListTtcScenario.afterRelaunchFreshObservation(snapshot, state));
+    }
+
+    @Test
+    void connectedRelaunchUsesTheTwoProcessScenarioBudget() {
+        assertEquals(40, DedicatedCpuScenario.timeoutMinutes("cpu-list-total-ttc-connected"));
+        assertEquals(5, DedicatedCpuScenario.timeoutMinutes("startup-only"));
     }
 
     @Test

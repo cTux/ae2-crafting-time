@@ -5,9 +5,17 @@ $source = Join-Path $temp "versions\1.20.1-forge\run\saves\ae2-crafting-time"
 New-Item -ItemType Directory -Path $scripts, $source -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "run-ui-smoke.ps1") -Destination (Join-Path $scripts "run-ui-smoke.ps1")
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1"), (Join-Path $PSScriptRoot "ui-smoke-forge-suite.json"), (Join-Path $PSScriptRoot "ui-smoke-fabric-suite.json"), (Join-Path $PSScriptRoot "ui-smoke-neoforge-suite.json"), (Join-Path $PSScriptRoot "ui-smoke-neoforge-26.1.2-suite.json") -Destination $scripts
-foreach ($file in @('expand-ui-smoke-groups.ps1','release-matrix.json','ui-smoke-coverage.json','ui-smoke-groups.json')) {
+foreach ($file in @('expand-ui-smoke-groups.ps1','release-matrix.json','ui-smoke-coverage.json','ui-smoke-groups.json',
+        'prepare-ui-smoke-resume.ps1','ui-smoke-dependency-identity.ps1','ui-smoke-progress.ps1',
+        'ui-smoke-scheduled-java.ps1')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination $scripts
 }
+# This synthetic launcher exercises the single-process runner contract. The
+# native two-process CPU-list contract has its own deterministic self-check.
+$fixtureGroupsPath = Join-Path $scripts 'ui-smoke-groups.json'
+$fixtureGroups = Get-Content -LiteralPath $fixtureGroupsPath -Raw | ConvertFrom-Json
+$fixtureGroups.groups.'standard-ae2' = @($fixtureGroups.groups.'standard-ae2' | Where-Object { $_ -ne 'cpu-list-total-ttc' })
+$fixtureGroups | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $fixtureGroupsPath -Encoding UTF8
 [IO.File]::WriteAllText((Join-Path $temp "gradle.properties"), "modVersion=1.1.0`n", [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $source ".ae2-crafting-time-test-fixture.json"), @'
 {"schema":1,"scenario":"craft-plan","sourceFixtureId":"ae2-crafting-time","disposableWorldId":"SOURCE_ONLY",
@@ -167,7 +175,8 @@ Set-Content -LiteralPath (Join-Path $RuntimeDirectory "logs\latest.log") -Value 
 function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive,
         [string]$Target = "1.20.1-forge", [string]$Scenario = "craft-plan", [string[]]$ProjectId, [string]$ReportDirectory, [bool]$shouldPass) {
     $env:AE2CT_UI_SMOKE_TEST_MODE = $mode
-    $arguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $scripts "run-ui-smoke.ps1"))
+    $arguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $scripts "run-ui-smoke.ps1"),
+        "-HeadSha", ('1' * 40))
     $arguments += @("-Target", $Target)
     if ($Latest) { $arguments += "-Latest" }
     if ($Interactive) { $arguments += "-Interactive" }
@@ -298,6 +307,7 @@ try {
     foreach ($leaf in @('standard-plan-controls','standard-status-controls','waiting-status','running-status','delayed-status','craft-lifecycle')) {
         Invoke-Case "pass" -Scenario $leaf -shouldPass $true
     }
+    Invoke-Case "pass" -Scenario cpu-list-total-ttc -shouldPass $false
     Invoke-Case "pass" -Scenario standard-ae2 -shouldPass $true
     Invoke-Case "missing-screenshot" -Scenario standard-ae2 -shouldPass $false
     $failedManifest = Join-Path $temp 'build/ui-smoke/1.20.1-forge/compatible/standard-ae2/evidence/resolved-mods.json'

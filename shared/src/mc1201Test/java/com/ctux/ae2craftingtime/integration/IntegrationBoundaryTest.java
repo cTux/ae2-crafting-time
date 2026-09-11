@@ -83,6 +83,8 @@ class IntegrationBoundaryTest {
                 });
             }
         }
+        assertTrue(all.contains("CraftingStatusMenuAccessor"), "production status accessor must be packaged");
+        assertTrue(clients.contains("CPUSelectionListMixin"), "CPU list renderer must be packaged");
         for (var candidate : IntegrationCatalog.CANDIDATES) {
             if (candidate.targets().contains(IntegrationPlatform.TARGET)) {
                 assertTrue(all.containsAll(candidate.mixins()), candidate.variant());

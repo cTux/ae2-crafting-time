@@ -6,6 +6,7 @@ import java.time.Instant;
 import java.util.List;
 
 public final class TestDriverRuntime implements AutoCloseable {
+    private static final long INITIAL_DEDICATED_READY_NANOS = java.time.Duration.ofSeconds(10).toNanos();
     static long renderedFrames;
     private final Minecraft minecraft = Minecraft.getInstance();
     private CraftPlanScenario scenario;
@@ -22,34 +23,86 @@ public final class TestDriverRuntime implements AutoCloseable {
     private boolean switching;
     private boolean switchingInProgress;
     private boolean switchingNow;
+    private final TestDriverLifecycleGuard lifecycle = new TestDriverLifecycleGuard();
     private net.minecraft.server.MinecraftServer stoppingServer;
     private boolean finalCleanup;
     private boolean finished;
+    private boolean initialDedicatedConnectionStarted;
+    private boolean initialDedicatedConnectionComplete;
+    private long initialDedicatedReadyAt;
+    private net.minecraft.client.gui.screens.Screen initialDedicatedParent;
+    private int reconnectStep;
+    private net.minecraft.client.multiplayer.ServerData reconnectServer;
 
     public TestDriverRuntime(DriverOptions options, String driverFile) throws Exception {
         this.options = options;
         this.driverFile = driverFile;
         cases = options.scenario().equals("suite") ? SuitePlan.read(options) : List.of(options);
-        progress = options.scenario().equals("suite") ? new SuiteProgress(cases) : null;
+        var continuing = options.continuation() != null;
+        progress = options.scenario().equals("suite") ? (continuing
+                ? SuiteProgress.resume(cases, options.output().resolve("result.json")) : new SuiteProgress(cases)) : null;
+        index = progress == null ? 0 : progress.index();
         oneWorld = progress != null && new com.google.gson.Gson().fromJson(
                 java.nio.file.Files.readString(options.output().resolve("suite-plan.json")), SuitePlan.class).schema() == 2;
         if (progress != null) {
             for (var item : cases) {
                 SuitePlan.verifyWorld(minecraft.gameDirectory.toPath().resolve("saves"), item);
             }
-            progress.start(Instant.now());
+            if (!continuing) progress.start(Instant.now());
             writeProgress();
         }
         minecraft.execute(() -> GLFW.glfwMaximizeWindow(minecraft.getWindow().handle()));
-        scenario = new CraftPlanScenario(minecraft, cases.get(0), driverFile);
+        scenario = new CraftPlanScenario(minecraft, cases.get(index), driverFile);
         endpoint = options.interactive() ? new InteractiveMcpServer(minecraft, scenario, options) : null;
     }
 
     public void tick() {
         renderedFrames++;
-        if (finished || switchingNow) {
+        if (awaitInitialDedicatedConnection()) {
             return;
         }
+        if (finished || switchingNow || !lifecycle.enter()) {
+            return;
+        }
+        try {
+            tickLifecycle();
+        } finally {
+            lifecycle.exit();
+        }
+    }
+
+    private boolean awaitInitialDedicatedConnection() {
+        if (!options.connectedDedicated() || initialDedicatedConnectionComplete) {
+            return false;
+        }
+        if (minecraft.getCurrentServer() != null) {
+            initialDedicatedConnectionComplete = true;
+            return false;
+        }
+        if (initialDedicatedParent != null) {
+            if (!initialDedicatedConnectionStarted && minecraft.screen == initialDedicatedParent) {
+                DriverPlatform.connectInitialDedicatedServer(initialDedicatedParent,
+                        DriverPlatform.server(options.dedicatedAddress()));
+                initialDedicatedConnectionStarted = true;
+            }
+            return true;
+        }
+        boolean ready = minecraft.getOverlay() == null
+                && minecraft.screen instanceof net.minecraft.client.gui.screens.TitleScreen;
+        if (!ready) {
+            initialDedicatedReadyAt = 0;
+            return true;
+        }
+        if (initialDedicatedReadyAt == 0) {
+            initialDedicatedReadyAt = System.nanoTime();
+        } else if (!initialDedicatedConnectionStarted
+                && System.nanoTime() - initialDedicatedReadyAt >= INITIAL_DEDICATED_READY_NANOS) {
+            initialDedicatedParent = DriverPlatform.prepareInitialDedicatedConnect(minecraft);
+        }
+        return true;
+    }
+
+    private void tickLifecycle() {
         if (switching) {
             switchCase();
             return;
@@ -76,6 +129,10 @@ public final class TestDriverRuntime implements AutoCloseable {
             fixture.join();
         }
         scenario.tick();
+        if (scenario.reconnectRequested()) {
+            switching = true;
+            return;
+        }
         if (progress == null) {
             return;
         }
@@ -104,6 +161,10 @@ public final class TestDriverRuntime implements AutoCloseable {
     private void switchCase() {
         switchingNow = true;
         try {
+            if (scenario.reconnectRequested() || reconnectStep != 0) {
+                reconnectScenario();
+                return;
+            }
             if (oneWorld) {
                 var server = minecraft.getSingleplayerServer();
                 if (reset == null) {
@@ -168,6 +229,32 @@ public final class TestDriverRuntime implements AutoCloseable {
         } finally {
             switchingNow = false;
         }
+    }
+
+    private void reconnectScenario() {
+        if (reconnectStep == 0) {
+            reconnectServer = minecraft.getCurrentServer();
+            stoppingServer = minecraft.getSingleplayerServer();
+            DriverPlatform.disconnectLevel(minecraft);
+            reconnectStep = 1;
+            return;
+        }
+        if (reconnectStep == 1) {
+            if (stoppingServer != null && stoppingServer.getRunningThread().isAlive()) return;
+            stoppingServer = null;
+            UiObservationStore.reset();
+            if (reconnectServer == null) DriverPlatform.openWorld(minecraft, options.world());
+            else DriverPlatform.connectServer(minecraft, reconnectServer);
+            reconnectStep = 2;
+            return;
+        }
+        if (minecraft.level == null || minecraft.player == null || minecraft.gameMode == null
+                || (reconnectServer == null && minecraft.getSingleplayerServer() == null)
+                || (reconnectServer != null && minecraft.getCurrentServer() == null)) return;
+        scenario.reconnected();
+        reconnectServer = null;
+        reconnectStep = 0;
+        switching = false;
     }
 
     private void writeProgress() throws java.io.IOException {

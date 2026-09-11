@@ -4,13 +4,19 @@ param(
     [switch]$Interactive,
     [switch]$Scheduled,
     [switch]$Stop,
-    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|craft-plan|no-space-status|no-provider-status|no-power-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string]$CasesBase64,
     [string[]]$ProjectId,
     [string]$LocalRoot,
     [string]$InteractiveUser = "Codex",
-    [string]$RequestPath,
     [string]$BundleDirectory,
+    [string]$ReportDirectory,
+    [Parameter(Mandatory)][ValidatePattern('^[a-f0-9]{40}$')][string]$HeadSha,
+    [string]$ResumeBundleDirectory,
+    [switch]$CaptureResumeOnly,
+    [int]$CallbackTimeoutSeconds = 20,
+    [int]$CheckpointTimeoutSeconds = 60,
+    [int]$StartupTimeoutSeconds = 300,
     [string]$PreparedLaunchRoot = 'C:\Users\Public\Documents\AE2CraftingTimeSmoke\prepared'
 )
 
@@ -46,27 +52,12 @@ function Stop-Smoke([string]$report) {
     Write-Host "Stopped UI-smoke process tree $($status.pid)"
 }
 
-if ($RequestPath) {
-    $request = Get-Content -LiteralPath $RequestPath -Raw | ConvertFrom-Json
-    $major = if ($request.target -like '1.20.1-*') { 17 } elseif ($request.target -eq '1.21.1-neoforge') { 21 } else { 25 }
-    $env:JAVA_HOME = & (Join-Path $PSScriptRoot 'get-java-home.ps1') -Major $major
-    $env:Path = "$(Join-Path $env:JAVA_HOME 'bin');$env:Path"
-    $arguments = @{ ReportDirectory = $request.reportDirectory; Scenario = $request.scenario; Target = $request.target }
-    if (-not $request.bundleDirectory -or -not $request.preparedLaunch) { throw 'Guest smoke requires host-built artifacts and an installed native loader manifest' }
-    if ($request.casesBase64) { $arguments.CasesBase64 = $request.casesBase64 }
-    $arguments.BundleDirectory = $request.bundleDirectory
-    $arguments.PreparedLaunch = $request.preparedLaunch
-    if ($request.projectId) { $arguments.ProjectId = @($request.projectId) }
-    if ($request.latest) { $arguments.Latest = $true }
-    if ($request.interactive) { $arguments.Interactive = $true }
-    & (Join-Path $request.stagedRoot "scripts\run-ui-smoke.ps1") @arguments
-    exit 0
-}
-
 $sourceRoot = Split-Path -Parent $PSScriptRoot
 $workspaceId = Get-WorkspaceId $sourceRoot
 $stage = if ($LocalRoot) { [IO.Path]::GetFullPath($LocalRoot) } else { Join-Path $env:PUBLIC "Documents\AE2CraftingTimeSmoke\$workspaceId" }
-$report = Get-ReportDirectory $sourceRoot $Latest.IsPresent $Scenario
+$destinationReport = if ($ReportDirectory) { [IO.Path]::GetFullPath($ReportDirectory) } else { Get-ReportDirectory $sourceRoot $Latest.IsPresent $Scenario }
+$profile = if ($Latest) { 'latest' } else { 'compatible' }
+$report = Join-Path $stage "reports\$Target\$profile\$Scenario"
 
 if ($Stop) {
     Stop-Smoke $report
@@ -80,44 +71,36 @@ if (!(Test-Path -LiteralPath $preparedLaunch -PathType Leaf)) {
     $preparedLaunch = Join-Path $PreparedLaunchRoot "$Target/launch.json"
 }
 
-$taskName = "AE2 Crafting Time UI Smoke $workspaceId"
-$existing = if ($Scheduled) { Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue } else { $null }
-if ($existing -and $existing.State -eq "Running") { throw "UI smoke task is already running" }
-
 $major = if ($Target -like '1.20.1-*') { 17 } elseif ($Target -eq '1.21.1-neoforge') { 21 } else { 25 }
 $smokeJava = & (Join-Path $PSScriptRoot 'get-java-home.ps1') -Major $major
 New-Item -ItemType Directory -Path $stage, $report -Force | Out-Null
 & robocopy.exe $sourceRoot $stage /MIR /XD .git .gradle build /XF .git /NFL /NDL /NJH /NJS /NP | Out-Null
 if ($LASTEXITCODE -gt 7) { throw "Failed to stage the checkout with robocopy exit $LASTEXITCODE" }
 
-$request = [ordered]@{
-    casesBase64 = $CasesBase64
-    target = $Target; stagedRoot = $stage; reportDirectory = $report; scenario = $Scenario
-    projectId = @($ProjectId); latest = $Latest.IsPresent; interactive = $Interactive.IsPresent; javaHome = $smokeJava
-    bundleDirectory = $BundleDirectory; preparedLaunch = $preparedLaunch
-}
-$requestFile = Join-Path $stage "ui-smoke-request.json"
-[IO.File]::WriteAllText($requestFile, ($request | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
-
-if ($Scheduled) {
-    $script = Join-Path $stage "scripts\run-ui-smoke-codexvm.ps1"
-    $action = New-ScheduledTaskAction -Execute "powershell.exe" `
-        -Argument "-NoProfile -WindowStyle Hidden -ExecutionPolicy Bypass -File `"$script`" -RequestPath `"$requestFile`""
-    if (-not $existing) {
-        $principal = New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\$InteractiveUser" -LogonType Interactive -RunLevel Limited
-        Register-ScheduledTask -TaskName $taskName -Action $action -Principal $principal | Out-Null
-    } else {
-        Set-ScheduledTask -TaskName $taskName -Action $action | Out-Null
-    }
-    $queued = [ordered]@{ schema = 1; target = $Target; profile = $(if ($Latest) { "latest" } else { "compatible" })
-        scenario = $Scenario; phase = "queued"; pid = $null; stagedRoot = $stage; updatedAt = [DateTime]::UtcNow.ToString("o") }
-    [IO.File]::WriteAllText((Join-Path $report "status.json"), ($queued | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
-    Start-ScheduledTask -TaskName $taskName
-    Write-Host "Queued UI smoke in the interactive Codex desktop: $report"
-    exit 0
-}
-
 $env:JAVA_HOME = $smokeJava
 $env:Path = "$(Join-Path $smokeJava 'bin');$env:Path"
-& (Join-Path $stage "scripts\run-ui-smoke-codexvm.ps1") -RequestPath $requestFile
-exit 0
+$arguments = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $stage 'scripts\run-ui-smoke.ps1'),
+    '-ReportDirectory', $report, '-Scenario', $Scenario, '-Target', $Target, '-HeadSha', $HeadSha,
+    '-BundleDirectory', $BundleDirectory, '-PreparedLaunch', $preparedLaunch,
+    '-CallbackTimeoutSeconds', [string]$CallbackTimeoutSeconds,
+    '-CheckpointTimeoutSeconds', [string]$CheckpointTimeoutSeconds,
+    '-StartupTimeoutSeconds', [string]$StartupTimeoutSeconds)
+if ($CasesBase64) { $arguments += @('-CasesBase64', $CasesBase64) }
+if ($ProjectId) { $arguments += @('-ProjectId') + @($ProjectId) }
+if ($Latest) { $arguments += '-Latest' }
+if ($Interactive) { $arguments += '-Interactive' }
+if ($ResumeBundleDirectory) { $arguments += @('-ResumeBundleDirectory', $ResumeBundleDirectory) }
+if ($CaptureResumeOnly) { $arguments += '-CaptureResumeOnly' }
+if ($Scheduled) { $arguments += @('-ScheduledJava', '-InteractiveUser', $InteractiveUser) }
+$innerExitCode = 0
+try {
+    & powershell.exe @arguments
+    $innerExitCode = $LASTEXITCODE
+} finally {
+    if (Test-Path -LiteralPath $report -PathType Container) {
+        New-Item -ItemType Directory -Path $destinationReport -Force | Out-Null
+        & robocopy.exe $report $destinationReport /MIR /NFL /NDL /NJH /NJS /NP | Out-Null
+        if ($LASTEXITCODE -gt 7) { throw "Failed to retain CodexVM smoke report with robocopy exit $LASTEXITCODE" }
+    }
+}
+exit $innerExitCode

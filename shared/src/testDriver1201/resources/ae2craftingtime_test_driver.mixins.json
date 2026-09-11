@@ -12,6 +12,7 @@
     "CraftingCPUMenuAccessor"
   ],
   "client": [
+    "CpuTtcClientMixin",
     "ClientStatsAccessor",
     "AEBaseScreenMixin",
     "AEKeyRenderingMixin",
@@ -20,11 +21,13 @@
     "ContainerScreenAccessor",
     "CraftConfirmTableRendererMixin",
     "GuiGraphicsMixin",
+    "JoinMultiplayerScreenAccessor",
     "MEStorageScreenAccessor",
     "MouseHandlerAccessor",
     "RenderSystemMixin",
     "ChatComponentAccessor",
-    "CraftingStatusAccessor"
+    "CraftingStatusAccessor",
+    "CPUSelectionListObservationMixin"
   ],
   "injectors": {
     "defaultRequire": 1

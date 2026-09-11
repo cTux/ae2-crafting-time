@@ -17,7 +17,10 @@ public final class Ae2CraftingTimeClient implements ClientModInitializer {
         // Drop rainbows and plates when leaving a world or server so they
         // never leak into another world with matching coordinates. Red plates
         // return only via server-approved resync.
-        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> ProviderHighlightClient.onSessionEnd());
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            ProviderHighlightClient.onSessionEnd();
+            CpuTtcClient.clear();
+        });
         // AFTER_TRANSLUCENT runs after vanilla's world-buffer flush. Own and
         // flush every highlight batch here, including the item's render type.
         var consumers = net.minecraft.client.renderer.MultiBufferSource.immediate(

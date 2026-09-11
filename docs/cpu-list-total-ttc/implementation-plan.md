@@ -1,7 +1,8 @@
 # CPU-list total TTC implementation plan
 
-Status: planned. [Issue #324](https://github.com/cTux/ae2-crafting-time/issues/324)
-tracks implementation; merging these documents must leave it open.
+Status: implementation in progress in [PR #381](https://github.com/cTux/ae2-crafting-time/pull/381).
+[Issue #324](https://github.com/cTux/ae2-crafting-time/issues/324) remains the
+implementation tracker until the change and its evidence are accepted.
 
 Read the [specification](spec.md) and [technical design](technical-design.md)
 together. Follow `AGENTS.md` and the implementation/development, UI-driver,
@@ -128,10 +129,26 @@ when the compatible graph reaches an older adapter. Run clients sequentially.
   artifact identities, server estimates, and matching client snapshots. The
   existing headless `DedicatedCpuScenario` does not provide this UI evidence.
 
+## Step 10 diagnostic execution contract
+
+- Capture phase 1 once into an immutable resume bundle containing the marked
+  disposable world, continuation/evidence, head and artifact hashes. Record the
+  base/catalogue mode plus the ordinal managed JAR name/hash catalogue in both
+  bundle provenance and the world marker; reject mismatch before launch.
+- Use resume-only phase 2 for diagnosis, with current-PID callback liveness,
+  an absolute loader/world/fixture startup deadline, and a 60-second checkpoint
+  watchdog armed only in the active scenario phase. Record evidence and exactly
+  one client launch. Never count it as final approval.
+- After the focused fix passes, run the complete two-process scenario at the
+  committed head and record phase timings, launch count, PID/start identities,
+  and predecessor continuation hash.
+- Changed planning selects only `cpu-list-total-ttc` and the primary graph on
+  all four targets. Seal one bundle per head/fingerprint and verify its byte
+  identity before integrated or connected-dedicated reuse.
+
 ## Completion gate
 
 Implementation is complete when A1-A7 have test or UI evidence, all four targets
 pass required checks, and the feature PR has no unresolved blocking feedback.
-Link that PR and evidence to #324. This planning PR instead requires consistent
-linked documents, documentation/link checks, and green required GitHub checks;
-no game code or release artifacts change here.
+Link the implementation PR and evidence to #324. No release is published as
+part of this work.

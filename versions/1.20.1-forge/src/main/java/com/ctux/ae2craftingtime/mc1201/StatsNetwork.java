@@ -1,6 +1,8 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C;
+import com.ctux.ae2craftingtime.mc1201.net.CpuTtcRequestC2S;
+import com.ctux.ae2craftingtime.mc1201.net.CpuTtcSnapshotS2C;
 import com.ctux.ae2craftingtime.mc1201.net.ProviderLocateC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsChatC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsRequestC2S;
@@ -13,7 +15,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 @SuppressWarnings({ "deprecation", "removal" })
 public final class StatsNetwork {
-    private static final String PROTOCOL = "16";
+    private static final String PROTOCOL = "17";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(Ae2CraftingTime.MOD_ID, "main"),
             () -> PROTOCOL,
@@ -30,11 +32,21 @@ public final class StatsNetwork {
                 StatsChatC2S::handle);
         CHANNEL.registerMessage(id++, ProviderHighlightS2C.class, ProviderHighlightS2C::encode,
                 ProviderHighlightS2C::decode, ProviderHighlightS2C::handle);
-        CHANNEL.registerMessage(id, ProviderLocateC2S.class, ProviderLocateC2S::encode,
+        CHANNEL.registerMessage(id++, ProviderLocateC2S.class, ProviderLocateC2S::encode,
                 ProviderLocateC2S::decode, ProviderLocateC2S::handle);
+        CHANNEL.registerMessage(id++, CpuTtcRequestC2S.class, CpuTtcRequestC2S::encode,
+                CpuTtcRequestC2S::decode, CpuTtcRequestC2S::handle,
+                java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(id, CpuTtcSnapshotS2C.class, CpuTtcSnapshotS2C::encode,
+                CpuTtcSnapshotS2C::decode, CpuTtcSnapshotS2C::handle,
+                java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT));
     }
 
     public static void sendTo(ServerPlayer player, StatsSnapshotS2C packet) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    }
+
+    public static void sendTo(ServerPlayer player, CpuTtcSnapshotS2C packet) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
     }
 

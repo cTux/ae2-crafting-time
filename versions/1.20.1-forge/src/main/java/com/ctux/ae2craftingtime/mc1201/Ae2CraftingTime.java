@@ -34,6 +34,7 @@ public final class Ae2CraftingTime {
         MinecraftForge.EVENT_BUS.addListener(this::onServerStopping);
         MinecraftForge.EVENT_BUS.addListener(this::onRegisterCommands);
         MinecraftForge.EVENT_BUS.addListener(this::onPlayerLoggedIn);
+        MinecraftForge.EVENT_BUS.addListener(this::onPlayerLoggedOut);
         IntegrationLog.summary();
     }
 
@@ -60,6 +61,13 @@ public final class Ae2CraftingTime {
 
     private void onServerStopping(ServerStoppingEvent event) {
         ProfilerBridge.flushCompletedSamples();
+        CpuTtcRequestHandler.clear();
+    }
+
+    private void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
+        if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
+            CpuTtcRequestHandler.clear(player.getUUID());
+        }
     }
 
     private void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {

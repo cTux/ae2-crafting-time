@@ -4,6 +4,7 @@ $scripts = Join-Path $temp 'scripts'
 New-Item -ItemType Directory -Path $scripts -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'run-ui-smoke-matrix.ps1'), (Join-Path $PSScriptRoot 'release-matrix.json') -Destination $scripts
 foreach ($file in @('get-ui-smoke-plan.ps1','get-ui-smoke-results.ps1','expand-ui-smoke-groups.ps1','run-client-versions.json',
+        'use-ui-smoke-bundle-cache.ps1',
         'ui-smoke-impact.json','ui-smoke-groups.json','ui-smoke-coverage.json','ui-smoke-forge-suite.json',
         'ui-smoke-fabric-suite.json','ui-smoke-neoforge-suite.json','ui-smoke-neoforge-26.1.2-suite.json')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination $scripts
@@ -20,8 +21,10 @@ param([string]$Target,[switch]$Latest)
 [pscustomobject]@{projectId='ae2';name='AE2';disposition='DIRECT_UI';scenario='standard-ae2';reason='';result='NOT_RUN'}
 '@ | Set-Content (Join-Path $scripts 'get-ui-smoke-coverage.ps1')
 @'
-param([string]$Target,[switch]$Latest,[switch]$ResolveOnly,[switch]$Packaged,[string]$RuntimeDirectory)
+param([string]$Target,[switch]$Latest,[switch]$ResolveOnly,[switch]$Packaged,[string]$RuntimeDirectory,[string[]]$ProjectId,[switch]$BaseOnly)
 if (-not $ResolveOnly -or -not $Packaged) { throw 'Guest build path selected' }
+if ((Split-Path -Leaf $RuntimeDirectory) -eq 'primary' -and -not $BaseOnly) { throw 'Primary graph omitted base-only resolution' }
+if ((Split-Path -Leaf $RuntimeDirectory) -ne 'primary' -and $BaseOnly) { throw 'Focused graph incorrectly used base-only resolution' }
 if ($Target -eq '1.20.1-fabric') { throw 'intentional resolution failure' }
 New-Item -ItemType Directory -Path (Join-Path $RuntimeDirectory 'mods') -Force | Out-Null
 '@ | Set-Content (Join-Path $scripts 'run-client.ps1')
@@ -45,6 +48,11 @@ foreach ($case in $cases) {
         ConvertTo-Json -Depth 6 | Set-Content "$evidence/result.json"
 }
 @{phase='passed';message='';pid=123;exitCode=0} | ConvertTo-Json | Set-Content "$live/status.json"
+if ($env:AE2CT_INNER_FAIL) {
+    @{schema=2;runId='failed-run';target=$Target;profile=$profile;scenario=$Scenario;phase='failed';message='intentional inner runner failure';pid=123;exitCode=17;startedAt=[DateTime]::UtcNow.ToString('o')} |
+        ConvertTo-Json | Set-Content "$live/status.json"
+    throw 'dispatch observed child exit 17'
+}
 if ($env:AE2CT_STATUS_GAP) {
     Remove-Item -LiteralPath "$live/status.json"
     Start-Job -ArgumentList "$live/status.json" -ScriptBlock {
@@ -115,6 +123,18 @@ try {
         $coverage = Get-Content (Join-Path $results[0].report 'coverage.json') -Raw | ConvertFrom-Json
         if ($coverage.result -ne 'PASS') { throw 'A failed run erased its completed scenario outcome' }
     } finally { Remove-Item Env:\AE2CT_UNCONFIRMED_EXIT -ErrorAction SilentlyContinue }
+    $env:AE2CT_INNER_FAIL = '1'
+    try {
+        & powershell.exe -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -Target 1.20.1-forge -Scenario cpu-list-total-ttc
+        if ($LASTEXITCODE -ne 1) { throw 'A failing inner runner must fail the compatible campaign' }
+        $report = Get-ChildItem (Join-Path $temp 'build/ui-smoke/campaigns') -File -Recurse -Filter result.json |
+            Where-Object { $_.Directory.Name -eq 'compatible' } | Sort-Object FullName | Select-Object -Last 1
+        $result = (Get-Content $report.FullName -Raw | ConvertFrom-Json).results[0]
+        $retainedStatus = Get-Content (Join-Path $result.report 'run/status.json') -Raw | ConvertFrom-Json
+        if ($result.result -ne 'FAIL' -or $result.message -ne 'intentional inner runner failure' -or $retainedStatus.exitCode -ne 17) {
+            throw 'A failing child hid or lost its exact retained status'
+        }
+    } finally { Remove-Item Env:\AE2CT_INNER_FAIL -ErrorAction SilentlyContinue }
     Write-Host 'UI smoke matrix checks passed'
 } finally {
     $resolved = [IO.Path]::GetFullPath($temp)

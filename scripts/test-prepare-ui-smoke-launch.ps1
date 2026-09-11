@@ -8,7 +8,7 @@ New-Item -ItemType Directory -Path $scripts, "$bundle/mods", $evidence -Force | 
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'prepare-ui-smoke-launch.ps1') -Destination $scripts
 Set-Content (Join-Path $scripts 'get-java-home.ps1') 'param([int]$Major); if ($Major -notin @(17,21)) { throw "wrong Java" }; "C:\Java$Major"'
 try {
-    $profile = @{schema=1;target='1.20.1-forge';profile='compatible';java=17;loader='47.4.10'}
+    $profile = @{schema=1;target='1.20.1-forge';profile='compatible';java=17;loader='47.4.10';dependencyMode='base'}
     $profile | ConvertTo-Json | Set-Content "$bundle/profile.json"
     Set-Content "$bundle/mods/mod.jar" 'unchanged artifact'
     '["mod.jar"]' | Set-Content "$bundle/mods/.ae2-crafting-time-run-mods.json"
@@ -27,10 +27,34 @@ try {
         throw 'Native launch lost the installed classpath or retained previous run arguments'
     }
     if ((Get-Content "$runtime/mods/mod.jar" -Raw) -ne (Get-Content "$bundle/mods/mod.jar" -Raw)) { throw 'Artifact changed during staging' }
+    $continuation = Join-Path $evidence 'cpu-list-continuation.json'
+    Set-Content -LiteralPath $continuation -Value '{"schema":1,"phase":"relaunch-ready"}'
+    & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -ContinuationPath $continuation -CampaignId 'campaign-a' | Out-Null
+    $continuedArguments = Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw
+    if (-not $continuedArguments.Contains('continuation=') -or -not $continuedArguments.Contains('campaign=campaign-a')) {
+        throw 'Relaunch continuation and campaign identity were not passed to the second client'
+    }
+    $parameters.Scenario = 'cpu-list-total-ttc'
+    $resumed = & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -ContinuationPath $continuation `
+        -CampaignId 'campaign-a' -ResumeOnly
+    $resumeArguments = Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw
+    if (-not $resumeArguments.Contains('resumeOnly=true') -or $resumed.finalApproval -ne $false) {
+        throw 'Resume-only launch was not marked as diagnostic and non-final'
+    }
+    $parameters.Scenario = 'delayed-status'
     & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -Interactive | Out-Null
     if (-not (Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw).Contains('interactive=true')) { throw 'Interactive mode was discarded' }
     & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -ProjectId rxYaglEe | Out-Null
     if (-not (Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw).Contains('advancedStatus=true')) { throw 'AdvancedAE status mode was discarded' }
+    $control = Join-Path $temp 'connected-control'
+    & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -DedicatedAddress '127.0.0.1:25565' -ControlDirectory $control | Out-Null
+    $connectedArguments = Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw
+    if (-not $connectedArguments.Contains('connectedDedicated=true') -or
+            -not $connectedArguments.Contains('dedicatedAddress=127.0.0.1:25565') -or
+            $connectedArguments.Contains('--quickPlayMultiplayer') -or
+            $connectedArguments.Contains('--quickPlaySingleplayer')) {
+        throw 'Connected dedicated launch did not defer connection until the test driver is ready'
+    }
     $profile.target = '1.21.1-neoforge'; $profile.java = 21; $profile.loader = '21.1.238'
     $profile | ConvertTo-Json | Set-Content "$bundle/profile.json"
     $launch.target = '1.21.1-neoforge'; $launch.java = 21; $launch.arguments[-5] = '1.21.1-21.1.238'

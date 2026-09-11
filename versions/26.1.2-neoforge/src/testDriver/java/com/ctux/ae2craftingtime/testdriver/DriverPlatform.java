@@ -38,6 +38,11 @@ final class DriverPlatform {
         if (org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_ALT) == org.lwjgl.glfw.GLFW.GLFW_PRESS) modifiers |= org.lwjgl.glfw.GLFW.GLFW_MOD_ALT;
         minecraft.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(x, y, new net.minecraft.client.input.MouseButtonInfo(0, modifiers)), false);
     }
+    static void clickAndRelease(net.minecraft.client.Minecraft minecraft, double x, double y) {
+        click(minecraft, x, y);
+        minecraft.screen.mouseReleased(new net.minecraft.client.input.MouseButtonEvent(x, y,
+                new net.minecraft.client.input.MouseButtonInfo(0, 0)));
+    }
 
     static final String IMPORT_EXPORT_ID = "ae2importexportcard";
     static final String EXTENDED_AE_ID = "extendedae";
@@ -64,8 +69,52 @@ final class DriverPlatform {
         minecraft.disconnect(new net.minecraft.client.gui.screens.TitleScreen(), false);
     }
 
+    static void disconnectLevel(net.minecraft.client.Minecraft minecraft) {
+        var connection = minecraft.getConnection().getConnection();
+        var before = connection.isConnected();
+        minecraft.level.disconnect(net.minecraft.network.chat.Component.translatable("multiplayer.status.quitting"));
+        var afterTransport = connection.isConnected();
+        clearLevel(minecraft);
+        System.out.println("AE2CT normal disconnect target=" + TARGET + " before=" + before
+                + " afterTransport=" + afterTransport + " afterClear=" + connection.isConnected());
+    }
+
+    static void resizeDisplay(net.minecraft.client.Minecraft minecraft) { minecraft.resizeGui(); }
+
     static void openWorld(net.minecraft.client.Minecraft minecraft, String world) {
         minecraft.createWorldOpenFlows().openWorld(world, () -> minecraft.setScreen(new net.minecraft.client.gui.screens.TitleScreen()));
+    }
+
+    static void connectServer(net.minecraft.client.Minecraft minecraft,
+            net.minecraft.client.multiplayer.ServerData server) {
+        connectServer(minecraft, new net.minecraft.client.gui.screens.TitleScreen(), server);
+    }
+
+    static net.minecraft.client.gui.screens.Screen prepareInitialDedicatedConnect(
+            net.minecraft.client.Minecraft minecraft) {
+        var multiplayer = new net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen(
+                new net.minecraft.client.gui.screens.TitleScreen());
+        minecraft.setScreen(multiplayer);
+        return multiplayer;
+    }
+
+    static void connectInitialDedicatedServer(
+            net.minecraft.client.gui.screens.Screen parent, net.minecraft.client.multiplayer.ServerData server) {
+        var multiplayer = (net.minecraft.client.gui.screens.multiplayer.JoinMultiplayerScreen) parent;
+        var accessor = (com.ctux.ae2craftingtime.testdriver.mixin.JoinMultiplayerScreenAccessor) multiplayer;
+        accessor.ae2craftingtime_test_driver$setEditingServer(server);
+        accessor.ae2craftingtime_test_driver$directJoinCallback(true);
+    }
+
+    static void connectServer(net.minecraft.client.Minecraft minecraft,
+            net.minecraft.client.gui.screens.Screen parent, net.minecraft.client.multiplayer.ServerData server) {
+        net.minecraft.client.gui.screens.ConnectScreen.startConnecting(parent,
+                minecraft, net.minecraft.client.multiplayer.resolver.ServerAddress.parseString(server.ip), server, false, null);
+    }
+
+    static net.minecraft.client.multiplayer.ServerData server(String address) {
+        return new net.minecraft.client.multiplayer.ServerData("AE2CT dedicated smoke", address,
+                net.minecraft.client.multiplayer.ServerData.Type.OTHER);
     }
 
 }

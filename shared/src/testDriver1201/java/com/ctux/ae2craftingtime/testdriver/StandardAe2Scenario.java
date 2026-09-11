@@ -35,6 +35,7 @@ final class StandardAe2Scenario {
             Map.entry("standard-status-controls", List.of("submitted", "status", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout")),
             Map.entry("waiting-status", List.of("submitted", "waiting", "first-dispatch", "recovered", "layout")),
             Map.entry("running-status", List.of("submitted", "running", "progress", "header", "layout")),
+            Map.entry("cpu-list-total-ttc", CpuListTtcScenario.CHECKS),
             Map.entry("delayed-status", List.of("submitted", "delayed", "row", "style", "tooltip", "layout", "recovered",
                     "plate-recovered", "final-plate", "completed", "output", "profile-sample", "plate-cleared")),
             Map.entry("craft-lifecycle", List.of("plan", "submitted", "status", "profile-sample", "total-cleared", "completed", "output",
@@ -42,18 +43,30 @@ final class StandardAe2Scenario {
     private enum Stage { PREPARE, TERMINAL, AMOUNT, PLAN_SORT, PLAN_TOOLTIP, PLAN_DETAILS, PLAN_RESET,
         SUBMIT, OPEN_STATUS, ACTIVE, STATUS_SORT, STATUS_TOOLTIP, STATUS_DETAILS, STATUS_RESET,
         RESTORE, DELAYED, PUMP, FINISHED, REOPEN, EMPTY, WORLD_POSITION, WORLD_HIGHLIGHT, WORLD_RELEASE, WORLD_FINISHED,
-        GALLERY_PARTIAL_PLAN, GALLERY_PROFILED_PLAN, GALLERY_DETAILS, GALLERY_CHAT, GALLERY_NEXT_JOB }
+        GALLERY_PARTIAL_PLAN, GALLERY_PROFILED_PLAN, GALLERY_DETAILS, GALLERY_CHAT, GALLERY_NEXT_JOB,
+        CPU_LIST_REOPEN, CPU_LIST_REOPENED }
     private final String leaf;
-    StandardAe2Scenario(String leaf) {
+    private final StandardCraftFixture fixture = new StandardCraftFixture();
+    private final CpuListTtcScenario cpuList;
+    private final boolean connectedDedicated;
+    StandardAe2Scenario(String leaf, String world, java.nio.file.Path output, boolean connectedDedicated) {
+        this(leaf, world, output, connectedDedicated, new java.util.ArrayList<>());
+    }
+    StandardAe2Scenario(String leaf, String world, java.nio.file.Path output, boolean connectedDedicated,
+            List<String> resultScreenshots) {
         if (!CHECKS.containsKey(leaf)) throw new IllegalArgumentException("Unknown standard leaf: " + leaf);
         this.leaf = leaf;
+        this.connectedDedicated = connectedDedicated;
+        cpuList = leaf.equals("cpu-list-total-ttc")
+                ? new CpuListTtcScenario(fixture, world, output, connectedDedicated, resultScreenshots) : null;
+        if (cpuList != null && cpuList.resumed()) phase = Stage.ACTIVE;
     }
     static boolean supports(String scenario) { return CHECKS.containsKey(scenario); }
-    private final StandardCraftFixture fixture = new StandardCraftFixture();
     private final StableFrames<Object> frames = new StableFrames<>(8);
     private CompletableFuture<Boolean> operation;
     private Stage phase = Stage.PREPARE;
     private Stage reportedPhase;
+    private String reportedCheckpoint;
     private int sort;
     private boolean partialJob;
     private boolean reviewJob;
@@ -66,19 +79,39 @@ final class StandardAe2Scenario {
     private final StableFrames<Boolean> worldFrames = new StableFrames<>(8);
     private final StatsInteraction stats = new StatsInteraction();
 
-    String checkpoint() { return "phase=" + phase + " fixture=" + fixture.checkpoint; }
+    String checkpoint() { return "phase=" + phase + " fixture=" + fixture.checkpoint
+            + (cpuList == null ? "" : " " + cpuList.checkpoint()); }
+
+    boolean reconnectRequested() { return cpuList != null && cpuList.reconnectRequested(); }
+    void reconnected() { cpuList.reconnected(); }
 
     boolean tick(Minecraft minecraft, FixtureMarker marker, Map<String, Boolean> checks,
             Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) throws Exception {
-        if (reportedPhase != phase) {
-            System.out.println("AE2CT standard checkpoint " + java.time.Instant.now() + " " + checkpoint());
+        var currentCheckpoint = checkpoint();
+        if (reportedPhase != phase || !currentCheckpoint.equals(reportedCheckpoint)) {
+            System.out.println("AE2CT standard checkpoint " + java.time.Instant.now() + " " + currentCheckpoint);
             reportedPhase = phase;
+            reportedCheckpoint = currentCheckpoint;
+        }
+        // Menu-free close/reopen and reconnect transitions are owned by this state machine.
+        if (phase == Stage.ACTIVE && cpuList != null) {
+            var complete = cpuList.tick(minecraft, marker, checks, screenshot, moveMouse);
+            return complete;
         }
         if (phase == Stage.PREPARE) {
+            fixture.cpuListScenario = leaf.equals("cpu-list-total-ttc");
             fixture.holdFinalOutput = leaf.equals("delayed-status");
             fixture.missingPlanInput = leaf.equals("standard-plan-controls");
             fixture.unprofiledPlan = leaf.equals("craft-lifecycle");
-            if (server(minecraft, player -> fixture.prepare(player, marker))) {
+            if (connectedDedicated && fixture.cpuListScenario) {
+                var state = CpuListTtcControl.state();
+                if (!state.ready()) return false;
+                fixture.bindTerminal(new net.minecraft.core.BlockPos(state.x(), state.y(), state.z()));
+                phase = Stage.TERMINAL;
+                return false;
+            }
+            if (server(minecraft, player -> fixture.prepare(player, marker)
+                    && (!fixture.cpuListScenario || fixture.prepareCpuListJobs(player)))) {
                 if (leaf.equals("standard-plan-controls")) {
                     mark(checks, "item-resolution", ProviderHighlightShapes.resolveItem(null).isEmpty()
                             && ProviderHighlightShapes.resolveItem("not an id!!").isEmpty()
@@ -93,6 +126,10 @@ final class StandardAe2Scenario {
             if (minecraft.screen == null) {
                 minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
                         new BlockHitResult(Vec3.atCenterOf(fixture.terminal).add(0, 0, -0.5), Direction.NORTH, fixture.terminal, false));
+            } else if (minecraft.screen instanceof MEStorageScreen<?> screen && fixture.cpuListScenario) {
+                var button = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$statusButton();
+                DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+                phase = Stage.ACTIVE;
             } else if (minecraft.screen instanceof MEStorageScreen<?> screen) {
                 var entry = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$repo().getAllEntries().stream()
                         .filter(row -> row.getWhat().getId().toString().equals("minecraft:smooth_stone") && row.isCraftable())
@@ -189,6 +226,18 @@ final class StandardAe2Scenario {
                 partialJob = true;
                 reviewJob = false;
                 phase = Stage.TERMINAL;
+            }
+            return false;
+        }
+        if (phase == Stage.CPU_LIST_REOPEN) {
+            if (minecraft.screen == null) {
+                minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
+                        new BlockHitResult(Vec3.atCenterOf(fixture.terminal).add(0, 0, -0.5), Direction.NORTH,
+                                fixture.terminal, false));
+            } else if (minecraft.screen instanceof MEStorageScreen<?> screen) {
+                var button = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$statusButton();
+                DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+                phase = Stage.CPU_LIST_REOPENED;
             }
             return false;
         }
@@ -548,6 +597,11 @@ final class StandardAe2Scenario {
         return List.of("minecraft:stone", "minecraft:smooth_stone").stream().allMatch(id -> rows.stream()
                 .anyMatch(row -> row.outputId().equals(id)
                         && row.description().stream().anyMatch(CraftPlanScenario::isResolvedTtc)));
+    }
+
+    static List<UiSnapshot.ObservedText> cpuCardTotals(UiSnapshot snapshot) {
+        return snapshot.text().stream().filter(t -> t.key().equals("text.ae2craftingtime.ttc")
+                && t.bounds() != null && t.bounds().y() >= snapshot.gui().y() + 19).toList();
     }
 
     private static void mark(Map<String, Boolean> checks, String key, boolean value) {

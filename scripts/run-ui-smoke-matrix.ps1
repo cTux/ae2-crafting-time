@@ -40,6 +40,7 @@ foreach ($targetEntry in $targets) {
     $report = Join-Path $campaign "$($row.target)/$($graph.id)"
     New-Item -ItemType Directory -Path $report -Force | Out-Null
     $started = [DateTime]::UtcNow.ToString('o')
+    $live = Join-Path $root "build/ui-smoke/$($row.target)/$profile/$Scenario"
     $result = 'FAIL_SETUP'
     $message = ''
     $coverage = @()
@@ -48,14 +49,24 @@ foreach ($targetEntry in $targets) {
         $coverage = @(& (Join-Path $PSScriptRoot 'get-ui-smoke-coverage.ps1') -Target $row.target -Latest:$runLatest)
         $coverage | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $report 'coverage.json') -Encoding UTF8
         $null = & (Join-Path $PSScriptRoot 'get-ui-smoke-plan.ps1') @planning -ExpectedFingerprint $plan.fingerprint
-        $cache = Join-Path $root "build/ui-smoke/bundle-cache/$($row.target)/$profile/$($graph.id)"
-        & (Join-Path $PSScriptRoot 'run-client.ps1') -Target $row.target -Latest:$runLatest -ResolveOnly -Packaged -RuntimeDirectory $cache -ProjectId $runProjects
+        $dependencyMode = if ($graph.baseOnly) { 'base' } else { 'catalogue' }
+        # Keep the Windows cache path below the legacy directory-length limit;
+        # the full immutable identities are still validated inside the seal.
+        $cache = Join-Path $root "build/ui-smoke/bundle-cache/$($commit.Substring(0,12))/$($plan.fingerprint.Substring(0,12))/$($row.target)/$profile/$dependencyMode/$($graph.id)"
+        $cacheParameters = @{CacheDirectory=$cache;HeadSha=$commit;Fingerprint=$plan.fingerprint;Target=$row.target;Profile=$profile;GraphId=$graph.id;BaseOnly=[bool]$graph.baseOnly}
+        if (Test-Path -LiteralPath (Join-Path $cache 'bundle-identity.json') -PathType Leaf) {
+            $cacheIdentity = & (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') @cacheParameters -Mode Reuse
+        } else {
+            & (Join-Path $PSScriptRoot 'run-client.ps1') -Target $row.target -Latest:$runLatest -ResolveOnly -Packaged -RuntimeDirectory $cache -ProjectId $runProjects -BaseOnly:([bool]$graph.baseOnly)
+            $cacheIdentity = & (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') @cacheParameters -Mode Seal
+        }
         # Guest shares may retain read handles. Each run receives an immutable bundle.
         $bundle = Join-Path $report 'bundle'
         Copy-Item -LiteralPath $cache -Destination $bundle -Recurse
         Get-ChildItem -LiteralPath (Join-Path $bundle 'mods') -Filter '*.jar' -File | ForEach-Object {
             [ordered]@{ file = $_.Name; sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash }
         } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $report 'artifact-hashes.json') -Encoding UTF8
+        $cacheIdentity | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $report 'bundle-reuse.json') -Encoding UTF8
         & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target $row.target -BundleDirectory $bundle
         $null = & (Join-Path $PSScriptRoot 'get-ui-smoke-plan.ps1') @planning -ExpectedFingerprint $plan.fingerprint
         $plan | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $report 'selection.json') -Encoding UTF8
@@ -64,7 +75,6 @@ foreach ($targetEntry in $targets) {
         if ($GuestSourceRoot) { $arguments.GuestSourceRoot = $GuestSourceRoot }
         $clientExitConfirmed = $false
         & (Join-Path $PSScriptRoot 'invoke-ui-smoke-codexvm.ps1') @arguments
-        $live = Join-Path $root "build/ui-smoke/$($row.target)/$profile/$Scenario"
         $deadline = [DateTime]::UtcNow.AddMinutes(45)
         do {
             if ([DateTime]::UtcNow -gt $deadline) {
@@ -100,6 +110,28 @@ foreach ($targetEntry in $targets) {
         if ($Latest) { $result = 'DIAGNOSTIC_FAILURE' }
         Write-Warning "$($row.target) $profile $result`: $message"
     } finally {
+        $runReport = Join-Path $report 'run'
+        if (!(Test-Path -LiteralPath $runReport) -and (Test-Path -LiteralPath (Join-Path $live 'status.json') -PathType Leaf)) {
+            try {
+                $liveStatus = Get-Content -LiteralPath (Join-Path $live 'status.json') -Raw | ConvertFrom-Json
+                $currentStatus = $liveStatus.target -ceq $row.target -and $liveStatus.profile -ceq $profile `
+                    -and $liveStatus.scenario -ceq $Scenario -and $liveStatus.startedAt `
+                    -and [DateTimeOffset]::Parse($liveStatus.startedAt) -ge [DateTimeOffset]::Parse($started)
+                if ($currentStatus) {
+                    Copy-Item -LiteralPath $live -Destination $runReport -Recurse
+                }
+            } catch {
+                Write-Warning "Could not retain failed live evidence: $($_.Exception.Message)"
+            }
+        }
+        if ($result -ne 'PASS' -and (Test-Path -LiteralPath (Join-Path $runReport 'status.json') -PathType Leaf)) {
+            $recordedStatus = Get-Content -LiteralPath (Join-Path $runReport 'status.json') -Raw | ConvertFrom-Json
+            if ($recordedStatus.phase -eq 'failed' -and $null -ne $recordedStatus.exitCode) {
+                if ($recordedStatus.message) { $message = $recordedStatus.message }
+                $result = if ($Latest) { 'DIAGNOSTIC_FAILURE' } else { 'FAIL' }
+                $clientExitConfirmed = $true
+            }
+        }
         $leaves = @(& (Join-Path $PSScriptRoot 'get-ui-smoke-results.ps1') -Target $row.target -Profile $profile -Scenarios $runCases -Evidence (Join-Path $report 'run/evidence') -ExpectedAdapters (Join-Path $report 'bundle/expected-adapters.json'))
         $groups = @()
         $catalogue = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json

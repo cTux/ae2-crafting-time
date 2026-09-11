@@ -7,6 +7,7 @@
   "mixins": [
     "AdvancedCraftingCpuLogicMixin",
     "CraftingCPUMenuAccessor",
+    "CraftingStatusMenuAccessor",
     "CraftingCpuLogicMixin",
     "PatternProviderLogicMixin",
     "PatternProviderExternalPushMixin",
@@ -17,6 +18,8 @@
     "NeoEcoIntBatchDispatchMixin"
   ],
   "client": [
+    "AbstractContainerScreenCpuTtcMixin",
+    "CPUSelectionListMixin",
     "AbstractTableRendererMixin",
     "ChatScreenMixin",
     "CraftingCPUScreenMixin",

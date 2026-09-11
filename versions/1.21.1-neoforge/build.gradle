@@ -55,6 +55,7 @@ sourceSets.main.java.srcDir '../../shared/src/mc1201/java'
 // toolchain (vanilla targets are official-named here); the 1.21.1 mixin
 // config lists the remap=false ChatScreenMixin instead.
 sourceSets.main.java.exclude '**/mixin/ChatScreenMixinSrg.java'
+sourceSets.main.java.exclude '**/mixin/AbstractContainerScreenCpuTtcMixinSrg.java'
 sourceSets.main.resources.srcDir '../../shared/src/main/resources'
 sourceSets.test.java.srcDir '../../shared/src/mc1201Test/java'
 
@@ -205,7 +206,9 @@ tasks.register('checkTestDriverArtifacts') {
                 || driverEntries.any { it.contains('/mc1201/Ae2CraftingTime.class') }
                 || !driverEntries.any { it.endsWith('/testdriver/TestDriverMod.class') }
                 || !driverEntries.any { it.endsWith('/META-INF/neoforge.mods.toml') }
-                || !driverMixins.mixins.contains('CraftingCPUMenuAccessor')) {
+                || !driverMixins.mixins.contains('CraftingCPUMenuAccessor')
+                || !driverMixins.client.contains('CpuTtcClientMixin')
+                || !driverMixins.client.contains('CPUSelectionListObservationMixin')) {
             throw new GradleException('Invalid isolated NeoForge test-driver artifact')
         }
     }

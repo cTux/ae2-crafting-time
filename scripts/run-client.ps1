@@ -12,6 +12,7 @@ param(
     [string]$DriverOutputDirectory,
     [string]$DriverWorld,
     [string[]]$ProjectId,
+    [switch]$BaseOnly,
     [switch]$Interactive,
     [Parameter(ValueFromRemainingArguments = $true)]
     [string[]]$GradleArgs
@@ -19,6 +20,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 if ($Packaged -and -not $ResolveOnly) { throw 'Packaged preparation requires -ResolveOnly; launch copied artifacts in CodexVM' }
+if ($BaseOnly -and $ProjectId) { throw 'Base-only preparation cannot select optional projects' }
 $javaHomes = @{}
 foreach ($major in 17, 21, 25) {
     $javaHomes[$major] = & (Join-Path $PSScriptRoot 'get-java-home.ps1') -Major $major
@@ -78,7 +80,8 @@ foreach ($requestedProject in $requestedProjects) {
     if ($requestedProject -notin $availableProjects) { throw "Unknown project $requestedProject for $Target" }
 }
 foreach ($replacement in @($matrixEntry.curseforge | Where-Object {
-    $_.replaces_project_id -and ($requestedProjects.Count -eq 0 -or [string]$_.project_id -in $requestedProjects)
+    -not $BaseOnly -and $_.replaces_project_id -and
+        ($requestedProjects.Count -eq 0 -or [string]$_.project_id -in $requestedProjects)
 })) {
     if ($replacement.replaces_project_id -in $requestedProjects) {
         throw "Cannot load projects $($replacement.project_id) and $($replacement.replaces_project_id) together"
@@ -86,7 +89,7 @@ foreach ($replacement in @($matrixEntry.curseforge | Where-Object {
     $null = $provided.Add([string]$replacement.replaces_project_id)
 }
 $projects = @($matrixEntry.projects | Where-Object {
-    ($Latest -or $_.compatible -ne $false) -and
+    -not $BaseOnly -and ($Latest -or $_.compatible -ne $false) -and
         ($requestedProjects.Count -eq 0 -or [string]$_.project_id -in $requestedProjects)
 } | Select-Object -ExpandProperty project_id)
 if (-not $Latest) {
@@ -183,7 +186,10 @@ function Add-CurseForgeProject([string]$projectId) {
     $dependency = $matrixEntry.curseforge | Where-Object { [string]$_.project_id -eq $projectId } | Select-Object -First 1
     foreach ($requiredProject in @($dependency.dependencies)) { Add-CurseForgeProject ([string]$requiredProject) }
 }
-if ($requestedProjects.Count) {
+if ($BaseOnly) {
+    # AE2 and its required dependencies are installed below. Optional catalogue
+    # projects are deliberately excluded from the primary direct-behavior graph.
+} elseif ($requestedProjects.Count) {
     foreach ($requestedProject in $requestedProjects) {
         if ($requestedProject -in @($matrixEntry.curseforge.project_id | ForEach-Object { [string]$_ })) {
             Add-CurseForgeProject $requestedProject
@@ -225,6 +231,7 @@ foreach ($dependency in @($ae2Version.dependencies | Where-Object dependency_typ
 $runtimeArgs = @("-P$($profile.LoaderProperty)=$loaderVersion", "-P$($profile.Ae2Property)=$($ae2Version.version_number)", "-PruntimeRunDirectory=$run")
 Write-Host "profile $(if ($Latest) { 'latest' } else { 'compatible' })"
 if ($requestedProjects.Count) { Write-Host "focused projects $($requestedProjects -join ', ')" }
+if ($BaseOnly) { Write-Host 'base-only dependencies' }
 Write-Host "runtime loader $loaderVersion"
 Write-Host "runtime ae2 $($ae2Version.version_number)"
 if ($Target -eq "1.20.1-fabric") {
@@ -268,6 +275,7 @@ if ($Packaged) {
     }
     [ordered]@{ schema = 1; target = $Target; profile = $(if ($Latest) { 'latest' } else { 'compatible' })
         loader = $loaderVersion; ae2 = $ae2Version.version_number; java = $clientJava
+        dependencyMode = $(if ($BaseOnly) { 'base' } else { 'catalogue' })
     } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $run 'profile.json') -Encoding UTF8
 }
 

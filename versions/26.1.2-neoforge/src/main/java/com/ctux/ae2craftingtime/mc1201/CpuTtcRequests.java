@@ -1,0 +1,11 @@
+package com.ctux.ae2craftingtime.mc1201;
+
+import com.ctux.ae2craftingtime.mc1201.net.CpuTtcPacketCodec;
+import com.ctux.ae2craftingtime.mc1201.net.CpuTtcRequestC2S;
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+
+public final class CpuTtcRequests {
+    public static boolean enabled() { return true; }
+    public static void send(CpuTtcPacketCodec.Request request) { ClientPacketDistributor.sendToServer(new CpuTtcRequestC2S(request)); }
+    private CpuTtcRequests() { }
+}

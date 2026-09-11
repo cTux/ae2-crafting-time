@@ -45,6 +45,12 @@ AE2 CraftingCpuLogic mixins on the server
   -> AE2 / optional integration UI text
 ```
 
+The Crafting Status CPU list uses a separate bounded path: the client requests
+the six visible CPU serials plus the selected serial, and the server resolves
+only serials already assigned by that open menu and still present on its live
+grid. The returned batch replaces the screen-session cache atomically and
+expires after three seconds. It never changes the profiler or selects a CPU.
+
 The server owns profiling, retained samples, persistence, resets, and aggregate
 stats. The client owns the display cache, request cooldowns, formatting, sort
 state, and click handling.
@@ -99,7 +105,7 @@ The core AE2 screens are always available when AE2 is present:
 - craft-confirm plan row TTC lines, color hints, total TTC, sort button, and TTC
   details/reset clicks
 - crafting status waiting and TTC lines, total TTC, sort button, and TTC
-  details/reset clicks
+  details/reset clicks, plus each busy CPU card's own remaining total
 
 Optional integrations add UI only when the target mod is installed:
 

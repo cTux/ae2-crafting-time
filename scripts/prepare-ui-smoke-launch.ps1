@@ -8,12 +8,18 @@ param(
     [Parameter(Mandatory)][string]$World,
     [Parameter(Mandatory)][string]$Evidence,
     [string[]]$ProjectId,
+    [string]$DedicatedAddress,
+    [string]$ControlDirectory,
+    [string]$ContinuationPath,
+    [string]$CampaignId,
+    [switch]$ResumeOnly,
     [switch]$Interactive
 )
 $ErrorActionPreference = 'Stop'
 $launch = Get-Content -LiteralPath $LaunchManifest -Raw | ConvertFrom-Json
 $bundle = Get-Content -LiteralPath (Join-Path $BundleDirectory 'profile.json') -Raw | ConvertFrom-Json
 if ($bundle.schema -ne 1 -or $bundle.target -ne $Target -or $bundle.profile -ne $Profile -or
+        $bundle.dependencyMode -notin @('base','catalogue') -or
         $launch.target -ne $Target -or $launch.java -ne $bundle.java) { throw 'Prepared launch target/profile/Java mismatch' }
 # The installed native loader must be the resolved profile's loader, including latest diagnostics.
 $loaderVersion = $bundle.loader -replace ('^' + [regex]::Escape($Target.Split('-')[0]) + '-'), ''
@@ -61,7 +67,7 @@ $arguments = [Collections.Generic.List[string]]::new()
 for ($i = 0; $i -lt $launch.arguments.Count; $i++) {
     $argument = [string]$launch.arguments[$i]
     if ($argument -match '^-Dae2craftingtime.test\.' -or $argument -match '^-Xm[xs]') { continue }
-    if ($argument -in @('--gameDir', '--quickPlaySingleplayer')) { $i++; continue }
+    if ($argument -in @('--gameDir', '--quickPlaySingleplayer', '--quickPlayMultiplayer')) { $i++; continue }
     $arguments.Add($argument)
 }
 $arguments.Insert(0, '-Xmx8G')
@@ -70,10 +76,32 @@ if ('rxYaglEe' -in @($ProjectId)) { $arguments.Insert(0, '-Dae2craftingtime.test
 foreach ($property in @("scenario=$Scenario", "profile=$Profile", "world=$World", "output=$Evidence", 'vmTextureProbe=true')) {
     $arguments.Insert(0, "-Dae2craftingtime.test.$property")
 }
+if ($CampaignId) {
+    if ($CampaignId -cnotmatch '^[A-Za-z0-9._-]{1,128}$') { throw 'Invalid UI-smoke campaign identity' }
+    $arguments.Insert(0, "-Dae2craftingtime.test.campaign=$CampaignId")
+}
+if ($ContinuationPath) {
+    $continuation = [IO.Path]::GetFullPath($ContinuationPath)
+    if (!(Test-Path -LiteralPath $continuation -PathType Leaf) -or
+            !($continuation.StartsWith(([IO.Path]::GetFullPath($Evidence)).TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase))) {
+        throw 'Relaunch continuation must be an existing evidence file'
+    }
+    $arguments.Insert(0, "-Dae2craftingtime.test.continuation=$continuation")
+}
+if ($ResumeOnly) {
+    if (!$ContinuationPath -or $Scenario -ne 'cpu-list-total-ttc') { throw 'Resume-only launch requires a CPU-list continuation' }
+    $arguments.Insert(0, '-Dae2craftingtime.test.resumeOnly=true')
+}
+if ($DedicatedAddress) {
+    if (-not $ControlDirectory) { throw 'Connected dedicated launch requires a control directory' }
+    $arguments.Insert(0, '-Dae2craftingtime.test.connectedDedicated=true')
+    $arguments.Insert(0, "-Dae2craftingtime.test.dedicatedAddress=$DedicatedAddress")
+    $arguments.Insert(0, "-Dae2craftingtime.test.control=$([IO.Path]::GetFullPath($ControlDirectory))")
+}
 $arguments.Add('--gameDir'); $arguments.Add($runtime)
-$arguments.Add('--quickPlaySingleplayer'); $arguments.Add($World)
+if (-not $DedicatedAddress) { $arguments.Add('--quickPlaySingleplayer'); $arguments.Add($World) }
 $argsFile = Join-Path $runtime 'ui-smoke-java.args'
 $quoted = @($arguments | ForEach-Object { '"' + $_.Replace('\', '\\').Replace('"', '\"') + '"' })
 [IO.File]::WriteAllLines($argsFile, $quoted, [Text.UTF8Encoding]::new($false))
 $javaHome = & (Join-Path $PSScriptRoot 'get-java-home.ps1') -Major $bundle.java
-[pscustomobject]@{ executable = (Join-Path $javaHome 'bin/java.exe'); arguments = ('@"' + $argsFile + '"') }
+[pscustomobject]@{ executable = (Join-Path $javaHome 'bin/java.exe'); arguments = ('@"' + $argsFile + '"'); finalApproval = !$ResumeOnly }
