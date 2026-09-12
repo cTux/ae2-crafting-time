@@ -425,7 +425,9 @@ final class CpuListTtcScenario {
                 next(Stage.HOLD_EXPIRED);
             }
             case HOLD_EXPIRED -> {
-                if (elapsedMillis() < 3600 || !CpuTtcPacketControl.hasHeld()) return false;
+                var nowMillis = java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+                if (!CpuTtcPacketControl.hasHeld() || !heldRequestExpired(
+                        CpuTtcPacketControl.requestCapture(), CpuTtcPacketControl.heldSequence(), nowMillis)) return false;
                 if (snapshot.cpuCards().stream().anyMatch(card -> card.ttc() != null)) return false;
                 CpuTtcPacketControl.releaseHeld();
                 CpuTtcPacketControl.drop();
@@ -855,6 +857,12 @@ final class CpuListTtcScenario {
                     || requests.get(index).sentAtMillis() - requests.get(index - 1).sentAtMillis() < 1_000) return false;
         }
         return true;
+    }
+
+    static boolean heldRequestExpired(CpuTtcPacketControl.RequestCapture capture, long sequence, long nowMillis) {
+        return sequence >= 0 && capture.batches().stream().filter(request -> request.sequence() == sequence)
+                .anyMatch(request -> nowMillis - request.sentAtMillis()
+                        >= com.ctux.ae2craftingtime.core.CpuTtcCache.REQUEST_TIMEOUT_MILLIS);
     }
 
     static boolean itemRowsReady(java.util.List<UiSnapshot.Row> rows) {

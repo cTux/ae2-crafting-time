@@ -1108,6 +1108,16 @@ class TestDriverCoreTest {
         assertFalse(CpuListTtcScenario.itemRowsReady(List.of(waiting, waiting)));
     }
 
+    @Test
+    void cpuListDelayedReplyUsesTheHeldRequestsActualAge() {
+        var request = new CpuTtcPacketControl.ObservedRequest(4, 1_000, List.of(1));
+        var capture = new CpuTtcPacketControl.RequestCapture(List.of(request), List.of(1));
+        assertFalse(CpuListTtcScenario.heldRequestExpired(capture, -1, 4_000));
+        assertFalse(CpuListTtcScenario.heldRequestExpired(capture, 5, 4_000));
+        assertFalse(CpuListTtcScenario.heldRequestExpired(capture, 4, 3_999));
+        assertTrue(CpuListTtcScenario.heldRequestExpired(capture, 4, 4_000));
+    }
+
     private static LinkedHashMap<String, Boolean> checks(boolean value) {
         var checks = new LinkedHashMap<String, Boolean>();
         DriverResult.requiredChecks("craft-plan").forEach(key -> checks.put(key, value));
