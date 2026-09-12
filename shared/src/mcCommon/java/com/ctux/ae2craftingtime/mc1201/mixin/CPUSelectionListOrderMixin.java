@@ -41,6 +41,9 @@ public abstract class CPUSelectionListOrderMixin {
     private Map<Integer, CpuTtcCache.CpuView> ae2craftingtime$drawn = Map.of();
 
     @Unique
+    private List<CraftingStatusMenu.CraftingCpuListEntry> ae2craftingtime$drawnList = List.of();
+
+    @Unique
     private int ae2craftingtime$drawnScroll = -1;
 
     @Inject(method = "<init>", at = @At("RETURN"), remap = false)
@@ -60,8 +63,9 @@ public abstract class CPUSelectionListOrderMixin {
 
     @Inject(method = "drawBackgroundLayer", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$beginDraw(CallbackInfo ci) {
+        ae2craftingtime$drawnList = List.copyOf(ae2craftingtime$displayed);
         var drawn = new LinkedHashMap<Integer, CpuTtcCache.CpuView>();
-        ae2craftingtime$displayed.forEach(cpu -> drawn.put(cpu.serial(), CpuTtcClient.view(cpu)));
+        ae2craftingtime$drawnList.forEach(cpu -> drawn.put(cpu.serial(), CpuTtcClient.view(cpu)));
         ae2craftingtime$drawn = Map.copyOf(drawn);
     }
 
@@ -78,7 +82,7 @@ public abstract class CPUSelectionListOrderMixin {
     private List<CraftingStatusMenu.CraftingCpuListEntry> ae2craftingtime$hitList(
             CraftingStatusMenu.CraftingCpuList instance,
             Operation<List<CraftingStatusMenu.CraftingCpuListEntry>> original) {
-        return ae2craftingtime$drawnScroll < 0 ? List.of() : ae2craftingtime$displayed;
+        return ae2craftingtime$drawnScroll < 0 ? List.of() : ae2craftingtime$drawnList;
     }
 
     @WrapOperation(method = "updateBeforeRender", at = @At(value = "INVOKE", target = AE2CRAFTINGTIME_CPUS,
