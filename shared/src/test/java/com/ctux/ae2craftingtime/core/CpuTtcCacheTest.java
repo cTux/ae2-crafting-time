@@ -66,6 +66,25 @@ class CpuTtcCacheTest {
     }
 
     @Test
+    void unchangedCollectionModePreservesOutstandingReply() {
+        var cache = open();
+        cache.observe(views(2), true, 0);
+        var sameMode = cache.refresh(List.of(1), 0).orElseThrow();
+        cache.setCollectionMode(true, 1);
+        assertTrue(cache.apply(1, sameMode.sequence(), seconds(sameMode.serials(), 10), 2));
+    }
+
+    @Test
+    void ae2ModeDropsReplyForAFormerPriority() {
+        var cache = open();
+        cache.observe(views(2), false, 0);
+        var request = cache.refresh(List.of(1), 0).orElseThrow();
+        assertTrue(cache.refresh(List.of(2), 1).isEmpty());
+        assertTrue(cache.apply(1, request.sequence(), seconds(request.serials(), 10), 2));
+        assertFalse(cache.seconds(1, 2).isPresent());
+    }
+
+    @Test
     void mergesBatchesClearsExplicitUnknownAndRetainsUnrelatedValues() {
         var cache = open();
         cache.observe(views(40), true, 0);
@@ -155,8 +174,8 @@ class CpuTtcCacheTest {
         cache.setCollectionMode(true, 1_000);
         var second = cache.refresh(List.of(1), 1_000).orElseThrow();
         cache.setCollectionMode(false, 1_001);
-        assertTrue(cache.apply(1, second.sequence(), seconds(second.serials(), 30), 1_002));
-        assertEquals(30, cache.seconds(1, 1_002).orElseThrow());
+        assertFalse(cache.apply(1, second.sequence(), seconds(second.serials(), 30), 1_002));
+        assertEquals(10, cache.seconds(1, 1_002).orElseThrow());
         assertFalse(cache.seconds(33, 1_002).isPresent());
         cache.observe(views(40), false, 1_003);
         assertFalse(cache.seconds(1, 4_002).isPresent());

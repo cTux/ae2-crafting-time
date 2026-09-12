@@ -195,6 +195,9 @@ public final class CpuTtcCache {
     private boolean setFullList(boolean value, long nowMillis) {
         var changed = fullList != value;
         fullList = value;
+        if (changed) {
+            outstanding = null;
+        }
         if (!fullList) {
             changed |= pruneToPriorities();
         }
