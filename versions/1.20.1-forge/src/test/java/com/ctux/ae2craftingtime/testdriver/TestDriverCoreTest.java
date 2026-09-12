@@ -44,9 +44,8 @@ class TestDriverCoreTest {
             TomcatURLStreamHandlerFactory.disable();
             var tomcat = new Tomcat();
             tomcat.setBaseDir(temporary.resolve("tomcat").toString());
-            Context context = tomcat.addContext("", temporary.toString());
-            var inheritedParent = context.getParentClassLoader();
-            InteractiveMcpServer.setContextParentClassLoader(context, driverLoader);
+            Context context = InteractiveMcpServer.addContext(tomcat, temporary.toString(), driverLoader);
+            var inheritedParent = driverLoader.getParent();
             try {
                 tomcat.start();
                 var webappLoader = context.getLoader().getClassLoader();
