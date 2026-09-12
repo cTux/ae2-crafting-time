@@ -521,12 +521,12 @@ final class CpuListTtcScenario {
                 if (snapshot.scroll() != 0 || snapshot.rawCpuSerials().size() != 33
                         || state.cpus().stream().filter(CpuListTtcControl.CpuState::busy).count() != 33
                         || state.cpus().stream().anyMatch(cpu -> cpu.busy() && cpu.seconds() == null)) return false;
-                var capture = CpuTtcPacketControl.requestCapture();
-                if (capture.batches().size() < 2
-                        || capture.batches().stream().anyMatch(batch -> batch.serials().size() > 32
+                var requests = CpuTtcPacketControl.requestCapture();
+                if (requests.batches().size() < 2
+                        || requests.batches().stream().anyMatch(batch -> batch.serials().size() > 32
                                 || new java.util.HashSet<>(batch.serials()).size() != batch.serials().size())
-                        || !requestCadenceValid(capture.batches())
-                        || !new java.util.HashSet<>(capture.uniqueSerials()).containsAll(snapshot.rawCpuSerials())) return false;
+                        || !requestCadenceValid(requests.batches())
+                        || !new java.util.HashSet<>(requests.uniqueSerials()).containsAll(snapshot.rawCpuSerials())) return false;
                 mark(checks, "background-coverage");
                 screenshot.accept("cpu-list-total-ttc-33-background.png");
                 CpuTtcPacketControl.holdLatest();
