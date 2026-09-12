@@ -43,10 +43,10 @@ Add a small CPU-list request/snapshot pair, separate from output-row statistics.
 This avoids sending every CPU's full output stats or consuming the selected
 CPU's slot in `StatsSnapshotS2C`. Keep existing output-stat packets unchanged.
 
-1. A client-only `CPUSelectionListMixin` collects the visible serials plus the
-   selected serial, deduplicated. Send at most once per second while this screen
-   is open, including when the selected CPU has no item rows. A list/selection
-   change clears inapplicable values immediately and queues the next refresh.
+1. A common client-only `CPUSelectionListOrderMixin` observes the full raw menu
+   list and gives the selected and rendered serials priority. `CpuTtcCache`
+   fills the remaining packet slots from a persistent busy-CPU round-robin
+   queue. Send at most once per second with one outstanding request.
 2. `CpuTtcRequestC2S` carries `containerId`, a client screen-session `long`, a
    nonnegative monotonically increasing request sequence `long`, and at most
    32 positive CPU serials. The selected serial has priority if the cap is ever
@@ -64,11 +64,11 @@ CPU's slot in `StatsSnapshotS2C`. Keep existing output-stat packets unchanged.
    are explicitly empty. Obtain values with `ProfilerBridge.remainingJobSeconds`
    after validating live membership. No notifications, storage scan, or profiler
    mutations are needed.
-5. A Minecraft-free `core/CpuTtcCache` holds only the current requested batch.
-   A client `CpuTtcRequests` coordinator binds it to the actual screen instance,
-   connection, sequence, container, and visible CPU membership. Apply only the
-   latest outstanding request for that active screen. Replace the whole batch,
-   including absent values, rather than merging old entries.
+5. A Minecraft-free `core/CpuTtcCache` holds complete observed membership and
+   per-job generations. It validates each exact reply set, merges requested
+   entries (including explicit unknowns), retains unrelated fresh entries, and
+   binds sequences to the active screen session. The common client publishes a
+   frozen display snapshot for title, badge, draw, tooltip, and hit-test use.
 6. In a `CraftingStatusMenu` screen, route `ClientStats.totalTtcSeconds()` to the
    selected serial in this same cache. Other CPU screens retain their existing
    single-total path. Both title mixins keep their placement and rendering;
@@ -85,9 +85,11 @@ CPU's slot in `StatsSnapshotS2C`. Keep existing output-stat packets unchanged.
   supports both limits without changing the output-stat budget.
 - Session ids increase per client process and renew for each screen instance.
   They are correlation tokens; authorization comes from the live menu and grid.
-- Expire batches three seconds after receipt using monotonic client time. Clear
-  on screen/connection changes; reject replies from old sessions or superseded
-  requests, including when a container id is reused.
+- In TTC modes expire each value after
+  `max(3, ceil(busy / 25) + 2)` seconds; shrinking membership shortens existing
+  deadlines and growth never extends them. AE2 mode uses three seconds and
+  prunes background values. Clear on screen/connection changes and reject old,
+  consumed, or timed-out replies, including reused container ids.
 - Observe list changes before rendering. Drop removed/idle serials and invalidate
   outstanding requests when the current-job value changes or elapsed time
   decreases (same-output replacement). Before such a transition reaches the

@@ -8,10 +8,13 @@ The current requirements and implementation guidance live in:
 
 Tracked by [issue #318](https://github.com/cTux/ae2-crafting-time/issues/318).
 
-## Planned extension: active crafting orders
+## Active crafting orders
 
-Research for [issue #387](https://github.com/cTux/ae2-crafting-time/issues/387)
-extends the status window's TTC setting to the CPU list. This is planned behavior:
+The [issue #387](https://github.com/cTux/ae2-crafting-time/issues/387) feature
+extends the status window's existing TTC setting to both item rows and the full
+CPU list. Busy known jobs sort numerically, unknown busy jobs follow, idle CPUs
+remain last, and AE2 order restores the raw list. Visible/selected CPUs refresh
+first while a bounded round-robin collector covers off-screen jobs:
 
 - [CPU sorting specification](ttc-sorting/cpu-list/spec.md)
 - [CPU sorting technical design and research](ttc-sorting/cpu-list/technical-design.md)

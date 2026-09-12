@@ -3,10 +3,10 @@
 Status: implementation in progress in [PR #381](https://github.com/cTux/ae2-crafting-time/pull/381).
 Tracking issue: [#324](https://github.com/cTux/ae2-crafting-time/issues/324).
 
-Planned follow-up: [active-order TTC sorting](../ttc-sorting/cpu-list/spec.md)
-extends these badges with full-list collection and ordering in TTC modes. Its
-explicit freshness rules apply to that future extension; this document records
-the original badge behavior.
+The [active-order TTC sorting extension](../ttc-sorting/cpu-list/spec.md) adds
+full-list collection and ordering in TTC modes. Its explicit ordering and
+adaptive freshness rules supersede the original visible-only refresh boundary;
+this document remains authoritative for badge appearance and estimate meaning.
 
 ## Goal
 
@@ -30,9 +30,10 @@ card in the left Crafting CPUs list, as requested in the reference screenshot.
 - Reserve space for TTC on the name line. Shorten an overlapping name with an
   ellipsis; the existing CPU tooltip still shows the full name. Fit long time
   values without dropping digits or spilling outside the card.
-- Refresh visible CPUs without selecting them. The selected card and title use
-  the same received value. Allow normal network latency; hide an expired value
-  instead of presenting it indefinitely as current.
+- Refresh visible and selected CPUs first without selecting them, then visit
+  every other busy CPU through bounded round-robin requests. The selected card
+  and title use the same frame snapshot. Hide expired values; TTC-mode expiry
+  adapts to list size as specified by the active-order extension.
 - Scrolling, CPU removal, job completion/cancellation/replacement, changing
   networks, closing the screen, and reconnecting must not transfer a cached
   total to a different CPU or job. Removed or idle rows stop showing the badge
@@ -57,7 +58,7 @@ a retained runtime dependency graph.
 
 ## Non-goals
 
-Do not change TTC math or learning, sort CPUs by TTC, change item-row statuses,
+Do not change TTC math or learning, change item-row statuses,
 add interactions/tooltips/settings, change crafting execution, create a network
 monitor, or publish a release. The implementation issue remains open until the
 feature PR is merged and its completion evidence is verified.

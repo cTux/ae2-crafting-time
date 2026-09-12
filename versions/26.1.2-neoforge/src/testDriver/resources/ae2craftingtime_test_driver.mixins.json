@@ -12,6 +12,7 @@
   ],
   "client": [
     "CpuTtcClientMixin",
+    "CpuTtcRequestsMixin",
     "ClientStatsAccessor",
     "AEBaseScreenMixin",
     "AbstractTableRendererMixin",

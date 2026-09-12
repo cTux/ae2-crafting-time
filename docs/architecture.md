@@ -45,11 +45,15 @@ AE2 CraftingCpuLogic mixins on the server
   -> AE2 / optional integration UI text
 ```
 
-The Crafting Status CPU list uses a separate bounded path: the client requests
-the six visible CPU serials plus the selected serial, and the server resolves
-only serials already assigned by that open menu and still present on its live
-grid. The returned batch replaces the screen-session cache atomically and
-expires after three seconds. It never changes the profiler or selects a CPU.
+The Crafting Status CPU list uses a separate bounded path. In TTC modes the
+client observes the complete menu list, prioritizes the selected and six
+visible CPUs, and fills each 32-serial request from a persistent round-robin
+queue. Replies merge per entry into the screen-session cache; values expire
+after `max(3, ceil(busy / 25) + 2)` seconds so large stable lists can refresh
+without starving off-screen jobs. AE2-order mode retains only visible/selected
+values with the three-second bound. The frozen per-frame snapshot drives the
+title, badges, display sorting, rendering, and hit testing without changing the
+server list, profiler, selection, packet limits, or one-request-per-second cap.
 
 The server owns profiling, retained samples, persistence, resets, and aggregate
 stats. The client owns the display cache, request cooldowns, formatting, sort

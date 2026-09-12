@@ -18,6 +18,7 @@
   ],
   "client": [
     "AbstractContainerScreenCpuTtcMixinSrg",
+    "CPUSelectionListOrderMixin",
     "CPUSelectionListMixin",
     "AbstractTableRendererMixin",
     "ChatScreenMixinSrg",

@@ -6,15 +6,25 @@ Native CPU setup waits for the formed cluster to become active before selection.
 
 ## CPU-list total TTC scenario
 
-`cpu-list-total-ttc` opens the real Crafting Status screen on a grid with more
-than six native CPUs. Three jobs have distinct retained critical-path totals;
-one CPU is idle and one busy CPU has no estimate. The driver requires all three
-busy badges before it selects a CPU, then compares that card with the unchanged
-title total from the same received snapshot.
+`cpu-list-total-ttc` opens the real Crafting Status screen on eight native CPUs:
+five busy jobs include distinct totals, an equal-total tie, one unknown total,
+and an off-screen shortest job; three CPUs are idle. Actual rendered-card
+observations retain raw AE2 serial order separately. The driver captures the
+initial mode and full button cycle, verifies stable CPU groups and item sorting,
+then compares selection, title, tooltip, cancellation, and badges by serial.
+
+A focused second fixture creates 33 server-known busy CPUs. Without selecting
+or scrolling first, captured outgoing request batches must cover every raw
+serial, contain no duplicates, and stay at or below 32 entries. Deterministic
+cache tests cover 0, 1, 25, 26, 32, 33, 100, and 1,000 busy rows, fairness,
+timeouts, and adaptive expiry without inflating the runtime fixture further.
 
 The scenario scrolls both directions, uses long English and Cyrillic fixture
 names for static layout checks, and exercises reorder, removal, completion,
-cancellation, and same-output replacement. It closes and reopens the menu,
+cancellation through the native button, and same-output replacement. It also
+checks hit suppression before the first draw and for a removed prior-frame row,
+wheel input before the next draw, server-selected identity, channel fallback,
+late replies after mode switches, and AE2-mode expiry. It closes and reopens the menu,
 switches to a second grid with overlapping names and serials, expires a delayed
 reply, and reconnects without accepting stale totals. Runtime screenshots stay
 English (`en_us`) and cover selected/unselected cards at the smallest and
@@ -24,7 +34,9 @@ progress bar, click area, tooltip, and scrollbar clear.
 Run the same checks against integrated and connected disposable dedicated
 servers on all four compatible targets. Record production/driver artifacts,
 dependencies, selected adapters, server estimates, and matching client card
-snapshots. A headless server check is not UI evidence.
+snapshots. Retained checkpoints include raw and displayed serial order, draw
+scroll, server state, and timestamped outgoing request batches. A headless
+server check is not UI evidence.
 
 The connected path is `scripts/run-connected-dedicated-ui-smoke.ps1`. It takes
 one prepared server and the matching prepared client launch, stages only the

@@ -10,4 +10,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface CraftingStatusAccessor {
     @Accessor("status") CraftingStatus ae2craftingtime_test_driver$status();
     @Accessor("scrollbar") Scrollbar ae2craftingtime_test_driver$scrollbar();
+    @Accessor("cancel") net.minecraft.client.gui.components.Button ae2craftingtime_test_driver$cancel();
 }

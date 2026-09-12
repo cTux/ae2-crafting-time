@@ -8,12 +8,14 @@ import appeng.client.gui.widgets.Scrollbar;
 import appeng.menu.me.crafting.CraftingCPUMenu;
 import appeng.menu.me.crafting.CraftingStatus;
 import appeng.menu.me.crafting.CraftingStatusEntry;
+import appeng.menu.me.crafting.CraftingStatusMenu;
 import com.ctux.ae2craftingtime.core.CraftingRowState;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcSort;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
+import com.ctux.ae2craftingtime.mc1201.CpuTtcClient;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.ProviderLocateClick;
 import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
@@ -103,6 +105,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         if ((Object) this instanceof CraftingStatusScreen) {
             ClientStats.CACHE.clearCpuState();
             ClientStatsRequests.clear();
+            CpuTtcClient.setSortMode((CraftingStatusMenu) menu, ae2craftingtime$ttcSortMode);
             addToLeftToolbar(new TtcSortButton(this::ae2craftingtime$cycleTtcSortMode,
                     () -> ae2craftingtime$ttcSortMode));
         }
@@ -134,6 +137,9 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
     @Inject(method = "updateBeforeRender", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$refreshArrivingTtc(CallbackInfo ci) {
+        if ((Object) this instanceof CraftingStatusScreen) {
+            CpuTtcClient.beginFrame((CraftingStatusMenu) menu);
+        }
         if (status != null && !ae2craftingtime$sortStatusByTtc(status.getEntries()).equals(status.getEntries())) {
             postUpdate(status);
         }
@@ -197,6 +203,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
     @Unique
     private void ae2craftingtime$cycleTtcSortMode() {
         ae2craftingtime$ttcSortMode = (ae2craftingtime$ttcSortMode + 1) % 3;
+        CpuTtcClient.setSortMode((CraftingStatusMenu) menu, ae2craftingtime$ttcSortMode);
         if (status != null) {
             postUpdate(status);
         }
