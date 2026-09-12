@@ -111,6 +111,13 @@ if (!$resolvedServer.StartsWith($resolvedRuntime.TrimEnd('\') + '\', [StringComp
 }
 New-Item -ItemType Directory -Path $runtimeRoot -Force | Out-Null
 Copy-Item -LiteralPath $sourceServer -Destination $resolvedServer -Recurse
+# A read-only VMware source share projects that attribute onto copied files.
+# The copy is report-owned and must be writable; the validated source stays untouched.
+foreach ($entry in @(Get-Item -LiteralPath $resolvedServer) + @(Get-ChildItem -LiteralPath $resolvedServer -Recurse -Force)) {
+    if ($entry.Attributes -band [IO.FileAttributes]::ReadOnly) {
+        $entry.Attributes = $entry.Attributes -bxor [IO.FileAttributes]::ReadOnly
+    }
+}
 $copyMarker = [ordered]@{ schema=2; sourceFixtureId='ae2-crafting-time'; role='disposable'; target=$Target
     source=[IO.Path]::GetFullPath($sourceServer); createdAt=[DateTime]::UtcNow.ToString('o') }
 $copyMarker | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $resolvedServer '.ae2-crafting-time-dedicated-fixture.json') -Encoding UTF8
