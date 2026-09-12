@@ -102,6 +102,11 @@ try {
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 30 -ProcessId 42 -ProgressProcessId 42 `
         -CallbackSequence 0 -StartedAt $now.AddSeconds(-121) -StartupTimeoutSeconds 120
     if ($driverNoCallback -ne 'no-callback') { throw 'A loaded driver without callbacks did not fail after startup grace' }
+    $loading = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-31) -CheckpointAt $now.AddSeconds(-31) `
+        -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 30 -ProcessId 42 -ProgressProcessId 42 `
+        -CallbackSequence 1 -StartedAt $now.AddSeconds(-60) -StartupTimeoutSeconds 120 `
+        -Checkpoint 'state=STARTING phase=PREPARE fixture=new cpu-list=INITIAL screen=net.minecraft.client.gui.screens.GenericDirtMessageScreen'
+    if ($loading) { throw 'World loading used the active-scenario callback deadline' }
     $placing = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-61) `
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
         -CallbackSequence 2000 -StartedAt $now.AddSeconds(-119) -StartupTimeoutSeconds 120 `
