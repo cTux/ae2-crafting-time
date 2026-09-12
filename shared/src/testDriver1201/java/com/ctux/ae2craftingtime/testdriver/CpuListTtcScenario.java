@@ -181,9 +181,7 @@ final class CpuListTtcScenario {
             case MODE_AE2 -> {
                 var expected = snapshot.rawCpuSerials().subList(snapshot.scroll(), snapshot.scroll() + 6);
                 var actual = snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::serial).toList();
-                if (!actual.equals(expected) || snapshot.rows().stream().filter(row -> row.craftAmount() > 0)
-                        .filter(row -> row.description().stream()
-                                .anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc"))).count() < 2) return false;
+                if (!actual.equals(expected) || !itemRowsReady(snapshot.rows())) return false;
                 observeItemMode(snapshot);
                 mark(checks, "raw-order");
                 screenshot.accept("cpu-list-total-ttc-ae2-order.png");
@@ -854,6 +852,12 @@ final class CpuListTtcScenario {
                     || requests.get(index).sentAtMillis() - requests.get(index - 1).sentAtMillis() < 1_000) return false;
         }
         return true;
+    }
+
+    static boolean itemRowsReady(java.util.List<UiSnapshot.Row> rows) {
+        var active = rows.stream().filter(row -> row.craftAmount() > 0).toList();
+        return active.size() >= 2 && active.stream().anyMatch(row -> row.description().stream()
+                .anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")));
     }
 
     private CpuListTtcControl.ServerState serverState() {

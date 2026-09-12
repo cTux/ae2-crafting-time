@@ -1098,6 +1098,16 @@ class TestDriverCoreTest {
                 java.util.Map.of("minecraft:stone", List.of(recorded)), List.of(inside), "minecraft:stone", cell));
     }
 
+    @Test
+    void cpuListItemModeWaitsForTwoRowsButOnlyOneKnownTtc() {
+        var ttc = new UiSnapshot.ObservedText("text.ae2craftingtime.ttc", "~1:00", List.of("~1:00"), null);
+        var known = new UiSnapshot.Row("minecraft:stone", 8, 0, new Rect(0, 0, 1, 1), List.of(ttc));
+        var waiting = new UiSnapshot.Row("minecraft:smooth_stone", 8, 0, new Rect(1, 0, 1, 1), List.of());
+        assertTrue(CpuListTtcScenario.itemRowsReady(List.of(known, waiting)));
+        assertFalse(CpuListTtcScenario.itemRowsReady(List.of(known)));
+        assertFalse(CpuListTtcScenario.itemRowsReady(List.of(waiting, waiting)));
+    }
+
     private static LinkedHashMap<String, Boolean> checks(boolean value) {
         var checks = new LinkedHashMap<String, Boolean>();
         DriverResult.requiredChecks("craft-plan").forEach(key -> checks.put(key, value));
