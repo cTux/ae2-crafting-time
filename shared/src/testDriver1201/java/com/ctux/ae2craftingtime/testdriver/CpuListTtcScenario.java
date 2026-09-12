@@ -390,11 +390,14 @@ final class CpuListTtcScenario {
                 if (card(snapshot, selectedSerial).ttc() == null || !totalsMatch(snapshot)) return false;
                 mark(checks, "replacement");
                 screenshot.accept("cpu-list-total-ttc-replacement.png");
-                CpuListScrollControl.scrollTo(1);
+                CpuListScrollControl.scrollTo(0);
                 next(Stage.REMOVE_SCROLL);
             }
             case REMOVE_SCROLL -> {
-                if (snapshot.cpuCards().stream().noneMatch(card -> card.serial() == removeSerial)) return false;
+                if (snapshot.cpuCards().stream().noneMatch(card -> card.serial() == removeSerial)) {
+                    CpuListScrollControl.scrollTo(snapshot.scroll() + 1);
+                    return false;
+                }
                 CpuListInputControl.armStale(removeSerial);
                 next(Stage.REMOVE);
             }
