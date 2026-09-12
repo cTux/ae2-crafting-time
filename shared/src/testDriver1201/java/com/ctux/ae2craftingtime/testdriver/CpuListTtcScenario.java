@@ -719,6 +719,8 @@ final class CpuListTtcScenario {
 
     private void openTerminal(Minecraft minecraft, StandardCraftFixture fixture) {
         if (minecraft.screen == null && !opening) {
+            var range = DriverPlatform.blockInteractionRange(minecraft);
+            if (minecraft.player.position().distanceToSqr(Vec3.atCenterOf(fixture.terminal)) > range * range) return;
             opening = true;
             minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
                 new BlockHitResult(Vec3.atCenterOf(fixture.terminal).add(0, 0, -0.5), Direction.NORTH,
