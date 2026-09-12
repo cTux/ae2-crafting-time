@@ -19,6 +19,7 @@ import net.minecraft.world.phys.Vec3;
 
 /** Executable A1-A5 regression flow for per-card CPU totals. */
 final class CpuListTtcScenario {
+    static final long OPEN_RETRY_NANOS = java.util.concurrent.TimeUnit.SECONDS.toNanos(1);
     static final java.util.List<String> CHECKS = java.util.List.of(
             "initial-distinct", "unknown-hidden", "idle-hidden", "badge-select", "selected-title", "tooltip",
             "initial-mode", "cpu-sort-cycle", "raw-order", "stable-groups", "offscreen-promoted",
@@ -66,6 +67,7 @@ final class CpuListTtcScenario {
     private long releasedFrame = -1;
     private long replacedElapsed;
     private boolean opening;
+    private long openAttemptedAt;
     private boolean reconnectRequested;
     private boolean continuationWritten;
     private final CpuListContinuation continuation;
@@ -718,14 +720,20 @@ final class CpuListTtcScenario {
     }
 
     private void openTerminal(Minecraft minecraft, StandardCraftFixture fixture) {
-        if (minecraft.screen == null && !opening) {
-            var range = DriverPlatform.blockInteractionRange(minecraft);
-            if (minecraft.player.position().distanceToSqr(Vec3.atCenterOf(fixture.terminal)) > range * range) return;
-            opening = true;
-            minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
-                new BlockHitResult(Vec3.atCenterOf(fixture.terminal).add(0, 0, -0.5), Direction.NORTH,
-                        fixture.terminal, false));
-        }
+        if (minecraft.screen != null) return;
+        var range = DriverPlatform.blockInteractionRange(minecraft);
+        if (minecraft.player.position().distanceToSqr(Vec3.atCenterOf(fixture.terminal)) > range * range) return;
+        var now = System.nanoTime();
+        if (!shouldAttemptTerminalOpen(opening, openAttemptedAt, now)) return;
+        opening = true;
+        openAttemptedAt = now;
+        minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
+            new BlockHitResult(Vec3.atCenterOf(fixture.terminal).add(0, 0, -0.5), Direction.NORTH,
+                    fixture.terminal, false));
+    }
+
+    static boolean shouldAttemptTerminalOpen(boolean opening, long attemptedAt, long now) {
+        return !opening || now - attemptedAt >= OPEN_RETRY_NANOS;
     }
 
     private void next(Stage value) { stage = value; stageStarted = System.nanoTime(); opening = false; }

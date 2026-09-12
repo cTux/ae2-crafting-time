@@ -122,11 +122,11 @@ try {
         -CallbackSequence 2000 -StartedAt $now.AddSeconds(-121) -StartupTimeoutSeconds 120 `
         -Checkpoint 'state=WORLD_READY phase=PREPARE fixture=placing cpu-list=INITIAL screen=none'
     if ($placingExpired -ne 'startup-timeout') { throw 'Fixture preparation escaped the absolute startup deadline' }
-    $activeLive = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-61) `
+    $activeStalled = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-61) `
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
         -CallbackSequence 2000 -StartedAt $now.AddSeconds(-121) -StartupTimeoutSeconds 120 `
         -Checkpoint 'state=WORLD_READY phase=ACTIVE fixture=ready cpu-list=RELAUNCH_OPEN screen=none'
-    if ($activeLive) { throw 'Fresh current-process callbacks did not keep the active phase alive' }
+    if ($activeStalled -ne 'no-checkpoint') { throw 'Fresh callbacks masked a stalled active scenario checkpoint' }
     $disconnected = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-1) `
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
         -CallbackSequence 2001 -StartedAt $now.AddSeconds(-10) -StartupTimeoutSeconds 120 `

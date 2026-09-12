@@ -129,6 +129,16 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void cpuListTerminalOpenRetriesAnIgnoredReadyInteractionWithoutSpamming() {
+        long attemptedAt = 1_000_000_000L;
+        assertTrue(CpuListTtcScenario.shouldAttemptTerminalOpen(false, attemptedAt, attemptedAt));
+        assertFalse(CpuListTtcScenario.shouldAttemptTerminalOpen(true, attemptedAt,
+                attemptedAt + CpuListTtcScenario.OPEN_RETRY_NANOS - 1));
+        assertTrue(CpuListTtcScenario.shouldAttemptTerminalOpen(true, attemptedAt,
+                attemptedAt + CpuListTtcScenario.OPEN_RETRY_NANOS));
+    }
+
+    @Test
     void cpuListRequestCaptureRetainsBatchesAndDeduplicatesCoverage() {
         CpuTtcPacketControl.beginRequestCapture();
         CpuTtcPacketControl.observeRequest(new com.ctux.ae2craftingtime.mc1201.net.CpuTtcPacketCodec.Request(

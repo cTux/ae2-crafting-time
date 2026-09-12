@@ -51,9 +51,6 @@ function Get-UiSmokeProgressDecision {
     if ($CallbackTimeoutSeconds -gt 0 -and ($Now.ToUniversalTime() - $CallbackAt.ToUniversalTime()).TotalSeconds -gt $CallbackTimeoutSeconds) {
         return 'no-callback'
     }
-    if ($ProcessId -gt 0 -and $ProgressProcessId -eq $ProcessId -and $CallbackSequence -gt 0) {
-        return $null
-    }
     if ($CheckpointTimeoutSeconds -gt 0 -and ($Now.ToUniversalTime() - $CheckpointAt.ToUniversalTime()).TotalSeconds -gt $CheckpointTimeoutSeconds) {
         return 'no-checkpoint'
     }
