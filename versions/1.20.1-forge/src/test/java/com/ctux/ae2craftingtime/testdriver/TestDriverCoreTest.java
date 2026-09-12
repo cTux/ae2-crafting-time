@@ -1083,6 +1083,21 @@ class TestDriverCoreTest {
         assertFalse(UiObservationStore.isWirelessScreen("appeng.client.gui.me.items.CraftingTermScreen"));
     }
 
+    @Test
+    void statusRowsUseRenderedTextWhenTheTableHasNoDescriptionHook() {
+        var cell = new Rect(10, 20, 67, 22);
+        var inside = new UiSnapshot.ObservedText("text.ae2craftingtime.ttc", "~1:00", List.of("~1:00"),
+                new Rect(20, 30, 20, 6));
+        var outside = new UiSnapshot.ObservedText("text.ae2craftingtime.ttc", "~2:00", List.of("~2:00"),
+                new Rect(80, 30, 20, 6));
+        assertEquals(List.of(inside), UiObservationStore.rowDescription(
+                java.util.Map.of(), List.of(inside, outside), "minecraft:stone", cell));
+
+        var recorded = new UiSnapshot.ObservedText("literal", "recorded", List.of(), null);
+        assertEquals(List.of(recorded), UiObservationStore.rowDescription(
+                java.util.Map.of("minecraft:stone", List.of(recorded)), List.of(inside), "minecraft:stone", cell));
+    }
+
     private static LinkedHashMap<String, Boolean> checks(boolean value) {
         var checks = new LinkedHashMap<String, Boolean>();
         DriverResult.requiredChecks("craft-plan").forEach(key -> checks.put(key, value));

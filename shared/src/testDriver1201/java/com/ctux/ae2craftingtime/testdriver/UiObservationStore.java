@@ -172,7 +172,7 @@ public final class UiObservationStore {
         }
         var rows = active.rows.stream().map(row -> new UiSnapshot.Row(row.outputId, row.craftAmount,
                 row.missingAmount, row.cell,
-                active.descriptions.getOrDefault(row.outputId, List.of()))).toList();
+                rowDescription(active.descriptions, active.text, row.outputId, row.cell))).toList();
         var mergedBadges = merge(active.badges);
         var cpuCards = active.cpuCards.stream().map(card -> {
             var ttc = active.text.stream().filter(text -> text.key().equals("text.ae2craftingtime.ttc")
@@ -205,6 +205,14 @@ public final class UiObservationStore {
 
     static boolean isWirelessScreen(String className) {
         return WIRELESS_SCREENS.contains(className);
+    }
+
+    static List<UiSnapshot.ObservedText> rowDescription(
+            Map<String, List<UiSnapshot.ObservedText>> descriptions,
+            List<UiSnapshot.ObservedText> text, String outputId, Rect cell) {
+        var recorded = descriptions.get(outputId);
+        if (recorded != null && !recorded.isEmpty()) return recorded;
+        return text.stream().filter(value -> value.bounds() != null && value.bounds().inside(cell)).toList();
     }
 
     public static void treeNode(GuiGraphics graphics, AEKey key, int x, int y) {
