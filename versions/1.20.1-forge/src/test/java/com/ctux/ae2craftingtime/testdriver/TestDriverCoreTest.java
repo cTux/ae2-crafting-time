@@ -3,9 +3,13 @@ package com.ctux.ae2craftingtime.testdriver;
 import com.ctux.ae2craftingtime.core.RequesterTtcLayout;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
 import net.minecraft.network.chat.Component;
+import org.apache.catalina.Context;
+import org.apache.catalina.startup.Tomcat;
+import org.apache.catalina.webresources.TomcatURLStreamHandlerFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import java.net.URLClassLoader;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,6 +36,37 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
+    @Test
+    void embeddedContextResolvesClassesThroughTheDriverLoader() throws Exception {
+        var driverJar = Path.of(System.getProperty("ae2craftingtime.test.driverJar"));
+        try (var driverLoader = new URLClassLoader(new java.net.URL[] {driverJar.toUri().toURL()},
+                getClass().getClassLoader())) {
+            TomcatURLStreamHandlerFactory.disable();
+            var tomcat = new Tomcat();
+            tomcat.setBaseDir(temporary.resolve("tomcat").toString());
+            Context context = InteractiveMcpServer.addContext(tomcat, temporary.toString(), driverLoader);
+            var inheritedParent = driverLoader.getParent();
+            try {
+                tomcat.start();
+                var webappLoader = context.getLoader().getClassLoader();
+                for (var suffix : List.of("authenticator.AuthenticatorBase", "valves.ValveBase",
+                        "util.LifecycleBase", "session.ManagerBase")) {
+                    var name = "com.ctux.ae2craftingtime.testdriver.lib.tomcat." + suffix;
+                    var resource = name.replace('.', '/') + ".class";
+                    assertThrows(ClassNotFoundException.class, () -> inheritedParent.loadClass(name));
+                    assertNull(inheritedParent.getResource(resource));
+                    assertSame(driverLoader, webappLoader.loadClass(name).getClassLoader());
+                    try (var input = webappLoader.getResourceAsStream(resource)) {
+                        assertTrue(input != null && input.readAllBytes().length > 0, resource);
+                    }
+                }
+            } finally {
+                tomcat.stop();
+                tomcat.destroy();
+            }
+        }
+    }
+
     @Test
     void driverProgressRetriesOnlyTransientWindowsReplaceFailures() throws Exception {
         var transientOutput = temporary.resolve("transient-progress");

@@ -219,6 +219,8 @@ def testDriverFileName = "ae2-crafting-time-${project.version}-forge-1.20.1-test
 ext.testDriverLoader = 'forge'
 tasks.register('testDriverUnmappedJar', com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar)
 apply from: rootProject.file('scripts/test-driver.gradle')
+sourceSets.test.compileClasspath += configurations.testDriverLibraries
+sourceSets.test.runtimeClasspath += configurations.testDriverLibraries
 def testDriverUnmappedJar = tasks.named('testDriverUnmappedJar')
 testDriverUnmappedJar.configure {
     from layout.buildDirectory.file('mixin/ae2craftingtime_test_driver.refmap.json')
@@ -269,6 +271,9 @@ tasks.register('checkTestDriverArtifacts') {
 
 tasks.named('test') {
     dependsOn tasks.named('checkTestDriverArtifacts')
+    def driverJar = testDriverUnmappedJar.flatMap { it.archiveFile }
+    inputs.file(driverJar)
+    systemProperty 'ae2craftingtime.test.driverJar', driverJar.get().asFile.absolutePath
 }
 
 sourceSets.testDriver.java.srcDir '../../shared/src/testDriverAddons/java'
