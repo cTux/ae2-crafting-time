@@ -221,7 +221,6 @@ try {
     }
     if (!$ready) { throw 'Dedicated server did not finish startup' }
     $clientParameters = @{ Target=$Target; Scenario='cpu-list-total-ttc'; ReportDirectory=(Join-Path $report 'client')
-        RuntimeDirectory=(Join-Path $runtimeRoot "client-$Target")
         BundleDirectory=$bundle; PreparedLaunch=$prepared; DedicatedAddress=$Address
         ControlDirectory=$control; CampaignId=$connectionEpoch; FailOnInitialDisconnect=$true }
     if ($HeadSha) { $clientParameters.HeadSha = $HeadSha }
@@ -233,6 +232,7 @@ try {
     for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
         $attemptReport = Join-Path $report "client-attempt-$attempt"
         $clientParameters.ReportDirectory = $attemptReport
+        $clientParameters.RuntimeDirectory = Join-Path $attemptReport 'runtime'
         $clientError = $null
         try {
             & (Join-Path $PSScriptRoot 'run-ui-smoke.ps1') @clientParameters

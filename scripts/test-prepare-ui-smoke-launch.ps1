@@ -89,7 +89,7 @@ try {
         throw "Accepted invalid native setup: $expected"
     }
     $parameters.RuntimeDirectory = Join-Path $temp 'unowned'
-    Assert-Rejected 'inside build/ui-smoke'
+    Assert-Rejected 'allowed runtime root'
     $parameters.RuntimeDirectory = $runtime
     $parameters.Target = '1.20.1-fabric'
     Assert-Rejected 'mismatch'

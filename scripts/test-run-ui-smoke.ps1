@@ -225,12 +225,15 @@ try {
         Invoke-Case $mode -Scenario no-target-status -shouldPass $false
     }
     Invoke-Case "pass" -shouldPass $true
-    $guestLocalRuntime = Join-Path $temp 'guest-local-runtime'
-    Invoke-Case 'pass' -ReportDirectory (Join-Path $temp 'external-runtime-report') `
+    $externalRuntimeReport = Join-Path $temp 'external-runtime-report'
+    $guestLocalRuntime = Join-Path $externalRuntimeReport 'runtime'
+    Invoke-Case 'pass' -ReportDirectory $externalRuntimeReport `
         -RuntimeDirectory $guestLocalRuntime -shouldPass $true
     if (!(Test-Path -LiteralPath (Join-Path $guestLocalRuntime 'options.txt') -PathType Leaf)) {
         throw 'Explicit UI-smoke runtime did not stay in the selected guest-local directory'
     }
+    Invoke-Case 'pass' -ReportDirectory (Join-Path $temp 'bounded-runtime-report') `
+        -RuntimeDirectory (Join-Path $temp 'unowned-runtime') -shouldPass $false
     foreach ($mode in @('fixed-scale','missing-scale','duplicate-scale','malformed-scale')) {
         Invoke-Case $mode -shouldPass $false
     }

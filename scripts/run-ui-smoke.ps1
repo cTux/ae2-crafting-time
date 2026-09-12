@@ -80,6 +80,10 @@ $profile = if ($Latest) { "latest" } else { "compatible" }
 $base = Join-Path $root "build\ui-smoke\$Target\$profile"
 $report = if ($ReportDirectory) { [IO.Path]::GetFullPath($ReportDirectory) } else { Join-Path $base $Scenario }
 $runtime = if ($RuntimeDirectory) { [IO.Path]::GetFullPath($RuntimeDirectory) } else { Join-Path $base "runtime" }
+if ($RuntimeDirectory -and
+        -not $runtime.StartsWith($report.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
+    throw 'Explicit UI-smoke runtime must stay inside the selected report directory'
+}
 $evidence = Join-Path $report "evidence"
 $headSha = $HeadSha
 if (!$headSha) {
@@ -271,6 +275,7 @@ try {
                 RuntimeDirectory=$runtime; Target=$Target; Profile=$profile; Scenario=$Scenario; World=$world
                 Evidence=$evidence; ProjectId=$ProjectId; Interactive=$Interactive; DedicatedAddress=$DedicatedAddress
                 ControlDirectory=$ControlDirectory; CampaignId=$campaignId }
+            if ($RuntimeDirectory) { $launchParameters.AllowedRuntimeRoot=$report }
             if ($phase -eq 2) { $launchParameters.ContinuationPath=$continuationPath; $launchParameters.ResumeOnly=$true }
             $launch = & (Join-Path $PSScriptRoot 'prepare-ui-smoke-launch.ps1') @launchParameters
             [ordered]@{schema=1;phase=$phase;world=$world;campaignId=$campaignId;executable=$launch.executable
@@ -288,6 +293,7 @@ try {
                     RuntimeDirectory=$runtime; Target=$Target; Profile=$profile; Scenario=$Scenario; World=$world
                     Evidence=$evidence; ProjectId=$ProjectId; Interactive=$Interactive; DedicatedAddress=$DedicatedAddress
                     ControlDirectory=$ControlDirectory; CampaignId=$campaignId }
+                if ($RuntimeDirectory) { $launchParameters.AllowedRuntimeRoot=$report }
                 if ($phase -eq 2) {
                     $launchParameters.ContinuationPath = $continuationPath
                     if ($resumeState) { $launchParameters.ResumeOnly = $true }

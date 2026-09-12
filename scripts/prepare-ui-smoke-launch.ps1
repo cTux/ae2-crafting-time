@@ -7,6 +7,7 @@ param(
     [Parameter(Mandatory)][string]$Scenario,
     [Parameter(Mandatory)][string]$World,
     [Parameter(Mandatory)][string]$Evidence,
+    [string]$AllowedRuntimeRoot,
     [string[]]$ProjectId,
     [string]$DedicatedAddress,
     [string]$ControlDirectory,
@@ -26,9 +27,13 @@ $loaderVersion = $bundle.loader -replace ('^' + [regex]::Escape($Target.Split('-
 $loaderArguments = @($launch.arguments | Where-Object { $_ -match "(^|[-])$([regex]::Escape($loaderVersion))($|[-])" })
 if (-not $loaderArguments.Count) { throw "Prepared loader does not match resolved loader $($bundle.loader)" }
 $runtime = [IO.Path]::GetFullPath($RuntimeDirectory)
-$ownedRoot = [IO.Path]::GetFullPath((Join-Path (Split-Path -Parent $PSScriptRoot) 'build/ui-smoke'))
+$ownedRoot = if ($AllowedRuntimeRoot) {
+    [IO.Path]::GetFullPath($AllowedRuntimeRoot)
+} else {
+    [IO.Path]::GetFullPath((Join-Path (Split-Path -Parent $PSScriptRoot) 'build/ui-smoke'))
+}
 if (-not $runtime.StartsWith($ownedRoot.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
-    throw 'Native smoke runtime must stay inside build/ui-smoke'
+    throw 'Native smoke runtime must stay inside its allowed runtime root'
 }
 $mods = Join-Path $runtime 'mods'
 New-Item -ItemType Directory -Path $mods -Force | Out-Null
