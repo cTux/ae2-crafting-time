@@ -85,6 +85,7 @@ public final class InteractiveMcpServer implements AutoCloseable {
         value.setPort(0);
         value.setBaseDir(options.output().resolve("tomcat").toString());
         Context context = value.addContext("", options.output().toString());
+        setContextParentClassLoader(context, InteractiveMcpServer.class.getClassLoader());
         var filterDefinition = new FilterDef();
         filterDefinition.setFilterName("testDriverSecurity");
         filterDefinition.setFilter(new RequestFilter(policy));
@@ -105,6 +106,10 @@ public final class InteractiveMcpServer implements AutoCloseable {
         connector.setMaxPostSize(EndpointPolicy.MAX_REQUEST_BYTES);
         connector.setAsyncTimeout(5000);
         return value;
+    }
+
+    static void setContextParentClassLoader(Context context, ClassLoader parent) {
+        context.setParentClassLoader(parent);
     }
 
     private List<McpServerFeatures.SyncToolSpecification> tools() {
