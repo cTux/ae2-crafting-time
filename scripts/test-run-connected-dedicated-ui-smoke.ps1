@@ -15,6 +15,9 @@ if ($runnerText -notmatch 'clientParameters\.ScheduledJava = \$true' -or
         $runnerText -notmatch 'clientParameters\.InteractiveUser = \$InteractiveUser') {
     throw 'Connected runner must support the prepared interactive Java session used by CodexVM'
 }
+if ($runnerText -notmatch 'RuntimeDirectory=\(Join-Path \$runtimeRoot "client-\$Target"\)') {
+    throw 'Connected client runtime must stay on the report-owned guest-local filesystem'
+}
 if ($runnerText.IndexOf("-SimpleMatch ']: Done ('", [StringComparison]::Ordinal) -lt 0 -or
         $runnerText.IndexOf("'run-ui-smoke.ps1'", [StringComparison]::Ordinal) -lt
             $runnerText.IndexOf("-SimpleMatch ']: Done ('", [StringComparison]::Ordinal)) {

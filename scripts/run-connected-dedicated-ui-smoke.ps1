@@ -221,6 +221,7 @@ try {
     }
     if (!$ready) { throw 'Dedicated server did not finish startup' }
     $clientParameters = @{ Target=$Target; Scenario='cpu-list-total-ttc'; ReportDirectory=(Join-Path $report 'client')
+        RuntimeDirectory=(Join-Path $runtimeRoot "client-$Target")
         BundleDirectory=$bundle; PreparedLaunch=$prepared; DedicatedAddress=$Address
         ControlDirectory=$control; CampaignId=$connectionEpoch; FailOnInitialDisconnect=$true }
     if ($HeadSha) { $clientParameters.HeadSha = $HeadSha }

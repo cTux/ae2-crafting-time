@@ -10,6 +10,7 @@ param(
     [string[]]$ProjectId,
     [string]$ArchiveRoot,
     [string]$ReportDirectory,
+    [string]$RuntimeDirectory,
     [string]$BundleDirectory,
     [string]$PreparedLaunch,
     [string]$DedicatedAddress,
@@ -78,7 +79,7 @@ $modsDirectory = if ($Target -eq "1.20.1-forge" -and -not $PreparedLaunch) { "re
 $profile = if ($Latest) { "latest" } else { "compatible" }
 $base = Join-Path $root "build\ui-smoke\$Target\$profile"
 $report = if ($ReportDirectory) { [IO.Path]::GetFullPath($ReportDirectory) } else { Join-Path $base $Scenario }
-$runtime = Join-Path $base "runtime"
+$runtime = if ($RuntimeDirectory) { [IO.Path]::GetFullPath($RuntimeDirectory) } else { Join-Path $base "runtime" }
 $evidence = Join-Path $report "evidence"
 $headSha = $HeadSha
 if (!$headSha) {

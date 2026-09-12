@@ -96,6 +96,12 @@ $exited = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test `
     -ProcessLookup { param($id) $null } -TaskLookup { param($name) [pscustomobject]@{State='Ready'} } `
     -InfoLookup { param($task) [pscustomobject]@{LastTaskResult=0} }
 if ($exited.state -ne 'exited' -or $exited.exitCode -ne 0) { throw 'A completed scheduled Java task was not accepted' }
+$unsignedFailure = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test `
+    -ProcessLookup { param($id) $null } -TaskLookup { param($name) [pscustomobject]@{State='Ready'} } `
+    -InfoLookup { param($task) [pscustomobject]@{LastTaskResult=[uint32]::MaxValue} }
+if ($unsignedFailure.state -ne 'exited' -or $unsignedFailure.exitCode -ne -1) {
+    throw 'An unsigned scheduled-task failure result was not preserved as its signed Java exit code'
+}
 $disappeared = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test `
     -ProcessLookup { param($id) $null } -TaskLookup { param($name) $null }
 if ($disappeared.state -ne 'disappeared') { throw 'A disappeared scheduled Java process was not detected' }
