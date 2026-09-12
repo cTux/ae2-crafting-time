@@ -17,6 +17,7 @@ $mixinConfigs = @(
     'versions/26.1.2-neoforge/src/testDriver/resources/ae2craftingtime_test_driver.mixins.json'
 )
 $accessor = 'shared/src/testDriver1201/java/com/ctux/ae2craftingtime/testdriver/mixin/JoinMultiplayerScreenAccessor.java'
+$scenario = 'shared/src/testDriver1201/java/com/ctux/ae2craftingtime/testdriver/CpuListTtcScenario.java'
 
 foreach ($relative in $runtimes) {
     $text = Get-Content -LiteralPath (Join-Path $root $relative) -Raw
@@ -33,7 +34,8 @@ foreach ($relative in $platforms) {
         $text -notmatch 'minecraft\.setScreen\(multiplayer\)' -or
         $text -notmatch 'JoinMultiplayerScreenAccessor\) multiplayer' -or
         $text -notmatch 'ae2craftingtime_test_driver\$setEditingServer\(server\)' -or
-        $text -notmatch 'ae2craftingtime_test_driver\$directJoinCallback\(true\)') {
+        $text -notmatch 'ae2craftingtime_test_driver\$directJoinCallback\(true\)' -or
+        $text -notmatch 'static double blockInteractionRange\(') {
         throw "Platform does not invoke the initialized multiplayer screen direct-join callback: $relative"
     }
 }
@@ -55,6 +57,13 @@ foreach ($relative in $mixinConfigs) {
     if ($config.client -notcontains 'JoinMultiplayerScreenAccessor') {
         throw "Test-driver mixin config does not register the multiplayer screen accessor: $relative"
     }
+}
+
+$scenarioText = Get-Content -LiteralPath (Join-Path $root $scenario) -Raw
+$openTerminal = [regex]::Match($scenarioText,
+    '(?s)private void openTerminal\(.*?DriverPlatform\.blockInteractionRange\(minecraft\).*?distanceToSqr\(.*?return;.*?opening = true;')
+if (!$openTerminal.Success) {
+    throw 'Connected CPU-list terminal interaction does not wait for the server teleport to reach the client'
 }
 
 Write-Host 'Connected dedicated driver direct-join callback contract passed'

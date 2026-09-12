@@ -36,6 +36,8 @@ direct UI, direct behavior, coexistence, tooling, or excluded with a reason.
 Declared driver coverage is separate from each run's PASS/FAIL/NOT_RUN result.
 `standard-ae2` adds plan/status input, real smelting, row states and output checks
 to all four drivers. See [the suite specification](automated-ui-testing/spec.md).
+Its CPU-list leaf additionally cycles both-list TTC sorting, binds input to
+actual rendered CPU identities, and captures bounded full-list request coverage.
 
 ## Required dependencies
 

@@ -362,6 +362,16 @@ coordinates from the actual widget or item bounds, and calls the screen's normal
 input path on the client thread. Sort modes are changed only by clicking the
 real `TtcSortButton`.
 
+For the CPU-list leaf, `CPUSelectionListObservationMixin` records each card at
+the native name-render call with its displayed serial, job identity, geometry,
+selection, frame, and draw scroll offset. `UiSnapshot` also carries the separate
+raw menu serial order for the AE2-mode oracle. The fixture's isolated 33-busy
+phase captures real client request batches with monotonic send timestamps and
+proves full off-screen coverage and one-second cadence within the existing
+32-serial packet boundary. Driver-only input controls call native wheel,
+hit-test, selection, and cancel paths; checkpoint JSON retains their raw order,
+draw scroll, client cards, requests, and authoritative server state.
+
 `AddonCpuFixture` owns the shared asynchronous place/finish/select lifecycle.
 Its registry maps each `*-cpu` scenario to one driver-only implementation.
 AdvancedAE, AppliedE, Applied Mekanistics, BM Addon, Crazy AE2 Addons,

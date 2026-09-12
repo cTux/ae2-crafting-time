@@ -39,10 +39,8 @@ function Get-UiSmokeProgressDecision {
         }
         return $null
     }
-    if ($CallbackTimeoutSeconds -gt 0 -and ($Now.ToUniversalTime() - $CallbackAt.ToUniversalTime()).TotalSeconds -gt $CallbackTimeoutSeconds) {
-        return 'no-callback'
-    }
-    $activeScenario = $ProcessId -le 0 -or $Checkpoint -match '(^|\s)phase=ACTIVE(\s|$)'
+    $activeScenario = $ProcessId -le 0 -or ($Checkpoint -match '(^|\s)state=WORLD_READY(\s|$)' -and
+        $Checkpoint -match '(^|\s)phase=ACTIVE(\s|$)')
     if (!$activeScenario) {
         if ($StartupTimeoutSeconds -gt 0 -and $StartedAt -ne [DateTime]::MinValue -and
                 ($Now.ToUniversalTime() - $StartedAt.ToUniversalTime()).TotalSeconds -gt $StartupTimeoutSeconds) {
@@ -50,8 +48,8 @@ function Get-UiSmokeProgressDecision {
         }
         return $null
     }
-    if ($ProcessId -gt 0 -and $ProgressProcessId -eq $ProcessId -and $CallbackSequence -gt 0) {
-        return $null
+    if ($CallbackTimeoutSeconds -gt 0 -and ($Now.ToUniversalTime() - $CallbackAt.ToUniversalTime()).TotalSeconds -gt $CallbackTimeoutSeconds) {
+        return 'no-callback'
     }
     if ($CheckpointTimeoutSeconds -gt 0 -and ($Now.ToUniversalTime() - $CheckpointAt.ToUniversalTime()).TotalSeconds -gt $CheckpointTimeoutSeconds) {
         return 'no-checkpoint'

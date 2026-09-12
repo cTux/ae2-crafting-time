@@ -1,7 +1,7 @@
 # TTC sorting for active crafting orders
 
 Tracking issue: [#387](https://github.com/cTux/ae2-crafting-time/issues/387).
-Status: planned; this document does not claim that CPU sorting is implemented.
+Status: implementation in progress; runtime acceptance is pending.
 
 ## Goal and scope
 

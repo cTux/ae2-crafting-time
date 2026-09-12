@@ -109,23 +109,27 @@ public final class UiObservationStore {
         }
     }
 
-    public static void cpuCards(List<appeng.menu.me.crafting.CraftingStatusMenu.CraftingCpuListEntry> entries,
-            int scroll, int selectedSerial, int x, int y, int width, int height) {
+    public static void beginCpuCards(List<appeng.menu.me.crafting.CraftingStatusMenu.CraftingCpuListEntry> entries,
+            int scroll) {
         if (active == null) return;
         active.cpuCards.clear();
         active.scroll = scroll;
-        for (int index = scroll; index < Math.min(entries.size(), scroll + 6); index++) {
-            var cpu = entries.get(index);
-            var job = cpu.currentJob();
-            var name = cpu.name() == null ? "CPU #" + cpu.serial() : cpu.name().getString();
-            var bounds = new Rect(x, y + (index - scroll) * (height + 1), width, height);
-            active.cpuCards.add(new PendingCpuCard(cpu.serial(), name,
-                    job == null ? null : job.what().getId().toString(), job == null ? 0 : job.amount(),
-                    cpu.elapsedTimeNanos(), cpu.serial() == selectedSerial, bounds,
-                    new Rect(bounds.x() + 2, bounds.y() + 2, Math.max(0, width - 4), 10),
-                    new Rect(bounds.x() + 2, bounds.y() + height - 12, Math.max(0, width - 4), 10),
-                    new Rect(bounds.x() + 1, bounds.y() + height - 2, Math.max(0, width - 2), 1)));
-        }
+        active.rawCpuSerials = entries.stream().map(
+                appeng.menu.me.crafting.CraftingStatusMenu.CraftingCpuListEntry::serial).toList();
+    }
+
+    public static void cpuCard(appeng.menu.me.crafting.CraftingStatusMenu.CraftingCpuListEntry cpu,
+            int selectedSerial, int x, int y, int width, int height) {
+        if (active == null) return;
+        var job = cpu.currentJob();
+        var name = cpu.name() == null ? "CPU #" + cpu.serial() : cpu.name().getString();
+        var bounds = new Rect(x, y, width, height);
+        active.cpuCards.add(new PendingCpuCard(cpu.serial(), name,
+                job == null ? null : job.what().getId().toString(), job == null ? 0 : job.amount(),
+                cpu.elapsedTimeNanos(), cpu.serial() == selectedSerial, bounds,
+                new Rect(bounds.x() + 2, bounds.y() + 2, Math.max(0, width - 4), 10),
+                new Rect(bounds.x() + 2, bounds.y() + height - 12, Math.max(0, width - 4), 10),
+                new Rect(bounds.x() + 1, bounds.y() + height - 2, Math.max(0, width - 2), 1)));
     }
 
     public static void finish(Minecraft minecraft) {
@@ -168,7 +172,7 @@ public final class UiObservationStore {
         }
         var rows = active.rows.stream().map(row -> new UiSnapshot.Row(row.outputId, row.craftAmount,
                 row.missingAmount, row.cell,
-                active.descriptions.getOrDefault(row.outputId, List.of()))).toList();
+                rowDescription(active.descriptions, active.text, row.outputId, row.cell))).toList();
         var mergedBadges = merge(active.badges);
         var cpuCards = active.cpuCards.stream().map(card -> {
             var ttc = active.text.stream().filter(text -> text.key().equals("text.ae2craftingtime.ttc")
@@ -179,7 +183,7 @@ public final class UiObservationStore {
         }).toList();
         latest = new UiSnapshot(active.screen, active.menu, active.gui, active.screenWidth, active.screenHeight,
                 active.guiScale, ++sequence, active.scroll, rows, active.text, mergedBadges, active.widgets,
-                active.itemCells, active.tooltip, cpuCards);
+                active.itemCells, active.tooltip, cpuCards, active.rawCpuSerials);
         active = null;
     }
 
@@ -201,6 +205,14 @@ public final class UiObservationStore {
 
     static boolean isWirelessScreen(String className) {
         return WIRELESS_SCREENS.contains(className);
+    }
+
+    static List<UiSnapshot.ObservedText> rowDescription(
+            Map<String, List<UiSnapshot.ObservedText>> descriptions,
+            List<UiSnapshot.ObservedText> text, String outputId, Rect cell) {
+        var recorded = descriptions.get(outputId);
+        if (recorded != null && !recorded.isEmpty()) return recorded;
+        return text.stream().filter(value -> value.bounds() != null && value.bounds().inside(cell)).toList();
     }
 
     public static void treeNode(GuiGraphics graphics, AEKey key, int x, int y) {
@@ -300,6 +312,7 @@ public final class UiObservationStore {
         private final List<Rect> itemCells = new ArrayList<>();
         private final List<UiSnapshot.ObservedText> tooltip = new ArrayList<>();
         private final List<PendingCpuCard> cpuCards = new ArrayList<>();
+        private List<Integer> rawCpuSerials = List.of();
 
         private Frame(String screen, String menu, Rect gui, int screenWidth, int screenHeight, double guiScale) {
             this.screen = screen;

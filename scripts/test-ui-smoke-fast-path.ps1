@@ -102,6 +102,16 @@ try {
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 30 -ProcessId 42 -ProgressProcessId 42 `
         -CallbackSequence 0 -StartedAt $now.AddSeconds(-121) -StartupTimeoutSeconds 120
     if ($driverNoCallback -ne 'no-callback') { throw 'A loaded driver without callbacks did not fail after startup grace' }
+    $loading = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-31) -CheckpointAt $now.AddSeconds(-31) `
+        -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 30 -ProcessId 42 -ProgressProcessId 42 `
+        -CallbackSequence 1 -StartedAt $now.AddSeconds(-60) -StartupTimeoutSeconds 120 `
+        -Checkpoint 'state=STARTING phase=PREPARE fixture=new cpu-list=INITIAL screen=net.minecraft.client.gui.screens.GenericDirtMessageScreen'
+    if ($loading) { throw 'World loading used the active-scenario callback deadline' }
+    $relaunchLoading = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-31) -CheckpointAt $now.AddSeconds(-31) `
+        -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 30 -ProcessId 42 -ProgressProcessId 42 `
+        -CallbackSequence 1 -StartedAt $now.AddSeconds(-60) -StartupTimeoutSeconds 120 `
+        -Checkpoint 'state=STARTING phase=ACTIVE fixture=new cpu-list=RELAUNCH_PREPARE screen=net.minecraft.client.gui.screens.ProgressScreen'
+    if ($relaunchLoading) { throw 'Relaunch loading used the active-scenario callback deadline' }
     $placing = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-61) `
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
         -CallbackSequence 2000 -StartedAt $now.AddSeconds(-119) -StartupTimeoutSeconds 120 `
@@ -112,11 +122,11 @@ try {
         -CallbackSequence 2000 -StartedAt $now.AddSeconds(-121) -StartupTimeoutSeconds 120 `
         -Checkpoint 'state=WORLD_READY phase=PREPARE fixture=placing cpu-list=INITIAL screen=none'
     if ($placingExpired -ne 'startup-timeout') { throw 'Fixture preparation escaped the absolute startup deadline' }
-    $activeLive = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-61) `
+    $activeStalled = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-61) `
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
         -CallbackSequence 2000 -StartedAt $now.AddSeconds(-121) -StartupTimeoutSeconds 120 `
         -Checkpoint 'state=WORLD_READY phase=ACTIVE fixture=ready cpu-list=RELAUNCH_OPEN screen=none'
-    if ($activeLive) { throw 'Fresh current-process callbacks did not keep the active phase alive' }
+    if ($activeStalled -ne 'no-checkpoint') { throw 'Fresh callbacks masked a stalled active scenario checkpoint' }
     $disconnected = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-1) `
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
         -CallbackSequence 2001 -StartedAt $now.AddSeconds(-10) -StartupTimeoutSeconds 120 `

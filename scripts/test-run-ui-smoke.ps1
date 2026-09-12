@@ -173,7 +173,8 @@ Set-Content -LiteralPath (Join-Path $RuntimeDirectory "logs\latest.log") -Value 
 '@, [Text.UTF8Encoding]::new($false))
 
 function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive,
-        [string]$Target = "1.20.1-forge", [string]$Scenario = "craft-plan", [string[]]$ProjectId, [string]$ReportDirectory, [bool]$shouldPass) {
+        [string]$Target = "1.20.1-forge", [string]$Scenario = "craft-plan", [string[]]$ProjectId,
+        [string]$ReportDirectory, [string]$RuntimeDirectory, [bool]$shouldPass) {
     $env:AE2CT_UI_SMOKE_TEST_MODE = $mode
     $arguments = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $scripts "run-ui-smoke.ps1"),
         "-HeadSha", ('1' * 40))
@@ -187,6 +188,7 @@ function Invoke-Case([string]$mode, [switch]$Latest, [switch]$Interactive,
         $ReportDirectory = Join-Path $temp "build/ui-smoke/$Target/$profile/$Scenario"
     }
     $arguments += @("-ReportDirectory", $ReportDirectory)
+    if ($RuntimeDirectory) { $arguments += @('-RuntimeDirectory', $RuntimeDirectory) }
     $preference = $ErrorActionPreference
     try {
         $ErrorActionPreference = "Continue"
@@ -223,6 +225,15 @@ try {
         Invoke-Case $mode -Scenario no-target-status -shouldPass $false
     }
     Invoke-Case "pass" -shouldPass $true
+    $externalRuntimeReport = Join-Path $temp 'external-runtime-report'
+    $guestLocalRuntime = Join-Path $externalRuntimeReport 'runtime'
+    Invoke-Case 'pass' -ReportDirectory $externalRuntimeReport `
+        -RuntimeDirectory $guestLocalRuntime -shouldPass $true
+    if (!(Test-Path -LiteralPath (Join-Path $guestLocalRuntime 'options.txt') -PathType Leaf)) {
+        throw 'Explicit UI-smoke runtime did not stay in the selected guest-local directory'
+    }
+    Invoke-Case 'pass' -ReportDirectory (Join-Path $temp 'bounded-runtime-report') `
+        -RuntimeDirectory (Join-Path $temp 'unowned-runtime') -shouldPass $false
     foreach ($mode in @('fixed-scale','missing-scale','duplicate-scale','malformed-scale')) {
         Invoke-Case $mode -shouldPass $false
     }

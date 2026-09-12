@@ -138,7 +138,7 @@ public final class CpuListTtcControl {
     public record Command(String epoch, long sequence, String action) { }
     public record CpuState(String position, int serial, String jobId, long amount, boolean live, boolean busy,
             Long seconds, long elapsedNanos, long progress) { }
-    public record ServerState(String network, int container, boolean stoneProfile, boolean smoothProfile,
+    public record ServerState(String network, int container, int selectedSerial, boolean stoneProfile, boolean smoothProfile,
             java.util.List<CpuState> cpus) { }
     private record ServerMarker(int schema, String sourceFixtureId, String role, String target) { }
     private CpuListTtcControl() { }

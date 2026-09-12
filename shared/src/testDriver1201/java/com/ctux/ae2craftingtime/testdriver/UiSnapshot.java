@@ -17,7 +17,15 @@ public record UiSnapshot(
         List<Widget> widgets,
         List<Rect> itemCells,
         List<ObservedText> tooltip,
-        List<CpuCard> cpuCards) {
+        List<CpuCard> cpuCards,
+        List<Integer> rawCpuSerials) {
+    public UiSnapshot(String screen, String menu, Rect gui, int screenWidth, int screenHeight, double guiScale,
+            long frame, int scroll, List<Row> rows, List<ObservedText> text, List<Rect> badges,
+            List<Widget> widgets, List<Rect> itemCells, List<ObservedText> tooltip, List<CpuCard> cpuCards) {
+        this(screen, menu, gui, screenWidth, screenHeight, guiScale, frame, scroll, rows, text, badges, widgets,
+                itemCells, tooltip, cpuCards, List.of());
+    }
+
     public UiSnapshot(String screen, String menu, Rect gui, int screenWidth, int screenHeight, double guiScale,
             long frame, int scroll, List<Row> rows, List<ObservedText> text, List<Rect> badges,
             List<Widget> widgets, List<Rect> itemCells, List<ObservedText> tooltip) {
@@ -33,6 +41,7 @@ public record UiSnapshot(
         itemCells = List.copyOf(itemCells);
         tooltip = List.copyOf(tooltip);
         cpuCards = List.copyOf(cpuCards);
+        rawCpuSerials = List.copyOf(rawCpuSerials);
     }
 
     public record Row(String outputId, long craftAmount, long missingAmount, Rect cell, List<ObservedText> description) {

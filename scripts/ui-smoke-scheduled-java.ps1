@@ -146,5 +146,7 @@ function Get-UiSmokeScheduledJavaProcessState {
         return [pscustomobject]@{state='disappeared';exitCode=$null}
     }
     $info = & $InfoLookup $task
-    return [pscustomobject]@{state='exited';exitCode=[int]$info.LastTaskResult}
+    $unsignedResult = [uint32]$info.LastTaskResult
+    $exitCode = [BitConverter]::ToInt32([BitConverter]::GetBytes($unsignedResult), 0)
+    return [pscustomobject]@{state='exited';exitCode=$exitCode}
 }

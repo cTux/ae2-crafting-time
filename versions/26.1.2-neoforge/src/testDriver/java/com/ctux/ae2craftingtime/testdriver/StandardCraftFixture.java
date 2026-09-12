@@ -39,6 +39,8 @@ final class StandardCraftFixture {
     private int sampleMultiplier = 1;
     private boolean restarting;
     private int originShift;
+    private int cpuCount = 8;
+    private int busyCpuCount = 5;
     private int[] initialSamples;
     String checkpoint = "new";
 
@@ -63,7 +65,7 @@ final class StandardCraftFixture {
         if (terminal == null) {
             checkpoint = "placing";
             terminal = new BlockPos(marker.terminal().x() + 60, marker.terminal().y(), marker.terminal().z() + originShift);
-            for (var pos : BlockPos.betweenClosed(terminal.offset(cpuListScenario ? -16 : -3, -2, -3),
+            for (var pos : BlockPos.betweenClosed(terminal.offset(cpuListScenario ? -(cpuCount * 2) : -3, -2, -3),
                     terminal.offset(cpuListScenario ? 13 : 9, 3, 3))) {
                 level.setBlockAndUpdate(pos, pos.getY() == terminal.getY() - 2
                         ? Blocks.STONE.defaultBlockState() : Blocks.AIR.defaultBlockState());
@@ -72,8 +74,8 @@ final class StandardCraftFixture {
                     AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT));
             PartHelper.setPart(level, terminal, Direction.NORTH, player, AEParts.CRAFTING_TERMINAL.get());
             DispatchStatusFixture.place(player, terminal.west(2), "16k_crafting_storage");
-            if (cpuListScenario) for (int offset : new int[] { 4, 6, 8, 10, 12, 14 })
-                DispatchStatusFixture.place(player, terminal.west(offset), "16k_crafting_storage");
+            if (cpuListScenario) for (int index = 1; index < cpuCount; index++)
+                DispatchStatusFixture.place(player, terminal.west(2 + index * 2), "16k_crafting_storage");
             DispatchStatusFixture.place(player, terminal.east(2), "drive");
             DispatchStatusFixture.place(player, terminal.below(), "creative_energy_cell");
             if (cpuListScenario) DispatchStatusFixture.place(player, terminal.south(2), "controller");
@@ -113,12 +115,13 @@ final class StandardCraftFixture {
                     var pos = terminal.west(2 + index * 2);
                     calculator.updateBlockEntities(calculator.createCluster(level, pos, pos), level, pos, pos);
                 }
-                extra.setName(index < 4 ? java.util.List.of("Alpha CPU",
-                        "Beta CPU with a deliberately long English tooltip name", "Gamma CPU", "Delta CPU").get(index)
+                extra.setName(index < 5 ? java.util.List.of("Alpha CPU",
+                        "Beta CPU with a deliberately long English tooltip name", "Gamma CPU", "Delta CPU",
+                        "Zulu shortest CPU").get(index)
                         : "Idle CPU " + (index + 1));
                 index++;
             }
-            if (index == 7 && cpuListIdentities == null) {
+            if (index == cpuCount && cpuListIdentities == null) {
                 cpuListIdentities = cpuListCpus(player);
             }
         }
@@ -126,7 +129,7 @@ final class StandardCraftFixture {
                 terminal.east(4), terminal.east(8)));
         if (cpuListScenario) nodes.add(0, terminal);
         if (cpuListScenario) nodes.add(terminal.east(12));
-        if (cpuListScenario) for (int offset : new int[] { 4, 6, 8, 10, 12, 14 }) nodes.add(terminal.west(offset));
+        if (cpuListScenario) for (int index = 1; index < cpuCount; index++) nodes.add(terminal.west(2 + index * 2));
         for (var pos : nodes) {
             checkpoint = "node " + pos;
             var other = ((IInWorldGridNodeHost) level.getBlockEntity(pos)).getGridNode(Direction.UP);
@@ -204,8 +207,7 @@ final class StandardCraftFixture {
         if (activeCpuCount != cpus.size()) return false;
         var service = cpu(player).getMainNode().getGrid().getCraftingService();
         if (cpuListPlans == null) {
-            var jobs = java.util.List.of(new CpuJob(Items.GLASS, 4), new CpuJob(Items.SMOOTH_STONE, 8),
-                    new CpuJob(Items.SMOOTH_STONE, 12), new CpuJob(Items.SMOOTH_STONE, 16));
+            var jobs = jobsForCpuList();
             var source = IActionSource.ofMachine(cpu(player));
             cpuListPlans = jobs.stream().map(job ->
                     service.beginCraftingCalculation(player.level(), () -> source,
@@ -218,7 +220,7 @@ final class StandardCraftFixture {
         if (cpuListPlans.stream().anyMatch(plan -> !plan.isDone())) return false;
         if (!cpuListSubmitted) {
             checkpoint = "cpu-list-submitting";
-            for (var i = 0; i < 4; i++) {
+            for (var i = 0; i < busyCpuCount; i++) {
                 try {
                     var result = service.submitJob(cpuListPlans.get(i).get(), null, cpus.get(i).getCluster(), false,
                             IActionSource.ofMachine(cpus.get(i)));
@@ -229,9 +231,9 @@ final class StandardCraftFixture {
             }
             cpuListSubmitted = true;
         }
-        var busyCpuCount = cpus.subList(0, 4).stream().filter(cpu -> cpu.getCluster().isBusy()).count();
-        checkpoint = "cpu-list-busy=" + busyCpuCount + "/4";
-        return busyCpuCount == 4;
+        var observedBusy = cpus.subList(0, busyCpuCount).stream().filter(cpu -> cpu.getCluster().isBusy()).count();
+        checkpoint = "cpu-list-busy=" + observedBusy + "/" + busyCpuCount;
+        return observedBusy == busyCpuCount;
     }
 
     void makeCpuListPartial(ServerPlayer player) {
@@ -298,6 +300,16 @@ final class StandardCraftFixture {
         return fixture;
     }
 
+    StandardCraftFixture largeCpuGrid() {
+        var fixture = new StandardCraftFixture();
+        fixture.cpuListScenario = true;
+        fixture.sampleMultiplier = sampleMultiplier * 2;
+        fixture.originShift = 120;
+        fixture.cpuCount = 33;
+        fixture.busyCpuCount = 33;
+        return fixture;
+    }
+
     String cpuListServerEstimates(ServerPlayer player) {
         return liveCpuListCpus(player).stream().filter(cpu -> cpu.getCluster().isBusy()).map(cpu ->
                 ProfilerBridge.remainingJobSeconds(cpu.getCluster()).stream().mapToObj(Long::toString)
@@ -326,15 +338,17 @@ final class StandardCraftFixture {
                     status == null ? 0 : status.elapsedTimeNanos(), status == null ? 0 : status.progress()));
         }
         var network = ProfilerBridge.networkId(grid);
+        var selected = player.containerMenu instanceof appeng.menu.me.crafting.CraftingStatusMenu menu
+                ? menu.getSelectedCpuSerial() : -1;
         return new com.google.gson.Gson().toJson(new CpuListTtcControl.ServerState(network.toString(),
-                player.containerMenu.containerId,
+                player.containerMenu.containerId, selected,
                 ProfilerBridge.stats(ProfilerBridge.key(network, AEItemKey.of(Items.STONE))).isPresent(),
                 ProfilerBridge.stats(ProfilerBridge.key(network, AEItemKey.of(Items.SMOOTH_STONE))).isPresent(), rows));
     }
 
     private java.util.List<CraftingBlockEntity> cpuListCpus(ServerPlayer player) {
         if (cpuListIdentities != null) return cpuListIdentities;
-        return java.util.stream.IntStream.range(0, 7)
+        return java.util.stream.IntStream.range(0, cpuCount)
                 .mapToObj(index -> player.level().getBlockEntity(terminal.west(2 + index * 2)))
                 .filter(CraftingBlockEntity.class::isInstance).map(CraftingBlockEntity.class::cast).toList();
     }
@@ -345,6 +359,14 @@ final class StandardCraftFixture {
     }
 
     private record CpuJob(net.minecraft.world.item.Item item, long amount) { }
+
+    private java.util.List<CpuJob> jobsForCpuList() {
+        if (busyCpuCount == 5) return java.util.List.of(new CpuJob(Items.GLASS, 4),
+                new CpuJob(Items.SMOOTH_STONE, 8), new CpuJob(Items.SMOOTH_STONE, 12),
+                new CpuJob(Items.SMOOTH_STONE, 12), new CpuJob(Items.STONE, 1));
+        return java.util.stream.IntStream.range(0, busyCpuCount)
+                .mapToObj(index -> new CpuJob(Items.SMOOTH_STONE, 32L + index)).toList();
+    }
 
     private int[] sampleCounts(ServerPlayer player) {
         var network = ProfilerBridge.networkId(cpu(player).getMainNode().getGrid());

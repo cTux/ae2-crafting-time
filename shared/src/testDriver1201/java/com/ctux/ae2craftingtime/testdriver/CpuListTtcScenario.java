@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import appeng.client.gui.me.crafting.CraftingStatusScreen;
 import appeng.client.gui.me.common.MEStorageScreen;
+import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import com.ctux.ae2craftingtime.testdriver.mixin.MEStorageScreenAccessor;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -18,16 +19,24 @@ import net.minecraft.world.phys.Vec3;
 
 /** Executable A1-A5 regression flow for per-card CPU totals. */
 final class CpuListTtcScenario {
+    static final long OPEN_RETRY_NANOS = java.util.concurrent.TimeUnit.SECONDS.toNanos(1);
     static final java.util.List<String> CHECKS = java.util.List.of(
             "initial-distinct", "unknown-hidden", "idle-hidden", "badge-select", "selected-title", "tooltip",
+            "initial-mode", "cpu-sort-cycle", "raw-order", "stable-groups", "offscreen-promoted",
+            "item-sort-cycle", "channel-fallback", "server-selection", "wheel-before-draw", "no-first-draw",
+            "native-cancel", "stale-hit", "mode-switch-late", "ae2-expiry", "default-reopen", "background-coverage",
             "scroll-down", "scroll-up", "partial", "stalled", "reordered", "finished", "cancelled",
             "replacement", "removed", "drop-expiry", "delayed-expiry", "close-reopen", "second-grid",
             "small-scale", "large-scale", "same-jvm-clear", "process-relaunch", "reconnect", "layout");
 
-    enum Stage { INITIAL, SELECTED, TOOLTIP, SCROLL_DOWN, SCROLL_UP, PARTIAL, RESTORE, STALLED,
-        RENAME, FINISH, CANCEL, REPLACE_EMPTY, REPLACE_STARTED, REPLACE, RESTART, RESTART_CLEARED, RESTART_FRESH,
+    enum Stage { INITIAL, MODE_AE2, MODE_SHORTEST, MODE_LONGEST, CHANNEL_FALLBACK, CHANNEL_RESTORED,
+        SELECTED, TOOLTIP, WHEEL, SCROLL_DOWN, SCROLL_UP, AE2_HOLD, AE2_LATE, AE2_EXPIRED, MODE_RESTORED,
+        PARTIAL, RESTORE, STALLED, RENAME, FINISH, CANCEL, CANCELLED, REPLACE_EMPTY, REPLACE_STARTED, REPLACE, RESTART, RESTART_CLEARED, RESTART_FRESH,
         REMOVE_SCROLL, REMOVE, DROP, DROP_EXPIRED, HOLD, HOLD_EXPIRED, HOLD_RELEASED,
-        REOPEN, REOPENED, SECOND_PREPARE, SECOND_OPEN, SECOND_SCREEN, SCALE_SMALL, SCALE_LARGE,
+        REOPEN, REOPENED, SECOND_PREPARE, SECOND_OPEN, SECOND_SCREEN, LARGE_PREPARE, LARGE_OPEN, LARGE_SCREEN,
+        LARGE_HOLD, LARGE_SWITCHED,
+        RETURN_SECOND, RETURN_OPEN, RETURN_SCREEN,
+        SCALE_SMALL, SCALE_LARGE,
         REJOIN_REQUEST, REJOIN_PREPARE, REJOIN_OPEN, REJOIN_EMPTY, REJOIN_REFRESH, REJOIN_FRESH, RELAUNCH_READY,
         RELAUNCH_PREPARE, RELAUNCH_OPEN, RELAUNCH_EMPTY, RELAUNCH_REFRESH, RELAUNCH_FRESH, DONE }
 
@@ -40,6 +49,8 @@ final class CpuListTtcScenario {
     private final java.util.Set<Integer> secondGridKnownSerials = new java.util.LinkedHashSet<>();
     private final java.util.Set<String> captured = new java.util.HashSet<>();
     private StandardCraftFixture second;
+    private StandardCraftFixture lifecycle;
+    private StandardCraftFixture large;
     private CompletableFuture<Boolean> operation;
     private CompletableFuture<String> observation;
     private Stage stage = Stage.INITIAL;
@@ -48,6 +59,7 @@ final class CpuListTtcScenario {
     private int selectedSerial = -1;
     private int finishSerial = -1;
     private int removeSerial = -1;
+    private int shortestSerial = -1;
     private long stalledElapsed;
     private String activeAction;
     private boolean actionComplete;
@@ -55,18 +67,23 @@ final class CpuListTtcScenario {
     private long releasedFrame = -1;
     private long replacedElapsed;
     private boolean opening;
+    private long openAttemptedAt;
     private boolean reconnectRequested;
     private boolean continuationWritten;
     private final CpuListContinuation continuation;
     private java.util.List<Long> stalledProgress;
     private volatile String authoritativeState;
     private CpuListTtcControl.ServerState partialState;
+    private CpuListTtcControl.ServerState beforeCancel;
+    private final java.util.List<java.util.List<String>> itemModeOrders = new java.util.ArrayList<>();
+    private final java.util.List<java.util.List<String>> itemKnownOrders = new java.util.ArrayList<>();
 
     CpuListTtcScenario(StandardCraftFixture first, String world, java.nio.file.Path output, boolean connectedDedicated,
             java.util.List<String> resultScreenshots) {
         this.first = first;
         this.world = world;
         this.connectedDedicated = connectedDedicated;
+        CpuListInputControl.reset();
         var path = System.getProperty("ae2craftingtime.test.continuation", "");
         this.evidence = output.resolve(checkpointFile(!path.isBlank()));
         if (path.isBlank()) {
@@ -120,7 +137,7 @@ final class CpuListTtcScenario {
             case INITIAL -> {
                 if (snapshot.cpuCards().size() != 6) return false;
                 var known = snapshot.cpuCards().stream().filter(card -> card.ttc() != null).toList();
-                if (known.size() != 3 || known.stream().map(card -> card.ttc().rendered()).distinct().count() != 3) return false;
+                if (known.size() != 4 || known.stream().map(card -> card.ttc().rendered()).distinct().count() != 3) return false;
                 if (!totalsMatch(snapshot)) return false;
                 if (snapshot.cpuCards().stream().filter(card -> card.jobId() == null).anyMatch(card -> card.ttc() != null))
                     throw new IllegalStateException("idle CPU rendered a total");
@@ -133,9 +150,16 @@ final class CpuListTtcScenario {
                 firstVisibleSerial = firstVisibleSerial(snapshot.cpuCards());
                 selectedSerial = serialForJob(snapshot.cpuCards(), "minecraft:smooth_stone", 8);
                 finishSerial = serialForJob(snapshot.cpuCards(), "minecraft:glass", 4);
-                removeSerial = serialForJob(snapshot.cpuCards(), "minecraft:smooth_stone", 12);
+                removeSerial = removalSerial(snapshot.cpuCards());
+                shortestSerial = serialForJob(snapshot.cpuCards(), "minecraft:stone", 1);
+                if (snapshot.rawCpuSerials().size() != 8 || snapshot.rawCpuSerials().indexOf(shortestSerial) < 6) {
+                    throw new IllegalStateException("shortest CPU was not off-screen in raw AE2 order");
+                }
+                assertCpuOrder(snapshot, true);
                 validateLayout(snapshot);
-                mark(checks, "initial-distinct", "unknown-hidden", "idle-hidden", "layout");
+                if (!sortState(snapshot).contains("longest")) return false;
+                if (!Boolean.TRUE.equals(CpuListInputControl.noFirstDraw())) return false;
+                mark(checks, "initial-distinct", "unknown-hidden", "idle-hidden", "initial-mode", "no-first-draw", "layout");
                 screenshot.accept("cpu-list-total-ttc-unselected-large.png");
                 var badge = selectionBadge(snapshot.cpuCards(), selectedSerial);
                 releasedFrame = snapshot.frame();
@@ -145,14 +169,65 @@ final class CpuListTtcScenario {
             case SELECTED -> {
                 if (snapshot.frame() <= releasedFrame) return false;
                 var selected = card(snapshot, selectedSerial);
-                if (!selected.selected() || selected.ttc() == null) return false;
+                if (!selected.selected() || selected.ttc() == null || serverState().selectedSerial() != selectedSerial) return false;
                 var title = title(snapshot);
                 if (title == null || !title.rendered().equals(selected.ttc().rendered())) return false;
                 if (snapshot.text().stream().noneMatch(text -> text.bounds() != null
                         && text.bounds().inside(selected.nameArea()) && text.rendered().endsWith("...")
                         && selected.name().startsWith(text.rendered().substring(0, text.rendered().length() - 3)))) return false;
-                mark(checks, "badge-select", "selected-title");
+                mark(checks, "badge-select", "selected-title", "server-selection");
                 screenshot.accept("cpu-list-total-ttc-selected-large.png");
+                clickSort(minecraft);
+                next(Stage.MODE_AE2);
+            }
+            case MODE_AE2 -> {
+                var expected = snapshot.rawCpuSerials().subList(snapshot.scroll(), snapshot.scroll() + 6);
+                var actual = snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::serial).toList();
+                if (!actual.equals(expected) || !itemRowsReady(snapshot.rows())) return false;
+                observeItemMode(snapshot);
+                mark(checks, "raw-order");
+                screenshot.accept("cpu-list-total-ttc-ae2-order.png");
+                clickSort(minecraft);
+                next(Stage.MODE_SHORTEST);
+            }
+            case MODE_SHORTEST -> {
+                if (!totalsMatch(snapshot)) return false;
+                assertCpuOrder(snapshot, false);
+                if (snapshot.cpuCards().get(0).serial() != shortestSerial) return false;
+                observeItemMode(snapshot);
+                mark(checks, "stable-groups", "offscreen-promoted");
+                screenshot.accept("cpu-list-total-ttc-shortest-first.png");
+                clickSort(minecraft);
+                next(Stage.MODE_LONGEST);
+            }
+            case MODE_LONGEST -> {
+                if (!totalsMatch(snapshot)) return false;
+                assertCpuOrder(snapshot, true);
+                observeItemMode(snapshot);
+                if (itemModeOrders.size() != 3 || !SortObservation.valid(itemModeOrders.get(0),
+                        itemModeOrders.get(1), itemModeOrders.get(2), itemKnownOrders.get(1), itemKnownOrders.get(2))) {
+                    throw new IllegalStateException("selected CPU item rows did not complete the TTC sort cycle");
+                }
+                mark(checks, "cpu-sort-cycle", "item-sort-cycle");
+                screenshot.accept("cpu-list-total-ttc-longest-first.png");
+                CpuTtcPacketControl.channelAvailable(false);
+                next(Stage.CHANNEL_FALLBACK);
+            }
+            case CHANNEL_FALLBACK -> {
+                var expected = snapshot.rawCpuSerials().subList(snapshot.scroll(), snapshot.scroll() + 6);
+                var fallbackTitle = title(snapshot);
+                if (!snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::serial).toList().equals(expected)
+                        || snapshot.cpuCards().stream().anyMatch(card -> card.ttc() != null)
+                        || fallbackTitle == null
+                        || !SortObservation.sortableIds(snapshot.rows()).equals(itemModeOrders.get(2))) return false;
+                mark(checks, "channel-fallback");
+                screenshot.accept("cpu-list-total-ttc-channel-fallback.png");
+                CpuTtcPacketControl.channelAvailable(null);
+                next(Stage.CHANNEL_RESTORED);
+            }
+            case CHANNEL_RESTORED -> {
+                if (snapshot.cpuCards().stream().noneMatch(card -> card.ttc() != null)) return false;
+                var selected = card(snapshot, selectedSerial);
                 moveMouse.accept(selected.badge().centerX(), selected.badge().centerY());
                 next(Stage.TOOLTIP);
             }
@@ -163,7 +238,17 @@ final class CpuListTtcScenario {
                 mark(checks, "tooltip");
                 screenshot.accept("cpu-list-total-ttc-tooltip.png");
                 moveMouse.accept(0, 0);
-                CpuListScrollControl.scrollTo(1);
+                CpuListInputControl.armWheel(snapshot.cpuCards().get(0).serial());
+                next(Stage.WHEEL);
+            }
+            case WHEEL -> {
+                if (CpuListInputControl.wheelResult() == null) return false;
+                if (!CpuListInputControl.wheelResult().equals(firstVisibleSerial))
+                    throw new IllegalStateException("wheel-before-draw hit a row that was not displayed");
+                if (serverState().selectedSerial() != firstVisibleSerial) return false;
+                mark(checks, "wheel-before-draw");
+                var badge = selectionBadge(snapshot.cpuCards(), selectedSerial);
+                DriverPlatform.clickAndRelease(minecraft, badge.centerX(), badge.centerY());
                 next(Stage.SCROLL_DOWN);
             }
             case SCROLL_DOWN -> {
@@ -178,9 +263,36 @@ final class CpuListTtcScenario {
             case SCROLL_UP -> {
                 if (snapshot.cpuCards().stream().noneMatch(card -> card.serial() == firstVisibleSerial)
                         || snapshot.cpuCards().stream().anyMatch(card -> card.name().equals("Idle CPU 7"))
-                        || !totalsMatch(snapshot)) return false;
+                        || !totalsMatch(snapshot) || serverState().selectedSerial() != selectedSerial) return false;
                 mark(checks, "scroll-up");
                 screenshot.accept("cpu-list-total-ttc-scroll-up.png");
+                CpuTtcPacketControl.holdLatest();
+                next(Stage.AE2_HOLD);
+            }
+            case AE2_HOLD -> {
+                if (!CpuTtcPacketControl.hasHeld()) return false;
+                clickSort(minecraft);
+                CpuTtcPacketControl.releaseHeld();
+                CpuTtcPacketControl.drop();
+                next(Stage.AE2_LATE);
+            }
+            case AE2_LATE -> {
+                var expected = snapshot.rawCpuSerials().subList(snapshot.scroll(), snapshot.scroll() + 6);
+                if (!snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::serial).toList().equals(expected)) return false;
+                mark(checks, "mode-switch-late");
+                next(Stage.AE2_EXPIRED);
+            }
+            case AE2_EXPIRED -> {
+                if (elapsedMillis() < 3_600 || snapshot.cpuCards().stream().anyMatch(card -> card.ttc() != null)) return false;
+                mark(checks, "ae2-expiry");
+                CpuTtcPacketControl.resume();
+                clickSort(minecraft);
+                clickSort(minecraft);
+                next(Stage.MODE_RESTORED);
+            }
+            case MODE_RESTORED -> {
+                if (snapshot.cpuCards().stream().noneMatch(card -> card.ttc() != null)
+                        || !sortState(snapshot).contains("longest")) return false;
                 if (server(minecraft, "partial", player -> { first.makeCpuListPartial(player); return true; })) next(Stage.PARTIAL);
             }
             case PARTIAL -> {
@@ -231,10 +343,19 @@ final class CpuListTtcScenario {
                 next(Stage.CANCEL);
             }
             case CANCEL -> {
-                if (!server(minecraft, "cancel", player -> { first.cancelSecondCpu(player); return true; })) return false;
+                beforeCancel = serverState();
+                var button = ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
+                        .ae2craftingtime_test_driver$cancel();
+                DriverPlatform.clickAndRelease(minecraft, button.getX() + 2, button.getY() + 2);
+                next(Stage.CANCELLED);
+            }
+            case CANCELLED -> {
                 var selected = snapshot.cpuCards().stream().filter(card -> card.serial() == selectedSerial).findFirst();
                 if (selected.isPresent() && (selected.get().jobId() != null || selected.get().ttc() != null)) return false;
-                mark(checks, "cancelled");
+                var after = serverState();
+                if (after.cpus().stream().filter(cpu -> cpu.serial() == selectedSerial).anyMatch(CpuListTtcControl.CpuState::busy)
+                        || !otherJobsUnchanged(beforeCancel, after, selectedSerial)) return false;
+                mark(checks, "cancelled", "native-cancel");
                 screenshot.accept("cpu-list-total-ttc-cancelled.png");
                 next(Stage.REPLACE_EMPTY);
             }
@@ -271,17 +392,23 @@ final class CpuListTtcScenario {
                 if (card(snapshot, selectedSerial).ttc() == null || !totalsMatch(snapshot)) return false;
                 mark(checks, "replacement");
                 screenshot.accept("cpu-list-total-ttc-replacement.png");
-                CpuListScrollControl.scrollTo(1);
+                CpuListScrollControl.scrollTo(0);
                 next(Stage.REMOVE_SCROLL);
             }
             case REMOVE_SCROLL -> {
-                if (snapshot.cpuCards().stream().noneMatch(card -> card.serial() == removeSerial)) return false;
+                if (snapshot.cpuCards().stream().noneMatch(card -> card.serial() == removeSerial)) {
+                    CpuListScrollControl.scrollTo(snapshot.scroll() + 1);
+                    return false;
+                }
+                CpuListInputControl.armStale(removeSerial);
                 next(Stage.REMOVE);
             }
             case REMOVE -> {
                 if (!server(minecraft, "remove", player -> { first.removeThirdCpu(player); return true; })) return false;
-                if (snapshot.cpuCards().stream().anyMatch(card -> card.serial() == removeSerial)) return false;
-                mark(checks, "removed");
+                if (snapshot.cpuCards().stream().anyMatch(card -> card.serial() == removeSerial)
+                        || !Boolean.TRUE.equals(CpuListInputControl.staleSuppressed())
+                        || serverState().selectedSerial() != selectedSerial) return false;
+                mark(checks, "removed", "stale-hit");
                 screenshot.accept("cpu-list-total-ttc-removed.png");
                 CpuTtcPacketControl.drop();
                 next(Stage.DROP);
@@ -300,7 +427,9 @@ final class CpuListTtcScenario {
                 next(Stage.HOLD_EXPIRED);
             }
             case HOLD_EXPIRED -> {
-                if (elapsedMillis() < 3600 || !CpuTtcPacketControl.hasHeld()) return false;
+                var nowMillis = java.util.concurrent.TimeUnit.NANOSECONDS.toMillis(System.nanoTime());
+                if (!CpuTtcPacketControl.hasHeld() || !heldRequestExpired(
+                        CpuTtcPacketControl.requestCapture(), CpuTtcPacketControl.heldSequence(), nowMillis)) return false;
                 if (snapshot.cpuCards().stream().anyMatch(card -> card.ttc() != null)) return false;
                 CpuTtcPacketControl.releaseHeld();
                 CpuTtcPacketControl.drop();
@@ -326,8 +455,9 @@ final class CpuListTtcScenario {
                 }
             }
             case REOPENED -> {
-                if (snapshot.cpuCards().stream().noneMatch(card -> card.ttc() != null)) return false;
-                mark(checks, "close-reopen");
+                if (snapshot.cpuCards().stream().noneMatch(card -> card.ttc() != null)
+                        || !sortState(snapshot).contains("longest")) return false;
+                mark(checks, "close-reopen", "default-reopen");
                 screenshot.accept("cpu-list-total-ttc-close-reopen.png");
                 minecraft.player.closeContainer();
                 second = first.secondGrid();
@@ -366,6 +496,81 @@ final class CpuListTtcScenario {
                 if (!secondScreenReady(snapshot, secondGridKnownSerials)) return false;
                 mark(checks, "second-grid");
                 screenshot.accept("cpu-list-total-ttc-second-grid.png");
+                minecraft.player.closeContainer();
+                lifecycle = second;
+                large = second.largeCpuGrid();
+                second = large;
+                next(Stage.LARGE_PREPARE);
+            }
+            case LARGE_PREPARE -> {
+                if (server(minecraft, "large-grid", player ->
+                        second.prepare(player, marker) && second.prepareCpuListJobs(player))) {
+                    if (connectedDedicated) {
+                        var state = CpuListTtcControl.state();
+                        second.bindTerminal(new net.minecraft.core.BlockPos(state.x(), state.y(), state.z()));
+                    }
+                    CpuTtcPacketControl.beginRequestCapture();
+                    next(Stage.LARGE_OPEN);
+                }
+            }
+            case LARGE_OPEN -> {
+                openTerminal(minecraft, second);
+                if (minecraft.screen instanceof MEStorageScreen<?> screen) {
+                    var button = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$statusButton();
+                    DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+                    next(Stage.LARGE_SCREEN);
+                }
+            }
+            case LARGE_SCREEN -> {
+                var state = serverState();
+                if (snapshot.scroll() != 0 || snapshot.rawCpuSerials().size() != 33
+                        || state.cpus().stream().filter(CpuListTtcControl.CpuState::busy).count() != 33
+                        || state.cpus().stream().anyMatch(cpu -> cpu.busy() && cpu.seconds() == null)) return false;
+                var requests = CpuTtcPacketControl.requestCapture();
+                if (requests.batches().size() < 2
+                        || requests.batches().stream().anyMatch(batch -> batch.serials().size() > 32
+                                || new java.util.HashSet<>(batch.serials()).size() != batch.serials().size())
+                        || !requestCadenceValid(requests.batches())
+                        || !new java.util.HashSet<>(requests.uniqueSerials()).containsAll(snapshot.rawCpuSerials())) return false;
+                mark(checks, "background-coverage");
+                screenshot.accept("cpu-list-total-ttc-33-background.png");
+                CpuTtcPacketControl.holdLatest();
+                next(Stage.LARGE_HOLD);
+            }
+            case LARGE_HOLD -> {
+                if (!CpuTtcPacketControl.hasHeld()) return false;
+                clickSort(minecraft);
+                CpuTtcPacketControl.releaseHeld();
+                CpuTtcPacketControl.drop();
+                CpuListScrollControl.scrollTo(10);
+                next(Stage.LARGE_SWITCHED);
+            }
+            case LARGE_SWITCHED -> {
+                if (!visibleWindowAt(snapshot.rawCpuSerials(), snapshot.cpuCards(), 10)
+                        || snapshot.cpuCards().stream().anyMatch(card -> card.ttc() != null)) return false;
+                mark(checks, "mode-switch-late");
+                CpuTtcPacketControl.resume();
+                minecraft.player.closeContainer();
+                second = lifecycle;
+                next(Stage.RETURN_SECOND);
+            }
+            case RETURN_SECOND -> {
+                if (server(minecraft, "return-second", player -> {
+                    player.teleportTo(second.terminal.getX() + 0.5, second.terminal.getY() - 1,
+                            second.terminal.getZ() - 2.5);
+                    return true;
+                })) next(Stage.RETURN_OPEN);
+            }
+            case RETURN_OPEN -> {
+                openTerminal(minecraft, second);
+                if (minecraft.screen instanceof MEStorageScreen<?> screen) {
+                    var button = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$statusButton();
+                    DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+                    next(Stage.RETURN_SCREEN);
+                }
+            }
+            case RETURN_SCREEN -> {
+                if (snapshot.rawCpuSerials().size() != 8 || !totalsMatch(snapshot)) return false;
                 minecraft.options.guiScale().set(1);
                 DriverPlatform.resizeDisplay(minecraft);
                 next(Stage.SCALE_SMALL);
@@ -515,12 +720,20 @@ final class CpuListTtcScenario {
     }
 
     private void openTerminal(Minecraft minecraft, StandardCraftFixture fixture) {
-        if (minecraft.screen == null && !opening) {
-            opening = true;
-            minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
-                new BlockHitResult(Vec3.atCenterOf(fixture.terminal).add(0, 0, -0.5), Direction.NORTH,
-                        fixture.terminal, false));
-        }
+        if (minecraft.screen != null) return;
+        var range = DriverPlatform.blockInteractionRange(minecraft);
+        if (minecraft.player.position().distanceToSqr(Vec3.atCenterOf(fixture.terminal)) > range * range) return;
+        var now = System.nanoTime();
+        if (!shouldAttemptTerminalOpen(opening, openAttemptedAt, now)) return;
+        opening = true;
+        openAttemptedAt = now;
+        minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
+            new BlockHitResult(Vec3.atCenterOf(fixture.terminal).add(0, 0, -0.5), Direction.NORTH,
+                    fixture.terminal, false));
+    }
+
+    static boolean shouldAttemptTerminalOpen(boolean opening, long attemptedAt, long now) {
+        return !opening || now - attemptedAt >= OPEN_RETRY_NANOS;
     }
 
     private void next(Stage value) { stage = value; stageStarted = System.nanoTime(); opening = false; }
@@ -537,10 +750,20 @@ final class CpuListTtcScenario {
     static int firstVisibleSerial(java.util.List<UiSnapshot.CpuCard> cards) {
         return cards.stream().findFirst().orElseThrow(() -> new IllegalStateException("CPU list is empty")).serial();
     }
+    static boolean visibleWindowAt(java.util.List<Integer> rawSerials,
+            java.util.List<UiSnapshot.CpuCard> cards, int start) {
+        if (cards.isEmpty() || start < 0 || start + cards.size() > rawSerials.size()) return false;
+        return cards.stream().map(UiSnapshot.CpuCard::serial).toList()
+                .equals(rawSerials.subList(start, start + cards.size()));
+    }
     static int serialForJob(java.util.List<UiSnapshot.CpuCard> cards, String jobId, long amount) {
         return cards.stream().filter(value -> jobId.equals(value.jobId()) && value.amount() == amount)
                 .mapToInt(UiSnapshot.CpuCard::serial).findFirst()
                 .orElseThrow(() -> new IllegalStateException("CPU job " + jobId + " x" + amount + " is not visible"));
+    }
+    static int removalSerial(java.util.List<UiSnapshot.CpuCard> cards) {
+        return cards.stream().filter(value -> value.name().equals("Gamma CPU")).mapToInt(UiSnapshot.CpuCard::serial)
+                .findFirst().orElseThrow(() -> new IllegalStateException("third fixture CPU is not visible"));
     }
     private static UiSnapshot.ObservedText title(UiSnapshot snapshot) {
         return snapshot.text().stream().filter(text -> text.key().equals("text.ae2craftingtime.ttc")
@@ -572,9 +795,97 @@ final class CpuListTtcScenario {
         for (var name : names) if (checks.containsKey(name)) checks.put(name, true);
     }
 
+    private static String sortState(UiSnapshot snapshot) {
+        return snapshot.widgets().stream().filter(widget -> widget.type().endsWith("TtcSortButton"))
+                .map(UiSnapshot.Widget::state).findFirst().orElse("").toLowerCase(java.util.Locale.ROOT);
+    }
+
+    private void observeItemMode(UiSnapshot snapshot) {
+        var order = SortObservation.sortableIds(snapshot.rows());
+        if (order.isEmpty()) throw new IllegalStateException("selected CPU exposed no crafting-plan rows");
+        if (!itemModeOrders.isEmpty()
+                && !new java.util.HashSet<>(itemModeOrders.get(0)).equals(new java.util.HashSet<>(order))) {
+            throw new IllegalStateException("CPU sort mode changed the selected job's item rows");
+        }
+        itemModeOrders.add(order);
+        itemKnownOrders.add(snapshot.rows().stream()
+                .filter(row -> row.description().stream()
+                        .anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")))
+                .map(UiSnapshot.Row::outputId).toList());
+    }
+
+    static boolean otherJobsUnchanged(CpuListTtcControl.ServerState before,
+            CpuListTtcControl.ServerState after, int excludedSerial) {
+        if (before == null || after == null) return false;
+        return comparableJobs(before, excludedSerial).equals(comparableJobs(after, excludedSerial));
+    }
+
+    private static java.util.Map<Integer, String> comparableJobs(
+            CpuListTtcControl.ServerState state, int excludedSerial) {
+        return state.cpus().stream().filter(cpu -> cpu.serial() != excludedSerial).collect(java.util.stream.Collectors.toMap(
+                CpuListTtcControl.CpuState::serial,
+                cpu -> cpu.position() + "|" + cpu.jobId() + "|" + cpu.amount() + "|" + cpu.live()
+                        + "|" + cpu.busy() + "|" + cpu.progress()));
+    }
+
+    private static void clickSort(Minecraft minecraft) {
+        var button = minecraft.screen.children().stream().filter(TtcSortButton.class::isInstance)
+                .map(net.minecraft.client.gui.components.AbstractWidget.class::cast).findFirst().orElseThrow();
+        DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+    }
+
+    private void assertCpuOrder(UiSnapshot snapshot, boolean descending) {
+        var state = serverState();
+        var rawIndex = new java.util.HashMap<Integer, Integer>();
+        for (int index = 0; index < snapshot.rawCpuSerials().size(); index++)
+            rawIndex.put(snapshot.rawCpuSerials().get(index), index);
+        Long previous = null;
+        var previousGroup = -1;
+        var previousRawIndex = -1;
+        for (var card : snapshot.cpuCards()) {
+            var cpu = state.cpus().stream().filter(value -> value.serial() == card.serial()).findFirst().orElseThrow();
+            var group = !cpu.busy() ? 2 : cpu.seconds() == null ? 1 : 0;
+            if (group < previousGroup) throw new IllegalStateException("CPU TTC groups are out of order");
+            if (group == 0 && previous != null) {
+                var comparison = Long.compare(cpu.seconds(), previous);
+                if (descending ? comparison > 0 : comparison < 0) {
+                    throw new IllegalStateException("CPU TTC values are out of order");
+                }
+            }
+            var currentRawIndex = rawIndex.getOrDefault(card.serial(), -1);
+            if (currentRawIndex < 0) throw new IllegalStateException("rendered CPU is absent from raw AE2 order");
+            if (group == previousGroup && (group != 0 || java.util.Objects.equals(cpu.seconds(), previous))
+                    && currentRawIndex < previousRawIndex)
+                throw new IllegalStateException("equal CPU TTC group did not preserve AE2 order");
+            previousGroup = group;
+            previous = group == 0 ? cpu.seconds() : null;
+            previousRawIndex = currentRawIndex;
+        }
+    }
+
     private static boolean fits(UiSnapshot snapshot) {
         var viewport = new Rect(0, 0, snapshot.screenWidth(), snapshot.screenHeight());
         return snapshot.gui().inside(viewport) && snapshot.cpuCards().stream().allMatch(card -> card.bounds().inside(viewport));
+    }
+
+    static boolean requestCadenceValid(java.util.List<CpuTtcPacketControl.ObservedRequest> requests) {
+        for (int index = 1; index < requests.size(); index++) {
+            if (requests.get(index).sequence() <= requests.get(index - 1).sequence()
+                    || requests.get(index).sentAtMillis() - requests.get(index - 1).sentAtMillis() < 1_000) return false;
+        }
+        return true;
+    }
+
+    static boolean heldRequestExpired(CpuTtcPacketControl.RequestCapture capture, long sequence, long nowMillis) {
+        return sequence >= 0 && capture.batches().stream().filter(request -> request.sequence() == sequence)
+                .anyMatch(request -> nowMillis - request.sentAtMillis()
+                        >= com.ctux.ae2craftingtime.core.CpuTtcCache.REQUEST_TIMEOUT_MILLIS);
+    }
+
+    static boolean itemRowsReady(java.util.List<UiSnapshot.Row> rows) {
+        var active = rows.stream().filter(row -> row.craftAmount() > 0).toList();
+        return active.size() >= 2 && active.stream().anyMatch(row -> row.description().stream()
+                .anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")));
     }
 
     private CpuListTtcControl.ServerState serverState() {
@@ -611,11 +922,11 @@ final class CpuListTtcScenario {
         }
         snapshot.cpuCards().stream().filter(card -> card.ttc() != null)
                 .map(UiSnapshot.CpuCard::serial).forEach(knownSerials::add);
-        if (knownSerials.size() < 3) {
+        if (knownSerials.size() < 4) {
             if (snapshot.scroll() == 0) CpuListScrollControl.scrollTo(1);
             return false;
         }
-        if (knownSerials.size() > 3) throw new IllegalStateException("second grid exposed more than three known totals");
+        if (knownSerials.size() > 4) throw new IllegalStateException("second grid exposed more than four known totals");
         if (snapshot.scroll() != 0) {
             CpuListScrollControl.scrollTo(0);
             return false;
@@ -659,9 +970,13 @@ final class CpuListTtcScenario {
 
     private static boolean requiresObservation(Stage value) {
         return switch (value) {
-            case INITIAL, SELECTED, TOOLTIP, SCROLL_DOWN, SCROLL_UP, PARTIAL, STALLED, RENAME, FINISH,
-                    CANCEL, REPLACE_EMPTY, REPLACE_STARTED, REPLACE, RESTART_CLEARED, RESTART_FRESH, REMOVE_SCROLL,
-                    REMOVE, DROP_EXPIRED, HOLD, HOLD_EXPIRED, HOLD_RELEASED, REOPENED, SECOND_SCREEN, SCALE_SMALL,
+            case INITIAL, SELECTED, MODE_AE2, MODE_SHORTEST, MODE_LONGEST, CHANNEL_FALLBACK, CHANNEL_RESTORED,
+                    TOOLTIP, WHEEL, SCROLL_DOWN, SCROLL_UP, AE2_HOLD, AE2_LATE, AE2_EXPIRED, MODE_RESTORED,
+                    PARTIAL, STALLED, RENAME, FINISH, CANCEL, CANCELLED,
+                    REPLACE_EMPTY, REPLACE_STARTED, REPLACE, RESTART_CLEARED, RESTART_FRESH, REMOVE_SCROLL,
+                    REMOVE, DROP_EXPIRED, HOLD, HOLD_EXPIRED, HOLD_RELEASED, REOPENED, SECOND_SCREEN, LARGE_SCREEN,
+                    LARGE_HOLD, LARGE_SWITCHED,
+                    RETURN_SCREEN, SCALE_SMALL,
                     SCALE_LARGE, REJOIN_EMPTY, REJOIN_FRESH, RELAUNCH_EMPTY, RELAUNCH_FRESH -> true;
             default -> false;
         };
@@ -672,7 +987,9 @@ final class CpuListTtcScenario {
             java.nio.file.Files.createDirectories(evidence.getParent());
             var value = new com.google.gson.Gson().toJson(java.util.Map.of(
                     "stage", stage.name(), "frame", snapshot.frame(), "screen", snapshot.screen(),
-                    "menu", snapshot.menu(), "clientCards", snapshot.cpuCards(), "serverState", serverState()));
+                    "menu", snapshot.menu(), "scroll", snapshot.scroll(), "rawCpuSerials", snapshot.rawCpuSerials(),
+                    "clientCards", snapshot.cpuCards(), "requests", CpuTtcPacketControl.requestCapture(),
+                    "serverState", serverState()));
             java.nio.file.Files.writeString(evidence, value + System.lineSeparator(),
                     java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
         } catch (java.io.IOException error) {

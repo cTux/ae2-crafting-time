@@ -15,6 +15,14 @@ if ($runnerText -notmatch 'clientParameters\.ScheduledJava = \$true' -or
         $runnerText -notmatch 'clientParameters\.InteractiveUser = \$InteractiveUser') {
     throw 'Connected runner must support the prepared interactive Java session used by CodexVM'
 }
+if ($runnerText -notmatch '\[ValidateRange\(1, 1800\)\]\[int\]\$ServerStartupTimeoutSeconds = 180' -or
+        $runnerText -notmatch 'AddSeconds\(\$ServerStartupTimeoutSeconds\)' -or
+        $runnerText -notmatch 'StartupTimeoutSeconds=\$ServerStartupTimeoutSeconds') {
+    throw 'Connected server and client startup must retain the same bounded configurable deadline'
+}
+if ($runnerText -notmatch "\`$clientParameters\.RuntimeDirectory = Join-Path \`$attemptReport 'runtime'") {
+    throw 'Connected client runtime must stay on the report-owned guest-local filesystem'
+}
 if ($runnerText.IndexOf("-SimpleMatch ']: Done ('", [StringComparison]::Ordinal) -lt 0 -or
         $runnerText.IndexOf("'run-ui-smoke.ps1'", [StringComparison]::Ordinal) -lt
             $runnerText.IndexOf("-SimpleMatch ']: Done ('", [StringComparison]::Ordinal)) {
@@ -77,10 +85,17 @@ try {
     Set-Content -LiteralPath (Join-Path $javaHome 'bin/java.exe') -Value 'java'
     $prepared = Join-Path $temporary 'prepared launch.json'
     Set-Content -LiteralPath $prepared -Value '{"target":"1.20.1-forge","java":17}'
+    $sourceMarker = Join-Path $source '.ae2-crafting-time-dedicated-fixture.json'
+    (Get-Item -LiteralPath $sourceMarker).IsReadOnly = $true
     & (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Target 1.20.1-forge `
         -ServerDirectory $source -PreparedLaunch $prepared -BundleDirectory $bundle -ReportDirectory $report `
         -JavaHome $javaHome -Address '127.0.0.1:25575' -PlanOnly
     $plan = Get-Content -LiteralPath (Join-Path $report 'connected-runner-plan.json') -Raw | ConvertFrom-Json
+    if (!(Get-Item -LiteralPath $sourceMarker).IsReadOnly -or
+            (Get-Item -LiteralPath (Join-Path $plan.disposableServer '.ae2-crafting-time-dedicated-fixture.json')).IsReadOnly) {
+        throw 'Runner did not preserve a read-only source while making its disposable copy writable'
+    }
+    (Get-Item -LiteralPath $sourceMarker).IsReadOnly = $false
     if ($plan.sourceServer -eq $plan.disposableServer -or !$plan.disposableServer.StartsWith($report)) { throw 'Plan did not isolate a disposable server copy' }
     if (!$plan.campaignId -or !$plan.connectionEpoch -or !$plan.relaunch.required -or $plan.relaunch.minimumProcesses -ne 2) {
         throw 'Connected plan omitted the campaign-bound two-process relaunch contract'

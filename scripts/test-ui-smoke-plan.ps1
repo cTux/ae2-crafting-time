@@ -163,7 +163,12 @@ try {
     $full = & $planner -Repository $temp
     $forgeGraphs = @($full.targets[0].graphs)
     $advancedGraphs = @($full.targets.graphs | Where-Object id -eq 'rxYaglEe')
-    Assert ($forgeGraphs.Count -eq 3 -and $forgeGraphs[1].cases.Count -eq 2) 'Full Forge must schedule its separate newest-adapter graph'
+    Assert ($forgeGraphs.Count -eq 4 -and $forgeGraphs[2].cases.Count -eq 2) 'Full Forge must schedule CPU-list and newest-adapter graphs separately'
+    Assert (!$forgeGraphs[0].baseOnly) 'Full Forge primary graph must install dependencies for direct addon cases'
+    Assert (@($forgeGraphs | Where-Object { $_.baseOnly -and $_.cases.Count -eq 1 -and $_.cases[0] -eq 'cpu-list-total-ttc' }).Count -eq 1) `
+        'Full Forge must isolate the CPU-list relaunch in one base-only graph'
+    $tree = & $planner -Repository $temp -Target '1.20.1-forge' -Scenario 'crafting-tree-screen'
+    Assert (!$tree.targets[0].graphs[0].baseOnly) 'Direct addon UI scenario must install its dependency catalogue'
     Assert ($advancedGraphs.Count -eq 3 -and @($advancedGraphs | Where-Object { $_.cases.Count -ne 4 }).Count -eq 0) 'AdvancedAE must repeat all provider status leaves on three targets'
     Assert ($full.targets[0].cases.Count -eq 38) 'Expanded Forge suite must contain 38 leaves'
     Assert ($full.targets[1].cases.Count -eq 20) 'Expanded Fabric suite must contain 20 leaves'

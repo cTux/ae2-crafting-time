@@ -47,6 +47,8 @@ public final class DedicatedCpuScenario {
     private long connectedAck;
     private String connectedAction = "";
     private StandardCraftFixture connectedSecond;
+    private StandardCraftFixture connectedLifecycle;
+    private StandardCraftFixture connectedLarge;
     private boolean connectedPrepared;
     private boolean connectedValidated;
     private final long started = System.nanoTime();
@@ -185,6 +187,20 @@ public final class DedicatedCpuScenario {
                     if (connectedSecond == null) connectedSecond = gridFixture.secondGrid();
                     if (!connectedSecond.prepare(player, origin) || !connectedSecond.prepareCpuListJobs(player)) yield false;
                     connectedSecond.renameCpuList(player);
+                    connectedLifecycle = connectedSecond;
+                    yield true;
+                }
+                case "large-grid" -> {
+                    if (connectedLarge == null) connectedLarge = gridFixture.largeCpuGrid();
+                    if (!connectedLarge.prepare(player, origin) || !connectedLarge.prepareCpuListJobs(player)) yield false;
+                    connectedSecond = connectedLarge;
+                    yield true;
+                }
+                case "return-second" -> {
+                    connectedSecond = connectedLifecycle;
+                    if (connectedSecond == null) yield false;
+                    player.teleportTo(connectedSecond.terminal.getX() + 0.5, connectedSecond.terminal.getY() - 1,
+                            connectedSecond.terminal.getZ() - 2.5);
                     yield true;
                 }
                 case "rejoin-prepare", "relaunch-prepare" -> {

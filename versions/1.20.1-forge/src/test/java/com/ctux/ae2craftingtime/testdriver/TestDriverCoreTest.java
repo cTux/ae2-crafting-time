@@ -95,10 +95,10 @@ class TestDriverCoreTest {
         var jobs = StandardCraftFixture.cpuListJobs();
         assertEquals("minecraft:glass", jobs.get(0).itemId());
         assertEquals(4, jobs.get(0).amount());
-        assertEquals(List.of("minecraft:smooth_stone", "minecraft:smooth_stone", "minecraft:smooth_stone"),
-                jobs.subList(1, 4).stream().map(StandardCraftFixture.CpuJob::itemId).toList());
-        assertEquals(List.of(8L, 12L, 16L),
-                jobs.subList(1, 4).stream().map(StandardCraftFixture.CpuJob::amount).toList());
+        assertEquals(List.of("minecraft:smooth_stone", "minecraft:smooth_stone", "minecraft:smooth_stone",
+                "minecraft:stone"), jobs.subList(1, 5).stream().map(StandardCraftFixture.CpuJob::itemId).toList());
+        assertEquals(List.of(8L, 12L, 12L, 1L),
+                jobs.subList(1, 5).stream().map(StandardCraftFixture.CpuJob::amount).toList());
         assertArrayEquals(new int[] { 4, 8, 12 }, StandardCraftFixture.pumpOffsets(true));
         assertArrayEquals(new int[] { 4, 8 }, StandardCraftFixture.pumpOffsets(false));
     }
@@ -122,18 +122,74 @@ class TestDriverCoreTest {
                 new UiSnapshot.CpuCard(2, "Beta", "minecraft:smooth_stone", 8, 0, false,
                         null, null, null, null, null, null));
         assertEquals(7, CpuListTtcScenario.firstVisibleSerial(cards));
+        assertTrue(CpuListTtcScenario.visibleWindowAt(List.of(3, 7, 2, 9), cards, 1));
+        assertFalse(CpuListTtcScenario.visibleWindowAt(List.of(3, 7, 2, 9), cards, 0));
+        assertFalse(CpuListTtcScenario.visibleWindowAt(List.of(3, 7), cards, 1));
+        assertFalse(CpuListTtcScenario.visibleWindowAt(List.of(3, 7, 2), List.of(), 1));
     }
 
     @Test
-    void cpuListRemovalTracksTheAmountTwelveSmoothStoneCpu() {
+    void cpuListTerminalOpenRetriesAnIgnoredReadyInteractionWithoutSpamming() {
+        long attemptedAt = 1_000_000_000L;
+        assertTrue(CpuListTtcScenario.shouldAttemptTerminalOpen(false, attemptedAt, attemptedAt));
+        assertFalse(CpuListTtcScenario.shouldAttemptTerminalOpen(true, attemptedAt,
+                attemptedAt + CpuListTtcScenario.OPEN_RETRY_NANOS - 1));
+        assertTrue(CpuListTtcScenario.shouldAttemptTerminalOpen(true, attemptedAt,
+                attemptedAt + CpuListTtcScenario.OPEN_RETRY_NANOS));
+    }
+
+    @Test
+    void cpuListRequestCaptureRetainsBatchesAndDeduplicatesCoverage() {
+        CpuTtcPacketControl.beginRequestCapture();
+        CpuTtcPacketControl.observeRequest(new com.ctux.ae2craftingtime.mc1201.net.CpuTtcPacketCodec.Request(
+                1, 2, 3, List.of(4, 5)));
+        CpuTtcPacketControl.observeRequest(new com.ctux.ae2craftingtime.mc1201.net.CpuTtcPacketCodec.Request(
+                1, 2, 4, List.of(5, 6)));
+        var capture = CpuTtcPacketControl.requestCapture();
+        assertEquals(List.of(List.of(4, 5), List.of(5, 6)),
+                capture.batches().stream().map(CpuTtcPacketControl.ObservedRequest::serials).toList());
+        assertEquals(List.of(4, 5, 6), capture.uniqueSerials());
+    }
+
+    @Test
+    void cpuListRemovalTracksTheThirdFixtureCpuDespiteEqualJobAmounts() {
         var cards = List.of(
-                new UiSnapshot.CpuCard(4, "Delta", "minecraft:smooth_stone", 16, 0, false,
+                new UiSnapshot.CpuCard(4, "Delta CPU", "minecraft:smooth_stone", 12, 0, false,
                         null, null, null, null, null, null),
-                new UiSnapshot.CpuCard(5, "Gamma", "minecraft:smooth_stone", 12, 0, false,
+                new UiSnapshot.CpuCard(5, "Gamma CPU", "minecraft:smooth_stone", 12, 0, false,
                         null, null, null, null, null, null),
                 new UiSnapshot.CpuCard(2, "Beta", "minecraft:smooth_stone", 8, 0, false,
                         null, null, null, null, null, null));
-        assertEquals(5, CpuListTtcScenario.serialForJob(cards, "minecraft:smooth_stone", 12));
+        assertEquals(5, CpuListTtcScenario.removalSerial(cards));
+        assertThrows(IllegalStateException.class, () -> CpuListTtcScenario.removalSerial(List.of()));
+    }
+
+    @Test
+    void cpuListInputObservationsKeepTheFirstProbeAndResetBetweenCases() {
+        CpuListInputControl.reset();
+        assertNull(CpuListInputControl.noFirstDraw());
+        CpuListInputControl.noFirstDraw(null);
+        CpuListInputControl.noFirstDraw(3);
+        assertTrue(CpuListInputControl.noFirstDraw());
+        CpuListInputControl.armWheel(4);
+        assertEquals(4, CpuListInputControl.wheelSerial());
+        CpuListInputControl.wheelResult(4);
+        assertEquals(4, CpuListInputControl.wheelResult());
+        assertNull(CpuListInputControl.wheelSerial());
+        CpuListInputControl.armStale(5);
+        assertEquals(5, CpuListInputControl.staleSerial());
+        CpuListInputControl.staleResult(null);
+        assertTrue(CpuListInputControl.staleSuppressed());
+        CpuListInputControl.armStale(5);
+        CpuListInputControl.staleResult(6);
+        assertFalse(CpuListInputControl.staleSuppressed());
+        CpuListInputControl.reset();
+        assertNull(CpuListInputControl.wheelResult());
+        assertNull(CpuListInputControl.staleSerial());
+        assertNull(CpuListInputControl.staleSuppressed());
+        CpuListInputControl.noFirstDraw(3);
+        assertFalse(CpuListInputControl.noFirstDraw());
+        CpuListInputControl.reset();
     }
 
     @Test
@@ -185,7 +241,10 @@ class TestDriverCoreTest {
                 "badge-select", "selected-title", "tooltip", "scroll-down", "scroll-up", "partial", "stalled",
                 "reordered", "finished", "cancelled", "replacement", "removed", "drop-expiry", "delayed-expiry",
                 "close-reopen", "second-grid", "small-scale", "large-scale", "same-jvm-clear", "process-relaunch",
-                "reconnect", "layout")));
+                "initial-mode", "cpu-sort-cycle", "raw-order", "stable-groups", "offscreen-promoted",
+                "item-sort-cycle", "channel-fallback", "server-selection", "wheel-before-draw", "no-first-draw",
+                "native-cancel", "stale-hit", "mode-switch-late", "ae2-expiry", "default-reopen",
+                "background-coverage", "reconnect", "layout")));
     }
 
     @Test
@@ -198,20 +257,47 @@ class TestDriverCoreTest {
         var all = java.util.stream.IntStream.range(0, 7)
                 .mapToObj(serial -> new UiSnapshot.CpuCard(serial, "CPU", "minecraft:stone", 1, 1, false,
                         new Rect(0, 0, 1, 1), new Rect(0, 0, 1, 1), new Rect(0, 0, 1, 1),
-                        new Rect(0, 0, 1, 1), serial == 0 || serial == 1 || serial == 6 ? ttc : null, null))
+                        new Rect(0, 0, 1, 1), serial == 0 || serial == 1 || serial == 5 || serial == 6 ? ttc : null, null))
                 .toList();
         var observed = new java.util.LinkedHashSet<Integer>();
         var firstPage = new UiSnapshot("screen", "menu", new Rect(0, 0, 1, 1), 1, 1, 1, 1, 0,
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), all.subList(0, 6));
         assertFalse(CpuListTtcScenario.secondScreenReady(firstPage, observed));
-        assertEquals(java.util.Set.of(0, 1), observed);
+        assertEquals(java.util.Set.of(0, 1, 5), observed);
         assertEquals(1, scrollbar.getCurrentScroll());
         var secondPage = new UiSnapshot("screen", "menu", new Rect(0, 0, 1, 1), 1, 1, 1, 2, 1,
                 List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), all.subList(1, 7));
         assertFalse(CpuListTtcScenario.secondScreenReady(secondPage, observed));
-        assertEquals(java.util.Set.of(0, 1, 6), observed);
+        assertEquals(java.util.Set.of(0, 1, 5, 6), observed);
         assertEquals(0, scrollbar.getCurrentScroll());
         assertTrue(CpuListTtcScenario.secondScreenReady(firstPage, observed));
+    }
+
+    @Test
+    void cpuListRequestEvidenceRequiresIncreasingSequencesAndOneSecondCadence() {
+        var first = new CpuTtcPacketControl.ObservedRequest(1, 1_000, List.of(1));
+        var next = new CpuTtcPacketControl.ObservedRequest(2, 2_000, List.of(2));
+        assertTrue(CpuListTtcScenario.requestCadenceValid(List.of()));
+        assertTrue(CpuListTtcScenario.requestCadenceValid(List.of(first)));
+        assertTrue(CpuListTtcScenario.requestCadenceValid(List.of(first, next)));
+        assertFalse(CpuListTtcScenario.requestCadenceValid(List.of(first,
+                new CpuTtcPacketControl.ObservedRequest(1, 2_000, List.of(2)))));
+        assertFalse(CpuListTtcScenario.requestCadenceValid(List.of(first,
+                new CpuTtcPacketControl.ObservedRequest(2, 1_999, List.of(2)))));
+    }
+
+    @Test
+    void nativeCancelOracleIgnoresOnlyTheSelectedCpu() {
+        var selectedBefore = cpuState(1, "minecraft:stone", 8, true, 3);
+        var selectedAfter = cpuState(1, null, 0, false, 0);
+        var other = cpuState(2, "minecraft:glass", 4, true, 7);
+        var before = serverState(selectedBefore, other);
+        var after = serverState(selectedAfter, other);
+        assertTrue(CpuListTtcScenario.otherJobsUnchanged(before, after, 1));
+        assertFalse(CpuListTtcScenario.otherJobsUnchanged(null, after, 1));
+        assertFalse(CpuListTtcScenario.otherJobsUnchanged(before, null, 1));
+        assertFalse(CpuListTtcScenario.otherJobsUnchanged(before,
+                serverState(selectedAfter, cpuState(2, "minecraft:glass", 5, true, 7)), 1));
     }
 
     @Test
@@ -301,13 +387,13 @@ class TestDriverCoreTest {
                 true, true, 10L, 11, 12);
         var nextCpu = new CpuListTtcControl.CpuState("1,2,3", 99, "minecraft:stone", 8,
                 true, true, 9L, 999, 13);
-        var before = new CpuListTtcControl.ServerState("network", 1, true, true, List.of(firstCpu));
-        var after = new CpuListTtcControl.ServerState("network", 77, true, true, List.of(nextCpu));
+        var before = new CpuListTtcControl.ServerState("network", 1, -1, true, true, List.of(firstCpu));
+        var after = new CpuListTtcControl.ServerState("network", 77, -1, true, true, List.of(nextCpu));
         assertTrue(CpuListTtcScenario.samePhysicalJobs(before, after));
         assertFalse(CpuListTtcScenario.samePhysicalJobs(before,
-                new CpuListTtcControl.ServerState("other", 77, true, true, List.of(nextCpu))));
+                new CpuListTtcControl.ServerState("other", 77, -1, true, true, List.of(nextCpu))));
         assertFalse(CpuListTtcScenario.samePhysicalJobs(before,
-                new CpuListTtcControl.ServerState("network", 77, true, true, List.of(
+                new CpuListTtcControl.ServerState("network", 77, -1, true, true, List.of(
                         new CpuListTtcControl.CpuState("1,2,4", 99, "minecraft:stone", 8,
                                 true, true, 9L, 999, 13)))));
     }
@@ -357,10 +443,10 @@ class TestDriverCoreTest {
 
     @Test
     void onlyIntegratedRestoredJobsNeedOneFreshRuntimeGraph() {
-        var restored = new CpuListTtcControl.ServerState("network", 1, true, true, List.of(
+        var restored = new CpuListTtcControl.ServerState("network", 1, -1, true, true, List.of(
                 new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:stone", 8,
                         true, true, null, 9, 10)));
-        var live = new CpuListTtcControl.ServerState("network", 1, true, true, List.of(
+        var live = new CpuListTtcControl.ServerState("network", 1, -1, true, true, List.of(
                 new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:stone", 8,
                         true, true, 7L, 9, 10)));
         assertTrue(CpuListTtcScenario.requiresJobRefresh(false, restored));
@@ -382,7 +468,7 @@ class TestDriverCoreTest {
 
     @Test
     void completedPreambleObservationAdvancesRelaunchFreshWithoutAnotherObservation() {
-        var state = new CpuListTtcControl.ServerState("network", 1, true, true, List.of(
+        var state = new CpuListTtcControl.ServerState("network", 1, 4, true, true, List.of(
                 new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:smooth_stone", 8,
                         true, true, 3600L, 9, 10)));
         var rendered = TtcText.ttc("~1:00:00").getString();
@@ -1011,6 +1097,41 @@ class TestDriverCoreTest {
         assertFalse(UiObservationStore.isWirelessScreen("appeng.client.gui.me.items.CraftingTermScreen"));
     }
 
+    @Test
+    void statusRowsUseRenderedTextWhenTheTableHasNoDescriptionHook() {
+        var cell = new Rect(10, 20, 67, 22);
+        var inside = new UiSnapshot.ObservedText("text.ae2craftingtime.ttc", "~1:00", List.of("~1:00"),
+                new Rect(20, 30, 20, 6));
+        var outside = new UiSnapshot.ObservedText("text.ae2craftingtime.ttc", "~2:00", List.of("~2:00"),
+                new Rect(80, 30, 20, 6));
+        assertEquals(List.of(inside), UiObservationStore.rowDescription(
+                java.util.Map.of(), List.of(inside, outside), "minecraft:stone", cell));
+
+        var recorded = new UiSnapshot.ObservedText("literal", "recorded", List.of(), null);
+        assertEquals(List.of(recorded), UiObservationStore.rowDescription(
+                java.util.Map.of("minecraft:stone", List.of(recorded)), List.of(inside), "minecraft:stone", cell));
+    }
+
+    @Test
+    void cpuListItemModeWaitsForTwoRowsButOnlyOneKnownTtc() {
+        var ttc = new UiSnapshot.ObservedText("text.ae2craftingtime.ttc", "~1:00", List.of("~1:00"), null);
+        var known = new UiSnapshot.Row("minecraft:stone", 8, 0, new Rect(0, 0, 1, 1), List.of(ttc));
+        var waiting = new UiSnapshot.Row("minecraft:smooth_stone", 8, 0, new Rect(1, 0, 1, 1), List.of());
+        assertTrue(CpuListTtcScenario.itemRowsReady(List.of(known, waiting)));
+        assertFalse(CpuListTtcScenario.itemRowsReady(List.of(known)));
+        assertFalse(CpuListTtcScenario.itemRowsReady(List.of(waiting, waiting)));
+    }
+
+    @Test
+    void cpuListDelayedReplyUsesTheHeldRequestsActualAge() {
+        var request = new CpuTtcPacketControl.ObservedRequest(4, 1_000, List.of(1));
+        var capture = new CpuTtcPacketControl.RequestCapture(List.of(request), List.of(1));
+        assertFalse(CpuListTtcScenario.heldRequestExpired(capture, -1, 4_000));
+        assertFalse(CpuListTtcScenario.heldRequestExpired(capture, 5, 4_000));
+        assertFalse(CpuListTtcScenario.heldRequestExpired(capture, 4, 3_999));
+        assertTrue(CpuListTtcScenario.heldRequestExpired(capture, 4, 4_000));
+    }
+
     private static LinkedHashMap<String, Boolean> checks(boolean value) {
         var checks = new LinkedHashMap<String, Boolean>();
         DriverResult.requiredChecks("craft-plan").forEach(key -> checks.put(key, value));
@@ -1021,5 +1142,15 @@ class TestDriverCoreTest {
             List<Rect> cells, Rect gui) {
         return new UiSnapshot("screen", "menu", gui, 100, 100, 1, 1, 0, List.of(), List.of(text), List.of(),
                 widgets, cells, List.of());
+    }
+
+    private static CpuListTtcControl.CpuState cpuState(int serial, String jobId, long amount,
+            boolean busy, long progress) {
+        return new CpuListTtcControl.CpuState("0,0," + serial, serial, jobId, amount, busy, busy,
+                busy ? 1L : null, 1, progress);
+    }
+
+    private static CpuListTtcControl.ServerState serverState(CpuListTtcControl.CpuState... cpus) {
+        return new CpuListTtcControl.ServerState("network", 1, 1, true, true, List.of(cpus));
     }
 }

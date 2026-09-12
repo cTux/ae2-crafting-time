@@ -7,6 +7,7 @@ param(
     [ValidatePattern('^[a-f0-9]{40}$')][string]$HeadSha,
     [string]$Address = '127.0.0.1:25565',
     [string]$JavaHome,
+    [ValidateRange(1, 1800)][int]$ServerStartupTimeoutSeconds = 180,
     [switch]$ScheduledJava,
     [string]$InteractiveUser = 'Codex',
     [switch]$PlanOnly
@@ -111,6 +112,13 @@ if (!$resolvedServer.StartsWith($resolvedRuntime.TrimEnd('\') + '\', [StringComp
 }
 New-Item -ItemType Directory -Path $runtimeRoot -Force | Out-Null
 Copy-Item -LiteralPath $sourceServer -Destination $resolvedServer -Recurse
+# A read-only VMware source share projects that attribute onto copied files.
+# The copy is report-owned and must be writable; the validated source stays untouched.
+foreach ($entry in @(Get-Item -LiteralPath $resolvedServer) + @(Get-ChildItem -LiteralPath $resolvedServer -Recurse -Force)) {
+    if ($entry.Attributes -band [IO.FileAttributes]::ReadOnly) {
+        $entry.Attributes = $entry.Attributes -bxor [IO.FileAttributes]::ReadOnly
+    }
+}
 $copyMarker = [ordered]@{ schema=2; sourceFixtureId='ae2-crafting-time'; role='disposable'; target=$Target
     source=[IO.Path]::GetFullPath($sourceServer); createdAt=[DateTime]::UtcNow.ToString('o') }
 $copyMarker | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $resolvedServer '.ae2-crafting-time-dedicated-fixture.json') -Encoding UTF8
@@ -192,7 +200,7 @@ finally { $portReservation.Stop() }
 $serverProcess = Start-Process -FilePath $java -ArgumentList $launchCommandLine -WorkingDirectory $resolvedServer `
     -PassThru -WindowStyle Hidden -RedirectStandardOutput $serverOut -RedirectStandardError $serverErr
 try {
-    $deadline = [DateTime]::UtcNow.AddMinutes(3)
+    $deadline = [DateTime]::UtcNow.AddSeconds($ServerStartupTimeoutSeconds)
     $ready = $false
     while ([DateTime]::UtcNow -lt $deadline -and !$ready) {
         if ($serverProcess.HasExited) { throw "Dedicated server exited $($serverProcess.ExitCode) before accepting a client" }
@@ -215,7 +223,8 @@ try {
     if (!$ready) { throw 'Dedicated server did not finish startup' }
     $clientParameters = @{ Target=$Target; Scenario='cpu-list-total-ttc'; ReportDirectory=(Join-Path $report 'client')
         BundleDirectory=$bundle; PreparedLaunch=$prepared; DedicatedAddress=$Address
-        ControlDirectory=$control; CampaignId=$connectionEpoch; FailOnInitialDisconnect=$true }
+        ControlDirectory=$control; CampaignId=$connectionEpoch; FailOnInitialDisconnect=$true
+        StartupTimeoutSeconds=$ServerStartupTimeoutSeconds }
     if ($HeadSha) { $clientParameters.HeadSha = $HeadSha }
     if ($ScheduledJava) { $clientParameters.ScheduledJava = $true; $clientParameters.InteractiveUser = $InteractiveUser }
     $attempts = @()
@@ -225,6 +234,7 @@ try {
     for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
         $attemptReport = Join-Path $report "client-attempt-$attempt"
         $clientParameters.ReportDirectory = $attemptReport
+        $clientParameters.RuntimeDirectory = Join-Path $attemptReport 'runtime'
         $clientError = $null
         try {
             & (Join-Path $PSScriptRoot 'run-ui-smoke.ps1') @clientParameters
