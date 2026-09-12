@@ -495,6 +495,32 @@ Client state is read only on the Minecraft client thread. Integrated-server
 state is read only on the server thread. Endpoint work is queued to the owning
 thread and fails on a bounded timeout.
 
+## Embedded server class loading (#353)
+
+The interactive endpoint must resolve its shaded server classes through the
+test driver's defining classloader. Forge must not report missing parent
+classes for relocated Tomcat classes during endpoint startup or requests.
+The reported Project Infinity run completed its focused checks despite these
+errors; it does not establish a crash or a broken endpoint.
+
+Acceptance criteria for this driver-only correction:
+
+- **CL1:** Both the shared driver and native 26.1.2 implementation bind their
+  embedded context to the driver loader before startup. An isolated-loader
+  regression fails without the binding and passes with it.
+- **CL2:** A prepared Minecraft 1.20.1 Forge compatible client on Java 17 runs
+  `craft-lifecycle` interactively without the reported relocated-Tomcat parent
+  errors. MCP initialization, tool listing, state inspection, screenshot capture,
+  and normal quit succeed. Existing lifecycle checks and required screenshots
+  remain complete and visually reviewed.
+- **CL3:** Both endpoint implementations compile and package with the existing
+  dependencies. Production artifacts remain isolated; authorization, loopback
+  binding, limits, and game-thread scheduling remain intact.
+
+Do not suppress errors globally or change dependencies without new evidence.
+Prepared Forge verification is not an exact Project Infinity 0.0.52.0 /
+Forge 47.4.20 pack pass.
+
 ## Fixture safety
 
 The driver may act only when all of these are true:

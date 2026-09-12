@@ -3,6 +3,58 @@
 Implement this as one feature commit. Let the commit hook create the PR before
 running Gradle checks, then report local verification and GitHub CI separately.
 
+## Issue #353: Restore embedded context class loading
+
+This focused correction uses the checks below without repeating the original
+feature rollout or unrelated scenario matrices. Merge these documents before
+implementation; defer checks until the commit hook creates the PR.
+
+1. For **CL1**, bind the context parent immediately after `addContext` in both
+   `InteractiveMcpServer` implementations. Add one isolated-loader regression
+   exercising the actual configuration and representative shaded superclass
+   resolution. Retain failing evidence without the binding and passing evidence
+   with it; do not use a source-text assertion as the causal proof.
+2. For **CL3**, run that regression and existing endpoint-policy checks, then
+   build `:mc_1_20_1_forge:testDriverJar` and
+   `:mc_26_1_2_neoforge:testDriverJar` on the host. Check both driver JARs and
+   corresponding production JARs against the existing artifact-isolation
+   contract. The Forge build covers the shared endpoint; the other covers the
+   native implementation. Keep dependency versions unchanged.
+3. Before **CL2**, start or reuse CodexVM through the existing VM workflow and
+   inspect current client ownership. Recheck the prepared
+   `1.20.1-forge/1.20.1-47.4.10/launch.json`, installed Java 17, and disposable
+   fixture marker. Prepare a current-head compatible bundle through the existing
+   matrix preparation path. This profile does not prove an exact pack pass.
+4. For **CL2**, invoke `scripts/run-ui-smoke-codexvm.ps1` from the guest's
+   interactive desktop PowerShell session with `-Target 1.20.1-forge
+   -Scenario craft-lifecycle -Interactive -HeadSha <head>
+   -BundleDirectory <guest-visible-bundle>`, without `-Scheduled`. Use the normal
+   report and prepared-launch locations. A controlling guest process generates
+   a random 256-bit lowercase-hex `AE2CT_TEST_DRIVER_TOKEN` in memory, starts
+   the runner as its child, and retains it for loopback MCP calls. Never print
+   the token or put it in scripts, arguments, task definitions, or reports.
+   The host dispatcher selects scheduled Java, whose action does not inherit
+   this process token; use the existing non-scheduled route, not a new launcher.
+5. Wait for this run's `mcp-endpoint.json`. Send authenticated MCP `initialize`,
+   the initialized notification, and `tools/list`, preserving the negotiated
+   session header. Call `minecraft_get_state`, wait for lifecycle completion,
+   call `minecraft_take_screenshot`, then `minecraft_quit`. Verify the PNG,
+   recorded client's normal exit, endpoint shutdown, and every current lifecycle
+   check/screenshot in `scripts/ui-smoke-groups.json`. Review the images under
+   the existing evidence contract. Scan this client's full log for the reported
+   EventBus/relocated-Tomcat parent errors; retain other warnings separately.
+   Clear the controller's token in a `finally` block.
+6. Budget one clean final Minecraft launch, with the existing 300-second startup
+   deadline and 30-minute interactive ceiling. Record actual timings and bound
+   diagnostic retries by progress. Bind artifacts, logs, protocol outcomes, and
+   checks to the exact PR head. Report local checks separately from GitHub CI.
+
+Completion requires **CL1-CL3**, including discriminating regression and real
+endpoint-backed smoke evidence. An endpoint URL file or automatic scenario
+alone is insufficient. Resolve missing guest access, manifest, fixture, or
+interactive desktop control before launch; do not weaken verification or
+silently add infrastructure.
+
 ## Phase 1: Isolate the driver artifact
 
 1. Add the `testDriver` Java/resources source set to
