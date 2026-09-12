@@ -7,6 +7,7 @@ param(
     [ValidatePattern('^[a-f0-9]{40}$')][string]$HeadSha,
     [string]$Address = '127.0.0.1:25565',
     [string]$JavaHome,
+    [ValidateRange(1, 1800)][int]$ServerStartupTimeoutSeconds = 180,
     [switch]$ScheduledJava,
     [string]$InteractiveUser = 'Codex',
     [switch]$PlanOnly
@@ -199,7 +200,7 @@ finally { $portReservation.Stop() }
 $serverProcess = Start-Process -FilePath $java -ArgumentList $launchCommandLine -WorkingDirectory $resolvedServer `
     -PassThru -WindowStyle Hidden -RedirectStandardOutput $serverOut -RedirectStandardError $serverErr
 try {
-    $deadline = [DateTime]::UtcNow.AddMinutes(3)
+    $deadline = [DateTime]::UtcNow.AddSeconds($ServerStartupTimeoutSeconds)
     $ready = $false
     while ([DateTime]::UtcNow -lt $deadline -and !$ready) {
         if ($serverProcess.HasExited) { throw "Dedicated server exited $($serverProcess.ExitCode) before accepting a client" }
