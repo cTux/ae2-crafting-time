@@ -223,7 +223,8 @@ try {
     if (!$ready) { throw 'Dedicated server did not finish startup' }
     $clientParameters = @{ Target=$Target; Scenario='cpu-list-total-ttc'; ReportDirectory=(Join-Path $report 'client')
         BundleDirectory=$bundle; PreparedLaunch=$prepared; DedicatedAddress=$Address
-        ControlDirectory=$control; CampaignId=$connectionEpoch; FailOnInitialDisconnect=$true }
+        ControlDirectory=$control; CampaignId=$connectionEpoch; FailOnInitialDisconnect=$true
+        StartupTimeoutSeconds=$ServerStartupTimeoutSeconds }
     if ($HeadSha) { $clientParameters.HeadSha = $HeadSha }
     if ($ScheduledJava) { $clientParameters.ScheduledJava = $true; $clientParameters.InteractiveUser = $InteractiveUser }
     $attempts = @()

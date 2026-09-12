@@ -16,8 +16,9 @@ if ($runnerText -notmatch 'clientParameters\.ScheduledJava = \$true' -or
     throw 'Connected runner must support the prepared interactive Java session used by CodexVM'
 }
 if ($runnerText -notmatch '\[ValidateRange\(1, 1800\)\]\[int\]\$ServerStartupTimeoutSeconds = 180' -or
-        $runnerText -notmatch 'AddSeconds\(\$ServerStartupTimeoutSeconds\)') {
-    throw 'Connected server startup must retain a bounded configurable deadline'
+        $runnerText -notmatch 'AddSeconds\(\$ServerStartupTimeoutSeconds\)' -or
+        $runnerText -notmatch 'StartupTimeoutSeconds=\$ServerStartupTimeoutSeconds') {
+    throw 'Connected server and client startup must retain the same bounded configurable deadline'
 }
 if ($runnerText -notmatch "\`$clientParameters\.RuntimeDirectory = Join-Path \`$attemptReport 'runtime'") {
     throw 'Connected client runtime must stay on the report-owned guest-local filesystem'
