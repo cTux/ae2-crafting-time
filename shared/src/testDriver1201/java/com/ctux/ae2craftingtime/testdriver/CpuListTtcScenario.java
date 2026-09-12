@@ -820,7 +820,7 @@ final class CpuListTtcScenario {
 
     private static void clickSort(Minecraft minecraft) {
         var button = minecraft.screen.children().stream().filter(TtcSortButton.class::isInstance)
-                .map(TtcSortButton.class::cast).findFirst().orElseThrow();
+                .map(net.minecraft.client.gui.components.AbstractWidget.class::cast).findFirst().orElseThrow();
         DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
     }
 
