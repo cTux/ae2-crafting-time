@@ -544,7 +544,8 @@ final class CpuListTtcScenario {
                 next(Stage.LARGE_SWITCHED);
             }
             case LARGE_SWITCHED -> {
-                if (snapshot.scroll() != 10 || snapshot.cpuCards().stream().anyMatch(card -> card.ttc() != null)) return false;
+                if (!visibleWindowAt(snapshot.rawCpuSerials(), snapshot.cpuCards(), 10)
+                        || snapshot.cpuCards().stream().anyMatch(card -> card.ttc() != null)) return false;
                 mark(checks, "mode-switch-late");
                 CpuTtcPacketControl.resume();
                 minecraft.player.closeContainer();
@@ -738,6 +739,12 @@ final class CpuListTtcScenario {
     }
     static int firstVisibleSerial(java.util.List<UiSnapshot.CpuCard> cards) {
         return cards.stream().findFirst().orElseThrow(() -> new IllegalStateException("CPU list is empty")).serial();
+    }
+    static boolean visibleWindowAt(java.util.List<Integer> rawSerials,
+            java.util.List<UiSnapshot.CpuCard> cards, int start) {
+        if (cards.isEmpty() || start < 0 || start + cards.size() > rawSerials.size()) return false;
+        return cards.stream().map(UiSnapshot.CpuCard::serial).toList()
+                .equals(rawSerials.subList(start, start + cards.size()));
     }
     static int serialForJob(java.util.List<UiSnapshot.CpuCard> cards, String jobId, long amount) {
         return cards.stream().filter(value -> jobId.equals(value.jobId()) && value.amount() == amount)

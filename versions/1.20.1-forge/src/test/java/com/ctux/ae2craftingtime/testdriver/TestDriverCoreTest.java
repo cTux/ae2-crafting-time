@@ -122,6 +122,10 @@ class TestDriverCoreTest {
                 new UiSnapshot.CpuCard(2, "Beta", "minecraft:smooth_stone", 8, 0, false,
                         null, null, null, null, null, null));
         assertEquals(7, CpuListTtcScenario.firstVisibleSerial(cards));
+        assertTrue(CpuListTtcScenario.visibleWindowAt(List.of(3, 7, 2, 9), cards, 1));
+        assertFalse(CpuListTtcScenario.visibleWindowAt(List.of(3, 7, 2, 9), cards, 0));
+        assertFalse(CpuListTtcScenario.visibleWindowAt(List.of(3, 7), cards, 1));
+        assertFalse(CpuListTtcScenario.visibleWindowAt(List.of(3, 7, 2), List.of(), 1));
     }
 
     @Test
