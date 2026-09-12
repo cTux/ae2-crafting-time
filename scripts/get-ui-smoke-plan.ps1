@@ -181,8 +181,13 @@ foreach ($id in $ids) {
         }
     }
     if ($primary.Count) {
+        $directCases = @($coverage.psobject.Properties | Where-Object {
+            $_.Value.disposition -cin @('DIRECT_UI', 'DIRECT_BEHAVIOR')
+        } | ForEach-Object { $_.Value.scenario } | Where-Object { $_ } | Select-Object -Unique)
+        $baseOnly = !$ProjectId -and !@($primary | Where-Object { $_ -cin $directCases }).Count
         $graphs = @([pscustomobject]@{ id='primary'; profile=$(if ($Latest) { 'latest' } else { 'compatible' }); cases=$primary
-            projectId=@($ProjectId); baseOnly=[bool](!$ProjectId); reason='Requested dependency graph'; adapterPolicy='base AE2 graph for direct cases' }) + $graphs
+            projectId=@($ProjectId); baseOnly=$baseOnly; reason='Requested dependency graph'
+            adapterPolicy=$(if ($baseOnly) { 'base AE2 graph for direct cases' } else { 'packaged catalogue graph for direct cases' }) }) + $graphs
     }
     $entries += [pscustomobject]@{ target=$id; graphs=$graphs; mode=$(if ($full) { 'full' } else { 'focused' }); cases=$cases
         notSelectedCases=@($allCases | Where-Object { $_ -cnotin $cases });
