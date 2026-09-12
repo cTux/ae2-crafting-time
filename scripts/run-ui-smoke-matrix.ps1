@@ -7,6 +7,7 @@ param(
     [switch]$Interactive,
     [string]$Scenario = 'suite',
     [string[]]$ProjectId,
+    [int]$StartupTimeoutSeconds = 300,
     [string]$ArchiveRoot = 'E:/games/mc-instances/.codex-test-results/ui-smoke/clients',
     [string]$GuestSourceRoot,
     [string]$PreparedLaunchRoot = 'C:\Users\Public\Documents\AE2CraftingTimeSmoke\prepared'
@@ -72,6 +73,7 @@ foreach ($targetEntry in $targets) {
         $plan | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $report 'selection.json') -Encoding UTF8
         $arguments = @{ Target = $row.target; Latest = $runLatest; Scenario = $Scenario
             CasesBase64 = $casesBase64; BundleDirectory = $bundle; PreparedLaunchRoot = $PreparedLaunchRoot; ProjectId = $runProjects; Interactive = $Interactive }
+        $arguments.StartupTimeoutSeconds = $StartupTimeoutSeconds
         if ($GuestSourceRoot) { $arguments.GuestSourceRoot = $GuestSourceRoot }
         $clientExitConfirmed = $false
         & (Join-Path $PSScriptRoot 'invoke-ui-smoke-codexvm.ps1') @arguments
