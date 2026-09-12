@@ -180,10 +180,17 @@ foreach ($id in $ids) {
                 reason=$declaration.reason; adapterPolicy="$focusedProfile packaged catalogue variant; verify runtime selection" }
         }
     }
+    $directCases = @($coverage.psobject.Properties | Where-Object {
+        $_.Value.disposition -cin @('DIRECT_UI', 'DIRECT_BEHAVIOR')
+    } | ForEach-Object { $_.Value.scenario } | Where-Object { $_ } | Select-Object -Unique)
+    if (!$ProjectId -and 'cpu-list-total-ttc' -cin $primary -and
+            @($primary | Where-Object { $_ -cin $directCases }).Count) {
+        $primary = @($primary | Where-Object { $_ -cne 'cpu-list-total-ttc' })
+        $graphs = @([pscustomobject]@{ id='cpu-list-total-ttc'; profile=$(if ($Latest) { 'latest' } else { 'compatible' })
+            cases=@('cpu-list-total-ttc'); projectId=@(); baseOnly=$true; reason='CPU-list relaunch requires a sealed base graph'
+            adapterPolicy='base AE2 graph for direct cases' }) + $graphs
+    }
     if ($primary.Count) {
-        $directCases = @($coverage.psobject.Properties | Where-Object {
-            $_.Value.disposition -cin @('DIRECT_UI', 'DIRECT_BEHAVIOR')
-        } | ForEach-Object { $_.Value.scenario } | Where-Object { $_ } | Select-Object -Unique)
         $baseOnly = !$ProjectId -and !@($primary | Where-Object { $_ -cin $directCases }).Count
         $graphs = @([pscustomobject]@{ id='primary'; profile=$(if ($Latest) { 'latest' } else { 'compatible' }); cases=$primary
             projectId=@($ProjectId); baseOnly=$baseOnly; reason='Requested dependency graph'
