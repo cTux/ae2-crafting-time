@@ -25,6 +25,10 @@ final class DriverPlatform {
         return StandardAe2Scenario.focus(minecraft.getWindow().handle());
     }
 
+    static double blockInteractionRange(net.minecraft.client.Minecraft minecraft) {
+        return minecraft.player.blockInteractionRange();
+    }
+
     static void cloneEntry(appeng.client.gui.me.common.MEStorageScreen<?> screen,
             appeng.menu.me.common.GridInventoryEntry entry) {
         ((com.ctux.ae2craftingtime.testdriver.mixin.MEStorageScreenAccessor) screen)

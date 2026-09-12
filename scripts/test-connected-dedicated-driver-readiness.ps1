@@ -34,7 +34,8 @@ foreach ($relative in $platforms) {
         $text -notmatch 'minecraft\.setScreen\(multiplayer\)' -or
         $text -notmatch 'JoinMultiplayerScreenAccessor\) multiplayer' -or
         $text -notmatch 'ae2craftingtime_test_driver\$setEditingServer\(server\)' -or
-        $text -notmatch 'ae2craftingtime_test_driver\$directJoinCallback\(true\)') {
+        $text -notmatch 'ae2craftingtime_test_driver\$directJoinCallback\(true\)' -or
+        $text -notmatch 'static double blockInteractionRange\(') {
         throw "Platform does not invoke the initialized multiplayer screen direct-join callback: $relative"
     }
 }
