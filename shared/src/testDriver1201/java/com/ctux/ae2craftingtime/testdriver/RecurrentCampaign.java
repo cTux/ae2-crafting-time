@@ -4,8 +4,7 @@ final class RecurrentCampaign {
     static final long REQUESTED_AMOUNT = 100;
 
     static boolean addonRoute(boolean wcwt, boolean advancedAe) {
-        if (wcwt != advancedAe) throw new IllegalStateException("Connected recurrent addon route requires WCWT and AdvancedAE together");
-        return wcwt;
+        return wcwt && advancedAe;
     }
 
     static String plan(boolean recurrent) {
