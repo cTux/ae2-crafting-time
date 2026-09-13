@@ -370,7 +370,7 @@ class TestDriverCoreTest {
 
     @Test
     void recurrentPlanSenderRemapsTheMinecraftBroadcastLifecycleMethod() throws Exception {
-        var mixin = Class.forName("com.ctux.ae2craftingtime.mc1201.mixin.CraftConfirmMenuMixin");
+        var mixin = Class.forName("com.ctux.ae2craftingtime.mc1201.mixin.CraftConfirmMenuMixinSrg");
         var method = java.util.Arrays.stream(mixin.getDeclaredMethods())
                 .filter(value -> value.getName().equals("send"))
                 .findFirst().orElseThrow();
