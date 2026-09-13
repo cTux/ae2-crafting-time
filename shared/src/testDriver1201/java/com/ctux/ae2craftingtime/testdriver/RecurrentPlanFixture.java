@@ -22,7 +22,7 @@ import net.minecraft.world.item.Items;
 
 final class RecurrentPlanFixture implements ICraftingProvider {
     static final List<String> CASES = List.of("two", "self", "three", "ordinary", "seed", "less", "alternative",
-            "eligible", "mixed", "variants", "substitute", "emitter", "amount", "fluid", "large");
+            "eligible", "mixed", "variants", "substitute", "emitter", "amount", "fluid", "reported-1", "reported-100", "large");
     private final StandardCraftFixture fixture;
     private final List<IPatternDetails> patterns = new ArrayList<>();
     private IManagedGridNode node;
@@ -60,6 +60,12 @@ final class RecurrentPlanFixture implements ICraftingProvider {
                 default -> Set.of();
             };
             switch (name) {
+                case "reported-1", "reported-100" -> {
+                    pattern(player, a, b);
+                    pattern(player, b, c);
+                    pattern(player, c, b);
+                    expected = Set.of(c);
+                }
                 case "amount", "fluid" -> {
                     AEKey missing = name.equals("fluid")
                             ? appeng.api.stacks.AEFluidKey.of(net.minecraft.world.level.material.Fluids.WATER) : b;
@@ -166,6 +172,9 @@ final class RecurrentPlanFixture implements ICraftingProvider {
                     + " actual recurrence=" + actual + " simulation=" + plan.simulation());
         if (configured.equals("large") && menu.getPlan().getEntries().size() <= 256)
             throw new IllegalStateException("Large recurrence plan did not cross the chunk boundary");
+        if (configured.startsWith("reported-") && menu.getPlan().getEntries().stream()
+                .noneMatch(entry -> expected.contains(entry.getWhat()) && entry.getMissingAmount() == requestedAmount()))
+            throw new IllegalStateException("Reported regression lost missing quantity " + requestedAmount());
         for (var entry : menu.getPlan().getEntries()) {
             boolean flag = ((com.ctux.ae2craftingtime.mc1201.RecurrentPlanEntry) entry).ae2craftingtime$recurrent();
             if (flag != (entry.getMissingAmount() > 0 && expected.contains(entry.getWhat())))
@@ -177,6 +186,8 @@ final class RecurrentPlanFixture implements ICraftingProvider {
     }
 
     boolean recurrent() { return !expected.isEmpty(); }
+    boolean reported() { return configured.startsWith("reported-"); }
+    long requestedAmount() { return configured.equals("reported-100") ? 100 : 1; }
 
     void close() {
         if (node != null) node.destroy();

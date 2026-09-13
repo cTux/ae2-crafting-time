@@ -186,6 +186,8 @@ final class StandardAe2Scenario {
         }
         if (phase == Stage.AMOUNT) {
             if (minecraft.screen instanceof CraftAmountScreen amount) {
+                if (leaf.equals("recurrent-plan")) ((CraftAmountScreenAccessor) amount)
+                        .ae2craftingtime_test_driver$amount().setLongValue(recurrenceFixture.requestedAmount());
                 var button = ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next();
                 DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
             } else if (minecraft.screen instanceof CraftConfirmScreen) phase = Stage.values()[phase.ordinal() + 1];
@@ -316,6 +318,9 @@ final class StandardAe2Scenario {
             if (label != null && (label.bold() || !java.util.Objects.equals(label.color(), 0xFF5555)
                     || label.arguments().size() != 1 || !label.rendered().endsWith(label.arguments().get(0))))
                 throw new IllegalStateException("Recurrence label lost its red normal style or amount");
+            if (!connectedDedicated && recurrenceFixture.reported() && label != null
+                    && !label.arguments().equals(List.of(Long.toString(recurrenceFixture.requestedAmount()))))
+                throw new IllegalStateException("Recurrence label lost requested quantity " + recurrenceFixture.requestedAmount());
             if (!row.cell().inside(snapshot.gui())) throw new IllegalStateException("Recurrence row escapes plan layout");
             mark(checks, "recurrent-row", true);
             mark(checks, "red-normal", label == null || !label.bold() && java.util.Objects.equals(label.color(), 0xFF5555));
