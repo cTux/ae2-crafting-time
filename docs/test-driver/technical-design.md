@@ -44,6 +44,32 @@ dependency/adapter identity, artifact hashes, server totals, and client values.
 The 1.20.1/1.21.1 implementation lives in `shared/src/testDriver1201`; the
 26.1.2 source set keeps only its changed registry, rendering, and connection APIs.
 
+The `recurrent-plan` standard-AE2 leaf owns a managed native crafting provider
+beside `StandardCraftFixture`, with encoded real patterns for the recurrence,
+negative-control, retry, exact-key, amount and chunk-boundary cases in the spec.
+It proves the production diagnosis through the native
+plan row and tooltip rather than seeding driver state. Its connected counterpart
+keeps the same marked-loopback, bounded-control, identity, and cleanup rules as
+the CPU-list runner; no other multiplayer scenario is authorized.
+Every target uses one client process with the fixed offline fixture name/UUID
+and its own runtime, evidence and control directory. The client visits separate
+grids with opposite recurrence outcomes, swaps real patterns/replans, and
+reconnects. The server binds acknowledgements to the observed recipient UUID,
+menu and revision. The phase policy rejects old-phase commands; successful
+acknowledgements remain idempotent across waiting frames. Pure transition and
+packet-boundary tests cover recipient mismatches, sequential sessions and cleanup.
+Remove the concurrent-client branch, second role and dual-client memory gate;
+retain the existing one-client path on NeoForge 1.21.1 as on the other targets.
+All clients run sequentially, with one 8 GiB client at a time and verified exit
+before the next launch. The dedicated server may persist through reconnect.
+These checks establish single-client lifecycle and recipient-boundary evidence,
+not simultaneous-player behavior.
+Driver-only observers bind every accepted diagnostic to the native menu
+revision on the client thread and compare native quantities before and after.
+Recurrence runs, including selected-case suites, retain the runner's existing
+20-second callback and 60-second active-checkpoint watchdogs. Fixture case and
+sort are part of the reported checkpoint.
+
 Connected mode uses an atomic properties-file rendezvous inside the disposable
 run directory. Commands only ask the server fixture to perform the next real
 mutation; acknowledgements carry the active terminal and authoritative totals.
