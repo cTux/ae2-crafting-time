@@ -1,5 +1,14 @@
 # Dependencies
 
+Native Crafting Plan recurrence diagnostics use required AE2 planner, summary,
+menu and renderer hooks on all four supported targets. They do not select or
+extend optional Tree or requester screens. Forge and NeoForge append a
+versioned server-to-client packet; Fabric sends it only when the recipient
+advertises the recurrence channel. The native AE2 plan packet remains unchanged.
+Qualification requires integrated `recurrent-plan` and `standard-plan-controls`
+plus connected `recurrent-plan` on all targets, including the NeoForge 1.21.1 two-client
+and greater-than-256-row cases. No recurrence runtime pass is recorded here yet.
+
 ## Startup adapter selection
 
 Optional hooks use one fixed startup choice per dependency. The first matching

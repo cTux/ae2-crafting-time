@@ -40,7 +40,7 @@ function Get-UiSmokeProgressDecision {
         return $null
     }
     $activeScenario = $ProcessId -le 0 -or ($Checkpoint -match '(^|\s)state=WORLD_READY(\s|$)' -and
-        $Checkpoint -match '(^|\s)phase=ACTIVE(\s|$)')
+        $Checkpoint -match '(^|\s)phase=(?!PREPARE(?:\s|$))[A-Z_]+(\s|$)')
     if (!$activeScenario) {
         if ($StartupTimeoutSeconds -gt 0 -and $StartedAt -ne [DateTime]::MinValue -and
                 ($Now.ToUniversalTime() - $StartedAt.ToUniversalTime()).TotalSeconds -gt $StartupTimeoutSeconds) {

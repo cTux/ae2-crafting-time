@@ -32,6 +32,7 @@ final class StandardAe2Scenario {
     static final Map<String, List<String>> CHECKS = Map.ofEntries(
             Map.entry("standard-plan-controls", List.of("plan", "plan-sort", "missing-first", "plan-tooltip",
                     "plan-details", "plan-reset", "total-ttc", "layout", "item-resolution")),
+            Map.entry("recurrent-plan", List.of("recurrent-row", "red-normal", "recurrent-tooltip", "unchanged-quantity", "layout")),
             Map.entry("standard-status-controls", List.of("submitted", "status", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout")),
             Map.entry("waiting-status", List.of("submitted", "waiting", "first-dispatch", "recovered", "layout")),
             Map.entry("running-status", List.of("submitted", "running", "progress", "header", "layout")),
@@ -78,15 +79,36 @@ final class StandardAe2Scenario {
     private boolean stonePlateObserved;
     private final StableFrames<Boolean> worldFrames = new StableFrames<>(8);
     private final StatsInteraction stats = new StatsInteraction();
+    private boolean recurrenceSwapped;
+    private boolean recurrenceRejoined;
+    private boolean recurrenceReconnectRequested;
+    private boolean recurrenceCaptured;
+    private final RecurrentPlanFixture recurrenceFixture = new RecurrentPlanFixture(fixture);
+    private int recurrenceCase;
+    private boolean recurrenceServerVerified;
+    private boolean recurrenceHover;
 
     String checkpoint() { return "phase=" + phase + " fixture=" + fixture.checkpoint
+            + (leaf.equals("recurrent-plan") ? " recurrence=" + recurrenceCase + " sort=" + sort : "")
             + (cpuList == null ? "" : " " + cpuList.checkpoint()); }
 
-    boolean reconnectRequested() { return cpuList != null && cpuList.reconnectRequested(); }
-    void reconnected() { cpuList.reconnected(); }
+    boolean reconnectRequested() { return recurrenceReconnectRequested || cpuList != null && cpuList.reconnectRequested(); }
+    void reconnected() {
+        if (recurrenceReconnectRequested) {
+            recurrenceReconnectRequested = false;
+            recurrenceRejoined = true;
+            phase = Stage.TERMINAL;
+            frames.reset();
+        } else cpuList.reconnected();
+    }
 
     boolean tick(Minecraft minecraft, FixtureMarker marker, Map<String, Boolean> checks,
             Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) throws Exception {
+        if (connectedDedicated && leaf.equals("recurrent-plan") && !recurrenceCaptured) {
+            var state = RecurrentPlanControl.state();
+            if (!state.ready() || !state.epoch().equals(CpuListTtcControl.epoch())
+                    || !state.turn().equals(RecurrentPlanControl.role())) return false;
+        }
         var currentCheckpoint = checkpoint();
         if (reportedPhase != phase || !currentCheckpoint.equals(reportedCheckpoint)) {
             System.out.println("AE2CT standard checkpoint " + java.time.Instant.now() + " " + currentCheckpoint);
@@ -102,7 +124,16 @@ final class StandardAe2Scenario {
             fixture.cpuListScenario = leaf.equals("cpu-list-total-ttc");
             fixture.holdFinalOutput = leaf.equals("delayed-status");
             fixture.missingPlanInput = leaf.equals("standard-plan-controls");
-            fixture.unprofiledPlan = leaf.equals("craft-lifecycle");
+            fixture.recurrentPlan = leaf.equals("recurrent-plan");
+            if (fixture.recurrentPlan) fixture.missingPlanInput = true;
+            if (connectedDedicated && fixture.recurrentPlan) {
+                var state = RecurrentPlanControl.state();
+                if (!state.ready()) return false;
+                fixture.bindTerminal(new net.minecraft.core.BlockPos(state.x(), state.y(), state.z()));
+                phase = Stage.TERMINAL;
+                return false;
+            }
+            fixture.unprofiledPlan = leaf.equals("craft-lifecycle") || leaf.equals("recurrent-plan");
             if (connectedDedicated && fixture.cpuListScenario) {
                 var state = CpuListTtcControl.state();
                 if (!state.ready()) return false;
@@ -111,7 +142,8 @@ final class StandardAe2Scenario {
                 return false;
             }
             if (server(minecraft, player -> fixture.prepare(player, marker)
-                    && (!fixture.cpuListScenario || fixture.prepareCpuListJobs(player)))) {
+                    && (!fixture.cpuListScenario || fixture.prepareCpuListJobs(player))
+                    && (!leaf.equals("recurrent-plan") || recurrenceFixture.prepare(player, RecurrentPlanFixture.CASES.get(recurrenceCase))))) {
                 if (leaf.equals("standard-plan-controls")) {
                     mark(checks, "item-resolution", ProviderHighlightShapes.resolveItem(null).isEmpty()
                             && ProviderHighlightShapes.resolveItem("not an id!!").isEmpty()
@@ -251,6 +283,91 @@ final class StandardAe2Scenario {
         var planDescriptions = leaf.equals("craft-lifecycle") && minecraft.screen instanceof CraftConfirmScreen
                 ? snapshot.rows().stream().map(UiSnapshot.Row::description).toList() : List.of();
         if (!frames.observe(List.of(phase, sort, CaptureEvidence.readiness(snapshot), planDescriptions))) return false;
+        if (phase == Stage.PLAN_SORT && leaf.equals("recurrent-plan")) {
+            if (!(minecraft.screen instanceof CraftConfirmScreen screen)) return false;
+            if (!RecurrentPlanObservation.verify(screen.getMenu())) return false;
+            if (!connectedDedicated) {
+                if (!recurrenceServerVerified) {
+                    if (!server(minecraft, recurrenceFixture::validate)) return false;
+                    recurrenceServerVerified = true;
+                }
+                if (!recurrenceFixture.clientReady(screen.getMenu())) return false;
+            }
+            var row = snapshot.rows().stream().filter(value -> value.description().stream()
+                    .anyMatch(text -> text.key().equals("text.ae2craftingtime.plan.recurrent"))).findFirst()
+                    .orElseGet(() -> snapshot.rows().stream().findFirst().orElse(null));
+            if (row == null) return false;
+            var label = row.description().stream().filter(text -> text.key().equals("text.ae2craftingtime.plan.recurrent")).findFirst().orElse(null);
+            if (!connectedDedicated && recurrenceFixture.recurrent() && label == null
+                    && !RecurrentPlanFixture.CASES.get(recurrenceCase).equals("large")) return false;
+            if (snapshot.text().stream().filter(text -> text.key().equals("text.ae2craftingtime.plan.recurrent"))
+                    .anyMatch(text -> text.bounds() == null || snapshot.rows().stream().noneMatch(value -> text.bounds().inside(value.cell()))))
+                throw new IllegalStateException("Recurrent text escapes its native table cell");
+            if (connectedDedicated && RecurrentPlanControl.state().recurrent() != (label != null)) return false;
+            if (label != null && (label.bold() || !java.util.Objects.equals(label.color(), 0xFF5555)
+                    || label.arguments().size() != 1 || !label.rendered().endsWith(label.arguments().get(0))))
+                throw new IllegalStateException("Recurrence label lost its red normal style or amount");
+            if (!row.cell().inside(snapshot.gui())) throw new IllegalStateException("Recurrence row escapes plan layout");
+            mark(checks, "recurrent-row", true);
+            mark(checks, "red-normal", label == null || !label.bold() && java.util.Objects.equals(label.color(), 0xFF5555));
+            mark(checks, "unchanged-quantity", label == null || label.arguments().size() == 1
+                    && label.rendered().endsWith(label.arguments().get(0)));
+            mark(checks, "layout", row.cell().inside(snapshot.gui()));
+            if (!connectedDedicated && sort++ < 3) {
+                screenshot.accept("recurrent-" + RecurrentPlanFixture.CASES.get(recurrenceCase) + "-sort-" + sort + ".png");
+                AbstractWidget button = minecraft.screen.children().stream().filter(TtcSortButton.class::isInstance)
+                        .map(TtcSortButton.class::cast).findFirst().orElseThrow();
+                DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+                frames.reset();
+                return false;
+            }
+            recurrenceHover = label != null;
+            moveMouse.accept(row.cell().x() + row.cell().width() / 2, row.cell().y() + row.cell().height() / 2);
+            phase = Stage.PLAN_TOOLTIP;
+            return false;
+        }
+        if (phase == Stage.PLAN_TOOLTIP && leaf.equals("recurrent-plan")) {
+            var recurrent = snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.plan.recurrent_hint"));
+            if (recurrenceHover != recurrent) return false;
+            if (connectedDedicated) {
+                var action = recurrenceCaptured ? "captured" : recurrenceRejoined ? "rejoined" : recurrenceSwapped ? "swapped" : "initial";
+                if (!RecurrentPlanControl.request(action, minecraft.player.getUUID())) return false;
+                var state = RecurrentPlanControl.state();
+                if (!recurrenceSwapped) {
+                    if (!state.phase().equals("swap")) return false;
+                    recurrenceSwapped = true;
+                    ((CraftConfirmScreen) minecraft.screen).getMenu().replan();
+                    phase = Stage.PLAN_SORT; frames.reset(); return false;
+                }
+                if (!recurrenceRejoined && RecurrentPlanControl.role().equals("alpha")) {
+                    if (!state.phase().equals("reconnect")) return false;
+                    recurrenceReconnectRequested = true; return false;
+                }
+                if (!state.phase().equals("complete")) return false;
+                if (!recurrenceCaptured) {
+                    screenshot.accept("recurrent-plan-tooltip.png");
+                    recurrenceCaptured = true;
+                    return false;
+                }
+            }
+            mark(checks, "recurrent-tooltip", true);
+            if (!connectedDedicated) {
+                screenshot.accept("recurrent-" + RecurrentPlanFixture.CASES.get(recurrenceCase) + "-tooltip.png");
+                if (recurrenceCase + 1 < RecurrentPlanFixture.CASES.size()
+                        && (!RecurrentPlanFixture.CASES.get(recurrenceCase + 1).equals("large") || DriverPlatform.TARGET.equals("1.21.1-neoforge"))) {
+                    recurrenceCase++;
+                    recurrenceServerVerified = false;
+                    sort = 0;
+                    minecraft.player.closeContainer();
+                    phase = Stage.PREPARE;
+                    frames.reset();
+                    return false;
+                }
+            }
+            if (!connectedDedicated && !server(minecraft, player -> { recurrenceFixture.close(); return true; })) return false;
+            if (!recurrenceCaptured) screenshot.accept("recurrent-plan-tooltip.png");
+            return true;
+        }
         boolean plan = phase.ordinal() < Stage.OPEN_STATUS.ordinal();
         String prefix = plan ? "plan" : "status";
         if (phase == Stage.PLAN_SORT && !leaf.equals("standard-plan-controls")) {

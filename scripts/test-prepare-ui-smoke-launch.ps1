@@ -14,6 +14,7 @@ try {
     '["mod.jar"]' | Set-Content "$bundle/mods/.ae2-crafting-time-run-mods.json"
     $launch = @{target='1.20.1-forge';java=17;guest=(Join-Path $temp 'prepared');arguments=@('-Xmx1G','-Dae2craftingtime.test.world=old',
         '-cp','C:\Native Loader\client.jar','example.Client','--version','1.20.1-forge-47.4.10',
+        '--username','PreparedPlayer','--uuid','0123456789abcdef0123456789abcdef',
         '--gameDir','C:\Old Game','--quickPlaySingleplayer','old')}
     $manifest = Join-Path $temp 'launch.json'
     $launch | ConvertTo-Json | Set-Content $manifest
@@ -27,6 +28,27 @@ try {
         throw 'Native launch lost the installed classpath or retained previous run arguments'
     }
     if ((Get-Content "$runtime/mods/mod.jar" -Raw) -ne (Get-Content "$bundle/mods/mod.jar" -Raw)) { throw 'Artifact changed during staging' }
+    if (!$arguments.Contains('PreparedPlayer') -or !$arguments.Contains('0123456789abcdef0123456789abcdef')) {
+        throw 'Ordinary launch identity was changed'
+    }
+    $parameters.Scenario = 'recurrent-plan'
+    & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -Role alpha -OfflineName Ae2ctAlpha `
+        -OfflineUuid 446b6d0ccadd3e57baf699d70f01a628 -DedicatedAddress '127.0.0.1:25565' `
+        -ControlDirectory (Join-Path $temp 'roles') | Out-Null
+    $roleArguments = Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw
+    if (!$roleArguments.Contains('Ae2ctAlpha') -or $roleArguments.Contains('PreparedPlayer')) { throw 'Role identity was not replaced' }
+    foreach ($invalid in @(
+        @{name='Ae2ctBeta';uuid='446b6d0ccadd3e57baf699d70f01a628';address='127.0.0.1:25565'},
+        @{name='Ae2ctAlpha';uuid='0023ed57716f3ea09c429f2240aeac6e';address='127.0.0.1:25565'},
+        @{name='Ae2ctAlpha';uuid='446b6d0ccadd3e57baf699d70f01a628';address='192.0.2.1:25565'})) {
+        $refusedRole = $false
+        try {
+            & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -Role alpha -OfflineName $invalid.name `
+                -OfflineUuid $invalid.uuid -DedicatedAddress $invalid.address -ControlDirectory (Join-Path $temp 'roles') | Out-Null
+        } catch { $refusedRole = $_.Exception.Message -like '*bounded offline identity*' }
+        if (!$refusedRole) { throw 'Unbounded or mismatched recurrent role was accepted' }
+    }
+    $parameters.Scenario = 'delayed-status'
     $continuation = Join-Path $evidence 'cpu-list-continuation.json'
     Set-Content -LiteralPath $continuation -Value '{"schema":1,"phase":"relaunch-ready"}'
     & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -ContinuationPath $continuation -CampaignId 'campaign-a' | Out-Null
@@ -57,7 +79,7 @@ try {
     }
     $profile.target = '1.21.1-neoforge'; $profile.java = 21; $profile.loader = '21.1.238'
     $profile | ConvertTo-Json | Set-Content "$bundle/profile.json"
-    $launch.target = '1.21.1-neoforge'; $launch.java = 21; $launch.arguments[-5] = '1.21.1-21.1.238'
+    $launch.target = '1.21.1-neoforge'; $launch.java = 21; $launch.arguments[[Array]::IndexOf($launch.arguments, '--version') + 1] = '1.21.1-21.1.238'
     $launch | ConvertTo-Json | Set-Content $manifest
     $parameters.Target = '1.21.1-neoforge'
     $config = Join-Path $runtime 'config/fml.toml'
@@ -80,7 +102,7 @@ try {
     if (Compare-Object $templateBytes ([IO.File]::ReadAllBytes($config)) -SyncWindow 0) { throw 'Missing runtime FML config was not initialized from the prepared loader' }
     $profile.target = '1.20.1-forge'; $profile.java = 17; $profile.loader = '47.4.10'
     $profile | ConvertTo-Json | Set-Content "$bundle/profile.json"
-    $launch.target = '1.20.1-forge'; $launch.java = 17; $launch.arguments[-5] = '1.20.1-forge-47.4.10'
+    $launch.target = '1.20.1-forge'; $launch.java = 17; $launch.arguments[[Array]::IndexOf($launch.arguments, '--version') + 1] = '1.20.1-forge-47.4.10'
     $launch | ConvertTo-Json | Set-Content $manifest
     $parameters.Target = '1.20.1-forge'
     function Assert-Rejected([string]$expected) {

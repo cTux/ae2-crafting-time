@@ -85,6 +85,8 @@
   "text.ae2craftingtime.stall.hint.co_processors": "• Try adding Crafting Co-Processors",
   "text.ae2craftingtime.stall.reason.co_processors": "  All %s parallel slots were recently busy, and work is still waiting.",
   "text.ae2craftingtime.value.whole_seconds": "%ss",
+  "text.ae2craftingtime.plan.recurrent": "Recurrent: %s",
+  "text.ae2craftingtime.plan.recurrent_hint": "This ingredient is missing because its crafting recipe depends on itself, directly or through other recipes.",
   "guide.ae2craftingtime.name": "AE2 Crafting Time Guide",
   "item.ae2craftingtime.guide": "AE2 Crafting Time Guide"
 }

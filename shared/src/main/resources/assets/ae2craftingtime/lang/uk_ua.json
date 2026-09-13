@@ -85,6 +85,8 @@
   "text.ae2craftingtime.stall.hint.co_processors": "• Спробуйте додати Crafting Co-Processor",
   "text.ae2craftingtime.stall.reason.co_processors": "  Усі %s паралельних слотів нещодавно були зайняті, а частина роботи все ще чекає.",
   "text.ae2craftingtime.value.whole_seconds": "%sс",
+  "text.ae2craftingtime.plan.recurrent": "Циклічне: %s",
+  "text.ae2craftingtime.plan.recurrent_hint": "Цього інгредієнта бракує, бо рецепт його виготовлення залежить від нього самого — безпосередньо або через інші рецепти.",
   "guide.ae2craftingtime.name": "Посібник AE2 Crafting Time",
   "item.ae2craftingtime.guide": "Посібник AE2 Crafting Time"
 }

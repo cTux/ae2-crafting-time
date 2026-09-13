@@ -38,6 +38,30 @@ snapshots. Retained checkpoints include raw and displayed serial order, draw
 scroll, server state, and timestamped outgoing request batches. A headless
 server check is not UI evidence.
 
+`recurrent-plan` is the bounded native Crafting Plan recurrence case. It uses
+real self, two-key and three-key loops; ordinary, seeded, eligible-alternative,
+successful-alternative, mixed, exact-variant, fuzzy-substitute and emitter
+controls; concurrent and cancelled calculations; and CRAFT_LESS retries.
+Large item quantities and fluid units exercise native amount formatting. Every
+integrated case traverses all three TTC sorts without profiling samples, checks
+the native quantity and cell bounds, and captures its row and tooltip. The
+NeoForge 1.21.1 case also creates a real plan with more than 256 entries.
+Client-thread observations record native setPlan before diagnostic chunks and
+reject malformed/stale diagnostics without changing the plan. Its dedicated
+counterpart is restricted to the marked loopback fixture; this does not enable
+general multiplayer or arbitrary-server automation.
+NeoForge 1.21.1 runs `Ae2ctAlpha` and `Ae2ctBeta` concurrently with fixed,
+distinct offline UUIDs, runtime directories, evidence directories, and
+role-control directories. Their overlapping grids start with opposite results,
+swap recurrence and replan, then Alpha reconnects while Beta keeps its plan
+open. Server acknowledgements bind each role to the observed player UUID.
+Capture acknowledgements remain available until each role disconnects; the
+server exits only after both roles finish. The two-role runner requires 22 GiB
+of available memory, serializes startup until each Java PID is recorded, and
+cleans up only owned PID/start-time pairs and matching scheduled tasks. Run this
+leaf plus `standard-plan-controls` on all four targets; qualify English and
+Ukrainian rendering separately. These are required checks, not recorded passes.
+
 The connected path is `scripts/run-connected-dedicated-ui-smoke.ps1`. It takes
 one prepared server and the matching prepared client launch, stages only the
 matching production and driver artifacts into the server, and retains separate

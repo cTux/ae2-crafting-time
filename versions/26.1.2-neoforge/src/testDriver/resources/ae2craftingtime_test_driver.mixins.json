@@ -11,6 +11,8 @@
     "CraftingCPUMenuAccessor"
   ],
   "client": [
+    "RecurrentNativePlanMixin",
+    "RecurrentPacketMixin",
     "CpuTtcClientMixin",
     "CpuTtcRequestsMixin",
     "ClientStatsAccessor",

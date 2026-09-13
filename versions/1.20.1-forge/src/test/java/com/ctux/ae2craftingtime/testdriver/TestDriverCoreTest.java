@@ -31,11 +31,25 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
+    @Test
+    void recurrentConnectedRolesUseSeparateBoundedDirectories() throws Exception {
+        var root = java.nio.file.Files.createTempDirectory("ae2ct-recurrent-control");
+        var previous = System.getProperty("ae2craftingtime.test.control");
+        try {
+            System.setProperty("ae2craftingtime.test.control", root.toString());
+            assertNotEquals(RecurrentPlanControl.directory("alpha"), RecurrentPlanControl.directory("beta"));
+            assertThrows(IllegalArgumentException.class, () -> RecurrentPlanControl.directory("other"));
+        } finally {
+            if (previous == null) System.clearProperty("ae2craftingtime.test.control");
+            else System.setProperty("ae2craftingtime.test.control", previous);
+        }
+    }
     @Test
     void embeddedContextResolvesClassesThroughTheDriverLoader() throws Exception {
         var driverJar = Path.of(System.getProperty("ae2craftingtime.test.driverJar"));
@@ -250,7 +264,7 @@ class TestDriverCoreTest {
     @Test
     void standardResultCannotOmitAnyRequiredPlanStatusOrOutputCheck() {
         assertFalse(AddonCpuFixture.supports("standard-ae2"));
-        assertEquals(7, StandardAe2Scenario.CHECKS.size());
+        assertEquals(8, StandardAe2Scenario.CHECKS.size());
         for (var entry : StandardAe2Scenario.CHECKS.entrySet()) {
             var scenario = entry.getKey();
             assertTrue(AddonCpuFixture.supports(scenario));
@@ -352,6 +366,17 @@ class TestDriverCoreTest {
                 .findFirst().orElseThrow();
         var inject = method.getAnnotation(org.spongepowered.asm.mixin.injection.Inject.class);
         assertTrue(inject.remap());
+    }
+
+    @Test
+    void recurrentPlanSenderRemapsTheMinecraftBroadcastLifecycleMethod() throws Exception {
+        var mixin = Class.forName("com.ctux.ae2craftingtime.mc1201.mixin.CraftConfirmMenuMixinSrg");
+        var method = java.util.Arrays.stream(mixin.getDeclaredMethods())
+                .filter(value -> value.getName().equals("send"))
+                .findFirst().orElseThrow();
+        var inject = method.getAnnotation(org.spongepowered.asm.mixin.injection.Inject.class);
+        assertTrue(inject.remap(),
+                "broadcastChanges must remap so the recurrent-plan sender targets production Minecraft bytecode");
     }
 
     @Test

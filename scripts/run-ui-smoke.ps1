@@ -6,7 +6,7 @@ param(
     [string]$CasesBase64,
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$ArchiveRoot,
     [string]$ReportDirectory,
@@ -16,6 +16,9 @@ param(
     [string]$DedicatedAddress,
     [string]$ControlDirectory,
     [string]$CampaignId,
+    [ValidateSet('alpha','beta')][string]$Role,
+    [string]$OfflineName,
+    [ValidatePattern('^[a-f0-9]{32}$')][string]$OfflineUuid,
     [string]$HeadSha,
     [string]$ResumeBundleDirectory,
     [switch]$CaptureResumeOnly,
@@ -275,6 +278,7 @@ try {
                 RuntimeDirectory=$runtime; Target=$Target; Profile=$profile; Scenario=$Scenario; World=$world
                 Evidence=$evidence; ProjectId=$ProjectId; Interactive=$Interactive; DedicatedAddress=$DedicatedAddress
                 ControlDirectory=$ControlDirectory; CampaignId=$campaignId }
+            if ($Role) { $launchParameters.Role=$Role; $launchParameters.OfflineName=$OfflineName; $launchParameters.OfflineUuid=$OfflineUuid }
             if ($RuntimeDirectory) { $launchParameters.AllowedRuntimeRoot=$report }
             if ($phase -eq 2) { $launchParameters.ContinuationPath=$continuationPath; $launchParameters.ResumeOnly=$true }
             $launch = & (Join-Path $PSScriptRoot 'prepare-ui-smoke-launch.ps1') @launchParameters
@@ -293,6 +297,7 @@ try {
                     RuntimeDirectory=$runtime; Target=$Target; Profile=$profile; Scenario=$Scenario; World=$world
                     Evidence=$evidence; ProjectId=$ProjectId; Interactive=$Interactive; DedicatedAddress=$DedicatedAddress
                     ControlDirectory=$ControlDirectory; CampaignId=$campaignId }
+                if ($Role) { $launchParameters.Role=$Role; $launchParameters.OfflineName=$OfflineName; $launchParameters.OfflineUuid=$OfflineUuid }
                 if ($RuntimeDirectory) { $launchParameters.AllowedRuntimeRoot=$report }
                 if ($phase -eq 2) {
                     $launchParameters.ContinuationPath = $continuationPath
@@ -351,7 +356,7 @@ try {
                 } elseif ($process.WaitForExit(1000)) {
                     break
                 }
-                if ($Scenario -eq 'cpu-list-total-ttc') {
+                if ($Scenario -in @('cpu-list-total-ttc', 'recurrent-plan') -or $selectedCases -contains 'recurrent-plan') {
                     $progressPath = Join-Path $evidence 'driver-progress.json'
                     if (Test-Path -LiteralPath $progressPath -PathType Leaf) {
                         try {
