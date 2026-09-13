@@ -57,7 +57,7 @@ try {
         @('shared/src/mc1201/java/Packet.java',3),
         @('shared/src/mc2612/java/Packet.java',1),
         @('shared/src/neoforge/java/Packet.java',2),
-        @('shared/src/testDriver1201/java/StandardAe2Scenario.java',4),
+        @('shared/src/testDriver1201/java/UnclassifiedScenario.java',4),
         @('shared/src/testDriverAddons/java/Fixture.java',2),
         @('other/StallDiagnostic.java',4),
         @('unknown space ü.txt',4))) {
@@ -121,6 +121,11 @@ try {
     Put $lang '{"text.ae2craftingtime.ttc_delayed":"late","other":"value"}'
     Assert ((Plan).targets[0].mode -eq 'full') 'Index and worktree key changes must union'
     Clean
+    Put $lang '{"text.ae2craftingtime.ttc_delayed":"DELAYED","text.ae2craftingtime.plan.recurrent":"Recurrent: %s","text.ae2craftingtime.plan.recurrent_hint":"Recurrent dependency","other":"value"}'
+    $recurrentLanguage = Plan
+    Assert (@($recurrentLanguage.targets | Where-Object { $_.cases.Count -ne 2 -or 'recurrent-plan' -notin $_.cases -or 'standard-plan-controls' -notin $_.cases }).Count -eq 0) `
+        'English recurrent-plan labels must select only the recurrence matrix'
+    Clean
     $unicodeLanguage = '{"text.ae2craftingtime.ttc_delayed":"DELAYED","other":"value' + [char]0x2026 + '"}'
     Put $lang $unicodeLanguage
     Invoke-FixtureGit @('add','--',$lang)
@@ -170,10 +175,10 @@ try {
     $tree = & $planner -Repository $temp -Target '1.20.1-forge' -Scenario 'crafting-tree-screen'
     Assert (!$tree.targets[0].graphs[0].baseOnly) 'Direct addon UI scenario must install its dependency catalogue'
     Assert ($advancedGraphs.Count -eq 3 -and @($advancedGraphs | Where-Object { $_.cases.Count -ne 4 }).Count -eq 0) 'AdvancedAE must repeat all provider status leaves on three targets'
-    Assert ($full.targets[0].cases.Count -eq 38) 'Expanded Forge suite must contain 38 leaves'
-    Assert ($full.targets[1].cases.Count -eq 20) 'Expanded Fabric suite must contain 20 leaves'
-    Assert ($full.targets[2].cases.Count -eq 34) 'Expanded NeoForge suite must contain 34 leaves'
-    Assert ($full.targets[3].cases.Count -eq 23) 'Expanded 26.1.2 suite must contain 23 leaves'
+    Assert ($full.targets[0].cases.Count -eq 39) 'Expanded Forge suite must contain 39 leaves'
+    Assert ($full.targets[1].cases.Count -eq 21) 'Expanded Fabric suite must contain 21 leaves'
+    Assert ($full.targets[2].cases.Count -eq 35) 'Expanded NeoForge suite must contain 35 leaves'
+    Assert ($full.targets[3].cases.Count -eq 24) 'Expanded 26.1.2 suite must contain 24 leaves'
     Invoke-FixtureGit @('checkout','-b','conflict-side')
     Put 'README.md' 'theirs'
     Invoke-FixtureGit @('add','.')

@@ -45,7 +45,7 @@ final class RecurrentPlanFixture implements ICraftingProvider {
             var c = AEItemKey.of(Items.COBBLESTONE);
             var sand = AEItemKey.of(Items.SAND);
             for (int offset : new int[] {4, 8}) {
-                var provider = (PatternProviderBlockEntity) player.serverLevel().getBlockEntity(fixture.terminal.east(offset));
+                var provider = (PatternProviderBlockEntity) player.level().getBlockEntity(fixture.terminal.east(offset));
                 provider.getLogic().getPatternInv().setItemDirect(0, net.minecraft.world.item.ItemStack.EMPTY);
                 provider.getLogic().updatePatterns();
             }
@@ -64,7 +64,7 @@ final class RecurrentPlanFixture implements ICraftingProvider {
                     AEKey missing = name.equals("fluid")
                             ? appeng.api.stacks.AEFluidKey.of(net.minecraft.world.level.material.Fluids.WATER) : b;
                     var encoded = ServerDriverPlatform.processingPattern(List.of(new GenericStack(missing, 1_000_000)), new GenericStack(a, 1));
-                    patterns.add(java.util.Objects.requireNonNull(PatternDetailsHelper.decodePattern(encoded, player.serverLevel())));
+                    patterns.add(java.util.Objects.requireNonNull(PatternDetailsHelper.decodePattern(encoded, player.level())));
                     pattern(player, missing, a);
                     expected = Set.of(missing);
                 }
@@ -121,7 +121,7 @@ final class RecurrentPlanFixture implements ICraftingProvider {
             if (node == null) {
                 node = GridHelper.createManagedNode(this, (owner, changed) -> {})
                         .setInWorldNode(false).addService(ICraftingProvider.class, this);
-                node.create(player.serverLevel(), fixture.terminal);
+                node.create(player.level(), fixture.terminal);
                 GridHelper.createConnection(node.getNode(), fixture.cpu(player).getMainNode().getNode());
             }
             ICraftingProvider.requestUpdate(node);
@@ -139,13 +139,13 @@ final class RecurrentPlanFixture implements ICraftingProvider {
             if (boundaryPlans == null) {
                 var source = IActionSource.ofMachine(fixture.cpu(player));
                 var a = AEItemKey.of(Items.SMOOTH_STONE);
-                var cancelled = service.beginCraftingCalculation(player.serverLevel(), () -> source, a, 1024,
+                var cancelled = service.beginCraftingCalculation(player.level(), () -> source, a, 1024,
                         appeng.api.networking.crafting.CalculationStrategy.REPORT_MISSING_ITEMS);
                 if (!cancelled.cancel(true) || !cancelled.isCancelled()) throw new IllegalStateException("Cancellation was not observed");
                 boundaryPlans = List.of(
-                        service.beginCraftingCalculation(player.serverLevel(), () -> source, a, 2,
+                        service.beginCraftingCalculation(player.level(), () -> source, a, 2,
                                 appeng.api.networking.crafting.CalculationStrategy.CRAFT_LESS),
-                        service.beginCraftingCalculation(player.serverLevel(), () -> source, a, 2,
+                        service.beginCraftingCalculation(player.level(), () -> source, a, 2,
                                 appeng.api.networking.crafting.CalculationStrategy.REPORT_MISSING_ITEMS));
                 return false;
             }
@@ -195,7 +195,7 @@ final class RecurrentPlanFixture implements ICraftingProvider {
     private void pattern(ServerPlayer player, AEKey output, AEKey... inputs) {
         var encoded = ServerDriverPlatform.processingPattern(java.util.Arrays.stream(inputs)
                 .map(key -> new GenericStack(key, 1)).toList(), new GenericStack(output, 1));
-        var decoded = java.util.Objects.requireNonNull(PatternDetailsHelper.decodePattern(encoded, player.serverLevel()));
+        var decoded = java.util.Objects.requireNonNull(PatternDetailsHelper.decodePattern(encoded, player.level()));
         patterns.add(configured.equals("substitute") && output.equals(AEItemKey.of(Items.SMOOTH_STONE))
                 ? ServerDriverPlatform.substitutePattern(decoded, substitute) : decoded);
     }
