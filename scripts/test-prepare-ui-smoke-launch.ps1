@@ -38,8 +38,8 @@ try {
     $roleArguments = Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw
     if (!$roleArguments.Contains('Ae2ctAlpha') -or $roleArguments.Contains('PreparedPlayer')) { throw 'Role identity was not replaced' }
     foreach ($invalid in @(
-        @{name='Ae2ctBeta';uuid='446b6d0ccadd3e57baf699d70f01a628';address='127.0.0.1:25565'},
-        @{name='Ae2ctAlpha';uuid='0023ed57716f3ea09c429f2240aeac6e';address='127.0.0.1:25565'},
+        @{name='OtherPlayer';uuid='446b6d0ccadd3e57baf699d70f01a628';address='127.0.0.1:25565'},
+        @{name='Ae2ctAlpha';uuid='0123456789abcdef0123456789abcdef';address='127.0.0.1:25565'},
         @{name='Ae2ctAlpha';uuid='446b6d0ccadd3e57baf699d70f01a628';address='192.0.2.1:25565'})) {
         $refusedRole = $false
         try {

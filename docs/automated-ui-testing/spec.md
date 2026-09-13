@@ -247,8 +247,13 @@ Installing an addon alone is not evidence of supported behavior.
 
 ## Clients and profiles
 
-Clients run sequentially so their memory, logs, screenshots, ports, and world
-state remain attributable.
+All Minecraft smoke clients run sequentially, never simultaneously, across
+targets, scenarios, integrated and connected runs. Confirm the previous client
+has exited before starting another; each client keeps its existing 8 GiB heap.
+A disposable dedicated server may remain running for its one client's reconnect.
+Tests that need different identities use sequential sessions or unit/packet
+boundaries and must not claim simultaneous-player proof. This rule supersedes
+older plans requiring concurrent clients; historical results remain unchanged.
 
 Run `scripts/run-ui-smoke.ps1` on the host for all four compatible suites.
 Add `-Latest` for the diagnostic matrix. To run one target, add `-Target`

@@ -51,16 +51,19 @@ It proves the production diagnosis through the native
 plan row and tooltip rather than seeding driver state. Its connected counterpart
 keeps the same marked-loopback, bounded-control, identity, and cleanup rules as
 the CPU-list runner; no other multiplayer scenario is authorized.
-On NeoForge 1.21.1 the runner owns two simultaneous background client jobs.
-Each launch has a fixed offline name/UUID and separate runtime, evidence, and
-role-control directory. The server maps those players to separate overlapping
-grids, publishes opposite recurrence outcomes, swaps the real patterns, and
-waits for both role-bound replans before Alpha reconnects. Beta remains in its
-open plan until Alpha's rejoined acknowledgement completes the campaign.
-The phase/turn policy rejects old-phase or out-of-turn commands. Successful
-client acknowledgements are idempotent across waiting frames, and captured
-roles retain published acknowledgements until their normal disconnect. Pure
-transition tests cover both one-role and two-role schedules and final cleanup.
+Every target uses one client process with the fixed offline fixture name/UUID
+and its own runtime, evidence and control directory. The client visits separate
+grids with opposite recurrence outcomes, swaps real patterns/replans, and
+reconnects. The server binds acknowledgements to the observed recipient UUID,
+menu and revision. The phase policy rejects old-phase commands; successful
+acknowledgements remain idempotent across waiting frames. Pure transition and
+packet-boundary tests cover recipient mismatches, sequential sessions and cleanup.
+Remove the concurrent-client branch, second role and dual-client memory gate;
+retain the existing one-client path on NeoForge 1.21.1 as on the other targets.
+All clients run sequentially, with one 8 GiB client at a time and verified exit
+before the next launch. The dedicated server may persist through reconnect.
+These checks establish single-client lifecycle and recipient-boundary evidence,
+not simultaneous-player behavior.
 Driver-only observers bind every accepted diagnostic to the native menu
 revision on the client thread and compare native quantities before and after.
 Recurrence runs, including selected-case suites, retain the runner's existing

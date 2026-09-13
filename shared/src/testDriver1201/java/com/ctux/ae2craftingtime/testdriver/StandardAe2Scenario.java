@@ -80,6 +80,8 @@ final class StandardAe2Scenario {
     private final StableFrames<Boolean> worldFrames = new StableFrames<>(8);
     private final StatsInteraction stats = new StatsInteraction();
     private boolean recurrenceSwapped;
+    private boolean recurrenceVisited;
+    private String recurrenceCapturedAction = "";
     private boolean recurrenceRejoined;
     private boolean recurrenceReconnectRequested;
     private boolean recurrenceCaptured;
@@ -107,7 +109,14 @@ final class StandardAe2Scenario {
         if (connectedDedicated && leaf.equals("recurrent-plan") && !recurrenceCaptured) {
             var state = RecurrentPlanControl.state();
             if (!state.ready() || !state.epoch().equals(CpuListTtcControl.epoch())
+                    || minecraft.player == null || !state.player().equals(minecraft.player.getUUID().toString())
                     || !state.turn().equals(RecurrentPlanControl.role())) return false;
+            if (!recurrenceVisited && state.phase().equals("grid")) {
+                recurrenceVisited = true;
+                minecraft.player.closeContainer();
+                fixture.bindTerminal(new net.minecraft.core.BlockPos(state.x(), state.y(), state.z()));
+                phase = Stage.TERMINAL; frames.reset(); return false;
+            }
         }
         var currentCheckpoint = checkpoint();
         if (reportedPhase != phase || !currentCheckpoint.equals(reportedCheckpoint)) {
@@ -330,16 +339,27 @@ final class StandardAe2Scenario {
             var recurrent = snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.plan.recurrent_hint"));
             if (recurrenceHover != recurrent) return false;
             if (connectedDedicated) {
-                var action = recurrenceCaptured ? "captured" : recurrenceRejoined ? "rejoined" : recurrenceSwapped ? "swapped" : "initial";
-                if (!RecurrentPlanControl.request(action, minecraft.player.getUUID())) return false;
+                var action = recurrenceCaptured ? "captured" : recurrenceRejoined ? "rejoined" : recurrenceSwapped ? "swapped" : recurrenceVisited ? "grid" : "initial";
+                var observedMenu = ((CraftConfirmScreen) minecraft.screen).getMenu();
+                if (!action.equals(recurrenceCapturedAction)) {
+                    screenshot.accept("recurrent-connected-" + action + ".png");
+                    System.out.println("AE2CT recurrence-frame action=" + action + " player=" + minecraft.player.getUUID()
+                            + " menu=" + observedMenu.containerId + " revision="
+                            + ((com.ctux.ae2craftingtime.mc1201.RecurrentPlanMenu) observedMenu).ae2craftingtime$summaryRevision()
+                            + " screenshot=recurrent-connected-" + action + ".png");
+                    recurrenceCapturedAction = action;
+                }
+                if (!RecurrentPlanControl.request(action, minecraft.player.getUUID(), observedMenu.containerId,
+                        ((com.ctux.ae2craftingtime.mc1201.RecurrentPlanMenu) observedMenu).ae2craftingtime$summaryRevision())) return false;
                 var state = RecurrentPlanControl.state();
+                if (!recurrenceVisited) return false;
                 if (!recurrenceSwapped) {
                     if (!state.phase().equals("swap")) return false;
                     recurrenceSwapped = true;
                     ((CraftConfirmScreen) minecraft.screen).getMenu().replan();
                     phase = Stage.PLAN_SORT; frames.reset(); return false;
                 }
-                if (!recurrenceRejoined && RecurrentPlanControl.role().equals("alpha")) {
+                if (!recurrenceRejoined) {
                     if (!state.phase().equals("reconnect")) return false;
                     recurrenceReconnectRequested = true; return false;
                 }

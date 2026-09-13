@@ -1,30 +1,31 @@
 package com.ctux.ae2craftingtime.testdriver;
 
-import java.util.List;
-import java.util.Map;
-
 final class RecurrentCampaign {
-    static String phase(boolean swapped, boolean replanned, boolean complete) {
-        return complete ? "complete" : !swapped ? "initial" : !replanned ? "swap" : "reconnect";
+    static boolean sameGrid(Object expected, Object actual) {
+        return expected != null && expected == actual;
+    }
+    static String phase(boolean visited, boolean swapped, boolean replanned, boolean complete) {
+        return complete ? "complete" : !visited ? "initial" : !swapped ? "grid" : !replanned ? "swap" : "reconnect";
     }
 
-    static String turn(List<String> roles, Map<String, String> actions, String phase) {
+    static String turn(String action, String phase) {
         if (phase.equals("reconnect")) return "alpha";
         var expected = switch (phase) {
             case "initial" -> "initial";
+            case "grid" -> "grid";
             case "swap" -> "swapped";
             case "complete" -> "captured";
             default -> throw new IllegalArgumentException("Unknown recurrent phase: " + phase);
         };
-        return roles.stream().filter(role -> !expected.equals(actions.get(role))).findFirst().orElse("");
+        return expected.equals(action) ? "" : "alpha";
     }
 
-    static boolean allows(String role, String action, String phase, String turn, boolean disconnected) {
-        if (!role.equals(turn)) return false;
+    static boolean allows(String action, String phase, boolean disconnected) {
         return switch (phase) {
             case "initial" -> action.equals("initial");
+            case "grid" -> action.equals("grid");
             case "swap" -> action.equals("swapped");
-            case "reconnect" -> disconnected && role.equals("alpha") && action.equals("rejoined");
+            case "reconnect" -> disconnected && action.equals("rejoined");
             case "complete" -> action.equals("captured");
             default -> false;
         };

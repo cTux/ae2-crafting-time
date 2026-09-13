@@ -6,8 +6,10 @@ extend optional Tree or requester screens. Forge and NeoForge append a
 versioned server-to-client packet; Fabric sends it only when the recipient
 advertises the recurrence channel. The native AE2 plan packet remains unchanged.
 Qualification requires integrated `recurrent-plan` and `standard-plan-controls`
-plus connected `recurrent-plan` on all targets, including the NeoForge 1.21.1 two-client
-and greater-than-256-row cases. No recurrence runtime pass is recorded here yet.
+plus connected `recurrent-plan` with one client per target, all clients running
+sequentially. NeoForge 1.21.1 also covers a greater-than-256-row plan. Recipient
+boundary tests and dedicated replan/reconnect checks verify stale-plan isolation;
+no simultaneous-player proof or recurrence runtime pass is recorded here yet.
 
 ## Startup adapter selection
 

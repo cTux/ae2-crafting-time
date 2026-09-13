@@ -1,42 +1,41 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 import static org.junit.jupiter.api.Assertions.*;
-import java.util.HashMap;
-import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class RecurrentCampaignTest {
-    @Test void oneAndTwoRoleCampaignsSerializeEveryPhase() {
-        for (var roles : List.of(List.of("alpha"), List.of("alpha", "beta"))) {
-            var actions = new HashMap<String, String>();
-            for (var phase : List.of("initial", "swap", "complete")) {
-                var action = phase.equals("swap") ? "swapped" : phase.equals("complete") ? "captured" : "initial";
-                for (var role : roles) {
-                    var turn = RecurrentCampaign.turn(roles, actions, phase);
-                    assertEquals(role, turn);
-                    assertTrue(RecurrentCampaign.allows(role, action, phase, turn, false));
-                    assertFalse(RecurrentCampaign.allows(role, "rejoined", phase, turn, true));
-                    assertFalse(RecurrentCampaign.allows("unrelated", action, phase, turn, true));
-                    actions.put(role, action);
-                }
-                assertEquals("", RecurrentCampaign.turn(roles, actions, phase));
-            }
-            assertEquals("alpha", RecurrentCampaign.turn(roles, actions, "reconnect"));
+    @Test void onlyTheExactLiveGridCanAcknowledgeTheObservedPlan() {
+        var grid = new Object();
+        assertTrue(RecurrentCampaign.sameGrid(grid, grid));
+        assertFalse(RecurrentCampaign.sameGrid(grid, new Object()));
+        assertFalse(RecurrentCampaign.sameGrid(grid, null));
+        assertFalse(RecurrentCampaign.sameGrid(null, null));
+    }
+    @Test void oneClientCampaignSerializesEveryPhase() {
+        for (var phase : java.util.List.of("initial", "grid", "swap", "complete")) {
+            var action = phase.equals("swap") ? "swapped" : phase.equals("complete") ? "captured" : phase;
+            assertEquals("alpha", RecurrentCampaign.turn("", phase));
+            assertTrue(RecurrentCampaign.allows(action, phase, false));
+            assertFalse(RecurrentCampaign.allows("rejoined", phase, true));
+            assertEquals("", RecurrentCampaign.turn(action, phase));
         }
+        assertEquals("alpha", RecurrentCampaign.turn("swapped", "reconnect"));
     }
 
     @Test void reconnectRequiresARealDisconnectAndNoOldPhaseActionIsAccepted() {
-        assertEquals("initial", RecurrentCampaign.phase(false, false, false));
-        assertEquals("swap", RecurrentCampaign.phase(true, false, false));
-        assertEquals("reconnect", RecurrentCampaign.phase(true, true, false));
-        assertEquals("complete", RecurrentCampaign.phase(true, true, true));
-        assertFalse(RecurrentCampaign.allows("alpha", "rejoined", "reconnect", "alpha", false));
-        assertTrue(RecurrentCampaign.allows("alpha", "rejoined", "reconnect", "alpha", true));
-        assertFalse(RecurrentCampaign.allows("alpha", "swapped", "reconnect", "alpha", true));
-        assertFalse(RecurrentCampaign.allows("alpha", "initial", "swap", "alpha", true));
-        assertFalse(RecurrentCampaign.allows("alpha", "swapped", "complete", "alpha", true));
-        assertFalse(RecurrentCampaign.allows("alpha", "captured", "unknown", "alpha", true));
-        assertThrows(IllegalArgumentException.class, () -> RecurrentCampaign.turn(List.of("alpha"), java.util.Map.of(), "unknown"));
+        assertEquals("initial", RecurrentCampaign.phase(false, false, false, false));
+        assertEquals("grid", RecurrentCampaign.phase(true, false, false, false));
+        assertEquals("swap", RecurrentCampaign.phase(true, true, false, false));
+        assertEquals("reconnect", RecurrentCampaign.phase(true, true, true, false));
+        assertEquals("complete", RecurrentCampaign.phase(true, true, true, true));
+        assertFalse(RecurrentCampaign.allows("initial", "grid", false));
+        assertFalse(RecurrentCampaign.allows("rejoined", "reconnect", false));
+        assertTrue(RecurrentCampaign.allows("rejoined", "reconnect", true));
+        assertFalse(RecurrentCampaign.allows("swapped", "reconnect", true));
+        assertFalse(RecurrentCampaign.allows("initial", "swap", true));
+        assertFalse(RecurrentCampaign.allows("swapped", "complete", true));
+        assertFalse(RecurrentCampaign.allows("captured", "unknown", true));
+        assertThrows(IllegalArgumentException.class, () -> RecurrentCampaign.turn("", "unknown"));
     }
 
     @Test void capturedRoleStillReceivesAcknowledgementUntilItDisconnects() {

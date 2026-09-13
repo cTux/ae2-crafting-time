@@ -16,7 +16,7 @@ param(
     [string]$DedicatedAddress,
     [string]$ControlDirectory,
     [string]$CampaignId,
-    [ValidateSet('alpha','beta')][string]$Role,
+    [ValidateSet('alpha')][string]$Role,
     [string]$OfflineName,
     [ValidatePattern('^[a-f0-9]{32}$')][string]$OfflineUuid,
     [string]$HeadSha,
@@ -177,9 +177,9 @@ if (-not $resolvedBase.StartsWith($buildRoot, [StringComparison]::OrdinalIgnoreC
 Write-Status 'preparing' 'creating isolated runtime directories'
 New-Item -ItemType Directory -Path $base, $report, (Split-Path -Parent $worldCopy) -Force | Out-Null
 try {
-    $runtimeLock = [IO.File]::Open((Join-Path $base "runtime.lock"), "OpenOrCreate", "ReadWrite", "None")
+    $runtimeLock = [IO.File]::Open((Join-Path ([IO.Path]::GetTempPath()) "ae2-crafting-time-smoke-client.lock"), "OpenOrCreate", "ReadWrite", "None")
 } catch {
-    throw "Another $profile UI-smoke scenario is already using this workspace runtime"
+    throw "Another Minecraft UI-smoke client is already running; wait for its exit before launching another target or scenario"
 }
 if (Test-Path -LiteralPath $evidence) { Remove-Item -LiteralPath $evidence -Recurse -Force }
 if ($resumeState) {
@@ -630,7 +630,6 @@ try {
         if ($afterHash -ne $sourceHash -or $afterMetadata -ne $metadataHash) { throw "Tracked source fixture changed during UI smoke" }
     }
     Write-Status "passed" "UI smoke passed" $observedExitCode
-    $runtimeLock.Dispose()
     Write-Host "UI smoke passed: $evidence"
 } catch {
     if ($scheduledTaskName) { Remove-UiSmokeScheduledJava -TaskName $scheduledTaskName }
@@ -638,6 +637,7 @@ try {
         elseif ($process -and !$processDisappeared -and $process.HasExited) { [Nullable[int]]$process.ExitCode }
         else { $null }
     Write-Status "failed" $_.Exception.Message $exitCode
-    $runtimeLock.Dispose()
     throw
+} finally {
+    $runtimeLock.Dispose()
 }

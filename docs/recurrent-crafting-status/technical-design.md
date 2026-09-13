@@ -160,12 +160,13 @@ the extra label but must not change AE2's calculation or damage learned data.
 
 ## Verification extension and ownership
 
-The existing connected runner, `scripts/run-connected-dedicated-ui-smoke.ps1`,
-is specific to `cpu-list-total-ttc-connected` and one client. Reuse its source
+The connected runner, `scripts/run-connected-dedicated-ui-smoke.ps1`,
+supports CPU-list and recurrence scenarios. Reuse its source
 marker, dependency/launcher hash validation, disposable copy, loopback binding,
-server-ready barrier, and exact process cleanup. Add an explicit recurrence
-scenario selector; preserve the CPU-list default and its checks. This is a
-planned extension, not evidence that recurrence multiplayer is already runnable.
+server-ready barrier, and exact process cleanup. Preserve the CPU-list default
+and its checks. Remove recurrence's concurrent-client branch and memory gate;
+every target must use the existing single-client path. This requirement update
+does not certify the corresponding implementation or runtime result.
 
 Add `recurrent-plan` to the existing driver scenario/result/host selection
 contracts. Own its real processing-pattern fixture and frame checks beside
@@ -179,29 +180,29 @@ than adding recurrence state to the CPU-list state machine. Reuse the bounded
 atomic command/acknowledgement pattern in `CpuListTtcControl`; recurrence commands
 address an explicit player role and scenario phase, never an arbitrary action.
 
-The connected leaf is `recurrent-plan-connected`. On each target, its one
-client proves native summary/mod-chunk execution order and reconnect behavior.
-On 1.21.1 NeoForge, run a second actual client concurrently for player isolation.
-Use two distinct offline fixture names/UUIDs, separate runtime, control and
-evidence directories, and one campaign identity. Bind role acknowledgements to
-the server-observed player UUID and menu, not whichever player joins first.
-The two grids use overlapping item keys and opposite recurrence outcomes, then
-swap outcomes and replan. Both players must remain connected across the swap;
-capture each final frame and the server's matching recipient/plan records.
-Disconnect/rejoin one player while the other's plan stays open. A fake player
-or two sequential sessions cannot satisfy this overlap check.
+The server leaf is `recurrent-plan-connected`, selected through the runner's
+`-Scenario recurrent-plan`. Each target uses one connected client to prove
+native summary/mod-chunk execution order, recipient binding and reconnect.
+Use the fixed offline fixture identity and bind acknowledgements to the
+server-observed UUID, menu and revision. The client visits separate grids with
+overlapping item keys and opposite recurrence outcomes, swaps/replans, then
+reconnects without accepting its old diagnosis. Record each final frame and
+matching server recipient/plan evidence. Unit and packet-boundary tests cover
+different recipients, networks, menus and revisions independently of live
+clients. A separately identified session may run only after the prior client
+exits; neither sequential sessions nor boundary tests claim simultaneous-player proof.
 
 Reuse `prepare-ui-smoke-launch.ps1` and the scheduled-Java helpers for isolated
 launches. Add only validated fixture-role/offline-identity options needed by this
 loopback scenario; do not read account tokens or change ordinary launch identity.
-Start the clients one at a time through PID acquisition, keep both running for
-isolation, and serialize visible input/captures with both windows maximized.
-Give each client its own task name, argument file, log, watchdog and cleanup.
-Keep the existing 8 GiB client heap. Insufficient guest resources are a preflight
-failure, not permission to replace the second client with synthetic evidence.
+Record the client's PID, maximize its window, and retain its task name,
+argument file, log, watchdog and cleanup. Keep one 8 GiB client running at a
+time; confirm its exit before launching another. Remove the second role,
+dual-client orchestration and associated resource prerequisite. The disposable
+dedicated server may stay running through the client's reconnect.
 
-Update the test-driver spec/design's currently CPU-list-only multiplayer boundary
-in the implementation change to include this exact marked loopback scenario.
+Keep the test-driver spec/design's marked-loopback boundary limited to the
+registered CPU-list and recurrence scenarios.
 Do not broaden its permission to other servers or add a general multiplayer runner.
 Keep all new fixture/control code out of production JARs and `dist`.
 

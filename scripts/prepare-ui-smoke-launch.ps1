@@ -13,7 +13,7 @@ param(
     [string]$ControlDirectory,
     [string]$ContinuationPath,
     [string]$CampaignId,
-    [ValidateSet('alpha','beta')][string]$Role,
+    [ValidateSet('alpha')][string]$Role,
     [string]$OfflineName,
     [ValidatePattern('^[a-f0-9]{32}$')][string]$OfflineUuid,
     [switch]$ResumeOnly,
@@ -90,8 +90,8 @@ if ($CampaignId) {
     $arguments.Insert(0, "-Dae2craftingtime.test.campaign=$CampaignId")
 }
 if ($Role) {
-    $expectedName = if ($Role -eq 'alpha') { 'Ae2ctAlpha' } else { 'Ae2ctBeta' }
-    $expectedUuid = if ($Role -eq 'alpha') { '446b6d0ccadd3e57baf699d70f01a628' } else { '0023ed57716f3ea09c429f2240aeac6e' }
+    $expectedName = 'Ae2ctAlpha'
+    $expectedUuid = '446b6d0ccadd3e57baf699d70f01a628'
     if ($Scenario -ne 'recurrent-plan' -or $DedicatedAddress -notmatch '^(127\.0\.0\.1|localhost):[0-9]{1,5}$' -or
             $OfflineName -cne $expectedName -or $OfflineUuid -cne $expectedUuid) {
         throw 'Recurrent connected role requires its bounded offline identity'

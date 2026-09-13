@@ -50,17 +50,21 @@ Client-thread observations record native setPlan before diagnostic chunks and
 reject malformed/stale diagnostics without changing the plan. Its dedicated
 counterpart is restricted to the marked loopback fixture; this does not enable
 general multiplayer or arbitrary-server automation.
-NeoForge 1.21.1 runs `Ae2ctAlpha` and `Ae2ctBeta` concurrently with fixed,
-distinct offline UUIDs, runtime directories, evidence directories, and
-role-control directories. Their overlapping grids start with opposite results,
-swap recurrence and replan, then Alpha reconnects while Beta keeps its plan
-open. Server acknowledgements bind each role to the observed player UUID.
-Capture acknowledgements remain available until each role disconnects; the
-server exits only after both roles finish. The two-role runner requires 22 GiB
-of available memory, serializes startup until each Java PID is recorded, and
-cleans up only owned PID/start-time pairs and matching scheduled tasks. Run this
-leaf plus `standard-plan-controls` on all four targets; qualify English and
-Ukrainian rendering separately. These are required checks, not recorded passes.
+Every target runs one 8 GiB client with the fixed offline fixture identity.
+The client visits grids with opposite results, swaps patterns/replans, and
+reconnects without retaining an old diagnosis. Server acknowledgements bind
+the observed player UUID, menu and revision to the captured client frame.
+Unit/packet-boundary tests cover different recipients and reject wrong or stale
+identity. Separate identity sessions, if used, run only after the prior client
+exits. No simultaneous-player proof is required or claimed. Keep PID/start-time
+and scheduled-task cleanup for the single client. Run this leaf plus
+`standard-plan-controls` on all four targets in English; check Ukrainian
+resources/components statically. These are required checks, not recorded passes.
+
+All Minecraft smoke clients run sequentially, including connected scenarios;
+confirm the previous client exited before launching another. A disposable
+dedicated server may remain running for the client's reconnect. Remove obsolete
+dual-client scheduling and resource requirements before running the revised gate.
 
 The connected path is `scripts/run-connected-dedicated-ui-smoke.ps1`. It takes
 one prepared server and the matching prepared client launch, stages only the
