@@ -1,9 +1,13 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 import static org.junit.jupiter.api.Assertions.*;
+import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.Properties;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
@@ -46,5 +50,20 @@ class RecurrentPlanControlTest {
                 else System.setProperty(keys.get(i), previous.get(i));
             }
         }
+    }
+
+    @Test void retriesTransientWindowsReplaceFailures() throws Exception {
+        var target = directory.resolve("alpha/state.properties");
+        var values = new Properties();
+        values.setProperty("phase", "swap");
+        var attempts = new AtomicInteger();
+        RecurrentPlanControl.write(target, values, (source, destination) -> {
+            if (attempts.incrementAndGet() == 1) throw new AccessDeniedException(destination.toString());
+            Files.move(source, destination, StandardCopyOption.REPLACE_EXISTING);
+        });
+        assertEquals(2, attempts.get());
+        var written = new Properties();
+        try (var input = Files.newInputStream(target)) { written.load(input); }
+        assertEquals("swap", written.getProperty("phase"));
     }
 }

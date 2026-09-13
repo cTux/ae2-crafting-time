@@ -64,7 +64,18 @@ final class RecurrentPlanControl {
     }
     private static String checkedRole(String value) { if (!value.equals("alpha") && !value.equals("beta")) throw new IllegalArgumentException("invalid recurrent role"); return value; }
     private static Properties read(Path path) { var result=new Properties(); if(!Files.isRegularFile(path))return result; try(var in=Files.newInputStream(path)){if(Files.size(path)>65536)throw new IllegalStateException("Recurrent control file exceeds 64 KiB");result.load(in);return result;}catch(IOException e){throw new IllegalStateException(e);} }
-    private static void write(Path path, Properties values) { try { Files.createDirectories(path.getParent()); var tmp=path.resolveSibling(path.getFileName()+".tmp"); try(var out=Files.newOutputStream(tmp)){values.store(out,null);} Files.move(tmp,path,StandardCopyOption.REPLACE_EXISTING,StandardCopyOption.ATOMIC_MOVE); } catch(IOException e){throw new IllegalStateException(e);} }
+    private static void write(Path path, Properties values) {
+        write(path, values, (source, target) -> Files.move(source, target,
+                StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE));
+    }
+    static void write(Path path, Properties values, DriverProgress.ProgressMover mover) {
+        try {
+            Files.createDirectories(path.getParent());
+            var temporary = path.resolveSibling(path.getFileName() + ".tmp");
+            try (var output = Files.newOutputStream(temporary)) { values.store(output, null); }
+            DriverProgress.moveWithAccessDeniedRetry(temporary, path, mover);
+        } catch (IOException error) { throw new IllegalStateException(error); }
+    }
     record State(boolean ready,String epoch,long ack,String action,String phase,int x,int y,int z,String player,boolean recurrent,String turn) {}
     record Command(String epoch,long sequence,String action,String role,String player) {}
     private RecurrentPlanControl() {}
