@@ -5,6 +5,10 @@ final class ServerDriverPlatform {
         return net.minecraftforge.fml.ModList.get().isLoaded(id);
     }
 
+    static WirelessTerminalFixture wcwtTerminal() {
+        return new WcwtTerminalFixture();
+    }
+
     static net.minecraft.world.item.ItemStack processingPattern(appeng.api.stacks.GenericStack input,
             appeng.api.stacks.GenericStack output) {
         return appeng.api.crafting.PatternDetailsHelper.encodeProcessingPattern(

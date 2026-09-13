@@ -44,20 +44,20 @@ abstract class AddonCpuFixture<P> {
     }
 
     static AddonCpuFixture<?> create(String scenario) {
+        var fixtureClass = FIXTURES.get(scenario);
+        if (fixtureClass != null) {
+            try {
+                return (AddonCpuFixture<?>) Class.forName(fixtureClass).getDeclaredConstructor().newInstance();
+            } catch (ReflectiveOperationException | LinkageError error) {
+                throw new IllegalStateException("cannot load test-driver fixture for " + scenario, error);
+            }
+        }
         if (("craft-plan".equals(scenario) || StandardAe2Scenario.supports(scenario)) || NoSpaceScenario.SCENARIO.equals(scenario) || NoProviderScenario.SCENARIO.equals(scenario) || NoPowerScenario.SCENARIO.equals(scenario) || ProviderDispatchStatusScenario.supports(scenario) || CraftingTreeScenario.supports(scenario) || RequesterFixture.supports(scenario)
                 || Ae2NetworkAnalyserFixture.SCENARIO.equals(scenario)
                 || WirelessTerminalFixture.supports(scenario)) {
             return null;
         }
-        var fixtureClass = FIXTURES.get(scenario);
-        if (fixtureClass == null) {
-            throw new IllegalArgumentException("unsupported test-driver scenario: " + scenario);
-        }
-        try {
-            return (AddonCpuFixture<?>) Class.forName(fixtureClass).getDeclaredConstructor().newInstance();
-        } catch (ReflectiveOperationException | LinkageError error) {
-            throw new IllegalStateException("cannot load test-driver fixture for " + scenario, error);
-        }
+        throw new IllegalArgumentException("unsupported test-driver scenario: " + scenario);
     }
 
     final boolean setup(Minecraft minecraft, FixtureMarker marker) {

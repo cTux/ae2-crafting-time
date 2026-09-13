@@ -202,7 +202,7 @@ public final class DedicatedCpuScenario {
                     ServerDriverPlatform.isModLoaded("wcwt"), ServerDriverPlatform.isModLoaded("advanced_ae"));
             if (recurrentAddonRoute) {
                 addon = (AddonCpuFixture<Object>) AddonCpuFixture.create("advancedae-cpu");
-                recurrentWireless = WirelessTerminalFixture.create("ae2wcwt-terminal");
+                recurrentWireless = ServerDriverPlatform.wcwtTerminal();
             }
         }
         if (!recurrentFixture.prepare(rolePlayer, origin)) return;
