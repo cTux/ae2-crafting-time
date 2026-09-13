@@ -199,7 +199,7 @@ public final class DedicatedCpuScenario {
             recurrentFixture.missingPlanInput = true;
             recurrentFixture.unprofiledPlan = true;
             recurrentAddonRoute = RecurrentCampaign.addonRoute(
-                    DriverPlatform.isModLoaded("wcwt"), DriverPlatform.isModLoaded("advanced_ae"));
+                    ServerDriverPlatform.isModLoaded("wcwt"), ServerDriverPlatform.isModLoaded("advanced_ae"));
             if (recurrentAddonRoute) {
                 addon = (AddonCpuFixture<Object>) AddonCpuFixture.create("advancedae-cpu");
                 recurrentWireless = WirelessTerminalFixture.create("ae2wcwt-terminal");
