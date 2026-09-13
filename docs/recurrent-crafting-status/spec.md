@@ -59,7 +59,8 @@ Do not repair recipes, resolve loops, modify AE2's calculation or submission,
 add a graph viewer, change TTC estimation, reorder missing rows, add a setting,
 persist diagnoses, or release mod JARs as part of this planning PR.
 Missing-first sorting is tracked separately in
-[#318](https://github.com/cTux/ae2-crafting-time/issues/318).
+[#318](https://github.com/cTux/ae2-crafting-time/issues/318) and is already present;
+preserve its missing-amount comparator.
 
 ## Acceptance criteria
 
@@ -72,6 +73,13 @@ Missing-first sorting is tracked separately in
 | R5 | Replan, menu replacement, another network, cancellation, disconnect, and late packets cannot show an old diagnosis. |
 | R6 | Both locales, all four targets, all TTC sort modes, no-sample plans, and quantities/units remain correct. Long text stays within the existing table layout. |
 | R7 | Craftability, calculation results, timing data, saved data, and optional separate screens are unchanged. Missing or rejected diagnostic data leaves the native plan usable. |
+
+Verify both locales through translation/component checks. Runtime smoke uses
+English only under the [current smoke policy](../automated-ui-testing/spec.md#smoke-policy);
+Ukrainian remains a supported product locale. The bounded test-driver extension
+in the implementation plan is part of verification, not a new player feature.
+Its two-client overlap is limited to proving two actual players receive their
+own plans on one disposable loopback server; other campaigns stay sequential.
 
 See the [technical design](technical-design.md) and
 [implementation plan](implementation-plan.md).
