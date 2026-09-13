@@ -37,6 +37,13 @@ These are source checks, not runtime compatibility or reproduction evidence.
 The implementation must verify descriptors against both 1.20.1 loader artifacts
 and each target's prepared runtime before declaring coverage.
 
+Reinspection at `8adc78280d4efcabca0e3baacbc3c7a8e3119026` confirms the
+renderer still has no recurrence input. The compatible graphs now use AE2
+15.4.10 (Forge), 15.1.0 (Fabric), 19.2.17, and 26.1.10-beta. These are runtime
+pins, not new minimum supported versions. Verify the common hooks in both the
+minimum build artifacts and those resolved runtime artifacts, including Fabric
+remapping. Select the newest implemented adapter under the current smoke policy.
+
 ## Server evidence and ownership
 
 Observe AE2's recursion decision; do not build a second graph from all network
@@ -132,7 +139,7 @@ existing quantity formatting. Add the explanation once, before TTC-only guards.
 matching keys under the existing `ae2craftingtime` translation namespace in
 `shared/src/main/resources/assets/ae2craftingtime/lang/{en_us,uk_ua}.json`.
 Use ChatFormatting.RED without bold. The status must not enter TTC color or
-badge classification. Leave sorting and TTC calculations untouched; any later
+badge classification. Leave sorting and TTC calculations untouched; the existing
 #318 missing-first comparator continues to use missingAmount, not this flag.
 Disable hides the label immediately; re-enable may reuse evidence attached to
 the still-current plan. It must never restore flags from a previous summary.
@@ -150,6 +157,53 @@ the carrier have no evidence. Native terminal routes inherit the table hook;
 separate Tree and Requester views do not. A missing required hook must fail
 verification, not silently ship as supported. Invalid diagnostic input may lose
 the extra label but must not change AE2's calculation or damage learned data.
+
+## Verification extension and ownership
+
+The existing connected runner, `scripts/run-connected-dedicated-ui-smoke.ps1`,
+is specific to `cpu-list-total-ttc-connected` and one client. Reuse its source
+marker, dependency/launcher hash validation, disposable copy, loopback binding,
+server-ready barrier, and exact process cleanup. Add an explicit recurrence
+scenario selector; preserve the CPU-list default and its checks. This is a
+planned extension, not evidence that recurrence multiplayer is already runnable.
+
+Add `recurrent-plan` to the existing driver scenario/result/host selection
+contracts. Own its real processing-pattern fixture and frame checks beside
+`StandardAe2Scenario` and `StandardCraftFixture` in
+`shared/src/testDriver1201/java/com/ctux/ae2craftingtime/testdriver/`;
+keep changed 26.1.2 APIs in the existing
+version-specific driver source set. Reuse `DriverPlatform.processingPattern`,
+`UiObservationStore`, `CaptureEvidence`, and native menu interaction. Extend
+`DedicatedCpuScenario` dispatch through a focused recurrence fixture rather
+than adding recurrence state to the CPU-list state machine. Reuse the bounded
+atomic command/acknowledgement pattern in `CpuListTtcControl`; recurrence commands
+address an explicit player role and scenario phase, never an arbitrary action.
+
+The connected leaf is `recurrent-plan-connected`. On each target, its one
+client proves native summary/mod-chunk execution order and reconnect behavior.
+On 1.21.1 NeoForge, run a second actual client concurrently for player isolation.
+Use two distinct offline fixture names/UUIDs, separate runtime, control and
+evidence directories, and one campaign identity. Bind role acknowledgements to
+the server-observed player UUID and menu, not whichever player joins first.
+The two grids use overlapping item keys and opposite recurrence outcomes, then
+swap outcomes and replan. Both players must remain connected across the swap;
+capture each final frame and the server's matching recipient/plan records.
+Disconnect/rejoin one player while the other's plan stays open. A fake player
+or two sequential sessions cannot satisfy this overlap check.
+
+Reuse `prepare-ui-smoke-launch.ps1` and the scheduled-Java helpers for isolated
+launches. Add only validated fixture-role/offline-identity options needed by this
+loopback scenario; do not read account tokens or change ordinary launch identity.
+Start the clients one at a time through PID acquisition, keep both running for
+isolation, and serialize visible input/captures with both windows maximized.
+Give each client its own task name, argument file, log, watchdog and cleanup.
+Keep the existing 8 GiB client heap. Insufficient guest resources are a preflight
+failure, not permission to replace the second client with synthetic evidence.
+
+Update the test-driver spec/design's currently CPU-list-only multiplayer boundary
+in the implementation change to include this exact marked loopback scenario.
+Do not broaden its permission to other servers or add a general multiplayer runner.
+Keep all new fixture/control code out of production JARs and `dist`.
 
 ## Acceptance mapping
 
