@@ -4,8 +4,10 @@ Issue: [#216](https://github.com/cTux/ae2-crafting-time/issues/216).
 
 Status: original planning approved on 2026-09-03; researched again on
 2026-09-06 against `51edf0f8f531c8f12fe4e192f934669359011390`.
-This refresh updates the implementation boundaries; the three statuses are
-still unimplemented. See the [research findings](technical-design.md#repository-changes-since-the-original-plan).
+The original three statuses are implemented as of the 2026-09-13 repository
+baseline. The [NO CHANNEL extension](no-channel/spec.md) is planned separately
+in issue #405. The documents below retain the original three-status scope.
+See the [research findings](technical-design.md#repository-changes-since-the-original-plan).
 
 ## Goal
 
