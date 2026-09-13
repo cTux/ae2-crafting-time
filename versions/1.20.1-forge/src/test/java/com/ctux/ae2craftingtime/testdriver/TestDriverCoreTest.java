@@ -369,6 +369,17 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void recurrentPlanSenderRemapsTheMinecraftBroadcastLifecycleMethod() throws Exception {
+        var mixin = Class.forName("com.ctux.ae2craftingtime.mc1201.mixin.CraftConfirmMenuMixin");
+        var method = java.util.Arrays.stream(mixin.getDeclaredMethods())
+                .filter(value -> value.getName().equals("send"))
+                .findFirst().orElseThrow();
+        var inject = method.getAnnotation(org.spongepowered.asm.mixin.injection.Inject.class);
+        assertTrue(inject.remap(),
+                "broadcastChanges must remap so the recurrent-plan sender targets production Minecraft bytecode");
+    }
+
+    @Test
     void reconnectPacketHoldTracksTheNewestOutstandingResponse() {
         var first = new com.ctux.ae2craftingtime.mc1201.net.CpuTtcPacketCodec.Snapshot(1, 1, List.of());
         var latest = new com.ctux.ae2craftingtime.mc1201.net.CpuTtcPacketCodec.Snapshot(1, 2, List.of());
