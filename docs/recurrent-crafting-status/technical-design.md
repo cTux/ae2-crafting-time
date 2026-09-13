@@ -1,217 +1,169 @@
 # Recurrent crafting status: technical design
 
-Status: planned. Implements the [specification](spec.md).
+Status: implemented. This describes the current architecture and the open
+[#408](https://github.com/cTux/ae2-crafting-time/issues/408) investigation against
+the [specification](spec.md). Source inspection below is bound to
+`01cd5d75862105d7af049f03c2e0d88d54f5b980`; it is not a runtime pass for a fix.
 
-## Verified seams
+## Current calculation and summary flow
 
-The repository's shared `CraftConfirmTableRendererMixin` adds TTC through
-`getEntryDescription` and `getEntryTooltip`. It currently has no missing-reason
-input. Tooltip TTC handling exits early when `craftAmount <= 0`; recurrence
-handling must run before that guard. The two `CraftConfirmScreenMixin` variants
-own TTC sorting, while `AbstractTableRendererMixin` owns compact TTC rendering.
+The common production hooks live under
+`shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/`. They observe AE2's
+calculation rather than building a second graph from the recipe catalogue.
 
-Inspected AE2 15.0.10 sources from the published Fabric source JAR and the
-19.0.24 / 26.1.10-beta upstream source revisions have these same seams:
+1. `mixin/CraftingTreeNodeMixin` wraps the existing
+   `CraftingTreeProcess.notRecursive` call in `buildChildPatterns`. It returns
+   AE2's answer unchanged and remembers a rejected candidate on that node.
+2. At the actual simulated `CraftingCalculation.addMissing` call, it records the
+   key only when recurrence rejected a candidate, no eligible child remains,
+   and the missing amount is positive. `RecurrentMissing.record` owns this rule
+   in pure Java. Storage, emission and eligible alternatives retain AE2's behavior.
+3. `mixin/CraftingCalculationMixin` clears observations at every
+   `runCraftAttempt` entry. On a non-null result it attaches an immutable
+   intersection with the final plan's positive missing keys; nonsimulated
+   success has no recurrence keys. Nodes retain rejection metadata because AE2
+   can reuse its tree across attempts, including CRAFT_LESS.
+4. `mixin/CraftingPlanMixin` implements `PlanRecurrence` on the returned plan.
+   It retains exact AEKey identity, including variant data. Future completion
+   publishes the attachment; there is no process-global map, profiler or saved state.
+5. `mixin/CraftingPlanSummaryMixin` currently injects at `fromJob` RETURN.
+   It flags only existing summary entries with a positive missing amount and a
+   key in the plan attachment. AE2 computes those displayed quantities from
+   current storage and emitter state. Mixed shortages keep AE2's total amount.
+6. Native `CraftConfirmMenu.broadcastChanges` obtains the future, creates the
+   summary and sends `CraftConfirmPlanPacket`. Client `setPlan` installs it.
 
-1. `CraftingTreeNode.buildChildPatterns` skips a candidate when
-   `parent.notRecursive(details)` returns false.
-2. `CraftingTreeNode.request` consumes storage and checks emission before trying
-   recipes. Its terminal simulated shortage calls `job.addMissing(what, amount)`.
-3. `CraftingCalculation.runCraftAttempt` may run several times, including
-   CRAFT_LESS attempts, before returning the final simulated or successful plan.
-4. `CraftingPlan` carries missing quantities but no recurrence reason.
-5. `CraftingPlanSummary.fromJob` computes displayed missing quantities using the
-   current storage and emitter state. Therefore planner evidence alone cannot
-   turn a zero-missing summary row into Recurrent.
-6. `CraftConfirmMenu.broadcastChanges` obtains the future result, builds the
-   summary, and sends `CraftConfirmPlanPacket`. Client `setPlan` installs it.
+Inspection of the installed AE2 19.2.17 bytecode confirmed the recursion,
+terminal addMissing, summary factory and native send seams. The shared hooks
+also serve Forge/Fabric 1.20.1 and NeoForge 26.1.2; the supported-target source
+of truth remains `scripts/release-matrix.json`. A changed hook must be checked
+against their resolved artifacts, including Fabric remapping.
 
-Source anchors, pinned to inspected revisions:
-
-- [AE2 15.0.10 tree node](https://github.com/AppliedEnergistics/Applied-Energistics-2/blob/ffaf14d7535b3dc643e04b8407db5419ef51bee8/src/main/java/appeng/crafting/CraftingTreeNode.java)
-- [AE2 19.0.24 tree node](https://github.com/AppliedEnergistics/Applied-Energistics-2/blob/330e16349549e9976f0891cc37291a6407f6599a/src/main/java/appeng/crafting/CraftingTreeNode.java)
-- [AE2 26.1.10-beta calculation](https://github.com/AppliedEnergistics/Applied-Energistics-2/blob/3a051bb473de0b8fd329b39db4262f731d17e7e5/src/main/java/appeng/crafting/CraftingCalculation.java)
-- [AE2 26.1.10-beta confirm menu](https://github.com/AppliedEnergistics/Applied-Energistics-2/blob/3a051bb473de0b8fd329b39db4262f731d17e7e5/src/main/java/appeng/menu/me/crafting/CraftConfirmMenu.java)
-
-These are source checks, not runtime compatibility or reproduction evidence.
-The implementation must verify descriptors against both 1.20.1 loader artifacts
-and each target's prepared runtime before declaring coverage.
-
-Reinspection at `8adc78280d4efcabca0e3baacbc3c7a8e3119026` confirms the
-renderer still has no recurrence input. The compatible graphs now use AE2
-15.4.10 (Forge), 15.1.0 (Fabric), 19.2.17, and 26.1.10-beta. These are runtime
-pins, not new minimum supported versions. Verify the common hooks in both the
-minimum build artifacts and those resolved runtime artifacts, including Fabric
-remapping. Select the newest implemented adapter under the current smoke policy.
-
-## Server evidence and ownership
-
-Observe AE2's recursion decision; do not build a second graph from all network
-patterns. That graph would lose storage, substitution, emission, branch choice,
-and AE2's own recursion rules.
-
-Add thin shared mixins for `CraftingTreeNode`, `CraftingCalculation`, and
-`CraftingPlan`, plus a small typed carrier for immutable recurrence keys. The
-carrier stores real AEKey identity, including variant data, not
-`ProfilerBridge.key`'s normalized profiling id. Pure-Java classification and
-per-attempt aggregation belong in `shared/src/main/java`; AEKey conversion and
-Mixin adapters belong in `shared/src/mcCommon/java`.
-
-- While building a node's children, observe the existing notRecursive call
-  using a composable MixinExtras expression/wrapper, returning its original
-  result unchanged. Remember whether any candidate was rejected. Do not infer
-  recurrence from a globally repeated key or call AE2's recursion test twice.
-- At the node's actual positive `addMissing` call in simulation, record its key
-  only when at least one recipe was rejected for recursion and the node has no
-  eligible child recipes. Eligible-but-unsatisfied alternatives remain ordinary
-  shortage paths. Rejection metadata lives on that node because AE2 reuses the
-  built tree between attempts.
-- Clear the calculation's observed missing-key set at each runCraftAttempt
-  entry. Record only actual terminal simulated shortages; failed normal attempts
-  and speculative candidate construction cannot add a diagnosis.
-- On a non-null runCraftAttempt result, attach an immutable copy intersected
-  with the final plan's positive missingItems. A nonsimulated result gets an
-  empty set. Store it on the returned plan, never in a process-global map or
-  ThreadLocal. This also leaves concurrent calculations isolated.
-- When creating the summary, intersect again with entries whose missingAmount
-  is positive. For an aggregated key, any surviving recurrent contribution is
-  sufficient. Preserve AE2's total quantities and row objects.
-
-The worker thread owns mutable calculation observations. Future completion
-publishes the immutable plan attachment to the logical server. Cancelled,
-failed, discarded, or completed calculations are collected with their owners;
-there is no profiler, CPU, world-save, or retained-statistics state to clear.
+Common server hooks and carriers load on both physical sides; renderer hooks
+stay client-only. Use version source sets only for actual signature differences.
+A missing required hook fails verification. A plan without recurrence evidence
+keeps native Missing text and cannot damage calculation or learned timing data.
 
 ## Transport and plan identity
 
-Add a dedicated mod-owned `PlanRecurrenceS2C` payload, registered through each
-target's existing `StatsNetwork`. Do not extend AE2's native packet format or
-reuse CPU-scoped `blockReasons` / `ClientStatsCache`.
+`CraftConfirmMenuMixin` sends diagnostic chunks at broadcast tail after the
+native summary. Forge 1.20.1 uses `CraftConfirmMenuMixinSrg` for its mapped
+broadcast method. Each remembers the sent summary object and increments a long
+revision for each new summary; client `setPlan` increments its revision and
+clears the incoming row flags before installing it.
 
-Send diagnostic chunks immediately after the native summary packet from the
-same broadcast operation. Each menu starts a long summary revision at zero;
-the server increments it for every native summary it sends, and the client
-increments it for every `setPlan` installation. Both native and mod payload
-handlers must execute in connection order on the client thread. The native
-summary always clears previous row flags before any matching chunk applies.
+`PlanRecurrenceS2C` uses each target's existing `StatsNetwork`. Native and mod
+payloads go to the same player connection. Handlers must install the native
+summary before applying its diagnostic on the client thread. There is no
+evidence in #408 that warrants adding a queue or changing that wire contract.
 
-Each chunk carries `containerId`, positive `summaryRevision`, `entryCount`,
-`offset`, `rowCount` (1..256), and a fixed 32-byte recurrence bit mask. Row indices
-refer to the original summary list, before client sorting. Send only chunks
-with set bits. No warning means no chunk; setPlan already clears the old state.
+Each chunk contains containerId, positive revision, entryCount, offset,
+rowCount (1..256), and a fixed 32-byte bit mask. It describes original summary
+indices before sorting. Only chunks with set bits are sent; no evidence means
+no chunk. `PlanRecurrenceChunk.validFor` requires the active menu's matching
+container/revision/count, an aligned nonnegative offset, the exact remaining
+row count and zero bits beyond rowCount. Bounds cannot overflow or allocate a
+collection from an untrusted count. Application is idempotent and ignores rows
+without a positive missing amount.
 
-Use `PacketLimits.MAX_KEYS` (256) for the row bound and a pure-Java validation
-helper. Before applying a chunk, require the active CraftConfirmMenu, matching
-container/revision/count, nonnegative offset, offset divisible by 256, and
-`rowCount == min(256, entryCount - offset)`. Check bounds without integer
-overflow. Bits outside rowCount must be zero. Reject malformed or mismatched
-chunks without mutating the current plan. No allocation is sized by an
-untrusted entryCount: validate against the already-installed native summary.
-Apply idempotently to its existing row objects and ignore flags on rows without
-a positive missing amount. Sorting therefore cannot move a warning to a
-different ingredient, including two variants of the same item.
+The row bound is `PacketLimits.MAX_KEYS` (256): require `offset % 256 == 0`
+and `rowCount == min(256, entryCount - offset)` after checking bounds. Validate
+against the installed native summary rather than allocating from entryCount.
+At most `ceil(entryCount / 256)` diagnostic chunks describe one summary.
 
-There is no C2S diagnostic query or client-selected network access. Packets go
-only to the player already receiving that server-authorized plan. Work and
-retained state are linear in AE2's existing plan; each extra payload has a
-constant size, and at most ceil(entryCount / 256) chunks are sent per summary.
-Early/late revisions, a closed menu, and another menu are ignored, not queued.
-Ordered-handler verification is a required boundary test on every loader.
+Flags stay on existing entry objects, so sorting and distinct resource variants
+cannot move a warning to another row. Closed, replaced or disconnected menus
+and early/late revisions reject diagnostics without queuing them. Packets go
+only to the player already receiving that server-authorized plan; there is no
+C2S diagnosis query or client-selected network access.
 
-Forge adds the message after current registrations and increments its channel
-protocol from the value present at implementation time. Both NeoForge targets
-add a clientbound registration and increment their current registrar versions.
-Fabric adds `plan_recurrence_v1` and checks peer capability before sending.
-Keep all existing packet layouts and SavedData unchanged. An unsupported peer
-that is otherwise allowed to connect receives native Missing text; retain
-existing loader mismatch rejection rules.
+Forge and both NeoForge targets retain their versioned registrations. Fabric
+checks capability before sending `plan_recurrence_v1`. Existing loader mismatch
+rules remain intact; an otherwise permitted unsupported peer keeps native
+Missing text. AE2 packet bytes and SavedData do not change. Extra work is linear
+in the summary and payload size is constant per chunk.
 
 ## Rendering
 
-Add a transient boolean carrier to `CraftingPlanSummaryEntry`. The renderer
-consults it only together with `missingAmount > 0` and the enabled mod state.
-Change the Component generated for AE2's missing label at its semantic
-construction point in both description and tooltip; never replace translated
-strings by text matching or overwrite the whole renderer. Preserve AE2's
-existing quantity formatting. Add the explanation once, before TTC-only guards.
+`CraftingPlanSummaryEntryMixin` supplies the transient boolean.
+`CraftConfirmTableRendererMixin` consults it together with positive missing
+amount and enabled mod state. It wraps AE2's Missing component construction in
+both description and tooltip, preserves AE2's formatted amount, and adds the
+explanation before the TTC-only craftAmount guard. It does not replace strings
+by translated-text matching or overwrite the renderer.
 
-`TtcText` supplies `plan.recurrent` and `plan.recurrent_hint` components, with
-matching keys under the existing `ae2craftingtime` translation namespace in
-`shared/src/main/resources/assets/ae2craftingtime/lang/{en_us,uk_ua}.json`.
-Use ChatFormatting.RED without bold. The status must not enter TTC color or
-badge classification. Leave sorting and TTC calculations untouched; the existing
-#318 missing-first comparator continues to use missingAmount, not this flag.
-Disable hides the label immediately; re-enable may reuse evidence attached to
-the still-current plan. It must never restore flags from a previous summary.
+`TtcText` provides the English/Ukrainian `plan.recurrent` and
+`plan.recurrent_hint` components. Recurrent uses Minecraft red without bold;
+it is not a TTC badge or color category. Missing-first sorting, TTC values,
+stored/craft quantities and Start behavior remain unchanged. Disabling hides
+the label; re-enabling may use only the still-current summary's evidence.
 
-## Source sets and failures
+## #408: overlapping summary callbacks
 
-Share logic and AE2 hooks in mcCommon wherever inspected descriptors match.
-Use mc1201 and mc2612 only for differing Minecraft signatures; keep loader
-packet glue under each version module. Register common server hooks and the
-entry carrier on both physical sides, with renderer hooks client-only. Check
-all effective mixin lists, including NeoForge overrides and Fabric remapping.
+The reported native plan has the recurrence implementation installed on both
+peers. Inspected recurrence class bytes match the current dist classes. This
+rules out a pre-feature binary for those classes, not every environment cause.
 
-No new optional dependency or custom-planner adapter is included. Plans without
-the carrier have no evidence. Native terminal routes inherit the table hook;
-separate Tree and Requester views do not. A missing required hook must fail
-verification, not silently ship as supported. Invalid diagnostic input may lose
-the extra label but must not change AE2's calculation or damage learned data.
+Installed AE2: Crafting Tree 1.21.1-1.1.1 contains
+`com.neuvillette.ae2ct.mixin.AE2CraftingPlanSummary.buildEX`. Its `fromJob` TAIL
+injection is cancellable and calls `setReturnValue` with the same summary after
+attaching its own RecipeHelper. The failing server's mixin log lists that
+summary mixin before ours. Our independent RETURN callback could therefore be
+bypassed by the earlier cancellation: calculation keys would exist, summary
+flags would remain false, and the sender would produce no diagnostic chunks.
 
-## Verification extension and ownership
+This is the leading hypothesis, not a confirmed root cause. The available
+exports do not contain the transformed summary class. Confirm with a controlled
+Tree toggle and stage observations, or inspect the transformed instructions
+and reproduce the same callback behavior in a focused runtime check. Do not
+infer execution order from log order alone.
 
-The connected runner, `scripts/run-connected-dedicated-ui-smoke.ps1`,
-supports CPU-list and recurrence scenarios. Reuse its source
-marker, dependency/launcher hash validation, disposable copy, loopback binding,
-server-ready barrier, and exact process cleanup. Preserve the CPU-list default
-and its checks. Remove recurrence's concurrent-client branch and memory gate;
-every target must use the existing single-client path. This requirement update
-does not certify the corresponding implementation or runtime result.
+Keep the other hypotheses distinguishable: request quantity 100 might reach a
+different terminal shortage; a valid chunk might fail the active menu/revision
+guard; or the wireless route might differ. Inspect their actual values before
+changing classification or transport. AdvancedAE's inspected crafting-service
+hooks affect CPU listing, ticking and submission, not the calculation entry.
+The selected Quantum CPU is not evidence that it caused the failure.
 
-Add `recurrent-plan` to the existing driver scenario/result/host selection
-contracts. Own its real processing-pattern fixture and frame checks beside
-`StandardAe2Scenario` and `StandardCraftFixture` in
-`shared/src/testDriver1201/java/com/ctux/ae2craftingtime/testdriver/`;
-keep changed 26.1.2 APIs in the existing
-version-specific driver source set. Reuse `DriverPlatform.processingPattern`,
-`UiObservationStore`, `CaptureEvidence`, and native menu interaction. Extend
-`DedicatedCpuScenario` dispatch through a focused recurrence fixture rather
-than adding recurrence state to the CPU-list state machine. Reuse the bounded
-atomic command/acknowledgement pattern in `CpuListTtcControl`; recurrence commands
-address an explicit player role and scenario phase, never an arbitrary action.
+If callback bypass is confirmed, make enrichment compose at the shared summary
+factory boundary, including returns from another callback. A MixinExtras outer
+method wrapper is a candidate: call the original once, enrich the final result,
+and return that same object. Verify the installed MixinExtras API and transformed
+behavior before choosing the mechanism. Extract any new Minecraft-free branch
+into covered shared logic. Do not solve this by changing addon load order or
+mixin priority, duplicating terminal-specific marking, altering native packets,
+or requiring Tree. Preserve other addons' fields and all native row objects.
 
-The server leaf is `recurrent-plan-connected`, selected through the runner's
-`-Scenario recurrent-plan`. Each target uses one connected client to prove
-native summary/mod-chunk execution order, recipient binding and reconnect.
-Use the fixed offline fixture identity and bind acknowledgements to the
-server-observed UUID, menu and revision. The client visits separate grids with
-overlapping item keys and opposite recurrence outcomes, swaps/replans, then
-reconnects without accepting its old diagnosis. Record each final frame and
-matching server recipient/plan evidence. Unit and packet-boundary tests cover
-different recipients, networks, menus and revisions independently of live
-clients. A separately identified session may run only after the prior client
-exits; neither sequential sessions nor boundary tests claim simultaneous-player proof.
+## Verification boundary
 
-Reuse `prepare-ui-smoke-launch.ps1` and the scheduled-Java helpers for isolated
-launches. Add only validated fixture-role/offline-identity options needed by this
-loopback scenario; do not read account tokens or change ordinary launch identity.
-Record the client's PID, maximize its window, and retain its task name,
-argument file, log, watchdog and cleanup. Keep one 8 GiB client running at a
-time; confirm its exit before launching another. Remove the second role,
-dual-client orchestration and associated resource prerequisite. The disposable
-dedicated server may stay running through the client's reconnect.
+The existing `RecurrentPlanFixture` and `StandardAe2Scenario` provide real
+processing patterns, calculation/summary assertions and row/tooltip evidence.
+Their normal path opens a block terminal and accepts the amount-screen default.
+The large-input amount case does not request 100 outputs. Add the exact #408
+pattern graph and explicit 1/100 requests to this existing path.
 
-Keep the test-driver spec/design's marked-loopback boundary limited to the
-registered CPU-list and recurrence scenarios.
-Do not broaden its permission to other servers or add a general multiplayer runner.
-Keep all new fixture/control code out of production JARs and `dist`.
+`RecurrentPlanObservation` and its driver-only mixins already observe native
+installation, chunks, quantities and stale/malformed inputs. Reuse them to
+identify where evidence disappears; positive flags must still come from AE2's
+calculation. `AdvancedAeFixture` can place a Quantum Computer, but its direct
+cluster submission does not prove native menu routing. Reuse existing wireless
+fixture facilities for the WCWT route; do not treat a CPU submission pass as
+that route's recurrence proof.
 
-## Acceptance mapping
+The compatible NeoForge profile pins Tree 1.0.1 and WCWT 1.3.8, while the report
+uses Tree 1.21.1-1.1.1 and WCWT 1.3.9. Use an explicitly identified diagnostic
+graph for those installed versions without silently updating compatible pins
+or supported minimums. Prior connected recurrence evidence used only AE2 and
+GuideME, so it cannot certify the addon combination.
 
-| Spec | Design path and evidence required |
-| --- | --- |
-| R1-R2 | Actual rejection plus terminal missing call; real two-node, self, and three-node fixtures. |
-| R3-R4 | No-eligible-child rule, per-attempt reset, final intersections, exact keys; seeded, alternative, mixed, emitter, and variant tests. |
-| R5 | Plan attachment, menu revisions, ordered handling, clear on setPlan; cancellation, concurrent jobs, stale chunks, and reconnect tests. |
-| R6 | Shared renderer and locale keys; all-target codec/hooks, sorting, no-sample and large-unit visual checks. |
-| R7 | Read-only observations, unchanged native packet and quantities; calculation comparison and optional-screen regression checks. |
+Reuse `run-ui-smoke.ps1`, `run-ui-smoke-matrix.ps1` and
+`run-connected-dedicated-ui-smoke.ps1`. Keep CPU-list's default, marked disposable
+loopback worlds, source/dependency/launcher hash validation, one 8 GiB client at
+a time, exact process cleanup and recipient/menu/revision acknowledgements.
+The connected leaf remains `recurrent-plan-connected`. Replan, another grid and
+reconnect use the existing single-client lifecycle. Never add a general live-server
+driver or claim simultaneous-player proof. Test-driver changes stay out of dist.
+
+The [implementation plan](implementation-plan.md) maps the focused regression
+and verification to R1-R7. Separate screens, recipe repair, CPU execution,
+persistence, TTC calculations and releases remain outside this fix.
