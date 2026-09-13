@@ -19,9 +19,23 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.ctux.ae2craftingtime.mc1201.RecurrentPlanEntry;
 
 @Mixin(CraftConfirmTableRenderer.class)
 public abstract class CraftConfirmTableRendererMixin {
+    @WrapOperation(method = {"getEntryDescription", "getEntryTooltip"}, at = @At(value = "INVOKE",
+            target = "Lappeng/core/localization/GuiText;text"), remap = false)
+    private net.minecraft.network.chat.MutableComponent ae2craftingtime$recurrentLabel(
+            appeng.core.localization.GuiText text, Object[] arguments,
+            Operation<net.minecraft.network.chat.MutableComponent> original, CraftingPlanSummaryEntry entry) {
+        return text == appeng.core.localization.GuiText.Missing && entry.getMissingAmount() > 0
+                && ((RecurrentPlanEntry) entry).ae2craftingtime$recurrent()
+                && com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig.ENABLED.get()
+                ? TtcText.recurrent(arguments) : original.call(text, arguments);
+    }
+
     @Inject(method = "getEntryDescription", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$appendVisibleTimeToCraft(CraftingPlanSummaryEntry entry,
             CallbackInfoReturnable<List<Component>> cir) {
@@ -33,6 +47,10 @@ public abstract class CraftConfirmTableRendererMixin {
     @Inject(method = "getEntryTooltip", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$appendTooltipTimeToCraft(CraftingPlanSummaryEntry entry,
             CallbackInfoReturnable<List<Component>> cir) {
+        if (entry.getMissingAmount() > 0 && ((RecurrentPlanEntry) entry).ae2craftingtime$recurrent()
+                && com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig.ENABLED.get()) {
+            cir.getReturnValue().add(TtcText.recurrentHint());
+        }
         if (entry.getCraftAmount() <= 0) {
             return;
         }

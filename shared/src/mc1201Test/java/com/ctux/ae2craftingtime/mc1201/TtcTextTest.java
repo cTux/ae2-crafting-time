@@ -23,6 +23,32 @@ import java.util.Optional;
 
 class TtcTextTest {
     @ParameterizedTest
+    @CsvSource({"en_us, Recurrent", "uk_ua, Циклічне"})
+    void recurrencePreservesNativeAmountAndUsesNormalRedLocalizedText(String locale, String label) throws IOException {
+        var amount = "1.25 M mB";
+        var component = TtcText.recurrent(amount);
+        var contents = (TranslatableContents) component.getContents();
+        assertEquals("text.ae2craftingtime.plan.recurrent", contents.getKey());
+        assertEquals(List.of(amount), List.of(contents.getArgs()));
+        assertFalse(component.getStyle().isBold());
+        assertEquals(TextColor.fromLegacyFormat(ChatFormatting.RED), component.getStyle().getColor());
+        assertFalse(com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(contents.getKey()));
+        var hint = (TranslatableContents) TtcText.recurrentHint().getContents();
+        assertEquals("text.ae2craftingtime.plan.recurrent_hint", hint.getKey());
+        assertEquals(0, hint.getArgs().length);
+        try (var reader = new InputStreamReader(getClass().getResourceAsStream(
+                "/assets/ae2craftingtime/lang/" + locale + ".json"), StandardCharsets.UTF_8)) {
+            var translations = JsonParser.parseReader(reader).getAsJsonObject();
+            assertEquals(label + ": %s", translations.get(contents.getKey()).getAsString());
+            assertEquals(label + ": " + amount, String.format(translations.get(contents.getKey()).getAsString(), amount));
+            assertEquals(locale.equals("en_us")
+                    ? "This ingredient is missing because its crafting recipe depends on itself, directly or through other recipes."
+                    : "Цього інгредієнта бракує, бо рецепт його виготовлення залежить від нього самого — безпосередньо або через інші рецепти.",
+                    translations.get(hint.getKey()).getAsString());
+        }
+    }
+
+    @ParameterizedTest
     @CsvSource({"en_us, No data yet", "uk_ua, Даних ще немає"})
     void missingRowStatsUseTheExistingNoDataWording(String locale, String expected) throws IOException {
         var resource = "/assets/ae2craftingtime/lang/" + locale + ".json";

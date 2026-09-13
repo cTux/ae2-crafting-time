@@ -31,11 +31,25 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
+    @Test
+    void recurrentConnectedRolesUseSeparateBoundedDirectories() throws Exception {
+        var root = java.nio.file.Files.createTempDirectory("ae2ct-recurrent-control");
+        var previous = System.getProperty("ae2craftingtime.test.control");
+        try {
+            System.setProperty("ae2craftingtime.test.control", root.toString());
+            assertNotEquals(RecurrentPlanControl.directory("alpha"), RecurrentPlanControl.directory("beta"));
+            assertThrows(IllegalArgumentException.class, () -> RecurrentPlanControl.directory("other"));
+        } finally {
+            if (previous == null) System.clearProperty("ae2craftingtime.test.control");
+            else System.setProperty("ae2craftingtime.test.control", previous);
+        }
+    }
     @Test
     void embeddedContextResolvesClassesThroughTheDriverLoader() throws Exception {
         var driverJar = Path.of(System.getProperty("ae2craftingtime.test.driverJar"));

@@ -13,6 +13,9 @@ param(
     [string]$ControlDirectory,
     [string]$ContinuationPath,
     [string]$CampaignId,
+    [ValidateSet('alpha','beta')][string]$Role,
+    [string]$OfflineName,
+    [ValidatePattern('^[a-f0-9]{32}$')][string]$OfflineUuid,
     [switch]$ResumeOnly,
     [switch]$Interactive
 )
@@ -72,7 +75,8 @@ $arguments = [Collections.Generic.List[string]]::new()
 for ($i = 0; $i -lt $launch.arguments.Count; $i++) {
     $argument = [string]$launch.arguments[$i]
     if ($argument -match '^-Dae2craftingtime.test\.' -or $argument -match '^-Xm[xs]') { continue }
-    if ($argument -in @('--gameDir', '--quickPlaySingleplayer', '--quickPlayMultiplayer')) { $i++; continue }
+    if ($argument -in @('--gameDir', '--quickPlaySingleplayer', '--quickPlayMultiplayer') -or
+            ($Role -and $argument -in @('--username', '--uuid'))) { $i++; continue }
     $arguments.Add($argument)
 }
 $arguments.Insert(0, '-Xmx8G')
@@ -84,6 +88,17 @@ foreach ($property in @("scenario=$Scenario", "profile=$Profile", "world=$World"
 if ($CampaignId) {
     if ($CampaignId -cnotmatch '^[A-Za-z0-9._-]{1,128}$') { throw 'Invalid UI-smoke campaign identity' }
     $arguments.Insert(0, "-Dae2craftingtime.test.campaign=$CampaignId")
+}
+if ($Role) {
+    $expectedName = if ($Role -eq 'alpha') { 'Ae2ctAlpha' } else { 'Ae2ctBeta' }
+    $expectedUuid = if ($Role -eq 'alpha') { '446b6d0ccadd3e57baf699d70f01a628' } else { '0023ed57716f3ea09c429f2240aeac6e' }
+    if ($Scenario -ne 'recurrent-plan' -or $DedicatedAddress -notmatch '^(127\.0\.0\.1|localhost):[0-9]{1,5}$' -or
+            $OfflineName -cne $expectedName -or $OfflineUuid -cne $expectedUuid) {
+        throw 'Recurrent connected role requires its bounded offline identity'
+    }
+    $arguments.Insert(0, "-Dae2craftingtime.test.role=$Role")
+    $arguments.Add('--username'); $arguments.Add($OfflineName)
+    $arguments.Add('--uuid'); $arguments.Add($OfflineUuid)
 }
 if ($ContinuationPath) {
     $continuation = [IO.Path]::GetFullPath($ContinuationPath)

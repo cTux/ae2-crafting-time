@@ -30,6 +30,7 @@ final class StandardCraftFixture {
     boolean missingPlanInput;
     boolean unprofiledPlan;
     boolean cpuListScenario;
+    boolean recurrentPlan;
     private java.util.List<java.util.concurrent.Future<appeng.api.networking.crafting.ICraftingPlan>> cpuListPlans;
     private boolean cpuListSubmitted;
     private java.util.concurrent.Future<appeng.api.networking.crafting.ICraftingPlan> replacementPlan;
@@ -150,7 +151,7 @@ final class StandardCraftFixture {
                 if (cpuListScenario) drive.getCellInventory(0).insert(AEItemKey.of(Items.SAND), 256,
                         Actionable.MODULATE, IActionSource.empty());
             }
-            pattern(player, 4, Items.COBBLESTONE, Items.STONE);
+            pattern(player, 4, recurrentPlan ? Items.SMOOTH_STONE : Items.COBBLESTONE, Items.STONE);
             pattern(player, 8, Items.STONE, Items.SMOOTH_STONE);
             if (cpuListScenario) pattern(player, 12, Items.SAND, Items.GLASS);
             if (!unprofiledPlan) seed(player);
@@ -163,6 +164,11 @@ final class StandardCraftFixture {
     void seed(ServerPlayer player) {
         seed(player, Items.STONE);
         seed(player, Items.SMOOTH_STONE);
+    }
+
+    void setRecurrent(ServerPlayer player, boolean value) {
+        recurrentPlan = value;
+        pattern(player, 4, value ? Items.SMOOTH_STONE : Items.COBBLESTONE, Items.STONE);
     }
 
     void seed(ServerPlayer player, net.minecraft.world.item.Item item) {

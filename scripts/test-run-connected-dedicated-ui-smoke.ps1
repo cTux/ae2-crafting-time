@@ -1,5 +1,10 @@
 $ErrorActionPreference = 'Stop'
 $runnerText = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Raw
+if ($runnerText -notmatch "ValidateSet\('cpu-list-total-ttc','recurrent-plan'\)" -or
+        $runnerText -notmatch "Ae2ctAlpha" -or $runnerText -notmatch "Ae2ctBeta" -or
+        $runnerText -notmatch 'Start-Job' -or $runnerText -notmatch 'recurrent-role-processes.json') {
+    throw 'Connected runner is missing the bounded two-role recurrent campaign contract'
+}
 if ($runnerText.Contains('(& $java -version 2>&1)') -or
         $runnerText -notmatch 'RedirectStandardOutput.+RedirectStandardError') {
     throw 'Connected runner must capture Java version output without promoting native stderr to a terminating error'
@@ -175,6 +180,15 @@ param([string]$OutputPath)
         $casePlan = Get-Content -LiteralPath (Join-Path $caseReport 'connected-runner-plan.json') -Raw | ConvertFrom-Json
         $expectedCount = if ($case.target -like '*-fabric') { 1 } else { 3 }
         if ($casePlan.launchArguments.Count -ne $expectedCount) { throw 'Wrong target-specific Java launch argument contract' }
+        $recurrenceReport = Join-Path $temporary ('recurrent-' + $case.target)
+        & (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Target $case.target -Scenario recurrent-plan `
+            -ServerDirectory $caseSource -PreparedLaunch $casePrepared -BundleDirectory $caseBundle `
+            -ReportDirectory $recurrenceReport -JavaHome $javaHome -PlanOnly
+        $recurrencePlan = Get-Content -LiteralPath (Join-Path $recurrenceReport 'connected-runner-plan.json') -Raw | ConvertFrom-Json
+        if ($recurrencePlan.relaunch.required -or $recurrencePlan.relaunch.minimumProcesses -ne 1 -or
+                !($recurrencePlan.arguments -contains '-Dae2ct.testDriver.serverScenario=recurrent-plan-connected')) {
+            throw 'Recurrence plan retained CPU relaunch or server scenario metadata'
+        }
         if (Test-Path -LiteralPath (Join-Path $caseSource 'server.properties')) { throw 'Runner changed a source server' }
     }
     foreach ($refusal in @(

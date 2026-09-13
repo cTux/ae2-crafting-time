@@ -44,6 +44,29 @@ dependency/adapter identity, artifact hashes, server totals, and client values.
 The 1.20.1/1.21.1 implementation lives in `shared/src/testDriver1201`; the
 26.1.2 source set keeps only its changed registry, rendering, and connection APIs.
 
+The `recurrent-plan` standard-AE2 leaf owns a managed native crafting provider
+beside `StandardCraftFixture`, with encoded real patterns for the recurrence,
+negative-control, retry, exact-key, amount and chunk-boundary cases in the spec.
+It proves the production diagnosis through the native
+plan row and tooltip rather than seeding driver state. Its connected counterpart
+keeps the same marked-loopback, bounded-control, identity, and cleanup rules as
+the CPU-list runner; no other multiplayer scenario is authorized.
+On NeoForge 1.21.1 the runner owns two simultaneous background client jobs.
+Each launch has a fixed offline name/UUID and separate runtime, evidence, and
+role-control directory. The server maps those players to separate overlapping
+grids, publishes opposite recurrence outcomes, swaps the real patterns, and
+waits for both role-bound replans before Alpha reconnects. Beta remains in its
+open plan until Alpha's rejoined acknowledgement completes the campaign.
+The phase/turn policy rejects old-phase or out-of-turn commands. Successful
+client acknowledgements are idempotent across waiting frames, and captured
+roles retain published acknowledgements until their normal disconnect. Pure
+transition tests cover both one-role and two-role schedules and final cleanup.
+Driver-only observers bind every accepted diagnostic to the native menu
+revision on the client thread and compare native quantities before and after.
+Recurrence runs, including selected-case suites, retain the runner's existing
+20-second callback and 60-second active-checkpoint watchdogs. Fixture case and
+sort are part of the reported checkpoint.
+
 Connected mode uses an atomic properties-file rendezvous inside the disposable
 run directory. Commands only ask the server fixture to perform the next real
 mutation; acknowledgements carry the active terminal and authoritative totals.

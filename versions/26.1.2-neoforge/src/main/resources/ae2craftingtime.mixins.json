@@ -9,6 +9,12 @@
     "CraftingCPUMenuAccessor",
     "CraftingStatusMenuAccessor",
     "CraftingCpuLogicMixin",
+    "CraftingCalculationMixin",
+    "CraftConfirmMenuMixin",
+    "CraftingPlanMixin",
+    "CraftingPlanSummaryMixin",
+    "CraftingPlanSummaryEntryMixin",
+    "CraftingTreeNodeMixin",
     "PatternProviderLogicMixin",
     "PatternProviderExternalPushMixin"
   ],

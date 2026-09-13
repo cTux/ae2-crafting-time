@@ -16,6 +16,15 @@ import java.util.Locale;
 import java.util.Optional;
 
 public final class TtcText {
+    public static MutableComponent recurrent(Object... arguments) {
+        return Component.translatable("text.ae2craftingtime.plan.recurrent", arguments)
+                .withStyle(style -> style.withColor(ChatFormatting.RED).withBold(false));
+    }
+
+    public static MutableComponent recurrentHint() {
+        return Component.translatable("text.ae2craftingtime.plan.recurrent_hint");
+    }
+
     public static MutableComponent ttc(String eta) {
         return Component.translatable("text.ae2craftingtime.ttc", eta);
     }

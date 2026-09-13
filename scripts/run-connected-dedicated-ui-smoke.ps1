@@ -10,6 +10,7 @@ param(
     [ValidateRange(1, 1800)][int]$ServerStartupTimeoutSeconds = 180,
     [switch]$ScheduledJava,
     [string]$InteractiveUser = 'Codex',
+    [ValidateSet('cpu-list-total-ttc','recurrent-plan')][string]$Scenario = 'cpu-list-total-ttc',
     [switch]$PlanOnly
 )
 $ErrorActionPreference = 'Stop'
@@ -151,7 +152,7 @@ Set-Content -LiteralPath (Join-Path $resolvedServer 'eula.txt') -Value 'eula=tru
     'pause-when-empty-seconds=-1','view-distance=6','simulation-distance=6') |
     Set-Content -LiteralPath (Join-Path $resolvedServer 'server.properties') -Encoding Ascii
 
-$serverArgs = @("-Dae2ct.testDriver.serverScenario=cpu-list-total-ttc-connected",
+$serverArgs = @("-Dae2ct.testDriver.serverScenario=$Scenario-connected",
     "-Dae2ct.testDriver.serverTarget=$Target", "-Dae2ct.testDriver.serverResult=$serverResult",
     "-Dae2ct.testDriver.serverControl=$control", "-Dae2ct.testDriver.serverCampaign=$connectionEpoch", '-Xmx4G')
 if ($Target -eq '1.20.1-fabric') { $serverArgs += @('-jar','fabric-server-launch.jar','nogui') }
@@ -170,13 +171,17 @@ $sourceIdentity = [ordered]@{ markerSha256=(Get-FileHash -LiteralPath $markerPat
     dependencies=$sourceDependencies }
 $runnerPlan = [ordered]@{ target=$Target; headSha=$HeadSha; campaignId=$campaignId; connectionEpoch=$connectionEpoch
     sourceServer=$sourceServer; disposableServer=$resolvedServer; java=$java
-    sourceIdentity=$sourceIdentity; relaunch=[ordered]@{required=$true;minimumProcesses=2}
+    sourceIdentity=$sourceIdentity; relaunch=[ordered]@{required=($Scenario -eq 'cpu-list-total-ttc');minimumProcesses=$(if ($Scenario -eq 'cpu-list-total-ttc') { 2 } else { 1 })}
     scheduledJava=$ScheduledJava.IsPresent; interactiveUser=$InteractiveUser
     argumentFile=$argsFile; arguments=$serverArgs; launchArguments=$launchArguments
     launchCommandLine=$launchCommandLine; preparedLaunch=$prepared; address=$Address }
 $runnerPlan |
     ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $planPath -Encoding UTF8
 if ($PlanOnly) { Write-Host "Connected runner plan validated: $planPath"; return }
+if ($Scenario -eq 'recurrent-plan' -and $Target -eq '1.21.1-neoforge') {
+    $freeKiB = (Get-CimInstance Win32_OperatingSystem).FreePhysicalMemory
+    if ($freeKiB -lt 22 * 1024 * 1024) { throw 'Two 8 GiB recurrence clients and the dedicated server require at least 22 GiB free memory' }
+}
 
 $javaVersionOut = Join-Path $report 'java-version.stdout.log'
 $javaVersionErr = Join-Path $report 'java-version.stderr.log'
@@ -221,10 +226,95 @@ try {
         if (!$ready) { Start-Sleep -Milliseconds 250 }
     }
     if (!$ready) { throw 'Dedicated server did not finish startup' }
-    $clientParameters = @{ Target=$Target; Scenario='cpu-list-total-ttc'; ReportDirectory=(Join-Path $report 'client')
+    if ($Scenario -eq 'recurrent-plan' -and $Target -eq '1.21.1-neoforge') {
+        $roleSpecs = @(
+            [ordered]@{ role='alpha'; name='Ae2ctAlpha'; uuid='446b6d0ccadd3e57baf699d70f01a628' },
+            [ordered]@{ role='beta'; name='Ae2ctBeta'; uuid='0023ed57716f3ea09c429f2240aeac6e' })
+        $roleJobs = @()
+        try {
+            foreach ($spec in $roleSpecs) {
+                $roleReport = Join-Path $report "client-$($spec.role)"
+                $parameters = @{ Target=$Target; Scenario=$Scenario; ReportDirectory=$roleReport
+                    RuntimeDirectory=(Join-Path $roleReport 'runtime'); BundleDirectory=$bundle; PreparedLaunch=$prepared
+                    DedicatedAddress=$Address; ControlDirectory=$control; CampaignId=$connectionEpoch
+                    Role=$spec.role; OfflineName=$spec.name; OfflineUuid=$spec.uuid
+                    FailOnInitialDisconnect=$true; StartupTimeoutSeconds=$ServerStartupTimeoutSeconds }
+                if ($HeadSha) { $parameters.HeadSha = $HeadSha }
+                if ($ScheduledJava) { $parameters.ScheduledJava = $true; $parameters.InteractiveUser = $InteractiveUser }
+                $roleJobs += Start-Job -Name "ae2ct-recurrent-$($spec.role)" -ScriptBlock {
+                    param($script, $arguments)
+                    & $script @arguments
+                    if ($LASTEXITCODE) { throw "Connected role client exited $LASTEXITCODE" }
+                } -ArgumentList (Join-Path $PSScriptRoot 'run-ui-smoke.ps1'), $parameters
+                $pidDeadline = [DateTime]::UtcNow.AddSeconds($ServerStartupTimeoutSeconds)
+                do {
+                    if ($roleJobs[-1].State -notin @('NotStarted','Running')) {
+                        Receive-Job -Job $roleJobs[-1] -ErrorAction Stop
+                        throw "Role $($spec.role) exited before PID acquisition"
+                    }
+                    $roleStatusPath = Join-Path $roleReport 'status.json'
+                    $roleStatus = if (Test-Path -LiteralPath $roleStatusPath) {
+                        Get-Content -LiteralPath $roleStatusPath -Raw | ConvertFrom-Json
+                    } else { $null }
+                    if (@($roleStatus.processes | Where-Object { $_.pid }).Count) { break }
+                    if ([DateTime]::UtcNow -ge $pidDeadline) { throw "Role $($spec.role) did not acquire its Java PID" }
+                    Start-Sleep -Milliseconds 250
+                } while ($true)
+            }
+            while (@($roleJobs | Where-Object { $_.State -in @('NotStarted','Running') }).Count) {
+                if (@($roleJobs | Where-Object { $_.State -in @('Failed','Stopped') }).Count) {
+                    throw 'A recurrence client failed while its peer was still active'
+                }
+                $activeJobs = @($roleJobs | Where-Object { $_.State -in @('NotStarted','Running') })
+                $finishedRole = Wait-Job -Job $activeJobs -Any -Timeout 10
+                if (!$finishedRole) { continue }
+                if ($finishedRole.State -ne 'Completed') {
+                    throw "Connected role $($finishedRole.Name) failed: $($finishedRole.ChildJobs[0].JobStateInfo.Reason)"
+                }
+            }
+            foreach ($job in $roleJobs) {
+                Receive-Job -Job $job
+                if ($job.State -ne 'Completed') { throw "Connected role $($job.Name) failed: $($job.ChildJobs[0].JobStateInfo.Reason)" }
+            }
+            $roleEvidence = @($roleSpecs | ForEach-Object {
+                $status = Get-Content -LiteralPath (Join-Path $report "client-$($_.role)/status.json") -Raw | ConvertFrom-Json
+                [ordered]@{ role=$_.role; name=$_.name; uuid=$_.uuid; runtime=(Join-Path $report "client-$($_.role)/runtime")
+                    report=(Join-Path $report "client-$($_.role)"); processes=@($status.processes) }
+            })
+            if ($roleEvidence[0].runtime -eq $roleEvidence[1].runtime -or $roleEvidence[0].report -eq $roleEvidence[1].report) {
+                throw 'Recurrent role clients must use distinct runtime and evidence directories'
+            }
+            $roleEvidence | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $report 'recurrent-role-processes.json') -Encoding UTF8
+        } finally {
+            foreach ($job in $roleJobs) { if ($job.State -eq 'Running') { Stop-Job -Job $job }; Remove-Job -Job $job -Force }
+            foreach ($spec in $roleSpecs) {
+                $roleStatusPath = Join-Path $report "client-$($spec.role)/status.json"
+                if (!(Test-Path -LiteralPath $roleStatusPath -PathType Leaf)) { continue }
+                $roleStatus = Get-Content -LiteralPath $roleStatusPath -Raw | ConvertFrom-Json
+                foreach ($identity in @($roleStatus.processes)) {
+                    $ownedProcess = Get-Process -Id $identity.pid -ErrorAction SilentlyContinue
+                    if ($ownedProcess -and $ownedProcess.StartTime.ToUniversalTime().ToString('o') -eq $identity.startedAt) {
+                        $ownedProcess.Kill()
+                        $ownedProcess.WaitForExit()
+                    }
+                    if ($identity.taskName -and $identity.taskName -like 'AE2 Crafting Time Java * Phase *') {
+                        $task = Get-ScheduledTask -TaskName $identity.taskName -ErrorAction SilentlyContinue
+                        if ($task -and @($task.Actions | Where-Object { $_.Arguments -like "*$($identity.argumentFile)*" }).Count) {
+                            Unregister-ScheduledTask -TaskName $identity.taskName -Confirm:$false
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+    $clientParameters = @{ Target=$Target; Scenario=$Scenario; ReportDirectory=(Join-Path $report 'client')
         BundleDirectory=$bundle; PreparedLaunch=$prepared; DedicatedAddress=$Address
         ControlDirectory=$control; CampaignId=$connectionEpoch; FailOnInitialDisconnect=$true
         StartupTimeoutSeconds=$ServerStartupTimeoutSeconds }
+    if ($Scenario -eq 'recurrent-plan') {
+        $clientParameters.Role = 'alpha'; $clientParameters.OfflineName = 'Ae2ctAlpha'
+        $clientParameters.OfflineUuid = '446b6d0ccadd3e57baf699d70f01a628'
+    }
     if ($HeadSha) { $clientParameters.HeadSha = $HeadSha }
     if ($ScheduledJava) { $clientParameters.ScheduledJava = $true; $clientParameters.InteractiveUser = $InteractiveUser }
     $attempts = @()
@@ -287,15 +377,22 @@ try {
         throw $clientError
     }
     if (!$clientPassed) { throw 'Connected client smoke did not pass' }
+    }
     if (!$serverProcess.WaitForExit(60000)) { throw 'Dedicated server did not finish after client evidence completed' }
     if (!(Test-Path -LiteralPath $serverResult -PathType Leaf)) { throw 'Connected server produced no result artifact' }
     $result = Get-Content -LiteralPath $serverResult -Raw | ConvertFrom-Json
     if ($result.result -ne 'PASS') { throw "Connected dedicated server failed: $($result.error)" }
-    foreach ($required in @((Join-Path $resolvedServer 'logs/latest.log'), (Join-Path $control 'state.properties'))) {
+    $stateFiles = if ($Scenario -eq 'recurrent-plan') {
+        @('alpha') + $(if ($Target -eq '1.21.1-neoforge') { @('beta') } else { @() }) |
+            ForEach-Object { Join-Path $control "$_/state.properties" }
+    } else { @(Join-Path $control 'state.properties') }
+    foreach ($required in @((Join-Path $resolvedServer 'logs/latest.log')) + @($stateFiles)) {
         if (!(Test-Path -LiteralPath $required -PathType Leaf)) { throw "Connected evidence is missing: $required" }
     }
     Copy-Item -LiteralPath (Join-Path $resolvedServer 'logs/latest.log') -Destination (Join-Path $report 'server.latest.log')
-    Copy-Item -LiteralPath (Join-Path $control 'state.properties') -Destination (Join-Path $report 'server-estimates.properties')
+    if ($Scenario -eq 'cpu-list-total-ttc') {
+        Copy-Item -LiteralPath (Join-Path $control 'state.properties') -Destination (Join-Path $report 'server-estimates.properties')
+    }
 } finally {
     if (!$serverProcess.HasExited) { $serverProcess.Kill(); $serverProcess.WaitForExit() }
     $serverProcess.Dispose()
