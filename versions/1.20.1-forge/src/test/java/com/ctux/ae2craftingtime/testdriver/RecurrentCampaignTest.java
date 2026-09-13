@@ -4,6 +4,16 @@ import static org.junit.jupiter.api.Assertions.*;
 import org.junit.jupiter.api.Test;
 
 class RecurrentCampaignTest {
+    @Test void connectedAddonRouteRequiresTheExactPairAndReportedQuantity() {
+        assertFalse(RecurrentCampaign.addonRoute(false, false));
+        assertTrue(RecurrentCampaign.addonRoute(true, true));
+        assertThrows(IllegalStateException.class, () -> RecurrentCampaign.addonRoute(true, false));
+        assertThrows(IllegalStateException.class, () -> RecurrentCampaign.addonRoute(false, true));
+        assertEquals("reported-100", RecurrentCampaign.plan(true));
+        assertEquals("ordinary", RecurrentCampaign.plan(false));
+        assertEquals(100, RecurrentCampaign.REQUESTED_AMOUNT);
+    }
+
     @Test void onlyTheExactLiveGridCanAcknowledgeTheObservedPlan() {
         var grid = new Object();
         assertTrue(RecurrentCampaign.sameGrid(grid, grid));
