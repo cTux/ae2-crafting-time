@@ -74,14 +74,14 @@ public final class UiObservationStore {
             var cell = new Rect(active.gui.x() + TABLE_X + visibleIndex % 3 * PITCH_X,
                     active.gui.y() + TABLE_Y + visibleIndex / 3 * PITCH_Y, CELL_WIDTH, CELL_HEIGHT);
             active.rows.add(new PendingRow(entry.getWhat().getId().toString(), entry.getCraftAmount(),
-                    entry.getMissingAmount(), cell));
+                    entry.getMissingAmount(), cell, entry));
             active.itemCells.add(new Rect(cell.x() + CELL_WIDTH - 19, cell.y() + 3, 16, 16));
         }
     }
 
     public static void description(CraftingPlanSummaryEntry entry, List<Component> components) {
         if (active != null) {
-            active.descriptions.put(entry.getWhat().getId().toString(), observed(components, null));
+            active.planDescriptions.put(entry, observed(components, null));
         }
     }
 
@@ -172,7 +172,8 @@ public final class UiObservationStore {
         }
         var rows = active.rows.stream().map(row -> new UiSnapshot.Row(row.outputId, row.craftAmount,
                 row.missingAmount, row.cell,
-                rowDescription(active.descriptions, active.text, row.outputId, row.cell))).toList();
+                row.identity == null ? rowDescription(active.descriptions, active.text, row.outputId, row.cell)
+                        : active.planDescriptions.getOrDefault(row.identity, List.of()))).toList();
         var mergedBadges = merge(active.badges);
         var cpuCards = active.cpuCards.stream().map(card -> {
             var ttc = active.text.stream().filter(text -> text.key().equals("text.ae2craftingtime.ttc")
@@ -289,7 +290,10 @@ public final class UiObservationStore {
         return List.copyOf(merged);
     }
 
-    private record PendingRow(String outputId, long craftAmount, long missingAmount, Rect cell) {
+    private record PendingRow(String outputId, long craftAmount, long missingAmount, Rect cell, Object identity) {
+        private PendingRow(String outputId, long craftAmount, long missingAmount, Rect cell) {
+            this(outputId, craftAmount, missingAmount, cell, null);
+        }
     }
 
     private record PendingCpuCard(int serial, String name, String jobId, long amount, long elapsedNanos,
@@ -306,6 +310,7 @@ public final class UiObservationStore {
         private int scroll;
         private final List<PendingRow> rows = new ArrayList<>();
         private final Map<String, List<UiSnapshot.ObservedText>> descriptions = new LinkedHashMap<>();
+        private final Map<Object, List<UiSnapshot.ObservedText>> planDescriptions = new java.util.IdentityHashMap<>();
         private final List<UiSnapshot.ObservedText> text = new ArrayList<>();
         private final List<Rect> badges = new ArrayList<>();
         private final List<UiSnapshot.Widget> widgets = new ArrayList<>();

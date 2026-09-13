@@ -51,6 +51,17 @@ public final class DedicatedCpuScenario {
     private StandardCraftFixture connectedLarge;
     private boolean connectedPrepared;
     private boolean connectedValidated;
+    private StandardCraftFixture recurrentFixture;
+    private long recurrentAck;
+    private int recurrentAckMenu = -1;
+    private long recurrentAckRevision;
+    private boolean recurrentVisited;
+    private boolean recurrentSwapped;
+    private boolean recurrentReplanned;
+    private boolean recurrentDisconnected;
+    private boolean recurrentComplete;
+    private boolean recurrentCaptured;
+    private String recurrentAction = "";
     private final long started = System.nanoTime();
 
     public void tick(MinecraftServer server) {
@@ -76,6 +87,10 @@ public final class DedicatedCpuScenario {
         }
         if (scenario.equals("cpu-list-total-ttc-connected")) {
             stepConnected(server, level);
+            return;
+        }
+        if (scenario.equals("recurrent-plan-connected")) {
+            stepRecurrentConnected(server, level);
             return;
         }
         if (player == null) {
@@ -156,7 +171,80 @@ public final class DedicatedCpuScenario {
     }
 
     static int timeoutMinutes(String value) {
-        return "cpu-list-total-ttc-connected".equals(value) ? 40 : 5;
+        return value.endsWith("-connected") ? 40 : 5;
+    }
+
+    private void stepRecurrentConnected(MinecraftServer server, ServerLevel level) {
+        if (!connectedValidated) { CpuListTtcControl.validateDisposableServer(Path.of(""), target); connectedValidated = true; }
+        if (recurrentComplete && recurrentCaptured && server.getPlayerList().getPlayers().isEmpty()) {
+            finish(server, "PASS", "");
+            return;
+        }
+        var rolePlayer = server.getPlayerList().getPlayers().stream()
+                .filter(value -> value.getName().getString().equals("Ae2ctAlpha")).findFirst().orElse(null);
+        if (rolePlayer == null) {
+            if (!recurrentComplete && recurrentReplanned) recurrentDisconnected = true;
+            return;
+        }
+        var expectedUuid = UUID.nameUUIDFromBytes("OfflinePlayer:Ae2ctAlpha".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        if (!rolePlayer.getUUID().equals(expectedUuid)) throw new IllegalStateException("Unexpected offline role identity");
+        if (recurrentFixture == null) {
+            recurrentFixture = gridFixture;
+            recurrentFixture.cpuListScenario = false;
+            recurrentFixture.recurrentPlan = true;
+            recurrentFixture.missingPlanInput = true;
+            recurrentFixture.unprofiledPlan = true;
+        }
+        if (!recurrentFixture.prepare(rolePlayer, origin)) return;
+        var command = RecurrentPlanControl.command("alpha");
+        if (command.epoch().equals(CpuListTtcControl.epoch()) && command.role().equals("alpha")
+                && command.player().equals(rolePlayer.getUUID().toString()) && command.sequence() > recurrentAck) {
+            var commandPhase = RecurrentCampaign.phase(recurrentVisited, recurrentSwapped, recurrentReplanned, recurrentComplete);
+            if (RecurrentCampaign.allows(command.action(), commandPhase, recurrentDisconnected)
+                    && rolePlayer.containerMenu instanceof appeng.menu.me.crafting.CraftConfirmMenu menu
+                    && menu.getPlan() != null
+                    && RecurrentCampaign.sameGrid(recurrentFixture.cpu(rolePlayer).getMainNode().getGrid(),
+                            com.ctux.ae2craftingtime.mc1201.StatsRequestContext.current(rolePlayer).grid())
+                    && command.matches(CpuListTtcControl.epoch(), rolePlayer.getUUID(),
+                            menu.containerId, ((com.ctux.ae2craftingtime.mc1201.RecurrentPlanMenu) menu).ae2craftingtime$summaryRevision(), recurrentAck)) {
+                boolean flagged = menu.getPlan().getEntries().stream().anyMatch(entry ->
+                        ((com.ctux.ae2craftingtime.mc1201.RecurrentPlanEntry) entry).ae2craftingtime$recurrent());
+                if (flagged != recurrentFixture.recurrentPlan) throw new IllegalStateException("Server recurrence outcome differs for alpha");
+                recurrentAck = command.sequence();
+                recurrentAckMenu = command.menu();
+                recurrentAckRevision = command.revision();
+                recurrentAction = command.action();
+                recurrentCaptured |= command.action().equals("captured");
+                System.out.println("AE2CT recurrence recipient=" + rolePlayer.getUUID() + " menu=" + menu.containerId
+                        + " revision=" + ((com.ctux.ae2craftingtime.mc1201.RecurrentPlanMenu) menu).ae2craftingtime$summaryRevision()
+                        + " role=alpha action=" + command.action() + " recurrent=" + flagged);
+            }
+        }
+        var initial = "initial".equals(recurrentAction);
+        if (initial && !recurrentVisited) {
+            recurrentFixture = gridFixture.secondGrid();
+            recurrentFixture.cpuListScenario = false;
+            recurrentFixture.recurrentPlan = false;
+            recurrentFixture.missingPlanInput = true;
+            recurrentFixture.unprofiledPlan = true;
+            recurrentVisited = true;
+            return;
+        }
+        var visited = "grid".equals(recurrentAction);
+        if (visited && !recurrentSwapped) {
+            recurrentFixture.setRecurrent(rolePlayer, true);
+            recurrentSwapped = true;
+        }
+        var swapped = recurrentSwapped && "swapped".equals(recurrentAction);
+        recurrentReplanned |= swapped;
+        var rejoined = "rejoined".equals(recurrentAction);
+        recurrentComplete |= recurrentReplanned && recurrentDisconnected && rejoined;
+        var phase = RecurrentCampaign.phase(recurrentVisited, recurrentSwapped, recurrentReplanned, recurrentComplete);
+        if (RecurrentCampaign.publish(true, recurrentComplete, recurrentCaptured)) {
+            RecurrentPlanControl.publish("alpha", recurrentAck, recurrentAction, phase,
+                    recurrentFixture.terminal, rolePlayer.getUUID(), recurrentFixture.recurrentPlan,
+                    RecurrentCampaign.turn(recurrentAction, phase), recurrentAckMenu, recurrentAckRevision);
+        }
     }
 
     private void stepConnected(MinecraftServer server, ServerLevel level) {

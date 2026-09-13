@@ -57,6 +57,11 @@ foreach ($relative in $mixinConfigs) {
     if ($config.client -notcontains 'JoinMultiplayerScreenAccessor') {
         throw "Test-driver mixin config does not register the multiplayer screen accessor: $relative"
     }
+    foreach ($mixin in @('RecurrentNativePlanMixin', 'RecurrentPacketMixin')) {
+        if ($config.client -notcontains $mixin) {
+            throw "Test-driver mixin config does not register recurrent-plan observer ${mixin}: $relative"
+        }
+    }
 }
 
 $scenarioText = Get-Content -LiteralPath (Join-Path $root $scenario) -Raw

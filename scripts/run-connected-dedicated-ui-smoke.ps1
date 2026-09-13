@@ -10,6 +10,7 @@ param(
     [ValidateRange(1, 1800)][int]$ServerStartupTimeoutSeconds = 180,
     [switch]$ScheduledJava,
     [string]$InteractiveUser = 'Codex',
+    [ValidateSet('cpu-list-total-ttc','recurrent-plan')][string]$Scenario = 'cpu-list-total-ttc',
     [switch]$PlanOnly
 )
 $ErrorActionPreference = 'Stop'
@@ -151,7 +152,7 @@ Set-Content -LiteralPath (Join-Path $resolvedServer 'eula.txt') -Value 'eula=tru
     'pause-when-empty-seconds=-1','view-distance=6','simulation-distance=6') |
     Set-Content -LiteralPath (Join-Path $resolvedServer 'server.properties') -Encoding Ascii
 
-$serverArgs = @("-Dae2ct.testDriver.serverScenario=cpu-list-total-ttc-connected",
+$serverArgs = @("-Dae2ct.testDriver.serverScenario=$Scenario-connected",
     "-Dae2ct.testDriver.serverTarget=$Target", "-Dae2ct.testDriver.serverResult=$serverResult",
     "-Dae2ct.testDriver.serverControl=$control", "-Dae2ct.testDriver.serverCampaign=$connectionEpoch", '-Xmx4G')
 if ($Target -eq '1.20.1-fabric') { $serverArgs += @('-jar','fabric-server-launch.jar','nogui') }
@@ -170,14 +171,13 @@ $sourceIdentity = [ordered]@{ markerSha256=(Get-FileHash -LiteralPath $markerPat
     dependencies=$sourceDependencies }
 $runnerPlan = [ordered]@{ target=$Target; headSha=$HeadSha; campaignId=$campaignId; connectionEpoch=$connectionEpoch
     sourceServer=$sourceServer; disposableServer=$resolvedServer; java=$java
-    sourceIdentity=$sourceIdentity; relaunch=[ordered]@{required=$true;minimumProcesses=2}
+    sourceIdentity=$sourceIdentity; relaunch=[ordered]@{required=($Scenario -eq 'cpu-list-total-ttc');minimumProcesses=$(if ($Scenario -eq 'cpu-list-total-ttc') { 2 } else { 1 })}
     scheduledJava=$ScheduledJava.IsPresent; interactiveUser=$InteractiveUser
     argumentFile=$argsFile; arguments=$serverArgs; launchArguments=$launchArguments
     launchCommandLine=$launchCommandLine; preparedLaunch=$prepared; address=$Address }
 $runnerPlan |
     ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $planPath -Encoding UTF8
 if ($PlanOnly) { Write-Host "Connected runner plan validated: $planPath"; return }
-
 $javaVersionOut = Join-Path $report 'java-version.stdout.log'
 $javaVersionErr = Join-Path $report 'java-version.stderr.log'
 $javaVersionProcess = Start-Process -FilePath $java -ArgumentList '-version' -Wait -PassThru -WindowStyle Hidden `
@@ -221,10 +221,14 @@ try {
         if (!$ready) { Start-Sleep -Milliseconds 250 }
     }
     if (!$ready) { throw 'Dedicated server did not finish startup' }
-    $clientParameters = @{ Target=$Target; Scenario='cpu-list-total-ttc'; ReportDirectory=(Join-Path $report 'client')
+    $clientParameters = @{ Target=$Target; Scenario=$Scenario; ReportDirectory=(Join-Path $report 'client')
         BundleDirectory=$bundle; PreparedLaunch=$prepared; DedicatedAddress=$Address
         ControlDirectory=$control; CampaignId=$connectionEpoch; FailOnInitialDisconnect=$true
         StartupTimeoutSeconds=$ServerStartupTimeoutSeconds }
+    if ($Scenario -eq 'recurrent-plan') {
+        $clientParameters.Role = 'alpha'; $clientParameters.OfflineName = 'Ae2ctAlpha'
+        $clientParameters.OfflineUuid = '446b6d0ccadd3e57baf699d70f01a628'
+    }
     if ($HeadSha) { $clientParameters.HeadSha = $HeadSha }
     if ($ScheduledJava) { $clientParameters.ScheduledJava = $true; $clientParameters.InteractiveUser = $InteractiveUser }
     $attempts = @()
@@ -291,11 +295,16 @@ try {
     if (!(Test-Path -LiteralPath $serverResult -PathType Leaf)) { throw 'Connected server produced no result artifact' }
     $result = Get-Content -LiteralPath $serverResult -Raw | ConvertFrom-Json
     if ($result.result -ne 'PASS') { throw "Connected dedicated server failed: $($result.error)" }
-    foreach ($required in @((Join-Path $resolvedServer 'logs/latest.log'), (Join-Path $control 'state.properties'))) {
+    $stateFiles = if ($Scenario -eq 'recurrent-plan') {
+        @(Join-Path $control 'alpha/state.properties')
+    } else { @(Join-Path $control 'state.properties') }
+    foreach ($required in @((Join-Path $resolvedServer 'logs/latest.log')) + @($stateFiles)) {
         if (!(Test-Path -LiteralPath $required -PathType Leaf)) { throw "Connected evidence is missing: $required" }
     }
     Copy-Item -LiteralPath (Join-Path $resolvedServer 'logs/latest.log') -Destination (Join-Path $report 'server.latest.log')
-    Copy-Item -LiteralPath (Join-Path $control 'state.properties') -Destination (Join-Path $report 'server-estimates.properties')
+    if ($Scenario -eq 'cpu-list-total-ttc') {
+        Copy-Item -LiteralPath (Join-Path $control 'state.properties') -Destination (Join-Path $report 'server-estimates.properties')
+    }
 } finally {
     if (!$serverProcess.HasExited) { $serverProcess.Kill(); $serverProcess.WaitForExit() }
     $serverProcess.Dispose()

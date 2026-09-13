@@ -169,7 +169,11 @@ public final class CraftPlanScenario {
             AdapterSmokePolicy.verify(DriverPlatform.TARGET, options.scenario(),
                     minecraft.getLanguageManager().getSelected(),
                     com.ctux.ae2craftingtime.integration.IntegrationMixinPlugin.snapshot());
-            var state = CpuListTtcControl.state();
+            var recurrence = options.scenario().equals("recurrent-plan");
+            var recurrentState = recurrence ? RecurrentPlanControl.state() : null;
+            var state = recurrence ? new CpuListTtcControl.State(recurrentState.ready(), recurrentState.epoch(),
+                    recurrentState.ack(), recurrentState.action(), recurrentState.phase(), recurrentState.x(),
+                    recurrentState.y(), recurrentState.z(), "", "") : CpuListTtcControl.state();
             if (!state.ready()) return;
             marker = new FixtureMarker(1, "craft-plan", "ae2-crafting-time", options.world(),
                     new FixtureMarker.Position(state.x(), state.y(), state.z(), "NORTH"), "minecraft:smooth_stone");

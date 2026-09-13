@@ -135,7 +135,9 @@ foreach ($change in $changes) {
         $new = Read-Language $newJson
         $keys = @(@($old.Keys) + @($new.Keys) | Sort-Object -Unique -CaseSensitive | Where-Object { !$old.ContainsKey($_) -or !$new.ContainsKey($_) -or $old[$_] -cne $new[$_] })
         if (!$keys.Count) { $reason = 'Language formatting only; static validation still required' }
-        elseif (@($keys | Where-Object { $_ -cne 'text.ae2craftingtime.ttc_delayed' }).Count) { $cases = @('suite'); $reason = 'English keys affect general UI' }
+        elseif (!@($keys | Where-Object { $_ -notin @('text.ae2craftingtime.plan.recurrent','text.ae2craftingtime.plan.recurrent_hint') }).Count) {
+            $cases = @('recurrent-plan','standard-plan-controls'); $reason = 'English recurrent-plan labels changed'
+        } elseif (@($keys | Where-Object { $_ -cne 'text.ae2craftingtime.ttc_delayed' }).Count) { $cases = @('suite'); $reason = 'English keys affect general UI' }
         else { $cases = @('delayed-status'); $reason = 'English delayed label changed' }
     } elseif ($behavior.Count) { $cases = @($behavior.cases | Select-Object -Unique); $reason = $behavior.reason -join '; ' }
     else {

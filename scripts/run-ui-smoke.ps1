@@ -6,7 +6,7 @@ param(
     [string]$CasesBase64,
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$ArchiveRoot,
     [string]$ReportDirectory,
@@ -16,6 +16,9 @@ param(
     [string]$DedicatedAddress,
     [string]$ControlDirectory,
     [string]$CampaignId,
+    [ValidateSet('alpha')][string]$Role,
+    [string]$OfflineName,
+    [ValidatePattern('^[a-f0-9]{32}$')][string]$OfflineUuid,
     [string]$HeadSha,
     [string]$ResumeBundleDirectory,
     [switch]$CaptureResumeOnly,
@@ -174,9 +177,9 @@ if (-not $resolvedBase.StartsWith($buildRoot, [StringComparison]::OrdinalIgnoreC
 Write-Status 'preparing' 'creating isolated runtime directories'
 New-Item -ItemType Directory -Path $base, $report, (Split-Path -Parent $worldCopy) -Force | Out-Null
 try {
-    $runtimeLock = [IO.File]::Open((Join-Path $base "runtime.lock"), "OpenOrCreate", "ReadWrite", "None")
+    $runtimeLock = [IO.File]::Open((Join-Path ([IO.Path]::GetTempPath()) "ae2-crafting-time-smoke-client.lock"), "OpenOrCreate", "ReadWrite", "None")
 } catch {
-    throw "Another $profile UI-smoke scenario is already using this workspace runtime"
+    throw "Another Minecraft UI-smoke client is already running; wait for its exit before launching another target or scenario"
 }
 if (Test-Path -LiteralPath $evidence) { Remove-Item -LiteralPath $evidence -Recurse -Force }
 if ($resumeState) {
@@ -275,6 +278,7 @@ try {
                 RuntimeDirectory=$runtime; Target=$Target; Profile=$profile; Scenario=$Scenario; World=$world
                 Evidence=$evidence; ProjectId=$ProjectId; Interactive=$Interactive; DedicatedAddress=$DedicatedAddress
                 ControlDirectory=$ControlDirectory; CampaignId=$campaignId }
+            if ($Role) { $launchParameters.Role=$Role; $launchParameters.OfflineName=$OfflineName; $launchParameters.OfflineUuid=$OfflineUuid }
             if ($RuntimeDirectory) { $launchParameters.AllowedRuntimeRoot=$report }
             if ($phase -eq 2) { $launchParameters.ContinuationPath=$continuationPath; $launchParameters.ResumeOnly=$true }
             $launch = & (Join-Path $PSScriptRoot 'prepare-ui-smoke-launch.ps1') @launchParameters
@@ -293,6 +297,7 @@ try {
                     RuntimeDirectory=$runtime; Target=$Target; Profile=$profile; Scenario=$Scenario; World=$world
                     Evidence=$evidence; ProjectId=$ProjectId; Interactive=$Interactive; DedicatedAddress=$DedicatedAddress
                     ControlDirectory=$ControlDirectory; CampaignId=$campaignId }
+                if ($Role) { $launchParameters.Role=$Role; $launchParameters.OfflineName=$OfflineName; $launchParameters.OfflineUuid=$OfflineUuid }
                 if ($RuntimeDirectory) { $launchParameters.AllowedRuntimeRoot=$report }
                 if ($phase -eq 2) {
                     $launchParameters.ContinuationPath = $continuationPath
@@ -351,7 +356,7 @@ try {
                 } elseif ($process.WaitForExit(1000)) {
                     break
                 }
-                if ($Scenario -eq 'cpu-list-total-ttc') {
+                if ($Scenario -in @('cpu-list-total-ttc', 'recurrent-plan') -or $selectedCases -contains 'recurrent-plan') {
                     $progressPath = Join-Path $evidence 'driver-progress.json'
                     if (Test-Path -LiteralPath $progressPath -PathType Leaf) {
                         try {
@@ -625,7 +630,6 @@ try {
         if ($afterHash -ne $sourceHash -or $afterMetadata -ne $metadataHash) { throw "Tracked source fixture changed during UI smoke" }
     }
     Write-Status "passed" "UI smoke passed" $observedExitCode
-    $runtimeLock.Dispose()
     Write-Host "UI smoke passed: $evidence"
 } catch {
     if ($scheduledTaskName) { Remove-UiSmokeScheduledJava -TaskName $scheduledTaskName }
@@ -633,6 +637,7 @@ try {
         elseif ($process -and !$processDisappeared -and $process.HasExited) { [Nullable[int]]$process.ExitCode }
         else { $null }
     Write-Status "failed" $_.Exception.Message $exitCode
-    $runtimeLock.Dispose()
     throw
+} finally {
+    $runtimeLock.Dispose()
 }

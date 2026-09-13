@@ -1,5 +1,30 @@
 $ErrorActionPreference = 'Stop'
 $runnerText = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Raw
+$parseErrors = $null
+$runnerAst = [Management.Automation.Language.Parser]::ParseInput($runnerText, [ref]$null, [ref]$parseErrors)
+if ($parseErrors.Count) { throw 'Connected runner has invalid PowerShell syntax' }
+$clientInvocation = $runnerAst.Find({ param($node)
+    $node -is [Management.Automation.Language.CommandAst] -and
+        $node.Extent.Text -match '^& .+run-ui-smoke\.ps1'
+}, $true)
+if (!$clientInvocation) { throw 'Connected runner has no synchronous client invocation' }
+for ($ancestor = $clientInvocation.Parent; $ancestor; $ancestor = $ancestor.Parent) {
+    if ($ancestor -is [Management.Automation.Language.IfStatementAst] -and
+            $ancestor.Clauses[0].Item1.Extent.Text -match 'Scenario') {
+        throw 'Shared client launch must not be conditional on the recurrence scenario'
+    }
+}
+$clientRunner = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'run-ui-smoke.ps1') -Raw
+if ($clientRunner -notmatch 'GetTempPath\(\)\) "ae2-crafting-time-smoke-client.lock"' -or
+        $clientRunner -notmatch '"OpenOrCreate", "ReadWrite", "None"') {
+    throw 'Every target and profile must share one exclusive smoke-client lock'
+}
+if ($runnerText -notmatch "ValidateSet\('cpu-list-total-ttc','recurrent-plan'\)" -or
+        $runnerText -notmatch "Ae2ctAlpha" -or $runnerText -match "Ae2ctBeta" -or
+        $runnerText -match 'Start-Job' -or $runnerText -match 'recurrent-role-processes.json' -or
+        $runnerText -match '22 \* 1024 \* 1024') {
+    throw 'Connected runner must use one bounded Alpha client without concurrent-client orchestration'
+}
 if ($runnerText.Contains('(& $java -version 2>&1)') -or
         $runnerText -notmatch 'RedirectStandardOutput.+RedirectStandardError') {
     throw 'Connected runner must capture Java version output without promoting native stderr to a terminating error'
@@ -175,6 +200,15 @@ param([string]$OutputPath)
         $casePlan = Get-Content -LiteralPath (Join-Path $caseReport 'connected-runner-plan.json') -Raw | ConvertFrom-Json
         $expectedCount = if ($case.target -like '*-fabric') { 1 } else { 3 }
         if ($casePlan.launchArguments.Count -ne $expectedCount) { throw 'Wrong target-specific Java launch argument contract' }
+        $recurrenceReport = Join-Path $temporary ('recurrent-' + $case.target)
+        & (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Target $case.target -Scenario recurrent-plan `
+            -ServerDirectory $caseSource -PreparedLaunch $casePrepared -BundleDirectory $caseBundle `
+            -ReportDirectory $recurrenceReport -JavaHome $javaHome -PlanOnly
+        $recurrencePlan = Get-Content -LiteralPath (Join-Path $recurrenceReport 'connected-runner-plan.json') -Raw | ConvertFrom-Json
+        if ($recurrencePlan.relaunch.required -or $recurrencePlan.relaunch.minimumProcesses -ne 1 -or
+                !($recurrencePlan.arguments -contains '-Dae2ct.testDriver.serverScenario=recurrent-plan-connected')) {
+            throw 'Recurrence plan retained CPU relaunch or server scenario metadata'
+        }
         if (Test-Path -LiteralPath (Join-Path $caseSource 'server.properties')) { throw 'Runner changed a source server' }
     }
     foreach ($refusal in @(
