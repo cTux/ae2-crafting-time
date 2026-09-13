@@ -1,6 +1,14 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 final class ServerDriverPlatform {
+    static boolean isModLoaded(String id) {
+        return net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded(id);
+    }
+
+    static WirelessTerminalFixture wcwtTerminal() {
+        throw new IllegalArgumentException("WCWT is unavailable on Fabric 1.20.1");
+    }
+
     static net.minecraft.world.item.ItemStack processingPattern(appeng.api.stacks.GenericStack input,
             appeng.api.stacks.GenericStack output) {
         return appeng.api.crafting.PatternDetailsHelper.encodeProcessingPattern(

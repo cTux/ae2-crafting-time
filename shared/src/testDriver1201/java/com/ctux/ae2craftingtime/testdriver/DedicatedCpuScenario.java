@@ -52,6 +52,10 @@ public final class DedicatedCpuScenario {
     private boolean connectedPrepared;
     private boolean connectedValidated;
     private StandardCraftFixture recurrentFixture;
+    private RecurrentPlanFixture recurrentPatterns;
+    private WirelessTerminalFixture recurrentWireless;
+    private boolean recurrentWirelessReady;
+    private boolean recurrentAddonRoute;
     private long recurrentAck;
     private int recurrentAckMenu = -1;
     private long recurrentAckRevision;
@@ -194,8 +198,17 @@ public final class DedicatedCpuScenario {
             recurrentFixture.recurrentPlan = true;
             recurrentFixture.missingPlanInput = true;
             recurrentFixture.unprofiledPlan = true;
+            recurrentAddonRoute = RecurrentCampaign.addonRoute(
+                    ServerDriverPlatform.isModLoaded("wcwt"), ServerDriverPlatform.isModLoaded("advanced_ae"));
+            if (recurrentAddonRoute) {
+                addon = (AddonCpuFixture<Object>) AddonCpuFixture.create("advancedae-cpu");
+                recurrentWireless = ServerDriverPlatform.wcwtTerminal();
+            }
         }
         if (!recurrentFixture.prepare(rolePlayer, origin)) return;
+        if (recurrentAddonRoute && !prepareRecurrentAddons(rolePlayer)) return;
+        if (recurrentPatterns == null) recurrentPatterns = new RecurrentPlanFixture(recurrentFixture);
+        if (!recurrentPatterns.prepare(rolePlayer, RecurrentCampaign.plan(recurrentFixture.recurrentPlan))) return;
         var command = RecurrentPlanControl.command("alpha");
         if (command.epoch().equals(CpuListTtcControl.epoch()) && command.role().equals("alpha")
                 && command.player().equals(rolePlayer.getUUID().toString()) && command.sequence() > recurrentAck) {
@@ -227,6 +240,7 @@ public final class DedicatedCpuScenario {
             recurrentFixture.recurrentPlan = false;
             recurrentFixture.missingPlanInput = true;
             recurrentFixture.unprofiledPlan = true;
+            recurrentPatterns = new RecurrentPlanFixture(recurrentFixture);
             recurrentVisited = true;
             return;
         }
@@ -245,6 +259,21 @@ public final class DedicatedCpuScenario {
                     recurrentFixture.terminal, rolePlayer.getUUID(), recurrentFixture.recurrentPlan,
                     RecurrentCampaign.turn(recurrentAction, phase), recurrentAckMenu, recurrentAckRevision);
         }
+    }
+
+    private boolean prepareRecurrentAddons(ServerPlayer rolePlayer) {
+        var marker = new FixtureMarker(1, "craft-plan", "ae2-crafting-time", "dedicated-disposable",
+                new FixtureMarker.Position(recurrentFixture.terminal.getX(), recurrentFixture.terminal.getY(),
+                        recurrentFixture.terminal.getZ(), "NORTH"), origin.outputId());
+        if (placement == null) { placement = addon.place(rolePlayer, marker); return false; }
+        if (!ready) { ready = addon.finish(rolePlayer, placement); if (!ready) return false; }
+        if (grid == null) grid = recurrentFixture.cpu(rolePlayer).getMainNode().getGrid();
+        if (cpu == null) { cpu = addon.cpu(rolePlayer, placement, grid); if (cpu == null) return false; }
+        if (!recurrentWirelessReady) {
+            if (recurrentWireless.setup(rolePlayer, marker) == null) return false;
+            recurrentWirelessReady = true;
+        }
+        return true;
     }
 
     private void stepConnected(MinecraftServer server, ServerLevel level) {
@@ -326,6 +355,8 @@ public final class DedicatedCpuScenario {
             Files.writeString(output, new GsonBuilder().setPrettyPrinting().create().toJson(Map.of(
                     "target", target, "scenario", scenario, "result", result, "error", error,
                     "adapters", IntegrationMixinPlugin.snapshot(), "dispatch", DispatchObservation.snapshot(),
+                    "addonRoute", Map.of("enabled", recurrentAddonRoute, "wcwt", recurrentWirelessReady,
+                            "quantumCpu", cpu != null),
                     "finishedAt", java.time.Instant.now().toString())));
         } catch (Exception failure) { throw new IllegalStateException("Cannot save dedicated test evidence", failure); }
         finally { server.halt(false); }

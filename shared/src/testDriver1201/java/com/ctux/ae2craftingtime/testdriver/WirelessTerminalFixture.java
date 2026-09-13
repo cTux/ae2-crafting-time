@@ -37,7 +37,7 @@ abstract class WirelessTerminalFixture {
     }
 
     final ItemStack setup(ServerPlayer player, FixtureMarker marker) {
-        if (!DriverPlatform.isModLoaded(modId())) {
+        if (!ServerDriverPlatform.isModLoaded(modId())) {
             throw new IllegalStateException(modId() + " is unavailable");
         }
         var level = player.serverLevel();

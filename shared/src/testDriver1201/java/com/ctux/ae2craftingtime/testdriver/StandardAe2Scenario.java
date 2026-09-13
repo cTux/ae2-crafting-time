@@ -58,6 +58,8 @@ final class StandardAe2Scenario {
         if (!CHECKS.containsKey(leaf)) throw new IllegalArgumentException("Unknown standard leaf: " + leaf);
         this.leaf = leaf;
         this.connectedDedicated = connectedDedicated;
+        recurrenceAddonRoute = connectedDedicated && leaf.equals("recurrent-plan") && RecurrentCampaign.addonRoute(
+                DriverPlatform.isModLoaded("wcwt"), DriverPlatform.isModLoaded("advanced_ae"));
         cpuList = leaf.equals("cpu-list-total-ttc")
                 ? new CpuListTtcScenario(fixture, world, output, connectedDedicated, resultScreenshots) : null;
         if (cpuList != null && cpuList.resumed()) phase = Stage.ACTIVE;
@@ -89,6 +91,8 @@ final class StandardAe2Scenario {
     private int recurrenceCase;
     private boolean recurrenceServerVerified;
     private boolean recurrenceHover;
+    private final boolean recurrenceAddonRoute;
+    private boolean recurrenceWirelessOpened;
 
     String checkpoint() { return "phase=" + phase + " fixture=" + fixture.checkpoint
             + (leaf.equals("recurrent-plan") ? " recurrence=" + recurrenceCase + " sort=" + sort : "")
@@ -165,6 +169,13 @@ final class StandardAe2Scenario {
         }
         if (phase == Stage.TERMINAL) {
             if (minecraft.screen == null) {
+                if (recurrenceAddonRoute && !recurrenceVisited) {
+                    var held = net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(
+                            minecraft.player.getMainHandItem().getItem()).toString();
+                    if (!held.equals("wcwt:wireless_comprehensive_work_terminal")) return false;
+                    minecraft.gameMode.useItem(minecraft.player, InteractionHand.MAIN_HAND);
+                    return false;
+                }
                 minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
                         new BlockHitResult(Vec3.atCenterOf(fixture.terminal).add(0, 0, -0.5), Direction.NORTH, fixture.terminal, false));
             } else if (minecraft.screen instanceof MEStorageScreen<?> screen && fixture.cpuListScenario) {
@@ -172,6 +183,11 @@ final class StandardAe2Scenario {
                 DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
                 phase = Stage.ACTIVE;
             } else if (minecraft.screen instanceof MEStorageScreen<?> screen) {
+                if (recurrenceAddonRoute && !recurrenceVisited) {
+                    if (!minecraft.screen.getClass().getName().equals(
+                            "com.lhy.wcwt.client.WirelessComprehensiveWorkTerminalScreen")) return false;
+                    recurrenceWirelessOpened = true;
+                }
                 var entry = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$repo().getAllEntries().stream()
                         .filter(row -> row.getWhat().getId().toString().equals("minecraft:smooth_stone") && row.isCraftable())
                         .findFirst().orElse(null);
@@ -186,6 +202,9 @@ final class StandardAe2Scenario {
         }
         if (phase == Stage.AMOUNT) {
             if (minecraft.screen instanceof CraftAmountScreen amount) {
+                if (leaf.equals("recurrent-plan")) ((CraftAmountScreenAccessor) amount)
+                        .ae2craftingtime_test_driver$amount().setLongValue(
+                                connectedDedicated ? RecurrentCampaign.REQUESTED_AMOUNT : recurrenceFixture.requestedAmount());
                 var button = ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next();
                 DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
             } else if (minecraft.screen instanceof CraftConfirmScreen) phase = Stage.values()[phase.ordinal() + 1];
@@ -294,6 +313,7 @@ final class StandardAe2Scenario {
         if (!frames.observe(List.of(phase, sort, CaptureEvidence.readiness(snapshot), planDescriptions))) return false;
         if (phase == Stage.PLAN_SORT && leaf.equals("recurrent-plan")) {
             if (!(minecraft.screen instanceof CraftConfirmScreen screen)) return false;
+            if (recurrenceAddonRoute && !recurrenceVisited && !recurrenceWirelessOpened) return false;
             if (!RecurrentPlanObservation.verify(screen.getMenu())) return false;
             if (!connectedDedicated) {
                 if (!recurrenceServerVerified) {
@@ -313,9 +333,14 @@ final class StandardAe2Scenario {
                     .anyMatch(text -> text.bounds() == null || snapshot.rows().stream().noneMatch(value -> text.bounds().inside(value.cell()))))
                 throw new IllegalStateException("Recurrent text escapes its native table cell");
             if (connectedDedicated && RecurrentPlanControl.state().recurrent() != (label != null)) return false;
+            if (connectedDedicated && label != null
+                    && !label.arguments().equals(List.of(Long.toString(RecurrentCampaign.REQUESTED_AMOUNT)))) return false;
             if (label != null && (label.bold() || !java.util.Objects.equals(label.color(), 0xFF5555)
                     || label.arguments().size() != 1 || !label.rendered().endsWith(label.arguments().get(0))))
                 throw new IllegalStateException("Recurrence label lost its red normal style or amount");
+            if (!connectedDedicated && recurrenceFixture.reported() && label != null
+                    && !label.arguments().equals(List.of(Long.toString(recurrenceFixture.requestedAmount()))))
+                throw new IllegalStateException("Recurrence label lost requested quantity " + recurrenceFixture.requestedAmount());
             if (!row.cell().inside(snapshot.gui())) throw new IllegalStateException("Recurrence row escapes plan layout");
             mark(checks, "recurrent-row", true);
             mark(checks, "red-normal", label == null || !label.bold() && java.util.Objects.equals(label.color(), 0xFF5555));

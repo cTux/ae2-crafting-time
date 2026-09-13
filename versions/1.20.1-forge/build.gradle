@@ -145,6 +145,7 @@ dependencies {
     }
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'io.github.llamalad7:mixinextras-common:0.5.5'
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     testDriverAnnotationProcessor 'org.spongepowered:mixin:0.8.5:processor'

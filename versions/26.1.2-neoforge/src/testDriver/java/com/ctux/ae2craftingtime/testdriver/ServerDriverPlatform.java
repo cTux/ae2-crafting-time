@@ -1,6 +1,14 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 final class ServerDriverPlatform {
+    static boolean isModLoaded(String id) {
+        return net.neoforged.fml.ModList.get().isLoaded(id);
+    }
+
+    static WirelessTerminalFixture wcwtTerminal() {
+        throw new IllegalStateException("WCWT is unavailable for 26.1.2");
+    }
+
     static net.minecraft.world.item.ItemStack processingPattern(appeng.api.stacks.GenericStack input,
             appeng.api.stacks.GenericStack output) {
         return appeng.api.crafting.PatternDetailsHelper.encodeProcessingPattern(

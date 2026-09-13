@@ -1,6 +1,16 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 final class RecurrentCampaign {
+    static final long REQUESTED_AMOUNT = 100;
+
+    static boolean addonRoute(boolean wcwt, boolean advancedAe) {
+        return wcwt && advancedAe;
+    }
+
+    static String plan(boolean recurrent) {
+        return recurrent ? "reported-100" : "ordinary";
+    }
+
     static boolean sameGrid(Object expected, Object actual) {
         return expected != null && expected == actual;
     }

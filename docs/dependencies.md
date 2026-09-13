@@ -70,6 +70,8 @@ the supported Fabric Loader minimum, `0.14.21`, predates Loader's built-in
 MixinExtras. Version `0.5.5` also prevents world-entry crashes when newer
 Fabric Mixin versions compile `Redirect.at` as an array. Forge uses the
 library's recommended Jar-in-Jar setup.
+The 1.21.1 summary hook uses `WrapOperation`, available in NeoForge `21.1.1`'s
+bundled MixinExtras `0.3.5`, so the loader floor stays unchanged.
 
 MixinExtras is intentionally not a separate player-installed dependency.
 Externalizing it would mostly move the same bytes into another JAR and add a
