@@ -70,7 +70,7 @@ preserve its missing-amount comparator.
 | R2 | Direct self-dependency and a three-recipe loop receive the same diagnosis. |
 | R3 | Ordinary shortages and failures on an eligible nonrecursive alternative keep Missing; a successful seeded or alternative plan has no Recurrent label. |
 | R4 | Mixed rows follow the aggregation rule; unrelated missing rows stay Missing. Resource variants remain distinct. |
-| R5 | Replan, menu replacement, another network, cancellation, disconnect, and late packets cannot show an old diagnosis. |
+| R5 | Replan, menu replacement, another network, cancellation, disconnect, and late packets cannot show an old diagnosis. Dedicated single-client sessions and recipient/menu/revision boundary tests verify isolation. |
 | R6 | Both locales, all four targets, all TTC sort modes, no-sample plans, and quantities/units remain correct. Long text stays within the existing table layout. |
 | R7 | Craftability, calculation results, timing data, saved data, and optional separate screens are unchanged. Missing or rejected diagnostic data leaves the native plan usable. |
 
@@ -78,8 +78,11 @@ Verify both locales through translation/component checks. Runtime smoke uses
 English only under the [current smoke policy](../automated-ui-testing/spec.md#smoke-policy);
 Ukrainian remains a supported product locale. The bounded test-driver extension
 in the implementation plan is part of verification, not a new player feature.
-Its two-client overlap is limited to proving two actual players receive their
-own plans on one disposable loopback server; other campaigns stay sequential.
+Every Minecraft smoke client runs sequentially, including connected checks.
+Use one 8 GiB client at a time and one connected client per target. The dedicated
+session verifies the logical-server path, recipient binding, replanning and
+reconnect; boundary tests cover different recipient identities. Simultaneous
+player testing and claims of simultaneous-player proof are outside this gate.
 
 See the [technical design](technical-design.md) and
 [implementation plan](implementation-plan.md).

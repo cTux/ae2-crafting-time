@@ -40,14 +40,15 @@ a sealed `base` dependency bundle from `scripts/run-client.ps1 -ResolveOnly
 -Packaged -BaseOnly` for that target's compatible pins, with no production/driver JARs
 in the source. Record target, loader, Java, launcher path/hash and dependency
 hashes in its source marker; validate with the existing connected runner's
-checks. Both connected clients use that same base bundle; keep optional addon
+checks. The connected client uses that same base bundle; keep optional addon
 catalogues in the integrated runs. Verify each resolved base dependency loads
 on a server before accepting the fixture; do not bypass hash equality checks. Preserve
 the source and run only its separately marked disposable copy on loopback.
 
-The existing runner cannot yet run recurrence or two clients. The smallest
-extension described in the technical design is included in this issue. Finish
-its static contracts and preflight before the first environment-heavy run.
+The runner now has a recurrence path; remove its concurrent-client branch,
+second role and dual-client memory prerequisite before running it under this
+revised requirement. Use one 8 GiB client per target, with no simultaneous
+clients. Finish its static contracts and preflight before runtime verification.
 If provisioning needs unavailable software, resources or credentials, report
 that exact prerequisite instead of substituting a different environment.
 
@@ -90,7 +91,8 @@ check Fabric capability before send. Do not modify AE2 packet bytes.
 Extend the nearest packet tests for empty evidence, 1/256/257 rows, the final
 partial chunk, duplicate chunks, negative and overflow bounds, wrong counts,
 invalid trailing bits, stale/future revisions, wrong or closed menus, new
-plans with identical contents, two players/networks, cancellation and disconnect.
+plans with identical contents, distinct recipient/network identities at the
+unit/packet boundary, cancellation and disconnect.
 Prove native setPlan runs before its mod chunk on each loader's client executor.
 Assert no packet-controlled count allocates an arbitrary-sized collection.
 
@@ -147,19 +149,21 @@ controls. Reuse `StandardCraftFixture`, `DriverPlatform.processingPattern`,
 existing leaves. Update `docs/test-driver/{spec,technical-design}.md` alongside
 implementation with this bounded multiplayer exception and its exact result set.
 
-Extend `scripts/run-connected-dedicated-ui-smoke.ps1` with a scenario selector
-whose existing CPU-list default is unchanged. For `recurrent-plan-connected`,
+Keep `scripts/run-connected-dedicated-ui-smoke.ps1`'s scenario selector and
+CPU-list default. Select `-Scenario recurrent-plan`; for its server counterpart,
+`recurrent-plan-connected`,
 dispatch the recurrence fixture through `DedicatedCpuScenario` and the current
 loader `ServerDriverPlatform` entrypoints. Reuse `CpuListTtcControl`'s bounded
-atomic rendezvous pattern with separate role files; keep its CPU-list schema
+atomic rendezvous pattern for the single fixture identity; keep its CPU-list schema
 and commands unchanged. Extend `prepare-ui-smoke-launch.ps1` only for validated
 offline role identity, forwarded through the existing runner. Use its native
-loader launch and `ui-smoke-scheduled-java.ps1` for separate owned client processes.
-On NeoForge 1.21.1 enable two roles; other targets need one. Refuse duplicate
-identities, shared output/runtime directories, unmarked worlds and non-loopback
+loader launch and `ui-smoke-scheduled-java.ps1` for one owned client process.
+Use the single-client path on every target, including NeoForge 1.21.1. Remove
+the second role and its scheduling/memory checks. Refuse overlapping client
+processes, reused output/runtime directories, unmarked worlds and non-loopback
 servers. Extend `test-run-connected-dedicated-ui-smoke.ps1`,
 `test-prepare-ui-smoke-launch.ps1`, the closest readiness check and
-`TestDriverCoreTest` for these changed branches, including cleanup on one-client
+`TestDriverCoreTest` for these changed branches, including cleanup on client
 failure. Run those checks only after the hook-created PR exists.
 
 Run prepared-client smoke in CodexVM, in English, through the smoke skill. First
@@ -172,7 +176,7 @@ the changed selector must not silently omit them.
 | --- | --- |
 | 1.20.1 Forge | Integrated recurrent-plan plus standard-plan-controls; connected recurrent-plan-connected with one client proves packet ordering and lifecycle. |
 | 1.20.1 Fabric | Same leaves and connected gate; capability fallback and remapped hooks verified. |
-| 1.21.1 NeoForge | Same integrated leaves; connected gate with two actual clients on separate grids proves overlapping player isolation and reconnect. |
+| 1.21.1 NeoForge | Same integrated leaves and one-client connected gate; sequential grid changes, replan and reconnect verify stale-state isolation. |
 | 26.1.2 NeoForge | Same integrated leaves and one-client connected gate on its rendering/packet APIs. |
 
 All integrated recurrence leaves include self/two/three-node loops, successful
@@ -182,9 +186,11 @@ NeoForge 1.21.1; all-target codec tests cover chunk boundaries. Each connected
 gate records native setPlan followed by its mod chunk on the client thread,
 then menu replacement and reconnect. Driver-only packet interception supplies
 late/malformed negative inputs; real positive flags must come from AE2's server
-calculation. On the two-player gate, capture both players' opposite outcomes,
-swap/replan, and reconnect one while the other retains its valid plan. Retain
-actual recipient UUID/menu/revision records and both client frame snapshots.
+calculation. In each connected gate, visit grids with opposite outcomes, swap
+patterns/replan, and reconnect the same client. Retain actual recipient
+UUID/menu/revision records and matching client frames. Cover different recipients
+in unit/packet-boundary tests. An optional separately identified session runs
+only after the previous client exits. Do not claim simultaneous-player proof.
 
 Capture red row text and its hover explanation. A screenshot alone does not
 certify negative controls or isolation. Bind every result, log, PNG/sidecar and
@@ -194,11 +200,11 @@ dependency graph and adapter identity. Review every non-PASS visual checkpoint.
 ### Launch and time budget
 
 Budget four integrated client launches, one per target, grouping the two leaves
-in each process. Follow these with four dedicated-server launches and five
-client launches: one connected client per target plus NeoForge 1.21.1's second
-player. That is nine client and four server launches before any extra graph
+in each process. Follow these with four dedicated-server launches and four
+client launches: one connected client per target. That is eight client and
+four server launches before any extra graph
 selected for newest-adapter coverage. Reconnect reuses its client process.
-Launch targets sequentially; only the explicit two-player gate overlaps clients.
+All client launches are sequential; verify each client's exit before the next.
 Start with the Forge integrated case, then finish the selected integrated matrix
 before dedicated runs. Reuse that first clean pass if its source/artifact identity
 is unchanged; it is not an extra mandatory rehearsal.
@@ -220,7 +226,7 @@ remain diagnostic-only.
 | --- | --- | --- |
 | R1-R2 | Node rejection observation, terminal shortage capture, row label/hint | Covered classification tests; real self/A-B/A-B-C loops and row/hover frames on four targets |
 | R3-R4 | Per-attempt reset, eligible-child rule, positive intersections, exact AEKeys | Covered seed/alternative/emitter/substitute/CRAFT_LESS/mixed/variant boundaries; successful runtime controls; plan with at least 257 entries |
-| R5 | Plan attachment, menu revision and bounded chunks | All-target codec/ordered-handler checks; replan/menu/network/cancel/reconnect cases; two-client recipient/frame evidence |
+| R5 | Plan attachment, recipient/menu revision and bounded chunks | All-target codec/ordered-handler and recipient-identity boundary checks; one-client dedicated replan/menu/network/cancel/reconnect cases and matching recipient/frame evidence |
 | R6 | Shared text and renderer, unchanged TTC/sort consumers | English/Ukrainian resource/component checks; English normal-red style, narrow layout, units and three sort modes; standard-plan-controls |
 | R7 | Read-only planner hooks, separate payload, optional capability | Native result/quantity comparison; malformed/fallback checks; unchanged persisted formats; all-target builds and driver-artifact isolation |
 
