@@ -1,8 +1,9 @@
 # Recurrent ingredients in the crafting plan
 
-Status: planned; this documentation does not implement the feature.
+Status: implemented; this is the current behavior contract. The regression in
+[#408](https://github.com/cTux/ae2-crafting-time/issues/408) remains under investigation.
 
-Tracking issue: [#320](https://github.com/cTux/ae2-crafting-time/issues/320).
+Original feature: [#320](https://github.com/cTux/ae2-crafting-time/issues/320).
 
 ## Goal
 
@@ -57,7 +58,7 @@ becomes a positive diagnosis.
 
 Do not repair recipes, resolve loops, modify AE2's calculation or submission,
 add a graph viewer, change TTC estimation, reorder missing rows, add a setting,
-persist diagnoses, or release mod JARs as part of this planning PR.
+persist diagnoses, or release mod JARs as part of this feature repair.
 Missing-first sorting is tracked separately in
 [#318](https://github.com/cTux/ae2-crafting-time/issues/318) and is already present;
 preserve its missing-amount comparator.
@@ -83,6 +84,28 @@ Use one 8 GiB client at a time and one connected client per target. The dedicate
 session verifies the logical-server path, recipient binding, replanning and
 reconnect; boundary tests cover different recipient identities. Simultaneous
 player testing and claims of simultaneous-player proof are outside this gate.
+
+## Native-plan regression #408
+
+The reported setup uses Minecraft 1.21.1 NeoForge, AE2 19.2.17,
+AdvancedAE 1.6.12's Quantum Computer, Wireless Comprehensive Work Terminal
+1.3.9, and AE2: Crafting Tree 1.21.1-1.1.1. With processing patterns for A from B,
+B from A, and C from A, requesting 100 C can leave the native shortage row at
+`Missing: 100`. The expected result is `Recurrent: 100` in red, with the same
+quantity and tooltip explanation. This restores R1, R2, R5 and R7; it does not
+introduce a new kind of recurrence or change which ingredient AE2 reports missing.
+
+Native-plan diagnostics must survive another addon's summary enrichment,
+including a cancellable return callback. Crafting Tree's separate tree remains
+outside this feature even when the addon is installed. The observed addon
+combination is a regression target, not proof that the CPU or terminal caused
+the failure, and not a new dependency minimum.
+
+Compare requests for 1 and 100 on the same fixture. Verify the final calculation
+keys, server summary flags, native client summary, diagnostic chunk and rendered
+row together. A successful base-only smoke does not cover this addon boundary.
+The focused investigation and required checks are in the implementation plan;
+all existing R1-R7 behavior remains required.
 
 See the [technical design](technical-design.md) and
 [implementation plan](implementation-plan.md).
