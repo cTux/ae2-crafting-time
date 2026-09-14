@@ -59,3 +59,56 @@ Gate: S8-S10 and required CI green.
 S1-S10 have evidence; all ten pages work in both languages; all four JARs have
 correct resources with no runtime/dependency/recipe changes; the PR links #305
 and all three planning documents.
+
+## Recurrent follow-up (#412)
+
+The original ten-page implementation above is complete. For
+[#412](https://github.com/cTux/ae2-crafting-time/issues/412), execute only these
+steps; do not recreate those pages or their images. The new completion gate is
+eleven pages, S11-S13 plus S3 and S5-S10 for the addition.
+
+1. Read the recurrence spec/design and current locale keys. Confirm the
+   native-plan scope, mixed-shortage quantity, recovery, and clearing rules.
+   Author both `statuses/recurrent.md` locale peers as specified (S11).
+2. Append navigation position 10, add the separate Crafting Plan explanation in
+   both landing pages, and add each estimate page's Next link. Verify return,
+   previous, and time-estimates links agree across locales (S5, S6, S12).
+3. Use the prepared-client smoke workflow's `recurrent-plan` evidence to obtain
+   and inspect an exact Recurrent crop. Package the PNG, record its source, and
+   write matching captions/alt text. Use the guide-image refresh workflow for
+   the crop. Do not fabricate an image or treat old unreviewed evidence as a
+   current screenshot (S3, S7, S13).
+4. Extend root `build.gradle`'s existing `statusPages` map as designed. Reuse the
+   existing failure checks for missing page, locale, label, image, position, and
+   navigation; check the formatted recurrence label. Keep transformations and
+   packaging ownership unchanged (S9).
+5. After the implementation commit hook creates the PR, run `checkGuideResources`,
+   applicable resource processing/four-JAR checks, and `git diff --check`.
+   Inspect packaged locale pages and image in all four distributions (S8, S9).
+6. Follow the prepared-client smoke policy sequentially. Open the new page from
+   the book, search for it, traverse its links, and compare its screenshot/text
+   to the native-plan label and hover help. Exercise the GuideME and Fabric
+   renderer paths, readability in both themes, and translation parity under the
+   current locale verification policy. Retain actual evidence; do not substitute
+   a successful resource check for rendered-page review (S10-S13).
+
+Close #412 only after the book implementation and these checks pass. This
+planning-only PR updates the three documents, checks their consistency and
+links, and leaves game resources unchanged; it does not require a client launch.
+
+## Publish the matching wiki update (S14)
+
+After the book implementation is merged, extend the completion gate above with:
+
+1. Refresh the separate wiki checkout and mirror the canonical English/Ukrainian
+   Recurrent pages using the file names and link mapping in the design. Update
+   both status landings and estimate-page navigation; copy the reviewed PNG.
+2. Compare the adapted pages with the merged guide source, verify both locales'
+   internal links and image targets, and review the wiki diff for unrelated edits.
+3. Commit and publish the wiki update. Open both live Recurrent pages on GitHub,
+   follow landing/estimate/return/related links, and inspect the rendered image,
+   caption, and text. Record source and wiki commits plus the live page URLs.
+
+S14 is required alongside the book checks before #412 is complete. Issue #411
+already delivered the initial wiki and is not a blocker. This planning follow-up
+adds the publication requirement; it does not publish incomplete book content.
