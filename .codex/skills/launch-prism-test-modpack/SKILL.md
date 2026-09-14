@@ -26,6 +26,11 @@ Add the type as a plain label instead, such as `feature`, `bug`, or `tests`.
 - Maximize the exact Minecraft window through VNC before visual inspection. Run
   clients sequentially and confirm the tested client stopped; never kill Java
   processes broadly.
+- Before persisting any guest filesystem path in Prism JVM arguments, resolve it
+  to an absolute Windows path and serialize it with forward slashes (`C:/...`).
+  Reject `?` and control characters, then read back the persisted Prism field and
+  require the exact serialized value before launch. Never inject raw `\` path
+  separators or try to reconstruct a corrupted path inside the test driver.
 
 ## Route
 

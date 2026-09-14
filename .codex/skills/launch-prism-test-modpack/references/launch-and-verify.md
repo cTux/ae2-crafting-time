@@ -39,6 +39,22 @@ Read this after an eligible named-modpack instance exists in Prism's **Codex** g
   do not create backups. Compare SHA-256 hashes of every copied JAR against
   its host artifact before launch.
 
+## Persist Test-Driver Paths Safely
+
+- For every filesystem-valued JVM property written through Prism, including
+  `ae2craftingtime.test.output` and `ae2craftingtime.test.continuation`, first
+  resolve the guest path to an absolute Windows path, then replace `\` with `/`.
+  The persisted value must use the form `C:/path/to/file`; raw backslashes can
+  be consumed as escapes while Prism stores or reloads the argument.
+- Reject a serialized value containing `?`, carriage return, line feed, or any
+  other control character. Do not launch and do not ask the Java driver to
+  repair it: after escape processing, missing path characters are unrecoverable.
+- After saving Prism's instance JVM arguments, read back that same persisted
+  field before launch. Use its quote-aware argument representation, never a
+  whitespace split, to find each filesystem-valued `-Dae2craftingtime.test.*`
+  property and require an exact match with the forward-slash value prepared
+  above. A missing, duplicated, or changed property is a staging failure.
+
 ## Launch And Decide
 
 - Before opening Prism, run `scripts/set-prism-java.ps1 -InstanceDirectory`
