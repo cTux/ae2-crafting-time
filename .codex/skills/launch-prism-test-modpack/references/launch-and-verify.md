@@ -50,10 +50,10 @@ Read this after an eligible named-modpack instance exists in Prism's **Codex** g
   other control character. Do not launch and do not ask the Java driver to
   repair it: after escape processing, missing path characters are unrecoverable.
 - After saving Prism's instance JVM arguments, read back that same persisted
-  field before launch. Split the arguments, find each filesystem-valued
-  `-Dae2craftingtime.test.*` property, and require an exact match with the
-  forward-slash value prepared above. A missing, duplicated, or changed
-  property is a staging failure.
+  field before launch. Use its quote-aware argument representation, never a
+  whitespace split, to find each filesystem-valued `-Dae2craftingtime.test.*`
+  property and require an exact match with the forward-slash value prepared
+  above. A missing, duplicated, or changed property is a staging failure.
 
 ## Launch And Decide
 
