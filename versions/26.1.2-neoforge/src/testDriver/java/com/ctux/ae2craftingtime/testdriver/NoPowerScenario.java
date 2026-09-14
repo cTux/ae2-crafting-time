@@ -4,6 +4,7 @@ import appeng.api.config.Actionable;
 import appeng.api.config.PowerMultiplier;
 import appeng.api.stacks.AEItemKey;
 import appeng.client.gui.me.crafting.CraftingCPUScreen;
+import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.level.ServerPlayer;
@@ -158,16 +159,22 @@ final class NoPowerScenario {
                 recoveredActiveAmount = cpu.craftingLogic.getWaitingFor(AEItemKey.of(Items.DIAMOND));
                 var tick = player.level().getGameTime();
                 var reasons = ProfilerBridge.blockReasons(cpu, cpu.getGrid(), tick);
-                if (!reasons.isEmpty() && tick - powerRestoredTick >= 20) {
-                    throw new IllegalStateException("power blocker survived its 20-tick expiry after restoration");
+                var output = ProfilerBridge.key(ProfilerBridge.networkId(cpu.getGrid()), AEItemKey.of(Items.DIAMOND));
+                var reason = reasons.get(output);
+                var energy = cpu.getGrid().getEnergyService();
+                recoveryState = "server=" + reasons
+                        + ", tickDelta=" + (tick - powerRestoredTick)
+                        + ", active=" + cpu.isActive()
+                        + ", energy=" + energy.extractAEPower(64, Actionable.SIMULATE, PowerMultiplier.CONFIG)
+                        + ", idle=" + energy.getIdlePowerUsage()
+                        + ", waiting=" + recoveredActiveAmount;
+                if (reason == CraftingBlockReason.NO_POWER && tick - powerRestoredTick >= 20) {
+                    throw new IllegalStateException("power blocker survived its 20-tick expiry after restoration: "
+                            + recoveryState);
                 }
-                if (reasons.isEmpty() && recoveredActiveAmount > 1 && recoveryResolvedAt == 0) {
+                if (reason != CraftingBlockReason.NO_POWER && recoveredActiveAmount > 1 && recoveryResolvedAt == 0) {
                     recoveryResolvedAt = System.nanoTime();
                 }
-                recoveryState = "server=" + reasons
-                        + ", active=" + cpu.isActive() + ", energy=" + cpu.getGrid().getEnergyService()
-                                .extractAEPower(64, Actionable.SIMULATE, PowerMultiplier.CONFIG)
-                        + ", waiting=" + cpu.craftingLogic.getWaitingFor(AEItemKey.of(Items.DIAMOND));
                 return true;
             })) return false;
             if (hasWarning(snapshot)) {
@@ -185,8 +192,10 @@ final class NoPowerScenario {
             if (serverStep(minecraft, player -> {
                 var cpu = fixture.cpu(player);
                 cpu.getCluster().craftingLogic.cancel();
-                var clear = ProfilerBridge.blockReasons(cpu.getCluster(), cpu.getMainNode().getGrid(),
-                        player.level().getGameTime()).isEmpty();
+                var grid = cpu.getMainNode().getGrid();
+                var output = ProfilerBridge.key(ProfilerBridge.networkId(grid), AEItemKey.of(Items.DIAMOND));
+                var clear = ProfilerBridge.blockReasons(cpu.getCluster(), grid,
+                        player.level().getGameTime()).get(output) == null;
                 cpu.getMainNode().getGrid().getEnergyService().extractAEPower(Double.MAX_VALUE,
                         Actionable.MODULATE, PowerMultiplier.ONE);
                 return clear;

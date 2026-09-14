@@ -272,7 +272,7 @@ final class ProviderDispatchStatusScenario {
 
     private boolean tickLocked(Minecraft minecraft, UiSnapshot snapshot, Map<String, Boolean> checks,
             Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) {
-        var power = fixture.targetPosition().south();
+        var power = fixture.targetPosition().south(2);
         if (phase == 4) {
             if (!observeWarning(snapshot, checks, screenshot, moveMouse, "locked-en-us.png")) return false;
             checks.put("lock-while-low", true);
