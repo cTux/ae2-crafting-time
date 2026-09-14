@@ -786,3 +786,35 @@ accuracy sample has respectively 2/2 and 1/2 known rows before Ctrl-clicking the
 final recipe in a reopened plan. Clear unrelated chat before that real request,
 close the menu, open ChatScreen and wait for rendered frames before capture.
 The screenshot helper records current-screen sidecars even without an AE2 menu.
+
+## No-channel status fixture
+
+Extend the existing dispatch scenario infrastructure for #405. The current
+`DispatchStatusFixture` uses direct `GridHelper.createConnection` edges and
+requires an already-active native batch; neither proves initial channel
+starvation. Add a physical controller/normal-cable branch with enough real
+channel consumers to saturate its bottleneck. Keep CPU, terminal and storage
+on a healthy branch, wait for pathing, and inspect the tested provider's actual
+node presence/power/boot/channel predicates. Never assume allocation order or
+set channel fields directly. If the intended provider is not starved, fail the
+fixture or adjust the physical route within its existing deadline.
+
+Reuse native and `AdvancedAeStatusFixture` construction/submission/menu seams.
+Allow a new job with positive scheduled and zero active output; do not wait for
+first dispatch as readiness. A required AdvancedAE case must prove its selected
+CPU type and adapter. Restore a real route, wait for boot completion, observe
+successful dispatch, return the output and wait for the job to finish. Repeat
+with a healthy duplicate pattern and the negative/lifecycle controls in the
+[implementation plan](../provider-dispatch-statuses/no-channel/implementation-plan.md#4-add-and-run-actual-channel-starvation-scenarios).
+Restore channel mode and clear fixture blocks, jobs and samples during teardown.
+
+Keep each asynchronous server action pending until completion; issue UI actions
+once and poll readiness with existing progress deadlines. Register the leaf in
+both driver runtimes and support registry, `SuitePlan` validation, host scenario
+validation, groups/impact/selection and required result/screenshot checks.
+Extend the nearest driver and PowerShell contract tests after hook-created PR.
+Use shared 1.20.1/1.21.1 fixture code with the existing 26.1.2 API counterpart,
+not a new launcher. Retain unique screenshots for blocked, tooltip, recovered,
+alternative and negative/lifecycle checkpoints with matching authoritative
+server facts. Existing source markers and disposable-copy/reset rules apply;
+restore original channel mode even on failure and report failed cleanup.

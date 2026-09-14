@@ -10,6 +10,18 @@ equal to fetched `origin/master` on 2026-09-13. This is source research, not
 compiled-hook or in-game proof. The following pinned AE2 sources were fetched
 and inspected for all four dependency defaults in `versions/*/build.gradle`.
 
+Implementation investigation on 2026-09-14 used current master
+`9ed01be4355d04e52baf3fc33b9e2e58d02de045`, which contains the planning merge
+`133de96e86bfe42d3c4eccb31362d62be1df74c2`. Read-only `javap -c` inspection of
+the four cached pinned artifacts below confirmed the send-list short circuit,
+activity check before the lock lookup, and unconditional pattern-list getter.
+No repository tests or Minecraft scenarios ran during that investigation.
+
+After the requested rebase, the planning base is
+`acee74e24b1d49c2002ac1006b247a75703d2904`. Its #419 change guards a null
+Crafting Plan during recurrence reset; it does not change this dispatch flow,
+protocol table or fixture boundary. Preserve its dependency notes.
+
 | Target / AE2 | Pattern-provider source | Node API | Channel implementation |
 | --- | --- | --- | --- |
 | 1.20.1 Forge / 15.0.10 | [PatternProviderLogic](https://github.com/AppliedEnergistics/Applied-Energistics-2/blob/bcdb7c040bc3badf24e3354381d6fe0fe6490592/src/main/java/appeng/helpers/patternprovider/PatternProviderLogic.java#L269-L302) | [IGridNode](https://github.com/AppliedEnergistics/Applied-Energistics-2/blob/bcdb7c040bc3badf24e3354381d6fe0fe6490592/src/main/java/appeng/api/networking/IGridNode.java#L117-L149) | [GridNode](https://github.com/AppliedEnergistics/Applied-Energistics-2/blob/bcdb7c040bc3badf24e3354381d6fe0fe6490592/src/main/java/appeng/me/GridNode.java#L446-L448) |
@@ -103,9 +115,9 @@ requested keys even without samples. New enum values are a wire boundary:
 
 | Loader | Inspected boundary | Planned boundary |
 | --- | --- | --- |
-| Forge 1.20.1 | `PROTOCOL = "17"` | `18` |
+| Forge 1.20.1 | `PROTOCOL = "18"` | `19` |
 | Fabric 1.20.1 | `stats_snapshot_v9` | `stats_snapshot_v10` |
-| NeoForge 1.21.1 / 26.1.2 | registrar `16` | `17` on both |
+| NeoForge 1.21.1 / 26.1.2 | registrar `17` | `18` on both |
 
 If the implementation base advances, increment that current boundary once;
 never reuse an incompatible identifier or roll it back. Preserve Fabric's
@@ -128,6 +140,62 @@ Forge 1.20.1; it must exercise the same observer on its three applicable targets
 No new bespoke adapters for unrelated CPU/provider addons. Existing retained
 variants still need contract/packaging coverage; live tests use the newest
 implemented adapter. See the [implementation plan](implementation-plan.md).
+
+## Book and Wiki delivery
+
+The canonical book lives under `shared/src/main/resources/assets/
+ae2craftingtime/guides/ae2craftingtime/guide/`. Add `statuses/no-channel.md`
+and its `_uk_ua` peer after NO POWER and before LOCKED, matching reason priority.
+Update both status indexes, adjacent page links and following navigation positions.
+Extend `build.gradle`'s ordered `statusPages` map; retain its locale, label,
+image, reachability and previous/next/return-link checks. Each page uses the same
+reviewed English PNG with translated caption/alt text. Obtain the crop from
+the actual NO CHANNEL smoke evidence through the guide-image refresh workflow;
+do not manufacture an image or weaken the image check.
+
+Follow the existing [Wiki conventions](../../guideme-guide/status-chapter/technical-design.md#github-wiki-update-s14)
+in the separate `ae2-crafting-time.wiki.git` repository. Mirror the completed
+book as `Status-No-Channel.md` and `Ukrainian-Status-No-Channel.md`, stripping
+frontmatter and adapting links to Wiki page names. Update `Statuses.md`,
+`Ukrainian-Statuses.md`, adjacent NO POWER/LOCKED navigation and any existing
+sidebar status listing. Reuse the reviewed PNG and preserve unrelated Wiki work.
+The text must distinguish Waiting, missing provider lookup and dispatch power
+from a proven provider-channel failure. Published pages and links are a separate
+completion gate; a local Wiki diff or book resource check is not publication.
+
+## Verification infrastructure boundary
+
+The existing `DispatchStatusFixture` connects nodes directly with
+`GridHelper.createConnection` and waits for an already dispatched native batch.
+That setup cannot prove initial channel starvation. Extend the feature fixture
+with a real controller/cable bottleneck and a submission path that accepts zero
+active output while scheduled work is positive. Reuse native and
+`AdvancedAeStatusFixture` CPU construction, but fail an AdvancedAE-required
+case if the addon or selected AdvancedAE CPU is missing; silent native fallback
+cannot satisfy AC-06. Register `no-channel-status` through existing driver,
+planner and evidence contracts. These feature-specific extensions are part of
+#405, not a new runner or infrastructure project. The
+[driver design](../../test-driver/technical-design.md#no-channel-status-fixture)
+owns asynchronous operations, real topology and reset details.
+
+Prepared source worlds and the existing disposable-copy path are present.
+Fabric intentionally uses the Forge source marker; both NeoForge targets have
+their own `SOURCE_ONLY` markers. The host has Java 17, 21 and 25. The existing
+[host/guest staging path](../../dev-client.md#host-build-and-vm-staging) provides
+exact-worktree sharing and native-loader launches. Runtime preflight on
+2026-09-14 confirmed SSH access, all four guest `prepared/<target>/launch.json`
+files and Java 17.0.20.1/21.0.12.1/25.0.4.1. Fabric libraries/assets and the
+versioned Forge 47.4.23 manifest's classpath exist. Default Forge 47.4.10 and
+NeoForge 21.1.238/26.1.2.99 each reference one absent synthetic version JAR;
+whether those entries affect native launch remains unresolved. The existing
+dispatcher's `vmrun getGuestIPAddress -wait` successfully resolves the guest;
+no runner change is needed. Before runtime execution, validate the selected
+manifest against the resolved loader and check those classpath references
+through the existing launcher path. These are pending
+launch gates, not proof that the loaders are absent or that smoke passed.
+Use the existing prepared installation path if provisioning is needed; do not
+substitute a different loader or profile. Recheck exact-worktree sharing and
+previous-client cleanup before the campaign.
 
 ## Review decisions
 

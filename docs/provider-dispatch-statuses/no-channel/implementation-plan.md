@@ -3,7 +3,8 @@
 Issue: [#405](https://github.com/cTux/ae2-crafting-time/issues/405).
 Implement the [specification](spec.md) through the
 [technical design](technical-design.md). This is future implementation work;
-the planning PR changes documentation only and must not close the issue.
+the planning PR changes documentation only and must not close the issue. The
+2026-09-14 repair preserves AC-01 through AC-06 and adds the book/Wiki gates.
 
 ## 1. Extend the existing dispatch facts and evaluator
 
@@ -63,7 +64,9 @@ ae2craftingtime/lang/{en_us,uk_ua}.json` and both GuideME status trees.
   MAX_KEYS, requested-key checks, rate limits, and menu/CPU authorization.
 - Add the badge and mixed-row qualifier using existing rendering/sorting.
   Add exact English/Ukrainian text and a GuideME status page/index entry in
-  each locale. Update `docs/dependencies.md` with the verified scope.
+  each locale. Follow the design's status order, adjacent navigation, shared
+  screenshot and `statusPages` validation changes. Update `docs/dependencies.md`
+  with the verified scope.
 - Extend `CraftingRowStateTest`, text tests, `ClientStatsCacheTest`, and
   `StatsPacketTest` boundaries for the new enum: zero pending, mixed amounts,
   no samples, stale/omitted keys, foreign CPU contexts, unknown ordinals,
@@ -84,7 +87,10 @@ smoke selection/evidence files under `scripts`.
 Register `no-channel-status` with the host groups, impact rules, driver
 selection, planner tests, and evidence requirements. Reuse existing native
 and AdvancedAE CPU construction. Do not mock status maps or force the node's
-channel fields for the acceptance scenario.
+channel fields for the acceptance scenario. The existing direct-node fixture
+does not provide channel starvation or a zero-active first-dispatch state;
+extend those seams under the updated test-driver spec/design. Treat missing
+AdvancedAE in an AdvancedAE-required case as failure, never native fallback.
 
 1. Build a powered controller network. Put the CPU, terminal, and required
    storage on a healthy branch. Saturate a separate normal-cable branch with
@@ -120,7 +126,37 @@ screenshots, logs, and dependency manifest; inspect tooltip/layout screenshots.
 Delivers live evidence for AC-01 through AC-06. Unavailable runtime evidence
 is a named incomplete gate, never replaced with source assertions.
 
-## 5. Verification and delivery
+## 5. Prerequisites and verification order
+
+Before the runtime campaign, verify the existing CodexVM SSH path, exact
+worktree share, prepared native manifests and their resolved loader versions,
+guest-local assets/libraries, Java 17/21/25 and absence of a previous test client.
+The tracked source worlds and disposable marker/copy machinery already exist;
+Fabric uses the Forge marked source. Parent preflight verified guest manifests,
+JDKs, SSH and the dispatcher's address-discovery path; the design records three
+unresolved synthetic classpath references. Resolve those named launch checks
+through the existing VM/prepared-client workflow before claiming readiness.
+Missing installations need the documented native-loader provisioning path,
+not guest Gradle or a substituted profile.
+
+After the PR exists, run plan-only selection, deterministic unit/coverage and
+packet/mixin/script checks first; final guide/image checks follow capture.
+Then run one representative native
+`no-channel-status`, followed by the remaining three native and three
+AdvancedAE target/CPU combinations in English. Select project `rxYaglEe` for
+AdvancedAE status mode and retain the actual CPU and newest implemented adapter
+identity. Ensure the changed-scope selection includes these seven direct cases
+plus the relevant status regressions; generic `advancedae-cpu` is insufficient.
+Run clients sequentially and verify exact process exit between runs.
+
+Budget at least seven direct launches plus any lifecycle/reload phases and
+selected regressions. Measure the first cold start and budget subsequent runs
+from it; no cold-start duration was measured during investigation. Use existing
+progress deadlines and record all launches/retries. Existing resume support is
+CPU-list-specific; do not assume a NO CHANNEL checkpoint is resumable. Final
+proof needs a clean current-head run, not a diagnostic partial run.
+
+## 6. Verification and delivery
 
 - Review the full diff and the AC mapping above. Commit the implementation as
   one conventional change through the repository hook; run no local tests
@@ -134,13 +170,33 @@ is a named incomplete gate, never replaced with source assertions.
   in CodexVM. Ensure the explicit four-native/three-AdvancedAE matrix above is
   represented; generic or narrower selection cannot waive it. Keep
   `selection.json` and bind all evidence to the implementation commit.
+- Obtain and review the actual NO CHANNEL screenshot, then use the guide-image
+  refresh workflow to add the shared crop and source provenance. Never bypass
+  guide checks or supply a placeholder to make an early PR green. Screenshot
+  delivery after the first runtime pass may require a policy-permitted follow-up
+  commit; review and rerun the invalidated resource/packaging checks at that head.
+- Run `checkGuideResources` and applicable four-target resource/packaging checks.
+  Open the new book page, follow index/previous/next/return links and inspect the
+  crop, text and layout on the GuideME and Fabric renderer paths. Verify both
+  locale resources statically under the English runtime policy (AC-07).
 - Check production JARs exclude the driver; check documentation links,
   translations, protocol agreement, and `git diff --check`.
-- Update this plan's implementation state and issue evidence after AC-01
-  through AC-06 pass. Implementation merge/release needs its own user scope;
-  the current request authorizes merging these planning documents only.
+- Update this plan's implementation state and issue evidence after the gates
+  below pass. The live issue run authorizes implementation and merge; planning
+  delivery alone leaves the issue open. Release upload remains outside scope.
 
-Completion means every AC has matching core/boundary/live evidence, required
+## 7. Publish and verify the Wiki (AC-08)
+
+Mirror the reviewed canonical book pages and PNG using the design's Wiki file
+names and link mapping. Refresh the separate Wiki checkout, preserve unrelated
+edits, and review only the two new pages, affected navigation and shared image.
+Publish the completed content under the live issue authority. Open both live
+pages and follow status landing, adjacent, return and related links; inspect the
+rendered image/text. Retain canonical source SHA, Wiki commit and live page URLs.
+Publication and readback must pass before normal issue finalization; a closing
+reference or merged implementation PR does not substitute for this gate.
+
+Completion means AC-01 through AC-08 have matching core/boundary/live evidence, required
 CI is green at the reviewed head, and no unverified addon or runtime result
 is presented as supported. No blocking implementation dependency was found;
 the existing #216 and #120 code is already on the researched baseline.
