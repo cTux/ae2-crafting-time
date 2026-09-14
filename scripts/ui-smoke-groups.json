@@ -6,8 +6,8 @@
   },
   "cases": {
     "no-channel-status": {
-      "checks": ["screen", "real-job", "tooltip", "layout", "channel-starved", "no-samples", "healthy-alternative", "power-loss-suppressed", "reboot-suppressed", "reboot-recovered", "missing-input-suppressed", "infinite-mode-suppressed", "channel-mode-restored", "channel-restored", "job-completed"],
-      "advancedChecks": ["screen", "real-job", "tooltip", "layout", "advanced-cpu", "channel-starved", "no-samples", "healthy-alternative", "power-loss-suppressed", "reboot-suppressed", "reboot-recovered", "missing-input-suppressed", "infinite-mode-suppressed", "channel-mode-restored", "channel-restored", "job-completed"],
+      "checks": ["screen", "real-job", "tooltip", "layout", "channel-starved", "no-samples", "healthy-alternative", "power-loss-suppressed", "reboot-boundary", "reboot-recovered", "missing-input-suppressed", "infinite-mode-suppressed", "channel-mode-restored", "channel-restored", "job-completed"],
+      "advancedChecks": ["screen", "real-job", "tooltip", "layout", "advanced-cpu", "channel-starved", "no-samples", "healthy-alternative", "power-loss-suppressed", "reboot-boundary", "reboot-recovered", "missing-input-suppressed", "infinite-mode-suppressed", "channel-mode-restored", "channel-restored", "job-completed"],
       "screenshots": ["no-channel-en-us.png", "no-channel-alternative.png", "no-channel-power-loss.png", "no-channel-reboot.png", "no-channel-missing-input.png", "no-channel-infinite.png", "no-channel-restored.png"]
     },
     "standard-plan-controls": {

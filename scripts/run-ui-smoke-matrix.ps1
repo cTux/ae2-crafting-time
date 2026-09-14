@@ -69,11 +69,13 @@ foreach ($targetEntry in $targets) {
             [ordered]@{ file = $_.Name; sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash }
         } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $report 'artifact-hashes.json') -Encoding UTF8
         $cacheIdentity | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $report 'bundle-reuse.json') -Encoding UTF8
-        & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target $row.target -BundleDirectory $bundle
+        $adapterParameters = @{ Target=$row.target; BundleDirectory=$bundle; BaseOnly=[bool]$graph.baseOnly }
+        if ($runProjects.Count) { $adapterParameters.ProjectId = $runProjects }
+        & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') @adapterParameters
         $null = & (Join-Path $PSScriptRoot 'get-ui-smoke-plan.ps1') @planning -ExpectedFingerprint $plan.fingerprint
         $plan | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $report 'selection.json') -Encoding UTF8
         $arguments = @{ Target = $row.target; Latest = $runLatest; Scenario = $Scenario
-            CasesBase64 = $casesBase64; BundleDirectory = $bundle; PreparedLaunchRoot = $PreparedLaunchRoot; ProjectId = $runProjects; Interactive = $Interactive }
+            CasesBase64 = $casesBase64; BundleDirectory = $bundle; PreparedLaunchRoot = $PreparedLaunchRoot; ProjectId = $runProjects; BaseOnly = [bool]$graph.baseOnly; Interactive = $Interactive }
         $arguments.StartupTimeoutSeconds = $StartupTimeoutSeconds
         if ($GuestSourceRoot) { $arguments.GuestSourceRoot = $GuestSourceRoot }
         $clientExitConfirmed = $false

@@ -7,6 +7,7 @@ import appeng.api.config.YesNo;
 import appeng.api.crafting.PatternDetailsHelper;
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IInWorldGridNodeHost;
+import appeng.api.networking.IGridConnection;
 import appeng.api.networking.crafting.CalculationStrategy;
 import appeng.api.networking.crafting.ICraftingPlan;
 import appeng.api.networking.security.IActionSource;
@@ -52,6 +53,8 @@ final class DispatchStatusFixture {
     private long pendingOutput;
     private long recoveredWaiting;
     private Object advancedCpu;
+    private long rebootRequestedTick;
+    private IGridConnection ingredientConnection;
 
     DispatchStatusFixture(int inputAmount) {
         this(inputAmount, LockCraftingMode.NONE, true, 64);
@@ -120,6 +123,14 @@ final class DispatchStatusFixture {
             drive.getInternalInventory().setItemDirect(0,
                     new ItemStack(BuiltInRegistries.ITEM.getValue(Identifier.tryParse("ae2:item_storage_cell_4k"))));
             drive.getCellInventory(0).insert(AEItemKey.of(Items.COBBLESTONE), outputAmount * inputAmount, Actionable.MODULATE, IActionSource.empty());
+            if (channelScenario) {
+                if (ingredientConnection == null) {
+                    ingredientConnection = GridHelper.createConnection(cpu.getMainNode().getNode(), drive.getMainNode().getNode());
+                }
+                if (!drive.getMainNode().isActive() || provider(player).getMainNode().isActive()) {
+                    return false;
+                }
+            }
             provider(player).getLogic().getConfigManager().putSetting(Settings.BLOCKING_MODE,
                     initialBlocking ? YesNo.YES : YesNo.NO);
             provider(player).getLogic().getConfigManager().putSetting(Settings.LOCK_CRAFTING_MODE,
@@ -235,13 +246,15 @@ final class DispatchStatusFixture {
     }
 
     boolean reboot(ServerPlayer player) {
+        rebootRequestedTick = player.level().getServer().getTickCount();
         cpu(player).getMainNode().getGrid().getPathingService().repath();
         return true;
     }
 
-    boolean providerRebooting(ServerPlayer player) {
+    boolean providerPastRebootBoundary(ServerPlayer player) {
         var node = ((IInWorldGridNodeHost) provider(player)).getGridNode(Direction.UP);
-        return node != null && node.isPowered() && !node.hasGridBooted();
+        return player.level().getServer().getTickCount() > rebootRequestedTick && node != null && node.isPowered()
+                && node.hasGridBooted() && !node.meetsChannelRequirements();
     }
 
     boolean setInputs(ServerPlayer player, boolean present) {
@@ -385,11 +398,6 @@ final class DispatchStatusFixture {
         healthyProviderPosition = cpuPosition.east(2).south(3);
         place(player, healthyProviderPosition, "pattern_provider");
         level.setBlockAndUpdate(healthyProviderPosition.south(), Blocks.CHEST.defaultBlockState());
-        // A real path longer than the observation TTL leaves time to capture the booting checkpoint.
-        for (int z = 1; z <= 28; z++) {
-            PartHelper.setPart(level, cpuPosition.east(11).south(z), null, player,
-                    AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT));
-        }
         for (int x = 3; x <= 11; x++) {
             PartHelper.setPart(level, cpuPosition.east(x), null, player,
                     AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT));

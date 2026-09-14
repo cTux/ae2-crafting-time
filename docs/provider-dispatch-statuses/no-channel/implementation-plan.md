@@ -111,7 +111,11 @@ AdvancedAE in an AdvancedAE-required case as failure, never native fallback.
 5. Exercise reboot, power-only loss, missing inputs, and infinite mode in an
    isolated test world, restoring the original mode during teardown. Assert
    actual node state and absence of fresh false channel evidence. An inactive
-   CPU must not create a new provider-channel diagnosis.
+   CPU must not create a new provider-channel diagnosis. For AE2 versions whose
+   booting transition begins and ends in one server-end-tick call, use a
+   pure-state test for powered-but-not-booted UNKNOWN and native evidence after
+   a real `repath()` on a later tick; do not require an impossible client frame
+   during that synchronous transition.
 6. Cover CPU switch/late reply, cancel/replace, disable/reload, and save/reopen
    without persistent NO CHANNEL or an alias. Regress existing NO PROVIDER,
    NO POWER, NO SPACE, Waiting, DELAYED, dispatch statuses, and total TTC.

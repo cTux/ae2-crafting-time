@@ -6,6 +6,7 @@ import appeng.api.config.Settings;
 import appeng.api.config.YesNo;
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IInWorldGridNodeHost;
+import appeng.api.networking.IGridConnection;
 import appeng.api.networking.crafting.CalculationStrategy;
 import appeng.api.networking.crafting.ICraftingPlan;
 import appeng.api.networking.security.IActionSource;
@@ -51,6 +52,8 @@ final class DispatchStatusFixture {
     private long pendingOutput;
     private long recoveredWaiting;
     private Object advancedCpu;
+    private long rebootRequestedTick;
+    private IGridConnection ingredientConnection;
 
     DispatchStatusFixture(int inputAmount) {
         this(inputAmount, LockCraftingMode.NONE, true, 64);
@@ -124,6 +127,14 @@ final class DispatchStatusFixture {
                     new ItemStack(BuiltInRegistries.ITEM.get(ResourceLocation.tryParse("ae2:item_storage_cell_4k"))));
             drive.getCellInventory(0).insert(AEItemKey.of(Items.COBBLESTONE), outputAmount * inputAmount,
                     Actionable.MODULATE, IActionSource.empty());
+            if (channelScenario) {
+                if (ingredientConnection == null) {
+                    ingredientConnection = GridHelper.createConnection(cpu.getMainNode().getNode(), drive.getMainNode().getNode());
+                }
+                if (!drive.getMainNode().isActive() || provider(player).getMainNode().isActive()) {
+                    return false;
+                }
+            }
             provider(player).getLogic().getConfigManager().putSetting(Settings.BLOCKING_MODE,
                     initialBlocking ? YesNo.YES : YesNo.NO);
             provider(player).getLogic().getConfigManager().putSetting(Settings.LOCK_CRAFTING_MODE,
@@ -138,10 +149,11 @@ final class DispatchStatusFixture {
             return false;
         }
         try {
+            var plan = calculation.get();
             if (advancedCpu != null) {
-                invokeAdvanced("submit", new Class<?>[] { ServerPlayer.class, ICraftingPlan.class }, player, calculation.get());
+                invokeAdvanced("submit", new Class<?>[] { ServerPlayer.class, ICraftingPlan.class }, player, plan);
             } else if (!cpu.getCluster().isBusy()) {
-                var result = cpu.getMainNode().getGrid().getCraftingService().submitJob(calculation.get(), null,
+                var result = cpu.getMainNode().getGrid().getCraftingService().submitJob(plan, null,
                         cpu.getCluster(), false, IActionSource.ofMachine(cpu));
                 if (!result.successful()) {
                     throw new IllegalStateException("fixture crafting submission failed: " + result);
@@ -240,13 +252,15 @@ final class DispatchStatusFixture {
     }
 
     boolean reboot(ServerPlayer player) {
+        rebootRequestedTick = player.server.getTickCount();
         cpu(player).getMainNode().getGrid().getPathingService().repath();
         return true;
     }
 
-    boolean providerRebooting(ServerPlayer player) {
+    boolean providerPastRebootBoundary(ServerPlayer player) {
         var node = ((IInWorldGridNodeHost) provider(player)).getGridNode(Direction.UP);
-        return node != null && node.isPowered() && !node.hasGridBooted();
+        return player.server.getTickCount() > rebootRequestedTick && node != null && node.isPowered()
+                && node.hasGridBooted() && !node.meetsChannelRequirements();
     }
 
     boolean setInputs(ServerPlayer player, boolean present) {
@@ -389,11 +403,6 @@ final class DispatchStatusFixture {
         healthyProviderPosition = cpuPosition.east(2).south(3);
         place(player, healthyProviderPosition, "pattern_provider");
         level.setBlockAndUpdate(healthyProviderPosition.south(), Blocks.CHEST.defaultBlockState());
-        // A real path longer than the observation TTL leaves time to capture the booting checkpoint.
-        for (int z = 1; z <= 28; z++) {
-            PartHelper.setPart(level, cpuPosition.east(11).south(z), null, player,
-                    AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT));
-        }
         for (int x = 3; x <= 11; x++) {
             PartHelper.setPart(level, cpuPosition.east(x), null, player,
                     AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT));

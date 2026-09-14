@@ -299,7 +299,7 @@ try {
             -not (Test-Path -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\latest\craft-plan\evidence\result.json"))) {
         throw "Compatible and latest evidence was not separated"
     }
-    $lock = [IO.File]::Open((Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\runtime.lock"), "Open", "ReadWrite", "None")
+    $lock = [IO.File]::Open((Join-Path ([IO.Path]::GetTempPath()) "ae2-crafting-time-smoke-client.lock"), "Open", "ReadWrite", "None")
     try { Invoke-Case "pass" -shouldPass $false } finally { $lock.Dispose() }
     Invoke-Case "pass" -Interactive -shouldPass $true
     $env:AE2CT_TEST_DRIVER_TOKEN = 'b' * 64

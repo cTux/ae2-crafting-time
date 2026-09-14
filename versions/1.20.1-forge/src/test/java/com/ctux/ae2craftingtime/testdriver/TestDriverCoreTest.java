@@ -600,7 +600,7 @@ class TestDriverCoreTest {
         assertEquals(ProviderDispatchStatusScenario.checks(ProviderDispatchStatusScenario.NO_CHANNEL),
                 DriverResult.requiredChecks(ProviderDispatchStatusScenario.NO_CHANNEL));
         assertTrue(DriverResult.requiredChecks(ProviderDispatchStatusScenario.NO_CHANNEL)
-                .containsAll(List.of("channel-starved", "no-samples", "reboot-suppressed", "job-completed")));
+                .containsAll(List.of("channel-starved", "no-samples", "reboot-boundary", "job-completed")));
         assertFalse(ProviderDispatchStatusScenario.statusRowsReady(List.of()));
         assertTrue(ProviderDispatchStatusScenario.statusRowsReady(List.of(
                 new UiSnapshot.Row("minecraft:diamond", 64, 0, null, List.of()))));

@@ -10,6 +10,12 @@ $prepareCall = "& (Join-Path `$PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Ta
 if ($invoke.IndexOf($prepareCall, [StringComparison]::Ordinal) -lt 0) {
     throw 'Focused bundle preparation must reuse the packaged adapter catalogue preflight'
 }
+if ($invoke.IndexOf('-ProjectId $ProjectId -BaseOnly:$BaseOnly', [StringComparison]::Ordinal) -lt 0) {
+    throw 'Focused bundle preparation must preserve selected dependency and BaseOnly policy'
+}
+if ($invoke.IndexOf('ProjectId = $ProjectId; BaseOnly = $BaseOnly', [StringComparison]::Ordinal) -lt 0) {
+    throw 'Direct campaign delegation must preserve selected dependency and BaseOnly policy'
+}
 if ($invoke.IndexOf('if (-not $Stop) {', [StringComparison]::Ordinal) -gt $prepare) {
     throw 'Cleanup-only dispatch must not depend on bundle preparation'
 }

@@ -63,7 +63,7 @@ final class ProviderDispatchStatusScenario {
         else if (!NO_CHANNEL.equals(scenario)) checks.add("mixed-row");
         if (NO_CHANNEL.equals(scenario)) checks.addAll(List.of(
                 "channel-starved", "no-samples", "healthy-alternative", "power-loss-suppressed",
-                "reboot-suppressed", "reboot-recovered", "missing-input-suppressed", "infinite-mode-suppressed",
+                "reboot-boundary", "reboot-recovered", "missing-input-suppressed", "infinite-mode-suppressed",
                 "channel-mode-restored", "channel-restored", "job-completed"));
         if (NO_TARGET.equals(scenario)) checks.addAll(List.of("target-removed", "target-restored"));
         if (INPUT_BLOCKED.equals(scenario)) checks.addAll(List.of(
@@ -148,9 +148,9 @@ final class ProviderDispatchStatusScenario {
                     && serverStep(minecraft, fixture::reboot)) {
                 changedAt = System.nanoTime();
                 phase++;
-            } else if (phase == 8 && (operation != null || recovered(snapshot))
-                    && serverStep(minecraft, fixture::providerRebooting)) {
-                checks.put("reboot-suppressed", true);
+            } else if (phase == 8 && (operation != null || hasWarning(snapshot))
+                    && serverStep(minecraft, fixture::providerPastRebootBoundary)) {
+                checks.put("reboot-boundary", true);
                 screenshot.accept("no-channel-reboot.png");
                 phase++;
             } else if (phase == 9 && (operation != null || hasWarning(snapshot)) && serverStep(minecraft, player -> fixture.setInputs(player, false))) {
