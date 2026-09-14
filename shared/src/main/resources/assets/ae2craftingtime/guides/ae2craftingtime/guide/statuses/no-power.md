@@ -29,4 +29,4 @@ proof of this status.
 *The network has scheduled work but cannot pay the energy cost of its next dispatch.*
 
 [Previous: NO PROVIDER](no-provider.md) | [Statuses](index.md) |
-[Next: LOCKED](locked.md) | [Delay diagnostics](../features/delay-diagnostics.md)
+[Next: NO CHANNEL](no-channel.md) | [Delay diagnostics](../features/delay-diagnostics.md)

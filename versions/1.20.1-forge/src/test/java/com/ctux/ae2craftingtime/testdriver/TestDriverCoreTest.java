@@ -595,6 +595,12 @@ class TestDriverCoreTest {
 
     @Test
     void providerStatusWaitsForTheSelectedCpuRowsBeforeMutatingTheFixture() {
+        assertTrue(AddonCpuFixture.supports(ProviderDispatchStatusScenario.NO_CHANNEL));
+        assertNull(AddonCpuFixture.create(ProviderDispatchStatusScenario.NO_CHANNEL));
+        assertEquals(ProviderDispatchStatusScenario.checks(ProviderDispatchStatusScenario.NO_CHANNEL),
+                DriverResult.requiredChecks(ProviderDispatchStatusScenario.NO_CHANNEL));
+        assertTrue(DriverResult.requiredChecks(ProviderDispatchStatusScenario.NO_CHANNEL)
+                .containsAll(List.of("channel-starved", "no-samples", "reboot-suppressed", "job-completed")));
         assertFalse(ProviderDispatchStatusScenario.statusRowsReady(List.of()));
         assertTrue(ProviderDispatchStatusScenario.statusRowsReady(List.of(
                 new UiSnapshot.Row("minecraft:diamond", 64, 0, null, List.of()))));

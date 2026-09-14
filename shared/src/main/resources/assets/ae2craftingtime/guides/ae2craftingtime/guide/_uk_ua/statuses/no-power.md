@@ -28,4 +28,4 @@ navigation:
 *Мережа має заплановану роботу, але не може оплатити наступне відправлення.*
 
 [Назад: Без провайдера](no-provider.md) | [Стани](index.md) |
-[Далі: Заблоковано](locked.md) | [Діагностика затримок](../features/delay-diagnostics.md)
+[Далі: Немає каналу](no-channel.md) | [Діагностика затримок](../features/delay-diagnostics.md)

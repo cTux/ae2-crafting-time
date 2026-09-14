@@ -5,6 +5,7 @@ param(
     [string]$Target,
     [switch]$Latest,
     [switch]$Interactive,
+    [switch]$BaseOnly,
     [string]$Scenario = 'suite',
     [string[]]$ProjectId,
     [int]$StartupTimeoutSeconds = 300,
@@ -14,7 +15,7 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
-$planning = @{ Changed=$Changed; BaseRef=$BaseRef; Target=$Target; Latest=$Latest; Interactive=$Interactive; ProjectId=$ProjectId }
+$planning = @{ Changed=$Changed; BaseRef=$BaseRef; Target=$Target; Latest=$Latest; Interactive=$Interactive; BaseOnly=$BaseOnly; ProjectId=$ProjectId }
 if ($PSBoundParameters.ContainsKey('Scenario')) { $planning.Scenario = $Scenario }
 $plan = & (Join-Path $PSScriptRoot 'get-ui-smoke-plan.ps1') @planning
 if ($PlanOnly) { $plan | ConvertTo-Json -Depth 20; return }

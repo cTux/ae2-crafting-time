@@ -37,4 +37,20 @@ final class AdvancedAeStatusFixture {
         menu.ae2craftingtime_test_driver$setCpu(null);
         menu.ae2craftingtime_test_driver$setCpu(core.getCluster().getActiveCPUs().get(0));
     }
+
+    boolean finished(ServerPlayer player) {
+        var core = (AdvCraftingBlockEntity) player.serverLevel().getBlockEntity(placement.core());
+        return core.getCluster().getActiveCPUs().isEmpty();
+    }
+
+    appeng.crafting.inv.ListCraftingInventory inventory(ServerPlayer player) {
+        var core = (AdvCraftingBlockEntity) player.serverLevel().getBlockEntity(placement.core());
+        return core.getCluster().getActiveCPUs().get(0).getInventory();
+    }
+
+    long waiting(ServerPlayer player) {
+        var core = (AdvCraftingBlockEntity) player.serverLevel().getBlockEntity(placement.core());
+        return core.getCluster().getActiveCPUs().get(0).craftingLogic
+                .getWaitingFor(appeng.api.stacks.AEItemKey.of(net.minecraft.world.item.Items.DIAMOND));
+    }
 }

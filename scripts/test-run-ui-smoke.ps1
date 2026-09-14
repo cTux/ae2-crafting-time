@@ -274,7 +274,7 @@ try {
     Invoke-Case "missing-screenshot" -Scenario "no-power-status" -shouldPass $false
     Invoke-Case "pass" -Scenario "no-provider-status" -shouldPass $true
     Invoke-Case "missing-screenshot" -Scenario "no-provider-status" -shouldPass $false
-    foreach ($scenario in @('no-target-status','input-blocked-status','locked-status')) {
+    foreach ($scenario in @('no-channel-status','no-target-status','input-blocked-status','locked-status')) {
         Invoke-Case "pass" -Scenario $scenario -shouldPass $true
         Invoke-Case "missing-screenshot" -Scenario $scenario -shouldPass $false
     }

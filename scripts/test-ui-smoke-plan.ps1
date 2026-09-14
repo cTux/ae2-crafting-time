@@ -109,7 +109,7 @@ try {
         'CPU-list primary graph must resolve only AE2 and the test driver'
     Clean
     Put 'shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingStatusTableRendererMixin.java' 'only delayed method changed'
-    Assert ((Plan).targets[0].cases.Count -eq 11) 'Never narrow mixed renderers by keywords'
+    Assert ((Plan).targets[0].cases.Count -eq 12) 'Never narrow mixed renderers by keywords'
     Clean
     Put $lang '{"text.ae2craftingtime.ttc_delayed":"late","other":"value"}'
     Assert ((Plan).targets[0].cases[0] -eq 'delayed-status') 'English delayed value must narrow'
@@ -174,11 +174,18 @@ try {
         'Full Forge must isolate the CPU-list relaunch in one base-only graph'
     $tree = & $planner -Repository $temp -Target '1.20.1-forge' -Scenario 'crafting-tree-screen'
     Assert (!$tree.targets[0].graphs[0].baseOnly) 'Direct addon UI scenario must install its dependency catalogue'
-    Assert ($advancedGraphs.Count -eq 3 -and @($advancedGraphs | Where-Object { $_.cases.Count -ne 4 }).Count -eq 0) 'AdvancedAE must repeat all provider status leaves on three targets'
-    Assert ($full.targets[0].cases.Count -eq 39) 'Expanded Forge suite must contain 39 leaves'
-    Assert ($full.targets[1].cases.Count -eq 21) 'Expanded Fabric suite must contain 21 leaves'
-    Assert ($full.targets[2].cases.Count -eq 35) 'Expanded NeoForge suite must contain 35 leaves'
-    Assert ($full.targets[3].cases.Count -eq 24) 'Expanded 26.1.2 suite must contain 24 leaves'
+    Assert ($advancedGraphs.Count -eq 3 -and @($advancedGraphs | Where-Object { $_.cases.Count -ne 5 }).Count -eq 0) 'AdvancedAE must repeat all provider status leaves on three targets'
+    Assert ($full.targets[0].cases.Count -eq 40) 'Expanded Forge suite must contain 40 leaves'
+    Assert ($full.targets[1].cases.Count -eq 22) 'Expanded Fabric suite must contain 22 leaves'
+    Assert ($full.targets[2].cases.Count -eq 36) 'Expanded NeoForge suite must contain 36 leaves'
+    Assert ($full.targets[3].cases.Count -eq 25) 'Expanded 26.1.2 suite must contain 25 leaves'
+    $channel = & $planner -Repository $temp -Scenario no-channel-status
+    Assert (@($channel.targets.graphs | Where-Object id -eq 'rxYaglEe').Count -eq 3) 'Native base graph must not suppress later AdvancedAE targets'
+    $nativeChannel = & $planner -Repository $temp -Scenario no-channel-status -BaseOnly
+    Assert ($nativeChannel.targets.Count -eq 4 -and @($nativeChannel.targets.graphs).Count -eq 4) 'Explicit base-only must select four native graphs'
+    Assert (@($nativeChannel.targets.graphs | Where-Object { !$_.baseOnly }).Count -eq 0) 'Explicit base-only must persist across all targets'
+    Reject { & $planner -Changed -Repository $temp -BaseOnly } 'Changed base-only override must fail'
+    Reject { & $planner -Repository $temp -ProjectId rxYaglEe -BaseOnly } 'Conflicting dependency selectors must fail'
     Invoke-FixtureGit @('checkout','-b','conflict-side')
     Put 'README.md' 'theirs'
     Invoke-FixtureGit @('add','.')

@@ -16,7 +16,8 @@ class ProviderDispatchTrackerTest {
 
     @Test
     void completeAlternativesRequireOneAgreedObservedReason() {
-        for (var attempt : List.of(AttemptResult.NO_TARGET, AttemptResult.INPUT_BLOCKED, AttemptResult.LOCKED)) {
+        for (var attempt : List.of(AttemptResult.NO_CHANNEL, AttemptResult.NO_TARGET,
+                AttemptResult.INPUT_BLOCKED, AttemptResult.LOCKED)) {
             var evaluation = new ProviderDispatchTracker.Evaluation();
             evaluation.candidate();
             evaluation.busy(false);
@@ -82,6 +83,10 @@ class ProviderDispatchTrackerTest {
         tracker.observe(cpu, "target", Map.of(output, 1L, other, 0L), CraftingBlockReason.NO_TARGET, 50);
         tracker.observe(cpu, "input", Map.of(output, 1L), CraftingBlockReason.INPUT_BLOCKED, 50);
         tracker.observe(cpu, "lock", Map.of(output, 1L), CraftingBlockReason.LOCKED, 50);
+        tracker.observe(cpu, "channel", Map.of(output, 1L), CraftingBlockReason.NO_CHANNEL, 50);
+        assertEquals(Map.of(output, CraftingBlockReason.NO_CHANNEL), tracker.reasons(cpu, 50));
+
+        tracker.observe(cpu, "channel", Map.of(output, 1L), null, 50);
         assertEquals(Map.of(output, CraftingBlockReason.LOCKED), tracker.reasons(cpu, 50));
 
         tracker.observe(cpu, "lock", Map.of(output, 1L), null, 50);
@@ -99,6 +104,22 @@ class ProviderDispatchTrackerTest {
     }
 
     @Test
+    void activityRequiresAConclusiveChannelFailure() {
+        assertEquals(AttemptResult.NO_CHANNEL,
+                ProviderDispatchTracker.activityResult(false, true, true, true, false));
+        assertEquals(AttemptResult.UNKNOWN,
+                ProviderDispatchTracker.activityResult(true, true, true, true, false));
+        assertEquals(AttemptResult.UNKNOWN,
+                ProviderDispatchTracker.activityResult(false, false, true, true, false));
+        assertEquals(AttemptResult.UNKNOWN,
+                ProviderDispatchTracker.activityResult(false, true, false, true, false));
+        assertEquals(AttemptResult.UNKNOWN,
+                ProviderDispatchTracker.activityResult(false, true, true, false, false));
+        assertEquals(AttemptResult.UNKNOWN,
+                ProviderDispatchTracker.activityResult(false, true, true, true, true));
+    }
+
+    @Test
     void disabledNullAndLifecycleClearsDropObservations() {
         var tracker = new ProviderDispatchTracker();
         tracker.observe(null, "pattern", Map.of(output, 1L), CraftingBlockReason.LOCKED, 1);
@@ -111,18 +132,52 @@ class ProviderDispatchTrackerTest {
         tracker.observe(cpu, "pattern", Map.of(output, -1L), CraftingBlockReason.LOCKED, 1);
         assertTrue(tracker.reasons(cpu, 1).isEmpty());
 
-        tracker.observe(cpu, "pattern", Map.of(output, 1L), CraftingBlockReason.LOCKED, 1);
+        tracker.observe(cpu, "pattern", Map.of(output, 1L), CraftingBlockReason.NO_CHANNEL, 1);
         tracker.clear(cpu);
         assertTrue(tracker.reasons(cpu, 1).isEmpty());
-        tracker.observe(cpu, "pattern", Map.of(output, 1L), CraftingBlockReason.LOCKED, 1);
+        tracker.observe(cpu, "pattern", Map.of(output, 1L), CraftingBlockReason.NO_CHANNEL, 1);
         tracker.clear();
         assertTrue(tracker.reasons(cpu, 1).isEmpty());
     }
 
     @Test
+    void channelAlternativesRequireConsensusInBothOrders() {
+        for (var alternative : AttemptResult.values()) {
+            for (var reversed : List.of(false, true)) {
+                var evaluation = new ProviderDispatchTracker.Evaluation();
+                for (var attempt : reversed ? List.of(alternative, AttemptResult.NO_CHANNEL)
+                        : List.of(AttemptResult.NO_CHANNEL, alternative)) {
+                    evaluation.candidate();
+                    evaluation.attempt(attempt);
+                }
+                assertNull(evaluation.result());
+                evaluation.exhausted();
+                assertEquals(alternative == AttemptResult.NO_CHANNEL ? CraftingBlockReason.NO_CHANNEL : null,
+                        evaluation.result());
+                evaluation.busy(true);
+                assertNull(evaluation.result());
+            }
+        }
+    }
+
+    @Test
+    void channelEvidenceIsScopedExpiresAndDoesNotEraseAnotherPattern() {
+        var tracker = new ProviderDispatchTracker();
+        var otherCpu = new Object();
+        var otherNetwork = new ProfileKey("other-grid", output.outputId());
+        tracker.observe(cpu, "blocked", Map.of(output, 1L), CraftingBlockReason.NO_CHANNEL, 50);
+        tracker.observe(otherCpu, "blocked", Map.of(otherNetwork, 1L), CraftingBlockReason.NO_CHANNEL, 50);
+        tracker.observe(cpu, "successful", Map.of(output, 1L), null, 50);
+        assertEquals(Map.of(output, CraftingBlockReason.NO_CHANNEL), tracker.reasons(cpu, 69));
+        assertEquals(Map.of(otherNetwork, CraftingBlockReason.NO_CHANNEL), tracker.reasons(otherCpu, 69));
+        assertTrue(tracker.reasons(cpu, 70).isEmpty());
+        assertTrue(tracker.reasons(otherCpu, 49).isEmpty());
+    }
+
+    @Test
     void profilerPrioritizesExistingReasonsAndClearsEveryJobBoundary() {
         var profiler = new CraftProfiler(10);
-        profiler.observeProviderDispatch(cpu, "target", Map.of(output, 1L), CraftingBlockReason.NO_TARGET, 50);
+        profiler.observeProviderDispatch(cpu, "target", Map.of(output, 1L), CraftingBlockReason.NO_CHANNEL, 50);
         profiler.observeDispatchPower(cpu, "power", Map.of(output, 1L), 10, 0, 50);
         assertEquals(Map.of(output, CraftingBlockReason.NO_POWER), profiler.blockReasons(cpu, 50, Set.of()));
         assertEquals(Map.of(output, CraftingBlockReason.NO_PROVIDER), profiler.blockReasons(cpu, 50, Set.of(output)));
@@ -132,8 +187,8 @@ class ProviderDispatchTrackerTest {
                 () -> profiler.clearPending(cpu), () -> profiler.setEnabled(false),
                 () -> profiler.loadSamples(List.of()))) {
             profiler.setEnabled(true);
-            profiler.observeProviderDispatch(cpu, "pattern", Map.of(output, 1L), CraftingBlockReason.LOCKED, 50);
-            assertEquals(CraftingBlockReason.LOCKED, profiler.blockReasons(cpu, 50, Set.of()).get(output));
+            profiler.observeProviderDispatch(cpu, "pattern", Map.of(output, 1L), CraftingBlockReason.NO_CHANNEL, 50);
+            assertEquals(CraftingBlockReason.NO_CHANNEL, profiler.blockReasons(cpu, 50, Set.of()).get(output));
             cleanup.run();
             assertTrue(profiler.blockReasons(cpu, 50, Set.of()).isEmpty());
         }
@@ -157,6 +212,7 @@ class ProviderDispatchTrackerTest {
 
     private static CraftingBlockReason reason(AttemptResult result) {
         return switch (result) {
+            case NO_CHANNEL -> CraftingBlockReason.NO_CHANNEL;
             case NO_TARGET -> CraftingBlockReason.NO_TARGET;
             case INPUT_BLOCKED -> CraftingBlockReason.INPUT_BLOCKED;
             case LOCKED -> CraftingBlockReason.LOCKED;

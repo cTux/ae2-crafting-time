@@ -2,7 +2,7 @@
 navigation:
   title: DELAYED
   parent: statuses/index.md
-  position: 7
+  position: 8
 ---
 
 # DELAYED

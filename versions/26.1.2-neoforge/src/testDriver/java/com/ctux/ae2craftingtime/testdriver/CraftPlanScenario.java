@@ -680,6 +680,10 @@ public final class CraftPlanScenario {
 
     private void requestQuit() {
         if (standard != null) standard.releaseKeys();
+        if (providerDispatchStatus != null) {
+            var cleanupFailure = providerDispatchStatus.cleanup(minecraft);
+            if (cleanupFailure != null) throw new IllegalStateException(cleanupFailure);
+        }
         treeStats.releaseKeys();
         if (!options.interactive()) {
             minecraft.stop();
@@ -689,6 +693,10 @@ public final class CraftPlanScenario {
 
     private void fail(String code, String expected, String observed) {
         if (standard != null) standard.releaseKeys();
+        if (providerDispatchStatus != null) {
+            var cleanupFailure = providerDispatchStatus.cleanup(minecraft);
+            if (cleanupFailure != null) observed += "; " + cleanupFailure;
+        }
         treeStats.releaseKeys();
         failure = new DriverResult.Failure(state.name(), code, ReportText.safe(expected), ReportText.safe(observed));
         advance(ScenarioState.FAILED);

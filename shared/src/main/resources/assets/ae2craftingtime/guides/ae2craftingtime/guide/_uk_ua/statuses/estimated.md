@@ -2,7 +2,7 @@
 navigation:
   title: Оцінка TTC
   parent: statuses/index.md
-  position: 9
+  position: 10
 ---
 
 # Оцінка TTC

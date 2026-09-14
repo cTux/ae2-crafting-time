@@ -2,9 +2,14 @@
   "schema": 1,
   "groups": {
     "standard-ae2": ["standard-plan-controls", "recurrent-plan", "standard-status-controls", "waiting-status", "running-status", "delayed-status", "craft-lifecycle", "cpu-list-total-ttc"],
-    "provider-dispatch-statuses": ["no-target-status", "input-blocked-status", "locked-status"]
+    "provider-dispatch-statuses": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"]
   },
   "cases": {
+    "no-channel-status": {
+      "checks": ["screen", "real-job", "tooltip", "layout", "channel-starved", "no-samples", "healthy-alternative", "power-loss-suppressed", "reboot-suppressed", "reboot-recovered", "missing-input-suppressed", "infinite-mode-suppressed", "channel-mode-restored", "channel-restored", "job-completed"],
+      "advancedChecks": ["screen", "real-job", "tooltip", "layout", "advanced-cpu", "channel-starved", "no-samples", "healthy-alternative", "power-loss-suppressed", "reboot-suppressed", "reboot-recovered", "missing-input-suppressed", "infinite-mode-suppressed", "channel-mode-restored", "channel-restored", "job-completed"],
+      "screenshots": ["no-channel-en-us.png", "no-channel-alternative.png", "no-channel-power-loss.png", "no-channel-reboot.png", "no-channel-missing-input.png", "no-channel-infinite.png", "no-channel-restored.png"]
+    },
     "standard-plan-controls": {
       "checks": ["plan", "plan-sort", "missing-first", "plan-tooltip", "plan-details", "plan-reset", "total-ttc", "layout", "item-resolution"],
       "screenshots": ["plan-default.png", "plan-sort-1.png", "plan-sort-2.png", "plan-sort-3.png", "plan-tooltip.png", "plan-details.png", "plan-reset.png"]
@@ -62,7 +67,7 @@
     "merequester": ["merequester-screen"]
   },
   "adapterBehaviorCases": {
-    "advanced_ae": ["no-target-status", "input-blocked-status", "locked-status"]
+    "advanced_ae": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"]
   },
   "readRecoveryCases": {
     "ae2ct": ["crafting-tree-read-recovery"],

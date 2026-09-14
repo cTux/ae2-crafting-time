@@ -57,16 +57,36 @@ class ProviderObservationInjectionTest {
     void providerHooksMatchEveryPinnedPushPatternCallSite() throws IOException {
         var target = method(readClass("appeng/helpers/patternprovider/PatternProviderLogic"), "pushPattern");
         var targetCalls = calls(target).stream().map(ProviderObservationInjectionTest::signature).toList();
+        var activity = "Lappeng/api/networking/IManagedGridNode;isActive()Z";
+        assertEquals(1, targetCalls.stream().filter(activity::equals).count());
+        var instructions = calls(target);
+        var queueCheck = instructions.stream().filter(call -> call.name.equals("isEmpty")).findFirst().orElseThrow();
+        var activityCheck = instructions.stream().filter(call -> signature(call).equals(activity)).findFirst().orElseThrow();
+        var lockCheck = instructions.stream().filter(call -> call.name.equals("getCraftingLockedReason")).findFirst().orElseThrow();
+        assertTrue(instructions.indexOf(queueCheck) < instructions.indexOf(activityCheck));
+        assertTrue(instructions.indexOf(activityCheck) < instructions.indexOf(lockCheck));
+        var queueJump = assertInstanceOf(org.objectweb.asm.tree.JumpInsnNode.class, queueCheck.getNext());
+        assertTrue(target.instructions.indexOf(queueJump.label) > target.instructions.indexOf(activityCheck),
+                "A nonempty send queue must skip the activity guard");
         var mixin = readClass(MIXINS + "PatternProviderLogicMixin");
         var handlers = mixin.methods.stream().filter(method -> method.name.startsWith("ae2craftingtime$observe"))
                 .toList();
-        assertEquals(6, handlers.size());
+        assertEquals(7, handlers.size());
         for (var handler : handlers) {
             if (handler.name.equals("ae2craftingtime$observeBlocking")) {
                 var expression = annotation(handler, "/ModifyExpressionValue;");
                 assertEquals(List.of("pushPattern"), value(expression, "method"));
                 var at = (AnnotationNode) ((List<?>) value(expression, "at")).get(0);
                 assertTrue(targetCalls.contains((String) value(at, "target")));
+                continue;
+            }
+            if (handler.name.equals("ae2craftingtime$observeActivity")) {
+                var wrap = annotation(handler, "/WrapOperation;");
+                assertEquals(List.of("pushPattern"), value(wrap, "method"));
+                var at = (AnnotationNode) ((List<?>) value(wrap, "at")).get(0);
+                assertTrue(targetCalls.contains((String) value(at, "target")));
+                assertEquals(1, calls(handler).stream().filter(call -> call.owner.endsWith("/Operation")
+                        && call.name.equals("call")).count());
                 continue;
             }
             var redirect = annotation(handler, "/Redirect;");

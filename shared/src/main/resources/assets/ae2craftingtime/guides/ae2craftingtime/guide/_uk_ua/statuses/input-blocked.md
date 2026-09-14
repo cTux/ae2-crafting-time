@@ -2,7 +2,7 @@
 navigation:
   title: Вхід заблоковано
   parent: statuses/index.md
-  position: 4
+  position: 5
 ---
 
 # Вхід заблоковано

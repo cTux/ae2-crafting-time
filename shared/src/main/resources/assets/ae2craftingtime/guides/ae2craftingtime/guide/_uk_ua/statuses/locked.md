@@ -2,7 +2,7 @@
 navigation:
   title: Заблоковано
   parent: statuses/index.md
-  position: 3
+  position: 4
 ---
 
 # Заблоковано
@@ -27,5 +27,5 @@ navigation:
 
 *Активне блокування провайдера зупиняє наступну заплановану партію.*
 
-[Назад: Немає енергії](no-power.md) | [Стани](index.md) |
+[Назад: Немає каналу](no-channel.md) | [Стани](index.md) |
 [Далі: Вхід заблоковано](input-blocked.md) | [Діагностика затримок](../features/delay-diagnostics.md)

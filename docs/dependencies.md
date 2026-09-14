@@ -129,6 +129,13 @@ does not depend on storage supplied by other addons.
 Fabric Crafting Tree has no available runtime artifact and is excluded from
 issue #193's runtime acceptance by explicit user decision.
 
+`no-channel-status` uses a real controller and normal-cable bottleneck on every
+native target. It checks the provider node's power, boot and channel predicates,
+then frees a physical channel and requires the real job to continue. The same
+scenario directly selects an AdvancedAE CPU on Forge 1.20.1 and both NeoForge
+targets when AdvancedAE status mode is enabled. Other provider overrides are
+covered only when they execute AE2's observed provider activity guard.
+
 `no-provider-status` is a focused native AE2 scenario on all four targets.
 Its historical Forge 1.20.1 smoke checks real pattern/provider removal, bilingual
 tooltips, recovery, redundant providers, and cancellation. New campaigns use

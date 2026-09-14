@@ -8,9 +8,36 @@ import org.junit.jupiter.api.Test;
 
 class ProviderDispatchContextTest {
     @Test
+    void channelActivityIsIsolatedAcrossNestedAndMissingFrames() {
+        var provider = new Object();
+        var other = new Object();
+        ProviderDispatchContext.activity(provider, false, true, true, true, false);
+        try (var outer = ProviderDispatchContext.begin(provider)) {
+            ProviderDispatchContext.activity(provider, false, true, true, true, false);
+            try (var inner = ProviderDispatchContext.begin(other)) {
+                ProviderDispatchContext.activity(provider, true, true, true, true, true);
+                assertEquals(AttemptResult.UNKNOWN, inner.finish(false));
+            }
+            assertEquals(AttemptResult.NO_CHANNEL, outer.finish(false));
+            ProviderDispatchContext.activity(provider, true, true, true, true, true);
+            assertEquals(AttemptResult.UNKNOWN, outer.finish(false));
+        }
+    }
+
+    @Test
     void classifiesOnlyDirectCompleteProviderEvidence() {
         var provider = new Object();
         try (var scope = ProviderDispatchContext.begin(provider)) {
+            assertEquals(AttemptResult.UNKNOWN, scope.finish(false));
+        }
+        try (var scope = ProviderDispatchContext.begin(provider)) {
+            ProviderDispatchContext.activity(provider, false, true, true, true, false);
+            assertEquals(AttemptResult.NO_CHANNEL, scope.finish(false));
+            assertEquals(AttemptResult.SUCCESS, scope.finish(true));
+        }
+        try (var scope = ProviderDispatchContext.begin(provider)) {
+            ProviderDispatchContext.activity(new Object(), false, true, true, true, false);
+            ProviderDispatchContext.activity(provider, false, false, true, true, false);
             assertEquals(AttemptResult.UNKNOWN, scope.finish(false));
         }
         try (var scope = ProviderDispatchContext.begin(provider)) {

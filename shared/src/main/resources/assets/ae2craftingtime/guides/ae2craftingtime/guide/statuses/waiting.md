@@ -2,7 +2,7 @@
 navigation:
   title: Waiting
   parent: statuses/index.md
-  position: 6
+  position: 7
 ---
 
 # Waiting

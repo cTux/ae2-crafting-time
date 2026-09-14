@@ -3,11 +3,14 @@ package com.ctux.ae2craftingtime.mc1201.mixin;
 import appeng.api.config.LockCraftingMode;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.implementations.blockentities.ICraftingMachine;
+import appeng.api.networking.IManagedGridNode;
 import appeng.api.stacks.KeyCounter;
 import appeng.helpers.patternprovider.PatternProviderLogic;
 import appeng.helpers.patternprovider.PatternProviderTarget;
 import com.ctux.ae2craftingtime.mc1201.ProviderDispatchContext;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.core.Direction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
@@ -21,6 +24,16 @@ public abstract class PatternProviderLogicMixin {
 
     @Invoker(value = "adapterAcceptsAll", remap = false)
     protected abstract boolean ae2craftingtime$adapterAcceptsAll(PatternProviderTarget target, KeyCounter[] input);
+
+    @WrapOperation(method = "pushPattern", at = @At(value = "INVOKE",
+            target = "Lappeng/api/networking/IManagedGridNode;isActive()Z"), remap = false)
+    private boolean ae2craftingtime$observeActivity(IManagedGridNode managedNode, Operation<Boolean> original) {
+        var active = original.call(managedNode);
+        var node = managedNode.getNode();
+        ProviderDispatchContext.activity(this, active, node != null, node != null && node.isPowered(),
+                node != null && node.hasGridBooted(), node != null && node.meetsChannelRequirements());
+        return active;
+    }
 
     @Redirect(method = "pushPattern", at = @At(value = "INVOKE",
             target = "Lappeng/helpers/patternprovider/PatternProviderLogic;getCraftingLockedReason()Lappeng/api/config/LockCraftingMode;"),

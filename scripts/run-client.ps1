@@ -263,7 +263,7 @@ if ($DriverScenario) {
     $runtimeArgs += "-PtestDriverProfile=$(if ($Latest) { 'latest' } else { 'compatible' })"
     $runtimeArgs += "-PtestDriverOutput=$([IO.Path]::GetFullPath($DriverOutputDirectory))"
     $runtimeArgs += "-PtestDriverWorld=$DriverWorld"
-    if ($DriverScenario -in @('no-target-status','input-blocked-status','locked-status') -and
+    if ($DriverScenario -in @('no-channel-status','no-target-status','input-blocked-status','locked-status') -and
             'rxYaglEe' -in $requestedProjects) { $runtimeArgs += '-PtestDriverAdvancedStatus=true' }
     if ($Interactive) { $runtimeArgs += "-PtestDriverInteractive=true" }
 }
