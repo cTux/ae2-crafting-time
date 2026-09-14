@@ -11,6 +11,12 @@ sequentially. NeoForge 1.21.1 also covers a greater-than-256-row plan. Recipient
 boundary tests and dedicated replan/reconnect checks verify stale-plan isolation;
 no simultaneous-player proof or recurrence runtime pass is recorded here yet.
 
+Applied Enhancements 1.0.7 clears the native plan before starting long-range
+calculation, including ordinary small orders. Recurrence reset accepts that
+absent plan on all targets. AELIS may bypass native recurrence observation, so
+its missing rows are not yet qualified for recurrence labels. Project Infinity
+0.0.52 testing with OmniSequence 1.3.9 and 2.0.3-fix tracks these separately.
+
 ## Startup adapter selection
 
 Optional hooks use one fixed startup choice per dependency. The first matching

@@ -5,6 +5,19 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class RecurrentMissingTest {
+    @Test void clearsOnlyEntriesOfAnAvailablePlan() {
+        var cleared = new java.util.ArrayList<String>();
+        RecurrentMissing.clearPlan(null, ignored -> {
+            fail("A cleared plan has no entries to inspect");
+            return Set.<String>of();
+        }, cleared::add);
+        assertTrue(cleared.isEmpty());
+        RecurrentMissing.clearPlan(java.util.List.of("first", "second"), value -> value, cleared::add);
+        assertEquals(java.util.List.of("first", "second"), cleared);
+        RecurrentMissing.clearPlan(java.util.List.<String>of(), value -> value, cleared::add);
+        assertEquals(java.util.List.of("first", "second"), cleared);
+    }
+
     @Test void classifiesOnlyTerminalPositiveRecurrence() {
         assertTrue(RecurrentMissing.record(true, false, 1));
         assertFalse(RecurrentMissing.record(false, false, 1));
