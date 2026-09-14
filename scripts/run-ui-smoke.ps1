@@ -339,6 +339,7 @@ try {
             $progressPid = 0
             $callbackSequence = 0
             $checkpoint = ''
+            $activeScenarioObserved = $false
             $processExitObserved = $false
             $scheduledExitCode = $null
             while ([DateTime]::UtcNow -lt $deadline) {
@@ -367,6 +368,10 @@ try {
                                 if ($progress.callbackAt) { $lastCallback = [DateTime]::Parse($progress.callbackAt).ToUniversalTime() }
                                 if ($progress.checkpointAt) { $lastCheckpoint = [DateTime]::Parse($progress.checkpointAt).ToUniversalTime() }
                                 if ($progress.checkpoint) { $checkpoint = [string]$progress.checkpoint }
+                                if ($checkpoint -match '(^|\s)state=WORLD_READY(\s|$)' -and
+                                        $checkpoint -match '(^|\s)phase=(?!PREPARE(?:\s|$))[A-Z_]+(\s|$)') {
+                                    $activeScenarioObserved = $true
+                                }
                             }
                         } catch { }
                     }
@@ -381,7 +386,7 @@ try {
                             -CheckpointTimeoutSeconds $CheckpointTimeoutSeconds -ProcessId $process.Id `
                             -ProgressProcessId $progressPid -CallbackSequence $callbackSequence `
                             -StartedAt $process.StartTime.ToUniversalTime() -StartupTimeoutSeconds $StartupTimeoutSeconds `
-                            -Checkpoint $checkpoint
+                            -ActiveScenarioObserved:$activeScenarioObserved -Checkpoint $checkpoint
                     }
                     if ($watchdogReason) { break }
                 }
