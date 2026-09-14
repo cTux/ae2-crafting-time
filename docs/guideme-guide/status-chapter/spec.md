@@ -2,7 +2,8 @@
 
 Issue: [#305](https://github.com/cTux/ae2-crafting-time/issues/305)
 
-Status: planned.
+Status: the original ten pages are implemented. The Recurrent addition is planned
+under [#412](https://github.com/cTux/ae2-crafting-time/issues/412).
 
 ## Goal
 
@@ -12,7 +13,8 @@ limits, with a real screenshot and useful cross-links.
 
 ## Pages and display priority
 
-`statuses/index.md` links to these pages in current precedence order:
+`statuses/index.md` keeps these ten pages in their existing order and appends Recurrent.
+The landing page separates Crafting Plan diagnostics from running-job priority:
 
 | Page | Visible state | Required explanation |
 | --- | --- | --- |
@@ -26,6 +28,7 @@ limits, with a real screenshot and useful cross-links.
 | `delayed.md` | `DELAYED` | Active work stopped producing output beyond its learned threshold. |
 | `no-data-yet.md` | `No data yet` | No usable retained timing sample exists yet. |
 | `estimated.md` | TTC such as `~12s` | A usable estimate exists; explain amount, total, confidence, and uncertainty. |
+| `recurrent.md` | `Recurrent` | Crafting Plan has a proven recipe self-dependency; check seed ingredients and alternative recipes. |
 
 Stored-only NO SPACE wins first. For scheduled work, current reason precedence is
 NO PROVIDER, NO POWER, LOCKED, INPUT BLOCKED, NO TARGET, then Waiting, DELAYED,
@@ -56,7 +59,7 @@ addresses, chat, coordinates, unrelated worlds, and test controls.
 
 English and Ukrainian use identical paths, positions, image references, and
 links; Ukrainian is a complete natural translation. Both themes remain readable.
-All ten statuses and the chapter cover all four supported targets. Reconcile the
+All eleven statuses and the chapter cover all four supported targets. Reconcile the
 approved scope first if implementation finds target drift.
 
 This changes guide resources and existing transformations only: no detection,
@@ -72,7 +75,7 @@ precedence, thresholds, packets, persistence, config, recipes, or dependencies.
 
 | ID | Observable result |
 | --- | --- |
-| S1 | Chapter 3 links to exactly the ten listed states in display priority order. |
+| S1 | Chapter 3 links to exactly the eleven listed states, preserving the first ten positions and separating Recurrent from running-job priority. |
 | S2 | Every state emitted by the mod maps once; no planned/native-only state is presented as shipped. |
 | S3 | Every page satisfies meaning, scope, recovery, clearing, limits, screenshot, and link rules. |
 | S4 | Precedence and mixed active/scheduled explanations match current renderer/data. |
@@ -85,3 +88,35 @@ precedence, thresholds, packets, persistence, config, recipes, or dependencies.
 
 See the [technical design](technical-design.md) and
 [implementation plan](implementation-plan.md).
+
+## Recurrent addition (#412)
+
+Follow the [existing recurrence contract](../../recurrent-crafting-status/spec.md)
+for detection and quantities. This addition documents that behavior; it does not
+change it. The page uses `Recurrent` / `Циклічне`, explains the normal-weight red
+`Recurrent: <amount>` label and matching hover explanation, and places it in
+Crafting Plan before submission, not a running CPU's Crafting Status.
+
+Use a simple A -> B -> A example and mention direct and longer loops. Explain
+that an ordinary shortage stays Missing, and a rejected circular alternative
+alone is not proof. The number remains AE2's total missing amount, even when a
+row combines ordinary and recurrent shortages. A successful plan with a usable
+seed or alternative has no Recurrent row; having the requested output in storage
+is not a guarantee that AE2 can use it as a seed.
+
+Order the recovery checklist: inspect the affected ingredient and hover help;
+follow its patterns to find the loop; supply a usable seed or choose/correct a
+recipe that breaks it; calculate the plan again. Do not promise an automatic
+repair. Explain that recalculation replaces the diagnosis and old plans do not
+carry it across menus or networks. Timing samples are not required, and TTC
+colors/order do not control this label. Separate Crafting Tree and ME Requester
+screens are outside this native-plan diagnostic.
+
+| ID | Observable result |
+| --- | --- |
+| S11 | Both locales explain Recurrent's location, label, loops, quantities, recovery, clearing, and limits above. |
+| S12 | Recurrent has position 10, is reachable from the landing and TTC estimate pages, and is explicitly outside running-job priority. |
+| S13 | A reviewed, packaged PNG shows a real Recurrent row; caption/alt text describe the fixture without claiming every loop item becomes a missing row. |
+
+S3 and S5-S10 also apply to the new page. This planning merge leaves #412 open;
+book resources and their runtime verification belong to its implementation.
