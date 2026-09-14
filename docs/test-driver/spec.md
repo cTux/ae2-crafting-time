@@ -702,3 +702,24 @@ Keep the original lifecycle checkpoints and add stable PNG/sidecar pairs for
 each new context. Chat captures preserve the original response; published crops
 exclude the player attribution. Single-case interactive mode may retain this
 world for subsequent manual book checks; suites remain non-interactive.
+
+## No-channel status scenario
+
+For [#405](https://github.com/cTux/ae2-crafting-time/issues/405), add
+`no-channel-status` with the complete [NO CHANNEL criteria](../provider-dispatch-statuses/no-channel/spec.md).
+It submits a real processing job through a powered, booted provider starved by
+an actual cable bottleneck. CPU, terminal and storage retain healthy channels.
+Require zero learned samples, positive scheduled work, a failed dispatch and a
+visible English NO CHANNEL badge/tooltip. Restore the route, observe the badge
+clear, return actual output and require job completion. Verify a healthy
+same-pattern alternative suppresses the warning and cover the specified
+negative-state, mixed-row and lifecycle cases without seeding diagnostic maps.
+
+Run direct status/recovery on all four native targets and all three applicable
+AdvancedAE targets, retaining actual CPU/adapter identity. Missing AdvancedAE
+must fail its required case rather than silently selecting native. Keep older
+adapter contract/packaging checks. Record real node predicates, server ticks,
+job state, result checks, English screenshots/sidecars and dependency manifest;
+review badge/tooltip layout. The screenshot also supplies the canonical book
+crop after visual review. No new runner, production dependency or persistent
+channel diagnostic is introduced.

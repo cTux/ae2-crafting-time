@@ -2,9 +2,9 @@
 
 Issue: [#405](https://github.com/cTux/ae2-crafting-time/issues/405).
 
-Status: researched and planned on 2026-09-13; implementation is not part of
-this documentation change. Extends the implemented [provider dispatch
-statuses](../spec.md). Merging this plan leaves #405 open.
+Status: researched on 2026-09-13 and updated against the issue on 2026-09-14;
+implementation is not part of this documentation change. Extends the implemented
+[provider dispatch statuses](../spec.md). Merging this plan leaves #405 open.
 
 ## Goal
 
@@ -83,6 +83,8 @@ Reuse `text.ae2craftingtime.dispatch_status.scheduled_only` unchanged.
 | AC-04 | Mixed active/scheduled tooltip, reason priority, sorting, color, bounds, and both translations agree with NC-03/04. Existing statuses, total TTC, learning, and locate/plate behavior remain intact. |
 | AC-05 | Fresh recovery, 20-tick expiry, backwards ticks, cancellation/replacement/finish, disable/reload, save/reopen, CPU switches, separate networks, and late replies cannot leak the new reason or turn it into a saved NO PROVIDER/NO POWER. |
 | AC-06 | All four native targets and all three applicable AdvancedAE targets have direct English status/recovery evidence; changed pure logic has 100% line/branch coverage and packet/mixin/packaging checks pass. |
+| AC-07 | English and Ukrainian GuideME each have a dedicated NO CHANNEL page explaining the cause, differences from Waiting/NO PROVIDER/NO POWER, and channel recovery. Both status indexes and previous/next/return links work; the shared reviewed screenshot, locale parity and packaged pages pass existing guide checks and rendered navigation review. |
+| AC-08 | Publish matching English and Ukrainian GitHub Wiki pages and status navigation from the canonical book content. Verify the live pages, internal links and image; retain the source commit, Wiki commit and page URLs. The feature is incomplete until publication is verified. |
 
 See the [research and design](technical-design.md) and
 [implementation plan](implementation-plan.md).
