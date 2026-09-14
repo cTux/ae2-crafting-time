@@ -123,3 +123,25 @@ Forge/Fabric 1.20.1 and both NeoForge targets. No dependencies, recipe changes,
 new guide system, or server migration are needed. S11 maps to localized prose,
 S12 to navigation/manifest changes, and S13 to the inspected capture. Existing
 S3 and S5-S10 cover links, translations, packaging, and guide rendering.
+
+## GitHub wiki update (S14)
+
+The wiki published under #411 uses `Status-Estimated.md` and
+`Ukrainian-Status-Estimated.md`, locale-specific landing pages `Statuses.md` and
+`Ukrainian-Statuses.md`, and shared images under `images/statuses/`. Preserve
+those conventions in the separate `ae2-crafting-time.wiki.git` repository.
+
+After the canonical book change is merged, add `Status-Recurrent.md` and
+`Ukrainian-Status-Recurrent.md` from the corresponding guide pages. Strip GuideME
+navigation frontmatter and translate page links to wiki names without `.md`.
+The new pages link to the matching locale's status landing, estimate page, and
+`Feature-Time-Estimates` / `Ukrainian-Feature-Time-Estimates` page. Update both
+landing pages and both estimate pages to expose Recurrent, keeping the separate
+Crafting Plan explanation. The existing sidebar already links both landings.
+
+Copy the reviewed PNG unchanged to `images/statuses/crafting-plan-recurrent.png`
+and use it from both wiki pages. Do not introduce separately authored behavior
+or a new synchronization framework. Start from the latest wiki checkout and
+preserve unrelated wiki edits. Commit and publish the bounded page/image changes;
+record the canonical source commit, wiki commit, and live page URLs as evidence.
+If publication or rendered links/images fail, leave #412 incomplete until fixed.

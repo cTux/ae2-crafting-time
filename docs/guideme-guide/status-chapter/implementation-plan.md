@@ -95,3 +95,20 @@ eleven pages, S11-S13 plus S3 and S5-S10 for the addition.
 Close #412 only after the book implementation and these checks pass. This
 planning-only PR updates the three documents, checks their consistency and
 links, and leaves game resources unchanged; it does not require a client launch.
+
+## Publish the matching wiki update (S14)
+
+After the book implementation is merged, extend the completion gate above with:
+
+1. Refresh the separate wiki checkout and mirror the canonical English/Ukrainian
+   Recurrent pages using the file names and link mapping in the design. Update
+   both status landings and estimate-page navigation; copy the reviewed PNG.
+2. Compare the adapted pages with the merged guide source, verify both locales'
+   internal links and image targets, and review the wiki diff for unrelated edits.
+3. Commit and publish the wiki update. Open both live Recurrent pages on GitHub,
+   follow landing/estimate/return/related links, and inspect the rendered image,
+   caption, and text. Record source and wiki commits plus the live page URLs.
+
+S14 is required alongside the book checks before #412 is complete. Issue #411
+already delivered the initial wiki and is not a blocker. This planning follow-up
+adds the publication requirement; it does not publish incomplete book content.
