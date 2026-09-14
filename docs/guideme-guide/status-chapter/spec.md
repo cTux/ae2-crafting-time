@@ -120,3 +120,19 @@ screens are outside this native-plan diagnostic.
 
 S3 and S5-S10 also apply to the new page. This planning merge leaves #412 open;
 book resources and their runtime verification belong to its implementation.
+
+## GitHub wiki parity (#412)
+
+The same change must reach the published GitHub wiki in English and Ukrainian.
+The initial wiki publication from [#411](https://github.com/cTux/ae2-crafting-time/issues/411)
+is complete; updating it is part of #412, not a new publication project. Keep the
+GuideME Markdown as the canonical content. Mirror the Recurrent explanation,
+reviewed screenshot, captions, and changed status navigation, adapting only the
+format and links needed by GitHub wiki Markdown.
+
+| ID | Observable result |
+| --- | --- |
+| S14 | Published English and Ukrainian Recurrent wiki pages match the book's meaning and reviewed image, are reachable from their status landing and estimate pages, and have working return and related links. |
+
+Verify both published wiki pages and their navigation/images on GitHub before
+completing #412. A local wiki checkout or book-only merge does not satisfy S14.
