@@ -1,10 +1,11 @@
 # NO CHANNEL implementation plan
 
 Issue: [#405](https://github.com/cTux/ae2-crafting-time/issues/405).
-Implement the [specification](spec.md) through the
-[technical design](technical-design.md). This is future implementation work;
-the planning PR changes documentation only and must not close the issue. The
-2026-09-14 repair preserves AC-01 through AC-06 and adds the book/Wiki gates.
+[PR #423](https://github.com/cTux/ae2-crafting-time/pull/423) implements the
+[specification](spec.md) through the [technical design](technical-design.md).
+The historical planning work was merged separately in
+[PR #422](https://github.com/cTux/ae2-crafting-time/pull/422). The 2026-09-14
+repair preserves AC-01 through AC-06 and adds the book/Wiki gates.
 
 ## 1. Extend the existing dispatch facts and evaluator
 
@@ -188,6 +189,16 @@ proof needs a clean current-head run, not a diagnostic partial run.
 - Update this plan's implementation state and issue evidence after the gates
   below pass. The live issue run authorizes implementation and merge; planning
   delivery alone leaves the issue open. Release upload remains outside scope.
+
+## Implementation state
+
+PR #423 implements the planned core, loader integrations, test-driver fixtures,
+resources and runner checks. Verification covers all 12 changed-scope graphs and
+137 selected cases across Forge, Fabric and both NeoForge targets, including four
+native and three AdvancedAE NO CHANNEL combinations. Focused line and branch
+coverage, driver compilation, protocol/resource checks and packaging checks pass.
+The shared guide image and both live Wiki locales are published and verified.
+The English Forge and Fabric in-game book renderer and navigation checks pass.
 
 ## 7. Publish and verify the Wiki (AC-08)
 

@@ -2,9 +2,8 @@
 
 Issue: [#405](https://github.com/cTux/ae2-crafting-time/issues/405).
 
-Status: researched on 2026-09-13 and updated against the issue on 2026-09-14;
-implementation is not part of this documentation change. Extends the implemented
-[provider dispatch statuses](../spec.md). Merging this plan leaves #405 open.
+Status: implemented in [PR #423](https://github.com/cTux/ae2-crafting-time/pull/423).
+Extends the implemented [provider dispatch statuses](../spec.md).
 
 ## Goal
 

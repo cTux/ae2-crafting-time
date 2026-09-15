@@ -1,6 +1,6 @@
 # NO CHANNEL research and technical design
 
-Implements the proposed [specification](spec.md), tracked in
+Implements the [specification](spec.md), tracked in
 [#405](https://github.com/cTux/ae2-crafting-time/issues/405).
 
 ## Verified evidence
