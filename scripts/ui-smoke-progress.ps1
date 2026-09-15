@@ -10,6 +10,7 @@ function Get-UiSmokeProgressDecision {
         [long]$CallbackSequence = -1,
         [DateTime]$StartedAt = [DateTime]::MinValue,
         [int]$StartupTimeoutSeconds = 300,
+        [switch]$ActiveScenarioObserved,
         [string]$Checkpoint = ''
     )
     $plannedFabricRejoin = $Checkpoint -match 'cpu-list=REJOIN_REQUEST(?:\s|$)' -and
@@ -39,7 +40,7 @@ function Get-UiSmokeProgressDecision {
         }
         return $null
     }
-    $activeScenario = $ProcessId -le 0 -or ($Checkpoint -match '(^|\s)state=WORLD_READY(\s|$)' -and
+    $activeScenario = $ProcessId -le 0 -or $ActiveScenarioObserved -or ($Checkpoint -match '(^|\s)state=WORLD_READY(\s|$)' -and
         $Checkpoint -match '(^|\s)phase=(?!PREPARE(?:\s|$))[A-Z_]+(\s|$)')
     if (!$activeScenario) {
         if ($StartupTimeoutSeconds -gt 0 -and $StartedAt -ne [DateTime]::MinValue -and

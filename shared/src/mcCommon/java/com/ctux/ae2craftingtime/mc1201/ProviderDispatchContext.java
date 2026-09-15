@@ -21,6 +21,15 @@ public final class ProviderDispatchContext {
         }
     }
 
+    public static void activity(Object provider, boolean active, boolean nodePresent, boolean powered,
+            boolean booted, boolean meetsChannelRequirements) {
+        var frame = current(provider);
+        if (frame != null) {
+            frame.activity = com.ctux.ae2craftingtime.core.ProviderDispatchTracker.activityResult(
+                    active, nodePresent, powered, booted, meetsChannelRequirements);
+        }
+    }
+
     public static void dedicated(Object provider, boolean acceptsPlans) {
         var frame = current(provider);
         if (frame != null && acceptsPlans) {
@@ -71,6 +80,7 @@ public final class ProviderDispatchContext {
     private static final class Frame {
         private final Object provider;
         private boolean checked;
+        private AttemptResult activity;
         private boolean locked;
         private boolean dedicatedRoute;
         private boolean dedicatedRejected;
@@ -85,6 +95,9 @@ public final class ProviderDispatchContext {
         private AttemptResult finish(boolean success) {
             if (success) {
                 return AttemptResult.SUCCESS;
+            }
+            if (activity == AttemptResult.NO_CHANNEL) {
+                return AttemptResult.NO_CHANNEL;
             }
             if (locked) {
                 return AttemptResult.LOCKED;

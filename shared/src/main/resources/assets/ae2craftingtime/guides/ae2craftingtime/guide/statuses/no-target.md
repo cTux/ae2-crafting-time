@@ -2,7 +2,7 @@
 navigation:
   title: NO TARGET
   parent: statuses/index.md
-  position: 5
+  position: 6
 ---
 
 # NO TARGET

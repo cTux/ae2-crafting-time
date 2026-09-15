@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.testdriver;
 
 import com.ctux.ae2craftingtime.core.RequesterTtcLayout;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import org.apache.catalina.Context;
 import org.apache.catalina.startup.Tomcat;
@@ -18,12 +19,15 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.TimeoutException;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -595,9 +599,51 @@ class TestDriverCoreTest {
 
     @Test
     void providerStatusWaitsForTheSelectedCpuRowsBeforeMutatingTheFixture() {
+        assertTrue(AddonCpuFixture.supports(ProviderDispatchStatusScenario.NO_CHANNEL));
+        assertNull(AddonCpuFixture.create(ProviderDispatchStatusScenario.NO_CHANNEL));
+        assertEquals(ProviderDispatchStatusScenario.checks(ProviderDispatchStatusScenario.NO_CHANNEL),
+                DriverResult.requiredChecks(ProviderDispatchStatusScenario.NO_CHANNEL));
+        assertTrue(DriverResult.requiredChecks(ProviderDispatchStatusScenario.NO_CHANNEL)
+                .containsAll(List.of("channel-starved", "no-samples", "reboot-boundary", "job-completed")));
         assertFalse(ProviderDispatchStatusScenario.statusRowsReady(List.of()));
         assertTrue(ProviderDispatchStatusScenario.statusRowsReady(List.of(
                 new UiSnapshot.Row("minecraft:diamond", 64, 0, null, List.of()))));
+    }
+
+    @Test
+    void providerStatusDrainsCompletedServerStepsAfterTheUiStateChanges() throws Exception {
+        var scenario = new ProviderDispatchStatusScenario(ProviderDispatchStatusScenario.LOCKED);
+        var phaseField = ProviderDispatchStatusScenario.class.getDeclaredField("phase");
+        var operationField = ProviderDispatchStatusScenario.class.getDeclaredField("operation");
+        var fixtureField = ProviderDispatchStatusScenario.class.getDeclaredField("fixture");
+        var providerPositionField = DispatchStatusFixture.class.getDeclaredField("providerPosition");
+        var tickLocked = ProviderDispatchStatusScenario.class.getDeclaredMethod("tickLocked", Minecraft.class,
+                UiSnapshot.class, Map.class, Consumer.class, BiConsumer.class);
+        for (var field : List.of(phaseField, operationField, fixtureField, providerPositionField)) {
+            field.setAccessible(true);
+        }
+        tickLocked.setAccessible(true);
+        providerPositionField.set(fixtureField.get(scenario), net.minecraft.core.BlockPos.ZERO);
+
+        var warning = new UiSnapshot.ObservedText("text.ae2craftingtime.locked", "locked", List.of(), null);
+        var warningSnapshot = new UiSnapshot("screen", "menu", null, 100, 100, 1, 1, 0,
+                List.of(), List.of(warning), List.of(), List.of(), List.of(), List.of());
+        var recoveredSnapshot = new UiSnapshot("screen", "menu", null, 100, 100, 1, 1, 0,
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
+        for (int phase = 4; phase <= 10; phase++) {
+            phaseField.setInt(scenario, phase);
+            operationField.set(scenario, CompletableFuture.completedFuture(true));
+            var snapshot = phase % 2 == 0 ? recoveredSnapshot : warningSnapshot;
+            var screenshots = new AtomicInteger();
+
+            tickLocked.invoke(scenario, null, snapshot, new LinkedHashMap<String, Boolean>(),
+                    (Consumer<String>) ignored -> screenshots.incrementAndGet(),
+                    (BiConsumer<Integer, Integer>) (x, y) -> {});
+
+            assertEquals(phase + 1, phaseField.getInt(scenario), "phase " + phase);
+            assertNull(operationField.get(scenario), "phase " + phase);
+            assertEquals(0, screenshots.get(), "phase " + phase + " must not capture a changed UI state");
+        }
     }
 
     @Test

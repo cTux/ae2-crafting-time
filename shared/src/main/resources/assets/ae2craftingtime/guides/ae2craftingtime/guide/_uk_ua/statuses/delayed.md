@@ -2,7 +2,7 @@
 navigation:
   title: ЗАТРИМКА
   parent: statuses/index.md
-  position: 7
+  position: 8
 ---
 
 # ЗАТРИМКА

@@ -2,7 +2,7 @@
 navigation:
   title: Даних ще немає
   parent: statuses/index.md
-  position: 8
+  position: 9
 ---
 
 # Даних ще немає

@@ -95,6 +95,7 @@ class TtcTextTest {
     @ParameterizedTest
     @CsvSource({"en_us, NO_PROVIDER, NO PROVIDER", "uk_ua, NO_PROVIDER, Без провайдера",
             "en_us, NO_POWER, NO POWER", "uk_ua, NO_POWER, Немає енергії",
+            "en_us, NO_CHANNEL, NO CHANNEL", "uk_ua, NO_CHANNEL, Немає каналу",
             "en_us, NO_TARGET, NO TARGET", "uk_ua, NO_TARGET, Немає приймача",
             "en_us, INPUT_BLOCKED, INPUT BLOCKED", "uk_ua, INPUT_BLOCKED, Вхід заблоковано",
             "en_us, LOCKED, LOCKED", "uk_ua, LOCKED, Заблоковано"})
@@ -120,7 +121,8 @@ class TtcTextTest {
     void mixedRowQualifierAppearsOnlyForTransientDispatchReasons() {
         for (var reason : com.ctux.ae2craftingtime.core.CraftingBlockReason.values()) {
             var lines = TtcText.blockReasonTooltip(reason, true);
-            var transientReason = reason == com.ctux.ae2craftingtime.core.CraftingBlockReason.NO_TARGET
+            var transientReason = reason == com.ctux.ae2craftingtime.core.CraftingBlockReason.NO_CHANNEL
+                    || reason == com.ctux.ae2craftingtime.core.CraftingBlockReason.NO_TARGET
                     || reason == com.ctux.ae2craftingtime.core.CraftingBlockReason.INPUT_BLOCKED
                     || reason == com.ctux.ae2craftingtime.core.CraftingBlockReason.LOCKED;
             assertEquals(transientReason ? 4 : 3, lines.size());

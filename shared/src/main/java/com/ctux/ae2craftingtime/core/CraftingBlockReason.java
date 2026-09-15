@@ -5,5 +5,6 @@ public enum CraftingBlockReason {
     NO_POWER,
     NO_TARGET,
     INPUT_BLOCKED,
-    LOCKED
+    LOCKED,
+    NO_CHANNEL
 }

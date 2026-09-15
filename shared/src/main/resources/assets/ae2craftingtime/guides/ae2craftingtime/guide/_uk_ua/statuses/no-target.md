@@ -2,7 +2,7 @@
 navigation:
   title: Немає приймача
   parent: statuses/index.md
-  position: 5
+  position: 6
 ---
 
 # Немає приймача

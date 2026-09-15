@@ -28,6 +28,7 @@
   "no-space-status",
   "no-provider-status",
   "no-power-status"
+  ,"no-channel-status"
   ,"no-target-status"
   ,"input-blocked-status"
   ,"locked-status"

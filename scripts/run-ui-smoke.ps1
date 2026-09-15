@@ -6,7 +6,7 @@ param(
     [string]$CasesBase64,
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-channel-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$ArchiveRoot,
     [string]$ReportDirectory,
@@ -339,6 +339,7 @@ try {
             $progressPid = 0
             $callbackSequence = 0
             $checkpoint = ''
+            $activeScenarioObserved = $false
             $processExitObserved = $false
             $scheduledExitCode = $null
             while ([DateTime]::UtcNow -lt $deadline) {
@@ -367,6 +368,10 @@ try {
                                 if ($progress.callbackAt) { $lastCallback = [DateTime]::Parse($progress.callbackAt).ToUniversalTime() }
                                 if ($progress.checkpointAt) { $lastCheckpoint = [DateTime]::Parse($progress.checkpointAt).ToUniversalTime() }
                                 if ($progress.checkpoint) { $checkpoint = [string]$progress.checkpoint }
+                                if ($checkpoint -match '(^|\s)state=WORLD_READY(\s|$)' -and
+                                        $checkpoint -match '(^|\s)phase=(?!PREPARE(?:\s|$))[A-Z_]+(\s|$)') {
+                                    $activeScenarioObserved = $true
+                                }
                             }
                         } catch { }
                     }
@@ -381,7 +386,7 @@ try {
                             -CheckpointTimeoutSeconds $CheckpointTimeoutSeconds -ProcessId $process.Id `
                             -ProgressProcessId $progressPid -CallbackSequence $callbackSequence `
                             -StartedAt $process.StartTime.ToUniversalTime() -StartupTimeoutSeconds $StartupTimeoutSeconds `
-                            -Checkpoint $checkpoint
+                            -ActiveScenarioObserved:$activeScenarioObserved -Checkpoint $checkpoint
                     }
                     if ($watchdogReason) { break }
                 }

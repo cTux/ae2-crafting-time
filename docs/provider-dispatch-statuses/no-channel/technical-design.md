@@ -1,6 +1,6 @@
 # NO CHANNEL research and technical design
 
-Implements the proposed [specification](spec.md), tracked in
+Implements the [specification](spec.md), tracked in
 [#405](https://github.com/cTux/ae2-crafting-time/issues/405).
 
 ## Verified evidence
@@ -162,6 +162,14 @@ sidebar status listing. Reuse the reviewed PNG and preserve unrelated Wiki work.
 The text must distinguish Waiting, missing provider lookup and dispatch power
 from a proven provider-channel failure. Published pages and links are a separate
 completion gate; a local Wiki diff or book resource check is not publication.
+
+AE2 15.4.10 completes path recalculation and raises then clears its booting
+state inside one server-end-tick call. The native driver therefore verifies a
+real `repath()` boundary on a later server tick, with the provider powered,
+booted and still channel-starved and the refreshed UI still showing NO CHANNEL.
+It does not claim a transient client-visible boot frame. The pure-state
+`ProviderDispatchContextTest.classifiesOnlyDirectCompleteProviderEvidence`
+case covers powered but not booted evidence remaining UNKNOWN.
 
 ## Verification infrastructure boundary
 

@@ -40,6 +40,7 @@ tasks.register('checkGuideResources') {
                 'no-space.md': 'text.ae2craftingtime.no_space',
                 'no-provider.md': 'text.ae2craftingtime.no_provider',
                 'no-power.md': 'text.ae2craftingtime.no_power',
+                'no-channel.md': 'text.ae2craftingtime.no_channel',
                 'locked.md': 'text.ae2craftingtime.locked',
                 'input-blocked.md': 'text.ae2craftingtime.input_blocked',
                 'no-target.md': 'text.ae2craftingtime.no_target',
@@ -231,7 +232,7 @@ tasks.register('checkGuideResources') {
             texts['statuses/locked.md'] = texts['statuses/locked.md'].replace('**Label:** `LOCKED`', '**Label:** `STALE`')
         }
         expectRejected('an incorrect status position') { texts, ignored ->
-            texts['statuses/locked.md'] = texts['statuses/locked.md'].replace('position: 3', 'position: 99')
+            texts['statuses/locked.md'] = texts['statuses/locked.md'].replace('position: 4', 'position: 99')
         }
 
         def targets = [

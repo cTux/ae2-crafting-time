@@ -25,6 +25,7 @@ final class ProviderDispatchStatusScenario {
     static final String NO_TARGET = "no-target-status";
     static final String INPUT_BLOCKED = "input-blocked-status";
     static final String LOCKED = "locked-status";
+    static final String NO_CHANNEL = "no-channel-status";
     private static final String MIXED = "text.ae2craftingtime.dispatch_status.scheduled_only";
     private static final List<String> BASE_CHECKS = List.of("screen", "real-job", "tooltip", "layout");
     private final String scenario;
@@ -42,12 +43,14 @@ final class ProviderDispatchStatusScenario {
         key = "text.ae2craftingtime." + scenario.replace("-status", "").replace('-', '_');
         fixture = new DispatchStatusFixture(INPUT_BLOCKED.equals(scenario) ? 2 : 1,
                 LOCKED.equals(scenario) ? LockCraftingMode.LOCK_WHILE_LOW : LockCraftingMode.NONE,
-                INPUT_BLOCKED.equals(scenario),
-                INPUT_BLOCKED.equals(scenario) || advancedFixture() ? 4096 : 64);
+                INPUT_BLOCKED.equals(scenario) || NO_CHANNEL.equals(scenario),
+                !NO_CHANNEL.equals(scenario) && (INPUT_BLOCKED.equals(scenario) || advancedFixture()) ? 4096 : 64,
+                NO_CHANNEL.equals(scenario));
     }
 
     static boolean supports(String scenario) {
-        return NO_TARGET.equals(scenario) || INPUT_BLOCKED.equals(scenario) || LOCKED.equals(scenario);
+        return NO_TARGET.equals(scenario) || INPUT_BLOCKED.equals(scenario) || LOCKED.equals(scenario)
+                || NO_CHANNEL.equals(scenario);
     }
 
     static boolean statusRowsReady(List<UiSnapshot.Row> rows) {
@@ -57,7 +60,11 @@ final class ProviderDispatchStatusScenario {
     static List<String> checks(String scenario) {
         var checks = new java.util.ArrayList<>(BASE_CHECKS);
         if (advancedFixture()) checks.add("advanced-cpu");
-        else checks.add("mixed-row");
+        else if (!NO_CHANNEL.equals(scenario)) checks.add("mixed-row");
+        if (NO_CHANNEL.equals(scenario)) checks.addAll(List.of(
+                "channel-starved", "no-samples", "healthy-alternative", "power-loss-suppressed",
+                "reboot-boundary", "reboot-recovered", "missing-input-suppressed", "infinite-mode-suppressed",
+                "channel-mode-restored", "channel-restored", "job-completed"));
         if (NO_TARGET.equals(scenario)) checks.addAll(List.of("target-removed", "target-restored"));
         if (INPUT_BLOCKED.equals(scenario)) checks.addAll(List.of(
                 "blocking-mode", "blocking-recovered", "zero-insertion", "partial-capacity"));
@@ -75,6 +82,11 @@ final class ProviderDispatchStatusScenario {
             if (serverStep(minecraft, player -> fixture.prepare(phase, player, marker))) phase++;
             return false;
         }
+        if (NO_CHANNEL.equals(scenario) && phase == 15) {
+            if (!serverStep(minecraft, fixture::finishDispatchedOutput)) return false;
+            checks.put("job-completed", true);
+            return true;
+        }
         var snapshot = UiObservationStore.latest();
         if (!(minecraft.screen instanceof CraftingCPUScreen<?> screen) || snapshot == null
                 || !snapshot.screen().equals(screen.getClass().getName()) || !statusRowsReady(snapshot.rows())
@@ -83,18 +95,33 @@ final class ProviderDispatchStatusScenario {
             checks.put("screen", true);
             checks.put("real-job", true);
             if (advancedFixture()) checks.put("advanced-cpu", true);
-            else checks.put("mixed-row", true);
-            if (NO_TARGET.equals(scenario)) {
-                if (hasWarning(snapshot)) throw new IllegalStateException("NO TARGET appeared before target removal");
+            else if (!NO_CHANNEL.equals(scenario)) checks.put("mixed-row", true);
+            if (NO_CHANNEL.equals(scenario)) {
+                if (operation == null && !observeWarning(snapshot, checks, screenshot, moveMouse, "no-channel-en-us.png")) return false;
                 if (serverStep(minecraft, player -> {
-                    player.level().setBlockAndUpdate(fixture.cpuPosition.east(6).north(), Blocks.AIR.defaultBlockState());
+                    if (!fixture.initialChannelJob(player)) throw new IllegalStateException("channel fixture lacks initial job/node/no-sample evidence");
+                    return fixture.installHealthyAlternative(player);
+                })) {
+                    checks.put("channel-starved", true);
+                    checks.put("no-samples", true);
+                    changedAt = System.nanoTime();
+                    phase++;
+                }
+                return false;
+            }
+            if (NO_TARGET.equals(scenario)) {
+                if (operation == null && hasWarning(snapshot)) {
+                    throw new IllegalStateException("NO TARGET appeared before target removal");
+                }
+                if (serverStep(minecraft, player -> {
+                    player.level().setBlockAndUpdate(fixture.targetPosition(), Blocks.AIR.defaultBlockState());
                     return true;
                 })) phase++;
                 return false;
             }
             if (LOCKED.equals(scenario)) {
                 if (serverStep(minecraft, player -> {
-                    fixture.provider(player, 6).getLogic().getConfigManager().putSetting(
+                    fixture.provider(player).getLogic().getConfigManager().putSetting(
                             Settings.LOCK_CRAFTING_MODE, LockCraftingMode.LOCK_WHILE_LOW);
                     return true;
                 })) phase++;
@@ -103,6 +130,61 @@ final class ProviderDispatchStatusScenario {
             if (!observeWarning(snapshot, checks, screenshot, moveMouse, scenario + "-en-us.png")) return false;
             checks.put("blocking-mode", true);
             phase++;
+        } else if (NO_CHANNEL.equals(scenario)) {
+            if (phase == 4 && (operation != null || recovered(snapshot))
+                    && serverStep(minecraft, player -> fixture.healthyAlternativeDispatched(player)
+                            && fixture.removeHealthyAlternative(player))) {
+                checks.put("healthy-alternative", true);
+                screenshot.accept("no-channel-alternative.png");
+                phase++;
+            } else if (phase == 5 && (operation != null || hasWarning(snapshot)) && serverStep(minecraft, player -> fixture.setPower(player, false))) {
+                changedAt = System.nanoTime();
+                phase++;
+            } else if (phase == 6 && (operation != null || recovered(snapshot))
+                    && serverStep(minecraft, player -> fixture.providerPowered(player, false)
+                            && fixture.setPower(player, true))) {
+                checks.put("power-loss-suppressed", true);
+                screenshot.accept("no-channel-power-loss.png");
+                phase++;
+            } else if (phase == 7 && (operation != null || hasWarning(snapshot))
+                    && serverStep(minecraft, fixture::reboot)) {
+                changedAt = System.nanoTime();
+                phase++;
+            } else if (phase == 8 && (operation != null || hasWarning(snapshot))
+                    && serverStep(minecraft, fixture::providerPastRebootBoundary)) {
+                checks.put("reboot-boundary", true);
+                screenshot.accept("no-channel-reboot.png");
+                phase++;
+            } else if (phase == 9 && (operation != null || hasWarning(snapshot)) && serverStep(minecraft, player -> fixture.setInputs(player, false))) {
+                checks.put("reboot-recovered", true);
+                changedAt = System.nanoTime();
+                phase++;
+            } else if (phase == 10 && (operation != null || recovered(snapshot)) && serverStep(minecraft, player -> fixture.setInputs(player, true))) {
+                checks.put("missing-input-suppressed", true);
+                screenshot.accept("no-channel-missing-input.png");
+                phase++;
+            } else if (phase == 11 && (operation != null || hasWarning(snapshot))
+                    && serverStep(minecraft, player -> fixture.setInfiniteChannels(player, true))) {
+                changedAt = System.nanoTime();
+                phase++;
+            } else if (phase == 12 && (operation != null || recovered(snapshot))
+                    && serverStep(minecraft, player -> fixture.channelMode(player, true) && fixture.channelRestored(player)
+                            && fixture.setInfiniteChannels(player, false))) {
+                checks.put("infinite-mode-suppressed", true);
+                screenshot.accept("no-channel-infinite.png");
+                phase++;
+            } else if (phase == 13 && (operation != null || hasWarning(snapshot))
+                    && serverStep(minecraft, player -> fixture.channelMode(player, false)
+                            && fixture.restoreChannel(player))) {
+                checks.put("channel-mode-restored", true);
+                changedAt = System.nanoTime();
+                phase++;
+            } else if (phase == 14 && (operation != null || recovered(snapshot))
+                    && serverStep(minecraft, fixture::recoveredDispatch)) {
+                checks.put("channel-restored", true);
+                screenshot.accept("no-channel-restored.png");
+                phase++;
+            }
         } else if (NO_TARGET.equals(scenario)) {
             return tickNoTarget(minecraft, snapshot, checks, screenshot, moveMouse);
         } else if (INPUT_BLOCKED.equals(scenario)) {
@@ -116,10 +198,11 @@ final class ProviderDispatchStatusScenario {
     private boolean tickNoTarget(Minecraft minecraft, UiSnapshot snapshot, Map<String, Boolean> checks,
             Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) {
         if (phase == 4) {
-            if (!observeWarning(snapshot, checks, screenshot, moveMouse, "no-target-en-us.png")) return false;
+            if (operation == null
+                    && !observeWarning(snapshot, checks, screenshot, moveMouse, "no-target-en-us.png")) return false;
             checks.put("target-removed", true);
             if (serverStep(minecraft, player -> {
-                player.level().setBlockAndUpdate(fixture.cpuPosition.east(6).north(), Blocks.CHEST.defaultBlockState());
+                player.level().setBlockAndUpdate(fixture.targetPosition(), Blocks.CHEST.defaultBlockState());
                 return true;
             })) { changedAt = System.nanoTime(); phase++; }
         } else if (phase == 5 && recovered(snapshot)) {
@@ -133,16 +216,16 @@ final class ProviderDispatchStatusScenario {
     private boolean tickInputBlocked(Minecraft minecraft, UiSnapshot snapshot, Map<String, Boolean> checks,
             Consumer<String> screenshot) {
         if (phase == 4 && serverStep(minecraft, player -> {
-            fixture.provider(player, 6).getLogic().getConfigManager().putSetting(Settings.BLOCKING_MODE, YesNo.NO);
-            ((Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north())).clearContent();
+            fixture.provider(player).getLogic().getConfigManager().putSetting(Settings.BLOCKING_MODE, YesNo.NO);
+            ((Container) player.level().getBlockEntity(fixture.targetPosition())).clearContent();
             return true;
         })) { changedAt = System.nanoTime(); phase++; }
         else if (phase == 5 && (operation != null || recovered(snapshot))) {
             checks.put("blocking-recovered", true);
             if (operation == null) screenshot.accept("input-blocked-recovered.png");
             if (serverStep(minecraft, player -> {
-                var target = (Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north());
-                long pending = pendingInput(fixture.provider(player, 6).getLogic());
+                var target = (Container) player.level().getBlockEntity(fixture.targetPosition());
+                long pending = pendingInput(fixture.provider(player).getLogic());
                 System.out.println("AE2CT input-fixture pending=" + pending + " slots=" + target.getContainerSize());
                 for (int slot = 0; slot < target.getContainerSize(); slot++) {
                     target.setItem(slot, new ItemStack(Items.COBBLESTONE,
@@ -154,7 +237,7 @@ final class ProviderDispatchStatusScenario {
             checks.put("zero-insertion", true);
             if (operation == null) screenshot.accept("input-blocked-zero-insertion.png");
             if (serverStep(minecraft, player -> {
-                ((Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north())).setItem(0, new ItemStack(Items.COBBLESTONE, 63));
+                ((Container) player.level().getBlockEntity(fixture.targetPosition())).setItem(0, new ItemStack(Items.COBBLESTONE, 63));
                 return true;
             })) { changedAt = System.nanoTime(); phase++; }
         } else if (phase == 7 && recovered(snapshot)) {
@@ -192,67 +275,68 @@ final class ProviderDispatchStatusScenario {
 
     private boolean tickLocked(Minecraft minecraft, UiSnapshot snapshot, Map<String, Boolean> checks,
             Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) {
-        var power = fixture.cpuPosition.east(6).south();
+        var power = fixture.targetPosition().south(2);
         if (phase == 4) {
-            if (!observeWarning(snapshot, checks, screenshot, moveMouse, "locked-en-us.png")) return false;
+            if (operation == null
+                    && !observeWarning(snapshot, checks, screenshot, moveMouse, "locked-en-us.png")) return false;
             checks.put("lock-while-low", true);
             if (serverStep(minecraft, player -> {
                 player.level().setBlockAndUpdate(power, Blocks.REDSTONE_BLOCK.defaultBlockState());
                 return true;
             })) { changedAt = System.nanoTime(); phase++; }
         }
-        else if (phase == 5 && recovered(snapshot)) {
+        else if (phase == 5 && (operation != null || recovered(snapshot))) {
             checks.put("low-recovered", true);
             if (advancedFixture()) return true;
             if (serverStep(minecraft, player -> {
-                fixture.provider(player, 6).getLogic().getConfigManager().putSetting(
+                fixture.provider(player).getLogic().getConfigManager().putSetting(
                         Settings.LOCK_CRAFTING_MODE, LockCraftingMode.LOCK_WHILE_HIGH);
                 return true;
             })) phase++;
-        } else if (phase == 6 && hasWarning(snapshot)) {
+        } else if (phase == 6 && (operation != null || hasWarning(snapshot))) {
             checks.put("lock-while-high", true);
             if (serverStep(minecraft, player -> {
                 player.level().setBlockAndUpdate(power, Blocks.AIR.defaultBlockState());
                 return true;
             })) { changedAt = System.nanoTime(); phase++; }
-        } else if (phase == 7 && recovered(snapshot)) {
+        } else if (phase == 7 && (operation != null || recovered(snapshot))) {
             checks.put("high-recovered", true);
             if (serverStep(minecraft, player -> {
-                fixture.provider(player, 6).getLogic().getConfigManager().putSetting(
+                fixture.provider(player).getLogic().getConfigManager().putSetting(
                         Settings.LOCK_CRAFTING_MODE, LockCraftingMode.LOCK_UNTIL_PULSE);
                 // Notify the provider of LOW before the later rising edge (AE2 15 caches redstone state).
                 player.level().setBlockAndUpdate(power, Blocks.STONE.defaultBlockState());
                 return true;
             })) phase++;
-        } else if (phase == 8 && hasWarning(snapshot)) {
+        } else if (phase == 8 && (operation != null || hasWarning(snapshot))) {
             checks.put("pulse-lock", true);
             if (serverStep(minecraft, player -> {
-                var target = (Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north());
+                var target = (Container) player.level().getBlockEntity(fixture.targetPosition());
                 for (int slot = 0; slot < target.getContainerSize(); slot++) {
                     target.setItem(slot, new ItemStack(Items.COBBLESTONE, 64));
                 }
                 player.level().setBlockAndUpdate(power, Blocks.REDSTONE_BLOCK.defaultBlockState());
                 return true;
             })) { changedAt = System.nanoTime(); phase++; }
-        } else if (phase == 9 && recovered(snapshot)) {
+        } else if (phase == 9 && (operation != null || recovered(snapshot))) {
             checks.put("pulse-recovered", true);
             if (serverStep(minecraft, player -> {
                 player.level().setBlockAndUpdate(power, Blocks.AIR.defaultBlockState());
-                var logic = fixture.provider(player, 6).getLogic();
+                var logic = fixture.provider(player).getLogic();
                 logic.getConfigManager().putSetting(Settings.BLOCKING_MODE, YesNo.NO);
-                ((Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north())).clearContent();
+                ((Container) player.level().getBlockEntity(fixture.targetPosition())).clearContent();
                 logic.getConfigManager().putSetting(Settings.LOCK_CRAFTING_MODE, LockCraftingMode.LOCK_UNTIL_RESULT);
                 return true;
             })) phase++;
-        } else if (phase == 10 && hasWarning(snapshot)) {
+        } else if (phase == 10 && (operation != null || hasWarning(snapshot))) {
             checks.put("result-lock", true);
-            screenshot.accept("locked-result-wait.png");
+            if (operation == null) screenshot.accept("locked-result-wait.png");
             if (serverStep(minecraft, player -> {
-                var target = (Container) player.level().getBlockEntity(fixture.cpuPosition.east(6).north());
+                var target = (Container) player.level().getBlockEntity(fixture.targetPosition());
                 for (int slot = 0; slot < target.getContainerSize(); slot++) {
                     target.setItem(slot, new ItemStack(Items.COBBLESTONE, 64));
                 }
-                fixture.provider(player, 6).getLogic().getReturnInv().insert(AEItemKey.of(Items.DIAMOND), 1,
+                fixture.provider(player).getLogic().getReturnInv().insert(AEItemKey.of(Items.DIAMOND), 1,
                         Actionable.MODULATE, IActionSource.empty());
                 return true;
             })) { changedAt = System.nanoTime(); phase++; }
@@ -276,6 +360,10 @@ final class ProviderDispatchStatusScenario {
             throw new IllegalStateException(key + " has no contained rendered badge");
         }
         checks.put("tooltip", true);
+        if (NO_CHANNEL.equals(scenario) && (!warning.bold() || warning.color() == null
+                || (warning.color() & 0xffffff) != 0xff5555)) {
+            throw new IllegalStateException("NO CHANNEL must render bold red");
+        }
         checks.put("layout", true);
         screenshot.accept(screenshotName);
         return true;
@@ -293,7 +381,7 @@ final class ProviderDispatchStatusScenario {
 
     private boolean tooltipReady(List<UiSnapshot.ObservedText> tooltip) {
         var expected = new java.util.ArrayList<>(List.of(key, key + ".explanation", key + ".suggestion"));
-        if (!advancedFixture()) expected.add(MIXED);
+        if (!advancedFixture() && !NO_CHANNEL.equals(scenario)) expected.add(MIXED);
         return expected.stream()
                 .allMatch(key -> tooltip.stream().anyMatch(text -> text.key().equals(key)));
     }
@@ -316,6 +404,21 @@ final class ProviderDispatchStatusScenario {
         var done = operation.join();
         operation = null;
         return done;
+    }
+
+    String cleanup(Minecraft minecraft) {
+        if (!NO_CHANNEL.equals(scenario)) return null;
+        var server = minecraft.getSingleplayerServer();
+        if (server == null || minecraft.player == null) return "channel fixture cleanup has no integrated player/server";
+        var playerId = minecraft.player.getUUID();
+        try {
+            server.submit(() -> fixture.restoreChannelMode(server.getPlayerList().getPlayer(playerId)))
+                    .get(5, java.util.concurrent.TimeUnit.SECONDS);
+            return null;
+        } catch (Exception error) {
+            if (error instanceof InterruptedException) Thread.currentThread().interrupt();
+            return "channel fixture cleanup failed: " + ReportText.failure(error);
+        }
     }
 
 }

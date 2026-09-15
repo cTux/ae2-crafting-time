@@ -13,6 +13,19 @@ import java.util.OptionalLong;
 
 class ClientStatsCacheTest {
     @Test
+    void channelReasonWithoutSamplesIsReplacedAndCannotCrossCpuOrNetwork() {
+        var cache = new ClientStatsCache();
+        var key = new ProfileKey("grid", "minecraft:diamond");
+        cache.replaceBlockReasons(List.of(key), Map.of(key, CraftingBlockReason.NO_CHANNEL), 7);
+        assertEquals(CraftingBlockReason.NO_CHANNEL, cache.blockReason(key, 7));
+        assertTrue(cache.get(key).isEmpty());
+        assertEquals(null, cache.blockReason(key, 8));
+        assertEquals(null, cache.blockReason(new ProfileKey("other-grid", key.outputId()), 7));
+        cache.replaceBlockReasons(List.of(key), Map.of(), 7);
+        assertEquals(null, cache.blockReason(key, 7));
+    }
+
+    @Test
     void totalTtcIsScopedToTheSelectedCpu() {
         var cache = new ClientStatsCache();
 

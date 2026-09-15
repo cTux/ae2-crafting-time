@@ -74,7 +74,8 @@ public final class TtcText {
     }
 
     private static boolean isDispatchReason(CraftingBlockReason reason) {
-        return reason == CraftingBlockReason.NO_TARGET
+        return reason == CraftingBlockReason.NO_CHANNEL
+                || reason == CraftingBlockReason.NO_TARGET
                 || reason == CraftingBlockReason.INPUT_BLOCKED
                 || reason == CraftingBlockReason.LOCKED;
     }

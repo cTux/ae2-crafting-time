@@ -152,3 +152,14 @@ The 24 gallery JPEGs total 1,191,066 bytes (previous PNGs: 1,270,916 bytes).
 The 44 enlarged book PNGs total 2,671,574 bytes (previous JPEGs: 4,269,248
 bytes). Book exports use lossless PNG for GuideME compatibility; gallery exports
 keep JPEG quality 90.
+
+The NO CHANNEL book image comes from the scenario-PASS capture in the real
+1.20.1 Forge BaseOnly run for issue 405; the outer adapter-contract check failed
+after the scenario completed. The retained client archive is
+`20260914T195816885Z-083b2040`, source path
+`1.20.1-forge/compatible/no-channel-status/evidence/no-channel-en-us.png`, and it has
+SHA-256 `9f69ed7591faf4204c3a45899929c353ee3faaee9b67baa0b15ee5d2304494c`;
+the physical crop is `[500, 185, 980, 320]`, exported at 1600 pixels wide.
+Both locale copies are identical, SHA-256
+`60573bdfe90bd0705e6c59d52e9e23ed78d43b08021c9fbbbfb5693e2c3a9dbf`
+and 61,207 bytes each; the source is 249,255 bytes.

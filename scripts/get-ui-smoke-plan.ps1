@@ -6,15 +6,17 @@ param(
     [string[]]$ProjectId,
     [switch]$Latest,
     [switch]$Interactive,
+    [switch]$BaseOnly,
     [string]$Repository = (Split-Path -Parent $PSScriptRoot),
     [string]$MatrixDirectory = $PSScriptRoot,
     [string]$ExpectedFingerprint
 )
 $ErrorActionPreference = 'Stop'
-if ($Changed -and ($Target -or $PSBoundParameters.ContainsKey('Scenario') -or $ProjectId -or $Latest -or $Interactive)) {
-    throw 'Changed mode cannot override Target, Scenario, ProjectId, Latest or Interactive'
+if ($Changed -and ($Target -or $PSBoundParameters.ContainsKey('Scenario') -or $ProjectId -or $Latest -or $Interactive -or $BaseOnly)) {
+    throw 'Changed mode cannot override Target, Scenario, ProjectId, Latest, Interactive or BaseOnly'
 }
 if ($Interactive -and (!$Target -or $Scenario -in @('suite','standard-ae2'))) { throw 'Interactive smoke requires one target and one leaf' }
+if ($ProjectId -and $BaseOnly) { throw 'ProjectId and BaseOnly select different dependency graphs' }
 if ($ProjectId -and $Scenario -in @('suite','standard-ae2')) { throw 'Groups require the full graph' }
 
 # Read native stdout directly: PowerShell line enumeration loses newline filenames.
@@ -166,7 +168,7 @@ foreach ($id in $ids) {
     $clients = Get-Content -LiteralPath (Join-Path $MatrixDirectory 'run-client-versions.json') -Raw | ConvertFrom-Json
     $coverage = (Get-Content -LiteralPath (Join-Path $MatrixDirectory 'ui-smoke-coverage.json') -Raw | ConvertFrom-Json).$id
     $client = $clients | Where-Object id -CEQ $id
-    if (!$Latest -and !$ProjectId) {
+    if (!$Latest -and !$ProjectId -and !$BaseOnly) {
         foreach ($project in $client.projects) {
             $declaration = $coverage.($project.project_id)
             if ($declaration.disposition -cne 'FOCUSED_BEHAVIOR') { continue }
@@ -193,10 +195,10 @@ foreach ($id in $ids) {
             adapterPolicy='base AE2 graph for direct cases' }) + $graphs
     }
     if ($primary.Count) {
-        $baseOnly = !$ProjectId -and !@($primary | Where-Object { $_ -cin $directCases }).Count
+        $primaryBaseOnly = $BaseOnly -or (!$ProjectId -and !@($primary | Where-Object { $_ -cin $directCases }).Count)
         $graphs = @([pscustomobject]@{ id='primary'; profile=$(if ($Latest) { 'latest' } else { 'compatible' }); cases=$primary
-            projectId=@($ProjectId); baseOnly=$baseOnly; reason='Requested dependency graph'
-            adapterPolicy=$(if ($baseOnly) { 'base AE2 graph for direct cases' } else { 'packaged catalogue graph for direct cases' }) }) + $graphs
+            projectId=@($ProjectId); baseOnly=$primaryBaseOnly; reason='Requested dependency graph'
+            adapterPolicy=$(if ($primaryBaseOnly) { 'base AE2 graph for direct cases' } else { 'packaged catalogue graph for direct cases' }) }) + $graphs
     }
     $entries += [pscustomobject]@{ target=$id; graphs=$graphs; mode=$(if ($full) { 'full' } else { 'focused' }); cases=$cases
         notSelectedCases=@($allCases | Where-Object { $_ -cnotin $cases });

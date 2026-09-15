@@ -1,10 +1,11 @@
 # NO CHANNEL implementation plan
 
 Issue: [#405](https://github.com/cTux/ae2-crafting-time/issues/405).
-Implement the [specification](spec.md) through the
-[technical design](technical-design.md). This is future implementation work;
-the planning PR changes documentation only and must not close the issue. The
-2026-09-14 repair preserves AC-01 through AC-06 and adds the book/Wiki gates.
+[PR #423](https://github.com/cTux/ae2-crafting-time/pull/423) implements the
+[specification](spec.md) through the [technical design](technical-design.md).
+The historical planning work was merged separately in
+[PR #422](https://github.com/cTux/ae2-crafting-time/pull/422). The 2026-09-14
+repair preserves AC-01 through AC-06 and adds the book/Wiki gates.
 
 ## 1. Extend the existing dispatch facts and evaluator
 
@@ -111,7 +112,11 @@ AdvancedAE in an AdvancedAE-required case as failure, never native fallback.
 5. Exercise reboot, power-only loss, missing inputs, and infinite mode in an
    isolated test world, restoring the original mode during teardown. Assert
    actual node state and absence of fresh false channel evidence. An inactive
-   CPU must not create a new provider-channel diagnosis.
+   CPU must not create a new provider-channel diagnosis. For AE2 versions whose
+   booting transition begins and ends in one server-end-tick call, use a
+   pure-state test for powered-but-not-booted UNKNOWN and native evidence after
+   a real `repath()` on a later tick; do not require an impossible client frame
+   during that synchronous transition.
 6. Cover CPU switch/late reply, cancel/replace, disable/reload, and save/reopen
    without persistent NO CHANNEL or an alias. Regress existing NO PROVIDER,
    NO POWER, NO SPACE, Waiting, DELAYED, dispatch statuses, and total TTC.
@@ -184,6 +189,16 @@ proof needs a clean current-head run, not a diagnostic partial run.
 - Update this plan's implementation state and issue evidence after the gates
   below pass. The live issue run authorizes implementation and merge; planning
   delivery alone leaves the issue open. Release upload remains outside scope.
+
+## Implementation state
+
+PR #423 implements the planned core, loader integrations, test-driver fixtures,
+resources and runner checks. Verification covers all 12 changed-scope graphs and
+137 selected cases across Forge, Fabric and both NeoForge targets, including four
+native and three AdvancedAE NO CHANNEL combinations. Focused line and branch
+coverage, driver compilation, protocol/resource checks and packaging checks pass.
+The shared guide image and both live Wiki locales are published and verified.
+The English Forge and Fabric in-game book renderer and navigation checks pass.
 
 ## 7. Publish and verify the Wiki (AC-08)
 

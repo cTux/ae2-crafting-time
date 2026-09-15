@@ -12,7 +12,8 @@ public final class ProviderDispatchTracker {
         UNKNOWN,
         NO_TARGET,
         INPUT_BLOCKED,
-        LOCKED
+        LOCKED,
+        NO_CHANNEL
     }
 
     private record Failure(Set<ProfileKey> outputs, CraftingBlockReason reason, long tick) { }
@@ -74,7 +75,8 @@ public final class ProviderDispatchTracker {
     }
 
     private static boolean isDispatchReason(CraftingBlockReason reason) {
-        return reason == CraftingBlockReason.NO_TARGET
+        return reason == CraftingBlockReason.NO_CHANNEL
+                || reason == CraftingBlockReason.NO_TARGET
                 || reason == CraftingBlockReason.INPUT_BLOCKED
                 || reason == CraftingBlockReason.LOCKED;
     }
@@ -84,10 +86,20 @@ public final class ProviderDispatchTracker {
     }
 
     private static int priority(CraftingBlockReason reason) {
+        if (reason == CraftingBlockReason.NO_CHANNEL) {
+            return 4;
+        }
         if (reason == CraftingBlockReason.LOCKED) {
             return 3;
         }
         return reason == CraftingBlockReason.INPUT_BLOCKED ? 2 : 1;
+    }
+
+    public static AttemptResult activityResult(boolean active, boolean nodePresent, boolean powered,
+            boolean booted, boolean meetsChannelRequirements) {
+        return !active && nodePresent && powered && booted && !meetsChannelRequirements
+                ? AttemptResult.NO_CHANNEL
+                : AttemptResult.UNKNOWN;
     }
 
     private void removeEmpty(Object cpu, Map<Object, Failure> patterns) {
@@ -114,6 +126,13 @@ public final class ProviderDispatchTracker {
         }
 
         public void attempt(AttemptResult result) {
+            var observed = switch (result) {
+                case SUCCESS, UNKNOWN -> null;
+                case NO_CHANNEL -> CraftingBlockReason.NO_CHANNEL;
+                case NO_TARGET -> CraftingBlockReason.NO_TARGET;
+                case INPUT_BLOCKED -> CraftingBlockReason.INPUT_BLOCKED;
+                case LOCKED -> CraftingBlockReason.LOCKED;
+            };
             if (result == AttemptResult.SUCCESS) {
                 succeeded = true;
                 return;
@@ -122,11 +141,6 @@ public final class ProviderDispatchTracker {
                 unknown = true;
                 return;
             }
-            var observed = result == AttemptResult.NO_TARGET
-                    ? CraftingBlockReason.NO_TARGET
-                    : result == AttemptResult.INPUT_BLOCKED
-                            ? CraftingBlockReason.INPUT_BLOCKED
-                            : CraftingBlockReason.LOCKED;
             if (reason == null) {
                 reason = observed;
             } else if (reason != observed) {

@@ -18,18 +18,19 @@ param([string]$Target,[string]$BundleDirectory)
 '@ | Set-Content (Join-Path $scripts 'prepare-ui-smoke-adapters.ps1')
 @'
 param([string]$Target,[switch]$Latest)
-[pscustomobject]@{projectId='ae2';name='AE2';disposition='DIRECT_UI';scenario='standard-ae2';reason='';result='NOT_RUN'}
+[pscustomobject]@{projectId='ae2';name='AE2';disposition='DIRECT_UI';scenario='standard-plan-controls';reason='';result='NOT_RUN'}
 '@ | Set-Content (Join-Path $scripts 'get-ui-smoke-coverage.ps1')
 @'
 param([string]$Target,[switch]$Latest,[switch]$ResolveOnly,[switch]$Packaged,[string]$RuntimeDirectory,[string[]]$ProjectId,[switch]$BaseOnly)
 if (-not $ResolveOnly -or -not $Packaged) { throw 'Guest build path selected' }
-if ((Split-Path -Leaf $RuntimeDirectory) -eq 'primary' -and -not $BaseOnly) { throw 'Primary graph omitted base-only resolution' }
-if ((Split-Path -Leaf $RuntimeDirectory) -ne 'primary' -and $BaseOnly) { throw 'Focused graph incorrectly used base-only resolution' }
+$graph = Split-Path -Leaf $RuntimeDirectory
+[pscustomobject]@{target=$Target;graph=$graph;baseOnly=[bool]$BaseOnly;projectId=@($ProjectId)} | ConvertTo-Json -Compress |
+    Add-Content $env:AE2CT_RESOLVER_CALLS
 if ($Target -eq '1.20.1-fabric') { throw 'intentional resolution failure' }
 New-Item -ItemType Directory -Path (Join-Path $RuntimeDirectory 'mods') -Force | Out-Null
 '@ | Set-Content (Join-Path $scripts 'run-client.ps1')
 @'
-param([string]$Target,[switch]$Latest,[string]$Scenario,[string]$BundleDirectory,[string]$PreparedLaunchRoot,[string]$GuestSourceRoot,[string]$CasesBase64)
+param([string]$Target,[switch]$Latest,[string]$Scenario,[string]$BundleDirectory,[string]$PreparedLaunchRoot,[string]$GuestSourceRoot,[string]$CasesBase64,[string[]]$ProjectId,[switch]$BaseOnly,[switch]$Interactive,[int]$StartupTimeoutSeconds)
 $profile=if($Latest){'latest'}else{'compatible'}
 $live=Join-Path (Split-Path -Parent $PSScriptRoot) "build/ui-smoke/$Target/$profile/$Scenario"
 $cases = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($CasesBase64)) | ConvertFrom-Json
@@ -83,6 +84,9 @@ try {
     $previewPlan = ($preview -join "`n") | ConvertFrom-Json
     if ($previewPlan.targets.Count -ne 4 -or $previewPlan.mode -ne 'manual') { throw 'Plan-only lost explicit full scope' }
     foreach ($latest in @($false,$true)) {
+        $resolverCalls = $temp + '-resolver-calls.jsonl'
+        $env:AE2CT_RESOLVER_CALLS = $resolverCalls
+        Remove-Item $resolverCalls -ErrorAction SilentlyContinue
         $arguments = @('-NoProfile','-File',(Join-Path $scripts 'run-ui-smoke-matrix.ps1'))
         if ($latest) { $arguments += '-Latest' }
         & powershell.exe @arguments
@@ -98,10 +102,17 @@ try {
         $expectedGraphs = @($expectedPlan.targets | ForEach-Object { $targetId=$_.target; $_.graphs | ForEach-Object { "$targetId/$($_.id)" } })
         $observedGraphs = @($results | ForEach-Object { "$($_.target)/$($_.graph)" })
         if (Compare-Object $expectedGraphs $observedGraphs -SyncWindow 0) { throw 'An earlier failure skipped or reordered a planned graph' }
+        $resolver = @(Get-Content $resolverCalls | ForEach-Object { $_ | ConvertFrom-Json })
+        $expectedResolution = @($expectedPlan.targets | ForEach-Object { $targetId=$_.target; $_.graphs | ForEach-Object {
+            "$targetId/$($_.id)/$([bool]$_.baseOnly)/$(@($_.projectId) -join ',')" } })
+        $observedResolution = @($resolver | ForEach-Object { "$($_.target)/$($_.graph)/$([bool]$_.baseOnly)/$(@($_.projectId) -join ',')" })
+        if (Compare-Object $expectedResolution $observedResolution -SyncWindow 0) { throw 'Resolver arguments drifted from exact planner graph metadata' }
         if ($results[-1].target -ne '26.1.2-neoforge' -or $results[-1].result -ne 'PASS') { throw ("Last planned target did not finish: " + ($results[-1] | Select-Object target,graph,result,message,cases | ConvertTo-Json -Depth 4 -Compress)) }
         $expected = if ($latest) { 'DIAGNOSTIC_FAILURE' } else { 'FAIL_SETUP' }
         $fabricResult = @($results | Where-Object target -eq '1.20.1-fabric')
-        if ($fabricResult.Count -ne 1 -or $fabricResult[0].result -ne $expected -or $fabricResult[0].message -notlike '*intentional resolution failure*') {
+        $expectedFabric = @($expectedPlan.targets | Where-Object target -eq '1.20.1-fabric' | ForEach-Object graphs)
+        if ($fabricResult.Count -ne $expectedFabric.Count -or
+                @($fabricResult | Where-Object { $_.result -ne $expected -or $_.message -notlike '*intentional resolution failure*' }).Count -ne 0) {
             throw 'Failure classification or evidence was lost'
         }
     }
@@ -115,7 +126,7 @@ try {
         & powershell.exe -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1')
         if ($LASTEXITCODE -ne 1) { throw 'Unconfirmed client exit must fail the compatible campaign' }
         $report = Get-ChildItem (Join-Path $temp 'build/ui-smoke/campaigns') -File -Recurse -Filter result.json |
-            Where-Object { $_.Directory.Name -eq 'compatible' } | Sort-Object FullName | Select-Object -Last 1
+            Where-Object { $_.Directory.Name -eq 'compatible' } | Sort-Object LastWriteTimeUtc | Select-Object -Last 1
         $results = (Get-Content $report.FullName -Raw | ConvertFrom-Json).results
         if ($results.Count -ne 1 -or $results[0].message -notlike '*exit is unconfirmed*') {
             throw 'The matrix launched another client after unconfirmed termination'
@@ -128,7 +139,7 @@ try {
         & powershell.exe -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -Target 1.20.1-forge -Scenario cpu-list-total-ttc
         if ($LASTEXITCODE -ne 1) { throw 'A failing inner runner must fail the compatible campaign' }
         $report = Get-ChildItem (Join-Path $temp 'build/ui-smoke/campaigns') -File -Recurse -Filter result.json |
-            Where-Object { $_.Directory.Name -eq 'compatible' } | Sort-Object FullName | Select-Object -Last 1
+            Where-Object { $_.Directory.Name -eq 'compatible' } | Sort-Object LastWriteTimeUtc | Select-Object -Last 1
         $result = (Get-Content $report.FullName -Raw | ConvertFrom-Json).results[0]
         $retainedStatus = Get-Content (Join-Path $result.report 'run/status.json') -Raw | ConvertFrom-Json
         if ($result.result -ne 'FAIL' -or $result.message -ne 'intentional inner runner failure' -or $retainedStatus.exitCode -ne 17) {

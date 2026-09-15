@@ -2,7 +2,7 @@
 navigation:
   title: LOCKED
   parent: statuses/index.md
-  position: 3
+  position: 4
 ---
 
 # LOCKED
@@ -28,5 +28,5 @@ runtime-only and is not restored after reopening the world.
 
 *An active Pattern Provider lock prevents the next scheduled batch.*
 
-[Previous: NO POWER](no-power.md) | [Statuses](index.md) |
+[Previous: NO CHANNEL](no-channel.md) | [Statuses](index.md) |
 [Next: INPUT BLOCKED](input-blocked.md) | [Delay diagnostics](../features/delay-diagnostics.md)

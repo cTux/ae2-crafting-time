@@ -2,7 +2,7 @@
 navigation:
   title: INPUT BLOCKED
   parent: statuses/index.md
-  position: 4
+  position: 5
 ---
 
 # INPUT BLOCKED
