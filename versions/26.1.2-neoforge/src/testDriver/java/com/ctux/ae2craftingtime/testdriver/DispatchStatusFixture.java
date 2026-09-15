@@ -117,7 +117,6 @@ final class DispatchStatusFixture {
             if (!cpu.getCluster().isActive()) {
                 return false;
             }
-            if (!prepareAdvancedCpu(player, marker)) return false;
             var drive = (DriveBlockEntity) level.getBlockEntity(
                     channelScenario ? cpuPosition.east(2).south() : cpuPosition.east(4));
             drive.getInternalInventory().setItemDirect(0,
@@ -131,6 +130,7 @@ final class DispatchStatusFixture {
                     return false;
                 }
             }
+            if (!prepareAdvancedCpu(player, marker)) return false;
             provider(player).getLogic().getConfigManager().putSetting(Settings.BLOCKING_MODE,
                     initialBlocking ? YesNo.YES : YesNo.NO);
             provider(player).getLogic().getConfigManager().putSetting(Settings.LOCK_CRAFTING_MODE,
