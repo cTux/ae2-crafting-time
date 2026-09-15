@@ -1,5 +1,39 @@
 # Automated UI Testing Spec
 
+## Failed native evidence retention
+
+[#424](https://github.com/cTux/ae2-crafting-time/issues/424) restores failure
+evidence already required by [the archive contract](../ui-smoke-evidence.md).
+A guest can retain its failed status, screenshots and logs, then return a
+nonzero dispatch exit. The host must copy that invocation into the campaign
+before archiving it. A successful archive copy does not make the scenario pass.
+See the [design](technical-design.md#failed-native-evidence-retention) and
+[plan](implementation-plan.md#failed-native-evidence-retention).
+
+This covers the shared native matrix runner on Windows PowerShell 5.1 and
+PowerShell 7, all four release targets, compatible/latest profiles, and single
+cases or suites. Production code, guest launch behavior, fixtures, schemas and
+archive layout stay unchanged. The separate #405 fixture failure is out of scope.
+
+- **FE-01:** When dispatch fails after writing a current native failure, retain
+  its status, full failure PNG/JSON, raw result and logs byte-for-byte in both
+  the campaign and immutable archive. Existing campaign evidence is not replaced.
+- **FE-02:** Preserve the original runtime failure message and confirmed PID/exit
+  code, including exit 0. Compatible rows and failed leaves remain `FAIL`;
+  latest rows remain `DIAGNOSTIC_FAILURE`. Keep archive-copy success separate
+  from the raw failure and preserve existing diagnostic gate semantics.
+- **FE-03:** Attach fallback evidence only when target, profile and scenario
+  match exactly and its start is at or after the campaign row start. Reject
+  older, missing, malformed or mismatched status. Compare actual instants with
+  full timestamp precision on both interpreters, including explicit offsets.
+- **FE-04:** Preserve the existing stop behavior after dispatch exceptions.
+  A recorded PID without confirmed exit must still prevent another launch and
+  fail cleanup; retaining its evidence must not imply a confirmed exit.
+- **FE-05:** Deterministic checks exercise the real matrix under both
+  interpreters and the real archive finalizer, including current failure,
+  stale/invalid status and equal/one-tick-older timestamp boundaries. This host
+  correction needs no Minecraft launch or new VM infrastructure.
+
 ## Minecraft MCP research
 
 [#382](https://github.com/cTux/ae2-crafting-time/issues/382) adds a short

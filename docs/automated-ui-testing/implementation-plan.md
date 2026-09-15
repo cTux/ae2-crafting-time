@@ -1,5 +1,55 @@
 # Automated UI Testing Implementation Plan
 
+## Failed native evidence retention
+
+Implement [#424](https://github.com/cTux/ae2-crafting-time/issues/424) against
+[FE-01 through FE-05](spec.md#failed-native-evidence-retention) and the
+[verified design](technical-design.md#failed-native-evidence-retention).
+
+1. Change only the timestamp conversion at the shared fallback guard in
+   `scripts/run-ui-smoke-matrix.ps1` to typed `DateTimeOffset` conversion.
+   Preserve exact identity checks, the inclusive comparison, malformed-status
+   rejection and the existing copy/classification/stop flow. This serves all
+   four native targets and both profiles without guest or archive changes.
+2. Extend `scripts/test-ui-smoke-matrix.ps1` using its existing temporary
+   repository and fake dispatch. Make the child interpreter explicit so a
+   PowerShell 7 invocation actually exercises a PowerShell 7 matrix. Simulate
+   dispatch throwing after writing current failed status, failure PNG/JSON,
+   failed raw result and logs. Check preserved bytes, original message, PID,
+   exit 0 and nonzero exit, compatible `FAIL` and latest `DIAGNOSTIC_FAILURE`.
+   Exercise the real finalizer for these failed campaigns and verify archived
+   bytes against the campaign and manifest. Covers FE-01/02/05.
+3. Add negative cases for older timestamps, missing/malformed status or start,
+   and each mismatched target/profile/scenario. Use deterministic UTC and
+   explicit-offset timestamp cases, equality and a one-tick-older boundary to
+   check instant and precision preservation; do not change the system timezone.
+   Preserve existing campaign evidence and prove an unconfirmed PID still stops
+   subsequent dispatch and fails cleanup. Covers FE-01/03/04/05.
+4. Review the complete diff, then follow the conventional commit and hook-created
+   PR ordering before running repository tests. On that PR head, run:
+
+   ```powershell
+   powershell.exe -NoProfile -File scripts/test-ui-smoke-matrix.ps1
+   pwsh -NoProfile -File scripts/test-ui-smoke-matrix.ps1
+   powershell.exe -NoProfile -File scripts/test-ui-smoke-archive.ps1
+   pwsh -NoProfile -File scripts/test-ui-smoke-archive.ps1
+   ```
+
+   Prove the new regression fails with the original comparison and passes with
+   the correction after the PR exists. Keep this comparison in a disposable
+   test copy. Report GitHub build/test/coverage checks separately; current CI
+   does not run these Windows matrix/archive self-tests.
+
+Windows PowerShell 5.1, PowerShell 7.6.5, Git, the existing self-test fixture
+builders and the real archive finalizer were available during investigation. Recheck them
+before verification. No Minecraft process, Java runtime, prepared client, VM
+access or new verification infrastructure is required for this host-only fix.
+
+Done means FE-01 through FE-05 pass on the implementation head with original
+failure evidence preserved and stale evidence excluded. Retain exact commands,
+interpreter versions and outcomes; do not describe synthetic checks as a native
+client run or rewrite historical failed archives.
+
 ## Minecraft MCP research delivery
 
 Complete [#382](https://github.com/cTux/ae2-crafting-time/issues/382) as docs-only
