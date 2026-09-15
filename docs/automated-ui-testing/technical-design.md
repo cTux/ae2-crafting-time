@@ -1,5 +1,51 @@
 # Automated UI Testing Technical Design
 
+## Failed native evidence retention
+
+Investigation for [#424](https://github.com/cTux/ae2-crafting-time/issues/424)
+at `bcfd6eab21f5073622509662aa01928c784b28c0` found a timestamp conversion bug
+in the [matrix runner](../../scripts/run-ui-smoke-matrix.ps1), line 124.
+The [requirements](spec.md#failed-native-evidence-retention) restore the existing
+failure archive contract.
+
+Both public host entry points, `run-ui-smoke.ps1` and the unbundled
+`invoke-ui-smoke-codexvm.ps1`, delegate to that matrix. The guest's
+`run-ui-smoke.ps1` writes schema-2 status with a UTC `startedAt`, PID and observed
+exit code. `run-ui-smoke-codexvm.ps1` copies the guest report back in `finally`
+before returning the inner exit. A nonzero dispatcher exit bypasses the matrix's
+normal copy; its own `finally` must recover current evidence from the live folder.
+
+That fallback calls `[DateTimeOffset]::Parse($liveStatus.startedAt)` after
+`ConvertFrom-Json`. Windows PowerShell 5.1 leaves the JSON timestamp as a string.
+PowerShell 7 decodes it as `DateTime`; passing it to the string-based `Parse`
+implicitly formats it without the UTC designation or fractional seconds.
+Reparsing then applies the host's local offset.
+
+A read-only probe on PowerShell 7.6.5 at UTC+03:00 reproduced the reported values:
+`2026-09-14T18:37:15.1417835Z` became `2026-09-14T18:37:15+03:00`, incorrectly
+preceding the row start `2026-09-14T18:36:49.2252414Z`. The same probe passed on
+Windows PowerShell 5.1. A typed `[DateTimeOffset]` conversion preserved UTC and
+all ticks, accepted equality and rejected a timestamp one tick older. Historical
+#405 raw files were unavailable for reinspection; its original run remains
+reporter evidence, separate from this reproduced current-code defect.
+
+Use typed `[DateTimeOffset]` conversion at the shared fallback comparison.
+Keep exact target/profile/scenario checks, the inclusive start boundary and the
+existing missing/malformed-status handling. Do not stringify a decoded date or
+require a newer `ConvertFrom-Json` option unavailable in PowerShell 5.1.
+
+Once copied, the existing fallback restores the failed message and classification
+from retained status. `get-ui-smoke-results.ps1` then sees the failed leaf instead
+of reporting an absent result. `complete-ui-smoke-evidence.ps1` already copies
+and hashes campaign files; its archive implementation needs no change. Preserve
+the existing report, stop/cleanup behavior, latest diagnostic semantics and raw
+schemas. All targets share this host boundary; no loader-specific fix is needed.
+
+The existing `test-ui-smoke-matrix.ps1` regression always launches
+`powershell.exe` and stubs the finalizer. Extend it to cover the PowerShell 7
+child and real failure archive, reusing `test-ui-smoke-archive.ps1` for archive
+invariants. Keep the dispatcher fake and the matrix/finalizer real.
+
 ## Minecraft MCP research design
 
 For [#382](https://github.com/cTux/ae2-crafting-time/issues/382), compare candidates
