@@ -148,6 +148,9 @@ final class DispatchStatusFixture {
         if (!calculation.isDone()) {
             return false;
         }
+        if (advancedCpu == null && !cpu.getCluster().isActive()) {
+            return false;
+        }
         try {
             var plan = calculation.get();
             if (advancedCpu != null) {

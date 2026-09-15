@@ -143,6 +143,9 @@ final class DispatchStatusFixture {
         if (!calculation.isDone()) {
             return false;
         }
+        if (advancedCpu == null && !cpu.getCluster().isActive()) {
+            return false;
+        }
         try {
             if (advancedCpu != null) {
                 invokeAdvanced("submit", new Class<?>[] { ServerPlayer.class, ICraftingPlan.class }, player, calculation.get());
