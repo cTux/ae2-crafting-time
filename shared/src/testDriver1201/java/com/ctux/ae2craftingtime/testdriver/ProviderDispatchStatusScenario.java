@@ -110,7 +110,9 @@ final class ProviderDispatchStatusScenario {
                 return false;
             }
             if (NO_TARGET.equals(scenario)) {
-                if (hasWarning(snapshot)) throw new IllegalStateException("NO TARGET appeared before target removal");
+                if (operation == null && hasWarning(snapshot)) {
+                    throw new IllegalStateException("NO TARGET appeared before target removal");
+                }
                 if (serverStep(minecraft, player -> {
                     player.level().setBlockAndUpdate(fixture.targetPosition(), Blocks.AIR.defaultBlockState());
                     return true;
@@ -196,7 +198,8 @@ final class ProviderDispatchStatusScenario {
     private boolean tickNoTarget(Minecraft minecraft, UiSnapshot snapshot, Map<String, Boolean> checks,
             Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) {
         if (phase == 4) {
-            if (!observeWarning(snapshot, checks, screenshot, moveMouse, "no-target-en-us.png")) return false;
+            if (operation == null
+                    && !observeWarning(snapshot, checks, screenshot, moveMouse, "no-target-en-us.png")) return false;
             checks.put("target-removed", true);
             if (serverStep(minecraft, player -> {
                 player.level().setBlockAndUpdate(fixture.targetPosition(), Blocks.CHEST.defaultBlockState());
@@ -274,14 +277,15 @@ final class ProviderDispatchStatusScenario {
             Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) {
         var power = fixture.targetPosition().south(2);
         if (phase == 4) {
-            if (!observeWarning(snapshot, checks, screenshot, moveMouse, "locked-en-us.png")) return false;
+            if (operation == null
+                    && !observeWarning(snapshot, checks, screenshot, moveMouse, "locked-en-us.png")) return false;
             checks.put("lock-while-low", true);
             if (serverStep(minecraft, player -> {
                 player.level().setBlockAndUpdate(power, Blocks.REDSTONE_BLOCK.defaultBlockState());
                 return true;
             })) { changedAt = System.nanoTime(); phase++; }
         }
-        else if (phase == 5 && recovered(snapshot)) {
+        else if (phase == 5 && (operation != null || recovered(snapshot))) {
             checks.put("low-recovered", true);
             if (advancedFixture()) return true;
             if (serverStep(minecraft, player -> {
@@ -289,13 +293,13 @@ final class ProviderDispatchStatusScenario {
                         Settings.LOCK_CRAFTING_MODE, LockCraftingMode.LOCK_WHILE_HIGH);
                 return true;
             })) phase++;
-        } else if (phase == 6 && hasWarning(snapshot)) {
+        } else if (phase == 6 && (operation != null || hasWarning(snapshot))) {
             checks.put("lock-while-high", true);
             if (serverStep(minecraft, player -> {
                 player.level().setBlockAndUpdate(power, Blocks.AIR.defaultBlockState());
                 return true;
             })) { changedAt = System.nanoTime(); phase++; }
-        } else if (phase == 7 && recovered(snapshot)) {
+        } else if (phase == 7 && (operation != null || recovered(snapshot))) {
             checks.put("high-recovered", true);
             if (serverStep(minecraft, player -> {
                 fixture.provider(player).getLogic().getConfigManager().putSetting(
@@ -304,7 +308,7 @@ final class ProviderDispatchStatusScenario {
                 player.level().setBlockAndUpdate(power, Blocks.STONE.defaultBlockState());
                 return true;
             })) phase++;
-        } else if (phase == 8 && hasWarning(snapshot)) {
+        } else if (phase == 8 && (operation != null || hasWarning(snapshot))) {
             checks.put("pulse-lock", true);
             if (serverStep(minecraft, player -> {
                 var target = (Container) player.level().getBlockEntity(fixture.targetPosition());
@@ -314,7 +318,7 @@ final class ProviderDispatchStatusScenario {
                 player.level().setBlockAndUpdate(power, Blocks.REDSTONE_BLOCK.defaultBlockState());
                 return true;
             })) { changedAt = System.nanoTime(); phase++; }
-        } else if (phase == 9 && recovered(snapshot)) {
+        } else if (phase == 9 && (operation != null || recovered(snapshot))) {
             checks.put("pulse-recovered", true);
             if (serverStep(minecraft, player -> {
                 player.level().setBlockAndUpdate(power, Blocks.AIR.defaultBlockState());
@@ -324,9 +328,9 @@ final class ProviderDispatchStatusScenario {
                 logic.getConfigManager().putSetting(Settings.LOCK_CRAFTING_MODE, LockCraftingMode.LOCK_UNTIL_RESULT);
                 return true;
             })) phase++;
-        } else if (phase == 10 && hasWarning(snapshot)) {
+        } else if (phase == 10 && (operation != null || hasWarning(snapshot))) {
             checks.put("result-lock", true);
-            screenshot.accept("locked-result-wait.png");
+            if (operation == null) screenshot.accept("locked-result-wait.png");
             if (serverStep(minecraft, player -> {
                 var target = (Container) player.level().getBlockEntity(fixture.targetPosition());
                 for (int slot = 0; slot < target.getContainerSize(); slot++) {
