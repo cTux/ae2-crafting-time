@@ -121,7 +121,7 @@ foreach ($targetEntry in $targets) {
                 $liveStatus = Get-Content -LiteralPath (Join-Path $live 'status.json') -Raw | ConvertFrom-Json
                 $currentStatus = $liveStatus.target -ceq $row.target -and $liveStatus.profile -ceq $profile `
                     -and $liveStatus.scenario -ceq $Scenario -and $liveStatus.startedAt `
-                    -and [DateTimeOffset]::Parse($liveStatus.startedAt) -ge [DateTimeOffset]::Parse($started)
+                    -and [DateTimeOffset]$liveStatus.startedAt -ge [DateTimeOffset]$started
                 if ($currentStatus) {
                     Copy-Item -LiteralPath $live -Destination $runReport -Recurse
                 }

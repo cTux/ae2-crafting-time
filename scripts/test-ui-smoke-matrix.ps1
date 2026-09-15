@@ -1,4 +1,5 @@
 $ErrorActionPreference = 'Stop'
+$shell = (Get-Process -Id $PID).Path
 $temp = Join-Path ([IO.Path]::GetTempPath()) ('ae2ct-matrix-' + [guid]::NewGuid().ToString('N'))
 $scripts = Join-Path $temp 'scripts'
 New-Item -ItemType Directory -Path $scripts -Force | Out-Null
@@ -50,9 +51,37 @@ foreach ($case in $cases) {
 }
 @{phase='passed';message='';pid=123;exitCode=0} | ConvertTo-Json | Set-Content "$live/status.json"
 if ($env:AE2CT_INNER_FAIL) {
-    @{schema=2;runId='failed-run';target=$Target;profile=$profile;scenario=$Scenario;phase='failed';message='intentional inner runner failure';pid=123;exitCode=17;startedAt=[DateTime]::UtcNow.ToString('o')} |
-        ConvertTo-Json | Set-Content "$live/status.json"
-    throw 'dispatch observed child exit 17'
+    $exitCode = if ($null -ne $env:AE2CT_FAILURE_EXIT_CODE) { [int]$env:AE2CT_FAILURE_EXIT_CODE } else { 17 }
+    $statusCase = if ($env:AE2CT_STATUS_CASE) { $env:AE2CT_STATUS_CASE } else { 'current' }
+    $status = [ordered]@{schema=2;runId='failed-run';target=$Target;profile=$profile;scenario=$Scenario;phase='failed';message="native failure $exitCode";pid=123;exitCode=$exitCode;startedAt=[DateTime]::UtcNow.ToString('o')}
+    switch ($statusCase) {
+        'equal' { $status.startedAt = $started }
+        'equal-offset' { $status.startedAt = ([DateTimeOffset]$started).ToOffset([TimeSpan]::FromHours(3)).ToString('o') }
+        'older-tick' { $status.startedAt = ([DateTimeOffset]$started).AddTicks(-1).ToString('o') }
+        'missing-start' { $null = $status.Remove('startedAt') }
+        'malformed-start' { $status.startedAt = 'not-a-date' }
+        'wrong-target' { $status.target = '1.20.1-fabric' }
+        'wrong-profile' { $status.profile = if ($profile -eq 'latest') { 'compatible' } else { 'latest' } }
+        'wrong-scenario' { $status.scenario = 'craft-plan' }
+        'existing' {
+            New-Item -ItemType Directory -Path (Join-Path $report 'run') -Force | Out-Null
+            [IO.File]::WriteAllBytes((Join-Path $report 'run/existing.bin'), [byte[]](9,8,7))
+        }
+    }
+    $failureEvidence = if ($cases.Count -eq 1) { "$live/evidence" } else { "$live/evidence/$($cases[0])" }
+    New-Item -ItemType Directory -Path $failureEvidence,"$live/logs" -Force | Out-Null
+    [IO.File]::WriteAllBytes((Join-Path $failureEvidence 'failure.png'), [byte[]](137,80,78,71,13,10,26,10,1,2,3))
+    [IO.File]::WriteAllBytes((Join-Path $failureEvidence 'failure.json'), [Text.Encoding]::UTF8.GetBytes('{"failure":"native"}'))
+    [IO.File]::WriteAllBytes((Join-Path $failureEvidence 'result.json'), [Text.Encoding]::UTF8.GetBytes('{"schema":1,"complete":true,"result":"FAIL"}'))
+    [IO.File]::WriteAllBytes("$live/logs/client.log", [Text.Encoding]::UTF8.GetBytes('native failure log'))
+    if ($statusCase -eq 'missing-status') {
+        Remove-Item -LiteralPath "$live/status.json" -ErrorAction SilentlyContinue
+    } elseif ($statusCase -eq 'malformed-status') {
+        Set-Content -LiteralPath "$live/status.json" -Value '{' -NoNewline
+    } else {
+        $status | ConvertTo-Json | Set-Content "$live/status.json"
+    }
+    throw "dispatch observed child exit $exitCode"
 }
 if ($env:AE2CT_STATUS_GAP) {
     Remove-Item -LiteralPath "$live/status.json"
@@ -79,7 +108,7 @@ $raw=Get-Content (Join-Path $CampaignDirectory 'result.json') -Raw | ConvertFrom
 
 Set-Content -LiteralPath (Join-Path $temp '.gitignore') 'build/'
 try {
-    $preview = & powershell.exe -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -PlanOnly
+    $preview = & $shell -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -PlanOnly
     if ($LASTEXITCODE -ne 0 -or (Test-Path -LiteralPath (Join-Path $temp 'build'))) { throw 'Plan-only built or dispatched a client' }
     $previewPlan = ($preview -join "`n") | ConvertFrom-Json
     if ($previewPlan.targets.Count -ne 4 -or $previewPlan.mode -ne 'manual') { throw 'Plan-only lost explicit full scope' }
@@ -89,7 +118,7 @@ try {
         Remove-Item $resolverCalls -ErrorAction SilentlyContinue
         $arguments = @('-NoProfile','-File',(Join-Path $scripts 'run-ui-smoke-matrix.ps1'))
         if ($latest) { $arguments += '-Latest' }
-        & powershell.exe @arguments
+        & $shell @arguments
         $exitCode = $LASTEXITCODE
         if (($exitCode -eq 0) -ne $latest) { throw 'Compatible failures and latest diagnostics have the same exit behavior' }
         $profile = if ($latest) { 'latest' } else { 'compatible' }
@@ -97,7 +126,7 @@ try {
             Where-Object { $_.Directory.Name -eq $profile } | Select-Object -Last 1
         $results = (Get-Content $report.FullName -Raw | ConvertFrom-Json).results
         $expectedPlan = if ($latest) {
-            (& powershell.exe -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -Latest -PlanOnly) -join "`n" | ConvertFrom-Json
+            (& $shell -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -Latest -PlanOnly) -join "`n" | ConvertFrom-Json
         } else { $previewPlan }
         $expectedGraphs = @($expectedPlan.targets | ForEach-Object { $targetId=$_.target; $_.graphs | ForEach-Object { "$targetId/$($_.id)" } })
         $observedGraphs = @($results | ForEach-Object { "$($_.target)/$($_.graph)" })
@@ -118,12 +147,14 @@ try {
     }
     $env:AE2CT_STATUS_GAP = '1'
     try {
-        & powershell.exe -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -Target 1.20.1-forge -Scenario waiting-status
+        & $shell -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -Target 1.20.1-forge -Scenario waiting-status
         if ($LASTEXITCODE -ne 0) { throw 'Transient status replacement must not lose the running client' }
     } finally { Remove-Item Env:\AE2CT_STATUS_GAP -ErrorAction SilentlyContinue }
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'complete-ui-smoke-evidence.ps1'), (Join-Path $PSScriptRoot 'ui-smoke-visuals.json') -Destination $scripts -Force
+    $archiveRoot = Join-Path $temp 'archive'
     $env:AE2CT_UNCONFIRMED_EXIT = '1'
     try {
-        & powershell.exe -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1')
+        & $shell -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -ArchiveRoot $archiveRoot
         if ($LASTEXITCODE -ne 1) { throw 'Unconfirmed client exit must fail the compatible campaign' }
         $report = Get-ChildItem (Join-Path $temp 'build/ui-smoke/campaigns') -File -Recurse -Filter result.json |
             Where-Object { $_.Directory.Name -eq 'compatible' } | Sort-Object LastWriteTimeUtc | Select-Object -Last 1
@@ -133,19 +164,70 @@ try {
         }
         $coverage = Get-Content (Join-Path $results[0].report 'coverage.json') -Raw | ConvertFrom-Json
         if ($coverage.result -ne 'PASS') { throw 'A failed run erased its completed scenario outcome' }
+        $gate = Get-Content (Join-Path $report.Directory.FullName 'gate.json') -Raw | ConvertFrom-Json
+        if ($gate.cleanupResult -ne 'FAIL' -or $gate.archiveResult -ne 'PASS') { throw 'Unconfirmed exit cleanup or archive evidence was lost' }
     } finally { Remove-Item Env:\AE2CT_UNCONFIRMED_EXIT -ErrorAction SilentlyContinue }
-    $env:AE2CT_INNER_FAIL = '1'
-    try {
-        & powershell.exe -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -Target 1.20.1-forge -Scenario cpu-list-total-ttc
-        if ($LASTEXITCODE -ne 1) { throw 'A failing inner runner must fail the compatible campaign' }
-        $report = Get-ChildItem (Join-Path $temp 'build/ui-smoke/campaigns') -File -Recurse -Filter result.json |
-            Where-Object { $_.Directory.Name -eq 'compatible' } | Sort-Object LastWriteTimeUtc | Select-Object -Last 1
-        $result = (Get-Content $report.FullName -Raw | ConvertFrom-Json).results[0]
-        $retainedStatus = Get-Content (Join-Path $result.report 'run/status.json') -Raw | ConvertFrom-Json
-        if ($result.result -ne 'FAIL' -or $result.message -ne 'intentional inner runner failure' -or $retainedStatus.exitCode -ne 17) {
-            throw 'A failing child hid or lost its exact retained status'
+
+    function Invoke-FailedMatrixCase([string]$statusCase, [int]$exitCode = 17, [switch]$Latest) {
+        $env:AE2CT_INNER_FAIL = '1'
+        $env:AE2CT_STATUS_CASE = $statusCase
+        $env:AE2CT_FAILURE_EXIT_CODE = [string]$exitCode
+        try {
+            $arguments = @('-NoProfile','-File',(Join-Path $scripts 'run-ui-smoke-matrix.ps1'),'-Target','1.20.1-forge','-Scenario','waiting-status','-ArchiveRoot',$archiveRoot)
+            if ($Latest) { $arguments += '-Latest' }
+            $null = & $shell @arguments
+            $matrixExit = $LASTEXITCODE
+        } finally {
+            Remove-Item Env:\AE2CT_INNER_FAIL,Env:\AE2CT_STATUS_CASE,Env:\AE2CT_FAILURE_EXIT_CODE -ErrorAction SilentlyContinue
         }
-    } finally { Remove-Item Env:\AE2CT_INNER_FAIL -ErrorAction SilentlyContinue }
+        $profile = if ($Latest) { 'latest' } else { 'compatible' }
+        $report = Get-ChildItem (Join-Path $temp 'build/ui-smoke/campaigns') -File -Recurse -Filter result.json |
+            Where-Object { $_.Directory.Name -eq $profile } | Sort-Object LastWriteTimeUtc | Select-Object -Last 1
+        $result = (Get-Content $report.FullName -Raw | ConvertFrom-Json).results[0]
+        [pscustomobject]@{exitCode=$matrixExit;campaign=$report.Directory.FullName;result=$result;gate=(Get-Content (Join-Path $report.Directory.FullName 'gate.json') -Raw | ConvertFrom-Json)}
+    }
+
+    foreach ($case in @(
+        @{status='current';exit=0;latest=$false},
+        @{status='equal';exit=17;latest=$false},
+        @{status='equal-offset';exit=17;latest=$true}
+    )) {
+        $run = Invoke-FailedMatrixCase -statusCase $case.status -exitCode $case.exit -Latest:([bool]$case.latest)
+        $expectedResult = if ($case.latest) { 'DIAGNOSTIC_FAILURE' } else { 'FAIL' }
+        $expectedExit = if ($case.latest) { 0 } else { 1 }
+        $retainedStatus = Get-Content (Join-Path $run.result.report 'run/status.json') -Raw | ConvertFrom-Json
+        if ($run.exitCode -ne $expectedExit -or $run.result.result -ne $expectedResult -or $run.result.message -ne "native failure $($case.exit)" -or
+                $retainedStatus.pid -ne 123 -or $retainedStatus.exitCode -ne $case.exit -or $run.result.cases[0].result -ne 'FAIL') {
+            throw "A $($case.status) failing child hid its status, classification, PID, exit code or failed leaf"
+        }
+        foreach ($relative in @('status.json','evidence/failure.png','evidence/failure.json','evidence/result.json','logs/client.log')) {
+            $campaignFile = Join-Path $run.result.report "run/$relative"
+            $liveFile = Join-Path $temp "build/ui-smoke/1.20.1-forge/$(if($case.latest){'latest'}else{'compatible'})/waiting-status/$relative"
+            $archiveRelative = ([IO.Path]::GetFullPath($campaignFile)).Substring(([IO.Path]::GetFullPath($run.campaign)).Length).TrimStart('/','\').Replace('\','/')
+            $archiveFile = Join-Path $run.gate.archive $archiveRelative
+            if ((Get-FileHash $campaignFile).Hash -cne (Get-FileHash $liveFile).Hash -or (Get-FileHash $campaignFile).Hash -cne (Get-FileHash $archiveFile).Hash) {
+                throw "Failed evidence bytes changed while retaining $relative"
+            }
+            $manifest = Get-Content (Join-Path $run.gate.archive 'manifest.json') -Raw | ConvertFrom-Json
+            if (!($manifest | Where-Object { $_.path -ceq $archiveRelative -and $_.sha256 -ceq (Get-FileHash $campaignFile).Hash })) {
+                throw "Archive manifest lost $relative"
+            }
+        }
+    }
+
+    foreach ($statusCase in @('older-tick','missing-status','malformed-status','missing-start','malformed-start','wrong-target','wrong-profile','wrong-scenario')) {
+        $run = Invoke-FailedMatrixCase -statusCase $statusCase
+        if (Test-Path -LiteralPath (Join-Path $run.result.report 'run')) { throw "Rejected $statusCase status was retained" }
+        if ($run.result.message -notlike '*dispatch observed child exit 17*') { throw "Rejected $statusCase status replaced the dispatch failure" }
+    }
+
+    $run = Invoke-FailedMatrixCase -statusCase existing
+    $existing = Join-Path $run.result.report 'run/existing.bin'
+    $existingChanged = !(Test-Path -LiteralPath $existing)
+    if (!$existingChanged) { $existingChanged = @(Compare-Object ([IO.File]::ReadAllBytes($existing)) ([byte[]](9,8,7)) -SyncWindow 0).Count -ne 0 }
+    if ($existingChanged -or (Test-Path -LiteralPath (Join-Path $run.result.report 'run/status.json'))) {
+        throw 'Current fallback replaced existing campaign evidence'
+    }
     Write-Host 'UI smoke matrix checks passed'
 } finally {
     $resolved = [IO.Path]::GetFullPath($temp)
