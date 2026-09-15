@@ -1,13 +1,15 @@
 # Initial Crafting Status ETA
 
-Status: ready for implementation. Tracks [issue #350](https://github.com/cTux/ae2-crafting-time/issues/350).
+Status: follow-up ready for implementation. Tracks [issue #425](https://github.com/cTux/ae2-crafting-time/issues/425),
+which closes a gap in [issue #350](https://github.com/cTux/ae2-crafting-time/issues/350).
 
 ## Expected behavior
 
-On AE2 15.x and 19.x, Crafting Status must not show AE2's native ETA until the
-selected job has completed measurable work. The normal **Crafting Status** title
-stays visible while progress is zero. AE2 Crafting Time's separate total TTC
-badge can still appear when profiler data is available.
+Both the directly opened `CraftingCPUScreen` and the terminal's
+`CraftingStatusScreen` must hide AE2's native ETA until the selected job has
+completed measurable work. Keep AE2's normal title, including a custom CPU name
+resolved by `getGuiDisplayName`. AE2 Crafting Time's separate learned total TTC
+badge can still appear under its existing data and width rules.
 
 After the first item completes, AE2's native ETA, the red can't-store warning,
 sorting, tooltips, and status controls keep their existing behavior.
@@ -15,13 +17,39 @@ sorting, tooltips, and status controls keep their existing behavior.
 ## Acceptance
 
 - A newly submitted job with equal start and remaining counts has no native ETA
-  suffix.
+  suffix on either screen. Defensive reversed counters also hide that suffix.
 - A job with a smaller remaining count keeps AE2's native ETA suffix.
+- A missing status keeps AE2's supplied title. Native and custom display names
+  remain intact when the initial ETA is hidden.
 - The red can't-store warning is preserved when the initial ETA is hidden.
-- The behavior is shared by the 1.20.1 Forge, 1.20.1 Fabric, and 1.21.1
-  NeoForge targets. AE2 26.1.2 remains unchanged.
-- Pure decision logic has full line and branch coverage, and a real Crafting
-  Status smoke capture shows a plausible initial title.
+- The behavior must cover 1.20.1 Forge, 1.20.1 Fabric, and 1.21.1 NeoForge,
+  with independent verification on 26.1.2 NeoForge. The separate
+  26.1.2 adapter is in scope; the earlier #350 exclusion no longer applies.
+- Pure decision logic retains full line and branch coverage; `TimeEstimateTest`
+  executes equal, reversed, and progressed counters. A focused ASM test checks
+  both hooks structurally: no terminal-only type gate, calls to
+  `hasMeasuredProgress` and `getGuiDisplayName`, and warning/copy operations.
+- Current-source `no-channel-status` captures on all four targets show a normal
+  zero-progress title. Record both direct and terminal screen evidence and a
+  custom-name zero-progress case on each target. Add manual prepared-client
+  captures when named scenarios omit a case.
+- Current-source client evidence verifies screen behavior, component/name
+  preservation, warning color, and learned TTC layout. Inspect
+  `standard-status-controls` and `no-space-status` for measured-progress ETA and
+  the red warning. Null-status handling remains a source/structural check unless
+  a recorded test actually exercises it.
+
+## Evidence status
+
+#425 retains a direct-screen defect from the #405 Forge `no-channel-status`
+run. That run later failed a recovery assertion: its screenshot proves the
+observed title defect, not a scenario pass. Retained observations and source
+inspection establish scope; only new, source-bound checks can verify this fix.
+
+A separate retained #405 capture on 26.1.2 shows the same direct-screen defect.
+That scenario passed its existing checks, which did not inspect the title.
+The [technical design](technical-design.md#independent-2612-evidence) records
+this evidence; it is not verification of the upcoming correction.
 
 ## Out of scope
 
