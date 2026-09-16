@@ -1,137 +1,141 @@
-# AppliedE investigation and correction gates
+# AppliedE correction and verification plan
 
-Deliver the [spec](spec.md) from the verified [design](technical-design.md).
-This plan first restores a controlled reproduction. It does not authorize a
-speculative production fix or treat startup repair as issue completion.
+Deliver the [spec](spec.md) from the evidence and remaining limits in the
+[design](technical-design.md). The startup prerequisites are already implemented
+at base 4d3d818602a98922c00af7d75fc9490133e8e6a3. Do not repeat them or change
+startup deadlines. This amendment does not authorize Crafting Time production
+code or an external repository mutation.
 
-## Ordered work
+## Current evidence gate
+
+Both controls reached a usable world. The enabled result fails with an empty
+plan and zero craft counters; the disabled result passes all seven existing
+checks. Its plan uses eight stored cobblestone, so it proves native furnace
+crafting, not EMC transmutation.
+
+The successful raw debugger observations have been independently reviewed at the
+session and line references in the design; AP-03 establishes the ordering/cache
+mechanism with the documented identity qualification. The campaign's early JDB
+logs instead contain failed attachment reads. Retain a redacted successful raw
+excerpt with the campaign before cleanup or handoff. AP-05 becomes complete only
+after the upstream correction decision and this reviewed amendment are accepted
+and merged. The instrumented enabled timeout is not clean functional proof.
+
+## Ordered changes and checks
 
 | Order | Work and check | Criteria |
 |---|---|---|
-| 1 | Merge the reviewed documentation-only change. Preserve the claim and keep the issue open. | All |
-| 2 | Recheck CodexVM, SSH, Java 17, Prism's Codex group, exact managed pack metadata, fixture preparation and archive access. Resolve the missing exact dependency artifacts and compare their hashes to the design and full archived graph. | AP-01, AP-07 |
-| 3 | Stage one new marked guest-local copy through the named-modpack workflow. Build current Forge production/driver JARs on the host after repository PR ordering permits checks, record their SHA/hash, and verify the complete staged graph and configuration. | AP-01 |
-| 4 | Establish bounded world entry and a feasible read-only trace method. Diagnose the existing STARTING timeout from loading/world/driver evidence before choosing a lifecycle or deadline change. | AP-02, AP-03 |
-| 5 | Run the focused enabled/disabled comparison described below with fresh calculations and native safety intact. Retain actual field values and result boundaries. | AP-03, AP-04, AP-07 |
-| 6 | Review causation and correction ownership. Amend and merge these three documents with the proven correction and exact regression/verification plan before production implementation. | AP-05 |
-| 7 | Implement and verify only that documented correction, including exact requested output/EMC accounting and existing AppliedE profiling checks. | AP-06, AP-07 |
+| 1 | Archive the reviewed successful raw debugger excerpt, control/reset provenance and the exact limits of the disabled pass. Preserve the existing failed and successful results. | AP-01 through AP-05, AP-07 |
+| 2 | Merge the reviewed three-document amendment. Keep the issue open. Obtain separately scoped authority before editing the Applied Enhancements repository. | AP-05 |
+| 3 | At the exact upstream source revision matching the reported artifact, inspect all candidate-discovery and child-build callers. Add the smallest optional AppliedE classifier and pre-build fallback described below. | AP-05, AP-06 |
+| 4 | Add upstream behavioral regression coverage for each build entry, nested candidates, fallback propagation and unaffected ordinary patterns. Follow that repository's applicable build/test rules. | AP-06 |
+| 5 | Repair the development-only AppliedE fixture so the final EMC assertion cannot pass using a conventional recipe. Update its existing test/result boundaries and dependency coverage documentation truthfully. | AP-06, AP-07 |
+| 6 | After the relevant implementation PRs exist, run targeted tests/coverage and compile affected driver consumers. Then perform the focused corrected runtime checks below. | AP-06, AP-07 |
+| 7 | Review actual corrected artifacts, CI and runtime evidence. Report upstream delivery state separately; the disabled baseline does not close #420. | AP-05 through AP-07 |
 
-Ordered-work item 4 is a prerequisite gate. If existing facilities cannot provide usable world
-entry or AP-03 traces, stop dependent execution and document the smallest concrete
-in-repository prerequisite, its callers, branch coverage and runtime proof before
-changing code. Obtain scope authorization for substantial new infrastructure or
-third-party changes. Do not run the old staging script against its stale worktree
-or locally built dependency references.
+The observed mechanism selects the upstream correction boundary; it does not
+validate an unimplemented correction or establish successful EMC accounting.
 
-The merged initial-overlay prerequisite proved necessary but did not provide a
-usable-world boundary. At exact head `aa50d4328c005cbf6856bba44e91c5a71b88e265`,
-the enabled control reported `958.782` seconds to the title screen and then
-`5.835` minutes starting JEI in the marked world. It failed `STARTING` on
-`ReceivingLevelScreen`; every scenario check and dispatch counter remained zero,
-and none of the AP-03 debugger breakpoints fired. Do not run the disabled control
-or replay this graph with the same driver.
+## Upstream change boundary
 
-The next prerequisite is now concrete. In shared `CraftPlanScenario`, defer the
-first `STARTING` deadline observation until the exact local/dedicated world
-readiness predicate used by `start()` is true. Add focused branch coverage to
-`TestDriverCoreTest`. Do not change the ten-minute value, post-start deadlines,
-runner watchdogs or the independent 26.1.2 driver. The exemption must still
-require an uninitialized clock, so a later language reload during `STARTING`
-checks its deadline.
-After the hook creates the prerequisite PR, run:
+Before any AELIS compiler call to molecularmanipulator$buildChildPatterns, query
+the existing crafting service for the occurrence's raw candidate patterns. A
+candidate whose runtime class name is exactly
+gripe._90.appliede.me.misc.TransmutationPattern selects the stable
+request_ordered_pattern fallback before that occurrence's children are built.
+Do not initialize an AppliedE child merely to discover its pattern type.
 
-```text
-./gradlew :mc_1_20_1_forge:test --tests com.ctux.ae2craftingtime.testdriver.TestDriverCoreTest
-./gradlew :mc_1_20_1_forge:compileTestDriverJava :fabric_1_20_1:compileTestDriverJava :mc_1_21_1_neoforge:compileTestDriverJava
-```
+Cover all three paths in the inspected compiler: inspect,
+isTerminalQuantityFeedbackOccurrence and validateOccurrence. Propagate the
+existing typed fallback to the session boundary; the terminal-feedback helper's
+RuntimeException catch must not consume it and resume compilation. Preserve
+emitter handling and ordinary-pattern behavior. Nested occurrences need the
+same guard, including when their ordinary parent has already been inspected.
 
-Retain method-level JaCoCo line/branch evidence for `waitForUsableWorld`, the
-pure `readyToStart` predicate and `startTime` from the Forge test execution; the default report includes only
-selected driver classes and does not measure these methods. Preserve existing
-coverage gates and report the Minecraft `tick` adapter boundary separately.
-Review and merge the verified prerequisite before staging its current
-production/driver pair or launching another exact-pack comparison.
+Use an exact class-name comparison without a required AppliedE class reference,
+class loading, dependency range change or generic extension framework.
+Installations without AppliedE must continue to work. Reuse the upstream fallback type
+and session/native routing instead of adding a parallel planner or rewriting
+third-party bytecode in Crafting Time.
 
-After merge, stage the 363-JAR managed source, add the retained hash-matching
-Applied Enhancements JAR, replace only OmniSequence `1.3.9` with the retained
-hash-matching `2.0.3-fix` JAR, then inject the current Crafting Time pair. Record
-the resulting 364 non-Crafting-Time hashes. Set `MaxMemAlloc=8192` on the
-disposable instance and include its readback in both run records; do not inherit
-the managed source's `11648` MiB override. Run enabled first and disabled second
-from equivalent pristine state. If AP-03 still has no feasible read-only trace,
-stop again and document that separate diagnostic prerequisite instead of
-inferring the cached-child sequence.
+Tests must execute the decision at the real compiler boundary: request-ordered
+candidates never invoke their build bridge, keep their child list uninitialized
+and yield the stable fallback; an ordinary or absent AppliedE candidate retains
+normal compilation. Cover mixed ordinary/AppliedE candidate lists, a nested
+request-ordered child, all three guarded entries and fallback propagation.
+A classifier-only test does not prove the fix. Keep native positive-output
+validation unchanged.
 
-## Exact-pack comparison
+## Unambiguous EMC proof
 
-Use Minecraft 1.20.1 / Forge 47.4.20 / Java 17 and the reported Project Infinity
-0.0.52.0 graph, with scenario `appliede-cpu`. Reuse its module, knowledge, EMC and
-native CPU fixture. Prepared `compatible` or `latest` clients do not substitute
-for this graph. The result's `compatible` profile string is not pack provenance.
+Read AppliedE's actual extraction/accounting path before choosing the assertion.
+The current fixture grants furnace knowledge and EMC but leaves the ordinary
+furnace recipe available. Preserve the original mixed-recipe case as a planning
+regression, and create an isolated EMC-only state for the accounting check.
 
-Follow the named-modpack and VM skills: host-only builds, guest-local NTFS,
-marked disposable world, an 8 GiB client, maximized window, `guiScale:0`, and
-`pauseOnLostFocus:false`. Preserve the managed source. Validate absolute
-forward-slash filesystem properties in Prism before launch and verify the exact
-active world and fixture marker before actions.
+Use the existing disposable fixture APIs to remove the competing furnace pattern
+and conventional input supply from that isolated state. Verify that the
+Transmutation Module is active, owns the intended player's knowledge and
+advertises the requested furnace. Sample its real authoritative EMC balance
+after setup and immediately before submission; compute the expected positive
+charge from the installed ProjectE value for one furnace. After completion,
+require exactly that net debit and exactly one returned furnace. Check that
+neither a stored furnace nor another crafting provider could satisfy the order.
 
-For each control, record:
+Reuse the current dispatch, completion, profile and TTC checks, adding the
+accounting assertion at the existing test-driver result/validation boundary.
+Do not call a generic craft counter an EMC observation. Keep decisions in covered
+shared logic and preserve server-thread ownership. Inspect AppliedEFixture's
+Forge 1.20.1 and NeoForge 1.21.1 consumers and their API differences; compile both
+if the common fixture changes. Use a Forge-only adapter if the APIs require it,
+without inventing a NeoForge compatibility claim.
 
-- the native request identity, output key and requested amount;
-- available pattern class, definition and full output keys/amounts;
-- node identity, quantity at request entry, quantity used to rebuild the pattern,
-  first child-build order and whether later calls reuse the same processes;
-- effective automatic-AELIS and long-range settings, native-safety application,
-  selected calculation path, outcome and exception boundary;
-- accepted amount, furnace return, EMC before/after, job completion, profile
-  sample and TTC when the request reaches crafting.
+After the driver implementation PR exists, compile
+`:mc_1_20_1_forge:compileTestDriverJava` and
+`:mc_1_21_1_neoforge:compileTestDriverJava` when the shared fixture changes.
+Run the focused Forge tests for the added pure accounting/validation decisions,
+with unchanged line/branch coverage requirements; name those exact test methods
+in the executable change before running them. Neither this document review nor
+the earlier result JSON substitutes for those checks.
 
-Run automatic AELIS enabled first, then disabled in a fresh calculation after
-restarting from equivalent pristine fixture/player/profiler state. Preserve every
-other mod and gameplay setting; use the same harness settings in both controls.
-If loading or world entry fails, label that attempt as a
-prerequisite failure; no recipe verdict follows. Toggling AELIS without recording
-quantity/build ordering may isolate a dependency interaction but cannot prove
-the specific cached-zero hypothesis. Use a further focused causal control only
-when the observed trace identifies it; document any needed code change first.
+## Focused runtime proof
 
-## Time and evidence
+Use Project Infinity 0.0.52.0, Minecraft 1.20.1, Forge 47.4.20 and Java 17.
+Stage a new marked guest-local Codex-group copy through the existing named-pack
+workflow. Compare every non-Crafting-Time JAR with the archived graph, allowing
+only the explicitly identified upstream correction artifact. Record its source
+SHA and hash, plus current Crafting Time production/driver identities.
 
-Initially budget two focused pack launches and 45 minutes per attempt, including
-startup, one scenario, evidence capture and cleanup. These are planning ceilings,
-not permission to extend the driver's existing deadline. No reliable isolated
-cold-start measurement is available: the original archived 16m26s process also
-ran twenty preceding scenarios. Measure actual phase times on the first attempt.
+Keep automatic AELIS, long-range crafting and native safety enabled. Preserve
+8192 MiB heap, guiScale:0, pauseOnLostFocus:false and validated absolute
+forward-slash driver paths. Run the original mixed-recipe scenario and the
+isolated EMC-only case sequentially with pristine resets. They may share one
+launch if the existing fixture lifecycle supports it. Require the fallback
+reason, valid requested/advertised/rebuilt amounts, native acceptance and the
+AP-06 output/accounting/profile assertions.
 
-Inspect progress at least once per minute. When an existing watchdog expires or
-loading/world progress stops, retain logs and the exact screen, diagnose the last
-completed checkpoint, then request normal quit of only the identified client.
-Do not spend another full launch replaying proven phases without a new hypothesis.
-A resumed or instrumented attempt is diagnostic evidence; final correction proof
-requires a clean focused run with the documented released dependencies.
+Read-only breakpoint evidence may establish ordering, but final functional
+proof runs cleanly without debugger suspension. Retain the earlier enabled
+failure and disabled baseline; do not relabel them as corrected runs. Budget
+one corrected launch initially and 45 minutes for staging, startup, focused
+checks and evidence, then use measured phase times to assess any retry.
+The campaign already reached usable worlds; it is not permission to extend
+driver deadlines or replay full matrices.
 
-Use the [archive and timing contract](../ui-smoke-evidence.md). Keep inventory,
-configuration, production/driver identities, trace events, original result files,
-screenshots/sidecars, process exit and per-attempt timings. Review required visual
-evidence without presenting a screenshot as proof of server state. Exclude account
-data and private machine/server paths from published documents and comments.
+## Review and completion
 
-## Checks and completion
+For these documents, inspect links, facts, criterion coverage and whitespace;
+no repository test is needed. Executable checks follow the applicable
+repository's hook-created PR ordering. Apply unchanged coverage rules to new
+logic and report excluded Minecraft adapters separately.
 
-Before the documentation PR, review links, referenced paths, hashes and criterion
-coverage; do not run repository tests. Documentation needs static validation, not
-new executable tests. After the hook creates the PR, inspect its applicable CI.
+Follow the [archive contract](../ui-smoke-evidence.md): preserve distinct control
+configuration and inventory receipts, pristine-reset provenance, raw debugger
+output, results, screenshots/sidecars, exact-client exit and timings. Do not use
+the overwritten top-level stage-readback file as the enabled receipt. Review
+required images and keep private paths/account details out of published reports.
 
-Any later executable prerequisite needs the existing focused regression and
-unchanged 100% line/branch coverage requirements. Trace all shared callers and
-the separate 26.1.2 implementation before choosing checks. A shared startup-policy
-change must account for Forge/Fabric 1.20.1 and NeoForge 1.21.1 consumers; it must
-not silently extend standard/status deadlines or the independent 26.1.2 policy.
-Name exact compile targets and scenarios in the amendment, then run those checks
-only after its implementation PR exists. No full release matrix is implied.
-
-The investigation completes when AP-01 through AP-05 have retained evidence and
-a reviewed correction decision. If causation remains unresolved, report the exact
-missing evidence and retain an open issue. Closing #420 additionally requires the
-documented correction, current-head checks, AP-06 functional proof and AP-07
-readback; a successful startup or unverified workaround is insufficient.
+AP-06 remains open until corrected AELIS-enabled EMC proof passes. AP-07 requires
+the complete retained evidence and actual exit/visual review, not just result
+JSON. An upstream patch's publication, local diagnostic build and Crafting Time
+PR are separate states; report each truthfully before deciding issue closure.
