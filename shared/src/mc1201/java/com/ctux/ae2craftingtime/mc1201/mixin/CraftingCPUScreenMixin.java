@@ -166,9 +166,9 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         if (status == null) {
             return title;
         }
-        if ((Object) this instanceof CraftingStatusScreen && !TimeEstimate.hasMeasuredProgress(
+        if (!TimeEstimate.hasMeasuredProgress(
                 status.getStartItemCount(), status.getRemainingItemCount())) {
-            title = GuiText.CraftingStatus.text();
+            title = getGuiDisplayName(GuiText.CraftingStatus.text());
             if (menu.isCantStoreItems()) {
                 title = title.copy().append(" - ")
                         .append(GuiText.CantStoreItems.text().withStyle(ChatFormatting.RED));
