@@ -107,6 +107,9 @@ public final class CraftPlanScenario {
         if (state == ScenarioState.FAILED || state == ScenarioState.QUIT_REQUESTED) {
             return;
         }
+        if (waitForInitialOverlay(state, stateStarted, minecraft.getOverlay() != null)) {
+            return;
+        }
         if (elapsed().compareTo(state == ScenarioState.STARTING || standard != null || noSpace != null || noProvider != null
                 || noPower != null || providerDispatchStatus != null ? START_TIMEOUT : STEP_TIMEOUT) > 0) {
             fail("timeout", state.name(), currentScreen());
@@ -956,6 +959,10 @@ public final class CraftPlanScenario {
 
     static long startTime(long started, long now) {
         return started == 0 ? now : started;
+    }
+
+    static boolean waitForInitialOverlay(ScenarioState state, long started, boolean overlayPresent) {
+        return state == ScenarioState.STARTING && started == 0 && overlayPresent;
     }
 
     private String currentScreen() {

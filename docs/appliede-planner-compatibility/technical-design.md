@@ -101,3 +101,69 @@ No existing runtime trace captures AP-03. Use bounded read-only debugger
 inspection if available. New diagnostic instrumentation or a startup-policy
 change needs a concrete design amendment first; do not silently introduce a
 runner, profiler, third-party patch or broad timeout increase.
+
+## Rechecked startup prerequisite
+
+The 2026-09-16 recheck used merged investigation base
+`de41780837e9935aeacb6265c307f2d1f17a99ed`. CodexVM was already running with
+Java `17.0.20.1`; Prism had no Java client. The managed Project Infinity source
+remains in the `Codex` group with Minecraft `1.20.1`, Forge `47.4.20`, AE2
+`15.4.10` and 363 enabled JARs. The retained exact graph contains 364
+non-Crafting-Time JARs. A name/hash comparison found only these differences:
+
+| Graph operation | Artifact | SHA-256 |
+|---|---|---|
+| Keep | AppliedE `0.14.7-fix2` | `832e8b3872ca90c3d1a917bdcbb3c09d7c809b2edeeec6295227f4f287f5d29e` |
+| Add | Applied Enhancements `1.0.7-forge` | `37b52c6938b9ebd8d4b8c5780c0c89d485ab58abb58beae8a5e7c96f36fbf5a9` |
+| Replace | OmniSequence `1.3.9` with `2.0.3-fix` | `7c0e12290ed104401719efc174be2867006fb557104978fed577a5b87007a875` |
+
+The original current-run archive used production SHA-256
+`d074d23a8d98b855401c4e0dc5c2a3c2758725ffd502ef17ab071cdc29f56637`
+and driver SHA-256
+`cd791450c9f4cf24b33c31cad56935f86e9049b6d32acd287a60953b126342b0`
+from commit `0426f9469d3e9a810e6dd1037242855b9a311e70`. Those artifacts are not
+current for the `1.2.7` investigation base and must not be reused as current
+evidence. A clean retained build at `29ae528a76fd767c32f1f43f75346e91c20257e3`
+has production SHA-256
+`63b6f1965691a3bc60cf5d7fafac598ef6e17ffb01931ab1ec5acc3c7eb7a96e`
+and driver SHA-256
+`93491e41ff22c1ddc62fd441e1cff1eaf66e938f55580aa40b6ef68515ebbbcf`.
+Its non-documentation tree is identical to the merged investigation base, so
+both are valid pre-prerequisite candidates. The disabled run did not retain a
+post-copy hash receipt, so it is not a current runtime readback. The driver must
+be rebuilt after the prerequisite PR exists; the production artifact is
+unchanged by that driver-only correction.
+
+The retained disabled-AELIS failure was captured at
+`2026-09-15T19:36:23.658570Z` on `ReceivingLevelScreen`. It had no request,
+plan, CPU or craft checks. A later same-graph diagnostic log starts at
+23:01:05 local time, still performs resource work at 23:12:16, finishes the
+initial resource reload at 23:13:37, and records `Game took 781.308 seconds to
+start` at 23:13:44. This exceeds the shared driver's ten-minute `STARTING`
+deadline before any AppliedE comparison can begin.
+
+The retained staging script also inherited the managed source instance's
+`MaxMemAlloc=11648` override instead of setting and reading back the specified
+8 GiB heap. The prior disabled result therefore does not satisfy the controlled
+harness contract independently of its startup timeout. The next disposable
+stage must explicitly set `MaxMemAlloc=8192` and record the instance readback.
+
+### Driver-only correction
+
+`CraftPlanScenario.tick` must return while the state is `STARTING`,
+`stateStarted` is zero and the initial Minecraft loading overlay is present,
+before calling `elapsed()`. The first frame after that overlay clears starts
+the existing ten-minute deadline. Later overlays and every non-`STARTING` state
+keep their current absolute deadlines. The change belongs in shared
+`testDriver1201`, so it serves Forge/Fabric 1.20.1 and NeoForge 1.21.1. The
+separate 26.1.2 implementation and its two-minute policy stay unchanged.
+
+The focused regression covers unobserved `STARTING` with and without an overlay,
+already-started `STARTING` with an overlay, and a non-starting state with an
+overlay, alongside the existing first-observation clock check. The already-started
+case preserves the deadline during a language reload requested by `start()`.
+After a hook-created prerequisite PR exists, compile the three
+shared-driver consumers and run the exact Forge pack. A clean enabled/disabled
+campaign must then measure process loading, world entry and scenario time
+separately. AP-03 still needs bounded field/order tracing; this startup change
+does not provide or claim it.
