@@ -864,11 +864,26 @@ class TestDriverCoreTest {
     }
 
     @Test
-    void scenarioClockWaitsOnlyForUnobservedStartupOverlay() {
-        assertTrue(CraftPlanScenario.waitForInitialOverlay(ScenarioState.STARTING, 0, true));
-        assertFalse(CraftPlanScenario.waitForInitialOverlay(ScenarioState.STARTING, 0, false));
-        assertFalse(CraftPlanScenario.waitForInitialOverlay(ScenarioState.STARTING, 7, true));
-        assertFalse(CraftPlanScenario.waitForInitialOverlay(ScenarioState.WORLD_READY, 0, true));
+    void scenarioClockWaitsOnlyForUnobservedUsableWorld() {
+        assertTrue(CraftPlanScenario.waitForUsableWorld(ScenarioState.STARTING, 0, false));
+        assertFalse(CraftPlanScenario.waitForUsableWorld(ScenarioState.STARTING, 0, true));
+        assertFalse(CraftPlanScenario.waitForUsableWorld(ScenarioState.STARTING, 7, false));
+        assertFalse(CraftPlanScenario.waitForUsableWorld(ScenarioState.WORLD_READY, 0, false));
+    }
+
+    @Test
+    void scenarioReadinessRequiresUsableClientAndMatchingConnection() {
+        assertTrue(CraftPlanScenario.readyToStart(false, false, true, true, true, false, true, false), "local world");
+        assertFalse(CraftPlanScenario.readyToStart(true, false, true, true, true, false, true, false), "overlay");
+        assertFalse(CraftPlanScenario.readyToStart(false, true, true, true, true, false, true, false), "screen");
+        assertFalse(CraftPlanScenario.readyToStart(false, false, false, true, true, false, true, false), "missing level");
+        assertFalse(CraftPlanScenario.readyToStart(false, false, true, false, true, false, true, false), "missing player");
+        assertFalse(CraftPlanScenario.readyToStart(false, false, true, true, false, false, true, false), "missing game mode");
+        assertFalse(CraftPlanScenario.readyToStart(false, false, true, true, true, false, false, false), "missing local server");
+        assertFalse(CraftPlanScenario.readyToStart(false, false, true, true, true, false, true, true), "unexpected remote server");
+        assertTrue(CraftPlanScenario.readyToStart(false, false, true, true, true, true, false, true), "dedicated world");
+        assertFalse(CraftPlanScenario.readyToStart(false, false, true, true, true, true, true, true), "unexpected local server");
+        assertFalse(CraftPlanScenario.readyToStart(false, false, true, true, true, true, false, false), "missing remote server");
     }
 
     @Test

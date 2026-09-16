@@ -107,7 +107,7 @@ public final class CraftPlanScenario {
         if (state == ScenarioState.FAILED || state == ScenarioState.QUIT_REQUESTED) {
             return;
         }
-        if (waitForInitialOverlay(state, stateStarted, minecraft.getOverlay() != null)) {
+        if (waitForUsableWorld(state, stateStarted, readyToStart())) {
             return;
         }
         if (elapsed().compareTo(state == ScenarioState.STARTING || standard != null || noSpace != null || noProvider != null
@@ -163,9 +163,7 @@ public final class CraftPlanScenario {
             minecraft.reloadResourcePacks();
             return;
         }
-        if (minecraft.screen != null || minecraft.level == null || minecraft.player == null || minecraft.gameMode == null
-                || (!options.connectedDedicated() && (minecraft.getSingleplayerServer() == null || minecraft.getCurrentServer() != null))
-                || (options.connectedDedicated() && (minecraft.getSingleplayerServer() != null || minecraft.getCurrentServer() == null))) {
+        if (!readyToStart()) {
             return;
         }
         if (options.connectedDedicated()) {
@@ -961,8 +959,23 @@ public final class CraftPlanScenario {
         return started == 0 ? now : started;
     }
 
-    static boolean waitForInitialOverlay(ScenarioState state, long started, boolean overlayPresent) {
-        return state == ScenarioState.STARTING && started == 0 && overlayPresent;
+    static boolean waitForUsableWorld(ScenarioState state, long started, boolean ready) {
+        return state == ScenarioState.STARTING && started == 0 && !ready;
+    }
+
+    private boolean readyToStart() {
+        return readyToStart(minecraft.getOverlay() != null, minecraft.screen != null,
+                minecraft.level != null, minecraft.player != null, minecraft.gameMode != null,
+                options.connectedDedicated(), minecraft.getSingleplayerServer() != null,
+                minecraft.getCurrentServer() != null);
+    }
+
+    static boolean readyToStart(boolean overlayPresent, boolean screenPresent, boolean levelPresent,
+            boolean playerPresent, boolean gameModePresent, boolean connectedDedicated,
+            boolean localServerPresent, boolean remoteServerPresent) {
+        return !overlayPresent && !screenPresent && levelPresent && playerPresent && gameModePresent
+                && (connectedDedicated ? !localServerPresent && remoteServerPresent
+                        : localServerPresent && !remoteServerPresent);
     }
 
     private String currentScreen() {
