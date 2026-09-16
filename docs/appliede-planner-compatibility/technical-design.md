@@ -150,18 +150,33 @@ stage must explicitly set `MaxMemAlloc=8192` and record the instance readback.
 
 ### Driver-only correction
 
-`CraftPlanScenario.tick` must return while the state is `STARTING`,
-`stateStarted` is zero and the initial Minecraft loading overlay is present,
-before calling `elapsed()`. The first frame after that overlay clears starts
-the existing ten-minute deadline. Later overlays and every non-`STARTING` state
-keep their current absolute deadlines. The change belongs in shared
+The merged first correction made `CraftPlanScenario.tick` return while the state
+was `STARTING`, `stateStarted` was zero and the initial Minecraft loading overlay
+was present, before calling `elapsed()`. It started the existing ten-minute
+deadline on the first later frame. Later overlays and every non-`STARTING` state
+kept their current absolute deadlines. The change belongs in shared
 `testDriver1201`, so it serves Forge/Fabric 1.20.1 and NeoForge 1.21.1. The
 separate 26.1.2 implementation and its two-minute policy stay unchanged.
 
-The focused regression covers unobserved `STARTING` with and without an overlay,
-already-started `STARTING` with an overlay, and a non-starting state with an
-overlay, alongside the existing first-observation clock check. The already-started
-case preserves the deadline during a language reload requested by `start()`.
+The first correction was necessary but insufficient. At merged head
+`aa50d4328c005cbf6856bba44e91c5a71b88e265`, the exact enabled control reached
+the title screen after `958.782` seconds, then remained in marked-world loading
+through a `5.835` minute JEI startup. The driver failed `STARTING` on
+`ReceivingLevelScreen` before any crafting breakpoint or scenario check. This
+proves that an overlay-only gate cannot establish the usable-world boundary.
+
+Replace that gate with the exact readiness predicate already required by
+`start()`: no overlay or screen, non-null level/player/game mode, and the correct
+local-server or dedicated-server connection. Only an unobserved `STARTING`
+clock may wait. The focused regression covers unobserved `STARTING` with an
+unusable and usable world, already-started `STARTING` with an unusable world,
+and a non-starting state with an unusable world, alongside the existing
+first-observation clock check. The already-started case preserves the deadline
+during a language reload requested by `start()`.
+The shared pure readiness predicate also has local and dedicated success cases,
+each missing client component, overlay/screen presence, and missing or unexpected
+server connections covered. Both clock gating and `start()` use the same
+Minecraft adapter and predicate, so their readiness requirements cannot diverge.
 After a hook-created prerequisite PR exists, compile the three
 shared-driver consumers and run the exact Forge pack. A clean enabled/disabled
 campaign must then measure process loading, world entry and scenario time

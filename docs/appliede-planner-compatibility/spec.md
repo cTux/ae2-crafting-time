@@ -69,16 +69,20 @@ Enhancements `1.0.7-forge`, replacing OmniSequence `1.3.9` with `2.0.3-fix`, and
 leaving every other mod name and hash unchanged. Hash-matching retained copies of
 both missing artifacts are available. AppliedE already matches the design hash.
 
-The disabled-AELIS attempt is still a prerequisite failure. Its driver reached
-`STARTING` during the initial loading overlay, exhausted the ten-minute scenario
-deadline on `ReceivingLevelScreen`, and never entered the request. A same-graph
-diagnostic retry reported game startup taking 781.308 seconds, with initial
-resource loading still active after ten minutes. The shared driver currently starts the deadline before it
-skips loading-overlay frames.
+The merged initial-overlay prerequisite was exercised at its exact merged head
+`aa50d4328c005cbf6856bba44e91c5a71b88e265`. The current driver survived the
+initial overlay and reached the title screen after ModernFix reported
+`958.782` seconds of process startup. The marked world then spent another
+`5.835` minutes starting JEI. The unchanged ten-minute `STARTING` deadline
+expired on `ReceivingLevelScreen` before the first crafting request; all seven
+scenario checks and every dispatch counter remained zero. The disabled control
+was therefore not run, and this result is not an AppliedE verdict.
 
-The prerequisite correction is therefore limited to the development driver:
-while `STARTING` has an uninitialized clock and the initial loading overlay,
-do not initialize its deadline. Start the unchanged ten-minute deadline on the first later observable
-frame. Keep every post-start deadline, production class and the independent
-26.1.2 driver unchanged. AP-02 through AP-05 remain open until that prerequisite
-is reviewed, merged and used for a clean exact-pack enabled/disabled campaign.
+The next prerequisite remains limited to the development driver. While
+`STARTING` has an uninitialized clock, defer that clock until the first frame
+whose overlay and screen are clear and whose client/player/game mode and correct
+local or dedicated server connection are all usable by `start()`. Then preserve
+the unchanged ten-minute deadline, including during any later language reload.
+Keep every post-start deadline, production class and the independent 26.1.2
+driver unchanged. AP-02 through AP-05 remain open until that prerequisite is
+reviewed, merged and used for a fresh exact-pack campaign.

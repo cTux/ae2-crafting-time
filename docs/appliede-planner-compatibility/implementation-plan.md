@@ -23,12 +23,21 @@ changing code. Obtain scope authorization for substantial new infrastructure or
 third-party changes. Do not run the old staging script against its stale worktree
 or locally built dependency references.
 
-The first prerequisite is now concrete. In shared `CraftPlanScenario`, defer the
-first `STARTING` deadline observation only while Minecraft's initial loading
-overlay remains present. Add focused branch coverage to `TestDriverCoreTest`.
-Do not change the ten-minute value, post-start deadlines, runner watchdogs or the
-independent 26.1.2 driver. The exemption must also require an uninitialized
-clock, so a later language reload during `STARTING` still checks its deadline.
+The merged initial-overlay prerequisite proved necessary but did not provide a
+usable-world boundary. At exact head `aa50d4328c005cbf6856bba44e91c5a71b88e265`,
+the enabled control reported `958.782` seconds to the title screen and then
+`5.835` minutes starting JEI in the marked world. It failed `STARTING` on
+`ReceivingLevelScreen`; every scenario check and dispatch counter remained zero,
+and none of the AP-03 debugger breakpoints fired. Do not run the disabled control
+or replay this graph with the same driver.
+
+The next prerequisite is now concrete. In shared `CraftPlanScenario`, defer the
+first `STARTING` deadline observation until the exact local/dedicated world
+readiness predicate used by `start()` is true. Add focused branch coverage to
+`TestDriverCoreTest`. Do not change the ten-minute value, post-start deadlines,
+runner watchdogs or the independent 26.1.2 driver. The exemption must still
+require an uninitialized clock, so a later language reload during `STARTING`
+checks its deadline.
 After the hook creates the prerequisite PR, run:
 
 ```text
@@ -36,8 +45,8 @@ After the hook creates the prerequisite PR, run:
 ./gradlew :mc_1_20_1_forge:compileTestDriverJava :fabric_1_20_1:compileTestDriverJava :mc_1_21_1_neoforge:compileTestDriverJava
 ```
 
-Retain method-level JaCoCo line/branch evidence for `waitForInitialOverlay` and
-`startTime` from the Forge test execution; the default report includes only
+Retain method-level JaCoCo line/branch evidence for `waitForUsableWorld`, the
+pure `readyToStart` predicate and `startTime` from the Forge test execution; the default report includes only
 selected driver classes and does not measure these methods. Preserve existing
 coverage gates and report the Minecraft `tick` adapter boundary separately.
 Review and merge the verified prerequisite before staging its current
