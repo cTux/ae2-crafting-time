@@ -23,6 +23,36 @@ changing code. Obtain scope authorization for substantial new infrastructure or
 third-party changes. Do not run the old staging script against its stale worktree
 or locally built dependency references.
 
+The first prerequisite is now concrete. In shared `CraftPlanScenario`, defer the
+first `STARTING` deadline observation only while Minecraft's initial loading
+overlay remains present. Add focused branch coverage to `TestDriverCoreTest`.
+Do not change the ten-minute value, post-start deadlines, runner watchdogs or the
+independent 26.1.2 driver. The exemption must also require an uninitialized
+clock, so a later language reload during `STARTING` still checks its deadline.
+After the hook creates the prerequisite PR, run:
+
+```text
+./gradlew :mc_1_20_1_forge:test --tests com.ctux.ae2craftingtime.testdriver.TestDriverCoreTest
+./gradlew :mc_1_20_1_forge:compileTestDriverJava :fabric_1_20_1:compileTestDriverJava :mc_1_21_1_neoforge:compileTestDriverJava
+```
+
+Retain method-level JaCoCo line/branch evidence for `waitForInitialOverlay` and
+`startTime` from the Forge test execution; the default report includes only
+selected driver classes and does not measure these methods. Preserve existing
+coverage gates and report the Minecraft `tick` adapter boundary separately.
+Review and merge the verified prerequisite before staging its current
+production/driver pair or launching another exact-pack comparison.
+
+After merge, stage the 363-JAR managed source, add the retained hash-matching
+Applied Enhancements JAR, replace only OmniSequence `1.3.9` with the retained
+hash-matching `2.0.3-fix` JAR, then inject the current Crafting Time pair. Record
+the resulting 364 non-Crafting-Time hashes. Set `MaxMemAlloc=8192` on the
+disposable instance and include its readback in both run records; do not inherit
+the managed source's `11648` MiB override. Run enabled first and disabled second
+from equivalent pristine state. If AP-03 still has no feasible read-only trace,
+stop again and document that separate diagnostic prerequisite instead of
+inferring the cached-child sequence.
+
 ## Exact-pack comparison
 
 Use Minecraft 1.20.1 / Forge 47.4.20 / Java 17 and the reported Project Infinity

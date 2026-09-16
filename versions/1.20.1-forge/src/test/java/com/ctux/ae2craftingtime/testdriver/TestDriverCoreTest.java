@@ -864,6 +864,14 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void scenarioClockWaitsOnlyForUnobservedStartupOverlay() {
+        assertTrue(CraftPlanScenario.waitForInitialOverlay(ScenarioState.STARTING, 0, true));
+        assertFalse(CraftPlanScenario.waitForInitialOverlay(ScenarioState.STARTING, 0, false));
+        assertFalse(CraftPlanScenario.waitForInitialOverlay(ScenarioState.STARTING, 7, true));
+        assertFalse(CraftPlanScenario.waitForInitialOverlay(ScenarioState.WORLD_READY, 0, true));
+    }
+
+    @Test
     void blockTerminalReadinessWaitsForServerAndClientBeforeOneInteraction() {
         var readiness = new CraftPlanScenario.BlockTerminalReadiness();
         var server = new CompletableFuture<Void>();

@@ -59,3 +59,26 @@ usable world; it provides no comparison result.
 
 AP-01 through AP-05 establish readiness for a documented correction. Issue closure
 also requires AP-06 and AP-07; none currently has a new passing runtime result.
+
+## Current investigation gate
+
+The 2026-09-16 preflight reproduced the startup prerequisite without selecting a
+production correction. The managed Codex-group source contains 363 mods. Compared
+with the retained exact non-Crafting-Time graph, it differs only by adding Applied
+Enhancements `1.0.7-forge`, replacing OmniSequence `1.3.9` with `2.0.3-fix`, and
+leaving every other mod name and hash unchanged. Hash-matching retained copies of
+both missing artifacts are available. AppliedE already matches the design hash.
+
+The disabled-AELIS attempt is still a prerequisite failure. Its driver reached
+`STARTING` during the initial loading overlay, exhausted the ten-minute scenario
+deadline on `ReceivingLevelScreen`, and never entered the request. A same-graph
+diagnostic retry reported game startup taking 781.308 seconds, with initial
+resource loading still active after ten minutes. The shared driver currently starts the deadline before it
+skips loading-overlay frames.
+
+The prerequisite correction is therefore limited to the development driver:
+while `STARTING` has an uninitialized clock and the initial loading overlay,
+do not initialize its deadline. Start the unchanged ten-minute deadline on the first later observable
+frame. Keep every post-start deadline, production class and the independent
+26.1.2 driver unchanged. AP-02 through AP-05 remain open until that prerequisite
+is reviewed, merged and used for a clean exact-pack enabled/disabled campaign.
