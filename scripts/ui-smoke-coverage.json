@@ -25,6 +25,10 @@
       "disposition": "DIRECT_BEHAVIOR",
       "scenario": "lightningtech-cpu"
     },
+    "ArHeh5Fz": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "lightningtech-cpu"
+    },
     "1631756": {
       "disposition": "TOOLING",
       "scenario": "standard-ae2"
@@ -189,6 +193,10 @@
       "disposition": "DIRECT_BEHAVIOR",
       "scenario": "lightningtech-cpu"
     },
+    "ArHeh5Fz": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "lightningtech-cpu"
+    },
     "1631756": {
       "disposition": "TOOLING",
       "scenario": "standard-ae2"
@@ -274,6 +282,10 @@
       "reason": "Run AdvancedAE CPU dispatch and provider statuses in an isolated direct graph."
     },
     "1527395": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "lightningtech-cpu"
+    },
+    "ArHeh5Fz": {
       "disposition": "DIRECT_BEHAVIOR",
       "scenario": "lightningtech-cpu"
     },

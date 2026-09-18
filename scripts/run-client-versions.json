@@ -7,6 +7,7 @@
       { "name": "Applied Mekanistics", "project_id": "IiATswDj", "mod_id": "appmek" },
       { "name": "ME Requester", "project_id": "E6BFl96N", "mod_id": "merequester" },
       { "name": "NeoEco AE", "project_id": "udZtKfzP", "mod_id": "neoecoae" },
+      { "name": "AE2 Lightning Tech (legacy Modrinth identity)", "project_id": "ArHeh5Fz", "mod_id": "ae2lt", "compatible": false, "reason": "Replaced by CurseForge project 1527395 after the Modrinth project was removed." },
       { "name": "AdvancedAE", "project_id": "rxYaglEe", "mod_id": "advanced_ae" },
       { "name": "ExtendedAE", "project_id": "JiOqfoFM" },
       { "name": "ExtendedAE-Plus", "project_id": "xr109llC", "mod_id": "extendedae_plus" },
@@ -73,6 +74,7 @@
       {
         "name": "AE2 Lightning Tech",
         "project_id": 1527395,
+        "replaces_project_id": "ArHeh5Fz",
         "mod_id": "ae2lt",
         "version": "2.1.0-beta.4-forge.1.20.1",
         "dependencies": [1631756],
@@ -206,6 +208,7 @@
       { "name": "AdvancedAE", "project_id": "rxYaglEe", "mod_id": "advanced_ae" },
       { "name": "ME Requester", "project_id": "E6BFl96N", "mod_id": "merequester" },
       { "name": "NeoEco AE", "project_id": "udZtKfzP", "mod_id": "neoecoae" },
+      { "name": "AE2 Lightning Tech (legacy Modrinth identity)", "project_id": "ArHeh5Fz", "mod_id": "ae2lt", "compatible": false, "reason": "Replaced by CurseForge project 1527395 after the Modrinth project was removed." },
       { "name": "ExtendedAE", "project_id": "JiOqfoFM" },
       { "name": "ExtendedAE-Plus", "project_id": "xr109llC", "mod_id": "extendedae_plus" },
       { "name": "BM Addon", "project_id": "qPydPwtX", "mod_id": "bmaddon" },
@@ -263,6 +266,7 @@
       {
         "name": "AE2 Lightning Tech",
         "project_id": 1527395,
+        "replaces_project_id": "ArHeh5Fz",
         "mod_id": "ae2lt",
         "version": "2.1.0-beta.5",
         "dependencies": [1631756],
@@ -298,6 +302,7 @@
     "id": "26.1.2-neoforge",
     "projects": [
       { "name": "AdvancedAE", "project_id": "rxYaglEe", "mod_id": "advanced_ae" },
+      { "name": "AE2 Lightning Tech (legacy Modrinth identity)", "project_id": "ArHeh5Fz", "compatible": false, "reason": "Replaced by CurseForge project 1527395 after the Modrinth project was removed." },
       { "name": "ExtendedAE", "project_id": "JiOqfoFM" },
       { "name": "BM Addon", "project_id": "qPydPwtX", "mod_id": "bmaddon" },
       { "name": "Neo Vitae", "project_id": "rvaW4C93" },
@@ -334,6 +339,7 @@
       {
         "name": "AE2 Lightning Tech",
         "project_id": 1527395,
+        "replaces_project_id": "ArHeh5Fz",
         "version": "1.0.1alpha-26.1.2neoforge",
         "compatible": { "file_id": 8121639, "filename": "ae2lt-1.0.1alpha-26.1.2neoforge.jar", "sha512": "9a884c95d7abb9daba4e54783045f98c37d6cfc1b0cbb22b01ba497071626267379159e419d1e23930938e463de1d0c70b8770d2be3f19b43f80358199d98047" },
         "latest": { "file_id": 8121639, "filename": "ae2lt-1.0.1alpha-26.1.2neoforge.jar", "sha512": "9a884c95d7abb9daba4e54783045f98c37d6cfc1b0cbb22b01ba497071626267379159e419d1e23930938e463de1d0c70b8770d2be3f19b43f80358199d98047" }
