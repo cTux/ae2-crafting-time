@@ -218,6 +218,41 @@ read as messy rectangles in-game.)
 - English and Ukrainian messages keep matching placeholders.
 - Packet, NBT, and message-component round trips have full test coverage.
 
+## Planned shared-provider icon correction
+
+[Issue #443](https://github.com/cTux/ae2-crafting-time/issues/443) reports two
+delayed item icons overlapping on one provider's red plate. This correction is
+planned, not implemented. It applies to all four supported targets.
+
+Render one red plate and at most one output icon on each camera-facing provider
+face. The first retained delayed output at that dimension and block position
+wins; every visible face uses that output. Updating that identity does not move
+it behind another output. The choice stays stable while the retained candidates
+and their positions stay unchanged; no timer or frame counter rotates icons.
+
+Keep every delayed identity in client state. If the winner recovers, finishes,
+is cancelled, or loses that position, the next retained candidate becomes
+visible. Clearing another candidate does not hide or replace the winner.
+Disconnect clears the state as before; login resync may establish a new order.
+The chosen output still uses the current centered transform and item lookup.
+An unknown or non-item winner keeps the plate-only fallback; this does not add
+fluid or chemical icons or search later candidates for a different icon.
+
+The change is display selection only. Server timing, ownership, packet and save
+formats, rainbow edges, the one-second pulse, face culling, scale, lighting and
+depth offsets retain their current behavior. No setting or dependency is added.
+
+### Acceptance for #443
+
+| ID | Observable result |
+| --- | --- |
+| P443-1 | Two or more delayed outputs sharing a provider draw one red plate and at most one centered icon per visible face. Duplicate positions do not add another draw. |
+| P443-2 | Repeated frames and updates to an existing identity keep the first retained winner. A later candidate cannot replace it while it still covers that position. |
+| P443-3 | Clearing the winner reveals the next candidate without losing its delayed state. Clearing an unselected candidate keeps the winner. An empty candidate set draws nothing. |
+| P443-4 | Partially overlapping position lists preserve all unique providers. Equal coordinates in different dimensions remain independent. Different network identities sharing one physical position still produce only one display there. |
+| P443-5 | Provider removal and session cleanup retain their existing rules. Rainbow edges and their 15-second expiry, delayed timing and plate pulse remain unchanged. Unknown/non-item winners remain plate-only. |
+| P443-6 | All four loader adapters use the same selection rule, including both plate rendering and item submission on 26.1.2. Covered selection and lifecycle checks plus reviewed in-game evidence prove the change; compilation alone does not. |
+
 ## Planned fluid and gas icon correction
 
 [Issue #376](https://github.com/cTux/ae2-crafting-time/issues/376) tracks the

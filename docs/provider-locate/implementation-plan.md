@@ -1,7 +1,9 @@
 # Provider Locate Implementation Plan
 
-Implement this as one feature commit. Let the commit hook create the PR, then
-use required CI as the first Gradle test run.
+The phases below describe the original feature. The final section is the
+current planned correction for #443; it does not repeat the original work.
+Let the commit hook create the PR, then use required CI as the first Gradle
+test run.
 
 ## Phase 1: Track dispatched patterns per craft
 
@@ -98,3 +100,109 @@ steps in the same commit.
       only its plate and outline drop.
    5. Re-enter the world and verify red returns for still-delayed crafts,
       rainbow never returns, and active chat links still work.
+
+## #443: one delayed output per provider
+
+Status: planned, not implemented. Follow the
+[specification](spec.md#acceptance-for-443) and
+[source evidence and design](technical-design.md#443-one-display-per-provider-position).
+Complete the correction as one conventional fix commit after review; do not
+run local tests before the hook-created implementation PR exists.
+
+1. **Confirm verification access.** Before a build or smoke campaign, check the
+   exact CodexVM, guest JDKs, prepared native launch manifests and disposable
+   fixture path below. Resolve missing installations through the documented
+   prepared-client workflow. Do not silently add a runner or provisioning
+   system. A missing prerequisite without an existing provisioning path needs
+   a separately documented prerequisite or explicit authority before expanding
+   this issue.
+2. **Select the display.** Add the smallest pure selection operation under
+   `shared/src/main/java` and a separate rendering view in
+   `ProviderHighlightClient`. Retain raw `plates()` and every delayed identity.
+   Select the first retained candidate per dimension/position, collapsing
+   duplicate positions while preserving other positions and dimensions.
+3. **Wire every renderer.** Replace raw plate iteration in Forge 1.20.1,
+   Fabric 1.20.1 and NeoForge 1.21.1. Update both the plate and item-submit
+   loops in NeoForge 26.1.2. Keep geometry, buffer flushes and edge paths intact.
+4. **Add focused regressions.** Cover the new pure operation's lines and
+   branches completely. Extend the nearest client boundary tests for stable
+   updates, selection after clear/trim and retained losing identities. Review
+   every renderer call site against the same output contract.
+5. **Verify after PR creation.** Run the focused tests and shared coverage
+   checks, then compile the affected four targets. Track required GitHub CI
+   separately (`test jacocoTestReport`, including the shared 100% gate).
+   Preview `scripts/run-ui-smoke.ps1 -Changed -BaseRef origin/master -PlanOnly`
+   and retain its selection. Run the required selection after the representative
+   overlap case passes; report any broader suites selected by current policy.
+   Selection rules can choose CPU-list or full-suite coverage for these paths,
+   so also run the explicit overlap check below. Do not weaken selection rules
+   to obtain a smaller campaign.
+6. **Review evidence and close the documentation gap.** Bind checks, captures
+   and reports to the implementation head. Review the single-icon center,
+   several successive frames, survivor transition, red pulse and rainbow
+   behavior. Keep unrun cases and visual-review requirements explicit. Only
+   after the criteria pass should the documents describe the fix as shipped.
+
+### Criteria mapped to checks
+
+| Criteria | Change and check |
+| --- | --- |
+| P443-1, P443-4 | Pure selection: empty input, one candidate, several candidates, repeated positions, partial overlap, different dimensions and different networks at one position. Assert exact selected outputs and unique positions. |
+| P443-2 | Pure ordering checks and `ProviderPlatesTest`: repeated reads, updating the winner, updating a loser and adding a later candidate preserve the first retained winner. |
+| P443-3, P443-5 | Client boundary checks: clear winner/loser, trim a position, clear the last candidate and end the session; assert retained identities and independent edge state as well as selected displays. Check unknown/non-item output selection without inventing a registry fallback. |
+| P443-1, P443-2, P443-6 | Review all four render adapters and both 26.1.2 passes; compile all targets. Reviewed overlap captures prove centering and stability in actual render pipelines. |
+| P443-3, P443-5, P443-6 | Run `delayed-status` for existing automatic plate and final-output cleanup coverage; perform the additional overlap/recovery/manual-locate visual check below. Existing shape and timer code stays unchanged. |
+
+### Runtime scope and prerequisites
+
+Investigation at `818809c57cf06540b23430bb4836e06f7fd82466` verified host Java
+17, 21 and 25 selection and Gradle wrapper 8.12. CodexVM exists but was stopped.
+Guest Java, SSH/VNC access and prepared manifest contents remain unverified.
+This is a feasibility gap, not a successful smoke run.
+
+Use the compatible profiles in `scripts/run-client-versions.json`:
+
+| Target | Java | Loader / AE2 at investigation | Visual role |
+| --- | --- | --- | --- |
+| 1.20.1 Forge | 17 | 47.4.10 / 15.4.10 | First overlap reproduction and older render path |
+| 1.20.1 Fabric | 17 | 0.19.4 / 15.1.0; Fabric API 0.92.11+1.20.1 | Distinct immediate-buffer path |
+| 1.21.1 NeoForge | 21 | 21.1.238 / 19.2.17 | Compile and client boundary coverage; run additional smoke required by change selection |
+| 26.1.2 NeoForge | 25 | 26.1.2.99 / 26.1.10-beta | Separate plate and item-submit passes |
+
+Recheck profile versions before execution. Follow `docs/dev-client.md` and the
+prepared-smoke skill: build on the host, stage immutable artifacts, and launch
+only the matching installed native loader in CodexVM. Check the prepared
+`launch.json` at the documented guest root for the exact target/resolved loader.
+Retain evidence under `build/ui-smoke`, archive it, and stop only the recorded
+client before the next target. No dedicated-server campaign is needed for this
+client-only selection change.
+
+Tracked source markers exist for Forge and both NeoForge targets and use
+`disposableWorldId: SOURCE_ONLY`. Fabric intentionally uses the Forge source
+fixture. Use the existing runner's disposable copy and marker validation;
+never launch or modify the tracked source world.
+
+### Additional overlap check
+
+The existing `delayed-status` leaf places its two outputs on different
+providers, so it remains a lifecycle check. Use an authorized interactive
+prepared client and disposable world for this additional manual case; no new
+automation infrastructure is part of this plan:
+
+1. Put two processing patterns with distinct item outputs in one provider.
+   Complete a sample of each, then start both crafts and withhold their outputs
+   until both are delayed. Keep the terminal closed when inspecting the world.
+2. Record both retained delayed identities referencing the same provider.
+   Capture the original overlap before the fix and the corrected view after
+   it, each with its exact tested revision. Observe a face and a corner view
+   over several frames: one centered icon per visible face, with no rotation
+   between candidates. The automatic visual gate cannot substitute for review
+   without a qualified reference.
+3. Locate one craft to add rainbow edges. Release the selected output while
+   the other stays delayed. Verify the surviving icon appears, red remains,
+   and rainbow follows its independent expiry. Release the final output and
+   verify red clears. Repeat with the unselected output released first.
+4. Perform the same case on Fabric 1.20.1 and NeoForge 26.1.2 after Forge passes.
+   If the prepared client cannot establish this setup through existing controls,
+   record the exact gap before adding a fixture extension; do not report the
+   ordinary `delayed-status` pass as overlap proof.
