@@ -21,9 +21,13 @@
       "scenario": "neoeco-cpu",
       "reason": "The compatible Forge pin selects the older pending-accounting adapter. Smoke batched-long in a focused newest-adapter graph."
     },
-    "ArHeh5Fz": {
+    "1527395": {
       "disposition": "DIRECT_BEHAVIOR",
       "scenario": "lightningtech-cpu"
+    },
+    "1631756": {
+      "disposition": "TOOLING",
+      "scenario": "standard-ae2"
     },
     "rxYaglEe": {
       "disposition": "FOCUSED_BEHAVIOR",
@@ -181,9 +185,13 @@
       "disposition": "DIRECT_BEHAVIOR",
       "scenario": "neoeco-cpu"
     },
-    "ArHeh5Fz": {
+    "1527395": {
       "disposition": "DIRECT_BEHAVIOR",
       "scenario": "lightningtech-cpu"
+    },
+    "1631756": {
+      "disposition": "TOOLING",
+      "scenario": "standard-ae2"
     },
     "JiOqfoFM": {
       "disposition": "DIRECT_BEHAVIOR",
@@ -265,7 +273,7 @@
       "profile": "compatible",
       "reason": "Run AdvancedAE CPU dispatch and provider statuses in an isolated direct graph."
     },
-    "ArHeh5Fz": {
+    "1527395": {
       "disposition": "DIRECT_BEHAVIOR",
       "scenario": "lightningtech-cpu"
     },

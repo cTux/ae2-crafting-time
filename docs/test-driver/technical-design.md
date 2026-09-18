@@ -762,14 +762,17 @@ Runtime acceptance still requires independent, group and full-suite evidence
 on all four targets; code or contract tests alone do not establish a UI pass.
 
 
-The delayed leaf observes `ProviderHighlightClient.plates()` without mutating
-it. Both `StandardCraftFixture` adapters hold final smooth-stone output while
-continuing real furnace ticks and importing the stone dependency. Require stone
-plate recovery while the CPU waits for smooth stone, then a final delayed plate
-and completed output still in the furnace. Close the menu, aim at the provider
-and intervening AE2 terminal, and capture `delayed-world-highlight.png`. Release
+The delayed leaf observes `ProviderHighlightClient.plates()` and
+`renderPlates()` without mutating them. Both `StandardCraftFixture` adapters
+dispatch stone and glass through one provider and return them at separate,
+controlled recovery points. Require two retained identities, one stable
+first-retained render icon, a real locate edge, and survivor selection after the
+winner returns. Capture `delayed-world-overlap.png` and
+`delayed-world-winner-recovered.png`. The final provider then holds smooth stone;
+close the menu, aim at that provider and the intervening AE2 terminal, and
+capture `delayed-world-highlight.png`. Release
 the held output through normal ME insertion in one server operation. After the
-CPU is idle, output is stored, new samples exist, and both plates are absent,
+CPU is idle, output is stored, new samples exist, and all plates are absent,
 capture `delayed-world-finished.png` before reopening idle status. World stages
 run independently of the menu-frame observer, which has no fresh frames when
 menus are closed. Rendering correctness still requires image review.

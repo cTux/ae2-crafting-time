@@ -116,6 +116,10 @@ abstract class AddonCpuFixture<P> {
 
     void configureAmount(appeng.client.gui.me.crafting.CraftAmountScreen screen) {}
 
+    boolean dispatchReady(DispatchObservation.Snapshot snapshot) {
+        return snapshot.finishes() > 0;
+    }
+
     void verifyDispatch(DispatchObservation.Snapshot snapshot) {
         if (!snapshot.completedExactlyOnce()) throw new IllegalStateException("fixture dispatch/output mismatch: " + snapshot);
     }

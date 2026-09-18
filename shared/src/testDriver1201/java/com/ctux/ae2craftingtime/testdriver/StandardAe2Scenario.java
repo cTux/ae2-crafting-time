@@ -38,12 +38,14 @@ final class StandardAe2Scenario {
             Map.entry("running-status", List.of("submitted", "running", "progress", "header", "layout")),
             Map.entry("cpu-list-total-ttc", CpuListTtcScenario.CHECKS),
             Map.entry("delayed-status", List.of("submitted", "delayed", "row", "style", "tooltip", "layout", "recovered",
-                    "plate-recovered", "final-plate", "completed", "output", "profile-sample", "plate-cleared")),
+                    "overlap", "stable-selection", "winner-recovery", "rainbow-preserved", "plate-recovered",
+                    "final-plate", "completed", "output", "profile-sample", "plate-cleared")),
             Map.entry("craft-lifecycle", List.of("plan", "submitted", "status", "profile-sample", "total-cleared", "completed", "output",
                     "plan-no-data", "plan-partial", "accuracy-full", "accuracy-partial", "details-chat")));
     private enum Stage { PREPARE, TERMINAL, AMOUNT, PLAN_SORT, PLAN_TOOLTIP, PLAN_DETAILS, PLAN_RESET,
         SUBMIT, OPEN_STATUS, ACTIVE, STATUS_SORT, STATUS_TOOLTIP, STATUS_DETAILS, STATUS_RESET,
-        RESTORE, DELAYED, PUMP, FINISHED, REOPEN, EMPTY, WORLD_POSITION, WORLD_HIGHLIGHT, WORLD_RELEASE, WORLD_FINISHED,
+        RESTORE, DELAYED, OVERLAP_POSITION, OVERLAP_HIGHLIGHT, OVERLAP_RELEASE, OVERLAP_RECOVERY, OVERLAP_REOPEN,
+        PUMP, FINISHED, REOPEN, EMPTY, WORLD_POSITION, WORLD_HIGHLIGHT, WORLD_RELEASE, WORLD_FINISHED,
         GALLERY_PARTIAL_PLAN, GALLERY_PROFILED_PLAN, GALLERY_DETAILS, GALLERY_CHAT, GALLERY_NEXT_JOB,
         CPU_LIST_REOPEN, CPU_LIST_REOPENED }
     private final String leaf;
@@ -80,6 +82,10 @@ final class StandardAe2Scenario {
     private volatile boolean finalOutputReady;
     private boolean stonePlateObserved;
     private final StableFrames<Boolean> worldFrames = new StableFrames<>(8);
+    private final StableFrames<String> overlapFrames = new StableFrames<>(8);
+    private String overlapWinner;
+    private String overlapSurvivor;
+    private boolean overlapLocated;
     private final StatsInteraction stats = new StatsInteraction();
     private boolean recurrenceSwapped;
     private boolean recurrenceVisited;
@@ -226,6 +232,71 @@ final class StandardAe2Scenario {
         if (phase == Stage.WORLD_POSITION) {
             if (server(minecraft, player -> { fixture.viewFinalProvider(player); return true; })) {
                 phase = Stage.WORLD_HIGHLIGHT;
+            }
+            return false;
+        }
+        if (phase == Stage.OVERLAP_POSITION) {
+            if (server(minecraft, player -> { fixture.viewSharedProvider(player); return true; })) {
+                overlapFrames.reset();
+                phase = Stage.OVERLAP_HIGHLIGHT;
+            }
+            return false;
+        }
+        if (phase == Stage.OVERLAP_HIGHLIGHT) {
+            minecraft.player.setYRot(9.462f);
+            minecraft.player.setXRot(2);
+            var raw = plateOutputsAt(4);
+            var rendered = renderOutputsAt(4);
+            var state = raw + "|" + rendered + "|" + hasEdge(overlapWinner, 4);
+            if (minecraft.screen != null || !overlapFrames.observe(state)) return false;
+            if (!raw.equals(java.util.Set.of("minecraft:stone", "minecraft:glass"))
+                    || !rendered.equals(java.util.Set.of(overlapWinner)) || !hasEdge(overlapWinner, 4)) return false;
+            screenshot.accept("delayed-world-overlap.png");
+            mark(checks, "overlap", true);
+            mark(checks, "stable-selection", true);
+            phase = Stage.OVERLAP_RELEASE;
+            return false;
+        }
+        if (phase == Stage.OVERLAP_RELEASE) {
+            if (server(minecraft, player -> {
+                fixture.releaseDelayedOutput(overlapWinner);
+                fixture.pump(player, true);
+                return true;
+            })) {
+                overlapFrames.reset();
+                phase = Stage.OVERLAP_RECOVERY;
+            }
+            return false;
+        }
+        if (phase == Stage.OVERLAP_RECOVERY) {
+            server(minecraft, player -> { fixture.pump(player, true); return true; });
+            var raw = plateOutputsAt(4);
+            var rendered = renderOutputsAt(4);
+            var state = raw + "|" + rendered + "|" + hasEdge(overlapWinner, 4);
+            if (!overlapFrames.observe(state)) return false;
+            if (!raw.equals(java.util.Set.of(overlapSurvivor))
+                    || !rendered.equals(java.util.Set.of(overlapSurvivor)) || !hasEdge(overlapWinner, 4)) return false;
+            screenshot.accept("delayed-world-winner-recovered.png");
+            mark(checks, "winner-recovery", true);
+            mark(checks, "rainbow-preserved", true);
+            mark(checks, "plate-recovered", true);
+            if (server(minecraft, player -> {
+                fixture.releaseDelayedOutput(overlapSurvivor);
+                fixture.pump(player, true);
+                fixture.viewTerminal(player);
+                return true;
+            })) phase = Stage.OVERLAP_REOPEN;
+            return false;
+        }
+        if (phase == Stage.OVERLAP_REOPEN) {
+            if (minecraft.screen == null) {
+                minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
+                        new BlockHitResult(Vec3.atCenterOf(fixture.terminal).add(0, 0, -0.5),
+                                Direction.NORTH, fixture.terminal, false));
+            } else if (minecraft.screen instanceof MEStorageScreen<?> screen) {
+                var button = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$statusButton();
+                DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+                phase = Stage.PUMP;
             }
             return false;
         }
@@ -586,8 +657,25 @@ final class StandardAe2Scenario {
                 mark(checks, "tooltip", true);
             }
             if (!stonePlateObserved) return false;
+            var raw = plateOutputsAt(4);
+            var rendered = renderOutputsAt(4);
+            if (!raw.equals(java.util.Set.of("minecraft:stone", "minecraft:glass")) || rendered.size() != 1) return false;
+            if (overlapWinner == null) {
+                overlapWinner = rendered.iterator().next();
+                overlapSurvivor = overlapWinner.equals("minecraft:stone") ? "minecraft:glass" : "minecraft:stone";
+                overlapFrames.reset();
+            }
+            if (!rendered.equals(java.util.Set.of(overlapWinner)) || !overlapFrames.observe(overlapWinner)) return false;
+            if (!overlapLocated) {
+                var row = snapshot.rows().stream().filter(value -> value.outputId().equals(overlapWinner)).findFirst().orElseThrow();
+                DriverPlatform.doubleClick(minecraft, row.cell().centerX(), row.cell().centerY());
+                overlapLocated = true;
+                return false;
+            }
+            if (!hasEdge(overlapWinner, 4)) return false;
             moveMouse.accept(0, 0);
-            phase = Stage.PUMP;
+            minecraft.player.closeContainer();
+            phase = Stage.OVERLAP_POSITION;
         } else if (phase == Stage.PUMP) {
             boolean complete = server(minecraft, player -> {
                 long output = fixture.pump(player, true);
@@ -598,12 +686,7 @@ final class StandardAe2Scenario {
                 return output == 1 && !fixture.cpu(player).getCluster().isBusy() && fixture.observedNewSamples(player);
             });
             if (leaf.equals("delayed-status") && progressed && dispatched) {
-                if (stonePlateObserved && !hasPlate("minecraft:stone", 4)
-                        && !Boolean.TRUE.equals(checks.get("plate-recovered"))) {
-                    mark(checks, "plate-recovered", true);
-                    screenshot.accept("delayed-plate-recovered.png");
-                }
-                if (operation == null && Boolean.TRUE.equals(checks.get("plate-recovered")) && finalOutputReady
+                if (operation == null && finalOutputReady
                         && rowText(snapshot, "minecraft:smooth_stone", "text.ae2craftingtime.ttc_delayed") != null
                         && hasPlate("minecraft:smooth_stone", 8)) {
                     mark(checks, "final-plate", true);
@@ -725,6 +808,25 @@ final class StandardAe2Scenario {
     private boolean hasPlate(String output, int providerOffset) {
         return ProviderHighlightClient.plates().stream().anyMatch(plate -> plate.outputId().equals(output)
                 && plate.positions().contains(fixture.terminal.east(providerOffset)));
+    }
+
+    private java.util.Set<String> plateOutputsAt(int providerOffset) {
+        return ProviderHighlightClient.plates().stream()
+                .filter(plate -> plate.positions().contains(fixture.terminal.east(providerOffset)))
+                .map(ProviderHighlightClient.Plate::outputId)
+                .collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
+    }
+
+    private java.util.Set<String> renderOutputsAt(int providerOffset) {
+        return ProviderHighlightClient.renderPlates().stream()
+                .filter(plate -> plate.position().equals(fixture.terminal.east(providerOffset)))
+                .map(ProviderHighlightClient.RenderPlate::outputId)
+                .collect(java.util.stream.Collectors.toCollection(java.util.LinkedHashSet::new));
+    }
+
+    private boolean hasEdge(String output, int providerOffset) {
+        return ProviderHighlightClient.liveEdges().stream().anyMatch(edge -> edge.outputId().equals(output)
+                && edge.positions().contains(fixture.terminal.east(providerOffset)));
     }
 
     private static void validateLayout(UiSnapshot snapshot) {

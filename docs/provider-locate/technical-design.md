@@ -440,11 +440,12 @@ server delay detection, persistence, protocol versions, translations or addon
 support. No dedicated-server behavior changes are required.
 
 The existing `ProviderPlatesTest` and `ProviderHighlightTriggerTest` cover raw
-state and independent lifetimes but not overlapping render positions.
-`StandardAe2Scenario` captures delayed-world highlights and cleanup; its stone
-and smooth-stone recipes use different providers at offsets 4 and 8. Passing
-that scenario does not prove #443. The implementation plan names the additional
-same-provider visual setup and the runtime prerequisites that remain unchecked.
+state and independent lifetimes. `StandardAe2Scenario` supplies the runtime
+boundary: its delayed leaf dispatches stone and glass through the provider at
+offset 4, retains both identities, checks the single first-retained render view,
+locates the selected row, and releases that winner before checking survivor and
+rainbow preservation. Its final provider at offset 8 retains the existing
+completion and cleanup coverage.
 
 ## Sources checked
 
