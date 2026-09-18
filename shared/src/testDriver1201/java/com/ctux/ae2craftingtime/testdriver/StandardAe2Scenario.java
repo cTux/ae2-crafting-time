@@ -85,7 +85,6 @@ final class StandardAe2Scenario {
     private final StableFrames<String> overlapFrames = new StableFrames<>(8);
     private String overlapWinner;
     private String overlapSurvivor;
-    private boolean overlapLocated;
     private final StatsInteraction stats = new StatsInteraction();
     private boolean recurrenceSwapped;
     private boolean recurrenceVisited;
@@ -666,16 +665,10 @@ final class StandardAe2Scenario {
                 overlapFrames.reset();
             }
             if (!rendered.equals(java.util.Set.of(overlapWinner)) || !overlapFrames.observe(overlapWinner)) return false;
-            if (!overlapLocated) {
-                var row = snapshot.rows().stream().filter(value -> value.outputId().equals(overlapWinner)).findFirst().orElseThrow();
-                DriverPlatform.doubleClick(minecraft, row.cell().centerX(), row.cell().centerY());
-                overlapLocated = true;
-                return false;
-            }
-            if (!hasEdge(overlapWinner, 4)) return false;
-            moveMouse.accept(0, 0);
-            minecraft.player.closeContainer();
+            var row = snapshot.rows().stream().filter(value -> value.outputId().equals(overlapWinner)).findFirst().orElseThrow();
+            DriverPlatform.doubleClick(minecraft, row.cell().centerX(), row.cell().centerY());
             phase = Stage.OVERLAP_POSITION;
+            return false;
         } else if (phase == Stage.PUMP) {
             boolean complete = server(minecraft, player -> {
                 long output = fixture.pump(player, true);
