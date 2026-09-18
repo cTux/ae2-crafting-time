@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import com.ctux.ae2craftingtime.core.ProviderDisplaySelection;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -45,6 +46,9 @@ public final class ProviderHighlightClient {
         public Plate(String dimensionId, List<BlockPos> positions, String outputId, long highlightedAtMillis) {
             this("", dimensionId, positions, outputId, highlightedAtMillis);
         }
+    }
+
+    public record RenderPlate(String dimensionId, BlockPos position, String outputId) {
     }
 
     private static final LinkedHashMap<String, Plate> PLATES = new LinkedHashMap<>();
@@ -247,6 +251,17 @@ public final class ProviderHighlightClient {
     /** Persistent plates for the render hooks to filter by dimension. Server authoritative. */
     public static List<Plate> plates() {
         return new ArrayList<>(PLATES.values());
+    }
+
+    public static List<RenderPlate> renderPlates() {
+        var candidates = PLATES.values().stream()
+                .filter(plate -> shouldShowPlates(plate.outputId()))
+                .map(plate -> new ProviderDisplaySelection.Candidate<>(plate, plate.dimensionId(), plate.positions()))
+                .toList();
+        return ProviderDisplaySelection.firstByPosition(candidates).stream()
+                .map(selected -> new RenderPlate(selected.dimensionId(), selected.position(),
+                        selected.value().outputId()))
+                .toList();
     }
 
     /**
