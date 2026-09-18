@@ -386,6 +386,66 @@ blocked (NO POWER / NO SPACE)
 - Command and render registrations are client/server separated so a
   dedicated server never loads client classes.
 
+## #443: one display per provider position
+
+Research baseline: `818809c57cf06540b23430bb4836e06f7fd82466`.
+This section describes a planned correction for
+[issue #443](https://github.com/cTux/ae2-crafting-time/issues/443).
+The report supplies no exact game or loader version. Source inspection proves
+duplicate submissions on all four targets; a controlled in-game reproduction
+has not yet run.
+
+`ProviderHighlightClient` correctly retains plates in a `LinkedHashMap` keyed
+by network, dimension and output. `showPlate` replaces an existing identity
+without changing its insertion order. `plates()` returns every identity.
+Each renderer then loops over every plate and every position without selecting
+one output for a shared position. The face transform depends only on position
+and direction, so different outputs use the same center, scale and depth.
+
+| Current source | Relevant boundary |
+| --- | --- |
+| `shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/DelayedNotificationServer.java` | Sends one automatic plate per newly delayed output. All four S2C handlers call `showPlate`; recovery clears only the matching identity. |
+| Both `ProfilerBridge` copies in `shared/src/mc1201` and `shared/src/mc2612` | Finish/cancel cleanup and login resync preserve independent output lifetimes. No change needed here. |
+| `shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/ProviderHighlightClient.java` | Owns retained order, raw plate snapshots, position trimming and session cleanup. Add a separate rendering view here; retain the raw `plates()` contract used by tests and the driver. |
+| Forge 1.20.1 and NeoForge 1.21.1 `ProviderHighlightRender`, Fabric 1.20.1 `Ae2CraftingTimeClient` | Currently loop over raw plates, then call the mc1201 `ProviderHighlightShapes.renderFacePlatesAndIcons`. |
+| NeoForge 26.1.2 `ProviderHighlightRender` | Both `onRenderLevelStage` and `onSubmitGeometry` independently loop over raw plates. Both must consume the same selection rule. |
+| Both `ProviderHighlightShapes` copies and shared `ProviderFaceIcons` | Already center icons and select camera-facing faces. Preserve these geometry and buffer boundaries. |
+
+Select once per `(dimension, block position)`, in retained candidate order.
+The first candidate wins, including when another network identity references
+the same physical position. Duplicate positions within one candidate also
+collapse. Selection is derived from current retained state and does not delete
+losers or change their positions, timestamps or network/output identity.
+Different dimensions never compete. Apply the current nonblank-output gate
+before selection; do not filter by successful item-registry resolution.
+
+Keep the selection operation Minecraft-free in `shared/src/main/java`, with
+tests under `shared/src/test/java`. The shared client adapter converts positions
+to that operation's value representation and returns selected render entries.
+Use ordinary ordered collections; no new dependency, persistent winner cache,
+timer, packet field or configuration is needed. Both 26.1.2 passes derive their
+selection from the same ordered state, so unchanged state cannot choose two
+different winners. World rendering remains on the existing client thread.
+
+Removing the winner naturally exposes the next retained candidate. Removing a
+loser leaves the display unchanged. An update that removes a position releases
+only that position; retained insertion order still applies elsewhere. Session
+end empties the source state, and resync establishes a fresh retention order.
+An unknown/non-item winner renders the existing plate-only fallback. Typed
+resource icons remain the separate planned #376 correction.
+
+Preserve the older per-face filled-buffer flush, Fabric's immediate buffer and
+26.1.2's separate item-submit phase. Do not change edge enumeration or timing,
+server delay detection, persistence, protocol versions, translations or addon
+support. No dedicated-server behavior changes are required.
+
+The existing `ProviderPlatesTest` and `ProviderHighlightTriggerTest` cover raw
+state and independent lifetimes but not overlapping render positions.
+`StandardAe2Scenario` captures delayed-world highlights and cleanup; its stone
+and smooth-stone recipes use different providers at offsets 4 and 8. Passing
+that scenario does not prove #443. The implementation plan names the additional
+same-provider visual setup and the runtime prerequisites that remain unchecked.
+
 ## Sources checked
 
 - [Issue #231](https://github.com/cTux/ae2-crafting-time/issues/231).
