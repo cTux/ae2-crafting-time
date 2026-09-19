@@ -102,3 +102,42 @@ keep their current behavior. Do not restore removed accuracy tooltip rows.
 
 See the [technical design](technical-design.md) and
 [implementation plan](implementation-plan.md).
+
+## Planned warning-tooltip controls correction (#437)
+
+[Issue #437](https://github.com/cTux/ae2-crafting-time/issues/437) restores the
+control hints skipped by warning tooltips. This correction is planned, not
+implemented. It applies to all four supported targets and extends the original
+tooltip requirements above; it does not reopen the dispatch-status feature.
+
+Every `DELAYED`, `NO SPACE`, `NO PROVIDER`, `NO POWER`, `NO CHANNEL`, `NO TARGET`,
+`INPUT BLOCKED`, and `LOCKED` tooltip ends with these three gray hints, once each:
+
+1. `Double-Click for highlighting Pattern Provider in a world`
+2. `Ctrl-Click for TTC details`
+3. `Ctrl-Alt-Click to clear TTC stats`
+
+Use the existing `locate_hint`, `details_hint`, and `reset_hint` translations in
+English and Ukrainian. Keep the status explanation, suggestion, delayed advice,
+and any scheduled-batch qualifier unchanged and above the hints. Ordinary TTC
+text colored red by relative ranking is not a warning status.
+
+Hints describe the existing controls; they do not grant new action eligibility.
+Details/reset still require positive active or pending work, so stored-only
+`NO SPACE` rows still ignore those clicks. Locate still requires server-resolved
+provider positions and job ownership; an unresolvable row keeps its expiry
+notice. Preserve row selection after sorting/scrolling, server validation,
+packets, saves, status priority, and provider-highlight behavior. Normal TTC,
+Waiting, collecting-data, empty rows, Craft Plan, and Crafting Tree keep their
+current tooltip behavior. No setting or dependency is added.
+
+### Acceptance for #437
+
+| ID | Observable result |
+| --- | --- |
+| W437-1 | Every warning listed above ends with exactly the three hints in the stated order, including warnings with no learned samples. |
+| W437-2 | Existing tooltip body components keep their text, style, and order. The mixed-row qualifier stays before the controls; DELAYED does not duplicate its locate hint. |
+| W437-3 | Existing English/Ukrainian hint keys and gray styling are reused. Non-warning rows and other UI surfaces retain their current behavior. |
+| W437-4 | Automated final-tooltip checks cover INPUT BLOCKED and NO SPACE, all block-reason enum values, final hint order, and duplicate prevention. |
+| W437-5 | Reviewed English client evidence shows complete, readable INPUT BLOCKED and NO SPACE tooltips. Real locate/details/reset clicks on an eligible warning row target the displayed output; stored-only NO SPACE retains its current no-op details/reset boundary. |
+| W437-6 | All four targets compile the shared correction and pass their required changed-scope checks. No protocol, save, dependency, action-eligibility, or status-detection change is introduced. |

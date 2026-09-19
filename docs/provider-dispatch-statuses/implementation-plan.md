@@ -150,3 +150,68 @@ identity and English screenshots are recorded; older variants retain contract
 coverage; translations and protocol boundaries agree; required CI is green;
 and no known repository-owned warning or false-positive classification remains.
 Do not merge or publish a release without the corresponding user authorization.
+
+## Warning-tooltip controls correction (#437)
+
+This is the bounded follow-up for [#437](spec.md#planned-warning-tooltip-controls-correction-437).
+The original feature steps above are historical context, not work to repeat.
+Implement only after this correction's three documents are merged.
+
+1. Correct final tooltip assembly in the shared status renderer. Append the
+   locate/details/reset section once after every warning body, preserving
+   non-warning behavior and existing action eligibility (W437-1, W437-2, W437-3).
+2. Add final-composition regression checks in the existing shared Minecraft
+   test source set, with covered core tests if new pure decisions are needed.
+   Assert exact hint suffix/order, unchanged body, no duplicates, mixed-row
+   qualifier placement, no-sample warnings, all six block reasons, NO SPACE,
+   DELAYED, and ordinary/empty-row exclusions. Keep both locale key checks and
+   every existing coverage gate (W437-1 through W437-4, W437-6).
+3. Extend the existing input-blocked and no-space scenario assertions and the
+   native NO SPACE counterpart to observe the final hints. Reuse existing
+   driver input actions on an eligible warning row to verify all three controls
+   against its output, preserving the stored-only NO SPACE rejection. Keep
+   captures before actions that close the screen or reset samples. Cover row
+   targeting after sorting/scrolling through existing controls fixtures
+   (W437-4, W437-5).
+4. After the hook creates the implementation PR, run the focused regression
+   checks, shared coverage, and affected target compilation. Review
+   `scripts/run-ui-smoke.ps1 -Changed -BaseRef origin/master -PlanOnly` before
+   building or launching. The baseline renderer rule selects
+   `standard-status-controls`, `waiting-status`, `running-status`,
+   `delayed-status`, `no-space-status`, `no-provider-status`, `no-power-status`,
+   `no-channel-status`, `no-target-status`, `input-blocked-status`,
+   `locked-status`, and `craft-lifecycle` on all four targets. Editing `TtcText`
+   additionally selects `recurrent-plan` and `standard-plan-controls`; review
+   the actual plan rather than assuming this list is exhaustive (W437-6).
+5. First prove INPUT BLOCKED and NO SPACE on prepared compatible Fabric 1.20.1
+   with Java 17, then run the complete required changed selection sequentially
+   in CodexVM. Use the newest implemented adapters and English runtime text;
+   validate Ukrainian statically. Archive screenshots/sidecars, result checks,
+   dependency/artifact identities and timings at the tested PR SHA. Review the
+   complete tooltips for fit and all required captures before accepting them.
+   A focused pair alone does not satisfy the selected matrix (W437-5, W437-6).
+
+### Verification prerequisites and completion
+
+The investigation verified host JDKs 17/21/25, the Gradle 8.12 wrapper, a running CodexVM,
+working SSH, matching guest JDKs, all four compatible native launch manifests,
+loader entry classes and asset directories. The tracked source-fixture markers,
+disposable-copy/reset flow and existing launch/evidence/cleanup scripts exist.
+No new verification framework is needed. Recheck the exact worktree share,
+manifest/dependency match and fixture marker before staging; build only on the
+host and launch only guest-local disposable clients. Three manifests reference
+absent version-named wrapper JARs while their actual loader entry classes are
+present elsewhere on the classpath; this is not a proven launch failure and
+must be assessed by normal preflight, not treated as a recorded smoke pass.
+
+Budget launches and wall time from the reviewed selection. Record measured
+startup costs, use existing progress deadlines, and stop on an owned failure
+before expanding the campaign. Final proof must use a clean run of the current
+head; diagnostic retries do not replace it. No client was launched during this
+investigation, so runtime costs and success remain unmeasured.
+
+Complete when W437-1 through W437-6 have current-head evidence, required CI
+passes, and the reviewed diff preserves the stated compatibility boundaries.
+The original dispatch implementation's dedicated-server, persistence and
+AdvancedAE dispatch campaign is not a new requirement for this tooltip-only
+correction; any cases required by current changed-selection policy still run.
