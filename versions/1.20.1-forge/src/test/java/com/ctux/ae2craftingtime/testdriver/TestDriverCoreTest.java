@@ -64,6 +64,17 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void nativeCpuOrderKeepsCrazyPriorityAcrossChannelFallback() {
+        var raw = List.of(3, 6, 4, 5, 8, 1);
+        var prioritized = List.of(7, 3, 6, 4, 5, 8);
+        assertTrue(CpuListTtcScenario.nativeOrderReady(false, raw, raw, 7));
+        assertFalse(CpuListTtcScenario.nativeOrderReady(false, prioritized, raw, 7));
+        assertTrue(CpuListTtcScenario.nativeOrderReady(true, prioritized, raw, 7));
+        assertFalse(CpuListTtcScenario.nativeOrderReady(true, raw, raw, 7));
+        assertFalse(CpuListTtcScenario.nativeOrderReady(true, List.of(), raw, 7));
+    }
+
+    @Test
     void cpuListFirstDrawProbeUsesTheStableTooltipCaller() throws Exception {
         var node = new ClassNode();
         try (var input = getClass().getResourceAsStream(

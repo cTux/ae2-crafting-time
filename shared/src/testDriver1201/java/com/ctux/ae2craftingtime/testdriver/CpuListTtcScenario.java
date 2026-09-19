@@ -186,8 +186,7 @@ final class CpuListTtcScenario {
             case MODE_AE2 -> {
                 var expected = snapshot.rawCpuSerials().subList(snapshot.scroll(), snapshot.scroll() + 6);
                 var actual = snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::serial).toList();
-                if ((!crazyPriorityChanged && !actual.equals(expected))
-                        || (crazyPriorityChanged && actual.get(0) != shortestSerial)
+                if (!nativeOrderReady(crazyPriorityChanged, actual, expected, shortestSerial)
                         || !itemRowsReady(snapshot.rows())) return false;
                 observeItemMode(snapshot);
                 mark(checks, "raw-order");
@@ -222,7 +221,8 @@ final class CpuListTtcScenario {
             case CHANNEL_FALLBACK -> {
                 var expected = snapshot.rawCpuSerials().subList(snapshot.scroll(), snapshot.scroll() + 6);
                 var fallbackTitle = title(snapshot);
-                if (!snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::serial).toList().equals(expected)
+                var actual = snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::serial).toList();
+                if (!nativeOrderReady(crazyPriorityChanged, actual, expected, shortestSerial)
                         || snapshot.cpuCards().stream().anyMatch(card -> card.ttc() != null)
                         || fallbackTitle == null
                         || !SortObservation.sortableIds(snapshot.rows()).equals(itemModeOrders.get(2))) return false;
@@ -892,6 +892,11 @@ final class CpuListTtcScenario {
         var active = rows.stream().filter(row -> row.craftAmount() > 0).toList();
         return active.size() >= 2 && active.stream().anyMatch(row -> row.description().stream()
                 .anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")));
+    }
+
+    static boolean nativeOrderReady(boolean crazyPriorityChanged, java.util.List<Integer> actual,
+            java.util.List<Integer> rawWindow, int prioritySerial) {
+        return crazyPriorityChanged ? !actual.isEmpty() && actual.get(0) == prioritySerial : actual.equals(rawWindow);
     }
 
     private CpuListTtcControl.ServerState serverState() {
