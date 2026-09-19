@@ -1,0 +1,5 @@
+# 1.20.1-forge	crazyae2addons	cpu-list-2.6.2
+# source=https://github.com/Omicron-Industries/CrazyAE2Addons/blob/a100d8794bd053083d3eafe292a5bee1e3bd753e/src/main/java/net/oktawia/crazyae2addons/mixins/MixinCPUSelectionList.java
+net/oktawia/crazyae2addons/mixins/MixinCPUSelectionList	class	java/lang/Object
+net/oktawia/crazyae2addons/mixins/MixinCPUSelectionList	method:sortThenSlice	(Ljava/util/List;II)Ljava/util/List;
+net/oktawia/crazyae2addons/mixins/MixinCPUSelectionList	method:hitTestOnSorted	(Lappeng/client/Point;Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V

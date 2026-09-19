@@ -18,13 +18,14 @@ public final class CpuTtcDisplayOrder {
 
         public <T> List<T> display(List<T> raw, ToIntFunction<T> serial, Predicate<T> busy,
                 Function<T, OptionalLong> seconds, long revision, int mode, boolean channel) {
-            if (raw == null || serial == null || busy == null || seconds == null || mode < 0 || mode > 2) {
+            if (raw == null || serial == null || busy == null || seconds == null) {
                 throw new IllegalArgumentException("invalid CPU display input");
             }
+            var ttcOrder = ttcOrderActive(mode, channel);
             var currentSerials = raw.stream().mapToInt(serial).boxed().toList();
             if (this.revision != revision || this.mode != mode || this.channel != channel
                     || !rawSerials.equals(currentSerials)) {
-                var sorted = mode == 0 || !channel ? List.copyOf(raw)
+                var sorted = !ttcOrder ? List.copyOf(raw)
                         : TtcSort.copyPrioritizedSorted(raw, busy, seconds, (left, right) -> 0, true, mode == 2);
                 orderedSerials = sorted.stream().mapToInt(serial).boxed().toList();
                 rawSerials = List.copyOf(currentSerials);
@@ -51,6 +52,13 @@ public final class CpuTtcDisplayOrder {
             rawSerials = List.of();
             orderedSerials = List.of();
         }
+    }
+
+    public static boolean ttcOrderActive(int mode, boolean channel) {
+        if (mode < 0 || mode > 2) {
+            throw new IllegalArgumentException("invalid TTC sort mode");
+        }
+        return mode != 0 && channel;
     }
 
     public static boolean hitCurrent(CpuTtcCache.CpuView drawn, CpuTtcCache.CpuView current) {

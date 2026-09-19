@@ -29,6 +29,7 @@
     "AbstractTableRendererMixin",
     "ChatScreenMixinSrg",
     "CraftingCPUScreenMixin",
+    "CrazyAe2CpuListCompatibilityMixin",
     "CraftConfirmScreenMixin",
     "CraftConfirmTableRendererMixin",
     "CraftingStatusTableRendererMixin",

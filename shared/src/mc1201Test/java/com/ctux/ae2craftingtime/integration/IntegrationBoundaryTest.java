@@ -100,6 +100,17 @@ class IntegrationBoundaryTest {
             boolean pseudo = node.invisibleAnnotations != null && node.invisibleAnnotations.stream()
                     .anyMatch(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/Pseudo;"));
             if (pseudo) assertTrue(IntegrationCatalog.CANDIDATES.stream().anyMatch(c -> c.mixins().contains(mixin)), mixin);
+            if (mixin.equals("CrazyAe2CpuListCompatibilityMixin")) {
+                var annotation = node.invisibleAnnotations.stream()
+                        .filter(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/Mixin;"))
+                        .findFirst().orElseThrow();
+                assertTrue(annotation.values.contains(900), "Crazy adapter must apply after the priority-1000 addon mixin");
+                assertTrue(node.methods.stream().anyMatch(method -> method.name.equals("ae2craftingtime$keepTtcOrder")
+                        && method.desc.equals("(Ljava/util/List;IILorg/spongepowered/asm/mixin/injection/callback/"
+                                + "CallbackInfoReturnable;)V")));
+                assertTrue(node.methods.stream().anyMatch(method -> method.name.equals("ae2craftingtime$useFrameHitTest")
+                        && method.desc.equals("(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V")));
+            }
         }
         // Config construction must be safe before loader metadata exists, including both Forge configs.
         for (int i = 0; i < files.size(); i++) {

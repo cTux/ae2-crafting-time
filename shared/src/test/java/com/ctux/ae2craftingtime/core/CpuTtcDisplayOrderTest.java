@@ -67,6 +67,11 @@ class CpuTtcDisplayOrderTest {
                 () -> state.display(List.of(), Row::serial, Row::busy, Row::secondsValue, 0, -1, true));
         assertThrows(IllegalArgumentException.class,
                 () -> state.display(List.of(), Row::serial, Row::busy, Row::secondsValue, 0, 3, true));
+        assertFalse(CpuTtcDisplayOrder.ttcOrderActive(0, true));
+        assertFalse(CpuTtcDisplayOrder.ttcOrderActive(1, false));
+        assertFalse(CpuTtcDisplayOrder.ttcOrderActive(2, false));
+        assertTrue(CpuTtcDisplayOrder.ttcOrderActive(1, true));
+        assertTrue(CpuTtcDisplayOrder.ttcOrderActive(2, true));
 
         var drawn = new CpuTtcCache.CpuView(1, "job", 2, 10);
         assertTrue(CpuTtcDisplayOrder.hitCurrent(drawn, new CpuTtcCache.CpuView(1, "job", 2, 10)));

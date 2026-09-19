@@ -70,6 +70,7 @@ final class CpuListTtcScenario {
     private long openAttemptedAt;
     private boolean reconnectRequested;
     private boolean continuationWritten;
+    private boolean crazyPriorityChanged;
     private final CpuListContinuation continuation;
     private java.util.List<Long> stalledProgress;
     private volatile String authoritativeState;
@@ -177,15 +178,19 @@ final class CpuListTtcScenario {
                         && selected.name().startsWith(text.rendered().substring(0, text.rendered().length() - 3)))) return false;
                 mark(checks, "badge-select", "selected-title", "server-selection");
                 screenshot.accept("cpu-list-total-ttc-selected-large.png");
+                crazyPriorityChanged = raiseCrazyPriority(minecraft, shortestSerial);
                 clickSort(minecraft);
                 next(Stage.MODE_AE2);
             }
             case MODE_AE2 -> {
                 var expected = snapshot.rawCpuSerials().subList(snapshot.scroll(), snapshot.scroll() + 6);
                 var actual = snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::serial).toList();
-                if (!actual.equals(expected) || !itemRowsReady(snapshot.rows())) return false;
+                if ((!crazyPriorityChanged && !actual.equals(expected))
+                        || (crazyPriorityChanged && actual.get(0) != shortestSerial)
+                        || !itemRowsReady(snapshot.rows())) return false;
                 observeItemMode(snapshot);
                 mark(checks, "raw-order");
+                if (crazyPriorityChanged) mark(checks, "crazy-priority");
                 screenshot.accept("cpu-list-total-ttc-ae2-order.png");
                 clickSort(minecraft);
                 next(Stage.MODE_SHORTEST);
@@ -832,6 +837,18 @@ final class CpuListTtcScenario {
         var button = minecraft.screen.children().stream().filter(TtcSortButton.class::isInstance)
                 .map(net.minecraft.client.gui.components.AbstractWidget.class::cast).findFirst().orElseThrow();
         DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+    }
+
+    private static boolean raiseCrazyPriority(Minecraft minecraft, int serial) {
+        if (!DriverPlatform.isModLoaded("crazyae2addons")) return false;
+        var screen = (CraftingStatusScreen) minecraft.screen;
+        var cpu = screen.getMenu().cpuList.cpus().stream().filter(row -> row.serial() == serial).findFirst().orElseThrow();
+        try {
+            cpu.getClass().getMethod("setPrio", int.class).invoke(cpu, Integer.MAX_VALUE);
+            return true;
+        } catch (ReflectiveOperationException failure) {
+            throw new IllegalStateException("Crazy AE2 Addons priority contract is unavailable", failure);
+        }
     }
 
     private void assertCpuOrder(UiSnapshot snapshot, boolean descending) {
