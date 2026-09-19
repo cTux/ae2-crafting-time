@@ -85,6 +85,15 @@ class IntegrationBoundaryTest {
         }
         assertTrue(all.contains("CraftingStatusMenuAccessor"), "production status accessor must be packaged");
         assertTrue(clients.contains("CPUSelectionListMixin"), "CPU list renderer must be packaged");
+        if (IntegrationPlatform.TARGET.equals("1.20.1-forge")) {
+            assertTrue(clients.contains("CrazyAe2CpuListRenderMixin"),
+                    "Crazy render compatibility must be packaged separately so it can run before Crazy");
+            assertTrue(clients.contains("CrazyAe2CpuListCompatibilityMixin"),
+                    "Crazy hit-test compatibility must remain packaged separately so it can run after Crazy");
+        } else {
+            assertFalse(clients.contains("CrazyAe2CpuListRenderMixin"));
+            assertFalse(clients.contains("CrazyAe2CpuListCompatibilityMixin"));
+        }
         for (var candidate : IntegrationCatalog.CANDIDATES) {
             if (candidate.targets().contains(IntegrationPlatform.TARGET)) {
                 assertTrue(all.containsAll(candidate.mixins()), candidate.variant());
@@ -100,12 +109,12 @@ class IntegrationBoundaryTest {
             boolean pseudo = node.invisibleAnnotations != null && node.invisibleAnnotations.stream()
                     .anyMatch(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/Pseudo;"));
             if (pseudo) assertTrue(IntegrationCatalog.CANDIDATES.stream().anyMatch(c -> c.mixins().contains(mixin)), mixin);
-            if (mixin.equals("CrazyAe2CpuListCompatibilityMixin")) {
+            if (mixin.equals("CrazyAe2CpuListRenderMixin")) {
                 var annotation = node.invisibleAnnotations.stream()
                         .filter(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/Mixin;"))
                         .findFirst().orElseThrow();
-                assertTrue(annotation.values.contains(1100),
-                        "Crazy adapter must inject hit testing above the priority-1000 addon mixin");
+                assertTrue(annotation.values.contains(900),
+                        "Crazy render adapter must run before the priority-1000 addon mixin");
                 var slice = node.methods.stream()
                         .filter(method -> method.name.equals("ae2craftingtime$sliceTtcFrame"))
                         .findFirst().orElseThrow();
@@ -118,7 +127,15 @@ class IntegrationBoundaryTest {
                 var at = (org.objectweb.asm.tree.AnnotationNode)
                         ((List<?>) annotationValue(wrap, "at")).get(0);
                 assertEquals("Ljava/util/List;subList(II)Ljava/util/List;", annotationValue(at, "target"));
-
+                assertFalse(node.methods.stream().anyMatch(method -> method.name.equals("ae2craftingtime$hitTtcFrame")),
+                        "early render mixin must not carry the late hit-test handler");
+            }
+            if (mixin.equals("CrazyAe2CpuListCompatibilityMixin")) {
+                var annotation = node.invisibleAnnotations.stream()
+                        .filter(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/Mixin;"))
+                        .findFirst().orElseThrow();
+                assertTrue(annotation.values.contains(1100),
+                        "Crazy hit-test adapter must run after the priority-1000 addon mixin");
                 var hit = node.methods.stream()
                         .filter(method -> method.name.equals("ae2craftingtime$hitTtcFrame"))
                         .findFirst().orElseThrow();
@@ -130,6 +147,8 @@ class IntegrationBoundaryTest {
                 var hitAt = (org.objectweb.asm.tree.AnnotationNode)
                         ((List<?>) annotationValue(inject, "at")).get(0);
                 assertEquals("HEAD", annotationValue(hitAt, "value"));
+                assertFalse(node.methods.stream().anyMatch(method -> method.name.equals("ae2craftingtime$sliceTtcFrame")),
+                        "late hit-test mixin must not carry the early render handler");
                 assertFalse(node.methods.stream().anyMatch(method -> method.name.equals("ae2craftingtime$keepTtcOrder")
                         || method.name.equals("ae2craftingtime$useFrameHitTest")));
             }

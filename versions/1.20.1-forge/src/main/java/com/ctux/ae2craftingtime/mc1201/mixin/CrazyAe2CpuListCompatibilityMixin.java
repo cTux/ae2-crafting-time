@@ -7,8 +7,6 @@ import appeng.menu.me.crafting.CraftingStatusMenu;
 import com.ctux.ae2craftingtime.core.CpuTtcCache;
 import com.ctux.ae2craftingtime.core.CpuTtcDisplayOrder;
 import com.ctux.ae2craftingtime.mc1201.CpuTtcClient;
-import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
-import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.client.renderer.Rect2i;
@@ -44,17 +42,6 @@ public abstract class CrazyAe2CpuListCompatibilityMixin {
     @Shadow
     @Dynamic("CPUSelectionListOrderMixin merged frame")
     private int ae2craftingtime$drawnScroll;
-
-    @WrapOperation(method = "drawBackgroundLayer", at = @At(value = "INVOKE",
-            target = "Ljava/util/List;subList(II)Ljava/util/List;", remap = false),
-            order = 10001, require = 1, remap = false)
-    private List<CraftingStatusMenu.CraftingCpuListEntry> ae2craftingtime$sliceTtcFrame(
-            List<CraftingStatusMenu.CraftingCpuListEntry> list, int from, int to,
-            Operation<List<CraftingStatusMenu.CraftingCpuListEntry>> original) {
-        return CpuTtcClient.ttcOrderActive(menu)
-                ? ae2craftingtime$drawnList.subList(from, to)
-                : original.call(list, from, to);
-    }
 
     @Inject(method = "hitTestCpu", at = @At("HEAD"), cancellable = true, remap = false, require = 1)
     private void ae2craftingtime$hitTtcFrame(Point mousePos,

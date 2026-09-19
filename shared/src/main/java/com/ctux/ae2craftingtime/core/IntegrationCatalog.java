@@ -21,7 +21,7 @@ public final class IntegrationCatalog {
             new IntegrationSelection.Candidate("ae2ct", "tree-helper", PRE_26, true,
                     Set.of("CraftingTreeWidgetMixin"), treeHelper()),
             new IntegrationSelection.Candidate("crazyae2addons", "cpu-list-2.6.2", Set.of("1.20.1-forge"), true,
-                    Set.of("CrazyAe2CpuListCompatibilityMixin"), List.of(
+                    Set.of("CrazyAe2CpuListRenderMixin", "CrazyAe2CpuListCompatibilityMixin"), List.of(
                             method(CRAZY_CPU_LIST, "sortThenSlice", "(Ljava/util/List;II)Ljava/util/List;"),
                             method(CRAZY_CPU_LIST, "hitTestOnSorted", "(Lappeng/client/Point;"
                                     + "Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V"))),

@@ -47,6 +47,7 @@ class IntegrationCatalogTest {
                 "method:hitTestOnSorted", List.of("(Lappeng/client/Point;"
                         + "Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V"))));
         var selected = selector("1.20.1-forge", true, exact);
+        assertTrue(selected.shouldApply("CrazyAe2CpuListRenderMixin"));
         assertTrue(selected.shouldApply("CrazyAe2CpuListCompatibilityMixin"));
         assertEquals("cpu-list-2.6.2", selected.snapshot().get("crazyae2addons").variant());
 
@@ -54,19 +55,23 @@ class IntegrationCatalogTest {
                 "method:sortThenSlice", List.of("(Ljava/util/List;II)Ljava/util/List;"),
                 "method:hitTestOnSorted", List.of("(Lappeng/client/Point;)V"))));
         var rejected = selector("1.20.1-forge", true, changed);
+        assertFalse(rejected.shouldApply("CrazyAe2CpuListRenderMixin"));
         assertFalse(rejected.shouldApply("CrazyAe2CpuListCompatibilityMixin"));
         assertEquals("no_compatible_variant", rejected.snapshot().get("crazyae2addons").reason());
         assertEquals(List.of("cpu-list-2.6.2:missing:" + owner + "#method:hitTestOnSorted"),
                 rejected.snapshot().get("crazyae2addons").rejected());
 
         var wrongTarget = selector("1.20.1-fabric", true, exact);
+        assertFalse(wrongTarget.shouldApply("CrazyAe2CpuListRenderMixin"));
         assertFalse(wrongTarget.shouldApply("CrazyAe2CpuListCompatibilityMixin"));
         assertEquals("unsupported_target", wrongTarget.snapshot().get("crazyae2addons").reason());
         var server = selector("1.20.1-forge", false, exact);
+        assertFalse(server.shouldApply("CrazyAe2CpuListRenderMixin"));
         assertFalse(server.shouldApply("CrazyAe2CpuListCompatibilityMixin"));
         assertEquals("wrong_side", server.snapshot().get("crazyae2addons").reason());
         var absent = new IntegrationSelection(IntegrationCatalog.CANDIDATES, "1.20.1-forge", true,
                 id -> null, c -> IntegrationContract.check(c.contract(), exact::get), d -> {});
+        assertFalse(absent.shouldApply("CrazyAe2CpuListRenderMixin"));
         assertFalse(absent.shouldApply("CrazyAe2CpuListCompatibilityMixin"));
         assertEquals("absent", absent.snapshot().get("crazyae2addons").reason());
     }
@@ -104,7 +109,7 @@ class IntegrationCatalogTest {
         return switch (variant) {
             case "tree-helper" -> Set.of("CraftingTreeWidgetMixin");
             case "tree-layout" -> Set.of("CraftingTreeNewWidgetMixin");
-            case "cpu-list-2.6.2" -> Set.of("CrazyAe2CpuListCompatibilityMixin");
+            case "cpu-list-2.6.2" -> Set.of("CrazyAe2CpuListRenderMixin", "CrazyAe2CpuListCompatibilityMixin");
             case "pending-accounting" -> Set.of("ECOCraftingCpuLogicMixin", "NeoEcoPendingDispatchMixin");
             case "batched-long" -> Set.of("ECOCraftingCpuLogicMixin", "NeoEcoLongBatchDispatchMixin");
             case "batched-int" -> Set.of("ECOCraftingCpuLogicMixin", "NeoEcoIntBatchDispatchMixin");
