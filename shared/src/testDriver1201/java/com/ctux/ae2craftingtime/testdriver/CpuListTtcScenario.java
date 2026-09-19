@@ -284,7 +284,8 @@ final class CpuListTtcScenario {
             }
             case AE2_LATE -> {
                 var expected = snapshot.rawCpuSerials().subList(snapshot.scroll(), snapshot.scroll() + 6);
-                if (!snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::serial).toList().equals(expected)) return false;
+                var actual = snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::serial).toList();
+                if (!nativeOrderReady(crazyPriorityChanged, actual, expected, shortestSerial)) return false;
                 mark(checks, "mode-switch-late");
                 next(Stage.AE2_EXPIRED);
             }

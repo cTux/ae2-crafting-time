@@ -64,7 +64,7 @@ class TestDriverCoreTest {
     }
 
     @Test
-    void nativeCpuOrderKeepsCrazyPriorityAcrossChannelFallback() {
+    void nativeCpuOrderKeepsCrazyPriorityAcrossAe2ModeTransitions() {
         var raw = List.of(3, 6, 4, 5, 8, 1);
         var prioritized = List.of(7, 3, 6, 4, 5, 8);
         assertTrue(CpuListTtcScenario.nativeOrderReady(false, raw, raw, 7));
