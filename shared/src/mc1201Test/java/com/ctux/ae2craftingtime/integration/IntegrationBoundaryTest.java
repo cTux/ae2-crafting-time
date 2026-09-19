@@ -114,32 +114,30 @@ class IntegrationBoundaryTest {
                         .filter(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/Mixin;"))
                         .findFirst().orElseThrow();
                 assertTrue(annotation.values.contains(1100),
-                        "Crazy adapter must merge after the priority-1000 addon so MixinExtras can nest its wrappers");
+                        "Crazy adapter must merge ordinary injections after the priority-1000 addon");
                 var slice = node.methods.stream()
                         .filter(method -> method.name.equals("ae2craftingtime$sliceTtcFrame"))
                         .findFirst().orElseThrow();
-                var wrap = slice.visibleAnnotations.stream()
-                        .filter(a -> a.desc.endsWith("/WrapOperation;"))
+                var modify = slice.visibleAnnotations.stream()
+                        .filter(a -> a.desc.endsWith("/ModifyVariable;"))
                         .findFirst().orElseThrow();
-                assertEquals(List.of("drawBackgroundLayer"), annotationValue(wrap, "method"));
-                assertEquals(10001, annotationValue(wrap, "order"));
-                assertEquals(1, annotationValue(wrap, "require"));
-                var at = (org.objectweb.asm.tree.AnnotationNode)
-                        ((List<?>) annotationValue(wrap, "at")).get(0);
-                assertEquals("Ljava/util/List;subList(II)Ljava/util/List;", annotationValue(at, "target"));
+                assertEquals(List.of("drawBackgroundLayer"), annotationValue(modify, "method"));
+                assertEquals(0, annotationValue(modify, "ordinal"));
+                assertEquals(1, annotationValue(modify, "require"));
+                var store = (org.objectweb.asm.tree.AnnotationNode) annotationValue(modify, "at");
+                assertEquals("STORE", annotationValue(store, "value"));
                 var hit = node.methods.stream()
                         .filter(method -> method.name.equals("ae2craftingtime$hitTtcFrame"))
                         .findFirst().orElseThrow();
-                var hitWrap = hit.visibleAnnotations.stream()
-                        .filter(a -> a.desc.endsWith("/WrapOperation;"))
+                var inject = hit.visibleAnnotations.stream()
+                        .filter(a -> a.desc.endsWith("/Inject;"))
                         .findFirst().orElseThrow();
-                assertEquals(List.of("getTooltip", "onMouseUp"), annotationValue(hitWrap, "method"));
-                assertEquals(2, annotationValue(hitWrap, "require"));
-                var hitAt = (org.objectweb.asm.tree.AnnotationNode)
-                        ((List<?>) annotationValue(hitWrap, "at")).get(0);
-                assertEquals("Lappeng/client/gui/widgets/CPUSelectionList;hitTestCpu(Lappeng/client/Point;)"
-                        + "Lappeng/menu/me/crafting/CraftingStatusMenu$CraftingCpuListEntry;",
-                        annotationValue(hitAt, "target"));
+                assertEquals(List.of("hitTestCpu"), annotationValue(inject, "method"));
+                assertEquals(Boolean.TRUE, annotationValue(inject, "cancellable"));
+                assertEquals(1, annotationValue(inject, "require"));
+                var head = (org.objectweb.asm.tree.AnnotationNode)
+                        ((List<?>) annotationValue(inject, "at")).get(0);
+                assertEquals("HEAD", annotationValue(head, "value"));
             }
         }
         // Config construction must be safe before loader metadata exists, including both Forge configs.
