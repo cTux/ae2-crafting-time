@@ -87,7 +87,7 @@ class IntegrationBoundaryTest {
         assertTrue(clients.contains("CPUSelectionListMixin"), "CPU list renderer must be packaged");
         if (IntegrationPlatform.TARGET.equals("1.20.1-forge")) {
             assertTrue(clients.contains("CrazyAe2CpuListRenderMixin"),
-                    "Crazy render and input compatibility must run before Crazy");
+                    "Crazy render and input compatibility must nest after Crazy");
             assertFalse(clients.contains("CrazyAe2CpuListCompatibilityMixin"),
                     "Crazy compatibility must not target the addon's rewritten private handler");
         } else {
@@ -113,8 +113,8 @@ class IntegrationBoundaryTest {
                 var annotation = node.invisibleAnnotations.stream()
                         .filter(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/Mixin;"))
                         .findFirst().orElseThrow();
-                assertTrue(annotation.values.contains(900),
-                        "Crazy render adapter must run before the priority-1000 addon mixin");
+                assertTrue(annotation.values.contains(1100),
+                        "Crazy adapter must merge after the priority-1000 addon so MixinExtras can nest its wrappers");
                 var slice = node.methods.stream()
                         .filter(method -> method.name.equals("ae2craftingtime$sliceTtcFrame"))
                         .findFirst().orElseThrow();
