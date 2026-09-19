@@ -78,12 +78,12 @@ with the same behavior on integrated and matching dedicated servers. Native
 addon CPUs shown in AE2's list participate through the existing estimate path;
 unknown scopes remain unknown. Separate addon screens are outside this scope.
 
-Crazy AE2 Addons compatibility is limited to its verified `2.6.2` client hooks
-on Minecraft 1.20.1 Forge. The correction must activate only when that exact
-hook contract is present. It must leave Fabric, NeoForge, Crazy-absent Forge,
-and changed or unsupported Crazy hook shapes on the normal AE2 Crafting Time
-path. A skipped incompatible hook is reported through startup integration
-diagnostics instead of being treated as verified compatibility.
+Crazy AE2 Addons compatibility is limited to verified `2.6.2` behavior on
+Minecraft 1.20.1 Forge. The correction uses the shared AE2 render/input seam,
+not an addon-private hook contract. It must leave Fabric, NeoForge,
+Crazy-absent Forge, and AE2-order/channel-unavailable behavior on their normal
+paths. Changed Crazy hook shapes remain unverified and must not be reported as
+compatible without new runtime evidence.
 
 If the CPU-total channel is unavailable, the CPU list keeps AE2 order, while
 item sorting and the existing title fallback continue normally. Do not infer
@@ -108,7 +108,7 @@ priority, or the menu's stored CPU list.
 | C7 | All four targets pass the affected unit/boundary checks and actual UI verification on integrated and connected dedicated servers, with rendered-row evidence. |
 | C8 | With Crazy AE2 Addons 2.6.2 on Forge 1.20.1, TTC modes remain authoritative before the six-row slice, while AE2 order retains Crazy's priority/name/serial behavior, including live priority changes. |
 | C9 | With Crazy installed, rendering, badge, tooltip, click, selection, cancellation, wheel-before-draw, and stale-hit suppression use one displayed CPU identity for the frame. |
-| C10 | The exact Project Infinity 0.0.52.0 fixture promotes every known off-screen job in the initial longest-first check. A Crazy-absent control keeps the existing behavior, and unsupported Crazy hook shapes skip the compatibility path without changing other targets. |
+| C10 | The current Project Infinity CurseForge main release at execution time promotes every known off-screen job in the initial longest-first check. The current exact target is Project Infinity 0.1 `0.0.51.4-hotfix-2`, file `8895030`. A Crazy-absent control keeps the existing behavior, and all four minimum AE2 target bytecodes retain the shared render/input seam without changing other targets. |
 
 See the [technical design](technical-design.md) and
 [implementation plan](implementation-plan.md).

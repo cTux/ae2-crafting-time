@@ -70,6 +70,14 @@ public final class CpuTtcDisplayOrder {
         return drawnScroll < 0 ? -1 : drawnScroll;
     }
 
+    public static <T> List<T> visibleSlice(List<T> displayed, int drawnScroll, int visibleCount) {
+        if (displayed == null) throw new IllegalArgumentException("missing CPU display list");
+        if (visibleCount < 0) throw new IllegalArgumentException("invalid visible CPU count");
+        var from = Math.min(Math.max(0, drawnScroll), displayed.size());
+        var to = from + Math.min(visibleCount, displayed.size() - from);
+        return displayed.subList(from, to);
+    }
+
     public static int hitIndex(int mouseX, int mouseY, int boundsX, int boundsY,
             int buttonWidth, int buttonHeight, int drawnScroll, int size) {
         var relativeX = mouseX - boundsX - 9;

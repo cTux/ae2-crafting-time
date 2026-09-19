@@ -1,5 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
+import appeng.client.Point;
+import appeng.client.gui.style.Blitter;
 import appeng.client.gui.widgets.CPUSelectionList;
 import appeng.client.gui.widgets.Scrollbar;
 import appeng.menu.me.crafting.CraftingStatusMenu;
@@ -11,12 +13,14 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.client.renderer.Rect2i;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -33,6 +37,13 @@ public abstract class CPUSelectionListOrderMixin {
     @Shadow
     @Final
     private Scrollbar scrollbar;
+
+    @Shadow
+    @Final
+    private Blitter buttonBg;
+
+    @Shadow
+    private Rect2i bounds;
 
     @Unique
     private List<CraftingStatusMenu.CraftingCpuListEntry> ae2craftingtime$displayed = List.of();
@@ -101,11 +112,35 @@ public abstract class CPUSelectionListOrderMixin {
         return ae2craftingtime$drawnScroll;
     }
 
+    @ModifyVariable(method = "drawBackgroundLayer", at = @At("STORE"), ordinal = 0, require = 1, remap = false)
+    private List<CraftingStatusMenu.CraftingCpuListEntry> ae2craftingtime$sliceTtcFrame(
+            List<CraftingStatusMenu.CraftingCpuListEntry> original) {
+        if (!CpuTtcClient.ttcOrderActive(menu)) return original;
+        return CpuTtcDisplayOrder.visibleSlice(ae2craftingtime$drawnList, ae2craftingtime$drawnScroll,
+                original.size());
+    }
+
     @WrapOperation(method = "hitTestCpu", at = @At(value = "INVOKE",
             target = "Lappeng/client/gui/widgets/Scrollbar;getCurrentScroll()I", remap = false),
             remap = false, require = 1)
     private int ae2craftingtime$useDrawnScroll(Scrollbar instance, Operation<Integer> original) {
         return CpuTtcDisplayOrder.inputScroll(ae2craftingtime$drawnScroll);
+    }
+
+    @Inject(method = "hitTestCpu", at = @At("HEAD"), cancellable = true, require = 1, remap = false)
+    private void ae2craftingtime$hitTtcFrame(Point mousePos,
+            CallbackInfoReturnable<CraftingStatusMenu.CraftingCpuListEntry> cir) {
+        if (!CpuTtcClient.ttcOrderActive(menu)) return;
+        var index = CpuTtcDisplayOrder.hitIndex(mousePos.getX(), mousePos.getY(), bounds.getX(), bounds.getY(),
+                buttonBg.getSrcWidth(), buttonBg.getSrcHeight(), ae2craftingtime$drawnScroll,
+                ae2craftingtime$drawnList.size());
+        if (index < 0) {
+            cir.setReturnValue(null);
+            return;
+        }
+        var cpu = ae2craftingtime$drawnList.get(index);
+        var drawn = ae2craftingtime$drawn.get(cpu.serial());
+        cir.setReturnValue(drawn != null && CpuTtcClient.stillCurrent(menu, drawn) ? cpu : null);
     }
 
     @Inject(method = "hitTestCpu", at = @At("RETURN"), cancellable = true, remap = false)
