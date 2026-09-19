@@ -206,3 +206,52 @@ failure is a failed build/verification, not a silently disabled feature.
 
 Acceptance-to-test mapping and delivery gates are in the
 [implementation plan](implementation-plan.md).
+
+## Warning-tooltip controls correction (#437)
+
+The following evidence is from merged baseline
+`e363543b6e5454929b00e2350d4534a53c41312d`. It defines the
+[planned correction](spec.md#planned-warning-tooltip-controls-correction-437),
+not a completed runtime verification.
+
+`shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingStatusTableRendererMixin.java`
+injects at the return of AE2's `getEntryTooltip`. Its NO SPACE branch and
+non-null block-reason branch append their body and return before details/reset
+hints. `appendStatsTooltip` adds the locate hint only in its stall branch.
+This control flow explains why the reported INPUT BLOCKED tooltip stops after
+the scheduled-batch qualifier and why the other early-return warnings are also
+affected. All four target builds include and register this same renderer.
+
+Keep one final control section after warning-body assembly. Reuse `TtcText`'s
+existing translated components and gray style; remove the old delayed-only
+locate insertion if the final section takes ownership of it. Preserve the
+non-warning path's two current hints and the empty-row early exit. The change
+must not depend on retained stats for NO SPACE or provider-block reasons.
+Do not alter body factories just to append screen-specific controls to every
+caller. Their only production consumers are this renderer, while details/reset
+factories also serve Craft Plan and both Crafting Tree adapters.
+
+`CraftingRowState.noSpace` requires stored items with zero active and pending
+amounts. Both `shared/src/mc1201` and `shared/src/mc2612` status-screen mixins
+reject details/reset when active plus pending is zero. Preserve this boundary.
+Their hit tests use displayed table geometry/scrolling and a hovered-key fallback.
+`TtcDetailsClick` routes to those handlers and `StatsChatMessages`; the shared
+`StatsChatServer` retains network resolution, rate limits and sample checks.
+Locate passes through `ProviderLocateClick` to the two `ProviderLocateServer`
+counterparts, which validate CPU context, owner and live provider positions.
+No click handler or transport needs to change for this presentation correction.
+
+`TtcTextTest` currently checks warning bodies, translations and the qualifier,
+not the completed status tooltip. Add regression evidence at the final
+composition/injection boundary, so a correct body factory cannot hide another
+early return. Cover NO SPACE, all six block reasons, mixed rows, DELAYED, missing
+samples, and unchanged ordinary/empty rows. Any new Minecraft-free decisions
+belong in covered shared core; component assembly stays at the Minecraft boundary.
+
+Existing `ProviderDispatchStatusScenario` checks only body-key presence and is
+shared across all four targets. `NoSpaceScenario` has shared and 26.1.2 copies
+with the same gap. Extend their final-frame assertions for the ordered hint
+suffix, reusing current fixtures, observations and screenshots. Reuse existing
+stats-click and locate driver actions to prove eligible warning-row targeting;
+do not seed a production warning or add a new runner. Complete tooltip fit still
+requires screenshot review, not only component-key assertions.
