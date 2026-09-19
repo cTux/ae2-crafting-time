@@ -597,6 +597,14 @@ class TestDriverCoreTest {
         var tooltip = keys.stream().map(key -> new UiSnapshot.ObservedText(key, key, List.of(), null)).toList();
 
         assertTrue(scenario.tooltipReady(tooltip));
+        var previous = System.getProperty("ae2craftingtime.test.advancedStatus");
+        try {
+            System.setProperty("ae2craftingtime.test.advancedStatus", "true");
+            assertTrue(scenario.tooltipReady(tooltip));
+        } finally {
+            if (previous == null) System.clearProperty("ae2craftingtime.test.advancedStatus");
+            else System.setProperty("ae2craftingtime.test.advancedStatus", previous);
+        }
         assertTrue(WarningTooltipChecks.hasControls(tooltip));
         for (int missing = 0; missing < tooltip.size(); missing++) {
             var incomplete = new java.util.ArrayList<>(tooltip);

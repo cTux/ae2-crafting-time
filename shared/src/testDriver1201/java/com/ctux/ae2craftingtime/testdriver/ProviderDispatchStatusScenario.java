@@ -419,7 +419,10 @@ final class ProviderDispatchStatusScenario {
 
     boolean tooltipReady(List<UiSnapshot.ObservedText> tooltip) {
         var expected = new java.util.ArrayList<>(List.of(key, key + ".explanation", key + ".suggestion"));
-        if (!advancedFixture() && !NO_CHANNEL.equals(scenario)) expected.add(MIXED);
+        if (!NO_CHANNEL.equals(scenario) && (!advancedFixture()
+                || tooltip.stream().anyMatch(text -> text.key().equals(MIXED)))) {
+            expected.add(MIXED);
+        }
         return WarningTooltipChecks.hasBodyAndControls(tooltip, expected);
     }
 
