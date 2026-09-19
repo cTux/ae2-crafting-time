@@ -104,7 +104,8 @@ class IntegrationBoundaryTest {
                 var annotation = node.invisibleAnnotations.stream()
                         .filter(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/Mixin;"))
                         .findFirst().orElseThrow();
-                assertTrue(annotation.values.contains(900), "Crazy adapter must apply after the priority-1000 addon mixin");
+                assertTrue(annotation.values.contains(1100),
+                        "Crazy adapter must transform after the priority-1000 addon mixin");
                 assertTrue(node.methods.stream().anyMatch(method -> method.name.equals("ae2craftingtime$keepTtcOrder")
                         && method.desc.equals("(Ljava/util/List;IILorg/spongepowered/asm/mixin/injection/callback/"
                                 + "CallbackInfoReturnable;)V")));
