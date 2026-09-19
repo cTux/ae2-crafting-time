@@ -44,7 +44,8 @@ final class StandardAe2Scenario {
                     "plan-no-data", "plan-partial", "accuracy-full", "accuracy-partial", "details-chat")));
     private enum Stage { PREPARE, TERMINAL, AMOUNT, PLAN_SORT, PLAN_TOOLTIP, PLAN_DETAILS, PLAN_RESET,
         SUBMIT, OPEN_STATUS, ACTIVE, STATUS_SORT, STATUS_TOOLTIP, STATUS_DETAILS, STATUS_RESET,
-        RESTORE, DELAYED, OVERLAP_POSITION, OVERLAP_HIGHLIGHT, OVERLAP_RELEASE, OVERLAP_RECOVERY, OVERLAP_REOPEN,
+        RESTORE, DELAYED, OVERLAP_POSITION, OVERLAP_HIGHLIGHT, OVERLAP_RELEASE, OVERLAP_RECOVERY, OVERLAP_FINISH,
+        OVERLAP_REOPEN,
         PUMP, FINISHED, REOPEN, EMPTY, WORLD_POSITION, WORLD_HIGHLIGHT, WORLD_RELEASE, WORLD_FINISHED,
         GALLERY_PARTIAL_PLAN, GALLERY_PROFILED_PLAN, GALLERY_DETAILS, GALLERY_CHAT, GALLERY_NEXT_JOB,
         CPU_LIST_REOPEN, CPU_LIST_REOPENED }
@@ -268,7 +269,7 @@ final class StandardAe2Scenario {
             return false;
         }
         if (phase == Stage.OVERLAP_RECOVERY) {
-            server(minecraft, player -> { fixture.pump(player, true); return true; });
+            if (!server(minecraft, player -> { fixture.pump(player, true); return true; })) return false;
             var raw = plateOutputsAt(4);
             var rendered = renderOutputsAt(4);
             var state = raw + "|" + rendered + "|" + hasEdge(overlapWinner, 4);
@@ -279,6 +280,10 @@ final class StandardAe2Scenario {
             mark(checks, "winner-recovery", true);
             mark(checks, "rainbow-preserved", true);
             mark(checks, "plate-recovered", true);
+            phase = Stage.OVERLAP_FINISH;
+            return false;
+        }
+        if (phase == Stage.OVERLAP_FINISH) {
             if (server(minecraft, player -> {
                 fixture.releaseDelayedOutput(overlapSurvivor);
                 fixture.pump(player, true);
