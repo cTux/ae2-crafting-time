@@ -28,7 +28,6 @@ public abstract class CPUSelectionListObservationMixin {
     @Shadow @Final private Scrollbar scrollbar;
     @Shadow @Final private Blitter buttonBg;
     @Shadow private Rect2i bounds;
-    @Shadow private CraftingStatusMenu.CraftingCpuListEntry hitTestCpu(Point mousePos) { throw new AssertionError(); }
     @Unique private final java.util.Map<Integer, Point> ae2craftingtime_test_driver$points = new java.util.HashMap<>();
     @Unique private Rect2i ae2craftingtime_test_driver$screenBounds;
     @Unique private boolean ae2craftingtime_test_driver$drawn;
@@ -43,17 +42,15 @@ public abstract class CPUSelectionListObservationMixin {
         if (stale != null && menu.cpuList.cpus().stream().noneMatch(cpu -> cpu.serial() == stale)) {
             var point = ae2craftingtime_test_driver$points.get(stale);
             if (point == null) throw new IllegalStateException("stale CPU was not captured in the preceding draw");
-            var hit = hitTestCpu(point);
-            ((CPUSelectionList) (Object) this).onMouseUp(point, 0);
-            CpuListInputControl.staleResult(hit == null ? null : hit.serial());
+            var handled = ((CPUSelectionList) (Object) this).onMouseUp(point, 0);
+            CpuListInputControl.staleResult(handled ? stale : null);
         }
         var wheel = CpuListInputControl.wheelSerial();
         var point = wheel == null ? null : ae2craftingtime_test_driver$points.get(wheel);
         if (point != null) {
             ((CPUSelectionList) (Object) this).onMouseWheel(point, -1);
-            var hit = hitTestCpu(point);
-            ((CPUSelectionList) (Object) this).onMouseUp(point, 0);
-            CpuListInputControl.wheelResult(hit == null ? null : hit.serial());
+            var handled = ((CPUSelectionList) (Object) this).onMouseUp(point, 0);
+            CpuListInputControl.wheelResult(handled ? menu.getSelectedCpuSerial() : null);
         }
     }
 

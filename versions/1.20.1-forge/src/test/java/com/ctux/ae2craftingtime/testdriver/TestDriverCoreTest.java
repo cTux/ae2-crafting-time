@@ -62,8 +62,9 @@ class TestDriverCoreTest {
                 .filter(call -> call.getOpcode() == Opcodes.INVOKEVIRTUAL)
                 .toList();
         assertEquals(1, calls.stream().filter(call -> call.name.equals("getTooltip")).count());
-        assertEquals(2, calls.stream().filter(call -> call.name.equals("hitTestCpu")).count(),
-                "only the post-draw stale and wheel probes may call hitTestCpu directly");
+        assertEquals(2, calls.stream().filter(call -> call.name.equals("onMouseUp")).count());
+        assertEquals(0, calls.stream().filter(call -> call.name.equals("hitTestCpu")).count(),
+                "input probes must exercise stable production callers rather than the private helper");
     }
 
     @Test

@@ -154,15 +154,17 @@ class IntegrationBoundaryTest {
                 var hit = node.methods.stream()
                         .filter(method -> method.name.equals("ae2craftingtime$hitTtcFrame"))
                         .findFirst().orElseThrow();
-                var inject = hit.visibleAnnotations.stream()
-                        .filter(a -> a.desc.endsWith("/Inject;"))
+                var wrap = hit.visibleAnnotations.stream()
+                        .filter(a -> a.desc.endsWith("/WrapOperation;"))
                         .findFirst().orElseThrow();
-                assertEquals(List.of("hitTestCpu"), annotationValue(inject, "method"));
-                assertEquals(Boolean.TRUE, annotationValue(inject, "cancellable"));
-                assertEquals(1, annotationValue(inject, "require"));
+                assertEquals(List.of("getTooltip", "onMouseUp"), annotationValue(wrap, "method"));
+                assertEquals(2, annotationValue(wrap, "require"));
                 var head = (org.objectweb.asm.tree.AnnotationNode)
-                        ((List<?>) annotationValue(inject, "at")).get(0);
-                assertEquals("HEAD", annotationValue(head, "value"));
+                        ((List<?>) annotationValue(wrap, "at")).get(0);
+                assertEquals("INVOKE", annotationValue(head, "value"));
+                assertEquals("Lappeng/client/gui/widgets/CPUSelectionList;hitTestCpu(Lappeng/client/Point;)"
+                        + "Lappeng/menu/me/crafting/CraftingStatusMenu$CraftingCpuListEntry;",
+                        annotationValue(head, "target"));
             }
         }
         // Config construction must be safe before loader metadata exists, including both Forge configs.

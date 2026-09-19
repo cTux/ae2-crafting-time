@@ -22,7 +22,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(CPUSelectionList.class)
 public abstract class CPUSelectionListOrderMixin {
@@ -127,28 +126,20 @@ public abstract class CPUSelectionListOrderMixin {
         return CpuTtcDisplayOrder.inputScroll(ae2craftingtime$drawnScroll);
     }
 
-    @Inject(method = "hitTestCpu", at = @At("HEAD"), cancellable = true, require = 1, remap = false)
-    private void ae2craftingtime$hitTtcFrame(Point mousePos,
-            CallbackInfoReturnable<CraftingStatusMenu.CraftingCpuListEntry> cir) {
-        if (!CpuTtcClient.ttcOrderActive(menu)) return;
+    @WrapOperation(method = { "getTooltip", "onMouseUp" }, at = @At(value = "INVOKE",
+            target = "Lappeng/client/gui/widgets/CPUSelectionList;hitTestCpu(Lappeng/client/Point;)"
+                    + "Lappeng/menu/me/crafting/CraftingStatusMenu$CraftingCpuListEntry;",
+            remap = false), remap = false, require = 2)
+    private CraftingStatusMenu.CraftingCpuListEntry ae2craftingtime$hitTtcFrame(
+            CPUSelectionList instance, Point mousePos,
+            Operation<CraftingStatusMenu.CraftingCpuListEntry> original) {
+        if (!CpuTtcClient.ttcOrderActive(menu)) return original.call(instance, mousePos);
         var index = CpuTtcDisplayOrder.hitIndex(mousePos.getX(), mousePos.getY(), bounds.getX(), bounds.getY(),
                 buttonBg.getSrcWidth(), buttonBg.getSrcHeight(), ae2craftingtime$drawnScroll,
                 ae2craftingtime$drawnList.size());
-        if (index < 0) {
-            cir.setReturnValue(null);
-            return;
-        }
+        if (index < 0) return null;
         var cpu = ae2craftingtime$drawnList.get(index);
         var drawn = ae2craftingtime$drawn.get(cpu.serial());
-        cir.setReturnValue(drawn != null && CpuTtcClient.stillCurrent(menu, drawn) ? cpu : null);
-    }
-
-    @Inject(method = "hitTestCpu", at = @At("RETURN"), cancellable = true, remap = false)
-    private void ae2craftingtime$suppressStaleHit(CallbackInfoReturnable<CraftingStatusMenu.CraftingCpuListEntry> cir) {
-        var cpu = cir.getReturnValue();
-        var drawn = cpu == null ? null : ae2craftingtime$drawn.get(cpu.serial());
-        if (drawn == null || !CpuTtcClient.stillCurrent(menu, drawn)) {
-            cir.setReturnValue(null);
-        }
+        return drawn != null && CpuTtcClient.stillCurrent(menu, drawn) ? cpu : null;
     }
 }
