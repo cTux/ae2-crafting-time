@@ -348,6 +348,22 @@ final class StandardCraftFixture {
                         .findFirst().orElse("unknown")).collect(java.util.stream.Collectors.joining(","));
     }
 
+    boolean raiseCrazyPriority(ServerPlayer player) {
+        var target = liveCpuListCpus(player).stream().map(CraftingBlockEntity::getCluster)
+                .filter(cluster -> {
+                    var status = cluster.getJobStatus();
+                    var job = status == null ? null : status.crafting();
+                    return job != null && job.what().equals(AEItemKey.of(Items.STONE)) && job.amount() == 1;
+                }).findFirst().orElseThrow();
+        try {
+            target.getClass().getMethod("setPrio", int.class).invoke(target, Integer.MAX_VALUE);
+            target.markDirty();
+            return true;
+        } catch (ReflectiveOperationException failure) {
+            throw new IllegalStateException("Crazy AE2 Addons server priority contract is unavailable", failure);
+        }
+    }
+
     String cpuListServerState(ServerPlayer player) {
         var grid = cpu(player).getMainNode().getGrid();
         var serials = player.containerMenu instanceof appeng.menu.me.crafting.CraftingStatusMenu menu

@@ -46,6 +46,24 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
     @Test
+    void crazyPriorityProbeMutatesAndPersistsTheServerCluster() throws Exception {
+        var node = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/StandardCraftFixture.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, 0);
+        }
+        var method = node.methods.stream().filter(candidate -> candidate.name.equals("raiseCrazyPriority"))
+                .findFirst().orElseThrow();
+        var calls = java.util.Arrays.stream(method.instructions.toArray())
+                .filter(MethodInsnNode.class::isInstance).map(MethodInsnNode.class::cast).toList();
+        assertTrue(calls.stream().anyMatch(call -> call.name.equals("getMethod")));
+        assertTrue(calls.stream().anyMatch(call -> call.name.equals("invoke")));
+        assertTrue(calls.stream().anyMatch(call -> call.name.equals("markDirty")),
+                "the live Crazy priority must be persisted on its server crafting cluster");
+    }
+
+    @Test
     void cpuListFirstDrawProbeUsesTheStableTooltipCaller() throws Exception {
         var node = new ClassNode();
         try (var input = getClass().getResourceAsStream(
