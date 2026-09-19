@@ -564,12 +564,13 @@ class TestDriverCoreTest {
     }
 
     @Test
-    void noSpaceRequiresTheRenderedWarningAndBothAdviceLines() {
+    void noSpaceRequiresTheRenderedWarningAdviceAndOrderedControls() {
         assertTrue(AddonCpuFixture.supports(NoSpaceScenario.SCENARIO));
         assertNull(AddonCpuFixture.create(NoSpaceScenario.SCENARIO));
         assertEquals(NoSpaceScenario.CHECKS, DriverResult.requiredChecks(NoSpaceScenario.SCENARIO));
         var tooltip = List.of(NoSpaceScenario.KEY, NoSpaceScenario.KEY + ".explanation",
-                NoSpaceScenario.KEY + ".suggestion").stream()
+                NoSpaceScenario.KEY + ".suggestion", "text.ae2craftingtime.locate_hint",
+                "text.ae2craftingtime.details_hint", "text.ae2craftingtime.reset_hint").stream()
                 .map(key -> new UiSnapshot.ObservedText(key, key, List.of(), null)).toList();
         assertTrue(NoSpaceScenario.tooltipReady(tooltip));
         for (int missing = 0; missing < tooltip.size(); missing++) {
@@ -577,7 +578,43 @@ class TestDriverCoreTest {
             incomplete.remove(missing);
             assertFalse(NoSpaceScenario.tooltipReady(incomplete));
         }
+        var duplicated = new java.util.ArrayList<>(tooltip);
+        duplicated.add(3, tooltip.get(3));
+        assertFalse(NoSpaceScenario.tooltipReady(duplicated));
         assertFalse(NoSpaceScenario.tooltipReady(List.of()));
+    }
+
+    @Test
+    void providerWarningRequiresItsBodyFollowedByOneOrderedControlSection() {
+        var scenario = new ProviderDispatchStatusScenario(ProviderDispatchStatusScenario.INPUT_BLOCKED);
+        var keys = List.of("text.ae2craftingtime.input_blocked",
+                "text.ae2craftingtime.input_blocked.explanation",
+                "text.ae2craftingtime.input_blocked.suggestion",
+                "text.ae2craftingtime.dispatch_status.scheduled_only",
+                "text.ae2craftingtime.locate_hint",
+                "text.ae2craftingtime.details_hint",
+                "text.ae2craftingtime.reset_hint");
+        var tooltip = keys.stream().map(key -> new UiSnapshot.ObservedText(key, key, List.of(), null)).toList();
+
+        assertTrue(scenario.tooltipReady(tooltip));
+        var previous = System.getProperty("ae2craftingtime.test.advancedStatus");
+        try {
+            System.setProperty("ae2craftingtime.test.advancedStatus", "true");
+            assertTrue(scenario.tooltipReady(tooltip));
+        } finally {
+            if (previous == null) System.clearProperty("ae2craftingtime.test.advancedStatus");
+            else System.setProperty("ae2craftingtime.test.advancedStatus", previous);
+        }
+        assertTrue(WarningTooltipChecks.hasControls(tooltip));
+        for (int missing = 0; missing < tooltip.size(); missing++) {
+            var incomplete = new java.util.ArrayList<>(tooltip);
+            incomplete.remove(missing);
+            assertFalse(scenario.tooltipReady(incomplete));
+        }
+        var reordered = new java.util.ArrayList<>(tooltip);
+        java.util.Collections.swap(reordered, reordered.size() - 2, reordered.size() - 1);
+        assertFalse(scenario.tooltipReady(reordered));
+        assertFalse(WarningTooltipChecks.hasControls(reordered));
     }
 
     @Test

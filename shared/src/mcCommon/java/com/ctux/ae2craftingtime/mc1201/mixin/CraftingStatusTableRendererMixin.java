@@ -37,27 +37,40 @@ public abstract class CraftingStatusTableRendererMixin {
     @Inject(method = "getEntryTooltip", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$appendTooltipTimeToCraft(CraftingStatusEntry entry,
             CallbackInfoReturnable<List<Component>> cir) {
-        if (ae2craftingtime$noSpace(entry)) {
-            cir.getReturnValue().addAll(TtcText.noSpaceTooltip());
-            IntegrationLog.observe("ae2craftingtime", "status-tooltip");
-            return;
-        }
-        var amount = entry.getActiveAmount() + entry.getPendingAmount();
-        if (amount <= 0) {
-            return;
-        }
+        ae2craftingtime$appendTooltip(cir.getReturnValue(), entry.getActiveAmount(), entry.getPendingAmount(),
+                ae2craftingtime$noSpace(entry), ae2craftingtime$blockReason(entry),
+                () -> ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue()));
+    }
 
-        var reason = ae2craftingtime$blockReason(entry);
-        if (reason != null) {
-            cir.getReturnValue().addAll(TtcText.blockReasonTooltip(reason,
-                    entry.getActiveAmount() > 0 && entry.getPendingAmount() > 0));
-            IntegrationLog.observe("ae2craftingtime", "status-tooltip");
-            return;
+    private static void ae2craftingtime$appendTooltip(List<Component> lines, long active, long pending, boolean noSpace,
+            CraftingBlockReason reason, java.util.function.BooleanSupplier appendStats) {
+        var showLocateHint = false;
+        if (noSpace) {
+            lines.addAll(TtcText.noSpaceTooltip());
+            showLocateHint = true;
+        } else {
+            var amount = active + pending;
+            if (amount <= 0) {
+                return;
+            }
+
+            if (reason != null) {
+                lines.addAll(TtcText.blockReasonTooltip(reason, active > 0 && pending > 0));
+                showLocateHint = true;
+            } else {
+                showLocateHint = appendStats.getAsBoolean();
+            }
         }
-        ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue());
-        cir.getReturnValue().add(TtcText.detailsHint().withStyle(ChatFormatting.GRAY));
-        cir.getReturnValue().add(TtcText.resetHint().withStyle(ChatFormatting.GRAY));
+        ae2craftingtime$appendControlHints(lines, showLocateHint);
         IntegrationLog.observe("ae2craftingtime", "status-tooltip");
+    }
+
+    private static void ae2craftingtime$appendControlHints(List<Component> lines, boolean showLocateHint) {
+        if (showLocateHint) {
+            lines.add(TtcText.locateHint().withStyle(ChatFormatting.GRAY));
+        }
+        lines.add(TtcText.detailsHint().withStyle(ChatFormatting.GRAY));
+        lines.add(TtcText.resetHint().withStyle(ChatFormatting.GRAY));
     }
 
     private static void ae2craftingtime$appendTtc(CraftingStatusEntry entry, List<Component> lines) {
@@ -97,20 +110,22 @@ public abstract class CraftingStatusTableRendererMixin {
         }, () -> lines.add(TtcText.ttcCollectingData()));
     }
 
-    private static void ae2craftingtime$appendStatsTooltip(CraftingStatusEntry entry, List<Component> lines) {
+    private static boolean ae2craftingtime$appendStatsTooltip(CraftingStatusEntry entry, List<Component> lines) {
         var amount = entry.getActiveAmount() + entry.getPendingAmount();
         var key = ProfilerBridge.key(entry.getWhat());
         var normalized = AeKeyAmounts.normalize(entry.getWhat(), amount);
         ClientStatsRequests.request(key);
-        ClientStats.CACHE.get(key).ifPresent(stats -> {
-            var stall = ClientStats.CACHE.stall(key);
-            if (stall.isPresent()) {
-                lines.addAll(TtcText.stallLines(normalized, entry.getPendingAmount(), stats, stall.get()));
-                lines.add(TtcText.locateHint().withStyle(ChatFormatting.GRAY));
-            } else {
-                lines.addAll(TtcText.statsLines(stats));
-            }
-        });
+        var stats = ClientStats.CACHE.get(key);
+        if (stats.isEmpty()) {
+            return false;
+        }
+        var stall = ClientStats.CACHE.stall(key);
+        if (stall.isPresent()) {
+            lines.addAll(TtcText.stallLines(normalized, entry.getPendingAmount(), stats.get(), stall.get()));
+            return true;
+        }
+        lines.addAll(TtcText.statsLines(stats.get()));
+        return false;
     }
 
     private static Component delayedTtcLine() {

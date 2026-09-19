@@ -5,6 +5,10 @@
     "provider-dispatch-statuses": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"]
   },
   "cases": {
+    "no-space-status": {
+      "checks": ["screen", "external-machine", "warning", "tooltip", "layout", "details-ignored", "reset-ignored", "recovered"],
+      "screenshots": ["no-space-before.png", "no-space-en-us.png", "no-space-recovered.png"]
+    },
     "no-channel-status": {
       "checks": ["screen", "real-job", "tooltip", "layout", "channel-starved", "no-samples", "healthy-alternative", "power-loss-suppressed", "reboot-boundary", "reboot-recovered", "missing-input-suppressed", "infinite-mode-suppressed", "channel-mode-restored", "channel-restored", "job-completed"],
       "advancedChecks": ["screen", "real-job", "tooltip", "layout", "advanced-cpu", "channel-starved", "no-samples", "healthy-alternative", "power-loss-suppressed", "reboot-boundary", "reboot-recovered", "missing-input-suppressed", "infinite-mode-suppressed", "channel-mode-restored", "channel-restored", "job-completed"],
@@ -48,9 +52,9 @@
       "screenshots": ["no-target-en-us.png", "no-target-restored.png"]
     },
     "input-blocked-status": {
-      "checks": ["screen", "real-job", "mixed-row", "tooltip", "layout", "blocking-mode", "blocking-recovered", "zero-insertion", "partial-capacity"],
-      "advancedChecks": ["screen", "real-job", "tooltip", "layout", "advanced-cpu", "blocking-mode", "blocking-recovered", "zero-insertion", "partial-capacity"],
-      "screenshots": ["input-blocked-status-en-us.png", "input-blocked-recovered.png", "input-blocked-zero-insertion.png", "input-blocked-partial-capacity.png"]
+      "checks": ["screen", "real-job", "mixed-row", "tooltip", "layout", "blocking-mode", "warning-details", "warning-reset", "blocking-recovered", "zero-insertion", "partial-capacity"],
+      "advancedChecks": ["screen", "real-job", "tooltip", "layout", "advanced-cpu", "blocking-mode", "warning-details", "warning-reset", "blocking-recovered", "zero-insertion", "partial-capacity"],
+      "screenshots": ["input-blocked-status-en-us.png", "input-blocked-details.png", "input-blocked-reset.png", "input-blocked-recovered.png", "input-blocked-zero-insertion.png", "input-blocked-partial-capacity.png"]
     },
     "locked-status": {
       "checks": ["screen", "real-job", "mixed-row", "tooltip", "layout", "lock-while-low", "low-recovered", "lock-while-high", "high-recovered", "pulse-lock", "pulse-recovered", "result-lock", "result-returned"],

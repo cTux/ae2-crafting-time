@@ -852,7 +852,8 @@ final class StandardAe2Scenario {
         return snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.stats.ttc")
                 && text.rendered().startsWith(net.minecraft.client.resources.language.I18n.get("text.ae2craftingtime.stats.ttc") + ": ")
                 && text.rendered().endsWith(expected))
-                && snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.stall.improvements"));
+                && snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.stall.improvements"))
+                && WarningTooltipChecks.hasControls(snapshot.tooltip());
     }
 
     static boolean planEstimatesReady(List<UiSnapshot.Row> rows) {

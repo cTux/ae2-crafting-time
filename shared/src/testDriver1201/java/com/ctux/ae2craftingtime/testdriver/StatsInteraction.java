@@ -16,18 +16,24 @@ final class StatsInteraction {
     private int chatCount;
     private long nextStatsClick;
     private long clickedAt;
+    private long clickedAmount;
 
     void next() { clicked = false; }
 
     boolean click(Minecraft minecraft, UiSnapshot snapshot, String output, boolean reset) {
-        return click(minecraft, snapshot, output, reset, true);
+        return click(minecraft, snapshot, output, reset, true, 1);
+    }
+
+    boolean click(Minecraft minecraft, UiSnapshot snapshot, String output, boolean reset, long amount) {
+        return click(minecraft, snapshot, output, reset, true, amount);
     }
 
     boolean clickWithoutStats(Minecraft minecraft, UiSnapshot snapshot, String output, boolean reset) {
-        return click(minecraft, snapshot, output, reset, false);
+        return click(minecraft, snapshot, output, reset, false, 1);
     }
 
-    private boolean click(Minecraft minecraft, UiSnapshot snapshot, String output, boolean reset, boolean expectResponse) {
+    private boolean click(Minecraft minecraft, UiSnapshot snapshot, String output, boolean reset, boolean expectResponse,
+            long amount) {
         var chat = ((ChatComponentAccessor) minecraft.gui.getChat()).ae2craftingtime_test_driver$messages();
         if (!clicked) {
             if (System.nanoTime() < nextStatsClick) return false;
@@ -44,13 +50,14 @@ final class StatsInteraction {
             }
             if (!DriverPlatform.modifiers(minecraft, reset)) return false;
             var row = snapshot.rows().stream().filter(r -> r.outputId().equals(output)).findFirst().orElseThrow();
+            clickedAmount = amount;
             DriverPlatform.click(minecraft, row.cell().centerX(), row.cell().centerY());
             releaseKeys();
             clicked = true;
             clickedAt = System.nanoTime();
             clickPhase = 0;
         }
-        String expected = reset ? "Cleared TTC stats for " + output : output + " x1:";
+        String expected = reset ? "Cleared TTC stats for " + output : output + " x" + clickedAmount + ":";
         long matches = chat.size() > chatCount ? chat.subList(0, chat.size() - chatCount).stream()
                 .filter(message -> message.content().getString().contains(expected)).count() : 0;
         if (matches > 1) throw new IllegalStateException("Duplicated stats response: " + expected);

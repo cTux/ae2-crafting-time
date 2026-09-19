@@ -36,6 +36,8 @@ final class ProviderDispatchStatusScenario {
     private CompletableFuture<Boolean> operation;
     private int phase;
     private long changedAt;
+    private final StatsInteraction stats = new StatsInteraction();
+    private int controlPhase;
 
     ProviderDispatchStatusScenario(String scenario) {
         if (!supports(scenario)) throw new IllegalArgumentException("unsupported provider status scenario: " + scenario);
@@ -67,7 +69,7 @@ final class ProviderDispatchStatusScenario {
                 "channel-mode-restored", "channel-restored", "job-completed"));
         if (NO_TARGET.equals(scenario)) checks.addAll(List.of("target-removed", "target-restored"));
         if (INPUT_BLOCKED.equals(scenario)) checks.addAll(List.of(
-                "blocking-mode", "blocking-recovered", "zero-insertion", "partial-capacity"));
+                "blocking-mode", "warning-details", "warning-reset", "blocking-recovered", "zero-insertion", "partial-capacity"));
         if (LOCKED.equals(scenario)) {
             checks.addAll(List.of("lock-while-low", "low-recovered"));
             if (!advancedFixture()) checks.addAll(List.of("lock-while-high", "high-recovered",
@@ -215,6 +217,7 @@ final class ProviderDispatchStatusScenario {
 
     private boolean tickInputBlocked(Minecraft minecraft, UiSnapshot snapshot, Map<String, Boolean> checks,
             Consumer<String> screenshot) {
+        if (phase == 4 && !warningControls(minecraft, snapshot, checks, screenshot)) return false;
         if (phase == 4 && serverStep(minecraft, player -> {
             fixture.provider(player).getLogic().getConfigManager().putSetting(Settings.BLOCKING_MODE, YesNo.NO);
             ((Container) player.level().getBlockEntity(fixture.targetPosition())).clearContent();
@@ -246,6 +249,41 @@ final class ProviderDispatchStatusScenario {
             return true;
         }
         return false;
+    }
+
+    private boolean warningControls(Minecraft minecraft, UiSnapshot snapshot, Map<String, Boolean> checks,
+            Consumer<String> screenshot) {
+        if (controlPhase == 0) {
+            if (serverStep(minecraft, player -> {
+                var network = com.ctux.ae2craftingtime.mc1201.ProfilerBridge.networkId(fixture.provider(player).getMainNode().getGrid());
+                var tick = player.level().getGameTime();
+                for (var item : List.of(Items.DIAMOND, Items.EMERALD)) {
+                    com.ctux.ae2craftingtime.mc1201.ProfilerBridge.start(network, this, AEItemKey.of(item), 1, tick);
+                    com.ctux.ae2craftingtime.mc1201.ProfilerBridge.complete(network, this, AEItemKey.of(item), 1, tick + 20);
+                }
+                return true;
+            })) controlPhase++;
+        } else if (controlPhase == 1 || controlPhase == 4) {
+            if (serverStep(minecraft, player -> {
+                var network = com.ctux.ae2craftingtime.mc1201.ProfilerBridge.networkId(fixture.provider(player).getMainNode().getGrid());
+                var diamond = com.ctux.ae2craftingtime.mc1201.ProfilerBridge.stats(
+                        com.ctux.ae2craftingtime.mc1201.ProfilerBridge.key(network, AEItemKey.of(Items.DIAMOND)));
+                var emerald = com.ctux.ae2craftingtime.mc1201.ProfilerBridge.stats(
+                        com.ctux.ae2craftingtime.mc1201.ProfilerBridge.key(network, AEItemKey.of(Items.EMERALD)));
+                return diamond.isPresent() == (controlPhase == 1) && emerald.isPresent();
+            })) controlPhase++;
+        } else if (controlPhase == 2 || controlPhase == 3) {
+            if (!hasWarning(snapshot)) return false;
+            boolean reset = controlPhase == 3;
+            var row = snapshot.rows().stream().filter(value -> value.outputId().equals("minecraft:diamond"))
+                    .findFirst().orElseThrow();
+            if (!stats.click(minecraft, snapshot, "minecraft:diamond", reset, row.craftAmount())) return false;
+            checks.put(reset ? "warning-reset" : "warning-details", true);
+            screenshot.accept(reset ? "input-blocked-reset.png" : "input-blocked-details.png");
+            stats.next();
+            controlPhase++;
+        }
+        return controlPhase == 5;
     }
 
     static int occupiedSlotCount(int slot, int slots, long pending) {
@@ -379,11 +417,13 @@ final class ProviderDispatchStatusScenario {
         return true;
     }
 
-    private boolean tooltipReady(List<UiSnapshot.ObservedText> tooltip) {
+    boolean tooltipReady(List<UiSnapshot.ObservedText> tooltip) {
         var expected = new java.util.ArrayList<>(List.of(key, key + ".explanation", key + ".suggestion"));
-        if (!advancedFixture() && !NO_CHANNEL.equals(scenario)) expected.add(MIXED);
-        return expected.stream()
-                .allMatch(key -> tooltip.stream().anyMatch(text -> text.key().equals(key)));
+        if (!NO_CHANNEL.equals(scenario) && (!advancedFixture()
+                || tooltip.stream().anyMatch(text -> text.key().equals(MIXED)))) {
+            expected.add(MIXED);
+        }
+        return WarningTooltipChecks.hasBodyAndControls(tooltip, expected);
     }
 
     private static boolean advancedFixture() {
