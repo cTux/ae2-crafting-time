@@ -1,13 +1,17 @@
 # Active-order TTC sorting technical design
 
-Implements the planned [specification](spec.md) for
-[#387](https://github.com/cTux/ae2-crafting-time/issues/387).
+Implements the [specification](spec.md) for the baseline shipped through
+[#387](https://github.com/cTux/ae2-crafting-time/issues/387) and the Crazy AE2
+Addons compatibility correction tracked by
+[#421](https://github.com/cTux/ae2-crafting-time/issues/421).
 
 ## Research result
 
-Research performed on 2026-09-11 against repository commit
+Baseline research was performed on 2026-09-11 against repository commit
 `4dbd2c5b5b7b9b5709a780db397e1a47203308fa` and the upstream releases below.
-This is source-level research, not a runtime compatibility or performance pass.
+The baseline implementation later merged in
+[#395](https://github.com/cTux/ae2-crafting-time/pull/395). Its original source
+research remains below because it defines the shared four-target behavior.
 
 The feature is feasible without changing AE2's server list or the packet
 format. Two changes are necessary: a shared display order for rendering and
@@ -66,6 +70,64 @@ The 26.1 drawing parameter is `GuiGraphicsExtractor`; older targets use
 The inspected [AEBaseScreen render order](https://github.com/AppliedEnergistics/Applied-Energistics-2/blob/79ee2c704ad62941a426c26b1cb1f76ef5b2ee5a/src/main/java/appeng/client/gui/AEBaseScreen.java#L264)
 updates the screen before its widgets. The current title reads TTC during that
 screen update, so freezing values only in the widget would be too late.
+
+## Crazy AE2 Addons 2.6.2 correction
+
+Project Infinity 0.0.52.0 reproduced the conflict on Minecraft 1.20.1, Forge
+47.4.20, AE2 15.4.10, and Crazy AE2 Addons 2.6.2. Eight CPUs existed, six were
+visible, and the initial longest-first screen showed `Alpha`, `Beta`, `Delta`,
+`Gamma`, and two idle CPUs. Only three known totals were visible, so the known
+off-screen job was never promoted. The same result with OmniSequence 1.3.9 and
+2.0.3-fix excludes that addon version as the cause.
+
+The transformed call chain explains the exact order:
+
+1. AE2 drawing calls `menu.cpuList.cpus().subList(...)` before iterating the six
+   visible cards.
+2. `CPUSelectionListOrderMixin` replaces the `cpus()` result with the immutable
+   TTC display list for the frame.
+3. Crazy's `MixinCPUSelectionList.sortThenSlice` redirects the following
+   `List.subList` call. It sorts the supplied list again by descending Crazy CPU
+   priority, case-insensitive name, then serial before slicing it.
+4. Crazy's cancellable `hitTestOnSorted` hook independently rebuilds that same
+   order from the raw menu list and returns at `hitTestCpu` HEAD. Tooltip and
+   mouse-up therefore bypass Crafting Time's frame list and stale-hit checks.
+
+The installed 2.6.2 bytecode and the upstream
+[`MixinCPUSelectionList`](https://github.com/Omicron-Industries/CrazyAE2Addons/blob/a100d8794bd053083d3eafe292a5bee1e3bd753e/src/main/java/net/oktawia/crazyae2addons/mixins/MixinCPUSelectionList.java)
+contain these hooks. Their priority/name/serial comparator produces the observed
+alphabetical order for the equal-priority fixture CPUs. This is a client display
+and input conflict; estimates, packets, the server CPU list, and PR #419's
+Applied Enhancements plan lifecycle are not involved.
+
+### Small compatibility seam
+
+Keep `CpuTtcDisplayOrder`, `CpuTtcClient`, and the existing immutable frame list
+as the only TTC ordering source. Add one Forge-client compatibility mixin for
+Crazy's verified 2.6.2 hook shape. Select it through `IntegrationCatalog` only
+for `1.20.1-forge`, client side, after bytecode contracts confirm both Crazy
+handler methods and descriptors. Apply it after Crazy's mixin has contributed
+those handlers to `CPUSelectionList`.
+
+The compatibility mixin needs one narrow bridge to the existing frame snapshot
+and whether TTC ordering is active. Do not copy the TTC comparator, cache, or
+list lifecycle into the compatibility code.
+
+- In shortest- or longest-TTC mode with the CPU-total channel available,
+  bypass Crazy's post-sort and slice the published Crafting Time frame list.
+  Suppress Crazy's cancellable hit handler so native `hitTestCpu` continues
+  through Crafting Time's displayed-list, drawn-scroll, and stale-hit hooks.
+- In AE2 mode or when the channel is unavailable, delegate unchanged to Crazy.
+  Its priority/name/serial order then remains the effective native order for
+  rendering and input.
+- If Crazy is absent or its handler contract changes, skip only this
+  compatibility mixin and report the rejected variant through existing startup
+  diagnostics. Core CPU-list behavior remains loaded. Do not use `require = 0`
+  alone as the compatibility detector or silently claim an unverified shape.
+
+This seam does not add a dependency, change Crazy's priority data, replace
+AE2's renderer, or assign a sorted list back to `menu.cpuList`. Fabric and both
+NeoForge targets retain the shared baseline without the Forge-only adapter.
 
 ## Ownership and display flow
 
@@ -204,14 +266,27 @@ Native addon rows need no new adapter. Preserve unknown-estimate behavior and
 optional dependencies; separate addon UIs and new addon support are excluded.
 No locale keys change. Keep the current English/Ukrainian text and layout checks.
 
+The Crazy correction is client-only and uses the existing 1.20.1 Forge
+dependency floor of 2.6.2. It adds no packet registration, protocol bump,
+server mixin, persisted data, or dependency range change.
+
 ## Verification and alternatives
 
-The [implementation plan](implementation-plan.md) maps C1-C7 to exact checks.
+The [implementation plan](implementation-plan.md) maps C1-C10 to exact checks.
 Crucially, capture serials from actual per-card render calls and compare those
 with real hover/click actions. Do not use a second invocation of the production
 sort helper as proof of correct rendering. Existing CPU-list expiry fixtures
 with a small busy set keep their three-second expectation; add large-set cases
 for the changed bound rather than weakening that coverage.
+
+For C8-C10, fail first on the initial six rendered cards in the exact Project
+Infinity graph. After that passes, cycle every mode, change a Crazy priority,
+and compare render, tooltip, click, selection, and cancellation serials. Run the
+existing disconnect and two-process continuation only after the initial order
+passes. A prepared Crazy-absent Forge control proves the gated adapter does not
+change the normal path. All four targets still build and run affected boundary
+checks, but the new runtime compatibility proof is the exact 1.20.1 Forge graph;
+do not replay unrelated four-target UI suites as a substitute.
 
 Rejected approaches:
 
@@ -223,3 +298,8 @@ Rejected approaches:
   makes a local display setting server state.
 - Sorting independently in rendering and hit testing can select a different
   CPU when a response arrives between the two operations.
+- Disabling Crazy's ordering globally breaks its advertised priority behavior
+  in AE2 mode. The adapter yields only while TTC ordering is active.
+- Reimplementing Crazy's comparator in Crafting Time would create a second
+  version-sensitive source of truth. Delegating in native mode preserves the
+  installed addon's behavior.

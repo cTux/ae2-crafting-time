@@ -1,11 +1,104 @@
 # Active-order TTC sorting implementation plan
 
-For [#387](https://github.com/cTux/ae2-crafting-time/issues/387), using the
+For the baseline shipped through
+[#387](https://github.com/cTux/ae2-crafting-time/issues/387) and the Crazy AE2
+Addons correction tracked by
+[#421](https://github.com/cTux/ae2-crafting-time/issues/421), using the
 [specification](spec.md) and [technical design](technical-design.md).
-Status: ready for implementation; no step below is claimed as executed by the
-documentation PR. Implement as one feature, not separate partial releases.
 
-## 1. Extend the bounded cache and prove the ordering rules
+The baseline steps below were implemented by
+[#395](https://github.com/cTux/ae2-crafting-time/pull/395). Execute only the
+#421 correction plan until the compatibility checks pass; the retained baseline
+plan records the surrounding invariants it must not regress.
+
+## Fix Crazy AE2 Addons ordering (#421)
+
+### 1. Gate the verified Crazy client hooks
+
+Ownership: `core/IntegrationCatalog`, its selection tests, the 1.20.1 Forge
+client mixin registration, and one client-only compatibility mixin beside
+`CPUSelectionListOrderMixin`.
+
+- Add one `1.20.1-forge` client candidate for Crazy AE2 Addons 2.6.2. Its
+  bytecode contract must identify `MixinCPUSelectionList.sortThenSlice` and
+  `hitTestOnSorted` with their inspected descriptors before enabling the mixin.
+- Apply the adapter after Crazy has contributed those handlers to AE2's
+  `CPUSelectionList`. Keep the current shared ordering mixin enabled normally.
+- Cover accepted, absent, wrong-target, server-side, and changed-handler
+  selection. A rejected contract skips only the Crazy adapter and appears in
+  startup diagnostics.
+- Do not add a dependency, widen the declared version range, or use an optional
+  injection match by itself as proof of compatibility.
+
+Gate: deterministic integration-selection and mixin-boundary checks prove C10
+without loading Crazy on Fabric or NeoForge.
+
+### 2. Keep one frame order for rendering and input
+
+Ownership: the existing `CPUSelectionListOrderMixin`, the new gated adapter,
+and the smallest bridge needed to read its published frame list and active
+TTC/native mode. Do not change `CpuTtcCache`, packets, or server handlers.
+
+- In shortest- and longest-TTC modes with an available channel, stop Crazy's
+  post-sort from replacing the published TTC order before the six-row slice.
+- In the same modes, let native `hitTestCpu` continue through Crafting Time's
+  displayed-list, captured-scroll, and stale-hit path instead of Crazy's
+  cancellable raw-list result.
+- In AE2 mode and channel-unavailable fallback, delegate to Crazy unchanged so
+  priority/name/serial ordering remains native for both rendering and input.
+- Reuse the existing frame snapshot and sorter. Add no second TTC comparator,
+  copy of Crazy's comparator, global redirect, or menu-list mutation.
+- Put every new mode/contract decision in covered pure code when possible.
+  Keep the transformed-method adapter to delegation and API conversion.
+
+Gate: focused tests cover TTC/native/channel decisions, and transformed-hook
+checks bind drawing and hit handling to the same frame identity for C8-C9.
+
+### 3. Extend the existing scenario, not the runner
+
+Ownership: `cpu-list-total-ttc` observations/checks and only the fixture control
+needed to change Crazy priority during the existing Forge scenario.
+
+- Reuse the eight-CPU fixture: four known jobs including one initially
+  off-screen, one unknown busy CPU, idle CPUs, and equal TTC values.
+- Fail first at `INITIAL` unless longest-first promotes every known job before
+  the six-row slice. Then cycle AE2, shortest, and longest modes.
+- Change a Crazy CPU priority in AE2 mode and require its native reorder. Return
+  to both TTC modes and require TTC to be final while equal/unknown/idle groups
+  retain the latest AE2 order.
+- At every reorder compare rendered serial, badge, tooltip, click, selected
+  serial, cancellation target, wheel-before-draw, and stale-hit result.
+- Run the exact Project Infinity 0.0.52.0 graph with Crazy 2.6.2. Run a prepared
+  1.20.1 Forge Crazy-absent control from the same committed head. Preserve JAR
+  identities and the original failed smoke evidence.
+- Continue disconnect, reconnect, and the clean two-process phase only after
+  the initial ordering check passes. Diagnostic resume evidence cannot replace
+  the final clean run.
+
+Gate: retained JSON and screenshots prove C8-C10 against actual rendered rows;
+launch success, unit tests, or reconstructed list order cannot substitute.
+
+### 4. Deliver and verify the correction
+
+- Follow `AGENTS.md`: commit only after the documentation base is merged, let
+  the post-commit hook create the implementation PR, then run local checks.
+- Run focused shared/integration boundary tests with 100% changed executable
+  line and branch coverage, the Forge production and TestDriver builds, and
+  `git diff --check`. GitHub's all-JAR and Gradle checks remain separate proof.
+- Use the change-selected smoke plan, then execute the exact Project Infinity
+  case and Crazy-absent control above. This Forge-only adapter does not require
+  replaying unrelated Fabric/NeoForge UI suites; all-target CI/build coverage
+  must still prove their shared baseline compiles unchanged.
+- Update `docs/dependencies.md` from “known conflict” to verified compatibility
+  only after the exact enabled graph passes. Keep the limitation if runtime
+  verification remains incomplete.
+
+Gate: the implementation is complete only when C8-C10 pass at the current PR
+head, required CI is green, and the documents match the observed result.
+
+## Shipped baseline plan
+
+### 1. Extend the bounded cache and prove the ordering rules
 
 Ownership: `shared/src/main/java/com/ctux/ae2craftingtime/core/CpuTtcCache.java`,
 `TtcSort.java` only if necessary, and their tests under `shared/src/test/java`.
@@ -33,7 +126,7 @@ Ownership: `shared/src/main/java/com/ctux/ae2craftingtime/core/CpuTtcCache.java`
 Gate: focused cache/sort tests exercise C2, C3, and C5, with deterministic fake
 time and a non-starvation assertion independent of queue implementation.
 
-## 2. Bind one display list to the native widget
+### 2. Bind one display list to the native widget
 
 Ownership: `shared/src/mcCommon/java/.../mc1201/CpuTtcClient.java`, new
 `mixin/CPUSelectionListOrderMixin.java`, the existing `mc1201` and `mc2612`
@@ -61,7 +154,7 @@ Gate: minimum-dependency builds cover all four targets; prepared-client Mixin
 application and real input prove C1, C2, C4, and C6. A compile pass alone does
 not establish the widget injection contract.
 
-## 3. Extend the existing CPU-list scenario and observations
+### 3. Extend the existing CPU-list scenario and observations
 
 Ownership: shared `testDriver1201`'s `CpuListTtcScenario`, `StandardCraftFixture`,
 `UiObservationStore`, `UiSnapshot`, and
@@ -100,7 +193,7 @@ including `versions/1.20.1-forge/src/test/.../TestDriverCoreTest.java`.
 Gate: C1-C6 have independent checks and screenshot/JSON mappings. Observations
 record what the renderer used, not what the sorter was expected to return.
 
-## 4. Verify, reconcile docs, and finish
+### 4. Verify, reconcile docs, and finish
 
 Follow `AGENTS.md`: inspect/statically review, make one conventional feature
 commit, let the post-commit hook create the PR, then run local tests and smoke.
@@ -144,8 +237,11 @@ document consistency, and `git diff --check`; report GitHub CI separately.
 | C5 | cache boundary tests and retained lifecycle/delivery/expiry UI checkpoints |
 | C6 | no-channel boundary, existing plan/status checks, native addon known/unknown cases |
 | C7 | four-target build/test results and immutable-head integrated/dedicated evidence |
+| C8 | Crazy-enabled mode cycle, off-screen promotion, and live priority-change evidence |
+| C9 | rendered serial matched to tooltip, click, selection, cancellation, wheel, and stale-hit results |
+| C10 | exact Project Infinity clean run, Crazy-absent control, and accepted/rejected contract checks |
 
-Implementation is complete only when every criterion has this evidence, shared
-coverage remains 100%, required CI is green at the current PR head, and the
-documents match the implemented behavior. Merging the planning PR completes
-the research deliverable only; keep #387 open for implementation tracking.
+The baseline merged through #395. The #421 correction is complete only when its
+new criteria have the focused evidence above, shared coverage remains 100%,
+required CI is green at the current PR head, and these documents match the
+implemented behavior.

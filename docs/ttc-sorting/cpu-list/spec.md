@@ -1,7 +1,11 @@
 # TTC sorting for active crafting orders
 
-Tracking issue: [#387](https://github.com/cTux/ae2-crafting-time/issues/387).
-Status: implementation in progress; runtime acceptance is pending.
+Tracking issues: [#387](https://github.com/cTux/ae2-crafting-time/issues/387)
+for the shipped baseline and
+[#421](https://github.com/cTux/ae2-crafting-time/issues/421) for Crazy AE2
+Addons compatibility. The baseline merged in
+[#395](https://github.com/cTux/ae2-crafting-time/pull/395); the Crazy ordering
+correction and its exact-pack runtime acceptance are pending.
 
 ## Goal and scope
 
@@ -27,10 +31,17 @@ fixed three-second expiry rules.
   total precede busy CPUs without an estimate; idle CPUs come last.
 - Known totals sort numerically in the chosen direction. Equal totals, unknown
   busy CPUs, and idle CPUs each retain their relative order in the latest AE2
-  list. Do not use formatted text, CPU names, or the selected CPU as TTC keys.
-- **AE2 order** shows the complete latest AE2 list in its original order,
-  including idle CPUs. It restores the existing visible-plus-selected refresh
+  list. Do not use formatted text, CPU names, Crazy priority, or the selected
+  CPU as TTC keys.
+- **AE2 order** shows the complete effective native list, including idle CPUs.
+  Without another UI-order integration this is the latest AE2 list in its
+  original order. It restores the existing visible-plus-selected refresh
   behavior. The selected order's item sorting continues to behave as today.
+- Crazy AE2 Addons may apply its priority, name, and serial order in **AE2
+  order**. In either TTC mode, TTC grouping and the chosen numeric direction
+  are final: Crazy priority or CPU names cannot reorder those rows. Equal known
+  totals, unknown busy CPUs, and idle CPUs retain the latest AE2 order. Crazy's
+  priority order remains available by switching back to **AE2 order**.
 - The complete active list participates, including jobs outside the viewport
   and lists larger than one request batch. Estimates arrive progressively;
   unknown rows move into the known group when their data arrives. No CPU is
@@ -67,26 +78,37 @@ with the same behavior on integrated and matching dedicated servers. Native
 addon CPUs shown in AE2's list participate through the existing estimate path;
 unknown scopes remain unknown. Separate addon screens are outside this scope.
 
+Crazy AE2 Addons compatibility is limited to its verified `2.6.2` client hooks
+on Minecraft 1.20.1 Forge. The correction must activate only when that exact
+hook contract is present. It must leave Fabric, NeoForge, Crazy-absent Forge,
+and changed or unsupported Crazy hook shapes on the normal AE2 Crafting Time
+path. A skipped incompatible hook is reported through startup integration
+diagnostics instead of being treated as verified compatibility.
+
 If the CPU-total channel is unavailable, the CPU list keeps AE2 order, while
 item sorting and the existing title fallback continue normally. Do not infer
 CPU totals from item statistics on the client.
 
 No new control, sort mode, saved preference, configuration, translation key,
 estimator, server crafting priority, persistence, dependency upgrade, or release
-is included. Reuse English/Ukrainian button text and badge layout. This planning
-change delivers documents; executable changes belong to the implementation.
+is included. Reuse English/Ukrainian button text and badge layout. The Crazy
+correction is client-only and does not change packets, estimates, server CPU
+priority, or the menu's stored CPU list.
 
 ## Acceptance criteria
 
 | ID | Observable result |
 | --- | --- |
 | C1 | The initial longest-first view and every button mode apply to both lists; reopening restores the default. |
-| C2 | Known busy totals sort in both directions, followed by unknown busy and idle groups; ties preserve AE2 order. AE2 mode exactly restores the latest original list. |
+| C2 | Known busy totals sort in both directions, followed by unknown busy and idle groups; ties preserve the latest AE2 order. Without another UI-order integration, AE2 mode exactly restores the latest original list; installed native UI ordering remains effective in AE2 mode. |
 | C3 | With more than 32 busy CPUs, every stable job is requested without scrolling; priority rows refresh and background rows are not starved. No request or server budget is increased. |
 | C4 | Selection, card click, tooltip, cancellation, badge/title agreement, and scroll clamping remain correct after reorder and removal. |
 | C5 | Completion, same-output replacement, expiry, late/duplicate responses, reopen, network change, and reconnect cannot reuse invalid totals. Freshness follows the rule above. |
 | C6 | Channel-unavailable behavior and existing item/plan sorting remain intact. Native addon rows with unknown totals remain usable. |
 | C7 | All four targets pass the affected unit/boundary checks and actual UI verification on integrated and connected dedicated servers, with rendered-row evidence. |
+| C8 | With Crazy AE2 Addons 2.6.2 on Forge 1.20.1, TTC modes remain authoritative before the six-row slice, while AE2 order retains Crazy's priority/name/serial behavior, including live priority changes. |
+| C9 | With Crazy installed, rendering, badge, tooltip, click, selection, cancellation, wheel-before-draw, and stale-hit suppression use one displayed CPU identity for the frame. |
+| C10 | The exact Project Infinity 0.0.52.0 fixture promotes every known off-screen job in the initial longest-first check. A Crazy-absent control keeps the existing behavior, and unsupported Crazy hook shapes skip the compatibility path without changing other targets. |
 
 See the [technical design](technical-design.md) and
 [implementation plan](implementation-plan.md).
