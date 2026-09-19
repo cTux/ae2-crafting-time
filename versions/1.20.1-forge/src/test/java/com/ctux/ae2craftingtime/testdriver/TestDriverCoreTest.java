@@ -9,6 +9,10 @@ import org.apache.catalina.startup.Tomcat;
 import org.apache.catalina.webresources.TomcatURLStreamHandlerFactory;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodInsnNode;
 
 import java.net.URLClassLoader;
 import java.nio.file.AccessDeniedException;
@@ -34,12 +38,34 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
+    @Test
+    void cpuListFirstDrawProbeUsesTheStableTooltipCaller() throws Exception {
+        var node = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/mixin/CPUSelectionListObservationMixin.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, 0);
+        }
+        var method = node.methods.stream()
+                .filter(candidate -> candidate.name.equals("ae2craftingtime_test_driver$inputBoundaries"))
+                .findFirst().orElseThrow();
+        var calls = java.util.Arrays.stream(method.instructions.toArray())
+                .filter(MethodInsnNode.class::isInstance)
+                .map(MethodInsnNode.class::cast)
+                .filter(call -> call.getOpcode() == Opcodes.INVOKEVIRTUAL)
+                .toList();
+        assertEquals(1, calls.stream().filter(call -> call.name.equals("getTooltip")).count());
+        assertEquals(2, calls.stream().filter(call -> call.name.equals("hitTestCpu")).count(),
+                "only the post-draw stale and wheel probes may call hitTestCpu directly");
+    }
+
     @Test
     void recurrentConnectedControlAcceptsOnlyTheBoundedAlphaDirectory() throws Exception {
         var root = java.nio.file.Files.createTempDirectory("ae2ct-recurrent-control");

@@ -36,8 +36,8 @@ public abstract class CPUSelectionListObservationMixin {
     @Inject(method = "updateBeforeRender", at = @At("HEAD"))
     private void ae2craftingtime_test_driver$inputBoundaries(CallbackInfo ci) {
         if (!ae2craftingtime_test_driver$drawn) {
-            var first = hitTestCpu(new Point(bounds.getX() + 10, bounds.getY() + 20));
-            CpuListInputControl.noFirstDraw(first == null ? null : first.serial());
+            var first = ((CPUSelectionList) (Object) this).getTooltip(bounds.getX() + 10, bounds.getY() + 20);
+            CpuListInputControl.noFirstDraw(first == null ? null : 0);
         }
         var stale = CpuListInputControl.staleSerial();
         if (stale != null && menu.cpuList.cpus().stream().noneMatch(cpu -> cpu.serial() == stale)) {

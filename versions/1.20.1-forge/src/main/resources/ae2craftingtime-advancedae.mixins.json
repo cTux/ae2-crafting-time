@@ -9,8 +9,7 @@
     "AdvancedCraftingCpuLogicMixin"
   ],
   "client": [
-    "CrazyAe2CpuListRenderMixin",
-    "CrazyAe2CpuListCompatibilityMixin"
+    "CrazyAe2CpuListRenderMixin"
   ],
   "injectors": {
     "defaultRequire": 1

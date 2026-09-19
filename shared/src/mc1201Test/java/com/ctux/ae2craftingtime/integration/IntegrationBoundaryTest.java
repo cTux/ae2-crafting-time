@@ -87,9 +87,9 @@ class IntegrationBoundaryTest {
         assertTrue(clients.contains("CPUSelectionListMixin"), "CPU list renderer must be packaged");
         if (IntegrationPlatform.TARGET.equals("1.20.1-forge")) {
             assertTrue(clients.contains("CrazyAe2CpuListRenderMixin"),
-                    "Crazy render compatibility must be packaged separately so it can run before Crazy");
-            assertTrue(clients.contains("CrazyAe2CpuListCompatibilityMixin"),
-                    "Crazy hit-test compatibility must remain packaged separately so it can run after Crazy");
+                    "Crazy render and input compatibility must run before Crazy");
+            assertFalse(clients.contains("CrazyAe2CpuListCompatibilityMixin"),
+                    "Crazy compatibility must not target the addon's rewritten private handler");
         } else {
             assertFalse(clients.contains("CrazyAe2CpuListRenderMixin"));
             assertFalse(clients.contains("CrazyAe2CpuListCompatibilityMixin"));
@@ -127,30 +127,19 @@ class IntegrationBoundaryTest {
                 var at = (org.objectweb.asm.tree.AnnotationNode)
                         ((List<?>) annotationValue(wrap, "at")).get(0);
                 assertEquals("Ljava/util/List;subList(II)Ljava/util/List;", annotationValue(at, "target"));
-                assertFalse(node.methods.stream().anyMatch(method -> method.name.equals("ae2craftingtime$hitTtcFrame")),
-                        "early render mixin must not carry the late hit-test handler");
-            }
-            if (mixin.equals("CrazyAe2CpuListCompatibilityMixin")) {
-                var annotation = node.invisibleAnnotations.stream()
-                        .filter(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/Mixin;"))
-                        .findFirst().orElseThrow();
-                assertTrue(annotation.values.contains(1100),
-                        "Crazy hit-test adapter must run after the priority-1000 addon mixin");
                 var hit = node.methods.stream()
                         .filter(method -> method.name.equals("ae2craftingtime$hitTtcFrame"))
                         .findFirst().orElseThrow();
-                var inject = hit.visibleAnnotations.stream()
-                        .filter(a -> a.desc.endsWith("/Inject;"))
+                var hitWrap = hit.visibleAnnotations.stream()
+                        .filter(a -> a.desc.endsWith("/WrapOperation;"))
                         .findFirst().orElseThrow();
-                assertEquals(List.of("hitTestCpu"), annotationValue(inject, "method"));
-                assertEquals(true, annotationValue(inject, "cancellable"));
+                assertEquals(List.of("getTooltip", "onMouseUp"), annotationValue(hitWrap, "method"));
+                assertEquals(2, annotationValue(hitWrap, "require"));
                 var hitAt = (org.objectweb.asm.tree.AnnotationNode)
-                        ((List<?>) annotationValue(inject, "at")).get(0);
-                assertEquals("HEAD", annotationValue(hitAt, "value"));
-                assertFalse(node.methods.stream().anyMatch(method -> method.name.equals("ae2craftingtime$sliceTtcFrame")),
-                        "late hit-test mixin must not carry the early render handler");
-                assertFalse(node.methods.stream().anyMatch(method -> method.name.equals("ae2craftingtime$keepTtcOrder")
-                        || method.name.equals("ae2craftingtime$useFrameHitTest")));
+                        ((List<?>) annotationValue(hitWrap, "at")).get(0);
+                assertEquals("Lappeng/client/gui/widgets/CPUSelectionList;hitTestCpu(Lappeng/client/Point;)"
+                        + "Lappeng/menu/me/crafting/CraftingStatusMenu$CraftingCpuListEntry;",
+                        annotationValue(hitAt, "target"));
             }
         }
         // Config construction must be safe before loader metadata exists, including both Forge configs.
