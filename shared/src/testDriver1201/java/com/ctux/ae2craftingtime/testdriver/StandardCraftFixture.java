@@ -21,7 +21,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 
-/** Two actual vanilla smelters; the fixture supplies fuel and imports their output. */
 final class StandardCraftFixture {
     BlockPos terminal;
     private boolean initialized;
@@ -43,6 +42,8 @@ final class StandardCraftFixture {
     private int cpuCount = 8;
     private int busyCpuCount = 5;
     private int[] initialSamples;
+    private String delayedRelease;
+    private boolean preparedFinalOutput;
     String checkpoint = "new";
 
     void bindTerminal(BlockPos value) { terminal = value; }
@@ -84,7 +85,8 @@ final class StandardCraftFixture {
             if (cpuListScenario) DispatchStatusFixture.place(player, terminal.south(2), "controller");
             for (int offset : new int[] {4, 8}) {
                 DispatchStatusFixture.place(player, terminal.east(offset), "pattern_provider");
-                level.setBlockAndUpdate(terminal.east(offset).below(), Blocks.FURNACE.defaultBlockState());
+                level.setBlockAndUpdate(terminal.east(offset).below(),
+                        (holdFinalOutput ? Blocks.CHEST : Blocks.FURNACE).defaultBlockState());
             }
             if (cpuListScenario) {
                 DispatchStatusFixture.place(player, terminal.east(12), "pattern_provider");
@@ -150,9 +152,16 @@ final class StandardCraftFixture {
                         IActionSource.empty());
                 if (cpuListScenario) drive.getCellInventory(0).insert(AEItemKey.of(Items.SAND), 256,
                         Actionable.MODULATE, IActionSource.empty());
+                if (holdFinalOutput) drive.getCellInventory(0).insert(AEItemKey.of(Items.SAND), 2,
+                        Actionable.MODULATE, IActionSource.empty());
             }
-            pattern(player, 4, recurrentPlan ? Items.SMOOTH_STONE : Items.COBBLESTONE, Items.STONE);
-            pattern(player, 8, Items.STONE, Items.SMOOTH_STONE);
+            pattern(player, 4, 0, recurrentPlan ? Items.SMOOTH_STONE : Items.COBBLESTONE, Items.STONE);
+            if (holdFinalOutput) {
+                pattern(player, 4, 1, Items.SAND, Items.GLASS);
+                pattern(player, 8, java.util.List.of(Items.STONE, Items.GLASS), Items.SMOOTH_STONE);
+            } else {
+                pattern(player, 8, Items.STONE, Items.SMOOTH_STONE);
+            }
             if (cpuListScenario) pattern(player, 12, Items.SAND, Items.GLASS);
             if (!unprofiledPlan) seed(player);
             initialized = true;
@@ -163,6 +172,7 @@ final class StandardCraftFixture {
 
     void seed(ServerPlayer player) {
         seed(player, Items.STONE);
+        if (holdFinalOutput) seed(player, Items.GLASS);
         seed(player, Items.SMOOTH_STONE);
     }
 
@@ -191,9 +201,23 @@ final class StandardCraftFixture {
     }
 
     private void pattern(ServerPlayer player, int offset, net.minecraft.world.item.Item input, net.minecraft.world.item.Item output) {
+        pattern(player, offset, 0, input, output);
+    }
+
+    private void pattern(ServerPlayer player, int offset, int slot, net.minecraft.world.item.Item input,
+            net.minecraft.world.item.Item output) {
         var provider = (PatternProviderBlockEntity) player.serverLevel().getBlockEntity(terminal.east(offset));
-        provider.getLogic().getPatternInv().setItemDirect(0, ServerDriverPlatform.processingPattern(
+        provider.getLogic().getPatternInv().setItemDirect(slot, ServerDriverPlatform.processingPattern(
                 new GenericStack(AEItemKey.of(input), 1), new GenericStack(AEItemKey.of(output), 1)));
+        provider.getLogic().updatePatterns();
+    }
+
+    private void pattern(ServerPlayer player, int offset, java.util.List<net.minecraft.world.item.Item> inputs,
+            net.minecraft.world.item.Item output) {
+        var provider = (PatternProviderBlockEntity) player.serverLevel().getBlockEntity(terminal.east(offset));
+        provider.getLogic().getPatternInv().setItemDirect(0, ServerDriverPlatform.processingPattern(inputs.stream()
+                .map(item -> new GenericStack(AEItemKey.of(item), 1)).toList(),
+                new GenericStack(AEItemKey.of(output), 1)));
         provider.getLogic().updatePatterns();
     }
 
@@ -406,8 +430,16 @@ final class StandardCraftFixture {
     }
 
     boolean finalOutputReady(ServerPlayer player) {
+        if (holdFinalOutput) return contains(target(player, 8), Items.SMOOTH_STONE);
         var furnace = (FurnaceBlockEntity) player.serverLevel().getBlockEntity(terminal.east(8).below());
         return furnace.getItem(2).is(Items.SMOOTH_STONE) && furnace.getItem(2).getCount() == 1;
+    }
+
+    void releaseDelayedOutput(String outputId) {
+        if (!java.util.Set.of("minecraft:stone", "minecraft:glass").contains(outputId)) {
+            throw new IllegalArgumentException("Unsupported delayed output: " + outputId);
+        }
+        delayedRelease = outputId;
     }
 
     void viewFinalProvider(ServerPlayer player) {
@@ -419,6 +451,7 @@ final class StandardCraftFixture {
     long pump(ServerPlayer player, boolean fuel) {
         if (fuel && initialSamples == null) initialSamples = sampleCounts(player);
         var storage = cpu(player).getMainNode().getGrid().getStorageService().getInventory();
+        if (holdFinalOutput || preparedFinalOutput) return pumpDelayed(player, storage);
         for (int offset : pumpOffsets(cpuListScenario)) {
             var furnace = (FurnaceBlockEntity) player.serverLevel().getBlockEntity(terminal.east(offset).below());
             if (fuel && furnace.getItem(1).isEmpty()) furnace.setItem(1, new ItemStack(Items.COAL));
@@ -431,5 +464,76 @@ final class StandardCraftFixture {
             }
         }
         return storage.extract(AEItemKey.of(Items.SMOOTH_STONE), Long.MAX_VALUE, Actionable.SIMULATE, IActionSource.empty());
+    }
+
+    void viewSharedProvider(ServerPlayer player) {
+        player.teleportTo(terminal.getX() + 5, terminal.getY() - 1, terminal.getZ() - 2.5);
+        player.setYRot(9.462f);
+        player.setXRot(2);
+    }
+
+    void viewTerminal(ServerPlayer player) {
+        player.teleportTo(terminal.getX() + 0.5, terminal.getY() - 1, terminal.getZ() - 2.5);
+    }
+
+    private long pumpDelayed(ServerPlayer player, appeng.api.storage.MEStorage storage) {
+        if (delayedRelease != null) {
+            var output = delayedRelease.equals("minecraft:stone") ? Items.STONE : Items.GLASS;
+            var input = output == Items.STONE ? Items.COBBLESTONE : Items.SAND;
+            if (removeOne(target(player, 4), input)) {
+                var inserted = storage.insert(AEItemKey.of(output), 1, Actionable.MODULATE,
+                        IActionSource.ofMachine(cpu(player)));
+                if (inserted != 1) throw new IllegalStateException("Could not return delayed " + delayedRelease);
+                returnedStone |= output == Items.STONE;
+                delayedRelease = null;
+            }
+        }
+        var finalTarget = target(player, 8);
+        if (!preparedFinalOutput && removeOne(finalTarget, Items.STONE)) {
+            if (!removeOne(finalTarget, Items.GLASS)) {
+                addOne(finalTarget, Items.STONE);
+            } else {
+                addOne(finalTarget, Items.SMOOTH_STONE);
+                preparedFinalOutput = true;
+            }
+        }
+        if (preparedFinalOutput && !holdFinalOutput && removeOne(finalTarget, Items.SMOOTH_STONE)) {
+            var inserted = storage.insert(AEItemKey.of(Items.SMOOTH_STONE), 1, Actionable.MODULATE,
+                    IActionSource.ofMachine(cpu(player)));
+            if (inserted != 1) throw new IllegalStateException("Could not return final delayed output");
+        }
+        return storage.extract(AEItemKey.of(Items.SMOOTH_STONE), Long.MAX_VALUE, Actionable.SIMULATE,
+                IActionSource.empty());
+    }
+
+    private net.minecraft.world.Container target(ServerPlayer player, int offset) {
+        return (net.minecraft.world.Container) player.serverLevel().getBlockEntity(terminal.east(offset).below());
+    }
+
+    private static boolean contains(net.minecraft.world.Container target, net.minecraft.world.item.Item item) {
+        for (int slot = 0; slot < target.getContainerSize(); slot++) if (target.getItem(slot).is(item)) return true;
+        return false;
+    }
+
+    private static boolean removeOne(net.minecraft.world.Container target, net.minecraft.world.item.Item item) {
+        for (int slot = 0; slot < target.getContainerSize(); slot++) {
+            if (target.getItem(slot).is(item)) {
+                target.removeItem(slot, 1);
+                target.setChanged();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static void addOne(net.minecraft.world.Container target, net.minecraft.world.item.Item item) {
+        for (int slot = 0; slot < target.getContainerSize(); slot++) {
+            if (target.getItem(slot).isEmpty()) {
+                target.setItem(slot, new ItemStack(item));
+                target.setChanged();
+                return;
+            }
+        }
+        throw new IllegalStateException("Delayed processor has no output slot");
     }
 }

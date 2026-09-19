@@ -57,17 +57,15 @@ public final class Ae2CraftingTimeClient implements ClientModInitializer {
                 }
             }
             // Plates persist while their output still reports a stall.
-            for (var plate : ProviderHighlightClient.plates()) {
-                if (!levelDimension.equals(plate.dimensionId())
-                        || !ProviderHighlightClient.shouldShowPlates(plate.outputId())) {
+            for (var plate : ProviderHighlightClient.renderPlates()) {
+                if (!levelDimension.equals(plate.dimensionId())) {
                     continue;
                 }
                 var stack = ProviderHighlightShapes.resolveItem(plate.outputId());
-                for (var pos : plate.positions()) {
-                    ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos,
-                            stack, ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z),
-                            LevelRenderer.getLightColor(minecraft.level, pos), alpha);
-                }
+                var pos = plate.position();
+                ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos,
+                        stack, ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z),
+                        LevelRenderer.getLightColor(minecraft.level, pos), alpha);
             }
             consumers.endBatch();
             poseStack.popPose();

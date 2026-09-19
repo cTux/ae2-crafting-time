@@ -36,6 +36,10 @@ final class DriverPlatform {
     static void click(net.minecraft.client.Minecraft minecraft, double x, double y) {
         minecraft.screen.mouseClicked(x, y, 0);
     }
+    static void doubleClick(net.minecraft.client.Minecraft minecraft, double x, double y) {
+        click(minecraft, x, y);
+        click(minecraft, x, y);
+    }
     static void clickAndRelease(net.minecraft.client.Minecraft minecraft, double x, double y) {
         click(minecraft, x, y);
         minecraft.screen.mouseReleased(x, y, 0);

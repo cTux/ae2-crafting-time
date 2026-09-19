@@ -682,7 +682,7 @@ public final class CraftPlanScenario {
             return;
         }
         var observed = DispatchObservation.snapshot();
-        if (observed.finishes() == 0) {
+        if (!addonFixture.dispatchReady(observed)) {
             sampleCheck = null;
             return;
         }

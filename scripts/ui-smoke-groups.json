@@ -31,8 +31,8 @@
       "screenshots": ["status-waiting-running.png", "running-progress.png"]
     },
     "delayed-status": {
-      "checks": ["submitted", "delayed", "row", "style", "tooltip", "layout", "recovered", "plate-recovered", "final-plate", "completed", "output", "profile-sample", "plate-cleared"],
-      "screenshots": ["status-delayed.png", "delayed-tooltip.png", "delayed-recovered.png", "delayed-plate-recovered.png", "delayed-final-held.png", "delayed-world-highlight.png", "delayed-world-finished.png"]
+      "checks": ["submitted", "delayed", "row", "style", "tooltip", "layout", "recovered", "overlap", "stable-selection", "winner-recovery", "rainbow-preserved", "plate-recovered", "final-plate", "completed", "output", "profile-sample", "plate-cleared"],
+      "screenshots": ["status-delayed.png", "delayed-tooltip.png", "delayed-world-overlap.png", "delayed-world-winner-recovered.png", "delayed-final-held.png", "delayed-world-highlight.png", "delayed-world-finished.png", "delayed-recovered.png"]
     },
     "craft-lifecycle": {
       "checks": ["plan", "submitted", "status", "profile-sample", "total-cleared", "completed", "output", "plan-no-data", "plan-partial", "accuracy-full", "accuracy-partial", "details-chat"],

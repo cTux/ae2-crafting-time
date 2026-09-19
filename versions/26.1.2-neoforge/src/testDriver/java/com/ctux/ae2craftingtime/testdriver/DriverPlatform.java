@@ -42,6 +42,14 @@ final class DriverPlatform {
         if (org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_ALT) == org.lwjgl.glfw.GLFW.GLFW_PRESS) modifiers |= org.lwjgl.glfw.GLFW.GLFW_MOD_ALT;
         minecraft.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(x, y, new net.minecraft.client.input.MouseButtonInfo(0, modifiers)), false);
     }
+    static void doubleClick(net.minecraft.client.Minecraft minecraft, double x, double y) {
+        long window = minecraft.getWindow().handle();
+        int modifiers = 0;
+        if (org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_CONTROL) == org.lwjgl.glfw.GLFW.GLFW_PRESS) modifiers |= org.lwjgl.glfw.GLFW.GLFW_MOD_CONTROL;
+        if (org.lwjgl.glfw.GLFW.glfwGetKey(window, org.lwjgl.glfw.GLFW.GLFW_KEY_LEFT_ALT) == org.lwjgl.glfw.GLFW.GLFW_PRESS) modifiers |= org.lwjgl.glfw.GLFW.GLFW_MOD_ALT;
+        minecraft.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(x, y,
+                new net.minecraft.client.input.MouseButtonInfo(0, modifiers)), true);
+    }
     static void clickAndRelease(net.minecraft.client.Minecraft minecraft, double x, double y) {
         click(minecraft, x, y);
         minecraft.screen.mouseReleased(new net.minecraft.client.input.MouseButtonEvent(x, y,

@@ -19,7 +19,6 @@
       { "project_id": "545hUrw9", "version_id": "ByiqRpj3", "dependency_type": "optional" },
       { "project_id": "E6BFl96N", "dependency_type": "optional" },
       { "project_id": "udZtKfzP", "dependency_type": "optional", "version_number": "20.3.0" },
-      { "project_id": "ArHeh5Fz", "dependency_type": "optional" },
       { "project_id": "qPydPwtX", "dependency_type": "optional" },
       { "project_id": "anaGQD2Q", "version_id": "KwFCuLdA", "dependency_type": "optional" },
       { "project_id": "4inoel9g", "version_id": "RFT2nmVb", "dependency_type": "optional" },
@@ -85,8 +84,7 @@
       { "project_id": "IZPmgTLT", "version_id": "nd0U5eJF", "dependency_type": "optional" },
       { "project_id": "SyKS54UY", "version_id": "VKYzoChV", "dependency_type": "optional" },
       { "project_id": "oMgZ004U", "version_id": "4x40hq9D", "dependency_type": "optional" },
-      { "project_id": "udZtKfzP", "dependency_type": "optional" },
-      { "project_id": "ArHeh5Fz", "dependency_type": "optional" }
+      { "project_id": "udZtKfzP", "dependency_type": "optional" }
     ],
     "changelog": "### FIXED\n\n- The total TTC now sits in the crafting status header, so it no longer overlaps the action buttons."
   },

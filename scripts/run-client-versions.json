@@ -7,7 +7,7 @@
       { "name": "Applied Mekanistics", "project_id": "IiATswDj", "mod_id": "appmek" },
       { "name": "ME Requester", "project_id": "E6BFl96N", "mod_id": "merequester" },
       { "name": "NeoEco AE", "project_id": "udZtKfzP", "mod_id": "neoecoae" },
-      { "name": "AE2 Lightning Tech", "project_id": "ArHeh5Fz", "mod_id": "ae2lt" },
+      { "name": "AE2 Lightning Tech (legacy Modrinth identity)", "project_id": "ArHeh5Fz", "compatible": false, "reason": "Replaced by CurseForge project 1527395 after the Modrinth project was removed." },
       { "name": "AdvancedAE", "project_id": "rxYaglEe", "mod_id": "advanced_ae" },
       { "name": "ExtendedAE", "project_id": "JiOqfoFM" },
       { "name": "ExtendedAE-Plus", "project_id": "xr109llC", "mod_id": "extendedae_plus" },
@@ -40,7 +40,6 @@
         { "project_id": "9s6osm5g", "version_id": "t8TXrZvZ", "version": "11.1.136+forge" },
         { "project_id": "a1RwDz90", "version_id": "flhDmaU7", "version": "1.0.1" },
         { "project_id": "anaGQD2Q", "version_id": "JK2VlwKh", "version": "2.6.2" },
-        { "project_id": "ArHeh5Fz", "version_id": "8RXazZkx", "version": "2.1.0-beta.2-forge.1.20.1" },
         { "project_id": "ayN3DZKb", "version_id": "KXyq9wjS", "version": "1.2.2" },
         { "project_id": "B1CBVXHX", "version_id": "NzNZILgs", "version": "mc1.20.1-1.0.52-forge" },
         { "project_id": "Ce6I4WUE", "version_id": "uxe1WQp4", "version": "10.4.16.80" },
@@ -52,7 +51,6 @@
         { "project_id": "JiOqfoFM", "version_id": "uq3lO4ER", "version": "1.20-1.4.18-forge" },
         { "project_id": "jjuIRIVr", "version_id": "SH2D1n3s", "version": "forge-2.4.6" },
         { "project_id": "lhGA9TYQ", "version_id": "1MKTLiiG", "version": "9.2.14+forge" },
-        { "project_id": "M5jhzZXH", "version_id": "UgayyKmv", "version": "2.0.0-beta.2-forge.1.20.1" },
         { "project_id": "nU0bVIaL", "version_id": "94dtOLgZ", "version": "1.20.1-85-forge" },
         { "project_id": "oMgZ004U", "version_id": "cAcdjzEn", "version": "1.20-1.3.7-forge" },
         { "project_id": "PbNc6qBY", "version_id": "1YxwR16I", "version": "3.3.8-50" },
@@ -73,6 +71,24 @@
     },
     "test_driver_projects": ["PbNc6qBY"],
     "curseforge": [
+      {
+        "name": "AE2 Lightning Tech",
+        "project_id": 1527395,
+        "replaces_project_id": "ArHeh5Fz",
+        "mod_id": "ae2lt",
+        "version": "2.1.0-beta.4-forge.1.20.1",
+        "dependencies": [1631756],
+        "compatible": { "file_id": 8829989, "filename": "ae2lt-forge-1.20.1-2.1.0-beta.4.jar", "sha512": "d08720dce5b47ffc1df793c8eb0e0784dd23e67035e006e1091b3076f81fd49944bf7e0c0c2295028885d08075382fd1a950b23daa91a8406120b7c1b13e3834" },
+        "latest": { "file_id": 8829989, "filename": "ae2lt-forge-1.20.1-2.1.0-beta.4.jar", "sha512": "d08720dce5b47ffc1df793c8eb0e0784dd23e67035e006e1091b3076f81fd49944bf7e0c0c2295028885d08075382fd1a950b23daa91a8406120b7c1b13e3834" }
+      },
+      {
+        "name": "Thunderbolt Core",
+        "project_id": 1631756,
+        "mod_id": "thunderbolt",
+        "version": "2.0.0-beta.4-forge.1.20.1",
+        "compatible": { "file_id": 8850927, "filename": "thunderbolt-forge-1.20.1-2.0.0-beta.4.jar", "sha512": "011f9671ea034a5fba6e12c095d026c3e12e105106efb5ba53847404c9306def00b2627045de3a114d14224189457e92e63bf1a3624da5f2b621a6b1fe66eb3a" },
+        "latest": { "file_id": 8850927, "filename": "thunderbolt-forge-1.20.1-2.0.0-beta.4.jar", "sha512": "011f9671ea034a5fba6e12c095d026c3e12e105106efb5ba53847404c9306def00b2627045de3a114d14224189457e92e63bf1a3624da5f2b621a6b1fe66eb3a" }
+      },
       {
         "name": "AE2 Things (Forge)",
         "project_id": 609977,
@@ -192,7 +208,7 @@
       { "name": "AdvancedAE", "project_id": "rxYaglEe", "mod_id": "advanced_ae" },
       { "name": "ME Requester", "project_id": "E6BFl96N", "mod_id": "merequester" },
       { "name": "NeoEco AE", "project_id": "udZtKfzP", "mod_id": "neoecoae" },
-      { "name": "AE2 Lightning Tech", "project_id": "ArHeh5Fz", "mod_id": "ae2lt" },
+      { "name": "AE2 Lightning Tech (legacy Modrinth identity)", "project_id": "ArHeh5Fz", "compatible": false, "reason": "Replaced by CurseForge project 1527395 after the Modrinth project was removed." },
       { "name": "ExtendedAE", "project_id": "JiOqfoFM" },
       { "name": "ExtendedAE-Plus", "project_id": "xr109llC", "mod_id": "extendedae_plus" },
       { "name": "BM Addon", "project_id": "qPydPwtX", "mod_id": "bmaddon" },
@@ -220,7 +236,6 @@
         { "project_id": "692GClaE", "version_id": "jH6bsw4F", "version": "1.21.1-1.120.4" },
         { "project_id": "8BmcQJ2H", "version_id": "tPkJmim6", "version": "4.9.2" },
         { "project_id": "a1RwDz90", "version_id": "35O4yt0D", "version": "1.0.1" },
-        { "project_id": "ArHeh5Fz", "version_id": "RSF7tEIt", "version": "2.1.0-beta.2" },
         { "project_id": "ayN3DZKb", "version_id": "Iw2gl7Lb", "version": "2.1.1" },
         { "project_id": "B1CBVXHX", "version_id": "bpcbGDy4", "version": "mc1.21.1-2.2.37-neoforge" },
         { "project_id": "Ce6I4WUE", "version_id": "5KzzycBT", "version": "10.7.19.85" },
@@ -231,7 +246,6 @@
         { "project_id": "IZPmgTLT", "version_id": "nd0U5eJF", "version": "1.0.3" },
         { "project_id": "JiOqfoFM", "version_id": "bC302UUP", "version": "1.21-2.2.35-neoforge" },
         { "project_id": "jjuIRIVr", "version_id": "RPG4EriK", "version": "4.11.0" },
-        { "project_id": "M5jhzZXH", "version_id": "3xQLbgab", "version": "2.0.0-beta.2" },
         { "project_id": "oMgZ004U", "version_id": "4x40hq9D", "version": "1.21-2.1.5-neoforge" },
         { "project_id": "pNabrMMw", "version_id": "CxSEpEnO", "version": "19.5.1" },
         { "project_id": "qelfSMnn", "version_id": "UNYpf7A1", "version": "1.21.1-1.6.0" },
@@ -249,6 +263,24 @@
       ]
     },
     "curseforge": [
+      {
+        "name": "AE2 Lightning Tech",
+        "project_id": 1527395,
+        "replaces_project_id": "ArHeh5Fz",
+        "mod_id": "ae2lt",
+        "version": "2.1.0-beta.5",
+        "dependencies": [1631756],
+        "compatible": { "file_id": 8823559, "filename": "ae2lt-2.1.0-beta.5.jar", "sha512": "e68f4049fae67919362afc55fa394c196c7cf7a1818d6c5d10001672e0724e818cec635d867c51e54c7fcf16b4e59efaa6d5b74accffa2a744716d389b5262cb" },
+        "latest": { "file_id": 8823559, "filename": "ae2lt-2.1.0-beta.5.jar", "sha512": "e68f4049fae67919362afc55fa394c196c7cf7a1818d6c5d10001672e0724e818cec635d867c51e54c7fcf16b4e59efaa6d5b74accffa2a744716d389b5262cb" }
+      },
+      {
+        "name": "Thunderbolt Core",
+        "project_id": 1631756,
+        "mod_id": "thunderbolt",
+        "version": "2.0.0-beta.4",
+        "compatible": { "file_id": 8844639, "filename": "thunderbolt-2.0.0-beta.4.jar", "sha512": "8a650995a498d6dbed6682b80de4fe9525dee22a516cf56ef686939be7a4397a35116e6cda8545e450a37cf3335650838ff5c4fdad765465bebcc2b7779aef74" },
+        "latest": { "file_id": 8844639, "filename": "thunderbolt-2.0.0-beta.4.jar", "sha512": "8a650995a498d6dbed6682b80de4fe9525dee22a516cf56ef686939be7a4397a35116e6cda8545e450a37cf3335650838ff5c4fdad765465bebcc2b7779aef74" }
+      },
       {
         "name": "OmniSequence: Transfinite",
         "project_id": 1624558,
@@ -270,7 +302,7 @@
     "id": "26.1.2-neoforge",
     "projects": [
       { "name": "AdvancedAE", "project_id": "rxYaglEe", "mod_id": "advanced_ae" },
-      { "name": "AE2 Lightning Tech", "project_id": "ArHeh5Fz" },
+      { "name": "AE2 Lightning Tech (legacy Modrinth identity)", "project_id": "ArHeh5Fz", "compatible": false, "reason": "Replaced by CurseForge project 1527395 after the Modrinth project was removed." },
       { "name": "ExtendedAE", "project_id": "JiOqfoFM" },
       { "name": "BM Addon", "project_id": "qPydPwtX", "mod_id": "bmaddon" },
       { "name": "Neo Vitae", "project_id": "rvaW4C93" },
@@ -289,7 +321,6 @@
       "versions": [
         { "project_id": "8BmcQJ2H", "version_id": "xfVfPcoC", "version": "5.5.2" },
         { "project_id": "692GClaE", "version_id": "EkohPYvX", "version": "26.1.2-2.0.0" },
-        { "project_id": "ArHeh5Fz", "version_id": "3kMh6U7h", "version": "1.0.1alpha-26.1.2neoforge" },
         { "project_id": "Ck4E7v7R", "version_id": "ZkJhP9xE", "version": "26.1.12-beta" },
         { "project_id": "JiOqfoFM", "version_id": "KpNzac5y", "version": "26.1-1.0.3-neoforge" },
         { "project_id": "oMgZ004U", "version_id": "yrw1WDVE", "version": "26.1-1.0.1-neoforge" },
@@ -303,6 +334,16 @@
         { "project_id": "UhW5uCKw", "version_id": "t0p0CUPy", "version": "26.1-1.2-neoforge" },
         { "project_id": "VQhDBNs8", "version_id": "qUOmPSfe", "version": "26.1.2-1.0.0.57" }
       ]
-    }
+    },
+    "curseforge": [
+      {
+        "name": "AE2 Lightning Tech",
+        "project_id": 1527395,
+        "replaces_project_id": "ArHeh5Fz",
+        "version": "1.0.1alpha-26.1.2neoforge",
+        "compatible": { "file_id": 8121639, "filename": "ae2lt-1.0.1alpha-26.1.2neoforge.jar", "sha512": "9a884c95d7abb9daba4e54783045f98c37d6cfc1b0cbb22b01ba497071626267379159e419d1e23930938e463de1d0c70b8770d2be3f19b43f80358199d98047" },
+        "latest": { "file_id": 8121639, "filename": "ae2lt-1.0.1alpha-26.1.2neoforge.jar", "sha512": "9a884c95d7abb9daba4e54783045f98c37d6cfc1b0cbb22b01ba497071626267379159e419d1e23930938e463de1d0c70b8770d2be3f19b43f80358199d98047" }
+      }
+    ]
   }
 ]

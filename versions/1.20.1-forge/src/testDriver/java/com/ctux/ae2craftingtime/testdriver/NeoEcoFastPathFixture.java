@@ -80,6 +80,10 @@ final class NeoEcoFastPathFixture extends NeoEcoFixture {
         ((NeoEcoAmountAccessor) screen).ae2craftingtime_test_driver$amount().setLongValue(64);
     }
 
+    @Override boolean dispatchReady(DispatchObservation.Snapshot snapshot) {
+        return snapshot.completedExactlyOnce();
+    }
+
     @Override void verifyDispatch(DispatchObservation.Snapshot snapshot) {
         super.verifyDispatch(snapshot);
         if (snapshot.fastPathCrafts() == 0) throw new IllegalStateException("ECO job completed without exercising FastPath");

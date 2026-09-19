@@ -182,27 +182,14 @@ Tracked source markers exist for Forge and both NeoForge targets and use
 fixture. Use the existing runner's disposable copy and marker validation;
 never launch or modify the tracked source world.
 
-### Additional overlap check
+### Overlap check
 
-The existing `delayed-status` leaf places its two outputs on different
-providers, so it remains a lifecycle check. Use an authorized interactive
-prepared client and disposable world for this additional manual case; no new
-automation infrastructure is part of this plan:
-
-1. Put two processing patterns with distinct item outputs in one provider.
-   Complete a sample of each, then start both crafts and withhold their outputs
-   until both are delayed. Keep the terminal closed when inspecting the world.
-2. Record both retained delayed identities referencing the same provider.
-   Capture the original overlap before the fix and the corrected view after
-   it, each with its exact tested revision. Observe a face and a corner view
-   over several frames: one centered icon per visible face, with no rotation
-   between candidates. The automatic visual gate cannot substitute for review
-   without a qualified reference.
-3. Locate one craft to add rainbow edges. Release the selected output while
-   the other stays delayed. Verify the surviving icon appears, red remains,
-   and rainbow follows its independent expiry. Release the final output and
-   verify red clears. Repeat with the unselected output released first.
-4. Perform the same case on Fabric 1.20.1 and NeoForge 26.1.2 after Forge passes.
-   If the prepared client cannot establish this setup through existing controls,
-   record the exact gap before adding a fixture extension; do not report the
-   ordinary `delayed-status` pass as overlap proof.
+The `delayed-status` leaf uses its existing prepared client and disposable world
+to dispatch two distinct intermediate outputs through one provider. It waits for
+both retained identities, stabilizes the single first-retained render selection,
+and performs a real row locate before capturing `delayed-world-overlap.png`.
+It releases that winner while the other output remains delayed, then requires
+the survivor icon, red plate, and independent rainbow edge before capturing
+`delayed-world-winner-recovered.png`. The existing final-output stages verify
+the remaining plate clears. Review both new captures on Forge 1.20.1, then on
+Fabric 1.20.1 and NeoForge 26.1.2; an automatic assertion is not visual approval.

@@ -241,6 +241,90 @@ class ProviderPlatesTest {
     }
 
     @Test
+    void renderViewKeepsRawLosersAndFirstRetainedWinner() {
+        var shared = new BlockPos(1, 2, 3);
+        var firstOnly = new BlockPos(4, 5, 6);
+        var secondOnly = new BlockPos(7, 8, 9);
+        var networkA = "minecraft:overworld|1,2,3";
+        var networkB = "minecraft:overworld|9,9,9";
+        ProviderHighlightClient.showPlate(networkA, "minecraft:overworld",
+                List.of(shared, shared, firstOnly), "unknown:first");
+        ProviderHighlightClient.showPlate(networkB, "minecraft:overworld",
+                List.of(shared, secondOnly), "minecraft:iron_ingot");
+        ProviderHighlightClient.showPlate("nether-network", "minecraft:the_nether", List.of(shared),
+                "minecraft:gold_ingot");
+
+        var expected = List.of(
+                new ProviderHighlightClient.RenderPlate("minecraft:overworld", shared, "unknown:first"),
+                new ProviderHighlightClient.RenderPlate("minecraft:overworld", firstOnly, "unknown:first"),
+                new ProviderHighlightClient.RenderPlate("minecraft:overworld", secondOnly,
+                        "minecraft:iron_ingot"),
+                new ProviderHighlightClient.RenderPlate("minecraft:the_nether", shared,
+                        "minecraft:gold_ingot"));
+        assertEquals(expected, ProviderHighlightClient.renderPlates());
+        assertEquals(expected, ProviderHighlightClient.renderPlates());
+        assertEquals(3, ProviderHighlightClient.plates().size());
+
+        ProviderHighlightClient.showPlate(networkB, "minecraft:overworld",
+                List.of(shared, secondOnly), "minecraft:iron_ingot");
+        ProviderHighlightClient.showPlate(networkA, "minecraft:overworld",
+                List.of(shared, shared, firstOnly), "unknown:first");
+        assertEquals(expected, ProviderHighlightClient.renderPlates());
+        assertEquals(3, ProviderHighlightClient.plates().size());
+
+        ProviderHighlightClient.showPlate(networkA, "minecraft:overworld", List.of(firstOnly),
+                "unknown:first");
+        assertEquals(List.of(
+                new ProviderHighlightClient.RenderPlate("minecraft:overworld", firstOnly, "unknown:first"),
+                new ProviderHighlightClient.RenderPlate("minecraft:overworld", shared,
+                        "minecraft:iron_ingot"),
+                new ProviderHighlightClient.RenderPlate("minecraft:overworld", secondOnly,
+                        "minecraft:iron_ingot"),
+                new ProviderHighlightClient.RenderPlate("minecraft:the_nether", shared,
+                        "minecraft:gold_ingot")), ProviderHighlightClient.renderPlates());
+    }
+
+    @Test
+    void renderViewFollowsPositionTrimWinnerClearAndSessionEnd() {
+        var shared = new BlockPos(1, 2, 3);
+        var firstOnly = new BlockPos(4, 5, 6);
+        var secondOnly = new BlockPos(7, 8, 9);
+        var networkA = "minecraft:overworld|1,2,3";
+        var networkB = "minecraft:overworld|9,9,9";
+        ProviderHighlightClient.showPlate(networkA, "minecraft:overworld", List.of(shared, firstOnly),
+                "minecraft:gold_ingot");
+        ProviderHighlightClient.showPlate(networkB, "minecraft:overworld", List.of(shared, secondOnly),
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.show(networkA, "minecraft:overworld", List.of(shared), 15,
+                "minecraft:gold_ingot");
+
+        ProviderHighlightClient.trimPositions("minecraft:overworld", pos -> !pos.equals(firstOnly));
+        assertEquals(2, ProviderHighlightClient.plates().size());
+        assertEquals(List.of(
+                new ProviderHighlightClient.RenderPlate("minecraft:overworld", shared,
+                        "minecraft:gold_ingot"),
+                new ProviderHighlightClient.RenderPlate("minecraft:overworld", secondOnly,
+                        "minecraft:iron_ingot")), ProviderHighlightClient.renderPlates());
+
+        ProviderHighlightClient.clearFor(networkB, "minecraft:iron_ingot");
+        assertEquals("minecraft:gold_ingot", ProviderHighlightClient.renderPlates().get(0).outputId());
+        ProviderHighlightClient.showPlate(networkB, "minecraft:overworld", List.of(shared, secondOnly),
+                "minecraft:iron_ingot");
+        ProviderHighlightClient.clearFor(networkA, "minecraft:gold_ingot");
+        assertEquals(List.of(
+                new ProviderHighlightClient.RenderPlate("minecraft:overworld", shared,
+                        "minecraft:iron_ingot"),
+                new ProviderHighlightClient.RenderPlate("minecraft:overworld", secondOnly,
+                        "minecraft:iron_ingot")), ProviderHighlightClient.renderPlates());
+        assertNotNull(ProviderHighlightClient.live());
+
+        ProviderHighlightClient.onSessionEnd();
+        assertTrue(ProviderHighlightClient.renderPlates().isEmpty());
+        assertTrue(ProviderHighlightClient.plates().isEmpty());
+        assertNull(ProviderHighlightClient.live());
+    }
+
+    @Test
     void delayedPlateSurvivesBlockedEpisodeClear() {
         // Delayed red and a blocked warning share the same output: clearing
         // only the blocked episode (edge-only) must leave red until the

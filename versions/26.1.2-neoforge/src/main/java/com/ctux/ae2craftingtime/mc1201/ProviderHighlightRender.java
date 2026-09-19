@@ -62,19 +62,17 @@ public final class ProviderHighlightRender {
         }
         // Plates persist while their output still reports a stall.
         var filled = consumers.getBuffer(RenderTypes.debugFilledBox());
-        for (var plate : ProviderHighlightClient.plates()) {
-            if (!levelDimension.equals(plate.dimensionId())
-                    || !ProviderHighlightClient.shouldShowPlates(plate.outputId())) {
+        for (var plate : ProviderHighlightClient.renderPlates()) {
+            if (!levelDimension.equals(plate.dimensionId())) {
                 continue;
             }
-            for (var pos : plate.positions()) {
-                var originX = pos.getX() - camera.x;
-                var originY = pos.getY() - camera.y;
-                var originZ = pos.getZ() - camera.z;
-                for (var face : ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z)) {
-                    ProviderHighlightShapes.renderFacePlate(event.getPoseStack(), filled, originX, originY,
-                            originZ, face, redArgb);
-                }
+            var pos = plate.position();
+            var originX = pos.getX() - camera.x;
+            var originY = pos.getY() - camera.y;
+            var originZ = pos.getZ() - camera.z;
+            for (var face : ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z)) {
+                ProviderHighlightShapes.renderFacePlate(event.getPoseStack(), filled, originX, originY,
+                        originZ, face, redArgb);
             }
         }
         consumers.endBatch(RenderTypes.debugFilledBox());
@@ -95,9 +93,8 @@ public final class ProviderHighlightRender {
             itemResolver = new ItemModelResolver(manager);
             resolverManager = manager;
         }
-        for (var plate : ProviderHighlightClient.plates()) {
-            if (!levelDimension.equals(plate.dimensionId())
-                    || !ProviderHighlightClient.shouldShowPlates(plate.outputId())) {
+        for (var plate : ProviderHighlightClient.renderPlates()) {
+            if (!levelDimension.equals(plate.dimensionId())) {
                 continue;
             }
             var stack = ProviderHighlightShapes.resolveItem(plate.outputId());
@@ -108,15 +105,14 @@ public final class ProviderHighlightRender {
             if (ITEM_STATE.isEmpty()) {
                 continue;
             }
-            for (var pos : plate.positions()) {
-                var light = LevelRenderer.getLightCoords(minecraft.level, pos);
-                for (var face : ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z)) {
-                    pose.pushPose();
-                    ProviderHighlightShapes.orientFaceForItem(pose, pos.getX() - camera.x, pos.getY() - camera.y,
-                            pos.getZ() - camera.z, face);
-                    ITEM_STATE.submit(pose, collector, light, OverlayTexture.NO_OVERLAY, 0);
-                    pose.popPose();
-                }
+            var pos = plate.position();
+            var light = LevelRenderer.getLightCoords(minecraft.level, pos);
+            for (var face : ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z)) {
+                pose.pushPose();
+                ProviderHighlightShapes.orientFaceForItem(pose, pos.getX() - camera.x, pos.getY() - camera.y,
+                        pos.getZ() - camera.z, face);
+                ITEM_STATE.submit(pose, collector, light, OverlayTexture.NO_OVERLAY, 0);
+                pose.popPose();
             }
         }
     }
