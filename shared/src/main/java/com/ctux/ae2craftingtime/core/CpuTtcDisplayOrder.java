@@ -70,6 +70,18 @@ public final class CpuTtcDisplayOrder {
         return drawnScroll < 0 ? -1 : drawnScroll;
     }
 
+    public static int hitIndex(int mouseX, int mouseY, int boundsX, int boundsY,
+            int buttonWidth, int buttonHeight, int drawnScroll, int size) {
+        var relativeX = mouseX - boundsX - 9;
+        if (relativeX < 0 || relativeX >= buttonWidth) return -1;
+        var relativeY = mouseY - boundsY - 19;
+        var rowHeight = buttonHeight + 1;
+        if (relativeY % rowHeight == buttonHeight) return -1;
+        if (relativeY < 0) return -1;
+        var index = drawnScroll + relativeY / rowHeight;
+        return index >= 0 && index < size ? index : -1;
+    }
+
     private CpuTtcDisplayOrder() {
     }
 }

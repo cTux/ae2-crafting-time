@@ -105,12 +105,33 @@ class IntegrationBoundaryTest {
                         .filter(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/Mixin;"))
                         .findFirst().orElseThrow();
                 assertTrue(annotation.values.contains(1100),
-                        "Crazy adapter must transform after the priority-1000 addon mixin");
-                assertTrue(node.methods.stream().anyMatch(method -> method.name.equals("ae2craftingtime$keepTtcOrder")
-                        && method.desc.equals("(Ljava/util/List;IILorg/spongepowered/asm/mixin/injection/callback/"
-                                + "CallbackInfoReturnable;)V")));
-                assertTrue(node.methods.stream().anyMatch(method -> method.name.equals("ae2craftingtime$useFrameHitTest")
-                        && method.desc.equals("(Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfo;)V")));
+                        "Crazy adapter must inject hit testing above the priority-1000 addon mixin");
+                var slice = node.methods.stream()
+                        .filter(method -> method.name.equals("ae2craftingtime$sliceTtcFrame"))
+                        .findFirst().orElseThrow();
+                var wrap = slice.visibleAnnotations.stream()
+                        .filter(a -> a.desc.endsWith("/WrapOperation;"))
+                        .findFirst().orElseThrow();
+                assertEquals(List.of("drawBackgroundLayer"), annotationValue(wrap, "method"));
+                assertEquals(10001, annotationValue(wrap, "order"));
+                assertEquals(1, annotationValue(wrap, "require"));
+                var at = (org.objectweb.asm.tree.AnnotationNode)
+                        ((List<?>) annotationValue(wrap, "at")).get(0);
+                assertEquals("Ljava/util/List;subList(II)Ljava/util/List;", annotationValue(at, "target"));
+
+                var hit = node.methods.stream()
+                        .filter(method -> method.name.equals("ae2craftingtime$hitTtcFrame"))
+                        .findFirst().orElseThrow();
+                var inject = hit.visibleAnnotations.stream()
+                        .filter(a -> a.desc.endsWith("/Inject;"))
+                        .findFirst().orElseThrow();
+                assertEquals(List.of("hitTestCpu"), annotationValue(inject, "method"));
+                assertEquals(true, annotationValue(inject, "cancellable"));
+                var hitAt = (org.objectweb.asm.tree.AnnotationNode)
+                        ((List<?>) annotationValue(inject, "at")).get(0);
+                assertEquals("HEAD", annotationValue(hitAt, "value"));
+                assertFalse(node.methods.stream().anyMatch(method -> method.name.equals("ae2craftingtime$keepTtcOrder")
+                        || method.name.equals("ae2craftingtime$useFrameHitTest")));
             }
         }
         // Config construction must be safe before loader metadata exists, including both Forge configs.
@@ -121,5 +142,12 @@ class IntegrationBoundaryTest {
             assertNull(plugin.getMixins());
             plugin.acceptTargets(Set.of(), Set.of());
         }
+    }
+
+    private static Object annotationValue(org.objectweb.asm.tree.AnnotationNode annotation, String key) {
+        for (int i = 0; i < annotation.values.size(); i += 2) {
+            if (annotation.values.get(i).equals(key)) return annotation.values.get(i + 1);
+        }
+        return null;
     }
 }
