@@ -33,13 +33,14 @@ final class NoSpaceScenario {
     static final String SCENARIO = "no-space-status";
     static final String KEY = "text.ae2craftingtime.no_space";
     static final List<String> CHECKS = List.of("screen", "external-machine", "warning", "tooltip", "layout",
-            "recovered");
+            "details-ignored", "reset-ignored", "recovered");
     private BlockPos cpuPosition;
     private int phase;
     private CompletableFuture<Boolean> operation;
     private int menuId;
     private final StableFrames<Integer> frames = new StableFrames<>(3);
     private final StableFrames<Integer> tooltipFrames = new StableFrames<>(3);
+    private final StatsInteraction stats = new StatsInteraction();
 
     boolean tick(Minecraft minecraft, FixtureMarker marker, Map<String, Boolean> checks,
             Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) {
@@ -70,6 +71,10 @@ final class NoSpaceScenario {
         } else if (phase == 3) {
             if (serverStep(minecraft, player -> {
                 var cpu = (CraftingBlockEntity) player.level().getBlockEntity(cpuPosition);
+                var network = com.ctux.ae2craftingtime.mc1201.ProfilerBridge.networkId(cpu.getMainNode().getGrid());
+                var tick = player.level().getGameTime();
+                com.ctux.ae2craftingtime.mc1201.ProfilerBridge.start(network, this, AEItemKey.of(Items.FURNACE), 1, tick);
+                com.ctux.ae2craftingtime.mc1201.ProfilerBridge.complete(network, this, AEItemKey.of(Items.FURNACE), 1, tick + 20);
                 cpu.getCluster().craftingLogic.getInventory().insert(AEItemKey.of(Items.FURNACE), 64,
                         Actionable.MODULATE);
                 return true;
@@ -96,9 +101,27 @@ final class NoSpaceScenario {
             checks.put("tooltip", true);
             checks.put("layout", true);
             screenshot.accept("no-space-en-us.png");
-            phase = 6;
+            phase++;
+        } else if (phase == 5) {
+            var reset = Boolean.TRUE.equals(checks.get("details-ignored"));
+            if (!stats.clickWithoutStats(minecraft, snapshot, "minecraft:furnace", reset)) {
+                return false;
+            }
+            checks.put(reset ? "reset-ignored" : "details-ignored", true);
+            if (reset) {
+                phase++;
+            } else {
+                stats.next();
+            }
         } else if (phase == 6) {
             if (serverStep(minecraft, player -> {
+                var cpu = (CraftingBlockEntity) player.level().getBlockEntity(cpuPosition);
+                var key = com.ctux.ae2craftingtime.mc1201.ProfilerBridge.key(
+                        com.ctux.ae2craftingtime.mc1201.ProfilerBridge.networkId(cpu.getMainNode().getGrid()),
+                        AEItemKey.of(Items.FURNACE));
+                if (com.ctux.ae2craftingtime.mc1201.ProfilerBridge.stats(key).isEmpty()) {
+                    throw new IllegalStateException("Stored-only NO SPACE reset its retained sample");
+                }
                 var drive = (DriveBlockEntity) player.level().getBlockEntity(cpuPosition.east(2));
                 drive.getInternalInventory().setItemDirect(0, cell());
                 return true;
@@ -117,8 +140,8 @@ final class NoSpaceScenario {
     }
 
     static boolean tooltipReady(List<UiSnapshot.ObservedText> tooltip) {
-        return List.of(KEY, KEY + ".explanation", KEY + ".suggestion").stream()
-                .allMatch(key -> tooltip.stream().anyMatch(text -> text.key().equals(key)));
+        return WarningTooltipChecks.hasBodyAndControls(tooltip,
+                List.of(KEY, KEY + ".explanation", KEY + ".suggestion"));
     }
 
     private static boolean hasWarning(UiSnapshot snapshot) {
