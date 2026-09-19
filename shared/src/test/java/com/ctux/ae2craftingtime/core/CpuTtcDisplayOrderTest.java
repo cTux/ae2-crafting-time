@@ -67,6 +67,11 @@ class CpuTtcDisplayOrderTest {
                 () -> state.display(List.of(), Row::serial, Row::busy, Row::secondsValue, 0, -1, true));
         assertThrows(IllegalArgumentException.class,
                 () -> state.display(List.of(), Row::serial, Row::busy, Row::secondsValue, 0, 3, true));
+        assertFalse(CpuTtcDisplayOrder.ttcOrderActive(0, true));
+        assertFalse(CpuTtcDisplayOrder.ttcOrderActive(1, false));
+        assertFalse(CpuTtcDisplayOrder.ttcOrderActive(2, false));
+        assertTrue(CpuTtcDisplayOrder.ttcOrderActive(1, true));
+        assertTrue(CpuTtcDisplayOrder.ttcOrderActive(2, true));
 
         var drawn = new CpuTtcCache.CpuView(1, "job", 2, 10);
         assertTrue(CpuTtcDisplayOrder.hitCurrent(drawn, new CpuTtcCache.CpuView(1, "job", 2, 10)));
@@ -79,6 +84,15 @@ class CpuTtcDisplayOrderTest {
         assertEquals(-1, CpuTtcDisplayOrder.inputScroll(-1));
         assertEquals(0, CpuTtcDisplayOrder.inputScroll(0));
         assertEquals(4, CpuTtcDisplayOrder.inputScroll(4));
+
+        assertEquals(2, CpuTtcDisplayOrder.hitIndex(19, 39, 10, 20, 67, 22, 2, 8));
+        assertEquals(3, CpuTtcDisplayOrder.hitIndex(19, 62, 10, 20, 67, 22, 2, 8));
+        assertEquals(-1, CpuTtcDisplayOrder.hitIndex(18, 39, 10, 20, 67, 22, 2, 8));
+        assertEquals(-1, CpuTtcDisplayOrder.hitIndex(86, 39, 10, 20, 67, 22, 2, 8));
+        assertEquals(-1, CpuTtcDisplayOrder.hitIndex(19, 38, 10, 20, 67, 22, 2, 8));
+        assertEquals(-1, CpuTtcDisplayOrder.hitIndex(19, 61, 10, 20, 67, 22, 2, 8));
+        assertEquals(-1, CpuTtcDisplayOrder.hitIndex(19, 39, 10, 20, 67, 22, -1, 8));
+        assertEquals(-1, CpuTtcDisplayOrder.hitIndex(19, 39, 10, 20, 67, 22, 8, 8));
     }
 
     @Test

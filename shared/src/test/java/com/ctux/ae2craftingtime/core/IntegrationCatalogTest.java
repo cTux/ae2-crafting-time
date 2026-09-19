@@ -14,6 +14,7 @@ class IntegrationCatalogTest {
     @Test
     void retainedReleasedContractsSelectExactlyOneBundle() throws Exception {
         for (var fixture : List.of("tree-helper-forge", "tree-helper-neo", "tree-layout-forge", "tree-layout-neo",
+                "crazyae2addons-2.6.2",
                 "neoeco-20.3.0", "neoeco-20.4.0", "neoeco-20.4.2", "neoeco-21.1.1")) {
             try (var input = getClass().getResourceAsStream("/integration-contracts/" + fixture + ".tsv")) {
                 var lines = new String(input.readAllBytes(), StandardCharsets.UTF_8).lines().toList();
@@ -36,6 +37,38 @@ class IntegrationCatalogTest {
                 assertEquals(expectedBundle(identity[2]), accepted, fixture);
             }
         }
+    }
+
+    @Test
+    void crazyCpuListContractIsClientOnlyForgeAndRejectsChangedHandlers() {
+        var owner = "net/oktawia/crazyae2addons/mixins/MixinCPUSelectionList";
+        var exact = Map.of(owner, new IntegrationContract.ClassInfo("java/lang/Object", Map.of(
+                "method:sortThenSlice", List.of("(Ljava/util/List;II)Ljava/util/List;"),
+                "method:hitTestOnSorted", List.of("(Lappeng/client/Point;"
+                        + "Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V"))));
+        var selected = selector("1.20.1-forge", true, exact);
+        assertTrue(selected.shouldApply("CrazyAe2CpuListRenderMixin"));
+        assertEquals("cpu-list-2.6.2", selected.snapshot().get("crazyae2addons").variant());
+
+        var changed = Map.of(owner, new IntegrationContract.ClassInfo("java/lang/Object", Map.of(
+                "method:sortThenSlice", List.of("(Ljava/util/List;II)Ljava/util/List;"),
+                "method:hitTestOnSorted", List.of("(Lappeng/client/Point;)V"))));
+        var rejected = selector("1.20.1-forge", true, changed);
+        assertFalse(rejected.shouldApply("CrazyAe2CpuListRenderMixin"));
+        assertEquals("no_compatible_variant", rejected.snapshot().get("crazyae2addons").reason());
+        assertEquals(List.of("cpu-list-2.6.2:missing:" + owner + "#method:hitTestOnSorted"),
+                rejected.snapshot().get("crazyae2addons").rejected());
+
+        var wrongTarget = selector("1.20.1-fabric", true, exact);
+        assertFalse(wrongTarget.shouldApply("CrazyAe2CpuListRenderMixin"));
+        assertEquals("unsupported_target", wrongTarget.snapshot().get("crazyae2addons").reason());
+        var server = selector("1.20.1-forge", false, exact);
+        assertFalse(server.shouldApply("CrazyAe2CpuListRenderMixin"));
+        assertEquals("wrong_side", server.snapshot().get("crazyae2addons").reason());
+        var absent = new IntegrationSelection(IntegrationCatalog.CANDIDATES, "1.20.1-forge", true,
+                id -> null, c -> IntegrationContract.check(c.contract(), exact::get), d -> {});
+        assertFalse(absent.shouldApply("CrazyAe2CpuListRenderMixin"));
+        assertEquals("absent", absent.snapshot().get("crazyae2addons").reason());
     }
 
     @Test
@@ -71,6 +104,7 @@ class IntegrationCatalogTest {
         return switch (variant) {
             case "tree-helper" -> Set.of("CraftingTreeWidgetMixin");
             case "tree-layout" -> Set.of("CraftingTreeNewWidgetMixin");
+            case "cpu-list-2.6.2" -> Set.of("CrazyAe2CpuListRenderMixin");
             case "pending-accounting" -> Set.of("ECOCraftingCpuLogicMixin", "NeoEcoPendingDispatchMixin");
             case "batched-long" -> Set.of("ECOCraftingCpuLogicMixin", "NeoEcoLongBatchDispatchMixin");
             case "batched-int" -> Set.of("ECOCraftingCpuLogicMixin", "NeoEcoIntBatchDispatchMixin");

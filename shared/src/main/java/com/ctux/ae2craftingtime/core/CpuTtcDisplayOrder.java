@@ -18,13 +18,14 @@ public final class CpuTtcDisplayOrder {
 
         public <T> List<T> display(List<T> raw, ToIntFunction<T> serial, Predicate<T> busy,
                 Function<T, OptionalLong> seconds, long revision, int mode, boolean channel) {
-            if (raw == null || serial == null || busy == null || seconds == null || mode < 0 || mode > 2) {
+            if (raw == null || serial == null || busy == null || seconds == null) {
                 throw new IllegalArgumentException("invalid CPU display input");
             }
+            var ttcOrder = ttcOrderActive(mode, channel);
             var currentSerials = raw.stream().mapToInt(serial).boxed().toList();
             if (this.revision != revision || this.mode != mode || this.channel != channel
                     || !rawSerials.equals(currentSerials)) {
-                var sorted = mode == 0 || !channel ? List.copyOf(raw)
+                var sorted = !ttcOrder ? List.copyOf(raw)
                         : TtcSort.copyPrioritizedSorted(raw, busy, seconds, (left, right) -> 0, true, mode == 2);
                 orderedSerials = sorted.stream().mapToInt(serial).boxed().toList();
                 rawSerials = List.copyOf(currentSerials);
@@ -53,6 +54,13 @@ public final class CpuTtcDisplayOrder {
         }
     }
 
+    public static boolean ttcOrderActive(int mode, boolean channel) {
+        if (mode < 0 || mode > 2) {
+            throw new IllegalArgumentException("invalid TTC sort mode");
+        }
+        return mode != 0 && channel;
+    }
+
     public static boolean hitCurrent(CpuTtcCache.CpuView drawn, CpuTtcCache.CpuView current) {
         return drawn != null && current != null && drawn.serial() == current.serial()
                 && current.sameJob(drawn) && current.elapsedNanos() >= drawn.elapsedNanos();
@@ -60,6 +68,18 @@ public final class CpuTtcDisplayOrder {
 
     public static int inputScroll(int drawnScroll) {
         return drawnScroll < 0 ? -1 : drawnScroll;
+    }
+
+    public static int hitIndex(int mouseX, int mouseY, int boundsX, int boundsY,
+            int buttonWidth, int buttonHeight, int drawnScroll, int size) {
+        var relativeX = mouseX - boundsX - 9;
+        if (relativeX < 0 || relativeX >= buttonWidth) return -1;
+        var relativeY = mouseY - boundsY - 19;
+        var rowHeight = buttonHeight + 1;
+        if (relativeY % rowHeight == buttonHeight) return -1;
+        if (relativeY < 0) return -1;
+        var index = drawnScroll + relativeY / rowHeight;
+        return index >= 0 && index < size ? index : -1;
     }
 
     private CpuTtcDisplayOrder() {

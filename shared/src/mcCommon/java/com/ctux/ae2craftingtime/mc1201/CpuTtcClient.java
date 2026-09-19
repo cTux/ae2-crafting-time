@@ -65,6 +65,11 @@ public final class CpuTtcClient {
                 cpu -> cpu.currentJob() != null, cpu -> seconds(cpu.serial()), frameRevision, sortMode, enabled);
     }
 
+    public static boolean ttcOrderActive(CraftingStatusMenu menu) {
+        open(menu);
+        return CpuTtcDisplayOrder.ttcOrderActive(sortMode, CpuTtcRequests.enabled());
+    }
+
     public static void refresh(CraftingStatusMenu menu,
             List<CraftingStatusMenu.CraftingCpuListEntry> displayed, int scroll) {
         if (!active() || !CpuTtcRequests.enabled()) {

@@ -85,6 +85,15 @@ class IntegrationBoundaryTest {
         }
         assertTrue(all.contains("CraftingStatusMenuAccessor"), "production status accessor must be packaged");
         assertTrue(clients.contains("CPUSelectionListMixin"), "CPU list renderer must be packaged");
+        if (IntegrationPlatform.TARGET.equals("1.20.1-forge")) {
+            assertTrue(clients.contains("CrazyAe2CpuListRenderMixin"),
+                    "Crazy render and input compatibility must nest after Crazy");
+            assertFalse(clients.contains("CrazyAe2CpuListCompatibilityMixin"),
+                    "Crazy compatibility must not target the addon's rewritten private handler");
+        } else {
+            assertFalse(clients.contains("CrazyAe2CpuListRenderMixin"));
+            assertFalse(clients.contains("CrazyAe2CpuListCompatibilityMixin"));
+        }
         for (var candidate : IntegrationCatalog.CANDIDATES) {
             if (candidate.targets().contains(IntegrationPlatform.TARGET)) {
                 assertTrue(all.containsAll(candidate.mixins()), candidate.variant());
@@ -100,6 +109,36 @@ class IntegrationBoundaryTest {
             boolean pseudo = node.invisibleAnnotations != null && node.invisibleAnnotations.stream()
                     .anyMatch(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/Pseudo;"));
             if (pseudo) assertTrue(IntegrationCatalog.CANDIDATES.stream().anyMatch(c -> c.mixins().contains(mixin)), mixin);
+            if (mixin.equals("CrazyAe2CpuListRenderMixin")) {
+                var annotation = node.invisibleAnnotations.stream()
+                        .filter(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/Mixin;"))
+                        .findFirst().orElseThrow();
+                assertTrue(annotation.values.contains(1100),
+                        "Crazy adapter must merge ordinary injections after the priority-1000 addon");
+                var slice = node.methods.stream()
+                        .filter(method -> method.name.equals("ae2craftingtime$sliceTtcFrame"))
+                        .findFirst().orElseThrow();
+                var modify = slice.visibleAnnotations.stream()
+                        .filter(a -> a.desc.endsWith("/ModifyVariable;"))
+                        .findFirst().orElseThrow();
+                assertEquals(List.of("drawBackgroundLayer"), annotationValue(modify, "method"));
+                assertEquals(0, annotationValue(modify, "ordinal"));
+                assertEquals(1, annotationValue(modify, "require"));
+                var store = (org.objectweb.asm.tree.AnnotationNode) annotationValue(modify, "at");
+                assertEquals("STORE", annotationValue(store, "value"));
+                var hit = node.methods.stream()
+                        .filter(method -> method.name.equals("ae2craftingtime$hitTtcFrame"))
+                        .findFirst().orElseThrow();
+                var inject = hit.visibleAnnotations.stream()
+                        .filter(a -> a.desc.endsWith("/Inject;"))
+                        .findFirst().orElseThrow();
+                assertEquals(List.of("hitTestCpu"), annotationValue(inject, "method"));
+                assertEquals(Boolean.TRUE, annotationValue(inject, "cancellable"));
+                assertEquals(1, annotationValue(inject, "require"));
+                var head = (org.objectweb.asm.tree.AnnotationNode)
+                        ((List<?>) annotationValue(inject, "at")).get(0);
+                assertEquals("HEAD", annotationValue(head, "value"));
+            }
         }
         // Config construction must be safe before loader metadata exists, including both Forge configs.
         for (int i = 0; i < files.size(); i++) {
@@ -109,5 +148,12 @@ class IntegrationBoundaryTest {
             assertNull(plugin.getMixins());
             plugin.acceptTargets(Set.of(), Set.of());
         }
+    }
+
+    private static Object annotationValue(org.objectweb.asm.tree.AnnotationNode annotation, String key) {
+        for (int i = 0; i < annotation.values.size(); i += 2) {
+            if (annotation.values.get(i).equals(key)) return annotation.values.get(i + 1);
+        }
+        return null;
     }
 }
