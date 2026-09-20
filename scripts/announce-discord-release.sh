@@ -158,7 +158,7 @@ if [[ -n "$image_url" ]]; then
     exit 1
   fi
   if ! response="$(curl --silent --show-error --fail-with-body \
-    -F "payload_json=$payload" \
+    --form-string "payload_json=$payload" \
     -F "files[0]=@$image_path;filename=$image_name" \
     "${DISCORD_WEBHOOK_URL}${separator}wait=true")"; then
     printf '%s\n' "$response" >&2

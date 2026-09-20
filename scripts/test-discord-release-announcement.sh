@@ -29,8 +29,15 @@ curl() {
       -F)
         if [[ "$2" == payload_json=* ]]; then
           payload="${2#payload_json=}"
+          payload="${payload%%;*}"
         elif [[ "$2" == files\[0\]=* ]]; then
           attachment="$2"
+        fi
+        shift
+        ;;
+      --form-string)
+        if [[ "$2" == payload_json=* ]]; then
+          payload="${2#payload_json=}"
         fi
         shift
         ;;
@@ -90,7 +97,7 @@ exact = 2000 - len(prefix + "\n\n" + suffix)
 body = {
     "short": "### FIXED\n\n- Clearer status.",
     "multiline": "### ADDED\n\n- First line.\n- @everyone <@123> <@&456>\n\n### FIXED\n\n- Last line.\n",
-    "image": "### FIXED\n\n- Clearer status. ([#308](https://github.com/cTux/ae2-crafting-time/issues/308))\n\n![Crafting status showing the LOCKED provider warning](https://github.com/cTux/ae2-crafting-time/releases/download/release-1.2.2/locked-en-us.png)",
+    "image": "### FIXED\n\n- Clearer status; controls restored. ([#308](https://github.com/cTux/ae2-crafting-time/issues/308))\n\n![Crafting status showing the LOCKED provider warning](https://github.com/cTux/ae2-crafting-time/releases/download/release-1.2.2/locked-en-us.png)",
     "empty": "", "null": None,
     "exact": "x" * exact,
 }[case]
