@@ -84,6 +84,11 @@ a UTF-8 argument file so result/control paths containing spaces remain one argum
 
 ## Delayed resource icon fixtures (planned)
 
+The [#482 fixture design](connected-resource-fixtures/technical-design.md) owns
+the bounded server protocol, typed fixtures and fixture-only evidence gate.
+Its [implementation plan](connected-resource-fixtures/implementation-plan.md)
+separates prerequisite qualification from the final #376 icon assertions below.
+
 Implement `delayed-resource-icons` and `appmek-resource-icons` against the
 [scenario contract](spec.md#delayed-resource-icon-scenarios-planned) and
 [production design](../provider-locate/resource-icons/technical-design.md).
