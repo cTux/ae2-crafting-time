@@ -46,6 +46,13 @@ the reported fluid symptom is not a recorded reproduction on every target.
 6. Automated boundary tests and reviewed in-game captures cover these cases;
    compilation or fixture setup alone is not evidence of a visible chemical icon.
 
+These criteria preserve the current one-plate-per-provider selection. When
+several delayed outputs share a provider, its icon belongs to the selected
+plate; recovery promotes the next plate with that plate's own resource key.
+Position trimming and reconnect retain that key. If fresh live candidates are
+ambiguous, they clear any older display fallback instead of keeping a stale icon.
+The red plate and its existing lifetime remain intact.
+
 ## Out of scope
 
 No new status, setting, message, hard Mekanism dependency, processing-machine

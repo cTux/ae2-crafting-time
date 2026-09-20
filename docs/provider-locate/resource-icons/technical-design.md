@@ -5,7 +5,7 @@ This is a proposed implementation backed by source inspection, not runtime proof
 
 ## Evidence and root cause
 
-Research baseline: `ef604b26653f6a183ae86b9ce5cafc165a5cb65e`.
+Research baseline: `f583e5e32bcb2898076ebf255ffecab5c4aabc33`.
 All paths below are repository-relative.
 
 | Source | Finding |
@@ -14,8 +14,9 @@ All paths below are repository-relative.
 | `shared/src/mc2612/java/com/ctux/ae2craftingtime/mc1201/ProviderHighlightShapes.java`, `resolveItem` | Same item-only lookup under the newer registry API. |
 | `versions/1.20.1-forge` and `versions/1.21.1-neoforge`, `ProviderHighlightRender`; `versions/1.20.1-fabric`, `Ae2CraftingTimeClient` | All resolve the plain output ID through the older shared helper. |
 | `versions/26.1.2-neoforge`, `ProviderHighlightRender` | Red plates render separately; `onSubmitGeometry` skips empty item stacks and empty item render states. |
-| Both `ProfilerBridge` copies, `keyOf`; shared `ProviderHighlightCodec` and `ProviderHighlightClient.Plate` | Output IDs come from `AEKey.getId().toString()`; highlight state carries no typed resource key. |
+| Both `ProfilerBridge` copies, `key`; shared `ProviderHighlightCodec` and `ProviderHighlightClient.Plate` | Output IDs come from `AEKey.getId().toString()`; highlight state carries no typed resource key. |
 | `ProviderStartTracker`, `ProviderLocateRecords.StoredStart`, both `PersistedProviderTag` copies | Live patterns are retained, but saved provider starts contain ID/name/positions, not the typed display key. |
+| `ProviderHighlightClient.renderPlates`, `RenderPlate`, and pure `ProviderDisplaySelection.firstByPosition` | One selected plate supplies each dimension/provider position. The render projection currently retains only the position and output ID. |
 | Forge and 1.21.1 NeoForge `AppliedMekanisticsFixture` | Oxygen is represented by `MekanismKey` over `GasStack` and `ChemicalStack`, respectively. Fixture setup does not prove world-icon rendering. |
 | `scripts/release-matrix.json` | Applied Mekanistics is optional on Forge 1.20.1 and NeoForge 1.21.1, not listed on the other two targets. |
 
@@ -31,7 +32,10 @@ Keep `ProfileKey` and existing plate lifetime keys unchanged. Add optional typed
 Resolve that key from the retained pattern outputs in `ProviderStartTracker`
 within the existing CPU scope. Match the output ID, retain the complete AE key,
 and accept only one distinct matching key. Conflicting candidates yield no icon.
-Do not scan client item/fluid registries to guess the type.
+Do not scan client item/fluid registries to guess the type. Distinguish missing
+live information from an observed ambiguous match: only missing information may
+use a saved fallback. An ambiguous live result replaces an older display key
+with no icon, while retaining the provider state.
 
 Carry the same display key through automatic delayed sends in both
 `ProfilerBridge` copies, `ProviderLocateRecords.StoredStart`, provider persistence,
@@ -39,6 +43,21 @@ login resync, the shared highlight codec and every loader S2C wrapper, and
 `ProviderHighlightClient.Plate`. Live pattern data wins over saved fallback data.
 Clear and edge-only packets need no display key and retain their existing meaning.
 Follow all constructor/copy paths so trimming positions does not discard the key.
+
+`ProviderDispatchObserver` feeds retained patterns through `observeProviders`.
+Automatic sends originate in `DelayedNotificationServer.notify`,
+`pushAutoHighlight`, and `defaultHighlightSender`; include these in the change,
+not just the bridge. Keep display data in `ProviderStartInfo`, `StoredStart`,
+snapshot/restore, fallback replacement, resync filtering, packet encode/decode,
+`showPlate`, and `trimPositions`. Project the selected plate's key into
+`RenderPlate` after `firstByPosition`; do not resolve another candidate by ID.
+The generic winner-selection helper needs no new resource-specific policy.
+
+Audit every loader's command registration and `ProviderLocateC2S` callback,
+both `ProviderLocateServer` copies, `ProviderLocateCommand`, and bridge clear
+sends when packet constructors change. These manual/clear paths carry no display
+key and never create or overwrite red plates. `BlockReasonNotifier` remains
+chat/edge-only. All four loader login hooks retain server-approved resync.
 
 Use AE2's own typed key serialization at the Minecraft API boundary; keep AE2
 classes out of the Minecraft-free core. Store an optional `displayKey` field in
@@ -52,14 +71,27 @@ Malformed display data must not produce a partial state update. Missing optional
 key types may yield no icon. Do not log raw key data. Bump the affected highlight
 channel/registrar compatibility versions together when implementation changes the
 wire layout; select the next versions from the then-current registrations.
+At the research baseline these are Forge protocol `19`, both NeoForge
+registrars `18`, and Fabric `provider_highlight_v4`.
 
 ## Rendering decision and API verification
 
-Reuse AE2's generic resource rendering support rather than implementing fluid or
-Mekanism registries, textures and tint rules independently. AE2 documents
-[GenericStack wrapping and serialization](https://appliedenergistics.org/javadoc/appeng/api/stacks/GenericStack.html).
-That establishes a typed resource/display representation, but does not prove that
-its wrapped ItemStack renders correctly in this mod's FIXED world context.
+Reuse AE2's native resource rendering support rather than implementing fluid or
+Mekanism registries, textures and tint rules independently. Cached source/JAR
+inspection established these API boundaries; none is a visual qualification:
+
+| Boundary | Observed API |
+| --- | --- |
+| AE2 15.0.10 Forge/Fabric | `appeng.api.client.AEKeyRendering.drawOnBlockFace(PoseStack, MultiBufferSource, AEKey, float, int, Level)`; `AEKey.toTagGeneric()` / `fromTagGeneric(CompoundTag)` |
+| AE2 19.2.17 NeoForge | Same world-face renderer; `AEKey.CODEC` and `toTagGeneric(HolderLookup.Provider)` / `fromTagGeneric(HolderLookup.Provider, CompoundTag)` |
+| AE2 26.1.10-beta NeoForge | `appeng.client.api.AEKeyRenderState.extract(AEKey, Level, int)` and `submit(PoseStack, SubmitNodeCollector, int)`; `AEKey.CODEC`, with tag methods using `ValueInput` / `ValueOutput` |
+| Cached AppMek artifacts `9n9p68Qq` and `TpUCzFaW` | `AMChemicalStackRenderer` implements AE2's `AEKeyRenderHandler<MekanismKey>` with `drawOnBlockFace` |
+
+Keep serialization conversions behind target adapters: 1.21.1 needs registry
+context unlike 1.20.1 despite sharing other mc1201 code. Use the 26.1.2 codec
+with its registry-aware serialization context. Do not put client render classes
+in server packet or persistence initialization. Check the minimum 19.0.24
+artifact and each exact runtime graph before finalizing these adapters.
 
 The first implementation slice must verify the pinned dependencies' world-render
 API and a real fluid/chemical icon before committing to the rendering adapter.
@@ -68,6 +100,13 @@ retain the normal item renderer for item keys. If the pinned AE2 world-render AP
 cannot render a registered type, stop that implementation slice and record the
 exact limitation before revising this design. Do not silently ship a bucket icon.
 This API qualification is an explicit technical gate, not a completed experiment.
+
+Compile defaults remain AE2 15.0.10 (both 1.20.1 loaders), 19.0.24 (1.21.1),
+and 26.1.10-beta. The compatible graphs at this baseline use AE2 15.4.10,
+15.1.0, 19.2.17, and 26.1.10-beta respectively; AppMek uses 1.4.3 on Forge
+and 1.6.3 on NeoForge 1.21.1. Qualify the exact 1.6.3 artifact rather than
+treating the inspected cached AppMek artifact as proof for that runtime version.
+Read current pins from `scripts/run-client-versions.json` before running.
 
 Keep two version-specific rendering boundaries: mc1201 for Forge/Fabric 1.20.1
 and NeoForge 1.21.1; mc2612 plus its submit-geometry hook for 26.1.2. Preserve
