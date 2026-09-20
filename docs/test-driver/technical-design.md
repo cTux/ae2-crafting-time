@@ -50,7 +50,8 @@ negative-control, retry, exact-key, amount and chunk-boundary cases in the spec.
 It proves the production diagnosis through the native
 plan row and tooltip rather than seeding driver state. Its connected counterpart
 keeps the same marked-loopback, bounded-control, identity, and cleanup rules as
-the CPU-list runner; no other multiplayer scenario is authorized.
+the CPU-list runner. The planned resource-icon cases below use that same bounded
+exception; no general multiplayer scenario is authorized.
 Every target uses one client process with the fixed offline fixture name/UUID
 and its own runtime, evidence and control directory. The client visits separate
 grids with opposite recurrence outcomes, swaps real patterns/replans, and
@@ -80,6 +81,52 @@ The connected runner never mutates the prepared server. It requires a target-
 matched source marker, validates launch and artifact identities before copying,
 writes a disposable marker in a report-owned runtime, and launches Java through
 a UTF-8 argument file so result/control paths containing spaces remain one argument.
+
+## Delayed resource icon fixtures (planned)
+
+Implement `delayed-resource-icons` and `appmek-resource-icons` against the
+[scenario contract](spec.md#delayed-resource-icon-scenarios-planned) and
+[production design](../provider-locate/resource-icons/technical-design.md).
+Reuse `StandardAe2Scenario` lifecycle actions and `StandardCraftFixture` grid,
+processing-pattern, native CPU and output-return seams. Shared 1.20.1/1.21.1
+driver code owns common transitions; 26.1.2 keeps only its native API differences.
+AppMek key construction stays in the two target-specific optional fixtures,
+loaded only for that selected case. Keep all fixture content out of production.
+
+Encode real water/lava or oxygen/hydrogen output patterns on a provider. Retain
+the actual typed key and amount on the server; hold dispatched output, poll the
+real delayed transition, then release the correct key through normal crafting
+insertion. Size storage and CPU capacity for the job. A named bucketless fluid
+from the pinned graph, or one driver-only registered fluid on one target, uses
+the same flow. Keep registration and appearance metadata in the evidence.
+
+Read `plates()` and `renderPlates()` without changing either. Bind each world
+capture to its server output key and selected provider position; exercise two
+outputs sharing one provider and verify the survivor's key after winner recovery.
+World capture stages cannot depend on menu-frame observations while the terminal
+is closed. Preserve each asynchronous action until completion, issue it once,
+and use existing readiness/progress deadlines. Restore fixture settings and
+clear jobs/blocks/state on teardown, including failure cleanup.
+
+Extend the existing connected runner's scenario validation, driver lifecycle
+guard and server/client dispatch only for these two leaves. Reuse its properties-
+file commands and acknowledgements for create/hold/release/cancel and reconnect;
+bind them to the active fixture, player and phase. Production packets alone
+create client highlights. Preserve loopback addressing, schema-2 immutable-source
+and disposable markers, exact dependency/launcher/artifact hashes, idempotent
+acknowledgements, timeouts and PID/start-time cleanup. No new runner, general
+server provisioning or arbitrary remote command is part of this work. If existing
+seams cannot support it without an independently large infrastructure change,
+deliver that prerequisite separately before implementing dependent checks.
+
+Register the new leaves in both driver runtimes, supported-case/SuitePlan checks,
+host validation and selection, and `DriverResult`/screenshot contracts. Extend
+the nearest driver and PowerShell boundary tests after the hook-created PR.
+Keep the existing `appmek-cpu` contract unchanged: these are resource lifecycle
+cases, not additional addon CPU fixtures. Define checks for dispatch, delayed
+plate/key, selected winner, recovery/finish/cancel, reconnect and cleanup; name
+captures by scenario, resource and checkpoint to avoid overwriting evidence.
+Review icon appearance separately from semantic assertions.
 
 ## Single-world fixtures and transitions
 

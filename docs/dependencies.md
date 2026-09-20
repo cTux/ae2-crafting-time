@@ -17,6 +17,33 @@ absent plan on all targets. AELIS may bypass native recurrence observation, so
 its missing rows are not yet qualified for recurrence labels. Project Infinity
 0.0.52 testing with OmniSequence 1.3.9 and 2.0.3-fix tracks these separately.
 
+## Delayed resource icon qualification (planned)
+
+[Issue #376](https://github.com/cTux/ae2-crafting-time/issues/376) requires
+`delayed-resource-icons` on all four native targets and `appmek-resource-icons`
+on Forge 1.20.1 / NeoForge 1.21.1. These are planned driver cases, not currently
+qualified coverage. Existing `appmek-cpu` mounts oxygen storage and a native CPU;
+it does not prove a delayed chemical output or a visible provider icon.
+
+Use the [resource-icon matrix](provider-locate/resource-icons/implementation-plan.md#runtime-acceptance-matrix)
+and [driver contract](test-driver/spec.md#delayed-resource-icon-scenarios-planned):
+water/lava and item controls on all four compatible profiles, oxygen/hydrogen on
+both integration profiles, a named bucketless fluid on one target, base-only
+absent-integration controls, and matching connected send/reconnect cases.
+AppMek remains optional and gains no Fabric or 26.1.2 dependency. A driver-only
+bucketless fixture adds no production resource, metadata requirement or mod.
+
+Compile/API qualification covers AE2 15.0.10, 19.0.24 and 26.1.10-beta minimums.
+At the documented research baseline the compatible runtime AE2 pins are 15.4.10
+(Forge), 15.1.0 (Fabric), 19.2.17 (NeoForge 1.21.1) and 26.1.10-beta; AppMek pins
+are 1.4.3 and 1.6.3 respectively. Re-read `scripts/run-client-versions.json` and
+record exact artifacts before running. Verify the native typed serialization
+and world renderer on each applicable API boundary, including AppMek 1.6.3 and
+26.1.2 geometry submission. Source signatures and successful compilation do not
+qualify texture, tint or resource-reload behavior. Keep results bound to the
+tested artifact hashes and reviewed world captures; no runtime pass is claimed
+by this prerequisite documentation and no dependency minimum changes here.
+
 ## Startup adapter selection
 
 Optional hooks use one fixed startup choice per dependency. The first matching
