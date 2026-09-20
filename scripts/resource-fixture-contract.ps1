@@ -21,7 +21,10 @@ function Get-ResourceFixtureManifestDigest([object[]]$Screenshots) {
             ([string]$capture.sha256).ToLowerInvariant()).Append("`n")
     }
     $sha = [Security.Cryptography.SHA256]::Create()
-    try { return [Convert]::ToHexString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($canonical.ToString()))).ToLowerInvariant() }
+    try {
+        $hash = $sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($canonical.ToString()))
+        return -join @($hash | ForEach-Object { $_.ToString('x2') })
+    }
     finally { $sha.Dispose() }
 }
 
@@ -112,32 +115,36 @@ function Assert-ResourceFixtureContract([object]$Evidence, [string]$Scenario, [s
         $sidecar = @($Evidence.sidecars)[$captureIndex]
         $shot = @($Evidence.screenshots)[$captureIndex]
         $observationMillis = [long]$observation.observedAtMillis
+        [object[]]$serverJobs = @($observation.serverJobs)
+        [object[]]$plates = @($observation.plates)
+        [object[]]$renderPlates = @($observation.renderPlates)
+        [object[]]$rainbows = @($observation.rainbows)
         if ($captureIndex -lt 0 -or $sidecar.capture.frame -ne $observation.frame -or
                 $sidecar.capture.sha256 -cne $shot.sha256 -or $sidecar.screen -cne 'world') {
             throw "Sidecar frame/hash binding is invalid for $checkpoint"
         }
         if ($checkpoint.EndsWith('-cleanup')) {
-            if ($observation.plates.Count -or $observation.renderPlates.Count -or $observation.rainbows.Count) {
+            if ($plates.Count -or $renderPlates.Count -or $rainbows.Count) {
                 throw 'Cleanup capture retained client highlight state'
             }
             continue
         }
-        if (!$observation.serverJobs.Count -or $observation.frame -lt 0 -or $observationMillis -le 0) { throw 'Capture lacks frame-bound server jobs or observation time' }
+        if (!$serverJobs.Count -or $observation.frame -lt 0 -or $observationMillis -le 0) { throw 'Capture lacks frame-bound server jobs or observation time' }
         $outputs = @(Get-ResourceFixtureOutputs $case)
-        if (!(Test-ResourceFixtureSequence -Expected $outputs -Actual @($observation.serverJobs.resource))) {
+        if (!(Test-ResourceFixtureSequence -Expected $outputs -Actual @($serverJobs.resource))) {
             throw "Resource output identities are invalid for $checkpoint"
         }
         $receipt = Get-ResourceFixtureReceipt @($Evidence.receipts) $case $checkpoint
-        if (!$receipt -or !(Test-ResourceFixtureJobs -Expected @($receipt.jobs) -Actual @($observation.serverJobs))) {
+        if (!$receipt -or !(Test-ResourceFixtureJobs -Expected @($receipt.jobs) -Actual $serverJobs)) {
             throw "Observation does not agree with its authoritative receipt for $checkpoint"
         }
         [object[]]$active = @($(if ($checkpoint.EndsWith('-winner-promoted')) { $outputs[-1] }
             elseif ($checkpoint.EndsWith('-held') -or $checkpoint.EndsWith('-rejoined')) { $outputs }))
-        [object[]]$plateOutputs = @($observation.plates | ForEach-Object { $_.outputId })
+        [object[]]$plateOutputs = @($plates | ForEach-Object { $_.outputId })
         if (!(Test-ResourceFixtureSequence -Expected $active -Actual $plateOutputs) -or
-                $observation.plates.Count -ne $active.Count -or
-                $observation.renderPlates.Count -ne $(if($active.Count){1}else{0}) -or
-                ($active.Count -and $observation.renderPlates[0].outputId -notin $active)) {
+                $plates.Count -ne $active.Count -or
+                $renderPlates.Count -ne $(if($active.Count){1}else{0}) -or
+                ($active.Count -and $renderPlates[0].outputId -notin $active)) {
             throw "Logical or rendered plate identities/cardinality are invalid for $checkpoint"
         }
         $providers = @($observation.serverJobs.provider | Select-Object -Unique)
