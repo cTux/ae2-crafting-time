@@ -84,6 +84,35 @@ function Write-UiSmokeRelaunchEvidence {
     [IO.File]::WriteAllText($Path, ($payload | ConvertTo-Json -Depth 5), [Text.UTF8Encoding]::new($false))
 }
 
+function New-UiSmokeScheduledJavaTaskAction {
+    param(
+        [Parameter(Mandatory)][string]$Executable,
+        [Parameter(Mandatory)][string]$Arguments,
+        [Parameter(Mandatory)][ValidatePattern('^[A-Za-z0-9-]{1,128}$')][string]$PipeName
+    )
+    $payload = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes((
+        [ordered]@{ executable=$Executable; arguments=$Arguments; pipeName=$PipeName } | ConvertTo-Json -Compress)))
+    $script = @'
+$config = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String('__PAYLOAD__')) | ConvertFrom-Json
+$pipe = [IO.Pipes.NamedPipeClientStream]::new('.', $config.pipeName, [IO.Pipes.PipeDirection]::In)
+try {
+    $pipe.Connect(30000)
+    $reader = [IO.StreamReader]::new($pipe, [Text.UTF8Encoding]::new($false), $false, 1024, $true)
+    $env:AE2CT_TEST_DRIVER_TOKEN = $reader.ReadLine()
+    $reader.Dispose()
+    if ($env:AE2CT_TEST_DRIVER_TOKEN -cnotmatch '^[a-f0-9]{64}$') { exit 87 }
+    $child = Start-Process -FilePath $config.executable -ArgumentList ([string]$config.arguments) -PassThru -Wait
+    exit $child.ExitCode
+} finally {
+    Remove-Item Env:\AE2CT_TEST_DRIVER_TOKEN -ErrorAction SilentlyContinue
+    $pipe.Dispose()
+}
+'@.Replace('__PAYLOAD__', $payload)
+    $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($script))
+    [pscustomobject]@{ Execute=(Join-Path $PSHOME 'powershell.exe')
+        Argument="-NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand $encoded" }
+}
+
 function Start-UiSmokeScheduledJava {
     param(
         [Parameter(Mandatory)][string]$Executable,
@@ -91,6 +120,7 @@ function Start-UiSmokeScheduledJava {
         [Parameter(Mandatory)][string]$WorkingDirectory,
         [Parameter(Mandatory)][string]$TaskName,
         [Parameter(Mandatory)][string]$InteractiveUser,
+        [ValidatePattern('^[a-f0-9]{64}$')][string]$InteractiveToken,
         [int]$StartTimeoutSeconds = 30
     )
     if ([IO.Path]::GetFileName($Executable) -cne 'java.exe' -or !(Test-Path -LiteralPath $Executable -PathType Leaf)) {
@@ -99,12 +129,29 @@ function Start-UiSmokeScheduledJava {
     if ($Arguments -cnotmatch '^@".+ui-smoke-java\.args"$') { throw 'Interactive smoke task requires the prepared argument file' }
     if (Get-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue) { throw "UI-smoke Java task already exists: $TaskName" }
     $before = @(Get-CimInstance Win32_Process -Filter "Name = 'java.exe'" | Select-Object -ExpandProperty ProcessId)
-    $action = New-ScheduledTaskAction -Execute $Executable -Argument $Arguments -WorkingDirectory $WorkingDirectory
+    $tokenPipe = $null
+    if ($InteractiveToken) {
+        $pipeName = 'ae2ct-' + [guid]::NewGuid().ToString('N')
+        $tokenPipe = [IO.Pipes.NamedPipeServerStream]::new($pipeName, [IO.Pipes.PipeDirection]::Out, 1,
+            [IO.Pipes.PipeTransmissionMode]::Byte, [IO.Pipes.PipeOptions]::Asynchronous)
+        $relay = New-UiSmokeScheduledJavaTaskAction -Executable $Executable -Arguments $Arguments -PipeName $pipeName
+        $action = New-ScheduledTaskAction -Execute $relay.Execute -Argument $relay.Argument -WorkingDirectory $WorkingDirectory
+    } else {
+        $action = New-ScheduledTaskAction -Execute $Executable -Argument $Arguments -WorkingDirectory $WorkingDirectory
+    }
     $principal = New-ScheduledTaskPrincipal -UserId "$env:COMPUTERNAME\$InteractiveUser" -LogonType Interactive -RunLevel Limited
     Register-ScheduledTask -TaskName $TaskName -Action $action -Principal $principal | Out-Null
     try {
         $notBefore = [DateTime]::UtcNow.AddSeconds(-1)
         Start-ScheduledTask -TaskName $TaskName
+        if ($tokenPipe) {
+            $connected = $tokenPipe.WaitForConnectionAsync()
+            if (!$connected.Wait($StartTimeoutSeconds * 1000)) { throw 'Scheduled Java token relay did not connect' }
+            $writer = [IO.StreamWriter]::new($tokenPipe, [Text.UTF8Encoding]::new($false), 1024, $true)
+            $writer.WriteLine($InteractiveToken)
+            $writer.Flush()
+            $writer.Dispose()
+        }
         $deadline = [DateTime]::UtcNow.AddSeconds($StartTimeoutSeconds)
         do {
             Start-Sleep -Milliseconds 250
@@ -123,6 +170,8 @@ function Start-UiSmokeScheduledJava {
         Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue
         Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
         throw
+    } finally {
+        if ($tokenPipe) { $tokenPipe.Dispose() }
     }
 }
 
