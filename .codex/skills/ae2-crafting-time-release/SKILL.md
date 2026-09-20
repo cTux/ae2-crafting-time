@@ -34,6 +34,9 @@ when preparing artifacts for a client or modpack smoke test.
    created a partial version, GitHub release, local state, or version bump.
 8. Write multipart JSON only through the script's BOM-free `Write-Json` helper.
    Keep the no-BOM regression check in `test-deploy-changed.ps1`.
+   Send JSON-valued multipart fields with `curl --form-string`, never `-F`;
+   semicolons in JSON are otherwise parsed as multipart attributes. Keep file
+   attachments on `-F`.
 9. In a managed environment, check GitHub authentication and user-scoped tokens
    with the same elevated permissions as the real deploy. Treat a sandbox-only
    failure as non-authoritative and never print token values.
@@ -44,8 +47,11 @@ when preparing artifacts for a client or modpack smoke test.
     notes under `all` and row-specific notes under exact release-matrix ids;
     never send a loader- or Minecraft-specific note to an unrelated JAR. Use a
     manual changelog whenever automatic conversion lacks full source-issue URLs.
+    Keep a generated changelog file outside the worktree so the real deploy's
+    clean-tree gate accepts it, and use that unchanged file for dry run and deploy.
 11. End every GitHub and Discord release-note item with its linked source GitHub
     issue, for example `([#111](https://github.com/cTux/ae2-crafting-time/issues/111))`.
+    Use one source link per bullet; do not combine several issues into one item.
     Include one image when reviewed smoke evidence exists for a player-visible
     change; otherwise include none. Discord must receive exactly one message;
     upload that image in the same webhook request so it appears as an inline
@@ -58,6 +64,9 @@ when preparing artifacts for a client or modpack smoke test.
     exclude account data,
     tokens, chat, server addresses, coordinates, and unrelated worlds. Include
     the exact image in the release-body approval preview.
+    Before approval, budget the complete Discord message with production-length
+    release, JAR, CurseForge, and Modrinth links, not only the release body. Leave
+    enough margin for generated file ids.
 12. After the dry run, get explicit user approval for the exact GitHub Release
     title and body and for every affected versioned JAR's changelog shown on
     CurseForge and Modrinth. Do not upload until all text is approved; rerun the
