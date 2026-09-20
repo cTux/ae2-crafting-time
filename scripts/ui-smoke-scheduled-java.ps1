@@ -191,9 +191,11 @@ function Get-UiSmokeScheduledJavaProcessState {
     )
     if ($null -ne (& $ProcessLookup $ProcessId)) { return [pscustomobject]@{state='running';exitCode=$null} }
     $task = & $TaskLookup $TaskName
-    if ($null -eq $task -or $task.State -ne 'Ready') {
+    if ($null -eq $task) {
         return [pscustomobject]@{state='disappeared';exitCode=$null}
     }
+    if ($task.State -eq 'Running') { return [pscustomobject]@{state='finishing';exitCode=$null} }
+    if ($task.State -ne 'Ready') { return [pscustomobject]@{state='disappeared';exitCode=$null} }
     $info = & $InfoLookup $task
     $unsignedResult = [uint32]$info.LastTaskResult
     $exitCode = [BitConverter]::ToInt32([BitConverter]::GetBytes($unsignedResult), 0)

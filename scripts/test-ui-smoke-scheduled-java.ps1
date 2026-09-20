@@ -118,6 +118,11 @@ $running = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test -Pr
     if ($id -eq 42) { [pscustomobject]@{ Id = $id } }
 }
 if ($running.state -ne 'running') { throw 'A present scheduled Java process was reported missing' }
+$finishing = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test `
+    -ProcessLookup { param($id) $null } -TaskLookup { param($name) [pscustomobject]@{State='Running'} }
+if ($finishing.state -ne 'finishing') {
+    throw 'An exact scheduled Java task still finishing after its child exited was reported missing'
+}
 $exited = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test `
     -ProcessLookup { param($id) $null } -TaskLookup { param($name) [pscustomobject]@{State='Ready'} } `
     -InfoLookup { param($task) [pscustomobject]@{LastTaskResult=0} }
