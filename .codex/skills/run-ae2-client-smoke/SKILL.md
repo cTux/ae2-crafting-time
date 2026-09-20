@@ -63,12 +63,21 @@ These are guest runtime versions; Gradle and all JAR builds stay on the host.
 
 Treat `scripts/run-client-versions.json` as the candidate inventory and known
 issues list. Verify newest releases from official loader or project metadata,
-then run the latest profile. Keep an incompatible project in the latest set;
+then choose the audit scope below. Keep an incompatible project in the latest set;
 exclude it only from `compatible` with a concrete `reason` and any `issue_url`
 or `upstream_issue_url`.
 
-Promote versions into `compatible` only after the complete target graph starts
-and the requested smoke checks pass. Find or create a local issue for every
+For a maximum-version-only audit, follow the development skill's
+[dependency audit workflow](../ae2-crafting-time-dev/references/dependency-audits.md).
+Keep other versions fixed and run only the changed addon's explicit
+`-Target <id> -ProjectId <id> -Scenario <case>`; a loader-only update uses
+`-BaseOnly` and a native AE2 UI case. Promote only after that focused run and
+visual review pass, and label the result focused rather than full-graph qualified.
+Do not demand a full suite or change code to make a research candidate pass.
+
+For an explicitly requested full dependency-graph audit, run the latest profile
+and promote the graph only after it starts and its requested checks pass.
+Find or create a local issue for every
 reproduced problem and include its evidence. Create or comment on an upstream
 issue only when the user requests it; link the local and upstream issues when
 both exist.

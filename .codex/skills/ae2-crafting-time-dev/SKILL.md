@@ -56,6 +56,8 @@ Every new or changed executable behavior must have 100% line and branch coverage
 
 ## Change Boundaries
 
+- For dependency release research or maximum-version bumps, follow
+  [the dependency audit workflow](references/dependency-audits.md).
 - Use the smallest shared root-cause fix; do not patch sibling callers
   individually.
 - Treat wire layouts and persisted NBT as compatibility boundaries. Update every
