@@ -140,8 +140,9 @@ function Assert-ResourceFixtureContract([object]$Evidence, [string]$Scenario, [s
         }
         [object[]]$active = @($(if ($checkpoint.EndsWith('-winner-promoted')) { $outputs[-1] }
             elseif ($checkpoint.EndsWith('-held') -or $checkpoint.EndsWith('-rejoined')) { $outputs }))
-        [object[]]$plateOutputs = @($plates | ForEach-Object { $_.outputId })
-        if (!(Test-ResourceFixtureSequence -Expected $active -Actual $plateOutputs) -or
+        [object[]]$expectedPlateOutputs = @($active | Sort-Object)
+        [object[]]$plateOutputs = @($plates | ForEach-Object { $_.outputId } | Sort-Object)
+        if (!(Test-ResourceFixtureSequence -Expected $expectedPlateOutputs -Actual $plateOutputs) -or
                 $plates.Count -ne $active.Count -or
                 $renderPlates.Count -ne $(if($active.Count){1}else{0}) -or
                 ($active.Count -and $renderPlates[0].outputId -notin $active)) {

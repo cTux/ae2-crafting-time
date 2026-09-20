@@ -62,6 +62,9 @@ function Assert-Rejected([scriptblock]$Action, [string]$Name) {
 
 $connected = New-Evidence $true
 Assert-ResourceFixtureContract $connected 'delayed-resource-icons' '1.20.1-fabric' $true $connected.epoch $connected.fixture | Out-Null
+$reorderedOverlap = @($connected.clientObservations | Where-Object checkpoint -eq 'fluid-overlap-held.png')[0]
+$reorderedOverlap.plates = @($reorderedOverlap.plates | Sort-Object outputId -Descending)
+Assert-ResourceFixtureContract $connected 'delayed-resource-icons' '1.20.1-fabric' $true $connected.epoch $connected.fixture | Out-Null
 Assert-ResourceFixtureServerTiming @($connected.receipts) | Out-Null
 Assert-Rejected { Assert-ResourceFixtureContract $connected 'delayed-resource-icons' '1.20.1-fabric' $true ('3' * 32) $connected.fixture } 'stale epoch'
 $connected.screenshotManifestDigest = '0' * 64
