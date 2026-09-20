@@ -454,6 +454,10 @@ final class StandardCraftFixture {
         player.setXRot(2);
     }
 
+    boolean raiseCrazyPriority(ServerPlayer player) {
+        return false;
+    }
+
     void viewTerminal(ServerPlayer player) {
         player.teleportTo(terminal.getX() + 0.5, terminal.getY() - 1, terminal.getZ() - 2.5);
     }
