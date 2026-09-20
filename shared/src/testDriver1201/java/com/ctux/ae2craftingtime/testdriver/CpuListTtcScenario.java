@@ -610,8 +610,13 @@ final class CpuListTtcScenario {
                 reconnectRequested = true;
             }
             case REJOIN_PREPARE, RELAUNCH_PREPARE -> {
-                var action = stage == Stage.REJOIN_PREPARE ? "rejoin-prepare" : "relaunch-prepare";
-                var prepared = server(minecraft, action, player -> second.prepare(player, marker));
+                var relaunch = stage == Stage.RELAUNCH_PREPARE;
+                var action = relaunch ? "relaunch-prepare" : "rejoin-prepare";
+                var prepared = server(minecraft, action, player -> {
+                    var ready = second.prepare(player, marker);
+                    if (ready && relaunch) second.viewTerminal(player);
+                    return ready;
+                });
                 if (prepared) {
                     next(stage == Stage.REJOIN_PREPARE ? Stage.REJOIN_OPEN : Stage.RELAUNCH_OPEN);
                 }

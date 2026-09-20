@@ -525,6 +525,21 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void resumedCpuListReturnsToItsPersistedTerminalBeforeOpening() throws Exception {
+        var node = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/CpuListTtcScenario.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, 0);
+        }
+        assertTrue(node.methods.stream().flatMap(method ->
+                java.util.Arrays.stream(method.instructions.toArray()))
+                .filter(MethodInsnNode.class::isInstance).map(MethodInsnNode.class::cast)
+                .anyMatch(call -> call.owner.endsWith("/StandardCraftFixture")
+                        && call.name.equals("viewTerminal")));
+    }
+
+    @Test
     void resumedCpuListStartsAtTheCpuOwnedActiveStage() throws Exception {
         var world = "ae2ct-" + "a".repeat(32);
         var path = temporary.resolve("cpu-list-continuation.json");
