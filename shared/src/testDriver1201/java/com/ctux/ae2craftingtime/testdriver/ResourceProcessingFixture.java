@@ -71,8 +71,12 @@ final class ResourceProcessingFixture {
                 try {
                     var plan = plans.get(index).get();
                     if (plan.simulation()) throw new IllegalStateException("resource fixture plan is missing inputs");
+                    // This fixture models a craft submitted from the player's terminal. Keep the
+                    // real CPU as the calculation machine, but retain the player on submission so
+                    // production delayed notifications have the same authoritative owner as a
+                    // native interactive craft.
                     var result = service.submitJob(plan, null, cpus.get(index).getCluster(), false,
-                            IActionSource.ofMachine(cpus.get(index)));
+                            IActionSource.ofPlayer(player));
                     if (!result.successful()) throw new IllegalStateException("resource fixture job was rejected: " + result);
                 } catch (Exception error) {
                     throw new IllegalStateException("resource fixture calculation failed", error);
