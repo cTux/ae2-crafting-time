@@ -100,34 +100,36 @@ alphabetical order for the equal-priority fixture CPUs. This is a client display
 and input conflict; estimates, packets, the server CPU list, and PR #419's
 Applied Enhancements plan lifecycle are not involved.
 
-### Small compatibility seam
+### Stable core seam
 
 Keep `CpuTtcDisplayOrder`, `CpuTtcClient`, and the existing immutable frame list
-as the only TTC ordering source. Add one Forge-client compatibility mixin for
-Crazy's verified 2.6.2 hook shape. Select it through `IntegrationCatalog` only
-for `1.20.1-forge`, client side, after bytecode contracts confirm both Crazy
-handler methods and descriptors. Apply it after Crazy's mixin has contributed
-those handlers to `CPUSelectionList`.
+as the only TTC ordering source. The Forge-only compatibility mixin attempted
+by the checkpoint implementation is not a reliable seam: Mixin registered its
+handlers after Crazy transformed `CPUSelectionList`, but did not merge them into
+the target class. This failed with both MixinExtras wrappers and ordinary Sponge
+injectors, before and after Crazy's priority.
 
-The compatibility mixin needs one narrow bridge to the existing frame snapshot
-and whether TTC ordering is active. Do not copy the TTC comparator, cache, or
-list lifecycle into the compatibility code.
+Put the correction in the existing core `CPUSelectionListOrderMixin`, which is
+already merged into AE2's target class on all four supported rows. The minimum
+AE2 bytecode for every row stores the visible list immediately after the final
+`List.subList` and exposes the same `hitTestCpu(Point)` method. Modify that stored
+list and inject at the stable method head; do not target Crazy's private source
+handlers or register a second optional mixin.
 
 - In shortest- or longest-TTC mode with the CPU-total channel available,
-  bypass Crazy's post-sort and slice the published Crafting Time frame list.
-  Suppress Crazy's cancellable hit handler so native `hitTestCpu` continues
-  through Crafting Time's displayed-list, drawn-scroll, and stale-hit hooks.
+  replace the post-slice visible local with the matching slice of the published
+  Crafting Time frame list. Resolve hits at `hitTestCpu` HEAD from that same
+  frame, captured scroll, native card geometry, and stale-job validation.
 - In AE2 mode or when the channel is unavailable, delegate unchanged to Crazy.
   Its priority/name/serial order then remains the effective native order for
   rendering and input.
-- If Crazy is absent or its handler contract changes, skip only this
-  compatibility mixin and report the rejected variant through existing startup
-  diagnostics. Core CPU-list behavior remains loaded. Do not use `require = 0`
-  alone as the compatibility detector or silently claim an unverified shape.
+- If Crazy is absent, the same core injections preserve the normal AE2 path:
+  TTC modes use the existing frame and native mode does nothing. No addon bytecode
+  contract or startup-diagnostic candidate is needed for these stable AE2 seams.
 
 This seam does not add a dependency, change Crazy's priority data, replace
-AE2's renderer, or assign a sorted list back to `menu.cpuList`. Fabric and both
-NeoForge targets retain the shared baseline without the Forge-only adapter.
+AE2's renderer, or assign a sorted list back to `menu.cpuList`. The shared
+injections apply consistently on Forge, Fabric, and both NeoForge targets.
 
 ## Ownership and display flow
 
@@ -283,7 +285,7 @@ For C8-C10, fail first on the initial six rendered cards in the exact Project
 Infinity graph. After that passes, cycle every mode, change a Crazy priority,
 and compare render, tooltip, click, selection, and cancellation serials. Run the
 existing disconnect and two-process continuation only after the initial order
-passes. A prepared Crazy-absent Forge control proves the gated adapter does not
+passes. A prepared Crazy-absent Forge control proves the shared seam does not
 change the normal path. All four targets still build and run affected boundary
 checks, but the new runtime compatibility proof is the exact 1.20.1 Forge graph;
 do not replay unrelated four-target UI suites as a substitute.

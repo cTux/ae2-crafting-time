@@ -46,6 +46,35 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
     @Test
+    void crazyPriorityProbeMutatesAndPersistsTheServerCluster() throws Exception {
+        var node = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/StandardCraftFixture.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, 0);
+        }
+        var method = node.methods.stream().filter(candidate -> candidate.name.equals("raiseCrazyPriority"))
+                .findFirst().orElseThrow();
+        var calls = java.util.Arrays.stream(method.instructions.toArray())
+                .filter(MethodInsnNode.class::isInstance).map(MethodInsnNode.class::cast).toList();
+        assertTrue(calls.stream().anyMatch(call -> call.name.equals("getMethod")));
+        assertTrue(calls.stream().anyMatch(call -> call.name.equals("invoke")));
+        assertTrue(calls.stream().anyMatch(call -> call.name.equals("markDirty")),
+                "the live Crazy priority must be persisted on its server crafting cluster");
+    }
+
+    @Test
+    void nativeCpuOrderKeepsCrazyPriorityAcrossAe2ModeTransitions() {
+        var raw = List.of(3, 6, 4, 5, 8, 1);
+        var prioritized = List.of(7, 3, 6, 4, 5, 8);
+        assertTrue(CpuListTtcScenario.nativeOrderReady(false, raw, raw, 7));
+        assertFalse(CpuListTtcScenario.nativeOrderReady(false, prioritized, raw, 7));
+        assertTrue(CpuListTtcScenario.nativeOrderReady(true, prioritized, raw, 7));
+        assertFalse(CpuListTtcScenario.nativeOrderReady(true, raw, raw, 7));
+        assertFalse(CpuListTtcScenario.nativeOrderReady(true, List.of(), raw, 7));
+    }
+
+    @Test
     void cpuListFirstDrawProbeUsesTheStableTooltipCaller() throws Exception {
         var node = new ClassNode();
         try (var input = getClass().getResourceAsStream(
@@ -62,8 +91,9 @@ class TestDriverCoreTest {
                 .filter(call -> call.getOpcode() == Opcodes.INVOKEVIRTUAL)
                 .toList();
         assertEquals(1, calls.stream().filter(call -> call.name.equals("getTooltip")).count());
-        assertEquals(2, calls.stream().filter(call -> call.name.equals("hitTestCpu")).count(),
-                "only the post-draw stale and wheel probes may call hitTestCpu directly");
+        assertEquals(2, calls.stream().filter(call -> call.name.equals("onMouseUp")).count());
+        assertEquals(0, calls.stream().filter(call -> call.name.equals("hitTestCpu")).count(),
+                "input probes must exercise stable production callers rather than the private helper");
     }
 
     @Test
@@ -492,6 +522,21 @@ class TestDriverCoreTest {
     void relaunchWritesToAPhaseLocalCheckpointLedger() {
         assertEquals("cpu-list-checkpoints.jsonl", CpuListTtcScenario.checkpointFile(false));
         assertEquals("cpu-list-checkpoints.phase-2.jsonl", CpuListTtcScenario.checkpointFile(true));
+    }
+
+    @Test
+    void resumedCpuListReturnsToItsPersistedTerminalBeforeOpening() throws Exception {
+        var node = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/CpuListTtcScenario.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, 0);
+        }
+        assertTrue(node.methods.stream().flatMap(method ->
+                java.util.Arrays.stream(method.instructions.toArray()))
+                .filter(MethodInsnNode.class::isInstance).map(MethodInsnNode.class::cast)
+                .anyMatch(call -> call.owner.endsWith("/StandardCraftFixture")
+                        && call.name.equals("viewTerminal")));
     }
 
     @Test

@@ -295,6 +295,7 @@ public final class DedicatedCpuScenario {
                 case "partial" -> { gridFixture.makeCpuListPartial(player); yield true; }
                 case "restore" -> { gridFixture.restoreCpuListSamples(player); yield true; }
                 case "rename" -> { gridFixture.renameCpuList(player); yield true; }
+                case "crazy-priority" -> gridFixture.raiseCrazyPriority(player);
                 case "finish" -> gridFixture.finishFirstCpu(player);
                 case "cancel" -> { gridFixture.cancelSecondCpu(player); yield true; }
                 case "replace" -> gridFixture.replaceSecondCpu(player);

@@ -85,6 +85,14 @@ class CpuTtcDisplayOrderTest {
         assertEquals(0, CpuTtcDisplayOrder.inputScroll(0));
         assertEquals(4, CpuTtcDisplayOrder.inputScroll(4));
 
+        var displayed = List.of(1, 2, 3, 4);
+        assertEquals(List.of(1, 2), CpuTtcDisplayOrder.visibleSlice(displayed, -1, 2));
+        assertEquals(List.of(3, 4), CpuTtcDisplayOrder.visibleSlice(displayed, 2, 8));
+        assertEquals(List.of(), CpuTtcDisplayOrder.visibleSlice(displayed, 8, 2));
+        assertEquals(List.of(), CpuTtcDisplayOrder.visibleSlice(displayed, 2, 0));
+        assertThrows(IllegalArgumentException.class, () -> CpuTtcDisplayOrder.visibleSlice(null, 0, 1));
+        assertThrows(IllegalArgumentException.class, () -> CpuTtcDisplayOrder.visibleSlice(displayed, 0, -1));
+
         assertEquals(2, CpuTtcDisplayOrder.hitIndex(19, 39, 10, 20, 67, 22, 2, 8));
         assertEquals(3, CpuTtcDisplayOrder.hitIndex(19, 62, 10, 20, 67, 22, 2, 8));
         assertEquals(-1, CpuTtcDisplayOrder.hitIndex(18, 39, 10, 20, 67, 22, 2, 8));

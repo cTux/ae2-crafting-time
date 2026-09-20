@@ -11,7 +11,6 @@ public final class IntegrationCatalog {
 
     private static final Set<String> PRE_26 = Set.of("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge");
     private static final String ECO = "cn/dancingsnow/neoecoae/api/me/ECOCraftingCPULogic";
-    private static final String CRAZY_CPU_LIST = "net/oktawia/crazyae2addons/mixins/MixinCPUSelectionList";
     private static final String BATCH = "(Lcn/dancingsnow/neoecoae/api/me/ExecutingCraftingJob;"
             + "Lcn/dancingsnow/neoecoae/impl/crafting/fastpath/ECOExtractedPatternExecution;";
 
@@ -20,11 +19,6 @@ public final class IntegrationCatalog {
                     Set.of("CraftingTreeNewWidgetMixin"), treeLayout()),
             new IntegrationSelection.Candidate("ae2ct", "tree-helper", PRE_26, true,
                     Set.of("CraftingTreeWidgetMixin"), treeHelper()),
-            new IntegrationSelection.Candidate("crazyae2addons", "cpu-list-2.6.2", Set.of("1.20.1-forge"), true,
-                    Set.of("CrazyAe2CpuListRenderMixin"), List.of(
-                            method(CRAZY_CPU_LIST, "sortThenSlice", "(Ljava/util/List;II)Ljava/util/List;"),
-                            method(CRAZY_CPU_LIST, "hitTestOnSorted", "(Lappeng/client/Point;"
-                                    + "Lorg/spongepowered/asm/mixin/injection/callback/CallbackInfoReturnable;)V"))),
             eco("batched-long", "1.20.1-forge", "NeoEcoLongBatchDispatchMixin", BATCH + "JZ)V"),
             eco("pending-accounting", "1.20.1-forge", "NeoEcoPendingDispatchMixin",
                     "(L" + ECO + "$PendingPatternAccounting;)V"),

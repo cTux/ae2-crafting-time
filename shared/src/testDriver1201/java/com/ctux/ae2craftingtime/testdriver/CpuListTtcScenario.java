@@ -178,15 +178,15 @@ final class CpuListTtcScenario {
                         && selected.name().startsWith(text.rendered().substring(0, text.rendered().length() - 3)))) return false;
                 mark(checks, "badge-select", "selected-title", "server-selection");
                 screenshot.accept("cpu-list-total-ttc-selected-large.png");
-                crazyPriorityChanged = raiseCrazyPriority(minecraft, shortestSerial);
+                crazyPriorityChanged = DriverPlatform.isModLoaded("crazyae2addons");
+                if (crazyPriorityChanged && !server(minecraft, "crazy-priority", first::raiseCrazyPriority)) return false;
                 clickSort(minecraft);
                 next(Stage.MODE_AE2);
             }
             case MODE_AE2 -> {
                 var expected = snapshot.rawCpuSerials().subList(snapshot.scroll(), snapshot.scroll() + 6);
                 var actual = snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::serial).toList();
-                if ((!crazyPriorityChanged && !actual.equals(expected))
-                        || (crazyPriorityChanged && actual.get(0) != shortestSerial)
+                if (!nativeOrderReady(crazyPriorityChanged, actual, expected, shortestSerial)
                         || !itemRowsReady(snapshot.rows())) return false;
                 observeItemMode(snapshot);
                 mark(checks, "raw-order");
@@ -221,7 +221,8 @@ final class CpuListTtcScenario {
             case CHANNEL_FALLBACK -> {
                 var expected = snapshot.rawCpuSerials().subList(snapshot.scroll(), snapshot.scroll() + 6);
                 var fallbackTitle = title(snapshot);
-                if (!snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::serial).toList().equals(expected)
+                var actual = snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::serial).toList();
+                if (!nativeOrderReady(crazyPriorityChanged, actual, expected, shortestSerial)
                         || snapshot.cpuCards().stream().anyMatch(card -> card.ttc() != null)
                         || fallbackTitle == null
                         || !SortObservation.sortableIds(snapshot.rows()).equals(itemModeOrders.get(2))) return false;
@@ -283,7 +284,8 @@ final class CpuListTtcScenario {
             }
             case AE2_LATE -> {
                 var expected = snapshot.rawCpuSerials().subList(snapshot.scroll(), snapshot.scroll() + 6);
-                if (!snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::serial).toList().equals(expected)) return false;
+                var actual = snapshot.cpuCards().stream().map(UiSnapshot.CpuCard::serial).toList();
+                if (!nativeOrderReady(crazyPriorityChanged, actual, expected, shortestSerial)) return false;
                 mark(checks, "mode-switch-late");
                 next(Stage.AE2_EXPIRED);
             }
@@ -608,8 +610,13 @@ final class CpuListTtcScenario {
                 reconnectRequested = true;
             }
             case REJOIN_PREPARE, RELAUNCH_PREPARE -> {
-                var action = stage == Stage.REJOIN_PREPARE ? "rejoin-prepare" : "relaunch-prepare";
-                var prepared = server(minecraft, action, player -> second.prepare(player, marker));
+                var relaunch = stage == Stage.RELAUNCH_PREPARE;
+                var action = relaunch ? "relaunch-prepare" : "rejoin-prepare";
+                var prepared = server(minecraft, action, player -> {
+                    var ready = second.prepare(player, marker);
+                    if (ready && relaunch) second.viewTerminal(player);
+                    return ready;
+                });
                 if (prepared) {
                     next(stage == Stage.REJOIN_PREPARE ? Stage.REJOIN_OPEN : Stage.RELAUNCH_OPEN);
                 }
@@ -839,18 +846,6 @@ final class CpuListTtcScenario {
         DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
     }
 
-    private static boolean raiseCrazyPriority(Minecraft minecraft, int serial) {
-        if (!DriverPlatform.isModLoaded("crazyae2addons")) return false;
-        var screen = (CraftingStatusScreen) minecraft.screen;
-        var cpu = screen.getMenu().cpuList.cpus().stream().filter(row -> row.serial() == serial).findFirst().orElseThrow();
-        try {
-            cpu.getClass().getMethod("setPrio", int.class).invoke(cpu, Integer.MAX_VALUE);
-            return true;
-        } catch (ReflectiveOperationException failure) {
-            throw new IllegalStateException("Crazy AE2 Addons priority contract is unavailable", failure);
-        }
-    }
-
     private void assertCpuOrder(UiSnapshot snapshot, boolean descending) {
         var state = serverState();
         var rawIndex = new java.util.HashMap<Integer, Integer>();
@@ -903,6 +898,11 @@ final class CpuListTtcScenario {
         var active = rows.stream().filter(row -> row.craftAmount() > 0).toList();
         return active.size() >= 2 && active.stream().anyMatch(row -> row.description().stream()
                 .anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")));
+    }
+
+    static boolean nativeOrderReady(boolean crazyPriorityChanged, java.util.List<Integer> actual,
+            java.util.List<Integer> rawWindow, int prioritySerial) {
+        return crazyPriorityChanged ? !actual.isEmpty() && actual.get(0) == prioritySerial : actual.equals(rawWindow);
     }
 
     private CpuListTtcControl.ServerState serverState() {

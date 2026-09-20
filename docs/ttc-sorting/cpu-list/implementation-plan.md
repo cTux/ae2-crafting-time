@@ -13,37 +13,36 @@ plan records the surrounding invariants it must not regress.
 
 ## Fix Crazy AE2 Addons ordering (#421)
 
-### 1. Gate the verified Crazy client hooks
+### 1. Use the already-merged core CPU-list mixin
 
-Ownership: `core/IntegrationCatalog`, its selection tests, the 1.20.1 Forge
-client mixin registration, and one client-only compatibility mixin beside
-`CPUSelectionListOrderMixin`.
+Ownership: the existing `CPUSelectionListOrderMixin`, its registration on all
+four targets, and the transformed-hook boundary check.
 
-- Add one `1.20.1-forge` client candidate for Crazy AE2 Addons 2.6.2. Its
-  bytecode contract must identify `MixinCPUSelectionList.sortThenSlice` and
-  `hitTestOnSorted` with their inspected descriptors before enabling the mixin.
-- Apply the adapter after Crazy has contributed those handlers to AE2's
-  `CPUSelectionList`. Keep the current shared ordering mixin enabled normally.
-- Cover accepted, absent, wrong-target, server-side, and changed-handler
-  selection. A rejected contract skips only the Crazy adapter and appears in
-  startup diagnostics.
-- Do not add a dependency, widen the declared version range, or use an optional
-  injection match by itself as proof of compatibility.
+- Remove the Forge-only Crazy CPU-list mixin, optional registration, addon
+  handler contract, and selection tests. The checkpoint mixin registered but
+  did not merge after Crazy transformed the target, regardless of injector kind
+  or priority.
+- Confirm the minimum AE2 bytecode for all four packaged targets has the same
+  post-`List.subList` visible-list store and `hitTestCpu(Point)` entry point.
+- Keep both corrections in `CPUSelectionListOrderMixin`, whose existing hooks
+  already merge on those targets. Do not target Crazy's private handler names.
+- Do not add a dependency or widen the declared Crazy version range.
 
-Gate: deterministic integration-selection and mixin-boundary checks prove C10
-without loading Crazy on Fabric or NeoForge.
+Gate: deterministic transformed-hook checks bind both injections to the core
+mixin, while all-target compile and package checks prove the shared shape.
 
 ### 2. Keep one frame order for rendering and input
 
-Ownership: the existing `CPUSelectionListOrderMixin`, the new gated adapter,
-and the smallest bridge needed to read its published frame list and active
-TTC/native mode. Do not change `CpuTtcCache`, packets, or server handlers.
+Ownership: the existing `CPUSelectionListOrderMixin` and its published frame
+list and active TTC/native mode. Do not change `CpuTtcCache`, packets, or server
+handlers.
 
-- In shortest- and longest-TTC modes with an available channel, stop Crazy's
-  post-sort from replacing the published TTC order before the six-row slice.
-- In the same modes, let native `hitTestCpu` continue through Crafting Time's
-  displayed-list, captured-scroll, and stale-hit path instead of Crazy's
-  cancellable raw-list result.
+- In shortest- and longest-TTC modes with an available channel, replace the
+  visible local after Crazy's post-sort/slice with the equivalent slice of the
+  published TTC frame.
+- In the same modes, return from `hitTestCpu` HEAD using the frozen frame,
+  captured scroll, AE2's card geometry, and stale-current validation before
+  Crazy's cancellable raw-list result can run.
 - In AE2 mode and channel-unavailable fallback, delegate to Crazy unchanged so
   priority/name/serial ordering remains native for both rendering and input.
 - Reuse the existing frame snapshot and sorter. Add no second TTC comparator,
@@ -68,9 +67,11 @@ needed to change Crazy priority during the existing Forge scenario.
   retain the latest AE2 order.
 - At every reorder compare rendered serial, badge, tooltip, click, selected
   serial, cancellation target, wheel-before-draw, and stale-hit result.
-- Run the exact Project Infinity 0.0.52.0 graph with Crazy 2.6.2. Run a prepared
-  1.20.1 Forge Crazy-absent control from the same committed head. Preserve JAR
-  identities and the original failed smoke evidence.
+- Run the current Project Infinity CurseForge main release at execution time
+  with Crazy 2.6.2. The current exact target is Project Infinity 0.1
+  `0.0.51.4-hotfix-2`, file `8895030`. Run a prepared 1.20.1 Forge Crazy-absent
+  control from the same committed head. Preserve JAR identities and the original
+  failed smoke evidence.
 - Continue disconnect, reconnect, and the clean two-process phase only after
   the initial ordering check passes. Diagnostic resume evidence cannot replace
   the final clean run.
@@ -86,9 +87,9 @@ launch success, unit tests, or reconstructed list order cannot substitute.
   line and branch coverage, the Forge production and TestDriver builds, and
   `git diff --check`. GitHub's all-JAR and Gradle checks remain separate proof.
 - Use the change-selected smoke plan, then execute the exact Project Infinity
-  case and Crazy-absent control above. This Forge-only adapter does not require
-  replaying unrelated Fabric/NeoForge UI suites; all-target CI/build coverage
-  must still prove their shared baseline compiles unchanged.
+  case and Crazy-absent control above. This Forge-only compatibility correction
+  does not require replaying unrelated Fabric/NeoForge UI suites; all-target
+  CI/build coverage must still prove their shared baseline compiles unchanged.
 - Update `docs/dependencies.md` from “known conflict” to verified compatibility
   only after the exact enabled graph passes. Keep the limitation if runtime
   verification remains incomplete.
@@ -239,7 +240,7 @@ document consistency, and `git diff --check`; report GitHub CI separately.
 | C7 | four-target build/test results and immutable-head integrated/dedicated evidence |
 | C8 | Crazy-enabled mode cycle, off-screen promotion, and live priority-change evidence |
 | C9 | rendered serial matched to tooltip, click, selection, cancellation, wheel, and stale-hit results |
-| C10 | exact Project Infinity clean run, Crazy-absent control, and accepted/rejected contract checks |
+| C10 | exact Project Infinity clean run, Crazy-absent control, and four-target minimum-AE2 seam checks |
 
 The baseline merged through #395. The #421 correction is complete only when its
 new criteria have the focused evidence above, shared coverage remains 100%,

@@ -17,9 +17,44 @@ import org.junit.jupiter.api.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
+import org.objectweb.asm.tree.MethodInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 class IntegrationBoundaryTest {
+    @Test
+    void cpuSelectionListRetainsTheSharedRenderAndInputSeams() throws Exception {
+        var node = new ClassNode();
+        try (var input = getClass().getResourceAsStream("/appeng/client/gui/widgets/CPUSelectionList.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, 0);
+        }
+        assertTrue(node.fields.stream().anyMatch(field -> field.name.equals("buttonBg")
+                && field.desc.equals("Lappeng/client/gui/style/Blitter;")));
+        assertTrue(node.fields.stream().anyMatch(field -> field.name.equals("bounds")
+                && field.desc.equals("Lnet/minecraft/client/renderer/Rect2i;")));
+
+        var draw = node.methods.stream().filter(method -> method.name.equals("drawBackgroundLayer"))
+                .findFirst().orElseThrow();
+        var subList = java.util.stream.StreamSupport.stream(draw.instructions.spliterator(), false)
+                .filter(MethodInsnNode.class::isInstance).map(MethodInsnNode.class::cast)
+                .filter(instruction -> instruction.owner.equals("java/util/List")
+                        && instruction.name.equals("subList")
+                        && instruction.desc.equals("(II)Ljava/util/List;"))
+                .findFirst().orElseThrow();
+        var store = nextInstruction(subList);
+        assertInstanceOf(VarInsnNode.class, store);
+        assertEquals(Opcodes.ASTORE, store.getOpcode());
+        var listLocals = draw.localVariables.stream().filter(local -> local.desc.equals("Ljava/util/List;")).toList();
+        assertEquals(1, listLocals.size(), "ModifyVariable ordinal 0 must identify the post-slice list");
+        assertEquals(((VarInsnNode) store).var, listLocals.get(0).index);
+
+        assertTrue(node.methods.stream().anyMatch(method -> method.name.equals("hitTestCpu")
+                && method.desc.equals("(Lappeng/client/Point;)"
+                        + "Lappeng/menu/me/crafting/CraftingStatusMenu$CraftingCpuListEntry;")));
+    }
+
     @Test
     void asmReadsAnOverlappingContractWithoutDefiningAnyClasses() {
         var classes = new HashMap<String, IntegrationContract.ClassInfo>();
@@ -85,15 +120,10 @@ class IntegrationBoundaryTest {
         }
         assertTrue(all.contains("CraftingStatusMenuAccessor"), "production status accessor must be packaged");
         assertTrue(clients.contains("CPUSelectionListMixin"), "CPU list renderer must be packaged");
-        if (IntegrationPlatform.TARGET.equals("1.20.1-forge")) {
-            assertTrue(clients.contains("CrazyAe2CpuListRenderMixin"),
-                    "Crazy render and input compatibility must nest after Crazy");
-            assertFalse(clients.contains("CrazyAe2CpuListCompatibilityMixin"),
-                    "Crazy compatibility must not target the addon's rewritten private handler");
-        } else {
-            assertFalse(clients.contains("CrazyAe2CpuListRenderMixin"));
-            assertFalse(clients.contains("CrazyAe2CpuListCompatibilityMixin"));
-        }
+        assertFalse(clients.contains("CrazyAe2CpuListRenderMixin"),
+                "CPU list compatibility must stay in the proven core mixin config");
+        assertFalse(clients.contains("CrazyAe2CpuListCompatibilityMixin"),
+                "CPU list compatibility must not target addon-private handlers");
         for (var candidate : IntegrationCatalog.CANDIDATES) {
             if (candidate.targets().contains(IntegrationPlatform.TARGET)) {
                 assertTrue(all.containsAll(candidate.mixins()), candidate.variant());
@@ -109,12 +139,7 @@ class IntegrationBoundaryTest {
             boolean pseudo = node.invisibleAnnotations != null && node.invisibleAnnotations.stream()
                     .anyMatch(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/Pseudo;"));
             if (pseudo) assertTrue(IntegrationCatalog.CANDIDATES.stream().anyMatch(c -> c.mixins().contains(mixin)), mixin);
-            if (mixin.equals("CrazyAe2CpuListRenderMixin")) {
-                var annotation = node.invisibleAnnotations.stream()
-                        .filter(a -> a.desc.equals("Lorg/spongepowered/asm/mixin/Mixin;"))
-                        .findFirst().orElseThrow();
-                assertTrue(annotation.values.contains(1100),
-                        "Crazy adapter must merge ordinary injections after the priority-1000 addon");
+            if (mixin.equals("CPUSelectionListOrderMixin")) {
                 var slice = node.methods.stream()
                         .filter(method -> method.name.equals("ae2craftingtime$sliceTtcFrame"))
                         .findFirst().orElseThrow();
@@ -129,15 +154,17 @@ class IntegrationBoundaryTest {
                 var hit = node.methods.stream()
                         .filter(method -> method.name.equals("ae2craftingtime$hitTtcFrame"))
                         .findFirst().orElseThrow();
-                var inject = hit.visibleAnnotations.stream()
-                        .filter(a -> a.desc.endsWith("/Inject;"))
+                var wrap = hit.visibleAnnotations.stream()
+                        .filter(a -> a.desc.endsWith("/WrapOperation;"))
                         .findFirst().orElseThrow();
-                assertEquals(List.of("hitTestCpu"), annotationValue(inject, "method"));
-                assertEquals(Boolean.TRUE, annotationValue(inject, "cancellable"));
-                assertEquals(1, annotationValue(inject, "require"));
+                assertEquals(List.of("getTooltip", "onMouseUp"), annotationValue(wrap, "method"));
+                assertEquals(2, annotationValue(wrap, "require"));
                 var head = (org.objectweb.asm.tree.AnnotationNode)
-                        ((List<?>) annotationValue(inject, "at")).get(0);
-                assertEquals("HEAD", annotationValue(head, "value"));
+                        ((List<?>) annotationValue(wrap, "at")).get(0);
+                assertEquals("INVOKE", annotationValue(head, "value"));
+                assertEquals("Lappeng/client/gui/widgets/CPUSelectionList;hitTestCpu(Lappeng/client/Point;)"
+                        + "Lappeng/menu/me/crafting/CraftingStatusMenu$CraftingCpuListEntry;",
+                        annotationValue(head, "target"));
             }
         }
         // Config construction must be safe before loader metadata exists, including both Forge configs.
@@ -155,5 +182,11 @@ class IntegrationBoundaryTest {
             if (annotation.values.get(i).equals(key)) return annotation.values.get(i + 1);
         }
         return null;
+    }
+
+    private static AbstractInsnNode nextInstruction(AbstractInsnNode instruction) {
+        var next = instruction.getNext();
+        while (next != null && next.getOpcode() < 0) next = next.getNext();
+        return next;
     }
 }
