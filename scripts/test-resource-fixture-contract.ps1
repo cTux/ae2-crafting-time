@@ -37,7 +37,7 @@ function New-Evidence([bool]$connected, [bool]$expiredLater = $false) {
         foreach($name in @($names|Where-Object{$_ -like ($case.ToLowerInvariant().Replace('_','-')+'-*')})){
             $checkpoint=[IO.Path]::GetFileNameWithoutExtension($name);if($checkpoint.EndsWith('-cleanup')){continue}
             $jobs=if($checkpoint.EndsWith('-winner-promoted')){$winner}elseif($checkpoint.EndsWith('-completed')){$completed}elseif($checkpoint.EndsWith('-cancelled')){$cancelled}elseif($checkpoint.EndsWith('-cancel-held')){$cancelHeld}else{$held}
-            $active=if($checkpoint.EndsWith('-winner-promoted')){@($outputs[-1])}elseif($checkpoint.EndsWith('-held')-or$checkpoint.EndsWith('-rejoined')){$outputs}else{@()}
+            [object[]]$active=@($(if($checkpoint.EndsWith('-winner-promoted')){$outputs[-1]}elseif($checkpoint.EndsWith('-held')-or$checkpoint.EndsWith('-rejoined')){$outputs}))
             $observations += [pscustomobject]@{case=$case;checkpoint=$name;frame=10;observedAtMillis=$(if($expiredLater-and
                     ($checkpoint.EndsWith('-completed')-or$checkpoint.EndsWith('-cancel-held')-or$checkpoint.EndsWith('-cancelled'))){3000}else{1000});serverJobs=$jobs;
                 plates=@($active|ForEach-Object{[pscustomobject]@{outputId=$_;positions=@([pscustomobject]@{x=1;y=2;z=3})}});

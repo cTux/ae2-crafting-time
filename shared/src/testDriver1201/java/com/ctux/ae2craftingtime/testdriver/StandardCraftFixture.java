@@ -181,7 +181,7 @@ final class StandardCraftFixture {
         }
         checkpoint = "craftable";
         return resourceFixture
-                ? resourceCpus(player).size() == 2 && resourceCpus(player).stream().allMatch(cpu -> cpu.getCluster().isActive())
+                ? resourceCpus(player).size() == 2 && resourceCpus(player).stream().allMatch(candidate -> candidate.getCluster().isActive())
                 : node.getGrid().getCraftingService().isCraftable(AEItemKey.of(Items.SMOOTH_STONE));
     }
 

@@ -133,7 +133,8 @@ function Assert-ResourceFixtureContract([object]$Evidence, [string]$Scenario, [s
         }
         [object[]]$active = @($(if ($checkpoint.EndsWith('-winner-promoted')) { $outputs[-1] }
             elseif ($checkpoint.EndsWith('-held') -or $checkpoint.EndsWith('-rejoined')) { $outputs }))
-        if (!(Test-ResourceFixtureSequence -Expected $active -Actual @($observation.plates.outputId)) -or
+        [object[]]$plateOutputs = @($observation.plates | ForEach-Object { $_.outputId })
+        if (!(Test-ResourceFixtureSequence -Expected $active -Actual $plateOutputs) -or
                 $observation.plates.Count -ne $active.Count -or
                 $observation.renderPlates.Count -ne $(if($active.Count){1}else{0}) -or
                 ($active.Count -and $observation.renderPlates[0].outputId -notin $active)) {
@@ -166,7 +167,7 @@ function Assert-ResourceFixtureContract([object]$Evidence, [string]$Scenario, [s
                 throw "Held/winner authoritative job state is invalid for $checkpoint"
             }
         }
-        $rainbowOutputs = @($observation.rainbows.outputId)
+        $rainbowOutputs = @($observation.rainbows | ForEach-Object { $_.outputId })
         $initialHeld = $checkpoint.EndsWith('-held') -and !$checkpoint.EndsWith('-cancel-held')
         $immediateWinner = !$Connected -and $checkpoint.EndsWith('-winner-promoted')
         if ($initialHeld) {
