@@ -1,30 +1,30 @@
 {
     "1.20.1-forge":  {
-                         "version":  "1.2.6",
-                         "fingerprint":  "4b416f658f73b95f09ec43b332cae2f4e9d5f84d24b5fe1d186a2975895fdf93",
-                         "jar":  "dist/ae2-crafting-time-1.2.6-forge-1.20.1.jar",
-                         "commit":  "ed9580f5264cec1904a2b1cd195d7108ffd86b9c",
-                         "updatedAt":  "2026-09-15T13:45:53.9077494Z"
+                         "version":  "1.2.7",
+                         "fingerprint":  "203f8ab624022e3653cddf747fb2825c6ddbac0f2d67d1fb31604df042588505",
+                         "jar":  "dist/ae2-crafting-time-1.2.7-forge-1.20.1.jar",
+                         "commit":  "800100e0e1a1a2e6039cdacc228ae64c5bc2e1d4",
+                         "updatedAt":  "2026-09-20T07:30:29.6854830Z"
                      },
     "1.20.1-fabric":  {
-                          "version":  "1.2.6",
-                          "fingerprint":  "8a531fa46a9cd0689098290647dae20525f6529a2927375b1021b81198c552c4",
-                          "jar":  "dist/ae2-crafting-time-1.2.6-fabric-1.20.1.jar",
-                          "commit":  "ed9580f5264cec1904a2b1cd195d7108ffd86b9c",
-                          "updatedAt":  "2026-09-15T13:45:53.9119960Z"
+                          "version":  "1.2.7",
+                          "fingerprint":  "062f5fb9c647a9f48bbe7c5e5f169578b3229fa68dfd81880a06371f914bd259",
+                          "jar":  "dist/ae2-crafting-time-1.2.7-fabric-1.20.1.jar",
+                          "commit":  "800100e0e1a1a2e6039cdacc228ae64c5bc2e1d4",
+                          "updatedAt":  "2026-09-20T07:30:29.6890703Z"
                       },
     "1.21.1-neoforge":  {
-                            "version":  "1.2.6",
-                            "fingerprint":  "a11578c8dc4357b7ab7e33b51a8ac608ca65380c36092b40777d48d430a6dff2",
-                            "jar":  "dist/ae2-crafting-time-1.2.6-neoforge-1.21.1.jar",
-                            "commit":  "ed9580f5264cec1904a2b1cd195d7108ffd86b9c",
-                            "updatedAt":  "2026-09-15T13:45:53.9130549Z"
+                            "version":  "1.2.7",
+                            "fingerprint":  "b411d5455434cd743652fe423cab7a37d40de87eae723523f440690310275b6a",
+                            "jar":  "dist/ae2-crafting-time-1.2.7-neoforge-1.21.1.jar",
+                            "commit":  "800100e0e1a1a2e6039cdacc228ae64c5bc2e1d4",
+                            "updatedAt":  "2026-09-20T07:30:29.6900763Z"
                         },
     "26.1.2-neoforge":  {
-                            "version":  "1.2.6",
-                            "fingerprint":  "305cefe9adb4b0429b2da47a1faa9d26b69ba115b182a88db89d2cbbd2f0153f",
-                            "jar":  "dist/ae2-crafting-time-1.2.6-neoforge-26.1.2.jar",
-                            "commit":  "ed9580f5264cec1904a2b1cd195d7108ffd86b9c",
-                            "updatedAt":  "2026-09-15T13:45:53.9141099Z"
+                            "version":  "1.2.7",
+                            "fingerprint":  "2d5181eb90d6150678c97c084a3a4de2251d8e1bd67efd4a8e455d1de346ecf3",
+                            "jar":  "dist/ae2-crafting-time-1.2.7-neoforge-26.1.2.jar",
+                            "commit":  "800100e0e1a1a2e6039cdacc228ae64c5bc2e1d4",
+                            "updatedAt":  "2026-09-20T07:30:29.6905794Z"
                         }
 }
