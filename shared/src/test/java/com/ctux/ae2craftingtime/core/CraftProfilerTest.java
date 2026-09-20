@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.core;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -57,6 +58,13 @@ class CraftProfilerTest {
     void rejectsInvalidConfiguration() {
         assertThrows(IllegalArgumentException.class, () -> new CraftProfiler(0));
         assertThrows(IllegalArgumentException.class, () -> new CraftProfiler(1, 0.5));
+        assertThrows(IllegalArgumentException.class, () -> new CraftProfiler(1, Double.NaN));
+        assertThrows(IllegalArgumentException.class, () -> new CraftProfiler(1, Double.POSITIVE_INFINITY));
+        assertThrows(IllegalArgumentException.class, () -> new CraftProfiler(1, Double.NEGATIVE_INFINITY));
+
+        assertDoesNotThrow(() -> new CraftProfiler(1, 1.0));
+        assertDoesNotThrow(() -> new CraftProfiler(1, 4.0));
+        assertDoesNotThrow(() -> new CraftProfiler(1, 1000.5));
     }
 
     @Test
@@ -123,6 +131,35 @@ class CraftProfilerTest {
         assertEquals(6, stats.sampleCount());
         assertEquals(2.0, stats.amountPerSecond());
         assertFalse(stats.reliableEstimate());
+    }
+
+    @Test
+    void fallbackMultiplierKeepsFourAndFiveSampleEstimatesFinite() {
+        var multiplier = ConfigNumbers.parseDouble("NaN", 4.0, 1.0, 1000.0);
+        var profiler = new CraftProfiler(10, multiplier);
+        var ironPlate = new ProfileKey("minecraft:iron_plate");
+
+        for (var i = 0; i < 4; i++) {
+            profiler.start(ironPlate, 1, ProfileUnit.ITEM, i * 20L);
+            profiler.complete(ironPlate, 1, i * 20L + 10);
+            profiler.flushCompletedSamples();
+        }
+
+        var fourSamples = profiler.stats(ironPlate).orElseThrow();
+        assertEquals(2.0, fourSamples.amountPerSecond());
+        assertEquals(4, fourSamples.usedSampleCount());
+        assertTrue(fourSamples.reliableEstimate());
+        assertEquals(5, TimeEstimate.seconds(10, fourSamples).orElseThrow());
+
+        profiler.start(ironPlate, 1, ProfileUnit.ITEM, 100);
+        profiler.complete(ironPlate, 1, 1_100);
+        profiler.flushCompletedSamples();
+
+        var fiveSamples = profiler.stats(ironPlate).orElseThrow();
+        assertEquals(2.0, fiveSamples.amountPerSecond());
+        assertEquals(4, fiveSamples.usedSampleCount());
+        assertFalse(fiveSamples.reliableEstimate());
+        assertEquals(5, TimeEstimate.seconds(10, fiveSamples).orElseThrow());
     }
 
     @Test

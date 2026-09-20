@@ -46,8 +46,8 @@ public final class CraftProfiler {
         if (maxSamples <= 0) {
             throw new IllegalArgumentException("maxSamples must be positive");
         }
-        if (outlierMultiplier < 1.0) {
-            throw new IllegalArgumentException("outlierMultiplier must be at least 1");
+        if (!Double.isFinite(outlierMultiplier) || outlierMultiplier < 1.0) {
+            throw new IllegalArgumentException("outlierMultiplier must be finite and at least 1");
         }
         this.maxSamples = maxSamples;
         this.outlierMultiplier = outlierMultiplier;
