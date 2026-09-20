@@ -2,7 +2,7 @@
 
 Issue: [#305](https://github.com/cTux/ae2-crafting-time/issues/305)
 
-Status: the original ten pages are implemented. The Recurrent addition is planned
+Status: eleven pages, including NO CHANNEL, are implemented. The Recurrent addition is planned
 under [#412](https://github.com/cTux/ae2-crafting-time/issues/412).
 
 ## Goal
@@ -13,7 +13,7 @@ limits, with a real screenshot and useful cross-links.
 
 ## Pages and display priority
 
-`statuses/index.md` keeps these ten pages in their existing order and appends Recurrent.
+`statuses/index.md` keeps these eleven pages in their existing order and appends Recurrent.
 The landing page separates Crafting Plan diagnostics from running-job priority:
 
 | Page | Visible state | Required explanation |
@@ -21,6 +21,7 @@ The landing page separates Crafting Plan diagnostics from running-job priority:
 | `no-space.md` | `NO SPACE` | Stored output cannot return to ME storage; free or add writable storage. |
 | `no-provider.md` | `NO PROVIDER` | Scheduled patterns have no connected provider; restore provider/pattern. |
 | `no-power.md` | `NO POWER` | Network cannot power next dispatch; increase generation or stored energy. |
+| `no-channel.md` | `NO CHANNEL` | The provider has no usable channel; check its network connection and channel capacity. |
 | `locked.md` | `LOCKED` | Provider locks/redstone prevent the next batch; satisfy or disable the lock. |
 | `input-blocked.md` | `INPUT BLOCKED` | Destination refuses inputs; inspect space, sides, filters, and blocking mode. |
 | `no-target.md` | `NO TARGET` | Provider has no usable destination; connect/configure a compatible target. |
@@ -31,7 +32,7 @@ The landing page separates Crafting Plan diagnostics from running-job priority:
 | `recurrent.md` | `Recurrent` | Crafting Plan has a proven recipe self-dependency; check seed ingredients and alternative recipes. |
 
 Stored-only NO SPACE wins first. For scheduled work, current reason precedence is
-NO PROVIDER, NO POWER, LOCKED, INPUT BLOCKED, NO TARGET, then Waiting, DELAYED,
+NO PROVIDER, NO POWER, NO CHANNEL, LOCKED, INPUT BLOCKED, NO TARGET, then Waiting, DELAYED,
 missing history, and estimate behavior. Pages explain mixed active/scheduled
 rows without implying active batches share the scheduled blocking reason.
 
@@ -59,7 +60,7 @@ addresses, chat, coordinates, unrelated worlds, and test controls.
 
 English and Ukrainian use identical paths, positions, image references, and
 links; Ukrainian is a complete natural translation. Both themes remain readable.
-All eleven statuses and the chapter cover all four supported targets. Reconcile the
+All twelve statuses and the chapter cover all four supported targets. Reconcile the
 approved scope first if implementation finds target drift.
 
 This changes guide resources and existing transformations only: no detection,
@@ -75,7 +76,7 @@ precedence, thresholds, packets, persistence, config, recipes, or dependencies.
 
 | ID | Observable result |
 | --- | --- |
-| S1 | Chapter 3 links to exactly the eleven listed states, preserving the first ten positions and separating Recurrent from running-job priority. |
+| S1 | Chapter 3 links to exactly the twelve listed states, preserving the first eleven positions, including NO CHANNEL, and separating Recurrent from running-job priority. |
 | S2 | Every state emitted by the mod maps once; no planned/native-only state is presented as shipped. |
 | S3 | Every page satisfies meaning, scope, recovery, clearing, limits, screenshot, and link rules. |
 | S4 | Precedence and mixed active/scheduled explanations match current renderer/data. |
@@ -97,6 +98,11 @@ change it. The page uses `Recurrent` / `Циклічне`, explains the normal-w
 `Recurrent: <amount>` label and matching hover explanation, and places it in
 Crafting Plan before submission, not a running CPU's Crafting Status.
 
+The regression reported in [#408](https://github.com/cTux/ae2-crafting-time/issues/408)
+was fixed by merged [#410](https://github.com/cTux/ae2-crafting-time/pull/410).
+Older investigation notes in the recurrence documents are historical, not an
+open prerequisite or a request to change detection in this issue.
+
 Use a simple A -> B -> A example and mention direct and longer loops. Explain
 that an ordinary shortage stays Missing, and a rejected circular alternative
 alone is not proof. The number remains AE2's total missing amount, even when a
@@ -115,7 +121,7 @@ screens are outside this native-plan diagnostic.
 | ID | Observable result |
 | --- | --- |
 | S11 | Both locales explain Recurrent's location, label, loops, quantities, recovery, clearing, and limits above. |
-| S12 | Recurrent has position 10, is reachable from the landing and TTC estimate pages, and is explicitly outside running-job priority. |
+| S12 | Recurrent has position 11 after TTC estimate at position 10, is reachable from the landing and TTC estimate pages, and is explicitly outside running-job priority. |
 | S13 | A reviewed, packaged PNG shows a real Recurrent row; caption/alt text describe the fixture without claiming every loop item becomes a missing row. |
 
 S3 and S5-S10 also apply to the new page. This planning merge leaves #412 open;
