@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import com.ctux.ae2craftingtime.core.ConfigNumbers;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -36,7 +37,8 @@ public final class Ae2CraftingTimeConfig {
             case "showChatMessages" -> SHOW_CHAT_MESSAGES.set(parseBoolean(value, SHOW_CHAT_MESSAGES.get()));
             case "notifyOnDelayed" -> NOTIFY_ON_DELAYED.set(parseBoolean(value, NOTIFY_ON_DELAYED.get()));
             case "maxSamples" -> MAX_SAMPLES.set(parseInt(value, MAX_SAMPLES.get(), 1, 100));
-            case "outlierMultiplier" -> OUTLIER_MULTIPLIER.set(parseDouble(value, OUTLIER_MULTIPLIER.get(), 1.0, 1000.0));
+            case "outlierMultiplier" -> OUTLIER_MULTIPLIER
+                    .set(ConfigNumbers.parseDouble(value, OUTLIER_MULTIPLIER.get(), 1.0, 1000.0));
             default -> {
             }
         }
@@ -58,14 +60,6 @@ public final class Ae2CraftingTimeConfig {
             return false;
         }
         return fallback;
-    }
-
-    private static double parseDouble(String value, double fallback, double min, double max) {
-        try {
-            return Math.max(min, Math.min(max, Double.parseDouble(value)));
-        } catch (NumberFormatException ignored) {
-            return fallback;
-        }
     }
 
     public static final class BooleanValue {

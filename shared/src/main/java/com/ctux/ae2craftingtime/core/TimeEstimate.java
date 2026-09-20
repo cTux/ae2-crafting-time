@@ -7,7 +7,7 @@ import java.util.OptionalLong;
 
 public final class TimeEstimate {
     public static OptionalLong seconds(long amount, ProfileStats stats) {
-        if (amount <= 0 || stats.amountPerSecond() <= 0) {
+        if (amount <= 0 || !Double.isFinite(stats.amountPerSecond()) || stats.amountPerSecond() <= 0) {
             return OptionalLong.empty();
         }
 

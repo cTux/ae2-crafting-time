@@ -53,11 +53,18 @@ class TimeEstimateTest {
     }
 
     @Test
-    void zeroThroughputHasNoEstimate() {
-        var stats = new ProfileStats(0, 0, 0, 0, 0, ProfileUnit.ITEM);
+    void invalidInputsHaveNoEstimate() {
+        for (var rate : List.of(Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 0.0, -1.0)) {
+            var stats = new ProfileStats(1, 20, 1, rate, 20, ProfileUnit.ITEM);
+            assertFalse(TimeEstimate.seconds(10, stats).isPresent());
+            assertFalse(TimeEstimate.format(10, stats).isPresent());
+        }
 
-        assertFalse(TimeEstimate.format(10, stats).isPresent());
-        assertFalse(TimeEstimate.seconds(0, stats).isPresent());
+        var stats = new ProfileStats(1, 20, 1, 1.0, 20, ProfileUnit.ITEM);
+        for (var amount : List.of(0L, -1L)) {
+            assertFalse(TimeEstimate.seconds(amount, stats).isPresent());
+            assertFalse(TimeEstimate.format(amount, stats).isPresent());
+        }
     }
 
     @Test
