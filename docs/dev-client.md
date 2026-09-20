@@ -153,7 +153,12 @@ The same matrix is the known-issues list. Keep incompatible candidates in
 When issues exist, add `issue_url` for this repository and
 `upstream_issue_url` for the dependency. Promote a latest version into
 `compatible` only after the whole target starts and its requested smoke checks
-pass together.
+pass together. For an explicitly scoped maximum-version-only audit, one
+addon with its required prerequisites and its corresponding client scenario
+can qualify that addon version. Record this as focused coverage; it does not
+qualify the combined addon graph. Preserve minimum versions and integration
+code. Any required code, driver, or dependency-graph change needs a separate
+issue instead of promotion in that audit.
 
 ExtendedAE-Plus is included in the Forge 1.20.1 and NeoForge 1.21.1 compatible
 profiles. Expanded AE stays excluded because its Applied Flux pattern-provider

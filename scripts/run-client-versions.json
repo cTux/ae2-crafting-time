@@ -28,7 +28,7 @@
       { "name": "JEI", "project_id": "u6dRKJwZ" }
     ],
     "compatible": {
-      "loader_version": "1.20.1-47.4.10",
+      "loader_version": "1.20.1-47.4.23",
       "ae2_version_id": "7KVs6HMQ",
       "ae2_version": "15.4.10",
       "versions": [
@@ -62,7 +62,7 @@
         { "project_id": "RYE1pYyr", "version_id": "c2s3iMw8", "version": "1.1.6-1.20.1-forge" },
         { "project_id": "SOw6jD6x", "version_id": "mIP0ApJY", "version": "1.20.1-0.7.48r" },
         { "project_id": "u6dRKJwZ", "version_id": "IrfJO7PN", "version": "15.59.0.212" },
-        { "project_id": "udZtKfzP", "version_id": "TYrXvWwv", "version": "20.3.0" },
+        { "project_id": "udZtKfzP", "version_id": "Qm3GW128", "version": "20.4.2" },
         { "project_id": "UhW5uCKw", "version_id": "eoUaDkZf", "version": "1.20-1.5-forge" },
         { "project_id": "VQhDBNs8", "version_id": "cTJwfNfV", "version": "1.20.1-1.0.0+20" },
         { "project_id": "vvuO3ImH", "version_id": "IPQlZkz1", "version": "5.14.1+1.20.1" },
@@ -179,7 +179,7 @@
       { "name": "JEI", "project_id": "u6dRKJwZ" }
     ],
     "compatible": {
-      "loader_version": "0.19.4",
+      "loader_version": "0.19.5",
       "ae2_version_id": "kywcQ25B",
       "ae2_version": "15.1.0",
       "fabric_api_version_id": "xhLT3C5f",
@@ -227,7 +227,7 @@
       { "name": "JEI", "project_id": "u6dRKJwZ" }
     ],
     "compatible": {
-      "loader_version": "21.1.238",
+      "loader_version": "21.1.251",
       "ae2_version_id": "kfyIqgJ6",
       "ae2_version": "19.2.17",
       "ae2_group": "org.appliedenergistics",
@@ -240,7 +240,7 @@
         { "project_id": "B1CBVXHX", "version_id": "bpcbGDy4", "version": "mc1.21.1-2.2.37-neoforge" },
         { "project_id": "Ce6I4WUE", "version_id": "5KzzycBT", "version": "10.7.19.85" },
         { "project_id": "Ck4E7v7R", "version_id": "hFpGwC6q", "version": "21.1.19" },
-        { "project_id": "E6BFl96N", "version_id": "Zf5HhnF1", "version": "1.21.1-1.4.3+neoforge" },
+        { "project_id": "E6BFl96N", "version_id": "hLs5MFnR", "version": "1.21.1-1.5.0+neoforge" },
         { "project_id": "gu7yAYhd", "version_id": "1ewzHZYg", "version": "1.120.2" },
         { "project_id": "IiATswDj", "version_id": "TpUCzFaW", "version": "1.6.3" },
         { "project_id": "IZPmgTLT", "version_id": "nd0U5eJF", "version": "1.0.3" },
@@ -248,12 +248,12 @@
         { "project_id": "jjuIRIVr", "version_id": "RPG4EriK", "version": "4.11.0" },
         { "project_id": "oMgZ004U", "version_id": "4x40hq9D", "version": "1.21-2.1.5-neoforge" },
         { "project_id": "pNabrMMw", "version_id": "CxSEpEnO", "version": "19.5.1" },
-        { "project_id": "qelfSMnn", "version_id": "UNYpf7A1", "version": "1.21.1-1.6.0" },
+        { "project_id": "qelfSMnn", "version_id": "SnCFnDzn", "version": "1.21.1-1.9.0" },
         { "project_id": "qPydPwtX", "version_id": "kKLZdIPS", "version": "BMAddon1.21.1-beta1" },
         { "project_id": "rvaW4C93", "version_id": "7JwMBNfy", "version": "1.21.1-1.1.16" },
         { "project_id": "rxYaglEe", "version_id": "ablTMAjP", "version": "1.6.12-1.21.1" },
         { "project_id": "RYE1pYyr", "version_id": "k444ySGT", "version": "1.1.6-1.21.1-neoforge" },
-        { "project_id": "SOw6jD6x", "version_id": "Awt8eCuo", "version": "1.21.1-0.8.0a" },
+        { "project_id": "SOw6jD6x", "version_id": "1rbqTjbS", "version": "1.21.1-0.8.1a" },
         { "project_id": "SyKS54UY", "version_id": "me5XWMw9", "version": "1.0.1-beta" },
         { "project_id": "u6dRKJwZ", "version_id": "w1zqfWJi", "version": "19.51.0.417" },
         { "project_id": "udZtKfzP", "version_id": "gWMhHBje", "version": "21.1.1" },
@@ -315,7 +315,7 @@
       { "name": "JEI", "project_id": "u6dRKJwZ" }
     ],
     "compatible": {
-      "loader_version": "26.1.2.99",
+      "loader_version": "26.1.2.109",
       "ae2_version_id": "pK0VDmDU",
       "ae2_version": "26.1.10-beta",
       "versions": [
@@ -325,7 +325,7 @@
         { "project_id": "JiOqfoFM", "version_id": "KpNzac5y", "version": "26.1-1.0.3-neoforge" },
         { "project_id": "oMgZ004U", "version_id": "yrw1WDVE", "version": "26.1-1.0.1-neoforge" },
         { "project_id": "pNabrMMw", "version_id": "ncEqrp7o", "version": "26.1.1-beta" },
-        { "project_id": "qelfSMnn", "version_id": "v2PSNZ3v", "version": "26.1.2-2.1.0" },
+        { "project_id": "qelfSMnn", "version_id": "DMPhIJZQ", "version": "26.1.2-2.3.0" },
         { "project_id": "qPydPwtX", "version_id": "lNUOSgAt", "version": "beta3" },
         { "project_id": "rvaW4C93", "version_id": "oDNiS7Ki", "version": "26.1.2-1.1.26" },
         { "project_id": "rxYaglEe", "version_id": "hPJMJOBd", "version": "26.1.7" },

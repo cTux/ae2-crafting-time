@@ -18,7 +18,11 @@ JEI on 1.21.1 remains unchanged: its new MezzConfig prerequisite is tracked in
 ## Automated focused checks
 
 Runtime source: `106fa660bd980b2bc7265d38aaeb4142b4b1b2c8`.
-Subsequent changes only document results and the verified GuideME maximum.
+Subsequent changes document results and the verified GuideME maximum.
+The integration merge also retains the separately verified addon and loader
+maxima from PRs #456 and #464. Their adjacent catalogue rows were combined
+without changing any selected artifact. No combined-graph smoke was run; these
+receipts continue to describe each original focused graph and its loader.
 All four CodexVM `craft-plan` runs passed semantic assertions, archive, and
 cleanup. Every plan, three sort states, and tooltip screenshot was manually
 reviewed: readable TTC labels and controls, no overlapping or clipped plan UI.
