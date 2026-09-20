@@ -30,6 +30,22 @@ final class AppliedMekanisticsFixture extends AddonCpuFixture<AppliedMekanistics
     private static final long CHEMICAL_AMOUNT = 1_000_000;
     private static final long COBBLESTONE_AMOUNT = 64;
 
+    static ItemStack resourceCell() { return new ItemStack(AMItems.CHEMICAL_CELL_1K.get()); }
+
+    static java.util.List<appeng.api.stacks.AEKey> resourceKeys(String name) {
+        var oxygen = MekanismAPI.CHEMICAL_REGISTRY.get(Objects.requireNonNull(ResourceLocation.tryBuild("mekanism", "oxygen")));
+        var hydrogen = MekanismAPI.CHEMICAL_REGISTRY.get(Objects.requireNonNull(ResourceLocation.tryBuild("mekanism", "hydrogen")));
+        if (oxygen == null || hydrogen == null) throw new IllegalStateException("Mekanism resource fixture chemicals are unavailable");
+        var oxygenKey = MekanismKey.of(new ChemicalStack(MekanismAPI.CHEMICAL_REGISTRY.wrapAsHolder(oxygen), 1));
+        var hydrogenKey = MekanismKey.of(new ChemicalStack(MekanismAPI.CHEMICAL_REGISTRY.wrapAsHolder(hydrogen), 1));
+        return switch (name) {
+            case "OXYGEN" -> java.util.List.of(oxygenKey);
+            case "HYDROGEN" -> java.util.List.of(hydrogenKey);
+            case "CHEMICAL_OVERLAP" -> java.util.List.of(oxygenKey, hydrogenKey);
+            default -> throw new IllegalArgumentException("unknown chemical resource case");
+        };
+    }
+
     @Override
     protected Placement place(ServerPlayer player, FixtureMarker marker) {
         if (player == null) {

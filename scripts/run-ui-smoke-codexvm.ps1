@@ -2,9 +2,10 @@ param(
     [ValidateSet("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")][string]$Target = "1.20.1-forge",
     [switch]$Latest,
     [switch]$Interactive,
+    [switch]$ResourceFixtureOnly,
     [switch]$Scheduled,
     [switch]$Stop,
-    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-channel-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|delayed-resource-icons|appmek-resource-icons|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-channel-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string]$CasesBase64,
     [string[]]$ProjectId,
     [string]$LocalRoot,
@@ -89,6 +90,7 @@ if ($CasesBase64) { $arguments += @('-CasesBase64', $CasesBase64) }
 if ($ProjectId) { $arguments += @('-ProjectId') + @($ProjectId) }
 if ($Latest) { $arguments += '-Latest' }
 if ($Interactive) { $arguments += '-Interactive' }
+if ($ResourceFixtureOnly) { $arguments += '-ResourceFixtureOnly' }
 if ($ResumeBundleDirectory) { $arguments += @('-ResumeBundleDirectory', $ResumeBundleDirectory) }
 if ($CaptureResumeOnly) { $arguments += '-CaptureResumeOnly' }
 if ($Scheduled) { $arguments += @('-ScheduledJava', '-InteractiveUser', $InteractiveUser) }

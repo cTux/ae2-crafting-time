@@ -5,6 +5,7 @@ param(
     [string]$Target,
     [switch]$Latest,
     [switch]$Interactive,
+    [switch]$ResourceFixtureOnly,
     [switch]$BaseOnly,
     [string]$Scenario = 'suite',
     [string[]]$ProjectId,
@@ -14,6 +15,14 @@ param(
     [string]$PreparedLaunchRoot = 'C:\Users\Public\Documents\AE2CraftingTimeSmoke\prepared'
 )
 $ErrorActionPreference = 'Stop'
+$resourceScenario = $Scenario -in @('delayed-resource-icons','appmek-resource-icons')
+if ($Changed -and $ResourceFixtureOnly) { throw 'Changed mode cannot opt into fixture-only resource execution' }
+if ($ResourceFixtureOnly.IsPresent -ne $resourceScenario) {
+    throw 'ResourceFixtureOnly is required exactly for a focused resource fixture scenario'
+}
+if ($Scenario -eq 'appmek-resource-icons' -and $Target -and $Target -notin @('1.20.1-forge','1.21.1-neoforge')) {
+    throw 'AppMek resource fixtures are supported only on Forge 1.20.1 and NeoForge 1.21.1'
+}
 $root = Split-Path -Parent $PSScriptRoot
 $planning = @{ Changed=$Changed; BaseRef=$BaseRef; Target=$Target; Latest=$Latest; Interactive=$Interactive; BaseOnly=$BaseOnly; ProjectId=$ProjectId }
 if ($PSBoundParameters.ContainsKey('Scenario')) { $planning.Scenario = $Scenario }
@@ -34,6 +43,14 @@ foreach ($targetEntry in $targets) {
   foreach ($graph in $targetEntry.graphs) {
     $row = $targetEntry
     $runCases = @($graph.cases)
+    $resourceCases = @($runCases | Where-Object { $_ -in @('delayed-resource-icons','appmek-resource-icons') })
+    if ($resourceCases.Count -and $resourceCases.Count -ne $runCases.Count) {
+        throw 'Resource fixture cases cannot share a JVM with non-resource suite cases'
+    }
+    $runResourceFixtureOnly = $ResourceFixtureOnly -and $resourceCases.Count -gt 0
+    if (($resourceCases.Count -gt 0) -ne $runResourceFixtureOnly) {
+        throw 'Planned resource fixture execution lost its explicit ResourceFixtureOnly authorization'
+    }
     $runLatest = $graph.profile -eq 'latest'
     $profile = $graph.profile
     $runProjects = @($graph.projectId)
@@ -76,6 +93,7 @@ foreach ($targetEntry in $targets) {
         $plan | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath (Join-Path $report 'selection.json') -Encoding UTF8
         $arguments = @{ Target = $row.target; Latest = $runLatest; Scenario = $Scenario
             CasesBase64 = $casesBase64; BundleDirectory = $bundle; PreparedLaunchRoot = $PreparedLaunchRoot; ProjectId = $runProjects; BaseOnly = [bool]$graph.baseOnly; Interactive = $Interactive }
+        if ($runResourceFixtureOnly) { $arguments.ResourceFixtureOnly = $true }
         $arguments.StartupTimeoutSeconds = $StartupTimeoutSeconds
         if ($GuestSourceRoot) { $arguments.GuestSourceRoot = $GuestSourceRoot }
         $clientExitConfirmed = $false

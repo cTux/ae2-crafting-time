@@ -1,8 +1,40 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 final class ServerDriverPlatform {
+    static appeng.api.stacks.AEKey bucketlessResourceKey() {
+        return ResourceFixtureFluid.key();
+    }
+    static java.util.Map<String, Object> resourceFacts(ResourceFixtureControl.Case resourceCase) {
+        return resourceCase == ResourceFixtureControl.Case.BUCKETLESS ? ResourceFixtureFluid.facts()
+                : java.util.Map.of("storageValidated", true,
+                        "chemical", resourceCase.name().contains("GEN") || resourceCase.name().startsWith("CHEMICAL"));
+    }
+    static byte[] encodeResourceKey(appeng.api.stacks.AEKey key, net.minecraft.server.level.ServerPlayer player) {
+        try {
+            var bytes = new java.io.ByteArrayOutputStream();
+            try (var output = new java.io.DataOutputStream(bytes)) {
+                net.minecraft.nbt.NbtIo.write(key.toTagGeneric(), output);
+            }
+            return bytes.toByteArray();
+        } catch (java.io.IOException error) {
+            throw new IllegalStateException("cannot encode resource key", error);
+        }
+    }
     static boolean isModLoaded(String id) {
         return net.minecraftforge.fml.ModList.get().isLoaded(id);
+    }
+    static void installResourceStorage(appeng.blockentity.storage.DriveBlockEntity drive, boolean chemical) {
+        var inventory = drive.getInternalInventory();
+        if (inventory.getStackInSlot(1).isEmpty()) {
+            inventory.setItemDirect(1, appeng.core.definitions.AEItems.FLUID_CELL_1K.stack());
+            drive.onChangeInventory(inventory, 1);
+        }
+        if (chemical && inventory.getStackInSlot(2).isEmpty()) {
+            if (!isModLoaded("appmek")) throw new IllegalStateException("AppMek resource fixture requires appmek");
+            inventory.setItemDirect(2, AppliedMekanisticsFixture.resourceCell());
+            drive.onChangeInventory(inventory, 2);
+        }
+        drive.getMainNode().getGrid().getStorageService().invalidateCache();
     }
 
     static WirelessTerminalFixture wcwtTerminal() {

@@ -11,6 +11,7 @@ public final class TestDriverMod {
     public static final String MOD_ID = "ae2craftingtime_test_driver";
 
     public TestDriverMod() {
+        ResourceFixtureFluid.register(net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus());
         DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> TestDriverMod::startClient);
     }
 

@@ -83,6 +83,22 @@ cleanup, unsupported chemical targets, missing integration and misplaced flag.
 Run existing CPU-list and recurrence runner contract tests as regression checks;
 broaden their runtime only if shared behavior changes invalidate prior coverage.
 
+## Executable coverage map
+
+| Boundary | Executable regression | Runtime gate and retained artifact |
+| --- | --- | --- |
+| Identity, transition, replay/conflict, reset revision and final client acknowledgement | `ResourceFixtureControlTest` | exact receipt/state comparison in both runner validators; JUnit XML |
+| Multi-tick warmup return, partial insertion and original-failure-preserving cleanup | `ResourceFixtureControlTest.multiSlotWarmupReturnPollsEveryPartialSlotUntilComplete`, `partialInsertionRetainsTheUninsertedRemainder`, `connectedAbortBindsOriginalFailureAndTerminalRevision` and `cleanupFailureKeepsTheOriginalFailureVisible` | authoritative `resourceCleanup`, abort acknowledgement and server job timing snapshots; `resource-fixture-evidence.json` |
+| Focused case catalogue and graph selection on all supported targets | `scripts/test-ui-smoke-plan.ps1` | `get-ui-smoke-plan.ps1` rejects ordinary-suite inclusion and selects one compatible graph; plan JSON |
+| Explicit fixture-only authorization and unsupported chemical targets | `scripts/test-ui-smoke-matrix.ps1` | `run-ui-smoke-matrix.ps1` rejects absent/misplaced flags before launch; matrix plan JSON |
+| Setup deadline and active progress watchdog | resource cases in `scripts/test-ui-smoke-fast-path.ps1` | 300-second setup and 60-second active limits; progress/status JSON |
+| Launch wrapper forwarding | `scripts/test-run-ui-smoke-wrapper.ps1` | executes the public wrapper against a parameter-validating matrix fixture and requires `ResourceFixtureOnly`; captured invocation result |
+| Fixed captures, hashes, delayed timing, frame facts, plate/rainbow semantics, server/client agreement and mode-specific receipt traces | `scripts/test-resource-fixture-contract.ps1` exercises the validator; integrated and connected resource rows provide runtime coverage after PR creation | source-defined positive/negative validator fixtures cover identities, cardinalities, job states, receipt agreement and sidecar binding; real PNGs, sidecars, client evidence and server results remain post-PR runtime evidence |
+
+The post-PR test command must execute every regression named above; source-text
+matching is not accepted as coverage. A runtime row passes only after its mode's
+validator emits the combined evidence artifact from the exact expected trace.
+
 Ready to unblock #376 means: current-head tests/builds/CI pass, all matrix
 fixture checks and cleanup pass, artifacts/captures are reviewed and archived,
 and every result explicitly says fixture-only with icon acceptance NOT_RUN.

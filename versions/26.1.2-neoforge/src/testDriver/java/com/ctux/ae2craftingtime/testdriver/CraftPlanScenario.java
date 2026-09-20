@@ -72,6 +72,7 @@ public final class CraftPlanScenario {
     private boolean amountSubmitted;
     private boolean treeHoverStarted;
     private final StatsInteraction treeStats = new StatsInteraction();
+    private final ResourceFixtureClient resourceFixture;
 
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         DispatchObservation.watch(null, null);
@@ -86,9 +87,10 @@ public final class CraftPlanScenario {
                 ? new ProviderDispatchStatusScenario(options.scenario()) : null;
         this.options = options;
         this.driverFile = driverFile;
-        baseFixture = standard == null && noSpace == null && noProvider == null && noPower == null
+        resourceFixture = options.resourceFixtureOnly() ? new ResourceFixtureClient(minecraft, options, driverFile) : null;
+        baseFixture = resourceFixture == null && standard == null && noSpace == null && noProvider == null && noPower == null
                 && providerDispatchStatus == null ? DriverPlatform.baseFixture(options.scenario()) : null;
-        addonFixture = AddonCpuFixture.create(options.scenario());
+        addonFixture = resourceFixture == null ? AddonCpuFixture.create(options.scenario()) : null;
         wirelessFixture = WirelessTerminalFixture.create(options.scenario());
         requesterFixture = RequesterFixture.SCENARIO.equals(options.scenario()) ? RequesterFixture.create() : null;
         networkAnalyserFixture = Ae2NetworkAnalyserFixture.SCENARIO.equals(options.scenario())
@@ -97,6 +99,7 @@ public final class CraftPlanScenario {
     }
 
     public void tick() {
+        if (resourceFixture != null) { resourceFixture.tick(); state = resourceFixture.state(); return; }
         if (!screenshotWrite.isDone()) return;
         screenshotWrite.join();
         if (pendingPass) {
@@ -146,8 +149,8 @@ public final class CraftPlanScenario {
         return failure;
     }
 
-    boolean reconnectRequested() { return standard != null && standard.reconnectRequested(); }
-    void reconnected() { standard.reconnected(); }
+    boolean reconnectRequested() { return resourceFixture != null ? resourceFixture.reconnectRequested() : standard != null && standard.reconnectRequested(); }
+    void reconnected() { if (resourceFixture != null) resourceFixture.reconnected(); else standard.reconnected(); }
 
     public long elapsedMillis() {
         return Duration.ofNanos(System.nanoTime() - stateStarted).toMillis();
@@ -710,7 +713,7 @@ public final class CraftPlanScenario {
         }
     }
 
-    boolean evidenceReady() { return screenshotWrite.isDone(); }
+    boolean evidenceReady() { return screenshotWrite.isDone() && (resourceFixture == null || resourceFixture.evidenceReady()); }
 
     private DriverResult result(boolean complete, String value, DriverResult.Failure resultFailure) {
         return new DriverResult(1, complete, driverFile, DriverPlatform.TARGET, options.profile(), options.scenario(), value,
@@ -874,6 +877,11 @@ public final class CraftPlanScenario {
         var screen = minecraft.screen.getClass().getName();
         var snapshot = UiObservationStore.latest();
         return state == ScenarioState.PLAN_STABLE && snapshot != null ? screen + " rows=" + ids(snapshot) : screen;
+    }
+
+    String checkpoint() {
+        if (resourceFixture != null) return resourceFixture.checkpoint();
+        return "state=" + state + " " + currentScreen();
     }
 
 }

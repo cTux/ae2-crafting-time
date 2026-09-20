@@ -188,7 +188,6 @@ public final class TestDriverRuntime implements AutoCloseable {
                 com.ctux.ae2craftingtime.testdriver.mixin.ClientStatsAccessor.ae2craftingtime_test_driver$networkAmounts().clear();
                 com.ctux.ae2craftingtime.mc1201.ClientStats.CACHE.clear();
                 com.ctux.ae2craftingtime.mc1201.ClientStatsRequests.clear();
-                com.ctux.ae2craftingtime.mc1201.ProviderHighlightClient.onSessionEnd();
                 UiObservationStore.reset();
                 if (finalCleanup) {
                     finished = true;

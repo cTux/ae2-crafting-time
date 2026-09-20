@@ -6,7 +6,7 @@ param(
     [string]$CasesBase64,
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-channel-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|delayed-resource-icons|appmek-resource-icons|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-channel-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$ArchiveRoot,
     [string]$ReportDirectory,
@@ -16,6 +16,7 @@ param(
     [string]$DedicatedAddress,
     [string]$ControlDirectory,
     [string]$CampaignId,
+    [string]$ResourceFixtureId,
     [ValidateSet('alpha')][string]$Role,
     [string]$OfflineName,
     [ValidatePattern('^[a-f0-9]{32}$')][string]$OfflineUuid,
@@ -28,7 +29,8 @@ param(
     [int]$CallbackTimeoutSeconds = 20,
     [int]$CheckpointTimeoutSeconds = 60,
     [int]$StartupTimeoutSeconds = 300,
-    [switch]$FailOnInitialDisconnect
+    [switch]$FailOnInitialDisconnect,
+    [switch]$ResourceFixtureOnly
 )
 
 function Test-UiSnapshotBounds($snapshot) {
@@ -48,6 +50,30 @@ function Test-UiSnapshotBounds($snapshot) {
 }
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot 'resource-fixture-contract.ps1')
+$resourceScenario = $Scenario -in @('delayed-resource-icons','appmek-resource-icons')
+if (($resourceScenario -and !$ResourceFixtureOnly) -or
+        ($ResourceFixtureOnly -and !$resourceScenario -and $Scenario -ne 'suite')) {
+    throw 'ResourceFixtureOnly is required exactly for resource fixture scenarios'
+}
+function Get-ResourceFixtureCases([string]$CaseScenario, [string]$CaseTarget) {
+    if ($CaseScenario -eq 'appmek-resource-icons') { return @('OXYGEN','HYDROGEN','CHEMICAL_OVERLAP') }
+    return @('ITEM','WATER','LAVA') + $(if ($CaseTarget -eq '1.20.1-forge') { @('BUCKETLESS') } else { @() }) + @('FLUID_OVERLAP')
+}
+function Get-ResourceFixtureScreenshots([string[]]$FixtureCases, [bool]$Connected) {
+    $values = foreach ($fixtureCase in $FixtureCases) {
+        $prefix = $fixtureCase.ToLowerInvariant().Replace('_','-')
+        $checkpoints = @('held') + $(if ($Connected) { @('rejoined') } else { @() }) +
+            $(if ($fixtureCase.EndsWith('OVERLAP')) { @('winner-promoted') } else { @() }) +
+            @('completed','cancel-held','cancelled')
+        foreach ($checkpoint in $checkpoints) { "$prefix-$checkpoint.png" }
+    }
+    $values += $FixtureCases[-1].ToLowerInvariant().Replace('_','-') + '-cleanup.png'
+    return @($values)
+}
+if ($Scenario -eq 'appmek-resource-icons' -and $Target -notin @('1.20.1-forge','1.21.1-neoforge')) {
+    throw 'AppMek resource fixtures are supported only on Forge 1.20.1 and NeoForge 1.21.1'
+}
 if (-not $PreparedLaunch -and -not $ReportDirectory) {
     if ($CasesBase64) { throw 'Case-list transport is internal to native execution' }
     if ($BundleDirectory) { throw 'A native bundle requires its prepared launch manifest' }
@@ -55,6 +81,7 @@ if (-not $PreparedLaunch -and -not $ReportDirectory) {
     if ($PSBoundParameters.ContainsKey('Scenario')) { $campaign.Scenario = $Scenario }
     if ($ArchiveRoot) { $campaign.ArchiveRoot = $ArchiveRoot }
     $campaign.Changed = $Changed; $campaign.BaseRef = $BaseRef; $campaign.PlanOnly = $PlanOnly
+    if ($ResourceFixtureOnly) { $campaign.ResourceFixtureOnly = $true }
     & (Join-Path $PSScriptRoot 'run-ui-smoke-matrix.ps1') @campaign
     exit $LASTEXITCODE
 }
@@ -111,6 +138,9 @@ $stderr = Join-Path $report "launcher.stderr.log"
 $statusPath = Join-Path $report "status.json"
 $runId = [guid]::NewGuid().ToString("N")
 $campaignId = if ($resumeState) { $resumeState.campaignId } elseif ($CampaignId) { $CampaignId } else { [guid]::NewGuid().ToString('N') }
+$resourceFixtureId = if ($ResourceFixtureOnly) {
+    if ($ResourceFixtureId) { $ResourceFixtureId } else { [guid]::NewGuid().ToString('N') }
+} else { '' }
 if ($campaignId -cnotmatch '^[A-Za-z0-9._-]{1,128}$') { throw 'Invalid UI-smoke campaign identity' }
 $startedAt = [DateTime]::UtcNow.ToString("o")
 $process = $null
@@ -277,10 +307,11 @@ try {
             $launchParameters = @{ LaunchManifest=$PreparedLaunch; BundleDirectory=$BundleDirectory
                 RuntimeDirectory=$runtime; Target=$Target; Profile=$profile; Scenario=$Scenario; World=$world
                 Evidence=$evidence; ProjectId=$ProjectId; Interactive=$Interactive; DedicatedAddress=$DedicatedAddress
-                ControlDirectory=$ControlDirectory; CampaignId=$campaignId }
+                ControlDirectory=$ControlDirectory; CampaignId=$campaignId; ResourceFixtureId=$resourceFixtureId }
             if ($Role) { $launchParameters.Role=$Role; $launchParameters.OfflineName=$OfflineName; $launchParameters.OfflineUuid=$OfflineUuid }
             if ($RuntimeDirectory) { $launchParameters.AllowedRuntimeRoot=$report }
             if ($phase -eq 2) { $launchParameters.ContinuationPath=$continuationPath; $launchParameters.ResumeOnly=$true }
+            if ($ResourceFixtureOnly) { $launchParameters.ResourceFixtureOnly = $true }
             $launch = & (Join-Path $PSScriptRoot 'prepare-ui-smoke-launch.ps1') @launchParameters
             [ordered]@{schema=1;phase=$phase;world=$world;campaignId=$campaignId;executable=$launch.executable
                 arguments=$launch.arguments;finalApproval=$launch.finalApproval;runtime=$runtime;evidence=$evidence} | ConvertTo-Json -Depth 5 |
@@ -296,13 +327,14 @@ try {
                 $launchParameters = @{ LaunchManifest=$PreparedLaunch; BundleDirectory=$BundleDirectory
                     RuntimeDirectory=$runtime; Target=$Target; Profile=$profile; Scenario=$Scenario; World=$world
                     Evidence=$evidence; ProjectId=$ProjectId; Interactive=$Interactive; DedicatedAddress=$DedicatedAddress
-                    ControlDirectory=$ControlDirectory; CampaignId=$campaignId }
+                    ControlDirectory=$ControlDirectory; CampaignId=$campaignId; ResourceFixtureId=$resourceFixtureId }
                 if ($Role) { $launchParameters.Role=$Role; $launchParameters.OfflineName=$OfflineName; $launchParameters.OfflineUuid=$OfflineUuid }
                 if ($RuntimeDirectory) { $launchParameters.AllowedRuntimeRoot=$report }
                 if ($phase -eq 2) {
                     $launchParameters.ContinuationPath = $continuationPath
                     if ($resumeState) { $launchParameters.ResumeOnly = $true }
                 }
+                if ($ResourceFixtureOnly) { $launchParameters.ResourceFixtureOnly = $true }
                 $launch = & (Join-Path $PSScriptRoot 'prepare-ui-smoke-launch.ps1') @launchParameters
                 $executable = $launch.executable
                 $phaseArguments = $launch.arguments
@@ -331,7 +363,7 @@ try {
             $processes += $identity
             Write-Status "running" "client phase $phase"
             $timeout = if ($Interactive) { [TimeSpan]::FromMinutes(30) }
-                elseif ($Scenario -in @("suite", "cpu-list-total-ttc")) { [TimeSpan]::FromMinutes(40) }
+                elseif ($Scenario -in @("suite", "cpu-list-total-ttc", "delayed-resource-icons", "appmek-resource-icons")) { [TimeSpan]::FromMinutes(40) }
                 else { [TimeSpan]::FromMinutes(8) }
             $deadline = [DateTime]::UtcNow.Add($timeout)
             $watchdogReason = $null
@@ -358,7 +390,8 @@ try {
                 } elseif ($process.WaitForExit(1000)) {
                     break
                 }
-                if ($Scenario -in @('cpu-list-total-ttc', 'recurrent-plan') -or $selectedCases -contains 'recurrent-plan') {
+                if ($Scenario -in @('cpu-list-total-ttc', 'recurrent-plan', 'delayed-resource-icons', 'appmek-resource-icons') -or
+                        $selectedCases -contains 'recurrent-plan') {
                     $progressPath = Join-Path $evidence 'driver-progress.json'
                     if (Test-Path -LiteralPath $progressPath -PathType Leaf) {
                         try {
@@ -495,7 +528,10 @@ try {
             Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
         $driverName = "ae2-crafting-time-$modVersion-$loader-$game-test-driver.jar"
         $standardContracts = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json).cases
-        $requiredChecks = if ($standardContracts.$caseScenario) {
+        $requiredChecks = if ($caseScenario -in @('delayed-resource-icons','appmek-resource-icons')) {
+            @('server-identity','real-dispatch','delayed-plates','native-locate','lifecycle',
+                'capture-integrity','cleanup','fixture-only')
+        } elseif ($standardContracts.$caseScenario) {
             if ($result.checks.'advanced-cpu' -is [bool] -and $standardContracts.$caseScenario.advancedChecks) {
                 @($standardContracts.$caseScenario.advancedChecks)
             } else { @($standardContracts.$caseScenario.checks) }
@@ -546,7 +582,9 @@ try {
         $actualChecks = @($result.checks.psobject.Properties.Name)
         if (Compare-Object $requiredChecks $actualChecks -CaseSensitive) { throw "Invalid UI-smoke check set: $caseScenario" }
         foreach ($check in $requiredChecks) { if (-not $result.checks.$check) { throw "Failed UI-smoke check: $check" } }
-        $requiredScreenshots = if ($standardContracts.$caseScenario) {
+        $requiredScreenshots = if ($caseScenario -in @('delayed-resource-icons','appmek-resource-icons')) {
+            Get-ResourceFixtureScreenshots (Get-ResourceFixtureCases $caseScenario $Target) ([bool]$DedicatedAddress)
+        } elseif ($standardContracts.$caseScenario) {
             if ($result.checks.'advanced-cpu' -is [bool] -and $standardContracts.$caseScenario.advancedScreenshots) {
                 @($standardContracts.$caseScenario.advancedScreenshots)
             } else { @($standardContracts.$caseScenario.screenshots) }
@@ -583,6 +621,98 @@ try {
             if (!(Test-Path -LiteralPath $sidecar -PathType Leaf)) { throw "Missing semantic snapshot $screenshot" }
             $snapshot = Get-Content -LiteralPath $sidecar -Raw | ConvertFrom-Json
             if (!$snapshot.screen -or !$snapshot.gui -or !(Test-UiSnapshotBounds $snapshot)) { throw "Invalid semantic snapshot $screenshot" }
+        }
+        if ($caseScenario -in @('delayed-resource-icons','appmek-resource-icons')) {
+            $fixturePath = Join-Path $caseEvidence 'resource-fixture-evidence.json'
+            if (!(Test-Path -LiteralPath $fixturePath -PathType Leaf)) { throw 'Missing resource fixture evidence' }
+            $fixture = Get-Content -LiteralPath $fixturePath -Raw | ConvertFrom-Json
+            $fixture | Add-Member -NotePropertyName sidecars -NotePropertyValue @($fixture.screenshots | ForEach-Object {
+                Get-Content -LiteralPath (Join-Path $caseEvidence $_.name.Replace('.png','.json')) -Raw | ConvertFrom-Json
+            }) -Force
+            Assert-ResourceFixtureContract $fixture $caseScenario $Target ([bool]$DedicatedAddress) `
+                $campaignId $resourceFixtureId | Out-Null
+            $expectedCases = Get-ResourceFixtureCases $caseScenario $Target
+            $expectedCaptures = Get-ResourceFixtureScreenshots $expectedCases ([bool]$DedicatedAddress)
+            $connectedEvidence = [bool]$DedicatedAddress
+            if ($fixture.schema -ne 1 -or $fixture.fixtureResult -cne 'PASS' -or
+                    $fixture.productionIconAcceptance -cne 'NOT_RUN' -or !$fixture.clientObservations.Count -or
+                    $fixture.connected -ne $connectedEvidence -or
+                    (Compare-Object $expectedCaptures @($fixture.screenshots.name) -SyncWindow 0 -CaseSensitive) -or
+                    (Compare-Object $expectedCaptures @($result.screenshots) -SyncWindow 0 -CaseSensitive) -or
+                    !$fixture.clientEvidence.digest -or $fixture.clientEvidence.captures -ne $expectedCaptures.Count) {
+                throw 'Resource fixture semantic evidence is incomplete'
+            }
+            $integratedProperties = @($fixture.integratedServerEvidence.psobject.Properties)
+            if ($connectedEvidence) {
+                if ($integratedProperties.Count) { throw 'Connected resource evidence manufactured an integrated server result' }
+            } elseif ($fixture.integratedServerEvidence.teardownComplete -ne $true -or
+                    $fixture.integratedServerEvidence.fixtureResult -cne 'PASS' -or
+                    $fixture.integratedServerEvidence.clientEvidence.digest -cne $fixture.clientEvidence.digest -or
+                    $fixture.integratedServerEvidence.clientEvidence.captures -ne $fixture.clientEvidence.captures -or
+                    $fixture.integratedServerEvidence.clientEvidence.revision -ne $fixture.clientEvidence.revision) {
+                throw 'Integrated resource evidence lacks authoritative server cleanup'
+            }
+            foreach ($fixtureCase in $expectedCases) {
+                $caseReceipts = @($fixture.receipts | Where-Object { $_.case -ceq $fixtureCase })
+                $requiredActions = @('CREATE') + $(if ($connectedEvidence) { @('REJOIN_PREPARE','RECONNECT') } else { @() }) +
+                    @('RELEASE','RESET','CREATE','CANCEL','RESET')
+                if ($fixtureCase.EndsWith('OVERLAP')) {
+                    $requiredActions = @('CREATE') + $(if ($connectedEvidence) { @('REJOIN_PREPARE','RECONNECT') } else { @() }) +
+                        @('RELEASE','RELEASE','RESET','CREATE','CANCEL','CANCEL','RESET')
+                }
+                if ($fixtureCase -ceq $expectedCases[-1]) { $requiredActions += 'COMPLETE' }
+                if ((Compare-Object $requiredActions @($caseReceipts.action) -SyncWindow 0 -CaseSensitive) -or
+                        @($caseReceipts | Where-Object { $_.sequence -le 0 -or $_.revision -le 0 -or
+                            $_.ackRevision -ne $_.revision -or $_.stateRevision -ne
+                                $(if ($_.action -ceq 'RESET') { $_.revision + 1 } else { $_.revision }) }).Count) {
+                    throw "Resource fixture lifecycle evidence is invalid for $fixtureCase"
+                }
+            }
+            if (Compare-Object (1..@($fixture.receipts).Count) @($fixture.receipts.sequence) -SyncWindow 0) {
+                throw 'Resource fixture receipt sequence is not contiguous'
+            }
+            if (Compare-Object $expectedCaptures @($fixture.clientObservations.checkpoint) -SyncWindow 0 -CaseSensitive) {
+                throw 'Resource fixture observations do not match the fixed capture contract'
+            }
+            foreach ($observation in @($fixture.clientObservations | Where-Object { $_.checkpoint -notlike '*-cleanup.png' })) {
+                if (!$observation.serverJobs.Count -or $observation.frame -lt 0 -or !$observation.screen) {
+                    throw "Resource fixture observation lacks frame-bound server facts: $($observation.checkpoint)"
+                }
+                foreach ($job in @($observation.serverJobs)) {
+                    if (!$job.resource -or !$job.keyFingerprint -or !$job.keyEncoding -or !$job.cpu -or !$job.provider -or
+                            $job.rawAmount -le 0 -or $job.dispatchCount -ne 1) {
+                        throw "Resource fixture job evidence is incomplete: $($observation.checkpoint)"
+                    }
+                }
+            }
+            foreach ($capture in @($fixture.screenshots)) {
+                $capturePath = Join-Path $caseEvidence $capture.name
+                if ((Get-FileHash -LiteralPath $capturePath -Algorithm SHA256).Hash -ine $capture.sha256) {
+                    throw "Resource fixture screenshot hash mismatch: $($capture.name)"
+                }
+            }
+            if (!$connectedEvidence) {
+                $serverReceipts = @($fixture.integratedServerEvidence.receipts)
+                Assert-ResourceFixtureServerTiming $serverReceipts | Out-Null
+                if ($serverReceipts.Count -ne @($fixture.receipts).Count) {
+                    throw 'Integrated server and client receipt counts differ'
+                }
+                for ($receiptIndex = 0; $receiptIndex -lt $serverReceipts.Count; $receiptIndex++) {
+                    $serverReceipt = $serverReceipts[$receiptIndex]
+                    $clientReceipt = $fixture.receipts[$receiptIndex]
+                    if ($serverReceipt.sequence -ne $clientReceipt.sequence -or
+                            $serverReceipt.revision -ne $clientReceipt.revision -or
+                            $serverReceipt.stateRevision -ne $clientReceipt.stateRevision -or
+                            $serverReceipt.action -cne $clientReceipt.action -or
+                            $serverReceipt.case -cne $clientReceipt.case -or
+                            $serverReceipt.slot -ne $clientReceipt.slot -or
+                            $serverReceipt.phase -cne $clientReceipt.phase -or
+                            ($serverReceipt.jobs | ConvertTo-Json -Depth 12 -Compress) -cne
+                                ($clientReceipt.jobs | ConvertTo-Json -Depth 12 -Compress)) {
+                        throw "Integrated server and client receipt $receiptIndex differ"
+                    }
+                }
+            }
         }
     }
     $manifest = Join-Path $runtime "$modsDirectory\.ae2-crafting-time-run-mods.json"

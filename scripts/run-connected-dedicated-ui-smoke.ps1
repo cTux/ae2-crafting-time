@@ -7,13 +7,32 @@ param(
     [ValidatePattern('^[a-f0-9]{40}$')][string]$HeadSha,
     [string]$Address = '127.0.0.1:25565',
     [string]$JavaHome,
-    [ValidateRange(1, 1800)][int]$ServerStartupTimeoutSeconds = 180,
+    [ValidateRange(1, 1800)][int]$ServerStartupTimeoutSeconds = 300,
     [switch]$ScheduledJava,
     [string]$InteractiveUser = 'Codex',
-    [ValidateSet('cpu-list-total-ttc','recurrent-plan')][string]$Scenario = 'cpu-list-total-ttc',
+    [ValidateSet('cpu-list-total-ttc','recurrent-plan','delayed-resource-icons','appmek-resource-icons')][string]$Scenario = 'cpu-list-total-ttc',
+    [switch]$ResourceFixtureOnly,
     [switch]$PlanOnly
 )
 $ErrorActionPreference = 'Stop'
+. (Join-Path $PSScriptRoot 'resource-fixture-contract.ps1')
+function Get-ResourceFixtureScreenshots([string[]]$FixtureCases) {
+    $values = foreach ($fixtureCase in $FixtureCases) {
+        $prefix = $fixtureCase.ToLowerInvariant().Replace('_','-')
+        $checkpoints = @('held','rejoined') + $(if ($fixtureCase.EndsWith('OVERLAP')) { @('winner-promoted') } else { @() }) +
+            @('completed','cancel-held','cancelled')
+        foreach ($checkpoint in $checkpoints) { "$prefix-$checkpoint.png" }
+    }
+    $values += $FixtureCases[-1].ToLowerInvariant().Replace('_','-') + '-cleanup.png'
+    return @($values)
+}
+$resourceScenario = $Scenario -in @('delayed-resource-icons','appmek-resource-icons')
+if ($ResourceFixtureOnly.IsPresent -ne $resourceScenario) {
+    throw 'ResourceFixtureOnly is required exactly for resource fixture scenarios'
+}
+if ($Scenario -eq 'appmek-resource-icons' -and $Target -notin @('1.20.1-forge','1.21.1-neoforge')) {
+    throw 'AppMek resource fixtures are supported only on Forge 1.20.1 and NeoForge 1.21.1'
+}
 $sourceServer = [IO.Path]::GetFullPath($ServerDirectory)
 $bundle = [IO.Path]::GetFullPath($BundleDirectory)
 $prepared = [IO.Path]::GetFullPath($PreparedLaunch)
@@ -101,6 +120,7 @@ $java = Join-Path ([IO.Path]::GetFullPath($JavaHome)) 'bin/java.exe'
 if (!(Test-Path -LiteralPath $java -PathType Leaf)) { throw "Java executable is missing: $java" }
 $campaignId = [guid]::NewGuid().ToString('N')
 $connectionEpoch = [guid]::NewGuid().ToString('N')
+$connectionFixture = [guid]::NewGuid().ToString('N')
 
 # All inputs are validated before the disposable copy is created or mutated.
 New-Item -ItemType Directory -Path $report -Force | Out-Null
@@ -154,7 +174,9 @@ Set-Content -LiteralPath (Join-Path $resolvedServer 'eula.txt') -Value 'eula=tru
 
 $serverArgs = @("-Dae2ct.testDriver.serverScenario=$Scenario-connected",
     "-Dae2ct.testDriver.serverTarget=$Target", "-Dae2ct.testDriver.serverResult=$serverResult",
-    "-Dae2ct.testDriver.serverControl=$control", "-Dae2ct.testDriver.serverCampaign=$connectionEpoch", '-Xmx4G')
+    "-Dae2ct.testDriver.serverControl=$control", "-Dae2ct.testDriver.serverCampaign=$connectionEpoch",
+    "-Dae2craftingtime.test.resourceFixture=$connectionFixture", '-Xmx4G')
+if ($ResourceFixtureOnly) { $serverArgs = @('-Dae2craftingtime.test.resourceFixtureOnly=true') + $serverArgs }
 if ($Target -eq '1.20.1-fabric') { $serverArgs += @('-jar','fabric-server-launch.jar','nogui') }
 $argsFile = Join-Path $report 'dedicated-java.args'
 $quotedServerArgs = @($serverArgs | ForEach-Object { '"' + $_.Replace('\', '\\').Replace('"', '\"') + '"' })
@@ -169,7 +191,7 @@ $sourceIdentity = [ordered]@{ markerSha256=(Get-FileHash -LiteralPath $markerPat
     launcherSha256=(Get-FileHash -LiteralPath $launcher -Algorithm SHA256).Hash
     loader=$profile.loader; javaMajor=$expectedJava; javaPath=$java; javaVersion="required-$expectedJava"
     dependencies=$sourceDependencies }
-$runnerPlan = [ordered]@{ target=$Target; headSha=$HeadSha; campaignId=$campaignId; connectionEpoch=$connectionEpoch
+$runnerPlan = [ordered]@{ target=$Target; headSha=$HeadSha; campaignId=$campaignId; connectionEpoch=$connectionEpoch; resourceFixture=$connectionFixture
     sourceServer=$sourceServer; disposableServer=$resolvedServer; java=$java
     sourceIdentity=$sourceIdentity; relaunch=[ordered]@{required=($Scenario -eq 'cpu-list-total-ttc');minimumProcesses=$(if ($Scenario -eq 'cpu-list-total-ttc') { 2 } else { 1 })}
     scheduledJava=$ScheduledJava.IsPresent; interactiveUser=$InteractiveUser
@@ -223,8 +245,13 @@ try {
     if (!$ready) { throw 'Dedicated server did not finish startup' }
     $clientParameters = @{ Target=$Target; Scenario=$Scenario; ReportDirectory=(Join-Path $report 'client')
         BundleDirectory=$bundle; PreparedLaunch=$prepared; DedicatedAddress=$Address
-        ControlDirectory=$control; CampaignId=$connectionEpoch; FailOnInitialDisconnect=$true
+        ControlDirectory=$control; CampaignId=$connectionEpoch; ResourceFixtureId=$connectionFixture; FailOnInitialDisconnect=$true
         StartupTimeoutSeconds=$ServerStartupTimeoutSeconds }
+    if ($ResourceFixtureOnly) { $clientParameters.ResourceFixtureOnly = $true }
+    if ($ResourceFixtureOnly) {
+        $clientParameters.OfflineName = 'Ae2ctAlpha'
+        $clientParameters.OfflineUuid = '446b6d0ccadd3e57baf699d70f01a628'
+    }
     if ($Scenario -eq 'recurrent-plan') {
         $clientParameters.Role = 'alpha'; $clientParameters.OfflineName = 'Ae2ctAlpha'
         $clientParameters.OfflineUuid = '446b6d0ccadd3e57baf699d70f01a628'
@@ -265,7 +292,8 @@ try {
             $progress.pid -eq $processes[0].pid -and
             $status.message -eq 'UI-smoke phase 1 watchdog: initial-disconnect' -and
             !(Test-Path -LiteralPath (Join-Path $attemptReport 'evidence/result.json')) -and
-            !(Test-Path -LiteralPath (Join-Path $attemptReport 'evidence/relaunch-evidence.json'))
+            !(Test-Path -LiteralPath (Join-Path $attemptReport 'evidence/relaunch-evidence.json')) -and
+            (!$resourceScenario -or !(Test-Path -LiteralPath (Join-Path $control 'resource/command.properties')))
         $processAlive = $processes.Count -and $null -ne (Get-Process -Id $processes[0].pid -ErrorAction SilentlyContinue)
         $taskAlive = $ScheduledJava -and $processes.Count -and $processes[0].taskName -and
             $null -ne (Get-ScheduledTask -TaskName $processes[0].taskName -ErrorAction SilentlyContinue)
@@ -295,11 +323,124 @@ try {
     if (!(Test-Path -LiteralPath $serverResult -PathType Leaf)) { throw 'Connected server produced no result artifact' }
     $result = Get-Content -LiteralPath $serverResult -Raw | ConvertFrom-Json
     if ($result.result -ne 'PASS') { throw "Connected dedicated server failed: $($result.error)" }
-    $stateFiles = if ($Scenario -eq 'recurrent-plan') {
+    $stateFiles = if ($resourceScenario) {
+        @(Join-Path $control 'resource/state.properties')
+    } elseif ($Scenario -eq 'recurrent-plan') {
         @(Join-Path $control 'alpha/state.properties')
     } else { @(Join-Path $control 'state.properties') }
     foreach ($required in @((Join-Path $resolvedServer 'logs/latest.log')) + @($stateFiles)) {
         if (!(Test-Path -LiteralPath $required -PathType Leaf)) { throw "Connected evidence is missing: $required" }
+    }
+    if ($resourceScenario) {
+        $fixtureEvidencePath = Join-Path $report "client/evidence/resource-fixture-evidence.json"
+        if (!(Test-Path -LiteralPath $fixtureEvidencePath -PathType Leaf)) { throw 'Resource fixture evidence is missing' }
+        $fixtureEvidence = Get-Content -LiteralPath $fixtureEvidencePath -Raw | ConvertFrom-Json
+        $fixtureEvidence | Add-Member -NotePropertyName sidecars -NotePropertyValue @($fixtureEvidence.screenshots | ForEach-Object {
+            Get-Content -LiteralPath (Join-Path $report "client/evidence/$($_.name.Replace('.png','.json'))") -Raw | ConvertFrom-Json
+        }) -Force
+        Assert-ResourceFixtureContract $fixtureEvidence $Scenario $Target $true $connectionEpoch $connectionFixture | Out-Null
+        if ($fixtureEvidence.schema -ne 1 -or $fixtureEvidence.fixtureResult -ne 'PASS' -or
+                $fixtureEvidence.productionIconAcceptance -ne 'NOT_RUN' -or !$fixtureEvidence.receipts.Count -or
+                !$fixtureEvidence.screenshots.Count -or !$fixtureEvidence.clientObservations.Count) {
+            throw 'Resource fixture evidence contract failed validation'
+        }
+        $expectedChecks = @('server-identity','real-dispatch','delayed-plates','native-locate','lifecycle',
+            'capture-integrity','cleanup','fixture-only')
+        if ((Compare-Object $expectedChecks @($fixtureEvidence.checks.psobject.Properties.Name) -CaseSensitive) -or
+                @($fixtureEvidence.checks.psobject.Properties | Where-Object { $_.Value -ne $true }).Count) {
+            throw 'Resource fixture client checks are missing, unexpected, or false'
+        }
+        $expectedCases = if ($Scenario -eq 'appmek-resource-icons') {
+            @('OXYGEN','HYDROGEN','CHEMICAL_OVERLAP')
+        } else {
+            @('ITEM','WATER','LAVA') + $(if ($Target -eq '1.20.1-forge') { @('BUCKETLESS') } else { @() }) + @('FLUID_OVERLAP')
+        }
+        $expectedCaptures = Get-ResourceFixtureScreenshots $expectedCases
+        if ($fixtureEvidence.connected -ne $true -or $fixtureEvidence.serverState.epoch.Replace('-','') -cne $connectionEpoch -or
+                $fixtureEvidence.serverState.fixture.Replace('-','') -cne $connectionFixture -or !$fixtureEvidence.clientEvidence.digest -or
+                $fixtureEvidence.clientEvidence.captures -ne $expectedCaptures.Count -or
+                (Compare-Object $expectedCaptures @($fixtureEvidence.screenshots.name) -SyncWindow 0 -CaseSensitive) -or
+                (Compare-Object $expectedCaptures @($fixtureEvidence.clientObservations.checkpoint) -SyncWindow 0 -CaseSensitive)) {
+            throw 'Connected resource fixture capture/evidence acknowledgement is invalid'
+        }
+        foreach ($fixtureCase in $expectedCases) {
+            $caseReceipts = @($fixtureEvidence.receipts | Where-Object { $_.case -ceq $fixtureCase })
+            $requiredActions = @('CREATE','REJOIN_PREPARE','RECONNECT','RELEASE','RESET','CREATE','CANCEL','RESET')
+            if ($fixtureCase.EndsWith('OVERLAP')) { $requiredActions = @('CREATE','REJOIN_PREPARE','RECONNECT','RELEASE','RELEASE','RESET','CREATE','CANCEL','CANCEL','RESET') }
+            if ($fixtureCase -ceq $expectedCases[-1]) { $requiredActions += 'COMPLETE' }
+            if ((Compare-Object $requiredActions @($caseReceipts.action) -SyncWindow 0 -CaseSensitive) -or
+                    @($caseReceipts | Where-Object { $_.sequence -le 0 -or $_.revision -le 0 -or
+                        $_.ackRevision -ne $_.revision -or $_.stateRevision -ne
+                            $(if ($_.action -ceq 'RESET') { $_.revision + 1 } else { $_.revision }) }).Count) {
+                throw "Resource fixture receipts failed independent validation for $fixtureCase"
+            }
+        }
+        if (Compare-Object $expectedCases @($fixtureEvidence.receipts.case | Select-Object -Unique) -CaseSensitive) {
+            throw 'Resource fixture evidence contains a missing or unexpected case'
+        }
+        foreach ($capture in @($fixtureEvidence.screenshots)) {
+            $capturePath = Join-Path $report "client/evidence/$($capture.name)"
+            $sidecarPath = [IO.Path]::ChangeExtension($capturePath, '.json')
+            if (!(Test-Path -LiteralPath $capturePath -PathType Leaf) -or
+                    !(Test-Path -LiteralPath $sidecarPath -PathType Leaf) -or
+                    (Get-FileHash -LiteralPath $capturePath -Algorithm SHA256).Hash -ine $capture.sha256) {
+                throw "Resource fixture capture hash mismatch: $($capture.name)"
+            }
+            $sidecar = Get-Content -LiteralPath $sidecarPath -Raw | ConvertFrom-Json
+            if ($sidecar.capture.sha256 -ine $capture.sha256 -or $sidecar.screen -cne 'world') {
+                throw "Resource fixture semantic capture mismatch: $($capture.name)"
+            }
+        }
+        $serverEvidence = $result.resourceEvidence
+        Assert-ResourceFixtureServerTiming @($serverEvidence.receipts) | Out-Null
+        if ($serverEvidence.fixtureResult -cne 'PASS' -or $serverEvidence.epoch -cne $fixtureEvidence.serverState.epoch -or
+                $serverEvidence.fixture -cne $fixtureEvidence.serverState.fixture -or
+                $serverEvidence.player -cne $fixtureEvidence.player -or $serverEvidence.teardownComplete -ne $true -or
+                $serverEvidence.clientEvidence.digest -cne $fixtureEvidence.clientEvidence.digest -or
+                $serverEvidence.clientEvidence.captures -ne $fixtureEvidence.clientEvidence.captures -or
+                $serverEvidence.clientEvidence.revision -ne $fixtureEvidence.clientEvidence.revision -or
+                $result.resourceCleanup.liveCleanup -cne 'PASS' -or $result.resourceCleanup.originalFailure) {
+            throw 'Authoritative server resource identity or cleanup evidence is invalid'
+        }
+        foreach ($fixtureCase in $expectedCases) {
+            $facts = $serverEvidence.caseFacts.$fixtureCase
+            if (!$facts -or $facts.storageValidated -eq $false -or
+                    ($fixtureCase -ceq 'BUCKETLESS' -and ($facts.hasBucket -ne $false -or
+                        $facts.tintArgb -ne -16711681 -or $facts.id -cne 'ae2craftingtime_test_driver:resource_fixture_fluid'))) {
+                throw "Authoritative server resource facts are invalid for $fixtureCase"
+            }
+        }
+        if (@($serverEvidence.receipts).Count -ne @($fixtureEvidence.receipts).Count) {
+            throw 'Client and authoritative server receipt counts differ'
+        }
+        for ($i = 0; $i -lt @($serverEvidence.receipts).Count; $i++) {
+            $serverReceipt = $serverEvidence.receipts[$i]
+            $clientReceipt = $fixtureEvidence.receipts[$i]
+            if ($serverReceipt.sequence -ne $clientReceipt.sequence -or
+                    $serverReceipt.revision -ne $clientReceipt.revision -or
+                    $serverReceipt.stateRevision -ne $clientReceipt.stateRevision -or
+                    $serverReceipt.action -cne $clientReceipt.action -or
+                    $serverReceipt.case -cne $clientReceipt.case -or
+                    $serverReceipt.slot -ne $clientReceipt.slot -or
+                    $serverReceipt.phase -cne $clientReceipt.phase -or
+                    ($serverReceipt.jobs | ConvertTo-Json -Depth 12 -Compress) -cne
+                        ($clientReceipt.jobs | ConvertTo-Json -Depth 12 -Compress)) {
+                throw "Client and authoritative server receipt $i differ"
+            }
+            if ($serverReceipt.action -notin @('RESET','COMPLETE') -and !$serverReceipt.jobs.Count) {
+                throw "Authoritative server receipt $i omitted its job snapshot"
+            }
+            if ($serverReceipt.serverTick -lt 0 -or ($serverReceipt.action -notin @('RESET','COMPLETE') -and
+                    @($serverReceipt.jobs | Where-Object { !$_.resource -or !$_.keyFingerprint -or !$_.keyEncoding -or
+                        !$_.cpu -or !$_.provider -or $_.rawAmount -le 0 -or $_.dispatchCount -ne 1 }).Count)) {
+                throw "Authoritative server receipt $i has incomplete job facts"
+            }
+        }
+        [ordered]@{schema=1;fixtureResult='PASS';productionIconAcceptance='NOT_RUN';scope='fixture-only'
+            headSha=$HeadSha;target=$Target;scenario=$Scenario;campaignId=$campaignId;epoch=$connectionEpoch
+            sourceIdentity=$sourceIdentity;artifacts=$artifacts;dependencies=$sourceDependencies
+            client=$fixtureEvidence;server=$result} | ConvertTo-Json -Depth 20 |
+            Set-Content -LiteralPath (Join-Path $report 'resource-fixture-evidence.json') -Encoding UTF8
     }
     Copy-Item -LiteralPath (Join-Path $resolvedServer 'logs/latest.log') -Destination (Join-Path $report 'server.latest.log')
     if ($Scenario -eq 'cpu-list-total-ttc') {

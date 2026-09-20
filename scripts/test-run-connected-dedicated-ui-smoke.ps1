@@ -19,7 +19,7 @@ if ($clientRunner -notmatch 'GetTempPath\(\)\) "ae2-crafting-time-smoke-client.l
         $clientRunner -notmatch '"OpenOrCreate", "ReadWrite", "None"') {
     throw 'Every target and profile must share one exclusive smoke-client lock'
 }
-if ($runnerText -notmatch "ValidateSet\('cpu-list-total-ttc','recurrent-plan'\)" -or
+if ($runnerText -notmatch "ValidateSet\('cpu-list-total-ttc','recurrent-plan','delayed-resource-icons','appmek-resource-icons'\)" -or
         $runnerText -notmatch "Ae2ctAlpha" -or $runnerText -match "Ae2ctBeta" -or
         $runnerText -match 'Start-Job' -or $runnerText -match 'recurrent-role-processes.json' -or
         $runnerText -match '22 \* 1024 \* 1024') {
@@ -40,7 +40,7 @@ if ($runnerText -notmatch 'clientParameters\.ScheduledJava = \$true' -or
         $runnerText -notmatch 'clientParameters\.InteractiveUser = \$InteractiveUser') {
     throw 'Connected runner must support the prepared interactive Java session used by CodexVM'
 }
-if ($runnerText -notmatch '\[ValidateRange\(1, 1800\)\]\[int\]\$ServerStartupTimeoutSeconds = 180' -or
+if ($runnerText -notmatch '\[ValidateRange\(1, 1800\)\]\[int\]\$ServerStartupTimeoutSeconds = 300' -or
         $runnerText -notmatch 'AddSeconds\(\$ServerStartupTimeoutSeconds\)' -or
         $runnerText -notmatch 'StartupTimeoutSeconds=\$ServerStartupTimeoutSeconds') {
     throw 'Connected server and client startup must retain the same bounded configurable deadline'
@@ -124,6 +124,15 @@ try {
     if ($plan.sourceServer -eq $plan.disposableServer -or !$plan.disposableServer.StartsWith($report)) { throw 'Plan did not isolate a disposable server copy' }
     if (!$plan.campaignId -or !$plan.connectionEpoch -or !$plan.relaunch.required -or $plan.relaunch.minimumProcesses -ne 2) {
         throw 'Connected plan omitted the campaign-bound two-process relaunch contract'
+    }
+    $resourceReport = Join-Path $temporary 'resource-plan'
+    & (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Target 1.20.1-forge `
+        -ServerDirectory $source -PreparedLaunch $prepared -BundleDirectory $bundle -ReportDirectory $resourceReport `
+        -JavaHome $javaHome -Scenario delayed-resource-icons -ResourceFixtureOnly -PlanOnly
+    $resourcePlan = Get-Content -LiteralPath (Join-Path $resourceReport 'connected-runner-plan.json') -Raw | ConvertFrom-Json
+    if ($resourcePlan.resourceFixture -cnotmatch '^[a-f0-9]{32}$' -or
+            !($resourcePlan.arguments -contains "-Dae2craftingtime.test.resourceFixture=$($resourcePlan.resourceFixture)")) {
+        throw 'Connected resource plan omitted its explicit launch fixture identity'
     }
     if (!$plan.sourceIdentity.markerSha256 -or !$plan.sourceIdentity.launcherSha256 -or !$plan.sourceIdentity.javaVersion) {
         throw 'Connected plan omitted source marker, loader launcher, or Java identity'

@@ -127,6 +127,16 @@ try {
         -CallbackSequence 2000 -StartedAt $now.AddSeconds(-121) -StartupTimeoutSeconds 120 `
         -Checkpoint 'state=WORLD_READY phase=PREPARE fixture=placing cpu-list=INITIAL screen=none'
     if ($placingExpired -ne 'startup-timeout') { throw 'Fixture preparation escaped the absolute startup deadline' }
+    $resourceSetup = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-61) `
+        -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
+        -CallbackSequence 2000 -StartedAt $now.AddSeconds(-299) -StartupTimeoutSeconds 300 `
+        -Checkpoint 'state=STARTING phase=SETUP resource-case=0 stage=0 fixture-phase=READY'
+    if ($resourceSetup) { throw 'Resource warmup used the active checkpoint deadline before WORLD_READY' }
+    $resourceSetupExpired = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-1) `
+        -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
+        -CallbackSequence 2000 -StartedAt $now.AddSeconds(-301) -StartupTimeoutSeconds 300 `
+        -Checkpoint 'state=STARTING phase=SETUP resource-case=0 stage=0 fixture-phase=READY'
+    if ($resourceSetupExpired -ne 'startup-timeout') { throw 'Resource setup escaped the 300-second startup deadline' }
     $recurrencePreparing = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-1) `
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
         -CallbackSequence 2304 -StartedAt $now.AddSeconds(-121) -StartupTimeoutSeconds 120 -ActiveScenarioObserved `
@@ -142,6 +152,11 @@ try {
         -CallbackSequence 2000 -StartedAt $now.AddSeconds(-121) -StartupTimeoutSeconds 120 `
         -Checkpoint 'state=WORLD_READY phase=ACTIVE fixture=ready cpu-list=RELAUNCH_OPEN screen=none'
     if ($activeStalled -ne 'no-checkpoint') { throw 'Fresh callbacks masked a stalled active scenario checkpoint' }
+    $resourceActiveStalled = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-61) `
+        -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
+        -CallbackSequence 2000 -StartedAt $now.AddSeconds(-301) -StartupTimeoutSeconds 300 `
+        -Checkpoint 'state=WORLD_READY phase=ACTIVE resource-case=0 stage=1 fixture-phase=HELD'
+    if ($resourceActiveStalled -ne 'no-checkpoint') { throw 'Active resource lifecycle escaped the checkpoint watchdog' }
     $namedStageStalled = Get-UiSmokeProgressDecision -Now $now -CallbackAt $now.AddSeconds(-1) -CheckpointAt $now.AddSeconds(-61) `
         -CallbackTimeoutSeconds 15 -CheckpointTimeoutSeconds 60 -ProcessId 42 -ProgressProcessId 42 `
         -CallbackSequence 2000 -StartedAt $now.AddSeconds(-121) -StartupTimeoutSeconds 120 `

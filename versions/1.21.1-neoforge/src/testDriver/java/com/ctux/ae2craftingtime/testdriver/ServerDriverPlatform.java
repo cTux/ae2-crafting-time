@@ -1,8 +1,35 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 final class ServerDriverPlatform {
+    static appeng.api.stacks.AEKey bucketlessResourceKey() { throw new UnsupportedOperationException(); }
+    static java.util.Map<String, Object> resourceFacts(ResourceFixtureControl.Case resourceCase) {
+        return java.util.Map.of("storageValidated", true,
+                "chemical", resourceCase.name().contains("GEN") || resourceCase.name().startsWith("CHEMICAL"));
+    }
+    static byte[] encodeResourceKey(appeng.api.stacks.AEKey key, net.minecraft.server.level.ServerPlayer player) {
+        var buffer = new net.minecraft.network.RegistryFriendlyByteBuf(
+                io.netty.buffer.Unpooled.buffer(), player.registryAccess());
+        try {
+            appeng.api.stacks.AEKey.writeKey(buffer, key);
+            var bytes = new byte[buffer.readableBytes()];
+            buffer.getBytes(buffer.readerIndex(), bytes);
+            return bytes;
+        } finally {
+            buffer.release();
+        }
+    }
     static boolean isModLoaded(String id) {
         return net.neoforged.fml.ModList.get().isLoaded(id);
+    }
+    static void installResourceStorage(appeng.blockentity.storage.DriveBlockEntity drive, boolean chemical) {
+        var inventory = drive.getInternalInventory();
+        if (inventory.getStackInSlot(1).isEmpty()) inventory.setItemDirect(1,
+                appeng.core.definitions.AEItems.FLUID_CELL_1K.stack());
+        if (chemical && inventory.getStackInSlot(2).isEmpty()) {
+            if (!isModLoaded("appmek")) throw new IllegalStateException("AppMek resource fixture requires appmek");
+            inventory.setItemDirect(2, AppliedMekanisticsFixture.resourceCell());
+        }
+        drive.getMainNode().getGrid().getStorageService().invalidateCache();
     }
 
     static WirelessTerminalFixture wcwtTerminal() {

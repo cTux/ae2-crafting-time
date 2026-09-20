@@ -153,7 +153,13 @@ foreach ($change in $changes) {
         if ($cases.Count) { if (!$selection.ContainsKey($id)) { $selection[$id] = @() }; $selection[$id] += $cases }
     }
 }
-if (!$Changed) { foreach ($id in $ids) { if (!$Target -or $id -ceq $Target) { $selection[$id] = @($Scenario) } } }
+if (!$Changed) {
+    foreach ($id in $ids) {
+        if ($Target -and $id -cne $Target) { continue }
+        if ($Scenario -ceq 'appmek-resource-icons' -and $id -notin @('1.20.1-forge','1.21.1-neoforge')) { continue }
+        $selection[$id] = @($Scenario)
+    }
+}
 $entries = @()
 foreach ($id in $ids) {
     if (!$selection.ContainsKey($id)) { continue }
@@ -161,6 +167,7 @@ foreach ($id in $ids) {
     $full = 'suite' -cin $requested
     if ($full) { $requested = @('suite') }
     $cases = @(& "$PSScriptRoot/expand-ui-smoke-groups.ps1" -Target $id -Scenarios $requested -MatrixDirectory $MatrixDirectory)
+    if (!$cases.Count) { continue }
     $allCases = @(& "$PSScriptRoot/expand-ui-smoke-groups.ps1" -Target $id -Scenarios suite -MatrixDirectory $MatrixDirectory)
     $graphs = @()
     $primary = @($cases)
@@ -195,9 +202,17 @@ foreach ($id in $ids) {
             adapterPolicy='base AE2 graph for direct cases' }) + $graphs
     }
     if ($primary.Count) {
-        $primaryBaseOnly = $BaseOnly -or (!$ProjectId -and !@($primary | Where-Object { $_ -cin $directCases }).Count)
+        $primaryProjects = @($ProjectId)
+        $appmekResource = 'appmek-resource-icons' -cin $primary
+        if ($appmekResource -and !$ProjectId) {
+            $primaryProjects = @($client.projects | Where-Object mod_id -CEQ 'appmek' | ForEach-Object project_id)
+            if ($primaryProjects.Count -ne 1) { throw "AppMek resource fixture has no unique project graph for $id" }
+        }
+        if ($BaseOnly -and $appmekResource) { throw 'AppMek resource fixture cannot use the base-only graph' }
+        $primaryBaseOnly = $BaseOnly -or (!$appmekResource -and !$ProjectId -and
+            !@($primary | Where-Object { $_ -cin $directCases }).Count)
         $graphs = @([pscustomobject]@{ id='primary'; profile=$(if ($Latest) { 'latest' } else { 'compatible' }); cases=$primary
-            projectId=@($ProjectId); baseOnly=$primaryBaseOnly; reason='Requested dependency graph'
+            projectId=$primaryProjects; baseOnly=$primaryBaseOnly; reason='Requested dependency graph'
             adapterPolicy=$(if ($primaryBaseOnly) { 'base AE2 graph for direct cases' } else { 'packaged catalogue graph for direct cases' }) }) + $graphs
     }
     $entries += [pscustomobject]@{ target=$id; graphs=$graphs; mode=$(if ($full) { 'full' } else { 'focused' }); cases=$cases

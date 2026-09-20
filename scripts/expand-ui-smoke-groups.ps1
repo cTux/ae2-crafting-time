@@ -23,6 +23,12 @@ foreach ($group in $groups) {
 $suiteName = if ($Target -eq '26.1.2-neoforge') { 'neoforge-26.1.2' } else { $Target.Split('-')[1] }
 $suite = Get-Content -LiteralPath (Join-Path $MatrixDirectory "ui-smoke-$suiteName-suite.json") -Raw | ConvertFrom-Json
 $supported = @($suite | ForEach-Object { if ($_ -cin $groups) { $catalogue.groups.$_ } else { $_ } })
+# Fixture-only leaves are explicit focused cases and never ordinary suite members.
+$focused = @($catalogue.focusedCases.$Target)
+foreach ($case in $focused) {
+    if ($case -cnotin $leaves) { throw "Unknown focused case for ${Target}: $case" }
+}
+$supported += $focused
 # Focused adapter fixtures can intentionally live outside the compatible suite.
 $coverage = Get-Content -LiteralPath (Join-Path $MatrixDirectory 'ui-smoke-coverage.json') -Raw | ConvertFrom-Json
 $supported += @($coverage.$Target.psobject.Properties.Value.scenario | Where-Object { $_ -cnotin $groups })

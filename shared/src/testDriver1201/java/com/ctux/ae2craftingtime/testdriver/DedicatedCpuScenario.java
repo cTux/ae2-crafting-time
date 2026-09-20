@@ -13,6 +13,7 @@ import com.ctux.ae2craftingtime.integration.IntegrationMixinPlugin;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.google.gson.GsonBuilder;
 import com.mojang.authlib.GameProfile;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -65,6 +66,8 @@ public final class DedicatedCpuScenario {
     private boolean recurrentDisconnected;
     private boolean recurrentComplete;
     private boolean recurrentCaptured;
+    private ResourceFixtureServer resourceFixture;
+    private Map<String, Object> resourceCleanup = Map.of();
     private String recurrentAction = "";
     private final long started = System.nanoTime();
 
@@ -77,6 +80,7 @@ public final class DedicatedCpuScenario {
             }
             step(server);
         } catch (Exception | LinkageError failure) {
+            if (resourceFixture != null) resourceCleanup = resourceFixture.cleanup(failure.toString());
             finish(server, "FAIL", failure.toString());
             failure.printStackTrace();
         }
@@ -95,6 +99,21 @@ public final class DedicatedCpuScenario {
         }
         if (scenario.equals("recurrent-plan-connected")) {
             stepRecurrentConnected(server, level);
+            return;
+        }
+        if (scenario.equals("delayed-resource-icons-connected") || scenario.equals("appmek-resource-icons-connected")) {
+            if (!connectedValidated) {
+                CpuListTtcControl.validateDisposableServer(Path.of(""), target);
+                connectedValidated = true;
+            }
+            if (resourceFixture == null) resourceFixture = new ResourceFixtureServer(scenario, target, gridFixture, origin);
+            if (resourceFixture.tick(server)) {
+                resourceCleanup = resourceFixture.cleanup("");
+                if (!resourceCleanup.get("liveCleanup").equals("PASS")) {
+                    throw new IllegalStateException("resource fixture cleanup failed: " + resourceCleanup);
+                }
+                finish(server, resourceFixture.failed() ? "FAIL" : "PASS", resourceFixture.failure());
+            }
             return;
         }
         if (player == null) {
@@ -353,12 +372,26 @@ public final class DedicatedCpuScenario {
     private void finish(MinecraftServer server, String result, String error) {
         done = true;
         try {
-            Files.writeString(output, new GsonBuilder().setPrettyPrinting().create().toJson(Map.of(
-                    "target", target, "scenario", scenario, "result", result, "error", error,
-                    "adapters", IntegrationMixinPlugin.snapshot(), "dispatch", DispatchObservation.snapshot(),
-                    "addonRoute", Map.of("enabled", recurrentAddonRoute, "wcwt", recurrentWirelessReady,
-                            "quantumCpu", cpu != null),
-                    "finishedAt", java.time.Instant.now().toString())));
+            var json = new GsonBuilder().setPrettyPrinting().create().toJson(Map.ofEntries(
+                    Map.entry("target", target), Map.entry("scenario", scenario), Map.entry("result", result),
+                    Map.entry("error", error), Map.entry("adapters", IntegrationMixinPlugin.snapshot()),
+                    Map.entry("dispatch", DispatchObservation.snapshot()), Map.entry("addonRoute",
+                            Map.of("enabled", recurrentAddonRoute, "wcwt", recurrentWirelessReady,
+                                    "quantumCpu", cpu != null)),
+                    Map.entry("resourceCleanup", resourceCleanup), Map.entry("resourceEvidence",
+                            resourceFixture == null ? Map.of() : resourceFixture.evidence()),
+                    Map.entry("finishedAt", java.time.Instant.now().toString())));
+            var temporary = output.resolveSibling(output.getFileName() + "." + UUID.randomUUID() + ".tmp");
+            try {
+                try (var stream = Files.newOutputStream(temporary, java.nio.file.StandardOpenOption.CREATE_NEW,
+                        java.nio.file.StandardOpenOption.WRITE, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
+                    stream.write(json.getBytes(StandardCharsets.UTF_8));
+                }
+                Files.move(temporary, output, java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } finally {
+                Files.deleteIfExists(temporary);
+            }
         } catch (Exception failure) { throw new IllegalStateException("Cannot save dedicated test evidence", failure); }
         finally { server.halt(false); }
     }

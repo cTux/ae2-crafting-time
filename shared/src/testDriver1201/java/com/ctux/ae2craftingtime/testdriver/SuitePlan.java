@@ -25,7 +25,9 @@ record SuitePlan(int schema, List<Case> cases) {
         var scenarios = new HashSet<String>();
         var worlds = new HashSet<String>();
         for (var item : cases) {
-            if (item == null || item.scenario == null || !AddonCpuFixture.supports(item.scenario)
+            if (item == null || item.scenario == null
+                    || !(AddonCpuFixture.supports(item.scenario) || DriverOptions.isResourceScenario(item.scenario))
+                    || DriverOptions.isResourceScenario(item.scenario) != options.resourceFixtureOnly()
                     || item.world == null || !item.world.matches("ae2ct-[a-f0-9]{32}")
                     || !scenarios.add(item.scenario)
                     || (schema == 1 ? !worlds.add(item.world) : !item.world.equals(options.world()))) {
