@@ -11,6 +11,32 @@ if (@(Get-UiSmokeJavaLaunchPhases -Scenario cpu-list-total-ttc -PrepareOnly).Cou
     throw 'Prepare-only unexpectedly launches Java'
 }
 
+$token = 'd' * 64
+$pipeName = 'ae2ct-test-' + [guid]::NewGuid().ToString('N')
+$pipe = [IO.Pipes.NamedPipeServerStream]::new($pipeName, [IO.Pipes.PipeDirection]::Out, 1,
+    [IO.Pipes.PipeTransmissionMode]::Byte, [IO.Pipes.PipeOptions]::Asynchronous)
+try {
+    $expectedHash = ([BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash(
+        [Text.Encoding]::UTF8.GetBytes($token)))).Replace('-', '').ToLowerInvariant()
+    $childArguments = "-NoProfile -NonInteractive -Command `"`$hash = ([BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes(`$env:AE2CT_TEST_DRIVER_TOKEN)))).Replace('-', '').ToLowerInvariant(); if (`$hash -ceq '$expectedHash') { exit 0 } else { exit 9 }`""
+    $action = New-UiSmokeScheduledJavaTaskAction -Executable (Join-Path $PSHOME 'powershell.exe') `
+        -Arguments $childArguments -PipeName $pipeName
+    if ($action.Argument -match [regex]::Escape($token)) { throw 'Scheduled action persisted the interactive token' }
+    $relay = Start-Process -FilePath $action.Execute -ArgumentList $action.Argument -PassThru -WindowStyle Hidden
+    $connected = $pipe.WaitForConnectionAsync()
+    if (!$connected.Wait(5000)) { throw 'Scheduled token relay did not connect' }
+    $writer = [IO.StreamWriter]::new($pipe, [Text.UTF8Encoding]::new($false), 1024, $true)
+    $writer.WriteLine($token)
+    $writer.Flush()
+    $writer.Dispose()
+    if (!$relay.WaitForExit(5000) -or $relay.ExitCode -ne 0) {
+        throw 'Scheduled child did not inherit a valid interactive token'
+    }
+} finally {
+    $pipe.Dispose()
+    if ($relay -and !$relay.HasExited) { $relay.Kill() }
+}
+
 $processes = @(
     [pscustomobject]@{phase=1;pid=10;startedAt='2026-09-10T00:00:00Z';exitCode=0;exitedAt='2026-09-10T00:01:00Z'},
     [pscustomobject]@{phase=2;pid=11;startedAt='2026-09-10T00:02:00Z';exitCode=0;exitedAt='2026-09-10T00:03:00Z'}
@@ -92,6 +118,11 @@ $running = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test -Pr
     if ($id -eq 42) { [pscustomobject]@{ Id = $id } }
 }
 if ($running.state -ne 'running') { throw 'A present scheduled Java process was reported missing' }
+$finishing = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test `
+    -ProcessLookup { param($id) $null } -TaskLookup { param($name) [pscustomobject]@{State='Running'} }
+if ($finishing.state -ne 'finishing') {
+    throw 'An exact scheduled Java task still finishing after its child exited was reported missing'
+}
 $exited = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test `
     -ProcessLookup { param($id) $null } -TaskLookup { param($name) [pscustomobject]@{State='Ready'} } `
     -InfoLookup { param($task) [pscustomobject]@{LastTaskResult=0} }

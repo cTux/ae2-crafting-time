@@ -28,5 +28,6 @@ shared load, recipe changes, and server performance can change the result.
 
 *The visible TTC uses learned throughput for the remaining recipe amount.*
 
-[Previous: No data yet](no-data-yet.md) | [Statuses](index.md) |
+[Previous: No data yet](no-data-yet.md) | [Next: Recurrent](recurrent.md) |
+[Statuses](index.md) |
 [Time estimates](../features/time-estimates.md)

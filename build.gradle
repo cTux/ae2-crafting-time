@@ -47,7 +47,8 @@ tasks.register('checkGuideResources') {
                 'waiting.md': 'text.ae2craftingtime.waiting',
                 'delayed.md': 'text.ae2craftingtime.ttc_delayed',
                 'no-data-yet.md': 'text.ae2craftingtime.no_stats',
-                'estimated.md': null
+                'estimated.md': null,
+                'recurrent.md': 'text.ae2craftingtime.plan.recurrent'
         ]
         def relativePath = { File base, File child ->
             base.toPath().relativize(child.toPath()).toString().replace(File.separatorChar, '/' as char)
@@ -171,6 +172,10 @@ tasks.register('checkGuideResources') {
 
                 def enLabel = labelKey == null ? '~12s' : english[labelKey]
                 def ukLabel = labelKey == null ? '~12 с' : ukrainian[labelKey]
+                if (labelKey == 'text.ae2craftingtime.plan.recurrent') {
+                    enLabel = String.format(enLabel, '1')
+                    ukLabel = String.format(ukLabel, '1')
+                }
                 check(en.contains("**Label:** `$enLabel`"), "Stale English status label: $enPath")
                 check(uk.contains("**Позначка:** `$ukLabel`"), "Stale Ukrainian status label: $ukPath")
             }
@@ -230,6 +235,10 @@ tasks.register('checkGuideResources') {
         }
         expectRejected('a stale status label') { texts, ignored ->
             texts['statuses/locked.md'] = texts['statuses/locked.md'].replace('**Label:** `LOCKED`', '**Label:** `STALE`')
+        }
+        expectRejected('a stale formatted status label') { texts, ignored ->
+            texts['statuses/recurrent.md'] = texts['statuses/recurrent.md']
+                    .replace('**Label:** `Recurrent: 1`', '**Label:** `Recurrent: stale`')
         }
         expectRejected('an incorrect status position') { texts, ignored ->
             texts['statuses/locked.md'] = texts['statuses/locked.md'].replace('position: 4', 'position: 99')

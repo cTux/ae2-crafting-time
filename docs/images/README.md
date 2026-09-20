@@ -15,6 +15,18 @@ With timing history available:
 
 ![Two-stage crafting plan with recipe and total estimates](crafting-plan-estimate.jpg)
 
+The Recurrent guide page uses a reviewed crop from the real native Crafting
+Plan `recurrent-plan` fixture. Its retained source is campaign
+`20260915T054847124Z-2d275585`, path
+`1.20.1-forge/primary/run/evidence/recurrent-plan/recurrent-plan-tooltip.png`,
+commit `157efbd6b366976f19f91f592da394ceca3c40b2`, SHA-256
+`1d4529ec24e12367a70d9e0b945264ef71e6f0355224aa9a2ed216defa6549a9`, and
+physical crop `[740, 110, 1400, 360]`, exported at 1600 pixels wide. The
+scenario passed its Recurrent row, color, tooltip, quantity, and layout checks;
+the crop was manually reviewed for the exact label and complete explanation.
+The wider campaign's unrelated `rxYaglEe` status-file failure is not treated as
+a full-campaign pass.
+
 When only part of the plan has history, the total covers the known work:
 
 ![Crafting plan with one known and one unknown recipe](crafting-plan-partial-estimate.jpg)
