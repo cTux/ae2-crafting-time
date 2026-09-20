@@ -43,6 +43,17 @@ transitive versions. Keep full-graph qualification separate; a focused result
 does not prove addon coexistence. Record exact loaded versions, artifact hashes,
 source SHA, assertions, screenshot review, and any setup failure.
 
+Before launch, inspect the selected JAR's embedded required dependencies and
+compare them with the resolved bundle. Hosting metadata can omit prerequisites.
+Verify the bundle contains the requested addon and exact artifact; a cache hit
+or successful launch alone is not compatibility evidence. Until the focused
+cache identity includes project selection, move only the task-owned cache aside
+between selections ([#458](https://github.com/cTux/ae2-crafting-time/issues/458)).
+Until array dispatch is fixed, do not pass multiple project IDs through the
+PowerShell executable boundary: later IDs can bind to the staging directory
+([#466](https://github.com/cTux/ae2-crafting-time/issues/466)). A missing required
+graph is a follow-up issue, not permission to change the resolver in this audit.
+
 Promote only after the requested focused smoke succeeds. Keep unsuccessful
 candidates out of a ready bump PR. Open research/fix issues and leave PRs
 unmerged when the user requests research without merging.
