@@ -11,6 +11,17 @@ if (@(Get-UiSmokeJavaLaunchPhases -Scenario cpu-list-total-ttc -PrepareOnly).Cou
     throw 'Prepare-only unexpectedly launches Java'
 }
 
+$nonInteractive = Get-UiSmokeScheduledJavaStartParameters -Executable 'java.exe' -Arguments '@args' `
+    -WorkingDirectory 'runtime' -TaskName 'task' -InteractiveUser 'Codex' -InteractiveToken $null
+if ($nonInteractive.ContainsKey('InteractiveToken')) {
+    throw 'Non-interactive scheduled Java retained an empty token argument'
+}
+$interactive = Get-UiSmokeScheduledJavaStartParameters -Executable 'java.exe' -Arguments '@args' `
+    -WorkingDirectory 'runtime' -TaskName 'task' -InteractiveUser 'Codex' -InteractiveToken ('d' * 64)
+if ($interactive.InteractiveToken -cne ('d' * 64)) {
+    throw 'Interactive scheduled Java lost its token argument'
+}
+
 $token = 'd' * 64
 $pipeName = 'ae2ct-test-' + [guid]::NewGuid().ToString('N')
 $pipe = [IO.Pipes.NamedPipeServerStream]::new($pipeName, [IO.Pipes.PipeDirection]::Out, 1,
@@ -110,7 +121,7 @@ try {
     throw 'Duplicate phase process identity was accepted'
 } catch { if ($_.Exception.Message -eq 'Duplicate phase process identity was accepted') { throw } }
 $runner = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'run-ui-smoke.ps1') -Raw
-if ($runner -notmatch "if \(\`$Scenario -in @\('cpu-list-total-ttc', 'recurrent-plan'\) -or \`$selectedCases -contains 'recurrent-plan'\) \{\s*\`$progressPath") {
+if ($runner -notmatch "if \(\`$Scenario -in @\('cpu-list-total-ttc', 'recurrent-plan', 'delayed-resource-icons', 'appmek-resource-icons'\) -or\s*\`$selectedCases -contains 'recurrent-plan'\) \{\s*\`$progressPath") {
     throw 'The progress watchdog does not cover every CPU-list process'
 }
 $running = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test -ProcessLookup {
