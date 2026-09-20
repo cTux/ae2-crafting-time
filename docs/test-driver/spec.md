@@ -75,6 +75,44 @@ The prepared server is an immutable source marked by
 launch files, profile, and exactly one production/driver artifact pair before
 creating a separately marked disposable copy below the report directory.
 
+## Delayed resource icon scenarios (planned)
+
+For [#376](https://github.com/cTux/ae2-crafting-time/issues/376), implement the
+[resource-icon acceptance matrix](../provider-locate/resource-icons/implementation-plan.md#runtime-acceptance-matrix)
+through these bounded cases. They are required future coverage, not existing
+driver availability or recorded passes.
+
+| Scenario | Targets and real fixture outputs |
+| --- | --- |
+| `delayed-resource-icons` | Forge/Fabric 1.20.1, NeoForge 1.21.1 and 26.1.2: item control, water and lava |
+| `appmek-resource-icons` | Forge 1.20.1 and NeoForge 1.21.1 with Applied Mekanistics: oxygen and hydrogen |
+
+Submit real processing jobs, observe provider dispatch, withhold outputs until
+DELAYED, then return them through normal ME crafting insertion. Include a named
+bucketless fluid on one target as specified in the linked plan. Do not seed
+production delayed state, client highlights or renderer results. Existing
+`appmek-cpu` oxygen storage setup is not a chemical-output rendering check.
+
+Capture the recognizable resource texture and tint on visible provider faces
+with chat disabled and the terminal closed. Cover shared-provider winner
+promotion, manual rainbow expiry independent of red, recovery, immediate
+completion, cancellation, provider removal/unload and resource reload. Base-only
+profiles prove items/fluids work without AppMek. Observe retained and selected
+plate keys alongside screenshots; key equality alone is not visual proof.
+
+Run fluid send/reconnect on all four connected dedicated targets and chemical
+send/reconnect on both AppMek targets. The same single client reconnects to the
+still-running marked disposable server; require server-approved typed plate
+restoration and no restored rainbow. This adds only these two named scenarios
+to the bounded connected exception below. Retain normal safety checks, sequential
+8 GiB clients and exact-process cleanup; do not enable arbitrary multiplayer.
+
+Record resource key/type, authoritative job state, target/profile, dependency
+and production/driver hashes, and unique English PNG/sidecar checkpoints for
+each observed transition. Require all scenario checks, clean client exit and
+reviewed world captures. Missing fixtures, unsupported APIs or absent required
+integrations fail the required case rather than silently reducing its scope.
+
 ## Optional screen read recovery
 
 `crafting-tree-read-recovery` and `merequester-read-recovery` use isolated addon
@@ -557,8 +595,10 @@ Forge 47.4.20 pack pass.
 The driver may act only when all of these are true:
 
 - the explicit test-driver launch option is present;
-- the connection is singleplayer, or the explicitly selected CPU-list connected
-  scenario uses the runner-created loopback dedicated server and control directory;
+- the connection is singleplayer, or an explicitly selected bounded connected
+  scenario (`cpu-list-total-ttc`, `recurrent-plan`, or the planned
+  `delayed-resource-icons` / `appmek-resource-icons`) uses the runner-created
+  loopback dedicated server and control directory;
 - the opened world is the runner-created disposable copy; and
 - the world contains the expected test-fixture marker and scenario data.
 
@@ -639,9 +679,9 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 
 ## Not included
 
-- Optional-addon behavior outside the registered CPU fixture contract.
+- Optional-addon behavior outside the documented scenario contracts.
 - General dedicated-server or multiplayer support outside the bounded connected
-  CPU-list scenario and registered server fixtures.
+  scenarios and registered server fixtures.
 - General-purpose UI automation, arbitrary world setup, or remote control.
 - Pixel-perfect full-frame comparisons.
 - Publishing the driver on GitHub, CurseForge, or Modrinth.
@@ -657,7 +697,7 @@ client exit, and fatal log entries. Missing or invalid output is a failure.
 - Both loaders refuse a driver paired with the wrong AE2 Crafting Time version.
 - The driver remains inactive without the explicit test option and refuses
   other multiplayer sessions, the tracked fixture, and unmarked worlds. The
-  connected CPU-list exception requires the marked disposable server and explicit
+  bounded connected exception requires the marked disposable server and explicit
   control-directory launch options described above.
 - One command copies the fixture, runs the compatible Crafting Plan scenario,
   validates the result and logs, saves five screenshots, closes the exact
