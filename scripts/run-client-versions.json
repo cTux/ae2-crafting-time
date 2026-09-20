@@ -28,7 +28,7 @@
       { "name": "JEI", "project_id": "u6dRKJwZ" }
     ],
     "compatible": {
-      "loader_version": "1.20.1-47.4.10",
+      "loader_version": "1.20.1-47.4.23",
       "ae2_version_id": "7KVs6HMQ",
       "ae2_version": "15.4.10",
       "versions": [
@@ -179,7 +179,7 @@
       { "name": "JEI", "project_id": "u6dRKJwZ" }
     ],
     "compatible": {
-      "loader_version": "0.19.4",
+      "loader_version": "0.19.5",
       "ae2_version_id": "kywcQ25B",
       "ae2_version": "15.1.0",
       "fabric_api_version_id": "xhLT3C5f",
@@ -227,7 +227,7 @@
       { "name": "JEI", "project_id": "u6dRKJwZ" }
     ],
     "compatible": {
-      "loader_version": "21.1.238",
+      "loader_version": "21.1.251",
       "ae2_version_id": "kfyIqgJ6",
       "ae2_version": "19.2.17",
       "ae2_group": "org.appliedenergistics",
@@ -315,7 +315,7 @@
       { "name": "JEI", "project_id": "u6dRKJwZ" }
     ],
     "compatible": {
-      "loader_version": "26.1.2.99",
+      "loader_version": "26.1.2.109",
       "ae2_version_id": "pK0VDmDU",
       "ae2_version": "26.1.10-beta",
       "versions": [
