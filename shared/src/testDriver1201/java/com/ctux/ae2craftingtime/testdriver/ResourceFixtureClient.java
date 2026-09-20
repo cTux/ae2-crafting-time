@@ -391,13 +391,35 @@ final class ResourceFixtureClient {
         String hash = CaptureEvidence.sha256(Files.readAllBytes(capture.path()));
         screenshots.add(Map.of("name", capture.name(), "sha256", hash));
         observations.add(Map.of("case", cases.get(caseIndex).name(), "checkpoint", capture.name(),
-                "screen", "world", "plates", capture.plates(),
-                "renderPlates", capture.renderPlates(), "rainbows",
-                capture.rainbows(), "serverJobs", capture.jobs(), "frame", capture.frame(),
+                "screen", "world", "plates", capture.plates().stream().map(ResourceFixtureClient::plateEvidence).toList(),
+                "renderPlates", capture.renderPlates().stream().map(ResourceFixtureClient::renderPlateEvidence).toList(),
+                "rainbows", capture.rainbows().stream().map(ResourceFixtureClient::rainbowEvidence).toList(),
+                "serverJobs", capture.jobs(), "frame", capture.frame(),
                 "observedAtMillis", capture.observedAtMillis()));
         checks.put("capture-integrity", true);
         pendingCapture = null;
         captureWrite = CompletableFuture.completedFuture(null);
+    }
+
+    private static Map<String, Object> plateEvidence(ProviderHighlightClient.Plate plate) {
+        return Map.of("networkId", plate.networkId(), "dimensionId", plate.dimensionId(),
+                "positions", plate.positions().stream().map(ResourceFixtureClient::positionEvidence).toList(),
+                "outputId", plate.outputId(), "highlightedAtMillis", plate.highlightedAtMillis());
+    }
+
+    private static Map<String, Object> renderPlateEvidence(ProviderHighlightClient.RenderPlate plate) {
+        return Map.of("dimensionId", plate.dimensionId(), "position", positionEvidence(plate.position()),
+                "outputId", plate.outputId());
+    }
+
+    private static Map<String, Object> rainbowEvidence(ProviderHighlightClient.Highlight highlight) {
+        return Map.of("networkId", highlight.networkId(), "dimensionId", highlight.dimensionId(),
+                "positions", highlight.positions().stream().map(ResourceFixtureClient::positionEvidence).toList(),
+                "outputId", highlight.outputId(), "expiresAtMillis", highlight.expiresAtMillis());
+    }
+
+    private static Map<String, Integer> positionEvidence(BlockPos position) {
+        return Map.of("x", position.getX(), "y", position.getY(), "z", position.getZ());
     }
 
     private void quarantineCapture() {
