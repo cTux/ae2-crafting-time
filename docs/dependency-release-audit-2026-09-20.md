@@ -124,8 +124,8 @@ sidecars, images, result, and gate under the task's UI-smoke evidence.
 | --- | --- | ---: | ---: |
 | NeoEco 20.4.2, Forge 1.20.1 | 20260920T051832781Z | 219.2 s | 2 s |
 | ME Requester 1.5.0, NeoForge 1.21.1 | 20260920T051019441Z | 195.4 s | 1 s |
-| Import Export Card 1.9.0, NeoForge 1.21.1 | 20260920T055110055Z | 172.0 s | 1 s |
-| Advanced Peripherals 0.8.1a, NeoForge 1.21.1 | 20260920T055404707Z | 178.1 s | 1 s |
+| Import Export Card 1.9.0, NeoForge 1.21.1 | 20260920T055110055Z | 172.6 s | 1 s |
+| Advanced Peripherals 0.8.1a, NeoForge 1.21.1 | 20260920T055404707Z | 177.7 s | 1 s |
 | Import Export Card 2.3.0, NeoForge 26.1.2 | 20260920T055704303Z | 58.3 s | 9 s |
 
 Campaign totals include resolution/staging, host build, game loading, world
