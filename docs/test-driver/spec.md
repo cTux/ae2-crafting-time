@@ -77,6 +77,11 @@ creating a separately marked disposable copy below the report directory.
 
 ## Delayed resource icon scenarios (planned)
 
+The fixture prerequisite is [#482](connected-resource-fixtures/spec.md).
+Its explicit fixture-only runs qualify real jobs and control/lifecycle evidence;
+they report production icon acceptance as NOT_RUN and cannot satisfy #376.
+The following remains the final production-icon acceptance contract.
+
 For [#376](https://github.com/cTux/ae2-crafting-time/issues/376), implement the
 [resource-icon acceptance matrix](../provider-locate/resource-icons/implementation-plan.md#runtime-acceptance-matrix)
 through these bounded cases. They are required future coverage, not existing

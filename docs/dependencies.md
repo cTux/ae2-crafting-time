@@ -19,6 +19,10 @@ its missing rows are not yet qualified for recurrence labels. Project Infinity
 
 ## Delayed resource icon qualification (planned)
 
+[Connected resource fixtures #482](test-driver/connected-resource-fixtures/spec.md)
+must qualify before #376 resumes. Fixture-only PASS means real jobs, bounded
+control and lifecycle evidence; production icon acceptance remains NOT_RUN.
+
 [Issue #376](https://github.com/cTux/ae2-crafting-time/issues/376) requires
 `delayed-resource-icons` on all four native targets and `appmek-resource-icons`
 on Forge 1.20.1 / NeoForge 1.21.1. These are planned driver cases, not currently
