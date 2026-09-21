@@ -85,8 +85,8 @@ with exact version sets recorded. A1, A4–A8.
 ## 6. Targeted player verification
 
 Use `run-ae2-client-smoke` and `use-codex-vm`; obey their launch, timing, and
-screenshot rules. Run clients sequentially using existing `scripts-run`
-launchers. No new broad driver framework is required.
+screenshot rules. Run clients sequentially through `scripts/run-client.ps1` or
+`scripts/run-client.sh`. No new broad driver framework is required.
 
 | Check | Evidence | Criteria |
 | --- | --- | --- |

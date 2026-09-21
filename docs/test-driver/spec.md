@@ -351,16 +351,16 @@ immutable head/selection fingerprint and hash-verified on every reuse.
 
 ## Development client installation
 
-`scripts-run/run-1.20.1-forge.bat` builds and installs the matching driver JAR
-in its development client's managed mod directory before starting Minecraft:
+`scripts/run-client.ps1 -Target 1.20.1-forge` builds and installs the matching
+driver JAR in its development client's managed mod directory before starting Minecraft:
 
 ```text
 versions/1.20.1-forge/run/resolved-mods/
   ae2-crafting-time-<mod-version>-forge-1.20.1-test-driver.jar
 ```
 
-`scripts-run/run-1.20.1-forge-latest.bat` does the same under `run-latest`.
-The paired shell launchers have the same behavior. Each launch replaces a stale
+Add `-Latest` to use `run-latest`; the matching `scripts/run-client.sh` command
+has the same behavior. Each launch replaces a stale
 driver copy and fails before Minecraft starts if the matching driver cannot be
 built or installed.
 
