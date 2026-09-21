@@ -19,7 +19,7 @@ try {
     $expectedHash = ([BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash(
         [Text.Encoding]::UTF8.GetBytes($token)))).Replace('-', '').ToLowerInvariant()
     $childArguments = "-NoProfile -NonInteractive -Command `"`$hash = ([BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes(`$env:AE2CT_TEST_DRIVER_TOKEN)))).Replace('-', '').ToLowerInvariant(); if (`$hash -ceq '$expectedHash') { exit 0 } else { exit 9 }`""
-    $action = New-UiSmokeScheduledJavaTaskAction -Executable (Join-Path $PSHOME 'powershell.exe') `
+    $action = New-UiSmokeScheduledJavaTaskAction -Executable (Get-Process -Id $PID).Path `
         -Arguments $childArguments -PipeName $pipeName
     if ($action.Argument -match [regex]::Escape($token)) { throw 'Scheduled action persisted the interactive token' }
     $relay = Start-Process -FilePath $action.Execute -ArgumentList $action.Argument -PassThru -WindowStyle Hidden

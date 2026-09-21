@@ -180,10 +180,10 @@ try {
     $tree = & $planner -Repository $temp -Target '1.20.1-forge' -Scenario 'crafting-tree-screen'
     Assert (!$tree.targets[0].graphs[0].baseOnly) 'Direct addon UI scenario must install its dependency catalogue'
     Assert ($advancedGraphs.Count -eq 3 -and @($advancedGraphs | Where-Object { $_.cases.Count -ne 5 }).Count -eq 0) 'AdvancedAE must repeat all provider status leaves on three targets'
-    Assert ($full.targets[0].cases.Count -eq 40) 'Expanded Forge suite must contain 40 leaves'
-    Assert ($full.targets[1].cases.Count -eq 22) 'Expanded Fabric suite must contain 22 leaves'
-    Assert ($full.targets[2].cases.Count -eq 36) 'Expanded NeoForge suite must contain 36 leaves'
-    Assert ($full.targets[3].cases.Count -eq 25) 'Expanded 26.1.2 suite must contain 25 leaves'
+    Assert ($full.targets[0].cases.Count -eq 41) 'Expanded Forge suite must contain 41 leaves'
+    Assert ($full.targets[1].cases.Count -eq 23) 'Expanded Fabric suite must contain 23 leaves'
+    Assert ($full.targets[2].cases.Count -eq 37) 'Expanded NeoForge suite must contain 37 leaves'
+    Assert ($full.targets[3].cases.Count -eq 26) 'Expanded 26.1.2 suite must contain 26 leaves'
     $channel = & $planner -Repository $temp -Scenario no-channel-status
     Assert (@($channel.targets.graphs | Where-Object id -eq 'rxYaglEe').Count -eq 3) 'Native base graph must not suppress later AdvancedAE targets'
     $nativeChannel = & $planner -Repository $temp -Scenario no-channel-status -BaseOnly
