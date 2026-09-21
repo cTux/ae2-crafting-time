@@ -4,6 +4,62 @@ Tracks [#482](https://github.com/cTux/ae2-crafting-time/issues/482).
 Follow the [spec](spec.md) and [design](technical-design.md). This prerequisite
 must merge with fixture-only qualification before #376 resumes its icon fix.
 
+The approved expansion adds RF7/RF8 to the original slices below. Continue from
+#484's reviewed implementation, including fixes through `5294f0d9`; do not
+reimplement those slices from this documentation-only baseline. Prior diagnostic
+passes are not a complete qualified matrix.
+
+## Provisioning and readiness extension
+
+1. **Source preparation (RF7/RF4/RF5).** Add
+   `scripts/prepare-dedicated-ui-smoke-server.ps1` and its focused PowerShell
+   contract test. Reuse release-matrix/profile/Java and managed bundle readers;
+   add only fixed official installer selection, bounded fetch/cache, fresh
+   staging, integrity/seal validation and atomic publication. Cover four exact
+   loader launch layouts and six graphs. No new mod resolver or Java installer.
+2. **Source consumption (RF7/RF6).** Extend the existing connected runner's
+   schema-2 validation with optional provisioning/seal fields. Newly provisioned
+   runs require the full seal. Preserve old marked-source compatibility without
+   relabelling it RF7-qualified. Propagate explicit EULA consent and archive the
+   installer provenance, graph, full tree identity and before/after checks.
+3. **Prewarm gate (RF8/RF3).** Extend the resource branch in DedicatedCpuScenario,
+   ResourceFixtureServer and the client resource scenario with the shared
+   PREWARM/ARMED gate. Keep loader callbacks and native connection APIs in their
+   existing version adapters, including 26.1.2. Add bounded readiness DTOs and
+   one-shot receipt binding; no production hook, resource command or fixture
+   construction runs before arm. Retain the replay no-republication correction.
+4. **Runner integration (RF8/RF4/RF6).** Carry Prewarm through the existing
+   connected host/guest launch and progress/result validators. Separate readiness
+   from scenario results, retain the same warmed processes, replace outer retry
+   with the single bounded prewarm budget, and preserve all post-arm watchdogs.
+   Validate expected-adapters.json before starting, not after a diagnostic run.
+5. **Verification after the implementation commit/hook-created PR.** Extend
+   `scripts/test-run-connected-dedicated-ui-smoke.ps1`, source preparation tests,
+   launch/dispatch tests and ResourceFixtureControlTest. Use local fixed HTTP
+   fixtures/mocked transfers in unit tests, never live downloads. Cover unknown
+   target/latest/graph, wrong Java, missing checksum, corrupt cache/seal, metadata
+   mismatch, redirects/auth refusal, all byte/time/count bounds, link/ancestor/
+   hardlink/path escape, interrupted publication, existing-source preservation,
+   missing EULA consent and exact cleanup. Test early/stale/duplicate arm,
+   connection change, no fixture mutation, cold timeout, three-attempt exhaustion,
+   dead callback, post-arm failure and prohibition on retry/deadline extension.
+   Exercise all four installer launch adapters and production packaging isolation.
+6. **Cold and reuse qualification (RF7/RF8 plus RF1–RF6).** On the immutable
+   implementation head run source preparation and a Prewarm connected resource
+   campaign first with an empty task-owned artifact cache, then with the verified
+   cache/source hit, for each of the six graphs below. Fresh processes and current
+   readiness are required both times; do not clear global/JVM/OS caches to claim
+   a stronger cold test. Record exact cold definition, download/install/startup/
+   join/frame/arm timings, bytes and cleanup. Require full fixture and visual
+   review after arming in both runs; prewarm alone cannot qualify a row. Preserve
+   existing integrated qualification on the tested head and rerun when invalidated.
+
+No tests or runtime work are part of this requirements-only change. Installer
+checksum metadata retrieval and the exact prepared bundle are implementation
+inputs, not permission to upgrade missing artifacts or substitute another graph.
+
+## Original fixture slices
+
 1. **Bounded control (RF3).** Add resource command/state DTOs, strict bounded
    properties parsing and pure transition checks beside existing driver control
    classes. Reuse directory/epoch, source-marker and atomic move utilities.
@@ -38,7 +94,7 @@ must merge with fixture-only qualification before #376 resumes its icon fix.
    one conventional implementation commit lets the hook create the PR. Then
    run the existing driver/core/runner/launch/lifecycle checks extended above,
    shared changed-behavior coverage and all four production/driver builds.
-6. **Runtime qualification (RF1–RF6).** Preflight and run the matrix below on
+6. **Runtime qualification (RF1–RF8).** Preflight and run the matrix below on
    the immutable PR head, sequentially. First prove integrated Forge native,
    then connected Forge native, then the remaining applicable rows. Only after
    cheap checks and representative execution pass expand the matrix. Keep
@@ -61,11 +117,13 @@ upgrade dependencies as part of this prerequisite.
 
 Preflight host Java 17/21/25 (Gradle on 17/21), matching guest Java/native client
 manifests and dedicated source markers, source dependency hashes, disposable
-world setup, driver isolation and available memory. Missing source installs
-are named provisioning blockers; no unmarked server or guest Gradle substitute.
-Use existing setup paths, document exact blocked target if preparation is absent,
-and do not silently create a general provisioner. Record launch count, cold-start
-cost when measured and a wall-time budget before starting the matrix.
+world setup, driver isolation, 12 GiB provisioning disk reserve and runtime
+memory for the 4 GiB server plus 8 GiB client and OS overhead. Prepare missing
+sources with the bounded provisioner; missing Java, upstream checksums, exact
+bundle or explicit EULA consent remain named blockers. Never use an unmarked
+server, guest Gradle build or unapproved graph. Record launch count and the
+15-minute installation, 600-second prewarm and 40-minute measured scenario
+budgets before starting each row. Record cap failures instead of increasing them.
 
 ## Evidence and completion
 
@@ -99,7 +157,8 @@ The post-PR test command must execute every regression named above; source-text
 matching is not accepted as coverage. A runtime row passes only after its mode's
 validator emits the combined evidence artifact from the exact expected trace.
 
-Ready to unblock #376 means: current-head tests/builds/CI pass, all matrix
+Ready to unblock #376 means: current-head tests/builds/CI pass, RF7 source
+preparation and RF8 cold/cache-hit readiness qualify on all six graphs, all matrix
 fixture checks and cleanup pass, artifacts/captures are reviewed and archived,
 and every result explicitly says fixture-only with icon acceptance NOT_RUN.
 Update parent driver/dependency docs from planned to implemented fixture status
