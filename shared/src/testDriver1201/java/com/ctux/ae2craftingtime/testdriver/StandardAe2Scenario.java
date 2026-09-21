@@ -29,6 +29,8 @@ import java.util.function.Function;
 
 /** Bounded, real plan -> dispatch -> vanilla processing -> completed output flow. */
 final class StandardAe2Scenario {
+    private static final org.apache.logging.log4j.Logger LOG =
+            org.apache.logging.log4j.LogManager.getLogger("ae2ct-test-driver");
     static final Map<String, List<String>> CHECKS = Map.ofEntries(
             Map.entry("standard-plan-controls", List.of("plan", "plan-sort", "missing-first", "plan-tooltip",
                     "plan-details", "plan-reset", "total-ttc", "layout", "item-resolution")),
@@ -120,6 +122,7 @@ final class StandardAe2Scenario {
     private int variantLifecycle;
     private boolean variantReconnectRequested;
     private boolean variantCancelCaptured;
+    private long variantNextDiagnosticAt;
     private appeng.menu.me.crafting.CraftingPlanSummary variantSecondSummary;
     private long variantSecondRevision;
     private int variantSecondMenu;
@@ -466,6 +469,18 @@ final class StandardAe2Scenario {
             return false;
         }
         var snapshot = UiObservationStore.latest();
+        if (leaf.equals("stored-variant-plan") && phase == Stage.PLAN_SORT && variantStep > 0
+                && System.nanoTime() >= variantNextDiagnosticAt) {
+            variantNextDiagnosticAt = System.nanoTime() + 10_000_000_000L;
+            var menu = minecraft.screen instanceof CraftConfirmScreen screen ? screen.getMenu() : null;
+            var row = snapshot == null ? null : snapshot.rows().stream()
+                    .filter(value -> value.outputId().equals("minecraft:iron_pickaxe")).findFirst().orElse(null);
+            LOG.info("Variant wait step={} sort={} frame={} lastFrame={} label={} {}", variantStep, sort,
+                    snapshot == null ? -1 : snapshot.frame(), lastFrame,
+                    row != null && row.description().stream().anyMatch(value -> value.key().equals(
+                            "text.ae2craftingtime.plan.stored_variant")),
+                    menu == null ? "menu=absent" : StoredVariantObservation.diagnostic(menu));
+        }
         if (snapshot == null || snapshot.frame() == lastFrame) return false;
         lastFrame = snapshot.frame();
         if (phase == Stage.PLAN_SORT && leaf.equals("standard-plan-controls") && !planEstimatesReady(snapshot.rows())) {

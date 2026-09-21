@@ -260,6 +260,12 @@ final class StandardCraftFixture {
                 || actual.get(storedVariantKey(2)) != (near ? 1 : 0)
                 || actual.get(storedVariantKey(3)) != (near ? 1 : 0))
             throw new IllegalStateException("Stored-variant authoritative stock does not match the requested transition");
+        var node = ((IInWorldGridNodeHost) player.serverLevel().getBlockEntity(terminal)).getGridNode(Direction.NORTH);
+        var visible = node.getGrid().getStorageService().getInventory().getAvailableStacks();
+        org.apache.logging.log4j.LogManager.getLogger("ae2ct-test-driver").info(
+                "Variant stock cell=[{},{},{}] grid=[{},{},{}]", actual.get(storedVariantKey(1)),
+                actual.get(storedVariantKey(2)), actual.get(storedVariantKey(3)), visible.get(storedVariantKey(1)),
+                visible.get(storedVariantKey(2)), visible.get(storedVariantKey(3)));
         System.out.println("AE2CT variant storage exact=" + actual.get(storedVariantKey(1))
                 + " near-2=" + actual.get(storedVariantKey(2)) + " near-3=" + actual.get(storedVariantKey(3)));
     }

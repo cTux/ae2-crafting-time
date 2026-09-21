@@ -158,6 +158,17 @@ public final class StoredVariantObservation {
         return state != null && state.packets > 0;
     }
 
+    static synchronized String diagnostic(CraftConfirmMenu menu) {
+        var server = SERVERS.values().stream().filter(value -> value.menu == menu.containerId && !value.released)
+                .findFirst().orElse(null);
+        var client = CLIENTS.get(menu);
+        return "watcher=" + (server != null && WATCHERS.containsValue(server))
+                + " notifications=" + (server == null ? -1 : server.notifications)
+                + " refreshes=" + (server == null ? -1 : server.refreshes)
+                + " sends=" + (server == null ? -1 : server.sends)
+                + " packets=" + (client == null ? -1 : client.packets);
+    }
+
     private static List<List<Long>> amounts(CraftingPlanSummary summary) {
         return summary == null ? List.of() : summary.getEntries().stream().map(row ->
                 List.of(row.getStoredAmount(), row.getCraftAmount(), row.getMissingAmount())).toList();
