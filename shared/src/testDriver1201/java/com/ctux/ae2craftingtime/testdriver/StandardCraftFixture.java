@@ -107,7 +107,9 @@ final class StandardCraftFixture {
                 PartHelper.setPart(level, obstruction, null, player, AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT));
                 PartHelper.setPart(level, obstruction, Direction.NORTH, player, AEParts.CRAFTING_TERMINAL.asItem());
             }
-            player.teleportTo(terminal.getX() + 0.5, terminal.getY() - 1, terminal.getZ() - 2.5);
+            // Face the provider four blocks east and three south; send absolute rotation to the client.
+            player.connection.teleport(terminal.getX() + 0.5, terminal.getY() - 1, terminal.getZ() - 2.5,
+                    -53.13f, 2f);
             return false;
         }
         checkpoint = "terminal-node";
