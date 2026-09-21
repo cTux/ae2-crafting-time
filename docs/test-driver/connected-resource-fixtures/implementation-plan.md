@@ -164,3 +164,33 @@ and every result explicitly says fixture-only with icon acceptance NOT_RUN.
 Update parent driver/dependency docs from planned to implemented fixture status
 only with that evidence. Leave #376 open for its production implementation,
 payload/persistence boundary tests and complete visual acceptance campaign.
+
+## Paused qualification handoff (2026-09-22)
+
+PR #484 remains open at `93a2cc54ad768dbfb0d26e821050282f3602f4c4`.
+This is a fixture-only candidate, not a completed prerequisite. The exact-head
+integrated, connected cold, and connected source-hit rows passed with reviewed
+captures for Fabric 1.20.1 native (18/22/22), Forge 1.20.1 native (22/27/27),
+and Forge 1.20.1 AppMek (14/17/17). NeoForge 1.21.1 native passed integrated
+(18) and connected cold (22), but its exact-head source-hit run stalled after
+the second player joined: the client issued `RECONNECT` sequence 3 while the
+server retained the `REJOIN_PREPARE` sequence-2 acknowledgement. The active
+checkpoint watchdog stopped that run. The cause remains unproved.
+
+One separate diagnostic source-hit run with temporary logging passed all 22
+captures; each reconnect gate was satisfied on its first poll. That diagnostic
+does not replace the failed exact-head row or prove a fix. The logging was
+removed, leaving the committed source unchanged. The interrupted later
+exact-head retry has no verified result in this handoff. NeoForge 1.21.1
+AppMek and NeoForge 26.1.2 native rows were not run. Retained failure and
+diagnostic evidence is under `.omo/evidence/issue-482-remaining-93a2/` in the
+task worktree; the failed archive SHA-256 is
+`3AC0FBC877A4CEDA2EEFA075A85883D5894BCC74B23E7C4A99D25C8ADB460205`.
+
+To resume, first classify the NeoForge source-hit reconnect stall with a
+server-side pending-gate snapshot (player-absence observation, player and grid
+identity, loaded/busy/delayed state), then correct a proved cause or obtain a
+clean committed-head pass without masking the earlier failure. Qualify the two
+unrun graphs, review every emitted capture, and check current-head CI/reviews
+before considering #484 for merge. Keep #376 open; its typed-resource production
+icon implementation and visual acceptance remain separate and unfinished.
