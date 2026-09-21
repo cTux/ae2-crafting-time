@@ -622,7 +622,7 @@ final class StandardAe2Scenario {
             mark(checks, "variant-layout", true);
             if (variantStep == 1 && sort < 3) {
                 screenshot.accept("stored-variant-sort-" + sort + ".png");
-                var button = minecraft.screen.children().stream().filter(TtcSortButton.class::isInstance)
+                AbstractWidget button = minecraft.screen.children().stream().filter(TtcSortButton.class::isInstance)
                         .map(TtcSortButton.class::cast).findFirst().orElseThrow();
                 DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
                 sort++;
