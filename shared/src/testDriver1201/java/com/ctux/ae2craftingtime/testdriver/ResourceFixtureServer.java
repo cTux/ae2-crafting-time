@@ -76,11 +76,7 @@ final class ResourceFixtureServer {
         var commandPath = control.resolve("resource/command.properties");
         if (!Files.exists(commandPath)) return false;
         var command = ResourceFixtureControl.readCommand(control);
-        if (command.sequence() == state.ack()) {
-            ResourceFixtureControl.decide(state, command, lastAccepted, false);
-            ResourceFixtureControl.writeState(control, state);
-            return false;
-        }
+        if (acknowledgedReplay(state, command, lastAccepted)) return false;
         ResourceFixtureControl.validateCase(target, scenario, command.resourceCase());
         var decision = ResourceFixtureControl.decide(state, command, lastAccepted, operationInFlight, operationDecision);
         if (operationInFlight == null) {
@@ -127,6 +123,13 @@ final class ResourceFixtureServer {
         }
         return state.phase() == ResourceFixtureControl.Phase.COMPLETE
                 || state.phase() == ResourceFixtureControl.Phase.FAILED;
+    }
+
+    static boolean acknowledgedReplay(ResourceFixtureControl.State state,
+            ResourceFixtureControl.Command command, ResourceFixtureControl.Command lastAccepted) {
+        if (command.sequence() != state.ack()) return false;
+        ResourceFixtureControl.decide(state, command, lastAccepted, false);
+        return true;
     }
 
     private boolean apply(ServerPlayer player, ResourceFixtureControl.Command command,

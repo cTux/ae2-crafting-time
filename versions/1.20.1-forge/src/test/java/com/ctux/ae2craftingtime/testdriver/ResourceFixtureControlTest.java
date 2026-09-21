@@ -146,6 +146,24 @@ class ResourceFixtureControlTest {
                         ResourceFixtureControl.Case.WATER, 0), null, create));
     }
 
+    @Test void acknowledgedReplayRequiresNoStateRepublication() {
+        var epoch = UUID.randomUUID();
+        var player = UUID.randomUUID();
+        var fixture = UUID.randomUUID();
+        var command = command(epoch, player, fixture, 1, 4, ResourceFixtureControl.Action.RELEASE,
+                ResourceFixtureControl.Case.ITEM, 0);
+        var settled = state(epoch, player, fixture, 1, 4, ResourceFixtureControl.Phase.SETTLED,
+                ResourceFixtureControl.Case.ITEM);
+
+        assertTrue(ResourceFixtureServer.acknowledgedReplay(settled, command, command));
+        assertFalse(ResourceFixtureServer.acknowledgedReplay(settled,
+                command(epoch, player, fixture, 1, 5, ResourceFixtureControl.Action.RESET,
+                        ResourceFixtureControl.Case.ITEM, 0), command));
+        assertThrows(IllegalArgumentException.class, () -> ResourceFixtureServer.acknowledgedReplay(settled,
+                command(epoch, player, fixture, 1, 4, ResourceFixtureControl.Action.CANCEL,
+                        ResourceFixtureControl.Case.ITEM, 0), command));
+    }
+
     @Test void retainsTheAcceptedResetDecisionWhileTheOperationIsInFlight() {
         var epoch = UUID.randomUUID();
         var player = UUID.randomUUID();
