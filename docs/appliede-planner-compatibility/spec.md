@@ -8,10 +8,11 @@ defect: AELIS initializes an AppliedE child before its requested amount is captu
 No Crafting Time production correction is selected. Corrected EMC behavior still
 requires verification.
 
-The reproduction and startup prerequisites are complete. Read the
-[design](technical-design.md) and [plan](implementation-plan.md) together. Merge
-this reviewed amendment before the scoped upstream correction or further driver
-changes. A selected correction design is not a verified fix.
+The reproduction and startup prerequisites are complete. The causal documentation
+amendment was merged in [PR #436](https://github.com/cTux/ae2-crafting-time/pull/436).
+Read the [design](technical-design.md) and [plan](implementation-plan.md) together.
+No upstream correction or final EMC verification has been completed. A selected
+correction design is not a verified fix.
 
 ## Reported environment
 
@@ -61,8 +62,8 @@ usable world; it provides no comparison result.
 
 AP-01 through AP-05 establish readiness for a documented correction. The
 campaign below supplies graph, control and independently reviewed AP-03 debugger
-observations. AP-05 still requires acceptance and merge of this amendment. Issue
-closure requires the corrected enabled run in AP-06 and its AP-07 evidence.
+observations; the AP-05 documentation amendment is merged. Issue closure still
+requires the corrected enabled run in AP-06 and its AP-07 evidence.
 
 ## Earlier startup prerequisites
 

@@ -17,16 +17,18 @@ The successful raw debugger observations have been independently reviewed at the
 session and line references in the design; AP-03 establishes the ordering/cache
 mechanism with the documented identity qualification. The campaign's early JDB
 logs instead contain failed attachment reads. Retain a redacted successful raw
-excerpt with the campaign before cleanup or handoff. AP-05 becomes complete only
-after the upstream correction decision and this reviewed amendment are accepted
-and merged. The instrumented enabled timeout is not clean functional proof.
+excerpt with the campaign before cleanup or handoff. The upstream correction
+boundary and AP-05 documentation were accepted and merged in
+[PR #436](https://github.com/cTux/ae2-crafting-time/pull/436); the correction
+itself has not been implemented. The instrumented enabled timeout is not clean
+functional proof.
 
 ## Ordered changes and checks
 
 | Order | Work and check | Criteria |
 |---|---|---|
 | 1 | Archive the reviewed successful raw debugger excerpt, control/reset provenance and the exact limits of the disabled pass. Preserve the existing failed and successful results. | AP-01 through AP-05, AP-07 |
-| 2 | Merge the reviewed three-document amendment. Keep the issue open. Obtain separately scoped authority before editing the Applied Enhancements repository. | AP-05 |
+| 2 | Completed: the reviewed three-document amendment merged in PR #436. Keep the issue open; obtain separately scoped authority before editing the Applied Enhancements repository. | AP-05 |
 | 3 | At the exact upstream source revision matching the reported artifact, inspect all candidate-discovery and child-build callers. Add the smallest optional AppliedE classifier and pre-build fallback described below. | AP-05, AP-06 |
 | 4 | Add upstream behavioral regression coverage for each build entry, nested candidates, fallback propagation and unaffected ordinary patterns. Follow that repository's applicable build/test rules. | AP-06 |
 | 5 | Repair the development-only AppliedE fixture so the final EMC assertion cannot pass using a conventional recipe. Update its existing test/result boundaries and dependency coverage documentation truthfully. | AP-06, AP-07 |
