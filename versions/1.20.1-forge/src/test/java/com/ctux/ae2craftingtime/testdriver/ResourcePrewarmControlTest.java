@@ -258,4 +258,45 @@ class ResourcePrewarmControlTest {
         }
         assertThrows(IllegalArgumentException.class, () -> ResourcePrewarmControl.advanceReadiness(0, 30, true, true));
     }
+
+    @Test void clientReadinessRunsOnceAtFrameCompletionNotAtScreenRender() throws Exception {
+        var node = new org.objectweb.asm.tree.ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/TestDriverRuntime.class")) {
+            assertNotNull(input);
+            new org.objectweb.asm.ClassReader(input).accept(node, 0);
+        }
+        for (var methodName : new String[]{"tick", "afterRender"}) {
+            var method = node.methods.stream().filter(candidate -> candidate.name.equals(methodName))
+                    .findFirst().orElseThrow();
+            var calls = java.util.Arrays.stream(method.instructions.toArray())
+                    .filter(org.objectweb.asm.tree.MethodInsnNode.class::isInstance)
+                    .map(org.objectweb.asm.tree.MethodInsnNode.class::cast)
+                    .filter(call -> call.owner.endsWith("/ResourcePrewarmClient"))
+                    .map(call -> call.name).filter(name -> !name.equals("checkpoint")).toList();
+            assertEquals(methodName.equals("tick") ? java.util.List.of("afterRender", "tick") : java.util.List.of(),
+                    calls, "screenless world frames must count once, before readiness receipt publication");
+        }
+    }
+
+    @Test void screenlessWorldFramesReachFortyAndInterruptedFramesRestartTheWindow() {
+        int frames = 0;
+        // No ScreenEvent.Render.Post is emitted in-world; only completed-frame callbacks advance this window.
+        for (int frame = 1; frame <= 40; frame++) {
+            frames = ResourcePrewarmControl.advanceReadiness(frames, 40, true, frame != 1);
+            assertEquals(frame, frames);
+            assertEquals(frame == 40, frames >= 40);
+        }
+        // An open screen/overlay or missing world resets readiness, not merely pauses it.
+        frames = ResourcePrewarmControl.advanceReadiness(frames, 40, false, true);
+        assertEquals(0, frames);
+        for (int frame = 1; frame <= 39; frame++)
+            frames = ResourcePrewarmControl.advanceReadiness(frames, 40, true, true);
+        frames = ResourcePrewarmControl.advanceReadiness(frames, 40, true, false);
+        assertEquals(1, frames, "a different native connection must earn its own 40 frames");
+        for (int frame = 2; frame <= 40; frame++) {
+            frames = ResourcePrewarmControl.advanceReadiness(frames, 40, true, true);
+            assertEquals(frame == 40, frames >= 40);
+        }
+    }
 }

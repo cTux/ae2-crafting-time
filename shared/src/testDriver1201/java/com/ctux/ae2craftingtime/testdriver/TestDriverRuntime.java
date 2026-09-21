@@ -65,7 +65,11 @@ public final class TestDriverRuntime implements AutoCloseable {
         renderedFrames++;
         driverProgress.callback(prewarm != null && !prewarmComplete ? prewarm.checkpoint() : scenario.checkpoint());
         if (prewarm != null && !prewarmComplete) {
-            try { prewarmComplete = prewarm.tick(); }
+            try {
+                // tick is the completed-frame callback on every loader, even with no screen open.
+                prewarm.afterRender();
+                prewarmComplete = prewarm.tick();
+            }
             catch (Exception failure) { minecraft.stop(); throw new IllegalStateException("resource prewarm failed", failure); }
             if (!prewarmComplete) return;
             initialDedicatedConnectionComplete = true;
@@ -279,7 +283,6 @@ public final class TestDriverRuntime implements AutoCloseable {
 
     public void afterRender() {
         UiObservationStore.finish(minecraft);
-        if (prewarm != null && !prewarmComplete) prewarm.afterRender();
     }
 
     @Override
