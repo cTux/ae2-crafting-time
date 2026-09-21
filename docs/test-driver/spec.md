@@ -81,6 +81,33 @@ AppMek graphs. It seals new sources and requires explicit EULA consent for
 disposable execution. Resource-only prewarm proves readiness before fixture
 activation, not scenario success; older connected leaves keep their contracts.
 
+## Stored-variant plan scenario (planned)
+
+`stored-variant-plan` verifies [#327](../exact-ingredient-mismatch/spec.md) using
+real processing patterns and two damaged stacks of one item with different
+exact NBT/components. Keep one native confirmation menu and summary open while
+storage moves through none, near-match, none, near-match plus exact key, and
+near-match again. Require automatic warning appearance, clearing and recovery
+at the next ordinary synchronization after AE2's notification, with unchanged
+native quantities, summary revision and Start behavior. Never seed diagnostics.
+
+Capture each transition and the gold normal-weight row/tooltip in English.
+Cover ordinary, exact-only, different-item, fluid and successful controls,
+multiple variants, unrelated rows, all TTC sorts without samples, narrow layout
+and coexistence with recurrence. Record server storage facts and notification,
+refresh, send and receive ordering; screenshots alone do not prove those facts.
+Check English/Ukrainian resources and components statically.
+
+Run the leaf and native plan/recurrence regressions on all four compatible
+targets. Its connected counterpart adds only this named leaf to the marked
+loopback exception, retaining one 8 GiB client at a time. Verify live changes,
+replan, network switch, cancellation, reconnect and watcher cleanup through
+server UUID/menu/revision acknowledgements. Pure and packet tests cover other
+recipients, reordered/duplicate updates and zero-mask clearing; no simultaneous
+player claim is made. Matching immutable dedicated sources and prepared clients
+must be verified before execution; missing provisioning remains a prerequisite.
+This is required future coverage, not an existing runnable leaf or a pass.
+
 ## Delayed resource icon scenarios (planned)
 
 The fixture prerequisite is [#482](connected-resource-fixtures/spec.md).
@@ -608,7 +635,7 @@ The driver may act only when all of these are true:
 - the explicit test-driver launch option is present;
 - the connection is singleplayer, or an explicitly selected bounded connected
   scenario (`cpu-list-total-ttc`, `recurrent-plan`, or the planned
-  `delayed-resource-icons` / `appmek-resource-icons`) uses the runner-created
+  `stored-variant-plan`, `delayed-resource-icons` / `appmek-resource-icons`) uses the runner-created
   loopback dedicated server and control directory;
 - the opened world is the runner-created disposable copy; and
 - the world contains the expected test-fixture marker and scenario data.

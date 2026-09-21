@@ -82,6 +82,34 @@ matched source marker, validates launch and artifact identities before copying,
 writes a disposable marker in a report-owned runtime, and launches Java through
 a UTF-8 argument file so result/control paths containing spaces remain one argument.
 
+## Stored-variant plan scenario (planned)
+
+Implement `stored-variant-plan` through the existing `StandardAe2Scenario`,
+`StandardCraftFixture`, recurrence fixture/observation, and dedicated control
+seams. Reuse real damaged-item AE2 keys and processing-pattern encoding; keep
+fixture changes on the server and final-frame observations on the client.
+Shared 1.20.1/1.21.1 driver code owns common transitions; 26.1.2 retains only
+its changed API adapters. The [feature plan](../exact-ingredient-mismatch/implementation-plan.md)
+owns the exact acceptance/check mapping.
+
+Capture the original native summary identity, revision, quantities, Start state
+and grid node count. Issue each storage mutation once, retain its pending
+operation and wait for native notification/synchronization before observing
+the final row. Never force production flags, callbacks or renderer results.
+Driver-only observers record callback, dirty refresh, packet ordering and
+watcher teardown; fail if idle frames trigger storage rescans or a destroyed
+watcher remains registered. Observe replacement masks, including all-zero
+clears, without mutating the production diagnosis to satisfy UI assertions.
+
+Extend existing runtime/support/SuitePlan, host scenario validation,
+groups/impact/selection, required results/screenshots and connected dispatch
+for this leaf. Preserve loopback, immutable-source/disposable markers,
+artifact/dependency identity, bounded phase acknowledgements, existing
+20-second callback and 60-second checkpoint watchdogs, and exact-process cleanup.
+The dedicated run uses the same single client's network/replan/reconnect flow;
+unit boundaries cover recipient mismatches. Add no grid node, general runner,
+arbitrary server automation or provisioning implementation to this scenario.
+
 ## Delayed resource icon fixtures (planned)
 
 The [#482 fixture design](connected-resource-fixtures/technical-design.md) owns
