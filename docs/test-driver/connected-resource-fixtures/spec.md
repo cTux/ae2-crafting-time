@@ -2,7 +2,9 @@
 
 Planning draft for [#482](https://github.com/cTux/ae2-crafting-time/issues/482),
 the test-driver prerequisite for [#376](https://github.com/cTux/ae2-crafting-time/issues/376).
-No fixture implementation or runtime qualification is claimed here.
+The provisioning/prewarm expansion is a planning draft. Fixture work on #484
+has runtime evidence, but neither that evidence nor this document qualifies the
+complete matrix.
 
 ## Goal and boundary
 
@@ -11,6 +13,17 @@ be held, released, cancelled and observed through a client reconnect. Reuse the
 existing prepared clients and disposable connected server. This changes only
 development tooling; player behavior, profiling, highlight packets, persistence
 and production rendering remain unchanged.
+
+Provide a supported, opt-in way to prepare the exact compatible dedicated
+server graphs for all four release-matrix targets. Download official loader
+installers, reuse verified caches, seal a new source and never upgrade or edit
+an existing source. Require explicit Minecraft EULA acceptance before writing
+acceptance into a disposable runtime. No account credentials are needed.
+
+Connected resource runs use a bounded cold-start readiness phase before fixture
+activation. It may exercise ordinary login and rendering, but creates no grid,
+job, sample, plate or resource command. Keep the warmed client/server processes
+for the measured run. Readiness is not a fixture or visual-acceptance pass.
 
 The parent [resource-icon contract](../spec.md#delayed-resource-icon-scenarios-planned)
 still owns #376's visible-icon acceptance. #482 establishes fixture readiness
@@ -58,11 +71,23 @@ do not interpret a command acknowledgement as completion or cancellation.
 - **RF6:** Evidence binds server facts, actual client observations, reviewed
   captures, artifacts and dependency graph to one tested SHA. Fixture readiness
   and #376 visual acceptance remain separately reported.
+- **RF7:** A supported provisioner produces and reuses sealed, non-linked
+  sources for four native graphs and the two AppMek graphs, verifying official
+  downloads, target/Java/loader, every launch dependency and source identity.
+  Corruption, graph mismatch, exceeded bounds or failed installation cannot
+  publish a usable source. Existing sources and unrelated files stay unchanged.
+- **RF8:** Cold readiness proves a real matching client join and stable rendered
+  world before one-shot fixture activation. It has finite startup/connection
+  budgets, no fixture mutation and no credentials. Failure preserves evidence
+  and cleans owned processes; it never relaxes post-command deadlines or retries
+  a progressed fixture. Cold and cache-hit runs qualify separately on all graphs.
 
 ## Not included
 
 No production fix, new production key type, general remote-command API, arbitrary
-server support, simultaneous clients, loader upgrades or new server provisioner.
+server support, simultaneous clients, loader upgrades or general server hosting.
+The provisioner supports only the fixed compatible connected graphs, not
+modpacks, latest profiles, Java installation, authentication or arbitrary URLs.
 Resource reload, provider removal/unload, malformed production payloads and final
 icon/tint correctness remain #376 checks using these reusable fixtures. No new
 translations or player settings. Existing CPU-list, recurrence and `appmek-cpu`

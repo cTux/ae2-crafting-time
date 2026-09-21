@@ -22,6 +22,11 @@ its missing rows are not yet qualified for recurrence labels. Project Infinity
 [Connected resource fixtures #482](test-driver/connected-resource-fixtures/spec.md)
 must qualify before #376 resumes. Fixture-only PASS means real jobs, bounded
 control and lifecycle evidence; production icon acceptance remains NOT_RUN.
+Its approved expansion also requires sealed-source provisioning and cold/cache-hit
+prewarm qualification for four native and two AppMek connected graphs. Exact
+Java, loader and graph identities are defined in the
+[fixture design](test-driver/connected-resource-fixtures/technical-design.md#provisioning-evidence-and-ownership).
+These remain requirements, not additional recorded coverage or dependency upgrades.
 
 [Issue #376](https://github.com/cTux/ae2-crafting-time/issues/376) requires
 `delayed-resource-icons` on all four native targets and `appmek-resource-icons`
