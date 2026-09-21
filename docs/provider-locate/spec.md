@@ -261,3 +261,39 @@ item-only world icon limitation. Its [resource icon spec](resource-icons/spec.md
 [implementation plan](resource-icons/implementation-plan.md) extend this feature
 to fluid and supported gas/chemical icons. These documents describe a planned
 fix; the existing red plate may currently appear without a non-item icon.
+
+## Planned red sky beam
+
+[Issue #488](https://github.com/cTux/ae2-crafting-time/issues/488) adds a red
+vertical beam to the automatic red-background highlight. This is planned,
+not shipped. The beam helps you find a delayed provider hidden inside a build.
+See the [design](technical-design.md#red-sky-beam-design) and
+[implementation plan](implementation-plan.md#red-sky-beam-implementation).
+
+The beam rises from the center of the provider's top face into the sky, passing
+through every block above it. Solid blocks, glass, fluids and dimension roofs
+neither stop it nor change its red color. It remains visible through intervening
+world geometry within the normal client view distance, including underground
+and in roofed dimensions. No sky access or beacon structure is required.
+
+The beam shares the red plate's lifetime and one-second pulse. It appears
+automatically, including with chat notifications disabled, and stays until the
+last red plate at that position disappears. An unresolved item/resource icon
+does not suppress it. Manual rainbow locates keep their separate 15-second
+timer and never create, prolong or clear a beam. No new setting is added.
+
+### Beam acceptance criteria
+
+| ID | Observable result |
+| --- | --- |
+| B1 | Delayed work creates a red beam and plate together, without a click or open screen, even with `notifyOnDelayed` disabled. |
+| B2 | An underground provider under opaque blocks, glass, fluids or a dimension roof emits an uninterrupted red beam above the roof. Looking through covering blocks does not hide it. |
+| B3 | Recovery, finish (including immediate final-output completion), cancellation and provider removal clear the beam with the last plate. Session exit clears it; login resync restores it only for still-delayed work. |
+| B4 | Shared-provider delayed outputs draw one beam at that position. Clearing one output keeps it while another plate remains. Other providers and dimensions retain independent state. |
+| B5 | A manual locate with no red plate draws no red beam. Locate expiry never removes an existing beam, and recovery never truncates the independent rainbow timer. |
+| B6 | Only the existing authorized recipient sees the beam, only in the matching dimension. A missing icon still permits it. Plates, icons, rainbow edges and unrelated world rendering keep their existing appearance. |
+| B7 | All four supported targets pass lifecycle checks and reviewed runtime captures for roof penetration, pulse and cleanup. |
+
+This adds no world blocks, light sources, crafting behavior, new provider
+discovery, cross-dimension visibility, packets or save data. Resource-icon
+support in #376 is independent and does not block the beam.

@@ -447,7 +447,81 @@ locates the selected row, and releases that winner before checking survivor and
 rainbow preservation. Its final provider at offset 8 retains the existing
 completion and cleanup coverage.
 
-## Sources checked
+## Red sky beam design
+
+Planned for [issue #488](https://github.com/cTux/ae2-crafting-time/issues/488).
+Source baseline: `5778c552e0c5cec2a7d914a2c2f3f18a5fb1767b`.
+The earlier #443 investigation above is historical: this baseline already has
+`ProviderDisplaySelection.firstByPosition` and `renderPlates()` on all targets.
+
+### State and ownership
+
+Use `ProviderHighlightClient.renderPlates()` as the only beam input, after the
+existing `trimPositions` call and current-dimension filter. It already selects
+one plate per physical provider without deleting other delayed identities.
+Draw one beam per selected position, independently of item resolution or
+camera-facing plate-face selection. Do not introduce a beam cache or timer.
+Winner changes therefore keep the beam, while removing the last plate removes
+it on the next render. Use the existing frame's `pulseAlpha()` for both.
+
+Server authority, owner-only sends, clear packets, login resync and unknown
+unloaded-target handling stay intact. No server scanning or new chunk loads
+are needed. `liveEdges()` must never supply beam positions. This also keeps
+blocked-only warnings and manual-only locates from creating red beams.
+
+### Geometry and render boundaries
+
+Render a vertical translucent, full-bright red column, centered at
+`(x + 0.5, z + 0.5)`, starting at `y + 1`, with a 0.2-block square cross-section.
+Use the plate red `(1.0, 0.15, 0.15)` and its pulse opacity. End it at
+`max(dimension upper build boundary, provider top + client render distance in
+blocks)`. This keeps a positive column above high providers and reaches above
+dimension roofs without scanning blocks or hard-coding Overworld height.
+Normal camera/fog distance still applies; infinite-distance visibility is not
+part of the feature. Do not cull the whole column just because its base is
+outside the camera frustum.
+
+Use a beam-specific render type/pipeline with translucent blending, no culling,
+no depth test and no depth writes, so opaque geometry cannot hide the column
+and it cannot corrupt depth for later draws. Keep the existing plate/icon/edge
+pipelines unchanged. Define render state in that pipeline, not global depth
+toggles around deferred buffered writes. Flush its batch at the world hook
+before returning, and never retain a consumer across writes to another type.
+No vanilla beacon block entity, beacon sky-access check, texture or dependency
+is needed: use the existing filled-shape emission approach with the dedicated
+state. Restore the pose stack and let pipeline setup/teardown own render state.
+
+| Owned seam | Planned change |
+| --- | --- |
+| `shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/ProviderHighlightShapes.java` | Add the beam draw entry point using the older filled-shape API. Keep API differences in loader adapters where necessary. |
+| `shared/src/mc2612/java/com/ctux/ae2craftingtime/mc1201/ProviderHighlightShapes.java` | Equivalent camera-relative geometry for the newer render API. |
+| Forge 1.20.1 and NeoForge 1.21.1 `ProviderHighlightRender` | Submit beams from selected plates in their existing world stage, with a beam-specific render type. |
+| Fabric 1.20.1 `Ae2CraftingTimeClient` | Same selection and geometry in `AFTER_TRANSLUCENT`; keep its dedicated immediate buffer and flush before return. |
+| NeoForge 26.1.2 `ProviderHighlightRender` | Draw beams once in `onRenderLevelStage` using a dedicated pipeline. Do not submit them again in the separate item-only `onSubmitGeometry` pass. |
+
+Do not change the shared plate store unless a minimal test seam is required.
+No codec, protocol, persistence, migration, translation or optional integration
+changes are required. Existing server/client compatibility remains unchanged;
+an older client simply lacks the beam. Dedicated servers must never load the
+new rendering classes. All four release-matrix rows require implementation.
+
+### Validation and failure boundaries
+
+Reuse `ProviderPlatesTest` and `ProviderHighlightTriggerTest` for automatic
+plates versus manual edges, recovery/finish/cancel and session cleanup. Extend
+focused checks for beam inputs: shared-provider survivor, empty selection,
+dimension filtering and unresolved icon. Check positive geometry height at
+both build limits. Do not duplicate the delayed-state machine in tests.
+
+Visual captures must prove opaque-roof penetration and render-state isolation;
+state assertions or compilation cannot prove either. Check from below and
+above a roof, beside the provider, and while its base is off-screen but the
+column is visible. Observe nearby translucent blocks, item icons and rainbow
+edges before and after removal. Missing level/state means no draw. Unknown
+unloaded targets keep the existing plate policy; no render-time chunk scan or
+fallback beam is allowed. #376 is related icon work, not a dependency.
+
+## Original feature sources checked
 
 - [Issue #231](https://github.com/cTux/ae2-crafting-time/issues/231).
 - Repository code: `CraftProfiler`, `ProfilerBridge` (both source sets),
