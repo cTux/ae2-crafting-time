@@ -55,8 +55,9 @@ if ($runnerText.IndexOf("-SimpleMatch ']: Done ('", [StringComparison]::Ordinal)
 }
 if ($runnerText -notmatch '\$maxAttempts = 3' -or
         $runnerText -notmatch 'FailOnInitialDisconnect=\$true' -or
-        $runnerText -notmatch "initial-disconnect-cap-exhausted" -or
-        $runnerText -notmatch "\`$status\.message -eq 'UI-smoke phase 1 watchdog: initial-disconnect'" -or
+        $runnerText -notmatch "startup-failure-cap-exhausted" -or
+        $runnerText -notmatch "'UI-smoke phase 1 watchdog: initial-disconnect'" -or
+        $runnerText -notmatch "'UI-smoke phase 1 watchdog: startup-timeout'" -or
         $runnerText -match '\$progress\.checkpoint -match ''\^state=STARTING') {
     throw 'Connected runner omitted the bounded startup-only disconnect retry contract'
 }
@@ -65,8 +66,9 @@ function Invoke-StartupRetryPolicy([object[]]$observations) {
     foreach ($observation in $observations) {
         $attempt++
         if ($observation -eq 'PASS') { return [pscustomobject]@{ attempts=$attempt; result='pass' } }
-        $startupDisconnect = $observation.message -eq 'UI-smoke phase 1 watchdog: initial-disconnect'
-        if (!$startupDisconnect) { return [pscustomobject]@{ attempts=$attempt; result='fail-closed' } }
+        $startupFailure = $observation.message -in @('UI-smoke phase 1 watchdog: initial-disconnect',
+            'UI-smoke phase 1 watchdog: startup-timeout')
+        if (!$startupFailure) { return [pscustomobject]@{ attempts=$attempt; result='fail-closed' } }
         if ($attempt -eq 3) { return [pscustomobject]@{ attempts=$attempt; result='cap-exhausted' } }
     }
     return [pscustomobject]@{ attempts=$attempt; result='pass' }
@@ -75,6 +77,10 @@ $transient = Invoke-StartupRetryPolicy @(
     [pscustomobject]@{ message='UI-smoke phase 1 watchdog: initial-disconnect'; checkpoint='state=STARTING phase=PREPARE fixture=new cpu-list=INITIAL screen=net.minecraft.client.gui.screens.ProgressScreen' },
     'PASS')
 if ($transient.attempts -ne 2 -or $transient.result -ne 'pass') { throw 'Immediate disconnect did not consume exactly one retry' }
+$coldTimeout = Invoke-StartupRetryPolicy @(
+    [pscustomobject]@{ message='UI-smoke phase 1 watchdog: startup-timeout'; checkpoint='state=STARTING phase=SETUP resource-case=0 stage=0 fixture-phase=pending' },
+    'PASS')
+if ($coldTimeout.attempts -ne 2 -or $coldTimeout.result -ne 'pass') { throw 'Cold pre-fixture timeout did not consume exactly one retry' }
 $exhausted = Invoke-StartupRetryPolicy @(1..3 | ForEach-Object {
     [pscustomobject]@{ message='UI-smoke phase 1 watchdog: initial-disconnect'; checkpoint='state=STARTING phase=PREPARE fixture=new cpu-list=INITIAL screen=net.minecraft.client.gui.screens.ProgressScreen' }
 })

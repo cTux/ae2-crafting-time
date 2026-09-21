@@ -287,10 +287,11 @@ try {
             Get-Content -LiteralPath $fixturePath -Raw | ConvertFrom-Json
         } else { $null }
         $processes = @($status.processes)
-        $startupDisconnect = $null -ne $clientError -and $status.phase -eq 'failed' -and
+        $startupFailure = $null -ne $clientError -and $status.phase -eq 'failed' -and
             $processes.Count -eq 1 -and $processes[0].phase -eq 1 -and
             $progress.pid -eq $processes[0].pid -and
-            $status.message -eq 'UI-smoke phase 1 watchdog: initial-disconnect' -and
+            $status.message -in @('UI-smoke phase 1 watchdog: initial-disconnect',
+                'UI-smoke phase 1 watchdog: startup-timeout') -and
             !(Test-Path -LiteralPath (Join-Path $attemptReport 'evidence/result.json')) -and
             !(Test-Path -LiteralPath (Join-Path $attemptReport 'evidence/relaunch-evidence.json')) -and
             (!$resourceScenario -or !(Test-Path -LiteralPath (Join-Path $control 'resource/command.properties')))
@@ -298,10 +299,10 @@ try {
         $taskAlive = $ScheduledJava -and $processes.Count -and $processes[0].taskName -and
             $null -ne (Get-ScheduledTask -TaskName $processes[0].taskName -ErrorAction SilentlyContinue)
         $worldsRemoved = $fixture -and @($fixture.disposableWorlds | Where-Object { !$_.removed }).Count -eq 0
-        $retry = $startupDisconnect -and !$processAlive -and !$taskAlive -and $worldsRemoved -and $attempt -lt $maxAttempts
+        $retry = $startupFailure -and !$processAlive -and !$taskAlive -and $worldsRemoved -and $attempt -lt $maxAttempts
         $reason = if ($clientPassed) { 'PASS' }
-            elseif ($startupDisconnect -and $attempt -eq $maxAttempts) { 'initial-disconnect-cap-exhausted' }
-            elseif ($retry) { 'initial-disconnect-retry' }
+            elseif ($startupFailure -and $attempt -eq $maxAttempts) { 'startup-failure-cap-exhausted' }
+            elseif ($retry) { 'startup-failure-retry' }
             else { $clientError.Exception.Message }
         $attempts += [ordered]@{ attempt=$attempt; report=$(if($clientPassed){'client'}else{Split-Path -Leaf $attemptReport}); result=$(if($clientPassed){'PASS'}else{'FAIL'})
             reason=$reason; checkpoint=$(if($progress){$progress.checkpoint}else{$null}); processes=@($processes | ForEach-Object {
@@ -313,8 +314,8 @@ try {
             break
         }
         if ($retry) { continue }
-        if ($startupDisconnect -and $attempt -eq $maxAttempts) {
-            throw "Connected client exhausted $maxAttempts startup disconnect attempts"
+        if ($startupFailure -and $attempt -eq $maxAttempts) {
+            throw "Connected client exhausted $maxAttempts pre-fixture startup attempts"
         }
         throw $clientError
     }
