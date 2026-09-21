@@ -12,10 +12,17 @@ param(
     [string]$InteractiveUser = 'Codex',
     [ValidateSet('cpu-list-total-ttc','recurrent-plan','delayed-resource-icons','appmek-resource-icons')][string]$Scenario = 'cpu-list-total-ttc',
     [switch]$ResourceFixtureOnly,
+    [switch]$Prewarm,
+    [switch]$AcceptMinecraftEula,
     [switch]$PlanOnly
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'resource-fixture-contract.ps1')
+. (Join-Path $PSScriptRoot 'dedicated-source-contract.ps1')
+if (!$PlanOnly -and !$AcceptMinecraftEula) { throw 'Connected execution requires explicit -AcceptMinecraftEula consent' }
+if ($Prewarm -and (!$ResourceFixtureOnly -or $HeadSha -cnotmatch '^[a-f0-9]{40}$')) {
+    throw 'Prewarm requires resource fixture mode and the complete tested head'
+}
 function Get-ResourceFixtureScreenshots([string[]]$FixtureCases) {
     $values = foreach ($fixtureCase in $FixtureCases) {
         $prefix = $fixtureCase.ToLowerInvariant().Replace('_','-')
@@ -55,6 +62,8 @@ if (!(Test-Path -LiteralPath $prepared -PathType Leaf)) { throw "Missing prepare
 $markerPath = Join-Path $sourceServer '.ae2-crafting-time-dedicated-fixture.json'
 if (!(Test-Path -LiteralPath $markerPath -PathType Leaf)) { throw 'Prepared server is not marked as an AE2 Crafting Time source fixture' }
 $marker = Get-Content -LiteralPath $markerPath -Raw | ConvertFrom-Json
+$provisionedSource = $null -ne $marker.provisioning
+if ($provisionedSource) { Assert-DedicatedSeal $sourceServer | Out-Null }
 if ($marker.schema -ne 2 -or $marker.sourceFixtureId -ne 'ae2-crafting-time' -or
         $marker.role -ne 'source' -or $marker.target -ne $Target) {
     throw 'Prepared server marker does not match the requested source fixture and target'
@@ -84,6 +93,17 @@ if ($production[0].Name -notlike "*-$($targetParts[1])-$($targetParts[0]).jar" -
     throw 'Production and driver filenames must identify the same version and target'
 }
 $preparedProfile = Get-Content -LiteralPath $prepared -Raw | ConvertFrom-Json
+if ($Prewarm) {
+    $prewarmGraph = Get-DedicatedGraph $Target $bundle $prepared
+    if ($prewarmGraph.headSha -cne $HeadSha) { throw 'Prewarm bundle does not identify the tested head' }
+    $adapters = Read-DedicatedJson (Join-Path $bundle 'expected-adapters.json') 64KB
+    if ($Scenario -eq 'delayed-resource-icons' -and @($adapters.PSObject.Properties).Count -ne 0) {
+        throw 'Native prewarm requires the empty base adapter contract'
+    }
+    if ($Scenario -eq 'appmek-resource-icons' -and (@($adapters.PSObject.Properties).Count -ne 1 -or !$adapters.appmek)) {
+        throw 'Chemical prewarm requires the focused AppMek adapter contract'
+    }
+}
 if ($preparedProfile.target -ne $Target -or $preparedProfile.java -ne $expectedJava) {
     throw 'Prepared client target and Java must match the connected server'
 }
@@ -133,6 +153,10 @@ if (!$resolvedServer.StartsWith($resolvedRuntime.TrimEnd('\') + '\', [StringComp
 }
 New-Item -ItemType Directory -Path $runtimeRoot -Force | Out-Null
 Copy-Item -LiteralPath $sourceServer -Destination $resolvedServer -Recurse
+if ($provisionedSource) {
+    Assert-DedicatedSeal $resolvedServer | Out-Null
+    Assert-DedicatedSeal $sourceServer | Out-Null
+}
 # A read-only VMware source share projects that attribute onto copied files.
 # The copy is report-owned and must be writable; the validated source stays untouched.
 foreach ($entry in @(Get-Item -LiteralPath $resolvedServer) + @(Get-ChildItem -LiteralPath $resolvedServer -Recurse -Force)) {
@@ -167,7 +191,9 @@ foreach ($artifact in $artifacts) { Copy-Item -LiteralPath $artifact.path -Desti
     dependencies=@(Get-ChildItem -LiteralPath $mods -File -Filter '*.jar' | Sort-Object Name | ForEach-Object {
         [ordered]@{name=$_.Name;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
     }) } | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $report 'dedicated-artifacts.json') -Encoding UTF8
-Set-Content -LiteralPath (Join-Path $resolvedServer 'eula.txt') -Value 'eula=true' -Encoding Ascii
+if ($AcceptMinecraftEula) {
+    Set-Content -LiteralPath (Join-Path $resolvedServer 'eula.txt') -Value 'eula=true' -Encoding Ascii
+}
 @('level-name=ae2ct-cpu-list-connected','online-mode=false','enforce-secure-profile=false', 'server-ip=127.0.0.1', "server-port=$serverPort",
     'pause-when-empty-seconds=-1','view-distance=6','simulation-distance=6') |
     Set-Content -LiteralPath (Join-Path $resolvedServer 'server.properties') -Encoding Ascii
@@ -177,6 +203,13 @@ $serverArgs = @("-Dae2ct.testDriver.serverScenario=$Scenario-connected",
     "-Dae2ct.testDriver.serverControl=$control", "-Dae2ct.testDriver.serverCampaign=$connectionEpoch",
     "-Dae2craftingtime.test.resourceFixture=$connectionFixture", '-Xmx4G')
 if ($ResourceFixtureOnly) { $serverArgs = @('-Dae2craftingtime.test.resourceFixtureOnly=true') + $serverArgs }
+if ($Prewarm) {
+    $prewarmDeadline = [DateTimeOffset]::UtcNow.AddSeconds(600).ToUnixTimeMilliseconds()
+    foreach ($property in @('prewarm=true',"prewarmDeadline=$prewarmDeadline","prewarmHead=$HeadSha",
+            "prewarmBundle=$($prewarmGraph.bundleSha256)","prewarmEpoch=$connectionEpoch")) {
+        $serverArgs = @("-Dae2craftingtime.test.$property") + $serverArgs
+    }
+}
 if ($Target -eq '1.20.1-fabric') { $serverArgs += @('-jar','fabric-server-launch.jar','nogui') }
 $argsFile = Join-Path $report 'dedicated-java.args'
 $quotedServerArgs = @($serverArgs | ForEach-Object { '"' + $_.Replace('\', '\\').Replace('"', '\"') + '"' })
@@ -190,7 +223,8 @@ $planPath = Join-Path $report 'connected-runner-plan.json'
 $sourceIdentity = [ordered]@{ markerSha256=(Get-FileHash -LiteralPath $markerPath -Algorithm SHA256).Hash
     launcherSha256=(Get-FileHash -LiteralPath $launcher -Algorithm SHA256).Hash
     loader=$profile.loader; javaMajor=$expectedJava; javaPath=$java; javaVersion="required-$expectedJava"
-    dependencies=$sourceDependencies }
+    dependencies=$sourceDependencies;provisioned=$provisionedSource
+    provisioning=$(if($provisionedSource){$marker.provisioning}else{$null}) }
 $runnerPlan = [ordered]@{ target=$Target; headSha=$HeadSha; campaignId=$campaignId; connectionEpoch=$connectionEpoch; resourceFixture=$connectionFixture
     sourceServer=$sourceServer; disposableServer=$resolvedServer; java=$java
     sourceIdentity=$sourceIdentity; relaunch=[ordered]@{required=($Scenario -eq 'cpu-list-total-ttc');minimumProcesses=$(if ($Scenario -eq 'cpu-list-total-ttc') { 2 } else { 1 })}
@@ -221,8 +255,10 @@ finally { $portReservation.Stop() }
 
 $serverProcess = Start-Process -FilePath $java -ArgumentList $launchCommandLine -WorkingDirectory $resolvedServer `
     -PassThru -WindowStyle Hidden -RedirectStandardOutput $serverOut -RedirectStandardError $serverErr
+$serverStartedAt = $serverProcess.StartTime.ToUniversalTime()
 try {
-    $deadline = [DateTime]::UtcNow.AddSeconds($ServerStartupTimeoutSeconds)
+    $deadline = if ($Prewarm) { [DateTimeOffset]::FromUnixTimeMilliseconds($prewarmDeadline).UtcDateTime }
+        else { [DateTime]::UtcNow.AddSeconds($ServerStartupTimeoutSeconds) }
     $ready = $false
     while ([DateTime]::UtcNow -lt $deadline -and !$ready) {
         if ($serverProcess.HasExited) { throw "Dedicated server exited $($serverProcess.ExitCode) before accepting a client" }
@@ -248,6 +284,14 @@ try {
         ControlDirectory=$control; CampaignId=$connectionEpoch; ResourceFixtureId=$connectionFixture; FailOnInitialDisconnect=$true
         StartupTimeoutSeconds=$ServerStartupTimeoutSeconds }
     if ($ResourceFixtureOnly) { $clientParameters.ResourceFixtureOnly = $true }
+    if ($Prewarm) {
+        $clientParameters.Prewarm=$true; $clientParameters.PrewarmDeadline=$prewarmDeadline
+        $clientParameters.PrewarmBundle=$prewarmGraph.bundleSha256
+        $clientParameters.PrewarmServerProcessId=$serverProcess.Id
+        $clientParameters.PrewarmServerStartedAt=$serverProcess.StartTime.ToUniversalTime()
+        $clientParameters.FailOnInitialDisconnect=$false
+        $clientParameters.StartupTimeoutSeconds=300
+    }
     if ($ResourceFixtureOnly) {
         $clientParameters.OfflineName = 'Ae2ctAlpha'
         $clientParameters.OfflineUuid = '446b6d0ccadd3e57baf699d70f01a628'
@@ -262,6 +306,7 @@ try {
     $attemptLedger = Join-Path $report 'client-attempts.json'
     $clientPassed = $false
     $maxAttempts = 3
+    if ($Prewarm) { $maxAttempts = 1 }
     for ($attempt = 1; $attempt -le $maxAttempts; $attempt++) {
         $attemptReport = Join-Path $report "client-attempt-$attempt"
         $clientParameters.ReportDirectory = $attemptReport
@@ -450,4 +495,21 @@ try {
 } finally {
     if (!$serverProcess.HasExited) { $serverProcess.Kill(); $serverProcess.WaitForExit() }
     $serverProcess.Dispose()
+    if ($Prewarm) {
+        $prewarmDirectory = Join-Path $control 'prewarm'
+        $receipts = @(Get-ChildItem -LiteralPath $prewarmDirectory -File -ErrorAction SilentlyContinue | ForEach-Object {
+            [ordered]@{name=$_.Name;sha256=(Get-FileHash -LiteralPath $_.FullName).Hash;size=$_.Length;publishedAt=$_.LastWriteTimeUtc.ToString('o')}
+        })
+        $clientPrewarmPath = Join-Path $report 'client-attempt-1/prewarm-evidence.json'
+        $clientPrewarm = if (Test-Path -LiteralPath $clientPrewarmPath) { Read-DedicatedJson $clientPrewarmPath 64KB } else { $null }
+        [ordered]@{schema=1;readinessResult=$(if(Test-Path -LiteralPath (Join-Path $prewarmDirectory 'armed.json')){'READY'}else{'FAILED'})
+            deadlineMillis=$prewarmDeadline;headSha=$HeadSha;bundleSha256=$prewarmGraph.bundleSha256
+            phaseTimings=[ordered]@{startedAt=[DateTimeOffset]::FromUnixTimeMilliseconds($prewarmDeadline-600000).ToString('o')
+                serverProcessStartedAt=$serverStartedAt.ToString('o');finishedAt=[DateTime]::UtcNow.ToString('o')}
+            clientReadiness=$clientPrewarm
+            receiptHashes=$receipts;serverCleanup='EXITED';sourceMarkerSha256=(Get-FileHash -LiteralPath $markerPath).Hash
+            fixtureResult=$(if($clientPassed){'PASS'}else{'NOT_QUALIFIED'})} |
+            ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $report 'prewarm-evidence.json') -Encoding UTF8
+    }
+    if ($provisionedSource) { Assert-DedicatedSeal $sourceServer | Out-Null }
 }

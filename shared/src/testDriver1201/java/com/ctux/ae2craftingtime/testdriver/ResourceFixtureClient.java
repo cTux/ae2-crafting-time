@@ -64,6 +64,7 @@ final class ResourceFixtureClient {
     private boolean abortSent;
     private long abortStarted;
     private String originalFailure = "";
+    private boolean measuredStarted;
 
     ResourceFixtureClient(Minecraft minecraft, DriverOptions options, String driverFile) {
         this.minecraft = minecraft;
@@ -86,6 +87,7 @@ final class ResourceFixtureClient {
 
     void tick() {
         try {
+            if (!measuredStarted) { stageStarted = System.nanoTime(); measuredStarted = true; }
             if (aborting) {
                 quarantineCapture();
                 tickAbort();

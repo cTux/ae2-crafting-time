@@ -51,7 +51,12 @@ try {
     $cacheMarker = Join-Path $stage "build\cache-marker.txt"
     New-Item -ItemType Directory -Path (Split-Path -Parent $cacheMarker) -Force | Out-Null
     Set-Content -LiteralPath $cacheMarker -Value "keep"
+    $preservedMarkers=@('reports/retained-ledger.txt','runtime/server/retained-world.txt','connected-bundle-retained/identity.txt')|ForEach-Object {
+        $marker=Join-Path $stage $_;New-Item -ItemType Directory -Path (Split-Path $marker) -Force|Out-Null
+        Set-Content -LiteralPath $marker -Value 'preserve';$marker
+    }
     & (Join-Path $scripts "run-ui-smoke-codexvm.ps1") -HeadSha $head -BundleDirectory (Join-Path $source "bundle") -LocalRoot $stage
+    foreach($marker in $preservedMarkers){if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker) -ne 'preserve'){throw 'Staging mirror destroyed runtime or report evidence'}}
     if (-not (Test-Path -LiteralPath $cacheMarker)) { throw "Stable staging discarded the guest build cache" }
     if (-not (Test-Path -LiteralPath (Join-Path $source "build\ui-smoke\1.20.1-forge\compatible\craft-plan\wrapper-result.json"))) {
         throw "Default scenario report was not separated"
@@ -125,6 +130,60 @@ try {
     } finally {
         $env:AE2CT_UI_SMOKE_TEST_INNER_EXIT = $previousInnerExit
     }
+    # Connected Stop resolves the stable campaign record, not a new random report.
+    $connectedReport=Join-Path $stage 'reports/1.20.1-forge/compatible/delayed-resource-icons-connected-existing'
+    $attempt=Join-Path $connectedReport 'client-attempt-1'
+    New-Item -ItemType Directory -Path $attempt -Force | Out-Null
+    $connectedStatusPath=Join-Path (Split-Path $connectedReport) 'delayed-resource-icons-connected-status.json'
+    $script:stopStarted=[DateTime]::UtcNow.AddMinutes(-1)
+    $script:stopScript=Join-Path $scripts 'run-ui-smoke-codexvm.ps1'
+    $serverDirectory=Join-Path $temp 'sealed-source'
+    $connectedStatus=[ordered]@{phase='running';pid=41230;commandScript=$script:stopScript;report=$connectedReport
+        processStartedAt=$script:stopStarted.ToString('o');headSha=$head;serverDirectory=$serverDirectory}
+    $connectedStatus|ConvertTo-Json|Set-Content -LiteralPath $connectedStatusPath
+    $ledgerHash=(Get-FileHash -LiteralPath $connectedStatusPath).Hash
+    $runtimeMarker=Join-Path $connectedReport 'runtime-server/level.dat'
+    New-Item -ItemType Directory -Path (Split-Path $runtimeMarker) -Force|Out-Null
+    Set-Content -LiteralPath $runtimeMarker -Value 'owned running world'
+    function robocopy.exe { throw 'Active campaign reached staging mirror' }
+    function Copy-Item { throw 'Active campaign reached bundle copy' }
+    try {
+        & (Join-Path $scripts 'run-ui-smoke-codexvm.ps1') -HeadSha $head -LocalRoot $stage `
+            -Scenario delayed-resource-icons -ServerDirectory $serverDirectory -BundleDirectory (Join-Path $source 'bundle') -AcceptMinecraftEula
+        throw 'Second connected launch accepted active campaign'
+    } catch { if($_.Exception.Message -ne 'A connected campaign status is still active; stop or resolve it before starting another'){throw} }
+    finally { Remove-Item Function:robocopy.exe;Remove-Item Function:Copy-Item }
+    if((Get-FileHash -LiteralPath $connectedStatusPath).Hash -ne $ledgerHash -or (Get-Content -LiteralPath $runtimeMarker) -ne 'owned running world') {
+        throw 'Second connected launch changed the active ledger or runtime'
+    }
+    @{phase='running';pid=41231;argumentFile='owned-client.args';processStartedAt=$script:stopStarted.ToString('o')}|
+        ConvertTo-Json|Set-Content -LiteralPath (Join-Path $attempt 'status.json')
+    $script:killed=@()
+    function Get-CimInstance {
+        param($ClassName,$Filter)
+        [pscustomobject]@{CommandLine=$(if($Filter -like '*41231'){'java @owned-client.args'}else{$stopScript});CreationDate=$stopStarted}
+    }
+    $script:killed=[Collections.Generic.List[string]]::new()
+    function taskkill.exe { $killed.Add(($args -join ' '));$global:LASTEXITCODE=0 }
+    & (Join-Path $scripts 'run-ui-smoke-codexvm.ps1') -Stop -HeadSha $head -LocalRoot $stage `
+        -Scenario delayed-resource-icons -ServerDirectory $serverDirectory
+    if ($script:killed.Count -ne 2 -or $script:killed[0] -notlike '*41231*' -or $script:killed[1] -notlike '*41230*') {
+        throw 'Connected Stop did not stop the recorded scheduled client and wrapper/server tree'
+    }
+    if ((Get-Content -LiteralPath $connectedStatusPath -Raw|ConvertFrom-Json).phase -ne 'stopped') { throw 'Connected Stop left an active campaign record' }
+    $connectedStatus.phase='running';$connectedStatus.processStartedAt=$script:stopStarted.AddHours(-1).ToString('o')
+    $connectedStatus|ConvertTo-Json|Set-Content -LiteralPath $connectedStatusPath
+    try {
+        & (Join-Path $scripts 'run-ui-smoke-codexvm.ps1') -Stop -HeadSha $head -LocalRoot $stage `
+            -Scenario delayed-resource-icons -ServerDirectory $serverDirectory
+        throw 'Connected Stop accepted reused PID'
+    } catch { if ($_.Exception.Message -notlike '*does not match the recorded UI-smoke command*') { throw } }
+    if ($script:killed.Count -ne 2) { throw 'Stale campaign stop killed a process' }
+    try {
+        & (Join-Path $scripts 'run-ui-smoke-codexvm.ps1') -Stop -HeadSha ('2'*40) -LocalRoot $stage `
+            -Scenario delayed-resource-icons -ServerDirectory $serverDirectory
+        throw 'Connected Stop accepted different campaign head'
+    } catch { if ($_.Exception.Message -ne 'Connected UI-smoke stop identity does not match the requested campaign') { throw } }
     Write-Host "run-ui-smoke-codexvm checks passed"
 } finally {
     if (Test-Path -LiteralPath $temp) { Remove-Item -LiteralPath $temp -Recurse -Force }

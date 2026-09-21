@@ -17,6 +17,8 @@ public final class TestDriverRuntime implements AutoCloseable {
     private final SuiteProgress progress;
     private final boolean oneWorld;
     private final DriverProgress driverProgress;
+    private final ResourcePrewarmClient prewarm;
+    private boolean prewarmComplete;
     private java.util.concurrent.CompletableFuture<SuiteFixture> fixture;
     private java.util.concurrent.CompletableFuture<Integer> reset;
     private long resetStarted;
@@ -54,13 +56,20 @@ public final class TestDriverRuntime implements AutoCloseable {
         }
         minecraft.execute(() -> GLFW.glfwMaximizeWindow(minecraft.getWindow().getWindow()));
         scenario = new CraftPlanScenario(minecraft, cases.get(index), driverFile);
+        prewarm = options.prewarm() ? new ResourcePrewarmClient(minecraft, options) : null;
         driverProgress = new DriverProgress(options.output(), scenario.checkpoint());
         endpoint = options.interactive() ? new InteractiveMcpServer(minecraft, scenario, options) : null;
     }
 
     public void tick() {
         renderedFrames++;
-        driverProgress.callback(scenario.checkpoint());
+        driverProgress.callback(prewarm != null && !prewarmComplete ? prewarm.checkpoint() : scenario.checkpoint());
+        if (prewarm != null && !prewarmComplete) {
+            try { prewarmComplete = prewarm.tick(); }
+            catch (Exception failure) { minecraft.stop(); throw new IllegalStateException("resource prewarm failed", failure); }
+            if (!prewarmComplete) return;
+            initialDedicatedConnectionComplete = true;
+        }
         if (awaitInitialDedicatedConnection()) {
             return;
         }
@@ -270,6 +279,7 @@ public final class TestDriverRuntime implements AutoCloseable {
 
     public void afterRender() {
         UiObservationStore.finish(minecraft);
+        if (prewarm != null && !prewarmComplete) prewarm.afterRender();
     }
 
     @Override

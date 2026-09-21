@@ -3,6 +3,7 @@ package com.ctux.ae2craftingtime.testdriver;
 import java.nio.file.Path;
 
 public record DriverOptions(String scenario, String profile, String world, Path output, boolean interactive) {
+    public boolean prewarm() { return Boolean.getBoolean("ae2craftingtime.test.prewarm"); }
     public boolean resourceFixtureOnly() { return Boolean.getBoolean("ae2craftingtime.test.resourceFixtureOnly"); }
     public boolean connectedDedicated() { return Boolean.getBoolean("ae2craftingtime.test.connectedDedicated"); }
     public String dedicatedAddress() { return required("ae2craftingtime.test.dedicatedAddress"); }
@@ -18,6 +19,10 @@ public record DriverOptions(String scenario, String profile, String world, Path 
             return null;
         }
         boolean resourceScenario = isResourceScenario(scenario);
+        if (Boolean.getBoolean("ae2craftingtime.test.prewarm") && (!resourceScenario
+                || !Boolean.getBoolean("ae2craftingtime.test.connectedDedicated"))) {
+            throw new IllegalArgumentException("prewarm requires a connected resource scenario");
+        }
         if (!scenario.equals("suite") && !resourceScenario && !AddonCpuFixture.supports(scenario)) {
             throw new IllegalArgumentException("unsupported test-driver scenario: " + scenario);
         }

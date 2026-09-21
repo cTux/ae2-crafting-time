@@ -19,10 +19,18 @@ param(
     [ValidatePattern('^[a-f0-9]{32}$')][string]$OfflineUuid,
     [switch]$ResumeOnly,
     [switch]$ResourceFixtureOnly,
+    [switch]$Prewarm,
+    [long]$PrewarmDeadline,
+    [string]$PrewarmHead,
+    [string]$PrewarmBundle,
     [switch]$Interactive
 )
 $ErrorActionPreference = 'Stop'
 $resourceScenario = $Scenario -in @('delayed-resource-icons','appmek-resource-icons')
+if ($Prewarm -and (!$resourceScenario -or !$DedicatedAddress -or $PrewarmDeadline -le 0 -or
+        $PrewarmHead -cnotmatch '^[a-f0-9]{40}$' -or $PrewarmBundle -cnotmatch '^[a-fA-F0-9]{64}$')) {
+    throw 'Prewarm requires a connected resource launch and complete immutable identity'
+}
 if (($resourceScenario -and !$ResourceFixtureOnly) -or
         ($ResourceFixtureOnly -and !$resourceScenario -and $Scenario -ne 'suite')) {
     throw 'ResourceFixtureOnly is required exactly for resource fixture scenarios'
@@ -89,6 +97,12 @@ for ($i = 0; $i -lt $launch.arguments.Count; $i++) {
 $arguments.Insert(0, '-Xmx8G')
 if ($Interactive) { $arguments.Insert(0, '-Dae2craftingtime.test.interactive=true') }
 if ($ResourceFixtureOnly) { $arguments.Insert(0, '-Dae2craftingtime.test.resourceFixtureOnly=true') }
+if ($Prewarm) {
+    foreach ($property in @('prewarm=true',"prewarmDeadline=$PrewarmDeadline","prewarmHead=$PrewarmHead",
+            "prewarmBundle=$($PrewarmBundle.ToLowerInvariant())","prewarmEpoch=$CampaignId")) {
+        $arguments.Insert(0,"-Dae2craftingtime.test.$property")
+    }
+}
 if ('rxYaglEe' -in @($ProjectId)) { $arguments.Insert(0, '-Dae2craftingtime.test.advancedStatus=true') }
 foreach ($property in @("scenario=$Scenario", "profile=$Profile", "world=$World", "output=$Evidence", 'vmTextureProbe=true')) {
     $arguments.Insert(0, "-Dae2craftingtime.test.$property")

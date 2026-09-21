@@ -69,17 +69,26 @@ public final class DedicatedCpuScenario {
     private ResourceFixtureServer resourceFixture;
     private Map<String, Object> resourceCleanup = Map.of();
     private String recurrentAction = "";
-    private final long started = System.nanoTime();
+    private long started = System.nanoTime();
+    private ResourcePrewarmControl prewarm;
+    private Object prewarmConnection;
+    private int prewarmGeneration;
+    private int prewarmTicks;
+    private boolean prewarmArmed;
 
     public void tick(MinecraftServer server) {
         if (done) return;
         try {
             if (!server.isDedicatedServer()) throw new IllegalStateException("Dedicated test requires a dedicated server");
-            if (System.nanoTime() - started > java.util.concurrent.TimeUnit.MINUTES.toNanos(timeoutMinutes(scenario))) {
+            if ((!Boolean.getBoolean("ae2craftingtime.test.prewarm") || prewarmArmed)
+                    && System.nanoTime() - started > java.util.concurrent.TimeUnit.MINUTES.toNanos(timeoutMinutes(scenario))) {
                 throw new IllegalStateException("Dedicated CPU timeout: " + scenario + " " + DispatchObservation.snapshot());
             }
             step(server);
         } catch (Exception | LinkageError failure) {
+            if (Boolean.getBoolean("ae2craftingtime.test.prewarm") && !prewarmArmed) {
+                failure.printStackTrace(); done = true; server.halt(false); return;
+            }
             if (resourceFixture != null) resourceCleanup = resourceFixture.cleanup(failure.toString());
             finish(server, "FAIL", failure.toString());
             failure.printStackTrace();
@@ -102,6 +111,7 @@ public final class DedicatedCpuScenario {
             return;
         }
         if (scenario.equals("delayed-resource-icons-connected") || scenario.equals("appmek-resource-icons-connected")) {
+            if (Boolean.getBoolean("ae2craftingtime.test.prewarm") && !prewarm(server)) return;
             if (!connectedValidated) {
                 CpuListTtcControl.validateDisposableServer(Path.of(""), target);
                 connectedValidated = true;
@@ -191,6 +201,33 @@ public final class DedicatedCpuScenario {
             throw new IllegalStateException("Dedicated job did not record a fresh sample");
         }
         finish(server, "PASS", "");
+    }
+
+    private boolean prewarm(MinecraftServer server) throws java.io.IOException {
+        if (prewarm == null) prewarm = ResourcePrewarmControl.configured(CpuListTtcControl.directory());
+        if (prewarmArmed) return prewarm.accept(prewarmGeneration, true, false);
+        prewarm.waiting(System.currentTimeMillis());
+        var joined = server.getPlayerList().getPlayer(ResourcePrewarmControl.PLAYER);
+        Object current = joined == null ? null : joined.connection;
+        if (current != prewarmConnection) {
+            prewarm.invalidateReadiness();
+            prewarmConnection = current; prewarmTicks = 0;
+            if (current != null) prewarmGeneration = prewarm.attemptForJoin(prewarmGeneration);
+        }
+        if (current == null) return false;
+        if (!prewarm.attemptStillCurrent(prewarmGeneration)) {
+            prewarm.invalidateReadiness(); prewarmTicks = 0; return false;
+        }
+        int previousTicks = prewarmTicks;
+        prewarmTicks = ResourcePrewarmControl.advanceReadiness(prewarmTicks, 20, true, true);
+        if (previousTicks < 20 && prewarmTicks == 20) {
+            var process = ProcessHandle.current();
+            prewarm.write("server-ready.json", prewarm.ready(process.pid(), process.info().startInstant().orElseThrow(), prewarmGeneration, 20, 0));
+        }
+        if (prewarmTicks >= 20 && prewarm.accept(prewarmGeneration, current == prewarmConnection, resourceFixture == null)) {
+            prewarmArmed = true; started = System.nanoTime(); return true;
+        }
+        return false;
     }
 
     static int timeoutMinutes(String value) {

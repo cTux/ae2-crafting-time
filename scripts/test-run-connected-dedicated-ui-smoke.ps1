@@ -1,4 +1,10 @@
 $ErrorActionPreference = 'Stop'
+$refusedEula = $false
+try {
+    & (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Target 1.20.1-forge `
+        -ServerDirectory 'C:\absent-source' -PreparedLaunch 'C:\absent-launch' -BundleDirectory 'C:\absent-bundle' -ReportDirectory 'C:\absent-report'
+} catch { $refusedEula = $_.Exception.Message -like '*AcceptMinecraftEula*' }
+if (!$refusedEula) { throw 'Runner must refuse missing EULA consent before accessing or writing input paths' }
 $runnerText = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Raw
 $parseErrors = $null
 $runnerAst = [Management.Automation.Language.Parser]::ParseInput($runnerText, [ref]$null, [ref]$parseErrors)

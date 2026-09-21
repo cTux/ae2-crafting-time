@@ -30,7 +30,12 @@ param(
     [int]$CheckpointTimeoutSeconds = 60,
     [int]$StartupTimeoutSeconds = 300,
     [switch]$FailOnInitialDisconnect,
-    [switch]$ResourceFixtureOnly
+    [switch]$ResourceFixtureOnly,
+    [switch]$Prewarm,
+    [long]$PrewarmDeadline,
+    [string]$PrewarmBundle,
+    [int]$PrewarmServerProcessId,
+    [DateTime]$PrewarmServerStartedAt
 )
 
 function Test-UiSnapshotBounds($snapshot) {
@@ -51,6 +56,9 @@ function Test-UiSnapshotBounds($snapshot) {
 
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot 'resource-fixture-contract.ps1')
+if ($Prewarm) { . (Join-Path $PSScriptRoot 'resource-prewarm-contract.ps1') }
+if ($Prewarm -and (!$ResourceFixtureOnly -or !$DedicatedAddress -or !$PreparedLaunch -or $PrewarmDeadline -le 0 -or
+        $PrewarmServerProcessId -le 0 -or $PrewarmBundle -cnotmatch '^[a-fA-F0-9]{64}$')) { throw 'Incomplete connected prewarm launch' }
 $resourceScenario = $Scenario -in @('delayed-resource-icons','appmek-resource-icons')
 if (($resourceScenario -and !$ResourceFixtureOnly) -or
         ($ResourceFixtureOnly -and !$resourceScenario -and $Scenario -ne 'suite')) {
@@ -312,6 +320,8 @@ try {
             if ($RuntimeDirectory) { $launchParameters.AllowedRuntimeRoot=$report }
             if ($phase -eq 2) { $launchParameters.ContinuationPath=$continuationPath; $launchParameters.ResumeOnly=$true }
             if ($ResourceFixtureOnly) { $launchParameters.ResourceFixtureOnly = $true }
+            if ($Prewarm) { $launchParameters.Prewarm=$true; $launchParameters.PrewarmDeadline=$PrewarmDeadline
+                $launchParameters.PrewarmHead=$headSha; $launchParameters.PrewarmBundle=$PrewarmBundle }
             $launch = & (Join-Path $PSScriptRoot 'prepare-ui-smoke-launch.ps1') @launchParameters
             [ordered]@{schema=1;phase=$phase;world=$world;campaignId=$campaignId;executable=$launch.executable
                 arguments=$launch.arguments;finalApproval=$launch.finalApproval;runtime=$runtime;evidence=$evidence} | ConvertTo-Json -Depth 5 |
@@ -335,6 +345,8 @@ try {
                     if ($resumeState) { $launchParameters.ResumeOnly = $true }
                 }
                 if ($ResourceFixtureOnly) { $launchParameters.ResourceFixtureOnly = $true }
+                if ($Prewarm) { $launchParameters.Prewarm=$true; $launchParameters.PrewarmDeadline=$PrewarmDeadline
+                    $launchParameters.PrewarmHead=$headSha; $launchParameters.PrewarmBundle=$PrewarmBundle }
                 $launch = & (Join-Path $PSScriptRoot 'prepare-ui-smoke-launch.ps1') @launchParameters
                 $executable = $launch.executable
                 $phaseArguments = $launch.arguments
@@ -377,6 +389,8 @@ try {
             $activeScenarioObserved = $false
             $processExitObserved = $false
             $scheduledExitCode = $null
+            $prewarmArmedAt = $null
+            $scenarioStartedAt = $process.StartTime.ToUniversalTime()
             while ([DateTime]::UtcNow -lt $deadline) {
                 if ($ScheduledJava) {
                     $scheduledState = Get-UiSmokeScheduledJavaProcessState -ProcessId $process.Id -TaskName $scheduledTaskName
@@ -411,7 +425,24 @@ try {
                             }
                         } catch { }
                     }
-                    if ($FailOnInitialDisconnect -and $phase -eq 1 -and $progressPid -eq $process.Id -and
+                    if ($Prewarm) {
+                        $prewarmFailure = Get-ResourcePrewarmWatchdog ([DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()) `
+                            $PrewarmDeadline ([bool]$prewarmArmedAt) $callbackSequence ([DateTime]::UtcNow - $lastCallback).TotalSeconds
+                        if ($prewarmFailure) { $watchdogReason=$prewarmFailure; break }
+                    }
+                    if ($Prewarm -and !$prewarmArmedAt) {
+                        if (Update-ResourcePrewarm $ControlDirectory $campaignId $headSha $PrewarmBundle `
+                                $PrewarmServerProcessId $PrewarmServerStartedAt $process.Id $process.StartTime.ToUniversalTime()) {
+                            $prewarmArmedAt = [DateTime]::UtcNow
+                            $scenarioStartedAt = $prewarmArmedAt
+                            $deadline = $prewarmArmedAt.AddMinutes(40)
+                            [ordered]@{schema=1;readinessResult='READY';armedAt=$prewarmArmedAt.ToString('o')
+                                connectionCheckpoint=$checkpoint;fixtureMutationBeforeArm=$false
+                                armSha256=(Get-FileHash -LiteralPath (Join-Path $ControlDirectory 'prewarm/arm.json')).Hash} |
+                                ConvertTo-Json | Set-Content -LiteralPath (Join-Path $report 'prewarm-evidence.json') -Encoding UTF8
+                        } else { continue }
+                    }
+                    if (!$Prewarm -and $FailOnInitialDisconnect -and $phase -eq 1 -and $progressPid -eq $process.Id -and
                             $checkpoint -match '^state=STARTING .* screen=(?:net\.minecraft\.client\.gui\.screens\.DisconnectedScreen|net\.minecraft\.class_419)$') {
                         $watchdogReason = 'initial-disconnect'
                         break
@@ -421,7 +452,7 @@ try {
                             -CheckpointAt $lastCheckpoint -CallbackTimeoutSeconds $CallbackTimeoutSeconds `
                             -CheckpointTimeoutSeconds $CheckpointTimeoutSeconds -ProcessId $process.Id `
                             -ProgressProcessId $progressPid -CallbackSequence $callbackSequence `
-                            -StartedAt $process.StartTime.ToUniversalTime() -StartupTimeoutSeconds $StartupTimeoutSeconds `
+                            -StartedAt $scenarioStartedAt -StartupTimeoutSeconds $StartupTimeoutSeconds `
                             -ActiveScenarioObserved:$activeScenarioObserved -Checkpoint $checkpoint
                     }
                     if ($watchdogReason) { break }

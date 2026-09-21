@@ -4,6 +4,9 @@ param(
     [switch]$Latest,
     [switch]$Interactive,
     [switch]$ResourceFixtureOnly,
+    [switch]$Prewarm,
+    [switch]$AcceptMinecraftEula,
+    [string]$ServerDirectory,
     [switch]$Stop,
     [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|delayed-resource-icons|appmek-resource-icons|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-channel-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string]$CasesBase64,
@@ -25,6 +28,9 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+if ($Prewarm -and (!$ServerDirectory -or !$BundleDirectory -or !$ResourceFixtureOnly -or $Latest -or $Interactive)) {
+    throw 'Connected prewarm requires an exact bundle, server directory and resource fixture mode'
+}
 $vmx = "F:\VMs\Codex-Windows11\Codex-Windows11.vmx"
 $vmrun = "C:\Program Files\VMware\VMware Workstation\vmrun.exe"
 $root = Split-Path -Parent $PSScriptRoot
@@ -58,7 +64,7 @@ if ($BundleDirectory) {
     if (-not $bundlePath.StartsWith($root.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
         throw 'Bundle must be inside the shared worktree'
     }
-    if (-not $Stop) {
+    if (-not $Stop -and !$Prewarm) {
         & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target $Target -BundleDirectory $bundlePath -ProjectId $ProjectId -BaseOnly:$BaseOnly
         if (-not (Test-Path -LiteralPath (Join-Path $bundlePath 'expected-adapters.json') -PathType Leaf)) {
             throw 'Focused bundle adapter expectations were not prepared'
@@ -93,6 +99,9 @@ if ($CasesBase64) {
 if ($Latest) { $smokeArguments += "-Latest" }
 if ($Interactive) { $smokeArguments += "-Interactive" }
 if ($ResourceFixtureOnly) { $smokeArguments += "-ResourceFixtureOnly" }
+if ($Prewarm) { $smokeArguments += '-Prewarm' }
+if ($AcceptMinecraftEula) { $smokeArguments += '-AcceptMinecraftEula' }
+if ($ServerDirectory) { $smokeArguments += @('-ServerDirectory',$ServerDirectory) }
 if ($ProjectId) { $smokeArguments += @("-ProjectId") + $ProjectId }
 if ($Stop) { $smokeArguments += "-Stop" } else { $smokeArguments += @("-Scheduled", "-InteractiveUser", "Codex") }
 
