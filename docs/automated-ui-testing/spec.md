@@ -7,8 +7,7 @@ evidence already required by [the archive contract](../ui-smoke-evidence.md).
 A guest can retain its failed status, screenshots and logs, then return a
 nonzero dispatch exit. The host must copy that invocation into the campaign
 before archiving it. A successful archive copy does not make the scenario pass.
-See the [design](technical-design.md#failed-native-evidence-retention) and
-[plan](implementation-plan.md#failed-native-evidence-retention).
+See the [design](technical-design.md#failed-native-evidence-retention).
 
 This covers the shared native matrix runner on Windows PowerShell 5.1 and
 PowerShell 7, all four release targets, compatible/latest profiles, and single
@@ -60,9 +59,8 @@ reduce prepared-client smoke coordination; it does not change the smoke pipeline
 
 Extension researched 2026-09-08 for
 [#347](https://github.com/cTux/ae2-crafting-time/issues/347). See the
-[research](automation-research.md),
-[design](technical-design.md#unattended-evidence-gate-design), and
-[plan](implementation-plan.md#unattended-evidence-gate-implementation).
+[research](automation-research.md) and
+[design](technical-design.md#unattended-evidence-gate-design).
 The runner, independent standard leaves and change selection already exist at
 `7b127be8`; #218's planning sections below are retained historical design.
 Implementation is in [PR #349](https://github.com/cTux/ae2-crafting-time/pull/349).

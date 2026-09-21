@@ -329,15 +329,11 @@ against the current official protocol during implementation.
 
 ## Development client installation
 
-The existing wrappers already route through the shared client scripts, so they
-do not gain separate installation logic:
+Use the shared client scripts directly so there is one installation path:
 
 ```text
-scripts-run/run-1.20.1-forge.bat
-  -> scripts/run-client.ps1 -Target 1.20.1-forge
-
-scripts-run/run-1.20.1-forge.sh
-  -> scripts/run-client.sh -Target 1.20.1-forge
+scripts/run-client.ps1 -Target 1.20.1-forge
+scripts/run-client.sh -Target 1.20.1-forge
 ```
 
 For the Forge 1.20.1 target, each shared script resolves the selected profile,
@@ -356,7 +352,7 @@ stale cleanup, or copy failure stops the launch. Other targets do not build or
 install a driver.
 
 Add one optional runtime-directory parameter to both shared scripts. It defaults
-to the current `run` or `run-latest` directory for the existing wrappers and is
+to the current `run` or `run-latest` directory and is
 used consistently for dependency installation and Gradle's
 `runtimeRunDirectory`. The UI-smoke runner supplies its isolated directory under
 `build/ui-smoke`; it does not maintain a second driver-install path.
