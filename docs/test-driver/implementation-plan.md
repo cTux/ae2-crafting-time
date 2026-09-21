@@ -88,9 +88,8 @@ content is unchanged apart from the normal versioned build inputs.
 3. Remove stale Forge 1.20.1 driver versions from that same directory without
    touching unrelated mods. Stop the launch on build, name, cleanup, or copy
    failure.
-4. Keep the existing `.bat` and `.sh` wrappers thin; verify that compatible and
-   latest wrappers both inherit installation while other targets remain
-   unchanged.
+4. Verify that compatible and latest shared-script commands both inherit
+   installation while other targets remain unchanged.
 5. Add a shared-script runtime-directory parameter that defaults to the current
    `run` or `run-latest` location and controls both dependency installation and
    Gradle's `runtimeRunDirectory`.
@@ -101,9 +100,9 @@ Tests: extend the existing client-script tests for compatible/latest destination
 selection, exact managed filename, stale-driver cleanup, failure propagation,
 target exclusion, and PowerShell/shell parity.
 
-Completion gate: `scripts-run/run-1.20.1-forge.bat` and its latest counterpart
-start only after the matching driver is present in the selected client, while a
-normal run remains inert.
+Completion gate: `scripts/run-client.ps1 -Target 1.20.1-forge` and its `-Latest`
+counterpart start only after the matching driver is present in the selected
+client, while a normal run remains inert.
 
 ## Phase 3: Add the disposable fixture and runner
 
@@ -199,8 +198,8 @@ After the hook-created PR exists:
    screenshot, and quit through `minecraft_quit`.
 6. Inspect production JAR, driver JAR, and `dist`; confirm no test-driver entry
    can be published by the release matrix or deploy scripts.
-7. Launch both `scripts-run/run-1.20.1-forge.bat` profiles normally; confirm the
-   exact driver is installed and loaded but remains inert.
+7. Launch both `scripts/run-client.ps1 -Target 1.20.1-forge` profiles normally;
+   confirm the exact driver is installed and loaded but remains inert.
 8. Review the full warning/error sweep, fix repository-owned warnings, and
    report proven third-party warnings separately.
 9. Read back required GitHub CI after local checks complete.

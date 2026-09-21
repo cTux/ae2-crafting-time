@@ -1,5 +1,9 @@
 # Provider Locate Spec
 
+The sections before [Planned red sky beam](#planned-red-sky-beam) describe the
+existing delayed-only plate behavior. Issue #488 supersedes that restriction
+for the planned feature: every red warning below drives both plates and beams.
+
 ## Goal
 
 Extend the private delayed-output warning (issue #118) with two independent
@@ -261,3 +265,60 @@ item-only world icon limitation. Its [resource icon spec](resource-icons/spec.md
 [implementation plan](resource-icons/implementation-plan.md) extend this feature
 to fluid and supported gas/chemical icons. These documents describe a planned
 fix; the existing red plate may currently appear without a non-item icon.
+
+## Planned red sky beam
+
+[Issue #488](https://github.com/cTux/ae2-crafting-time/issues/488) extends red
+backgrounds with output icons and red sky beams to every red warning status.
+This is planned, not shipped. Both effects help you find a provider with a
+warning hidden inside a build.
+See the [design](technical-design.md#red-sky-beam-design) and
+[implementation plan](implementation-plan.md#red-sky-beam-implementation).
+
+The beam rises from the center of the provider's top face into the sky, passing
+through every block above it. Solid blocks, glass, fluids and dimension roofs
+neither stop it nor change its red color. It remains visible through intervening
+world geometry within the normal client view distance, including underground
+and in roofed dimensions. No sky access or beacon structure is required.
+
+The beam shares the red plate's lifetime and one-second pulse. It appears
+automatically, including with chat notifications disabled, and stays until the
+last red plate at that position disappears. An unresolved item/resource icon
+does not suppress it. Manual rainbow locates keep their separate 15-second
+timer and never create, prolong or clear a beam. No new setting is added.
+
+Both the red background with output icon and the sky beam apply to `DELAYED`,
+`NO SPACE`, `NO PROVIDER`, `NO POWER`, `NO CHANNEL`, `NO TARGET`, `INPUT BLOCKED`
+and `LOCKED`. Ordinary `Waiting`, `No data yet`, TTC values colored red by
+relative ranking and pre-craft `Recurrent` text are not warning statuses.
+Existing status detection, priority, freshness and chat rules do not change.
+
+Treat eligibility as the union of current warning reasons, not just DELAYED.
+Changing from one red reason to another never clears or restarts either effect.
+Resolving one reason or one job keeps both while another eligible reason/job
+owned by the same recipient still needs that provider. Remove them only when
+the last qualifying warning clears, the target breaks, or the session ends.
+
+All statuses need a valid associated provider position. `NO PROVIDER` still
+qualifies, but an absent provider cannot be marked: use only an existing,
+validated associated target, never invented coordinates or a replacement block.
+No resolvable target means no world marker; the red status remains visible.
+Reconnect resynchronizes current warnings without an open screen. After server
+restart, transient dispatch reasons require fresh evidence; never persist or
+restore them as DELAYED or another remembered reason.
+
+### Beam acceptance criteria
+
+| ID | Observable result |
+| --- | --- |
+| B1 | Each of the eight red warning statuses creates a red plate with output icon and beam together for valid targets, without a click or open screen, even with `notifyOnDelayed` disabled. Non-warning text does not. |
+| B2 | An underground provider under opaque blocks, glass, fluids or a dimension roof emits an uninterrupted red beam above the roof. Looking through covering blocks does not hide it. |
+| B3 | Final warning recovery, finish (including immediate final-output completion), cancellation and provider removal clear both effects. Session exit clears them; login resync restores only valid current warnings. Transient reasons require fresh evidence after restart. |
+| B4 | Shared-provider warning outputs draw one beam at that position. Clearing one reason/output/job keeps it while another eligible plate remains. Red-to-red transitions do not flicker or reset. Other owners, providers and dimensions retain independent state. |
+| B5 | A manual locate with no red plate draws no red beam. Locate expiry never removes an existing beam, and recovery never truncates the independent rainbow timer. |
+| B6 | Only the authorized recipient sees either effect, only in the matching dimension. Missing icons still permit plates and beams. NO PROVIDER with no valid target draws neither; no stale or replacement target is marked. Existing appearance and unrelated rendering remain intact. |
+| B7 | All four supported targets pass lifecycle checks and reviewed runtime captures for roof penetration, pulse and cleanup. |
+
+This adds no world blocks, light sources, crafting behavior, cross-dimension
+visibility, packet fields or persisted transient statuses. Resource-icon
+support in #376 is independent and does not block the beam.

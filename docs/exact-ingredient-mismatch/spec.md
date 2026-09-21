@@ -17,7 +17,7 @@ with a different NBT tag or data-component patch without changing AE2's plan.
 
 - Keep AE2's existing `Missing` amount and add a gold `Stored variant` line to
   that row when the current ME network contains a positive amount of the same
-  item under a different exact AE2 item key.
+  item under a different exact AE2 item key, with no positive stored exact key.
 - Add these tooltip lines:
   - `The ME network stores this item with different saved data.`
   - `Re-encode the pattern using the item the network actually produces or stores.`
@@ -27,9 +27,18 @@ with a different NBT tag or data-component patch without changing AE2's plan.
 - Treat the line as evidence of a stored near-match, not proof of the particular
   field or mod behavior that created it. Do not name ownership, energy, security,
   damage, or another component unless AE2 exposes that fact directly.
-- Remove the line when the exact item becomes available, all near-matches leave
-  the network, the plan is replaced, the menu closes, the player reconnects, or
-  another network/menu becomes active.
+- Update the line while the same confirmation screen stays open. Adding a
+  near-match shows it; removing the last near-match or adding any positive
+  amount of the exact key clears it. Removing that exact key restores it when
+  a near-match remains. An exact key suppresses the warning even when stored
+  near-matches coexist or the exact amount cannot satisfy the whole plan.
+- Updates require no Replan, reopening, or other player action. They arrive at
+  the next normal menu synchronization after AE2 detects the storage change,
+  followed by normal network delivery. AE2 detects storage changes on server
+  ticks; this does not promise zero wall-clock latency.
+- Clear the line when the plan is replaced, the menu closes, the player
+  reconnects, or another network/menu becomes active. A plan retained across a
+  network change stays undiagnosed until a new native plan is generated.
 - Preserve stored/craft/missing quantities, Start-button behavior, TTC text,
   TTC colors, and every sort order. The warning follows its row after sorting.
 - If the recurrent-ingredient feature from #320 also diagnoses the row, keep
@@ -39,7 +48,7 @@ with a different NBT tag or data-component patch without changing AE2's plan.
 ## Compatibility and text
 
 Support Forge and Fabric 1.20.1, NeoForge 1.21.1, and NeoForge 26.1.2. Use the
-logical server's current storage snapshot in singleplayer and multiplayer. The
+logical server's current storage in singleplayer and multiplayer. The
 feature works without learned timing samples and with substitutions enabled or
 disabled; it reports AE2's resulting exact missing key rather than re-evaluating
 substitution rules.
@@ -60,19 +69,20 @@ unsupported custom planners are outside this change.
 Do not repair or rewrite patterns, toggle substitutions, normalize or ignore
 item data, change AE2 extraction/crafting, identify the differing field, list
 every stored variant, add a comparison screen, diagnose fluids or chemicals,
-persist diagnoses, add a setting, or release mod JARs as part of this planning
-PR. A near-match outside the active ME network is not reported.
+persist diagnoses, add a setting, or release mod JARs as part of this task.
+A near-match outside the active ME network is not reported. Updating a warning
+does not recalculate the native plan or its Missing quantity.
 
 ## Acceptance criteria
 
 | ID | Observable result |
 | --- | --- |
-| V1 | A positive missing item row plus a stored same-item/different-key stack shows `Stored variant` and both tooltip instructions; the native missing quantity is unchanged. |
-| V2 | An exact stored key, an equal display name with a different registered item, or a same-item near-match with zero available amount does not produce a false warning. |
+| V1 | A positive missing item row plus a stored same-item/different-key stack, with no positive exact key, shows `Stored variant` and both tooltip instructions. Adding/removing stored keys updates it in the same open plan without player action; the native missing quantity and Start behavior are unchanged. |
+| V2 | Any positive exact stored key, including alongside near-matches, an equal display name with a different registered item, or a same-item near-match with zero available amount does not produce a false warning. Removing the exact key restores the warning if a positive near-match remains. |
 | V3 | Ordinary shortages, fluids, chemicals, successful plans, and plans without a positive missing amount retain their native presentation. |
 | V4 | Multiple stored variants produce one line on the matching row; unrelated missing rows remain unchanged and exact item variants stay distinct. |
-| V5 | Replan, menu replacement, sorting, cancellation, disconnect, another player, and another network cannot carry the warning to a stale or different row. |
-| V6 | Both locales, all four targets, all TTC sort modes, and no-sample plans render correctly; #320 recurrence can coexist without either diagnosis erasing the other. |
+| V5 | Replan, menu replacement, sorting, cancellation, disconnect, another player, another network, and delayed, duplicate, or reordered live updates cannot carry the warning to a stale or different row. Storage observation ends with its menu/plan. |
+| V6 | All four targets, all TTC sort modes, and no-sample plans render correctly; #320 recurrence coexists without either diagnosis erasing the other. English UI smoke and static English/Ukrainian resource/component checks follow the shared smoke policy. |
 | V7 | Planning, submission, quantities, pattern data, storage contents, timing samples, saved data, and optional separate screens are unchanged. Missing or rejected diagnostic data leaves the native plan usable. |
 
 See the [technical design](technical-design.md) and

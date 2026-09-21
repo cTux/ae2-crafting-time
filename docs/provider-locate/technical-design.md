@@ -447,7 +447,135 @@ locates the selected row, and releases that winner before checking survivor and
 rainbow preservation. Its final provider at offset 8 retains the existing
 completion and cleanup coverage.
 
-## Sources checked
+## Red sky beam design
+
+Planned for [issue #488](https://github.com/cTux/ae2-crafting-time/issues/488).
+Source baseline: `5778c552e0c5cec2a7d914a2c2f3f18a5fb1767b`.
+The earlier #443 investigation above is historical: this baseline already has
+`ProviderDisplaySelection.firstByPosition` and `renderPlates()` on all targets.
+
+### State and ownership
+
+The corrected scope includes all eight warning statuses in the spec, not only
+DELAYED. Earlier delayed-only lifecycle and blocked-warning descriptions in
+this document are the existing behavior, superseded by this planned section.
+`TtcText.blockReason`, `TtcText.noSpace` and the delayed rendering identify the
+warning set; `CraftingBlockReason` contains the six blocked reasons. Do not
+derive eligibility by inspecting RGB values or client UI caches.
+
+Extend the shared server highlight reconciliation at the existing CPU tick
+boundary. Combine current delayed evidence, `ProfilerBridge.blockReasons` with
+its current freshness/pending rules, and `NoSpaceProbe.stuckKeys` using the same
+stored-only predicate as the row. Reuse these predicates rather than inventing
+another delay threshold. Call reconciliation even when the result is empty,
+offline or chat-disabled, and without requiring `StatsRequestHandler` traffic.
+
+Keep runtime contributions by job/scope, owner, network, dimension and output,
+with their validated target positions. Reconcile the union per recipient and
+wire identity before sending: send the existing plate packet when positions
+appear/change, send an explicit clear only when its final contribution is gone.
+Changing warning reason without changing targets requires no clear or resend.
+Ending one CPU/job must not clear another owner's or surviving job's marker.
+Reuse existing collections where possible; a small runtime reconciliation map
+is appropriate, but a second client timer/state machine is not.
+
+Own `DelayedNotificationServer`, both `ProfilerBridge` copies (tick integration,
+finish/disable/reload cleanup and `resyncPlatesForPlayer`) and the existing CPU
+tick callers. Separate highlight reconciliation from once-per-episode chat in
+`BlockReasonNotifier`; its chat set remains NO POWER/NO SPACE. Delayed chat also
+retains its existing policy. All old direct delayed-only clear paths must route
+through the union check. Check standard, AdvancedAE and existing optional CPU
+callers without adding new addon detection or claiming unsupported statuses.
+
+Provider resolution must work before first successful dispatch. Reuse
+`ProviderStartTracker` pattern observations and the actual failed-dispatch
+provider candidates from `ProviderDispatchObserver`; retain bounded associated
+positions with that evidence when inactive providers disappear from a fresh
+offering lookup. Resolve and validate targets on the server with existing
+`ProviderBlockTargets` rules. Never scan arbitrary nearby blocks or choose an
+unrelated provider. NO PROVIDER with no surviving validated association yields
+no marker. Preserve unknown/unloaded handling without force-loading chunks.
+
+Reconnect sends current owner-bound contributions, with a first tick refresh
+when live state is not ready. Restart rebuilds transient reasons from fresh
+dispatch evidence; no new persisted reason or stale remembered-status fallback
+is allowed. Existing saved delayed/provider data may retain its existing role
+only for a still-valid active job. Re-evaluate NO SPACE from live CPU contents.
+
+Use `ProviderHighlightClient.renderPlates()` as the only beam input, after the
+existing `trimPositions` call and current-dimension filter. It already selects
+one plate per physical provider without deleting other warning identities.
+Draw one beam per selected position, independently of item resolution or
+camera-facing plate-face selection. Do not introduce a beam cache or timer.
+Winner changes therefore keep the beam, while removing the last plate removes
+it on the next render. Use the existing frame's `pulseAlpha()` for both.
+
+Server authority, owner-only sends, clear packet format and unknown unloaded
+target handling stay intact; eligibility, cleanup and login resync expand as
+above. `liveEdges()` never supplies beam positions. Blocked-only warnings now
+create both red effects; manual-only locates still create neither.
+
+### Geometry and render boundaries
+
+Render a vertical translucent, full-bright red column, centered at
+`(x + 0.5, z + 0.5)`, starting at `y + 1`, with a 0.2-block square cross-section.
+Use the plate red `(1.0, 0.15, 0.15)` and its pulse opacity. End it at
+`max(dimension upper build boundary, provider top + client render distance in
+blocks)`. This keeps a positive column above high providers and reaches above
+dimension roofs without scanning blocks or hard-coding Overworld height.
+Normal camera/fog distance still applies; infinite-distance visibility is not
+part of the feature. Do not cull the whole column just because its base is
+outside the camera frustum.
+
+Use a beam-specific render type/pipeline with translucent blending, no culling,
+no depth test and no depth writes, so opaque geometry cannot hide the column
+and it cannot corrupt depth for later draws. Keep the existing plate/icon/edge
+pipelines unchanged. Define render state in that pipeline, not global depth
+toggles around deferred buffered writes. Flush its batch at the world hook
+before returning, and never retain a consumer across writes to another type.
+No vanilla beacon block entity, beacon sky-access check, texture or dependency
+is needed: use the existing filled-shape emission approach with the dedicated
+state. Restore the pose stack and let pipeline setup/teardown own render state.
+
+| Owned seam | Planned change |
+| --- | --- |
+| `shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/ProviderHighlightShapes.java` | Add the beam draw entry point using the older filled-shape API. Keep API differences in loader adapters where necessary. |
+| `shared/src/mc2612/java/com/ctux/ae2craftingtime/mc1201/ProviderHighlightShapes.java` | Equivalent camera-relative geometry for the newer render API. |
+| Forge 1.20.1 and NeoForge 1.21.1 `ProviderHighlightRender` | Submit beams from selected plates in their existing world stage, with a beam-specific render type. |
+| Fabric 1.20.1 `Ae2CraftingTimeClient` | Same selection and geometry in `AFTER_TRANSLUCENT`; keep its dedicated immediate buffer and flush before return. |
+| NeoForge 26.1.2 `ProviderHighlightRender` | Draw beams once in `onRenderLevelStage` using a dedicated pipeline. Do not submit them again in the separate item-only `onSubmitGeometry` pass. |
+
+Do not change the shared plate store unless a minimal test seam is required.
+No codec fields, persisted transient reasons or migration are required. Update
+English and Ukrainian player guide descriptions together when implementing.
+The existing wire format carries the broader plate eligibility; older clients
+can display those plates but lack the beam. Dedicated servers must never load the
+new rendering classes. All four release-matrix rows require implementation.
+
+### Validation and failure boundaries
+
+Reuse `ProviderPlatesTest` and `ProviderHighlightTriggerTest` for automatic
+plates versus manual edges, recovery/finish/cancel and session cleanup. Extend
+focused checks for beam inputs: shared-provider survivor, empty selection,
+dimension filtering and unresolved icon. Check positive geometry height at
+both build limits. Do not duplicate the delayed-state machine in tests.
+
+Add server boundary cases for each warning, no-warning inputs, red-to-red
+transitions, simultaneous delayed/blocked causes, first-dispatch failure,
+shared output on two CPUs, separate owners, NO PROVIDER without a target,
+reason expiry and replacement blocks. Verify recovery of DELAYED cannot clear
+NO POWER/NO SPACE/dispatch warnings, including no-menu ticks, chat-disabled
+operation, offline/reconnect and restart with expired transient evidence.
+
+Visual captures must prove opaque-roof penetration and render-state isolation;
+state assertions or compilation cannot prove either. Check from below and
+above a roof, beside the provider, and while its base is off-screen but the
+column is visible. Observe nearby translucent blocks, item icons and rainbow
+edges before and after removal. Missing level/state means no draw. Unknown
+unloaded targets keep the existing plate policy; no render-time chunk scan or
+fallback beam is allowed. #376 is related icon work, not a dependency.
+
+## Original feature sources checked
 
 - [Issue #231](https://github.com/cTux/ae2-crafting-time/issues/231).
 - Repository code: `CraftProfiler`, `ProfilerBridge` (both source sets),

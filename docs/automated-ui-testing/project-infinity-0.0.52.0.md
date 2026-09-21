@@ -8,7 +8,7 @@ cold/warm benchmark or a claim of full automatic visual qualification.
 Tracked in [#347](https://github.com/cTux/ae2-crafting-time/issues/347), implemented
 in [#349](https://github.com/cTux/ae2-crafting-time/pull/349). See the
 [specification](spec.md#one-loaded-world-per-graph),
-[technical design](technical-design.md), and [implementation plan](implementation-plan.md).
+[technical design](technical-design.md), and retained pull-request history.
 
 ## What changed
 

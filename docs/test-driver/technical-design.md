@@ -82,6 +82,34 @@ matched source marker, validates launch and artifact identities before copying,
 writes a disposable marker in a report-owned runtime, and launches Java through
 a UTF-8 argument file so result/control paths containing spaces remain one argument.
 
+## Stored-variant plan scenario (planned)
+
+Implement `stored-variant-plan` through the existing `StandardAe2Scenario`,
+`StandardCraftFixture`, recurrence fixture/observation, and dedicated control
+seams. Reuse real damaged-item AE2 keys and processing-pattern encoding; keep
+fixture changes on the server and final-frame observations on the client.
+Shared 1.20.1/1.21.1 driver code owns common transitions; 26.1.2 retains only
+its changed API adapters. The [feature plan](../exact-ingredient-mismatch/implementation-plan.md)
+owns the exact acceptance/check mapping.
+
+Capture the original native summary identity, revision, quantities, Start state
+and grid node count. Issue each storage mutation once, retain its pending
+operation and wait for native notification/synchronization before observing
+the final row. Never force production flags, callbacks or renderer results.
+Driver-only observers record callback, dirty refresh, packet ordering and
+watcher teardown; fail if idle frames trigger storage rescans or a destroyed
+watcher remains registered. Observe replacement masks, including all-zero
+clears, without mutating the production diagnosis to satisfy UI assertions.
+
+Extend existing runtime/support/SuitePlan, host scenario validation,
+groups/impact/selection, required results/screenshots and connected dispatch
+for this leaf. Preserve loopback, immutable-source/disposable markers,
+artifact/dependency identity, bounded phase acknowledgements, existing
+20-second callback and 60-second checkpoint watchdogs, and exact-process cleanup.
+The dedicated run uses the same single client's network/replan/reconnect flow;
+unit boundaries cover recipient mismatches. Add no grid node, general runner,
+arbitrary server automation or provisioning implementation to this scenario.
+
 ## Delayed resource icon fixtures (planned)
 
 The [#482 fixture design](connected-resource-fixtures/technical-design.md) owns
@@ -329,15 +357,11 @@ against the current official protocol during implementation.
 
 ## Development client installation
 
-The existing wrappers already route through the shared client scripts, so they
-do not gain separate installation logic:
+Use the shared client scripts directly so there is one installation path:
 
 ```text
-scripts-run/run-1.20.1-forge.bat
-  -> scripts/run-client.ps1 -Target 1.20.1-forge
-
-scripts-run/run-1.20.1-forge.sh
-  -> scripts/run-client.sh -Target 1.20.1-forge
+scripts/run-client.ps1 -Target 1.20.1-forge
+scripts/run-client.sh -Target 1.20.1-forge
 ```
 
 For the Forge 1.20.1 target, each shared script resolves the selected profile,
@@ -356,7 +380,7 @@ stale cleanup, or copy failure stops the launch. Other targets do not build or
 install a driver.
 
 Add one optional runtime-directory parameter to both shared scripts. It defaults
-to the current `run` or `run-latest` directory for the existing wrappers and is
+to the current `run` or `run-latest` directory and is
 used consistently for dependency installation and Gradle's
 `runtimeRunDirectory`. The UI-smoke runner supplies its isolated directory under
 `build/ui-smoke`; it does not maintain a second driver-install path.
