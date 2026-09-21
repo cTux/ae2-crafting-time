@@ -75,6 +75,12 @@ The prepared server is an immutable source marked by
 launch files, profile, and exactly one production/driver artifact pair before
 creating a separately marked disposable copy below the report directory.
 
+The [#482 provisioning expansion](connected-resource-fixtures/spec.md) adds a
+bounded preparer for the four compatible connected targets and their supported
+AppMek graphs. It seals new sources and requires explicit EULA consent for
+disposable execution. Resource-only prewarm proves readiness before fixture
+activation, not scenario success; older connected leaves keep their contracts.
+
 ## Delayed resource icon scenarios (planned)
 
 The fixture prerequisite is [#482](connected-resource-fixtures/spec.md).

@@ -119,8 +119,10 @@ file commands and acknowledgements for create/hold/release/cancel and reconnect;
 bind them to the active fixture, player and phase. Production packets alone
 create client highlights. Preserve loopback addressing, schema-2 immutable-source
 and disposable markers, exact dependency/launcher/artifact hashes, idempotent
-acknowledgements, timeouts and PID/start-time cleanup. No new runner, general
-server provisioning or arbitrary remote command is part of this work. If existing
+acknowledgements, timeouts and PID/start-time cleanup. The
+[bounded provisioner and prewarm design](connected-resource-fixtures/technical-design.md#provisioning-evidence-and-ownership)
+now belongs to #482; no second smoke runner, general server hosting or arbitrary
+remote command is part of this work. If existing
 seams cannot support it without an independently large infrastructure change,
 deliver that prerequisite separately before implementing dependent checks.
 
