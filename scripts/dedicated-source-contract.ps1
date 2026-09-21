@@ -82,7 +82,8 @@ function Get-DedicatedTree([string]$Root, [int]$MaxFiles = 20000, [long]$MaxByte
     $total = 0L
     $files = @(Get-ChildItem -LiteralPath $rootPath -File -Recurse -Force | Where-Object {
         $_.FullName -ne (Join-Path $rootPath '.ae2-crafting-time-dedicated-fixture.json') -and
-        $_.FullName -ne (Join-Path $rootPath 'source-seal.json')
+        $_.FullName -ne (Join-Path $rootPath 'source-seal.json') -and
+        $_.FullName -ne (Join-Path $rootPath '.provisioning-quarantine.json')
     } | Sort-Object FullName | ForEach-Object {
         $total += $_.Length
         if ($_.Length -gt 512MB -or $total -gt $MaxBytes) { throw 'Dedicated tree exceeds its byte bound' }
@@ -93,8 +94,11 @@ function Get-DedicatedTree([string]$Root, [int]$MaxFiles = 20000, [long]$MaxByte
     return [ordered]@{schema=1;files=$files;bytes=$total}
 }
 
-function Assert-DedicatedSeal([string]$Root) {
+function Assert-DedicatedSeal([string]$Root, [switch]$AllowPendingPublication) {
     Assert-DedicatedPath $Root -Tree | Out-Null
+    if (!$AllowPendingPublication -and (Test-Path -LiteralPath (Join-Path $Root '.provisioning-quarantine.json'))) {
+        throw 'Source publication is pending or quarantined; reuse refused'
+    }
     $markerPath = Join-Path $Root '.ae2-crafting-time-dedicated-fixture.json'
     $marker = Read-DedicatedJson $markerPath
     if ($marker.schema -ne 2 -or $marker.role -ne 'source' -or $marker.sourceFixtureId -ne 'ae2-crafting-time' -or
@@ -113,6 +117,38 @@ function Assert-DedicatedSeal([string]$Root) {
         throw 'Source inventory changed; quarantine the source without deleting it'
     }
     return $marker
+}
+
+function Assert-DedicatedPublicationPaths([string]$Destination, $Seal) {
+    $rootPath = [IO.Path]::GetFullPath($Destination).TrimEnd('\','/')
+    # Windows PowerShell 5 filesystem cmdlets use legacy MAX_PATH: 260 includes
+    # the terminating NUL. Check the final keyed root, not the shorter staging root.
+    foreach ($relative in @($Seal.files.path) + @('source-seal.json','.ae2-crafting-time-dedicated-fixture.json','.provisioning-quarantine.json')) {
+        $path = $rootPath + '\' + $relative.Replace('/','\')
+        if ($path.Length -ge 260) { throw "Published source path reaches legacy MAX_PATH ($($path.Length) characters); choose a shorter SourceRoot: $relative" }
+    }
+}
+
+function Publish-DedicatedSource([string]$Staging, [string]$Destination, $Result) {
+    $Result.cleanup = 'NOT_PUBLISHED'
+    Assert-DedicatedSeal $Staging | Out-Null
+    Assert-DedicatedPublicationPaths $Destination (Read-DedicatedJson (Join-Path $Staging 'source-seal.json'))
+    # Establish durable fail-closed state before the directory can become visible
+    # under a source key. Never publish if this exclusive marker write fails.
+    New-Item -ItemType File -Path (Join-Path $Staging '.provisioning-quarantine.json') `
+        -Value '{"schema":1,"result":"UNVALIDATED"}' -ErrorAction Stop | Out-Null
+    foreach ($file in Get-ChildItem -LiteralPath $Staging -File -Recurse -Force) { $file.IsReadOnly = $true }
+    Move-Item -LiteralPath $Staging -Destination $Destination
+    $Result.cleanup = 'RETAINED_UNVALIDATED_SOURCE'
+    $Result.quarantinedSource = $Destination
+    # Only this publication step may validate the underlying inventory while the
+    # marker remains. Any failure below retains it; normal consumers always reject it.
+    Assert-DedicatedSeal $Destination -AllowPendingPublication | Out-Null
+    $Result.sourceMarkerSha256 = (Get-FileHash -LiteralPath (Join-Path $Destination '.ae2-crafting-time-dedicated-fixture.json')).Hash
+    # Clearing pending is the last fallible operation, after destination validation.
+    Remove-Item -LiteralPath (Join-Path $Destination '.provisioning-quarantine.json') -Force -ErrorAction Stop
+    $Result.source = $Destination; $Result.result = 'PREPARED'; $Result.cleanup = 'PUBLISHED'
+    $Result.quarantinedSource = $null
 }
 
 function Get-DedicatedGraph([string]$Target, [string]$BundleDirectory, [string]$PreparedLaunch) {

@@ -119,12 +119,7 @@ try {
             sealSha256=(Get-FileHash -LiteralPath (Join-Path $staging 'source-seal.json')).Hash
             installer=$installer.provenance;metadata=$metadata.identities}}
     $marker | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $staging '.ae2-crafting-time-dedicated-fixture.json') -Encoding UTF8
-    Assert-DedicatedSeal $staging | Out-Null
-    foreach ($file in Get-ChildItem -LiteralPath $staging -File -Recurse -Force) { $file.IsReadOnly = $true }
-    Move-Item -LiteralPath $staging -Destination $destination
-    Assert-DedicatedSeal $destination | Out-Null
-    $result.source = $destination; $result.result = 'PREPARED'; $result.cleanup = 'PUBLISHED'
-    $result.sourceMarkerSha256 = (Get-FileHash -LiteralPath (Join-Path $destination '.ae2-crafting-time-dedicated-fixture.json')).Hash
+    Publish-DedicatedSource $staging $destination $result
 } catch {
     $result.failure = $_.Exception.Message
     throw

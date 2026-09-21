@@ -140,6 +140,70 @@ try {
     Json (Join-Path $source '.ae2-crafting-time-dedicated-fixture.json') @{schema=2;role='source';sourceFixtureId='ae2-crafting-time'
         provisioning=@{schema=1;sourceKey=('a'*64);sealPath='source-seal.json';sealSha256=(Get-FileHash (Join-Path $source 'source-seal.json')).Hash}}
     Assert-DedicatedSeal $source | Out-Null
+    function New-PublicationFixture([string]$Staging,[string]$FileName) {
+        New-Item -ItemType Directory -Path $Staging -Force | Out-Null
+        [IO.File]::WriteAllText((Join-Path $Staging $FileName),'preserve installed bytes')
+        Json (Join-Path $Staging 'source-seal.json') (Get-DedicatedTree $Staging)
+        Json (Join-Path $Staging '.ae2-crafting-time-dedicated-fixture.json') @{schema=2;role='source';sourceFixtureId='ae2-crafting-time'
+            provisioning=@{schema=1;sourceKey=('a'*64);sealPath='source-seal.json';sealSha256=(Get-FileHash (Join-Path $Staging 'source-seal.json')).Hash}}
+    }
+    $publicationRoot=Join-Path $temporary 'publication';New-Item -ItemType Directory -Path $publicationRoot|Out-Null
+    $destination=Join-Path $publicationRoot ('a'*64)
+    $longName='x'*(260-$destination.Length-1)
+    $longStaging=Join-Path $temporary 'staging-long';New-PublicationFixture $longStaging $longName
+    $publication=[ordered]@{result='FAILED';source=$null;cleanup='NOT_RUN'}
+    Assert ((($destination+'\'+$longName).Length) -eq 260) 'Publication boundary fixture is not exactly 260 characters'
+    function Move-Item { throw 'Overlong publication reached Move-Item' }
+    try {
+        try { Publish-DedicatedSource $longStaging $destination $publication;throw 'Accepted 260-character published path' }
+        catch { if($_.Exception.Message -notlike '*legacy MAX_PATH (260 characters)*'){throw} }
+    } finally { Remove-Item Function:Move-Item }
+    Assert ((Test-Path -LiteralPath $longStaging) -and !(Test-Path -LiteralPath $destination)) 'Path refusal moved or published the source'
+    Assert ($publication.result -eq 'FAILED' -and !$publication.source -and $publication.cleanup -eq 'NOT_PUBLISHED') 'Path refusal reported misleading publication state'
+    $shortStaging=Join-Path $temporary 'staging-short';New-PublicationFixture $shortStaging $longName.Substring(1)
+    Publish-DedicatedSource $shortStaging $destination $publication
+    Assert ($publication.result -eq 'PREPARED' -and $publication.cleanup -eq 'PUBLISHED' -and !$publication.quarantinedSource) '259-character publication was not accepted'
+    Assert-DedicatedSeal $destination|Out-Null
+    $quarantineDestination=Join-Path $publicationRoot ('b'*64)
+    $quarantineStaging=Join-Path $temporary 'staging-quarantine';New-PublicationFixture $quarantineStaging 'library.jar'
+    $quarantineResult=[ordered]@{result='FAILED';source=$null;cleanup='NOT_RUN'}
+    $originalSeal=(Get-Command Assert-DedicatedSeal).ScriptBlock
+    function Assert-DedicatedSeal([string]$Root,[switch]$AllowPendingPublication) {
+        if($Root -eq $quarantineDestination){throw 'Injected post-move validation failure'}
+        & $originalSeal $Root -AllowPendingPublication:$AllowPendingPublication
+    }
+    try { Refuses { Publish-DedicatedSource $quarantineStaging $quarantineDestination $quarantineResult } 'Post-move failure was accepted' }
+    finally { Set-Item Function:Assert-DedicatedSeal -Value $originalSeal }
+    Assert ($quarantineResult.result -eq 'FAILED' -and !$quarantineResult.source -and
+        $quarantineResult.cleanup -eq 'RETAINED_UNVALIDATED_SOURCE' -and $quarantineResult.quarantinedSource -eq $quarantineDestination) 'Post-move failure did not identify the retained unvalidated destination'
+    Assert ((Test-Path -LiteralPath $quarantineDestination) -and !(Test-Path -LiteralPath $quarantineStaging)) 'Post-move failure lost its retained source'
+    Assert ((Get-Content -LiteralPath (Join-Path $quarantineDestination 'library.jar') -Raw) -eq 'preserve installed bytes') 'Quarantine changed installed evidence'
+    Assert (Test-Path -LiteralPath (Join-Path $quarantineDestination '.provisioning-quarantine.json')) 'Post-move failure omitted quarantine marker'
+    Refuses { Assert-DedicatedSeal $quarantineDestination } 'Quarantined publication could be reused'
+    Assert-DedicatedSeal $quarantineDestination -AllowPendingPublication|Out-Null
+    $writeStaging=Join-Path $temporary 'staging-marker-write';New-PublicationFixture $writeStaging 'library.jar'
+    $writeDestination=Join-Path $publicationRoot ('c'*64)
+    $writeResult=[ordered]@{result='FAILED';source=$null;cleanup='NOT_RUN'}
+    function New-Item { throw 'Injected pending marker creation failure' }
+    function Move-Item { throw 'Marker creation failure reached rename' }
+    try {
+        try { Publish-DedicatedSource $writeStaging $writeDestination $writeResult;throw 'Accepted pending marker creation failure' }
+        catch { if($_.Exception.Message -ne 'Injected pending marker creation failure'){throw} }
+    } finally { Remove-Item Function:New-Item;Remove-Item Function:Move-Item }
+    Assert ((Test-Path -LiteralPath $writeStaging) -and !(Test-Path -LiteralPath $writeDestination) -and
+        $writeResult.cleanup -eq 'NOT_PUBLISHED' -and !$writeResult.source) 'Marker write failure published a usable source'
+    $clearStaging=Join-Path $temporary 'staging-marker-clear';New-PublicationFixture $clearStaging 'library.jar'
+    $clearDestination=Join-Path $publicationRoot ('d'*64)
+    $clearResult=[ordered]@{result='FAILED';source=$null;cleanup='NOT_RUN'}
+    function Remove-Item { throw 'Injected pending marker clear failure' }
+    try {
+        try { Publish-DedicatedSource $clearStaging $clearDestination $clearResult;throw 'Accepted pending marker clear failure' }
+        catch { if($_.Exception.Message -ne 'Injected pending marker clear failure'){throw} }
+    } finally { Microsoft.PowerShell.Management\Remove-Item Function:Remove-Item }
+    Assert ($clearResult.cleanup -eq 'RETAINED_UNVALIDATED_SOURCE' -and !$clearResult.source -and
+        (Test-Path -LiteralPath (Join-Path $clearDestination '.provisioning-quarantine.json'))) 'Marker clear failure lost quarantine state'
+    Assert-DedicatedSeal $clearDestination -AllowPendingPublication|Out-Null
+    Refuses { Assert-DedicatedSeal $clearDestination } 'Marker clear failure allowed later reuse'
     Refuses { Get-DedicatedTree $source 0 } 'Inventory count cap failed'
     Refuses { Get-DedicatedTree $source 10 1 } 'Inventory byte cap failed'
     [IO.File]::AppendAllText((Join-Path $source 'library.jar'),'changed')
