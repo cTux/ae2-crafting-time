@@ -6,7 +6,7 @@ param(
     [string]$CasesBase64,
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-channel-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|stored-variant-plan|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-channel-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$ArchiveRoot,
     [string]$ReportDirectory,
@@ -358,7 +358,7 @@ try {
                 } elseif ($process.WaitForExit(1000)) {
                     break
                 }
-                if ($Scenario -in @('cpu-list-total-ttc', 'recurrent-plan') -or $selectedCases -contains 'recurrent-plan') {
+                if ($Scenario -in @('cpu-list-total-ttc', 'recurrent-plan', 'stored-variant-plan') -or $selectedCases -contains 'recurrent-plan' -or $selectedCases -contains 'stored-variant-plan') {
                     $progressPath = Join-Path $evidence 'driver-progress.json'
                     if (Test-Path -LiteralPath $progressPath -PathType Leaf) {
                         try {
@@ -496,9 +496,13 @@ try {
         $driverName = "ae2-crafting-time-$modVersion-$loader-$game-test-driver.jar"
         $standardContracts = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json).cases
         $requiredChecks = if ($standardContracts.$caseScenario) {
+            if ($DedicatedAddress -and $standardContracts.$caseScenario.connectedChecks) {
+                @($standardContracts.$caseScenario.checks) + @($standardContracts.$caseScenario.connectedChecks)
+            } else {
             if ($result.checks.'advanced-cpu' -is [bool] -and $standardContracts.$caseScenario.advancedChecks) {
                 @($standardContracts.$caseScenario.advancedChecks)
             } else { @($standardContracts.$caseScenario.checks) }
+            }
         } elseif ($caseScenario -eq "no-space-status") {
             @("screen", "external-machine", "warning", "tooltip", "layout", "recovered")
         } elseif ($caseScenario -eq "no-power-status") {
@@ -547,9 +551,13 @@ try {
         if (Compare-Object $requiredChecks $actualChecks -CaseSensitive) { throw "Invalid UI-smoke check set: $caseScenario" }
         foreach ($check in $requiredChecks) { if (-not $result.checks.$check) { throw "Failed UI-smoke check: $check" } }
         $requiredScreenshots = if ($standardContracts.$caseScenario) {
+            if ($DedicatedAddress -and $standardContracts.$caseScenario.connectedScreenshots) {
+                @($standardContracts.$caseScenario.screenshots) + @($standardContracts.$caseScenario.connectedScreenshots)
+            } else {
             if ($result.checks.'advanced-cpu' -is [bool] -and $standardContracts.$caseScenario.advancedScreenshots) {
                 @($standardContracts.$caseScenario.advancedScreenshots)
             } else { @($standardContracts.$caseScenario.screenshots) }
+            }
         } elseif ($caseScenario -eq "no-space-status") {
             @("no-space-before.png", "no-space-en-us.png", "no-space-recovered.png")
         } elseif ($caseScenario -eq "no-power-status") {

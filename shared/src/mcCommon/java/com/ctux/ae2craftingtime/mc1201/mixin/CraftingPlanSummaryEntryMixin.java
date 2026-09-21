@@ -8,6 +8,9 @@ import org.spongepowered.asm.mixin.Unique;
 @Mixin(CraftingPlanSummaryEntry.class)
 public class CraftingPlanSummaryEntryMixin implements RecurrentPlanEntry {
     @Unique private boolean ae2craftingtime$recurrent;
+    @Unique private boolean ae2craftingtime$storedVariant;
     @Override public boolean ae2craftingtime$recurrent() { return ae2craftingtime$recurrent; }
     @Override public void ae2craftingtime$recurrent(boolean recurrent) { ae2craftingtime$recurrent = recurrent; }
+    @Override public boolean ae2craftingtime$storedVariant() { return ae2craftingtime$storedVariant; }
+    @Override public void ae2craftingtime$storedVariant(boolean storedVariant) { ae2craftingtime$storedVariant = storedVariant; }
 }

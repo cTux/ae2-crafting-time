@@ -90,6 +90,9 @@
   "text.ae2craftingtime.value.whole_seconds": "%ss",
   "text.ae2craftingtime.plan.recurrent": "Recurrent: %s",
   "text.ae2craftingtime.plan.recurrent_hint": "This ingredient is missing because its crafting recipe depends on itself, directly or through other recipes.",
+  "text.ae2craftingtime.plan.stored_variant": "Stored variant",
+  "text.ae2craftingtime.plan.stored_variant.explanation": "The ME network stores this item with different saved data.",
+  "text.ae2craftingtime.plan.stored_variant.suggestion": "Re-encode the pattern using the item the network actually produces or stores.",
   "guide.ae2craftingtime.name": "AE2 Crafting Time Guide",
   "item.ae2craftingtime.guide": "AE2 Crafting Time Guide"
 }

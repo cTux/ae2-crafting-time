@@ -12,6 +12,7 @@
     "CraftingCpuLogicMixin",
     "CraftingCalculationMixin",
     "CraftConfirmMenuMixinSrg",
+    "StorageServiceAccessor",
     "CraftingPlanMixin",
     "CraftingPlanSummaryMixin",
     "CraftingPlanSummaryEntryMixin",

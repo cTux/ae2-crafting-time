@@ -90,6 +90,9 @@
   "text.ae2craftingtime.value.whole_seconds": "%sс",
   "text.ae2craftingtime.plan.recurrent": "Циклічне: %s",
   "text.ae2craftingtime.plan.recurrent_hint": "Цього інгредієнта бракує, бо рецепт його виготовлення залежить від нього самого — безпосередньо або через інші рецепти.",
+  "text.ae2craftingtime.plan.stored_variant": "Інший варіант у сховищі",
+  "text.ae2craftingtime.plan.stored_variant.explanation": "У ME-мережі є цей предмет з іншими збереженими даними.",
+  "text.ae2craftingtime.plan.stored_variant.suggestion": "Перекодуйте шаблон, використавши предмет, який мережа справді виробляє або зберігає.",
   "guide.ae2craftingtime.name": "Посібник AE2 Crafting Time",
   "item.ae2craftingtime.guide": "Посібник AE2 Crafting Time"
 }

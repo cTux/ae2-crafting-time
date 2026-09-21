@@ -66,6 +66,18 @@ public final class DedicatedCpuScenario {
     private boolean recurrentComplete;
     private boolean recurrentCaptured;
     private String recurrentAction = "";
+    private long variantAck;
+    private String variantAction = "";
+    private boolean variantComplete;
+    private StandardCraftFixture variantSecond;
+    private boolean variantDisconnected;
+    private int variantAckMenu = -1;
+    private long variantAckRevision;
+    private int variantPublishedMenu = Integer.MIN_VALUE;
+    private long variantPublishedRevision = Long.MIN_VALUE;
+    private long variantPublishedAck = Long.MIN_VALUE;
+    private boolean variantGridsReady;
+    private appeng.menu.me.crafting.CraftingPlanSummary variantOriginalSummary;
     private final long started = System.nanoTime();
 
     public void tick(MinecraftServer server) {
@@ -95,6 +107,10 @@ public final class DedicatedCpuScenario {
         }
         if (scenario.equals("recurrent-plan-connected")) {
             stepRecurrentConnected(server, level);
+            return;
+        }
+        if (scenario.equals("stored-variant-plan-connected")) {
+            stepStoredVariantConnected(server);
             return;
         }
         if (player == null) {
@@ -176,6 +192,101 @@ public final class DedicatedCpuScenario {
 
     static int timeoutMinutes(String value) {
         return value.endsWith("-connected") ? 40 : 5;
+    }
+
+    private void stepStoredVariantConnected(MinecraftServer server) {
+        if (!connectedValidated) { CpuListTtcControl.validateDisposableServer(Path.of(""), target); connectedValidated = true; }
+        if (variantComplete && server.getPlayerList().getPlayers().isEmpty()) {
+            finish(server, "PASS", "");
+            return;
+        }
+        var rolePlayer = server.getPlayerList().getPlayers().stream()
+                .filter(value -> value.getName().getString().equals("Ae2ctAlpha")).findFirst().orElse(null);
+        if (rolePlayer == null) {
+            if (variantAck >= 10) variantDisconnected = true;
+            return;
+        }
+        var expectedUuid = UUID.nameUUIDFromBytes("OfflinePlayer:Ae2ctAlpha".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        if (!rolePlayer.getUUID().equals(expectedUuid)) throw new IllegalStateException("Unexpected variant role identity");
+        var active = variantAck < 8 ? gridFixture : variantSecond;
+        if (active == gridFixture) {
+            gridFixture.storedVariantPlan = true;
+            gridFixture.missingPlanInput = true;
+            gridFixture.unprofiledPlan = true;
+        }
+        if (!active.prepare(rolePlayer, origin)) return;
+        if (!variantGridsReady) {
+            if (variantSecond == null) variantSecond = gridFixture.variantSecondGrid();
+            if (!variantSecond.prepare(rolePlayer, origin)) return;
+            variantSecond.setStoredVariantStock(rolePlayer, true, false);
+            gridFixture.viewTerminal(rolePlayer);
+            variantGridsReady = true;
+        }
+        var menu = rolePlayer.containerMenu instanceof appeng.menu.me.crafting.CraftConfirmMenu confirm ? confirm : null;
+        var revision = menu == null ? 0 : ((com.ctux.ae2craftingtime.mc1201.RecurrentPlanMenu) menu)
+                .ae2craftingtime$summaryRevision();
+        var command = StoredVariantControl.command();
+        if (variantAck == 9 && menu == null && command.action().equals("cancel")
+                && command.matches(rolePlayer.getUUID(), variantAckMenu, variantAckRevision, variantAck)) {
+            if (!StoredVariantObservation.closed(variantAckMenu)) return;
+            variantAck = command.sequence();
+            variantAction = command.action();
+        } else if (menu != null && menu.getPlan() != null && command.sequence() > variantAck
+                && command.matches(rolePlayer.getUUID(), menu.containerId, revision, variantAck)
+                && com.ctux.ae2craftingtime.mc1201.StatsRequestContext.current(rolePlayer).grid()
+                        == active.cpu(rolePlayer).getMainNode().getGrid()) {
+            var row = menu.getPlan().getEntries().stream().filter(entry ->
+                    active.storedVariantKey(1).equals(entry.getWhat()) && entry.getMissingAmount() > 0)
+                    .findFirst().orElse(null);
+            if (row == null) throw new IllegalStateException("Connected variant plan lost its exact missing row");
+            var expectedAction = variantAck == 0 ? "step-1" : variantAck == 1 ? "step-2"
+                    : variantAck == 2 ? "step-3" : variantAck == 3 ? "step-4"
+                    : variantAck == 4 ? "step-5" : variantAck == 5 ? "step-6"
+                    : variantAck == 6 ? "step-7" : variantAck == 7 ? "switch" : variantAck == 8 ? "replanned"
+                    : variantAck == 10 && variantDisconnected ? "complete" : "";
+            if (!command.action().equals(expectedAction))
+                throw new IllegalStateException("Unexpected variant transition: " + command.action());
+            switch (command.action()) {
+                case "step-1" -> active.setStoredVariantStock(rolePlayer, true, false);
+                case "step-2" -> active.setStoredVariantStock(rolePlayer, false, false);
+                case "step-3" -> active.setStoredVariantStock(rolePlayer, true, true);
+                case "step-4" -> active.setStoredVariantStock(rolePlayer, true, false);
+                case "step-5" -> active.setStoredVariantStock(rolePlayer, false, true);
+                case "step-6" -> {
+                    active.setStoredVariantStock(rolePlayer, false, false);
+                    active.setStoredVariantOtherStock(rolePlayer);
+                }
+                case "step-7" -> active.setStoredVariantStock(rolePlayer, true, false);
+                case "switch" -> {
+                    if (!StoredVariantObservation.verifyServer(menu.getPlan())) return;
+                    variantOriginalSummary = menu.getPlan();
+                    gridFixture.moveVariantTerminal(rolePlayer, variantSecond);
+                }
+                case "replanned" -> {
+                    if (!StoredVariantObservation.closed(variantOriginalSummary)) return;
+                    if (menu.containerId != variantAckMenu || menu.getPlan() == variantOriginalSummary
+                            || revision <= variantAckRevision)
+                        throw new IllegalStateException("Variant replan did not replace the retained native summary");
+                }
+                case "complete" -> variantComplete = true;
+                default -> throw new IllegalStateException("Unsupported variant transition");
+            }
+            variantAck = command.sequence();
+            variantAction = command.action();
+            variantAckMenu = menu.containerId;
+            variantAckRevision = revision;
+            System.out.println("AE2CT variant recipient=" + rolePlayer.getUUID() + " menu=" + menu.containerId
+                    + " revision=" + revision + " action=" + variantAction + " missing=" + row.getMissingAmount());
+        }
+        if (variantAckMenu != variantPublishedMenu || variantAckRevision != variantPublishedRevision
+                || variantAck != variantPublishedAck) {
+            StoredVariantControl.publish(variantAck, variantAction,
+                    gridFixture.terminal, rolePlayer.getUUID(),
+                    variantAckMenu, variantAckRevision);
+            variantPublishedMenu = variantAckMenu;
+            variantPublishedRevision = variantAckRevision;
+            variantPublishedAck = variantAck;
+        }
     }
 
     private void stepRecurrentConnected(MinecraftServer server, ServerLevel level) {

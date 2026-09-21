@@ -37,6 +37,14 @@ try {
         -ControlDirectory (Join-Path $temp 'roles') | Out-Null
     $roleArguments = Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw
     if (!$roleArguments.Contains('Ae2ctAlpha') -or $roleArguments.Contains('PreparedPlayer')) { throw 'Role identity was not replaced' }
+    $parameters.Scenario = 'stored-variant-plan'
+    & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -Role alpha -OfflineName Ae2ctAlpha `
+        -OfflineUuid 446b6d0ccadd3e57baf699d70f01a628 -DedicatedAddress '127.0.0.1:25565' `
+        -ControlDirectory (Join-Path $temp 'roles') | Out-Null
+    if (!(Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw).Contains('scenario=stored-variant-plan')) {
+        throw 'Bounded stored-variant connected launch was not prepared'
+    }
+    $parameters.Scenario = 'recurrent-plan'
     foreach ($invalid in @(
         @{name='OtherPlayer';uuid='446b6d0ccadd3e57baf699d70f01a628';address='127.0.0.1:25565'},
         @{name='Ae2ctAlpha';uuid='0123456789abcdef0123456789abcdef';address='127.0.0.1:25565'},

@@ -126,6 +126,11 @@ try {
     Assert (@($recurrentLanguage.targets | Where-Object { $_.cases.Count -ne 2 -or 'recurrent-plan' -notin $_.cases -or 'standard-plan-controls' -notin $_.cases }).Count -eq 0) `
         'English recurrent-plan labels must select only the recurrence matrix'
     Clean
+    Put $lang '{"text.ae2craftingtime.ttc_delayed":"DELAYED","text.ae2craftingtime.plan.stored_variant":"Stored variant","text.ae2craftingtime.plan.stored_variant.explanation":"Saved data differs","text.ae2craftingtime.plan.stored_variant.suggestion":"Re-encode the pattern","other":"value"}'
+    $variantLanguage = Plan
+    Assert (@($variantLanguage.targets | Where-Object { $_.cases.Count -ne 3 -or 'stored-variant-plan' -notin $_.cases -or 'recurrent-plan' -notin $_.cases -or 'standard-plan-controls' -notin $_.cases }).Count -eq 0) `
+        'English stored-variant labels must select variant and native-plan regressions'
+    Clean
     $unicodeLanguage = '{"text.ae2craftingtime.ttc_delayed":"DELAYED","other":"value' + [char]0x2026 + '"}'
     Put $lang $unicodeLanguage
     Invoke-FixtureGit @('add','--',$lang)

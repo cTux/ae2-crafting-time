@@ -10,7 +10,7 @@ param(
     [ValidateRange(1, 1800)][int]$ServerStartupTimeoutSeconds = 180,
     [switch]$ScheduledJava,
     [string]$InteractiveUser = 'Codex',
-    [ValidateSet('cpu-list-total-ttc','recurrent-plan')][string]$Scenario = 'cpu-list-total-ttc',
+    [ValidateSet('cpu-list-total-ttc','recurrent-plan','stored-variant-plan')][string]$Scenario = 'cpu-list-total-ttc',
     [switch]$PlanOnly
 )
 $ErrorActionPreference = 'Stop'
@@ -225,7 +225,7 @@ try {
         BundleDirectory=$bundle; PreparedLaunch=$prepared; DedicatedAddress=$Address
         ControlDirectory=$control; CampaignId=$connectionEpoch; FailOnInitialDisconnect=$true
         StartupTimeoutSeconds=$ServerStartupTimeoutSeconds }
-    if ($Scenario -eq 'recurrent-plan') {
+    if ($Scenario -in @('recurrent-plan','stored-variant-plan')) {
         $clientParameters.Role = 'alpha'; $clientParameters.OfflineName = 'Ae2ctAlpha'
         $clientParameters.OfflineUuid = '446b6d0ccadd3e57baf699d70f01a628'
     }
@@ -297,6 +297,8 @@ try {
     if ($result.result -ne 'PASS') { throw "Connected dedicated server failed: $($result.error)" }
     $stateFiles = if ($Scenario -eq 'recurrent-plan') {
         @(Join-Path $control 'alpha/state.properties')
+    } elseif ($Scenario -eq 'stored-variant-plan') {
+        @(Join-Path $control 'variant/state.properties')
     } else { @(Join-Path $control 'state.properties') }
     foreach ($required in @((Join-Path $resolvedServer 'logs/latest.log')) + @($stateFiles)) {
         if (!(Test-Path -LiteralPath $required -PathType Leaf)) { throw "Connected evidence is missing: $required" }

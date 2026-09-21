@@ -110,7 +110,7 @@ try {
     throw 'Duplicate phase process identity was accepted'
 } catch { if ($_.Exception.Message -eq 'Duplicate phase process identity was accepted') { throw } }
 $runner = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'run-ui-smoke.ps1') -Raw
-if ($runner -notmatch "if \(\`$Scenario -in @\('cpu-list-total-ttc', 'recurrent-plan'\) -or \`$selectedCases -contains 'recurrent-plan'\) \{\s*\`$progressPath") {
+if ($runner -notmatch "if \(\`$Scenario -in @\('cpu-list-total-ttc', 'recurrent-plan', 'stored-variant-plan'\) -or \`$selectedCases -contains 'recurrent-plan' -or \`$selectedCases -contains 'stored-variant-plan'\) \{\s*\`$progressPath") {
     throw 'The progress watchdog does not cover every CPU-list process'
 }
 $running = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test -ProcessLookup {
