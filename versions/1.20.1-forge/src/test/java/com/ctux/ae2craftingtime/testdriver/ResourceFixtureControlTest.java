@@ -356,6 +356,13 @@ class ResourceFixtureControlTest {
         }
     }
 
+    @Test void reconnectCaptureWaitsForTransientScreenAndOverlayToClose() {
+        assertFalse(ResourceFixtureClient.captureViewReady(true, false));
+        assertFalse(ResourceFixtureClient.captureViewReady(false, true));
+        assertFalse(ResourceFixtureClient.captureViewReady(true, true));
+        assertTrue(ResourceFixtureClient.captureViewReady(false, false));
+    }
+
     private void writeCommand(ResourceFixtureControl.Command command) throws Exception {
         var text = "schema=1\nepoch=" + command.epoch() + "\nscenario=" + command.scenario() + "\nplayer="
                 + command.player() + "\nfixture=" + command.fixture() + "\nrevision=" + command.revision() + "\nsequence="

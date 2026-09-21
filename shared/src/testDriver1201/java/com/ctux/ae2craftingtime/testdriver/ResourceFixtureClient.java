@@ -241,7 +241,7 @@ final class ResourceFixtureClient {
         if (!manualLocate && options.connectedDedicated() && !ProviderHighlightClient.liveEdges().isEmpty()) {
             throw new IllegalStateException("rainbow locate state survived reconnect");
         }
-        requireWorldView();
+        if (!worldViewReady()) return false;
         if (!renderPlatesConverged(expected, jobs.size())) return false;
         if (!stableFor(resourceCase.name() + ":" + checkpoint)) return false;
         checks.put("server-identity", true);
@@ -281,7 +281,7 @@ final class ResourceFixtureClient {
         if (options.connectedDedicated() && !ProviderHighlightClient.liveEdges().isEmpty()) {
             throw new IllegalStateException("connected rainbow locate state survived reconnect");
         }
-        requireWorldView();
+        if (!worldViewReady()) return false;
         if (!stableFor(resourceCase.name() + ":" + checkpoint)) return false;
         checks.put("lifecycle", true);
         return capture(resourceCase, checkpoint, jobs);
@@ -305,19 +305,21 @@ final class ResourceFixtureClient {
         return result;
     }
 
-    private void requireWorldView() {
-        if (minecraft.screen != null || minecraft.getOverlay() != null) {
-            throw new IllegalStateException("resource fixture capture requires closed menus and overlays");
-        }
+    static boolean captureViewReady(boolean screenOpen, boolean overlayOpen) {
+        return !screenOpen && !overlayOpen;
+    }
+
+    private boolean worldViewReady() {
+        if (!captureViewReady(minecraft.screen != null, minecraft.getOverlay() != null)) return false;
         minecraft.gui.getChat().clearMessages(true);
         minecraft.options.chatVisibility().set(net.minecraft.world.entity.player.ChatVisiblity.HIDDEN);
+        return true;
     }
 
     private boolean driveNativeLocate(String outputId) {
         if (!ProviderHighlightClient.liveEdges().isEmpty()) {
             if (minecraft.screen != null) minecraft.setScreen(null);
-            requireWorldView();
-            return minecraft.screen == null;
+            return worldViewReady();
         }
         if (locateSent) return false;
         if (minecraft.screen == null) {
