@@ -407,6 +407,17 @@ final class StandardCraftFixture {
             throw new IllegalStateException("Fixture failed to replace the active terminal grid");
     }
 
+    boolean variantTerminalReady(ServerPlayer player, StandardCraftFixture other) {
+        var terminalNode = ((IInWorldGridNodeHost) player.level().getBlockEntity(terminal)).getGridNode(Direction.NORTH);
+        var grid = terminalNode.getGrid();
+        if (grid == null || grid != other.cpu(player).getMainNode().getGrid()
+                || !other.cpu(player).getCluster().isActive() || grid.getCraftingService().getCpus().isEmpty())
+            return false;
+        var stock = grid.getStorageService().getInventory().getAvailableStacks();
+        return stock.get(other.storedVariantKey(1)) == 0 && stock.get(other.storedVariantKey(2)) == 1
+                && stock.get(other.storedVariantKey(3)) == 1;
+    }
+
     StandardCraftFixture largeCpuGrid() {
         var fixture = new StandardCraftFixture();
         fixture.cpuListScenario = true;

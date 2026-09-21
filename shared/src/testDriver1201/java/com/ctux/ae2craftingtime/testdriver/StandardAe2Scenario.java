@@ -541,6 +541,13 @@ final class StandardAe2Scenario {
                     variantSecondMenu = menu.containerId;
                     screenshot.accept("stored-variant-network-switch.png");
                     mark(checks, "network-switch", true);
+                    variantLifecycle = 5;
+                    variantHover = false;
+                    frames.reset();
+                    return false;
+                }
+                if (variantLifecycle == 5) {
+                    if (menu.hasNoCPU()) return false;
                     menu.replan();
                     variantLifecycle = 2;
                     variantHover = false;

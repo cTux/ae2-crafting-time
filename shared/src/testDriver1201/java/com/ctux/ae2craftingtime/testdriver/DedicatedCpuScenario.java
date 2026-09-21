@@ -208,7 +208,7 @@ public final class DedicatedCpuScenario {
         }
         var expectedUuid = UUID.nameUUIDFromBytes("OfflinePlayer:Ae2ctAlpha".getBytes(java.nio.charset.StandardCharsets.UTF_8));
         if (!rolePlayer.getUUID().equals(expectedUuid)) throw new IllegalStateException("Unexpected variant role identity");
-        var active = variantAck < 8 ? gridFixture : variantSecond;
+        var active = variantAck < 8 && variantOriginalSummary == null ? gridFixture : variantSecond;
         if (active == gridFixture) {
             gridFixture.storedVariantPlan = true;
             gridFixture.missingPlanInput = true;
@@ -258,9 +258,13 @@ public final class DedicatedCpuScenario {
                 }
                 case "step-7" -> active.setStoredVariantStock(rolePlayer, true, false);
                 case "switch" -> {
-                    if (!StoredVariantObservation.verifyServer(menu.getPlan())) return;
-                    variantOriginalSummary = menu.getPlan();
-                    gridFixture.moveVariantTerminal(rolePlayer, variantSecond);
+                    if (variantOriginalSummary == null) {
+                        if (!StoredVariantObservation.verifyServer(menu.getPlan())) return;
+                        variantOriginalSummary = menu.getPlan();
+                        gridFixture.moveVariantTerminal(rolePlayer, variantSecond);
+                        return;
+                    }
+                    if (!gridFixture.variantTerminalReady(rolePlayer, variantSecond)) return;
                 }
                 case "replanned" -> {
                     if (!StoredVariantObservation.closed(variantOriginalSummary)) return;
