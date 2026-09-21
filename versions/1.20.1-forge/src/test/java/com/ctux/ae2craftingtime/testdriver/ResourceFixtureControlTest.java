@@ -363,6 +363,12 @@ class ResourceFixtureControlTest {
         assertTrue(ResourceFixtureClient.captureViewReady(false, false));
     }
 
+    @Test void connectedRejoinWaitsForTerrainRenderingToSettle() {
+        assertEquals(40, ResourceFixtureClient.stableFramesRequired(true, "ITEM:rejoined"));
+        assertEquals(2, ResourceFixtureClient.stableFramesRequired(false, "ITEM:rejoined"));
+        assertEquals(2, ResourceFixtureClient.stableFramesRequired(true, "ITEM:held"));
+    }
+
     private void writeCommand(ResourceFixtureControl.Command command) throws Exception {
         var text = "schema=1\nepoch=" + command.epoch() + "\nscenario=" + command.scenario() + "\nplayer="
                 + command.player() + "\nfixture=" + command.fixture() + "\nrevision=" + command.revision() + "\nsequence="

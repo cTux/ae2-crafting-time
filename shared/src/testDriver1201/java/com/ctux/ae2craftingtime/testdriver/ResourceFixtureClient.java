@@ -596,7 +596,12 @@ final class ResourceFixtureClient {
             stableFrame = TestDriverRuntime.renderedFrames;
             return false;
         }
-        return TestDriverRuntime.renderedFrames >= stableFrame + 2;
+        return TestDriverRuntime.renderedFrames >= stableFrame
+                + stableFramesRequired(options.connectedDedicated(), checkpoint);
+    }
+
+    static int stableFramesRequired(boolean connectedDedicated, String checkpoint) {
+        return connectedDedicated && checkpoint.endsWith(":rejoined") ? 40 : 2;
     }
 
     private void requireObservationDeadline(String operation) {
