@@ -1,7 +1,7 @@
 # Provider Locate Implementation Plan
 
-The phases below describe the original feature. The final section is the
-current planned correction for #443; it does not repeat the original work.
+The phases below describe the original feature. Later sections record #443
+and the planned red sky beam for #488; they do not repeat the original work.
 Let the commit hook create the PR, then use required CI as the first Gradle
 test run.
 
@@ -193,3 +193,50 @@ the survivor icon, red plate, and independent rainbow edge before capturing
 `delayed-world-winner-recovered.png`. The existing final-output stages verify
 the remaining plate clears. Review both new captures on Forge 1.20.1, then on
 Fabric 1.20.1 and NeoForge 26.1.2; an automatic assertion is not visual approval.
+
+## Red sky beam implementation
+
+Status: planned, not implemented. Tracks
+[issue #488](https://github.com/cTux/ae2-crafting-time/issues/488), the
+[beam criteria](spec.md#beam-acceptance-criteria) and
+[render design](technical-design.md#red-sky-beam-design). The planning PR must
+leave #488 open. #443's selected render view exists at the design baseline;
+reuse it. #376 does not block this work.
+
+1. **Draw from existing state (B1, B3-B6).** Own the four loader render hooks
+   and the two `ProviderHighlightShapes` source-set copies named in the design.
+   Add one beam per current-dimension selected plate, after target trimming,
+   independent of icon resolution. Reuse the frame pulse and existing lifecycle.
+   Do not add a new state store or change any server/packet/save path.
+2. **Isolate rendering (B2, B6).** Implement the specified column dimensions,
+   height and red color through dedicated no-depth-test/no-depth-write render
+   types/pipelines. Keep vertex API differences at the existing version/loader
+   boundaries. Preserve Fabric's immediate-buffer flush and draw only once in
+   the 26.1.2 world stage. Review all callers for consumer lifetime, pose cleanup
+   and accidental changes to existing plate, icon or edge rendering.
+3. **Cover the boundary (B1, B3-B6).** Extend existing plate/trigger tests for
+   empty and manual-only inputs, shared-provider survivor/removal, dimension
+   filtering, session clear/resync and missing icon. Add a focused geometry
+   check for providers at both height extremes. Keep tests beside the existing
+   source-set tests, using the repository's existing test setup.
+4. **Commit, then verify (B7).** Use one conventional feature commit and let
+   the hook create its PR before running local tests. Run focused tests and
+   compile all four release-matrix targets; run required coverage checks and
+   report current-head GitHub CI separately. Follow the prepared-client smoke
+   skill and preview `scripts/run-ui-smoke.ps1 -Changed -BaseRef origin/master
+   -PlanOnly`; run its required selection without weakening it.
+5. **Capture the actual effect (B1-B7).** Extend the existing `delayed-status`
+   scenario in `StandardAe2Scenario` with an opaque roof over the provider in
+   its disposable fixture. Capture the automatic beam, shared-provider winner
+   recovery and last-output cleanup. Add glass/fluid and roofed-dimension
+   observations, manual-only locate, chat-disabled activation, re-entry and
+   wrong-dimension/other-player absence checks. Use the same server-owned path
+   in singleplayer and a dedicated-server ownership check. Never mutate the
+   tracked source world. Run and review the visual cases on Forge 1.20.1,
+   Fabric 1.20.1, NeoForge 1.21.1 and NeoForge 26.1.2, including high providers,
+   off-screen bases and nearby translucent geometry. Bind captures and logs to
+   the implementation commit and report unrun cases honestly.
+6. **Close only with evidence.** Match each B1-B7 criterion to passing checks
+   and reviewed captures. Update these docs from planned to shipped only after
+   that gate passes. Merge the implementation and verify #488 closes; the docs
+   merge alone does not deliver the feature.
