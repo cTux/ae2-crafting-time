@@ -17,6 +17,47 @@ import org.junit.jupiter.api.io.TempDir;
 class ResourceFixtureControlTest {
     @TempDir Path directory;
 
+    @Test void reconnectWaitsForDelayedConvergenceAfterTheRealNewPlayerJoins() {
+        for (boolean disconnected : new boolean[]{false, true}) {
+            for (boolean newPlayer : new boolean[]{false, true}) {
+                for (boolean delayed : new boolean[]{false, true}) {
+                    var polls = new java.util.concurrent.atomic.AtomicInteger();
+                    assertEquals(disconnected && newPlayer && delayed,
+                            ResourceFixtureControl.reconnectReady(disconnected, newPlayer, () -> {
+                                polls.incrementAndGet();
+                                return delayed;
+                            }));
+                    assertEquals(disconnected && newPlayer ? 1 : 0, polls.get(),
+                            "native delayed state must only be polled after both identity checks pass");
+                }
+            }
+        }
+        // The live failure: busy/held survives reconnect, but delayed status needs subsequent server ticks.
+        assertFalse(ResourceFixtureControl.reconnectReady(true, true, () -> false));
+        assertFalse(ResourceFixtureControl.reconnectReady(true, true, () -> false));
+        assertTrue(ResourceFixtureControl.reconnectReady(true, true, () -> true));
+        assertThrows(IllegalStateException.class, () -> ResourceFixtureControl.reconnectReady(true, true,
+                () -> { throw new IllegalStateException("native status unavailable"); }));
+    }
+
+    @Test void serverReconnectUsesTheNativeDelayedGateBeforeAcknowledgement() throws Exception {
+        var node = new org.objectweb.asm.tree.ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/ResourceFixtureServer.class")) {
+            new org.objectweb.asm.ClassReader(java.util.Objects.requireNonNull(input)).accept(node, 0);
+        }
+        var apply = node.methods.stream().filter(method -> method.name.equals("apply")).findFirst().orElseThrow();
+        assertTrue(java.util.Arrays.stream(apply.instructions.toArray())
+                .filter(org.objectweb.asm.tree.MethodInsnNode.class::isInstance)
+                .map(org.objectweb.asm.tree.MethodInsnNode.class::cast)
+                .anyMatch(call -> call.owner.endsWith("/ResourceFixtureControl") && call.name.equals("reconnectReady")));
+        assertTrue(node.methods.stream().filter(method -> method.name.startsWith("lambda$apply$"))
+                .flatMap(method -> java.util.Arrays.stream(method.instructions.toArray()))
+                .filter(org.objectweb.asm.tree.MethodInsnNode.class::isInstance)
+                .map(org.objectweb.asm.tree.MethodInsnNode.class::cast)
+                .anyMatch(call -> call.owner.endsWith("/ResourceProcessingFixture") && call.name.equals("delayed")));
+    }
+
     @Test void readsWritesAndBindsTheCompleteProtocol() throws Exception {
         var epoch = UUID.randomUUID();
         var player = UUID.randomUUID();

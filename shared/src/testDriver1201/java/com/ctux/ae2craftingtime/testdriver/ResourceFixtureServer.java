@@ -139,7 +139,8 @@ final class ResourceFixtureServer {
             case RELEASE -> processing.release(player, command.slot());
             case CANCEL -> processing.cancel(player, command.slot());
             case REJOIN_PREPARE -> { rejoinPlayer = player; yield true; }
-            case RECONNECT -> disconnected && player != rejoinPlayer;
+            case RECONNECT -> ResourceFixtureControl.reconnectReady(disconnected, player != rejoinPlayer,
+                    () -> processing.delayed(player));
             case RESET -> {
                 if (processing == null) throw new IllegalStateException("resource reset has no processing state");
                 processing.close(player);

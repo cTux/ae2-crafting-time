@@ -48,6 +48,11 @@ final class ResourceFixtureControl {
         static Decision replay(Phase phase, long revision) { return new Decision(true, phase, revision); }
     }
 
+    static boolean reconnectReady(boolean disconnected, boolean newPlayer,
+            java.util.function.BooleanSupplier delayed) {
+        return disconnected && newPlayer && delayed.getAsBoolean();
+    }
+
     static Command readCommand(Path controlRoot) {
         return decodeCommand(read(controlFile(controlRoot, "command.properties")));
     }
