@@ -1,5 +1,10 @@
 # Provider dispatch statuses
 
+Planned change: [#488](../provider-locate/spec.md#planned-red-sky-beam) adds
+automatic red plates with output icons and sky beams to every red warning,
+including these dispatch reasons. It supersedes this document's existing
+no-red-plates boundary, while preserving detection, priority and chat policy.
+
 Issue: [#216](https://github.com/cTux/ae2-crafting-time/issues/216).
 
 Status: original planning approved on 2026-09-03; researched again on

@@ -203,29 +203,43 @@ Status: planned, not implemented. Tracks
 leave #488 open. #443's selected render view exists at the design baseline;
 reuse it. #376 does not block this work.
 
-1. **Draw from existing state (B1, B3-B6).** Own the four loader render hooks
+1. **Reconcile all warning causes (B1, B3-B6).** Own shared server highlight
+   reconciliation in `DelayedNotificationServer`, both `ProfilerBridge` copies,
+   existing CPU tick callers and `ProviderStartTracker`/dispatch-observer target
+   capture. Combine DELAYED, NO SPACE and all six `CraftingBlockReason` values
+   using existing predicates, freshness and job ownership. Track the union of
+   current contributions before sending plate updates or clears. Update finish,
+   disable/reload and login resync paths together. Preserve chat policy in
+   `BlockReasonNotifier`; never gate highlights on chat or menu requests. Validate
+   first-dispatch targets and handle NO PROVIDER with no target as no marker.
+   Keep transient reasons runtime-only and refresh them after restart.
+2. **Draw from existing client state (B1, B3-B6).** Own the four loader render hooks
    and the two `ProviderHighlightShapes` source-set copies named in the design.
    Add one beam per current-dimension selected plate, after target trimming,
    independent of icon resolution. Reuse the frame pulse and existing lifecycle.
-   Do not add a new state store or change any server/packet/save path.
-2. **Isolate rendering (B2, B6).** Implement the specified column dimensions,
+   Do not add a client beam timer or change the packet format.
+3. **Isolate rendering (B2, B6).** Implement the specified column dimensions,
    height and red color through dedicated no-depth-test/no-depth-write render
    types/pipelines. Keep vertex API differences at the existing version/loader
    boundaries. Preserve Fabric's immediate-buffer flush and draw only once in
    the 26.1.2 world stage. Review all callers for consumer lifetime, pose cleanup
    and accidental changes to existing plate, icon or edge rendering.
-3. **Cover the boundary (B1, B3-B6).** Extend existing plate/trigger tests for
+4. **Cover the boundary (B1, B3-B6).** Extend existing plate/trigger tests for
    empty and manual-only inputs, shared-provider survivor/removal, dimension
    filtering, session clear/resync and missing icon. Add a focused geometry
    check for providers at both height extremes. Keep tests beside the existing
    source-set tests, using the repository's existing test setup.
-4. **Commit, then verify (B7).** Use one conventional feature commit and let
+   Add server tests for all eight warnings, no-menu/chat-disabled operation,
+   red-to-red transitions, overlapping reasons, two jobs sharing an output,
+   different owners, transient expiry, reconnect/restart and invalid/replaced
+   targets. Assert exact packet updates and no premature clear.
+5. **Commit, then verify (B7).** Use one conventional feature commit and let
    the hook create its PR before running local tests. Run focused tests and
    compile all four release-matrix targets; run required coverage checks and
    report current-head GitHub CI separately. Follow the prepared-client smoke
    skill and preview `scripts/run-ui-smoke.ps1 -Changed -BaseRef origin/master
    -PlanOnly`; run its required selection without weakening it.
-5. **Capture the actual effect (B1-B7).** Extend the existing `delayed-status`
+6. **Capture the actual effect (B1-B7).** Extend the existing `delayed-status`
    scenario in `StandardAe2Scenario` with an opaque roof over the provider in
    its disposable fixture. Capture the automatic beam, shared-provider winner
    recovery and last-output cleanup. Add glass/fluid and roofed-dimension
@@ -236,7 +250,13 @@ reuse it. #376 does not block this work.
    Fabric 1.20.1, NeoForge 1.21.1 and NeoForge 26.1.2, including high providers,
    off-screen bases and nearby translucent geometry. Bind captures and logs to
    the implementation commit and report unrun cases honestly.
-6. **Close only with evidence.** Match each B1-B7 criterion to passing checks
+   Extend existing warning-status scenarios to verify plates and beams for all
+   eight statuses on valid targets, including failures before first successful
+   dispatch. For NO PROVIDER additionally prove no-target absence. Exercise a
+   blocked-only warning and DELAYED-to-blocked transition without marker loss.
+7. **Close only with evidence.** Match each B1-B7 criterion to passing checks
    and reviewed captures. Update these docs from planned to shipped only after
    that gate passes. Merge the implementation and verify #488 closes; the docs
    merge alone does not deliver the feature.
+   Update English/Ukrainian player guidance and the protocol behavior docs to
+   describe all-warning eligibility without claiming a packet format change.

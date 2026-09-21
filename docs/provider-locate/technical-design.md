@@ -456,18 +456,64 @@ The earlier #443 investigation above is historical: this baseline already has
 
 ### State and ownership
 
+The corrected scope includes all eight warning statuses in the spec, not only
+DELAYED. Earlier delayed-only lifecycle and blocked-warning descriptions in
+this document are the existing behavior, superseded by this planned section.
+`TtcText.blockReason`, `TtcText.noSpace` and the delayed rendering identify the
+warning set; `CraftingBlockReason` contains the six blocked reasons. Do not
+derive eligibility by inspecting RGB values or client UI caches.
+
+Extend the shared server highlight reconciliation at the existing CPU tick
+boundary. Combine current delayed evidence, `ProfilerBridge.blockReasons` with
+its current freshness/pending rules, and `NoSpaceProbe.stuckKeys` using the same
+stored-only predicate as the row. Reuse these predicates rather than inventing
+another delay threshold. Call reconciliation even when the result is empty,
+offline or chat-disabled, and without requiring `StatsRequestHandler` traffic.
+
+Keep runtime contributions by job/scope, owner, network, dimension and output,
+with their validated target positions. Reconcile the union per recipient and
+wire identity before sending: send the existing plate packet when positions
+appear/change, send an explicit clear only when its final contribution is gone.
+Changing warning reason without changing targets requires no clear or resend.
+Ending one CPU/job must not clear another owner's or surviving job's marker.
+Reuse existing collections where possible; a small runtime reconciliation map
+is appropriate, but a second client timer/state machine is not.
+
+Own `DelayedNotificationServer`, both `ProfilerBridge` copies (tick integration,
+finish/disable/reload cleanup and `resyncPlatesForPlayer`) and the existing CPU
+tick callers. Separate highlight reconciliation from once-per-episode chat in
+`BlockReasonNotifier`; its chat set remains NO POWER/NO SPACE. Delayed chat also
+retains its existing policy. All old direct delayed-only clear paths must route
+through the union check. Check standard, AdvancedAE and existing optional CPU
+callers without adding new addon detection or claiming unsupported statuses.
+
+Provider resolution must work before first successful dispatch. Reuse
+`ProviderStartTracker` pattern observations and the actual failed-dispatch
+provider candidates from `ProviderDispatchObserver`; retain bounded associated
+positions with that evidence when inactive providers disappear from a fresh
+offering lookup. Resolve and validate targets on the server with existing
+`ProviderBlockTargets` rules. Never scan arbitrary nearby blocks or choose an
+unrelated provider. NO PROVIDER with no surviving validated association yields
+no marker. Preserve unknown/unloaded handling without force-loading chunks.
+
+Reconnect sends current owner-bound contributions, with a first tick refresh
+when live state is not ready. Restart rebuilds transient reasons from fresh
+dispatch evidence; no new persisted reason or stale remembered-status fallback
+is allowed. Existing saved delayed/provider data may retain its existing role
+only for a still-valid active job. Re-evaluate NO SPACE from live CPU contents.
+
 Use `ProviderHighlightClient.renderPlates()` as the only beam input, after the
 existing `trimPositions` call and current-dimension filter. It already selects
-one plate per physical provider without deleting other delayed identities.
+one plate per physical provider without deleting other warning identities.
 Draw one beam per selected position, independently of item resolution or
 camera-facing plate-face selection. Do not introduce a beam cache or timer.
 Winner changes therefore keep the beam, while removing the last plate removes
 it on the next render. Use the existing frame's `pulseAlpha()` for both.
 
-Server authority, owner-only sends, clear packets, login resync and unknown
-unloaded-target handling stay intact. No server scanning or new chunk loads
-are needed. `liveEdges()` must never supply beam positions. This also keeps
-blocked-only warnings and manual-only locates from creating red beams.
+Server authority, owner-only sends, clear packet format and unknown unloaded
+target handling stay intact; eligibility, cleanup and login resync expand as
+above. `liveEdges()` never supplies beam positions. Blocked-only warnings now
+create both red effects; manual-only locates still create neither.
 
 ### Geometry and render boundaries
 
@@ -500,9 +546,10 @@ state. Restore the pose stack and let pipeline setup/teardown own render state.
 | NeoForge 26.1.2 `ProviderHighlightRender` | Draw beams once in `onRenderLevelStage` using a dedicated pipeline. Do not submit them again in the separate item-only `onSubmitGeometry` pass. |
 
 Do not change the shared plate store unless a minimal test seam is required.
-No codec, protocol, persistence, migration, translation or optional integration
-changes are required. Existing server/client compatibility remains unchanged;
-an older client simply lacks the beam. Dedicated servers must never load the
+No codec fields, persisted transient reasons or migration are required. Update
+English and Ukrainian player guide descriptions together when implementing.
+The existing wire format carries the broader plate eligibility; older clients
+can display those plates but lack the beam. Dedicated servers must never load the
 new rendering classes. All four release-matrix rows require implementation.
 
 ### Validation and failure boundaries
@@ -512,6 +559,13 @@ plates versus manual edges, recovery/finish/cancel and session cleanup. Extend
 focused checks for beam inputs: shared-provider survivor, empty selection,
 dimension filtering and unresolved icon. Check positive geometry height at
 both build limits. Do not duplicate the delayed-state machine in tests.
+
+Add server boundary cases for each warning, no-warning inputs, red-to-red
+transitions, simultaneous delayed/blocked causes, first-dispatch failure,
+shared output on two CPUs, separate owners, NO PROVIDER without a target,
+reason expiry and replacement blocks. Verify recovery of DELAYED cannot clear
+NO POWER/NO SPACE/dispatch warnings, including no-menu ticks, chat-disabled
+operation, offline/reconnect and restart with expired transient evidence.
 
 Visual captures must prove opaque-roof penetration and render-state isolation;
 state assertions or compilation cannot prove either. Check from below and
