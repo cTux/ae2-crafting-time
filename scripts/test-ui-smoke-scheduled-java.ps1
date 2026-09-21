@@ -110,6 +110,19 @@ try {
     throw 'Duplicate phase process identity was accepted'
 } catch { if ($_.Exception.Message -eq 'Duplicate phase process identity was accepted') { throw } }
 $runner = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'run-ui-smoke.ps1') -Raw
+if ($runner -notmatch '\$tokenParameters = @\{\}' -or
+        $runner -notmatch 'if \(\$Interactive\) \{ \$tokenParameters\.InteractiveToken = \$env:AE2CT_TEST_DRIVER_TOKEN \}' -or
+        $runner -notmatch '-InteractiveUser \$InteractiveUser `\s*@tokenParameters') {
+    throw 'Noninteractive scheduled Java must omit the optional token while interactive Java passes it through validation'
+}
+try {
+    Start-UiSmokeScheduledJava -Executable missing-java.exe -Arguments missing -WorkingDirectory . `
+        -TaskName test -InteractiveUser Codex -InteractiveToken invalid
+    throw 'Invalid interactive token was accepted'
+} catch {
+    if ($_.Exception.Message -eq 'Invalid interactive token was accepted' -or
+            $_.Exception.Message -notmatch 'InteractiveToken') { throw }
+}
 if ($runner -notmatch "if \(\`$Scenario -in @\('cpu-list-total-ttc', 'recurrent-plan', 'stored-variant-plan'\) -or \`$selectedCases -contains 'recurrent-plan' -or \`$selectedCases -contains 'stored-variant-plan'\) \{\s*\`$progressPath") {
     throw 'The progress watchdog does not cover every CPU-list process'
 }

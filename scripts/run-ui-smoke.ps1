@@ -314,9 +314,11 @@ try {
             if ($ScheduledJava) {
                 if (!$PreparedLaunch) { throw 'Scheduled Java execution requires a prepared native client' }
                 $scheduledTaskName = "AE2 Crafting Time Java $runId Phase $phase"
+                $tokenParameters = @{}
+                if ($Interactive) { $tokenParameters.InteractiveToken = $env:AE2CT_TEST_DRIVER_TOKEN }
                 $scheduledIdentity = Start-UiSmokeScheduledJava -Executable $executable -Arguments ([string]$phaseArguments) `
                     -WorkingDirectory $workingDirectory -TaskName $scheduledTaskName -InteractiveUser $InteractiveUser `
-                    -InteractiveToken $(if ($Interactive) { $env:AE2CT_TEST_DRIVER_TOKEN } else { $null })
+                    @tokenParameters
                 $process = $scheduledIdentity.process
             } else {
                 $process = Start-Process -FilePath $executable -ArgumentList $phaseArguments -PassThru -WindowStyle Hidden `
