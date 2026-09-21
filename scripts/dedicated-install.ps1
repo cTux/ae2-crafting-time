@@ -82,6 +82,19 @@ function Assert-DedicatedInstallBounds([long]$Files, [long]$Bytes, [long]$Larges
     if ($ElapsedSeconds -ge 900) { throw 'Official installer exceeded 15 minutes' }
 }
 
+function Get-DedicatedProcessStartMilliseconds([DateTime]$StartedAt) {
+    # Process.StartTime retains 100 ns ticks; Win32_Process.CreationDate loses
+    # sub-microsecond digits. Compare their UTC Unix millisecond identities,
+    # including ledger readback, without a sliding timestamp tolerance.
+    return ([DateTimeOffset]$StartedAt.ToUniversalTime()).ToUnixTimeMilliseconds()
+}
+
+function Test-DedicatedProcessIdentity([int]$ProcessId, [DateTime]$StartedAt,
+        [int]$ExpectedProcessId, [DateTime]$ExpectedStartedAt) {
+    return $ProcessId -gt 0 -and $ProcessId -eq $ExpectedProcessId -and
+        (Get-DedicatedProcessStartMilliseconds $StartedAt) -eq (Get-DedicatedProcessStartMilliseconds $ExpectedStartedAt)
+}
+
 function Invoke-DedicatedInstaller([string]$Java, [string]$Installer, $Graph, [string]$Staging, [string]$Report) {
     Assert-DedicatedPath $Staging -Tree | Out-Null
     foreach ($name in @('.installer-home','.installer-temp')) { New-Item -ItemType Directory -Path (Join-Path $Staging $name) | Out-Null }
@@ -122,10 +135,12 @@ function Invoke-DedicatedInstaller([string]$Java, [string]$Installer, $Graph, [s
                     if ($child.ProcessId -in $owned.pid -or $child.ParentProcessId -notin $owned.pid) { continue }
                     $parent = @($owned | Where-Object pid -eq $child.ParentProcessId)[0]
                     $nativeParent = @($snapshot | Where-Object ProcessId -eq $parent.pid)
-                    if ($nativeParent.Count -ne 1 -or $nativeParent[0].CreationDate.ToUniversalTime() -ne $parent.startTime) {
+                    if ($nativeParent.Count -ne 1 -or !(Test-DedicatedProcessIdentity $nativeParent[0].ProcessId `
+                            $nativeParent[0].CreationDate $parent.pid $parent.startTime)) {
                         throw 'Installer parent process ownership changed'
                     }
-                    if ($child.CreationDate.ToUniversalTime() -lt $parent.startTime) { continue }
+                    if ((Get-DedicatedProcessStartMilliseconds $child.CreationDate) -lt
+                            (Get-DedicatedProcessStartMilliseconds $parent.startTime)) { continue }
                     $owned.Add([pscustomobject]@{pid=[int]$child.ProcessId;startTime=$child.CreationDate.ToUniversalTime()})
                     $added = $true
                 }
@@ -147,7 +162,9 @@ function Invoke-DedicatedInstaller([string]$Java, [string]$Installer, $Graph, [s
             foreach ($identity in @($owned.ToArray()) | Sort-Object startTime -Descending) {
                 $live = Get-Process -Id $identity.pid -ErrorAction SilentlyContinue
                 if (!$live) { continue }
-                if ($live.StartTime.ToUniversalTime() -ne $identity.startTime) { throw 'Installer process ownership changed; cleanup refused' }
+                if (!(Test-DedicatedProcessIdentity $live.Id $live.StartTime $identity.pid $identity.startTime)) {
+                    throw 'Installer process ownership changed; cleanup refused'
+                }
                 Stop-Process -InputObject $live -Force
                 if (!$live.WaitForExit(10000)) { throw 'Owned installer process did not exit; staging retained' }
             }

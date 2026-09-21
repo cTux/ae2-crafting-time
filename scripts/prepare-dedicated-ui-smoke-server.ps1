@@ -136,7 +136,7 @@ try {
         if (Test-Path -LiteralPath $processLedger) {
             foreach ($identity in @(Read-DedicatedJson $processLedger 64KB)) {
                 $live = Get-Process -Id $identity.pid -ErrorAction SilentlyContinue
-                if ($live -and $live.StartTime.ToUniversalTime() -eq [DateTime]::Parse($identity.startTime).ToUniversalTime()) {
+                if ($live -and (Test-DedicatedProcessIdentity $live.Id $live.StartTime $identity.pid ([DateTime]$identity.startTime))) {
                     $result.cleanup = 'RETAINED_LIVE_INSTALLER'
                     $result | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $report 'provisioning-evidence.json') -Encoding UTF8
                     throw 'Owned installer remains live; staging cleanup refused'

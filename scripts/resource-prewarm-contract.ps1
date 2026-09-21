@@ -13,7 +13,9 @@ function Assert-ResourcePrewarmReceipt($Receipt, [string]$Epoch, [string]$Head, 
             $Receipt.bundle -cne $Bundle.ToLowerInvariant() -or $Receipt.pid -ne $ProcessId -or
             $Receipt.player -cne '446b6d0c-cadd-3e57-baf6-99d70f01a628' -or
             [int]$Receipt.generation -lt 1 -or [int]$Receipt.generation -gt 3 -or
-            ([DateTimeOffset]::Parse($Receipt.startTime)).ToUnixTimeMilliseconds() -ne ([DateTimeOffset]$StartedAt).ToUnixTimeMilliseconds() -or
+            # PS5 JSON supplies a string; PS7 may supply DateTime. A direct cast
+            # preserves UTC and fractions in both, unlike Parse's string conversion.
+            ([DateTimeOffset]$Receipt.startTime).ToUnixTimeMilliseconds() -ne ([DateTimeOffset]$StartedAt).ToUnixTimeMilliseconds() -or
             [int]$Receipt.serverTicks -ne $(if($Server){20}else{0}) -or [int]$Receipt.worldFrames -ne $(if($Server -or $Attempt){0}else{40})) {
         throw 'Prewarm readiness identity, process or native counters mismatch'
     }

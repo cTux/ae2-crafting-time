@@ -52,7 +52,7 @@ function Stop-Smoke([string]$report, [string]$statusPath = (Join-Path $report 's
         elseif ($status.argumentFile) { $running.CommandLine.Contains($status.argumentFile) }
         else { $running.CommandLine -like "*$($status.stagedRoot)*run-client.ps1*" }
     if (-not $matchesCommand -or -not $status.processStartedAt -or
-            [Math]::Abs(($running.CreationDate.ToUniversalTime() - [DateTime]::Parse($status.processStartedAt).ToUniversalTime()).TotalSeconds) -gt 1) {
+            [Math]::Abs(($running.CreationDate.ToUniversalTime() - ([DateTime]$status.processStartedAt).ToUniversalTime()).TotalSeconds) -gt 1) {
         throw "PID $($status.pid) does not match the recorded UI-smoke command"
     }
     if ($status.commandScript) {

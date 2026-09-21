@@ -38,6 +38,20 @@ try {
     Refuses { Assert-DedicatedTransferBounds (512MB+1) 0 512MB } 'Per-file transfer cap failed'
     Refuses { Assert-DedicatedTransferBounds 1 (2GB+1) 512MB } 'Aggregate transfer cap failed'
     Assert-DedicatedInstallBounds 2048 4GB 512MB 10MB 10MB 899.99
+    $nativeStart=[DateTimeOffset]::Parse('2026-09-21T10:21:01.8362606Z').UtcDateTime
+    $cimStart=[DateTimeOffset]::Parse('2026-09-21T10:21:01.8362600Z').UtcDateTime
+    Assert (Test-DedicatedProcessIdentity 1234 $nativeStart 1234 $cimStart) 'CIM truncation rejected the same installer parent'
+    Assert (Test-DedicatedProcessIdentity 1234 $cimStart 1234 $nativeStart) 'Native cleanup rejected the same CIM-recorded child'
+    Assert (Test-DedicatedProcessIdentity 1234 $nativeStart.ToLocalTime() 1234 $cimStart) 'Process identity depends on time zone representation'
+    $ledger=@{pid=1234;startTime=$cimStart.ToString('o')}|ConvertTo-Json|ConvertFrom-Json
+    Assert (Test-DedicatedProcessIdentity 1234 $nativeStart $ledger.pid ([DateTime]$ledger.startTime)) 'Ledger readback lost live installer ownership'
+    Assert (!(Test-DedicatedProcessIdentity 1235 $nativeStart 1234 $cimStart)) 'Different installer PID accepted'
+    Assert (!(Test-DedicatedProcessIdentity 0 $nativeStart 0 $cimStart)) 'Invalid installer PID accepted'
+    Assert (!(Test-DedicatedProcessIdentity 1234 $nativeStart.AddSeconds(1) 1234 $cimStart)) 'Reused installer PID timestamp accepted'
+    Assert (!(Test-DedicatedProcessIdentity 1234 $nativeStart.AddMilliseconds(1) 1234 $cimStart)) 'Different canonical millisecond accepted'
+    $nextMillisecond=[DateTimeOffset]::Parse('2026-09-21T10:21:01.8370000Z').UtcDateTime
+    Assert (!(Test-DedicatedProcessIdentity 1234 $nextMillisecond 1234 $nextMillisecond.AddTicks(-1))) 'Sliding tolerance crossed a canonical millisecond boundary'
+    Assert ((Get-DedicatedProcessStartMilliseconds $cimStart) -eq (Get-DedicatedProcessStartMilliseconds $nativeStart)) 'Installer ancestry precision differs from identity checks'
     foreach ($index in 0..5) {
         $values=@(2048L,4GB,512MB,10MB,10MB,899.99)
         $values[$index]++
@@ -136,6 +150,12 @@ try {
     $receipt=[pscustomobject]@{schema='1';epoch=$epoch;head=$head;bundle=$bundleDigest;pid=[string]$PID
         startTime=$process.StartTime.ToUniversalTime().ToString('o');player='446b6d0c-cadd-3e57-baf6-99d70f01a628';generation='1';serverTicks='20';worldFrames='0'}
     Assert-ResourcePrewarmReceipt $receipt $epoch $head $bundleDigest $PID $process.StartTime $true
+    $timestampReceipt=$receipt.PSObject.Copy()
+    foreach($representation in @($nativeStart.ToString('o'),$nativeStart,[DateTimeOffset]$nativeStart)) {
+        $timestampReceipt.startTime=$representation
+        Assert-ResourcePrewarmReceipt $timestampReceipt $epoch $head $bundleDigest $PID $cimStart $true
+        Refuses { Assert-ResourcePrewarmReceipt $timestampReceipt $epoch $head $bundleDigest $PID $cimStart.AddMilliseconds(1) $true } 'Receipt timestamp normalization accepted a different millisecond'
+    }
     foreach($key in @('schema','epoch','head','bundle','pid','startTime','player','generation','serverTicks','worldFrames')) {
         $previous=$receipt.$key;$receipt.$key='invalid'
         Refuses { Assert-ResourcePrewarmReceipt $receipt $epoch $head $bundleDigest $PID $process.StartTime $true } "Receipt field $key was not bound"
