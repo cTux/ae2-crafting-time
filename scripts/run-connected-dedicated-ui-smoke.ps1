@@ -100,8 +100,11 @@ if ($Prewarm) {
     if ($Scenario -eq 'delayed-resource-icons' -and @($adapters.PSObject.Properties).Count -ne 0) {
         throw 'Native prewarm requires the empty base adapter contract'
     }
-    if ($Scenario -eq 'appmek-resource-icons' -and (@($adapters.PSObject.Properties).Count -ne 1 -or !$adapters.appmek)) {
-        throw 'Chemical prewarm requires the focused AppMek adapter contract'
+    if ($Scenario -eq 'appmek-resource-icons' -and (@($adapters.PSObject.Properties).Count -ne 0 -or $prewarmGraph.graph -cne 'appmek')) {
+        throw 'Chemical prewarm requires the focused AppMek shared-hooks graph and its empty adapter contract'
+    }
+    if ($Scenario -eq 'delayed-resource-icons' -and $prewarmGraph.graph -cne 'native') {
+        throw 'Native prewarm requires the native dependency graph'
     }
 }
 if ($preparedProfile.target -ne $Target -or $preparedProfile.java -ne $expectedJava) {

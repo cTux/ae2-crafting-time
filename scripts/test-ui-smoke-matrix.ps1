@@ -7,7 +7,9 @@ function Assert-Rejected([scriptblock]$Action, [string]$Message) {
     catch { if ($_.Exception.Message -like 'DID_NOT_REJECT:*') { throw } }
 }
 function Assert-ProcessRejected([string[]]$Arguments, [string]$Reason) {
-    $output = (& $shell @Arguments 2>&1) -join "`n"
+    $savedPreference=$ErrorActionPreference
+    try { $ErrorActionPreference='Continue';$output = (& $shell @Arguments 2>&1) -join "`n" }
+    finally { $ErrorActionPreference=$savedPreference }
     if ($LASTEXITCODE -eq 0 -or $output -notlike "*$Reason*") {
         throw "Subprocess did not reject with '$Reason': exit=$LASTEXITCODE output=$output"
     }
@@ -24,8 +26,14 @@ foreach ($file in @('get-ui-smoke-plan.ps1','get-ui-smoke-results.ps1','expand-u
 & git -C $temp -c user.name=Test -c user.email=test@example.invalid -c core.hooksPath=disabled-hooks commit --allow-empty -qm fixture
 if ($LASTEXITCODE -ne 0) { throw 'Could not initialize matrix fixture' }
 @'
-param([string]$Target,[string]$BundleDirectory)
-'{}' | Set-Content (Join-Path $BundleDirectory 'expected-adapters.json')
+param([string]$Target,[string]$BundleDirectory,[switch]$BaseOnly,[string[]]$ProjectId,[switch]$ValidateOnly)
+$path=Join-Path $BundleDirectory 'expected-adapters.json'
+if($ValidateOnly){
+    if(!(Test-Path -LiteralPath $path) -or !(Test-Path -LiteralPath (Join-Path $BundleDirectory 'bundle-identity.json'))){throw 'Copied bundle was not sealed with adapter expectations'}
+}else{
+    if(Test-Path -LiteralPath (Join-Path $BundleDirectory 'bundle-identity.json')){throw 'Adapter producer tried to mutate a sealed cache'}
+    [IO.File]::WriteAllText($path,'{}')
+}
 '@ | Set-Content (Join-Path $scripts 'prepare-ui-smoke-adapters.ps1')
 @'
 param([string]$Target,[switch]$Latest)
@@ -42,6 +50,8 @@ New-Item -ItemType Directory -Path (Join-Path $RuntimeDirectory 'mods') -Force |
 '@ | Set-Content (Join-Path $scripts 'run-client.ps1')
 @'
 param([string]$Target,[switch]$Latest,[string]$Scenario,[string]$BundleDirectory,[string]$PreparedLaunchRoot,[string]$GuestSourceRoot,[string]$CasesBase64,[string[]]$ProjectId,[switch]$BaseOnly,[switch]$Interactive,[switch]$ResourceFixtureOnly,[int]$StartupTimeoutSeconds)
+$sealed=Get-Content (Join-Path $BundleDirectory 'bundle-identity.json') -Raw|ConvertFrom-Json
+$null=& (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') -Mode Reuse -CacheDirectory $BundleDirectory -HeadSha $sealed.headSha -Fingerprint $sealed.fingerprint -Target $Target -Profile $sealed.profile -GraphId $sealed.graphId -BaseOnly:$BaseOnly
 $profile=if($Latest){'latest'}else{'compatible'}
 $live=Join-Path (Split-Path -Parent $PSScriptRoot) "build/ui-smoke/$Target/$profile/$Scenario"
 $cases = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($CasesBase64)) | ConvertFrom-Json

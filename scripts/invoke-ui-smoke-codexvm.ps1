@@ -64,8 +64,17 @@ if ($BundleDirectory) {
     if (-not $bundlePath.StartsWith($root.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
         throw 'Bundle must be inside the shared worktree'
     }
-    if (-not $Stop -and !$Prewarm) {
-        & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target $Target -BundleDirectory $bundlePath -ProjectId $ProjectId -BaseOnly:$BaseOnly
+    if (-not $Stop) {
+        if ($Prewarm) {
+            # A connected bundle already carries its exact graph; do not reinterpret
+            # omitted host ProjectId/BaseOnly switches or rewrite its sealed contract.
+            $identity = Get-Content -LiteralPath (Join-Path $bundlePath 'bundle-identity.json') -Raw | ConvertFrom-Json
+            $null = & (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') -Mode Reuse -CacheDirectory $bundlePath `
+                -HeadSha $headSha -Fingerprint $identity.fingerprint -Target $Target -Profile compatible `
+                -GraphId $identity.graphId -BaseOnly:([bool]$identity.baseOnly)
+        } else {
+            & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target $Target -BundleDirectory $bundlePath -ProjectId $ProjectId -BaseOnly:$BaseOnly
+        }
         if (-not (Test-Path -LiteralPath (Join-Path $bundlePath 'expected-adapters.json') -PathType Leaf)) {
             throw 'Focused bundle adapter expectations were not prepared'
         }

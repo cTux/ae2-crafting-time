@@ -1,6 +1,12 @@
 $ErrorActionPreference = 'Stop'
 $invoke = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'invoke-ui-smoke-codexvm.ps1') -Raw
 $postprocess = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'run-ui-smoke.ps1') -Raw
+$adapterScript=Get-Content -LiteralPath (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Raw
+if($adapterScript -notmatch '\$ValidateOnly = \$true' -or $adapterScript -notmatch 'use-ui-smoke-bundle-cache.ps1' -or
+        $invoke -match 'if \(-not \$Stop -and !\$Prewarm\)' -or
+        $invoke -notmatch 'use-ui-smoke-bundle-cache.ps1' -or $invoke -notmatch '-BaseOnly:\(\[bool\]\$identity.baseOnly\)') {
+    throw 'Sealed and prewarm dispatch must validate adapter expectations without modifying their identity'
+}
 $prepare = $invoke.IndexOf("prepare-ui-smoke-adapters.ps1", [StringComparison]::Ordinal)
 $dispatch = $invoke.IndexOf('if ($Transport -eq "OpenSSH")', [StringComparison]::Ordinal)
 if ($prepare -lt 0 -or $prepare -gt $dispatch) {

@@ -77,6 +77,8 @@ foreach ($targetEntry in $targets) {
             $cacheIdentity = & (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') @cacheParameters -Mode Reuse
         } else {
             & (Join-Path $PSScriptRoot 'run-client.ps1') -Target $row.target -Latest:$runLatest -ResolveOnly -Packaged -RuntimeDirectory $cache -ProjectId $runProjects -BaseOnly:([bool]$graph.baseOnly)
+            & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target $row.target -BundleDirectory $cache `
+                -ProjectId $runProjects -BaseOnly:([bool]$graph.baseOnly)
             $cacheIdentity = & (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') @cacheParameters -Mode Seal
         }
         # Guest shares may retain read handles. Each run receives an immutable bundle.
@@ -86,7 +88,7 @@ foreach ($targetEntry in $targets) {
             [ordered]@{ file = $_.Name; sha256 = (Get-FileHash -LiteralPath $_.FullName).Hash }
         } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $report 'artifact-hashes.json') -Encoding UTF8
         $cacheIdentity | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $report 'bundle-reuse.json') -Encoding UTF8
-        $adapterParameters = @{ Target=$row.target; BundleDirectory=$bundle; BaseOnly=[bool]$graph.baseOnly }
+        $adapterParameters = @{ Target=$row.target; BundleDirectory=$bundle; BaseOnly=[bool]$graph.baseOnly; ValidateOnly=$true }
         if ($runProjects.Count) { $adapterParameters.ProjectId = $runProjects }
         & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') @adapterParameters
         $null = & (Join-Path $PSScriptRoot 'get-ui-smoke-plan.ps1') @planning -ExpectedFingerprint $plan.fingerprint
