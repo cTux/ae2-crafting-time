@@ -202,6 +202,19 @@ public final class CraftProfiler {
         return true;
     }
 
+    /** Completes an output whose CPU scope changed during a chunk reload. */
+    public boolean completeUniquePending(ProfileKey key, long amount, long tick) {
+        if (key == null || amount <= 0) return false;
+        Object onlyScope = null;
+        for (var entry : pending.entrySet()) {
+            if (!entry.getValue().containsKey(key)) continue;
+            if (onlyScope != null) return false;
+            onlyScope = entry.getKey();
+        }
+        if (onlyScope == null) return false;
+        return complete(key, onlyScope, amount, tick);
+    }
+
     public boolean flushCompletedSamples() {
         if (dirtySampleKeys.isEmpty()) {
             return false;

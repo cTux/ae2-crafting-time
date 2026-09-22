@@ -823,6 +823,30 @@ class CraftProfilerTest {
     }
 
     @Test
+    void reloadedCpuCompletesOnlyAnUnambiguousPendingOutput() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:overworld|60,80,1026", "minecraft:water");
+        var oldCpu = new Object();
+        var newCpu = new Object();
+        var parallelCpu = new Object();
+        profiler.start(new ProfileKey("minecraft:overworld|60,80,1026", "minecraft:lava"),
+                new Object(), 1000, ProfileUnit.MILLIBUCKET, 0);
+
+        assertFalse(profiler.completeUniquePending(null, 1000, 1));
+        assertFalse(profiler.completeUniquePending(key, 0, 1));
+        assertFalse(profiler.completeUniquePending(key, 1000, 1));
+        profiler.start(key, oldCpu, 1000, ProfileUnit.MILLIBUCKET, 1);
+        profiler.start(key, parallelCpu, 1000, ProfileUnit.MILLIBUCKET, 1);
+        assertFalse(profiler.complete(key, newCpu, 1000, 20));
+        assertFalse(profiler.completeUniquePending(key, 1000, 20));
+        assertTrue(profiler.hasPending(key));
+
+        assertTrue(profiler.complete(key, parallelCpu, 1000, 21));
+        assertTrue(profiler.completeUniquePending(key, 1000, 22));
+        assertFalse(profiler.hasPending(key));
+    }
+
+    @Test
     void waitingKeysSnapshotAndRestoreForDisplay() {
         var profiler = new CraftProfiler(10);
         var cpu = new Object();

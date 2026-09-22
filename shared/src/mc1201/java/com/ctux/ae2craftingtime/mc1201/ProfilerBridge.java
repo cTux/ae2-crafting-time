@@ -133,7 +133,10 @@ public final class ProfilerBridge {
             return;
         }
         var profileKey = key(networkId, what);
-        PROFILER.complete(profileKey, scope, normalizeAmount(what, amount), tick);
+        var normalizedAmount = normalizeAmount(what, amount);
+        if (!PROFILER.complete(profileKey, scope, normalizedAmount, tick)) {
+            PROFILER.completeUniquePending(profileKey, normalizedAmount, tick);
+        }
         // A reloaded CPU can accept its final output without invoking finishJob.
         // The last completed output must still clear its persistent plate.
         if (server != null && !PROFILER.hasPending(profileKey)) {
