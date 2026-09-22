@@ -39,7 +39,7 @@ function New-Evidence([bool]$connected, [bool]$expiredLater = $false, [bool]$pro
         if ($production -and $case.EndsWith('OVERLAP')) {
             $receipts += [pscustomobject]@{case=$case;action='REMOVE_PROVIDER';providers=@();jobs=$cancelHeld}
         }
-        $receipts += [pscustomobject]@{case=$case;action='CANCEL';providers=@('1,2,3');jobs=$cancelled}
+        $receipts += [pscustomobject]@{case=$case;action='CANCEL';providers=@($(if($production -and $case.EndsWith('OVERLAP')){@()}else{@('1,2,3')}));jobs=$cancelled}
         foreach($name in @($names|Where-Object{$_ -like ($case.ToLowerInvariant().Replace('_','-')+'-*')})){
             $checkpoint=[IO.Path]::GetFileNameWithoutExtension($name);if($checkpoint.EndsWith('-cleanup')){continue}
             $jobs=if($checkpoint.EndsWith('-winner-promoted')){$winner}elseif($checkpoint.EndsWith('-completed')){$completed}elseif($checkpoint.EndsWith('-cancelled')){$cancelled}elseif($checkpoint.EndsWith('-cancel-held')){$cancelHeld}else{$held}
@@ -49,7 +49,8 @@ function New-Evidence([bool]$connected, [bool]$expiredLater = $false, [bool]$pro
                 plates=@($active|ForEach-Object{[pscustomobject]@{outputId=$_;positions=@([pscustomobject]@{x=1;y=2;z=3})}});
                 renderPlates=@($(if($active.Count){[pscustomobject]@{outputId=$active[0];position=[pscustomobject]@{x=1;y=2;z=3}}}));
                 rainbows=@($(if(($checkpoint.EndsWith('-held')-and!$checkpoint.EndsWith('-cancel-held'))-or$checkpoint.EndsWith('-resource-reloaded')-or$checkpoint.EndsWith('-chunk-reloaded')-or
-                        (!$connected-and(!$expiredLater-or!($checkpoint.EndsWith('-completed')-or$checkpoint.EndsWith('-cancel-held')-or$checkpoint.EndsWith('-cancelled'))))){
+                        (!$connected-and!($production-and$case.EndsWith('OVERLAP')-and$checkpoint.EndsWith('-cancelled'))-and
+                        (!$expiredLater-or!($checkpoint.EndsWith('-completed')-or$checkpoint.EndsWith('-cancel-held')-or$checkpoint.EndsWith('-cancelled'))))){
                     [pscustomobject]@{outputId=$outputs[0];expiresAtMillis=2000}}))}
         }
     }

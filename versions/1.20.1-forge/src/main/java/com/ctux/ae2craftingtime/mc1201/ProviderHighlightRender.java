@@ -1,8 +1,8 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.world.phys.AABB;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
@@ -63,8 +63,9 @@ public final class ProviderHighlightRender {
             var pos = plate.position();
             ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos, plate.displayKey(),
                     ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z),
-                    LevelRenderer.getLightColor(minecraft.level, pos), alpha);
+                    LightTexture.FULL_BRIGHT, alpha);
         }
+        consumers.endBatch(RenderType.solid());
         consumers.endBatch(RenderType.debugFilledBox());
         poseStack.popPose();
     }

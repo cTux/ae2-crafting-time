@@ -3,7 +3,6 @@ package com.ctux.ae2craftingtime.mc1201;
 import appeng.api.stacks.AEItemKey;
 import appeng.client.api.AEKeyRenderState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
@@ -115,7 +114,8 @@ public final class ProviderHighlightRender {
                 continue;
             }
             var pos = plate.position();
-            var light = LevelRenderer.getLightCoords(minecraft.level, pos);
+            // Packed maximum block/sky light; 26.1 no longer exposes LightTexture.
+            var light = 0xF000F0;
             for (var face : ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z)) {
                 pose.pushPose();
                 ProviderHighlightShapes.orientFaceForItem(pose, pos.getX() - camera.x, pos.getY() - camera.y,

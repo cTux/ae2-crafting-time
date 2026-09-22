@@ -5,8 +5,8 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.world.phys.AABB;
 
 public final class Ae2CraftingTimeClient implements ClientModInitializer {
@@ -64,7 +64,7 @@ public final class Ae2CraftingTimeClient implements ClientModInitializer {
                 var pos = plate.position();
                 ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos,
                         plate.displayKey(), ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z),
-                        LevelRenderer.getLightColor(minecraft.level, pos), alpha);
+                        LightTexture.FULL_BRIGHT, alpha);
             }
             consumers.endBatch();
             poseStack.popPose();

@@ -207,8 +207,11 @@ function Assert-ResourceFixtureContract([object]$Evidence, [string]$Scenario, [s
             continue
         }
         $providers = @($observation.serverJobs.provider | Select-Object -Unique)
-        if ($providers.Count -ne 1 -or @($receipt.providers).Count -ne 1 -or
-                $providers[0].Replace(' ','') -cne ([string]$receipt.providers[0]).Replace(' ','')) {
+        $removedAndCancelled = $production -and $case -ceq $cases[-1] -and $checkpoint.EndsWith('-cancelled')
+        if ($providers.Count -ne 1 -or
+                ($removedAndCancelled -and @($receipt.providers).Count -ne 0) -or
+                (!$removedAndCancelled -and (@($receipt.providers).Count -ne 1 -or
+                    $providers[0].Replace(' ','') -cne ([string]$receipt.providers[0]).Replace(' ','')))) {
             throw "Provider identity is invalid for $checkpoint"
         }
         $provider = $providers[0].Replace(' ','')
@@ -255,6 +258,8 @@ function Assert-ResourceFixtureContract([object]$Evidence, [string]$Scenario, [s
                     $observation.rainbows[0].expiresAtMillis -le $observationMillis)) {
                 throw "Chunk reload changed the located rainbow for $checkpoint"
             }
+        } elseif ($removedAndCancelled) {
+            if ($rainbowOutputs.Count) { throw "Removed provider restored a rainbow for $checkpoint" }
         } elseif (!$Connected) {
             if ($rainbowOutputs.Count) {
                 if (!(Test-ResourceFixtureSequence -Expected @($outputs[0]) -Actual $rainbowOutputs) -or
