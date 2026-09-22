@@ -117,21 +117,23 @@ the bounded server protocol, typed fixtures and fixture-only evidence gate.
 Its [implementation plan](connected-resource-fixtures/implementation-plan.md)
 separates prerequisite qualification from the final #376 icon assertions below.
 
-Implement `delayed-resource-icons` and `appmek-resource-icons` against the
+Extend the existing `delayed-resource-icons` and `appmek-resource-icons` against the
 [scenario contract](spec.md#delayed-resource-icon-scenarios-planned) and
 [production design](../provider-locate/resource-icons/technical-design.md).
-Reuse `StandardAe2Scenario` lifecycle actions and `StandardCraftFixture` grid,
-processing-pattern, native CPU and output-return seams. Shared 1.20.1/1.21.1
-driver code owns common transitions; 26.1.2 keeps only its native API differences.
+Reuse `ResourceFixtureClient`, `ResourceFixtureServer` and their bounded control
+protocol from merged #484, backed by the existing `StandardCraftFixture` grid,
+processing-pattern, native CPU and output-return seams. Shared driver code owns
+common transitions; target adapters keep only their native API differences.
 AppMek key construction stays in the two target-specific optional fixtures,
 loaded only for that selected case. Keep all fixture content out of production.
 
 Encode real water/lava or oxygen/hydrogen output patterns on a provider. Retain
 the actual typed key and amount on the server; hold dispatched output, poll the
 real delayed transition, then release the correct key through normal crafting
-insertion. Size storage and CPU capacity for the job. A named bucketless fluid
-from the pinned graph, or one driver-only registered fluid on one target, uses
-the same flow. Keep registration and appearance metadata in the evidence.
+insertion. Existing fixtures size storage and CPU capacity for the job. Forge's
+registered `ae2craftingtime_test_driver:resource_fixture_fluid` uses the same
+flow with no bucket, water textures and cyan tint `0xff00ffff`. Keep registration
+and appearance metadata in the evidence.
 
 Read `plates()` and `renderPlates()` without changing either. Bind each world
 capture to its server output key and selected provider position; exercise two
@@ -141,9 +143,9 @@ is closed. Preserve each asynchronous action until completion, issue it once,
 and use existing readiness/progress deadlines. Restore fixture settings and
 clear jobs/blocks/state on teardown, including failure cleanup.
 
-Extend the existing connected runner's scenario validation, driver lifecycle
-guard and server/client dispatch only for these two leaves. Reuse its properties-
-file commands and acknowledgements for create/hold/release/cancel and reconnect;
+Extend the existing connected runner's mode validation, driver lifecycle
+guard and server/client dispatch only for these two leaves. Reuse its bounded
+commands and acknowledgements for create/hold/release/cancel and reconnect;
 bind them to the active fixture, player and phase. Production packets alone
 create client highlights. Preserve loopback addressing, schema-2 immutable-source
 and disposable markers, exact dependency/launcher/artifact hashes, idempotent
@@ -154,14 +156,23 @@ remote command is part of this work. If existing
 seams cannot support it without an independently large infrastructure change,
 deliver that prerequisite separately before implementing dependent checks.
 
-Register the new leaves in both driver runtimes, supported-case/SuitePlan checks,
-host validation and selection, and `DriverResult`/screenshot contracts. Extend
-the nearest driver and PowerShell boundary tests after the hook-created PR.
+Route these existing leaves by scenario name in both driver runtimes, so ordinary
+runs perform production acceptance and explicit `-ResourceFixtureOnly` keeps its
+NOT_RUN contract. Update supported-case/SuitePlan checks, host/VM launch guards,
+connected/prewarm validation and `DriverResult`/screenshot contracts together.
+Keep fixture evidence schema 1 unchanged and require separate
+`resource-icon-evidence.json` schema 1 for ordinary runs under the
+[production evidence contract](../provider-locate/resource-icons/technical-design.md#production-acceptance-on-the-existing-fixtures).
+Extend the nearest driver and PowerShell boundary tests after the hook-created PR.
 Keep the existing `appmek-cpu` contract unchanged: these are resource lifecycle
 cases, not additional addon CPU fixtures. Define checks for dispatch, delayed
 plate/key, selected winner, recovery/finish/cancel, reconnect and cleanup; name
 captures by scenario, resource and checkpoint to avoid overwriting evidence.
-Review icon appearance separately from semantic assertions.
+Add bounded resource reload and provider removal/unload checkpoints to these
+existing transitions; await reload completion and verify surviving/restored
+state under the production lifetime rules. Server mutations use the existing
+revision/sequence guards. Review icon appearance separately from semantic
+assertions; missing evidence fails and unreviewed images remain REVIEW_REQUIRED.
 
 ## Single-world fixtures and transitions
 

@@ -110,24 +110,25 @@ This is required future coverage, not an existing runnable leaf or a pass.
 
 ## Delayed resource icon scenarios (planned)
 
-The fixture prerequisite is [#482](connected-resource-fixtures/spec.md).
+The fixture prerequisite [#482](connected-resource-fixtures/spec.md) merged in
+[#484](https://github.com/cTux/ae2-crafting-time/pull/484).
 Its explicit fixture-only runs qualify real jobs and control/lifecycle evidence;
 they report production icon acceptance as NOT_RUN and cannot satisfy #376.
 The following remains the final production-icon acceptance contract.
 
 For [#376](https://github.com/cTux/ae2-crafting-time/issues/376), implement the
 [resource-icon acceptance matrix](../provider-locate/resource-icons/implementation-plan.md#runtime-acceptance-matrix)
-through these bounded cases. They are required future coverage, not existing
-driver availability or recorded passes.
+through these existing bounded cases. Their ordinary production acceptance mode
+is required future coverage; the existing fixture-only mode is not an icon pass.
 
 | Scenario | Targets and real fixture outputs |
 | --- | --- |
-| `delayed-resource-icons` | Forge/Fabric 1.20.1, NeoForge 1.21.1 and 26.1.2: item control, water and lava |
-| `appmek-resource-icons` | Forge 1.20.1 and NeoForge 1.21.1 with Applied Mekanistics: oxygen and hydrogen |
+| `delayed-resource-icons` | Forge/Fabric 1.20.1, NeoForge 1.21.1 and 26.1.2: item, water, lava and overlap; Forge also has the bucketless test fluid |
+| `appmek-resource-icons` | Forge 1.20.1 and NeoForge 1.21.1 with Applied Mekanistics: oxygen, hydrogen and overlap |
 
 Submit real processing jobs, observe provider dispatch, withhold outputs until
 DELAYED, then return them through normal ME crafting insertion. Include a named
-bucketless fluid on one target as specified in the linked plan. Do not seed
+bucketless fluid on Forge as specified in the linked plan. Do not seed
 production delayed state, client highlights or renderer results. Existing
 `appmek-cpu` oxygen storage setup is not a chemical-output rendering check.
 
@@ -144,6 +145,14 @@ still-running marked disposable server; require server-approved typed plate
 restoration and no restored rainbow. This adds only these two named scenarios
 to the bounded connected exception below. Retain normal safety checks, sequential
 8 GiB clients and exact-process cleanup; do not enable arbitrary multiplayer.
+
+Ordinary runs of these leaves must check production acceptance; explicit
+`-ResourceFixtureOnly` preserves the prerequisite contract. Keep fixture evidence
+at NOT_RUN and require additional `resource-icon-evidence.json` schema 1 for
+ordinary runs, as defined in the
+[production design](../provider-locate/resource-icons/technical-design.md#production-acceptance-on-the-existing-fixtures).
+Missing or mismatched evidence fails. Typed-key assertions cannot replace world
+capture review; visual acceptance remains REVIEW_REQUIRED until reviewed.
 
 Record resource key/type, authoritative job state, target/profile, dependency
 and production/driver hashes, and unique English PNG/sidecar checkpoints for
