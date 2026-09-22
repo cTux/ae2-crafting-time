@@ -3,8 +3,12 @@ param(
     [ValidateSet("OpenSSH", "Vmrun")][string]$Transport = "OpenSSH",
     [switch]$Latest,
     [switch]$Interactive,
+    [switch]$ResourceFixtureOnly,
+    [switch]$Prewarm,
+    [switch]$AcceptMinecraftEula,
+    [string]$ServerDirectory,
     [switch]$Stop,
-    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|stored-variant-plan|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-channel-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|stored-variant-plan|delayed-resource-icons|appmek-resource-icons|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-channel-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string]$CasesBase64,
     [string[]]$ProjectId,
     [switch]$BaseOnly,
@@ -24,6 +28,9 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+if ($Prewarm -and (!$ServerDirectory -or !$BundleDirectory -or !$ResourceFixtureOnly -or $Latest -or $Interactive)) {
+    throw 'Connected prewarm requires an exact bundle, server directory and resource fixture mode'
+}
 $vmx = "F:\VMs\Codex-Windows11\Codex-Windows11.vmx"
 $vmrun = "C:\Program Files\VMware\VMware Workstation\vmrun.exe"
 $root = Split-Path -Parent $PSScriptRoot
@@ -31,7 +38,7 @@ $headSha = (& git -C $root rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0 -or $headSha -cnotmatch '^[a-f0-9]{40}$') { throw 'Cannot bind CodexVM dispatch to Git HEAD' }
 if (-not $Stop -and -not $BundleDirectory) {
     $campaign = @{ Target = $Target; Scenario = $Scenario; Latest = $Latest; PreparedLaunchRoot = $PreparedLaunchRoot
-        ProjectId = $ProjectId; BaseOnly = $BaseOnly; Interactive = $Interactive }
+        ProjectId = $ProjectId; BaseOnly = $BaseOnly; Interactive = $Interactive; ResourceFixtureOnly = $ResourceFixtureOnly }
     if ($GuestSourceRoot) { $campaign.GuestSourceRoot = $GuestSourceRoot }
     & (Join-Path $PSScriptRoot 'run-ui-smoke-matrix.ps1') @campaign
     exit $LASTEXITCODE
@@ -58,7 +65,16 @@ if ($BundleDirectory) {
         throw 'Bundle must be inside the shared worktree'
     }
     if (-not $Stop) {
-        & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target $Target -BundleDirectory $bundlePath -ProjectId $ProjectId -BaseOnly:$BaseOnly
+        if ($Prewarm) {
+            # A connected bundle already carries its exact graph; do not reinterpret
+            # omitted host ProjectId/BaseOnly switches or rewrite its sealed contract.
+            $identity = Get-Content -LiteralPath (Join-Path $bundlePath 'bundle-identity.json') -Raw | ConvertFrom-Json
+            $null = & (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') -Mode Reuse -CacheDirectory $bundlePath `
+                -HeadSha $headSha -Fingerprint $identity.fingerprint -Target $Target -Profile compatible `
+                -GraphId $identity.graphId -BaseOnly:([bool]$identity.baseOnly)
+        } else {
+            & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target $Target -BundleDirectory $bundlePath -ProjectId $ProjectId -BaseOnly:$BaseOnly
+        }
         if (-not (Test-Path -LiteralPath (Join-Path $bundlePath 'expected-adapters.json') -PathType Leaf)) {
             throw 'Focused bundle adapter expectations were not prepared'
         }
@@ -91,6 +107,10 @@ if ($CasesBase64) {
 }
 if ($Latest) { $smokeArguments += "-Latest" }
 if ($Interactive) { $smokeArguments += "-Interactive" }
+if ($ResourceFixtureOnly) { $smokeArguments += "-ResourceFixtureOnly" }
+if ($Prewarm) { $smokeArguments += '-Prewarm' }
+if ($AcceptMinecraftEula) { $smokeArguments += '-AcceptMinecraftEula' }
+if ($ServerDirectory) { $smokeArguments += @('-ServerDirectory',$ServerDirectory) }
 if ($ProjectId) { $smokeArguments += @("-ProjectId") + $ProjectId }
 if ($Stop) { $smokeArguments += "-Stop" } else { $smokeArguments += @("-Scheduled", "-InteractiveUser", "Codex") }
 

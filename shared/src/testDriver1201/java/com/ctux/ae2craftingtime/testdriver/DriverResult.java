@@ -32,6 +32,9 @@ public record DriverResult(
     public static final List<String> READ_RECOVERY_CHECKS = List.of("screen", "host-content", "overlay-absent", "layout");
     public static final List<String> TREE_RECOVERY_CHECKS = List.of("screen", "host-content", "overlay-absent", "layout",
             "tooltip", "details-ignored", "reset-ignored");
+    public static final List<String> RESOURCE_FIXTURE_CHECKS = List.of(
+            "server-identity", "real-dispatch", "delayed-plates", "native-locate",
+            "lifecycle", "capture-integrity", "cleanup", "fixture-only");
 
     public DriverResult {
         adapters = Map.copyOf(adapters);
@@ -52,7 +55,9 @@ public record DriverResult(
             checks.addAll(List.of("menu-cancel", "network-switch", "native-replan", "reconnected-fresh"));
             return List.copyOf(checks);
         }
-        return scenario.equals(RequesterFixture.RECOVERY) ? READ_RECOVERY_CHECKS
+        return (scenario.equals("delayed-resource-icons") || scenario.equals("appmek-resource-icons"))
+                ? RESOURCE_FIXTURE_CHECKS
+                : scenario.equals(RequesterFixture.RECOVERY) ? READ_RECOVERY_CHECKS
                 : scenario.equals(CraftingTreeScenario.RECOVERY) ? TREE_RECOVERY_CHECKS
                 : StandardAe2Scenario.supports(scenario) ? StandardAe2Scenario.CHECKS.get(scenario)
                 : scenario.equals("craft-plan") ? CRAFT_PLAN_CHECKS

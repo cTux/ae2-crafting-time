@@ -141,6 +141,22 @@ cleanup, unsupported chemical targets, missing integration and misplaced flag.
 Run existing CPU-list and recurrence runner contract tests as regression checks;
 broaden their runtime only if shared behavior changes invalidate prior coverage.
 
+## Executable coverage map
+
+| Boundary | Executable regression | Runtime gate and retained artifact |
+| --- | --- | --- |
+| Identity, transition, replay/conflict, reset revision and final client acknowledgement | `ResourceFixtureControlTest` | exact receipt/state comparison in both runner validators; JUnit XML |
+| Multi-tick warmup return, partial insertion and original-failure-preserving cleanup | `ResourceFixtureControlTest.multiSlotWarmupReturnPollsEveryPartialSlotUntilComplete`, `partialInsertionRetainsTheUninsertedRemainder`, `connectedAbortBindsOriginalFailureAndTerminalRevision` and `cleanupFailureKeepsTheOriginalFailureVisible` | authoritative `resourceCleanup`, abort acknowledgement and server job timing snapshots; `resource-fixture-evidence.json` |
+| Focused case catalogue and graph selection on all supported targets | `scripts/test-ui-smoke-plan.ps1` | `get-ui-smoke-plan.ps1` rejects ordinary-suite inclusion and selects one compatible graph; plan JSON |
+| Explicit fixture-only authorization and unsupported chemical targets | `scripts/test-ui-smoke-matrix.ps1` | `run-ui-smoke-matrix.ps1` rejects absent/misplaced flags before launch; matrix plan JSON |
+| Setup deadline and active progress watchdog | resource cases in `scripts/test-ui-smoke-fast-path.ps1` | 300-second setup and 60-second active limits; progress/status JSON |
+| Launch wrapper forwarding | `scripts/test-run-ui-smoke-wrapper.ps1` | executes the public wrapper against a parameter-validating matrix fixture and requires `ResourceFixtureOnly`; captured invocation result |
+| Fixed captures, hashes, delayed timing, frame facts, plate/rainbow semantics, server/client agreement and mode-specific receipt traces | `scripts/test-resource-fixture-contract.ps1` exercises the validator; integrated and connected resource rows provide runtime coverage after PR creation | source-defined positive/negative validator fixtures cover identities, cardinalities, job states, receipt agreement and sidecar binding; real PNGs, sidecars, client evidence and server results remain post-PR runtime evidence |
+
+The post-PR test command must execute every regression named above; source-text
+matching is not accepted as coverage. A runtime row passes only after its mode's
+validator emits the combined evidence artifact from the exact expected trace.
+
 Ready to unblock #376 means: current-head tests/builds/CI pass, RF7 source
 preparation and RF8 cold/cache-hit readiness qualify on all six graphs, all matrix
 fixture checks and cleanup pass, artifacts/captures are reviewed and archived,
@@ -148,3 +164,33 @@ and every result explicitly says fixture-only with icon acceptance NOT_RUN.
 Update parent driver/dependency docs from planned to implemented fixture status
 only with that evidence. Leave #376 open for its production implementation,
 payload/persistence boundary tests and complete visual acceptance campaign.
+
+## Paused qualification handoff (2026-09-22)
+
+PR #484 remains open at `93a2cc54ad768dbfb0d26e821050282f3602f4c4`.
+This is a fixture-only candidate, not a completed prerequisite. The exact-head
+integrated, connected cold, and connected source-hit rows passed with reviewed
+captures for Fabric 1.20.1 native (18/22/22), Forge 1.20.1 native (22/27/27),
+and Forge 1.20.1 AppMek (14/17/17). NeoForge 1.21.1 native passed integrated
+(18) and connected cold (22), but its exact-head source-hit run stalled after
+the second player joined: the client issued `RECONNECT` sequence 3 while the
+server retained the `REJOIN_PREPARE` sequence-2 acknowledgement. The active
+checkpoint watchdog stopped that run. The cause remains unproved.
+
+One separate diagnostic source-hit run with temporary logging passed all 22
+captures; each reconnect gate was satisfied on its first poll. That diagnostic
+does not replace the failed exact-head row or prove a fix. The logging was
+removed, leaving the committed source unchanged. The interrupted later
+exact-head retry has no verified result in this handoff. NeoForge 1.21.1
+AppMek and NeoForge 26.1.2 native rows were not run. Retained failure and
+diagnostic evidence is under `.omo/evidence/issue-482-remaining-93a2/` in the
+task worktree; the failed archive SHA-256 is
+`3AC0FBC877A4CEDA2EEFA075A85883D5894BCC74B23E7C4A99D25C8ADB460205`.
+
+To resume, first classify the NeoForge source-hit reconnect stall with a
+server-side pending-gate snapshot (player-absence observation, player and grid
+identity, loaded/busy/delayed state), then correct a proved cause or obtain a
+clean committed-head pass without masking the earlier failure. Qualify the two
+unrun graphs, review every emitted capture, and check current-head CI/reviews
+before considering #484 for merge. Keep #376 open; its typed-resource production
+icon implementation and visual acceptance remain separate and unfinished.

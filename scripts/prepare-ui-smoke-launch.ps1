@@ -13,13 +13,28 @@ param(
     [string]$ControlDirectory,
     [string]$ContinuationPath,
     [string]$CampaignId,
+    [string]$ResourceFixtureId,
     [ValidateSet('alpha')][string]$Role,
     [string]$OfflineName,
     [ValidatePattern('^[a-f0-9]{32}$')][string]$OfflineUuid,
     [switch]$ResumeOnly,
+    [switch]$ResourceFixtureOnly,
+    [switch]$Prewarm,
+    [long]$PrewarmDeadline,
+    [string]$PrewarmHead,
+    [string]$PrewarmBundle,
     [switch]$Interactive
 )
 $ErrorActionPreference = 'Stop'
+$resourceScenario = $Scenario -in @('delayed-resource-icons','appmek-resource-icons')
+if ($Prewarm -and (!$resourceScenario -or !$DedicatedAddress -or $PrewarmDeadline -le 0 -or
+        $PrewarmHead -cnotmatch '^[a-f0-9]{40}$' -or $PrewarmBundle -cnotmatch '^[a-fA-F0-9]{64}$')) {
+    throw 'Prewarm requires a connected resource launch and complete immutable identity'
+}
+if (($resourceScenario -and !$ResourceFixtureOnly) -or
+        ($ResourceFixtureOnly -and !$resourceScenario -and $Scenario -ne 'suite')) {
+    throw 'ResourceFixtureOnly is required exactly for resource fixture scenarios'
+}
 $launch = Get-Content -LiteralPath $LaunchManifest -Raw | ConvertFrom-Json
 $bundle = Get-Content -LiteralPath (Join-Path $BundleDirectory 'profile.json') -Raw | ConvertFrom-Json
 if ($bundle.schema -ne 1 -or $bundle.target -ne $Target -or $bundle.profile -ne $Profile -or
@@ -76,11 +91,18 @@ for ($i = 0; $i -lt $launch.arguments.Count; $i++) {
     $argument = [string]$launch.arguments[$i]
     if ($argument -match '^-Dae2craftingtime.test\.' -or $argument -match '^-Xm[xs]') { continue }
     if ($argument -in @('--gameDir', '--quickPlaySingleplayer', '--quickPlayMultiplayer') -or
-            ($Role -and $argument -in @('--username', '--uuid'))) { $i++; continue }
+            (($Role -or $ResourceFixtureOnly) -and $argument -in @('--username', '--uuid'))) { $i++; continue }
     $arguments.Add($argument)
 }
 $arguments.Insert(0, '-Xmx8G')
 if ($Interactive) { $arguments.Insert(0, '-Dae2craftingtime.test.interactive=true') }
+if ($ResourceFixtureOnly) { $arguments.Insert(0, '-Dae2craftingtime.test.resourceFixtureOnly=true') }
+if ($Prewarm) {
+    foreach ($property in @('prewarm=true',"prewarmDeadline=$PrewarmDeadline","prewarmHead=$PrewarmHead",
+            "prewarmBundle=$($PrewarmBundle.ToLowerInvariant())","prewarmEpoch=$CampaignId")) {
+        $arguments.Insert(0,"-Dae2craftingtime.test.$property")
+    }
+}
 if ('rxYaglEe' -in @($ProjectId)) { $arguments.Insert(0, '-Dae2craftingtime.test.advancedStatus=true') }
 foreach ($property in @("scenario=$Scenario", "profile=$Profile", "world=$World", "output=$Evidence", 'vmTextureProbe=true')) {
     $arguments.Insert(0, "-Dae2craftingtime.test.$property")
@@ -99,6 +121,14 @@ if ($Role) {
     $arguments.Insert(0, "-Dae2craftingtime.test.role=$Role")
     $arguments.Add('--username'); $arguments.Add($OfflineName)
     $arguments.Add('--uuid'); $arguments.Add($OfflineUuid)
+}
+if ($ResourceFixtureOnly) {
+    if ($ResourceFixtureId -cnotmatch '^[a-f0-9]{32}$') { throw 'Resource fixture launch identity is required' }
+    $arguments.Insert(0, "-Dae2craftingtime.test.resourceFixture=$ResourceFixtureId")
+}
+if ($ResourceFixtureOnly) {
+    $arguments.Add('--username'); $arguments.Add('Ae2ctAlpha')
+    $arguments.Add('--uuid'); $arguments.Add('446b6d0ccadd3e57baf699d70f01a628')
 }
 if ($ContinuationPath) {
     $continuation = [IO.Path]::GetFullPath($ContinuationPath)

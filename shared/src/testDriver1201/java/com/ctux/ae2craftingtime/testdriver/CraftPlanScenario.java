@@ -79,6 +79,7 @@ public final class CraftPlanScenario {
     private boolean amountSubmitted;
     private boolean treeHoverStarted;
     private final StatsInteraction treeStats = new StatsInteraction();
+    private final ResourceFixtureClient resourceFixture;
 
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         DispatchObservation.watch(null, null);
@@ -93,9 +94,10 @@ public final class CraftPlanScenario {
                 ? new ProviderDispatchStatusScenario(options.scenario()) : null;
         this.options = options;
         this.driverFile = driverFile;
-        baseFixture = standard == null && noSpace == null && noProvider == null && noPower == null
+        resourceFixture = options.resourceFixtureOnly() ? new ResourceFixtureClient(minecraft, options, driverFile) : null;
+        baseFixture = resourceFixture == null && standard == null && noSpace == null && noProvider == null && noPower == null
                 && providerDispatchStatus == null ? DriverPlatform.baseFixture(options.scenario()) : null;
-        addonFixture = AddonCpuFixture.create(options.scenario());
+        addonFixture = resourceFixture == null ? AddonCpuFixture.create(options.scenario()) : null;
         wirelessFixture = WirelessTerminalFixture.create(options.scenario());
         requesterFixture = RequesterFixture.supports(options.scenario()) ? RequesterFixture.create() : null;
         networkAnalyserFixture = Ae2NetworkAnalyserFixture.SCENARIO.equals(options.scenario())
@@ -104,6 +106,7 @@ public final class CraftPlanScenario {
     }
 
     public void tick() {
+        if (resourceFixture != null) { resourceFixture.tick(); state = resourceFixture.state(); return; }
         if (state == ScenarioState.FAILED || state == ScenarioState.QUIT_REQUESTED) {
             return;
         }
@@ -149,8 +152,8 @@ public final class CraftPlanScenario {
         return failure;
     }
 
-    boolean reconnectRequested() { return standard != null && standard.reconnectRequested(); }
-    void reconnected() { standard.reconnected(); }
+    boolean reconnectRequested() { return resourceFixture != null ? resourceFixture.reconnectRequested() : standard != null && standard.reconnectRequested(); }
+    void reconnected() { if (resourceFixture != null) resourceFixture.reconnected(); else standard.reconnected(); }
 
     public long elapsedMillis() {
         return Duration.ofNanos(System.nanoTime() - stateStarted).toMillis();
@@ -994,6 +997,7 @@ public final class CraftPlanScenario {
     }
 
     String checkpoint() {
+        if (resourceFixture != null) return resourceFixture.checkpoint();
         return "state=" + state + " " + currentScreen();
     }
 

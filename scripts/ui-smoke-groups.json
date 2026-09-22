@@ -4,7 +4,23 @@
     "standard-ae2": ["standard-plan-controls", "recurrent-plan", "stored-variant-plan", "standard-status-controls", "waiting-status", "running-status", "delayed-status", "craft-lifecycle", "cpu-list-total-ttc"],
     "provider-dispatch-statuses": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"]
   },
+  "focusedCases": {
+    "1.20.1-forge": ["delayed-resource-icons", "appmek-resource-icons"],
+    "1.20.1-fabric": ["delayed-resource-icons"],
+    "1.21.1-neoforge": ["delayed-resource-icons", "appmek-resource-icons"],
+    "26.1.2-neoforge": ["delayed-resource-icons"]
+  },
   "cases": {
+    "delayed-resource-icons": {
+      "checks": ["server-identity", "real-dispatch", "delayed-plates", "native-locate", "lifecycle", "capture-integrity", "cleanup", "fixture-only"],
+      "screenshots": [],
+      "fixtureOnly": true
+    },
+    "appmek-resource-icons": {
+      "checks": ["server-identity", "real-dispatch", "delayed-plates", "native-locate", "lifecycle", "capture-integrity", "cleanup", "fixture-only"],
+      "screenshots": [],
+      "fixtureOnly": true
+    },
     "no-space-status": {
       "checks": ["screen", "external-machine", "warning", "tooltip", "layout", "details-ignored", "reset-ignored", "recovered"],
       "screenshots": ["no-space-before.png", "no-space-en-us.png", "no-space-recovered.png"]

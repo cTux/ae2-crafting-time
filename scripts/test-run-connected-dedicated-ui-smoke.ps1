@@ -1,4 +1,10 @@
 $ErrorActionPreference = 'Stop'
+$refusedEula = $false
+try {
+    & (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Target 1.20.1-forge `
+        -ServerDirectory 'C:\absent-source' -PreparedLaunch 'C:\absent-launch' -BundleDirectory 'C:\absent-bundle' -ReportDirectory 'C:\absent-report'
+} catch { $refusedEula = $_.Exception.Message -like '*AcceptMinecraftEula*' }
+if (!$refusedEula) { throw 'Runner must refuse missing EULA consent before accessing or writing input paths' }
 $runnerText = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Raw
 $parseErrors = $null
 $runnerAst = [Management.Automation.Language.Parser]::ParseInput($runnerText, [ref]$null, [ref]$parseErrors)
@@ -19,7 +25,7 @@ if ($clientRunner -notmatch 'GetTempPath\(\)\) "ae2-crafting-time-smoke-client.l
         $clientRunner -notmatch '"OpenOrCreate", "ReadWrite", "None"') {
     throw 'Every target and profile must share one exclusive smoke-client lock'
 }
-if ($runnerText -notmatch "ValidateSet\('cpu-list-total-ttc','recurrent-plan','stored-variant-plan'\)" -or
+if ($runnerText -notmatch "ValidateSet\('cpu-list-total-ttc','recurrent-plan','stored-variant-plan','delayed-resource-icons','appmek-resource-icons'\)" -or
         $runnerText -notmatch "Ae2ctAlpha" -or $runnerText -match "Ae2ctBeta" -or
         $runnerText -match 'Start-Job' -or $runnerText -match 'recurrent-role-processes.json' -or
         $runnerText -match '22 \* 1024 \* 1024') {
@@ -40,7 +46,7 @@ if ($runnerText -notmatch 'clientParameters\.ScheduledJava = \$true' -or
         $runnerText -notmatch 'clientParameters\.InteractiveUser = \$InteractiveUser') {
     throw 'Connected runner must support the prepared interactive Java session used by CodexVM'
 }
-if ($runnerText -notmatch '\[ValidateRange\(1, 1800\)\]\[int\]\$ServerStartupTimeoutSeconds = 180' -or
+if ($runnerText -notmatch '\[ValidateRange\(1, 1800\)\]\[int\]\$ServerStartupTimeoutSeconds = 300' -or
         $runnerText -notmatch 'AddSeconds\(\$ServerStartupTimeoutSeconds\)' -or
         $runnerText -notmatch 'StartupTimeoutSeconds=\$ServerStartupTimeoutSeconds') {
     throw 'Connected server and client startup must retain the same bounded configurable deadline'
@@ -55,8 +61,9 @@ if ($runnerText.IndexOf("-SimpleMatch ']: Done ('", [StringComparison]::Ordinal)
 }
 if ($runnerText -notmatch '\$maxAttempts = 3' -or
         $runnerText -notmatch 'FailOnInitialDisconnect=\$true' -or
-        $runnerText -notmatch "initial-disconnect-cap-exhausted" -or
-        $runnerText -notmatch "\`$status\.message -eq 'UI-smoke phase 1 watchdog: initial-disconnect'" -or
+        $runnerText -notmatch "startup-failure-cap-exhausted" -or
+        $runnerText -notmatch "'UI-smoke phase 1 watchdog: initial-disconnect'" -or
+        $runnerText -notmatch "'UI-smoke phase 1 watchdog: startup-timeout'" -or
         $runnerText -match '\$progress\.checkpoint -match ''\^state=STARTING') {
     throw 'Connected runner omitted the bounded startup-only disconnect retry contract'
 }
@@ -65,8 +72,9 @@ function Invoke-StartupRetryPolicy([object[]]$observations) {
     foreach ($observation in $observations) {
         $attempt++
         if ($observation -eq 'PASS') { return [pscustomobject]@{ attempts=$attempt; result='pass' } }
-        $startupDisconnect = $observation.message -eq 'UI-smoke phase 1 watchdog: initial-disconnect'
-        if (!$startupDisconnect) { return [pscustomobject]@{ attempts=$attempt; result='fail-closed' } }
+        $startupFailure = $observation.message -in @('UI-smoke phase 1 watchdog: initial-disconnect',
+            'UI-smoke phase 1 watchdog: startup-timeout')
+        if (!$startupFailure) { return [pscustomobject]@{ attempts=$attempt; result='fail-closed' } }
         if ($attempt -eq 3) { return [pscustomobject]@{ attempts=$attempt; result='cap-exhausted' } }
     }
     return [pscustomobject]@{ attempts=$attempt; result='pass' }
@@ -75,6 +83,10 @@ $transient = Invoke-StartupRetryPolicy @(
     [pscustomobject]@{ message='UI-smoke phase 1 watchdog: initial-disconnect'; checkpoint='state=STARTING phase=PREPARE fixture=new cpu-list=INITIAL screen=net.minecraft.client.gui.screens.ProgressScreen' },
     'PASS')
 if ($transient.attempts -ne 2 -or $transient.result -ne 'pass') { throw 'Immediate disconnect did not consume exactly one retry' }
+$coldTimeout = Invoke-StartupRetryPolicy @(
+    [pscustomobject]@{ message='UI-smoke phase 1 watchdog: startup-timeout'; checkpoint='state=STARTING phase=SETUP resource-case=0 stage=0 fixture-phase=pending' },
+    'PASS')
+if ($coldTimeout.attempts -ne 2 -or $coldTimeout.result -ne 'pass') { throw 'Cold pre-fixture timeout did not consume exactly one retry' }
 $exhausted = Invoke-StartupRetryPolicy @(1..3 | ForEach-Object {
     [pscustomobject]@{ message='UI-smoke phase 1 watchdog: initial-disconnect'; checkpoint='state=STARTING phase=PREPARE fixture=new cpu-list=INITIAL screen=net.minecraft.client.gui.screens.ProgressScreen' }
 })
@@ -124,6 +136,15 @@ try {
     if ($plan.sourceServer -eq $plan.disposableServer -or !$plan.disposableServer.StartsWith($report)) { throw 'Plan did not isolate a disposable server copy' }
     if (!$plan.campaignId -or !$plan.connectionEpoch -or !$plan.relaunch.required -or $plan.relaunch.minimumProcesses -ne 2) {
         throw 'Connected plan omitted the campaign-bound two-process relaunch contract'
+    }
+    $resourceReport = Join-Path $temporary 'resource-plan'
+    & (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Target 1.20.1-forge `
+        -ServerDirectory $source -PreparedLaunch $prepared -BundleDirectory $bundle -ReportDirectory $resourceReport `
+        -JavaHome $javaHome -Scenario delayed-resource-icons -ResourceFixtureOnly -PlanOnly
+    $resourcePlan = Get-Content -LiteralPath (Join-Path $resourceReport 'connected-runner-plan.json') -Raw | ConvertFrom-Json
+    if ($resourcePlan.resourceFixture -cnotmatch '^[a-f0-9]{32}$' -or
+            !($resourcePlan.arguments -contains "-Dae2craftingtime.test.resourceFixture=$($resourcePlan.resourceFixture)")) {
+        throw 'Connected resource plan omitted its explicit launch fixture identity'
     }
     if (!$plan.sourceIdentity.markerSha256 -or !$plan.sourceIdentity.launcherSha256 -or !$plan.sourceIdentity.javaVersion) {
         throw 'Connected plan omitted source marker, loader launcher, or Java identity'

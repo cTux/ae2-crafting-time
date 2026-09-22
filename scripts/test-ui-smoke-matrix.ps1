@@ -2,6 +2,18 @@ $ErrorActionPreference = 'Stop'
 $shell = (Get-Process -Id $PID).Path
 $temp = Join-Path ([IO.Path]::GetTempPath()) ('ae2ct-matrix-' + [guid]::NewGuid().ToString('N'))
 $scripts = Join-Path $temp 'scripts'
+function Assert-Rejected([scriptblock]$Action, [string]$Message) {
+    try { & $Action; throw "DID_NOT_REJECT: $Message" }
+    catch { if ($_.Exception.Message -like 'DID_NOT_REJECT:*') { throw } }
+}
+function Assert-ProcessRejected([string[]]$Arguments, [string]$Reason) {
+    $savedPreference=$ErrorActionPreference
+    try { $ErrorActionPreference='Continue';$output = (& $shell @Arguments 2>&1) -join "`n" }
+    finally { $ErrorActionPreference=$savedPreference }
+    if ($LASTEXITCODE -eq 0 -or $output -notlike "*$Reason*") {
+        throw "Subprocess did not reject with '$Reason': exit=$LASTEXITCODE output=$output"
+    }
+}
 New-Item -ItemType Directory -Path $scripts -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'run-ui-smoke-matrix.ps1'), (Join-Path $PSScriptRoot 'release-matrix.json') -Destination $scripts
 foreach ($file in @('get-ui-smoke-plan.ps1','get-ui-smoke-results.ps1','expand-ui-smoke-groups.ps1','run-client-versions.json',
@@ -14,8 +26,14 @@ foreach ($file in @('get-ui-smoke-plan.ps1','get-ui-smoke-results.ps1','expand-u
 & git -C $temp -c user.name=Test -c user.email=test@example.invalid -c core.hooksPath=disabled-hooks commit --allow-empty -qm fixture
 if ($LASTEXITCODE -ne 0) { throw 'Could not initialize matrix fixture' }
 @'
-param([string]$Target,[string]$BundleDirectory)
-'{}' | Set-Content (Join-Path $BundleDirectory 'expected-adapters.json')
+param([string]$Target,[string]$BundleDirectory,[switch]$BaseOnly,[string[]]$ProjectId,[switch]$ValidateOnly)
+$path=Join-Path $BundleDirectory 'expected-adapters.json'
+if($ValidateOnly){
+    if(!(Test-Path -LiteralPath $path) -or !(Test-Path -LiteralPath (Join-Path $BundleDirectory 'bundle-identity.json'))){throw 'Copied bundle was not sealed with adapter expectations'}
+}else{
+    if(Test-Path -LiteralPath (Join-Path $BundleDirectory 'bundle-identity.json')){throw 'Adapter producer tried to mutate a sealed cache'}
+    [IO.File]::WriteAllText($path,'{}')
+}
 '@ | Set-Content (Join-Path $scripts 'prepare-ui-smoke-adapters.ps1')
 @'
 param([string]$Target,[switch]$Latest)
@@ -31,7 +49,9 @@ if ($Target -eq '1.20.1-fabric') { throw 'intentional resolution failure' }
 New-Item -ItemType Directory -Path (Join-Path $RuntimeDirectory 'mods') -Force | Out-Null
 '@ | Set-Content (Join-Path $scripts 'run-client.ps1')
 @'
-param([string]$Target,[switch]$Latest,[string]$Scenario,[string]$BundleDirectory,[string]$PreparedLaunchRoot,[string]$GuestSourceRoot,[string]$CasesBase64,[string[]]$ProjectId,[switch]$BaseOnly,[switch]$Interactive,[int]$StartupTimeoutSeconds)
+param([string]$Target,[switch]$Latest,[string]$Scenario,[string]$BundleDirectory,[string]$PreparedLaunchRoot,[string]$GuestSourceRoot,[string]$CasesBase64,[string[]]$ProjectId,[switch]$BaseOnly,[switch]$Interactive,[switch]$ResourceFixtureOnly,[int]$StartupTimeoutSeconds)
+$sealed=Get-Content (Join-Path $BundleDirectory 'bundle-identity.json') -Raw|ConvertFrom-Json
+$null=& (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') -Mode Reuse -CacheDirectory $BundleDirectory -HeadSha $sealed.headSha -Fingerprint $sealed.fingerprint -Target $Target -Profile $sealed.profile -GraphId $sealed.graphId -BaseOnly:$BaseOnly
 $profile=if($Latest){'latest'}else{'compatible'}
 $live=Join-Path (Split-Path -Parent $PSScriptRoot) "build/ui-smoke/$Target/$profile/$Scenario"
 $cases = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($CasesBase64)) | ConvertFrom-Json
@@ -108,6 +128,17 @@ $raw=Get-Content (Join-Path $CampaignDirectory 'result.json') -Raw | ConvertFrom
 
 Set-Content -LiteralPath (Join-Path $temp '.gitignore') 'build/'
 try {
+    Assert-ProcessRejected @('-NoProfile','-File',(Join-Path $scripts 'run-ui-smoke-matrix.ps1'),'-PlanOnly',
+        '-Target','1.20.1-forge','-Scenario','delayed-resource-icons') 'ResourceFixtureOnly is required exactly'
+    Assert-ProcessRejected @('-NoProfile','-File',(Join-Path $scripts 'run-ui-smoke-matrix.ps1'),'-PlanOnly',
+        '-Target','1.20.1-forge','-Scenario','waiting-status','-ResourceFixtureOnly') 'ResourceFixtureOnly is required exactly'
+    Assert-ProcessRejected @('-NoProfile','-File',(Join-Path $scripts 'run-ui-smoke-matrix.ps1'),'-PlanOnly',
+        '-Target','26.1.2-neoforge','-Scenario','appmek-resource-icons','-ResourceFixtureOnly') 'supported only'
+    $resourcePreview = & $shell -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -PlanOnly `
+        -Target 1.20.1-forge -Scenario delayed-resource-icons -ResourceFixtureOnly
+    if ($LASTEXITCODE -ne 0 -or (($resourcePreview -join "`n") | ConvertFrom-Json).targets[0].cases[0] -cne 'delayed-resource-icons') {
+        throw 'Explicit native resource fixture plan was not preserved'
+    }
     $preview = & $shell -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -PlanOnly
     if ($LASTEXITCODE -ne 0 -or (Test-Path -LiteralPath (Join-Path $temp 'build'))) { throw 'Plan-only built or dispatched a client' }
     $previewPlan = ($preview -join "`n") | ConvertFrom-Json

@@ -1,8 +1,33 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 final class ServerDriverPlatform {
+    static boolean isResourceChunkForced(net.minecraft.server.level.ServerLevel level, int x, int z) {
+        return level.getForcedChunks().contains(new net.minecraft.world.level.ChunkPos(x, z).toLong());
+    }
+    static appeng.api.stacks.AEKey bucketlessResourceKey() { throw new UnsupportedOperationException(); }
+    static java.util.Map<String, Object> resourceFacts(ResourceFixtureControl.Case resourceCase) {
+        return java.util.Map.of("storageValidated", true, "chemical", false);
+    }
+    static byte[] encodeResourceKey(appeng.api.stacks.AEKey key, net.minecraft.server.level.ServerPlayer player) {
+        try {
+            var bytes = new java.io.ByteArrayOutputStream();
+            try (var output = new java.io.DataOutputStream(bytes)) {
+                net.minecraft.nbt.NbtIo.write(key.toTagGeneric(), output);
+            }
+            return bytes.toByteArray();
+        } catch (java.io.IOException error) {
+            throw new IllegalStateException("cannot encode resource key", error);
+        }
+    }
     static boolean isModLoaded(String id) {
         return net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded(id);
+    }
+    static void installResourceStorage(appeng.blockentity.storage.DriveBlockEntity drive, boolean chemical) {
+        if (chemical) throw new IllegalStateException("chemical resource fixture is unsupported on Fabric");
+        var inventory = drive.getInternalInventory();
+        if (inventory.getStackInSlot(1).isEmpty()) inventory.setItemDirect(1,
+                appeng.core.definitions.AEItems.FLUID_CELL_1K.stack());
+        drive.getMainNode().getGrid().getStorageService().invalidateCache();
     }
 
     static WirelessTerminalFixture wcwtTerminal() {

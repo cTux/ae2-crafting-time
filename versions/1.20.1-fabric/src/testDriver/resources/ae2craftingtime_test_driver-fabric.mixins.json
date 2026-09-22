@@ -4,6 +4,7 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "ae2craftingtime_test_driver.refmap.json",
   "client": [
+    "ConnectionReadOrderingMixin",
     "GameRendererMixin"
   ],
   "injectors": {

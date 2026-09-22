@@ -175,6 +175,24 @@ function Start-UiSmokeScheduledJava {
     }
 }
 
+function Get-UiSmokeScheduledJavaStartParameters {
+    param(
+        [Parameter(Mandatory)][string]$Executable,
+        [Parameter(Mandatory)][string]$Arguments,
+        [Parameter(Mandatory)][string]$WorkingDirectory,
+        [Parameter(Mandatory)][string]$TaskName,
+        [Parameter(Mandatory)][string]$InteractiveUser,
+        [AllowNull()][string]$InteractiveToken
+    )
+    $parameters = @{ Executable=$Executable; Arguments=$Arguments; WorkingDirectory=$WorkingDirectory
+        TaskName=$TaskName; InteractiveUser=$InteractiveUser }
+    if ($InteractiveToken) {
+        if ($InteractiveToken -cnotmatch '^[a-f0-9]{64}$') { throw 'Interactive token must be 256-bit lowercase hex' }
+        $parameters.InteractiveToken = $InteractiveToken
+    }
+    return $parameters
+}
+
 function Remove-UiSmokeScheduledJava {
     param([Parameter(Mandatory)][string]$TaskName)
     Stop-ScheduledTask -TaskName $TaskName -ErrorAction SilentlyContinue

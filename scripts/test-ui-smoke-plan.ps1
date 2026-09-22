@@ -237,7 +237,26 @@ try {
     }
     $fullPlan = & $planner -Repository $temp -Scenario suite
     Assert (@($fullPlan.targets.graphs.cases | Where-Object { $_ -like '*-read-recovery' }).Count -eq 0) 'Full campaigns must exclude incompatible read fixtures'
+    Assert (@($fullPlan.targets.graphs.cases | Where-Object { $_ -in @('delayed-resource-icons','appmek-resource-icons') }).Count -eq 0) `
+        'Ordinary suites must exclude fixture-only resource leaves'
     $expand = Join-Path $PSScriptRoot 'expand-ui-smoke-groups.ps1'
+    foreach ($targetId in @('1.20.1-forge','1.20.1-fabric','1.21.1-neoforge','26.1.2-neoforge')) {
+        Assert ((& $expand -Target $targetId -Scenarios 'delayed-resource-icons') -ceq 'delayed-resource-icons') `
+            "Native resource fixture must be available as a focused case on $targetId"
+    }
+    foreach ($targetId in @('1.20.1-forge','1.21.1-neoforge')) {
+        Assert ((& $expand -Target $targetId -Scenarios 'appmek-resource-icons') -ceq 'appmek-resource-icons') `
+            "AppMek resource fixture must be available as a focused case on $targetId"
+    }
+    Reject { & $expand -Target '1.20.1-fabric' -Scenarios 'appmek-resource-icons' } 'Fabric must reject the chemical fixture'
+    Reject { & $expand -Target '26.1.2-neoforge' -Scenarios 'appmek-resource-icons' } '26.1.2 must reject the chemical fixture'
+    $nativeResource = & $planner -Repository $temp -Target '1.20.1-fabric' -Scenario 'delayed-resource-icons'
+    Assert ($nativeResource.targets[0].graphs.Count -eq 1 -and $nativeResource.targets[0].graphs[0].baseOnly) `
+        'Focused native resource fixture must use the base graph'
+    $chemicalResource = & $planner -Repository $temp -Target '1.21.1-neoforge' -Scenario 'appmek-resource-icons'
+    Assert ($chemicalResource.targets[0].graphs.Count -eq 1 -and !$chemicalResource.targets[0].graphs[0].baseOnly -and
+            $chemicalResource.targets[0].graphs[0].projectId.Count -eq 1) `
+        'Focused chemical resource fixture must use the unique AppMek graph'
     Assert ((& $expand -Target '1.20.1-forge' -Scenarios 'crafting-tree-read-recovery') -ceq 'crafting-tree-read-recovery') 'Forge must accept focused Tree recovery'
     Assert ((& $expand -Target '1.20.1-fabric' -Scenarios 'merequester-read-recovery') -ceq 'merequester-read-recovery') 'Fabric must accept focused Requester recovery'
     Reject { & $expand -Target '1.20.1-fabric' -Scenarios 'crafting-tree-read-recovery' } 'Unavailable Fabric Tree must remain unsupported'

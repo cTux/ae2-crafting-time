@@ -71,6 +71,20 @@ class SuitePlanTest {
         assertThrows(IllegalArgumentException.class, () -> new SuitePlan(2, List.of(first, second)).options(options()));
         assertThrows(IllegalArgumentException.class, () -> new SuitePlan(2, List.of(first, first)).options(options()));
     }
+
+    @Test void resourceSuitesRequireTheIsolatedFixtureMode() {
+        var resource = new SuitePlan.Case("delayed-resource-icons", FIRST);
+        assertThrows(IllegalArgumentException.class, () -> new SuitePlan(1, List.of(resource)).options(options()));
+        System.setProperty("ae2craftingtime.test.resourceFixtureOnly", "true");
+        try {
+            assertEquals("delayed-resource-icons",
+                    new SuitePlan(1, List.of(resource)).options(options()).get(0).scenario());
+            assertThrows(IllegalArgumentException.class,
+                    () -> new SuitePlan(1, List.of(resource, second)).options(options()));
+        } finally {
+            System.clearProperty("ae2craftingtime.test.resourceFixtureOnly");
+        }
+    }
     @Test void expandedSuitesReachCaseValidationThroughSixtyFourEntries() {
         var names = List.of("standard-plan-controls", "standard-status-controls", "waiting-status",
                 "running-status", "delayed-status", "craft-lifecycle", "craft-plan", "crafting-tree-screen",

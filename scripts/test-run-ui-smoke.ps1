@@ -7,7 +7,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot "run-ui-smoke.ps1") -Destination
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "prepare-ui-smoke-suite.ps1"), (Join-Path $PSScriptRoot "ui-smoke-forge-suite.json"), (Join-Path $PSScriptRoot "ui-smoke-fabric-suite.json"), (Join-Path $PSScriptRoot "ui-smoke-neoforge-suite.json"), (Join-Path $PSScriptRoot "ui-smoke-neoforge-26.1.2-suite.json") -Destination $scripts
 foreach ($file in @('expand-ui-smoke-groups.ps1','release-matrix.json','ui-smoke-coverage.json','ui-smoke-groups.json',
         'prepare-ui-smoke-resume.ps1','ui-smoke-dependency-identity.ps1','ui-smoke-progress.ps1',
-        'ui-smoke-scheduled-java.ps1')) {
+        'ui-smoke-scheduled-java.ps1','resource-fixture-contract.ps1')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination $scripts
 }
 # This synthetic launcher exercises the single-process runner contract. The

@@ -13,6 +13,7 @@ import com.ctux.ae2craftingtime.integration.IntegrationMixinPlugin;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.google.gson.GsonBuilder;
 import com.mojang.authlib.GameProfile;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
@@ -65,7 +66,14 @@ public final class DedicatedCpuScenario {
     private boolean recurrentDisconnected;
     private boolean recurrentComplete;
     private boolean recurrentCaptured;
+    private ResourceFixtureServer resourceFixture;
+    private Map<String, Object> resourceCleanup = Map.of();
     private String recurrentAction = "";
+    private ResourcePrewarmControl prewarm;
+    private Object prewarmConnection;
+    private int prewarmGeneration;
+    private int prewarmTicks;
+    private boolean prewarmArmed;
     private long variantAck;
     private String variantAction = "";
     private boolean variantComplete;
@@ -79,17 +87,22 @@ public final class DedicatedCpuScenario {
     private boolean variantGridsReady;
     private boolean variantReplanDiagnosed;
     private appeng.menu.me.crafting.CraftingPlanSummary variantOriginalSummary;
-    private final long started = System.nanoTime();
+    private long started = System.nanoTime();
 
     public void tick(MinecraftServer server) {
         if (done) return;
         try {
             if (!server.isDedicatedServer()) throw new IllegalStateException("Dedicated test requires a dedicated server");
-            if (System.nanoTime() - started > java.util.concurrent.TimeUnit.MINUTES.toNanos(timeoutMinutes(scenario))) {
+            if ((!Boolean.getBoolean("ae2craftingtime.test.prewarm") || prewarmArmed)
+                    && System.nanoTime() - started > java.util.concurrent.TimeUnit.MINUTES.toNanos(timeoutMinutes(scenario))) {
                 throw new IllegalStateException("Dedicated CPU timeout: " + scenario + " " + DispatchObservation.snapshot());
             }
             step(server);
         } catch (Exception | LinkageError failure) {
+            if (Boolean.getBoolean("ae2craftingtime.test.prewarm") && !prewarmArmed) {
+                failure.printStackTrace(); done = true; server.halt(false); return;
+            }
+            if (resourceFixture != null) resourceCleanup = resourceFixture.cleanup(failure.toString());
             finish(server, "FAIL", failure.toString());
             failure.printStackTrace();
         }
@@ -108,6 +121,22 @@ public final class DedicatedCpuScenario {
         }
         if (scenario.equals("recurrent-plan-connected")) {
             stepRecurrentConnected(server, level);
+            return;
+        }
+        if (scenario.equals("delayed-resource-icons-connected") || scenario.equals("appmek-resource-icons-connected")) {
+            if (Boolean.getBoolean("ae2craftingtime.test.prewarm") && !prewarm(server)) return;
+            if (!connectedValidated) {
+                CpuListTtcControl.validateDisposableServer(Path.of(""), target);
+                connectedValidated = true;
+            }
+            if (resourceFixture == null) resourceFixture = new ResourceFixtureServer(scenario, target, gridFixture, origin);
+            if (resourceFixture.tick(server)) {
+                resourceCleanup = resourceFixture.cleanup("");
+                if (!resourceCleanup.get("liveCleanup").equals("PASS")) {
+                    throw new IllegalStateException("resource fixture cleanup failed: " + resourceCleanup);
+                }
+                finish(server, resourceFixture.failed() ? "FAIL" : "PASS", resourceFixture.failure());
+            }
             return;
         }
         if (scenario.equals("stored-variant-plan-connected")) {
@@ -189,6 +218,33 @@ public final class DedicatedCpuScenario {
             throw new IllegalStateException("Dedicated job did not record a fresh sample");
         }
         finish(server, "PASS", "");
+    }
+
+    private boolean prewarm(MinecraftServer server) throws java.io.IOException {
+        if (prewarm == null) prewarm = ResourcePrewarmControl.configured(CpuListTtcControl.directory());
+        if (prewarmArmed) return prewarm.accept(prewarmGeneration, true, false);
+        prewarm.waiting(System.currentTimeMillis());
+        var joined = server.getPlayerList().getPlayer(ResourcePrewarmControl.PLAYER);
+        Object current = joined == null ? null : joined.connection;
+        if (current != prewarmConnection) {
+            prewarm.invalidateReadiness();
+            prewarmConnection = current; prewarmTicks = 0;
+            if (current != null) prewarmGeneration = prewarm.attemptForJoin(prewarmGeneration);
+        }
+        if (current == null) return false;
+        if (!prewarm.attemptStillCurrent(prewarmGeneration)) {
+            prewarm.invalidateReadiness(); prewarmTicks = 0; return false;
+        }
+        int previousTicks = prewarmTicks;
+        prewarmTicks = ResourcePrewarmControl.advanceReadiness(prewarmTicks, 20, true, true);
+        if (previousTicks < 20 && prewarmTicks == 20) {
+            var process = ProcessHandle.current();
+            prewarm.write("server-ready.json", prewarm.ready(process.pid(), process.info().startInstant().orElseThrow(), prewarmGeneration, 20, 0));
+        }
+        if (prewarmTicks >= 20 && prewarm.accept(prewarmGeneration, current == prewarmConnection, resourceFixture == null)) {
+            prewarmArmed = true; started = System.nanoTime(); return true;
+        }
+        return false;
     }
 
     static int timeoutMinutes(String value) {
@@ -492,12 +548,26 @@ public final class DedicatedCpuScenario {
     private void finish(MinecraftServer server, String result, String error) {
         done = true;
         try {
-            Files.writeString(output, new GsonBuilder().setPrettyPrinting().create().toJson(Map.of(
-                    "target", target, "scenario", scenario, "result", result, "error", error,
-                    "adapters", IntegrationMixinPlugin.snapshot(), "dispatch", DispatchObservation.snapshot(),
-                    "addonRoute", Map.of("enabled", recurrentAddonRoute, "wcwt", recurrentWirelessReady,
-                            "quantumCpu", cpu != null),
-                    "finishedAt", java.time.Instant.now().toString())));
+            var json = new GsonBuilder().setPrettyPrinting().create().toJson(Map.ofEntries(
+                    Map.entry("target", target), Map.entry("scenario", scenario), Map.entry("result", result),
+                    Map.entry("error", error), Map.entry("adapters", IntegrationMixinPlugin.snapshot()),
+                    Map.entry("dispatch", DispatchObservation.snapshot()), Map.entry("addonRoute",
+                            Map.of("enabled", recurrentAddonRoute, "wcwt", recurrentWirelessReady,
+                                    "quantumCpu", cpu != null)),
+                    Map.entry("resourceCleanup", resourceCleanup), Map.entry("resourceEvidence",
+                            resourceFixture == null ? Map.of() : resourceFixture.evidence()),
+                    Map.entry("finishedAt", java.time.Instant.now().toString())));
+            var temporary = output.resolveSibling(output.getFileName() + "." + UUID.randomUUID() + ".tmp");
+            try {
+                try (var stream = Files.newOutputStream(temporary, java.nio.file.StandardOpenOption.CREATE_NEW,
+                        java.nio.file.StandardOpenOption.WRITE, java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
+                    stream.write(json.getBytes(StandardCharsets.UTF_8));
+                }
+                Files.move(temporary, output, java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                        java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            } finally {
+                Files.deleteIfExists(temporary);
+            }
         } catch (Exception failure) { throw new IllegalStateException("Cannot save dedicated test evidence", failure); }
         finally { server.halt(false); }
     }

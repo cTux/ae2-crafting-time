@@ -11,6 +11,9 @@ param(
 $ErrorActionPreference = 'Stop'
 $cache = [IO.Path]::GetFullPath($CacheDirectory)
 $identityPath = Join-Path $cache 'bundle-identity.json'
+if (!(Test-Path -LiteralPath (Join-Path $cache 'expected-adapters.json') -PathType Leaf)) {
+    throw 'UI-smoke bundle must contain expected-adapters.json before sealing or reuse'
+}
 function Get-BundleIdentity {
     $root = $cache.TrimEnd('\')
     $files = @(Get-ChildItem -LiteralPath $root -File -Recurse | Where-Object FullName -ne $identityPath | ForEach-Object {
@@ -43,4 +46,9 @@ if ($identity.schema -ne 2 -or $identity.headSha -ne $HeadSha.ToLowerInvariant()
 }
 $tree = Get-BundleIdentity
 if ($tree.sha256 -ne $identity.bundleSha256) { throw 'UI-smoke bundle cache content changed after sealing' }
+$adapterArtifacts = @($identity.artifacts | Where-Object path -CEQ 'expected-adapters.json')
+$actualAdapters = @($tree.files | Where-Object path -CEQ 'expected-adapters.json')
+if ($adapterArtifacts.Count -ne 1 -or $adapterArtifacts[0].sha256 -cne $actualAdapters[0].sha256) {
+    throw 'UI-smoke bundle identity does not seal expected-adapters.json'
+}
 [pscustomobject]@{reused=$true;bundleSha256=$tree.sha256;identityPath=$identityPath}

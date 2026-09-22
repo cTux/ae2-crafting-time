@@ -46,6 +46,30 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
     @Test
+    void fixturePreparationSendsAbsoluteProviderFacingRotation() throws Exception {
+        var node = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/StandardCraftFixture.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, 0);
+        }
+        var prepare = node.methods.stream().filter(method -> method.name.equals("prepare")).findFirst().orElseThrow();
+        var teleports = java.util.Arrays.stream(prepare.instructions.toArray())
+                .filter(MethodInsnNode.class::isInstance).map(MethodInsnNode.class::cast)
+                .filter(call -> call.name.startsWith("teleport")).toList();
+        assertEquals(1, teleports.size());
+        var teleport = teleports.get(0);
+        assertEquals("net/minecraft/server/network/ServerGamePacketListenerImpl", teleport.owner);
+        assertEquals("teleport", teleport.name);
+        assertEquals("(DDDFF)V", teleport.desc, "position-only teleport preserves arbitrary spawn rotation");
+        assertEquals(Opcodes.FCONST_2, teleport.getPrevious().getOpcode(), "fixed downward pitch");
+        var yaw = assertInstanceOf(org.objectweb.asm.tree.LdcInsnNode.class, teleport.getPrevious().getPrevious());
+        assertEquals(-53.13f, yaw.cst, "fixed yaw, not the player's previous orientation");
+        assertEquals(-Math.toDegrees(Math.atan2(4, 3)), (float) yaw.cst, 0.01,
+                "the camera must face the actual provider east of the terminal");
+    }
+
+    @Test
     void crazyPriorityProbeMutatesAndPersistsTheServerCluster() throws Exception {
         var node = new ClassNode();
         try (var input = getClass().getResourceAsStream(

@@ -32,6 +32,7 @@ final class StandardCraftFixture {
     boolean unprofiledPlan;
     boolean cpuListScenario;
     boolean recurrentPlan;
+    boolean resourceFixture;
     boolean storedVariantPlan;
     private java.util.List<java.util.concurrent.Future<appeng.api.networking.crafting.ICraftingPlan>> cpuListPlans;
     private boolean cpuListSubmitted;
@@ -50,6 +51,14 @@ final class StandardCraftFixture {
     String checkpoint = "new";
 
     void bindTerminal(BlockPos value) { terminal = value; }
+    void configureResourceFixture() {
+        resourceFixture = true;
+        unprofiledPlan = true;
+        holdFinalOutput = true;
+        cpuListScenario = true;
+        cpuCount = 2;
+        busyCpuCount = 2;
+    }
     void refreshCpuIdentities() { cpuListIdentities = null; }
     void refreshCpuIdentities(ServerPlayer player) {
         var previous = cpuListIdentities;
@@ -78,9 +87,10 @@ final class StandardCraftFixture {
             PartHelper.setPart(level, terminal, null, player,
                     AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT));
             PartHelper.setPart(level, terminal, Direction.NORTH, player, AEParts.CRAFTING_TERMINAL.get());
-            DispatchStatusFixture.place(player, terminal.west(2), "16k_crafting_storage");
+            DispatchStatusFixture.place(player, terminal.west(2), resourceFixture ? "256k_crafting_storage" : "16k_crafting_storage");
             if (cpuListScenario) for (int index = 1; index < cpuCount; index++)
-                DispatchStatusFixture.place(player, terminal.west(2 + index * 2), "16k_crafting_storage");
+                    DispatchStatusFixture.place(player, terminal.west(2 + index * 2),
+                            resourceFixture ? "256k_crafting_storage" : "16k_crafting_storage");
             DispatchStatusFixture.place(player, terminal.east(2), "drive");
             DispatchStatusFixture.place(player, terminal.below(), "creative_energy_cell");
             if (cpuListScenario) DispatchStatusFixture.place(player, terminal.south(2), "controller");
@@ -98,7 +108,9 @@ final class StandardCraftFixture {
                 PartHelper.setPart(level, obstruction, null, player, AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT));
                 PartHelper.setPart(level, obstruction, Direction.NORTH, player, AEParts.CRAFTING_TERMINAL.get());
             }
-            player.teleportTo(terminal.getX() + 0.5, terminal.getY() - 1, terminal.getZ() - 2.5);
+            // Face the provider four blocks east and three south; send absolute rotation to the client.
+            player.connection.teleport(terminal.getX() + 0.5, terminal.getY() - 1, terminal.getZ() - 2.5,
+                    -53.13f, 2f);
             return false;
         }
         checkpoint = "terminal-node";
@@ -148,6 +160,7 @@ final class StandardCraftFixture {
         if (!initialized) {
             var drive = (DriveBlockEntity) level.getBlockEntity(terminal.east(2));
             drive.getInternalInventory().setItemDirect(0, appeng.core.definitions.AEItems.ITEM_CELL_1K.stack());
+            if (resourceFixture) ServerDriverPlatform.installResourceStorage(drive, false);
             if (!missingPlanInput) {
                 drive.getOriginalCellInventory(0).insert(AEItemKey.of(Items.COBBLESTONE), cpuListScenario ? 4096 : 2, Actionable.MODULATE,
                         IActionSource.empty());
@@ -156,20 +169,24 @@ final class StandardCraftFixture {
                 if (holdFinalOutput) drive.getOriginalCellInventory(0).insert(AEItemKey.of(Items.SAND), 2,
                         Actionable.MODULATE, IActionSource.empty());
             }
-            pattern(player, 4, 0, recurrentPlan ? Items.SMOOTH_STONE : Items.COBBLESTONE, Items.STONE);
-            if (holdFinalOutput) {
-                pattern(player, 4, 1, Items.SAND, Items.GLASS);
-                pattern(player, 8, java.util.List.of(Items.STONE, Items.GLASS), Items.SMOOTH_STONE);
-            } else {
-                if (storedVariantPlan) storedVariantPattern(player);
-                else pattern(player, 8, Items.STONE, Items.SMOOTH_STONE);
+            if (!resourceFixture) {
+                pattern(player, 4, 0, recurrentPlan ? Items.SMOOTH_STONE : Items.COBBLESTONE, Items.STONE);
+                if (holdFinalOutput) {
+                    pattern(player, 4, 1, Items.SAND, Items.GLASS);
+                    pattern(player, 8, java.util.List.of(Items.STONE, Items.GLASS), Items.SMOOTH_STONE);
+                } else {
+                    if (storedVariantPlan) storedVariantPattern(player);
+                    else pattern(player, 8, Items.STONE, Items.SMOOTH_STONE);
+                }
+                if (cpuListScenario) pattern(player, 12, Items.SAND, Items.GLASS);
             }
-            if (cpuListScenario) pattern(player, 12, Items.SAND, Items.GLASS);
-            if (!unprofiledPlan) seed(player);
+            if (!unprofiledPlan && !resourceFixture) seed(player);
             initialized = true;
         }
         checkpoint = "craftable";
-        return node.getGrid().getCraftingService().isCraftable(AEItemKey.of(Items.SMOOTH_STONE));
+        return resourceFixture
+                ? resourceCpus(player).size() == 2 && resourceCpus(player).stream().allMatch(candidate -> candidate.getCluster().isActive())
+                : node.getGrid().getCraftingService().isCraftable(AEItemKey.of(Items.SMOOTH_STONE));
     }
 
     void seed(ServerPlayer player) {
@@ -273,6 +290,85 @@ final class StandardCraftFixture {
 
     CraftingBlockEntity cpu(ServerPlayer player) {
         return (CraftingBlockEntity) player.level().getBlockEntity(terminal.west(2));
+    }
+
+    java.util.List<CraftingBlockEntity> resourceCpus(ServerPlayer player) {
+        return cpuListCpus(player).subList(0, 2);
+    }
+
+    void configureResourcePatterns(ServerPlayer player, java.util.List<appeng.api.stacks.AEKey> outputs,
+            boolean chemical, boolean clearSamples) {
+        var drive = (DriveBlockEntity) player.level().getBlockEntity(terminal.east(2));
+        ServerDriverPlatform.installResourceStorage(drive, chemical);
+        var provider = (PatternProviderBlockEntity) player.level().getBlockEntity(terminal.east(4));
+        var inventory = provider.getLogic().getPatternInv();
+        var network = ProfilerBridge.networkId(cpu(player).getMainNode().getGrid());
+        if (clearSamples) outputs.forEach(key -> ProfilerBridge.clearStats(ProfilerBridge.key(network, key)));
+        for (int slot = 0; slot < inventory.size(); slot++) inventory.setItemDirect(slot, ItemStack.EMPTY);
+        for (int slot = 0; slot < outputs.size(); slot++) {
+            var input = slot == 0 ? AEItemKey.of(Items.COBBLESTONE) : AEItemKey.of(Items.SAND);
+            cpu(player).getMainNode().getGrid().getStorageService().getInventory().insert(
+                    input, 1, Actionable.MODULATE, IActionSource.empty());
+            inventory.setItemDirect(slot, ServerDriverPlatform.processingPattern(
+                    new GenericStack(input, 1), new GenericStack(outputs.get(slot), outputs.get(slot).getAmountPerUnit())));
+        }
+        provider.getLogic().updatePatterns();
+    }
+
+    boolean consumeResourceInput(ServerPlayer player, int slot) {
+        return removeOne(target(player, 4), slot == 0 ? Items.COBBLESTONE : Items.SAND);
+    }
+
+    java.util.List<BlockPos> resourceProviders() { return java.util.List.of(terminal.east(4)); }
+
+    void cleanupResourceFixture(ServerPlayer player, java.util.List<appeng.api.stacks.AEKey> outputs,
+            boolean clearSamples) {
+        if (terminal == null) return;
+        for (int index = 0; index < 2; index++) {
+            var blockEntity = player.level().getBlockEntity(terminal.west(2 + index * 2));
+            if (blockEntity instanceof CraftingBlockEntity cpu && cpu.getCluster() != null
+                    && cpu.getCluster().isBusy()) cpu.getCluster().craftingLogic.cancel();
+        }
+        var providerBlockEntity = player.level().getBlockEntity(terminal.east(4));
+        if (providerBlockEntity instanceof PatternProviderBlockEntity provider) {
+            var inventory = provider.getLogic().getPatternInv();
+            for (int slot = 0; slot < inventory.size(); slot++) inventory.setItemDirect(slot, ItemStack.EMPTY);
+            provider.getLogic().updatePatterns();
+        }
+        var targetBlockEntity = player.level().getBlockEntity(terminal.east(4).below());
+        if (targetBlockEntity instanceof net.minecraft.world.Container target) {
+            target.clearContent();
+            target.setChanged();
+        }
+        var cpuBlockEntity = player.level().getBlockEntity(terminal.west(2));
+        if (!(cpuBlockEntity instanceof CraftingBlockEntity owner) || owner.getMainNode().getGrid() == null) return;
+        var grid = owner.getMainNode().getGrid();
+        for (var output : outputs) grid.getStorageService().getInventory().extract(
+                output, Long.MAX_VALUE, Actionable.MODULATE, IActionSource.empty());
+        grid.getStorageService().getInventory().extract(
+                AEItemKey.of(Items.COBBLESTONE), Long.MAX_VALUE, Actionable.MODULATE, IActionSource.empty());
+        grid.getStorageService().getInventory().extract(
+                AEItemKey.of(Items.SAND), Long.MAX_VALUE, Actionable.MODULATE, IActionSource.empty());
+        if (clearSamples) {
+            var network = ProfilerBridge.networkId(grid);
+            outputs.forEach(key -> ProfilerBridge.clearStats(ProfilerBridge.key(network, key)));
+        }
+    }
+
+    boolean resourceDelayed(ServerPlayer player, appeng.api.stacks.AEKey key) {
+        var grid = cpu(player).getMainNode().getGrid();
+        return ProfilerBridge.isStillDelayed(ProfilerBridge.key(ProfilerBridge.networkId(grid), key));
+    }
+
+    void teardownResourceFixture(ServerPlayer player) {
+        if (terminal == null) return;
+        var level = player.level();
+        for (var pos : BlockPos.betweenClosed(terminal.offset(-(cpuCount * 2), -2, -3), terminal.offset(13, 3, 3))) {
+            level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+        }
+        terminal = null;
+        initialized = false;
+        cpuListIdentities = null;
     }
 
     boolean prepareCpuListJobs(ServerPlayer player) {
