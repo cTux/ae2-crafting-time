@@ -116,6 +116,8 @@ final class ResourceFixtureClient {
                     throw new IllegalStateException("resource fixture setup exceeded 300 seconds");
                 }
                 if (!worldReady()) return;
+                resetStageDeadline();
+                result = ScenarioState.WORLD_READY;
             }
             tickIntegratedServer();
             if (!Files.isRegularFile(control.resolve("resource/state.properties"), java.nio.file.LinkOption.NOFOLLOW_LINKS)) {
