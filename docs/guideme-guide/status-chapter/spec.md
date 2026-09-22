@@ -98,6 +98,12 @@ change it. The page uses `Recurrent` / `Циклічне`, explains the normal-w
 `Recurrent: <amount>` label and matching hover explanation, and places it in
 Crafting Plan before submission, not a running CPU's Crafting Status.
 
+That normal-weight description matches the shipped presentation. The planned
+[#496 warning style](../../recurrent-crafting-status/spec.md#planned-warning-style-496)
+replaces it with bold red text and the existing compact dark badge. Update both
+locale pages, wiki source, and the shared screenshot when that UI change has
+reviewed runtime evidence; a planning-docs merge must not claim it is shipped.
+
 The regression reported in [#408](https://github.com/cTux/ae2-crafting-time/issues/408)
 was fixed by merged [#410](https://github.com/cTux/ae2-crafting-time/pull/410).
 Older investigation notes in the recurrence documents are historical, not an

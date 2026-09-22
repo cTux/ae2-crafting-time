@@ -1,10 +1,49 @@
 # Recurrent crafting status: implementation plan
 
-Status: the original feature is implemented. This is the focused repair plan for
-[#408](https://github.com/cTux/ae2-crafting-time/issues/408), restoring the
-[specification](spec.md) through the [current design](technical-design.md).
-Merge this documentation update before implementation. No fix or new runtime
-pass is claimed by these documents.
+Status: the original feature and #408 repair are implemented. The next change is
+the warning styling requested in
+[#496](https://github.com/cTux/ae2-crafting-time/issues/496), following the
+[specification](spec.md#planned-warning-style-496) and
+[rendering design](technical-design.md#planned-shared-warning-presentation-496).
+This documentation merge leaves #496 open for implementation and verification.
+
+## Planned #496 implementation
+
+1. Change `TtcText.recurrent` to bold Minecraft red and include its translation
+   key in the existing `CraftingRowState.isBadge` set. Reuse both target-specific
+   `AbstractTableRendererMixin` paths and `TtcBadge` geometry/background. Retain
+   the existing recurrence guards, amount formatting, tooltip explanation, native
+   row tint, and tooltip panel. Keep detection and provider highlights unchanged.
+2. Update the existing localized component test's normal-weight/non-badge
+   expectations. Update the `recurrent-plan` driver and smoke-group checkpoint
+   from `red-normal` to `red-warning-style`, checking bold red text and a rendered
+   containing badge. Keep ordinary/seeded/alternative controls, all sort modes,
+   no-sample cases, quantity/unit comparisons, replan/disable cleanup, and layout
+   checks. Add coverage only for changed decisions.
+3. Review and commit the implementation through the development/test-driver
+   workflows. Let the post-commit hook create its PR before running local checks.
+   Run the focused component/badge tests and applicable coverage checks, then use
+   `scripts/run-ui-smoke.ps1 -Changed -BaseRef origin/master -PlanOnly` to select
+   prepared-client checks. Verify all four target source sets; retain runtime
+   row/tooltip evidence on both renderer paths, including 26.1.2. Compare the badge
+   with an existing red warning. Reuse `recurrent-plan` and
+   `standard-plan-controls`; runtime smoke is English, with both locales covered
+   by resource/component and layout checks. Broaden only for a changed boundary
+   or a failing control; the historical #408 addon investigation is not a new
+   prerequisite for this styling-only change.
+4. Once the new style has reviewed runtime evidence, update the English and
+   Ukrainian Recurrent GuideME pages and their wiki source, remove the old
+   normal-weight description, and refresh the shared screenshot through
+   `refresh-guide-images`. Until then, keep shipped guide text and images truthful.
+   Complete required current-head CI and review, merge the implementation, then
+   close #496 with evidence for R8 and the preserved R1-R7 behavior.
+
+## Historical #408 repair plan
+
+The remaining sections record the repair merged in
+[#410](https://github.com/cTux/ae2-crafting-time/pull/410). Investigation wording,
+source pins, and launch budgets below describe that earlier task; they are not
+current blockers or verification claims for #496.
 
 ## 1. Revalidate the existing verification environment
 

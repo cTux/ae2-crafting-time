@@ -1,7 +1,9 @@
 # Recurrent ingredients in the crafting plan
 
-Status: implemented; this is the current behavior contract. The regression in
-[#408](https://github.com/cTux/ae2-crafting-time/issues/408) remains under investigation.
+Status: recurrence detection is implemented; #408 was fixed by
+[#410](https://github.com/cTux/ae2-crafting-time/pull/410). The styling change in
+R8 is planned under [#496](https://github.com/cTux/ae2-crafting-time/issues/496).
+Merging these documents does not implement that change or close #496.
 
 Original feature: [#320](https://github.com/cTux/ae2-crafting-time/issues/320).
 
@@ -43,10 +45,28 @@ Support Forge and Fabric 1.20.1, NeoForge 1.21.1, and NeoForge 26.1.2. Use the
 same logical-server result in singleplayer and multiplayer. The feature must
 work without learned timing samples.
 
-English uses `Recurrent`, not `Recursive`, in normal weight and Minecraft red.
+English uses `Recurrent`, not `Recursive`, in Minecraft red.
 Ukrainian uses `Циклічне`; its tooltip is
 `Цього інгредієнта бракує, бо рецепт його виготовлення залежить від нього самого — безпосередньо або через інші рецепти.`
 Text and the tooltip explain the status without relying on color alone.
+
+### Planned warning style (#496)
+
+Use the existing red warning presentation, such as `NO PROVIDER`: bold Minecraft
+red (`0xFF5555`) text with a shadow and the same compact, rounded dark background
+behind the complete `Recurrent: <amount>` line. Match its padding and opacity.
+The background belongs to the status label, not the whole table row; retain
+AE2's native missing-row tint and hover treatment.
+
+Use the same bold red text for the tooltip's `Recurrent: <amount>` line. Keep
+the normal tooltip panel background and ordinary explanation text. Both locales
+must fit the existing cells with their formatted amounts and units. Apply this
+style without requiring learned timing samples and in every TTC sort mode.
+
+The shipped style is currently normal-weight red without a compact badge. R8
+replaces that presentation when implemented. Detection, quantities, wording,
+sorting, and TTC colors retain the rules above. Recurrent remains a pre-craft
+diagnosis; this visual change does not trigger provider highlights or sky beams.
 
 Native AE2 plan tables opened from supported terminals inherit the feature.
 Crafting Tree's separate tree, ME Requester, and running crafting-status rows
@@ -74,6 +94,7 @@ preserve its missing-amount comparator.
 | R5 | Replan, menu replacement, another network, cancellation, disconnect, and late packets cannot show an old diagnosis. Dedicated single-client sessions and recipient/menu/revision boundary tests verify isolation. |
 | R6 | Both locales, all four targets, all TTC sort modes, no-sample plans, and quantities/units remain correct. Long text stays within the existing table layout. |
 | R7 | Craftability, calculation results, timing data, saved data, and optional separate screens are unchanged. Missing or rejected diagnostic data leaves the native plan usable. |
+| R8 (planned, #496) | Recurrent uses the existing bold red warning text, shadow, and compact dark badge in the plan row, with matching bold red tooltip text. Amounts, units, explanation, native row tint, tooltip panel, and other statuses retain their existing presentation. Both locales and all four targets preserve layout, all TTC sort modes, and no-sample behavior. Clearing the diagnosis or disabling the mod removes the Recurrent text and badge together. |
 
 Verify both locales through translation/component checks. Runtime smoke uses
 English only under the [current smoke policy](../automated-ui-testing/spec.md#smoke-policy);
