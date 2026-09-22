@@ -142,6 +142,7 @@ final class StandardAe2Scenario {
             frames.reset();
         } else if (variantReconnectRequested) {
             variantReconnectRequested = false;
+            variantHover = false;
             variantLifecycle = 4;
             phase = Stage.TERMINAL;
             frames.reset();
