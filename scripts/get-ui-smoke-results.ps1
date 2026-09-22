@@ -58,6 +58,12 @@ foreach ($scenario in $Scenarios) {
                 $contractChecks = if ($data.checks.'advanced-cpu' -is [bool] -and $contracts.$scenario.advancedChecks) {
                     @($contracts.$scenario.advancedChecks)
                 } else { @($contracts.$scenario.checks) }
+                if ($scenario -in @('delayed-resource-icons','appmek-resource-icons') -and
+                        $data.checks.'typed-keys' -is [bool]) {
+                    $contractChecks = @($contractChecks | ForEach-Object {
+                        if ($_ -eq 'fixture-only') { 'typed-keys' } else { $_ }
+                    })
+                }
                 if (Compare-Object $contractChecks @($data.checks.psobject.Properties.Name) -CaseSensitive) { throw 'Incomplete check set' }
                 foreach ($check in $contractChecks) { if ($data.checks.$check -isnot [bool] -or !$data.checks.$check) { throw "Failed check: $check" } }
                 $contractScreenshots = if ($data.checks.'advanced-cpu' -is [bool] -and $contracts.$scenario.advancedScreenshots) {

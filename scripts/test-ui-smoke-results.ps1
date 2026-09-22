@@ -137,6 +137,29 @@ try {
     $adapterResult.adapters.neoecoae.reason = 'missing'
     $adapterResult | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $temp 'result.json')
     Assert ((Read-Adapter).result -eq 'FAIL') 'Unselected adapter must fail'
+    $resource = Join-Path $temp 'resource'
+    New-Item -ItemType Directory -Path $resource | Out-Null
+    Set-Content -LiteralPath (Join-Path $resource 'water-held.png') -Value 'fixture-image'
+    @{screen='world';screenWidth=100;screenHeight=100;guiScale=2;gui=@{x=0;y=0;width=100;height=100}} |
+        ConvertTo-Json | Set-Content -LiteralPath (Join-Path $resource 'water-held.json')
+    $resourceChecks = [ordered]@{}
+    foreach ($check in $catalogue.cases.'delayed-resource-icons'.checks) {
+        $resourceChecks[$check] = $true
+    }
+    $resourceResult = @{schema=1;complete=$true;target='1.20.1-forge';profile='compatible';
+        scenario='delayed-resource-icons';language='en_us';result='PASS';checks=$resourceChecks;
+        screenshots=@('water-held.png')}
+    function Read-Resource { & "$PSScriptRoot/get-ui-smoke-results.ps1" -Target 1.20.1-forge -Profile compatible `
+        -Scenarios delayed-resource-icons -Evidence $resource }
+    $resourceResult | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $resource 'result.json')
+    Assert ((Read-Resource).result -eq 'PASS') 'Fixture-only resource check set must pass'
+    $resourceChecks.Remove('fixture-only')
+    $resourceChecks['typed-keys'] = $true
+    $resourceResult | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $resource 'result.json')
+    Assert ((Read-Resource).result -eq 'PASS') 'Production resource check set must pass'
+    $resourceChecks['fixture-only'] = $true
+    $resourceResult | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $resource 'result.json')
+    Assert ((Read-Resource).result -eq 'FAIL') 'Mixed resource modes must fail'
     Write-Host 'PASS: independent evidence, missing/unrun leaves and stale identity rejection'
 } finally {
     $resolved = [IO.Path]::GetFullPath($temp)
