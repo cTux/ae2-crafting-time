@@ -137,7 +137,9 @@ foreach ($change in $changes) {
         $new = Read-Language $newJson
         $keys = @(@($old.Keys) + @($new.Keys) | Sort-Object -Unique -CaseSensitive | Where-Object { !$old.ContainsKey($_) -or !$new.ContainsKey($_) -or $old[$_] -cne $new[$_] })
         if (!$keys.Count) { $reason = 'Language formatting only; static validation still required' }
-        elseif (!@($keys | Where-Object { $_ -notin @('text.ae2craftingtime.plan.recurrent','text.ae2craftingtime.plan.recurrent_hint') }).Count) {
+        elseif (!@($keys | Where-Object { $_ -notin @('text.ae2craftingtime.plan.stored_variant','text.ae2craftingtime.plan.stored_variant.explanation','text.ae2craftingtime.plan.stored_variant.suggestion') }).Count) {
+            $cases = @('stored-variant-plan','standard-plan-controls','recurrent-plan'); $reason = 'English stored-variant labels changed'
+        } elseif (!@($keys | Where-Object { $_ -notin @('text.ae2craftingtime.plan.recurrent','text.ae2craftingtime.plan.recurrent_hint') }).Count) {
             $cases = @('recurrent-plan','standard-plan-controls'); $reason = 'English recurrent-plan labels changed'
         } elseif (@($keys | Where-Object { $_ -cne 'text.ae2craftingtime.ttc_delayed' }).Count) { $cases = @('suite'); $reason = 'English keys affect general UI' }
         else { $cases = @('delayed-status'); $reason = 'English delayed label changed' }

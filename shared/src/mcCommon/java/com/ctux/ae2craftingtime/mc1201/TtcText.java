@@ -25,6 +25,16 @@ public final class TtcText {
         return Component.translatable("text.ae2craftingtime.plan.recurrent_hint");
     }
 
+    public static MutableComponent storedVariant() {
+        return Component.translatable("text.ae2craftingtime.plan.stored_variant")
+                .withStyle(style -> style.withColor(ChatFormatting.GOLD).withBold(false));
+    }
+
+    public static List<Component> storedVariantHints() {
+        return List.of(Component.translatable("text.ae2craftingtime.plan.stored_variant.explanation"),
+                Component.translatable("text.ae2craftingtime.plan.stored_variant.suggestion"));
+    }
+
     public static MutableComponent ttc(String eta) {
         return Component.translatable("text.ae2craftingtime.ttc", eta);
     }

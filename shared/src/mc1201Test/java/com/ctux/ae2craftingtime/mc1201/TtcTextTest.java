@@ -23,6 +23,36 @@ import java.util.Optional;
 
 class TtcTextTest {
     @ParameterizedTest
+    @CsvSource({"en_us, Stored variant", "uk_ua, Інший варіант у сховищі"})
+    void storedVariantHasIndependentLocalizedWarningAndGuidance(String locale, String label) throws IOException {
+        var name = TtcText.storedVariant();
+        assertEquals("text.ae2craftingtime.plan.stored_variant",
+                ((TranslatableContents) name.getContents()).getKey());
+        assertFalse(name.getStyle().isBold());
+        assertEquals(TextColor.fromLegacyFormat(ChatFormatting.GOLD), name.getStyle().getColor());
+        var hints = TtcText.storedVariantHints();
+        assertEquals(2, hints.size());
+        try (var reader = new InputStreamReader(getClass().getResourceAsStream(
+                "/assets/ae2craftingtime/lang/" + locale + ".json"), StandardCharsets.UTF_8)) {
+            var translations = JsonParser.parseReader(reader).getAsJsonObject();
+            assertEquals(label, translations.get("text.ae2craftingtime.plan.stored_variant").getAsString());
+            for (var hint : hints) {
+                var key = ((TranslatableContents) hint.getContents()).getKey();
+                assertTrue(translations.has(key));
+                assertFalse(translations.get(key).getAsString().isBlank());
+            }
+            assertEquals(locale.equals("en_us")
+                    ? "The ME network stores this item with different saved data."
+                    : "У ME-мережі є цей предмет з іншими збереженими даними.",
+                    translations.get("text.ae2craftingtime.plan.stored_variant.explanation").getAsString());
+            assertEquals(locale.equals("en_us")
+                    ? "Re-encode the pattern using the item the network actually produces or stores."
+                    : "Перекодуйте шаблон, використавши предмет, який мережа справді виробляє або зберігає.",
+                    translations.get("text.ae2craftingtime.plan.stored_variant.suggestion").getAsString());
+        }
+    }
+
+    @ParameterizedTest
     @CsvSource({"en_us, Recurrent", "uk_ua, Циклічне"})
     void recurrencePreservesNativeAmountAndUsesNormalRedLocalizedText(String locale, String label) throws IOException {
         var amount = "1.25 M mB";

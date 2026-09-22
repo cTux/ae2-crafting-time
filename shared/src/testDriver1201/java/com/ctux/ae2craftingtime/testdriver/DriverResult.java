@@ -43,6 +43,15 @@ public record DriverResult(
     }
 
     public static List<String> requiredChecks(String scenario) {
+        return requiredChecks(scenario, Boolean.getBoolean("ae2craftingtime.test.connectedDedicated"));
+    }
+
+    static List<String> requiredChecks(String scenario, boolean connected) {
+        if (connected && scenario.equals("stored-variant-plan")) {
+            var checks = new java.util.ArrayList<>(StandardAe2Scenario.CHECKS.get(scenario));
+            checks.addAll(List.of("menu-cancel", "network-switch", "native-replan", "reconnected-fresh"));
+            return List.copyOf(checks);
+        }
         return scenario.equals(RequesterFixture.RECOVERY) ? READ_RECOVERY_CHECKS
                 : scenario.equals(CraftingTreeScenario.RECOVERY) ? TREE_RECOVERY_CHECKS
                 : StandardAe2Scenario.supports(scenario) ? StandardAe2Scenario.CHECKS.get(scenario)

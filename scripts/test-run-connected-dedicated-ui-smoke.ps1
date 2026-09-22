@@ -19,7 +19,7 @@ if ($clientRunner -notmatch 'GetTempPath\(\)\) "ae2-crafting-time-smoke-client.l
         $clientRunner -notmatch '"OpenOrCreate", "ReadWrite", "None"') {
     throw 'Every target and profile must share one exclusive smoke-client lock'
 }
-if ($runnerText -notmatch "ValidateSet\('cpu-list-total-ttc','recurrent-plan'\)" -or
+if ($runnerText -notmatch "ValidateSet\('cpu-list-total-ttc','recurrent-plan','stored-variant-plan'\)" -or
         $runnerText -notmatch "Ae2ctAlpha" -or $runnerText -match "Ae2ctBeta" -or
         $runnerText -match 'Start-Job' -or $runnerText -match 'recurrent-role-processes.json' -or
         $runnerText -match '22 \* 1024 \* 1024') {
@@ -208,6 +208,15 @@ param([string]$OutputPath)
         if ($recurrencePlan.relaunch.required -or $recurrencePlan.relaunch.minimumProcesses -ne 1 -or
                 !($recurrencePlan.arguments -contains '-Dae2ct.testDriver.serverScenario=recurrent-plan-connected')) {
             throw 'Recurrence plan retained CPU relaunch or server scenario metadata'
+        }
+        $variantReport = Join-Path $temporary ('variant-' + $case.target)
+        & (Join-Path $PSScriptRoot 'run-connected-dedicated-ui-smoke.ps1') -Target $case.target -Scenario stored-variant-plan `
+            -ServerDirectory $caseSource -PreparedLaunch $casePrepared -BundleDirectory $caseBundle `
+            -ReportDirectory $variantReport -JavaHome $javaHome -PlanOnly
+        $variantPlan = Get-Content -LiteralPath (Join-Path $variantReport 'connected-runner-plan.json') -Raw | ConvertFrom-Json
+        if ($variantPlan.relaunch.required -or $variantPlan.relaunch.minimumProcesses -ne 1 -or
+                !($variantPlan.arguments -contains '-Dae2ct.testDriver.serverScenario=stored-variant-plan-connected')) {
+            throw 'Variant plan retained CPU relaunch or server scenario metadata'
         }
         if (Test-Path -LiteralPath (Join-Path $caseSource 'server.properties')) { throw 'Runner changed a source server' }
     }

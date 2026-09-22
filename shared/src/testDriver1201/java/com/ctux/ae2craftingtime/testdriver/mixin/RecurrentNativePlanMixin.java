@@ -13,6 +13,7 @@ public abstract class RecurrentNativePlanMixin {
     @Inject(method = "setPlan", at = @At("RETURN"), remap = false)
     private void installed(CraftingPlanSummary plan, CallbackInfo ci) {
         RecurrentPlanObservation.installed((CraftConfirmMenu) (Object) this);
+        com.ctux.ae2craftingtime.testdriver.StoredVariantObservation.installed((CraftConfirmMenu) (Object) this);
     }
 }
 

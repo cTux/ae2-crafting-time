@@ -40,6 +40,9 @@ public abstract class CraftConfirmTableRendererMixin {
     private void ae2craftingtime$appendVisibleTimeToCraft(CraftingPlanSummaryEntry entry,
             CallbackInfoReturnable<List<Component>> cir) {
         var before = cir.getReturnValue().size();
+        if (ae2craftingtime$showStoredVariant(entry)) {
+            cir.getReturnValue().add(TtcText.storedVariant());
+        }
         ae2craftingtime$appendTtc(entry, cir.getReturnValue());
         IntegrationLog.growth("plan-row", before, cir.getReturnValue().size());
     }
@@ -47,6 +50,9 @@ public abstract class CraftConfirmTableRendererMixin {
     @Inject(method = "getEntryTooltip", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$appendTooltipTimeToCraft(CraftingPlanSummaryEntry entry,
             CallbackInfoReturnable<List<Component>> cir) {
+        if (ae2craftingtime$showStoredVariant(entry)) {
+            cir.getReturnValue().addAll(TtcText.storedVariantHints());
+        }
         if (entry.getMissingAmount() > 0 && ((RecurrentPlanEntry) entry).ae2craftingtime$recurrent()
                 && com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig.ENABLED.get()) {
             cir.getReturnValue().add(TtcText.recurrentHint());
@@ -59,6 +65,13 @@ public abstract class CraftConfirmTableRendererMixin {
         cir.getReturnValue().add(TtcText.detailsHint().withStyle(ChatFormatting.GRAY));
         cir.getReturnValue().add(TtcText.resetHint().withStyle(ChatFormatting.GRAY));
         IntegrationLog.observe("ae2craftingtime", "plan-tooltip");
+    }
+
+    private static boolean ae2craftingtime$showStoredVariant(CraftingPlanSummaryEntry entry) {
+        return com.ctux.ae2craftingtime.core.PlanStoredVariantLifecycle.show(
+                entry.getWhat() instanceof appeng.api.stacks.AEItemKey, entry.getMissingAmount(),
+                ((RecurrentPlanEntry) entry).ae2craftingtime$storedVariant(),
+                com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig.ENABLED.get());
     }
 
     private static void ae2craftingtime$appendTtc(CraftingPlanSummaryEntry entry, List<Component> lines) {
