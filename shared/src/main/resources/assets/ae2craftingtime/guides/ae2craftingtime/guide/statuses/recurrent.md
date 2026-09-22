@@ -9,10 +9,11 @@ navigation:
 
 **Label:** `Recurrent: 1`
 
-Recurrent appears in Crafting Plan before you submit a job. Red, normal-weight
-text means AE2 proved that a missing ingredient could not use a recipe because
-that recipe eventually needs the same ingredient again. For example, A may need
-B while B needs A. Direct self-dependencies and longer loops work the same way.
+Recurrent appears in Crafting Plan before you submit a job. Bold red text on a
+rounded dark badge means AE2 proved that a missing ingredient could not use a
+recipe because that recipe eventually needs the same ingredient again. For
+example, A may need B while B needs A. Direct self-dependencies and longer
+loops work the same way.
 
 The number is AE2's total missing amount for that row. A row that combines an
 ordinary shortage with a recurrent one still shows that total; it is not a
