@@ -4,6 +4,7 @@ import appeng.api.config.Actionable;
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.parts.IPartHost;
 import appeng.api.parts.PartHelper;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
@@ -398,8 +399,7 @@ final class StandardCraftFixture {
     }
 
     void moveVariantTerminal(ServerPlayer player, StandardCraftFixture other) {
-        var host = (IInWorldGridNodeHost) player.level().getBlockEntity(terminal);
-        var terminalNode = host.getGridNode(Direction.NORTH);
+        var terminalNode = variantTerminalNode(player);
         var previous = terminalNode.getGrid();
         for (var connection : java.util.List.copyOf(terminalNode.getConnections())) connection.destroy();
         GridHelper.createConnection(terminalNode, other.cpu(player).getMainNode().getNode());
@@ -408,7 +408,7 @@ final class StandardCraftFixture {
     }
 
     boolean variantTerminalReady(ServerPlayer player, StandardCraftFixture other) {
-        var terminalNode = ((IInWorldGridNodeHost) player.level().getBlockEntity(terminal)).getGridNode(Direction.NORTH);
+        var terminalNode = variantTerminalNode(player);
         var grid = terminalNode.getGrid();
         if (grid == null || grid != other.cpu(player).getMainNode().getGrid()
                 || !other.cpu(player).getCluster().isActive() || grid.getCraftingService().getCpus().isEmpty())
@@ -416,6 +416,14 @@ final class StandardCraftFixture {
         var stock = grid.getStorageService().getInventory().getAvailableStacks();
         return stock.get(other.storedVariantKey(1)) == 0 && stock.get(other.storedVariantKey(2)) == 1
                 && stock.get(other.storedVariantKey(3)) == 1;
+    }
+
+    private appeng.api.networking.IGridNode variantTerminalNode(ServerPlayer player) {
+        var part = ((IPartHost) player.level().getBlockEntity(terminal)).getPart(Direction.NORTH);
+        if (!(part instanceof appeng.parts.reporting.CraftingTerminalPart terminalPart)
+                || terminalPart.getActionableNode() == null)
+            throw new IllegalStateException("Fixture crafting terminal part is missing its actionable node");
+        return terminalPart.getActionableNode();
     }
 
     StandardCraftFixture largeCpuGrid() {
