@@ -149,7 +149,7 @@ public abstract class CraftingCpuLogicMixin {
         var accepted = Math.min(amount, waiting);
         if (accepted > 0) {
             ProfilerBridge.complete(ProfilerBridge.networkId(cluster.getGrid()), cluster, what, accepted,
-                    cluster.getLevel().getGameTime());
+                    cluster.getLevel().getGameTime(), cluster.getLevel().getServer());
             IntegrationLog.cpu("ae2craftingtime", "cpu-output");
         }
     }

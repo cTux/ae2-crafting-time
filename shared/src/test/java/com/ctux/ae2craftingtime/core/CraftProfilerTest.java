@@ -807,6 +807,22 @@ class CraftProfilerTest {
     }
 
     @Test
+    void finalOutputAllowsPlateCleanupOnlyAfterEveryScopeHasCompleted() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:overworld|60,80,1026", "minecraft:water");
+        var reloadedCpu = new Object();
+        var parallelCpu = new Object();
+
+        profiler.start(key, reloadedCpu, 1000, ProfileUnit.MILLIBUCKET, 0);
+        profiler.start(key, parallelCpu, 1000, ProfileUnit.MILLIBUCKET, 0);
+        assertTrue(profiler.complete(key, reloadedCpu, 1000, 20));
+        assertTrue(profiler.hasPending(key));
+
+        assertTrue(profiler.complete(key, parallelCpu, 1000, 21));
+        assertFalse(profiler.hasPending(key));
+    }
+
+    @Test
     void waitingKeysSnapshotAndRestoreForDisplay() {
         var profiler = new CraftProfiler(10);
         var cpu = new Object();

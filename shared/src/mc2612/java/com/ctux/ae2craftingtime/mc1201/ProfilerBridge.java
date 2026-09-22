@@ -124,10 +124,26 @@ public final class ProfilerBridge {
     }
 
     public static void complete(String networkId, Object scope, AEKey what, long amount, long tick) {
+        complete(networkId, scope, what, amount, tick, null);
+    }
+
+    public static void complete(String networkId, Object scope, AEKey what, long amount, long tick,
+            net.minecraft.server.MinecraftServer server) {
         if (what == null || !isEnabled()) {
             return;
         }
-        PROFILER.complete(key(networkId, what), scope, normalizeAmount(what, amount), tick);
+        var profileKey = key(networkId, what);
+        PROFILER.complete(profileKey, scope, normalizeAmount(what, amount), tick);
+        // A reloaded CPU can accept its final output without invoking finishJob.
+        // The last completed output must still clear its persistent plate.
+        if (server != null && !PROFILER.hasPending(profileKey)) {
+            ProviderLocateRecords.startFor(profileKey).ifPresent(start -> {
+                clearHighlights(server, start.owner(), Set.of(profileKey));
+                ProviderLocateRecords.removeStarts(Set.of(profileKey));
+                ProviderLocateRecords.removeRecordsForKeys(Set.of(profileKey), start.owner());
+                persistProviderState();
+            });
+        }
     }
 
     public static boolean flushCompletedSamples() {
