@@ -547,7 +547,6 @@ final class StandardAe2Scenario {
                     return false;
                 }
                 if (variantLifecycle == 5) {
-                    if (menu.hasNoCPU()) return false;
                     menu.replan();
                     variantLifecycle = 2;
                     variantHover = false;
