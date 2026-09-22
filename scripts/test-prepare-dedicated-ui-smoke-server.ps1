@@ -52,6 +52,27 @@ try {
     $nextMillisecond=[DateTimeOffset]::Parse('2026-09-21T10:21:01.8370000Z').UtcDateTime
     Assert (!(Test-DedicatedProcessIdentity 1234 $nextMillisecond 1234 $nextMillisecond.AddTicks(-1))) 'Sliding tolerance crossed a canonical millisecond boundary'
     Assert ((Get-DedicatedProcessStartMilliseconds $cimStart) -eq (Get-DedicatedProcessStartMilliseconds $nativeStart)) 'Installer ancestry precision differs from identity checks'
+    $raceProcess=Start-Process -FilePath (Get-Process -Id $PID).Path -ArgumentList '-NoProfile','-Command','Start-Sleep -Seconds 60' -WindowStyle Hidden -PassThru
+    try {
+        function Stop-Process { param([Diagnostics.Process]$InputObject,[switch]$Force)
+            $InputObject.Kill();$InputObject.WaitForExit();throw [InvalidOperationException]::new('Process has exited') }
+        Stop-DedicatedInstallerProcess $raceProcess
+        Assert $raceProcess.HasExited 'Exited installer child was not accepted after the cleanup race'
+    } finally {
+        Remove-Item Function:Stop-Process
+        if (!$raceProcess.HasExited) { $raceProcess.Kill();$raceProcess.WaitForExit() }
+        $raceProcess.Dispose()
+    }
+    $blockedProcess=Start-Process -FilePath (Get-Process -Id $PID).Path -ArgumentList '-NoProfile','-Command','Start-Sleep -Seconds 60' -WindowStyle Hidden -PassThru
+    try {
+        function Stop-Process { throw [InvalidOperationException]::new('Refused to stop a live installer') }
+        Refuses { Stop-DedicatedInstallerProcess $blockedProcess } 'Live installer stop failure was accepted'
+        Assert (!$blockedProcess.HasExited) 'Live installer stop failure lost its process'
+    } finally {
+        Remove-Item Function:Stop-Process
+        if (!$blockedProcess.HasExited) { $blockedProcess.Kill();$blockedProcess.WaitForExit() }
+        $blockedProcess.Dispose()
+    }
     foreach ($index in 0..5) {
         $values=@(2048L,4GB,512MB,10MB,10MB,899.99)
         $values[$index]++
