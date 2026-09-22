@@ -1,6 +1,9 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 final class ServerDriverPlatform {
+    static boolean isResourceChunkForced(net.minecraft.server.level.ServerLevel level, int x, int z) {
+        return level.getForcedChunks().contains(new net.minecraft.world.level.ChunkPos(x, z).toLong());
+    }
     static appeng.api.stacks.AEKey bucketlessResourceKey() { throw new UnsupportedOperationException(); }
     static java.util.Map<String, Object> resourceFacts(ResourceFixtureControl.Case resourceCase) {
         return java.util.Map.of("storageValidated", true, "chemical", false);

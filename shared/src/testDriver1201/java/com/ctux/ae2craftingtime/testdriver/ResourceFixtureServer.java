@@ -12,9 +12,13 @@ import java.util.HexFormat;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluids;
@@ -39,6 +43,8 @@ final class ResourceFixtureServer {
     private boolean disconnected;
     private ServerPlayer rejoinPlayer;
     private ServerPlayer fixturePlayer;
+    private ServerLevel forcedLevel;
+    private final Set<ChunkCoord> ownedForcedChunks = new LinkedHashSet<>();
     private int warmups;
     private long warmupHeldAt;
     private boolean warmupReturning;
@@ -138,7 +144,11 @@ final class ResourceFixtureServer {
             case CREATE -> create(player, command.resourceCase());
             case RELEASE -> processing.release(player, command.slot());
             case CANCEL -> processing.cancel(player, command.slot());
-            case REJOIN_PREPARE -> { rejoinPlayer = player; yield true; }
+            case REJOIN_PREPARE -> {
+                retainResourceChunks((ServerLevel) player.level());
+                rejoinPlayer = player;
+                yield true;
+            }
             case RECONNECT -> ResourceFixtureControl.reconnectReady(disconnected, player != rejoinPlayer,
                     () -> processing.delayed(player));
             case RESET -> {
@@ -158,6 +168,7 @@ final class ResourceFixtureServer {
                         expectedCaptureCount());
                 grid.teardownResourceFixture(player);
                 teardownComplete = true;
+                releaseResourceChunks();
                 yield true;
             }
             case ABORT -> {
@@ -171,6 +182,51 @@ final class ResourceFixtureServer {
                 yield true;
             }
         };
+    }
+
+    record ChunkCoord(int x, int z) { }
+
+    static Set<ChunkCoord> resourceChunks(BlockPos terminal) {
+        var chunks = new LinkedHashSet<ChunkCoord>();
+        for (int x = (terminal.getX() - 4) >> 4; x <= (terminal.getX() + 13) >> 4; x++) {
+            for (int z = (terminal.getZ() - 3) >> 4; z <= (terminal.getZ() + 3) >> 4; z++) {
+                chunks.add(new ChunkCoord(x, z));
+            }
+        }
+        return Set.copyOf(chunks);
+    }
+
+    private void retainResourceChunks(ServerLevel level) {
+        if (!connected || forcedLevel != null) return;
+        if (grid.terminal == null) throw new IllegalStateException("resource grid has no terminal to retain");
+        forcedLevel = level;
+        for (var chunk : resourceChunks(grid.terminal)) {
+            forceOwnedChunk(ownedForcedChunks, chunk,
+                    ServerDriverPlatform.isResourceChunkForced(level, chunk.x(), chunk.z()),
+                    () -> level.setChunkForced(chunk.x(), chunk.z(), true));
+        }
+    }
+
+    static void forceOwnedChunk(Set<ChunkCoord> owned, ChunkCoord chunk, boolean preexisting, Runnable force) {
+        if (preexisting) return;
+        owned.add(chunk); // setChunkForced may mutate saved data and then throw while loading the chunk.
+        force.run();
+    }
+
+    private void releaseResourceChunks() {
+        if (forcedLevel == null) return;
+        RuntimeException failure = null;
+        for (var chunk : List.copyOf(ownedForcedChunks)) {
+            try {
+                forcedLevel.setChunkForced(chunk.x(), chunk.z(), false);
+                ownedForcedChunks.remove(chunk);
+            } catch (RuntimeException error) {
+                if (failure == null) failure = error;
+                else failure.addSuppressed(error);
+            }
+        }
+        if (ownedForcedChunks.isEmpty()) forcedLevel = null;
+        if (failure != null) throw failure;
     }
 
     private boolean create(ServerPlayer player, ResourceFixtureControl.Case resourceCase) {
@@ -339,6 +395,8 @@ final class ResourceFixtureServer {
         } catch (Exception error) {
             cleanupFailures.add("teardown: " + error);
         }
+        try { releaseResourceChunks(); }
+        catch (Exception error) { cleanupFailures.add("chunks: " + error); }
         cleanupOutcome = cleanupEvidence(originalFailure, String.join("; ", cleanupFailures));
         return cleanupOutcome;
     }

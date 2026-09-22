@@ -17,6 +17,31 @@ import org.junit.jupiter.api.io.TempDir;
 class ResourceFixtureControlTest {
     @TempDir Path directory;
 
+    @Test void connectedResourceRetentionCoversOnlyTheFixtureFootprint() {
+        var chunks = ResourceFixtureServer.resourceChunks(new net.minecraft.core.BlockPos(15, 80, -1));
+        assertEquals(java.util.Set.of(new ResourceFixtureServer.ChunkCoord(0, -1),
+                new ResourceFixtureServer.ChunkCoord(0, 0),
+                new ResourceFixtureServer.ChunkCoord(1, -1),
+                new ResourceFixtureServer.ChunkCoord(1, 0)), chunks);
+    }
+
+    @Test void forcedChunkOwnershipPrecedesMutationAndSkipsPreexistingChunks() {
+        var owned = new java.util.LinkedHashSet<ResourceFixtureServer.ChunkCoord>();
+        var chunk = new ResourceFixtureServer.ChunkCoord(1, -1);
+        var failure = new IllegalStateException("load failed after force data changed");
+        assertEquals(failure, assertThrows(IllegalStateException.class, () ->
+                ResourceFixtureServer.forceOwnedChunk(owned, chunk, false, () -> {
+                    assertTrue(owned.contains(chunk));
+                    throw failure;
+                })));
+        assertEquals(java.util.Set.of(chunk), owned);
+        owned.clear();
+        ResourceFixtureServer.forceOwnedChunk(owned, chunk, true, () -> {
+            throw new AssertionError("preexisting chunk must not be forced or owned");
+        });
+        assertTrue(owned.isEmpty());
+    }
+
     @Test void reconnectWaitsForDelayedConvergenceAfterTheRealNewPlayerJoins() {
         for (boolean disconnected : new boolean[]{false, true}) {
             for (boolean newPlayer : new boolean[]{false, true}) {
