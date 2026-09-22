@@ -15,7 +15,7 @@ class CraftingRowStateTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"0,1", "45,1", "47,0.9574468", "90,0.5"})
+    @CsvSource({"0,1", "90,1", "94,0.9574468", "180,0.5"})
     void recurrentWarningFitsItsNativeTextArea(int width, float expected) {
         assertEquals(expected, CraftingRowState.recurrentTextScale(width), 0.000001f);
     }

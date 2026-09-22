@@ -1,7 +1,8 @@
 package com.ctux.ae2craftingtime.core;
 
 public final class CraftingRowState {
-    public static final int RECURRENT_TEXT_WIDTH = 45;
+    // AE2 draws table descriptions at half scale: 90 font pixels occupy 45 screen pixels.
+    public static final int RECURRENT_TEXT_WIDTH = 90;
     private static final java.util.Set<String> BADGE_KEYS = java.util.Set.of(
             "text.ae2craftingtime.ttc", "text.ae2craftingtime.ttc_delayed", "text.ae2craftingtime.waiting",
             "text.ae2craftingtime.no_space", "text.ae2craftingtime.no_provider", "text.ae2craftingtime.no_power",
