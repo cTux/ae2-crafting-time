@@ -5,7 +5,7 @@ This is a proposed implementation backed by source inspection, not runtime proof
 
 ## Evidence and root cause
 
-Research baseline: `f583e5e32bcb2898076ebf255ffecab5c4aabc33`.
+Current-code review: `f25d042c2298eee5d77eeeaba8fa725e61e94be1`.
 All paths below are repository-relative.
 
 | Source | Finding |
@@ -54,7 +54,7 @@ snapshot/restore, fallback replacement, resync filtering, packet encode/decode,
 The generic winner-selection helper needs no new resource-specific policy.
 
 Audit every loader's command registration and `ProviderLocateC2S` callback,
-both `ProviderLocateServer` copies, `ProviderLocateCommand`, and bridge clear
+shared `ProviderLocateServer`, `ProviderLocateCommand`, and bridge clear
 sends when packet constructors change. These manual/clear paths carry no display
 key and never create or overwrite red plates. `BlockReasonNotifier` remains
 chat/edge-only. All four loader login hooks retain server-approved resync.
@@ -71,8 +71,9 @@ Malformed display data must not produce a partial state update. Missing optional
 key types may yield no icon. Do not log raw key data. Bump the affected highlight
 channel/registrar compatibility versions together when implementation changes the
 wire layout; select the next versions from the then-current registrations.
-At the research baseline these are Forge protocol `19`, both NeoForge
-registrars `18`, and Fabric `provider_highlight_v4`.
+At the current-code baseline these are Forge protocol `20`, both NeoForge
+registrars `19`, and Fabric `provider_highlight_v4`; the corresponding next
+versions are `21`, `20`, and `provider_highlight_v5`. Recheck before editing.
 
 ## Rendering decision and API verification
 
@@ -119,6 +120,44 @@ cached models/textures, and disconnect clears display caches.
 Chemical rendering delegates through registered AE2 key support. Common runtime
 classes must not import Mekanism classes. Version-specific fixtures already have
 the optional dependencies needed for chemical checks. No translations change.
+
+## Production acceptance on the existing fixtures
+
+[#484](https://github.com/cTux/ae2-crafting-time/pull/484) merged the #482
+fixture prerequisite at the current-code baseline. `ResourceFixtureClient`,
+`ResourceFixtureServer` and their bounded control protocol already run the two
+resource leaves, including connected reconnect and shared-provider promotion.
+Their explicit `-ResourceFixtureOnly` mode still requires
+`productionIconAcceptance: NOT_RUN`; those results cannot qualify this fix.
+
+Use the same leaves without `-ResourceFixtureOnly` for production acceptance.
+Start the resource driver from the scenario name in both modes, while retaining
+the flag as the fixture-only result boundary. Update the existing wrappers,
+launch preparation, driver dispatch, connected/prewarm guards and result readers
+together; ordinary unrelated scenarios must still reject the fixture-only flag.
+Keep fixture evidence schema 1 and its NOT_RUN field intact in both modes.
+Production runs additionally write `resource-icon-evidence.json` schema 1 with
+typed server, retained-plate and selected-render-plate observations, checkpoint
+capture names/hashes, SHA and graph identity, `semanticResult: PASS|FAIL` and
+`visualAcceptance: REVIEW_REQUIRED|PASS|FAIL`. Missing or mismatched required
+evidence fails the run. Semantic assertions alone leave visual acceptance
+REVIEW_REQUIRED; only recorded review of every required world capture can
+establish visual PASS. Bind that review to the same hashes and retain the raw
+automatic gate result; manual review never rewrites an automatic REVIEW_REQUIRED
+gate as an automatic PASS. Fixture-only runs never emit production PASS.
+
+Reuse current jobs and lifecycle checkpoints. Add bounded actions only for the
+remaining acceptance: resource reload with a surviving plate, provider removal,
+and unload/reload under the existing provider lifetime rules. Bind any added
+server action to the existing fixture/revision/sequence acknowledgement protocol;
+keep client resource reload local and await completion before capture. Retain
+normal production sends and resync as the only source of client plate state.
+The driver must not draw icons, populate highlights or force a semantic pass.
+
+No new provisioner, runner, command transport or cold/cache-hit qualification
+campaign is needed. Reuse #482's sealed sources and prewarm after validating
+their identities for the new artifacts. Extend the nearest driver and script
+checks for both execution modes, missing evidence and failure cleanup.
 
 ## Alternatives rejected
 

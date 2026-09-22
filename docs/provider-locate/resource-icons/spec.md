@@ -2,6 +2,11 @@
 
 Status: planned bug fix, not implemented. Tracks [issue #376](https://github.com/cTux/ae2-crafting-time/issues/376).
 
+The [#482 fixture prerequisite](../../test-driver/connected-resource-fixtures/spec.md)
+merged in [#484](https://github.com/cTux/ae2-crafting-time/pull/484). Its
+fixture-only qualification leaves production icon acceptance NOT_RUN; this
+specification still requires the production fix and reviewed icon captures.
+
 ## Expected behavior
 
 A delayed fluid or supported gas/chemical output shows its recognizable resource

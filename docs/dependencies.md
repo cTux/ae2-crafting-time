@@ -28,24 +28,29 @@ its missing rows are not yet qualified for recurrence labels. Project Infinity
 ## Delayed resource icon qualification (planned)
 
 [Connected resource fixtures #482](test-driver/connected-resource-fixtures/spec.md)
-must qualify before #376 resumes. Fixture-only PASS means real jobs, bounded
+merged in [#484](https://github.com/cTux/ae2-crafting-time/pull/484).
+Fixture-only PASS means real jobs, bounded
 control and lifecycle evidence; production icon acceptance remains NOT_RUN.
 Its approved expansion also requires sealed-source provisioning and cold/cache-hit
 prewarm qualification for four native and two AppMek connected graphs. Exact
 Java, loader and graph identities are defined in the
 [fixture design](test-driver/connected-resource-fixtures/technical-design.md#provisioning-evidence-and-ownership).
-These remain requirements, not additional recorded coverage or dependency upgrades.
+The prerequisite PR records its fixture qualification; it does not establish
+production icon coverage or change dependency minimums.
 
 [Issue #376](https://github.com/cTux/ae2-crafting-time/issues/376) requires
 `delayed-resource-icons` on all four native targets and `appmek-resource-icons`
-on Forge 1.20.1 / NeoForge 1.21.1. These are planned driver cases, not currently
-qualified coverage. Existing `appmek-cpu` mounts oxygen storage and a native CPU;
+on Forge 1.20.1 / NeoForge 1.21.1. These scenarios currently run only with explicit
+`-ResourceFixtureOnly`; ordinary production acceptance still needs the
+[mode and evidence extension](provider-locate/resource-icons/technical-design.md#production-acceptance-on-the-existing-fixtures).
+Existing `appmek-cpu` mounts oxygen storage and a native CPU;
 it does not prove a delayed chemical output or a visible provider icon.
 
 Use the [resource-icon matrix](provider-locate/resource-icons/implementation-plan.md#runtime-acceptance-matrix)
 and [driver contract](test-driver/spec.md#delayed-resource-icon-scenarios-planned):
 water/lava and item controls on all four compatible profiles, oxygen/hydrogen on
-both integration profiles, a named bucketless fluid on one target, base-only
+both integration profiles, Forge's driver-only bucketless
+`ae2craftingtime_test_driver:resource_fixture_fluid`, base-only
 absent-integration controls, and matching connected send/reconnect cases.
 AppMek remains optional and gains no Fabric or 26.1.2 dependency. A driver-only
 bucketless fixture adds no production resource, metadata requirement or mod.
