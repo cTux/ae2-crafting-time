@@ -37,6 +37,13 @@ function Assert-ResourceIconEvidence([object]$Icon, [object]$Fixture, [string]$H
     }
 }
 
+function Assert-ResourceFixtureServerUnloaded([object[]]$Receipts) {
+    $unloads = @($Receipts | Where-Object { $_.case -ceq 'WATER' -and $_.action -ceq 'UNLOAD_RELOAD' })
+    if ($unloads.Count -ne 1 -or $unloads[0].unloadedObserved -ne $true) {
+        throw 'Chunk reload lacks an observed unloaded chunk'
+    }
+}
+
 function Get-ResourceFixtureContractCaptures([string[]]$Cases, [bool]$Connected, [bool]$Production = $false) {
     $result = @()
     foreach ($case in $Cases) {
@@ -178,8 +185,8 @@ function Assert-ResourceFixtureContract([object]$Evidence, [string]$Scenario, [s
         if (!$receipt -or !(Test-ResourceFixtureJobs -Expected @($receipt.jobs) -Actual $serverJobs)) {
             throw "Observation does not agree with its authoritative receipt for $checkpoint"
         }
-        if ($checkpoint.EndsWith('-chunk-reloaded') -and $receipt.unloadedObserved -ne $true) {
-            throw 'Chunk reload lacks an observed unloaded chunk'
+        if ($checkpoint.EndsWith('-chunk-reloaded') -and !$Connected) {
+            Assert-ResourceFixtureServerUnloaded @($Evidence.integratedServerEvidence.receipts)
         }
         [object[]]$active = @($(if ($checkpoint.EndsWith('-winner-promoted')) { $outputs[-1] }
             elseif ($checkpoint.EndsWith('-held') -or $checkpoint.EndsWith('-resource-reloaded') -or

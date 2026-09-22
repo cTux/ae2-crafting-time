@@ -56,6 +56,9 @@ function New-Evidence([bool]$connected, [bool]$expiredLater = $false, [bool]$pro
     $observations += [pscustomobject]@{case=$cases[-1];checkpoint=$names[-1];frame=10;observedAtMillis=3000;serverJobs=@();plates=@();renderPlates=@();rainbows=@()}
     [pscustomobject]@{connected=$connected;checks=$(if($production){[pscustomobject]@{'typed-keys'=$true}}else{[pscustomobject]@{'fixture-only'=$true}});serverState=[pscustomobject]@{epoch=$epoch;fixture=$fixture}
         screenshots=$screenshots;sidecars=$sidecars;clientObservations=@($observations);receipts=$receipts
+        integratedServerEvidence=[pscustomobject]@{receipts=$(if($production){
+            @($receipts | ConvertTo-Json -Depth 20 | ConvertFrom-Json)
+        }else{@()})}
         screenshotManifestDigest=(Get-ResourceFixtureManifestDigest $screenshots)
         clientEvidence=[pscustomobject]@{digest=(Get-ResourceFixtureManifestDigest $screenshots)}
         epoch=$epoch;fixture=$fixture}
@@ -149,6 +152,11 @@ Assert-Rejected { Assert-ResourceIconEvidence $productionIcon $productionFixture
 foreach ($connectedMode in @($false,$true)) {
     $production = New-Evidence $connectedMode $false $true
     Assert-ResourceFixtureContract $production 'delayed-resource-icons' '1.20.1-fabric' $connectedMode $production.epoch $production.fixture | Out-Null
-    ($production.receipts | Where-Object action -eq 'UNLOAD_RELOAD').unloadedObserved = $false
-    Assert-Rejected { Assert-ResourceFixtureContract $production 'delayed-resource-icons' '1.20.1-fabric' $connectedMode $production.epoch $production.fixture } 'missing native unload receipt'
+    $serverReceipts = if($connectedMode){$production.receipts}else{$production.integratedServerEvidence.receipts}
+    Assert-ResourceFixtureServerUnloaded @($serverReceipts)
+    ($serverReceipts | Where-Object action -eq 'UNLOAD_RELOAD').unloadedObserved = $false
+    Assert-Rejected { Assert-ResourceFixtureServerUnloaded @($serverReceipts) } 'missing native unload receipt'
+    if(!$connectedMode){
+        Assert-Rejected { Assert-ResourceFixtureContract $production 'delayed-resource-icons' '1.20.1-fabric' $false $production.epoch $production.fixture } 'missing integrated server unload receipt'
+    }
 }
