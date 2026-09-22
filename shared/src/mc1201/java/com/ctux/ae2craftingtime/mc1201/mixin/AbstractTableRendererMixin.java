@@ -56,7 +56,7 @@ public abstract class AbstractTableRendererMixin {
                     var pose = guiGraphics.pose();
                     pose.pushPose();
                     pose.translate(left, y, 0);
-                    pose.scale(scale, scale, 1);
+                    pose.scale(scale, 1, 1);
                     guiGraphics.drawString(font, text, 0, 0, color, true);
                     pose.popPose();
                     return x + width;
