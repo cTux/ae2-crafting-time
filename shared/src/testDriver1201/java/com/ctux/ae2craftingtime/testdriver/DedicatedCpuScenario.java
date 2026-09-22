@@ -233,8 +233,9 @@ public final class DedicatedCpuScenario {
             variantAction = command.action();
         } else if (menu != null && menu.getPlan() != null && command.sequence() > variantAck
                 && command.matches(rolePlayer.getUUID(), menu.containerId, revision, variantAck)
-                && com.ctux.ae2craftingtime.mc1201.StatsRequestContext.current(rolePlayer).grid()
-                        == active.cpu(rolePlayer).getMainNode().getGrid()) {
+                && (command.action().equals("switch") && variantOriginalSummary != null
+                        || com.ctux.ae2craftingtime.mc1201.StatsRequestContext.current(rolePlayer).grid()
+                                == active.cpu(rolePlayer).getMainNode().getGrid())) {
             var row = menu.getPlan().getEntries().stream().filter(entry ->
                     active.storedVariantKey(1).equals(entry.getWhat()) && entry.getMissingAmount() > 0)
                     .findFirst().orElse(null);
