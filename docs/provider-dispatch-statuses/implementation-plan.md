@@ -1,5 +1,7 @@
 # Provider dispatch statuses: implementation plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Implement only after approval of the [spec](spec.md) and
 [technical design](technical-design.md). This plan does not authorize a release
 or changes to upstream crafting behavior.

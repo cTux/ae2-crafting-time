@@ -1,5 +1,7 @@
 # CodexVM MCP Evaluation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Deliver the [spec](spec.md) using the existing tools described in the
 [design](technical-design.md). Merge these three documents before implementation.
 

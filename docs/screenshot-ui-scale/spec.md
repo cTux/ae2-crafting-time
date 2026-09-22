@@ -1,5 +1,13 @@
 # Screenshot UI Scale Spec
 
+Status: finished
+
+Scope: Adaptive screenshot scale and sidecar validation.
+
+Implementation: [PR #332](https://github.com/cTux/ae2-crafting-time/pull/332).
+Verification: [implementation checks](https://github.com/cTux/ae2-crafting-time/issues/319#issuecomment-5570764364)
+and [prepared-client captures](../automated-ui-testing/prepared-clients-2026-09-08.md).
+
 ## Goal
 
 Make every new UI-smoke screenshot use as much of the available framebuffer as

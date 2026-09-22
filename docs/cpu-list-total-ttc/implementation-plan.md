@@ -1,6 +1,8 @@
 # CPU-list total TTC implementation plan
 
-Status: implementation in progress in [PR #381](https://github.com/cTux/ae2-crafting-time/pull/381).
+Lifecycle: see the [scope status and evidence](spec.md).
+
+Historical planning status: implementation in progress in [PR #381](https://github.com/cTux/ae2-crafting-time/pull/381).
 [Issue #324](https://github.com/cTux/ae2-crafting-time/issues/324) remains the
 implementation tracker until the change and its evidence are accepted.
 

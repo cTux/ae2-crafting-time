@@ -1,5 +1,7 @@
 # AppliedE correction and verification plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Deliver the [spec](spec.md) from the evidence and remaining limits in the
 [design](technical-design.md). The startup prerequisites are already implemented
 at base 4d3d818602a98922c00af7d75fc9490133e8e6a3. Do not repeat them or change

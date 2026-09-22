@@ -1,5 +1,13 @@
 # CPU-Bound Craft Time Stats
 
+Status: draft
+
+Scope: Historical CPU-specific sample proposal.
+
+Planning history: [PR #60](https://github.com/cTux/ae2-crafting-time/pull/60), [PR #100](https://github.com/cTux/ae2-crafting-time/pull/100).
+No active tracking issue or implementation acceptance is recorded here.
+Reconcile the proposal with current profiling and packet contracts before marking ready.
+
 Date: 2026-08-30
 
 ## Goal

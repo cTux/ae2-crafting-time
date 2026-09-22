@@ -1,5 +1,7 @@
 # No Space Status Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Evidence and ownership
 
 AE2's `CraftingCpuLogic` sets `cantStoreItems` only when there is no active job,

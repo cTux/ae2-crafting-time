@@ -1,9 +1,14 @@
 # Status Chapter Specification
 
-Issue: [#305](https://github.com/cTux/ae2-crafting-time/issues/305)
+Status: finished
 
-Status: eleven pages, including NO CHANNEL, are implemented. The Recurrent addition is planned
-under [#412](https://github.com/cTux/ae2-crafting-time/issues/412).
+Scope: Original status chapter and NO CHANNEL delivery.
+
+Implementation: [PR #339](https://github.com/cTux/ae2-crafting-time/pull/339), [PR #423](https://github.com/cTux/ae2-crafting-time/pull/423).
+Verification: resource/CI checks and manual book QA recorded in those PRs.
+The later Recurrent book/wiki scope is tracked below.
+
+Issue: [#305](https://github.com/cTux/ae2-crafting-time/issues/305)
 
 ## Goal
 
@@ -91,6 +96,13 @@ See the [technical design](technical-design.md) and
 [implementation plan](implementation-plan.md).
 
 ## Recurrent addition (#412)
+
+Status: in-progress
+
+Scope: Recurrent book and wiki delivery (#412).
+
+Implementation: [PR #479](https://github.com/cTux/ae2-crafting-time/pull/479) is merged and CI passed.
+Verification: complete book/runtime and wiki acceptance is not recorded in that PR.
 
 Follow the [existing recurrence contract](../../recurrent-crafting-status/spec.md)
 for detection and quantities. This addition documents that behavior; it does not

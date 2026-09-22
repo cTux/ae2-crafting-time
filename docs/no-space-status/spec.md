@@ -1,5 +1,12 @@
 # No Space Status
 
+Status: finished
+
+Scope: NO SPACE detection and display.
+
+Implementation: [PR #203](https://github.com/cTux/ae2-crafting-time/pull/203).
+Verification: [four-target prepared-client results](../automated-ui-testing/prepared-clients-2026-09-08.md).
+
 Issue: [#122](https://github.com/cTux/ae2-crafting-time/issues/122)
 
 ## Goal

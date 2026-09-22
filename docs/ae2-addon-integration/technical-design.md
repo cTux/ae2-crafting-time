@@ -1,8 +1,10 @@
 # AE2 Addon Integration Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Versioned adapter selection
 
-Status: planned. Implements VS-01 through VS-10 in the
+Historical planning status: planned. Implements VS-01 through VS-10 in the
 [specification](spec.md#versioned-adapter-selection). The remaining sections
 describe the existing integration layers that this change must preserve.
 

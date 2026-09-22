@@ -1,5 +1,7 @@
 # Active-order TTC sorting implementation plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 For the baseline shipped through
 [#387](https://github.com/cTux/ae2-crafting-time/issues/387) and the Crazy AE2
 Addons correction tracked by

@@ -1,6 +1,8 @@
 # Exact ingredient mismatch diagnostics: implementation plan
 
-Status: revised planning; implement after these documents and the approved
+Lifecycle: see the [scope status and evidence](spec.md).
+
+Historical planning status: revised planning; implement after these documents and the approved
 issue #327 update are delivered. Follow the [specification](spec.md) and
 [technical design](technical-design.md). This change publishes no release.
 

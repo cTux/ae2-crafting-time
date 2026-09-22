@@ -1,7 +1,15 @@
 # Initial Crafting Status ETA
 
-Status: follow-up ready for implementation. Tracks [issue #425](https://github.com/cTux/ae2-crafting-time/issues/425),
-which closes a gap in [issue #350](https://github.com/cTux/ae2-crafting-time/issues/350).
+Status: in-progress
+
+Scope: Initial ETA correction on standard and direct CPU screens.
+
+Implementation: [PR #373](https://github.com/cTux/ae2-crafting-time/pull/373), [PR #432](https://github.com/cTux/ae2-crafting-time/pull/432).
+Verification: [direct-screen implementation and passing CI](https://github.com/cTux/ae2-crafting-time/issues/425#issuecomment-5693073870).
+The plan's full runtime acceptance is not established by that CI record.
+
+Tracking: [#350](https://github.com/cTux/ae2-crafting-time/issues/350) and
+[#425](https://github.com/cTux/ae2-crafting-time/issues/425).
 
 ## Expected behavior
 

@@ -1,5 +1,7 @@
 # No Provider Status Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Verified dispatch seam
 
 `CraftingCpuLogic.executeCrafting` calls

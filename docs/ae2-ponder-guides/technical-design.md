@@ -1,5 +1,7 @@
 # AE2 Ponder Guides Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Evidence And Boundary
 
 The standalone Ponder project publishes loader artifacts for Minecraft 1.20.1

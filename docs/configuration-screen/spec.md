@@ -1,5 +1,12 @@
 # In-game Configuration Screen Specification
 
+Status: ready-to-implement
+
+Scope: In-game configuration screen.
+
+Planning: [PR #280](https://github.com/cTux/ae2-crafting-time/pull/280); [#117](https://github.com/cTux/ae2-crafting-time/issues/117).
+Hold: the issue is marked `do-not-implement-yet`; readiness does not lift that hold.
+
 Issue: [#117](https://github.com/cTux/ae2-crafting-time/issues/117)
 
 ## Goal

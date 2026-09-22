@@ -1,5 +1,7 @@
 # Minecraft 1.20.1 Guide Book Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 This design implements the [specification](spec.md) for
 [#265](https://github.com/cTux/ae2-crafting-time/issues/265).
 

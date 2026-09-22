@@ -1,5 +1,7 @@
 # AE2 Crafting Time Test Driver Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Implement this as one feature commit. Let the commit hook create the PR before
 running Gradle checks, then report local verification and GitHub CI separately.
 

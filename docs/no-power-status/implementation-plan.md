@@ -1,5 +1,7 @@
 # No Power Status Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 1. Replace the shipped NO PROVIDER snapshot set with a shared
    `CraftingBlockReason` map, using the approved compatibility bump below.
    Preserve its CPU context and exact-pattern revalidation.

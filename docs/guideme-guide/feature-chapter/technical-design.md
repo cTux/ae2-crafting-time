@@ -1,5 +1,7 @@
 # Feature Chapter Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Decision
 
 Extend the existing data-driven guide with one parent and 13 child Markdown

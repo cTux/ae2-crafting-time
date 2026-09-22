@@ -1,5 +1,7 @@
 # CPU-Bound Stats: Estimation UI
 
+Lifecycle: see the [scope status and evidence](index.md).
+
 Part of `cpu-bound-stats/`. See `index.md`, `data-model.md`, and
 `collection.md`.
 

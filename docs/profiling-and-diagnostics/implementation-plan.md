@@ -1,7 +1,9 @@
 # Live throughput learning and normalized sample details
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Issue: [#114](https://github.com/cTux/ae2-crafting-time/issues/114).
-Status: documentation only; none of these implementation steps has run.
+Historical planning status: documentation only; none of these implementation steps has run.
 Read the [specification](spec.md#planned-normalized-sample-details-114) and
 [technical design](technical-design.md#planned-design-for-114-per-unit-sample-presentation).
 This replaces the earlier presentation-only implementation plan.

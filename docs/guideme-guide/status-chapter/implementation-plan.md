@@ -1,5 +1,7 @@
 # Status Chapter Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Implement [#305](https://github.com/cTux/ae2-crafting-time/issues/305) as one
 documentation feature commit after the approved planning change.
 

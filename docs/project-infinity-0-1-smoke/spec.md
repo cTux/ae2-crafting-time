@@ -1,5 +1,14 @@
 # Project Infinity 0.1 Full UI Smoke Spec
 
+Status: ready-to-implement
+
+Scope: Campaign for exact pack file 8664964.
+
+Planning: [PR #306](https://github.com/cTux/ae2-crafting-time/pull/306).
+[#303](https://github.com/cTux/ae2-crafting-time/issues/303) was closed for documentation delivery, not execution.
+A run on another pack version does not complete this exact-file campaign;
+confirm the requested target before scheduling it.
+
 ## Goal
 
 Prove that the current AE2 Crafting Time build starts and behaves correctly in

@@ -1,5 +1,7 @@
 # Screenshot UI Scale Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 This design implements [SUI-01 through SUI-09](spec.md#requirements) by using
 Minecraft's native automatic GUI scale. It adds no custom scale calculator and
 does not change screenshot pixels after capture.

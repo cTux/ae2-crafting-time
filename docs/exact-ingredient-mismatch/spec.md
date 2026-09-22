@@ -1,6 +1,12 @@
 # Exact ingredient mismatch diagnostics
 
-Status: planned; this documentation does not implement the feature.
+Status: in-progress
+
+Scope: Live stored-variant diagnostics, including connected verification.
+
+Implementation: [PR #493](https://github.com/cTux/ae2-crafting-time/pull/493) is merged.
+Verification: [completion report and remaining checks](https://github.com/cTux/ae2-crafting-time/issues/327#issuecomment-5771676732).
+Connected Fabric 1.20.1 and both NeoForge target checks remain outstanding.
 
 Tracking issue: [#327](https://github.com/cTux/ae2-crafting-time/issues/327).
 

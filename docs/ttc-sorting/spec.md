@@ -1,5 +1,13 @@
 # TTC Sorting Specification
 
+Status: finished
+
+Scope: Missing-first Crafting Plan sorting.
+
+Implementation: [PR #331](https://github.com/cTux/ae2-crafting-time/pull/331).
+Verification: [regression and CI results](https://github.com/cTux/ae2-crafting-time/issues/318#issuecomment-5570763884)
+and [prepared-client coverage](../automated-ui-testing/prepared-clients-2026-09-08.md).
+
 Issue: [#318](https://github.com/cTux/ae2-crafting-time/issues/318)
 
 ## Goal

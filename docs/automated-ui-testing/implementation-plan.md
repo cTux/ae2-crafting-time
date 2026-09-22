@@ -1,5 +1,7 @@
 # Automated UI Testing Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 The runner, evidence gate, shared-world suites, change selection, and prepared
 client qualification are complete. Their current contracts live in the
 [specification](spec.md) and [technical design](technical-design.md); merged pull

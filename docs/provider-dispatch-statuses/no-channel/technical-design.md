@@ -1,5 +1,7 @@
 # NO CHANNEL research and technical design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Implements the [specification](spec.md), tracked in
 [#405](https://github.com/cTux/ae2-crafting-time/issues/405).
 

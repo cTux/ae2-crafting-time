@@ -1,5 +1,7 @@
 # Initial Crafting Status ETA Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Tracks [issue #425](https://github.com/cTux/ae2-crafting-time/issues/425), following
 the initial correction in [issue #350](https://github.com/cTux/ae2-crafting-time/issues/350).
 

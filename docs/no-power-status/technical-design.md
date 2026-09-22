@@ -1,5 +1,7 @@
 # No Power Status Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Evidence and ownership
 
 Inside `CraftingCpuLogic.executeCrafting`, AE2 calculates the pattern dispatch

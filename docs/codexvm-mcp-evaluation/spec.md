@@ -1,5 +1,12 @@
 # CodexVM MCP Evaluation Spec
 
+Status: finished
+
+Scope: MCP evaluation and bounded smoke-readiness correction.
+
+Implementation: [PR #393](https://github.com/cTux/ae2-crafting-time/pull/393).
+Verification: [measured results and no-adoption decision](results.md).
+
 Keep the existing OpenSSH, test-driver and localhost VNC workflow. The reviewed
 MCP candidates fail the credential safety gate, so this evaluation records a
 no-adoption result without installing or executing them. Tracking issue:

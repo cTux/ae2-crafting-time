@@ -1,5 +1,7 @@
 # CPU-Bound Stats: Collection
 
+Lifecycle: see the [scope status and evidence](index.md).
+
 Part of `cpu-bound-stats/`. See `index.md` and `data-model.md`.
 
 ## CPU identity

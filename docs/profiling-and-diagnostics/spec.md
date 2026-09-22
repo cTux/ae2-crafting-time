@@ -1,6 +1,14 @@
 # Profiling And Diagnostics Spec
 
-The sections above the planned #114 extension describe the current runtime.
+Status: finished
+
+Scope: Original profiling, accuracy and delayed-diagnostic baseline.
+
+Verification: [prepared-client results](../automated-ui-testing/prepared-clients-2026-09-08.md).
+The #114 extension below supersedes historical collection/window rules.
+
+The sections above the #114 extension retain the earlier runtime baseline.
+The implemented extension supersedes their collection/window rules.
 
 ## Goal
 
@@ -83,10 +91,19 @@ See [technical-design.md](technical-design.md) for ownership and code flow.
 
 ## Planned: normalized sample details (#114)
 
-Status: planning only. [Issue #114](https://github.com/cTux/ae2-crafting-time/issues/114)
-now includes learning during a running order, in addition to normalized details.
-The requirements below supersede the baseline collection/window rules above
-when implemented. See the [implementation plan](implementation-plan.md).
+Status: in-progress
+
+Scope: Live throughput learning and normalized samples (#114).
+
+Implementation: [PR #287](https://github.com/cTux/ae2-crafting-time/pull/287).
+Verification: that PR records three passing compatible targets and a blocked
+NeoForge 1.21.1 run; full acceptance reconciliation remains outstanding.
+
+[Issue #114](https://github.com/cTux/ae2-crafting-time/issues/114) includes live
+completion-interval learning and normalized details, implemented in PR #287.
+These requirements supersede the baseline collection/window rules above.
+See the [implementation plan](implementation-plan.md). The heading retains its
+historical link anchor.
 
 ### Confirmed meaning
 

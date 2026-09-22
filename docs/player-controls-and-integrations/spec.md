@@ -1,5 +1,13 @@
 # Player Controls And Integrations Spec
 
+Status: finished
+
+Scope: Shipped controls, common configuration and optional UI baseline.
+
+Verification: [prepared-client coverage](../automated-ui-testing/prepared-clients-2026-09-08.md)
+and [feature inventory](../feature-coverage.md).
+The proposed configuration screen and later addon updates have separate scopes.
+
 ## Goal
 
 Put TTC information where players already inspect AE2 crafts, make the learned

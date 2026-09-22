@@ -1,10 +1,17 @@
 # Connected resource lifecycle fixtures
 
-Planning draft for [#482](https://github.com/cTux/ae2-crafting-time/issues/482),
+Status: finished
+
+Scope: Fixture lifecycle, server provisioning and prewarm (RF1-RF8).
+
+Implementation: [PR #484](https://github.com/cTux/ae2-crafting-time/pull/484).
+Verification: [18/18 rows and 358 reviewed captures](https://github.com/cTux/ae2-crafting-time/issues/482#issuecomment-5774907363).
+Production icon acceptance remains NOT_RUN and belongs to #376.
+
+Implemented fixture scope for [#482](https://github.com/cTux/ae2-crafting-time/issues/482),
 the test-driver prerequisite for [#376](https://github.com/cTux/ae2-crafting-time/issues/376).
-The provisioning/prewarm expansion is a planning draft. Fixture work on #484
-has runtime evidence, but neither that evidence nor this document qualifies the
-complete matrix.
+The provisioning/prewarm expansion and fixture matrix are qualified by the
+completion record above. This does not qualify production resource icons.
 
 ## Goal and boundary
 

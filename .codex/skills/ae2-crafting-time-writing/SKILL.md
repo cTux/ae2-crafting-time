@@ -65,6 +65,13 @@ Add the type as a plain label instead, such as `feature`, `bug`, or `tests`.
 - **PR descriptions:** follow the active PR skill. Never paste commit messages,
   diffs, or logs as the explanation.
 
+## Documentation Status
+
+Follow [the documentation lifecycle](../../../docs/documentation-status.md) for
+feature scopes. Keep one canonical status with evidence in the spec or existing
+proposal entry document; companion docs link to it. Reconcile stale status prose
+and preserve completed baselines separately from later additions.
+
 ## Before Finishing
 
 Read the result once as a person, not a parser. Remove stiff phrases such as

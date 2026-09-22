@@ -1,5 +1,7 @@
 # No Provider Status Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 1. Reconcile the issue and spec with the verified dispatch seam and current
    protocol versions. Review the acceptance-to-check table in the design before
    editing executable code.

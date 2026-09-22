@@ -1,5 +1,7 @@
 # Profiling And Diagnostics Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 The sections above the planned #114 design describe the current runtime.
 
 ## Ownership
@@ -116,7 +118,7 @@ branches belong in the covered pure-Java core.
 
 ## Planned design for #114: per-unit sample presentation
 
-Status: not implemented. This section includes live completion-interval learning
+Historical planning status: not implemented. This section includes live completion-interval learning
 and supersedes the baseline Production Windows behavior above. See
 [requirements N1–N12](spec.md#requirements) and the
 [implementation plan](implementation-plan.md). Inspected runtime baseline:

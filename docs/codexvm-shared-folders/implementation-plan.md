@@ -1,5 +1,7 @@
 # CodexVM shared-folder plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Deliver the [specification](spec.md) using the observed flow and boundaries in
 the [design](technical-design.md). Merge this document trio before recovery or
 implementation. Follow repository hook/PR ordering; do not run local tests

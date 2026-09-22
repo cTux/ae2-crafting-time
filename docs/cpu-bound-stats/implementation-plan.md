@@ -1,5 +1,7 @@
 # CPU-Bound Stats: Implementation Plan
 
+Lifecycle: see the [scope status and evidence](index.md).
+
 Part of `cpu-bound-stats/`. Keep each step small and covered.
 
 ## 1. Extend the key

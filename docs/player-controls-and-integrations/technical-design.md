@@ -1,5 +1,7 @@
 # Player Controls And Integrations Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Presentation
 
 `CraftConfirmTableRendererMixin` and `CraftingStatusTableRendererMixin` append

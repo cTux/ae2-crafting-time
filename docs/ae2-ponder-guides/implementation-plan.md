@@ -1,5 +1,7 @@
 # AE2 Ponder Guides Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## 1. Add The Optional Integration Seam
 
 1. Add the three official Ponder compile dependencies and optional loader

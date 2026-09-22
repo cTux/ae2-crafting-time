@@ -1,8 +1,14 @@
 # Feature Chapter Specification
 
-Issue: [#304](https://github.com/cTux/ae2-crafting-time/issues/304)
+Status: in-progress
 
-Status: planned.
+Scope: Feature chapter and its documented renderer acceptance.
+
+Implementation: [PR #336](https://github.com/cTux/ae2-crafting-time/pull/336).
+Verification: resource, translation and CI checks passed; the PR records no new
+manual renderer QA and retains a Fabric runtime limitation.
+
+Issue: [#304](https://github.com/cTux/ae2-crafting-time/issues/304)
 
 ## Goal
 

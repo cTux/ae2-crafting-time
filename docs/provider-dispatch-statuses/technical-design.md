@@ -1,5 +1,7 @@
 # Provider dispatch statuses: technical design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Implements the proposed [specification](spec.md). No production code changes
 are part of this planning task.
 

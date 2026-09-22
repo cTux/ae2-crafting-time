@@ -1,5 +1,7 @@
 # CodexVM shared-folder design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 The [specification](spec.md) restores an existing staging contract. Inspection
 at `63e3441ac5159b95eb984eb8963be95479deb024` found working HGFS reads and no
 demonstrated launcher defect. Keep configuration unchanged until evidence

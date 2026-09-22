@@ -1,5 +1,7 @@
 # Initial Crafting Status ETA Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Tracks [issue #425](https://github.com/cTux/ae2-crafting-time/issues/425).
 The #350 helper already exists; this follow-up corrects its screen scope and
 the separate 26.1.2 title hook.

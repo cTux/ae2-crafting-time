@@ -1,5 +1,12 @@
 # Collecting Data Status Spec
 
+Status: finished
+
+Scope: No-data placeholder and final wording.
+
+Implementation: [PR #111](https://github.com/cTux/ae2-crafting-time/pull/111), [PR #180](https://github.com/cTux/ae2-crafting-time/pull/180).
+Verification: [prepared-client coverage](../automated-ui-testing/prepared-clients-2026-09-08.md).
+
 ## Why this exists
 
 [Discussion #64](https://github.com/cTux/ae2-crafting-time/discussions/64)

@@ -1,5 +1,7 @@
 # Provider Locate Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Research findings
 
 Issue #231 asks for three facts the delayed warning does not currently have:

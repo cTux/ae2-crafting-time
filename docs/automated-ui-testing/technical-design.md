@@ -1,5 +1,7 @@
 # Automated UI Testing Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Failed native evidence retention
 
 Investigation for [#424](https://github.com/cTux/ae2-crafting-time/issues/424)

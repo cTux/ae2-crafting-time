@@ -1,5 +1,7 @@
 # Minecraft 1.20.1 Guide Book Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Implement [#265](https://github.com/cTux/ae2-crafting-time/issues/265) from the
 [specification](spec.md) and [technical design](technical-design.md).
 

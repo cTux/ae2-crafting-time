@@ -1,5 +1,7 @@
 # NeoForge Suite Shutdown Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Implement this plan under [#362](https://github.com/cTux/ae2-crafting-time/issues/362).
 
 ## Phase 1: Reuse final fixture cleanup

@@ -1,5 +1,13 @@
 # AE2 Addon Integration Spec
 
+Status: in-progress
+
+Scope: Native addon integration and versioned adapter selection.
+
+Implementation: [PR #113](https://github.com/cTux/ae2-crafting-time/pull/113), [PR #211](https://github.com/cTux/ae2-crafting-time/pull/211).
+Verification: selection is merged, but [PR #211](https://github.com/cTux/ae2-crafting-time/pull/211) records incomplete runtime acceptance.
+The historical integration roadmap is not proof that every proposed layer shipped.
+
 ## Goal
 
 Support as many AE2 addons as possible through AE2's own extension points. An
@@ -9,7 +17,7 @@ crafting execution, key, or table UI behavior.
 The integration must stay optional. Installing AE2 Crafting Time must not make
 any addon required.
 
-The version-selection requirements below are planned, not implemented. Read
+The version-selection requirements below were implemented in PR #211. Read
 their [technical design](technical-design.md#versioned-adapter-selection) and
 [implementation plan](implementation-plan.md#versioned-adapter-selection).
 They extend this feature; they do not change the current support matrix.

@@ -1,5 +1,7 @@
 # Finite Outlier Validation Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 This implements the [specification](spec.md) for
 [#469](https://github.com/cTux/ae2-crafting-time/issues/469).
 Source evidence was inspected at

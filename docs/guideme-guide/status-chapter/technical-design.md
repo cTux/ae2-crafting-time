@@ -1,5 +1,7 @@
 # Status Chapter Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Decision
 
 Extend the shared guide to one parent and twelve child Markdown pages. Derive

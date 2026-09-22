@@ -1,5 +1,7 @@
 # Startup Integration Diagnostics Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Implements the [specification](spec.md). Execution order and proof requirements
 are in the [implementation plan](implementation-plan.md).
 

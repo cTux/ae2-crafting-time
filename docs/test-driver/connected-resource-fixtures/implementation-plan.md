@@ -1,5 +1,7 @@
 # Connected resource fixture implementation plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Tracks [#482](https://github.com/cTux/ae2-crafting-time/issues/482).
 Follow the [spec](spec.md) and [design](technical-design.md). This prerequisite
 must merge with fixture-only qualification before #376 resumes its icon fix.
