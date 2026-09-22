@@ -6,12 +6,14 @@
   "priority": 1100,
   "refmap": "ae2craftingtime_test_driver.refmap.json",
   "mixins": [
+    "StoredVariantServerObservationMixin",
     "ProfilerBridgeObservationMixin",
     "DedicatedScenarioMixin",
     "CraftConfirmMenuAccessor",
     "CraftingCPUMenuAccessor"
   ],
   "client": [
+    "StoredVariantPacketObservationMixin",
     "RecurrentNativePlanMixin",
     "RecurrentPacketMixin",
     "CpuTtcClientMixin",

@@ -29,10 +29,17 @@ import java.util.function.Function;
 
 /** Bounded, real plan -> dispatch -> vanilla processing -> completed output flow. */
 final class StandardAe2Scenario {
+    private static final org.apache.logging.log4j.Logger LOG =
+            org.apache.logging.log4j.LogManager.getLogger("ae2ct-test-driver");
     static final Map<String, List<String>> CHECKS = Map.ofEntries(
             Map.entry("standard-plan-controls", List.of("plan", "plan-sort", "missing-first", "plan-tooltip",
                     "plan-details", "plan-reset", "total-ttc", "layout", "item-resolution")),
-            Map.entry("recurrent-plan", List.of("recurrent-row", "red-normal", "recurrent-tooltip", "unchanged-quantity", "layout")),
+            Map.entry("recurrent-plan", List.of("recurrent-row", "red-normal", "recurrent-tooltip", "unchanged-quantity",
+                    "layout", "variant-clear")),
+            Map.entry("stored-variant-plan", List.of("initial-clear", "live-near", "removed-clear",
+                    "exact-clear", "restored-near", "gold-normal", "variant-tooltip", "unchanged-plan",
+                    "variant-sorts", "variant-layout", "exact-only", "other-item", "ordinary-clear",
+                    "fluid-clear", "coexistence", "notification-lifecycle", "watcher-cleanup")),
             Map.entry("standard-status-controls", List.of("submitted", "status", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout")),
             Map.entry("waiting-status", List.of("submitted", "waiting", "first-dispatch", "recovered", "layout")),
             Map.entry("running-status", List.of("submitted", "running", "progress", "header", "layout")),
@@ -60,6 +67,7 @@ final class StandardAe2Scenario {
             List<String> resultScreenshots) {
         if (!CHECKS.containsKey(leaf)) throw new IllegalArgumentException("Unknown standard leaf: " + leaf);
         this.leaf = leaf;
+        StoredVariantObservation.enable(leaf.equals("stored-variant-plan"));
         this.connectedDedicated = connectedDedicated;
         recurrenceAddonRoute = connectedDedicated && leaf.equals("recurrent-plan") && RecurrentCampaign.addonRoute(
                 DriverPlatform.isModLoaded("wcwt"), DriverPlatform.isModLoaded("advanced_ae"));
@@ -99,16 +107,43 @@ final class StandardAe2Scenario {
     private boolean recurrenceHover;
     private final boolean recurrenceAddonRoute;
     private boolean recurrenceWirelessOpened;
+    private int variantStep;
+    private int variantPendingStep = -1;
+    private boolean variantSwitchPending;
+    private boolean variantHover;
+    private appeng.menu.me.crafting.CraftConfirmMenu variantMenu;
+    private appeng.menu.me.crafting.CraftingPlanSummary variantSummary;
+    private long variantRevision;
+    private long variantMissing;
+    private List<List<Long>> variantAmounts;
+    private List<Boolean> variantButtons;
+    private boolean variantScaleRequested;
+    private int variantCapturedStep = -1;
+    private int variantLifecycle;
+    private boolean variantReconnectRequested;
+    private boolean variantCancelCaptured;
+    private long variantNextDiagnosticAt;
+    private appeng.menu.me.crafting.CraftingPlanSummary variantSecondSummary;
+    private long variantSecondRevision;
+    private int variantSecondMenu;
 
     String checkpoint() { return "phase=" + phase + " fixture=" + fixture.checkpoint
             + (leaf.equals("recurrent-plan") ? " recurrence=" + recurrenceCase + " sort=" + sort : "")
+            + (leaf.equals("stored-variant-plan") ? " variant=" + variantStep + " lifecycle=" + variantLifecycle : "")
             + (cpuList == null ? "" : " " + cpuList.checkpoint()); }
 
-    boolean reconnectRequested() { return recurrenceReconnectRequested || cpuList != null && cpuList.reconnectRequested(); }
+    boolean reconnectRequested() { return recurrenceReconnectRequested || variantReconnectRequested
+            || cpuList != null && cpuList.reconnectRequested(); }
     void reconnected() {
         if (recurrenceReconnectRequested) {
             recurrenceReconnectRequested = false;
             recurrenceRejoined = true;
+            phase = Stage.TERMINAL;
+            frames.reset();
+        } else if (variantReconnectRequested) {
+            variantReconnectRequested = false;
+            variantHover = false;
+            variantLifecycle = 4;
             phase = Stage.TERMINAL;
             frames.reset();
         } else cpuList.reconnected();
@@ -134,6 +169,53 @@ final class StandardAe2Scenario {
             reportedPhase = phase;
             reportedCheckpoint = currentCheckpoint;
         }
+        if (leaf.equals("stored-variant-plan") && connectedDedicated && variantLifecycle == 3) {
+            if (minecraft.screen instanceof CraftConfirmScreen) return false;
+            if (!StoredVariantControl.request("cancel", minecraft.player.getUUID(), variantSecondMenu,
+                    variantSecondRevision)) return false;
+            mark(checks, "menu-cancel", true);
+            mark(checks, "watcher-cleanup", true);
+            if (!variantCancelCaptured) {
+                screenshot.accept("stored-variant-cancelled.png");
+                variantCancelCaptured = true;
+            }
+            variantReconnectRequested = true;
+            return false;
+        }
+        if (leaf.equals("stored-variant-plan") && !connectedDedicated && variantStep == 9) {
+            var closedMenu = variantMenu.containerId;
+            if (!server(minecraft, player -> StoredVariantObservation.closed(closedMenu))) return false;
+            mark(checks, "watcher-cleanup", true);
+            return true;
+        }
+        if (leaf.equals("stored-variant-plan") && variantPendingStep >= 0) {
+            var next = variantPendingStep;
+            if (connectedDedicated) {
+                if (!StoredVariantControl.request("step-" + next, minecraft.player.getUUID(),
+                        variantMenu.containerId, variantRevision)) return false;
+            } else if (!server(minecraft, player -> {
+                fixture.setStoredVariantStock(player, next == 1 || next == 3 || next == 4 || next == 7,
+                        next == 3 || next == 5);
+                if (next == 6) fixture.setStoredVariantOtherStock(player);
+                return true;
+            })) return false;
+            variantStep = next;
+            variantPendingStep = -1;
+            variantHover = false;
+            moveMouse.accept(0, 0);
+            frames.reset();
+            return false;
+        }
+        if (leaf.equals("stored-variant-plan") && variantSwitchPending) {
+            if (!StoredVariantControl.request("switch", minecraft.player.getUUID(), variantMenu.containerId,
+                    variantRevision)) return false;
+            mark(checks, "notification-lifecycle", true);
+            variantSwitchPending = false;
+            variantLifecycle = 1;
+            variantHover = false;
+            frames.reset();
+            return false;
+        }
         // Menu-free close/reopen and reconnect transitions are owned by this state machine.
         if (phase == Stage.ACTIVE && cpuList != null) {
             var complete = cpuList.tick(minecraft, marker, checks, screenshot, moveMouse);
@@ -144,6 +226,8 @@ final class StandardAe2Scenario {
             fixture.holdFinalOutput = leaf.equals("delayed-status");
             fixture.missingPlanInput = leaf.equals("standard-plan-controls");
             fixture.recurrentPlan = leaf.equals("recurrent-plan");
+            fixture.storedVariantPlan = leaf.equals("stored-variant-plan");
+            if (fixture.storedVariantPlan) fixture.missingPlanInput = true;
             if (fixture.recurrentPlan) fixture.missingPlanInput = true;
             if (connectedDedicated && fixture.recurrentPlan) {
                 var state = RecurrentPlanControl.state();
@@ -152,7 +236,16 @@ final class StandardAe2Scenario {
                 phase = Stage.TERMINAL;
                 return false;
             }
-            fixture.unprofiledPlan = leaf.equals("craft-lifecycle") || leaf.equals("recurrent-plan");
+            if (connectedDedicated && fixture.storedVariantPlan) {
+                var state = StoredVariantControl.state();
+                if (!state.ready() || !state.epoch().equals(CpuListTtcControl.epoch())
+                        || !state.player().equals(minecraft.player.getUUID().toString())) return false;
+                fixture.bindTerminal(new net.minecraft.core.BlockPos(state.x(), state.y(), state.z()));
+                phase = Stage.TERMINAL;
+                return false;
+            }
+            fixture.unprofiledPlan = leaf.equals("craft-lifecycle") || leaf.equals("recurrent-plan")
+                    || leaf.equals("stored-variant-plan");
             if (connectedDedicated && fixture.cpuListScenario) {
                 var state = CpuListTtcControl.state();
                 if (!state.ready()) return false;
@@ -377,6 +470,18 @@ final class StandardAe2Scenario {
             return false;
         }
         var snapshot = UiObservationStore.latest();
+        if (leaf.equals("stored-variant-plan") && phase == Stage.PLAN_SORT && variantStep > 0
+                && System.nanoTime() >= variantNextDiagnosticAt) {
+            variantNextDiagnosticAt = System.nanoTime() + 10_000_000_000L;
+            var menu = minecraft.screen instanceof CraftConfirmScreen screen ? screen.getMenu() : null;
+            var row = snapshot == null ? null : snapshot.rows().stream()
+                    .filter(value -> value.outputId().equals("minecraft:iron_pickaxe")).findFirst().orElse(null);
+            LOG.info("Variant wait step={} sort={} frame={} lastFrame={} label={} {}", variantStep, sort,
+                    snapshot == null ? -1 : snapshot.frame(), lastFrame,
+                    row != null && row.description().stream().anyMatch(value -> value.key().equals(
+                            "text.ae2craftingtime.plan.stored_variant")),
+                    menu == null ? "menu=absent" : StoredVariantObservation.diagnostic(menu));
+        }
         if (snapshot == null || snapshot.frame() == lastFrame) return false;
         lastFrame = snapshot.frame();
         if (phase == Stage.PLAN_SORT && leaf.equals("standard-plan-controls") && !planEstimatesReady(snapshot.rows())) {
@@ -386,10 +491,203 @@ final class StandardAe2Scenario {
         var planDescriptions = leaf.equals("craft-lifecycle") && minecraft.screen instanceof CraftConfirmScreen
                 ? snapshot.rows().stream().map(UiSnapshot.Row::description).toList() : List.of();
         if (!frames.observe(List.of(phase, sort, CaptureEvidence.readiness(snapshot), planDescriptions))) return false;
+        if (phase == Stage.PLAN_SORT && leaf.equals("stored-variant-plan")) {
+            if (!(minecraft.screen instanceof CraftConfirmScreen screen)) return false;
+            var menu = screen.getMenu();
+            var summary = menu.getPlan();
+            if (summary == null) return false;
+            if (!variantScaleRequested) {
+                variantScaleRequested = true;
+                minecraft.options.guiScale().set(0);
+                DriverPlatform.resizeDisplay(minecraft);
+                frames.reset();
+                return false;
+            }
+            if (!snapshot.gui().inside(new Rect(0, 0, snapshot.screenWidth(), snapshot.screenHeight()))) {
+                if (snapshot.guiScale() <= 1) throw new IllegalStateException("Variant plan cannot fit native screen");
+                minecraft.options.guiScale().set((int) snapshot.guiScale() - 1);
+                DriverPlatform.resizeDisplay(minecraft);
+                frames.reset();
+                return false;
+            }
+            var key = fixture.storedVariantKey(1);
+            var entry = summary.getEntries().stream().filter(row -> key.equals(row.getWhat())).findFirst().orElse(null);
+            if (entry == null || entry.getMissingAmount() <= 0) return false;
+            if (variantLifecycle != 0) {
+                var expectedFreshVariant = variantLifecycle == 2 || variantLifecycle == 4;
+                var row = snapshot.rows().stream().filter(value -> value.outputId().equals("minecraft:iron_pickaxe"))
+                        .findFirst().orElse(null);
+                if (row == null || row.description().stream().anyMatch(value -> value.key().equals(
+                        "text.ae2craftingtime.plan.stored_variant")) != expectedFreshVariant
+                        || ((com.ctux.ae2craftingtime.mc1201.RecurrentPlanEntry) entry).ae2craftingtime$storedVariant() != expectedFreshVariant)
+                    return false;
+                if (!variantHover) {
+                    moveMouse.accept(row.cell().x() + row.cell().width() / 2,
+                            row.cell().y() + row.cell().height() / 2);
+                    variantHover = true;
+                    return false;
+                }
+                if (snapshot.tooltip().stream().anyMatch(value -> value.key().equals(
+                        "text.ae2craftingtime.plan.stored_variant.explanation")) != expectedFreshVariant
+                        || snapshot.tooltip().stream().anyMatch(value -> value.key().equals(
+                        "text.ae2craftingtime.plan.stored_variant.suggestion")) != expectedFreshVariant) return false;
+                if (expectedFreshVariant && !StoredVariantObservation.received(menu)) return false;
+                var revision = ((com.ctux.ae2craftingtime.mc1201.RecurrentPlanMenu) menu)
+                        .ae2craftingtime$summaryRevision();
+                if (variantLifecycle == 1) {
+                    if (menu != variantMenu || summary != variantSummary || revision != variantRevision)
+                        throw new IllegalStateException("Network switch replaced the retained native summary");
+                    variantSecondSummary = summary;
+                    variantSecondRevision = revision;
+                    variantSecondMenu = menu.containerId;
+                    screenshot.accept("stored-variant-network-switch.png");
+                    mark(checks, "network-switch", true);
+                    variantLifecycle = 5;
+                    variantHover = false;
+                    frames.reset();
+                    return false;
+                }
+                if (variantLifecycle == 5) {
+                    menu.replan();
+                    variantLifecycle = 2;
+                    variantHover = false;
+                    frames.reset();
+                    return false;
+                }
+                if (variantLifecycle == 2) {
+                    if (menu.containerId != variantSecondMenu || summary == variantSecondSummary
+                            || revision <= variantSecondRevision) return false;
+                    if (!StoredVariantControl.request("replanned", minecraft.player.getUUID(), menu.containerId,
+                            revision)) return false;
+                    screenshot.accept("stored-variant-replanned.png");
+                    mark(checks, "native-replan", true);
+                    variantSecondRevision = revision;
+                    variantLifecycle = 3;
+                    minecraft.player.closeContainer();
+                    frames.reset();
+                    return false;
+                }
+                if (variantLifecycle == 4) {
+                    if (revision <= 0) return false;
+                    screenshot.accept("stored-variant-reconnected.png");
+                    mark(checks, "reconnected-fresh", true);
+                    return StoredVariantControl.request("complete", minecraft.player.getUUID(), menu.containerId,
+                            revision);
+                }
+                return false;
+            }
+            if (variantMenu == null) {
+                variantMenu = menu;
+                variantSummary = summary;
+                variantRevision = ((com.ctux.ae2craftingtime.mc1201.RecurrentPlanMenu) menu)
+                        .ae2craftingtime$summaryRevision();
+                variantMissing = entry.getMissingAmount();
+                variantAmounts = summary.getEntries().stream().map(value -> List.of(
+                        value.getStoredAmount(), value.getCraftAmount(), value.getMissingAmount())).toList();
+                variantButtons = minecraft.screen.children().stream().filter(AbstractWidget.class::isInstance)
+                        .map(AbstractWidget.class::cast).map(value -> value.active).toList();
+            }
+            if (menu != variantMenu || summary != variantSummary || entry.getMissingAmount() != variantMissing
+                    || ((com.ctux.ae2craftingtime.mc1201.RecurrentPlanMenu) menu)
+                            .ae2craftingtime$summaryRevision() != variantRevision)
+                throw new IllegalStateException("Stored-variant transition replaced the native plan");
+            if (!variantAmounts.equals(summary.getEntries().stream().map(value -> List.of(
+                    value.getStoredAmount(), value.getCraftAmount(), value.getMissingAmount())).toList())
+                    || !variantButtons.equals(minecraft.screen.children().stream().filter(AbstractWidget.class::isInstance)
+                            .map(AbstractWidget.class::cast).map(value -> value.active).toList()))
+                throw new IllegalStateException("Stored-variant transition changed quantities or native button state");
+            for (var control : summary.getEntries()) {
+                if (control == entry) continue;
+                if (((com.ctux.ae2craftingtime.mc1201.RecurrentPlanEntry) control).ae2craftingtime$storedVariant())
+                    throw new IllegalStateException("Unrelated row received a stored-variant diagnosis");
+                if (control.getMissingAmount() > 0 && control.getWhat() instanceof appeng.api.stacks.AEFluidKey)
+                    mark(checks, "fluid-clear", true);
+                if (control.getMissingAmount() > 0 && control.getWhat().equals(appeng.api.stacks.AEItemKey.of(
+                        net.minecraft.world.item.Items.DIRT))) mark(checks, "ordinary-clear", true);
+            }
+            var row = snapshot.rows().stream().filter(value -> value.outputId().equals("minecraft:iron_pickaxe"))
+                    .findFirst().orElse(null);
+            if (row == null) return false;
+            var label = row.description().stream().filter(value -> value.key().equals(
+                    "text.ae2craftingtime.plan.stored_variant")).findFirst().orElse(null);
+            var expected = variantStep == 1 || variantStep == 4 || variantStep == 7;
+            if (((com.ctux.ae2craftingtime.mc1201.RecurrentPlanEntry) entry).ae2craftingtime$storedVariant()
+                    != expected || (label != null) != expected) return false;
+            if (expected && (label.bold() || !java.util.Objects.equals(label.color(), 0xFFAA00)))
+                throw new IllegalStateException("Stored-variant label is not normal gold text");
+            if (!variantHover) {
+                moveMouse.accept(row.cell().x() + row.cell().width() / 2,
+                        row.cell().y() + row.cell().height() / 2);
+                variantHover = true;
+                return false;
+            }
+            var explanation = snapshot.tooltip().stream().anyMatch(value -> value.key().equals(
+                    "text.ae2craftingtime.plan.stored_variant.explanation"));
+            var suggestion = snapshot.tooltip().stream().anyMatch(value -> value.key().equals(
+                    "text.ae2craftingtime.plan.stored_variant.suggestion"));
+            if (explanation != expected || suggestion != expected) return false;
+            if (expected) {
+                if (!StoredVariantObservation.received(menu)) return false;
+                if (!((com.ctux.ae2craftingtime.mc1201.RecurrentPlanEntry) entry).ae2craftingtime$recurrent()
+                        || row.description().stream().noneMatch(value -> value.key().equals(
+                                "text.ae2craftingtime.plan.recurrent"))
+                        || snapshot.tooltip().stream().noneMatch(value -> value.key().equals(
+                                "text.ae2craftingtime.plan.recurrent_hint"))) return false;
+                mark(checks, "coexistence", true);
+                var drawn = snapshot.text().stream().filter(value -> value.key().equals(
+                        "text.ae2craftingtime.plan.stored_variant")).toList();
+                if (drawn.size() != 1 || drawn.get(0).bounds() == null) return false;
+                if (!drawn.get(0).bounds().inside(row.cell()))
+                    throw new IllegalStateException("Stored-variant text exceeds its row at narrow layout");
+            }
+            if (!row.cell().inside(snapshot.gui())) throw new IllegalStateException("Variant row escapes native plan layout");
+            mark(checks, "variant-layout", true);
+            if (variantStep == 1 && sort < 3) {
+                screenshot.accept("stored-variant-sort-" + sort + ".png");
+                AbstractWidget button = minecraft.screen.children().stream().filter(TtcSortButton.class::isInstance)
+                        .map(TtcSortButton.class::cast).findFirst().orElseThrow();
+                DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+                sort++;
+                variantHover = false;
+                frames.reset();
+                return false;
+            }
+            if (sort == 3) mark(checks, "variant-sorts", true);
+            var checksByStep = new String[] {"initial-clear", "live-near", "removed-clear", "exact-clear",
+                    "restored-near", "exact-only", "other-item", "restored-near"};
+            mark(checks, checksByStep[variantStep], true);
+            mark(checks, "gold-normal", label == null || !label.bold() && java.util.Objects.equals(label.color(), 0xFFAA00));
+            if (expected) mark(checks, "variant-tooltip", true);
+            mark(checks, "unchanged-plan", true);
+            if (variantCapturedStep != variantStep) {
+                screenshot.accept("stored-variant-" + variantStep + ".png");
+                variantCapturedStep = variantStep;
+            }
+            if (variantStep == 7 && connectedDedicated) {
+                variantSwitchPending = true;
+                return false;
+            }
+            if (variantStep == 7) {
+                if (!server(minecraft, player -> player.containerMenu instanceof appeng.menu.me.crafting.CraftConfirmMenu confirm
+                        && StoredVariantObservation.verifyServer(confirm.getPlan()))) return false;
+                mark(checks, "notification-lifecycle", true);
+                variantStep = 9;
+                minecraft.player.closeContainer();
+                return false;
+            }
+            variantPendingStep = variantStep + 1;
+            return false;
+        }
         if (phase == Stage.PLAN_SORT && leaf.equals("recurrent-plan")) {
             if (!(minecraft.screen instanceof CraftConfirmScreen screen)) return false;
             if (recurrenceAddonRoute && !recurrenceVisited && !recurrenceWirelessOpened) return false;
             if (!RecurrentPlanObservation.verify(screen.getMenu())) return false;
+            if (screen.getMenu().getPlan() == null) return false;
+            if (screen.getMenu().getPlan().getEntries().stream().anyMatch(value ->
+                    ((com.ctux.ae2craftingtime.mc1201.RecurrentPlanEntry) value).ae2craftingtime$storedVariant())
+                    || snapshot.rows().stream().anyMatch(value -> value.description().stream().anyMatch(text ->
+                    text.key().equals("text.ae2craftingtime.plan.stored_variant")))) return false;
+            mark(checks, "variant-clear", true);
             if (!connectedDedicated) {
                 if (!recurrenceServerVerified) {
                     if (!server(minecraft, recurrenceFixture::validate)) return false;
@@ -436,6 +734,8 @@ final class StandardAe2Scenario {
             return false;
         }
         if (phase == Stage.PLAN_TOOLTIP && leaf.equals("recurrent-plan")) {
+            if (snapshot.tooltip().stream().anyMatch(text -> text.key().startsWith(
+                    "text.ae2craftingtime.plan.stored_variant"))) return false;
             var recurrent = snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.plan.recurrent_hint"));
             if (recurrenceHover != recurrent) return false;
             if (connectedDedicated) {

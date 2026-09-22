@@ -173,10 +173,15 @@ public final class CraftPlanScenario {
                     minecraft.getLanguageManager().getSelected(),
                     com.ctux.ae2craftingtime.integration.IntegrationMixinPlugin.snapshot());
             var recurrence = options.scenario().equals("recurrent-plan");
+            var variant = options.scenario().equals("stored-variant-plan");
             var recurrentState = recurrence ? RecurrentPlanControl.state() : null;
+            var variantState = variant ? StoredVariantControl.state() : null;
             var state = recurrence ? new CpuListTtcControl.State(recurrentState.ready(), recurrentState.epoch(),
                     recurrentState.ack(), recurrentState.action(), recurrentState.phase(), recurrentState.x(),
-                    recurrentState.y(), recurrentState.z(), "", "") : CpuListTtcControl.state();
+                    recurrentState.y(), recurrentState.z(), "", "") : variant
+                    ? new CpuListTtcControl.State(variantState.ready(), variantState.epoch(), variantState.ack(),
+                            variantState.action(), "", variantState.x(), variantState.y(), variantState.z(), "", "")
+                    : CpuListTtcControl.state();
             if (!state.ready()) return;
             marker = new FixtureMarker(1, "craft-plan", "ae2-crafting-time", options.world(),
                     new FixtureMarker.Position(state.x(), state.y(), state.z(), "NORTH"), "minecraft:smooth_stone");

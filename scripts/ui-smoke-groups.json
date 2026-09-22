@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "groups": {
-    "standard-ae2": ["standard-plan-controls", "recurrent-plan", "standard-status-controls", "waiting-status", "running-status", "delayed-status", "craft-lifecycle", "cpu-list-total-ttc"],
+    "standard-ae2": ["standard-plan-controls", "recurrent-plan", "stored-variant-plan", "standard-status-controls", "waiting-status", "running-status", "delayed-status", "craft-lifecycle", "cpu-list-total-ttc"],
     "provider-dispatch-statuses": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"]
   },
   "focusedCases": {
@@ -35,8 +35,14 @@
       "screenshots": ["plan-default.png", "plan-sort-1.png", "plan-sort-2.png", "plan-sort-3.png", "plan-tooltip.png", "plan-details.png", "plan-reset.png"]
     },
     "recurrent-plan": {
-      "checks": ["recurrent-row", "red-normal", "recurrent-tooltip", "unchanged-quantity", "layout"],
+      "checks": ["recurrent-row", "red-normal", "recurrent-tooltip", "unchanged-quantity", "layout", "variant-clear"],
       "screenshots": ["recurrent-plan-tooltip.png"]
+    },
+    "stored-variant-plan": {
+      "checks": ["initial-clear", "live-near", "removed-clear", "exact-clear", "restored-near", "gold-normal", "variant-tooltip", "unchanged-plan", "variant-sorts", "variant-layout", "exact-only", "other-item", "ordinary-clear", "fluid-clear", "coexistence", "notification-lifecycle", "watcher-cleanup"],
+      "connectedChecks": ["menu-cancel", "network-switch", "native-replan", "reconnected-fresh"],
+      "connectedScreenshots": ["stored-variant-network-switch.png", "stored-variant-replanned.png", "stored-variant-cancelled.png", "stored-variant-reconnected.png"],
+      "screenshots": ["stored-variant-0.png", "stored-variant-1.png", "stored-variant-2.png", "stored-variant-3.png", "stored-variant-4.png", "stored-variant-5.png", "stored-variant-6.png", "stored-variant-7.png", "stored-variant-sort-0.png", "stored-variant-sort-1.png", "stored-variant-sort-2.png"]
     },
     "standard-status-controls": {
       "checks": ["submitted", "status", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout"],

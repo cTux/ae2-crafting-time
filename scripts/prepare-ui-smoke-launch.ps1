@@ -114,7 +114,7 @@ if ($CampaignId) {
 if ($Role) {
     $expectedName = 'Ae2ctAlpha'
     $expectedUuid = '446b6d0ccadd3e57baf699d70f01a628'
-    if ($Scenario -ne 'recurrent-plan' -or $DedicatedAddress -notmatch '^(127\.0\.0\.1|localhost):[0-9]{1,5}$' -or
+    if ($Scenario -notin @('recurrent-plan','stored-variant-plan') -or $DedicatedAddress -notmatch '^(127\.0\.0\.1|localhost):[0-9]{1,5}$' -or
             $OfflineName -cne $expectedName -or $OfflineUuid -cne $expectedUuid) {
         throw 'Recurrent connected role requires its bounded offline identity'
     }

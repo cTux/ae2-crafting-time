@@ -109,7 +109,7 @@ try {
 }
 '@.Replace('__PAYLOAD__', $payload)
     $encoded = [Convert]::ToBase64String([Text.Encoding]::Unicode.GetBytes($script))
-    [pscustomobject]@{ Execute=(Join-Path $PSHOME 'powershell.exe')
+    [pscustomobject]@{ Execute=(Get-Process -Id $PID).Path
         Argument="-NoProfile -NonInteractive -WindowStyle Hidden -EncodedCommand $encoded" }
 }
 

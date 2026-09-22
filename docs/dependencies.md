@@ -11,6 +11,14 @@ sequentially. NeoForge 1.21.1 also covers a greater-than-256-row plan. Recipient
 boundary tests and dedicated replan/reconnect checks verify stale-plan isolation;
 no simultaneous-player proof or recurrence runtime pass is recorded here yet.
 
+Native Crafting Plan stored-variant diagnostics use the same required AE2 menu
+and renderer paths, plus AE2's storage watcher, on all four targets. They add no
+optional dependency and do not change separate Tree, requester, or running-job
+screens. The TestDriver's `stored-variant-plan` leaf covers real damaged-item
+exact/near keys and live storage transitions; qualification also requires
+`standard-plan-controls`, `recurrent-plan`, and a marked loopback connected run
+per target. This documents coverage requirements, not a recorded runtime pass.
+
 Applied Enhancements 1.0.7 clears the native plan before starting long-range
 calculation, including ordinary small orders. Recurrence reset accepts that
 absent plan on all targets. AELIS may bypass native recurrence observation, so

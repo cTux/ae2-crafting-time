@@ -6,7 +6,7 @@ param(
     [string]$CasesBase64,
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|delayed-resource-icons|appmek-resource-icons|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-channel-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|stored-variant-plan|delayed-resource-icons|appmek-resource-icons|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-channel-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$ArchiveRoot,
     [string]$ReportDirectory,
@@ -358,11 +358,11 @@ try {
             if ($ScheduledJava) {
                 if (!$PreparedLaunch) { throw 'Scheduled Java execution requires a prepared native client' }
                 $scheduledTaskName = "AE2 Crafting Time Java $runId Phase $phase"
-                $scheduledParameters = Get-UiSmokeScheduledJavaStartParameters -Executable $executable `
-                    -Arguments ([string]$phaseArguments) -WorkingDirectory $workingDirectory `
-                    -TaskName $scheduledTaskName -InteractiveUser $InteractiveUser `
-                    -InteractiveToken $(if ($Interactive) { $env:AE2CT_TEST_DRIVER_TOKEN } else { $null })
-                $scheduledIdentity = Start-UiSmokeScheduledJava @scheduledParameters
+                $tokenParameters = @{}
+                if ($Interactive) { $tokenParameters.InteractiveToken = $env:AE2CT_TEST_DRIVER_TOKEN }
+                $scheduledIdentity = Start-UiSmokeScheduledJava -Executable $executable -Arguments ([string]$phaseArguments) `
+                    -WorkingDirectory $workingDirectory -TaskName $scheduledTaskName -InteractiveUser $InteractiveUser `
+                    @tokenParameters
                 $process = $scheduledIdentity.process
             } else {
                 $process = Start-Process -FilePath $executable -ArgumentList $phaseArguments -PassThru -WindowStyle Hidden `
@@ -406,8 +406,8 @@ try {
                 } elseif ($process.WaitForExit(1000)) {
                     break
                 }
-                if ($Scenario -in @('cpu-list-total-ttc', 'recurrent-plan', 'delayed-resource-icons', 'appmek-resource-icons') -or
-                        $selectedCases -contains 'recurrent-plan') {
+                if ($Scenario -in @('cpu-list-total-ttc', 'recurrent-plan', 'stored-variant-plan', 'delayed-resource-icons', 'appmek-resource-icons') -or
+                        $selectedCases -contains 'recurrent-plan' -or $selectedCases -contains 'stored-variant-plan') {
                     $progressPath = Join-Path $evidence 'driver-progress.json'
                     if (Test-Path -LiteralPath $progressPath -PathType Leaf) {
                         try {
@@ -565,9 +565,13 @@ try {
             @('server-identity','real-dispatch','delayed-plates','native-locate','lifecycle',
                 'capture-integrity','cleanup','fixture-only')
         } elseif ($standardContracts.$caseScenario) {
+            if ($DedicatedAddress -and $standardContracts.$caseScenario.connectedChecks) {
+                @($standardContracts.$caseScenario.checks) + @($standardContracts.$caseScenario.connectedChecks)
+            } else {
             if ($result.checks.'advanced-cpu' -is [bool] -and $standardContracts.$caseScenario.advancedChecks) {
                 @($standardContracts.$caseScenario.advancedChecks)
             } else { @($standardContracts.$caseScenario.checks) }
+            }
         } elseif ($caseScenario -eq "no-space-status") {
             @("screen", "external-machine", "warning", "tooltip", "layout", "recovered")
         } elseif ($caseScenario -eq "no-power-status") {
@@ -618,9 +622,13 @@ try {
         $requiredScreenshots = if ($caseScenario -in @('delayed-resource-icons','appmek-resource-icons')) {
             Get-ResourceFixtureScreenshots (Get-ResourceFixtureCases $caseScenario $Target) ([bool]$DedicatedAddress)
         } elseif ($standardContracts.$caseScenario) {
+            if ($DedicatedAddress -and $standardContracts.$caseScenario.connectedScreenshots) {
+                @($standardContracts.$caseScenario.screenshots) + @($standardContracts.$caseScenario.connectedScreenshots)
+            } else {
             if ($result.checks.'advanced-cpu' -is [bool] -and $standardContracts.$caseScenario.advancedScreenshots) {
                 @($standardContracts.$caseScenario.advancedScreenshots)
             } else { @($standardContracts.$caseScenario.screenshots) }
+            }
         } elseif ($caseScenario -eq "no-space-status") {
             @("no-space-before.png", "no-space-en-us.png", "no-space-recovered.png")
         } elseif ($caseScenario -eq "no-power-status") {

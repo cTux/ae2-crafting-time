@@ -30,7 +30,7 @@ try {
     $expectedHash = ([BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash(
         [Text.Encoding]::UTF8.GetBytes($token)))).Replace('-', '').ToLowerInvariant()
     $childArguments = "-NoProfile -NonInteractive -Command `"`$hash = ([BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash([Text.Encoding]::UTF8.GetBytes(`$env:AE2CT_TEST_DRIVER_TOKEN)))).Replace('-', '').ToLowerInvariant(); if (`$hash -ceq '$expectedHash') { exit 0 } else { exit 9 }`""
-    $action = New-UiSmokeScheduledJavaTaskAction -Executable (Join-Path $PSHOME 'powershell.exe') `
+    $action = New-UiSmokeScheduledJavaTaskAction -Executable (Get-Process -Id $PID).Path `
         -Arguments $childArguments -PipeName $pipeName
     if ($action.Argument -match [regex]::Escape($token)) { throw 'Scheduled action persisted the interactive token' }
     $relay = Start-Process -FilePath $action.Execute -ArgumentList $action.Argument -PassThru -WindowStyle Hidden
@@ -121,7 +121,20 @@ try {
     throw 'Duplicate phase process identity was accepted'
 } catch { if ($_.Exception.Message -eq 'Duplicate phase process identity was accepted') { throw } }
 $runner = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'run-ui-smoke.ps1') -Raw
-if ($runner -notmatch "if \(\`$Scenario -in @\('cpu-list-total-ttc', 'recurrent-plan', 'delayed-resource-icons', 'appmek-resource-icons'\) -or\s*\`$selectedCases -contains 'recurrent-plan'\) \{\s*\`$progressPath") {
+if ($runner -notmatch '\$tokenParameters = @\{\}' -or
+        $runner -notmatch 'if \(\$Interactive\) \{ \$tokenParameters\.InteractiveToken = \$env:AE2CT_TEST_DRIVER_TOKEN \}' -or
+        $runner -notmatch '-InteractiveUser \$InteractiveUser `\s*@tokenParameters') {
+    throw 'Noninteractive scheduled Java must omit the optional token while interactive Java passes it through validation'
+}
+try {
+    Start-UiSmokeScheduledJava -Executable missing-java.exe -Arguments missing -WorkingDirectory . `
+        -TaskName test -InteractiveUser Codex -InteractiveToken invalid
+    throw 'Invalid interactive token was accepted'
+} catch {
+    if ($_.Exception.Message -eq 'Invalid interactive token was accepted' -or
+            $_.Exception.Message -notmatch 'InteractiveToken') { throw }
+}
+if ($runner -notmatch "if \(\`$Scenario -in @\('cpu-list-total-ttc', 'recurrent-plan', 'stored-variant-plan', 'delayed-resource-icons', 'appmek-resource-icons'\) -or\s*\`$selectedCases -contains 'recurrent-plan' -or \`$selectedCases -contains 'stored-variant-plan'\) \{\s*\`$progressPath") {
     throw 'The progress watchdog does not cover every CPU-list process'
 }
 $running = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test -ProcessLookup {

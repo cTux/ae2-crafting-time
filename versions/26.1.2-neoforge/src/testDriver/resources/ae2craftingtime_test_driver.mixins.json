@@ -5,12 +5,14 @@
   "compatibilityLevel": "JAVA_25",
   "priority": 1100,
   "mixins": [
+    "StoredVariantServerObservationMixin",
     "ProfilerBridgeObservationMixin",
     "DedicatedScenarioMixin",
     "CraftConfirmMenuAccessor",
     "CraftingCPUMenuAccessor"
   ],
   "client": [
+    "StoredVariantPacketObservationMixin",
     "RecurrentNativePlanMixin",
     "RecurrentPacketMixin",
     "CpuTtcClientMixin",

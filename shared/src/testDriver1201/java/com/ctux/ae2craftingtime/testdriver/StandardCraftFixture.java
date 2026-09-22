@@ -4,6 +4,7 @@ import appeng.api.config.Actionable;
 import appeng.api.networking.GridHelper;
 import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.security.IActionSource;
+import appeng.api.parts.IPartHost;
 import appeng.api.parts.PartHelper;
 import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
@@ -31,6 +32,7 @@ final class StandardCraftFixture {
     boolean cpuListScenario;
     boolean recurrentPlan;
     boolean resourceFixture;
+    boolean storedVariantPlan;
     private java.util.List<java.util.concurrent.Future<appeng.api.networking.crafting.ICraftingPlan>> cpuListPlans;
     private boolean cpuListSubmitted;
     private java.util.concurrent.Future<appeng.api.networking.crafting.ICraftingPlan> replacementPlan;
@@ -174,7 +176,8 @@ final class StandardCraftFixture {
                     pattern(player, 4, 1, Items.SAND, Items.GLASS);
                     pattern(player, 8, java.util.List.of(Items.STONE, Items.GLASS), Items.SMOOTH_STONE);
                 } else {
-                    pattern(player, 8, Items.STONE, Items.SMOOTH_STONE);
+                    if (storedVariantPlan) storedVariantPattern(player);
+                    else pattern(player, 8, Items.STONE, Items.SMOOTH_STONE);
                 }
                 if (cpuListScenario) pattern(player, 12, Items.SAND, Items.GLASS);
             }
@@ -236,6 +239,60 @@ final class StandardCraftFixture {
                 .map(item -> new GenericStack(AEItemKey.of(item), 1)).toList(),
                 new GenericStack(AEItemKey.of(output), 1)));
         provider.getLogic().updatePatterns();
+    }
+
+    AEItemKey storedVariantKey(int damage) {
+        var stack = new ItemStack(Items.IRON_PICKAXE);
+        stack.setDamageValue(damage);
+        return AEItemKey.of(stack);
+    }
+
+    private void storedVariantPattern(ServerPlayer player) {
+        var provider = (PatternProviderBlockEntity) player.serverLevel().getBlockEntity(terminal.east(8));
+        provider.getLogic().getPatternInv().setItemDirect(0, ServerDriverPlatform.processingPattern(
+                java.util.List.of(new GenericStack(storedVariantKey(1), 1),
+                        new GenericStack(AEItemKey.of(Items.DIRT), 1),
+                        new GenericStack(appeng.api.stacks.AEFluidKey.of(
+                                net.minecraft.world.level.material.Fluids.WATER), 1)),
+                new GenericStack(AEItemKey.of(Items.SMOOTH_STONE), 1)));
+        provider.getLogic().getPatternInv().setItemDirect(1, ServerDriverPlatform.processingPattern(
+                new GenericStack(storedVariantKey(1), 1), new GenericStack(storedVariantKey(1), 1)));
+        provider.getLogic().updatePatterns();
+    }
+
+    void setStoredVariantStock(ServerPlayer player, boolean near, boolean exact) {
+        var drive = (DriveBlockEntity) player.serverLevel().getBlockEntity(terminal.east(2));
+        var storage = drive.getCellInventory(0);
+        for (var damage : new int[] {1, 2, 3})
+            storage.extract(storedVariantKey(damage), Long.MAX_VALUE, Actionable.MODULATE, IActionSource.empty());
+        if (near) {
+            if (storage.insert(storedVariantKey(2), 1, Actionable.MODULATE, IActionSource.empty()) != 1)
+                throw new IllegalStateException("Could not store near-match pickaxe");
+            if (storage.insert(storedVariantKey(3), 1, Actionable.MODULATE, IActionSource.empty()) != 1)
+                throw new IllegalStateException("Could not store second near-match pickaxe");
+        }
+        if (exact && storage.insert(storedVariantKey(1), 1, Actionable.MODULATE, IActionSource.empty()) != 1)
+            throw new IllegalStateException("Could not store exact pickaxe");
+        var actual = storage.getAvailableStacks();
+        if (actual.get(storedVariantKey(1)) != (exact ? 1 : 0)
+                || actual.get(storedVariantKey(2)) != (near ? 1 : 0)
+                || actual.get(storedVariantKey(3)) != (near ? 1 : 0))
+            throw new IllegalStateException("Stored-variant authoritative stock does not match the requested transition");
+        var node = ((IInWorldGridNodeHost) player.serverLevel().getBlockEntity(terminal)).getGridNode(Direction.NORTH);
+        var visible = node.getGrid().getStorageService().getInventory().getAvailableStacks();
+        org.apache.logging.log4j.LogManager.getLogger("ae2ct-test-driver").info(
+                "Variant stock cell=[{},{},{}] grid=[{},{},{}]", actual.get(storedVariantKey(1)),
+                actual.get(storedVariantKey(2)), actual.get(storedVariantKey(3)), visible.get(storedVariantKey(1)),
+                visible.get(storedVariantKey(2)), visible.get(storedVariantKey(3)));
+        System.out.println("AE2CT variant storage exact=" + actual.get(storedVariantKey(1))
+                + " near-2=" + actual.get(storedVariantKey(2)) + " near-3=" + actual.get(storedVariantKey(3)));
+    }
+
+    void setStoredVariantOtherStock(ServerPlayer player) {
+        var drive = (DriveBlockEntity) player.serverLevel().getBlockEntity(terminal.east(2));
+        if (drive.getCellInventory(0).insert(AEItemKey.of(Items.IRON_SWORD), 1,
+                Actionable.MODULATE, IActionSource.empty()) != 1)
+            throw new IllegalStateException("Could not store unrelated sword");
     }
 
     CraftingBlockEntity cpu(ServerPlayer player) {
@@ -426,6 +483,43 @@ final class StandardCraftFixture {
         fixture.sampleMultiplier = sampleMultiplier * 4;
         fixture.originShift = 24;
         return fixture;
+    }
+
+    StandardCraftFixture variantSecondGrid() {
+        var fixture = new StandardCraftFixture();
+        fixture.originShift = 24;
+        fixture.storedVariantPlan = true;
+        fixture.missingPlanInput = true;
+        fixture.unprofiledPlan = true;
+        return fixture;
+    }
+
+    void moveVariantTerminal(ServerPlayer player, StandardCraftFixture other) {
+        var terminalNode = variantTerminalNode(player);
+        var previous = terminalNode.getGrid();
+        for (var connection : java.util.List.copyOf(terminalNode.getConnections())) connection.destroy();
+        GridHelper.createConnection(terminalNode, other.cpu(player).getMainNode().getNode());
+        if (terminalNode.getGrid() == previous)
+            throw new IllegalStateException("Fixture failed to replace the active terminal grid");
+    }
+
+    boolean variantTerminalReady(ServerPlayer player, StandardCraftFixture other) {
+        var terminalNode = variantTerminalNode(player);
+        var grid = terminalNode.getGrid();
+        if (grid == null || grid != other.cpu(player).getMainNode().getGrid()
+                || !other.cpu(player).getCluster().isActive() || grid.getCraftingService().getCpus().isEmpty())
+            return false;
+        var stock = grid.getStorageService().getInventory().getAvailableStacks();
+        return stock.get(other.storedVariantKey(1)) == 0 && stock.get(other.storedVariantKey(2)) == 1
+                && stock.get(other.storedVariantKey(3)) == 1;
+    }
+
+    private appeng.api.networking.IGridNode variantTerminalNode(ServerPlayer player) {
+        var part = ((IPartHost) player.level().getBlockEntity(terminal)).getPart(Direction.NORTH);
+        if (!(part instanceof appeng.parts.reporting.CraftingTerminalPart terminalPart)
+                || terminalPart.getActionableNode() == null)
+            throw new IllegalStateException("Fixture crafting terminal part is missing its actionable node");
+        return terminalPart.getActionableNode();
     }
 
     StandardCraftFixture largeCpuGrid() {

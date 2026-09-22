@@ -348,7 +348,7 @@ class TestDriverCoreTest {
     @Test
     void standardResultCannotOmitAnyRequiredPlanStatusOrOutputCheck() {
         assertFalse(AddonCpuFixture.supports("standard-ae2"));
-        assertEquals(8, StandardAe2Scenario.CHECKS.size());
+        assertEquals(9, StandardAe2Scenario.CHECKS.size());
         for (var entry : StandardAe2Scenario.CHECKS.entrySet()) {
             var scenario = entry.getKey();
             assertTrue(AddonCpuFixture.supports(scenario));
