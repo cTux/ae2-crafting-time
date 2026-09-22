@@ -1,6 +1,8 @@
 package com.ctux.ae2craftingtime.mc1201;
 
-import com.ctux.ae2craftingtime.core.PacketLimits;
+import appeng.api.client.AEKeyRendering;
+import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -12,18 +14,15 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 
 /**
  * Client-side only. Draws the delayed-craft provider highlight on 1.20.1 and
  * 1.21.1: thick rainbow edge boxes plus a red plate with the stuck output's
- * item icon on each camera-facing face.
+ * typed resource icon on each camera-facing face.
  *
  * <p>Vanilla {@code RenderType.lines()} width is fixed at one pixel on most
  * drivers, so edge thickness comes from three nested shells (roughly 2-3x
@@ -50,8 +49,8 @@ public final class ProviderHighlightShapes {
 
     /**
      * Draws a red plate with the stuck output's icon on each given face.
-     * Faces must already be culled to the camera side. An empty stack draws
-     * plates only (for example fluid outputs).
+     * Faces must already be culled to the camera side. An unavailable key draws
+     * only the plate.
      *
      * <p>Each plate is a thin filled box from vanilla
      * {@code LevelRenderer.addChainedFilledBoxVertices} into
@@ -60,12 +59,12 @@ public final class ProviderHighlightShapes {
      * and has no vanilla callers, so every face is flushed with its own
      * {@code endBatch}: appending the next face to the same strip would
      * continue the strip out of phase and the culled pipeline would drop
-     * the plate (the #241 invisible plates). Flushing before the item icon
+     * the plate (the #241 invisible plates). Flushing before the resource icon
      * also means the filled builder is never alive across other-type
      * writes (the #237 crash), so never hold a filled consumer.
      */
     public static void renderFacePlatesAndIcons(PoseStack pose, MultiBufferSource buffers, Level level, BlockPos pos,
-            ItemStack stack, List<Direction> faces, int light, float alpha) {
+            AEKey key, List<Direction> faces, int light, float alpha) {
         var items = Minecraft.getInstance().getItemRenderer();
         for (var face : faces) {
             pose.pushPose();
@@ -76,12 +75,16 @@ public final class ProviderHighlightShapes {
             if (buffers instanceof MultiBufferSource.BufferSource source) {
                 source.endBatch(RenderType.debugFilledBox());
             }
-            if (!stack.isEmpty()) {
+            if (key != null && AEKeyRendering.get(key.getType()) != null) {
                 pose.pushPose();
                 pose.translate(0.0, 0.0, ITEM_Z);
-                pose.scale(ITEM_SCALE, ITEM_SCALE, ITEM_SCALE);
-                items.renderStatic(stack, ItemDisplayContext.FIXED, light, OverlayTexture.NO_OVERLAY, pose, buffers,
-                        level, 0);
+                if (key instanceof AEItemKey item) {
+                    pose.scale(ITEM_SCALE, ITEM_SCALE, ITEM_SCALE);
+                    items.renderStatic(resolveItem(item), ItemDisplayContext.FIXED, light, OverlayTexture.NO_OVERLAY,
+                            pose, buffers, level, 0);
+                } else {
+                    AEKeyRendering.drawOnBlockFace(pose, buffers, key, ITEM_SCALE, light, level);
+                }
                 pose.popPose();
             }
             pose.popPose();
@@ -102,21 +105,8 @@ public final class ProviderHighlightShapes {
         pose.translate(0.0, 0.0, 0.5);
     }
 
-    /**
-     * Resolves a highlight output id to an item stack for the face icon.
-     * Returns {@link ItemStack#EMPTY} for anything that is not an item, so
-     * callers always render at least the red plate.
-     */
-    public static ItemStack resolveItem(String outputId) {
-        if (outputId == null || outputId.isBlank() || outputId.length() > PacketLimits.MAX_OUTPUT_ID_LENGTH) {
-            return ItemStack.EMPTY;
-        }
-        var id = ResourceLocation.tryParse(outputId);
-        if (id == null) {
-            return ItemStack.EMPTY;
-        }
-        var item = BuiltInRegistries.ITEM.get(id);
-        return item == null || item == Items.AIR ? ItemStack.EMPTY : new ItemStack(item);
+    public static ItemStack resolveItem(AEKey key) {
+        return key instanceof AEItemKey item ? item.toStack() : ItemStack.EMPTY;
     }
 
     private ProviderHighlightShapes() {

@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201.net;
 
+import appeng.api.stacks.AEKey;
 import com.ctux.ae2craftingtime.core.PacketLimits;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +9,7 @@ import net.minecraft.network.FriendlyByteBuf;
 
 public final class ProviderHighlightCodec {
     public record Highlight(String networkId, String dimensionId, List<BlockPos> positions, String outputId,
-            int durationSeconds, boolean plateOnly) {
+            int durationSeconds, boolean plateOnly, AEKey displayKey) {
         public Highlight {
             networkId = networkId == null ? "" : networkId;
             positions = positions == null ? List.of() : List.copyOf(positions);
@@ -17,16 +18,21 @@ public final class ProviderHighlightCodec {
 
         public Highlight(String dimensionId, List<BlockPos> positions, String outputId, int durationSeconds,
                 boolean plateOnly) {
-            this("", dimensionId, positions, outputId, durationSeconds, plateOnly);
+            this("", dimensionId, positions, outputId, durationSeconds, plateOnly, null);
         }
 
         public Highlight(String dimensionId, List<BlockPos> positions, String outputId, int durationSeconds) {
-            this("", dimensionId, positions, outputId, durationSeconds, false);
+            this("", dimensionId, positions, outputId, durationSeconds, false, null);
         }
 
         public Highlight(String networkId, String dimensionId, List<BlockPos> positions, String outputId,
                 int durationSeconds) {
-            this(networkId, dimensionId, positions, outputId, durationSeconds, false);
+            this(networkId, dimensionId, positions, outputId, durationSeconds, false, null);
+        }
+
+        public Highlight(String networkId, String dimensionId, List<BlockPos> positions, String outputId,
+                int durationSeconds, boolean plateOnly) {
+            this(networkId, dimensionId, positions, outputId, durationSeconds, plateOnly, null);
         }
     }
 
@@ -54,6 +60,11 @@ public final class ProviderHighlightCodec {
             throw new IllegalArgumentException("network id too long");
         }
         buffer.writeUtf(network);
+        var keyStart = buffer.writerIndex();
+        ProviderDisplayKeyPacket.write(buffer, highlight.displayKey());
+        if (buffer.writerIndex() - keyStart > ProviderDisplayKeyPacket.MAX_BYTES) {
+            throw new IllegalArgumentException("display key too large");
+        }
     }
 
     public static Highlight read(FriendlyByteBuf buffer) {
@@ -72,7 +83,14 @@ public final class ProviderHighlightCodec {
         var plateOnly = buffer.readBoolean();
         // Packets written before the network id carry no further bytes.
         var networkId = buffer.readableBytes() > 0 ? buffer.readUtf(PacketLimits.MAX_OUTPUT_ID_LENGTH) : "";
-        return new Highlight(networkId, dimension, positions, outputId, durationSeconds, plateOnly);
+        if (buffer.readableBytes() > ProviderDisplayKeyPacket.MAX_BYTES) {
+            throw new IllegalArgumentException("display key too large");
+        }
+        var displayKey = buffer.readableBytes() > 0 ? ProviderDisplayKeyPacket.read(buffer) : null;
+        if (buffer.readableBytes() != 0) {
+            throw new IllegalArgumentException("trailing highlight data");
+        }
+        return new Highlight(networkId, dimension, positions, outputId, durationSeconds, plateOnly, displayKey);
     }
 
     private ProviderHighlightCodec() {

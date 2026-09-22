@@ -1,8 +1,8 @@
 package com.ctux.ae2craftingtime.mc1201;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.world.phys.AABB;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -60,12 +60,12 @@ public final class ProviderHighlightRender {
             if (!levelDimension.equals(plate.dimensionId())) {
                 continue;
             }
-            var stack = ProviderHighlightShapes.resolveItem(plate.outputId());
             var pos = plate.position();
-            ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos, stack,
+            ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos, plate.displayKey(),
                     ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z),
-                    LevelRenderer.getLightColor(minecraft.level, pos), alpha);
+                    LightTexture.FULL_BRIGHT, alpha);
         }
+        consumers.endBatch(RenderType.solid());
         consumers.endBatch(RenderType.debugFilledBox());
         poseStack.popPose();
     }

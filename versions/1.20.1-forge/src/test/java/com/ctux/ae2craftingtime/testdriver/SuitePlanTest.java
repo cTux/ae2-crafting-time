@@ -72,9 +72,12 @@ class SuitePlanTest {
         assertThrows(IllegalArgumentException.class, () -> new SuitePlan(2, List.of(first, first)).options(options()));
     }
 
-    @Test void resourceSuitesRequireTheIsolatedFixtureMode() {
+    @Test void resourceSuitesSupportBothModesAndStayIsolated() {
         var resource = new SuitePlan.Case("delayed-resource-icons", FIRST);
-        assertThrows(IllegalArgumentException.class, () -> new SuitePlan(1, List.of(resource)).options(options()));
+        assertEquals("delayed-resource-icons",
+                new SuitePlan(1, List.of(resource)).options(options()).get(0).scenario());
+        assertThrows(IllegalArgumentException.class,
+                () -> new SuitePlan(1, List.of(resource, second)).options(options()));
         System.setProperty("ae2craftingtime.test.resourceFixtureOnly", "true");
         try {
             assertEquals("delayed-resource-icons",

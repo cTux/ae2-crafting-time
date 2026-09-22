@@ -25,7 +25,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-if ($Prewarm -and (!$ServerDirectory -or !$ResourceFixtureOnly -or $Latest -or $Interactive)) {
+if ($Prewarm -and (!$ServerDirectory -or ($Scenario -notin @('delayed-resource-icons','appmek-resource-icons')) -or $Latest -or $Interactive)) {
     throw 'Prewarm requires a compatible connected resource fixture'
 }
 

@@ -2,6 +2,10 @@ package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.core.PersistedOutputSamples;
 import com.ctux.ae2craftingtime.core.PersistedOutputStatus;
+import com.mojang.datafixers.util.Pair;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.Identifier;
 import net.minecraft.util.datafix.DataFixTypes;
@@ -15,7 +19,18 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
     public static final SavedDataType<Ae2CraftingTimeSavedData> TYPE = new SavedDataType<>(
             Identifier.fromNamespaceAndPath("ae2craftingtime", FILE_ID),
             Ae2CraftingTimeSavedData::new,
-            CompoundTag.CODEC.xmap(Ae2CraftingTimeSavedData::load, Ae2CraftingTimeSavedData::save),
+            new Codec<Ae2CraftingTimeSavedData>() {
+                @Override
+                public <T> DataResult<T> encode(Ae2CraftingTimeSavedData data, DynamicOps<T> ops, T prefix) {
+                    return CompoundTag.CODEC.encode(data.save(ops), ops, prefix);
+                }
+
+                @Override
+                public <T> DataResult<Pair<Ae2CraftingTimeSavedData, T>> decode(DynamicOps<T> ops, T input) {
+                    return CompoundTag.CODEC.decode(ops, input)
+                            .map(decoded -> Pair.of(load(decoded.getFirst(), ops), decoded.getSecond()));
+                }
+            },
             DataFixTypes.LEVEL);
 
     private List<PersistedOutputSamples> samples = List.of();
@@ -23,12 +38,12 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
     private List<ProviderLocateRecords.LocateRecord> providerRecords = List.of();
     private List<PersistedOutputStatus> statuses = List.of();
 
-    private static Ae2CraftingTimeSavedData load(CompoundTag tag) {
+    private static Ae2CraftingTimeSavedData load(CompoundTag tag, DynamicOps<?> ops) {
         var data = new Ae2CraftingTimeSavedData();
         if (tag.getIntOr("version", PersistedSamplesTag.VERSION) == PersistedSamplesTag.VERSION) {
             data.samples = PersistedSamplesTag.readOutputs(tag.getListOrEmpty("outputs"));
         }
-        data.providerStarts = PersistedProviderTag.readStarts(tag.getListOrEmpty("providers"));
+        data.providerStarts = PersistedProviderTag.readStarts(tag.getListOrEmpty("providers"), ops);
         data.providerRecords = PersistedProviderTag.readRecords(tag.getListOrEmpty("locateRecords"));
         data.statuses = PersistedStatusTag.readStatuses(tag.getListOrEmpty("statuses"));
         return data;
@@ -70,14 +85,14 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
         return statuses;
     }
 
-    private CompoundTag save() {
+    private CompoundTag save(DynamicOps<?> ops) {
         if (Ae2CraftingTimeConfig.SPEC.isLoaded()) {
             ProfilerBridge.flushCompletedSamples();
         }
         var tag = new CompoundTag();
         tag.putInt("version", PersistedSamplesTag.VERSION);
         tag.put("outputs", PersistedSamplesTag.writeOutputs(samples));
-        tag.put("providers", PersistedProviderTag.writeStarts(providerStarts));
+        tag.put("providers", PersistedProviderTag.writeStarts(providerStarts, ops));
         tag.put("locateRecords", PersistedProviderTag.writeRecords(providerRecords));
         tag.put("statuses", PersistedStatusTag.writeStatuses(statuses));
         return tag;

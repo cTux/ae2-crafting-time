@@ -258,9 +258,10 @@ final class StandardAe2Scenario {
                     && (!leaf.equals("recurrent-plan") || recurrenceFixture.prepare(player, RecurrentPlanFixture.CASES.get(recurrenceCase))))) {
                 if (leaf.equals("standard-plan-controls")) {
                     mark(checks, "item-resolution", ProviderHighlightShapes.resolveItem(null).isEmpty()
-                            && ProviderHighlightShapes.resolveItem("not an id!!").isEmpty()
-                            && ProviderHighlightShapes.resolveItem("minecraft:not_a_real_item_xyz").isEmpty()
-                            && ProviderHighlightShapes.resolveItem("minecraft:stone").is(net.minecraft.world.item.Items.STONE));
+                            && ProviderHighlightShapes.resolveItem(appeng.api.stacks.AEFluidKey.of(
+                                    net.minecraft.world.level.material.Fluids.WATER)).isEmpty()
+                            && ProviderHighlightShapes.resolveItem(appeng.api.stacks.AEItemKey.of(
+                                    net.minecraft.world.item.Items.STONE)).is(net.minecraft.world.item.Items.STONE));
                 }
                 phase = Stage.values()[phase.ordinal() + 1];
             }

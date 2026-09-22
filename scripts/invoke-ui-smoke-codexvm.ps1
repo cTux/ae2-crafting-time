@@ -28,7 +28,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-if ($Prewarm -and (!$ServerDirectory -or !$BundleDirectory -or !$ResourceFixtureOnly -or $Latest -or $Interactive)) {
+if ($Prewarm -and (!$ServerDirectory -or !$BundleDirectory -or ($Scenario -notin @('delayed-resource-icons','appmek-resource-icons')) -or $Latest -or $Interactive)) {
     throw 'Connected prewarm requires an exact bundle, server directory and resource fixture mode'
 }
 $vmx = "F:\VMs\Codex-Windows11\Codex-Windows11.vmx"

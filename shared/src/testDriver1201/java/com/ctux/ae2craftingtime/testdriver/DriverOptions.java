@@ -26,9 +26,9 @@ public record DriverOptions(String scenario, String profile, String world, Path 
         if (!scenario.equals("suite") && !resourceScenario && !AddonCpuFixture.supports(scenario)) {
             throw new IllegalArgumentException("unsupported test-driver scenario: " + scenario);
         }
-        if (!scenario.equals("suite")
-                && Boolean.getBoolean("ae2craftingtime.test.resourceFixtureOnly") != resourceScenario) {
-            throw new IllegalArgumentException("resource fixture mode must be used exactly with a resource scenario");
+        if (!scenario.equals("suite") && Boolean.getBoolean("ae2craftingtime.test.resourceFixtureOnly")
+                && !resourceScenario) {
+            throw new IllegalArgumentException("resource fixture mode requires a resource scenario");
         }
         var profile = required("ae2craftingtime.test.profile");
         if (!profile.equals("compatible") && !profile.equals("latest")) {

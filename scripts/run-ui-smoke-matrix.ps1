@@ -17,8 +17,8 @@ param(
 $ErrorActionPreference = 'Stop'
 $resourceScenario = $Scenario -in @('delayed-resource-icons','appmek-resource-icons')
 if ($Changed -and $ResourceFixtureOnly) { throw 'Changed mode cannot opt into fixture-only resource execution' }
-if ($ResourceFixtureOnly.IsPresent -ne $resourceScenario) {
-    throw 'ResourceFixtureOnly is required exactly for a focused resource fixture scenario'
+if ($ResourceFixtureOnly -and !$resourceScenario) {
+    throw 'ResourceFixtureOnly requires a focused resource fixture scenario'
 }
 if ($Scenario -eq 'appmek-resource-icons' -and $Target -and $Target -notin @('1.20.1-forge','1.21.1-neoforge')) {
     throw 'AppMek resource fixtures are supported only on Forge 1.20.1 and NeoForge 1.21.1'
@@ -48,9 +48,7 @@ foreach ($targetEntry in $targets) {
         throw 'Resource fixture cases cannot share a JVM with non-resource suite cases'
     }
     $runResourceFixtureOnly = $ResourceFixtureOnly -and $resourceCases.Count -gt 0
-    if (($resourceCases.Count -gt 0) -ne $runResourceFixtureOnly) {
-        throw 'Planned resource fixture execution lost its explicit ResourceFixtureOnly authorization'
-    }
+
     $runLatest = $graph.profile -eq 'latest'
     $profile = $graph.profile
     $runProjects = @($graph.projectId)

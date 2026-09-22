@@ -1,6 +1,19 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 final class DriverPlatform {
+    static byte[] encodeResourceKey(appeng.api.stacks.AEKey key, net.minecraft.client.Minecraft minecraft) {
+        var buffer = new net.minecraft.network.RegistryFriendlyByteBuf(
+                io.netty.buffer.Unpooled.buffer(), minecraft.level.registryAccess());
+        try {
+            appeng.api.stacks.AEKey.writeKey(buffer, key);
+            var bytes = new byte[buffer.readableBytes()];
+            buffer.getBytes(buffer.readerIndex(), bytes);
+            return bytes;
+        } finally {
+            buffer.release();
+        }
+    }
+
     static void captureSuite(net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate template,
             net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos min, net.minecraft.core.Vec3i size) {
         template.fillFromWorld(level, min, size, false, net.minecraft.world.level.block.Blocks.AIR);

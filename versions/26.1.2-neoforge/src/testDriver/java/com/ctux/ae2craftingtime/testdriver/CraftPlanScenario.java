@@ -87,7 +87,7 @@ public final class CraftPlanScenario {
                 ? new ProviderDispatchStatusScenario(options.scenario()) : null;
         this.options = options;
         this.driverFile = driverFile;
-        resourceFixture = options.resourceFixtureOnly() ? new ResourceFixtureClient(minecraft, options, driverFile) : null;
+        resourceFixture = DriverOptions.isResourceScenario(options.scenario()) ? new ResourceFixtureClient(minecraft, options, driverFile) : null;
         baseFixture = resourceFixture == null && standard == null && noSpace == null && noProvider == null && noPower == null
                 && providerDispatchStatus == null ? DriverPlatform.baseFixture(options.scenario()) : null;
         addonFixture = resourceFixture == null ? AddonCpuFixture.create(options.scenario()) : null;

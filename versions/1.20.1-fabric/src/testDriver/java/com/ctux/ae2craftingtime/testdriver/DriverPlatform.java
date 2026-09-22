@@ -1,6 +1,18 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 final class DriverPlatform {
+    static byte[] encodeResourceKey(appeng.api.stacks.AEKey key, net.minecraft.client.Minecraft minecraft) {
+        try {
+            var bytes = new java.io.ByteArrayOutputStream();
+            try (var output = new java.io.DataOutputStream(bytes)) {
+                net.minecraft.nbt.NbtIo.write(key.toTagGeneric(), output);
+            }
+            return bytes.toByteArray();
+        } catch (java.io.IOException error) {
+            throw new IllegalStateException("cannot encode resource key", error);
+        }
+    }
+
     static void captureSuite(net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate template,
             net.minecraft.server.level.ServerLevel level, net.minecraft.core.BlockPos min, net.minecraft.core.Vec3i size) {
         template.fillFromWorld(level, min, size, false, net.minecraft.world.level.block.Blocks.AIR);

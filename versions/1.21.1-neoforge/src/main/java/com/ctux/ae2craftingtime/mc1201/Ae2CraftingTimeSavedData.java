@@ -28,7 +28,8 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
             data.samples = PersistedSamplesTag.readOutputs(tag.getList("outputs", Tag.TAG_COMPOUND));
         }
         if (tag.contains("providers", Tag.TAG_LIST)) {
-            data.providerStarts = PersistedProviderTag.readStarts(tag.getList("providers", Tag.TAG_COMPOUND));
+            data.providerStarts = PersistedProviderTag.readStarts(tag.getList("providers", Tag.TAG_COMPOUND),
+                    registries);
         }
         if (tag.contains("locateRecords", Tag.TAG_LIST)) {
             data.providerRecords = PersistedProviderTag.readRecords(tag.getList("locateRecords", Tag.TAG_COMPOUND));
@@ -82,7 +83,7 @@ public final class Ae2CraftingTimeSavedData extends SavedData {
         }
         tag.putInt("version", PersistedSamplesTag.VERSION);
         tag.put("outputs", PersistedSamplesTag.writeOutputs(samples));
-        tag.put("providers", PersistedProviderTag.writeStarts(providerStarts));
+        tag.put("providers", PersistedProviderTag.writeStarts(providerStarts, registries));
         tag.put("locateRecords", PersistedProviderTag.writeRecords(providerRecords));
         tag.put("statuses", PersistedStatusTag.writeStatuses(statuses));
         return tag;

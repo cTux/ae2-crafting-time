@@ -1,20 +1,18 @@
 package com.ctux.ae2craftingtime.mc1201;
 
-import com.ctux.ae2craftingtime.core.PacketLimits;
+import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.core.Direction;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import org.joml.Vector3f;
 
 /**
  * Client-side only. Draws the delayed-craft provider highlight on Minecraft
  * 26.1: thick rainbow edge boxes plus a red plate on each camera-facing
- * face. Item icons are submitted separately through the 26.1 submit pipeline
+ * face. Resource icons are submitted separately through the 26.1 submit pipeline
  * (see the NeoForge render hook).
  *
  * <p>Unlike the older line pipeline, this version supports a real line width
@@ -139,24 +137,8 @@ public final class ProviderHighlightShapes {
                 .setLineWidth(lineWidth);
     }
 
-    /**
-     * Resolves a highlight output id to an item stack for the face icon.
-     * Returns {@link ItemStack#EMPTY} for anything that is not an item, so
-     * callers always render at least the red plate.
-     */
-    public static ItemStack resolveItem(String outputId) {
-        if (outputId == null || outputId.isBlank() || outputId.length() > PacketLimits.MAX_OUTPUT_ID_LENGTH) {
-            return ItemStack.EMPTY;
-        }
-        var id = Identifier.tryParse(outputId);
-        if (id == null) {
-            return ItemStack.EMPTY;
-        }
-        var entry = BuiltInRegistries.ITEM.get(id);
-        if (entry.isEmpty() || entry.get().value() == Items.AIR) {
-            return ItemStack.EMPTY;
-        }
-        return new ItemStack(entry.get().value());
+    public static ItemStack resolveItem(AEKey key) {
+        return key instanceof AEItemKey item ? item.toStack() : ItemStack.EMPTY;
     }
 
     private ProviderHighlightShapes() {

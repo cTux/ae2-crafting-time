@@ -95,6 +95,14 @@ function Test-DedicatedProcessIdentity([int]$ProcessId, [DateTime]$StartedAt,
         (Get-DedicatedProcessStartMilliseconds $StartedAt) -eq (Get-DedicatedProcessStartMilliseconds $ExpectedStartedAt)
 }
 
+function Stop-DedicatedInstallerProcess([Diagnostics.Process]$Process) {
+    if (!$Process.HasExited) {
+        try { Stop-Process -InputObject $Process -Force -ErrorAction Stop }
+        catch { if (!$Process.HasExited) { throw } }
+    }
+    if (!$Process.WaitForExit(10000)) { throw 'Owned installer process did not exit; staging retained' }
+}
+
 function Invoke-DedicatedInstaller([string]$Java, [string]$Installer, $Graph, [string]$Staging, [string]$Report) {
     Assert-DedicatedPath $Staging -Tree | Out-Null
     foreach ($name in @('.installer-home','.installer-temp')) { New-Item -ItemType Directory -Path (Join-Path $Staging $name) | Out-Null }
@@ -165,8 +173,7 @@ function Invoke-DedicatedInstaller([string]$Java, [string]$Installer, $Graph, [s
                 if (!(Test-DedicatedProcessIdentity $live.Id $live.StartTime $identity.pid $identity.startTime)) {
                     throw 'Installer process ownership changed; cleanup refused'
                 }
-                Stop-Process -InputObject $live -Force
-                if (!$live.WaitForExit(10000)) { throw 'Owned installer process did not exit; staging retained' }
+                Stop-DedicatedInstallerProcess $live
             }
         }
         $stdout.Dispose(); $stderr.Dispose(); $process.Dispose()

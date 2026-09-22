@@ -4,6 +4,8 @@ import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import appeng.api.networking.crafting.ICraftingProvider;
+import appeng.api.stacks.AEKey;
+import com.ctux.ae2craftingtime.core.DisplayKeySelection;
 import appeng.me.InWorldGridNode;
 import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.core.PacketLimits;
@@ -47,6 +49,30 @@ public final class ProviderStartTracker {
 
     public static void clearAll() {
         PATTERNS.clear();
+    }
+
+    /** Selects a typed output from retained live patterns without guessing from its id. */
+    public static DisplayKeySelection<AEKey> displayKey(Object scope, ProfileKey key) {
+        if (scope == null || key == null) {
+            return DisplayKeySelection.from(List.of());
+        }
+        var scoped = PATTERNS.get(scope);
+        if (scoped == null) {
+            return DisplayKeySelection.from(List.of());
+        }
+        var candidates = new ArrayList<AEKey>();
+        for (var pattern : scoped.getOrDefault(key, Set.of())) {
+            if (pattern == null) {
+                continue;
+            }
+            for (var output : pattern.getOutputs()) {
+                if (output != null && output.what() != null
+                        && key.outputId().equals(output.what().getId().toString())) {
+                    candidates.add(output.what());
+                }
+            }
+        }
+        return DisplayKeySelection.from(candidates);
     }
 
     /**

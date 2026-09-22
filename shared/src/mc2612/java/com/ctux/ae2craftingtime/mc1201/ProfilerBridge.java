@@ -124,10 +124,29 @@ public final class ProfilerBridge {
     }
 
     public static void complete(String networkId, Object scope, AEKey what, long amount, long tick) {
+        complete(networkId, scope, what, amount, tick, null);
+    }
+
+    public static void complete(String networkId, Object scope, AEKey what, long amount, long tick,
+            net.minecraft.server.MinecraftServer server) {
         if (what == null || !isEnabled()) {
             return;
         }
-        PROFILER.complete(key(networkId, what), scope, normalizeAmount(what, amount), tick);
+        var profileKey = key(networkId, what);
+        var normalizedAmount = normalizeAmount(what, amount);
+        if (!PROFILER.complete(profileKey, scope, normalizedAmount, tick)) {
+            PROFILER.completeUniquePending(profileKey, normalizedAmount, tick);
+        }
+        // A reloaded CPU can accept its final output without invoking finishJob.
+        // The last completed output must still clear its persistent plate.
+        if (server != null && !PROFILER.hasPending(profileKey)) {
+            ProviderLocateRecords.startFor(profileKey).ifPresent(start -> {
+                clearHighlights(server, start.owner(), Set.of(profileKey));
+                ProviderLocateRecords.removeStarts(Set.of(profileKey));
+                ProviderLocateRecords.removeRecordsForKeys(Set.of(profileKey), start.owner());
+                persistProviderState();
+            });
+        }
     }
 
     public static boolean flushCompletedSamples() {
@@ -189,8 +208,8 @@ public final class ProfilerBridge {
             if (crafted.getLongValue() <= 0) {
                 continue;
             }
-            ProviderLocateRecords.noteStart(key(networkId, crafted.getKey()), owner, null,
-                    displayNameOf(crafted.getKey()));
+            ProviderLocateRecords.noteStart(key(networkId, crafted.getKey()), owner, "", null,
+                    displayNameOf(crafted.getKey()), crafted.getKey());
         }
         persistProviderState();
         var predictedSeconds = jobEstimate.remainingSeconds((key, amount) -> estimateSeconds(key, amount)).orElse(0);
@@ -323,14 +342,20 @@ public final class ProfilerBridge {
                 .orElse(List.of());
     }
 
+    public static AEKey displayKey(Object scope, ProfileKey key) {
+        var live = ProviderStartTracker.displayKey(scope, key);
+        return live.orFallback(ProviderLocateRecords.startFor(key)
+                .map(ProviderLocateRecords.ProviderStartInfo::displayKey).orElse(null));
+    }
+
     public static void replaceProviderStart(ProfileKey key, UUID owner,
             List<BlockPos> positions, String outputName) {
         ProviderLocateRecords.replaceStart(key, owner, positions, outputName);
     }
 
     public static void replaceProviderStart(ProfileKey key, UUID owner, String dimensionId,
-            List<BlockPos> positions, String outputName) {
-        ProviderLocateRecords.replaceStart(key, owner, dimensionId, positions, outputName);
+            List<BlockPos> positions, String outputName, AEKey displayKey) {
+        ProviderLocateRecords.replaceStart(key, owner, dimensionId, positions, outputName, displayKey);
     }
 
     /**
@@ -343,6 +368,10 @@ public final class ProfilerBridge {
             return false;
         }
         return PROFILER.isDelayed(key);
+    }
+
+    public static boolean hasPending(ProfileKey key) {
+        return PROFILER.hasPending(key);
     }
 
     public static void persistProviderState() {
@@ -461,13 +490,15 @@ public final class ProfilerBridge {
                 continue;
             }
             if (kept.size() != positions.size() || !dimension.equals(storedDimension)) {
-                ProviderLocateRecords.replaceStart(key, owner, dimension, kept, start.outputName());
+                ProviderLocateRecords.replaceStart(key, owner, dimension, kept, start.outputName(),
+                        start.displayKey());
                 pruned = true;
             }
             try {
                 StatsNetwork.sendTo(player,
                         new com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C(key.networkId(), dimension,
-                                kept, key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS, true));
+                                kept, key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS, true,
+                                start.displayKey()));
             } catch (Exception ignored) {
                 // One unsendable plate must not hide the rest.
             }

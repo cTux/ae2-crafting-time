@@ -154,8 +154,8 @@ No packet layout changes anywhere in that batch, so no compatibility
 boundaries moved.
 
 The highlight packet carries `network id, dimension id, positions, output id,
-duration seconds, plateOnly`; the output id is the profile key id the client
-resolves to an item icon. `plateOnly = true` means "red plate only, no
+duration seconds, plateOnly, optional typed display key`. The output id remains
+the profile key id; the typed key supplies the plate icon. `plateOnly = true` means "red plate only, no
 rainbow edge" (automatic delayed pings and login resync). `plateOnly = false`
 means "rainbow edge only, no plate change" (chat-link and double-click
 locates). An empty-positions packet with duration zero means "clear this
@@ -192,14 +192,15 @@ locate click (command, runs as the clicker, silent)
 
 Adding the packet changes the wire registry. Current boundaries (same commit):
 
-- 1.20.1 Forge channel protocol: `14`;
-- 1.20.1 Fabric: `provider_highlight_v4` for plates + edges, plus
+- 1.20.1 Forge channel protocol: `21`;
+- 1.20.1 Fabric: `provider_highlight_v5` for plates + edges, plus
   `provider_locate_v1` for the double-click request (existing
   channels keep their versions because their layouts do not change);
-- 1.21.1 and 26.1.2 NeoForge registrar version: `13`.
+- 1.21.1 and 26.1.2 NeoForge registrar version: `20`.
 
-The `networkId` tail and stored `dimension` are additive with tolerant reads,
-so older packets and saves still decode.
+The typed-key tail is bounded to 16 KiB. Older packets and saves without it
+still decode and show a plate without an icon; unknown optional key types
+leave the plate visible.
 
 ## Client behavior
 
@@ -268,8 +269,8 @@ strokes on 1.20.1/1.21.1 and the `ShapeRenderer` line-width path on 26.1.2.
 Face plates are thin red filled boxes (`debugFilledBox` on 1.20.1/1.21.1,
 `debugFilledBox` on 26.1, where both pipelines are `QUADS`-mode) with the
 output item rendered item-frame style (`FIXED` display context) at half
-scale; the client resolves the packet's output id through the item registry
-and renders plate-only when it is not an item. Only faces pointing toward
+scale; the client renders the packet's typed resource through AE2 and keeps
+the plate visible when no renderer is available. Only faces pointing toward
 the camera render (at most 3 per block). On 1.20.1/1.21.1 each plate is one
 thin box from vanilla `LevelRenderer.addChainedFilledBoxVertices`, flushed
 with its own `endBatch` per face, after the invisible-plate follow-up in

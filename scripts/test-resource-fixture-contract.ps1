@@ -1,11 +1,11 @@
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'resource-fixture-contract.ps1')
 
-function New-Evidence([bool]$connected, [bool]$expiredLater = $false) {
+function New-Evidence([bool]$connected, [bool]$expiredLater = $false, [bool]$production = $false) {
     $scenario = 'delayed-resource-icons'; $target = '1.20.1-fabric'
     $epoch = '11111111111111111111111111111111'; $fixture = '22222222222222222222222222222222'
     $cases = Get-ResourceFixtureContractCases $scenario $target
-    $names = Get-ResourceFixtureContractCaptures $cases $connected
+    $names = Get-ResourceFixtureContractCaptures $cases $connected $production
     $screenshots = @($names | ForEach-Object { [pscustomobject]@{name=$_;sha256=('a' * 64)} })
     $sidecars = @($names | ForEach-Object {
         $late = $_ -like '*-completed.png' -or $_ -like '*-cancel-held.png' -or $_ -like '*-cancelled.png'
@@ -29,27 +29,37 @@ function New-Evidence([bool]$connected, [bool]$expiredLater = $false) {
         }
         $held=New-Jobs 'held';$winner=New-Jobs 'winner';$completed=New-Jobs 'completed';$cancelHeld=New-Jobs 'held';$cancelled=New-Jobs 'cancelled'
         $receipts += [pscustomobject]@{case=$case;action='CREATE';acceptedTick=10;serverTick=12;pollCount=3;providers=@('1,2,3');jobs=$held}
+        if ($production -and $case -eq 'WATER') {
+            $receipts += [pscustomobject]@{case=$case;action='UNLOAD_RELOAD';unloadedObserved=$true;providers=@('1,2,3');jobs=$held}
+        }
         if($connected){$receipts += [pscustomobject]@{case=$case;action='RECONNECT';providers=@('1,2,3');jobs=$held}}
         if($outputs.Count -eq 2){$receipts += [pscustomobject]@{case=$case;action='RELEASE';providers=@('1,2,3');jobs=$winner}}
         $receipts += [pscustomobject]@{case=$case;action='RELEASE';providers=@('1,2,3');jobs=$completed}
         $receipts += [pscustomobject]@{case=$case;action='CREATE';acceptedTick=20;serverTick=22;pollCount=3;providers=@('1,2,3');jobs=$cancelHeld}
-        $receipts += [pscustomobject]@{case=$case;action='CANCEL';providers=@('1,2,3');jobs=$cancelled}
+        if ($production -and $case.EndsWith('OVERLAP')) {
+            $receipts += [pscustomobject]@{case=$case;action='REMOVE_PROVIDER';providers=@();jobs=$cancelHeld}
+        }
+        $receipts += [pscustomobject]@{case=$case;action='CANCEL';providers=@($(if($production -and $case.EndsWith('OVERLAP')){@()}else{@('1,2,3')}));jobs=$cancelled}
         foreach($name in @($names|Where-Object{$_ -like ($case.ToLowerInvariant().Replace('_','-')+'-*')})){
             $checkpoint=[IO.Path]::GetFileNameWithoutExtension($name);if($checkpoint.EndsWith('-cleanup')){continue}
             $jobs=if($checkpoint.EndsWith('-winner-promoted')){$winner}elseif($checkpoint.EndsWith('-completed')){$completed}elseif($checkpoint.EndsWith('-cancelled')){$cancelled}elseif($checkpoint.EndsWith('-cancel-held')){$cancelHeld}else{$held}
-            [object[]]$active=@($(if($checkpoint.EndsWith('-winner-promoted')){$outputs[-1]}elseif($checkpoint.EndsWith('-held')-or$checkpoint.EndsWith('-rejoined')){$outputs}))
+            [object[]]$active=@($(if($checkpoint.EndsWith('-winner-promoted')){$outputs[-1]}elseif($checkpoint.EndsWith('-held')-or$checkpoint.EndsWith('-rejoined')-or$checkpoint.EndsWith('-resource-reloaded')-or$checkpoint.EndsWith('-chunk-reloaded')){$outputs}))
             $observations += [pscustomobject]@{case=$case;checkpoint=$name;frame=10;observedAtMillis=$(if($expiredLater-and
                     ($checkpoint.EndsWith('-completed')-or$checkpoint.EndsWith('-cancel-held')-or$checkpoint.EndsWith('-cancelled'))){3000}else{1000});serverJobs=$jobs;
                 plates=@($active|ForEach-Object{[pscustomobject]@{outputId=$_;positions=@([pscustomobject]@{x=1;y=2;z=3})}});
                 renderPlates=@($(if($active.Count){[pscustomobject]@{outputId=$active[0];position=[pscustomobject]@{x=1;y=2;z=3}}}));
-                rainbows=@($(if(($checkpoint.EndsWith('-held')-and!$checkpoint.EndsWith('-cancel-held'))-or
-                        (!$connected-and(!$expiredLater-or!($checkpoint.EndsWith('-completed')-or$checkpoint.EndsWith('-cancel-held')-or$checkpoint.EndsWith('-cancelled'))))){
+                rainbows=@($(if(($checkpoint.EndsWith('-held')-and!$checkpoint.EndsWith('-cancel-held'))-or$checkpoint.EndsWith('-resource-reloaded')-or$checkpoint.EndsWith('-chunk-reloaded')-or
+                        (!$connected-and!($production-and$case.EndsWith('OVERLAP')-and$checkpoint.EndsWith('-cancelled'))-and
+                        (!$expiredLater-or!($checkpoint.EndsWith('-completed')-or$checkpoint.EndsWith('-cancel-held')-or$checkpoint.EndsWith('-cancelled'))))){
                     [pscustomobject]@{outputId=$outputs[0];expiresAtMillis=2000}}))}
         }
     }
     $observations += [pscustomobject]@{case=$cases[-1];checkpoint=$names[-1];frame=10;observedAtMillis=3000;serverJobs=@();plates=@();renderPlates=@();rainbows=@()}
-    [pscustomobject]@{connected=$connected;serverState=[pscustomobject]@{epoch=$epoch;fixture=$fixture}
+    [pscustomobject]@{connected=$connected;checks=$(if($production){[pscustomobject]@{'typed-keys'=$true}}else{[pscustomobject]@{'fixture-only'=$true}});serverState=[pscustomobject]@{epoch=$epoch;fixture=$fixture}
         screenshots=$screenshots;sidecars=$sidecars;clientObservations=@($observations);receipts=$receipts
+        integratedServerEvidence=[pscustomobject]@{receipts=$(if($production){
+            @($receipts | ConvertTo-Json -Depth 20 | ConvertFrom-Json)
+        }else{@()})}
         screenshotManifestDigest=(Get-ResourceFixtureManifestDigest $screenshots)
         clientEvidence=[pscustomobject]@{digest=(Get-ResourceFixtureManifestDigest $screenshots)}
         epoch=$epoch;fixture=$fixture}
@@ -119,3 +129,40 @@ $integrated = New-Evidence $false
 $integrated.clientObservations[0].rainbows[0].outputId = 'minecraft:dirt'
 Assert-Rejected { Assert-ResourceFixtureContract $integrated 'delayed-resource-icons' '1.20.1-fabric' $false $integrated.epoch $integrated.fixture } 'wrong located rainbow identity'
 Write-Host 'Resource fixture executable evidence contract tests passed'
+
+$productionFixture = [pscustomobject]@{ target='1.20.1-fabric'; scenario='delayed-resource-icons';
+    screenshots=@([pscustomobject]@{name='water-held.png';sha256=('a'*64)});
+    clientObservations=@([pscustomobject]@{checkpoint='water-held.png'}) }
+$productionIcon = [pscustomobject]@{ schema=1; semanticResult='PASS'; visualAcceptance='REVIEW_REQUIRED';
+    headSha=('1'*40); graph=('2'*64); target=$productionFixture.target; scenario=$productionFixture.scenario;
+    screenshots=@([pscustomobject]@{name='water-held.png';sha256=('a'*64)});
+    observations=@([pscustomobject]@{checkpoint='water-held.png';
+        serverJobs=@([pscustomobject]@{resource='minecraft:water';keyFingerprint=('b'*64)});
+        plates=@([pscustomobject]@{outputId='minecraft:water';keyFingerprint=('b'*64);keyType='ae2:fluid'});
+        renderPlates=@([pscustomobject]@{outputId='minecraft:water';keyFingerprint=('b'*64);keyType='ae2:fluid'})}) }
+$productionFixture.clientObservations = @($productionIcon.observations | ConvertTo-Json -Depth 20 | ConvertFrom-Json)
+Assert-ResourceIconEvidence $productionIcon $productionFixture ('1'*40) ('2'*64)
+$productionFixture.scenario = 'appmek-resource-icons'
+$productionIcon.scenario = $productionFixture.scenario
+Assert-ResourceIconEvidence $productionIcon $productionFixture ('1'*40) ('2'*64)
+$productionFixture.scenario = 'delayed-resource-icons'
+$productionIcon.scenario = $productionFixture.scenario
+$productionIcon.observations[0].renderPlates[0].keyFingerprint = 'c'*64
+Assert-Rejected { Assert-ResourceIconEvidence $productionIcon $productionFixture ('1'*40) ('2'*64) } 'selected typed key mismatch'
+$productionIcon.observations[0].renderPlates[0].keyFingerprint = 'b'*64
+$productionIcon.headSha = '3'*40
+Assert-Rejected { Assert-ResourceIconEvidence $productionIcon $productionFixture ('1'*40) ('2'*64) } 'tested head mismatch'
+$productionIcon.headSha = '1'*40
+$productionIcon.observations[0].plates = @()
+Assert-Rejected { Assert-ResourceIconEvidence $productionIcon $productionFixture ('1'*40) ('2'*64) } 'empty independent production observation'
+foreach ($connectedMode in @($false,$true)) {
+    $production = New-Evidence $connectedMode $false $true
+    Assert-ResourceFixtureContract $production 'delayed-resource-icons' '1.20.1-fabric' $connectedMode $production.epoch $production.fixture | Out-Null
+    $serverReceipts = if($connectedMode){$production.receipts}else{$production.integratedServerEvidence.receipts}
+    Assert-ResourceFixtureServerUnloaded @($serverReceipts)
+    ($serverReceipts | Where-Object action -eq 'UNLOAD_RELOAD').unloadedObserved = $false
+    Assert-Rejected { Assert-ResourceFixtureServerUnloaded @($serverReceipts) } 'missing native unload receipt'
+    if(!$connectedMode){
+        Assert-Rejected { Assert-ResourceFixtureContract $production 'delayed-resource-icons' '1.20.1-fabric' $false $production.epoch $production.fixture } 'missing integrated server unload receipt'
+    }
+}

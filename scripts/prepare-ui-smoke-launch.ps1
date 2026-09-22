@@ -14,6 +14,8 @@ param(
     [string]$ContinuationPath,
     [string]$CampaignId,
     [string]$ResourceFixtureId,
+    [string]$HeadSha,
+    [string]$GraphIdentity,
     [ValidateSet('alpha')][string]$Role,
     [string]$OfflineName,
     [ValidatePattern('^[a-f0-9]{32}$')][string]$OfflineUuid,
@@ -31,9 +33,8 @@ if ($Prewarm -and (!$resourceScenario -or !$DedicatedAddress -or $PrewarmDeadlin
         $PrewarmHead -cnotmatch '^[a-f0-9]{40}$' -or $PrewarmBundle -cnotmatch '^[a-fA-F0-9]{64}$')) {
     throw 'Prewarm requires a connected resource launch and complete immutable identity'
 }
-if (($resourceScenario -and !$ResourceFixtureOnly) -or
-        ($ResourceFixtureOnly -and !$resourceScenario -and $Scenario -ne 'suite')) {
-    throw 'ResourceFixtureOnly is required exactly for resource fixture scenarios'
+if ($ResourceFixtureOnly -and !$resourceScenario -and $Scenario -ne 'suite') {
+    throw 'ResourceFixtureOnly requires a resource fixture scenario'
 }
 $launch = Get-Content -LiteralPath $LaunchManifest -Raw | ConvertFrom-Json
 $bundle = Get-Content -LiteralPath (Join-Path $BundleDirectory 'profile.json') -Raw | ConvertFrom-Json
@@ -91,7 +92,7 @@ for ($i = 0; $i -lt $launch.arguments.Count; $i++) {
     $argument = [string]$launch.arguments[$i]
     if ($argument -match '^-Dae2craftingtime.test\.' -or $argument -match '^-Xm[xs]') { continue }
     if ($argument -in @('--gameDir', '--quickPlaySingleplayer', '--quickPlayMultiplayer') -or
-            (($Role -or $ResourceFixtureOnly) -and $argument -in @('--username', '--uuid'))) { $i++; continue }
+            (($Role -or $ResourceFixtureId) -and $argument -in @('--username', '--uuid'))) { $i++; continue }
     $arguments.Add($argument)
 }
 $arguments.Insert(0, '-Xmx8G')
@@ -122,11 +123,16 @@ if ($Role) {
     $arguments.Add('--username'); $arguments.Add($OfflineName)
     $arguments.Add('--uuid'); $arguments.Add($OfflineUuid)
 }
-if ($ResourceFixtureOnly) {
+if ($ResourceFixtureId) {
     if ($ResourceFixtureId -cnotmatch '^[a-f0-9]{32}$') { throw 'Resource fixture launch identity is required' }
     $arguments.Insert(0, "-Dae2craftingtime.test.resourceFixture=$ResourceFixtureId")
+    if ($HeadSha -cnotmatch '^[a-f0-9]{40}$' -or $GraphIdentity -cnotmatch '^[a-fA-F0-9]{64}$') {
+        throw 'Resource icon evidence requires a commit and dependency graph identity'
+    }
+    $arguments.Insert(0, "-Dae2craftingtime.test.headSha=$HeadSha")
+    $arguments.Insert(0, "-Dae2craftingtime.test.graph=$($GraphIdentity.ToLowerInvariant())")
 }
-if ($ResourceFixtureOnly) {
+if ($ResourceFixtureId) {
     $arguments.Add('--username'); $arguments.Add('Ae2ctAlpha')
     $arguments.Add('--uuid'); $arguments.Add('446b6d0ccadd3e57baf699d70f01a628')
 }

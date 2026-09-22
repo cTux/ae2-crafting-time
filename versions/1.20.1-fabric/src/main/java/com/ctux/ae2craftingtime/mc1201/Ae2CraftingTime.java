@@ -29,7 +29,7 @@ public final class Ae2CraftingTime implements ModInitializer {
                 ProviderLocateCommand.build((source, id) -> ProviderLocateCommand.locate(source, id,
                         (player, highlight) -> StatsNetwork.sendTo(player, new ProviderHighlightS2C(
                                 highlight.networkId(), highlight.dimensionId(), highlight.positions(),
-                                highlight.outputId(), highlight.durationSeconds(), highlight.plateOnly()))))));
+                                highlight.outputId(), highlight.durationSeconds(), highlight.plateOnly(), highlight.displayKey()))))));
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
             var data = server.overworld().getDataStorage()
                     .computeIfAbsent(Ae2CraftingTimeSavedData::load, Ae2CraftingTimeSavedData::new,

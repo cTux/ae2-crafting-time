@@ -3,12 +3,56 @@ function Get-ResourceFixtureContractCases([string]$Scenario, [string]$Target) {
     return @('ITEM','WATER','LAVA') + $(if ($Target -ceq '1.20.1-forge') { @('BUCKETLESS') }) + @('FLUID_OVERLAP')
 }
 
-function Get-ResourceFixtureContractCaptures([string[]]$Cases, [bool]$Connected) {
+function Assert-ResourceIconEvidence([object]$Icon, [object]$Fixture, [string]$HeadSha, [string]$Graph) {
+    if ($Icon.schema -ne 1 -or $Icon.semanticResult -cne 'PASS' -or
+            $Icon.visualAcceptance -cne 'REVIEW_REQUIRED' -or
+            $Icon.headSha -cne $HeadSha -or $Icon.graph -cne $Graph.ToLowerInvariant() -or
+            $Icon.target -cne $Fixture.target -or $Icon.scenario -cne $Fixture.scenario -or
+            $Icon.profile -cne $Fixture.profile -or
+            !(Test-ResourceFixtureSequence -Expected @($Fixture.screenshots.name) -Actual @($Icon.screenshots.name)) -or
+            !(Test-ResourceFixtureSequence -Expected @($Fixture.screenshots.sha256) -Actual @($Icon.screenshots.sha256)) -or
+            (ConvertTo-Json -InputObject @($Fixture.clientObservations) -Depth 100 -Compress) -cne
+                (ConvertTo-Json -InputObject @($Icon.observations) -Depth 100 -Compress)) {
+        throw 'Resource icon production evidence identity, result, or capture binding is invalid'
+    }
+    foreach ($observation in @($Icon.observations)) {
+        $active = @($observation.plates)
+        if (!$active.Count) { continue }
+        foreach ($plate in $active) {
+            $matching = @($observation.serverJobs | Where-Object {
+                $_.resource -ceq $plate.outputId -and $_.keyFingerprint -ceq $plate.keyFingerprint
+            })
+            if (!$plate.keyType -or $matching.Count -ne 1) {
+                throw "Resource icon retained key disagrees with server job in $($observation.checkpoint)"
+            }
+        }
+        foreach ($plate in @($observation.renderPlates)) {
+            $matching = @($active | Where-Object {
+                $_.outputId -ceq $plate.outputId -and $_.keyFingerprint -ceq $plate.keyFingerprint
+            })
+            if (!$plate.keyType -or $matching.Count -ne 1) {
+                throw "Resource icon selected key disagrees with retained plate in $($observation.checkpoint)"
+            }
+        }
+    }
+}
+
+function Assert-ResourceFixtureServerUnloaded([object[]]$Receipts) {
+    $unloads = @($Receipts | Where-Object { $_.case -ceq 'WATER' -and $_.action -ceq 'UNLOAD_RELOAD' })
+    if ($unloads.Count -ne 1 -or $unloads[0].unloadedObserved -ne $true) {
+        throw 'Chunk reload lacks an observed unloaded chunk'
+    }
+}
+
+function Get-ResourceFixtureContractCaptures([string[]]$Cases, [bool]$Connected, [bool]$Production = $false) {
     $result = @()
     foreach ($case in $Cases) {
         $prefix = $case.ToLowerInvariant().Replace('_','-')
-        $states = @('held') + $(if ($Connected) { @('rejoined') }) +
-            $(if ($case.EndsWith('OVERLAP')) { @('winner-promoted') }) + @('completed','cancel-held','cancelled')
+        $states = @('held') + $(if ($Production -and $case -ceq 'WATER') {
+            @('resource-reloaded','chunk-reloaded') }) +
+            $(if ($Connected) { @('rejoined') }) +
+            $(if ($case.EndsWith('OVERLAP')) { @('winner-promoted') }) + @('completed','cancel-held') +
+            $(if ($Production -and $case.EndsWith('OVERLAP')) { @('provider-removed') }) + @('cancelled')
         $result += @($states | ForEach-Object { "$prefix-$_.png" })
     }
     return @($result + ($Cases[-1].ToLowerInvariant().Replace('_','-') + '-cleanup.png'))
@@ -80,8 +124,10 @@ function Get-ResourceFixtureOutputs([string]$Case) {
 
 function Get-ResourceFixtureReceipt([object[]]$Receipts, [string]$Case, [string]$Checkpoint) {
     $action = if ($Checkpoint.EndsWith('-cancel-held')) { 'CREATE' }
-        elseif ($Checkpoint.EndsWith('-held')) { 'CREATE' }
+        elseif ($Checkpoint.EndsWith('-held') -or $Checkpoint.EndsWith('-resource-reloaded')) { 'CREATE' }
         elseif ($Checkpoint.EndsWith('-rejoined')) { 'RECONNECT' }
+        elseif ($Checkpoint.EndsWith('-provider-removed')) { 'REMOVE_PROVIDER' }
+        elseif ($Checkpoint.EndsWith('-chunk-reloaded')) { 'UNLOAD_RELOAD' }
         elseif ($Checkpoint.EndsWith('-winner-promoted') -or $Checkpoint.EndsWith('-completed')) { 'RELEASE' }
         elseif ($Checkpoint.EndsWith('-cancelled')) { 'CANCEL' }
         else { throw "No authoritative receipt mapping for $Checkpoint" }
@@ -94,7 +140,8 @@ function Get-ResourceFixtureReceipt([object[]]$Receipts, [string]$Case, [string]
 function Assert-ResourceFixtureContract([object]$Evidence, [string]$Scenario, [string]$Target,
         [bool]$Connected, [string]$Epoch, [string]$Fixture) {
     $cases = Get-ResourceFixtureContractCases $Scenario $Target
-    $captures = Get-ResourceFixtureContractCaptures $cases $Connected
+    $production = @($Evidence.checks.psobject.Properties.Name) -contains 'typed-keys'
+    $captures = Get-ResourceFixtureContractCaptures $cases $Connected $production
     if ($Evidence.connected -ne $Connected -or
             $Evidence.serverState.epoch.Replace('-','') -cne $Epoch.Replace('-','') -or
             $Evidence.serverState.fixture.Replace('-','') -cne $Fixture.Replace('-','') -or
@@ -138,8 +185,13 @@ function Assert-ResourceFixtureContract([object]$Evidence, [string]$Scenario, [s
         if (!$receipt -or !(Test-ResourceFixtureJobs -Expected @($receipt.jobs) -Actual $serverJobs)) {
             throw "Observation does not agree with its authoritative receipt for $checkpoint"
         }
+        if ($checkpoint.EndsWith('-chunk-reloaded') -and !$Connected) {
+            Assert-ResourceFixtureServerUnloaded @($Evidence.integratedServerEvidence.receipts)
+        }
         [object[]]$active = @($(if ($checkpoint.EndsWith('-winner-promoted')) { $outputs[-1] }
-            elseif ($checkpoint.EndsWith('-held') -or $checkpoint.EndsWith('-rejoined')) { $outputs }))
+            elseif ($checkpoint.EndsWith('-held') -or $checkpoint.EndsWith('-resource-reloaded') -or
+                    $checkpoint.EndsWith('-chunk-reloaded') -or
+                    $checkpoint.EndsWith('-rejoined')) { $outputs }))
         [object[]]$expectedPlateOutputs = @($active | Sort-Object)
         [object[]]$plateOutputs = @($plates | ForEach-Object { $_.outputId } | Sort-Object)
         if (!(Test-ResourceFixtureSequence -Expected $expectedPlateOutputs -Actual $plateOutputs) -or
@@ -148,9 +200,18 @@ function Assert-ResourceFixtureContract([object]$Evidence, [string]$Scenario, [s
                 ($active.Count -and $renderPlates[0].outputId -notin $active)) {
             throw "Logical or rendered plate identities/cardinality are invalid for $checkpoint"
         }
+        if ($checkpoint.EndsWith('-provider-removed')) {
+            if (@($receipt.providers).Count -or $plates.Count -or $renderPlates.Count) {
+                throw "Removed provider retained a plate for $checkpoint"
+            }
+            continue
+        }
         $providers = @($observation.serverJobs.provider | Select-Object -Unique)
-        if ($providers.Count -ne 1 -or @($receipt.providers).Count -ne 1 -or
-                $providers[0].Replace(' ','') -cne ([string]$receipt.providers[0]).Replace(' ','')) {
+        $removedAndCancelled = $production -and $case -ceq $cases[-1] -and $checkpoint.EndsWith('-cancelled')
+        if ($providers.Count -ne 1 -or
+                ($removedAndCancelled -and @($receipt.providers).Count -ne 0) -or
+                (!$removedAndCancelled -and (@($receipt.providers).Count -ne 1 -or
+                    $providers[0].Replace(' ','') -cne ([string]$receipt.providers[0]).Replace(' ','')))) {
             throw "Provider identity is invalid for $checkpoint"
         }
         $provider = $providers[0].Replace(' ','')
@@ -190,6 +251,15 @@ function Assert-ResourceFixtureContract([object]$Evidence, [string]$Scenario, [s
                     $observation.rainbows[0].expiresAtMillis -le $observationMillis) {
                 throw "Winner promotion lost or changed the located rainbow for $checkpoint"
             }
+        } elseif ($checkpoint.EndsWith('-chunk-reloaded') -or $checkpoint.EndsWith('-resource-reloaded')) {
+            if ($rainbowOutputs.Count -and
+                    (!(Test-ResourceFixtureSequence -Expected @($outputs[0]) -Actual $rainbowOutputs) -or
+                    $observation.rainbows[0].expiresAtMillis -ne $locatedExpiry[$case] -or
+                    $observation.rainbows[0].expiresAtMillis -le $observationMillis)) {
+                throw "Chunk reload changed the located rainbow for $checkpoint"
+            }
+        } elseif ($removedAndCancelled) {
+            if ($rainbowOutputs.Count) { throw "Removed provider restored a rainbow for $checkpoint" }
         } elseif (!$Connected) {
             if ($rainbowOutputs.Count) {
                 if (!(Test-ResourceFixtureSequence -Expected @($outputs[0]) -Actual $rainbowOutputs) -or
