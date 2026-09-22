@@ -142,6 +142,11 @@ $productionIcon = [pscustomobject]@{ schema=1; semanticResult='PASS'; visualAcce
         renderPlates=@([pscustomobject]@{outputId='minecraft:water';keyFingerprint=('b'*64);keyType='ae2:fluid'})}) }
 $productionFixture.clientObservations = @($productionIcon.observations | ConvertTo-Json -Depth 20 | ConvertFrom-Json)
 Assert-ResourceIconEvidence $productionIcon $productionFixture ('1'*40) ('2'*64)
+$productionFixture.scenario = 'appmek-resource-icons'
+$productionIcon.scenario = $productionFixture.scenario
+Assert-ResourceIconEvidence $productionIcon $productionFixture ('1'*40) ('2'*64)
+$productionFixture.scenario = 'delayed-resource-icons'
+$productionIcon.scenario = $productionFixture.scenario
 $productionIcon.observations[0].renderPlates[0].keyFingerprint = 'c'*64
 Assert-Rejected { Assert-ResourceIconEvidence $productionIcon $productionFixture ('1'*40) ('2'*64) } 'selected typed key mismatch'
 $productionIcon.observations[0].renderPlates[0].keyFingerprint = 'b'*64

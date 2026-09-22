@@ -396,7 +396,7 @@ try {
             Get-Content -LiteralPath (Join-Path $report "client/evidence/$($_.name.Replace('.png','.json'))") -Raw | ConvertFrom-Json
         }) -Force
         Assert-ResourceFixtureContract $fixtureEvidence $Scenario $Target $true $connectionEpoch $connectionFixture | Out-Null
-        if (!$ResourceFixtureOnly -and $Scenario -eq 'delayed-resource-icons') {
+        if (!$ResourceFixtureOnly) {
             $iconPath = Join-Path $report 'client/evidence/resource-icon-evidence.json'
             if (!(Test-Path -LiteralPath $iconPath -PathType Leaf)) { throw 'Connected resource icon evidence is missing' }
             $icon = Get-Content -LiteralPath $iconPath -Raw | ConvertFrom-Json
@@ -461,7 +461,7 @@ try {
         }
         $serverEvidence = $result.resourceEvidence
         Assert-ResourceFixtureServerTiming @($serverEvidence.receipts) | Out-Null
-        if (!$ResourceFixtureOnly) {
+        if (!$ResourceFixtureOnly -and $Scenario -eq 'delayed-resource-icons') {
             Assert-ResourceFixtureServerUnloaded @($serverEvidence.receipts)
         }
         if ($serverEvidence.fixtureResult -cne 'PASS' -or $serverEvidence.epoch -cne $fixtureEvidence.serverState.epoch -or
