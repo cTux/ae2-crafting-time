@@ -367,6 +367,10 @@ public final class ProfilerBridge {
         return PROFILER.isDelayed(key);
     }
 
+    public static boolean hasPending(ProfileKey key) {
+        return PROFILER.hasPending(key);
+    }
+
     public static void persistProviderState() {
         if (savedData != null) {
             savedData.replaceProviderStarts(ProviderLocateRecords.snapshotStarts());

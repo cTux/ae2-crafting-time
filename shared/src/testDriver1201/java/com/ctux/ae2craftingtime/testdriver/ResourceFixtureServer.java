@@ -39,6 +39,7 @@ final class ResourceFixtureServer {
     private ResourceFixtureControl.Decision operationDecision;
     private long operationAcceptedTick;
     private int operationPolls;
+    private Long releaseWaitingAtAccept;
     private ResourceProcessingFixture processing;
     private boolean disconnected;
     private ServerPlayer rejoinPlayer;
@@ -96,6 +97,11 @@ final class ResourceFixtureServer {
             operationPolls = 0;
         }
         operationPolls++;
+        if (operationPolls == 1 && command.action() == ResourceFixtureControl.Action.RELEASE && processing != null) {
+            var slot = processing.slots().get(command.slot());
+            releaseWaitingAtAccept = grid.resourceCpus(player).get(command.slot()).getCluster()
+                    .craftingLogic.getWaitingFor(slot.key());
+        }
         boolean complete = apply(player, command, decision);
         if (!complete) return false;
         long revision = decision.nextRevision();
@@ -121,6 +127,20 @@ final class ResourceFixtureServer {
         receipt.put("serverTick", player.level().getGameTime());
         receipt.put("acceptedTick", operationAcceptedTick);
         receipt.put("pollCount", operationPolls);
+        if (command.action() == ResourceFixtureControl.Action.RELEASE && releaseWaitingAtAccept != null) {
+            var slot = processing.slots().get(command.slot());
+            var cpu = grid.resourceCpus(player).get(command.slot()).getCluster();
+            var network = com.ctux.ae2craftingtime.mc1201.ProfilerBridge.networkId(
+                    grid.cpu(player).getMainNode().getGrid());
+            var key = com.ctux.ae2craftingtime.mc1201.ProfilerBridge.key(network, slot.key());
+            receipt.put("waitingBeforeRelease", releaseWaitingAtAccept);
+            receipt.put("waitingAfterRelease", cpu.craftingLogic.getWaitingFor(slot.key()));
+            receipt.put("providerStartAfterRelease",
+                    com.ctux.ae2craftingtime.mc1201.ProviderLocateRecords.startFor(key).isPresent());
+            receipt.put("profilePendingAfterRelease",
+                    com.ctux.ae2craftingtime.mc1201.ProfilerBridge.hasPending(key));
+            releaseWaitingAtAccept = null;
+        }
         if (command.action() == ResourceFixtureControl.Action.UNLOAD_RELOAD) {
             receipt.put("unloadedObserved", unloadObserved);
         }
