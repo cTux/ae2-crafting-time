@@ -4,12 +4,11 @@ Lifecycle: see the [scope status and evidence](spec.md).
 
 Tracks [#482](https://github.com/cTux/ae2-crafting-time/issues/482).
 Follow the [spec](spec.md) and [design](technical-design.md). This prerequisite
-must merge with fixture-only qualification before #376 resumes its icon fix.
+merged with fixture-only qualification; #376 retains its production acceptance gate.
 
-The approved expansion adds RF7/RF8 to the original slices below. Continue from
-#484's reviewed implementation, including fixes through `5294f0d9`; do not
-reimplement those slices from this documentation-only baseline. Prior diagnostic
-passes are not a complete qualified matrix.
+The original slices, RF7/RF8 expansion and paused handoff below are historical.
+The [final scope evidence](spec.md) records qualification at `c0321e80` and the
+merged prerequisite. Do not resume the superseded handoff or reimplement these slices.
 
 ## Provisioning and readiness extension
 
@@ -168,6 +167,9 @@ only with that evidence. Leave #376 open for its production implementation,
 payload/persistence boundary tests and complete visual acceptance campaign.
 
 ## Paused qualification handoff (2026-09-22)
+
+Historical record, superseded by the [final qualification](spec.md). The statements
+below describe the earlier failed and incomplete attempts, not the current PR state.
 
 PR #484 remains open at `93a2cc54ad768dbfb0d26e821050282f3602f4c4`.
 This is a fixture-only candidate, not a completed prerequisite. The exact-head

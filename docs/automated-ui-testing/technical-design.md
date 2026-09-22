@@ -1,6 +1,6 @@
 # Automated UI Testing Technical Design
 
-Lifecycle: see the [scope status and evidence](spec.md).
+Lifecycle: see scope status and evidence for [base workflow](spec.md) and [unattended qualification](spec.md#unattended-evidence-gate).
 
 ## Failed native evidence retention
 

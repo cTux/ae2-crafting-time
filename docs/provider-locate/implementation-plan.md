@@ -1,6 +1,6 @@
 # Provider Locate Implementation Plan
 
-Lifecycle: see the [scope status and evidence](spec.md).
+Lifecycle: see scope status and evidence for [baseline](spec.md), [shared-provider icons](spec.md#planned-shared-provider-icon-correction), [resource icons](resource-icons/spec.md), and [red sky beams](spec.md#planned-red-sky-beam).
 
 The phases below describe the original feature. Later sections record #443
 and the planned red sky beam for #488; they do not repeat the original work.

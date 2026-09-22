@@ -1,6 +1,6 @@
 # Recurrent crafting status: technical design
 
-Lifecycle: see the [scope status and evidence](spec.md).
+Lifecycle: see scope status and evidence for [detection baseline](spec.md) and [warning styling](spec.md#planned-warning-style-496).
 
 Historical planning status: recurrence detection is implemented. The #496 rendering change below
 is planned against the [specification](spec.md); it has no runtime pass yet.

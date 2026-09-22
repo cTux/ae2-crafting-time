@@ -1,6 +1,6 @@
 # Provider Locate Technical Design
 
-Lifecycle: see the [scope status and evidence](spec.md).
+Lifecycle: see scope status and evidence for [baseline](spec.md), [shared-provider icons](spec.md#planned-shared-provider-icon-correction), [resource icons](resource-icons/spec.md), and [red sky beams](spec.md#planned-red-sky-beam).
 
 ## Research findings
 

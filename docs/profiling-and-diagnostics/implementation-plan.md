@@ -1,6 +1,6 @@
 # Live throughput learning and normalized sample details
 
-Lifecycle: see the [scope status and evidence](spec.md).
+Lifecycle: see the [live-learning scope status and evidence](spec.md#planned-normalized-sample-details-114).
 
 Issue: [#114](https://github.com/cTux/ae2-crafting-time/issues/114).
 Historical planning status: documentation only; none of these implementation steps has run.

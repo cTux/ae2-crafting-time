@@ -1,6 +1,6 @@
 # Automated UI Testing Implementation Plan
 
-Lifecycle: see the [scope status and evidence](spec.md).
+Lifecycle: see scope status and evidence for [base workflow](spec.md) and [unattended qualification](spec.md#unattended-evidence-gate).
 
 The runner, evidence gate, shared-world suites, change selection, and prepared
 client qualification are complete. Their current contracts live in the

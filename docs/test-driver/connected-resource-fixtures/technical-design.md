@@ -5,7 +5,8 @@ Lifecycle: see the [scope status and evidence](spec.md).
 Tracks [#482](https://github.com/cTux/ae2-crafting-time/issues/482).
 Original source baseline: `b94d1a4264d0d299945178fb542d4afcc8ba2617`.
 Expansion documents are based on `d7a867c`; implementation evidence below reaches
-`5294f0d9e7123b3fda2e680d1284f71186973e9c` on #484, not merged availability.
+`5294f0d9e7123b3fda2e680d1284f71186973e9c` on #484. These are historical design
+inputs; the specification links the later merged RF1-RF8 qualification.
 The [specification](spec.md) defines the boundary; this design defines the new
 driver-only control contract. Nothing below changes a production protocol.
 

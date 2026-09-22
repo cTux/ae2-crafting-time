@@ -1,6 +1,6 @@
 # Profiling And Diagnostics Technical Design
 
-Lifecycle: see the [scope status and evidence](spec.md).
+Lifecycle: see scope status and evidence for [baseline](spec.md) and [live-learning extension](spec.md#planned-normalized-sample-details-114).
 
 The sections above the planned #114 design describe the current runtime.
 

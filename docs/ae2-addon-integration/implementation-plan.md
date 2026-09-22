@@ -2,7 +2,8 @@
 
 Lifecycle: see the [scope status and evidence](spec.md).
 
-The version-selection work below is planned. The later sections retain the
+The version-selection work below records the plan implemented in PR #211;
+its remaining verification is tracked in the specification. The later sections retain the
 earlier native-integration roadmap; they are not evidence that every historical
 phase is still outstanding. Complete this feature as one conventional commit
 following `AGENTS.md`; run local tests only after the hook creates its PR.

@@ -19,8 +19,11 @@ to the canonical block instead of copying a mutable status.
 
 ```markdown
 Status: ready-to-implement
+
 Scope: Initial implementation.
+
 Issue: [#123](https://github.com/OWNER/REPO/issues/123)
+
 Planning: [Reviewed plan](implementation-plan.md)
 ```
 
@@ -57,6 +60,8 @@ GitHub issues remain the work tracker. A documentation block summarizes the evid
 for its named scope; it does not override issue instructions. Issue closure, planning-PR
 merge, elapsed time, and an unreviewed screenshot do not prove implementation completion.
 When evidence is missing, state what is unverified rather than claiming failure or success.
+Reconcile later evidence before relying on an older blocked PR description. A passing
+check for one target or follow-up does not finish a broader acceptance matrix.
 The initial status audit is dated 2026-09-22; it classifies retained evidence and does not
 claim a new runtime campaign.
 

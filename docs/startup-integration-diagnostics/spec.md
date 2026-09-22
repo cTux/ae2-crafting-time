@@ -1,11 +1,14 @@
 # Startup Integration Diagnostics Spec
 
-Status: finished
+Status: in-progress
 
 Scope: Startup inventory and observed integration diagnostics.
 
 Implementation: [PR #256](https://github.com/cTux/ae2-crafting-time/pull/256).
 Verification: [runtime evidence and limits](../ui-smoke-evidence.md#startup-integration-diagnostics-2026-09-05).
+The retained report records a failed full campaign, focused passes, and an
+unresolved evidence-export gate. Reconcile the completion matrix and confirm
+durable archival before marking this scope finished; no new runtime failure is inferred.
 
 Source: [#193](https://github.com/cTux/ae2-crafting-time/issues/193).
 Read with the [design](technical-design.md) and [plan](implementation-plan.md).

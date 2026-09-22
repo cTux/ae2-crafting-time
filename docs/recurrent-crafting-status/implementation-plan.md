@@ -1,6 +1,6 @@
 # Recurrent crafting status: implementation plan
 
-Lifecycle: see the [scope status and evidence](spec.md).
+Lifecycle: see scope status and evidence for [detection baseline](spec.md) and [warning styling](spec.md#planned-warning-style-496).
 
 Historical planning status: the original feature and #408 repair are implemented. The next change is
 the warning styling requested in
