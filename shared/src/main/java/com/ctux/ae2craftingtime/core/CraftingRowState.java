@@ -1,6 +1,7 @@
 package com.ctux.ae2craftingtime.core;
 
 public final class CraftingRowState {
+    public static final int RECURRENT_TEXT_WIDTH = 45;
     private static final java.util.Set<String> BADGE_KEYS = java.util.Set.of(
             "text.ae2craftingtime.ttc", "text.ae2craftingtime.ttc_delayed", "text.ae2craftingtime.waiting",
             "text.ae2craftingtime.no_space", "text.ae2craftingtime.no_provider", "text.ae2craftingtime.no_power",
@@ -10,6 +11,10 @@ public final class CraftingRowState {
 
     public static boolean isBadge(String translationKey) {
         return BADGE_KEYS.contains(translationKey);
+    }
+
+    public static float recurrentTextScale(int width) {
+        return width > RECURRENT_TEXT_WIDTH ? (float) RECURRENT_TEXT_WIDTH / width : 1f;
     }
 
     private CraftingRowState() {

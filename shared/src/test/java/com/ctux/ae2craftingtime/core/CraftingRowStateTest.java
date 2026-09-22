@@ -15,6 +15,12 @@ class CraftingRowStateTest {
     }
 
     @ParameterizedTest
+    @CsvSource({"0,1", "45,1", "47,0.9574468", "90,0.5"})
+    void recurrentWarningFitsItsNativeTextArea(int width, float expected) {
+        assertEquals(expected, CraftingRowState.recurrentTextScale(width), 0.000001f);
+    }
+
+    @ParameterizedTest
     @CsvSource({"1,true,true", "1,false,false", "0,true,false", "-1,true,false",
             "9223372036854775807,true,true"})
     void missingProviderRequiresPendingWorkRegardlessOfActiveBatches(long pending, boolean missing,

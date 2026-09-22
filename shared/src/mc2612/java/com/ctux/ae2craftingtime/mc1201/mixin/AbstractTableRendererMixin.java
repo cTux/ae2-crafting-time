@@ -47,6 +47,20 @@ public abstract class AbstractTableRendererMixin {
             var isAe2CraftingTime = translatable.getKey().startsWith("text.ae2craftingtime.");
             if (isAe2CraftingTime && ae2craftingtime$isTtcLine(translatable)) {
                 var width = font.width(text);
+                var scale = translatable.getKey().equals("text.ae2craftingtime.plan.recurrent")
+                        ? CraftingRowState.recurrentTextScale(width) : 1f;
+                if (scale < 1f) {
+                    var left = x + width - CraftingRowState.RECURRENT_TEXT_WIDTH;
+                    TtcBadge.fillRoundedRect(guiGraphics, left - 2, y - 2, x + width + 2,
+                            y + font.lineHeight + 2, TtcBadge.BACKGROUND);
+                    var pose = guiGraphics.pose();
+                    pose.pushMatrix();
+                    pose.translate(left, y);
+                    pose.scale(scale);
+                    guiGraphics.text(font, text, 0, 0, color, true);
+                    pose.popMatrix();
+                    return;
+                }
                 TtcBadge.fillRoundedRect(guiGraphics, x - 2, y - 2, x + width + 2, y + font.lineHeight + 2,
                         TtcBadge.BACKGROUND);
             }
