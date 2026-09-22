@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.ctux.ae2craftingtime.core.PacketLimits;
 import com.ctux.ae2craftingtime.core.ProfileKey;
+import appeng.api.stacks.AEItemKey;
 import com.ctux.ae2craftingtime.mc1201.ProviderLocateRecords.StoredStart;
 import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightCodec;
 import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightCodec.Highlight;
@@ -22,6 +23,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.item.Items;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -287,18 +289,139 @@ class ProviderLocateTest {
     }
 
     @Test
-    void resolveItemRejectsInvalidIds() {
+    void resolveItemRequiresTypedItem() {
         assertTrue(ProviderHighlightShapes.resolveItem(null).isEmpty());
-        assertTrue(ProviderHighlightShapes.resolveItem("").isEmpty());
-        assertTrue(ProviderHighlightShapes.resolveItem("   ").isEmpty());
-        assertTrue(ProviderHighlightShapes.resolveItem("x".repeat(129)).isEmpty());
-        assertTrue(ProviderHighlightShapes.resolveItem("not an id!!").isEmpty());
+        assumeTrue(bootstrapped, "item registry needs MC registries");
+        assertTrue(ProviderHighlightShapes.resolveItem(appeng.api.stacks.AEFluidKey.of(
+                net.minecraft.world.level.material.Fluids.WATER)).isEmpty());
     }
 
     @Test
-    void resolveItemFallsBackToEmptyForUnknownIds() {
+    void typedHighlightAndPersistedStartRoundTripWithoutGuessingFromOutputId() {
+        assumeTrue(bootstrapped);
+        var displayKey = AEItemKey.of(Items.STONE);
+        var highlight = new Highlight("net", "minecraft:overworld", List.of(new BlockPos(1, 2, 3)),
+                "custom:opaque_output", 15, true, displayKey);
+        var buffer = ProviderDisplayKeyTestContext.buffer();
+        ProviderHighlightCodec.write(buffer, highlight);
+        assertEquals(highlight, ProviderHighlightCodec.read(buffer));
+
+        var start = new StoredStart(new ProfileKey("net", "custom:opaque_output"), UUID.randomUUID(),
+                "minecraft:overworld", List.of(new BlockPos(1, 2, 3)), "Opaque", displayKey);
+        var tag = PersistedProviderTag.writeStarts(List.of(start), ProviderDisplayKeyTestContext.persistence());
+        assertEquals(List.of(start), PersistedProviderTag.readStarts(tag, ProviderDisplayKeyTestContext.persistence()));
+        ((CompoundTag) tag.get(0)).remove("displayKey");
+        assertNull(PersistedProviderTag.readStarts(tag, ProviderDisplayKeyTestContext.persistence()).get(0).displayKey());
+        ((CompoundTag) tag.get(0)).put("displayKey", new CompoundTag());
+        assertNull(PersistedProviderTag.readStarts(tag, ProviderDisplayKeyTestContext.persistence()).get(0).displayKey());
+    }
+
+    @Test
+    void highlightRejectsOversizeKeyAndKeepsPlateForUnknownType() {
+        var oversized = new FriendlyByteBuf(Unpooled.buffer());
+        ProviderHighlightCodec.write(oversized, new Highlight("net", "minecraft:overworld", List.of(),
+                "minecraft:stone", 15, true, null));
+        oversized.writeZero(16 * 1024);
+        assertThrows(IllegalArgumentException.class, () -> ProviderHighlightCodec.read(oversized));
+
+        var unknown = new FriendlyByteBuf(Unpooled.buffer());
+        ProviderHighlightCodec.write(unknown, new Highlight("net", "minecraft:overworld", List.of(),
+                "minecraft:stone", 15, true, null));
+        unknown.writerIndex(unknown.writerIndex() - 1);
+        unknown.writeBoolean(true);
+        unknown.writeVarInt(Integer.MAX_VALUE);
+        var decoded = ProviderHighlightCodec.read(unknown);
+        assertEquals("minecraft:stone", decoded.outputId());
+        assertNull(decoded.displayKey());
+
+        var truncated = new FriendlyByteBuf(Unpooled.buffer());
+        ProviderHighlightCodec.write(truncated, new Highlight("net", "minecraft:overworld", List.of(),
+                "minecraft:stone", 15, true, null));
+        truncated.setBoolean(truncated.writerIndex() - 1, true);
+        assertThrows(Exception.class, () -> ProviderHighlightCodec.read(truncated));
+
+        var trailing = new FriendlyByteBuf(Unpooled.buffer());
+        ProviderHighlightCodec.write(trailing, new Highlight("net", "minecraft:overworld", List.of(),
+                "minecraft:stone", 15, true, null));
+        trailing.writeByte(0);
+        assertThrows(IllegalArgumentException.class, () -> ProviderHighlightCodec.read(trailing));
+    }
+
+    @Test
+    void typedFluidSurvivesTransportTrimmingWinnerPromotionAndSnapshot() {
+        assumeTrue(bootstrapped);
+        var fluid = appeng.api.stacks.AEFluidKey.of(net.minecraft.world.level.material.Fluids.WATER);
+        var item = AEItemKey.of(Items.STONE);
+        var kept = new BlockPos(1, 2, 3);
+        var removed = new BlockPos(4, 5, 6);
+        var packet = new Highlight("net", "minecraft:overworld", List.of(kept, removed),
+                "minecraft:water", 15, true, fluid);
+        var buffer = ProviderDisplayKeyTestContext.buffer();
+        try {
+            ProviderHighlightCodec.write(buffer, packet);
+            assertEquals(packet, ProviderHighlightCodec.read(buffer));
+        } finally {
+            buffer.release();
+        }
+        ProviderHighlightClient.clearPlates();
+        ProviderLocateRecords.clearAll();
+        try {
+            ProviderHighlightClient.showPlate("net", "minecraft:overworld", List.of(kept, removed),
+                    "minecraft:stone", item);
+            ProviderHighlightClient.showPlate("net", "minecraft:overworld", List.of(kept, removed),
+                    "minecraft:water", fluid);
+            assertEquals(item, ProviderHighlightClient.renderPlates().get(0).displayKey());
+            ProviderHighlightClient.trimPositions("minecraft:overworld", kept::equals);
+            ProviderHighlightClient.clearFor("net", "minecraft:stone");
+            assertEquals(fluid, ProviderHighlightClient.renderPlates().get(0).displayKey());
+            var key = new ProfileKey("net", "minecraft:water");
+            ProviderLocateRecords.replaceStart(key, UUID.randomUUID(), "minecraft:overworld", List.of(kept), "Water", fluid);
+            var snapshot = ProviderLocateRecords.snapshotStarts();
+            ProviderLocateRecords.clearAll();
+            ProviderLocateRecords.restoreStarts(snapshot);
+            assertEquals(fluid, ProviderLocateRecords.startFor(key).orElseThrow().displayKey());
+        } finally {
+            ProviderHighlightClient.clearPlates();
+            ProviderLocateRecords.clearAll();
+        }
+    }
+
+    @Test
+    void liveOutputReplacesSavedFallbackAndExplicitReplacementCanClearIt() {
+        assumeTrue(bootstrapped);
+        var scope = new Object();
+        var fluid = appeng.api.stacks.AEFluidKey.of(net.minecraft.world.level.material.Fluids.WATER);
+        var item = AEItemKey.of(Items.WATER_BUCKET);
+        var key = new ProfileKey("net", fluid.getId().toString());
+        ProviderLocateRecords.replaceStart(key, UUID.randomUUID(), "minecraft:overworld",
+                List.of(new BlockPos(1, 2, 3)), "Water", item);
+        try {
+            assertEquals(item, ProfilerBridge.displayKey(scope, key));
+            var outputs = new appeng.api.stacks.GenericStack[] { new appeng.api.stacks.GenericStack(fluid, 1) };
+            var pattern = (appeng.api.crafting.IPatternDetails) java.lang.reflect.Proxy.newProxyInstance(
+                    getClass().getClassLoader(), new Class<?>[] { appeng.api.crafting.IPatternDetails.class },
+                    (proxy, method, args) -> switch (method.getName()) {
+                        case "getOutputs" -> outputs;
+                        case "hashCode" -> System.identityHashCode(proxy);
+                        case "equals" -> proxy == args[0];
+                        default -> throw new UnsupportedOperationException(method.getName());
+                    });
+            ProviderStartTracker.noteDispatch(scope, pattern, java.util.Map.of(key, 1L));
+            assertEquals(fluid, ProfilerBridge.displayKey(scope, key));
+            ProviderLocateRecords.replaceStart(key, UUID.randomUUID(), "minecraft:overworld",
+                    List.of(new BlockPos(1, 2, 3)), "Water", null);
+            assertNull(ProviderLocateRecords.startFor(key).orElseThrow().displayKey());
+        } finally {
+            ProviderStartTracker.clear(scope);
+            ProviderLocateRecords.clearAll();
+        }
+    }
+
+    @Test
+    void resolveItemKeepsItemAppearance() {
         assumeTrue(bootstrapped, "item registry needs MC registries");
-        assertTrue(ProviderHighlightShapes.resolveItem("minecraft:not_a_real_item_xyz").isEmpty());
+        assertTrue(ProviderHighlightShapes.resolveItem(appeng.api.stacks.AEItemKey.of(
+                net.minecraft.world.item.Items.STONE)).is(net.minecraft.world.item.Items.STONE));
     }
 
     private static List<BlockPos> positions(int count) {

@@ -18,30 +18,36 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'resource-fixture-contract.ps1')
+. (Join-Path $PSScriptRoot 'ui-smoke-dependency-identity.ps1')
 . (Join-Path $PSScriptRoot 'dedicated-source-contract.ps1')
 if (!$PlanOnly -and !$AcceptMinecraftEula) { throw 'Connected execution requires explicit -AcceptMinecraftEula consent' }
-if ($Prewarm -and (!$ResourceFixtureOnly -or $HeadSha -cnotmatch '^[a-f0-9]{40}$')) {
+$resourceScenario = $Scenario -in @('delayed-resource-icons','appmek-resource-icons')
+if ($Prewarm -and (!$resourceScenario -or $HeadSha -cnotmatch '^[a-f0-9]{40}$')) {
     throw 'Prewarm requires resource fixture mode and the complete tested head'
 }
-function Get-ResourceFixtureScreenshots([string[]]$FixtureCases) {
+function Get-ResourceFixtureScreenshots([string[]]$FixtureCases, [bool]$Production = $false) {
     $values = foreach ($fixtureCase in $FixtureCases) {
         $prefix = $fixtureCase.ToLowerInvariant().Replace('_','-')
-        $checkpoints = @('held','rejoined') + $(if ($fixtureCase.EndsWith('OVERLAP')) { @('winner-promoted') } else { @() }) +
-            @('completed','cancel-held','cancelled')
+        $checkpoints = @('held') + $(if ($Production -and $fixtureCase -ceq 'WATER') { @('resource-reloaded','chunk-reloaded') }) +
+            @('rejoined') + $(if ($fixtureCase.EndsWith('OVERLAP')) { @('winner-promoted') } else { @() }) +
+            @('completed','cancel-held') +
+            $(if ($Production -and $fixtureCase.EndsWith('OVERLAP')) { @('provider-removed') }) + @('cancelled')
         foreach ($checkpoint in $checkpoints) { "$prefix-$checkpoint.png" }
     }
     $values += $FixtureCases[-1].ToLowerInvariant().Replace('_','-') + '-cleanup.png'
     return @($values)
 }
-$resourceScenario = $Scenario -in @('delayed-resource-icons','appmek-resource-icons')
-if ($ResourceFixtureOnly.IsPresent -ne $resourceScenario) {
-    throw 'ResourceFixtureOnly is required exactly for resource fixture scenarios'
+if ($ResourceFixtureOnly -and !$resourceScenario) {
+    throw 'ResourceFixtureOnly requires a resource fixture scenario'
 }
 if ($Scenario -eq 'appmek-resource-icons' -and $Target -notin @('1.20.1-forge','1.21.1-neoforge')) {
     throw 'AppMek resource fixtures are supported only on Forge 1.20.1 and NeoForge 1.21.1'
 }
 $sourceServer = [IO.Path]::GetFullPath($ServerDirectory)
 $bundle = [IO.Path]::GetFullPath($BundleDirectory)
+$dependencyIdentity = if ($resourceScenario -and !$ResourceFixtureOnly -and !$PlanOnly) {
+    Get-UiSmokeDependencyIdentity $bundle
+}
 $prepared = [IO.Path]::GetFullPath($PreparedLaunch)
 $report = [IO.Path]::GetFullPath($ReportDirectory)
 if ($Address -notmatch '^(?<host>[^:]+):(?<port>\d+)$' -or [int]$Matches.port -lt 1 -or [int]$Matches.port -gt 65535) {
@@ -295,7 +301,7 @@ try {
         $clientParameters.FailOnInitialDisconnect=$false
         $clientParameters.StartupTimeoutSeconds=300
     }
-    if ($ResourceFixtureOnly) {
+    if ($resourceScenario) {
         $clientParameters.OfflineName = 'Ae2ctAlpha'
         $clientParameters.OfflineUuid = '446b6d0ccadd3e57baf699d70f01a628'
     }
@@ -390,13 +396,19 @@ try {
             Get-Content -LiteralPath (Join-Path $report "client/evidence/$($_.name.Replace('.png','.json'))") -Raw | ConvertFrom-Json
         }) -Force
         Assert-ResourceFixtureContract $fixtureEvidence $Scenario $Target $true $connectionEpoch $connectionFixture | Out-Null
+        if (!$ResourceFixtureOnly) {
+            $iconPath = Join-Path $report 'client/evidence/resource-icon-evidence.json'
+            if (!(Test-Path -LiteralPath $iconPath -PathType Leaf)) { throw 'Connected resource icon evidence is missing' }
+            $icon = Get-Content -LiteralPath $iconPath -Raw | ConvertFrom-Json
+            Assert-ResourceIconEvidence $icon $fixtureEvidence $HeadSha $dependencyIdentity.catalogueSha256
+        }
         if ($fixtureEvidence.schema -ne 1 -or $fixtureEvidence.fixtureResult -ne 'PASS' -or
                 $fixtureEvidence.productionIconAcceptance -ne 'NOT_RUN' -or !$fixtureEvidence.receipts.Count -or
                 !$fixtureEvidence.screenshots.Count -or !$fixtureEvidence.clientObservations.Count) {
             throw 'Resource fixture evidence contract failed validation'
         }
         $expectedChecks = @('server-identity','real-dispatch','delayed-plates','native-locate','lifecycle',
-            'capture-integrity','cleanup','fixture-only')
+            'capture-integrity','cleanup',$(if ($ResourceFixtureOnly) { 'fixture-only' } else { 'typed-keys' }))
         if ((Compare-Object $expectedChecks @($fixtureEvidence.checks.psobject.Properties.Name) -CaseSensitive) -or
                 @($fixtureEvidence.checks.psobject.Properties | Where-Object { $_.Value -ne $true }).Count) {
             throw 'Resource fixture client checks are missing, unexpected, or false'
@@ -406,7 +418,7 @@ try {
         } else {
             @('ITEM','WATER','LAVA') + $(if ($Target -eq '1.20.1-forge') { @('BUCKETLESS') } else { @() }) + @('FLUID_OVERLAP')
         }
-        $expectedCaptures = Get-ResourceFixtureScreenshots $expectedCases
+        $expectedCaptures = Get-ResourceFixtureScreenshots $expectedCases (!$ResourceFixtureOnly)
         if ($fixtureEvidence.connected -ne $true -or $fixtureEvidence.serverState.epoch.Replace('-','') -cne $connectionEpoch -or
                 $fixtureEvidence.serverState.fixture.Replace('-','') -cne $connectionFixture -or !$fixtureEvidence.clientEvidence.digest -or
                 $fixtureEvidence.clientEvidence.captures -ne $expectedCaptures.Count -or
@@ -416,8 +428,13 @@ try {
         }
         foreach ($fixtureCase in $expectedCases) {
             $caseReceipts = @($fixtureEvidence.receipts | Where-Object { $_.case -ceq $fixtureCase })
-            $requiredActions = @('CREATE','REJOIN_PREPARE','RECONNECT','RELEASE','RESET','CREATE','CANCEL','RESET')
-            if ($fixtureCase.EndsWith('OVERLAP')) { $requiredActions = @('CREATE','REJOIN_PREPARE','RECONNECT','RELEASE','RELEASE','RESET','CREATE','CANCEL','CANCEL','RESET') }
+            $requiredActions = @('CREATE') + $(if (!$ResourceFixtureOnly -and $fixtureCase -ceq 'WATER') { @('UNLOAD_RELOAD') }) +
+                @('REJOIN_PREPARE','RECONNECT','RELEASE','RESET','CREATE','CANCEL','RESET')
+            if ($fixtureCase.EndsWith('OVERLAP')) {
+                $requiredActions = @('CREATE','REJOIN_PREPARE','RECONNECT','RELEASE','RELEASE','RESET','CREATE') +
+                    $(if (!$ResourceFixtureOnly -and $fixtureCase -ceq $expectedCases[-1]) { @('REMOVE_PROVIDER') }) +
+                    @('CANCEL','CANCEL','RESET')
+            }
             if ($fixtureCase -ceq $expectedCases[-1]) { $requiredActions += 'COMPLETE' }
             if ((Compare-Object $requiredActions @($caseReceipts.action) -SyncWindow 0 -CaseSensitive) -or
                     @($caseReceipts | Where-Object { $_.sequence -le 0 -or $_.revision -le 0 -or

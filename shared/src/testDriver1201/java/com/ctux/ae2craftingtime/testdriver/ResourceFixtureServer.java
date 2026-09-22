@@ -49,14 +49,18 @@ final class ResourceFixtureServer {
     private long warmupHeldAt;
     private boolean warmupReturning;
     private boolean teardownComplete;
+    private boolean providerRemoved;
+    private int unloadPhase;
+    private BlockPos unloadProvider;
+    private boolean unloadObserved;
     private Map<String, Object> cleanupOutcome = Map.of();
     private String terminalFailure = "";
     private final List<Map<String, Object>> receipts = new ArrayList<>();
     private final Map<String, Map<String, Object>> caseFacts = new LinkedHashMap<>();
 
     ResourceFixtureServer(String serverScenario, String target, StandardCraftFixture grid, FixtureMarker marker) {
-        if (!Boolean.getBoolean("ae2craftingtime.test.resourceFixtureOnly")) {
-            throw new IllegalArgumentException("resource server requires fixture-only mode");
+        if (!DriverOptions.isResourceScenario(serverScenario.replaceFirst("-connected$", ""))) {
+            throw new IllegalArgumentException("resource server requires a resource scenario");
         }
         scenario = serverScenario.replaceFirst("-connected$", "");
         connected = serverScenario.endsWith("-connected");
@@ -117,6 +121,9 @@ final class ResourceFixtureServer {
         receipt.put("serverTick", player.level().getGameTime());
         receipt.put("acceptedTick", operationAcceptedTick);
         receipt.put("pollCount", operationPolls);
+        if (command.action() == ResourceFixtureControl.Action.UNLOAD_RELOAD) {
+            receipt.put("unloadedObserved", unloadObserved);
+        }
         receipt.put("providers", new Gson().fromJson(state.providers(), List.class));
         receipt.put("jobs", new Gson().fromJson(state.jobs(), List.class));
         receipts.add(Map.copyOf(receipt));
@@ -151,6 +158,14 @@ final class ResourceFixtureServer {
             }
             case RECONNECT -> ResourceFixtureControl.reconnectReady(disconnected, player != rejoinPlayer,
                     () -> processing.delayed(player));
+            case UNLOAD_RELOAD -> unloadReload(player);
+            case REMOVE_PROVIDER -> {
+                if (Boolean.getBoolean("ae2craftingtime.test.resourceFixtureOnly") || processing == null) {
+                    throw new IllegalStateException("provider removal requires a live production fixture");
+                }
+                providerRemoved = grid.removeResourceProvider(player);
+                yield providerRemoved;
+            }
             case RESET -> {
                 if (processing == null) throw new IllegalStateException("resource reset has no processing state");
                 processing.close(player);
@@ -160,6 +175,10 @@ final class ResourceFixtureServer {
                 warmups = 0;
                 warmupHeldAt = 0;
                 warmupReturning = false;
+                providerRemoved = false;
+                unloadPhase = 0;
+                unloadProvider = null;
+                unloadObserved = false;
                 yield true;
             }
             case COMPLETE -> {
@@ -277,7 +296,7 @@ final class ResourceFixtureServer {
 
     private String position() { return grid.terminal == null ? "0,0,0" : grid.terminal.getX() + "," + grid.terminal.getY() + "," + grid.terminal.getZ(); }
     private String providers() {
-        if (processing == null) return "[]";
+        if (processing == null || providerRemoved) return "[]";
         return new Gson().toJson(processing.providers().stream()
                 .map(pos -> pos.getX() + "," + pos.getY() + "," + pos.getZ()).toList());
     }
@@ -319,11 +338,47 @@ final class ResourceFixtureServer {
     }
     private boolean completeReceipts() {
         if (processing != null) throw new IllegalStateException("resource fixture completed with live processing state");
-        requireReceiptHistory(receipts, expectedCases(), connected);
+        requireReceiptHistory(receipts, expectedCases(), connected,
+                !Boolean.getBoolean("ae2craftingtime.test.resourceFixtureOnly"));
         return true;
     }
     static void requireReceiptHistory(List<Map<String, Object>> receipts,
             List<ResourceFixtureControl.Case> expectedCases, boolean connected) {
+        requireReceiptHistory(receipts, expectedCases, connected, false);
+    }
+
+    private boolean unloadReload(ServerPlayer player) {
+        if (Boolean.getBoolean("ae2craftingtime.test.resourceFixtureOnly") || processing == null) {
+            throw new IllegalStateException("chunk unload requires a live production fixture");
+        }
+        var level = player.serverLevel();
+        if (unloadPhase == 0) {
+            unloadProvider = grid.resourceProviders().get(0);
+            releaseResourceChunks();
+            player.teleportTo(unloadProvider.getX() + 512.5, unloadProvider.getY() + 1,
+                    unloadProvider.getZ() + 512.5);
+            unloadPhase = 1;
+            return false;
+        }
+        if (unloadPhase == 1) {
+            if (level.hasChunkAt(unloadProvider)) return false;
+            unloadObserved = true;
+            grid.refreshCpuIdentities();
+            player.teleportTo(grid.terminal.getX() + 0.5, grid.terminal.getY() - 1,
+                    grid.terminal.getZ() - 2.5);
+            unloadPhase = 2;
+            return false;
+        }
+        if (!level.hasChunkAt(unloadProvider)) return false;
+        // The disposable grid uses explicit connections; rebind native nodes after chunk reload.
+        if (!grid.prepare(player, marker) || !processing.delayed(player)) return false;
+        if (connected) retainResourceChunks(level);
+        unloadPhase = 0;
+        return true;
+    }
+
+    static void requireReceiptHistory(List<Map<String, Object>> receipts,
+            List<ResourceFixtureControl.Case> expectedCases, boolean connected, boolean production) {
         for (var resourceCase : expectedCases) {
             var values = receipts.stream().filter(receipt -> receipt.get("case").equals(resourceCase.name())).toList();
             var expected = new ArrayList<String>();
@@ -332,10 +387,16 @@ final class ResourceFixtureServer {
                 expected.add("REJOIN_PREPARE");
                 expected.add("RECONNECT");
             }
+            if (production && resourceCase == ResourceFixtureControl.Case.WATER) {
+                expected.add(1, "UNLOAD_RELOAD");
+            }
             expected.add("RELEASE");
             if (resourceCase.name().endsWith("OVERLAP")) expected.add("RELEASE");
             expected.add("RESET");
             expected.add("CREATE");
+            if (production && resourceCase == expectedCases.get(expectedCases.size() - 1)) {
+                expected.add("REMOVE_PROVIDER");
+            }
             expected.add("CANCEL");
             if (resourceCase.name().endsWith("OVERLAP")) expected.add("CANCEL");
             expected.add("RESET");
@@ -360,7 +421,8 @@ final class ResourceFixtureServer {
     }
     private int expectedCaptureCount() {
         return expectedCases().stream().mapToInt(value ->
-                ResourceFixtureControl.expectedScreenshots(value, connected).size()).sum() + 1;
+                ResourceFixtureControl.expectedScreenshots(value, connected,
+                        !Boolean.getBoolean("ae2craftingtime.test.resourceFixtureOnly")).size()).sum() + 1;
     }
     Map<String, Object> evidence() {
         return Map.ofEntries(Map.entry("schema", 1), Map.entry("fixture", fixture.toString()),

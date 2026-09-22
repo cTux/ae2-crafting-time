@@ -60,9 +60,8 @@ public final class ProviderHighlightRender {
             if (!levelDimension.equals(plate.dimensionId())) {
                 continue;
             }
-            var stack = ProviderHighlightShapes.resolveItem(plate.outputId());
             var pos = plate.position();
-            ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos, stack,
+            ProviderHighlightShapes.renderFacePlatesAndIcons(poseStack, consumers, minecraft.level, pos, plate.displayKey(),
                     ProviderFaceIcons.visibleFaces(pos, camera.x, camera.y, camera.z),
                     LevelRenderer.getLightColor(minecraft.level, pos), alpha);
         }

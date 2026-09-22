@@ -208,6 +208,7 @@ positions: list<BlockPos>, at most 16
 outputId: string, at most 128 chars (profile key id, e.g. an item id)
 durationSeconds: nonnegative int (15)
 plateOnly: boolean (true for automatic delayed pings: red plate only, no rainbow edge)
+displayKey: optional AE2 typed key (bounded to 16 KiB; absent for clears and edge-only locates)
 ```
 
 Rules:
@@ -235,9 +236,9 @@ Rules:
 - Blocked (`NO POWER` / `NO SPACE`) warnings never send plates or fallback
   updates; they keep chat with an edge-only record.
 - The client draws thick (2-3x) rainbow-cycling outline boxes while in the
-  same dimension until the duration expires, plus the output item centered
-  on a red plate on each camera-facing face (plate-only when the output id
-  is not an item). On 1.20.1/1.21.1 each plate is one thin filled box
+  same dimension until the duration expires, plus the typed output resource
+  centered on a red plate on each camera-facing face. Unknown or unavailable
+  key types leave the red plate visible without an icon. On 1.20.1/1.21.1 each plate is one thin filled box
   flushed with its own batch per face (the strip-mode `debugFilledBox`
   has no vanilla callers, so faces must never share one strip)
   (see [issue #241](https://github.com/cTux/ae2-crafting-time/issues/241)).
@@ -246,16 +247,17 @@ Rules:
   whatever triggered it, with clickable coordinates that teleport to each
   position
   (see [issue #241](https://github.com/cTux/ae2-crafting-time/issues/241)).
-  The packet layout is additive (`networkId` tail with tolerant reads).
+  The packet layout appends a bounded optional typed key after `networkId`;
+  older packets without that field retain a plate without an icon.
 
-Wire versions: Forge channel protocol `17`; Fabric keeps its existing channels
-and adds `cpu_ttc_request_v1` plus `cpu_ttc_snapshot_v1`; NeoForge registrars are
-`16`.
+Wire versions: Forge channel protocol `21`; Fabric uses `provider_highlight_v5`
+for typed provider icons and keeps its other channels; NeoForge registrars are
+`20`.
 
 ### Provider-start persistence
 
 Per-output provider links (network, owner, dimension, provider positions,
-display name) persist in the world `SavedData` beside throughput samples
+display name, optional typed display key) persist in the world `SavedData` beside throughput samples
 under a `providers` section. Old saves without the section load with empty
 provider state. The stored dimension travels with the fallback so resync
 never re-derives it alone. Rainbow edges are never persisted.

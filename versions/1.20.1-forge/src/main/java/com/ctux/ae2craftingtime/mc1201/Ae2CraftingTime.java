@@ -43,7 +43,7 @@ public final class Ae2CraftingTime {
                 ProviderLocateCommand.locate(source, id, (player, highlight) -> StatsNetwork.sendTo(player,
                         new ProviderHighlightS2C(highlight.networkId(), highlight.dimensionId(),
                                 highlight.positions(), highlight.outputId(), highlight.durationSeconds(),
-                                highlight.plateOnly())))));
+                                highlight.plateOnly(), highlight.displayKey())))));
     }
 
     private void onServerStarted(ServerStartedEvent event) {

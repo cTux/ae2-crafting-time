@@ -17,6 +17,17 @@ import org.junit.jupiter.api.io.TempDir;
 class ResourceFixtureControlTest {
     @TempDir Path directory;
 
+    @Test void productionCheckpointsIncludeBoundedLifecycleTransitions() {
+        assertEquals(List.of("held", "resource-reloaded", "chunk-reloaded", "rejoined", "completed",
+                "cancel-held", "cancelled"), ResourceFixtureControl.expectedCheckpoints(
+                        ResourceFixtureControl.Case.WATER, true, true));
+        assertEquals(List.of("held", "winner-promoted", "completed", "cancel-held", "provider-removed",
+                "cancelled"), ResourceFixtureControl.expectedCheckpoints(
+                        ResourceFixtureControl.Case.FLUID_OVERLAP, false, true));
+        assertFalse(ResourceFixtureControl.expectedCheckpoints(ResourceFixtureControl.Case.WATER, true)
+                .contains("chunk-reloaded"));
+    }
+
     @Test void connectedResourceRetentionCoversOnlyTheFixtureFootprint() {
         var chunks = ResourceFixtureServer.resourceChunks(new net.minecraft.core.BlockPos(15, 80, -1));
         assertEquals(java.util.Set.of(new ResourceFixtureServer.ChunkCoord(0, -1),

@@ -53,6 +53,8 @@ final class StandardCraftFixture {
     void bindTerminal(BlockPos value) { terminal = value; }
     void configureResourceFixture() {
         resourceFixture = true;
+        // Production lifecycle checks must leave the always-loaded spawn area.
+        originShift = Boolean.getBoolean("ae2craftingtime.test.resourceFixtureOnly") ? 0 : 1024;
         unprofiledPlan = true;
         holdFinalOutput = true;
         cpuListScenario = true;
@@ -320,6 +322,13 @@ final class StandardCraftFixture {
     }
 
     java.util.List<BlockPos> resourceProviders() { return java.util.List.of(terminal.east(4)); }
+
+    boolean removeResourceProvider(ServerPlayer player) {
+        var pos = terminal.east(4);
+        player.serverLevel().setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+        return player.serverLevel().getBlockEntity(pos) == null;
+    }
+
 
     void cleanupResourceFixture(ServerPlayer player, java.util.List<appeng.api.stacks.AEKey> outputs,
             boolean clearSamples) {

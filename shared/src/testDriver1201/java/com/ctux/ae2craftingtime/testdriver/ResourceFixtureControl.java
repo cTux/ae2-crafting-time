@@ -30,7 +30,7 @@ final class ResourceFixtureControl {
     private static final Set<String> ABORT_KEYS = Set.of(
             "schema", "epoch", "scenario", "player", "fixture", "revision", "failure");
 
-    enum Action { CREATE, RELEASE, CANCEL, REJOIN_PREPARE, RECONNECT, RESET, COMPLETE, ABORT }
+    enum Action { CREATE, RELEASE, CANCEL, REJOIN_PREPARE, RECONNECT, UNLOAD_RELOAD, REMOVE_PROVIDER, RESET, COMPLETE, ABORT }
     enum Case { ITEM, WATER, LAVA, BUCKETLESS, FLUID_OVERLAP, OXYGEN, HYDROGEN, CHEMICAL_OVERLAP }
     enum Phase { READY, HELD, REJOINING, SETTLED, CLEAN, COMPLETE, FAILED }
 
@@ -176,6 +176,8 @@ final class ResourceFixtureControl {
             case RELEASE, CANCEL -> require(state.phase(), EnumSet.of(Phase.HELD), Phase.SETTLED, state.revision());
             case REJOIN_PREPARE -> require(state.phase(), EnumSet.of(Phase.HELD), Phase.REJOINING, state.revision());
             case RECONNECT -> require(state.phase(), EnumSet.of(Phase.REJOINING), Phase.HELD, state.revision());
+            case UNLOAD_RELOAD -> require(state.phase(), EnumSet.of(Phase.HELD), Phase.HELD, state.revision());
+            case REMOVE_PROVIDER -> require(state.phase(), EnumSet.of(Phase.HELD), Phase.HELD, state.revision());
             case RESET -> require(state.phase(), EnumSet.of(Phase.SETTLED), Phase.CLEAN, increment(state.revision()));
             case COMPLETE -> require(state.phase(), EnumSet.of(Phase.CLEAN), Phase.COMPLETE, state.revision());
             case ABORT -> require(state.phase(), EnumSet.complementOf(EnumSet.of(Phase.COMPLETE, Phase.FAILED)),
@@ -227,28 +229,42 @@ final class ResourceFixtureControl {
     }
 
     static List<String> expectedCheckpoints(Case resourceCase, boolean connected) {
+        return expectedCheckpoints(resourceCase, connected, false);
+    }
+
+    static List<String> expectedCheckpoints(Case resourceCase, boolean connected, boolean production) {
         var values = new java.util.ArrayList<String>();
         values.add("held");
+        if (production && resourceCase == Case.WATER) values.add("resource-reloaded");
+        if (production && resourceCase == Case.WATER) values.add("chunk-reloaded");
         if (connected) values.add("rejoined");
         if (resourceCase == Case.FLUID_OVERLAP || resourceCase == Case.CHEMICAL_OVERLAP) {
             values.add("winner-promoted");
         }
         values.add("completed");
         values.add("cancel-held");
+        if (production && (resourceCase == Case.FLUID_OVERLAP || resourceCase == Case.CHEMICAL_OVERLAP)) {
+            values.add("provider-removed");
+        }
         values.add("cancelled");
         return List.copyOf(values);
     }
 
     static List<String> expectedScreenshots(Case resourceCase, boolean connected) {
+        return expectedScreenshots(resourceCase, connected, false);
+    }
+
+    static List<String> expectedScreenshots(Case resourceCase, boolean connected, boolean production) {
         var prefix = wireCase(resourceCase) + "-";
-        return expectedCheckpoints(resourceCase, connected).stream().map(value -> prefix + value + ".png").toList();
+        return expectedCheckpoints(resourceCase, connected, production).stream()
+                .map(value -> prefix + value + ".png").toList();
     }
 
     static String wireCase(Case value) { return wire(value); }
 
     private static boolean acknowledgedPhase(Action action, Phase phase) {
         return switch (action) {
-            case CREATE, RECONNECT -> phase == Phase.HELD;
+            case CREATE, RECONNECT, UNLOAD_RELOAD, REMOVE_PROVIDER -> phase == Phase.HELD;
             case RELEASE, CANCEL -> phase == Phase.HELD || phase == Phase.SETTLED;
             case REJOIN_PREPARE -> phase == Phase.REJOINING;
             case RESET -> phase == Phase.CLEAN;

@@ -59,6 +59,7 @@ final class ResourceFixtureClient {
     private ResourceFixtureServer integratedServer;
     private CompletableFuture<Boolean> serverTick;
     private CompletableFuture<Void> captureWrite = CompletableFuture.completedFuture(null);
+    private CompletableFuture<?> resourceReload;
     private Capture pendingCapture;
     private boolean aborting;
     private boolean abortSent;
@@ -82,7 +83,8 @@ final class ResourceFixtureClient {
                         ResourceFixtureControl.Case.CHEMICAL_OVERLAP)
                 : nativeCases();
         for (var check : List.of("server-identity", "real-dispatch", "delayed-plates", "native-locate",
-                "lifecycle", "capture-integrity", "cleanup", "fixture-only")) checks.put(check, false);
+                "lifecycle", "capture-integrity", "cleanup")) checks.put(check, false);
+        checks.put(options.resourceFixtureOnly() ? "fixture-only" : "typed-keys", false);
     }
 
     void tick() {
@@ -124,6 +126,7 @@ final class ResourceFixtureClient {
             }
             state = ResourceFixtureControl.readState(control);
             requireStateIdentity();
+            if (pending != null) requireObservationDeadline("resource action acknowledgement");
             if (!acknowledgePending(true)) return;
             var resourceCase = cases.get(Math.min(caseIndex, cases.size() - 1));
             if (options.connectedDedicated()) tickConnected(resourceCase); else tickIntegrated(resourceCase);
@@ -134,11 +137,18 @@ final class ResourceFixtureClient {
 
     private void tickConnected(ResourceFixtureControl.Case resourceCase) throws Exception {
         boolean overlap = overlap(resourceCase);
-        switch (stage) {
+        boolean unload = productionUnload(resourceCase);
+        if (unload && stage == 2) {
+            if (observeHeld(resourceCase, "chunk-reloaded", false))
+                request(ResourceFixtureControl.Action.REJOIN_PREPARE, resourceCase, 0);
+            return;
+        }
+        switch (unload && stage > 2 ? stage - 1 : stage) {
             case 0 -> request(ResourceFixtureControl.Action.CREATE, resourceCase, 0);
             case 1 -> {
                 if (!observeHeld(resourceCase, "held", true)) return;
-                request(ResourceFixtureControl.Action.REJOIN_PREPARE, resourceCase, 0);
+                request(unload ? ResourceFixtureControl.Action.UNLOAD_RELOAD
+                        : ResourceFixtureControl.Action.REJOIN_PREPARE, resourceCase, 0);
             }
             case 2 -> reconnectRequested = true;
             case 3 -> request(ResourceFixtureControl.Action.RECONNECT, resourceCase, 0);
@@ -167,17 +177,27 @@ final class ResourceFixtureClient {
             case 8 -> {
                 if (overlap) {
                     if (!observeHeld(resourceCase, "cancel-held", false)) return;
-                    request(ResourceFixtureControl.Action.CANCEL, resourceCase, 0);
+                    request(productionRemoval(resourceCase) ? ResourceFixtureControl.Action.REMOVE_PROVIDER
+                            : ResourceFixtureControl.Action.CANCEL, resourceCase, 0);
                 } else if (observeSettled(resourceCase, "cancelled", true))
                     request(ResourceFixtureControl.Action.RESET, resourceCase, 0);
             }
             case 9 -> {
-                if (overlap) request(ResourceFixtureControl.Action.CANCEL, resourceCase, 1);
+                if (overlap && productionRemoval(resourceCase)) {
+                    if (!observeProviderRemoved(resourceCase)) return;
+                    request(ResourceFixtureControl.Action.CANCEL, resourceCase, 0);
+                } else if (overlap) request(ResourceFixtureControl.Action.CANCEL, resourceCase, 1);
                 else nextCase(resourceCase);
             }
             case 10 -> {
-                if (observeSettled(resourceCase, "cancelled", true))
+                if (productionRemoval(resourceCase)) request(ResourceFixtureControl.Action.CANCEL, resourceCase, 1);
+                else if (observeSettled(resourceCase, "cancelled", true))
                     request(ResourceFixtureControl.Action.RESET, resourceCase, 0);
+            }
+            case 11 -> {
+                if (productionRemoval(resourceCase) && observeSettled(resourceCase, "cancelled", true))
+                    request(ResourceFixtureControl.Action.RESET, resourceCase, 0);
+                else if (!productionRemoval(resourceCase)) nextCase(resourceCase);
             }
             default -> nextCase(resourceCase);
         }
@@ -185,11 +205,18 @@ final class ResourceFixtureClient {
 
     private void tickIntegrated(ResourceFixtureControl.Case resourceCase) throws Exception {
         boolean overlap = overlap(resourceCase);
-        switch (stage) {
+        boolean unload = productionUnload(resourceCase);
+        if (unload && stage == 2) {
+            if (observeHeld(resourceCase, "chunk-reloaded", false))
+                request(ResourceFixtureControl.Action.RELEASE, resourceCase, 0);
+            return;
+        }
+        switch (unload && stage > 2 ? stage - 1 : stage) {
             case 0 -> request(ResourceFixtureControl.Action.CREATE, resourceCase, 0);
             case 1 -> {
                 if (!observeHeld(resourceCase, "held", true)) return;
-                request(ResourceFixtureControl.Action.RELEASE, resourceCase, 0);
+                request(unload ? ResourceFixtureControl.Action.UNLOAD_RELOAD
+                        : ResourceFixtureControl.Action.RELEASE, resourceCase, 0);
             }
             case 2 -> {
                 if (overlap) {
@@ -212,17 +239,27 @@ final class ResourceFixtureClient {
             case 5 -> {
                 if (overlap) {
                     if (!observeHeld(resourceCase, "cancel-held", false)) return;
-                    request(ResourceFixtureControl.Action.CANCEL, resourceCase, 0);
+                    request(productionRemoval(resourceCase) ? ResourceFixtureControl.Action.REMOVE_PROVIDER
+                            : ResourceFixtureControl.Action.CANCEL, resourceCase, 0);
                 } else if (observeSettled(resourceCase, "cancelled", true))
                     request(ResourceFixtureControl.Action.RESET, resourceCase, 0);
             }
             case 6 -> {
-                if (overlap) request(ResourceFixtureControl.Action.CANCEL, resourceCase, 1);
+                if (overlap && productionRemoval(resourceCase)) {
+                    if (!observeProviderRemoved(resourceCase)) return;
+                    request(ResourceFixtureControl.Action.CANCEL, resourceCase, 0);
+                } else if (overlap) request(ResourceFixtureControl.Action.CANCEL, resourceCase, 1);
                 else nextCase(resourceCase);
             }
             case 7 -> {
-                if (observeSettled(resourceCase, "cancelled", true))
+                if (productionRemoval(resourceCase)) request(ResourceFixtureControl.Action.CANCEL, resourceCase, 1);
+                else if (observeSettled(resourceCase, "cancelled", true))
                     request(ResourceFixtureControl.Action.RESET, resourceCase, 0);
+            }
+            case 8 -> {
+                if (productionRemoval(resourceCase) && observeSettled(resourceCase, "cancelled", true))
+                    request(ResourceFixtureControl.Action.RESET, resourceCase, 0);
+                else if (!productionRemoval(resourceCase)) nextCase(resourceCase);
             }
             default -> nextCase(resourceCase);
         }
@@ -240,18 +277,33 @@ final class ResourceFixtureClient {
                 .equals(expected)) return false;
         if (manualLocate && !driveNativeLocate(jobs.get(0).get("resource").getAsString())) return false;
         if (manualLocate && ProviderHighlightClient.liveEdges().isEmpty()) return false;
-        if (!manualLocate && options.connectedDedicated() && !ProviderHighlightClient.liveEdges().isEmpty()) {
+        if (!manualLocate && options.connectedDedicated() && !checkpoint.equals("chunk-reloaded")
+                && !ProviderHighlightClient.liveEdges().isEmpty()) {
             throw new IllegalStateException("rainbow locate state survived reconnect");
         }
         if (!worldViewReady()) return false;
         if (!renderPlatesConverged(expected, jobs.size())) return false;
+        if (!options.resourceFixtureOnly() && !typedKeysConverged(jobs)) return false;
         if (!stableFor(resourceCase.name() + ":" + checkpoint)) return false;
         checks.put("server-identity", true);
         checks.put("real-dispatch", true);
         checks.put("delayed-plates", true);
+        if (!options.resourceFixtureOnly()) checks.put("typed-keys", true);
         if (manualLocate) checks.put("native-locate", true);
         if (!manualLocate) checks.put("lifecycle", true);
-        return capture(resourceCase, checkpoint, jobs);
+        if (!capture(resourceCase, checkpoint, jobs)) return false;
+        if (!options.resourceFixtureOnly() && resourceCase == ResourceFixtureControl.Case.WATER
+                && checkpoint.equals("held")) {
+            if (resourceReload == null) {
+                resourceReload = minecraft.reloadResourcePacks();
+                return false;
+            }
+            if (!resourceReload.isDone()) return false;
+            resourceReload.join();
+            if (!typedKeysConverged(jobs)) throw new IllegalStateException("resource reload lost the typed plate");
+            return capture(resourceCase, "resource-reloaded", jobs);
+        }
+        return true;
     }
 
     private boolean observeWinner(ResourceFixtureControl.Case resourceCase) throws Exception {
@@ -261,6 +313,7 @@ final class ResourceFixtureClient {
                 || jobs.get(1).get("heldAmount").getAsLong() <= 0) return false;
         var expected = Set.of(jobs.get(1).get("resource").getAsString());
         if (!renderPlatesConverged(expected, 1)) return false;
+        if (!options.resourceFixtureOnly() && !typedKeysConverged(jobs)) return false;
         if (!options.connectedDedicated() && ProviderHighlightClient.liveEdges().isEmpty()) {
             throw new IllegalStateException("integrated rainbow locate expired before winner promotion");
         }
@@ -289,6 +342,23 @@ final class ResourceFixtureClient {
         return capture(resourceCase, checkpoint, jobs);
     }
 
+    private boolean productionRemoval(ResourceFixtureControl.Case resourceCase) {
+        return !options.resourceFixtureOnly() && overlap(resourceCase) && caseIndex == cases.size() - 1;
+    }
+
+    private boolean productionUnload(ResourceFixtureControl.Case resourceCase) {
+        return !options.resourceFixtureOnly() && resourceCase == ResourceFixtureControl.Case.WATER;
+    }
+
+    private boolean observeProviderRemoved(ResourceFixtureControl.Case resourceCase) throws Exception {
+        requireObservationDeadline("provider removal");
+        if (!state.providers().equals("[]") || !ProviderHighlightClient.plates().isEmpty()
+                || !ProviderHighlightClient.renderPlates().isEmpty() || !worldViewReady()
+                || !stableFor(resourceCase.name() + ":provider-removed")) return false;
+        checks.put("lifecycle", true);
+        return capture(resourceCase, "provider-removed", jobs());
+    }
+
     private boolean renderPlatesConverged(Set<String> expected, int plateCount) {
         var providers = JsonParser.parseString(state.providers()).getAsJsonArray();
         if (providers.size() != 1) return false;
@@ -298,6 +368,24 @@ final class ResourceFixtureClient {
                 && position.equals(rendered.get(0).position().getX() + "," + rendered.get(0).position().getY()
                         + "," + rendered.get(0).position().getZ())
                 && ProviderHighlightClient.plates().size() == plateCount;
+    }
+
+    private boolean typedKeysConverged(List<com.google.gson.JsonObject> jobs) {
+        for (var plate : ProviderHighlightClient.plates()) {
+            if (plate.displayKey() == null || jobs.stream().noneMatch(job ->
+                    plate.outputId().equals(job.get("resource").getAsString())
+                    && keyFingerprint(plate.displayKey()).equals(job.get("keyFingerprint").getAsString()))) return false;
+        }
+        for (var plate : ProviderHighlightClient.renderPlates()) {
+            if (plate.displayKey() == null || jobs.stream().noneMatch(job ->
+                    plate.outputId().equals(job.get("resource").getAsString())
+                    && keyFingerprint(plate.displayKey()).equals(job.get("keyFingerprint").getAsString()))) return false;
+        }
+        return true;
+    }
+
+    private String keyFingerprint(appeng.api.stacks.AEKey key) {
+        return CaptureEvidence.sha256(DriverPlatform.encodeResourceKey(key, minecraft));
     }
 
     private List<com.google.gson.JsonObject> jobs() {
@@ -395,8 +483,8 @@ final class ResourceFixtureClient {
         String hash = CaptureEvidence.sha256(Files.readAllBytes(capture.path()));
         screenshots.add(Map.of("name", capture.name(), "sha256", hash));
         observations.add(Map.of("case", cases.get(caseIndex).name(), "checkpoint", capture.name(),
-                "screen", "world", "plates", capture.plates().stream().map(ResourceFixtureClient::plateEvidence).toList(),
-                "renderPlates", capture.renderPlates().stream().map(ResourceFixtureClient::renderPlateEvidence).toList(),
+                "screen", "world", "plates", capture.plates().stream().map(this::plateEvidence).toList(),
+                "renderPlates", capture.renderPlates().stream().map(this::renderPlateEvidence).toList(),
                 "rainbows", capture.rainbows().stream().map(ResourceFixtureClient::rainbowEvidence).toList(),
                 "serverJobs", capture.jobs(), "frame", capture.frame(),
                 "observedAtMillis", capture.observedAtMillis()));
@@ -405,15 +493,19 @@ final class ResourceFixtureClient {
         captureWrite = CompletableFuture.completedFuture(null);
     }
 
-    private static Map<String, Object> plateEvidence(ProviderHighlightClient.Plate plate) {
+    private Map<String, Object> plateEvidence(ProviderHighlightClient.Plate plate) {
         return Map.of("networkId", plate.networkId(), "dimensionId", plate.dimensionId(),
                 "positions", plate.positions().stream().map(ResourceFixtureClient::positionEvidence).toList(),
-                "outputId", plate.outputId(), "highlightedAtMillis", plate.highlightedAtMillis());
+                "outputId", plate.outputId(), "highlightedAtMillis", plate.highlightedAtMillis(),
+                "keyFingerprint", plate.displayKey() == null ? "" : keyFingerprint(plate.displayKey()),
+                "keyType", plate.displayKey() == null ? "" : plate.displayKey().getType().getId().toString());
     }
 
-    private static Map<String, Object> renderPlateEvidence(ProviderHighlightClient.RenderPlate plate) {
+    private Map<String, Object> renderPlateEvidence(ProviderHighlightClient.RenderPlate plate) {
         return Map.of("dimensionId", plate.dimensionId(), "position", positionEvidence(plate.position()),
-                "outputId", plate.outputId());
+                "outputId", plate.outputId(),
+                "keyFingerprint", plate.displayKey() == null ? "" : keyFingerprint(plate.displayKey()),
+                "keyType", plate.displayKey() == null ? "" : plate.displayKey().getType().getId().toString());
     }
 
     private static Map<String, Object> rainbowEvidence(ProviderHighlightClient.Highlight highlight) {
@@ -477,7 +569,7 @@ final class ResourceFixtureClient {
         }
         requireExpectedCaptures();
         checks.put("cleanup", true);
-        checks.put("fixture-only", true);
+        if (options.resourceFixtureOnly()) checks.put("fixture-only", true);
         if (checks.containsValue(false)) throw new IllegalStateException("resource fixture checks are incomplete: " + checks);
         writeEvidence("PASS", "");
         result = ScenarioState.RESULT_WRITTEN;
@@ -645,7 +737,7 @@ final class ResourceFixtureClient {
     private List<String> expectedCaptureNames() {
         var expected = new ArrayList<String>();
         for (var resourceCase : cases) expected.addAll(ResourceFixtureControl.expectedScreenshots(
-                resourceCase, options.connectedDedicated()));
+                resourceCase, options.connectedDedicated(), !options.resourceFixtureOnly()));
         expected.add(ResourceFixtureControl.wireCase(cases.get(cases.size() - 1)) + "-cleanup.png");
         return List.copyOf(expected);
     }
@@ -700,6 +792,17 @@ final class ResourceFixtureClient {
                     Map.entry("screenshots", screenshots), Map.entry("checks", checks));
             var gson = new GsonBuilder().setPrettyPrinting().create();
             writeAtomic(options.output().resolve("resource-fixture-evidence.json"), gson.toJson(evidence));
+            if (!options.resourceFixtureOnly()) {
+                writeAtomic(options.output().resolve("resource-icon-evidence.json"), gson.toJson(Map.ofEntries(
+                        Map.entry("schema", 1), Map.entry("semanticResult", fixtureResult),
+                        Map.entry("visualAcceptance", fixtureResult.equals("PASS") ? "REVIEW_REQUIRED" : "FAIL"),
+                        Map.entry("target", DriverPlatform.TARGET), Map.entry("profile", options.profile()),
+                        Map.entry("scenario", options.scenario()),
+                        Map.entry("headSha", System.getProperty("ae2craftingtime.test.headSha", "")),
+                        Map.entry("graph", System.getProperty("ae2craftingtime.test.graph", "")),
+                        Map.entry("observations", observations), Map.entry("screenshots", screenshots),
+                        Map.entry("failure", failure))));
+            }
             writeAtomic(options.output().resolve("result.json"), gson.toJson(Map.ofEntries(
                     Map.entry("schema", 1), Map.entry("complete", fixtureResult.equals("PASS")),
                     Map.entry("driver", driverFile), Map.entry("target", DriverPlatform.TARGET),

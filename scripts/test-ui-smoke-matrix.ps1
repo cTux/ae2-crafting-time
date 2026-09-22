@@ -128,10 +128,13 @@ $raw=Get-Content (Join-Path $CampaignDirectory 'result.json') -Raw | ConvertFrom
 
 Set-Content -LiteralPath (Join-Path $temp '.gitignore') 'build/'
 try {
+    $productionPreview = & $shell -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -PlanOnly `
+        -Target 1.20.1-forge -Scenario delayed-resource-icons
+    if ($LASTEXITCODE -ne 0 -or (($productionPreview -join "`n") | ConvertFrom-Json).targets[0].cases[0] -cne 'delayed-resource-icons') {
+        throw 'Production resource icon plan was not preserved'
+    }
     Assert-ProcessRejected @('-NoProfile','-File',(Join-Path $scripts 'run-ui-smoke-matrix.ps1'),'-PlanOnly',
-        '-Target','1.20.1-forge','-Scenario','delayed-resource-icons') 'ResourceFixtureOnly is required exactly'
-    Assert-ProcessRejected @('-NoProfile','-File',(Join-Path $scripts 'run-ui-smoke-matrix.ps1'),'-PlanOnly',
-        '-Target','1.20.1-forge','-Scenario','waiting-status','-ResourceFixtureOnly') 'ResourceFixtureOnly is required exactly'
+        '-Target','1.20.1-forge','-Scenario','waiting-status','-ResourceFixtureOnly') 'ResourceFixtureOnly requires'
     Assert-ProcessRejected @('-NoProfile','-File',(Join-Path $scripts 'run-ui-smoke-matrix.ps1'),'-PlanOnly',
         '-Target','26.1.2-neoforge','-Scenario','appmek-resource-icons','-ResourceFixtureOnly') 'supported only'
     $resourcePreview = & $shell -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -PlanOnly `

@@ -57,23 +57,24 @@ function Test-UiSnapshotBounds($snapshot) {
 $ErrorActionPreference = "Stop"
 . (Join-Path $PSScriptRoot 'resource-fixture-contract.ps1')
 if ($Prewarm) { . (Join-Path $PSScriptRoot 'resource-prewarm-contract.ps1') }
-if ($Prewarm -and (!$ResourceFixtureOnly -or !$DedicatedAddress -or !$PreparedLaunch -or $PrewarmDeadline -le 0 -or
-        $PrewarmServerProcessId -le 0 -or $PrewarmBundle -cnotmatch '^[a-fA-F0-9]{64}$')) { throw 'Incomplete connected prewarm launch' }
 $resourceScenario = $Scenario -in @('delayed-resource-icons','appmek-resource-icons')
-if (($resourceScenario -and !$ResourceFixtureOnly) -or
-        ($ResourceFixtureOnly -and !$resourceScenario -and $Scenario -ne 'suite')) {
-    throw 'ResourceFixtureOnly is required exactly for resource fixture scenarios'
+if ($Prewarm -and (!$resourceScenario -or !$DedicatedAddress -or !$PreparedLaunch -or $PrewarmDeadline -le 0 -or
+        $PrewarmServerProcessId -le 0 -or $PrewarmBundle -cnotmatch '^[a-fA-F0-9]{64}$')) { throw 'Incomplete connected prewarm launch' }
+if ($ResourceFixtureOnly -and !$resourceScenario -and $Scenario -ne 'suite') {
+    throw 'ResourceFixtureOnly requires a resource fixture scenario'
 }
 function Get-ResourceFixtureCases([string]$CaseScenario, [string]$CaseTarget) {
     if ($CaseScenario -eq 'appmek-resource-icons') { return @('OXYGEN','HYDROGEN','CHEMICAL_OVERLAP') }
     return @('ITEM','WATER','LAVA') + $(if ($CaseTarget -eq '1.20.1-forge') { @('BUCKETLESS') } else { @() }) + @('FLUID_OVERLAP')
 }
-function Get-ResourceFixtureScreenshots([string[]]$FixtureCases, [bool]$Connected) {
+function Get-ResourceFixtureScreenshots([string[]]$FixtureCases, [bool]$Connected, [bool]$Production = $false) {
     $values = foreach ($fixtureCase in $FixtureCases) {
         $prefix = $fixtureCase.ToLowerInvariant().Replace('_','-')
-        $checkpoints = @('held') + $(if ($Connected) { @('rejoined') } else { @() }) +
+        $checkpoints = @('held') + $(if ($Production -and $fixtureCase -ceq 'WATER') { @('resource-reloaded','chunk-reloaded') }) +
+            $(if ($Connected) { @('rejoined') } else { @() }) +
             $(if ($fixtureCase.EndsWith('OVERLAP')) { @('winner-promoted') } else { @() }) +
-            @('completed','cancel-held','cancelled')
+            @('completed','cancel-held') +
+            $(if ($Production -and $fixtureCase.EndsWith('OVERLAP')) { @('provider-removed') }) + @('cancelled')
         foreach ($checkpoint in $checkpoints) { "$prefix-$checkpoint.png" }
     }
     $values += $FixtureCases[-1].ToLowerInvariant().Replace('_','-') + '-cleanup.png'
@@ -146,7 +147,7 @@ $stderr = Join-Path $report "launcher.stderr.log"
 $statusPath = Join-Path $report "status.json"
 $runId = [guid]::NewGuid().ToString("N")
 $campaignId = if ($resumeState) { $resumeState.campaignId } elseif ($CampaignId) { $CampaignId } else { [guid]::NewGuid().ToString('N') }
-$resourceFixtureId = if ($ResourceFixtureOnly) {
+$resourceFixtureId = if ($resourceScenario -or @($selectedCases | Where-Object { $_ -in @('delayed-resource-icons','appmek-resource-icons') }).Count) {
     if ($ResourceFixtureId) { $ResourceFixtureId } else { [guid]::NewGuid().ToString('N') }
 } else { '' }
 if ($campaignId -cnotmatch '^[A-Za-z0-9._-]{1,128}$') { throw 'Invalid UI-smoke campaign identity' }
@@ -315,7 +316,8 @@ try {
             $launchParameters = @{ LaunchManifest=$PreparedLaunch; BundleDirectory=$BundleDirectory
                 RuntimeDirectory=$runtime; Target=$Target; Profile=$profile; Scenario=$Scenario; World=$world
                 Evidence=$evidence; ProjectId=$ProjectId; Interactive=$Interactive; DedicatedAddress=$DedicatedAddress
-                ControlDirectory=$ControlDirectory; CampaignId=$campaignId; ResourceFixtureId=$resourceFixtureId }
+                ControlDirectory=$ControlDirectory; CampaignId=$campaignId; ResourceFixtureId=$resourceFixtureId; HeadSha=$headSha
+                GraphIdentity=$(if ($dependencyIdentity) { $dependencyIdentity.catalogueSha256 } else { "" }) }
             if ($Role) { $launchParameters.Role=$Role; $launchParameters.OfflineName=$OfflineName; $launchParameters.OfflineUuid=$OfflineUuid }
             if ($RuntimeDirectory) { $launchParameters.AllowedRuntimeRoot=$report }
             if ($phase -eq 2) { $launchParameters.ContinuationPath=$continuationPath; $launchParameters.ResumeOnly=$true }
@@ -337,7 +339,8 @@ try {
                 $launchParameters = @{ LaunchManifest=$PreparedLaunch; BundleDirectory=$BundleDirectory
                     RuntimeDirectory=$runtime; Target=$Target; Profile=$profile; Scenario=$Scenario; World=$world
                     Evidence=$evidence; ProjectId=$ProjectId; Interactive=$Interactive; DedicatedAddress=$DedicatedAddress
-                    ControlDirectory=$ControlDirectory; CampaignId=$campaignId; ResourceFixtureId=$resourceFixtureId }
+                    ControlDirectory=$ControlDirectory; CampaignId=$campaignId; ResourceFixtureId=$resourceFixtureId; HeadSha=$headSha
+                GraphIdentity=$(if ($dependencyIdentity) { $dependencyIdentity.catalogueSha256 } else { "" }) }
                 if ($Role) { $launchParameters.Role=$Role; $launchParameters.OfflineName=$OfflineName; $launchParameters.OfflineUuid=$OfflineUuid }
                 if ($RuntimeDirectory) { $launchParameters.AllowedRuntimeRoot=$report }
                 if ($phase -eq 2) {
@@ -563,7 +566,7 @@ try {
         $standardContracts = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json).cases
         $requiredChecks = if ($caseScenario -in @('delayed-resource-icons','appmek-resource-icons')) {
             @('server-identity','real-dispatch','delayed-plates','native-locate','lifecycle',
-                'capture-integrity','cleanup','fixture-only')
+                'capture-integrity','cleanup',$(if ($ResourceFixtureOnly) { 'fixture-only' } else { 'typed-keys' }))
         } elseif ($standardContracts.$caseScenario) {
             if ($DedicatedAddress -and $standardContracts.$caseScenario.connectedChecks) {
                 @($standardContracts.$caseScenario.checks) + @($standardContracts.$caseScenario.connectedChecks)
@@ -620,7 +623,8 @@ try {
         if (Compare-Object $requiredChecks $actualChecks -CaseSensitive) { throw "Invalid UI-smoke check set: $caseScenario" }
         foreach ($check in $requiredChecks) { if (-not $result.checks.$check) { throw "Failed UI-smoke check: $check" } }
         $requiredScreenshots = if ($caseScenario -in @('delayed-resource-icons','appmek-resource-icons')) {
-            Get-ResourceFixtureScreenshots (Get-ResourceFixtureCases $caseScenario $Target) ([bool]$DedicatedAddress)
+            Get-ResourceFixtureScreenshots (Get-ResourceFixtureCases $caseScenario $Target) `
+                ([bool]$DedicatedAddress) (!$ResourceFixtureOnly)
         } elseif ($standardContracts.$caseScenario) {
             if ($DedicatedAddress -and $standardContracts.$caseScenario.connectedScreenshots) {
                 @($standardContracts.$caseScenario.screenshots) + @($standardContracts.$caseScenario.connectedScreenshots)
@@ -672,8 +676,14 @@ try {
             }) -Force
             Assert-ResourceFixtureContract $fixture $caseScenario $Target ([bool]$DedicatedAddress) `
                 $campaignId $resourceFixtureId | Out-Null
+            if (!$ResourceFixtureOnly) {
+                $iconPath = Join-Path $caseEvidence 'resource-icon-evidence.json'
+                if (!(Test-Path -LiteralPath $iconPath -PathType Leaf)) { throw 'Missing resource icon production evidence' }
+                $icon = Get-Content -LiteralPath $iconPath -Raw | ConvertFrom-Json
+                Assert-ResourceIconEvidence $icon $fixture $headSha $dependencyIdentity.catalogueSha256
+            }
             $expectedCases = Get-ResourceFixtureCases $caseScenario $Target
-            $expectedCaptures = Get-ResourceFixtureScreenshots $expectedCases ([bool]$DedicatedAddress)
+            $expectedCaptures = Get-ResourceFixtureScreenshots $expectedCases ([bool]$DedicatedAddress) (!$ResourceFixtureOnly)
             $connectedEvidence = [bool]$DedicatedAddress
             if ($fixture.schema -ne 1 -or $fixture.fixtureResult -cne 'PASS' -or
                     $fixture.productionIconAcceptance -cne 'NOT_RUN' -or !$fixture.clientObservations.Count -or
@@ -695,11 +705,14 @@ try {
             }
             foreach ($fixtureCase in $expectedCases) {
                 $caseReceipts = @($fixture.receipts | Where-Object { $_.case -ceq $fixtureCase })
-                $requiredActions = @('CREATE') + $(if ($connectedEvidence) { @('REJOIN_PREPARE','RECONNECT') } else { @() }) +
+                $requiredActions = @('CREATE') + $(if (!$ResourceFixtureOnly -and $fixtureCase -ceq 'WATER') { @('UNLOAD_RELOAD') }) +
+                    $(if ($connectedEvidence) { @('REJOIN_PREPARE','RECONNECT') } else { @() }) +
                     @('RELEASE','RESET','CREATE','CANCEL','RESET')
                 if ($fixtureCase.EndsWith('OVERLAP')) {
                     $requiredActions = @('CREATE') + $(if ($connectedEvidence) { @('REJOIN_PREPARE','RECONNECT') } else { @() }) +
-                        @('RELEASE','RELEASE','RESET','CREATE','CANCEL','CANCEL','RESET')
+                        @('RELEASE','RELEASE','RESET','CREATE') +
+                        $(if (!$ResourceFixtureOnly -and $fixtureCase -ceq $expectedCases[-1]) { @('REMOVE_PROVIDER') }) +
+                        @('CANCEL','CANCEL','RESET')
                 }
                 if ($fixtureCase -ceq $expectedCases[-1]) { $requiredActions += 'COMPLETE' }
                 if ((Compare-Object $requiredActions @($caseReceipts.action) -SyncWindow 0 -CaseSensitive) -or

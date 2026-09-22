@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import appeng.api.stacks.AEKey;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -19,26 +20,36 @@ public final class ProviderLocateRecords {
             String outputName, String outputId, long createdTick) {
     }
 
-    public record ProviderStartInfo(UUID owner, String dimensionId, List<BlockPos> positions, String outputName) {
+    public record ProviderStartInfo(UUID owner, String dimensionId, List<BlockPos> positions, String outputName,
+            AEKey displayKey) {
         public ProviderStartInfo {
             dimensionId = dimensionId == null ? "" : dimensionId;
             positions = positions == null ? List.of() : List.copyOf(positions);
         }
 
         public ProviderStartInfo(UUID owner, List<BlockPos> positions, String outputName) {
-            this(owner, "", positions, outputName);
+            this(owner, "", positions, outputName, null);
+        }
+
+        public ProviderStartInfo(UUID owner, String dimensionId, List<BlockPos> positions, String outputName) {
+            this(owner, dimensionId, positions, outputName, null);
         }
     }
 
     public record StoredStart(ProfileKey key, UUID owner, String dimensionId, List<BlockPos> positions,
-            String outputName) {
+            String outputName, AEKey displayKey) {
         public StoredStart {
             dimensionId = dimensionId == null ? "" : dimensionId;
             positions = positions == null ? List.of() : List.copyOf(positions);
         }
 
         public StoredStart(ProfileKey key, UUID owner, List<BlockPos> positions, String outputName) {
-            this(key, owner, "", positions, outputName);
+            this(key, owner, "", positions, outputName, null);
+        }
+
+        public StoredStart(ProfileKey key, UUID owner, String dimensionId, List<BlockPos> positions,
+                String outputName) {
+            this(key, owner, dimensionId, positions, outputName, null);
         }
     }
 
@@ -79,6 +90,11 @@ public final class ProviderLocateRecords {
 
     public static synchronized void noteStart(ProfileKey key, UUID owner, String dimensionId,
             List<BlockPos> positions, String outputName) {
+        noteStart(key, owner, dimensionId, positions, outputName, null);
+    }
+
+    public static synchronized void noteStart(ProfileKey key, UUID owner, String dimensionId,
+            List<BlockPos> positions, String outputName, AEKey displayKey) {
         if (key == null) {
             return;
         }
@@ -99,7 +115,8 @@ public final class ProviderLocateRecords {
         if (mergedOwner == null && mergedPositions.isEmpty()) {
             return;
         }
-        STARTS.put(key, new ProviderStartInfo(mergedOwner, mergedDimension, mergedPositions, mergedName));
+        STARTS.put(key, new ProviderStartInfo(mergedOwner, mergedDimension, mergedPositions, mergedName,
+                displayKey != null ? displayKey : previous == null ? null : previous.displayKey()));
         evictEldest(STARTS, MAX_STARTS);
     }
 
@@ -124,19 +141,25 @@ public final class ProviderLocateRecords {
         STARTS.put(key, new ProviderStartInfo(owner,
                 keptDimension,
                 positions == null ? List.of() : List.copyOf(positions),
-                outputName == null || outputName.isBlank() ? key.outputId() : outputName));
+                outputName == null || outputName.isBlank() ? key.outputId() : outputName,
+                previous == null ? null : previous.displayKey()));
         evictEldest(STARTS, MAX_STARTS);
     }
 
     public static synchronized void replaceStart(ProfileKey key, UUID owner, String dimensionId,
             List<BlockPos> positions, String outputName) {
+        replaceStart(key, owner, dimensionId, positions, outputName, null);
+    }
+
+    public static synchronized void replaceStart(ProfileKey key, UUID owner, String dimensionId,
+            List<BlockPos> positions, String outputName, AEKey displayKey) {
         if (key == null) {
             return;
         }
         STARTS.put(key, new ProviderStartInfo(owner,
                 dimensionId == null ? "" : dimensionId,
                 positions == null ? List.of() : List.copyOf(positions),
-                outputName == null || outputName.isBlank() ? key.outputId() : outputName));
+                outputName == null || outputName.isBlank() ? key.outputId() : outputName, displayKey));
         evictEldest(STARTS, MAX_STARTS);
     }
 
@@ -154,7 +177,7 @@ public final class ProviderLocateRecords {
             var info = entry.getValue();
             if (info.owner() != null && info.positions() != null && !info.positions().isEmpty()) {
                 snapshot.add(new StoredStart(entry.getKey(), info.owner(), info.dimensionId(), info.positions(),
-                        info.outputName()));
+                        info.outputName(), info.displayKey()));
             }
             if (snapshot.size() >= MAX_STARTS) {
                 break;
@@ -198,7 +221,7 @@ public final class ProviderLocateRecords {
                 continue;
             }
             matches.add(new StoredStart(key, info.owner(), info.dimensionId(), info.positions(),
-                    info.outputName()));
+                    info.outputName(), info.displayKey()));
         }
         return List.copyOf(matches);
     }
@@ -295,7 +318,8 @@ public final class ProviderLocateRecords {
             }
             var dimension = entry.dimensionId() != null && !entry.dimensionId().isBlank() ? entry.dimensionId()
                     : "";
-            noteStart(entry.key(), entry.owner(), dimension, entry.positions(), entry.outputName());
+            noteStart(entry.key(), entry.owner(), dimension, entry.positions(), entry.outputName(),
+                    entry.displayKey());
         }
     }
 

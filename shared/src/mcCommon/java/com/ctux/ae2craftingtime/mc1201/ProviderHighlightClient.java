@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import appeng.api.stacks.AEKey;
 import com.ctux.ae2craftingtime.core.ProviderDisplaySelection;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -32,7 +33,7 @@ public final class ProviderHighlightClient {
     }
 
     public record Plate(String networkId, String dimensionId, List<BlockPos> positions, String outputId,
-            long highlightedAtMillis) {
+            long highlightedAtMillis, AEKey displayKey) {
         public Plate {
             networkId = networkId == null ? "" : networkId;
             positions = positions == null ? List.of() : List.copyOf(positions);
@@ -40,15 +41,23 @@ public final class ProviderHighlightClient {
         }
 
         public Plate(String dimensionId, List<BlockPos> positions, String outputId) {
-            this("", dimensionId, positions, outputId, System.currentTimeMillis());
+            this("", dimensionId, positions, outputId, System.currentTimeMillis(), null);
         }
 
         public Plate(String dimensionId, List<BlockPos> positions, String outputId, long highlightedAtMillis) {
-            this("", dimensionId, positions, outputId, highlightedAtMillis);
+            this("", dimensionId, positions, outputId, highlightedAtMillis, null);
+        }
+
+        public Plate(String networkId, String dimensionId, List<BlockPos> positions, String outputId,
+                long highlightedAtMillis) {
+            this(networkId, dimensionId, positions, outputId, highlightedAtMillis, null);
         }
     }
 
-    public record RenderPlate(String dimensionId, BlockPos position, String outputId) {
+    public record RenderPlate(String dimensionId, BlockPos position, String outputId, AEKey displayKey) {
+        public RenderPlate(String dimensionId, BlockPos position, String outputId) {
+            this(dimensionId, position, outputId, null);
+        }
     }
 
     private static final LinkedHashMap<String, Plate> PLATES = new LinkedHashMap<>();
@@ -103,19 +112,25 @@ public final class ProviderHighlightClient {
     }
 
     public static void showPlate(String networkId, String dimensionId, List<BlockPos> positions, String outputId) {
+        showPlate(networkId, dimensionId, positions, outputId, null);
+    }
+
+    public static void showPlate(String networkId, String dimensionId, List<BlockPos> positions, String outputId,
+            AEKey displayKey) {
         if (dimensionId == null || positions == null || positions.isEmpty() || outputId == null
                 || outputId.isBlank()) {
             return;
         }
-        storePlate(networkId, dimensionId, positions, outputId);
+        storePlate(networkId, dimensionId, positions, outputId, displayKey);
     }
 
-    private static void storePlate(String networkId, String dimensionId, List<BlockPos> positions, String outputId) {
+    private static void storePlate(String networkId, String dimensionId, List<BlockPos> positions, String outputId,
+            AEKey displayKey) {
         if (outputId == null || outputId.isBlank()) {
             return;
         }
         PLATES.put(keyOf(networkId, dimensionId, outputId),
-                new Plate(networkId, dimensionId, positions, outputId, System.currentTimeMillis()));
+                new Plate(networkId, dimensionId, positions, outputId, System.currentTimeMillis(), displayKey));
     }
 
     public static Highlight live() {
@@ -242,7 +257,7 @@ public final class ProviderHighlightClient {
                 emptied.add(entry.getKey());
             } else if (kept.size() != plate.positions().size()) {
                 entry.setValue(new Plate(plate.networkId(), plate.dimensionId(), kept, plate.outputId(),
-                        plate.highlightedAtMillis()));
+                        plate.highlightedAtMillis(), plate.displayKey()));
             }
         }
         emptied.forEach(PLATES::remove);
@@ -260,7 +275,7 @@ public final class ProviderHighlightClient {
                 .toList();
         return ProviderDisplaySelection.firstByPosition(candidates).stream()
                 .map(selected -> new RenderPlate(selected.dimensionId(), selected.position(),
-                        selected.value().outputId()))
+                        selected.value().outputId(), selected.value().displayKey()))
                 .toList();
     }
 

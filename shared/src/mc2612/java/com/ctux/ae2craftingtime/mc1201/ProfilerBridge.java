@@ -189,8 +189,8 @@ public final class ProfilerBridge {
             if (crafted.getLongValue() <= 0) {
                 continue;
             }
-            ProviderLocateRecords.noteStart(key(networkId, crafted.getKey()), owner, null,
-                    displayNameOf(crafted.getKey()));
+            ProviderLocateRecords.noteStart(key(networkId, crafted.getKey()), owner, "", null,
+                    displayNameOf(crafted.getKey()), crafted.getKey());
         }
         persistProviderState();
         var predictedSeconds = jobEstimate.remainingSeconds((key, amount) -> estimateSeconds(key, amount)).orElse(0);
@@ -323,14 +323,20 @@ public final class ProfilerBridge {
                 .orElse(List.of());
     }
 
+    public static AEKey displayKey(Object scope, ProfileKey key) {
+        var live = ProviderStartTracker.displayKey(scope, key);
+        return live.orFallback(ProviderLocateRecords.startFor(key)
+                .map(ProviderLocateRecords.ProviderStartInfo::displayKey).orElse(null));
+    }
+
     public static void replaceProviderStart(ProfileKey key, UUID owner,
             List<BlockPos> positions, String outputName) {
         ProviderLocateRecords.replaceStart(key, owner, positions, outputName);
     }
 
     public static void replaceProviderStart(ProfileKey key, UUID owner, String dimensionId,
-            List<BlockPos> positions, String outputName) {
-        ProviderLocateRecords.replaceStart(key, owner, dimensionId, positions, outputName);
+            List<BlockPos> positions, String outputName, AEKey displayKey) {
+        ProviderLocateRecords.replaceStart(key, owner, dimensionId, positions, outputName, displayKey);
     }
 
     /**
@@ -461,13 +467,15 @@ public final class ProfilerBridge {
                 continue;
             }
             if (kept.size() != positions.size() || !dimension.equals(storedDimension)) {
-                ProviderLocateRecords.replaceStart(key, owner, dimension, kept, start.outputName());
+                ProviderLocateRecords.replaceStart(key, owner, dimension, kept, start.outputName(),
+                        start.displayKey());
                 pruned = true;
             }
             try {
                 StatsNetwork.sendTo(player,
                         new com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightS2C(key.networkId(), dimension,
-                                kept, key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS, true));
+                                kept, key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS, true,
+                                start.displayKey()));
             } catch (Exception ignored) {
                 // One unsendable plate must not hide the rest.
             }

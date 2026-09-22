@@ -1,5 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import appeng.api.stacks.AEItemKey;
+import appeng.client.api.AEKeyRenderState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.item.ItemModelResolver;
@@ -17,6 +19,7 @@ import net.neoforged.neoforge.client.event.SubmitCustomGeometryEvent;
 @EventBusSubscriber(modid = Ae2CraftingTime.MOD_ID, value = Dist.CLIENT)
 public final class ProviderHighlightRender {
     private static final ItemStackRenderState ITEM_STATE = new ItemStackRenderState();
+    private static final AEKeyRenderState RESOURCE_STATE = new AEKeyRenderState();
     private static ItemModelResolver itemResolver;
     private static ModelManager resolverManager;
 
@@ -97,12 +100,18 @@ public final class ProviderHighlightRender {
             if (!levelDimension.equals(plate.dimensionId())) {
                 continue;
             }
-            var stack = ProviderHighlightShapes.resolveItem(plate.outputId());
-            if (stack.isEmpty()) {
+            var key = plate.displayKey();
+            if (key == null) {
                 continue;
             }
-            itemResolver.updateForTopItem(ITEM_STATE, stack, ItemDisplayContext.FIXED, minecraft.level, null, 0);
-            if (ITEM_STATE.isEmpty()) {
+            if (key instanceof AEItemKey item) {
+                itemResolver.updateForTopItem(ITEM_STATE, ProviderHighlightShapes.resolveItem(item), ItemDisplayContext.FIXED,
+                        minecraft.level, null, 0);
+            } else {
+                RESOURCE_STATE.clear();
+                RESOURCE_STATE.extract(key, minecraft.level, 0);
+            }
+            if (key instanceof AEItemKey ? ITEM_STATE.isEmpty() : RESOURCE_STATE.isEmpty()) {
                 continue;
             }
             var pos = plate.position();
@@ -111,7 +120,11 @@ public final class ProviderHighlightRender {
                 pose.pushPose();
                 ProviderHighlightShapes.orientFaceForItem(pose, pos.getX() - camera.x, pos.getY() - camera.y,
                         pos.getZ() - camera.z, face);
-                ITEM_STATE.submit(pose, collector, light, OverlayTexture.NO_OVERLAY, 0);
+                if (key instanceof AEItemKey) {
+                    ITEM_STATE.submit(pose, collector, light, OverlayTexture.NO_OVERLAY, 0);
+                } else {
+                    RESOURCE_STATE.submit(pose, collector, light);
+                }
                 pose.popPose();
             }
         }

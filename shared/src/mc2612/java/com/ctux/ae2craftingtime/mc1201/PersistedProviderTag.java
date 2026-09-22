@@ -16,6 +16,10 @@ final class PersistedProviderTag {
     private static final int MAX_NAME_LENGTH = 512;
 
     static List<StoredStart> readStarts(ListTag starts) {
+        return readStarts(starts, null);
+    }
+
+    static List<StoredStart> readStarts(ListTag starts, Object registries) {
         var persisted = new ArrayList<StoredStart>();
         for (var startTag : starts) {
             if (!(startTag instanceof CompoundTag start)) {
@@ -44,13 +48,19 @@ final class PersistedProviderTag {
                 continue;
             }
             var dimension = start.getStringOr("dimension", "");
+            var displayTag = start.get("displayKey") instanceof CompoundTag compound ? compound : null;
+            var displayKey = ProviderDisplayKeyTag.read(displayTag, registries);
             persisted.add(new StoredStart(key, owner, dimension, positions,
-                    name.isBlank() ? key.outputId() : name));
+                    name.isBlank() ? key.outputId() : name, displayKey));
         }
         return persisted;
     }
 
     static ListTag writeStarts(List<StoredStart> starts) {
+        return writeStarts(starts, null);
+    }
+
+    static ListTag writeStarts(List<StoredStart> starts, Object registries) {
         var startTags = new ListTag();
         for (var start : starts) {
             if (start == null || start.key() == null || start.owner() == null) {
@@ -73,6 +83,10 @@ final class PersistedProviderTag {
             tag.put("positions", posTags);
             var name = start.outputName() == null ? "" : start.outputName();
             tag.putString("name", name.length() > MAX_NAME_LENGTH ? name.substring(0, MAX_NAME_LENGTH) : name);
+            var displayTag = ProviderDisplayKeyTag.write(start.displayKey(), registries);
+            if (displayTag != null) {
+                tag.put("displayKey", displayTag);
+            }
             startTags.add(tag);
         }
         return startTags;

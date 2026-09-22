@@ -29,7 +29,7 @@ public record ProviderLocateC2S(String outputId) {
                         (target, highlight) -> com.ctux.ae2craftingtime.mc1201.StatsNetwork.sendTo(target,
                                 new ProviderHighlightS2C(highlight.networkId(), highlight.dimensionId(),
                                         highlight.positions(), highlight.outputId(), highlight.durationSeconds(),
-                                        highlight.plateOnly())));
+                                        highlight.plateOnly(), highlight.displayKey())));
             }
         });
         context.setPacketHandled(true);

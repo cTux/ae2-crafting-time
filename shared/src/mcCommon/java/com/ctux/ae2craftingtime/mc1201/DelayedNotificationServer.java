@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import appeng.api.stacks.AEKey;
 import appeng.api.networking.IGrid;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.mc1201.net.ProviderHighlightCodec;
@@ -85,13 +86,14 @@ public final class DelayedNotificationServer {
             BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender, boolean chatEnabled) {
         var positions = ProfilerBridge.locatePositions(scope, grid, key);
         var name = ProfilerBridge.displayName(key);
+        var displayKey = ProfilerBridge.displayKey(scope, key);
         UUID recordId = null;
         if (!positions.isEmpty()) {
             recordId = ProviderLocateRecords.create(owner, dimension, positions, name, key.outputId(),
                     player.level().getGameTime()).id();
         }
-        ProfilerBridge.replaceProviderStart(key, owner, dimension, positions, name);
-        pushAutoHighlight(player, dimension, key, positions, highlightSender);
+        ProfilerBridge.replaceProviderStart(key, owner, dimension, positions, name, displayKey);
+        pushAutoHighlight(player, dimension, key, positions, displayKey, highlightSender);
         if (chatEnabled) {
             player.sendSystemMessage(DelayedChatText.delayedMessage(name, recordId, idleTicks, typicalTicks));
         }
@@ -106,17 +108,23 @@ public final class DelayedNotificationServer {
     public static BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> defaultHighlightSender() {
         return (player, highlight) -> StatsNetwork.sendTo(player, new ProviderHighlightS2C(
                 highlight.networkId(), highlight.dimensionId(), highlight.positions(), highlight.outputId(),
-                highlight.durationSeconds(), highlight.plateOnly()));
+                highlight.durationSeconds(), highlight.plateOnly(), highlight.displayKey()));
     }
 
     static void pushAutoHighlight(ServerPlayer player, String dimension, ProfileKey key,
             List<BlockPos> positions, BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
+        pushAutoHighlight(player, dimension, key, positions, null, highlightSender);
+    }
+
+    static void pushAutoHighlight(ServerPlayer player, String dimension, ProfileKey key,
+            List<BlockPos> positions, AEKey displayKey,
+            BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
         if (player == null || key == null || positions == null || positions.isEmpty()
                 || highlightSender == null) {
             return;
         }
         highlightSender.accept(player, new ProviderHighlightCodec.Highlight(key.networkId(), dimension, positions,
-                key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS, true));
+                key.outputId(), ProviderLocateCommand.HIGHLIGHT_SECONDS, true, displayKey));
     }
 
     /**
