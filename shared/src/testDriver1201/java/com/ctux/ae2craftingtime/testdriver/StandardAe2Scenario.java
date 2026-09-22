@@ -34,7 +34,7 @@ final class StandardAe2Scenario {
     static final Map<String, List<String>> CHECKS = Map.ofEntries(
             Map.entry("standard-plan-controls", List.of("plan", "plan-sort", "missing-first", "plan-tooltip",
                     "plan-details", "plan-reset", "total-ttc", "layout", "item-resolution")),
-            Map.entry("recurrent-plan", List.of("recurrent-row", "red-normal", "recurrent-tooltip", "unchanged-quantity",
+            Map.entry("recurrent-plan", List.of("recurrent-row", "red-warning-style", "recurrent-tooltip", "unchanged-quantity",
                     "layout", "variant-clear")),
             Map.entry("stored-variant-plan", List.of("initial-clear", "live-near", "removed-clear",
                     "exact-clear", "restored-near", "gold-normal", "variant-tooltip", "unchanged-plan",
@@ -709,15 +709,21 @@ final class StandardAe2Scenario {
             if (connectedDedicated && RecurrentPlanControl.state().recurrent() != (label != null)) return false;
             if (connectedDedicated && label != null
                     && !label.arguments().equals(List.of(Long.toString(RecurrentCampaign.REQUESTED_AMOUNT)))) return false;
-            if (label != null && (label.bold() || !java.util.Objects.equals(label.color(), 0xFF5555)
+            if (label != null && (!label.bold() || !java.util.Objects.equals(label.color(), 0xFF5555)
                     || label.arguments().size() != 1 || !label.rendered().endsWith(label.arguments().get(0))))
-                throw new IllegalStateException("Recurrence label lost its red normal style or amount");
+                throw new IllegalStateException("Recurrence label lost its red warning style or amount");
+            if (label != null && snapshot.text().stream()
+                    .filter(text -> text.key().equals("text.ae2craftingtime.plan.recurrent"))
+                    .noneMatch(text -> text.bold() && java.util.Objects.equals(text.color(), 0xFF5555)
+                            && text.bounds() != null && snapshot.badges().stream()
+                            .anyMatch(badge -> text.bounds().inside(badge))))
+                throw new IllegalStateException("Recurrent label has no containing rendered badge");
             if (!connectedDedicated && recurrenceFixture.reported() && label != null
                     && !label.arguments().equals(List.of(Long.toString(recurrenceFixture.requestedAmount()))))
                 throw new IllegalStateException("Recurrence label lost requested quantity " + recurrenceFixture.requestedAmount());
             if (!row.cell().inside(snapshot.gui())) throw new IllegalStateException("Recurrence row escapes plan layout");
             mark(checks, "recurrent-row", true);
-            mark(checks, "red-normal", label == null || !label.bold() && java.util.Objects.equals(label.color(), 0xFF5555));
+            mark(checks, "red-warning-style", true);
             mark(checks, "unchanged-quantity", label == null || label.arguments().size() == 1
                     && label.rendered().endsWith(label.arguments().get(0)));
             mark(checks, "layout", row.cell().inside(snapshot.gui()));
@@ -739,6 +745,9 @@ final class StandardAe2Scenario {
                     "text.ae2craftingtime.plan.stored_variant"))) return false;
             var recurrent = snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.plan.recurrent_hint"));
             if (recurrenceHover != recurrent) return false;
+            if (recurrenceHover && snapshot.tooltip().stream().noneMatch(text ->
+                    text.key().equals("text.ae2craftingtime.plan.recurrent") && text.bold()
+                            && java.util.Objects.equals(text.color(), 0xFF5555))) return false;
             if (connectedDedicated) {
                 var action = recurrenceCaptured ? "captured" : recurrenceRejoined ? "rejoined" : recurrenceSwapped ? "swapped" : recurrenceVisited ? "grid" : "initial";
                 var observedMenu = ((CraftConfirmScreen) minecraft.screen).getMenu();

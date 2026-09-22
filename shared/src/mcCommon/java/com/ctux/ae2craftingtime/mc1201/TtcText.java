@@ -18,7 +18,7 @@ import java.util.Optional;
 public final class TtcText {
     public static MutableComponent recurrent(Object... arguments) {
         return Component.translatable("text.ae2craftingtime.plan.recurrent", arguments)
-                .withStyle(style -> style.withColor(ChatFormatting.RED).withBold(false));
+                .withStyle(style -> style.withColor(ChatFormatting.RED).withBold(true));
     }
 
     public static MutableComponent recurrentHint() {

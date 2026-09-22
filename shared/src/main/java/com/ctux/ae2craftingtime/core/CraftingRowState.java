@@ -6,7 +6,7 @@ public final class CraftingRowState {
             "text.ae2craftingtime.no_space", "text.ae2craftingtime.no_provider", "text.ae2craftingtime.no_power",
             "text.ae2craftingtime.no_channel",
             "text.ae2craftingtime.no_target", "text.ae2craftingtime.input_blocked",
-            "text.ae2craftingtime.locked");
+            "text.ae2craftingtime.locked", "text.ae2craftingtime.plan.recurrent");
 
     public static boolean isBadge(String translationKey) {
         return BADGE_KEYS.contains(translationKey);
