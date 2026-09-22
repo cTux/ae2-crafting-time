@@ -1,8 +1,9 @@
 # Recurrent crafting status: technical design
 
-Status: implemented. This describes the current architecture and the open
-[#408](https://github.com/cTux/ae2-crafting-time/issues/408) investigation against
-the [specification](spec.md). Source inspection below is bound to
+Status: recurrence detection is implemented. The #496 rendering change below
+is planned against the [specification](spec.md); it has no runtime pass yet.
+The historical #408 investigation was resolved by
+[#410](https://github.com/cTux/ae2-crafting-time/pull/410). Its source inspection is bound to
 `01cd5d75862105d7af049f03c2e0d88d54f5b980`; it is not a runtime pass for a fix.
 
 ## Current calculation and summary flow
@@ -93,10 +94,44 @@ explanation before the TTC-only craftAmount guard. It does not replace strings
 by translated-text matching or overwrite the renderer.
 
 `TtcText` provides the English/Ukrainian `plan.recurrent` and
-`plan.recurrent_hint` components. Recurrent uses Minecraft red without bold;
-it is not a TTC badge or color category. Missing-first sorting, TTC values,
+`plan.recurrent_hint` components. The current implementation uses Minecraft red
+without bold or a compact badge. Missing-first sorting, TTC values,
 stored/craft quantities and Start behavior remain unchanged. Disabling hides
 the label; re-enabling may use only the still-current summary's evidence.
+
+### Planned shared warning presentation (#496)
+
+Implement [R8](spec.md#acceptance-criteria) through the existing text and badge
+paths. `TtcText.recurrent` owns the bold red component shared by the plan row
+and tooltip. Add only `text.ae2craftingtime.plan.recurrent` to
+`CraftingRowState.isBadge`'s existing key set. Keep the explanation key out.
+
+Both `mc1201` and `mc2612` versions of `AbstractTableRendererMixin` already
+consult that shared predicate when drawing table text. Reuse their measured
+component width, two-pixel padding, shadow, and `TtcBadge.fillRoundedRect` with
+`TtcBadge.BACKGROUND` (`0xB0000000`). These source sets cover the supported
+1.20.1 Forge/Fabric, 1.21.1 NeoForge, and 26.1.2 NeoForge targets. Check the
+resolved source-set wiring during implementation. No new renderer or per-target
+badge policy is needed.
+
+Badge drawing is a table-rendering concern. The tooltip receives the same bold
+red component through `CraftConfirmTableRendererMixin`, using its existing
+panel background. Preserve the supplied amount argument and plain explanation.
+The existing recurrence/enabled/positive-missing guards still control whether
+that component exists, so the badge disappears with it after replan or disable.
+Do not add cached visual state, protocol fields, or a profiling requirement.
+
+Keep Recurrent outside TTC color interpolation and provider-warning highlight
+eligibility. Its shared badge membership changes only presentation. Preserve
+AE2's missing-row background and the behavior of other badge keys.
+
+Update `TtcTextTest`'s normal-weight/non-badge expectations to bold red/badge
+membership while retaining both locales and formatted-amount assertions. The
+existing `recurrent-plan` driver and `scripts/ui-smoke-groups.json` currently
+call the style checkpoint `red-normal`; update them together to verify bold red
+text and an actual containing badge. Retain row/tooltip screenshots and compare
+with an existing red warning, including the 26.1.2 renderer path. A component
+assertion alone does not prove the background was drawn or the text fits.
 
 ## #408: overlapping summary callbacks
 
