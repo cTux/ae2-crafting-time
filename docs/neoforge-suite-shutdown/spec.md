@@ -1,5 +1,13 @@
 # NeoForge Suite Shutdown Spec
 
+Status: finished
+
+Scope: Final suite cleanup and shutdown verification.
+
+Implementation: [PR #370](https://github.com/cTux/ae2-crafting-time/pull/370).
+Verification: that PR records the full 32+4-case matrix, normal final process exit,
+101 reviewed captures and passing implementation-head CI.
+
 ## Goal
 
 Make a completed shared-world UI smoke suite restore its disposable fixture

@@ -48,6 +48,11 @@ Keep the specification solution-neutral. Make the technical design and
 implementation plan precise enough that implementation requires no product,
 architecture, compatibility, or scope decisions.
 
+Follow [the documentation lifecycle](../../../docs/documentation-status.md).
+Start each new scope at `draft`; after planning decisions, approvals and consistency
+review are complete, mark it `ready-to-implement` and link the issue and reviewed
+plan. A planning merge never marks implementation `finished`. Preserve any hold.
+
 ## Self-Review
 
 Review the three documents together before finalizing the issue:

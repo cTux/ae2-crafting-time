@@ -1,14 +1,19 @@
 # NO CHANNEL status
 
+Status: finished
+
+Scope: NO CHANNEL detection, display and original guide delivery.
+
+Implementation: [PR #423](https://github.com/cTux/ae2-crafting-time/pull/423).
+Verification: that PR records 12 passing graphs, 846 reviewed captures, and
+manual book QA. Automatic visual classification remains REVIEW_REQUIRED.
+
 Planned change: [#488](../../provider-locate/spec.md#planned-red-sky-beam)
 includes NO CHANNEL in automatic red plates with output icons and sky beams.
 This supersedes NC-06's no-highlight/no-plate boundary only; detection,
 freshness, runtime-only evidence and chat policy remain unchanged.
 
 Issue: [#405](https://github.com/cTux/ae2-crafting-time/issues/405).
-
-Status: implemented in [PR #423](https://github.com/cTux/ae2-crafting-time/pull/423).
-Extends the implemented [provider dispatch statuses](../spec.md).
 
 ## Goal
 

@@ -1,5 +1,7 @@
 # Provider Locate Implementation Plan
 
+Lifecycle: see scope status and evidence for [baseline](spec.md), [shared-provider icons](spec.md#planned-shared-provider-icon-correction), [resource icons](resource-icons/spec.md), and [red sky beams](spec.md#planned-red-sky-beam).
+
 The phases below describe the original feature. Later sections record #443
 and the planned red sky beam for #488; they do not repeat the original work.
 Let the commit hook create the PR, then use required CI as the first Gradle
@@ -103,7 +105,7 @@ steps in the same commit.
 
 ## #443: one delayed output per provider
 
-Status: planned, not implemented. Follow the
+Historical planning status: planned, not implemented. Follow the
 [specification](spec.md#acceptance-for-443) and
 [source evidence and design](technical-design.md#443-one-display-per-provider-position).
 Complete the correction as one conventional fix commit after review; do not
@@ -196,7 +198,7 @@ Fabric 1.20.1 and NeoForge 26.1.2; an automatic assertion is not visual approval
 
 ## Red sky beam implementation
 
-Status: planned, not implemented. Tracks
+Historical planning status: planned, not implemented. Tracks
 [issue #488](https://github.com/cTux/ae2-crafting-time/issues/488), the
 [beam criteria](spec.md#beam-acceptance-criteria) and
 [render design](technical-design.md#red-sky-beam-design). The planning PR must

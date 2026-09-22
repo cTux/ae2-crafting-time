@@ -1,5 +1,14 @@
 # Minecraft 1.20.1 Guide Book Specification
 
+Status: in-progress
+
+Scope: GuideME support and full port acceptance on both 1.20.1 loaders.
+
+Implementation: [PR #333](https://github.com/cTux/ae2-crafting-time/pull/333).
+Verification: that PR records blocked Fabric runtime acceptance.
+Later [NO CHANNEL delivery](https://github.com/cTux/ae2-crafting-time/pull/423) includes Forge/Fabric book QA,
+but does not explicitly close every port acceptance criterion.
+
 Issue: [#265](https://github.com/cTux/ae2-crafting-time/issues/265)
 
 This extends the implemented [modern guide specification](../spec.md) to both

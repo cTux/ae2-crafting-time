@@ -1,5 +1,7 @@
 # NeoForge Early-Display Config Smoke Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Evidence and root cause
 
 Campaign `20260908T132513130Z` ran NeoForge 1.21.1 with loader `21.1.238`

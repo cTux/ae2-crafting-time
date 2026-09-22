@@ -1,5 +1,7 @@
 # Project Infinity 0.1 Full UI Smoke Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 This design implements [PI-01 through PI-12](spec.md#requirements) by composing
 the existing named-modpack, TestDriver, suite, and evidence paths. It adds no
 new runtime or test framework.

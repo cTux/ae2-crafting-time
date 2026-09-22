@@ -1,5 +1,7 @@
 # Automated UI Testing Technical Design
 
+Lifecycle: see scope status and evidence for [base workflow](spec.md) and [unattended qualification](spec.md#unattended-evidence-gate).
+
 ## Failed native evidence retention
 
 Investigation for [#424](https://github.com/cTux/ae2-crafting-time/issues/424)

@@ -1,5 +1,7 @@
 # Guide Book Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Decision
 
 Use `guideme:guide` with the persistent component

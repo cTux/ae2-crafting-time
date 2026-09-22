@@ -1,5 +1,7 @@
 # Waiting To Start Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Research findings
 
 Discussion #65 asks for one fact that the client does not currently have: an

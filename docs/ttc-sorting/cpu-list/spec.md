@@ -1,11 +1,21 @@
 # TTC sorting for active crafting orders
 
+Status: in-progress
+
+Scope: CPU ordering baseline and Crazy AE2 Addons correction.
+
+Implementation: [PR #395](https://github.com/cTux/ae2-crafting-time/pull/395), [PR #451](https://github.com/cTux/ae2-crafting-time/pull/451).
+Verification: [PR #451](https://github.com/cTux/ae2-crafting-time/pull/451) records exact-pack, reconnect, fresh-process and
+Crazy-absent control evidence with passing current-head CI. This establishes
+the Forge correction, not the full C7 gate: integrated and connected UI evidence
+for all four targets still needs to be reconciled and linked.
+
 Tracking issues: [#387](https://github.com/cTux/ae2-crafting-time/issues/387)
 for the shipped baseline and
 [#421](https://github.com/cTux/ae2-crafting-time/issues/421) for Crazy AE2
 Addons compatibility. The baseline merged in
 [#395](https://github.com/cTux/ae2-crafting-time/pull/395); the Crazy ordering
-correction and its exact-pack runtime acceptance are pending.
+correction and exact-pack runtime acceptance are recorded in PR #451.
 
 ## Goal and scope
 

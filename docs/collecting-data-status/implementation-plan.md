@@ -1,5 +1,7 @@
 # Collecting Data Status Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Implement this as one small feature commit. There is no migration or staged
 rollout.
 

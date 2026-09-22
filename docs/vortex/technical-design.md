@@ -1,5 +1,7 @@
 # Vortex Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Existing Evidence
 
 The logical server already records TTC, waiting state, and delayed diagnostics

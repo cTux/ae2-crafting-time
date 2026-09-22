@@ -1,8 +1,14 @@
 # AE2 Crafting Time Guide Book Specification
 
-Issue: [#144](https://github.com/cTux/ae2-crafting-time/issues/144)
+Status: finished
 
-Status: implemented by [#263](https://github.com/cTux/ae2-crafting-time/pull/263), 2026-09-05.
+Scope: Original GuideME book and first chapter.
+
+Implementation: [PR #263](https://github.com/cTux/ae2-crafting-time/pull/263).
+Verification: [implementation checks](https://github.com/cTux/ae2-crafting-time/pull/263).
+Later ports and chapters have their own specifications and status.
+
+Issue: [#144](https://github.com/cTux/ae2-crafting-time/issues/144)
 
 ## Goal and scope
 

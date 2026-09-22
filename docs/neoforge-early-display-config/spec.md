@@ -1,5 +1,13 @@
 # NeoForge Early-Display Config Smoke Spec
 
+Status: in-progress
+
+Scope: Isolated early-display configuration and its smoke acceptance.
+
+Implementation: [PR #368](https://github.com/cTux/ae2-crafting-time/pull/368) is merged and CI passed.
+Verification: PR #368 records one passing primary run and script checks.
+The plan requires a second fresh primary run; that evidence is not linked there.
+
 ## Goal
 
 Make the prepared NeoForge 1.21.1 smoke start from an attributable loader

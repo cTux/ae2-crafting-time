@@ -1,5 +1,13 @@
 # AE2 Crafting Time Test Driver Spec
 
+Status: finished
+
+Scope: Shipped driver baseline, excluding separately tracked extensions.
+
+Implementation: [PR #128](https://github.com/cTux/ae2-crafting-time/pull/128), [PR #208](https://github.com/cTux/ae2-crafting-time/pull/208).
+Verification: [prepared-client results](../automated-ui-testing/prepared-clients-2026-09-08.md).
+Stored-variant and resource-icon sections inherit their linked feature status.
+
 The saved Forge fixture starts within reach of its marked terminal and contains
 no retained CPU jobs. Optional scenarios keep its grid, patterns, and samples.
 Native CPU setup waits for the formed cluster to become active before selection.
@@ -83,6 +91,9 @@ activation, not scenario success; older connected leaves keep their contracts.
 
 ## Stored-variant plan scenario (planned)
 
+Lifecycle: see [stored-variant implementation and remaining verification](../exact-ingredient-mismatch/spec.md).
+The heading retains its historical link anchor; the scenario is implemented.
+
 `stored-variant-plan` verifies [#327](../exact-ingredient-mismatch/spec.md) using
 real processing patterns and two damaged stacks of one item with different
 exact NBT/components. Keep one native confirmation menu and summary open while
@@ -109,6 +120,9 @@ must be verified before execution; missing provisioning remains a prerequisite.
 This is required future coverage, not an existing runnable leaf or a pass.
 
 ## Delayed resource icon scenarios (planned)
+
+Lifecycle: [fixture scope](connected-resource-fixtures/spec.md);
+[production icon scope](../provider-locate/resource-icons/spec.md).
 
 The fixture prerequisite [#482](connected-resource-fixtures/spec.md) merged in
 [#484](https://github.com/cTux/ae2-crafting-time/pull/484).
@@ -221,7 +235,6 @@ All four native targets run the three leaves. The Forge 1.20.1, NeoForge 1.21.1,
 and NeoForge 26.1.2 AdvancedAE graphs repeat them with a job submitted directly
 to an AdvancedAE CPU. Driver code detects that graph from the loaded addon and
 does not link AdvancedAE classes in native or Fabric runs.
-
 
 ## No-space status scenario
 

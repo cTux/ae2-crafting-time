@@ -1,5 +1,7 @@
 # No Space Status Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 1. Add `NO_SPACE` to the covered pure-Java row-state resolver and test every
    stored, active, pending, and menu-flag boundary.
 2. Read `CraftingCPUScreen`'s current `isCantStoreItems()` value directly in the

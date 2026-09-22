@@ -1,5 +1,12 @@
 # AppliedE planner compatibility
 
+Status: in-progress
+
+Scope: AppliedE planner investigation and correction.
+
+Evidence: causal investigation in [PR #436](https://github.com/cTux/ae2-crafting-time/pull/436); [#420](https://github.com/cTux/ae2-crafting-time/issues/420) remains open.
+The upstream correction and final EMC verification are outstanding.
+
 [Issue #420](https://github.com/cTux/ae2-crafting-time/issues/420) records a valid
 one-furnace EMC request rejected before CPU submission. Restore that request, or
 explain a proven unsupported recipe accurately. The controlled exact-pack

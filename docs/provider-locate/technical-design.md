@@ -1,5 +1,7 @@
 # Provider Locate Technical Design
 
+Lifecycle: see scope status and evidence for [baseline](spec.md), [shared-provider icons](spec.md#planned-shared-provider-icon-correction), [resource icons](resource-icons/spec.md), and [red sky beams](spec.md#planned-red-sky-beam).
+
 ## Research findings
 
 Issue #231 asks for three facts the delayed warning does not currently have:

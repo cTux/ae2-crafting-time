@@ -1,6 +1,8 @@
 # Exact ingredient mismatch diagnostics: technical design
 
-Status: planned. Implements the [specification](spec.md).
+Lifecycle: see the [scope status and evidence](spec.md).
+
+Historical planning status: planned. Implements the [specification](spec.md).
 
 ## Evidence
 

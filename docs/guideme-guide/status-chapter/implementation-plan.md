@@ -1,5 +1,7 @@
 # Status Chapter Implementation Plan
 
+Lifecycle: see scope status and evidence for [original chapter](spec.md) and [Recurrent book/wiki delivery](spec.md#recurrent-addition-412).
+
 Implement [#305](https://github.com/cTux/ae2-crafting-time/issues/305) as one
 documentation feature commit after the approved planning change.
 

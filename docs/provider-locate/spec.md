@@ -1,5 +1,13 @@
 # Provider Locate Spec
 
+Status: finished
+
+Scope: Original delayed-only provider highlights and cleanup.
+
+Implementation: [PR #232](https://github.com/cTux/ae2-crafting-time/pull/232), [PR #245](https://github.com/cTux/ae2-crafting-time/pull/245), [PR #246](https://github.com/cTux/ae2-crafting-time/pull/246).
+Verification: [prepared-client results](../automated-ui-testing/prepared-clients-2026-09-08.md).
+Later icon and red-warning beam scopes are tracked separately below.
+
 The sections before [Planned red sky beam](#planned-red-sky-beam) describe the
 existing delayed-only plate behavior. Issue #488 supersedes that restriction
 for the planned feature: every red warning below drives both plates and beams.
@@ -224,6 +232,13 @@ read as messy rectangles in-game.)
 
 ## Planned shared-provider icon correction
 
+Status: in-progress
+
+Scope: One displayed icon per shared provider (#443).
+
+Implementation: [PR #445](https://github.com/cTux/ae2-crafting-time/pull/445) is merged and CI passed.
+Verification: complete runtime acceptance is not recorded in that PR.
+
 [Issue #443](https://github.com/cTux/ae2-crafting-time/issues/443) reports two
 delayed item icons overlapping on one provider's red plate. This correction is
 planned, not implemented. It applies to all four supported targets.
@@ -267,6 +282,12 @@ to fluid and supported gas/chemical icons. These documents describe a planned
 fix; the existing red plate may currently appear without a non-item icon.
 
 ## Planned red sky beam
+
+Status: ready-to-implement
+
+Scope: automatic plates and beams for all eight red warnings ([#488](https://github.com/cTux/ae2-crafting-time/issues/488)).
+
+Planning: [PR #489](https://github.com/cTux/ae2-crafting-time/pull/489), [PR #491](https://github.com/cTux/ae2-crafting-time/pull/491). No implementation is recorded for this extension.
 
 [Issue #488](https://github.com/cTux/ae2-crafting-time/issues/488) extends red
 backgrounds with output icons and red sky beams to every red warning status.

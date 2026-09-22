@@ -1,5 +1,7 @@
 # Collecting Data Status Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Decision
 
 Treat a missing or unusable cached estimate as a display state. Do not add a

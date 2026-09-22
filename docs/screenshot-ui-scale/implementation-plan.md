@@ -1,5 +1,7 @@
 # Screenshot UI Scale Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Implement this plan under [#319](https://github.com/cTux/ae2-crafting-time/issues/319).
 The planning change does not alter clients or rerun historical screenshots.
 

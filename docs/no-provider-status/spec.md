@@ -1,5 +1,12 @@
 # No Provider Status
 
+Status: finished
+
+Scope: NO PROVIDER detection and display.
+
+Implementation: [PR #206](https://github.com/cTux/ae2-crafting-time/pull/206).
+Verification: [four-target prepared-client results](../automated-ui-testing/prepared-clients-2026-09-08.md).
+
 Planned change: [#488](../provider-locate/spec.md#planned-red-sky-beam) includes
 NO PROVIDER in automatic red plates with output icons and sky beams when a
 validated associated provider target exists. No target means no marker, not

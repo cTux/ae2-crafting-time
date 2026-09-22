@@ -1,6 +1,11 @@
 # Delayed resource icons
 
-Status: planned bug fix, not implemented. Tracks [issue #376](https://github.com/cTux/ae2-crafting-time/issues/376).
+Status: in-progress
+
+Scope: Typed fluid and gas/chemical provider icons.
+
+Implementation: [PR #499](https://github.com/cTux/ae2-crafting-time/pull/499); [#376](https://github.com/cTux/ae2-crafting-time/issues/376) remains open.
+Fixture qualification does not satisfy production-icon acceptance.
 
 The [#482 fixture prerequisite](../../test-driver/connected-resource-fixtures/spec.md)
 merged in [#484](https://github.com/cTux/ae2-crafting-time/pull/484). Its

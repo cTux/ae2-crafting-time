@@ -1,5 +1,7 @@
 # Startup Integration Diagnostics Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Implement [issue #193](https://github.com/cTux/ae2-crafting-time/issues/193) from the
 [specification](spec.md) and [technical design](technical-design.md). This document
 retains the implementation sequence. Completed checks and remaining limits are

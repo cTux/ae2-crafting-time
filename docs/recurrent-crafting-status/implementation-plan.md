@@ -1,6 +1,8 @@
 # Recurrent crafting status: implementation plan
 
-Status: the original feature and #408 repair are implemented. The next change is
+Lifecycle: see scope status and evidence for [detection baseline](spec.md) and [warning styling](spec.md#planned-warning-style-496).
+
+Historical planning status: the original feature and #408 repair are implemented. The next change is
 the warning styling requested in
 [#496](https://github.com/cTux/ae2-crafting-time/issues/496), following the
 [specification](spec.md#planned-warning-style-496) and

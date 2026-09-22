@@ -1,5 +1,7 @@
 # NO CHANNEL implementation plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Issue: [#405](https://github.com/cTux/ae2-crafting-time/issues/405).
 [PR #423](https://github.com/cTux/ae2-crafting-time/pull/423) implements the
 [specification](spec.md) through the [technical design](technical-design.md).

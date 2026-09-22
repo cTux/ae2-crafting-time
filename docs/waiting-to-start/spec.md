@@ -1,5 +1,12 @@
 # Waiting To Start Spec
 
+Status: finished
+
+Scope: Waiting before first dispatch.
+
+Implementation: [PR #105](https://github.com/cTux/ae2-crafting-time/pull/105).
+Verification: [prepared-client waiting-status coverage](../automated-ui-testing/prepared-clients-2026-09-08.md).
+
 ## Goal
 
 In AE2's crafting-status screen, show when a scheduled output is waiting for

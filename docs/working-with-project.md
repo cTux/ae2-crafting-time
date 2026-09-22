@@ -37,6 +37,12 @@ Use the printed Gradle project names. The current modules are:
 - Put loader-only entrypoints, networking glue, saved-data glue, metadata, and tests under the matching `versions/<minecraft>-<loader>` folder.
 - Keep `scripts/release-matrix.json` as the source of truth for build/release rows.
 
+## Documentation Status
+
+Use the [documentation lifecycle](documentation-status.md) to distinguish draft
+plans, work ready to implement, implementation in progress, and verified completion.
+The canonical status lives in each feature specification; designs and plans link to it.
+
 ## Everyday Development
 
 Commit each fix or feature so the post-commit hook opens or updates its PR. Tests

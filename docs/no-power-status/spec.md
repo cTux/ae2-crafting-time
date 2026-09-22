@@ -1,5 +1,12 @@
 # No Power Status
 
+Status: finished
+
+Scope: NO POWER detection and display.
+
+Implementation: [PR #207](https://github.com/cTux/ae2-crafting-time/pull/207).
+Verification: [four-target prepared-client results](../automated-ui-testing/prepared-clients-2026-09-08.md).
+
 Issue: [#121](https://github.com/cTux/ae2-crafting-time/issues/121)
 
 ## Goal

@@ -1,5 +1,7 @@
 # TTC Sorting Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 This design implements the [specification](spec.md) for
 [#318](https://github.com/cTux/ae2-crafting-time/issues/318).
 

@@ -1,5 +1,12 @@
 # AE2 Ponder Guides Spec
 
+Status: draft
+
+Scope: Deferred Ponder guide proposal.
+
+Disposition: [#145](https://github.com/cTux/ae2-crafting-time/issues/145) was closed as [not relevant right now](https://github.com/cTux/ae2-crafting-time/issues/145#issuecomment-5561901138).
+No implementation is recorded; renewed approval and current-target review are needed.
+
 Issue: https://github.com/cTux/ae2-crafting-time/issues/145
 
 ## Goal

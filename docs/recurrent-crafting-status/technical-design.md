@@ -1,6 +1,8 @@
 # Recurrent crafting status: technical design
 
-Status: recurrence detection is implemented. The #496 rendering change below
+Lifecycle: see scope status and evidence for [detection baseline](spec.md) and [warning styling](spec.md#planned-warning-style-496).
+
+Historical planning status: recurrence detection is implemented. The #496 rendering change below
 is planned against the [specification](spec.md); it has no runtime pass yet.
 The historical #408 investigation was resolved by
 [#410](https://github.com/cTux/ae2-crafting-time/pull/410). Its source inspection is bound to

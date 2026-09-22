@@ -1,13 +1,16 @@
 # Status Chapter Technical Design
 
+Lifecycle: see scope status and evidence for [original chapter](spec.md) and [Recurrent book/wiki delivery](spec.md#recurrent-addition-412).
+
 ## Decision
 
 Extend the shared guide to one parent and twelve child Markdown pages. Derive
 inventory/order from current renderers, translations, and status types; derive
 meaning from matching status designs. Reuse seven retained screenshots and add
 three provider-dispatch captures for the original chapter. Those pages and the
-later NO CHANNEL page are shipped. The planned Recurrent extension adds one
-reviewed native-plan capture.
+later NO CHANNEL page are shipped. The Recurrent extension was delivered in
+PR #479; its remaining book/wiki verification is tracked in the linked scope.
+The design below retains the original requirement for one reviewed native-plan capture.
 
 This implements the [specification](spec.md) for
 [#305](https://github.com/cTux/ae2-crafting-time/issues/305).

@@ -1,5 +1,14 @@
 # Provider dispatch statuses
 
+Status: finished
+
+Scope: Original NO TARGET, INPUT BLOCKED and LOCKED statuses.
+
+Implementation: [PR #293](https://github.com/cTux/ae2-crafting-time/pull/293).
+Verification: [prepared-client results](../automated-ui-testing/prepared-clients-2026-09-08.md).
+[NO CHANNEL](no-channel/spec.md), tooltip controls below, and
+[red-warning highlights](../provider-locate/spec.md#planned-red-sky-beam) have separate scopes.
+
 Planned change: [#488](../provider-locate/spec.md#planned-red-sky-beam) adds
 automatic red plates with output icons and sky beams to every red warning,
 including these dispatch reasons. It supersedes this document's existing
@@ -7,14 +16,11 @@ no-red-plates boundary, while preserving detection, priority and chat policy.
 
 Issue: [#216](https://github.com/cTux/ae2-crafting-time/issues/216).
 
-Status: original planning approved on 2026-09-03; researched again on
-2026-09-06 against `51edf0f8f531c8f12fe4e192f934669359011390`.
-The original three statuses are implemented as of the 2026-09-13 repository
-baseline. The [NO CHANNEL extension](no-channel/spec.md) is planned separately
-in issue #405. The documents below retain the original three-status scope.
-See the [research findings](technical-design.md#repository-changes-since-the-original-plan).
-
 ## Goal
+
+The original three statuses and the [NO CHANNEL extension](no-channel/spec.md)
+are implemented. This document retains the original three-status scope; see
+the [source research](technical-design.md#repository-changes-since-the-original-plan).
 
 Explain why scheduled work cannot reach a machine with three crafting-status
 labels: `NO TARGET`, `INPUT BLOCKED`, and `LOCKED`. Replace a vague waiting or
@@ -109,6 +115,13 @@ See the [technical design](technical-design.md) and
 [implementation plan](implementation-plan.md).
 
 ## Planned warning-tooltip controls correction (#437)
+
+Status: in-progress
+
+Scope: Warning tooltip controls (#437).
+
+Implementation: [PR #447](https://github.com/cTux/ae2-crafting-time/pull/447) is merged and CI passed.
+Verification: full runtime acceptance is not recorded in that PR.
 
 [Issue #437](https://github.com/cTux/ae2-crafting-time/issues/437) restores the
 control hints skipped by warning tooltips. This correction is planned, not

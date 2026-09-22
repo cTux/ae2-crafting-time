@@ -1,5 +1,12 @@
 # Vortex Spec
 
+Status: ready-to-implement
+
+Scope: Vortex multi-network monitor and owner-bound Hubs.
+
+Planning: [PR #142](https://github.com/cTux/ae2-crafting-time/pull/142); [#141](https://github.com/cTux/ae2-crafting-time/issues/141).
+Hold: the issue is marked `do-not-implement-yet`; readiness does not lift that hold.
+
 Issue: [#141](https://github.com/cTux/ae2-crafting-time/issues/141)
 
 ## Goal

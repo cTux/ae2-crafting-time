@@ -1,5 +1,7 @@
 # Waiting To Start Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Implement this as one feature commit. Let the commit hook create the PR, then
 use required CI as the first Gradle test run.
 

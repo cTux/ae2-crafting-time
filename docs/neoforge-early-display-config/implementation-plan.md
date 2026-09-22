@@ -1,5 +1,7 @@
 # NeoForge Early-Display Config Smoke Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Implement this plan after the documentation PR merges. It restores the behavior
 defined in [the spec](spec.md) for
 [#357](https://github.com/cTux/ae2-crafting-time/issues/357).

@@ -1,9 +1,12 @@
 # Recurrent ingredients in the crafting plan
 
-Status: recurrence detection is implemented; #408 was fixed by
-[#410](https://github.com/cTux/ae2-crafting-time/pull/410). The styling change in
-R8 is planned under [#496](https://github.com/cTux/ae2-crafting-time/issues/496).
-Merging these documents does not implement that change or close #496.
+Status: in-progress
+
+Scope: Recurrence detection baseline and its verification.
+
+Implementation: [PR #404](https://github.com/cTux/ae2-crafting-time/pull/404), [PR #410](https://github.com/cTux/ae2-crafting-time/pull/410).
+Verification: merged implementation and passing CI are recorded; full baseline
+acceptance evidence is not established by those records. Styling #496 is separate below.
 
 Original feature: [#320](https://github.com/cTux/ae2-crafting-time/issues/320).
 
@@ -51,6 +54,12 @@ Ukrainian uses `Циклічне`; its tooltip is
 Text and the tooltip explain the status without relying on color alone.
 
 ### Planned warning style (#496)
+
+Status: ready-to-implement
+
+Scope: shared red warning presentation ([#496](https://github.com/cTux/ae2-crafting-time/issues/496)).
+
+Planning: [PR #498](https://github.com/cTux/ae2-crafting-time/pull/498); merging the plan does not implement the style change.
 
 Use the existing red warning presentation, such as `NO PROVIDER`: bold Minecraft
 red (`0xFF5555`) text with a shadow and the same compact, rounded dark background

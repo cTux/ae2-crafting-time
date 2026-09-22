@@ -1,5 +1,12 @@
 # Completed Craft Total TTC Specification
 
+Status: finished
+
+Scope: Clear total TTC after craft completion.
+
+Implementation: [PR #330](https://github.com/cTux/ae2-crafting-time/pull/330), [PR #346](https://github.com/cTux/ae2-crafting-time/pull/346).
+Verification: [four-target completion evidence](https://github.com/cTux/ae2-crafting-time/issues/325#issuecomment-5591111826).
+
 Issue: [#325](https://github.com/cTux/ae2-crafting-time/issues/325)
 
 ## Goal

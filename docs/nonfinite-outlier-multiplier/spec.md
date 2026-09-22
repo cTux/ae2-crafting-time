@@ -1,5 +1,13 @@
 # Finite Outlier Configuration and TTC
 
+Status: finished
+
+Scope: Finite configuration and estimate validation.
+
+Implementation: [PR #477](https://github.com/cTux/ae2-crafting-time/pull/477).
+Verification: implementation-head Gradle tests and Build checks passed in that PR;
+this scope uses source and regression checks, not a claimed Minecraft reproduction.
+
 Issue: [#469](https://github.com/cTux/ae2-crafting-time/issues/469)
 
 ## Problem

@@ -1,5 +1,7 @@
 # Delayed resource icon design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Tracks [issue #376](https://github.com/cTux/ae2-crafting-time/issues/376).
 This is a proposed implementation backed by source inspection, not runtime proof.
 

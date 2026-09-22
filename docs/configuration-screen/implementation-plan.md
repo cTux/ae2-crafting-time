@@ -1,5 +1,7 @@
 # In-game Configuration Screen Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Implement [#117](https://github.com/cTux/ae2-crafting-time/issues/117) from the
 [specification](spec.md) and [technical design](technical-design.md).
 

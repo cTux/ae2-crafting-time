@@ -1,5 +1,7 @@
 # CodexVM MCP Evaluation Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 The smallest safe result is a documented rejection plus measurements of the
 working tools. No runtime integration is needed for the
 [specification](spec.md).

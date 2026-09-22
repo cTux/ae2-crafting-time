@@ -1,5 +1,13 @@
 # Automated UI Testing Spec
 
+Status: finished
+
+Scope: Base automated runner, change selection and failed-evidence retention.
+
+Implementation: [PR #208](https://github.com/cTux/ae2-crafting-time/pull/208), [PR #220](https://github.com/cTux/ae2-crafting-time/pull/220), [PR #430](https://github.com/cTux/ae2-crafting-time/pull/430).
+Verification: implementation checks in those PRs and [prepared-client results](prepared-clients-2026-09-08.md).
+Unattended visual qualification is tracked separately below.
+
 ## Failed native evidence retention
 
 [#424](https://github.com/cTux/ae2-crafting-time/issues/424) restores failure
@@ -56,6 +64,14 @@ reduce prepared-client smoke coordination; it does not change the smoke pipeline
   identify risks and follow-up work requiring a separate implementation issue.
 
 ## Unattended evidence gate
+
+Status: in-progress
+
+Scope: Unattended execution and automatic visual qualification (#347/#351).
+
+Implementation: [PR #349](https://github.com/cTux/ae2-crafting-time/pull/349).
+Verification: [measured run](project-infinity-0.0.52.0.md); broader visual-reference
+qualification remains open in [#351](https://github.com/cTux/ae2-crafting-time/issues/351).
 
 Extension researched 2026-09-08 for
 [#347](https://github.com/cTux/ae2-crafting-time/issues/347). See the
@@ -141,13 +157,13 @@ Tracking issue: [#124](https://github.com/cTux/ae2-crafting-time/issues/124).
 
 ## Planned change-based smoke selection
 
-Tracking issue: [#218](https://github.com/cTux/ae2-crafting-time/issues/218).
+Change selection and independent standard cases were implemented in
+[PR #220](https://github.com/cTux/ae2-crafting-time/pull/220).
+CS-01 through CS-09 supersede the monolithic execution details below; the
+original behavior, evidence and safety requirements remain. The heading keeps
+its historical link anchor.
 
-Status: planned, researched on 2026-09-03. This section extends the implemented
-runner; it does not claim that automatic selection or independent standard
-cases already exist. The original #124 remains the completed baseline.
-For this extension, CS-01 through CS-09 supersede the monolithic execution
-details below; the original behavior, evidence and safety requirements remain.
+Tracking issue: [#218](https://github.com/cTux/ae2-crafting-time/issues/218).
 
 ### Scope and execution
 

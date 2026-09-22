@@ -1,12 +1,19 @@
 # Total TTC in the Crafting CPU list
 
-Status: implementation in progress in [PR #381](https://github.com/cTux/ae2-crafting-time/pull/381).
-Tracking issue: [#324](https://github.com/cTux/ae2-crafting-time/issues/324).
+Status: in-progress
+
+Scope: Original CPU-card total TTC implementation and acceptance.
+
+Implementation: [PR #381](https://github.com/cTux/ae2-crafting-time/pull/381) is merged and its CI passed.
+Verification: full completion evidence for this plan is not recorded in that PR.
+The [CPU sorting extension](../ttc-sorting/cpu-list/spec.md) records later work separately.
 
 The [active-order TTC sorting extension](../ttc-sorting/cpu-list/spec.md) adds
 full-list collection and ordering in TTC modes. Its explicit ordering and
 adaptive freshness rules supersede the original visible-only refresh boundary;
 this document remains authoritative for badge appearance and estimate meaning.
+
+Tracking issue: [#324](https://github.com/cTux/ae2-crafting-time/issues/324).
 
 ## Goal
 

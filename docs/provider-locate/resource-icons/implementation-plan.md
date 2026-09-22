@@ -1,5 +1,7 @@
 # Delayed resource icon implementation plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Tracks [issue #376](https://github.com/cTux/ae2-crafting-time/issues/376).
 No production fix has been applied. #482's fixture prerequisite merged in
 [#484](https://github.com/cTux/ae2-crafting-time/pull/484) at

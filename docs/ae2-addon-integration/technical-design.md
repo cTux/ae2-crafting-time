@@ -1,8 +1,10 @@
 # AE2 Addon Integration Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Versioned adapter selection
 
-Status: planned. Implements VS-01 through VS-10 in the
+Historical planning status: planned. Implements VS-01 through VS-10 in the
 [specification](spec.md#versioned-adapter-selection). The remaining sections
 describe the existing integration layers that this change must preserve.
 
@@ -21,7 +23,7 @@ evidence for regression targets, not fresh verification.
 | [Forge build](../../versions/1.20.1-forge/build.gradle), [extra AdvancedAE config](../../versions/1.20.1-forge/src/main/resources/ae2craftingtime-advancedae.mixins.json) | Forge packages AdvancedAE through an additional config and a shared source directory. Both configs must share the same selection state. |
 | [Lightning Tech mixin](../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/Ae2LtTimeWheelCraftingCpuLogicMixin.java), [ME Requester mixin](../../shared/src/mc1201/java/com/ctux/ae2craftingtime/mc1201/mixin/MERequesterScreenMixin.java) | Each currently has one adapter. Do not manufacture historical variants without an actual distinct supported contract. Lightning Tech's returned-output fix is a correctness change, not evidence that an old bug must be retained. |
 | [Dependencies](../dependencies.md), [campaign evidence](../mod-automation-coverage.md) | The curated Forge NeoEco pin is 20.3.0; Project Infinity records 20.4.0 and 20.4.2. Both sides of that contract change need regression proof. Source inspection alone does not identify the first released version of every Tree package. |
-| [Startup diagnostics design](../startup-integration-diagnostics/technical-design.md) | Issue #193 is planned, not implemented. Its inventory and observed-capability states must consume selection results rather than select a second time. |
+| [Startup diagnostics design](../startup-integration-diagnostics/technical-design.md) | At this research baseline, #193 was planned; its current delivery and verification are tracked in the [diagnostics spec](../startup-integration-diagnostics/spec.md). Its inventory and observed-capability states must consume selection results rather than select a second time. |
 
 Crafting Tree is also a fork boundary, not just a numerical version boundary.
 Live [original releases](https://www.curseforge.com/minecraft/mc-mods/ae2-crafting-tree/files/all)

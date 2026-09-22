@@ -1,5 +1,7 @@
 # Project Infinity 0.1 Full UI Smoke Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Execute this plan later as one manual named-modpack campaign linked to
 [#303](https://github.com/cTux/ae2-crafting-time/issues/303). Do not run the pack
 as part of this documentation change.

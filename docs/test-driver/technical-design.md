@@ -1,5 +1,7 @@
 # AE2 Crafting Time Test Driver Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 ## Capture evidence binding
 
 `CaptureEvidence` writes a sidecar only after the PNG completes, preserving the

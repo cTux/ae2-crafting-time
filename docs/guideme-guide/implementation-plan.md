@@ -1,5 +1,7 @@
 # Guide Book Implementation Plan
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Implement the [spec](spec.md) using the resource-only
 [design](technical-design.md). This planning change does not implement the mod.
 

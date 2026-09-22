@@ -1,5 +1,7 @@
 # NeoForge Suite Shutdown Technical Design
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 This design restores the final shared-world fixture through the same path used
 between cases. It adds no NeoForge-specific shutdown hook and does not weaken
 the launcher's exit validation.

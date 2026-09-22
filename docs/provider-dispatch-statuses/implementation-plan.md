@@ -1,5 +1,7 @@
 # Provider dispatch statuses: implementation plan
 
+Lifecycle: see scope status and evidence for [baseline](spec.md) and [tooltip correction](spec.md#planned-warning-tooltip-controls-correction-437).
+
 Implement only after approval of the [spec](spec.md) and
 [technical design](technical-design.md). This plan does not authorize a release
 or changes to upstream crafting behavior.

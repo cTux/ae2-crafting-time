@@ -1,5 +1,7 @@
 # AppliedE ordering failure and correction boundary
 
+Lifecycle: see the [scope status and evidence](spec.md).
+
 Current evidence base: 4d3d818602a98922c00af7d75fc9490133e8e6a3. Read the
 [spec](spec.md) and [plan](implementation-plan.md) together. The observed
 pre-request child mutation belongs to the Applied Enhancements/AppliedE planner

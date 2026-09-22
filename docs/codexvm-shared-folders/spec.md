@@ -1,5 +1,13 @@
 # CodexVM shared-folder recovery
 
+Status: finished
+
+Scope: Shared-folder investigation and verified no-change outcome.
+
+Delivery: [PR #402](https://github.com/cTux/ae2-crafting-time/pull/402).
+Verification: [round-trip and smoke results](results.md).
+The historical failure remains unexplained; this status does not claim a repair.
+
 Restore and verify the prepared smoke staging route described in
 [dev-client.md](../dev-client.md#host-build-and-vm-staging). Tracking issue:
 [#400](https://github.com/cTux/ae2-crafting-time/issues/400).

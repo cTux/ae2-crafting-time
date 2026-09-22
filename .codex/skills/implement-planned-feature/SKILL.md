@@ -22,7 +22,12 @@ The main agent owns every decision, implementation change, and review.
 ## Implement The Plan
 
 Implement the supplied plan directly. Preserve unrelated work, treat the issue
-and planning documents as read-only, and stop for user direction when the plan
+and approved requirements, design and acceptance criteria as read-only. Maintain
+only lifecycle status, implementation links and verification evidence under
+[the documentation lifecycle](../../../docs/documentation-status.md). Mark the
+active scope `in-progress` when implementation starts; mark it `finished` only
+after merge and all documented checks, with evidence. Keep completed baselines
+separate from follow-ups. Stop for user direction when the plan
 does not determine a product, architecture, compatibility, scope, migration, or
 publishing decision. Follow the repository's pre-PR test restriction while
 adding all planned tests.

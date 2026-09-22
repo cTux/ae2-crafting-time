@@ -1,5 +1,7 @@
 # CPU-Bound Stats: Data Model And Migration
 
+Lifecycle: see the [scope status and evidence](index.md).
+
 Part of `cpu-bound-stats/`. See `index.md` for the decisions.
 
 ## Profile key
