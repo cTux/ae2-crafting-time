@@ -22,6 +22,9 @@ Add the type as a plain label instead, such as `feature`, `bug`, or `tests`.
 
 ## Route
 
+- Run every UI smoke assertion and screenshot in English (`en_us`). Adding or
+  changing localizations does not add smoke runs in Ukrainian or any other
+  language; use non-smoke checks for translated text.
 - Build production and test-driver JARs only on the host. Follow
   [host build and VM staging](../../../docs/dev-client.md#host-build-and-vm-staging)
   for Java selection, the session worktree share, and artifact replacement.
