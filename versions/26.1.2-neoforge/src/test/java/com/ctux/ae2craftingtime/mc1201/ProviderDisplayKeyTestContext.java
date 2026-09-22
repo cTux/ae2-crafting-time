@@ -2,6 +2,15 @@ package com.ctux.ae2craftingtime.mc1201;
 
 /** Native registry context for the shared display-key boundary checks. */
 final class ProviderDisplayKeyTestContext {
+    static boolean nativeKeysAvailable() {
+        try {
+            net.minecraft.server.Bootstrap.bootStrap();
+            return appeng.api.stacks.AEFluidKey.of(net.minecraft.world.level.material.Fluids.WATER) != null;
+        } catch (Throwable unavailable) {
+            return false;
+        }
+    }
+
     static net.minecraft.network.FriendlyByteBuf buffer() {
         return new net.minecraft.network.RegistryFriendlyByteBuf(io.netty.buffer.Unpooled.buffer(), registries());
     }

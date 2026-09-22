@@ -39,6 +39,8 @@ class ProviderLocateTest {
         // Item lookup needs registries; constructing click/hover components does not.
         try {
             net.minecraft.server.Bootstrap.bootStrap();
+            AEItemKey.of(Items.STONE);
+            appeng.api.stacks.AEFluidKey.of(net.minecraft.world.level.material.Fluids.WATER);
             bootstrapped = true;
         } catch (Throwable ignored) {
             bootstrapped = false;

@@ -325,8 +325,8 @@ final class StandardCraftFixture {
 
     boolean removeResourceProvider(ServerPlayer player) {
         var pos = terminal.east(4);
-        player.serverLevel().setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
-        return player.serverLevel().getBlockEntity(pos) == null;
+        player.level().setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
+        return player.level().getBlockEntity(pos) == null;
     }
 
 

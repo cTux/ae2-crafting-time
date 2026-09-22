@@ -351,7 +351,7 @@ final class ResourceFixtureServer {
         if (Boolean.getBoolean("ae2craftingtime.test.resourceFixtureOnly") || processing == null) {
             throw new IllegalStateException("chunk unload requires a live production fixture");
         }
-        var level = player.serverLevel();
+        var level = (ServerLevel) player.level();
         if (unloadPhase == 0) {
             unloadProvider = grid.resourceProviders().get(0);
             releaseResourceChunks();

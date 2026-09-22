@@ -9,11 +9,12 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.world.level.material.Fluids;
 import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 class ProviderDisplayKeyTagTest {
     @Test
     void typedFluidRoundTripsAndBadOrMissingDataLosesOnlyTheIcon() {
-        net.minecraft.server.Bootstrap.bootStrap();
+        assumeTrue(ProviderDisplayKeyTestContext.nativeKeysAvailable(), "native registries require a running loader");
         var key = AEFluidKey.of(Fluids.WATER);
         var context = ProviderDisplayKeyTestContext.persistence();
         var tag = ProviderDisplayKeyTag.write(key, context);
@@ -25,7 +26,7 @@ class ProviderDisplayKeyTagTest {
 
     @Test
     void savedDataCodecPreservesTypedProvidersWithRegistryOps() {
-        net.minecraft.server.Bootstrap.bootStrap();
+        assumeTrue(ProviderDisplayKeyTestContext.nativeKeysAvailable(), "native registries require a running loader");
         var registries = net.minecraft.core.RegistryAccess.fromRegistryOfRegistries(
                 net.minecraft.core.registries.BuiltInRegistries.REGISTRY);
         var ops = registries.createSerializationContext(NbtOps.INSTANCE);

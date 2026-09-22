@@ -17,7 +17,8 @@ public final class ProviderDisplayKeyPacket {
     public static AEKey read(FriendlyByteBuf buffer) {
         if (!buffer.readBoolean()) return null;
         buffer.markReaderIndex();
-        if (AEKeyType.fromRawId(buffer.readVarInt()) == null) {
+        int rawId = buffer.readVarInt();
+        if (rawId < 0 || rawId > 127 || AEKeyType.fromRawId(rawId) == null) {
             // Unknown optional integration: retain the plate and discard only its terminal key field.
             buffer.readerIndex(buffer.writerIndex());
             return null;
