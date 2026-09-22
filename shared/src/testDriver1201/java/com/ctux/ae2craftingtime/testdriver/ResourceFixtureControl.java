@@ -254,6 +254,10 @@ final class ResourceFixtureControl {
         return expectedScreenshots(resourceCase, connected, false);
     }
 
+    static int postReconnectStage(Case resourceCase, boolean production) {
+        return production && resourceCase == Case.WATER ? 4 : 3;
+    }
+
     static List<String> expectedScreenshots(Case resourceCase, boolean connected, boolean production) {
         var prefix = wireCase(resourceCase) + "-";
         return expectedCheckpoints(resourceCase, connected, production).stream()

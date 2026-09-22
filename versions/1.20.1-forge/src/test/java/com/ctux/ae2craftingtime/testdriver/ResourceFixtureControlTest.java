@@ -28,6 +28,12 @@ class ResourceFixtureControlTest {
                 .contains("chunk-reloaded"));
     }
 
+    @Test void productionWaterReconnectAdvancesPastTheExtraUnloadStage() {
+        assertEquals(4, ResourceFixtureControl.postReconnectStage(ResourceFixtureControl.Case.WATER, true));
+        assertEquals(3, ResourceFixtureControl.postReconnectStage(ResourceFixtureControl.Case.WATER, false));
+        assertEquals(3, ResourceFixtureControl.postReconnectStage(ResourceFixtureControl.Case.LAVA, true));
+    }
+
     @Test void connectedResourceRetentionCoversOnlyTheFixtureFootprint() {
         var chunks = ResourceFixtureServer.resourceChunks(new net.minecraft.core.BlockPos(15, 80, -1));
         assertEquals(java.util.Set.of(new ResourceFixtureServer.ChunkCoord(0, -1),

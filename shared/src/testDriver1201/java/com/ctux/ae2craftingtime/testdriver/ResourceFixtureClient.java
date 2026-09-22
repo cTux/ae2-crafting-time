@@ -841,7 +841,11 @@ final class ResourceFixtureClient {
     }
 
     boolean reconnectRequested() { return reconnectRequested; }
-    void reconnected() { reconnectRequested = false; stage = 3; resetStageDeadline(); }
+    void reconnected() {
+        reconnectRequested = false;
+        stage = ResourceFixtureControl.postReconnectStage(cases.get(caseIndex), !options.resourceFixtureOnly());
+        resetStageDeadline();
+    }
     ScenarioState state() { return result; }
     boolean evidenceReady() { return captureWrite.isDone(); }
     String checkpoint() {
