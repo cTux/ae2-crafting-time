@@ -77,6 +77,7 @@ public final class DedicatedCpuScenario {
     private long variantPublishedRevision = Long.MIN_VALUE;
     private long variantPublishedAck = Long.MIN_VALUE;
     private boolean variantGridsReady;
+    private boolean variantReplanDiagnosed;
     private appeng.menu.me.crafting.CraftingPlanSummary variantOriginalSummary;
     private final long started = System.nanoTime();
 
@@ -225,6 +226,28 @@ public final class DedicatedCpuScenario {
         var menu = rolePlayer.containerMenu instanceof appeng.menu.me.crafting.CraftConfirmMenu confirm ? confirm : null;
         var revision = menu == null ? 0 : ((com.ctux.ae2craftingtime.mc1201.RecurrentPlanMenu) menu)
                 .ae2craftingtime$summaryRevision();
+        if (!variantReplanDiagnosed && variantAck == 8 && menu != null && menu.getPlan() != null
+                && revision > variantAckRevision) {
+            variantReplanDiagnosed = true;
+            var menuGrid = com.ctux.ae2craftingtime.mc1201.StatsRequestContext.current(rolePlayer).grid();
+            var terminalGrid = ((IInWorldGridNodeHost) rolePlayer.level().getBlockEntity(gridFixture.terminal))
+                    .getGridNode(Direction.NORTH).getGrid();
+            var secondGrid = variantSecond.cpu(rolePlayer).getMainNode().getGrid();
+            var stock = menuGrid == null ? null : menuGrid.getStorageService().getInventory().getAvailableStacks();
+            var secondStock = secondGrid.getStorageService().getInventory().getAvailableStacks();
+            System.out.println("AE2CT variant replan-diagnostic revision=" + revision
+                    + " target=" + menu.getTarget().getClass().getName()
+                    + " menu=terminal:" + (menuGrid == terminalGrid) + " menu=second:" + (menuGrid == secondGrid)
+                    + " entries=" + menu.getPlan().getEntries().stream()
+                            .map(entry -> entry.getWhat() + ":missing=" + entry.getMissingAmount()).toList()
+                    + " menu-stock=" + (stock == null ? "null" : java.util.List.of(
+                            stock.get(variantSecond.storedVariantKey(1)), stock.get(variantSecond.storedVariantKey(2)),
+                            stock.get(variantSecond.storedVariantKey(3))))
+                    + " second-stock=" + java.util.List.of(secondStock.get(variantSecond.storedVariantKey(1)),
+                            secondStock.get(variantSecond.storedVariantKey(2)), secondStock.get(variantSecond.storedVariantKey(3)))
+                    + " craftable=" + (menuGrid != null && menuGrid.getCraftingService()
+                            .isCraftable(AEItemKey.of(Items.SMOOTH_STONE))));
+        }
         var command = StoredVariantControl.command();
         if (variantAck == 9 && menu == null && command.action().equals("cancel")
                 && command.matches(rolePlayer.getUUID(), variantAckMenu, variantAckRevision, variantAck)) {
