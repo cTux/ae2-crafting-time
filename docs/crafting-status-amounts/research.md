@@ -5,7 +5,16 @@ Research date: 2026-09-23. Scope: source inspection and format design for
 
 The user's follow-up selects positional `4/10/200`, missing-category `-`, and
 single-category `A10`/`C10`/`S10`, with TTC background and text color. This resolves
-the original issue's format comparison. It does not supply runtime evidence.
+the original issue's format comparison. A further follow-up requires an on/off
+option. The amended plan adds an independent client Displays switch, default on;
+it supersedes the original plan's coupling to the row-TTC switch. Neither
+follow-up supplies runtime evidence.
+
+The current `OptionFeature`, `FeatureOptions`, `ClientConfigFile` and
+`OptionsScreen` enumerate client-owned switches, default them on, persist them,
+and render their toggles. They can supply this option without a custom control.
+The generic runtime gate also checks server profiling, so native quantity
+formatting must read its local feature switch directly to stay independent.
 
 ## Source findings
 

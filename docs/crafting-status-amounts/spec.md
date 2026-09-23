@@ -52,8 +52,13 @@ amounts. Zero categories remain omitted there, as in AE2 today.
   dropping a category, or overlapping the icon or adjacent cell. Retain AE2's
   compact values and horizontally shrink only when the measured text exceeds
   the available width. Full amounts stay readable in the tooltip.
-- Use the existing status-row display switch: when it is disabled, retain AE2's
-  original quantity lines. Add no separate setting in this scope.
+- Add **Compact crafting-status amounts** under **Options > Client > Displays**,
+  default **on**. Off restores AE2's original quantity lines and removes the
+  compact-format legend, without hiding TTC/status. The existing status-row TTC
+  switch remains independent: compact amounts can stay on with row TTC off.
+  Quantity formatting also remains available when server profiling is off.
+  **Done** saves and applies the choice without a restart; **Cancel** discards
+  edits. Reset section/all restores on, and the saved choice survives relaunch.
 - Keep `A`, `C`, `S`, `/`, and `-` stable in English and Ukrainian. Add a localized
   tooltip legend identifying the order and prefixes; retain native localized
   labels and full values. The legend appears even for available-only rows and
@@ -65,7 +70,8 @@ amounts. Zero categories remain omitted there, as in AE2 today.
 
 Cover all four release targets: 1.20.1 Forge, 1.20.1 Fabric, 1.21.1 NeoForge,
 and 26.1.2 NeoForge. Native AE2 item/fluid keys and installed addon keys use the
-same display contract. No server, network protocol, profiling, persistence,
+same display contract. Only the local option is persisted. No server, network
+protocol, profiling, world-save persistence,
 craft-confirm, Crafting Tree, or ME Requester behavior changes are included.
 
 Preserve other mods' description lines. If the original AE2 quantity components
@@ -82,7 +88,7 @@ compatibility before testing the actual mod combination.
 | Q3 | Quantity background and RGB match the current TTC/status styling and live configuration; available-only fallback is defined above. |
 | Q4 | The complete quantity badge fits the text area with default and wide resource-pack fonts at supported GUI scales; TTC and icon remain readable. |
 | Q5 | Native full-value tooltips, translated legend, controls, sort, selection, hover and warning precedence remain correct. |
-| Q6 | Disabled status rows restore native quantities; foreign description lines survive; unrecognized native lines take the documented fallback. |
+| Q6 | The independent compact-amount option restores native quantities when off and survives saving/relaunch; all four compact/TTC on-off combinations, Cancel and resets work. Server profiling off does not disable compact amounts. Foreign lines survive and unrecognized native lines take the documented fallback. |
 | Q7 | Tests, builds and reviewed English UI smoke evidence cover all four targets; Ukrainian text and format parity pass non-smoke checks. |
 
 The [plan](implementation-plan.md) maps each criterion to its verification gate.

@@ -16,9 +16,10 @@ badges through their version's `TtcBadge`; do not replace the table renderer.
 
 ## Composition
 
-1. Respect `ClientOptionsRuntime.enabled(OptionFeature.STATUS_ROWS)` before
-   condensing or adding the legend. This includes the existing server disable
-   behavior. Read stored, active and pending directly from the menu entry.
+1. Gate condensing and its legend on the new client-owned
+   `OptionFeature.COMPACT_STATUS_AMOUNTS`, independently of `STATUS_ROWS`.
+   Read stored, active and pending directly from the menu entry. Keep the
+   existing `appendTtc` gate unchanged, including its server disable behavior.
 2. Add a small formatter in the existing shared `TtcText` class. Pass the three
    raw amounts and their key-formatted `AmountFormat.SLOT` strings; inspect each
    amount independently with `> 0`. Emit the specification's cases without a
@@ -55,6 +56,29 @@ running afterward can still replace the result; priority escalation cannot prove
 compatibility. Add before/after foreign-line regression fixtures and inspect the
 actual prepared-client mod graph during smoke testing.
 
+## Client option
+
+Register `COMPACT_STATUS_AMOUNTS(Owner.CLIENT, Group.DISPLAYS,
+"compactStatusAmounts")` in `OptionFeature`. The existing `OptionsScreen`
+enumeration renders the toggle; `FeatureOptions` supplies the on default and
+reset behavior. `ClientConfigFile` already reads/writes client-owned features
+to `ae2craftingtime-client.toml`; a missing key defaults on. Reuse the existing
+draft/Done/Cancel flow, with no custom control, config format or server packet.
+
+Read `ClientOptionsRuntime.current().features().enabled(COMPACT_STATUS_AMOUNTS)`
+for the quantity gate. Do not use the generic `ClientOptionsRuntime.enabled`
+method here: it suppresses features when server profiling is disabled, whereas
+these native menu quantities require no profiler data. When row TTC is hidden,
+the summary uses the already-defined `TOTAL` color fallback.
+
+Add `config.ae2craftingtime.compactStatusAmounts` in both locale files:
+
+- English: `Compact crafting-status amounts`
+- Ukrainian: `Стислі кількості в стані виготовлення`
+
+Use the existing client-option help tooltip. Keep the toggle available without
+operator permission and do not change any sibling setting when it is switched.
+
 ## Drawing and width
 
 Reuse the existing rounded badge drawing and shadow in both renderer adapters.
@@ -82,8 +106,8 @@ fails and needs a reviewed design revision rather than silently hiding values.
 
 Leave AE2's full-amount tooltip components untouched. Add the quantity legend
 before the existing TTC tooltip append logic, so its early return for no pending
-work cannot hide the legend. Gate the legend by enabled status rows and at least
-one positive amount, without a cross-frame cache. Do not call
+work cannot hide the legend. Gate the legend by the compact-amount option and
+at least one positive amount, without a cross-frame cache. Do not call
 `getEntryDescription` again or trigger extra TTC requests. The same legend can
 explain native quantities when the compact description takes its fallback.
 
@@ -99,8 +123,10 @@ mutable render-session state. Do not gate the legend on `DETAILED_TOOLTIPS`.
 ## Data and failure boundaries
 
 The server and native menu continue to own quantities. All new work is client
-presentation over existing longs and `AEKey.formatAmount`. No packets, retained
-state, saved-data version, dependency, reset semantics, or migration is added.
+presentation over existing longs and `AEKey.formatAmount`. Only the new local
+boolean is persisted through the existing client config. No packets, retained
+profiling state, saved-data version, dependency, or history-reset changes are
+added. Existing config files need no migration: the missing key defaults on.
 Unknown translation/component contracts keep native quantities. Empty entries
 avoid formatting and summary creation. Custom key formatters remain responsible
 for unit display; do not apply `AeKeyAmounts.normalize`, which serves estimates.
