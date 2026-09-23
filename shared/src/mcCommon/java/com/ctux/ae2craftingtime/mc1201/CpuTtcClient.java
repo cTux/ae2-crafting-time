@@ -3,6 +3,7 @@ package com.ctux.ae2craftingtime.mc1201;
 import appeng.menu.me.crafting.CraftingStatusMenu;
 import com.ctux.ae2craftingtime.core.CpuTtcCache;
 import com.ctux.ae2craftingtime.core.CpuTtcDisplayOrder;
+import com.ctux.ae2craftingtime.core.OptionFeature;
 import com.ctux.ae2craftingtime.mc1201.net.CpuTtcPacketCodec;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,12 +63,14 @@ public final class CpuTtcClient {
         var raw = menu.cpuList.cpus();
         var enabled = CpuTtcRequests.enabled();
         return DISPLAY.display(raw, CraftingStatusMenu.CraftingCpuListEntry::serial,
-                cpu -> cpu.currentJob() != null, cpu -> seconds(cpu.serial()), frameRevision, sortMode, enabled);
+                cpu -> cpu.currentJob() != null, cpu -> seconds(cpu.serial()), frameRevision,
+                ClientOptionsRuntime.enabled(OptionFeature.CPU_SORT_CONTROL) ? sortMode : 0, enabled);
     }
 
     public static boolean ttcOrderActive(CraftingStatusMenu menu) {
         open(menu);
-        return CpuTtcDisplayOrder.ttcOrderActive(sortMode, CpuTtcRequests.enabled());
+        return ClientOptionsRuntime.enabled(OptionFeature.CPU_SORT_CONTROL)
+                && CpuTtcDisplayOrder.ttcOrderActive(sortMode, CpuTtcRequests.enabled());
     }
 
     public static void refresh(CraftingStatusMenu menu,

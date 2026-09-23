@@ -5,10 +5,12 @@ import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import com.ctux.ae2craftingtime.core.StallDiagnostic;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
+import com.ctux.ae2craftingtime.core.ClientConfig;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.TextColor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,7 +56,8 @@ public final class TtcText {
 
     public static MutableComponent noSpace() {
         return Component.translatable("text.ae2craftingtime.no_space")
-                .withStyle(ChatFormatting.RED);
+                .withStyle(style -> style.withColor(TextColor.fromRgb(
+                        ClientOptionsRuntime.current().color(ClientConfig.Color.DELAYED))));
     }
 
     public static List<Component> noSpaceTooltip() {
@@ -64,7 +67,8 @@ public final class TtcText {
 
     public static MutableComponent blockReason(CraftingBlockReason reason) {
         return Component.translatable("text.ae2craftingtime." + reason.name().toLowerCase(Locale.ROOT))
-                .withStyle(style -> style.withColor(ChatFormatting.RED).withBold(true));
+                .withStyle(style -> style.withColor(TextColor.fromRgb(
+                        ClientOptionsRuntime.current().color(ClientConfig.Color.DELAYED))).withBold(true));
     }
 
     public static List<Component> blockReasonTooltip(CraftingBlockReason reason) {
@@ -93,11 +97,14 @@ public final class TtcText {
     public static MutableComponent ttcCollectingData() {
         return Component.translatable("text.ae2craftingtime.ttc",
                 Component.translatable("text.ae2craftingtime.collecting_data"))
-                .withStyle(ChatFormatting.GRAY);
+                .withStyle(style -> style.withColor(TextColor.fromRgb(
+                        ClientOptionsRuntime.current().color(ClientConfig.Color.COLLECTING))));
     }
 
     public static MutableComponent totalTtc(String eta) {
-        return Component.translatable("text.ae2craftingtime.total_ttc", eta);
+        return Component.translatable("text.ae2craftingtime.total_ttc", eta)
+                .withStyle(style -> style.withColor(TextColor.fromRgb(
+                        ClientOptionsRuntime.current().color(ClientConfig.Color.TOTAL))));
     }
 
     public static MutableComponent noStats() {
@@ -191,7 +198,7 @@ public final class TtcText {
         if (!stats.reliableEstimate()) {
             details += I18n.get("text.ae2craftingtime.chat.details.low_confidence");
         }
-        if (accuracy.isPresent()) {
+        if (accuracy.isPresent() && ClientOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.ACCURACY_DETAILS)) {
             details += " | " + accuracy(accuracy.get()) + "; " + latestAccuracy(accuracy.get());
         }
         messages.add(details);

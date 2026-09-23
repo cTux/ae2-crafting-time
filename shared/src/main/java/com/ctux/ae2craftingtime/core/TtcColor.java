@@ -6,13 +6,18 @@ public final class TtcColor {
     public static final int RED = 0xFF5555;
 
     public static int forSeconds(long seconds, long minSeconds, long maxSeconds) {
+        return forSeconds(seconds, minSeconds, maxSeconds, GREEN, YELLOW, RED);
+    }
+
+    public static int forSeconds(long seconds, long minSeconds, long maxSeconds,
+            int fast, int middle, int slow) {
         if (maxSeconds <= minSeconds) {
-            return GREEN;
+            return fast;
         }
         var ratio = Math.max(0, Math.min(1, (double) (seconds - minSeconds) / (maxSeconds - minSeconds)));
         return ratio <= 0.5
-                ? interpolate(GREEN, YELLOW, ratio * 2)
-                : interpolate(YELLOW, RED, (ratio - 0.5) * 2);
+                ? interpolate(fast, middle, ratio * 2)
+                : interpolate(middle, slow, (ratio - 0.5) * 2);
     }
 
     private static int interpolate(int from, int to, double ratio) {

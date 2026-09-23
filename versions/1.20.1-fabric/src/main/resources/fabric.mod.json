@@ -15,6 +15,9 @@
     ],
     "client": [
       "com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeClient"
+    ],
+    "modmenu": [
+      "com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeModMenu"
     ]
   },
   "mixins": [

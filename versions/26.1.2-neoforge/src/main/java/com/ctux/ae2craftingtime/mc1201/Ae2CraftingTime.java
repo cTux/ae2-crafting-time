@@ -21,6 +21,7 @@ public final class Ae2CraftingTime {
         IntegrationLog.start("26.1.2-neoforge", net.neoforged.fml.loading.FMLLoader.getCurrent().getDist().isClient(), "neoforge",
                 id -> net.neoforged.fml.ModList.get().getModContainerById(id).map(mod -> mod.getModInfo().getVersion().toString()).orElse(null));
         IntegrationLog.required("config-registration", () -> modContainer.registerConfig(ModConfig.Type.COMMON, Ae2CraftingTimeConfig.SPEC, COMMON_CONFIG_FILE));
+        if (net.neoforged.fml.loading.FMLLoader.getCurrent().getDist().isClient()) Ae2CraftingTimeClient.registerConfigScreen(modContainer);
         modBus.addListener((net.neoforged.fml.event.config.ModConfigEvent.Loading event) -> {
             if (event.getConfig().getModId().equals(MOD_ID)) IntegrationLog.configuration();
         });
@@ -46,6 +47,7 @@ public final class Ae2CraftingTime {
     }
 
     private void onServerStarted(ServerStartedEvent event) {
+        ServerOptionsRuntime.initialize(event.getServer(), net.neoforged.fml.loading.FMLPaths.CONFIGDIR.get().resolve(COMMON_CONFIG_FILE));
         var data = event.getServer().overworld().getDataStorage()
                 .computeIfAbsent(Ae2CraftingTimeSavedData.TYPE);
         ProfilerBridge.load(data);
@@ -58,17 +60,21 @@ public final class Ae2CraftingTime {
     private void onServerStopping(ServerStoppingEvent event) {
         ProfilerBridge.flushCompletedSamples();
         CpuTtcRequestHandler.clear();
+        WarningPreferenceServer.clearAll();
+        ServerOptionsRuntime.clear();
     }
 
     private void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
             CpuTtcRequestHandler.clear(player.getUUID());
+            WarningPreferenceServer.clear(player);
         }
     }
 
     private void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
             ProfilerBridge.resyncPlatesForPlayer(player);
+            ServerOptionsRuntime.sendTo(player);
         }
     }
 }

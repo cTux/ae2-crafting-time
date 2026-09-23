@@ -12,12 +12,16 @@ import net.minecraft.world.phys.AABB;
 public final class Ae2CraftingTimeClient implements ClientModInitializer {
     @Override
     public void onInitializeClient() {
+        ClientOptionsRuntime.initialize(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir());
         IntegrationLog.required("key-registration", () -> KeyBindingHelper.registerKeyBinding(TtcDetailsKeyMapping.showDetails()));
         IntegrationLog.required("client-network-registration", StatsNetwork::registerClient);
+        ClientPlayConnectionEvents.JOIN.register((handler, sender, client) ->
+                ClientOptionsRuntime.syncWarningPreference());
         // Drop rainbows and plates when leaving a world or server so they
         // never leak into another world with matching coordinates. Red plates
         // return only via server-approved resync.
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            ClientServerOptions.clear();
             ProviderHighlightClient.onSessionEnd();
             CpuTtcClient.clear();
         });

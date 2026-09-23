@@ -26,12 +26,12 @@ public final class StatsChatServer {
             if (ProfilerBridge.stats(key).isEmpty()) {
                 return;
             }
-            if (ProfilerBridge.clearStats(key) && Ae2CraftingTimeConfig.SHOW_CHAT_MESSAGES.get()) {
+            if (ProfilerBridge.clearStats(key) && ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.SHOW_CHAT_MESSAGES)) {
                 notifyReset(player, Component.translatable("text.ae2craftingtime.chat.reset", outputId));
             }
             return;
         }
-        if (amount <= 0 || !Ae2CraftingTimeConfig.SHOW_CHAT_MESSAGES.get()) {
+        if (amount <= 0 || !ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.SHOW_CHAT_MESSAGES)) {
             return;
         }
         var stats = ProfilerBridge.stats(key);

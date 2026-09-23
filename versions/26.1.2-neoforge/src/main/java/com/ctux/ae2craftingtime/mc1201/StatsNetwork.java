@@ -9,6 +9,9 @@ import com.ctux.ae2craftingtime.mc1201.net.StatsRequestC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsSnapshotS2C;
 import com.ctux.ae2craftingtime.mc1201.net.PlanRecurrenceS2C;
 import com.ctux.ae2craftingtime.mc1201.net.PlanStoredVariantsS2C;
+import com.ctux.ae2craftingtime.mc1201.net.WarningPreferenceC2S;
+import com.ctux.ae2craftingtime.mc1201.net.ServerOptionsSnapshotS2C;
+import com.ctux.ae2craftingtime.mc1201.net.ServerOptionsUpdateC2S;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import net.neoforged.neoforge.network.PacketDistributor;
@@ -20,7 +23,7 @@ public final class StatsNetwork {
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("20");
+        var registrar = event.registrar("22");
         registrar.playToServer(StatsRequestC2S.TYPE, StatsRequestC2S.STREAM_CODEC, StatsRequestC2S::handle);
         registrar.playToServer(StatsChatC2S.TYPE, StatsChatC2S.STREAM_CODEC, StatsChatC2S::handle);
         registrar.playToClient(StatsSnapshotS2C.TYPE, StatsSnapshotS2C.STREAM_CODEC, StatsSnapshotS2C::handle);
@@ -31,6 +34,9 @@ public final class StatsNetwork {
         registrar.playToClient(CpuTtcSnapshotS2C.TYPE, CpuTtcSnapshotS2C.STREAM_CODEC, CpuTtcSnapshotS2C::handle);
         registrar.playToClient(PlanRecurrenceS2C.TYPE, PlanRecurrenceS2C.STREAM_CODEC, PlanRecurrenceS2C::handle);
         registrar.playToClient(PlanStoredVariantsS2C.TYPE, PlanStoredVariantsS2C.STREAM_CODEC, PlanStoredVariantsS2C::handle);
+        registrar.playToServer(WarningPreferenceC2S.TYPE, WarningPreferenceC2S.STREAM_CODEC, WarningPreferenceC2S::handle);
+        registrar.playToClient(ServerOptionsSnapshotS2C.TYPE, ServerOptionsSnapshotS2C.STREAM_CODEC, ServerOptionsSnapshotS2C::handle);
+        registrar.playToServer(ServerOptionsUpdateC2S.TYPE, ServerOptionsUpdateC2S.STREAM_CODEC, ServerOptionsUpdateC2S::handle);
     }
 
     public static void sendTo(ServerPlayer player, StatsSnapshotS2C packet) {
@@ -44,6 +50,9 @@ public final class StatsNetwork {
     public static void sendTo(ServerPlayer player, CpuTtcSnapshotS2C packet) {
         PacketDistributor.sendToPlayer(player, packet);
     }
+    public static void sendTo(ServerPlayer player, ServerOptionsSnapshotS2C packet) {
+        PacketDistributor.sendToPlayer(player, packet);
+    }
     public static void sendTo(ServerPlayer player, PlanRecurrenceS2C packet) { PacketDistributor.sendToPlayer(player, packet); }
     public static void sendTo(ServerPlayer player, PlanStoredVariantsS2C packet) { PacketDistributor.sendToPlayer(player, packet); }
 
@@ -54,6 +63,11 @@ public final class StatsNetwork {
     public static void sendToServer(ProviderLocateC2S packet) {
         ClientPacketDistributor.sendToServer(packet);
     }
+
+    public static void sendToServer(WarningPreferenceC2S packet) {
+        ClientPacketDistributor.sendToServer(packet);
+    }
+    public static void sendToServer(ServerOptionsUpdateC2S packet) { ClientPacketDistributor.sendToServer(packet); }
 
     private StatsNetwork() {
     }

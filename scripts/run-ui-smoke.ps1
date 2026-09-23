@@ -86,7 +86,8 @@ if ($Scenario -eq 'appmek-resource-icons' -and $Target -notin @('1.20.1-forge','
 if (-not $PreparedLaunch -and -not $ReportDirectory) {
     if ($CasesBase64) { throw 'Case-list transport is internal to native execution' }
     if ($BundleDirectory) { throw 'A native bundle requires its prepared launch manifest' }
-    $campaign = @{ Latest = $Latest; ProjectId = $ProjectId; Target = $Target; Interactive = $Interactive }
+    $campaign = @{ Latest = $Latest; ProjectId = $ProjectId; Target = $Target; Interactive = $Interactive
+        StartupTimeoutSeconds = $StartupTimeoutSeconds }
     if ($PSBoundParameters.ContainsKey('Scenario')) { $campaign.Scenario = $Scenario }
     if ($ArchiveRoot) { $campaign.ArchiveRoot = $ArchiveRoot }
     $campaign.Changed = $Changed; $campaign.BaseRef = $BaseRef; $campaign.PlanOnly = $PlanOnly

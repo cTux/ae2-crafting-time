@@ -1,11 +1,11 @@
 # In-game Configuration Screen Specification
 
-Status: draft
+Status: implementation in review
 
 Scope: In-game configuration screen.
 
-Planning: [original plan, PR #280](https://github.com/cTux/ae2-crafting-time/pull/280); [revised plan](implementation-plan.md).
-Open gate: review the expanded per-feature switches and mockup before implementation.
+Planning: [original plan, PR #280](https://github.com/cTux/ae2-crafting-time/pull/280); [revised plan, PR #509](https://github.com/cTux/ae2-crafting-time/pull/509).
+Implementation: [draft PR #510](https://github.com/cTux/ae2-crafting-time/pull/510). The screen, storage, protocol, and runtime switches are implemented; full cross-loader UI verification and dedicated-server permission testing remain open.
 
 Issue: [#117](https://github.com/cTux/ae2-crafting-time/issues/117)
 
@@ -32,9 +32,8 @@ belong to the client; profiling and shared behavior remain server-authoritative.
   has **Reset section**, and the root screen has **Reset all**; reset changes are
   reviewable before **Done** writes them.
 - Client-only changes apply as soon as **Done** is pressed. Server-owned changes
-  made by an authorized local/server operator apply on the next supported config
-  reload; otherwise the screen explains that a reconnect, world reload, or
-  server restart is required.
+  made by an authorized local/server operator are validated, saved, and applied
+  live by the server. The server sends the effective values back to players.
 
 ## Settings
 
@@ -103,9 +102,8 @@ and are not presented as off switches.
 - A missing key uses its default. Existing valid values survive the upgrade.
   Existing `enabled`, `showInTree`, `showChatMessages`, `notifyOnDelayed`,
   `maxSamples`, and `outlierMultiplier` values migrate without changing meaning.
-- A malformed client value falls back only that value. A malformed server value
-  follows the loader's config correction path and is logged without crashing a
-  client or dedicated server.
+- A malformed client or server value is logged and only that value falls back
+  to its default. It does not crash a client or dedicated server.
 - Unknown keys are preserved when the backing loader supports preservation and
   otherwise ignored; they never appear as invented UI options.
 

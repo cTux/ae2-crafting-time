@@ -6,6 +6,8 @@ import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
+import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
+import com.ctux.ae2craftingtime.core.OptionFeature;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
 import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
@@ -32,7 +34,7 @@ public abstract class CraftConfirmTableRendererMixin {
             Operation<net.minecraft.network.chat.MutableComponent> original, CraftingPlanSummaryEntry entry) {
         return text == appeng.core.localization.GuiText.Missing && entry.getMissingAmount() > 0
                 && ((RecurrentPlanEntry) entry).ae2craftingtime$recurrent()
-                && com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig.ENABLED.get()
+                && ClientOptionsRuntime.enabled(OptionFeature.RECURRENT_STATUS)
                 ? TtcText.recurrent(arguments) : original.call(text, arguments);
     }
 
@@ -54,16 +56,23 @@ public abstract class CraftConfirmTableRendererMixin {
             cir.getReturnValue().addAll(TtcText.storedVariantHints());
         }
         if (entry.getMissingAmount() > 0 && ((RecurrentPlanEntry) entry).ae2craftingtime$recurrent()
-                && com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig.ENABLED.get()) {
+                && ClientOptionsRuntime.enabled(OptionFeature.RECURRENT_STATUS)
+                && ClientOptionsRuntime.profilingEnabled()) {
             cir.getReturnValue().add(TtcText.recurrentHint());
         }
         if (entry.getCraftAmount() <= 0) {
             return;
         }
 
-        ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue());
-        cir.getReturnValue().add(TtcText.detailsHint().withStyle(ChatFormatting.GRAY));
-        cir.getReturnValue().add(TtcText.resetHint().withStyle(ChatFormatting.GRAY));
+        if (ClientOptionsRuntime.enabled(OptionFeature.DETAILED_TOOLTIPS)) {
+            ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue());
+        }
+        if (ClientOptionsRuntime.enabled(OptionFeature.CONTROL_HINTS)) {
+            if (ClientOptionsRuntime.enabled(OptionFeature.TTC_DETAILS_CLICK))
+                cir.getReturnValue().add(TtcText.detailsHint().withStyle(ChatFormatting.GRAY));
+            if (ClientOptionsRuntime.enabled(OptionFeature.RESET_HISTORY_CLICK))
+                cir.getReturnValue().add(TtcText.resetHint().withStyle(ChatFormatting.GRAY));
+        }
         IntegrationLog.observe("ae2craftingtime", "plan-tooltip");
     }
 
@@ -71,11 +80,11 @@ public abstract class CraftConfirmTableRendererMixin {
         return com.ctux.ae2craftingtime.core.PlanStoredVariantLifecycle.show(
                 entry.getWhat() instanceof appeng.api.stacks.AEItemKey, entry.getMissingAmount(),
                 ((RecurrentPlanEntry) entry).ae2craftingtime$storedVariant(),
-                com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig.ENABLED.get());
+                ClientOptionsRuntime.profilingEnabled());
     }
 
     private static void ae2craftingtime$appendTtc(CraftingPlanSummaryEntry entry, List<Component> lines) {
-        if (entry.getCraftAmount() <= 0) {
+        if (!ClientOptionsRuntime.enabled(OptionFeature.PLAN_ROWS) || entry.getCraftAmount() <= 0) {
             return;
         }
 
@@ -84,8 +93,12 @@ public abstract class CraftConfirmTableRendererMixin {
         ClientStats.CACHE.get(key).ifPresentOrElse(stats -> TimeEstimate
                 .format(AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()), stats)
                 .ifPresentOrElse(eta -> lines.add(ttcLine(key, eta)),
-                        () -> lines.add(TtcText.ttcCollectingData())),
-                () -> lines.add(TtcText.ttcCollectingData()));
+                        () -> ae2craftingtime$addCollecting(lines)),
+                () -> ae2craftingtime$addCollecting(lines));
+    }
+
+    private static void ae2craftingtime$addCollecting(List<Component> lines) {
+        if (ClientOptionsRuntime.enabled(OptionFeature.COLLECTING_STATUS)) lines.add(TtcText.ttcCollectingData());
     }
 
     private static void ae2craftingtime$appendStatsTooltip(CraftingPlanSummaryEntry entry, List<Component> lines) {

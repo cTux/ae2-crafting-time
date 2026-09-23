@@ -31,7 +31,8 @@ public record StatsRequestContext(IGrid grid, Object craftingCpu) {
     }
 
     private static Object optionalAdvancedCpu(CraftingCPUMenu menu) {
-        if (!IntegrationLog.available("advanced_ae") || IntegrationLog.disabled("advanced_ae", "selected-cpu")) return null;
+        if (!ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.ADVANCED_AE)
+                || !IntegrationLog.available("advanced_ae") || IntegrationLog.disabled("advanced_ae", "selected-cpu")) return null;
         try {
             var cpu = IntegrationRead.field(menu, CraftingCPUMenu.class, "advancedAE$advCpu", Object.class);
             IntegrationLog.observe("advanced_ae", "selected-cpu");

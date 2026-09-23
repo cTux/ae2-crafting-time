@@ -8,10 +8,13 @@ import appeng.client.gui.widgets.Scrollbar;
 import appeng.menu.me.crafting.CraftConfirmMenu;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
+import com.ctux.ae2craftingtime.core.OptionFeature;
+import com.ctux.ae2craftingtime.core.ClientConfig;
 import com.ctux.ae2craftingtime.core.TtcSort;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
+import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.StatsClickHandler;
 import com.ctux.ae2craftingtime.mc1201.StatsChatMessages;
@@ -54,9 +57,6 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
     @Unique
     private static final int AE2CRAFTINGTIME_ROWS = 5;
     @Unique
-    private static final int AE2CRAFTINGTIME_TOTAL_COLOR = 0xE0E0E0;
-
-    @Unique
     private int ae2craftingtime$ttcSortMode = 2;
 
     @Shadow(remap = false)
@@ -83,8 +83,10 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
             ScreenStyle style, CallbackInfo ci) {
         ClientStats.CACHE.clear();
         ClientStatsRequests.clear();
-        addToLeftToolbar(new TtcSortButton(this::ae2craftingtime$cycleTtcSortMode,
-                () -> ae2craftingtime$ttcSortMode));
+        ae2craftingtime$ttcSortMode = ClientOptionsRuntime.current().planSort();
+        if (ClientOptionsRuntime.enabled(OptionFeature.PLAN_SORT_CONTROL))
+            addToLeftToolbar(new TtcSortButton(this::ae2craftingtime$cycleTtcSortMode,
+                    () -> ae2craftingtime$ttcSortMode));
     }
 
     @SuppressWarnings("mapping")
@@ -99,7 +101,8 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
     private List<CraftingPlanSummaryEntry> ae2craftingtime$sortPlanByTtc(List<CraftingPlanSummaryEntry> entries) {
         var sorted = TtcSort.copyPrioritizedSorted(entries, entry -> entry.getMissingAmount() > 0,
                 CraftConfirmScreenMixin::ae2craftingtime$seconds, Comparator.naturalOrder(),
-                ae2craftingtime$ttcSortMode != 0, ae2craftingtime$ttcSortMode == 2);
+                ClientOptionsRuntime.enabled(OptionFeature.PLAN_SORT_CONTROL) && ae2craftingtime$ttcSortMode != 0,
+                ae2craftingtime$ttcSortMode == 2);
         IntegrationLog.observe("ae2craftingtime", "plan-sort");
         return sorted;
     }
@@ -107,6 +110,7 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
     @Inject(method = "drawFG", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$drawTotalTtc(GuiGraphics guiGraphics, int offsetX, int offsetY, int mouseX, int mouseY,
             CallbackInfo ci) {
+        if (!ClientOptionsRuntime.enabled(OptionFeature.PLAN_TOTAL)) return;
         var plan = getMenu().getPlan();
         if (plan == null) {
             return;
@@ -124,7 +128,8 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
             var totalWidth = font.width(text);
             TtcBadge.fillRoundedRect(guiGraphics, textX - 2, 176, textX + totalWidth + 2,
                     178 + font.lineHeight + 2, TtcBadge.BACKGROUND);
-            guiGraphics.drawString(font, text, textX, 178, AE2CRAFTINGTIME_TOTAL_COLOR, true);
+            guiGraphics.drawString(font, text, textX, 178,
+                    ClientOptionsRuntime.current().color(ClientConfig.Color.TOTAL), true);
             IntegrationLog.observe("ae2craftingtime", "plan-total");
         });
     }
@@ -153,10 +158,12 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
 
         var key = ProfilerBridge.key(entry.getWhat());
         if (TtcDetailsKeyMapping.matchesResetMouse(button)) {
+            if (!ClientOptionsRuntime.enabled(OptionFeature.RESET_HISTORY_CLICK)) return false;
             StatsChatMessages.reset(key, entry.getWhat().getDisplayName().getString());
             IntegrationLog.observe("ae2craftingtime", "plan-reset");
             return true;
         }
+        if (!ClientOptionsRuntime.enabled(OptionFeature.TTC_DETAILS_CLICK)) return false;
         StatsChatMessages.show(key, entry.getWhat().getDisplayName().getString(),
                 AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()));
         IntegrationLog.observe("ae2craftingtime", "plan-details");

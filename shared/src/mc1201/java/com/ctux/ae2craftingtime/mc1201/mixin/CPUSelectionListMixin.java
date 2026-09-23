@@ -32,6 +32,8 @@ public abstract class CPUSelectionListMixin {
             @Local(argsOnly = true) GuiGraphics guiGraphics, @Local(ordinal = 0) int x,
             @Local(ordinal = 1) int y) {
         var name = original.call(instance, cpu);
+        if (!com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.enabled(
+                com.ctux.ae2craftingtime.core.OptionFeature.CPU_CARD_TOTAL)) return name;
         var eta = TimeEstimate.formatTotal(java.util.List.of(CpuTtcClient.seconds(cpu.serial())));
         var font = Minecraft.getInstance().font;
         if (eta.isEmpty()) return ae2craftingtime$fitName(name, font,

@@ -3,7 +3,7 @@ package com.ctux.ae2craftingtime.mc1201;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 
 public final class TtcBadge {
-    public static final int BACKGROUND = 0xB0000000;
+    public static int BACKGROUND = 0xB0000000;
 
     private TtcBadge() {
     }

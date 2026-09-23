@@ -9,6 +9,9 @@ import com.ctux.ae2craftingtime.mc1201.net.StatsRequestC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsSnapshotS2C;
 import com.ctux.ae2craftingtime.mc1201.net.PlanRecurrenceS2C;
 import com.ctux.ae2craftingtime.mc1201.net.PlanStoredVariantsS2C;
+import com.ctux.ae2craftingtime.mc1201.net.WarningPreferenceC2S;
+import com.ctux.ae2craftingtime.mc1201.net.ServerOptionsSnapshotS2C;
+import com.ctux.ae2craftingtime.mc1201.net.ServerOptionsUpdateC2S;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -32,6 +35,9 @@ public final class StatsNetwork {
             "cpu_ttc_snapshot_v1");
     private static final ResourceLocation PLAN_RECURRENCE_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "plan_recurrence_v1");
     private static final ResourceLocation PLAN_STORED_VARIANTS_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "plan_stored_variants_v1");
+    private static final ResourceLocation WARNING_PREFERENCE_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "warning_preference_v1");
+    private static final ResourceLocation SERVER_OPTIONS_SNAPSHOT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "server_options_snapshot_v1");
+    private static final ResourceLocation SERVER_OPTIONS_UPDATE_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "server_options_update_v1");
 
     public static void registerServer() {
         ServerPlayNetworking.registerGlobalReceiver(REQUEST_ID,
@@ -54,6 +60,16 @@ public final class StatsNetwork {
                     var packet = CpuTtcRequestC2S.decode(buffer);
                     server.execute(() -> packet.handle(player));
                 });
+        ServerPlayNetworking.registerGlobalReceiver(WARNING_PREFERENCE_ID,
+                (server, player, handler, buffer, responseSender) -> {
+                    var packet = WarningPreferenceC2S.decode(buffer);
+                    server.execute(() -> packet.handle(player));
+                });
+        ServerPlayNetworking.registerGlobalReceiver(SERVER_OPTIONS_UPDATE_ID,
+                (server, player, handler, buffer, responseSender) -> {
+                    var packet = ServerOptionsUpdateC2S.decode(buffer);
+                    server.execute(() -> packet.handle(player));
+                });
     }
 
     public static void registerClient() {
@@ -74,6 +90,11 @@ public final class StatsNetwork {
                 });
         ClientPlayNetworking.registerGlobalReceiver(PLAN_RECURRENCE_ID, (client, handler, buffer, sender) -> { var packet=PlanRecurrenceS2C.decode(buffer); client.execute(packet::handle); });
         ClientPlayNetworking.registerGlobalReceiver(PLAN_STORED_VARIANTS_ID, (client, handler, buffer, sender) -> { var packet=PlanStoredVariantsS2C.decode(buffer); client.execute(packet::handle); });
+        ClientPlayNetworking.registerGlobalReceiver(SERVER_OPTIONS_SNAPSHOT_ID,
+                (client, handler, buffer, sender) -> {
+                    var packet = ServerOptionsSnapshotS2C.decode(buffer);
+                    client.execute(packet::handle);
+                });
     }
 
     public static void sendToServer(StatsRequestC2S packet) {
@@ -86,6 +107,13 @@ public final class StatsNetwork {
 
     public static void sendToServer(ProviderLocateC2S packet) {
         ClientPlayNetworking.send(LOCATE_ID, encode(packet));
+    }
+
+    public static void sendToServer(WarningPreferenceC2S packet) {
+        ClientPlayNetworking.send(WARNING_PREFERENCE_ID, encode(packet));
+    }
+    public static void sendToServer(ServerOptionsUpdateC2S packet) {
+        ClientPlayNetworking.send(SERVER_OPTIONS_UPDATE_ID, encode(packet));
     }
 
     public static boolean canSendCpuTtc() {
@@ -106,6 +134,10 @@ public final class StatsNetwork {
 
     public static void sendTo(ServerPlayer player, CpuTtcSnapshotS2C packet) {
         ServerPlayNetworking.send(player, CPU_TTC_SNAPSHOT_ID, encode(packet));
+    }
+    public static void sendTo(ServerPlayer player, ServerOptionsSnapshotS2C packet) {
+        if (ServerPlayNetworking.canSend(player, SERVER_OPTIONS_SNAPSHOT_ID))
+            ServerPlayNetworking.send(player, SERVER_OPTIONS_SNAPSHOT_ID, encode(packet));
     }
     public static void sendTo(ServerPlayer player, PlanRecurrenceS2C packet) { if(ServerPlayNetworking.canSend(player, PLAN_RECURRENCE_ID)) ServerPlayNetworking.send(player, PLAN_RECURRENCE_ID, encode(packet)); }
     public static void sendTo(ServerPlayer player, PlanStoredVariantsS2C packet) { if(ServerPlayNetworking.canSend(player, PLAN_STORED_VARIANTS_ID)) ServerPlayNetworking.send(player, PLAN_STORED_VARIANTS_ID, encode(packet)); }
@@ -139,6 +171,24 @@ public final class StatsNetwork {
     private static FriendlyByteBuf encode(ProviderLocateC2S packet) {
         var buffer = PacketByteBufs.create();
         ProviderLocateC2S.encode(packet, buffer);
+        return buffer;
+    }
+
+    private static FriendlyByteBuf encode(WarningPreferenceC2S packet) {
+        var buffer = PacketByteBufs.create();
+        WarningPreferenceC2S.encode(packet, buffer);
+        return buffer;
+    }
+
+    private static FriendlyByteBuf encode(ServerOptionsSnapshotS2C packet) {
+        var buffer = PacketByteBufs.create();
+        ServerOptionsSnapshotS2C.encode(packet, buffer);
+        return buffer;
+    }
+
+    private static FriendlyByteBuf encode(ServerOptionsUpdateC2S packet) {
+        var buffer = PacketByteBufs.create();
+        ServerOptionsUpdateC2S.encode(packet, buffer);
         return buffer;
     }
 

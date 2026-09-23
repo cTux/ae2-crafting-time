@@ -15,10 +15,12 @@ import java.util.function.BiFunction;
 import java.util.function.Predicate;
 
 public final class CraftProfiler {
-    private final int maxSamples;
-    private final double outlierMultiplier;
+    private int maxSamples;
+    private double outlierMultiplier;
     private static final Object DEFAULT_SCOPE = new Object();
-    private static final long MIN_DELAY_TICKS = 200L;
+    private long minimumDelayTicks = 200L;
+    private double typicalDurationMultiplier = 2.0;
+    private boolean delayedEnabled = true;
     private final Map<Object, Map<ProfileKey, ArrayDeque<PendingCraft>>> pending = new IdentityHashMap<>();
     private final Map<Object, Map<ProfileKey, Long>> lastProgressTicks = new IdentityHashMap<>();
     private final Map<Object, CapacityState> capacities = new IdentityHashMap<>();
@@ -73,6 +75,15 @@ public final class CraftProfiler {
             delayedResolved.clear();
             rememberedStatuses.clear();
         }
+    }
+
+    public void configure(ServerConfig config) {
+        maxSamples = config.maxSamples();
+        outlierMultiplier = config.outlierMultiplier();
+        minimumDelayTicks = config.minimumNoProgressSeconds() * 20L;
+        typicalDurationMultiplier = config.typicalDurationMultiplier();
+        delayedEnabled = config.features().enabled(OptionFeature.DELAYED_DETECTION);
+        for (var queue : samples.values()) trim(queue);
     }
 
     public void observeProviders(Object scope, Object pattern, Map<ProfileKey, Long> outputs, boolean hasProvider) {
@@ -290,6 +301,7 @@ public final class CraftProfiler {
     }
 
     public Optional<StallDiagnostic> stall(ProfileKey key, Object scope, long tick) {
+        if (!delayedEnabled) return Optional.empty();
         var scopedPending = pending.get(scope);
         var queue = scopedPending == null ? null : scopedPending.get(key);
         var stats = stats(key);
@@ -300,7 +312,7 @@ public final class CraftProfiler {
         var lastProgress = lastProgressTicks.get(scope).get(key);
         var idleTicks = Math.max(0, tick - lastProgress);
         var typicalTicks = stats.get().averageDurationTicks();
-        var delayedAfter = Math.max(MIN_DELAY_TICKS, (long) Math.ceil(typicalTicks * 2.0));
+        var delayedAfter = Math.max(minimumDelayTicks, (long) Math.ceil(typicalTicks * typicalDurationMultiplier));
         if (idleTicks < delayedAfter) {
             return Optional.empty();
         }
@@ -613,9 +625,11 @@ public final class CraftProfiler {
     private void addSample(ProfileKey key, CraftSample sample) {
         var queue = samples.computeIfAbsent(key, ignored -> new ArrayDeque<>());
         queue.addLast(sample);
-        while (queue.size() > maxSamples) {
-            queue.removeFirst();
-        }
+        trim(queue);
+    }
+
+    private void trim(ArrayDeque<CraftSample> queue) {
+        while (queue.size() > maxSamples) queue.removeFirst();
     }
 
     public List<PersistedOutputSamples> snapshotSamples() {

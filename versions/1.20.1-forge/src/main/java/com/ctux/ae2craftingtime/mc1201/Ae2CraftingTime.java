@@ -21,6 +21,7 @@ public final class Ae2CraftingTime {
         IntegrationLog.start("1.20.1-forge", net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient(), "forge",
                 id -> net.minecraftforge.fml.ModList.get().getModContainerById(id).map(mod -> mod.getModInfo().getVersion().toString()).orElse(null));
         IntegrationLog.required("config-registration", () -> ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Ae2CraftingTimeConfig.SPEC, COMMON_CONFIG_FILE));
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist.isClient()) Ae2CraftingTimeClient.registerConfigScreen();
         var modBus = net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext.get().getModEventBus();
         modBus.addListener((net.minecraftforge.fml.event.config.ModConfigEvent.Loading event) -> {
             if (event.getConfig().getModId().equals(MOD_ID)) IntegrationLog.configuration();
@@ -47,6 +48,7 @@ public final class Ae2CraftingTime {
     }
 
     private void onServerStarted(ServerStartedEvent event) {
+        ServerOptionsRuntime.initialize(event.getServer(), net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get().resolve(COMMON_CONFIG_FILE));
         var data = event.getServer().overworld().getDataStorage()
                 .computeIfAbsent(Ae2CraftingTimeSavedData::load, Ae2CraftingTimeSavedData::new,
                         Ae2CraftingTimeSavedData.FILE_ID);
@@ -62,17 +64,21 @@ public final class Ae2CraftingTime {
     private void onServerStopping(ServerStoppingEvent event) {
         ProfilerBridge.flushCompletedSamples();
         CpuTtcRequestHandler.clear();
+        WarningPreferenceServer.clearAll();
+        ServerOptionsRuntime.clear();
     }
 
     private void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
             CpuTtcRequestHandler.clear(player.getUUID());
+            WarningPreferenceServer.clear(player);
         }
     }
 
     private void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
             ProfilerBridge.resyncPlatesForPlayer(player);
+            ServerOptionsRuntime.sendTo(player);
         }
     }
 }

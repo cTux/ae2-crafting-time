@@ -1,5 +1,10 @@
 # Dependencies
 
+On Fabric 1.20.1, Mod Menu 7.2.2 or newer can open AE2 Crafting Time's
+options screen from the mod list. Mod Menu is optional: the game and the local
+client options file still load when it is absent. Forge and NeoForge use their
+loader's Configure button instead.
+
 Native Crafting Plan recurrence diagnostics use required AE2 planner, summary,
 menu and renderer hooks on all four supported targets. They do not select or
 extend optional Tree or requester screens. Forge and NeoForge append a

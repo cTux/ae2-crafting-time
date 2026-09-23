@@ -15,6 +15,35 @@ import org.junit.jupiter.api.Test;
 
 class CraftProfilerTest {
     @Test
+    void serverOptionsReconfigureRetainedSamplesAndDelayDetection() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("test:option-output");
+        var cpu = new Object();
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 0);
+        profiler.complete(key, cpu, 1, 20);
+        profiler.flushCompletedSamples();
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 30);
+        profiler.complete(key, cpu, 1, 70);
+        profiler.flushCompletedSamples();
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 100);
+
+        var options = new ServerConfig();
+        options.setMaxSamples(1);
+        options.setMinimumNoProgressSeconds(1);
+        options.setTypicalDurationMultiplier(1);
+        profiler.configure(options);
+        assertEquals(1, profiler.stats(key).orElseThrow().sampleCount());
+        assertFalse(profiler.stall(key, cpu, 139).isPresent());
+        assertTrue(profiler.stall(key, cpu, 140).isPresent());
+        assertEquals(1, profiler.pollNewlyDelayed(cpu, 140).size());
+
+        options.features().setEnabled(OptionFeature.DELAYED_DETECTION, false);
+        profiler.configure(options);
+        assertFalse(profiler.stall(key, cpu, 200).isPresent());
+        assertTrue(profiler.pollNewlyDelayed(cpu, 200).isEmpty());
+        assertEquals(List.of(key), profiler.pollResolvedDelayed(cpu));
+    }
+    @Test
     void jobEstimateCountsDownAndClearsWithItsCpu() {
         var profiler = new CraftProfiler(10);
         var cpu = new Object();

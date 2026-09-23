@@ -35,9 +35,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.core.BlockPos;
 
 public final class ProfilerBridge {
-    private static final CraftProfiler PROFILER = new CraftProfiler(Ae2CraftingTimeConfig.MAX_SAMPLES.get(),
+    private static CraftProfiler PROFILER = new CraftProfiler(Ae2CraftingTimeConfig.MAX_SAMPLES.get(),
             Ae2CraftingTimeConfig.OUTLIER_MULTIPLIER.get());
-    private static final TtcAccuracyTracker ACCURACY = new TtcAccuracyTracker(Ae2CraftingTimeConfig.MAX_SAMPLES.get());
+    private static TtcAccuracyTracker ACCURACY = new TtcAccuracyTracker(Ae2CraftingTimeConfig.MAX_SAMPLES.get());
     private static final Map<ProfileKey, String> DISPLAY_NAMES = new ConcurrentHashMap<>();
     private static Ae2CraftingTimeSavedData savedData;
 
@@ -51,7 +51,8 @@ public final class ProfilerBridge {
         if (isEnabled()) {
             ProviderStartTracker.noteDispatch(scope, pattern, outputs);
         }
-        PROFILER.observeProviders(scope, pattern, outputs, hasProvider);
+        if (ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.NO_PROVIDER_DETECTION))
+            PROFILER.observeProviders(scope, pattern, outputs, hasProvider);
     }
 
     public static void observeDispatchPower(String networkId, Object scope, IPatternDetails pattern,
@@ -61,7 +62,8 @@ public final class ProfilerBridge {
         for (var output : pattern.getOutputs()) {
             outputs.merge(key(networkId, output.what()), output.amount(), Long::sum);
         }
-        PROFILER.observeDispatchPower(scope, pattern, outputs, required, extracted, tick);
+        if (ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.NO_POWER_DETECTION))
+            PROFILER.observeDispatchPower(scope, pattern, outputs, required, extracted, tick);
     }
 
     public static void observeProviderDispatch(String networkId, Object scope, IPatternDetails pattern,
@@ -71,7 +73,7 @@ public final class ProfilerBridge {
         for (var output : pattern.getOutputs()) {
             outputs.merge(key(networkId, output.what()), output.amount(), Long::sum);
         }
-        PROFILER.observeProviderDispatch(scope, pattern, outputs, reason, tick);
+        if (reason == null || reasonEnabled(reason)) PROFILER.observeProviderDispatch(scope, pattern, outputs, reason, tick);
     }
 
     public static java.util.Map<ProfileKey, com.ctux.ae2craftingtime.core.CraftingBlockReason> blockReasons(
@@ -80,17 +82,21 @@ public final class ProfilerBridge {
             return java.util.Map.of();
         }
         var live = PROFILER.blockReasons(scope, tick, missingProviders(scope, grid));
+        live.entrySet().removeIf(entry -> !reasonEnabled(entry.getValue()));
         for (var entry : live.entrySet()) {
             PROFILER.rememberBlockReason(entry.getKey(), entry.getValue(), tick);
         }
         var merged = new java.util.HashMap<>(live);
-        PROFILER.rememberedReasons(scope).forEach(merged::putIfAbsent);
+        PROFILER.rememberedReasons(scope).forEach((key, reason) -> {
+            if (reasonEnabled(reason)) merged.putIfAbsent(key, reason);
+        });
         return merged;
     }
 
     public static Set<ProfileKey> missingProviders(Object scope, IGrid grid) {
         isEnabled();
-        return grid == null ? Set.of() : PROFILER.missingProviderOutputs(scope,
+        return grid == null || !ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.NO_PROVIDER_DETECTION)
+                ? Set.of() : PROFILER.missingProviderOutputs(scope,
                 pattern -> ((CraftingService) grid.getCraftingService())
                         .getProviders((IPatternDetails) pattern).iterator().hasNext());
     }
@@ -107,7 +113,8 @@ public final class ProfilerBridge {
     }
 
     public static void start(String networkId, Object scope, AEKey what, long amount, long tick) {
-        if (what == null || amount <= 0 || !isEnabled()) {
+        if (what == null || amount <= 0 || !isEnabled() || !ServerOptionsRuntime.scopeEnabled(scope)
+                || !ServerOptionsRuntime.keyEnabled(what)) {
             return;
         }
         var profileKey = key(networkId, what);
@@ -132,6 +139,13 @@ public final class ProfilerBridge {
         if (what == null || !isEnabled()) {
             return;
         }
+        if (!ServerOptionsRuntime.scopeEnabled(scope)) {
+            discardDisabledScope(scope, tick, server);
+            return;
+        }
+        if (!ServerOptionsRuntime.keyEnabled(what)) {
+            return;
+        }
         var profileKey = key(networkId, what);
         var normalizedAmount = normalizeAmount(what, amount);
         if (!PROFILER.complete(profileKey, scope, normalizedAmount, tick)) {
@@ -154,7 +168,8 @@ public final class ProfilerBridge {
             return false;
         }
         if (savedData != null) {
-            savedData.replaceFrom(PROFILER.snapshotSamples());
+            if (ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.SAVE_HISTORY))
+                savedData.replaceFrom(PROFILER.snapshotSamples());
             persistStatuses();
         }
         return true;
@@ -166,7 +181,7 @@ public final class ProfilerBridge {
 
     public static void startJob(String networkId, Object scope, ICraftingPlan plan, long tick, long nanoTime,
             UUID owner) {
-        if (plan == null || plan.finalOutput() == null || !isEnabled()) {
+        if (plan == null || plan.finalOutput() == null || !isEnabled() || !ServerOptionsRuntime.scopeEnabled(scope)) {
             return;
         }
 
@@ -200,7 +215,9 @@ public final class ProfilerBridge {
 
         var jobEstimate = new CraftingJobEstimate(key(networkId, plan.finalOutput().what()), remainingAmounts,
                 dependencies(networkId, plan, craftedAmounts));
-        PROFILER.startWaiting(scope, waitingKeys, tick);
+        PROFILER.startWaiting(scope,
+                ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.WAITING_TRACKING)
+                        ? waitingKeys : Set.of(), tick);
         PROFILER.setJobOwner(scope, owner);
         PROFILER.setJobEstimate(scope, jobEstimate);
         ProviderStartTracker.clear(scope);
@@ -213,8 +230,9 @@ public final class ProfilerBridge {
         }
         persistProviderState();
         var predictedSeconds = jobEstimate.remainingSeconds((key, amount) -> estimateSeconds(key, amount)).orElse(0);
-        ACCURACY.start(key(networkId, plan.finalOutput().what()), scope, predictedSeconds, knownRows, totalRows, tick,
-                nanoTime);
+        if (ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.ACCURACY_RECORDING))
+            ACCURACY.start(key(networkId, plan.finalOutput().what()), scope, predictedSeconds, knownRows, totalRows, tick,
+                    nanoTime);
     }
 
     private static Map<ProfileKey, Set<ProfileKey>> dependencies(String networkId, ICraftingPlan plan,
@@ -254,7 +272,7 @@ public final class ProfilerBridge {
     }
 
     public static OptionalLong remainingJobSeconds(Object scope) {
-        return scope == null || !isEnabled()
+        return scope == null || !isEnabled() || !ServerOptionsRuntime.scopeEnabled(scope)
                 ? OptionalLong.empty()
                 : PROFILER.remainingJobSeconds(scope, ProfilerBridge::estimateSeconds);
     }
@@ -281,7 +299,7 @@ public final class ProfilerBridge {
     }
 
     public static Optional<UUID> jobOwner(Object scope) {
-        if (scope == null || !isEnabled()) {
+        if (scope == null || !isEnabled() || !ServerOptionsRuntime.scopeEnabled(scope)) {
             return Optional.empty();
         }
         return PROFILER.jobOwner(scope);
@@ -292,6 +310,12 @@ public final class ProfilerBridge {
             return List.of();
         }
         return PROFILER.pollNewlyDelayed(scope, tick);
+    }
+
+    public static boolean discardDisabledScope(Object scope, long tick, net.minecraft.server.MinecraftServer server) {
+        if (scope == null || ServerOptionsRuntime.scopeEnabled(scope)) return false;
+        if (!PROFILER.scopedKeys(scope).isEmpty()) finishJob(scope, false, tick, 0, server);
+        return true;
     }
 
     /**
@@ -375,7 +399,7 @@ public final class ProfilerBridge {
     }
 
     public static void persistProviderState() {
-        if (savedData != null) {
+        if (savedData != null && ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.SAVE_HISTORY)) {
             savedData.replaceProviderStarts(ProviderLocateRecords.snapshotStarts());
             savedData.replaceProviderRecords(ProviderLocateRecords.snapshotRecords());
         }
@@ -383,7 +407,7 @@ public final class ProfilerBridge {
     }
 
     public static void persistStatuses() {
-        if (savedData != null) {
+        if (savedData != null && ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.SAVE_HISTORY)) {
             savedData.replaceStatuses(PROFILER.snapshotStatuses());
         }
     }
@@ -396,7 +420,8 @@ public final class ProfilerBridge {
             net.minecraft.server.MinecraftServer server) {
         var highlightKeys = scope == null ? Set.<ProfileKey>of() : PROFILER.scopedKeys(scope);
         var highlightOwner = scope == null ? Optional.<UUID>empty() : PROFILER.jobOwner(scope);
-        ACCURACY.finish(scope, success && isEnabled(), tick, nanoTime);
+        ACCURACY.finish(scope, success && isEnabled()
+                && ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.ACCURACY_RECORDING), tick, nanoTime);
         PROFILER.clearPending(scope);
         ProviderStartTracker.clear(scope);
         BlockReasonNotifier.clear(scope);
@@ -569,11 +594,13 @@ public final class ProfilerBridge {
         if (key == null || !isEnabled()) {
             return Optional.empty();
         }
-        return ACCURACY.stats(key);
+        return ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.ACCURACY_RECORDING)
+                ? ACCURACY.stats(key) : Optional.empty();
     }
 
     public static OptionalLong waitingTicks(ProfileKey key, Object scope, long tick) {
-        if (key == null || !isEnabled()) {
+        if (key == null || !isEnabled()
+                || !ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.WAITING_TRACKING)) {
             return OptionalLong.empty();
         }
         var live = PROFILER.waitingTicks(key, scope, tick);
@@ -608,14 +635,15 @@ public final class ProfilerBridge {
         var cleared = PROFILER.clearSamples(key);
         ACCURACY.clear(key);
         if (cleared && savedData != null) {
-            savedData.replaceFrom(PROFILER.snapshotSamples());
+            if (ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.SAVE_HISTORY))
+                savedData.replaceFrom(PROFILER.snapshotSamples());
             persistStatuses();
         }
         return cleared;
     }
 
     private static boolean isEnabled() {
-        var enabled = Ae2CraftingTimeConfig.ENABLED.get();
+        var enabled = ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.PROFILING);
         PROFILER.setEnabled(enabled);
         return enabled;
     }
@@ -642,7 +670,10 @@ public final class ProfilerBridge {
 
     public static void load(Ae2CraftingTimeSavedData data) {
         savedData = data;
-        ACCURACY.clear();
+        var config = ServerOptionsRuntime.current();
+        PROFILER = new CraftProfiler(config.maxSamples(), config.outlierMultiplier());
+        ACCURACY = new TtcAccuracyTracker(config.maxSamples());
+        PROFILER.configure(config);
         PROFILER.loadSamples(data.samples());
         ProviderStartTracker.clearAll();
         ProviderLocateRecords.clearAll();
@@ -652,8 +683,27 @@ public final class ProfilerBridge {
         PROFILER.restoreStatuses(data.statuses());
         var migrated = PROFILER.snapshotSamples();
         if (!migrated.equals(data.samples())) {
-            savedData.replaceFrom(migrated);
+            if (ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.SAVE_HISTORY))
+                savedData.replaceFrom(migrated);
         }
+    }
+
+    private static boolean reasonEnabled(CraftingBlockReason reason) {
+        if (reason == null) return false;
+        var feature = switch (reason) {
+            case NO_PROVIDER -> com.ctux.ae2craftingtime.core.OptionFeature.NO_PROVIDER_DETECTION;
+            case NO_POWER -> com.ctux.ae2craftingtime.core.OptionFeature.NO_POWER_DETECTION;
+            case NO_TARGET -> com.ctux.ae2craftingtime.core.OptionFeature.NO_TARGET_DETECTION;
+            case NO_CHANNEL -> com.ctux.ae2craftingtime.core.OptionFeature.NO_CHANNEL_DETECTION;
+            case INPUT_BLOCKED, LOCKED -> com.ctux.ae2craftingtime.core.OptionFeature.INPUT_BLOCKED_DETECTION;
+        };
+        return ServerOptionsRuntime.enabled(feature);
+    }
+
+    public static void configure(com.ctux.ae2craftingtime.core.ServerConfig config) {
+        PROFILER.configure(config);
+        ACCURACY.configure(config.maxSamples());
+        isEnabled();
     }
 
     private static String displayNameOf(AEKey key) {
