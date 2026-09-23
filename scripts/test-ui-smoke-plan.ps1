@@ -131,6 +131,11 @@ try {
     Assert (@($variantLanguage.targets | Where-Object { $_.cases.Count -ne 3 -or 'stored-variant-plan' -notin $_.cases -or 'recurrent-plan' -notin $_.cases -or 'standard-plan-controls' -notin $_.cases }).Count -eq 0) `
         'English stored-variant labels must select variant and native-plan regressions'
     Clean
+    Put $lang '{"text.ae2craftingtime.ttc_delayed":"DELAYED","text.ae2craftingtime.status.amounts":"%s","text.ae2craftingtime.status.amounts_legend":"A/C/S","config.ae2craftingtime.compactStatusAmounts":"Compact","other":"value"}'
+    $amountLanguage = Plan
+    Assert (@($amountLanguage.targets | Where-Object { $_.cases.Count -ne 1 -or $_.cases[0] -ne 'standard-status-controls' }).Count -eq 0) `
+        'English compact-status labels must select only the status relaunch leaf'
+    Clean
     $unicodeLanguage = '{"text.ae2craftingtime.ttc_delayed":"DELAYED","other":"value' + [char]0x2026 + '"}'
     Put $lang $unicodeLanguage
     Invoke-FixtureGit @('add','--',$lang)

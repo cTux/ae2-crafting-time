@@ -141,6 +141,8 @@ foreach ($change in $changes) {
             $cases = @('stored-variant-plan','standard-plan-controls','recurrent-plan'); $reason = 'English stored-variant labels changed'
         } elseif (!@($keys | Where-Object { $_ -notin @('text.ae2craftingtime.plan.recurrent','text.ae2craftingtime.plan.recurrent_hint') }).Count) {
             $cases = @('recurrent-plan','standard-plan-controls'); $reason = 'English recurrent-plan labels changed'
+        } elseif (!@($keys | Where-Object { $_ -notin @('text.ae2craftingtime.status.amounts','text.ae2craftingtime.status.amounts_legend','config.ae2craftingtime.compactStatusAmounts') }).Count) {
+            $cases = @('standard-status-controls'); $reason = 'English compact-status amount labels changed'
         } elseif (@($keys | Where-Object { $_ -cne 'text.ae2craftingtime.ttc_delayed' }).Count) { $cases = @('suite'); $reason = 'English keys affect general UI' }
         else { $cases = @('delayed-status'); $reason = 'English delayed label changed' }
     } elseif ($behavior.Count) { $cases = @($behavior.cases | Select-Object -Unique); $reason = $behavior.reason -join '; ' }
