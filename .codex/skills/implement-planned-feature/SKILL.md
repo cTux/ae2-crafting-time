@@ -42,6 +42,8 @@ implementation and tests, then verify:
   stay synchronized;
 - validation, security, wire and persistence compatibility, translations,
   metadata, and optional integrations remain correct where applicable;
+- new TTC statuses and features have an on/off option and appear in the
+  GuideME book and GitHub wiki; changes to existing ones appear in both;
 - changed behavior has the required line, branch, boundary, and regression
   coverage without weakened gates;
 - no speculative, unrelated, or unplanned change entered the diff.
