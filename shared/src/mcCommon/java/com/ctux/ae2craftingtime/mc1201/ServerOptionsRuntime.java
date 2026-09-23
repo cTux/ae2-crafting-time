@@ -55,10 +55,17 @@ public final class ServerOptionsRuntime {
     }
 
     public static void accept(ServerPlayer sender, byte[] bytes) {
-        if (file == null || activeServer == null || !ServerOptionsPermission.canEdit(activeServer, sender)) return;
+        if (file == null || activeServer == null) return;
+        if (!ServerOptionsPermission.canEdit(activeServer, sender)) {
+            sendTo(sender);
+            return;
+        }
         try {
             var update = ServerOptionsWire.decode(bytes);
-            if (update.editable() || update.revision() != revision) return;
+            if (update.editable() || update.revision() != revision) {
+                sendTo(sender);
+                return;
+            }
             ServerConfigFile.save(file, update.config());
             current = update.config().copy();
             ProfilerBridge.configure(current);
@@ -66,6 +73,7 @@ public final class ServerOptionsRuntime {
             for (var player : activeServer.getPlayerList().getPlayers()) sendTo(player);
         } catch (IllegalArgumentException | IOException error) {
             LoggerFactory.getLogger("ae2craftingtime").warn("Rejected server options update", error);
+            sendTo(sender);
         }
     }
 

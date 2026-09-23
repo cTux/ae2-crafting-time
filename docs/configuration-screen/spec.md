@@ -102,9 +102,8 @@ and are not presented as off switches.
 - A missing key uses its default. Existing valid values survive the upgrade.
   Existing `enabled`, `showInTree`, `showChatMessages`, `notifyOnDelayed`,
   `maxSamples`, and `outlierMultiplier` values migrate without changing meaning.
-- A malformed client value falls back only that value. A malformed server value
-  follows the loader's config correction path and is logged without crashing a
-  client or dedicated server.
+- A malformed client or server value is logged and only that value falls back
+  to its default. It does not crash a client or dedicated server.
 - Unknown keys are preserved when the backing loader supports preservation and
   otherwise ignored; they never appear as invented UI options.
 

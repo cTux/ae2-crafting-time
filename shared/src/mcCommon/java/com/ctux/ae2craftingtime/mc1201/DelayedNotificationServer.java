@@ -23,6 +23,7 @@ public final class DelayedNotificationServer {
         if (scope == null || server == null) {
             return;
         }
+        if (ProfilerBridge.discardDisabledScope(scope, tick, server)) return;
         // Preserve the once-per-episode while the live owner is offline: skip
         // polling so the transition still fires on reconnect instead of being
         // consumed with no client to receive the plate.

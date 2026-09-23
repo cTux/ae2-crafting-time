@@ -178,6 +178,9 @@ class ProviderDispatchTrackerTest {
     void profilerPrioritizesExistingReasonsAndClearsEveryJobBoundary() {
         var profiler = new CraftProfiler(10);
         profiler.observeProviderDispatch(cpu, "target", Map.of(output, 1L), CraftingBlockReason.NO_CHANNEL, 50);
+        profiler.observeProviderDispatch(cpu, "target", Map.of(output, 1L), null, 51);
+        assertTrue(profiler.blockReasons(cpu, 51, Set.of()).isEmpty());
+        profiler.observeProviderDispatch(cpu, "target", Map.of(output, 1L), CraftingBlockReason.NO_CHANNEL, 51);
         profiler.observeDispatchPower(cpu, "power", Map.of(output, 1L), 10, 0, 50);
         assertEquals(Map.of(output, CraftingBlockReason.NO_POWER), profiler.blockReasons(cpu, 50, Set.of()));
         assertEquals(Map.of(output, CraftingBlockReason.NO_PROVIDER), profiler.blockReasons(cpu, 50, Set.of(output)));

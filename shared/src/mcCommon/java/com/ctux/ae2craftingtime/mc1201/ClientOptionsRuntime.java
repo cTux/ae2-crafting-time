@@ -28,11 +28,16 @@ public final class ClientOptionsRuntime {
 
     public static ClientConfig current() { return current; }
 
+    public static boolean profilingEnabled() {
+        var snapshot = ClientServerOptions.snapshot();
+        return snapshot == null || snapshot.config().features().enabled(OptionFeature.PROFILING);
+    }
+
     public static boolean enabled(OptionFeature feature) {
         if (!current.features().enabled(feature)) return false;
         var snapshot = ClientServerOptions.snapshot();
         if (snapshot != null && feature != OptionFeature.RECEIVE_CRAFT_WARNINGS
-                && !snapshot.config().features().enabled(OptionFeature.PROFILING)) return false;
+                && !profilingEnabled()) return false;
         var serverFeature = switch (feature) {
             case ACCURACY_DETAILS -> OptionFeature.ACCURACY_RECORDING;
             case WAITING_STATUS -> OptionFeature.WAITING_TRACKING;

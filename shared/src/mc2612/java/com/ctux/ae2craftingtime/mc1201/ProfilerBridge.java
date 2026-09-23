@@ -73,7 +73,7 @@ public final class ProfilerBridge {
         for (var output : pattern.getOutputs()) {
             outputs.merge(key(networkId, output.what()), output.amount(), Long::sum);
         }
-        if (reasonEnabled(reason)) PROFILER.observeProviderDispatch(scope, pattern, outputs, reason, tick);
+        if (reason == null || reasonEnabled(reason)) PROFILER.observeProviderDispatch(scope, pattern, outputs, reason, tick);
     }
 
     public static java.util.Map<ProfileKey, com.ctux.ae2craftingtime.core.CraftingBlockReason> blockReasons(
@@ -136,8 +136,14 @@ public final class ProfilerBridge {
 
     public static void complete(String networkId, Object scope, AEKey what, long amount, long tick,
             net.minecraft.server.MinecraftServer server) {
-        if (what == null || !isEnabled() || !ServerOptionsRuntime.scopeEnabled(scope)
-                || !ServerOptionsRuntime.keyEnabled(what)) {
+        if (what == null || !isEnabled()) {
+            return;
+        }
+        if (!ServerOptionsRuntime.scopeEnabled(scope)) {
+            discardDisabledScope(scope, tick, server);
+            return;
+        }
+        if (!ServerOptionsRuntime.keyEnabled(what)) {
             return;
         }
         var profileKey = key(networkId, what);
@@ -304,6 +310,12 @@ public final class ProfilerBridge {
             return List.of();
         }
         return PROFILER.pollNewlyDelayed(scope, tick);
+    }
+
+    public static boolean discardDisabledScope(Object scope, long tick, net.minecraft.server.MinecraftServer server) {
+        if (scope == null || ServerOptionsRuntime.scopeEnabled(scope)) return false;
+        if (!PROFILER.scopedKeys(scope).isEmpty()) finishJob(scope, false, tick, 0, server);
+        return true;
     }
 
     /**

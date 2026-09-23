@@ -7,6 +7,7 @@ import java.util.ArrayList;
 
 /** World-scoped server values. Invalid fields keep their own defaults. */
 public final class ServerConfigFile {
+    private static final System.Logger LOGGER = System.getLogger("ae2craftingtime");
     public static ServerConfig load(Path path, Path legacyPath) throws IOException {
         var config = new ServerConfig();
         if (Files.isRegularFile(path)) read(path, config, false);
@@ -35,7 +36,10 @@ public final class ServerConfigFile {
             var key = parts[0].trim();
             if (legacyOnly && !legacyKey(key)) continue;
             try { set(config, key, parts[1].trim()); }
-            catch (IllegalArgumentException ignored) { /* Keep this field's default. */ }
+            catch (IllegalArgumentException error) {
+                LOGGER.log(System.Logger.Level.WARNING, "Invalid server option {0} in {1}; using default",
+                        key, path);
+            }
         }
     }
 
@@ -49,6 +53,7 @@ public final class ServerConfigFile {
             if (feature.owner() == OptionFeature.Owner.SERVER && feature.key().equals(key)) {
                 if (value.equalsIgnoreCase("true")) config.features().setEnabled(feature, true);
                 else if (value.equalsIgnoreCase("false")) config.features().setEnabled(feature, false);
+                else throw new IllegalArgumentException("Expected boolean");
                 return;
             }
         }

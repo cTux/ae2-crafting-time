@@ -9,6 +9,7 @@ import appeng.menu.me.crafting.CraftConfirmMenu;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.OptionFeature;
+import com.ctux.ae2craftingtime.core.ClientConfig;
 import com.ctux.ae2craftingtime.core.TtcSort;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
@@ -55,9 +56,6 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
     private static final int AE2CRAFTINGTIME_COLS = 3;
     @Unique
     private static final int AE2CRAFTINGTIME_ROWS = 5;
-    @Unique
-    private static final int AE2CRAFTINGTIME_TOTAL_COLOR = 0xE0E0E0;
-
     @Unique
     private int ae2craftingtime$ttcSortMode = 2;
 
@@ -130,7 +128,8 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
             var totalWidth = font.width(text);
             TtcBadge.fillRoundedRect(guiGraphics, textX - 2, 176, textX + totalWidth + 2,
                     178 + font.lineHeight + 2, TtcBadge.BACKGROUND);
-            guiGraphics.drawString(font, text, textX, 178, AE2CRAFTINGTIME_TOTAL_COLOR, true);
+            guiGraphics.drawString(font, text, textX, 178,
+                    ClientOptionsRuntime.current().color(ClientConfig.Color.TOTAL), true);
             IntegrationLog.observe("ae2craftingtime", "plan-total");
         });
     }

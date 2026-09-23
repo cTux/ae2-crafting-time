@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
@@ -20,27 +22,53 @@ public final class OptionsScreen extends Screen {
             OptionFeature.Group.APPEARANCE, OptionFeature.Group.CONTROLS);
 
     private final Screen parent;
+    private final OptionsSession session;
     private final ClientConfig draft;
     private final OptionFeature.Group group;
     private final int page;
     private String error;
+    private boolean reloadRequired;
     private final List<EditBox> inputs = new ArrayList<>();
+    private List<String> resizeValues = List.of();
     private Button doneButton;
+    private Button cancelButton;
 
-    public OptionsScreen(Screen parent) {
-        this(parent, ClientOptionsRuntime.current().copy(), OptionFeature.Group.DISPLAYS, 0);
+    @Override
+    public void tick() {
+        super.tick();
+        var result = session.poll();
+        if (result == OptionsSession.SaveResult.SAVED) onClose();
+        else if (result == OptionsSession.SaveResult.REJECTED) {
+            doneButton.active = true;
+            cancelButton.active = true;
+            reloadRequired = session.source() != null && ClientServerOptions.snapshot() != null
+                    && ClientServerOptions.snapshot().revision() != session.source().revision();
+            doneButton.setMessage(Component.translatable(reloadRequired
+                    ? "config.ae2craftingtime.reload" : "config.ae2craftingtime.save_failed"));
+        }
     }
 
-    private OptionsScreen(Screen parent, ClientConfig draft, OptionFeature.Group group, int page) {
+    public OptionsScreen(Screen parent) {
+        this(parent, new OptionsSession(), OptionFeature.Group.DISPLAYS, 0);
+    }
+
+    OptionsScreen(Screen parent, OptionsSession session) {
+        this(parent, session, OptionFeature.Group.DISPLAYS, 0);
+    }
+
+    private OptionsScreen(Screen parent, OptionsSession session, OptionFeature.Group group, int page) {
         super(Component.translatable("config.ae2craftingtime.title"));
         this.parent = parent;
-        this.draft = draft;
+        this.session = session;
+        this.draft = session.client();
         this.group = group;
         this.page = page;
     }
 
     @Override
     protected void init() {
+        resizeValues = inputs.stream().map(EditBox::getValue).toList();
+        inputs.clear();
         int left = Math.max(4, (width - 430) / 2);
         int right = Math.min(width - 4, left + 430);
         int sidebarWidth = 104;
@@ -48,13 +76,13 @@ public final class OptionsScreen extends Screen {
         addRenderableWidget(Button.builder(Component.translatable("config.ae2craftingtime.client"), button -> {})
                 .bounds(left, 30, 100, 20).build()).active = false;
         addRenderableWidget(Button.builder(Component.translatable("config.ae2craftingtime.server"), button -> {
-            if (commitInputs()) Minecraft.getInstance().setScreen(new ServerOptionsScreen(parent));
+            if (commitInputs()) Minecraft.getInstance().setScreen(new ServerOptionsScreen(parent, session));
         }).bounds(left + 105, 30, 100, 20).build());
 
         for (int i = 0; i < CLIENT_GROUPS.size(); i++) {
             var nextGroup = CLIENT_GROUPS.get(i);
             var button = addRenderableWidget(Button.builder(groupLabel(nextGroup), pressed ->
-                    { if (commitInputs()) Minecraft.getInstance().setScreen(new OptionsScreen(parent, draft, nextGroup, 0)); })
+                    { if (commitInputs()) Minecraft.getInstance().setScreen(new OptionsScreen(parent, session, nextGroup, 0)); })
                     .bounds(left, 61 + i * 25, sidebarWidth, 20).build());
             button.active = nextGroup != group;
         }
@@ -79,19 +107,22 @@ public final class OptionsScreen extends Screen {
                     .append(": ").append(Component.translatable(enabled ? "options.on" : "options.off"));
             var toggle = addRenderableWidget(Button.builder(label, pressed -> {
                 draft.features().setEnabled(feature, !draft.features().enabled(feature));
-                Minecraft.getInstance().setScreen(new OptionsScreen(parent, draft, group, page));
+                Minecraft.getInstance().setScreen(new OptionsScreen(parent, session, group, page));
             }).bounds(left + sidebarWidth + 8, y,
                     right - left - sidebarWidth - 8, 23).build());
+            toggle.setTooltip(Tooltip.create(Component.translatable(
+                    "config.ae2craftingtime.client_help",
+                    Component.translatable("config.ae2craftingtime." + feature.key()))));
         }
 
         if (page > 0) {
             addRenderableWidget(Button.builder(Component.literal("<"), pressed ->
-                    { if (commitInputs()) Minecraft.getInstance().setScreen(new OptionsScreen(parent, draft, group, page - 1)); })
+                    { if (commitInputs()) Minecraft.getInstance().setScreen(new OptionsScreen(parent, session, group, page - 1)); })
                     .bounds(right - 56, height - 84, 24, 20).build());
         }
         if ((page + 1) * rows < totalRows) {
             addRenderableWidget(Button.builder(Component.literal(">"), pressed ->
-                    { if (commitInputs()) Minecraft.getInstance().setScreen(new OptionsScreen(parent, draft, group, page + 1)); })
+                    { if (commitInputs()) Minecraft.getInstance().setScreen(new OptionsScreen(parent, session, group, page + 1)); })
                     .bounds(right - 28, height - 84, 24, 20).build());
         }
 
@@ -106,16 +137,20 @@ public final class OptionsScreen extends Screen {
                     draft.setStatusSort(2);
                 }
             }
-            Minecraft.getInstance().setScreen(new OptionsScreen(parent, draft, group, 0));
+            Minecraft.getInstance().setScreen(new OptionsScreen(parent, session, group, 0));
         }).bounds(left, height - 54, 100, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("config.ae2craftingtime.reset_all"), pressed -> {
-            draft.reset();
-            Minecraft.getInstance().setScreen(new OptionsScreen(parent, draft, group, 0));
+            session.resetAll();
+            Minecraft.getInstance().setScreen(new OptionsScreen(parent, session, group, 0));
         }).bounds(left + 104, height - 54, 84, 20).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), pressed -> onClose())
+        cancelButton = addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), pressed -> onClose())
                 .bounds(right - 158, height - 54, 76, 20).build());
         doneButton = addRenderableWidget(Button.builder(Component.translatable("gui.done"), pressed -> save())
                 .bounds(right - 78, height - 54, 76, 20).build());
+        if (session.isSaving()) {
+            doneButton.setMessage(Component.translatable("config.ae2craftingtime.saving"));
+            lockWidgets();
+        } else if (reloadRequired) doneButton.setMessage(Component.translatable("config.ae2craftingtime.reload"));
     }
 
     private void addAppearanceRow(int index, int x, int y, int width) {
@@ -126,7 +161,10 @@ public final class OptionsScreen extends Screen {
                     .bounds(x, y, width - 84, 23).build()).active = false;
             var input = new EditBox(font, x + width - 80, y, 80, 23, label);
             input.setMaxLength(7);
-            input.setValue(String.format(Locale.ROOT, "#%06X", draft.color(color)));
+            input.setValue(resizeValues.size() > inputs.size() ? resizeValues.get(inputs.size())
+                    : String.format(Locale.ROOT, "#%06X", draft.color(color)));
+            input.setTooltip(Tooltip.create(Component.translatable("config.ae2craftingtime.color_help",
+                    String.format(Locale.ROOT, "#%06X", color.defaultRgb()))));
             input.setResponder(value -> {
                 if (value.matches("#[0-9a-fA-F]{6}"))
                     draft.setColor(color, Integer.parseInt(value.substring(1), 16));
@@ -139,7 +177,9 @@ public final class OptionsScreen extends Screen {
                     .bounds(x, y, width - 84, 23).build()).active = false;
             var input = new EditBox(font, x + width - 80, y, 80, 23, label);
             input.setMaxLength(3);
-            input.setValue(Integer.toString(draft.badgeOpacity()));
+            input.setValue(resizeValues.size() > inputs.size() ? resizeValues.get(inputs.size())
+                    : Integer.toString(draft.badgeOpacity()));
+            input.setTooltip(Tooltip.create(Component.translatable("config.ae2craftingtime.opacity_help")));
             input.setResponder(value -> {
                 try { draft.setBadgeOpacity(Integer.parseInt(value)); }
                 catch (IllegalArgumentException ignored) { }
@@ -153,18 +193,34 @@ public final class OptionsScreen extends Screen {
         int value = index == 0 ? draft.planSort() : draft.statusSort();
         var label = Component.translatable(index == 0 ? "config.ae2craftingtime.planSort"
                 : "config.ae2craftingtime.statusSort").append(": ").append(TtcText.sortMode(value));
-        addRenderableWidget(Button.builder(label, button -> {
+        var sort = addRenderableWidget(Button.builder(label, button -> {
             if (index == 0) draft.setPlanSort((draft.planSort() + 1) % 3);
             else draft.setStatusSort((draft.statusSort() + 1) % 3);
-            Minecraft.getInstance().setScreen(new OptionsScreen(parent, draft, group, page));
+            Minecraft.getInstance().setScreen(new OptionsScreen(parent, session, group, page));
         }).bounds(x, y, width, 23).build());
+        sort.setTooltip(Tooltip.create(Component.translatable("config.ae2craftingtime.sort_help")));
     }
 
     private void save() {
+        if (reloadRequired) {
+            session.reload();
+            Minecraft.getInstance().setScreen(new OptionsScreen(parent, session, group, page));
+            return;
+        }
         if (!commitInputs()) return;
         try {
-            ClientOptionsRuntime.apply(draft);
-            onClose();
+            switch (session.save()) {
+                case SAVED -> onClose();
+                case WAITING -> {
+                    doneButton.setMessage(Component.translatable("config.ae2craftingtime.saving"));
+                    lockWidgets();
+                }
+                case STALE -> {
+                    doneButton.setMessage(Component.translatable("config.ae2craftingtime.reload"));
+                    reloadRequired = true;
+                }
+                case REJECTED -> throw new IllegalStateException("Unexpected save result");
+            }
         } catch (IOException exception) {
             error = exception.getMessage();
             doneButton.setMessage(Component.translatable("config.ae2craftingtime.save_failed"));
@@ -191,8 +247,16 @@ public final class OptionsScreen extends Screen {
         }
     }
 
+    private void lockWidgets() {
+        children().forEach(child -> {
+            if (child instanceof AbstractWidget widget) widget.active = false;
+            if (child instanceof EditBox input) input.setEditable(false);
+        });
+    }
+
     @Override
     public void onClose() {
+        if (session.isSaving()) return;
         Minecraft.getInstance().setScreen(parent);
     }
 

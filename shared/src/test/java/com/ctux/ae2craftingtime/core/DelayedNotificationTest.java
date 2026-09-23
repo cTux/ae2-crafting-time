@@ -47,6 +47,24 @@ class DelayedNotificationTest {
         assertTrue(profiler.scopedKeys(cpu).isEmpty());
     }
 
+    @Test
+    void discardedScopeCannotWarnOrLearnFromLaterCompletion() {
+        var profiler = new CraftProfiler(10);
+        var output = key("minecraft:iron_plate");
+        var cpu = new Object();
+        seedTypical(profiler, output, new Object());
+        var samples = profiler.snapshotSamples();
+        profiler.start(output, cpu, 1, ProfileUnit.ITEM, 300);
+        assertEquals(1, profiler.pollNewlyDelayed(cpu, 800).size());
+
+        profiler.clearPending(cpu);
+        assertFalse(profiler.complete(output, cpu, 1, 801));
+        assertFalse(profiler.hasPending(output));
+        assertTrue(profiler.pollNewlyDelayed(cpu, 1_000).isEmpty());
+        assertEquals(samples, profiler.snapshotSamples());
+        assertTrue(profiler.snapshotStatuses().isEmpty());
+    }
+
     private static ProfileKey key(String id) {
         return new ProfileKey(id);
     }

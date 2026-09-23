@@ -35,7 +35,6 @@ public abstract class CraftConfirmTableRendererMixin {
         return text == appeng.core.localization.GuiText.Missing && entry.getMissingAmount() > 0
                 && ((RecurrentPlanEntry) entry).ae2craftingtime$recurrent()
                 && ClientOptionsRuntime.enabled(OptionFeature.RECURRENT_STATUS)
-                && com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig.ENABLED.get()
                 ? TtcText.recurrent(arguments) : original.call(text, arguments);
     }
 
@@ -58,7 +57,7 @@ public abstract class CraftConfirmTableRendererMixin {
         }
         if (entry.getMissingAmount() > 0 && ((RecurrentPlanEntry) entry).ae2craftingtime$recurrent()
                 && ClientOptionsRuntime.enabled(OptionFeature.RECURRENT_STATUS)
-                && com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig.ENABLED.get()) {
+                && ClientOptionsRuntime.profilingEnabled()) {
             cir.getReturnValue().add(TtcText.recurrentHint());
         }
         if (entry.getCraftAmount() <= 0) {
@@ -81,7 +80,7 @@ public abstract class CraftConfirmTableRendererMixin {
         return com.ctux.ae2craftingtime.core.PlanStoredVariantLifecycle.show(
                 entry.getWhat() instanceof appeng.api.stacks.AEItemKey, entry.getMissingAmount(),
                 ((RecurrentPlanEntry) entry).ae2craftingtime$storedVariant(),
-                com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig.ENABLED.get());
+                ClientOptionsRuntime.profilingEnabled());
     }
 
     private static void ae2craftingtime$appendTtc(CraftingPlanSummaryEntry entry, List<Component> lines) {

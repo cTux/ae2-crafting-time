@@ -6,6 +6,7 @@ import com.ctux.ae2craftingtime.core.RequesterTtcLayout;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcColor;
 import com.ctux.ae2craftingtime.core.OptionFeature;
+import com.ctux.ae2craftingtime.core.ClientConfig;
 import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
@@ -94,7 +95,7 @@ public abstract class MERequesterScreenMixin {
             var estimate = estimates.get(row);
             var color = estimate.seconds().isPresent()
                     ? ClientOptionsRuntime.ttcColor(estimate.seconds().getAsLong(), minSeconds, maxSeconds)
-                    : 0xE0E0E0;
+                    : ClientOptionsRuntime.current().color(ClientConfig.Color.COLLECTING);
             var rowIndex = row;
             estimate.label().ifPresent(label -> {
                 ae2craftingtime$drawRowBadge(guiGraphics, rowIndex, label, color);
@@ -104,7 +105,8 @@ public abstract class MERequesterScreenMixin {
 
         TimeEstimate.formatTotal(estimates.stream().map(MERequesterEstimate::seconds).toList())
                 .ifPresent(eta -> {
-                    ae2craftingtime$drawBadge(guiGraphics, 160, 6, TtcText.totalTtc(eta), 0xE0E0E0,
+                    ae2craftingtime$drawBadge(guiGraphics, 160, 6, TtcText.totalTtc(eta),
+                            ClientOptionsRuntime.current().color(ClientConfig.Color.TOTAL),
                             0.5f, AE2CRAFTINGTIME_TEXT_SCALE, AE2CRAFTINGTIME_LABEL_PADDING);
                     IntegrationLog.observe("merequester", "total");
                 });

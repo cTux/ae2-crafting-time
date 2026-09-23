@@ -9,6 +9,7 @@ import java.util.Locale;
 
 /** Small flat TOML reader/writer for client-owned options. */
 public final class ClientConfigFile {
+    private static final System.Logger LOGGER = System.getLogger("ae2craftingtime");
     public static ClientConfig load(Path path, Path legacyPath) throws IOException {
         var config = new ClientConfig();
         if (Files.isRegularFile(path)) {
@@ -56,8 +57,9 @@ public final class ClientConfigFile {
             if (legacyOnly && !key.equals("showInTree")) continue;
             try {
                 set(config, key, value);
-            } catch (IllegalArgumentException ignored) {
-                // A malformed field keeps only its own default.
+            } catch (IllegalArgumentException error) {
+                LOGGER.log(System.Logger.Level.WARNING, "Invalid client option {0} in {1}; using default",
+                        key, path);
             }
         }
     }
@@ -67,6 +69,7 @@ public final class ClientConfigFile {
             if (feature.owner() == OptionFeature.Owner.CLIENT && feature.key().equals(key)) {
                 if (value.equalsIgnoreCase("true")) config.features().setEnabled(feature, true);
                 else if (value.equalsIgnoreCase("false")) config.features().setEnabled(feature, false);
+                else throw new IllegalArgumentException("Expected boolean");
                 return;
             }
         }
