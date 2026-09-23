@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -31,6 +32,12 @@ public final class ServerOptionsScreen extends Screen {
     private Button doneButton;
     private Button cancelButton;
     private boolean reloadRequired;
+
+    @Override
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        OptionsBackground.render(this, graphics);
+        super.render(graphics, mouseX, mouseY, partialTick);
+    }
 
     @Override
     public void tick() {

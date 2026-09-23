@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ArrayList;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -32,6 +33,12 @@ public final class OptionsScreen extends Screen {
     private List<String> resizeValues = List.of();
     private Button doneButton;
     private Button cancelButton;
+
+    @Override
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        OptionsBackground.render(this, graphics);
+        super.render(graphics, mouseX, mouseY, partialTick);
+    }
 
     @Override
     public void tick() {
