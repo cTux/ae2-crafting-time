@@ -51,11 +51,11 @@ public final class ServerOptionsRuntime {
 
     public static void sendTo(ServerPlayer player) {
         StatsNetwork.sendTo(player, new ServerOptionsSnapshotS2C(ServerOptionsWire.encode(
-                new ServerOptionsWire.Snapshot(revision, ServerOptionsPermission.canEdit(player), current))));
+                new ServerOptionsWire.Snapshot(revision, ServerOptionsPermission.canEdit(activeServer, player), current))));
     }
 
     public static void accept(ServerPlayer sender, byte[] bytes) {
-        if (file == null || activeServer == null || !ServerOptionsPermission.canEdit(sender)) return;
+        if (file == null || activeServer == null || !ServerOptionsPermission.canEdit(activeServer, sender)) return;
         try {
             var update = ServerOptionsWire.decode(bytes);
             if (update.editable() || update.revision() != revision) return;

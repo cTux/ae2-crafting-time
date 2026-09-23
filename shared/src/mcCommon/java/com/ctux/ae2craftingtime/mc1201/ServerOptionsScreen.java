@@ -26,6 +26,13 @@ public final class ServerOptionsScreen extends Screen {
     private final List<EditBox> inputs = new ArrayList<>();
     private Button doneButton;
 
+    @Override
+    public void tick() {
+        super.tick();
+        if (source == null && ClientServerOptions.snapshot() != null)
+            Minecraft.getInstance().setScreen(new ServerOptionsScreen(parent));
+    }
+
     public ServerOptionsScreen(Screen parent) {
         this(parent, ClientServerOptions.snapshot(),
                 ClientServerOptions.snapshot() == null ? null : ClientServerOptions.snapshot().config().copy(),
