@@ -42,6 +42,9 @@ description: Develop, debug, test, or port AE2 Crafting Time code and resources.
 - Update English and Ukrainian translation keys together and keep loader metadata, mixin lists, dependencies, docs, and code truthful to one another.
 - Keep docs, skills, changelogs, translations, and metadata in the casual,
   direct project voice. Never trade technical accuracy for personality.
+- Document every new or changed TTC status and feature in both
+  the GuideME book and GitHub wiki. Give each new TTC status and feature an
+  on/off option; update both guides when existing behavior changes.
 
 ## 100% Coverage Rule
 

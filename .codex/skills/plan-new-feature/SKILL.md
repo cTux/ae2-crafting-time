@@ -58,6 +58,8 @@ plan. A planning merge never marks implementation `finished`. Preserve any hold.
 Review the three documents together before finalizing the issue:
 
 - Every requested behavior and non-goal appears in the spec.
+- New TTC statuses and features have an on/off option and a GuideME and GitHub
+  wiki documentation step; changes to existing ones update both guides.
 - Every acceptance criterion maps to a design path and implementation/test step.
 - Server/client ownership, source-set reuse, all affected release-matrix rows,
   packets, persistence, security limits, translations, and optional integrations
