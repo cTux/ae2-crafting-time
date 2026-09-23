@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="460" viewBox="0 0 840 460"><rect width="840" height="460" fill="#f4f4f4"/><g font-family="sans-serif" fill="#222"><text x="24" y="32" font-size="20">Quantity format for issue #438</text><text x="24" y="57" font-size="13">Schematic only: not a Minecraft screenshot or a font-fit test.</text>
+<g transform="translate(24 83)"><text y="15" font-size="12">All categories</text><rect y="30" width="186" height="104" rx="3" fill="#bdbdbd"/>
+<rect x="10" y="43" width="139" height="29" rx="3" fill="#3b3b3b"/><text x="140" y="64" text-anchor="end" font-family="monospace" font-size="19" fill="#e0e0e0">4/10/200</text>
+<rect x="40" y="81" width="109" height="29" rx="3" fill="#3b3b3b"/><text x="140" y="102" text-anchor="end" font-family="monospace" font-size="16" fill="#e0e0e0">TTC/status</text>
+<rect x="158" y="65" width="19" height="19" fill="#777"/></g>
+<g transform="translate(228 83)"><text y="15" font-size="12">Crafting + scheduled</text><rect y="30" width="186" height="104" rx="3" fill="#bdbdbd"/>
+<rect x="10" y="43" width="139" height="29" rx="3" fill="#3b3b3b"/><text x="140" y="64" text-anchor="end" font-family="monospace" font-size="19" fill="#e0e0e0">-/10/200</text>
+<rect x="40" y="81" width="109" height="29" rx="3" fill="#3b3b3b"/><text x="140" y="102" text-anchor="end" font-family="monospace" font-size="16" fill="#e0e0e0">TTC/status</text>
+<rect x="158" y="65" width="19" height="19" fill="#777"/></g>
+<g transform="translate(432 83)"><text y="15" font-size="12">Available + scheduled</text><rect y="30" width="186" height="104" rx="3" fill="#bdbdbd"/>
+<rect x="10" y="43" width="139" height="29" rx="3" fill="#3b3b3b"/><text x="140" y="64" text-anchor="end" font-family="monospace" font-size="19" fill="#e0e0e0">10/-/200</text>
+<rect x="40" y="81" width="109" height="29" rx="3" fill="#3b3b3b"/><text x="140" y="102" text-anchor="end" font-family="monospace" font-size="16" fill="#e0e0e0">TTC/status</text>
+<rect x="158" y="65" width="19" height="19" fill="#777"/></g>
+<g transform="translate(636 83)"><text y="15" font-size="12">Available + crafting</text><rect y="30" width="186" height="104" rx="3" fill="#bdbdbd"/>
+<rect x="10" y="43" width="139" height="29" rx="3" fill="#3b3b3b"/><text x="140" y="64" text-anchor="end" font-family="monospace" font-size="19" fill="#e0e0e0">4/10/-</text>
+<rect x="40" y="81" width="109" height="29" rx="3" fill="#3b3b3b"/><text x="140" y="102" text-anchor="end" font-family="monospace" font-size="16" fill="#e0e0e0">TTC/status</text>
+<rect x="158" y="65" width="19" height="19" fill="#777"/></g>
+<g transform="translate(24 249)"><text y="15" font-size="12">Available only</text><rect y="30" width="186" height="104" rx="3" fill="#bdbdbd"/>
+<rect x="10" y="43" width="139" height="29" rx="3" fill="#3b3b3b"/><text x="140" y="64" text-anchor="end" font-family="monospace" font-size="19" fill="#e0e0e0">A10</text>
+<rect x="158" y="65" width="19" height="19" fill="#777"/></g>
+<g transform="translate(228 249)"><text y="15" font-size="12">Crafting only</text><rect y="30" width="186" height="104" rx="3" fill="#bdbdbd"/>
+<rect x="10" y="43" width="139" height="29" rx="3" fill="#3b3b3b"/><text x="140" y="64" text-anchor="end" font-family="monospace" font-size="19" fill="#e0e0e0">C10</text>
+<rect x="40" y="81" width="109" height="29" rx="3" fill="#3b3b3b"/><text x="140" y="102" text-anchor="end" font-family="monospace" font-size="16" fill="#e0e0e0">TTC/status</text>
+<rect x="158" y="65" width="19" height="19" fill="#777"/></g>
+<g transform="translate(432 249)"><text y="15" font-size="12">Scheduled only</text><rect y="30" width="186" height="104" rx="3" fill="#bdbdbd"/>
+<rect x="10" y="43" width="139" height="29" rx="3" fill="#3b3b3b"/><text x="140" y="64" text-anchor="end" font-family="monospace" font-size="19" fill="#e0e0e0">S10</text>
+<rect x="40" y="81" width="109" height="29" rx="3" fill="#3b3b3b"/><text x="140" y="102" text-anchor="end" font-family="monospace" font-size="16" fill="#e0e0e0">TTC/status</text>
+<rect x="158" y="65" width="19" height="19" fill="#777"/></g>
+<g transform="translate(636 249)"><text y="15" font-size="12">All zero: no quantity line</text><rect y="30" width="186" height="104" rx="3" fill="#bdbdbd"/>
+<rect x="158" y="65" width="19" height="19" fill="#777"/></g>
+<text x="24" y="440" font-size="13">Order: Available / Crafting / Scheduled. Actual color follows the row TTC/status.</text></g></svg>

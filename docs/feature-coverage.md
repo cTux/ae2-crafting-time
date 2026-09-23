@@ -45,6 +45,7 @@ work. Their specifications own the current status; this index does not duplicate
 - [CodexVM MCP Evaluation Spec](codexvm-mcp-evaluation/spec.md)
 - [CodexVM shared-folder recovery](codexvm-shared-folders/spec.md)
 - [Collecting Data Status Spec](collecting-data-status/spec.md)
+- [Compact crafting-status amounts](crafting-status-amounts/spec.md)
 - [Completed Craft Total TTC Specification](completed-status-total-ttc/spec.md)
 - [In-game Configuration Screen Specification](configuration-screen/spec.md)
 - [Total TTC in the Crafting CPU list](cpu-list-total-ttc/spec.md)
