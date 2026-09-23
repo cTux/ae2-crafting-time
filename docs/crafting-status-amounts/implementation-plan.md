@@ -8,7 +8,9 @@ documentation PR must use a non-closing issue reference.
 
 ## 1. Shared composition and regression checks
 
-Own `TtcText`, `CraftingStatusTableRendererMixin`, and their existing tests in
+Own the pure formatter in core `CraftingRowState` and its existing core test.
+Keep `TtcText` as component conversion, and test it and
+`CraftingStatusTableRendererMixin` through their existing tests in
 `shared/src/mc1201Test/java/com/ctux/ae2craftingtime/mc1201/`.
 
 - Implement Q1's eight cases with the key's SLOT formatting and no summation.
@@ -27,6 +29,8 @@ Own `TtcText`, `CraftingStatusTableRendererMixin`, and their existing tests in
 
 Use the existing test suite; do not add a testing framework. Check each new
 branch through formatter and composition tests rather than screenshots alone.
+Keep Minecraft-free decisions in `shared/src/main/java` with 100% line and
+branch coverage; keep Minecraft component/API conversion at the tested boundary.
 
 ## 2. Client option, badge rendering and bilingual resources
 
@@ -52,6 +56,58 @@ adapters, and `shared/src/main/resources/assets/ae2craftingtime/lang/{en_us,uk_u
   existing status/estimates pages; do not advertise the feature before it ships.
 
 ## 3. Cross-version validation
+
+### Verification prerequisites
+
+Before approving the runtime campaign, inspect the exact CodexVM prepared
+`launch.json` for each target and its compatible loader, Java executable and
+libraries. Verify the guest's Java 17/21/25 installations and the disposable
+fixture source/marker path. The host JDKs, VMX and launch scripts exist; the
+2026-09-23 investigation found the VM stopped, so guest readiness is still
+unverified. Missing native installations must be provisioned and checked before
+the campaign; the runner does not install or substitute them.
+
+Add these bounded checkpoints to the existing `standard-status-controls` leaf,
+`StandardCraftFixture`, and matching 26.1.2 adapters. They are prerequisite
+implementation work, not capabilities already supplied by the current driver:
+
+- Q1/Q2: deterministic native item/fluid rows for the eight presence masks,
+  large counts and fractional fluids, with per-row raw amounts recorded beside
+  the final rendered description and native full tooltip. Use fixture-controlled
+  native menu entries for otherwise transient/empty cases, clearly identify
+  these synthetic quantity cases, and separately exercise real craft transitions
+  through the normal server/menu synchronization. Never seed formatted output,
+  replace production callbacks or fabricate observation snapshots.
+- Q3/Q5: reuse the existing waiting, running, delayed and blocking leaves and
+  their real fixture state. Assert summary RGB against the actual appended
+  status component; retain native tooltips and existing interaction checkpoints.
+- Q6: use real Options controls for all four compact/TTC combinations, Done,
+  Cancel and both resets. Check server profiling off and a non-operator client
+  separately. Save compact off, exit cleanly, then relaunch the same disposable
+  client config and verify off before restoring on. Keep that config outside
+  pristine per-case fixture resets; record its path/hash and both launch results.
+- Q4: stage a test-only resource pack in the disposable client that maps the
+  default font to Minecraft's built-in uniform font. Await resource reload and
+  prove the representative quantity string has a greater measured `Font.width`
+  than under the default font; otherwise stop and repair the fixture. Capture
+  both fonts at requested GUI scales 1, 2 and Auto, recording effective scale,
+  dimensions and final badge/icon bounds. Restore the original font/scale after
+  the case. Keep the pack out of production resources and dependency profiles.
+
+Update the existing driver checkpoint/result expectations and
+`ui-smoke-groups.json` entries to require these captures. Register any new helper
+paths in `ui-smoke-impact.json` so changed-mode selection includes the leaf.
+The [driver spec](../test-driver/spec.md#compact-status-amounts-extension) and
+[design](../test-driver/technical-design.md#compact-status-amounts-extension)
+keep this extension separate from their shipped baseline.
+
+After the PR exists, run plan-only selection and cheap deterministic checks,
+then prove the extended leaf on 1.21.1 NeoForge before the four-target campaign.
+Budget at least two sequential launches per target for save/relaunch proof;
+record actual cold-start cost and a bounded progress timeout before expanding.
+Do not turn an unavailable fixture or unreadable capture into a skipped gate.
+
+### Execution
 
 Follow repository instructions: create the implementation commit and let the
 hook create the PR before local checks. Run targeted existing tests, the normal

@@ -20,10 +20,15 @@ badges through their version's `TtcBadge`; do not replace the table renderer.
    `OptionFeature.COMPACT_STATUS_AMOUNTS`, independently of `STATUS_ROWS`.
    Read stored, active and pending directly from the menu entry. Keep the
    existing `appendTtc` gate unchanged, including its server disable behavior.
-2. Add a small formatter in the existing shared `TtcText` class. Pass the three
+2. Add the pure string formatter to the existing core `CraftingRowState` class
+   in `shared/src/main/java`. Pass the three
    raw amounts and their key-formatted `AmountFormat.SLOT` strings; inspect each
    amount independently with `> 0`. Emit the specification's cases without a
    sum, parsing localized text, unit conversion, or a new formatter framework.
+   Keep `TtcText` as the Minecraft component wrapper. Cover every formatter
+   branch in `CraftingRowStateTest`; component recognition and styling use the
+   existing Minecraft boundary tests. Put other Minecraft-free decisions in
+   the same covered core source set rather than the excluded adapter package.
 3. Use one translatable wrapper key, `text.ae2craftingtime.status.amounts`, with
    value `%s` in both locale files and the composed string as its argument. This
    identifies the badge without adding a custom component type. Prefixes and
@@ -130,5 +135,15 @@ added. Existing config files need no migration: the missing key defaults on.
 Unknown translation/component contracts keep native quantities. Empty entries
 avoid formatting and summary creation. Custom key formatters remain responsible
 for unit display; do not apply `AeKeyAmounts.normalize`, which serves estimates.
+
+## Verification fixtures
+
+Extend `StandardAe2Scenario`'s `standard-status-controls` leaf and
+`StandardCraftFixture`; keep shared transitions in `testDriver1201` and use
+the existing 26.1.2 fixture/platform adapters for changed APIs. The
+[implementation plan](implementation-plan.md#verification-prerequisites) defines
+the quantity, option, font and relaunch checkpoints that must be added before
+the campaign. Reuse native menu rendering and final-frame observations; no
+second driver or production test switch is needed.
 
 The [implementation plan](implementation-plan.md) covers tests and runtime gates.

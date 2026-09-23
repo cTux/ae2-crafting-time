@@ -2,6 +2,22 @@
 
 Lifecycle: see the [scope status and evidence](spec.md).
 
+## Compact status amounts extension
+
+Extend the existing shared `StandardAe2Scenario` and `StandardCraftFixture`,
+with changed native APIs in the existing 26.1.2 fixture/platform adapters.
+Reuse native menus, Options controls, final-frame observations and capture
+sidecars. Synthetic quantity fixtures may supply raw native menu entries only;
+record them as synthetic and retain separate real craft-transition evidence.
+Never seed formatted text or observation snapshots. Reuse existing status
+fixtures for warnings and color checks.
+
+The [feature plan](../crafting-status-amounts/implementation-plan.md#verification-prerequisites)
+owns the exact checkpoints, test-only wider-font pack, resource-reload wait,
+scale restoration and two-launch config persistence check. Keep the pack and
+saved config in the disposable runtime, with capture/artifact identity in the
+campaign evidence. Add no general fixture engine or second runner.
+
 ## Capture evidence binding
 
 `CaptureEvidence` writes a sidecar only after the PNG completes, preserving the

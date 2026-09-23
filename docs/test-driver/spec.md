@@ -12,6 +12,19 @@ The saved Forge fixture starts within reach of its marked terminal and contains
 no retained CPU jobs. Optional scenarios keep its grid, patterns, and samples.
 Native CPU setup waits for the formed cluster to become active before selection.
 
+## Compact status amounts extension
+
+Lifecycle and acceptance: [compact status amounts](../crafting-status-amounts/spec.md).
+This planned extension is outside the shipped driver baseline. Extend
+`standard-status-controls` with the eight quantity combinations, item/fluid
+boundaries, native tooltip comparison, independent compact/TTC controls,
+Done/Cancel/resets and saved-option relaunch checks. Exercise default and wider
+fonts at scales 1, 2 and Auto on all four targets. Existing status leaves retain
+their real waiting, running and warning checks and also inspect the new badge.
+The [feature plan](../crafting-status-amounts/implementation-plan.md#verification-prerequisites)
+defines fixture ownership, synthetic-row limits, capture requirements and
+environment gates; none of these new checkpoints is claimed as implemented.
+
 ## CPU-list total TTC scenario
 
 `cpu-list-total-ttc` opens the real Crafting Status screen on eight native CPUs:
