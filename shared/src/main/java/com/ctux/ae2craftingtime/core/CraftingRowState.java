@@ -1,15 +1,21 @@
 package com.ctux.ae2craftingtime.core;
 
 public final class CraftingRowState {
+    // AE2 draws table descriptions at half scale: 90 font pixels occupy 45 screen pixels.
+    public static final int RECURRENT_TEXT_WIDTH = 90;
     private static final java.util.Set<String> BADGE_KEYS = java.util.Set.of(
             "text.ae2craftingtime.ttc", "text.ae2craftingtime.ttc_delayed", "text.ae2craftingtime.waiting",
             "text.ae2craftingtime.no_space", "text.ae2craftingtime.no_provider", "text.ae2craftingtime.no_power",
             "text.ae2craftingtime.no_channel",
             "text.ae2craftingtime.no_target", "text.ae2craftingtime.input_blocked",
-            "text.ae2craftingtime.locked");
+            "text.ae2craftingtime.locked", "text.ae2craftingtime.plan.recurrent");
 
     public static boolean isBadge(String translationKey) {
         return BADGE_KEYS.contains(translationKey);
+    }
+
+    public static float recurrentTextScale(int width) {
+        return width > RECURRENT_TEXT_WIDTH ? (float) RECURRENT_TEXT_WIDTH / width : 1f;
     }
 
     private CraftingRowState() {

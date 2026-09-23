@@ -8,10 +8,16 @@ import org.junit.jupiter.params.provider.CsvSource;
 class CraftingRowStateTest {
     @ParameterizedTest
     @CsvSource({"ttc,true", "ttc_delayed,true", "waiting,true", "no_space,true", "no_provider,true", "no_power,true",
-            "no_channel,true", "no_target,true", "input_blocked,true", "locked,true",
-            "no_provider.explanation,false", "details_hint,false", "unknown,false"})
+            "no_channel,true", "no_target,true", "input_blocked,true", "locked,true", "plan.recurrent,true",
+            "plan.recurrent_hint,false", "no_provider.explanation,false", "details_hint,false", "unknown,false"})
     void onlyCompactStatusLinesReceiveBadges(String suffix, boolean expected) {
         assertEquals(expected, CraftingRowState.isBadge("text.ae2craftingtime." + suffix));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0,1", "90,1", "94,0.9574468", "180,0.5"})
+    void recurrentWarningFitsItsNativeTextArea(int width, float expected) {
+        assertEquals(expected, CraftingRowState.recurrentTextScale(width), 0.000001f);
     }
 
     @ParameterizedTest

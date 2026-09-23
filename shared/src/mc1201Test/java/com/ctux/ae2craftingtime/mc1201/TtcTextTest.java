@@ -54,15 +54,15 @@ class TtcTextTest {
 
     @ParameterizedTest
     @CsvSource({"en_us, Recurrent", "uk_ua, Циклічне"})
-    void recurrencePreservesNativeAmountAndUsesNormalRedLocalizedText(String locale, String label) throws IOException {
+    void recurrencePreservesNativeAmountAndUsesBoldRedLocalizedText(String locale, String label) throws IOException {
         var amount = "1.25 M mB";
         var component = TtcText.recurrent(amount);
         var contents = (TranslatableContents) component.getContents();
         assertEquals("text.ae2craftingtime.plan.recurrent", contents.getKey());
         assertEquals(List.of(amount), List.of(contents.getArgs()));
-        assertFalse(component.getStyle().isBold());
+        assertTrue(component.getStyle().isBold());
         assertEquals(TextColor.fromLegacyFormat(ChatFormatting.RED), component.getStyle().getColor());
-        assertFalse(com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(contents.getKey()));
+        assertTrue(com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(contents.getKey()));
         var hint = (TranslatableContents) TtcText.recurrentHint().getContents();
         assertEquals("text.ae2craftingtime.plan.recurrent_hint", hint.getKey());
         assertEquals(0, hint.getArgs().length);

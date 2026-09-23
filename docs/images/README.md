@@ -16,16 +16,17 @@ With timing history available:
 ![Two-stage crafting plan with recipe and total estimates](crafting-plan-estimate.jpg)
 
 The Recurrent guide page uses a reviewed crop from the real native Crafting
-Plan `recurrent-plan` fixture. Its retained source is campaign
-`20260915T054847124Z-2d275585`, path
+Plan `recurrent-plan` fixture. Its retained source is archive
+`20260922T201206763Z-d068777e`, path
 `1.20.1-forge/primary/run/evidence/recurrent-plan/recurrent-plan-tooltip.png`,
-commit `157efbd6b366976f19f91f592da394ceca3c40b2`, SHA-256
-`1d4529ec24e12367a70d9e0b945264ef71e6f0355224aa9a2ed216defa6549a9`, and
+commit `9afdd6b0228c5c77eef2bae6ecb149cb799fde8d`, SHA-256
+`ea72093d72a5eb66cccadfe2ea657da53f0a78509b43374e451fa5420ffd6c70`, and
 physical crop `[740, 110, 1400, 360]`, exported at 1600 pixels wide. The
-scenario passed its Recurrent row, color, tooltip, quantity, and layout checks;
-the crop was manually reviewed for the exact label and complete explanation.
-The wider campaign's unrelated `rxYaglEe` status-file failure is not treated as
-a full-campaign pass.
+scenario passed its Recurrent row, bold red badge, tooltip, quantity, and layout
+checks; the crop was manually reviewed for the exact label and complete
+explanation. The wider campaign stopped on the unrelated CrazyAE2Addons CPU
+fixture failure tracked in [#507](https://github.com/cTux/ae2-crafting-time/issues/507);
+it is not treated as a full-campaign pass.
 
 When only part of the plan has history, the total covers the known work:
 
