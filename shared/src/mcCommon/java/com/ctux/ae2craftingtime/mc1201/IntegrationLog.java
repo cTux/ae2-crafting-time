@@ -87,16 +87,14 @@ public final class IntegrationLog {
     public static boolean treeEnabled() {
         var report = diagnostics;
         if (report == null) return false;
-        var enabled = Ae2CraftingTimeConfig.SHOW_IN_TREE.get();
-        report.configureGroup("ae2ct", enabled);
-        return report.available("ae2ct") && enabled;
+        return report.available("ae2ct");
     }
 
     public static void summary() { diagnostics.summary(); }
 
     public static void configuration() {
         diagnostics.configureProfiling(Ae2CraftingTimeConfig.ENABLED.get());
-        diagnostics.configureGroup("ae2ct", Ae2CraftingTimeConfig.SHOW_IN_TREE.get());
+        diagnostics.configureGroup("ae2ct", true);
     }
     private IntegrationLog() {}
 }

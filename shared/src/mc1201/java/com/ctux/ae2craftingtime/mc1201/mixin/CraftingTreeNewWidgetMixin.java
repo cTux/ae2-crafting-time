@@ -4,6 +4,8 @@ import appeng.api.stacks.GenericStack;
 import appeng.client.gui.AEBaseScreen;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcColor;
+import com.ctux.ae2craftingtime.core.OptionFeature;
+import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
 import com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeConfig;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.core.ProfileKey;
@@ -52,7 +54,7 @@ public abstract class CraftingTreeNewWidgetMixin {
     private void ae2craftingtime$clickStats(double mouseX, double mouseY, int button, CallbackInfo ci) {
         if (!IntegrationLog.available("ae2ct")) return;
         if ((!TtcDetailsKeyMapping.matchesMouse(button) && !TtcDetailsKeyMapping.matchesResetMouse(button))
-                || !Ae2CraftingTimeConfig.SHOW_IN_TREE.get()) {
+                || !ClientOptionsRuntime.enabled(OptionFeature.CRAFTING_TREE)) {
             return;
         }
 
@@ -71,7 +73,7 @@ public abstract class CraftingTreeNewWidgetMixin {
         ae2craftingtime$colorRoot = null;
         ae2craftingtime$secondsByNode = Map.of();
         ae2craftingtime$colorsByNode = Map.of();
-        if (IntegrationLog.treeEnabled()) {
+        if (IntegrationLog.treeEnabled() && ClientOptionsRuntime.enabled(OptionFeature.CRAFTING_TREE)) {
             IntegrationLog.observe("ae2ct", "layout");
         }
     }
@@ -81,7 +83,7 @@ public abstract class CraftingTreeNewWidgetMixin {
             at = @At("RETURN"),
             require = 0)
     private void ae2craftingtime$drawStats(GuiGraphics guiGraphics, @Coerce Object node, CallbackInfo ci) {
-        if (!IntegrationLog.treeEnabled()) {
+        if (!IntegrationLog.treeEnabled() || !ClientOptionsRuntime.enabled(OptionFeature.CRAFTING_TREE)) {
             return;
         }
 
@@ -120,7 +122,7 @@ public abstract class CraftingTreeNewWidgetMixin {
             int mouseY, List<Component> lines) {
         var additions = new ArrayList<Component>();
         try {
-            if (IntegrationLog.treeEnabled()) {
+            if (IntegrationLog.treeEnabled() && ClientOptionsRuntime.enabled(OptionFeature.CRAFTING_TREE)) {
                 var data = ae2craftingtime$hoveredDataNode(mouseX + screen.getGuiLeft(), mouseY + screen.getGuiTop());
                 var stack = data == null ? null : IntegrationRead.invoke(data, "output", GenericStack.class);
                 if (stack != null) {

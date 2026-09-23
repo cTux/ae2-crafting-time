@@ -9,6 +9,7 @@ import com.ctux.ae2craftingtime.mc1201.net.StatsRequestC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsSnapshotS2C;
 import com.ctux.ae2craftingtime.mc1201.net.PlanRecurrenceS2C;
 import com.ctux.ae2craftingtime.mc1201.net.PlanStoredVariantsS2C;
+import com.ctux.ae2craftingtime.mc1201.net.WarningPreferenceC2S;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkRegistry;
@@ -17,7 +18,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 @SuppressWarnings({ "deprecation", "removal" })
 public final class StatsNetwork {
-    private static final String PROTOCOL = "21";
+    private static final String PROTOCOL = "22";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(Ae2CraftingTime.MOD_ID, "main"),
             () -> PROTOCOL,
@@ -45,9 +46,12 @@ public final class StatsNetwork {
         CHANNEL.registerMessage(id++, PlanRecurrenceS2C.class, PlanRecurrenceS2C::encode,
                 PlanRecurrenceS2C::decode, PlanRecurrenceS2C::handle,
                 java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT));
-        CHANNEL.registerMessage(id, PlanStoredVariantsS2C.class, PlanStoredVariantsS2C::encode,
+        CHANNEL.registerMessage(id++, PlanStoredVariantsS2C.class, PlanStoredVariantsS2C::encode,
                 PlanStoredVariantsS2C::decode, PlanStoredVariantsS2C::handle,
                 java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id, WarningPreferenceC2S.class, WarningPreferenceC2S::encode,
+                WarningPreferenceC2S::decode, WarningPreferenceC2S::handle,
+                java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_SERVER));
     }
 
     public static void sendTo(ServerPlayer player, StatsSnapshotS2C packet) {
@@ -69,6 +73,10 @@ public final class StatsNetwork {
     }
 
     public static void sendToServer(ProviderLocateC2S packet) {
+        CHANNEL.sendToServer(packet);
+    }
+
+    public static void sendToServer(WarningPreferenceC2S packet) {
         CHANNEL.sendToServer(packet);
     }
 

@@ -9,6 +9,9 @@ import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
+import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
+import com.ctux.ae2craftingtime.core.OptionFeature;
+import com.ctux.ae2craftingtime.core.ClientConfig;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.TtcColorContext;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
@@ -39,13 +42,14 @@ public abstract class CraftingStatusTableRendererMixin {
             CallbackInfoReturnable<List<Component>> cir) {
         ae2craftingtime$appendTooltip(cir.getReturnValue(), entry.getActiveAmount(), entry.getPendingAmount(),
                 ae2craftingtime$noSpace(entry), ae2craftingtime$blockReason(entry),
-                () -> ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue()));
+                () -> ClientOptionsRuntime.enabled(OptionFeature.DETAILED_TOOLTIPS)
+                        && ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue()));
     }
 
     private static void ae2craftingtime$appendTooltip(List<Component> lines, long active, long pending, boolean noSpace,
             CraftingBlockReason reason, java.util.function.BooleanSupplier appendStats) {
         var showLocateHint = false;
-        if (noSpace) {
+        if (noSpace && ClientOptionsRuntime.enabled(OptionFeature.NO_SPACE_STATUS)) {
             lines.addAll(TtcText.noSpaceTooltip());
             showLocateHint = true;
         } else {
@@ -54,7 +58,7 @@ public abstract class CraftingStatusTableRendererMixin {
                 return;
             }
 
-            if (reason != null) {
+            if (reason != null && ClientOptionsRuntime.enabled(OptionFeature.statusFor(reason))) {
                 lines.addAll(TtcText.blockReasonTooltip(reason, active > 0 && pending > 0));
                 showLocateHint = true;
             } else {
@@ -66,15 +70,19 @@ public abstract class CraftingStatusTableRendererMixin {
     }
 
     private static void ae2craftingtime$appendControlHints(List<Component> lines, boolean showLocateHint) {
-        if (showLocateHint) {
+        if (!ClientOptionsRuntime.enabled(OptionFeature.CONTROL_HINTS)) return;
+        if (showLocateHint && ClientOptionsRuntime.enabled(OptionFeature.PROVIDER_LOCATE_CLICK)) {
             lines.add(TtcText.locateHint().withStyle(ChatFormatting.GRAY));
         }
-        lines.add(TtcText.detailsHint().withStyle(ChatFormatting.GRAY));
-        lines.add(TtcText.resetHint().withStyle(ChatFormatting.GRAY));
+        if (ClientOptionsRuntime.enabled(OptionFeature.TTC_DETAILS_CLICK))
+            lines.add(TtcText.detailsHint().withStyle(ChatFormatting.GRAY));
+        if (ClientOptionsRuntime.enabled(OptionFeature.RESET_HISTORY_CLICK))
+            lines.add(TtcText.resetHint().withStyle(ChatFormatting.GRAY));
     }
 
     private static void ae2craftingtime$appendTtc(CraftingStatusEntry entry, List<Component> lines) {
-        if (ae2craftingtime$noSpace(entry)) {
+        if (!ClientOptionsRuntime.enabled(OptionFeature.STATUS_ROWS)) return;
+        if (ae2craftingtime$noSpace(entry) && ClientOptionsRuntime.enabled(OptionFeature.NO_SPACE_STATUS)) {
             lines.add(TtcText.noSpace());
             return;
         }
@@ -86,28 +94,31 @@ public abstract class CraftingStatusTableRendererMixin {
         var key = ProfilerBridge.key(entry.getWhat());
         ClientStatsRequests.request(key);
         var reason = ae2craftingtime$blockReason(entry);
-        if (reason != null) {
+        if (reason != null && ClientOptionsRuntime.enabled(OptionFeature.statusFor(reason))) {
             lines.add(TtcText.blockReason(reason));
             return;
         }
         if (entry.getActiveAmount() == 0 && entry.getPendingAmount() > 0) {
             var waiting = ClientStats.CACHE.waitingTicks(key);
-            if (waiting.isPresent()) {
+            if (waiting.isPresent() && ClientOptionsRuntime.enabled(OptionFeature.WAITING_STATUS)) {
                 lines.add(TtcText.waiting()
-                        .withStyle(style -> style.withColor(TextColor.fromRgb(0xE0E0E0))));
+                        .withStyle(style -> style.withColor(TextColor.fromRgb(
+                                ClientOptionsRuntime.current().color(ClientConfig.Color.WAITING)))));
                 return;
             }
         }
         ClientStats.CACHE.get(key).ifPresentOrElse(stats -> {
             var stall = ClientStats.CACHE.stall(key);
-            if (stall.isPresent()) {
+            if (stall.isPresent() && ClientOptionsRuntime.enabled(OptionFeature.DELAYED_STATUS)) {
                 lines.add(delayedTtcLine());
                 return;
             }
             TimeEstimate.format(AeKeyAmounts.normalize(entry.getWhat(), amount), stats)
                     .ifPresentOrElse(eta -> lines.add(ttcLine(key, eta)),
-                            () -> lines.add(TtcText.ttcCollectingData()));
-        }, () -> lines.add(TtcText.ttcCollectingData()));
+                            () -> { if (ClientOptionsRuntime.enabled(OptionFeature.COLLECTING_STATUS))
+                                lines.add(TtcText.ttcCollectingData()); });
+        }, () -> { if (ClientOptionsRuntime.enabled(OptionFeature.COLLECTING_STATUS))
+            lines.add(TtcText.ttcCollectingData()); });
     }
 
     private static boolean ae2craftingtime$appendStatsTooltip(CraftingStatusEntry entry, List<Component> lines) {
@@ -120,7 +131,7 @@ public abstract class CraftingStatusTableRendererMixin {
             return false;
         }
         var stall = ClientStats.CACHE.stall(key);
-        if (stall.isPresent()) {
+        if (stall.isPresent() && ClientOptionsRuntime.enabled(OptionFeature.DELAYED_STATUS)) {
             lines.addAll(TtcText.stallLines(normalized, entry.getPendingAmount(), stats.get(), stall.get()));
             return true;
         }
@@ -130,7 +141,8 @@ public abstract class CraftingStatusTableRendererMixin {
 
     private static Component delayedTtcLine() {
         return TtcText.ttcDelayed()
-                .withStyle(style -> style.withColor(TextColor.fromRgb(0xFF5555)).withBold(true));
+                .withStyle(style -> style.withColor(TextColor.fromRgb(
+                        ClientOptionsRuntime.current().color(ClientConfig.Color.DELAYED))).withBold(true));
     }
 
     private static boolean ae2craftingtime$noSpace(CraftingStatusEntry entry) {

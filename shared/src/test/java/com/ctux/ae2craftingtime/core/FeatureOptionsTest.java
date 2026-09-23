@@ -10,6 +10,15 @@ import org.junit.jupiter.api.Test;
 
 class FeatureOptionsTest {
     @Test
+    void blockedReasonSwitchesAreIndependent() {
+        assertEquals(OptionFeature.NO_PROVIDER_STATUS, OptionFeature.statusFor(CraftingBlockReason.NO_PROVIDER));
+        assertEquals(OptionFeature.NO_POWER_STATUS, OptionFeature.statusFor(CraftingBlockReason.NO_POWER));
+        assertEquals(OptionFeature.NO_TARGET_STATUS, OptionFeature.statusFor(CraftingBlockReason.NO_TARGET));
+        assertEquals(OptionFeature.NO_CHANNEL_STATUS, OptionFeature.statusFor(CraftingBlockReason.NO_CHANNEL));
+        assertEquals(OptionFeature.INPUT_BLOCKED_STATUS, OptionFeature.statusFor(CraftingBlockReason.INPUT_BLOCKED));
+        assertEquals(OptionFeature.INPUT_BLOCKED_STATUS, OptionFeature.statusFor(CraftingBlockReason.LOCKED));
+    }
+    @Test
     void everySwitchHasOneStableKeyAndStartsEnabled() {
         var keys = new HashSet<String>();
         var client = new FeatureOptions(OptionFeature.Owner.CLIENT);

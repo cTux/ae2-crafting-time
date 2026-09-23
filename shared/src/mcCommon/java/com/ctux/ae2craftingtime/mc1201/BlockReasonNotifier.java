@@ -119,7 +119,7 @@ public final class BlockReasonNotifier {
         // Intentionally no replaceProviderStart and no highlight send: the
         // delayed path owns red plates and provider fallback. Blocked warnings
         // keep chat (and its clickable record for manual edge locates) only.
-        if (chatEnabled) {
+        if (WarningPreferenceServer.canSend(player, chatEnabled)) {
             player.sendSystemMessage(DelayedChatText.blockedMessage(name, recordId, wordKey, detail));
         }
     }

@@ -12,10 +12,12 @@ import appeng.menu.me.crafting.CraftingStatusEntry;
 import appeng.menu.me.crafting.CraftingStatusMenu;
 import com.ctux.ae2craftingtime.core.CraftingRowState;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
+import com.ctux.ae2craftingtime.core.OptionFeature;
 import com.ctux.ae2craftingtime.core.TtcSort;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
+import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
 import com.ctux.ae2craftingtime.mc1201.CpuTtcClient;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.ProviderLocateClick;
@@ -94,7 +96,8 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (button == 0 && ae2craftingtime$tryLocateDoubleClick(mouseX, mouseY)) {
+        if (button == 0 && ClientOptionsRuntime.enabled(OptionFeature.PROVIDER_LOCATE_CLICK)
+                && ae2craftingtime$tryLocateDoubleClick(mouseX, mouseY)) {
             getMinecraft().setScreen(null);
             return true;
         }
@@ -113,9 +116,11 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         if ((Object) this instanceof CraftingStatusScreen) {
             ClientStats.CACHE.clearCpuState();
             ClientStatsRequests.clear();
+            ae2craftingtime$ttcSortMode = ClientOptionsRuntime.current().statusSort();
             CpuTtcClient.setSortMode((CraftingStatusMenu) menu, ae2craftingtime$ttcSortMode);
-            addToLeftToolbar(new TtcSortButton(this::ae2craftingtime$cycleTtcSortMode,
-                    () -> ae2craftingtime$ttcSortMode));
+            if (ClientOptionsRuntime.enabled(OptionFeature.STATUS_SORT_CONTROL))
+                addToLeftToolbar(new TtcSortButton(this::ae2craftingtime$cycleTtcSortMode,
+                        () -> ae2craftingtime$ttcSortMode));
         }
     }
 
@@ -133,7 +138,8 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
     @Unique
     private List<CraftingStatusEntry> ae2craftingtime$sortStatusByTtc(List<CraftingStatusEntry> entries) {
-        if (!((Object) this instanceof CraftingStatusScreen) || ae2craftingtime$ttcSortMode == 0) {
+        if (!((Object) this instanceof CraftingStatusScreen) || ae2craftingtime$ttcSortMode == 0
+                || !ClientOptionsRuntime.enabled(OptionFeature.STATUS_SORT_CONTROL)) {
             return entries;
         }
 
@@ -163,6 +169,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
             remap = false)
     private Component ae2craftingtime$appendStatusTotalTtc(Component title) {
         ae2craftingtime$titleTtc = null;
+        if (!ClientOptionsRuntime.enabled(OptionFeature.STATUS_TOTAL)) return title;
         if (status == null) {
             return title;
         }
@@ -247,10 +254,12 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
 
         var key = ProfilerBridge.key(entry.getWhat());
         if (TtcDetailsKeyMapping.matchesResetMouse(button)) {
+            if (!ClientOptionsRuntime.enabled(OptionFeature.RESET_HISTORY_CLICK)) return false;
             StatsChatMessages.reset(key, entry.getWhat().getDisplayName().getString());
             IntegrationLog.observe("ae2craftingtime", "status-reset");
             return true;
         }
+        if (!ClientOptionsRuntime.enabled(OptionFeature.TTC_DETAILS_CLICK)) return false;
         StatsChatMessages.show(key, entry.getWhat().getDisplayName().getString(),
                 AeKeyAmounts.normalize(entry.getWhat(), amount));
         IntegrationLog.observe("ae2craftingtime", "status-details");

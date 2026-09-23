@@ -116,7 +116,7 @@ public abstract class AbstractTableRendererMixin {
 
         var colors = new HashMap<ProfileKey, Integer>();
         for (var entry : secondsByKey.entrySet()) {
-            colors.put(entry.getKey(), TtcColor.forSeconds(entry.getValue(), min, max));
+            colors.put(entry.getKey(), com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.ttcColor(entry.getValue(), min, max));
         }
         return colors;
     }

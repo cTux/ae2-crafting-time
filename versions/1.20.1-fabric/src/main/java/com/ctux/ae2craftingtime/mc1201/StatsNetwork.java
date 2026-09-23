@@ -9,6 +9,7 @@ import com.ctux.ae2craftingtime.mc1201.net.StatsRequestC2S;
 import com.ctux.ae2craftingtime.mc1201.net.StatsSnapshotS2C;
 import com.ctux.ae2craftingtime.mc1201.net.PlanRecurrenceS2C;
 import com.ctux.ae2craftingtime.mc1201.net.PlanStoredVariantsS2C;
+import com.ctux.ae2craftingtime.mc1201.net.WarningPreferenceC2S;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -32,6 +33,7 @@ public final class StatsNetwork {
             "cpu_ttc_snapshot_v1");
     private static final ResourceLocation PLAN_RECURRENCE_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "plan_recurrence_v1");
     private static final ResourceLocation PLAN_STORED_VARIANTS_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "plan_stored_variants_v1");
+    private static final ResourceLocation WARNING_PREFERENCE_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "warning_preference_v1");
 
     public static void registerServer() {
         ServerPlayNetworking.registerGlobalReceiver(REQUEST_ID,
@@ -52,6 +54,11 @@ public final class StatsNetwork {
         ServerPlayNetworking.registerGlobalReceiver(CPU_TTC_REQUEST_ID,
                 (server, player, handler, buffer, responseSender) -> {
                     var packet = CpuTtcRequestC2S.decode(buffer);
+                    server.execute(() -> packet.handle(player));
+                });
+        ServerPlayNetworking.registerGlobalReceiver(WARNING_PREFERENCE_ID,
+                (server, player, handler, buffer, responseSender) -> {
+                    var packet = WarningPreferenceC2S.decode(buffer);
                     server.execute(() -> packet.handle(player));
                 });
     }
@@ -86,6 +93,10 @@ public final class StatsNetwork {
 
     public static void sendToServer(ProviderLocateC2S packet) {
         ClientPlayNetworking.send(LOCATE_ID, encode(packet));
+    }
+
+    public static void sendToServer(WarningPreferenceC2S packet) {
+        ClientPlayNetworking.send(WARNING_PREFERENCE_ID, encode(packet));
     }
 
     public static boolean canSendCpuTtc() {
@@ -139,6 +150,12 @@ public final class StatsNetwork {
     private static FriendlyByteBuf encode(ProviderLocateC2S packet) {
         var buffer = PacketByteBufs.create();
         ProviderLocateC2S.encode(packet, buffer);
+        return buffer;
+    }
+
+    private static FriendlyByteBuf encode(WarningPreferenceC2S packet) {
+        var buffer = PacketByteBufs.create();
+        WarningPreferenceC2S.encode(packet, buffer);
         return buffer;
     }
 

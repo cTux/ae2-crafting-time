@@ -118,7 +118,7 @@ public final class CraftingTreeTtc {
         }
 
         for (var entry : seconds.entrySet()) {
-            colors.put(entry.getKey(), TtcColor.forSeconds(entry.getValue(), min, max));
+            colors.put(entry.getKey(), ClientOptionsRuntime.ttcColor(entry.getValue(), min, max));
         }
         return colors;
     }

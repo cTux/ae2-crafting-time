@@ -5,6 +5,8 @@ import appeng.client.gui.widgets.Scrollbar;
 import com.ctux.ae2craftingtime.core.RequesterTtcLayout;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcColor;
+import com.ctux.ae2craftingtime.core.OptionFeature;
+import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
 import com.ctux.ae2craftingtime.mc1201.ClientStatsRequests;
@@ -60,6 +62,7 @@ public abstract class MERequesterScreenMixin {
     @Inject(method = "addSubWidget", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$reserveTtcSpace(String id, AbstractWidget widget,
             Map<String, AbstractWidget> subWidgets, CallbackInfo ci) {
+        if (!ClientOptionsRuntime.enabled(OptionFeature.ME_REQUESTER)) return;
         var offset = RequesterTtcLayout.statusOffset(id);
         widget.setX(widget.getX() + offset);
         widget.setWidth(widget.getWidth() - offset);
@@ -68,7 +71,8 @@ public abstract class MERequesterScreenMixin {
     @Inject(method = "drawFG", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$drawRequestTtc(GuiGraphics guiGraphics, int offsetX, int offsetY, int mouseX,
             int mouseY, CallbackInfo ci) {
-        if (!IntegrationLog.available("merequester") || lines.isEmpty()) {
+        if (!ClientOptionsRuntime.enabled(OptionFeature.ME_REQUESTER)
+                || !IntegrationLog.available("merequester") || lines.isEmpty()) {
             return;
         }
 
@@ -89,7 +93,7 @@ public abstract class MERequesterScreenMixin {
         for (var row = 0; row < estimates.size(); row++) {
             var estimate = estimates.get(row);
             var color = estimate.seconds().isPresent()
-                    ? TtcColor.forSeconds(estimate.seconds().getAsLong(), minSeconds, maxSeconds)
+                    ? ClientOptionsRuntime.ttcColor(estimate.seconds().getAsLong(), minSeconds, maxSeconds)
                     : 0xE0E0E0;
             var rowIndex = row;
             estimate.label().ifPresent(label -> {

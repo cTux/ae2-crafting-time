@@ -65,4 +65,14 @@ public enum OptionFeature {
     public Owner owner() { return owner; }
     public Group group() { return group; }
     public String key() { return key; }
+
+    public static OptionFeature statusFor(CraftingBlockReason reason) {
+        return switch (reason) {
+            case NO_PROVIDER -> NO_PROVIDER_STATUS;
+            case NO_POWER -> NO_POWER_STATUS;
+            case NO_TARGET -> NO_TARGET_STATUS;
+            case NO_CHANNEL -> NO_CHANNEL_STATUS;
+            case INPUT_BLOCKED, LOCKED -> INPUT_BLOCKED_STATUS;
+        };
+    }
 }
