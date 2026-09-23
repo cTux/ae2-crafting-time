@@ -86,8 +86,10 @@ implementation work, not capabilities already supplied by the current driver:
   separately. Save compact off, exit cleanly, then relaunch the same disposable
   client config and verify off before restoring on. Keep that config outside
   pristine per-case fixture resets; record its path/hash and both launch results.
-- Q4: stage a test-only resource pack in the disposable client that maps the
-  default font to Minecraft's built-in uniform font. Await resource reload and
+- Q4: stage a test-only resource pack in the disposable client that widens
+  Minecraft's built-in ASCII bitmap and retains its uniform font as fallback.
+  Vanilla's default and uniform digits/slashes have the same measured advance
+  on 1.21.1, so a uniform-only pack cannot exercise this quantity line. Await resource reload and
   prove the representative quantity string has a greater measured `Font.width`
   than under the default font; otherwise stop and repair the fixture. Capture
   both fonts at requested GUI scales 1, 2 and Auto, recording effective scale,

@@ -320,6 +320,13 @@ try {
         Invoke-Case "pass" -Scenario $leaf -shouldPass $true
     }
     Invoke-Case "pass" -Scenario standard-status-controls -shouldPass $false
+    $statusFont = Get-Content -LiteralPath (Join-Path $temp 'build/ui-smoke/1.20.1-forge/compatible/runtime/resourcepacks/ae2ct-status-wide/assets/minecraft/font/default.json') -Raw | ConvertFrom-Json
+    if ($statusFont.providers[0].type -cne 'bitmap' -or $statusFont.providers[0].height -ne 10 -or
+            $statusFont.providers[0].chars[3] -cne '0123456789:;<=>?' -or
+            $statusFont.providers[0].chars[2][15] -cne '/' -or
+            $statusFont.providers[1].id -cne 'minecraft:uniform') {
+        throw 'Status font fixture does not widen the actual amount glyphs over the uniform fallback'
+    }
     Invoke-Case "pass" -Scenario cpu-list-total-ttc -shouldPass $false
     Invoke-Case "pass" -Scenario standard-ae2 -shouldPass $true
     Invoke-Case "missing-screenshot" -Scenario standard-ae2 -shouldPass $false
