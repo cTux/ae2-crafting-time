@@ -1,11 +1,11 @@
 # In-game Configuration Screen Specification
 
-Status: in-progress
+Status: implementation in review
 
 Scope: In-game configuration screen.
 
 Planning: [original plan, PR #280](https://github.com/cTux/ae2-crafting-time/pull/280); [revised plan, PR #509](https://github.com/cTux/ae2-crafting-time/pull/509).
-Implementation: [active branch](https://github.com/cTux/ae2-crafting-time/tree/codex/117-options-implementation); the remaining screen, storage, protocol, and runtime checks are pending.
+Implementation: [draft PR #510](https://github.com/cTux/ae2-crafting-time/pull/510). The screen, storage, protocol, and runtime switches are implemented; full cross-loader UI verification and dedicated-server permission testing remain open.
 
 Issue: [#117](https://github.com/cTux/ae2-crafting-time/issues/117)
 
@@ -32,9 +32,8 @@ belong to the client; profiling and shared behavior remain server-authoritative.
   has **Reset section**, and the root screen has **Reset all**; reset changes are
   reviewable before **Done** writes them.
 - Client-only changes apply as soon as **Done** is pressed. Server-owned changes
-  made by an authorized local/server operator apply on the next supported config
-  reload; otherwise the screen explains that a reconnect, world reload, or
-  server restart is required.
+  made by an authorized local/server operator are validated, saved, and applied
+  live by the server. The server sends the effective values back to players.
 
 ## Settings
 

@@ -151,6 +151,7 @@
   "config.ae2craftingtime.planSort": "Default Plan sort",
   "config.ae2craftingtime.statusSort": "Default Status sort",
   "config.ae2craftingtime.save_failed": "Save failed",
+  "config.ae2craftingtime.reload": "Reload",
   "config.ae2craftingtime.read_only": "Read only: server operator permission required",
   "config.ae2craftingtime.unavailable": "Unavailable on this installation",
   "config.ae2craftingtime.enabled": "Profiling and TTC",

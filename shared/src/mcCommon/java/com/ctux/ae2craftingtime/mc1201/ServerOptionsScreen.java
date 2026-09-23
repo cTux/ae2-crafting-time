@@ -25,6 +25,7 @@ public final class ServerOptionsScreen extends Screen {
     private final int page;
     private final List<EditBox> inputs = new ArrayList<>();
     private Button doneButton;
+    private boolean reloadRequired;
 
     @Override
     public void tick() {
@@ -168,9 +169,18 @@ public final class ServerOptionsScreen extends Screen {
     }
 
     private void save() {
+        if (reloadRequired) {
+            Minecraft.getInstance().setScreen(new ServerOptionsScreen(parent));
+            return;
+        }
         if (!commitInputs()) return;
-        if (source.editable() && ClientServerOptions.snapshot() != null
-                && ClientServerOptions.snapshot().revision() == source.revision()) {
+        if (source.editable()) {
+            if (ClientServerOptions.snapshot() == null
+                    || ClientServerOptions.snapshot().revision() != source.revision()) {
+                doneButton.setMessage(Component.translatable("config.ae2craftingtime.reload"));
+                reloadRequired = true;
+                return;
+            }
             StatsNetwork.sendToServer(new ServerOptionsUpdateC2S(ServerOptionsWire.encode(
                     new ServerOptionsWire.Snapshot(source.revision(), false, draft))));
         }
