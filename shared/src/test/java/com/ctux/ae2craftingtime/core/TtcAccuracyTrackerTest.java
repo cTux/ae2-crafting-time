@@ -8,6 +8,20 @@ import org.junit.jupiter.api.Test;
 
 class TtcAccuracyTrackerTest {
     @Test
+    void reconfiguringSampleLimitTrimsOldestWithoutDroppingLatest() {
+        var tracker = new TtcAccuracyTracker(3);
+        var output = new ProfileKey("test:accuracy");
+        for (int i = 0; i < 3; i++) {
+            var cpu = new Object();
+            tracker.start(output, cpu, 10 + i, 1, 1, 0, 1);
+            tracker.finish(cpu, true, 20, 2_000_000_001L);
+        }
+        assertThrows(IllegalArgumentException.class, () -> tracker.configure(0));
+        tracker.configure(1);
+        assertEquals(1, tracker.stats(output).orElseThrow().sampleCount());
+        assertEquals(12, tracker.stats(output).orElseThrow().lastPredictedSeconds());
+    }
+    @Test
     void rejectsInvalidSampleLimit() {
         assertThrows(IllegalArgumentException.class, () -> new TtcAccuracyTracker(0));
     }

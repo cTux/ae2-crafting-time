@@ -191,7 +191,7 @@ public final class TtcText {
         if (!stats.reliableEstimate()) {
             details += I18n.get("text.ae2craftingtime.chat.details.low_confidence");
         }
-        if (accuracy.isPresent()) {
+        if (accuracy.isPresent() && ClientOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.ACCURACY_DETAILS)) {
             details += " | " + accuracy(accuracy.get()) + "; " + latestAccuracy(accuracy.get());
         }
         messages.add(details);

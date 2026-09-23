@@ -15,6 +15,11 @@ public final class Ae2CraftingTimeClientInput {
     }
 
     @SubscribeEvent
+    public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
+        ClientServerOptions.clear();
+    }
+
+    @SubscribeEvent
     public static void showTtcDetails(InputEvent.MouseButton.Pre event) {
         if (event.getAction() == GLFW.GLFW_PRESS && TtcDetailsClick.tryHandle(event.getButton())) {
             event.setCanceled(true);

@@ -28,7 +28,26 @@ public final class ClientOptionsRuntime {
 
     public static ClientConfig current() { return current; }
 
-    public static boolean enabled(OptionFeature feature) { return current.features().enabled(feature); }
+    public static boolean enabled(OptionFeature feature) {
+        if (!current.features().enabled(feature)) return false;
+        var snapshot = ClientServerOptions.snapshot();
+        if (snapshot != null && feature != OptionFeature.RECEIVE_CRAFT_WARNINGS
+                && !snapshot.config().features().enabled(OptionFeature.PROFILING)) return false;
+        var serverFeature = switch (feature) {
+            case ACCURACY_DETAILS -> OptionFeature.ACCURACY_RECORDING;
+            case WAITING_STATUS -> OptionFeature.WAITING_TRACKING;
+            case DELAYED_STATUS -> OptionFeature.DELAYED_DETECTION;
+            case RECURRENT_STATUS -> OptionFeature.RECURRENT_DETECTION;
+            case NO_PROVIDER_STATUS -> OptionFeature.NO_PROVIDER_DETECTION;
+            case NO_POWER_STATUS -> OptionFeature.NO_POWER_DETECTION;
+            case NO_SPACE_STATUS -> OptionFeature.NO_SPACE_DETECTION;
+            case NO_CHANNEL_STATUS -> OptionFeature.NO_CHANNEL_DETECTION;
+            case NO_TARGET_STATUS -> OptionFeature.NO_TARGET_DETECTION;
+            case INPUT_BLOCKED_STATUS -> OptionFeature.INPUT_BLOCKED_DETECTION;
+            default -> null;
+        };
+        return serverFeature == null || snapshot == null || snapshot.config().features().enabled(serverFeature);
+    }
 
     public static int ttcColor(long seconds, long min, long max) {
         if (!enabled(OptionFeature.TTC_COLORS)) return current.color(ClientConfig.Color.TOTAL);

@@ -10,6 +10,8 @@ import com.ctux.ae2craftingtime.mc1201.net.StatsSnapshotS2C;
 import com.ctux.ae2craftingtime.mc1201.net.PlanRecurrenceS2C;
 import com.ctux.ae2craftingtime.mc1201.net.PlanStoredVariantsS2C;
 import com.ctux.ae2craftingtime.mc1201.net.WarningPreferenceC2S;
+import com.ctux.ae2craftingtime.mc1201.net.ServerOptionsSnapshotS2C;
+import com.ctux.ae2craftingtime.mc1201.net.ServerOptionsUpdateC2S;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkRegistry;
@@ -18,7 +20,7 @@ import net.minecraftforge.network.simple.SimpleChannel;
 
 @SuppressWarnings({ "deprecation", "removal" })
 public final class StatsNetwork {
-    private static final String PROTOCOL = "22";
+    private static final String PROTOCOL = "23";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(Ae2CraftingTime.MOD_ID, "main"),
             () -> PROTOCOL,
@@ -49,8 +51,14 @@ public final class StatsNetwork {
         CHANNEL.registerMessage(id++, PlanStoredVariantsS2C.class, PlanStoredVariantsS2C::encode,
                 PlanStoredVariantsS2C::decode, PlanStoredVariantsS2C::handle,
                 java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT));
-        CHANNEL.registerMessage(id, WarningPreferenceC2S.class, WarningPreferenceC2S::encode,
+        CHANNEL.registerMessage(id++, WarningPreferenceC2S.class, WarningPreferenceC2S::encode,
                 WarningPreferenceC2S::decode, WarningPreferenceC2S::handle,
+                java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(id++, ServerOptionsSnapshotS2C.class, ServerOptionsSnapshotS2C::encode,
+                ServerOptionsSnapshotS2C::decode, ServerOptionsSnapshotS2C::handle,
+                java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(id, ServerOptionsUpdateC2S.class, ServerOptionsUpdateC2S::encode,
+                ServerOptionsUpdateC2S::decode, ServerOptionsUpdateC2S::handle,
                 java.util.Optional.of(net.minecraftforge.network.NetworkDirection.PLAY_TO_SERVER));
     }
 
@@ -59,6 +67,9 @@ public final class StatsNetwork {
     }
 
     public static void sendTo(ServerPlayer player, CpuTtcSnapshotS2C packet) {
+        CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
+    }
+    public static void sendTo(ServerPlayer player, ServerOptionsSnapshotS2C packet) {
         CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet);
     }
     public static void sendTo(ServerPlayer player, PlanRecurrenceS2C packet) { CHANNEL.send(PacketDistributor.PLAYER.with(() -> player), packet); }
@@ -79,6 +90,7 @@ public final class StatsNetwork {
     public static void sendToServer(WarningPreferenceC2S packet) {
         CHANNEL.sendToServer(packet);
     }
+    public static void sendToServer(ServerOptionsUpdateC2S packet) { CHANNEL.sendToServer(packet); }
 
     private StatsNetwork() {
     }

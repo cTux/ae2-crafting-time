@@ -32,7 +32,9 @@ public abstract class CraftingTreeNodeMixin {
             target = "Lappeng/crafting/CraftingCalculation;addMissing(Lappeng/api/stacks/AEKey;J)V"), remap = false)
     private void ae2craftingtime$record(CraftingCalculation calculation, AEKey key, long amount,
             Operation<Void> original) {
-        if (RecurrentMissing.record(ae2craftingtime$rejected, nodes != null && !nodes.isEmpty(), amount)) {
+        if (com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.enabled(
+                com.ctux.ae2craftingtime.core.OptionFeature.RECURRENT_DETECTION)
+                && RecurrentMissing.record(ae2craftingtime$rejected, nodes != null && !nodes.isEmpty(), amount)) {
             ((com.ctux.ae2craftingtime.mc1201.RecurrentCalculation) calculation).ae2craftingtime$record(key);
         }
         original.call(calculation, key, amount);

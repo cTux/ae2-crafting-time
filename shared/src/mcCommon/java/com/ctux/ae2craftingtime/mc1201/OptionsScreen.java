@@ -47,8 +47,9 @@ public final class OptionsScreen extends Screen {
         int rows = Math.max(2, (height - 145) / 28);
         addRenderableWidget(Button.builder(Component.translatable("config.ae2craftingtime.client"), button -> {})
                 .bounds(left, 30, 100, 20).build()).active = false;
-        addRenderableWidget(Button.builder(Component.translatable("config.ae2craftingtime.server"), button -> {})
-                .bounds(left + 105, 30, 100, 20).build()).active = false;
+        addRenderableWidget(Button.builder(Component.translatable("config.ae2craftingtime.server"), button -> {
+            if (commitInputs()) Minecraft.getInstance().setScreen(new ServerOptionsScreen(parent));
+        }).bounds(left + 105, 30, 100, 20).build());
 
         for (int i = 0; i < CLIENT_GROUPS.size(); i++) {
             var nextGroup = CLIENT_GROUPS.get(i);
@@ -81,7 +82,6 @@ public final class OptionsScreen extends Screen {
                 Minecraft.getInstance().setScreen(new OptionsScreen(parent, draft, group, page));
             }).bounds(left + sidebarWidth + 8, y,
                     right - left - sidebarWidth - 8, 23).build());
-            toggle.active = feature != OptionFeature.ACCURACY_DETAILS;
         }
 
         if (page > 0) {

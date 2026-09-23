@@ -33,6 +33,10 @@ public final class ClientConfigFile {
         for (var color : ClientConfig.Color.values()) {
             lines.add(colorKey(color) + " = \"#" + String.format(Locale.ROOT, "%06X", config.color(color)) + "\"");
         }
+        saveLines(path, lines);
+    }
+
+    static void saveLines(Path path, ArrayList<String> lines) throws IOException {
         Files.createDirectories(path.getParent());
         var temporary = Files.createTempFile(path.getParent(), path.getFileName().toString(), ".tmp");
         try {

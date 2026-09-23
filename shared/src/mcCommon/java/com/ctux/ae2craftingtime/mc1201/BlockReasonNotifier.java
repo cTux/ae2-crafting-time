@@ -35,7 +35,7 @@ public final class BlockReasonNotifier {
 
     public static void maybeNotifyPower(Object scope, IGrid grid, long tick, MinecraftServer server,
             BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
-        if (!armed(server)) {
+        if (!armed(server) || !ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.NO_POWER_DETECTION)) {
             return;
         }
         var reasons = ProfilerBridge.blockReasons(scope, grid, tick);
@@ -55,7 +55,8 @@ public final class BlockReasonNotifier {
 
     public static void maybeNotifySpace(Object scope, IGrid grid, Object logic, MinecraftServer server,
             BiConsumer<ServerPlayer, ProviderHighlightCodec.Highlight> highlightSender) {
-        if (!armed(server) || scope == null || grid == null) {
+        if (!armed(server) || !ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.NO_SPACE_DETECTION)
+                || scope == null || grid == null) {
             return;
         }
         var networkId = ProfilerBridge.networkId(grid);
@@ -75,7 +76,7 @@ public final class BlockReasonNotifier {
         if (scope == null || server == null) {
             return;
         }
-        if (!Ae2CraftingTimeConfig.ENABLED.get()) {
+        if (!ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.PROFILING)) {
             return;
         }
         // Poll even when nothing is currently stuck: an empty set ends the
@@ -99,7 +100,7 @@ public final class BlockReasonNotifier {
             return;
         }
         var dimension = ProfilerBridge.dimensionId(grid);
-        var chatEnabled = Ae2CraftingTimeConfig.NOTIFY_ON_DELAYED.get();
+        var chatEnabled = ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.NOTIFY_ON_DELAYED);
         for (var key : newly) {
             notify(player, scope, grid, dimension, owner, key, wordKey, detail, highlightSender, chatEnabled);
         }
@@ -125,7 +126,7 @@ public final class BlockReasonNotifier {
     }
 
     private static boolean armed(MinecraftServer server) {
-        return server != null && Ae2CraftingTimeConfig.ENABLED.get();
+        return server != null && ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.PROFILING);
     }
 
     public static void clear(Object scope) {

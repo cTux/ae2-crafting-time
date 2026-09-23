@@ -28,7 +28,8 @@ public abstract class CraftingCalculationMixin implements com.ctux.ae2craftingti
     @Inject(method = "runCraftAttempt", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$attach(boolean simulation, long amount, CallbackInfoReturnable<CraftingPlan> cir) {
         var plan = cir.getReturnValue();
-        if (plan == null) return;
+        if (plan == null || !com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.enabled(
+                com.ctux.ae2craftingtime.core.OptionFeature.RECURRENT_DETECTION)) return;
         var positive = new HashSet<AEKey>();
         for (var entry : plan.missingItems()) if (entry.getLongValue() > 0) positive.add(entry.getKey());
         ((PlanRecurrence) (Object) plan).ae2craftingtime$recurrentKeys(

@@ -17,6 +17,11 @@ public final class Ae2CraftingTimeClientInput {
     }
 
     @SubscribeEvent
+    public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
+        ClientServerOptions.clear();
+    }
+
+    @SubscribeEvent
     public static void showTtcDetails(InputEvent.MouseButton.Pre event) {
         var mouse = Minecraft.getInstance().mouseHandler;
         var click = new MouseButtonEvent(mouse.xpos(), mouse.ypos(), event.getMouseButtonInfo());

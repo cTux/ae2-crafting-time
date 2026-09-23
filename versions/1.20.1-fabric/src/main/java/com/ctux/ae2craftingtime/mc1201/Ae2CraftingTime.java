@@ -31,6 +31,7 @@ public final class Ae2CraftingTime implements ModInitializer {
                                 highlight.networkId(), highlight.dimensionId(), highlight.positions(),
                                 highlight.outputId(), highlight.durationSeconds(), highlight.plateOnly(), highlight.displayKey()))))));
         ServerLifecycleEvents.SERVER_STARTED.register(server -> {
+            ServerOptionsRuntime.initialize(server, FabricLoader.getInstance().getConfigDir().resolve(COMMON_CONFIG_FILE));
             var data = server.overworld().getDataStorage()
                     .computeIfAbsent(Ae2CraftingTimeSavedData::load, Ae2CraftingTimeSavedData::new,
                             Ae2CraftingTimeSavedData.FILE_ID);
@@ -41,9 +42,12 @@ public final class Ae2CraftingTime implements ModInitializer {
             ProfilerBridge.flushCompletedSamples();
             CpuTtcRequestHandler.clear();
             WarningPreferenceServer.clearAll();
+            ServerOptionsRuntime.clear();
         });
-        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> ProfilerBridge
-                .resyncPlatesForPlayer(handler.getPlayer()));
+        ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
+            ProfilerBridge.resyncPlatesForPlayer(handler.getPlayer());
+            ServerOptionsRuntime.sendTo(handler.getPlayer());
+        });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             CpuTtcRequestHandler.clear(handler.getPlayer().getUUID());
             WarningPreferenceServer.clear(handler.getPlayer());

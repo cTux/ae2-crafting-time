@@ -48,7 +48,7 @@ public final class DelayedNotificationServer {
             return;
         }
         var dimension = ProfilerBridge.dimensionId(grid);
-        var chatEnabled = Ae2CraftingTimeConfig.NOTIFY_ON_DELAYED.get();
+        var chatEnabled = ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.NOTIFY_ON_DELAYED);
         for (var event : newlyDelayed) {
             notify(player, scope, grid, dimension, owner, event.key(),
                     event.diagnostic().idleTicks(), event.diagnostic().typicalDurationTicks(), highlightSender,

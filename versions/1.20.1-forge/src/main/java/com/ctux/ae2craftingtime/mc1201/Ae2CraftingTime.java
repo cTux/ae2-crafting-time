@@ -48,6 +48,7 @@ public final class Ae2CraftingTime {
     }
 
     private void onServerStarted(ServerStartedEvent event) {
+        ServerOptionsRuntime.initialize(event.getServer(), net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get().resolve(COMMON_CONFIG_FILE));
         var data = event.getServer().overworld().getDataStorage()
                 .computeIfAbsent(Ae2CraftingTimeSavedData::load, Ae2CraftingTimeSavedData::new,
                         Ae2CraftingTimeSavedData.FILE_ID);
@@ -64,6 +65,7 @@ public final class Ae2CraftingTime {
         ProfilerBridge.flushCompletedSamples();
         CpuTtcRequestHandler.clear();
         WarningPreferenceServer.clearAll();
+        ServerOptionsRuntime.clear();
     }
 
     private void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
@@ -76,6 +78,7 @@ public final class Ae2CraftingTime {
     private void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
             ProfilerBridge.resyncPlatesForPlayer(player);
+            ServerOptionsRuntime.sendTo(player);
         }
     }
 }

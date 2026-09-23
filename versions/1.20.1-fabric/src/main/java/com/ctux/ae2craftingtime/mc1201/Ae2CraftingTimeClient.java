@@ -21,6 +21,7 @@ public final class Ae2CraftingTimeClient implements ClientModInitializer {
         // never leak into another world with matching coordinates. Red plates
         // return only via server-approved resync.
         ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> {
+            ClientServerOptions.clear();
             ProviderHighlightClient.onSessionEnd();
             CpuTtcClient.clear();
         });

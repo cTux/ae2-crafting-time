@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 
 public final class TtcAccuracyTracker {
-    private final int maxSamples;
+    private int maxSamples;
     private final Map<Object, PendingJob> pending = new IdentityHashMap<>();
     private final Map<ProfileKey, ArrayDeque<AccuracySample>> samples = new HashMap<>();
 
@@ -16,6 +16,12 @@ public final class TtcAccuracyTracker {
             throw new IllegalArgumentException("maxSamples must be positive");
         }
         this.maxSamples = maxSamples;
+    }
+
+    public void configure(int maxSamples) {
+        if (maxSamples <= 0) throw new IllegalArgumentException("maxSamples must be positive");
+        this.maxSamples = maxSamples;
+        for (var queue : samples.values()) while (queue.size() > maxSamples) queue.removeFirst();
     }
 
     public void start(ProfileKey finalOutput, Object scope, long predictedSeconds, int knownRows, int totalRows,
