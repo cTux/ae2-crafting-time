@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.ctux.ae2craftingtime.core.ClientConfig;
 import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
 import com.google.gson.JsonParser;
@@ -183,7 +184,8 @@ class TtcTextTest {
         assertEquals("text.ae2craftingtime.collecting_data", nestedContents.getKey());
 
         assertFalse(collectingData.getStyle().isBold());
-        assertEquals(TextColor.fromLegacyFormat(ChatFormatting.GRAY), collectingData.getStyle().getColor());
+        assertEquals(TextColor.fromRgb(ClientConfig.Color.COLLECTING.defaultRgb()),
+                collectingData.getStyle().getColor());
     }
 
     @Test
