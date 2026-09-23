@@ -105,8 +105,6 @@ final class StandardAe2Scenario {
     private boolean amountOptionOpen;
     private boolean amountOptionSaving;
     private int amountOptionSavingTicks;
-    private long amountOptionNextDebugFrame;
-    private String amountOptionLastAction = "open";
     private boolean amountOptionSeenCompact;
     private boolean amountOptionSeenTime;
     private int amountOptionOperationStep;
@@ -519,6 +517,8 @@ final class StandardAe2Scenario {
             return false;
         }
         var snapshot = UiObservationStore.latest();
+        boolean optionsVisible = (phase == Stage.STATUS_OPTIONS || phase == Stage.STATUS_PERSIST)
+                && minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen;
         if (leaf.equals("stored-variant-plan") && phase == Stage.PLAN_SORT && variantStep > 0
                 && System.nanoTime() >= variantNextDiagnosticAt) {
             variantNextDiagnosticAt = System.nanoTime() + 10_000_000_000L;
@@ -531,15 +531,17 @@ final class StandardAe2Scenario {
                             "text.ae2craftingtime.plan.stored_variant")),
                     menu == null ? "menu=absent" : StoredVariantObservation.diagnostic(menu));
         }
-        if (snapshot == null || snapshot.frame() == lastFrame) return false;
-        lastFrame = snapshot.frame();
-        if (phase == Stage.PLAN_SORT && leaf.equals("standard-plan-controls") && !planEstimatesReady(snapshot.rows())) {
-            frames.reset();
-            return false;
+        if (!optionsVisible) {
+            if (snapshot == null || snapshot.frame() == lastFrame) return false;
+            lastFrame = snapshot.frame();
+            if (phase == Stage.PLAN_SORT && leaf.equals("standard-plan-controls") && !planEstimatesReady(snapshot.rows())) {
+                frames.reset();
+                return false;
+            }
+            var planDescriptions = leaf.equals("craft-lifecycle") && minecraft.screen instanceof CraftConfirmScreen
+                    ? snapshot.rows().stream().map(UiSnapshot.Row::description).toList() : List.of();
+            if (!frames.observe(List.of(phase, sort, CaptureEvidence.readiness(snapshot), planDescriptions))) return false;
         }
-        var planDescriptions = leaf.equals("craft-lifecycle") && minecraft.screen instanceof CraftConfirmScreen
-                ? snapshot.rows().stream().map(UiSnapshot.Row::description).toList() : List.of();
-        if (!frames.observe(List.of(phase, sort, CaptureEvidence.readiness(snapshot), planDescriptions))) return false;
         if (phase == Stage.PLAN_SORT && leaf.equals("stored-variant-plan")) {
             if (!(minecraft.screen instanceof CraftConfirmScreen screen)) return false;
             var menu = screen.getMenu();
@@ -1145,28 +1147,6 @@ final class StandardAe2Scenario {
             amountFontReload = minecraft.reloadResourcePacks();
             frames.reset();
         } else if (phase == Stage.STATUS_OPTIONS) {
-            if (TestDriverRuntime.renderedFrames >= amountOptionNextDebugFrame) {
-                amountOptionNextDebugFrame = TestDriverRuntime.renderedFrames + 30;
-                var debug = new com.google.gson.JsonObject();
-                debug.addProperty("case", amountOptionCase);
-                debug.addProperty("screen", minecraft.screen == null ? "null" : minecraft.screen.getClass().getName());
-                debug.addProperty("open", amountOptionOpen);
-                debug.addProperty("saving", amountOptionSaving);
-                debug.addProperty("savingTicks", amountOptionSavingTicks);
-                debug.addProperty("compactSeen", amountOptionSeenCompact);
-                debug.addProperty("timeSeen", amountOptionSeenTime);
-                debug.addProperty("operationStep", amountOptionOperationStep);
-                debug.addProperty("frame", TestDriverRuntime.renderedFrames);
-                debug.addProperty("renderedAfter", amountOptionRenderedAfter);
-                debug.addProperty("lastAction", amountOptionLastAction);
-                if (minecraft.screen != null) debug.add("buttons", new com.google.gson.Gson().toJsonTree(
-                        minecraft.screen.children().stream()
-                                .filter(net.minecraft.client.gui.components.Button.class::isInstance)
-                                .map(net.minecraft.client.gui.components.Button.class::cast)
-                                .map(button -> button.getMessage().getString() + " active=" + button.active)
-                                .toList()));
-                java.nio.file.Files.writeString(output.resolve("status-options-debug.json"), debug.toString());
-            }
             boolean compact = amountOptionCase == 1 || amountOptionCase >= 3;
             boolean time = amountOptionCase == 0 || amountOptionCase >= 3;
             if (minecraft.screen instanceof CraftingStatusScreen statusScreen) {
@@ -1217,12 +1197,10 @@ final class StandardAe2Scenario {
                 if (!amountOptionOpen) {
                     minecraft.setScreen(new com.ctux.ae2craftingtime.mc1201.OptionsScreen(statusScreen));
                     amountOptionOpen = true;
-                    amountOptionLastAction = "open";
                     amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
                     frames.reset();
                 } else if (!amountOptionSaving && TestDriverRuntime.renderedFrames >= amountOptionRenderedAfter) {
-                    throw new IllegalStateException("Amount options screen closed before save: case=" + amountOptionCase
-                            + " lastAction=" + amountOptionLastAction);
+                    throw new IllegalStateException("Amount options screen closed before save: case=" + amountOptionCase);
                 }
                 return false;
             }
@@ -1255,7 +1233,6 @@ final class StandardAe2Scenario {
                             .filter(button -> button.getMessage().getString().equals(">"))
                             .findFirst().orElseThrow(() -> new IllegalStateException("Compact option page is missing"));
                     DriverPlatform.click(minecraft, next.getX() + 4, next.getY() + 4);
-                    amountOptionLastAction = "next-reset-page";
                     amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
                     frames.reset();
                     return false;
@@ -1264,7 +1241,6 @@ final class StandardAe2Scenario {
                     if (!compactButton.getMessage().getString().endsWith(enabledLabel))
                         throw new IllegalStateException("Compact option must start enabled for reset/cancel");
                     DriverPlatform.click(minecraft, compactButton.getX() + 4, compactButton.getY() + 4);
-                    amountOptionLastAction = "toggle-reset-compact";
                     amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
                     amountOptionOperationStep = 1;
                     frames.reset();
@@ -1281,7 +1257,6 @@ final class StandardAe2Scenario {
                                     net.minecraft.client.resources.language.I18n.get(actionKey)))
                             .findFirst().orElseThrow(() -> new IllegalStateException("Option action missing: " + actionKey));
                     DriverPlatform.click(minecraft, action.getX() + 4, action.getY() + 4);
-                    amountOptionLastAction = "reset-action " + actionKey;
                     amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
                     amountOptionOperationStep = 2;
                     if (amountOptionCase == 4) amountOptionSaving = true;
@@ -1297,7 +1272,6 @@ final class StandardAe2Scenario {
                             .findFirst().orElseThrow(() -> new IllegalStateException("Done option is missing"));
                     amountOptionSaving = true;
                     DriverPlatform.click(minecraft, done.getX() + 4, done.getY() + 4);
-                    amountOptionLastAction = "save-reset";
                     amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
                     frames.reset();
                 }
@@ -1310,7 +1284,6 @@ final class StandardAe2Scenario {
                     amountOptionSeenCompact = true;
                     if (label.endsWith(enabledLabel) != compact) {
                         DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
-                        amountOptionLastAction = "toggle compact";
                         amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
                         frames.reset();
                         return false;
@@ -1319,7 +1292,6 @@ final class StandardAe2Scenario {
                     amountOptionSeenTime = true;
                     if (label.endsWith(enabledLabel) != time) {
                         DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
-                        amountOptionLastAction = "toggle time";
                         amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
                         frames.reset();
                         return false;
@@ -1332,11 +1304,7 @@ final class StandardAe2Scenario {
                             ? net.minecraft.client.resources.language.I18n.get("gui.done") : ">"))
                     .findFirst().orElseThrow(() -> new IllegalStateException("Amount options control is missing"));
             if (amountOptionSeenCompact && amountOptionSeenTime) amountOptionSaving = true;
-            System.out.println("AE2CT amount option action case=" + amountOptionCase + " compactSeen="
-                    + amountOptionSeenCompact + " timeSeen=" + amountOptionSeenTime + " label="
-                    + action.getMessage().getString());
             DriverPlatform.click(minecraft, action.getX() + 4, action.getY() + 4);
-            amountOptionLastAction = "action " + action.getMessage().getString();
             amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
             frames.reset();
         } else if (phase == Stage.STATUS_SERVER_OFF) {

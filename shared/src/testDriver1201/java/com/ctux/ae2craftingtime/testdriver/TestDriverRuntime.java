@@ -63,9 +63,7 @@ public final class TestDriverRuntime implements AutoCloseable {
 
     public void tick() {
         renderedFrames++;
-        driverProgress.callback((prewarm != null && !prewarmComplete ? prewarm.checkpoint() : scenario.checkpoint())
-                + " runtimeFinished=" + finished + " switching=" + switching + " switchingNow=" + switchingNow
-                + " lifecycleActive=" + lifecycle.active());
+        driverProgress.callback(prewarm != null && !prewarmComplete ? prewarm.checkpoint() : scenario.checkpoint());
         if (prewarm != null && !prewarmComplete) {
             try {
                 // tick is the completed-frame callback on every loader, even with no screen open.

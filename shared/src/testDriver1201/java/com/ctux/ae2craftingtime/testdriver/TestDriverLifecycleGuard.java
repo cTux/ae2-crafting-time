@@ -12,6 +12,4 @@ final class TestDriverLifecycleGuard {
     void exit() {
         active = false;
     }
-
-    boolean active() { return active; }
 }
