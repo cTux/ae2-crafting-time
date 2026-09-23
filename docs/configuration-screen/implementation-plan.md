@@ -8,13 +8,19 @@ Implement [#117](https://github.com/cTux/ae2-crafting-time/issues/117) from the
 ## 1. Lock the typed config contract
 
 - Add Minecraft-free client/server setting models with the exact defaults,
-  ranges, sort values, validation, reset, and ownership from the spec.
+  ranges, sort values, validation, reset, ownership, and independent feature
+  switches from the spec.
 - Route current config access through `ServerConfig`; add the client getters used
   by UI code.
 - Add focused tests for defaults, every boundary, NaN/infinity, invalid RGB,
   per-field fallback, and shrinking retained-sample limits.
 
 Gate: every setting has one owner and one tested default/range.
+
+For every row in the [feature-switch inventory](spec.md#feature-switches),
+record the existing collection or UI seam before editing. Include both chat
+senders for the personal warning mute. Keep the switch list synchronized with
+the shipped feature inventory in `docs/feature-coverage.md`.
 
 ## 2. Split storage and migrate existing files
 
@@ -34,6 +40,7 @@ servers never load client config classes.
 - Add the shared working-copy/descriptor state and the smallest `mc1201` and
   `mc2612` native widget adapters.
 - Implement categories, help/default/range text, availability states, save,
+  Client/Server tabs, read-only server values for non-operators,
   cancel, section reset, full reset, numeric/color validation, and save errors.
 - Add matching English and Ukrainian labels, descriptions, errors, ownership,
   availability, and apply-timing strings.
@@ -56,6 +63,8 @@ cleanly with and without Mod Menu.
 
 - Replace hard-coded surface visibility, detail/status visibility, sort defaults,
   TTC/status/total colors, and badge color/opacity at their shared UI seams.
+- Make each named feature switch hide its row, badge, tooltip, and click target
+  together. Check every status and optional integration independently.
 - Keep calculations, packets, current per-screen sort cycling, and the Controls
   binding unchanged.
 - Cover Crafting Plan, Crafting Status, Crafting Tree, and ME Requester with
@@ -67,6 +76,12 @@ Gate: each option changes only its named surface and persists across restart.
 
 - Replace the central delay constants with validated server values and preserve
   profiling/retention/filter/chat/notification behavior.
+- Gate each named diagnostic at its collection/classification seam, retaining
+  learned throughput and unrelated diagnostics. Gate world-save writes without
+  deleting existing history.
+- Send the personal warning preference on login and change. Check it for each
+  recipient in both delayed and blocked chat senders; keep the server-wide
+  `notifyOnDelayed` override. Verify one muted and one unmuted player together.
 - Add the effective-server-config snapshot and fixed typed update packet to the
   existing protocol; bump client/server protocol versions together on all four
   targets.
@@ -83,7 +98,8 @@ them; valid config reloads do not corrupt samples or active crafts.
   `git diff --check`, and all four release-matrix builds.
 - Run prepared-client smoke on all targets for loader entry, save/cancel/reset,
   invalid input, immediate client changes, persistence, authority/restart text,
-  and representative optional displays.
+  and every feature switch. Capture both Client and Server tabs at usable GUI
+  scales and compare them with the [mockup](options-mockup.svg).
 - Start dedicated servers on every target; run Fabric with and without Mod Menu;
   audit player JARs for test-driver content and unintended dependencies.
 

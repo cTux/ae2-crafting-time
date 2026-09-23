@@ -1,28 +1,33 @@
 # In-game Configuration Screen Specification
 
-Status: ready-to-implement
+Status: draft
 
 Scope: In-game configuration screen.
 
-Planning: [PR #280](https://github.com/cTux/ae2-crafting-time/pull/280); [#117](https://github.com/cTux/ae2-crafting-time/issues/117).
-Hold: the issue is marked `do-not-implement-yet`; readiness does not lift that hold.
+Planning: [original plan, PR #280](https://github.com/cTux/ae2-crafting-time/pull/280); [revised plan](implementation-plan.md).
+Open gate: review the expanded per-feature switches and mockup before implementation.
 
 Issue: [#117](https://github.com/cTux/ae2-crafting-time/issues/117)
 
 ## Goal
 
-Let players and server owners configure every useful AE2 Crafting Time option in
-game. The screen must make ownership clear: local display choices belong to the
-client, while profiling and shared behavior remain server-authoritative.
+Let players and server owners turn off each player-facing runtime feature without
+turning off unrelated features. Local display and personal notification choices
+belong to the client; profiling and shared behavior remain server-authoritative.
 
 ## Entry points and layout
 
 - Forge and NeoForge expose **Configure** from this mod's loader details page.
 - Fabric exposes the same screen through optional Mod Menu integration. The mod
   still loads and its config files still work when Mod Menu is absent.
-- The screen has General, Displays, Appearance, Diagnostics, and Advanced
-  sections. Every row shows its current value, default, valid range or choices,
-  and a short English or Ukrainian explanation.
+- The root has **Client** and **Server** tabs. Client groups are Displays,
+  Warnings, Appearance, and Controls. Server groups are General, Diagnostics,
+  Notifications, Integrations, and Advanced. Each group has its own page or scroll region.
+  Every row shows its current value, default, valid range or choices, and a
+  short English or Ukrainian explanation. The Server tab is read-only for
+  players without edit permission, with the effective server value still shown.
+- The [options mockup](options-mockup.svg) shows the proposed grouping and the
+  personal warning mute. It is a design preview, not an implemented screen.
 - **Done** saves valid changes. **Cancel** discards unsaved changes. Each section
   has **Reset section**, and the root screen has **Reset all**; reset changes are
   reviewable before **Done** writes them.
@@ -40,10 +45,35 @@ client, while profiling and shared behavior remain server-authoritative.
 | Profiling and TTC (`enabled`) | on | on/off | Enables server profiling and the data used by TTC surfaces. |
 | Retained samples (`maxSamples`) | `10` | `1`-`100` | Limits recent throughput and accuracy samples per output. |
 | Outlier multiplier (`outlierMultiplier`) | `4.0` | `1.0`-`1000.0` | Sets the median-relative throughput filter. |
-| Delayed notification (`notifyOnDelayed`) | on | on/off | Controls private delayed/blocking notifications. |
+| Delayed and blocked notifications (`notifyOnDelayed`) | on | on/off | Global server permission to send private craft warning chat. |
 | Chat details (`showChatMessages`) | on | on/off | Controls server-sent TTC details and reset notices. |
 | Minimum no-progress time | `10 s` | `1`-`3600 s` | Earliest time at which an output can become delayed. |
 | Typical-duration multiplier | `2.0` | `1.0`-`1000.0` | Required learned-duration multiple before an output becomes delayed. |
+
+### Feature switches
+
+Every switch defaults **on** to preserve existing behavior. Turning one off
+removes only the named feature; it does not erase learned samples, change active
+crafts, or silently turn off sibling features. The server profiling master
+(`enabled`) is the exception: turning it off suspends all server-derived TTC and
+diagnostics. It is clearly labelled as the master switch.
+
+| Owner and group | Independent switches | Off behavior |
+| --- | --- | --- |
+| Client / Displays | Crafting Plan row TTC, Crafting Plan total, Crafting Status row TTC, Crafting Status total, CPU-card total, Crafting Tree TTC, ME Requester TTC | Hide the named surface only; unsupported integrations are shown disabled with a reason. |
+| Client / Displays | Fast-to-slow TTC coloring, prediction accuracy, detailed tooltips, control hints | Hide the named detail or use neutral text color; estimates stay available. |
+| Client / Warnings | Waiting-to-start, collecting-data, delayed, recurrent ingredient, and each blocked reason (`NO PROVIDER`, `NO POWER`, `NO SPACE`, `NO CHANNEL`, `NO TARGET`, `INPUT BLOCKED`) | Hide that status and its badge/tooltip on this client; other statuses and calculations remain. |
+| Client / Warnings | Private craft warning chat | Mute delayed and blocked warning messages for this player, including the screenshot's repeated `is delayed` lines. Other players keep their own choice. |
+| Client / Controls | Crafting Plan sort control, Crafting Status sort control, CPU-list TTC sort, TTC details click, reset-history click, provider-locate click | Hide or disable only the named control. A disabled sort control uses AE2 order; no server-side history is removed. |
+| Server / Diagnostics | Prediction-accuracy recording, waiting-to-start tracking, delayed detection, recurrent ingredient detection, and each blocked reason (`NO PROVIDER`, `NO POWER`, `NO SPACE`, `NO CHANNEL`, `NO TARGET`, `INPUT BLOCKED`) | Stop collecting or classifying that named diagnostic for all clients; existing TTC estimation remains when profiling is on. |
+| Server / General | World-save history | Stop future writes of learned throughput history; keep the existing world-save file so re-enabling can resume from it. |
+| Server / Notifications | Private craft warning chat (`notifyOnDelayed`), Ctrl-click details/reset notices (`showChatMessages`) | Suppress the named server message for everyone without disabling diagnostics, clicks, or reset actions. |
+| Server / Integrations | AdvancedAE, NeoEco, AE2 Lightning Tech CPU profiling, and Applied Mekanistics chemical statistics | Stop only the named optional adapter; base AE2 profiling continues. Unsupported targets show the switch disabled with a reason. |
+
+The current `showInTree` value becomes the Crafting Tree display switch.
+`notifyOnDelayed` remains the global server switch. A client's private-chat mute
+is separate: a warning is delivered only when both switches are on. A local
+mute must work on a dedicated server without operator permission.
 
 The server sends the effective values needed for display and explanations after
 login and when they change. Only the integrated-server owner or a player with
@@ -55,15 +85,16 @@ authoritative.
 
 | Group | Settings and defaults |
 | --- | --- |
-| Displays | Independent on/off values for Crafting Plan rows, Crafting Plan total, Crafting Status rows, Crafting Status total, AE2: Crafting Tree, ME Requester, detailed tooltips, control hints, status indicators, and accuracy details. All default on where supported. |
+| Displays | The independent on/off values in the feature-switch table. All default on where supported. |
 | Sorting | Separate Crafting Plan and Crafting Status defaults. Both start at longest first, matching the current `2` mode. Choices are AE2 order, shortest first, and longest first. |
 | TTC scale | Fast `#55FF55`, middle `#FFFF55`, slow `#FF5555`. |
 | Status text | Waiting `#E0E0E0`, delayed/blocked `#FF5555`, collecting-data `#E0E0E0`, and total TTC `#E0E0E0`. |
 | Badges | Background `#000000` with `176/255` opacity, matching `0xB0000000`. |
 
-`showInTree` migrates to the AE2: Crafting Tree display toggle. Options for a
-surface that is unavailable on the current target stay visible but disabled and
-explain the missing mod or unsupported target.
+Options for a feature unavailable on the current target stay visible but disabled
+and explain the missing mod or unsupported target. Guide book content,
+translations, and packet safety limits are not independent runtime behaviors
+and are not presented as off switches.
 
 ## Validation and recovery
 
@@ -109,6 +140,9 @@ ownership remain aligned.
   calculations.
 - A remote unprivileged client cannot change server-owned values; effective
   server values remain consistent between clients.
+- Every feature switch listed above has a checked off/on case. A client can mute
+  the screenshot's warning chat for itself on a dedicated server while another
+  player continues receiving it; the server global switch suppresses it for all.
 - English and Ukrainian labels have matching keys/placeholders, dedicated-server
   startup stays client-class-free, and all four release-matrix builds pass.
 - Prepared-client smoke covers the loader entry point, editing, reset/cancel,
