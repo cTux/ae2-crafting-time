@@ -1,11 +1,11 @@
 # In-game Configuration Screen Specification
 
-Status: draft
+Status: in-progress
 
 Scope: In-game configuration screen.
 
-Planning: [original plan, PR #280](https://github.com/cTux/ae2-crafting-time/pull/280); [revised plan](implementation-plan.md).
-Open gate: review the expanded per-feature switches and mockup before implementation.
+Planning: [original plan, PR #280](https://github.com/cTux/ae2-crafting-time/pull/280); [revised plan, PR #509](https://github.com/cTux/ae2-crafting-time/pull/509).
+Implementation: [active branch](https://github.com/cTux/ae2-crafting-time/tree/codex/117-options-implementation); the remaining screen, storage, protocol, and runtime checks are pending.
 
 Issue: [#117](https://github.com/cTux/ae2-crafting-time/issues/117)
 
