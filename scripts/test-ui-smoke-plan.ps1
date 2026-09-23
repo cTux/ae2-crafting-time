@@ -185,6 +185,7 @@ try {
     }
     $statusOnly = & $planner -Repository $temp -Target '1.20.1-forge' -Scenario standard-status-controls
     Assert ($statusOnly.targets[0].graphs.Count -eq 1) 'Focused status relaunch must not duplicate its graph'
+    Assert (!$statusOnly.targets[0].graphs[0].baseOnly) 'Focused status relaunch must use the prepared compatible catalogue'
     Assert (!$forgeGraphs[0].baseOnly) 'Full Forge primary graph must install dependencies for direct addon cases'
     Assert (@($forgeGraphs | Where-Object { $_.baseOnly -and $_.cases.Count -eq 1 -and $_.cases[0] -eq 'cpu-list-total-ttc' }).Count -eq 1) `
         'Full Forge must isolate the CPU-list relaunch in one base-only graph'

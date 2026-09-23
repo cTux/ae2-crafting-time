@@ -213,7 +213,8 @@ foreach ($id in $ids) {
             if ($primaryProjects.Count -ne 1) { throw "AppMek resource fixture has no unique project graph for $id" }
         }
         if ($BaseOnly -and $appmekResource) { throw 'AppMek resource fixture cannot use the base-only graph' }
-        $primaryBaseOnly = $BaseOnly -or (!$appmekResource -and !$ProjectId -and
+        $statusCompatible = 'standard-status-controls' -cin $primary
+        $primaryBaseOnly = $BaseOnly -or (!$appmekResource -and !$statusCompatible -and !$ProjectId -and
             !@($primary | Where-Object { $_ -cin $directCases }).Count)
         $graphs = @([pscustomobject]@{ id='primary'; profile=$(if ($Latest) { 'latest' } else { 'compatible' }); cases=$primary
             projectId=$primaryProjects; baseOnly=$primaryBaseOnly; reason='Requested dependency graph'

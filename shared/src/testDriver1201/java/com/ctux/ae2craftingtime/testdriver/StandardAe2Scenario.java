@@ -104,6 +104,7 @@ final class StandardAe2Scenario {
     private int amountOptionCase;
     private boolean amountOptionOpen;
     private boolean amountOptionSaving;
+    private int amountOptionSavingTicks;
     private boolean amountOptionSeenCompact;
     private boolean amountOptionSeenTime;
     private int amountOptionOperationStep;
@@ -1176,10 +1177,12 @@ final class StandardAe2Scenario {
                     screenshot.accept("status-options-" + amountOptionCase + ".png");
                     amountOptionCase++;
                     amountOptionSaving = false;
+                    amountOptionSavingTicks = 0;
                     amountOptionOpen = false;
                     amountOptionSeenCompact = false;
                     amountOptionSeenTime = false;
                     amountOptionOperationStep = 0;
+                    amountOptionRenderedAfter = 0;
                     if (amountOptionCase == 7) {
                         mark(checks, "amount-options", true);
                         phase = Stage.STATUS_SORT;
@@ -1190,12 +1193,23 @@ final class StandardAe2Scenario {
                 if (!amountOptionOpen) {
                     minecraft.setScreen(new com.ctux.ae2craftingtime.mc1201.OptionsScreen(statusScreen));
                     amountOptionOpen = true;
+                    amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
                     frames.reset();
                 }
                 return false;
             }
-            if (!(minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen)) return false;
-            if (amountOptionSaving) return false;
+            if (!(minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen)
+                    || TestDriverRuntime.renderedFrames < amountOptionRenderedAfter) return false;
+            if (amountOptionSaving) {
+                if (++amountOptionSavingTicks > 100)
+                    throw new IllegalStateException("Amount option save did not close screen: case=" + amountOptionCase
+                            + " controls=" + minecraft.screen.children().stream()
+                            .filter(net.minecraft.client.gui.components.Button.class::isInstance)
+                            .map(net.minecraft.client.gui.components.Button.class::cast)
+                            .map(button -> button.getMessage().getString() + " active=" + button.active)
+                            .toList());
+                return false;
+            }
             String compactLabel = net.minecraft.client.resources.language.I18n.get(
                     "config.ae2craftingtime.compactStatusAmounts");
             String timeLabel = net.minecraft.client.resources.language.I18n.get("config.ae2craftingtime.statusRows");
@@ -1213,6 +1227,7 @@ final class StandardAe2Scenario {
                             .filter(button -> button.getMessage().getString().equals(">"))
                             .findFirst().orElseThrow(() -> new IllegalStateException("Compact option page is missing"));
                     DriverPlatform.click(minecraft, next.getX() + 4, next.getY() + 4);
+                    amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
                     frames.reset();
                     return false;
                 }
@@ -1220,6 +1235,7 @@ final class StandardAe2Scenario {
                     if (!compactButton.getMessage().getString().endsWith(enabledLabel))
                         throw new IllegalStateException("Compact option must start enabled for reset/cancel");
                     DriverPlatform.click(minecraft, compactButton.getX() + 4, compactButton.getY() + 4);
+                    amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
                     amountOptionOperationStep = 1;
                     frames.reset();
                     return false;
@@ -1235,6 +1251,7 @@ final class StandardAe2Scenario {
                                     net.minecraft.client.resources.language.I18n.get(actionKey)))
                             .findFirst().orElseThrow(() -> new IllegalStateException("Option action missing: " + actionKey));
                     DriverPlatform.click(minecraft, action.getX() + 4, action.getY() + 4);
+                    amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
                     amountOptionOperationStep = 2;
                     if (amountOptionCase == 4) amountOptionSaving = true;
                     frames.reset();
@@ -1249,6 +1266,7 @@ final class StandardAe2Scenario {
                             .findFirst().orElseThrow(() -> new IllegalStateException("Done option is missing"));
                     amountOptionSaving = true;
                     DriverPlatform.click(minecraft, done.getX() + 4, done.getY() + 4);
+                    amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
                     frames.reset();
                 }
                 return false;
@@ -1260,6 +1278,7 @@ final class StandardAe2Scenario {
                     amountOptionSeenCompact = true;
                     if (label.endsWith(enabledLabel) != compact) {
                         DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+                        amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
                         frames.reset();
                         return false;
                     }
@@ -1267,6 +1286,7 @@ final class StandardAe2Scenario {
                     amountOptionSeenTime = true;
                     if (label.endsWith(enabledLabel) != time) {
                         DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+                        amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
                         frames.reset();
                         return false;
                     }
@@ -1278,7 +1298,11 @@ final class StandardAe2Scenario {
                             ? net.minecraft.client.resources.language.I18n.get("gui.done") : ">"))
                     .findFirst().orElseThrow(() -> new IllegalStateException("Amount options control is missing"));
             if (amountOptionSeenCompact && amountOptionSeenTime) amountOptionSaving = true;
+            System.out.println("AE2CT amount option action case=" + amountOptionCase + " compactSeen="
+                    + amountOptionSeenCompact + " timeSeen=" + amountOptionSeenTime + " label="
+                    + action.getMessage().getString());
             DriverPlatform.click(minecraft, action.getX() + 4, action.getY() + 4);
+            amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
             frames.reset();
         } else if (phase == Stage.STATUS_SERVER_OFF) {
             if (!amountServerOffApplied) {
