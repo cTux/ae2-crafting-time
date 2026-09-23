@@ -16,7 +16,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 /** Native client option widgets. Each navigation action keeps the unsaved working copy. */
-public final class OptionsScreen extends Screen {
+public final class OptionsScreen extends OptionsBaseScreen {
     private static final List<OptionFeature.Group> CLIENT_GROUPS = List.of(
             OptionFeature.Group.DISPLAYS, OptionFeature.Group.WARNINGS,
             OptionFeature.Group.APPEARANCE, OptionFeature.Group.CONTROLS);

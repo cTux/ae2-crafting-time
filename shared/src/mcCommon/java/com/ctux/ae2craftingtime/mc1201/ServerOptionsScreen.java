@@ -16,7 +16,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 /** Server-effective options; only an operator can submit edits. */
-public final class ServerOptionsScreen extends Screen {
+public final class ServerOptionsScreen extends OptionsBaseScreen {
     private static final List<OptionFeature.Group> GROUPS = List.of(OptionFeature.Group.GENERAL,
             OptionFeature.Group.DIAGNOSTICS, OptionFeature.Group.NOTIFICATIONS,
             OptionFeature.Group.INTEGRATIONS, OptionFeature.Group.ADVANCED);
