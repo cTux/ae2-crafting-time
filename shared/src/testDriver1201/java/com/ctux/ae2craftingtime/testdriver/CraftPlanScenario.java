@@ -989,7 +989,8 @@ public final class CraftPlanScenario {
     }
 
     private String currentScreen() {
-        if (standard != null) return standard.checkpoint() + " screen=" + (minecraft.screen == null ? "none" : minecraft.screen.getClass().getName());
+        if (standard != null) return standard.checkpoint() + " screen=" + (minecraft.screen == null ? "none" : minecraft.screen.getClass().getName())
+                + " overlay=" + (minecraft.getOverlay() == null ? "none" : minecraft.getOverlay().getClass().getName());
         if (minecraft.screen == null) {
             return "none";
         }
