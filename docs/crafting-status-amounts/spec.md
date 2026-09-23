@@ -1,6 +1,6 @@
 # Compact crafting-status amounts
 
-Status: ready-to-implement
+Status: in-progress
 
 Scope: One quantity line in the native AE2 crafting-status cell.
 
@@ -8,6 +8,10 @@ Issue: [#438](https://github.com/cTux/ae2-crafting-time/issues/438)
 
 Planning: [Reviewed implementation plan](implementation-plan.md),
 [technical design](technical-design.md), and [research](research.md).
+
+Implementation: [Issue #438](https://github.com/cTux/ae2-crafting-time/issues/438); code and
+test-driver checkpoints are being added. CI, four-target client evidence, font
+readability, option relaunch, and visual review remain open.
 
 The planning review covers consistency and source feasibility. No prototype or
 Minecraft readability test has run for this scope. The issue's runtime research

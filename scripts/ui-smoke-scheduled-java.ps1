@@ -1,3 +1,24 @@
+function Assert-UiSmokeStatusContinuation {
+    param([string]$Path, [string]$ConfigPath, [string]$World, [string]$CampaignId)
+    $value = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
+    if ($value.schema -ne 1 -or $value.world -cne $World -or $value.campaign -cne $CampaignId -or
+            !(Test-Path -LiteralPath $ConfigPath -PathType Leaf) -or
+            (Get-FileHash -LiteralPath $ConfigPath -Algorithm SHA256).Hash -ine $value.configSha256) {
+        throw 'Saved compact-off client config does not match the phase-1 continuation'
+    }
+}
+
+function Assert-UiSmokeStatusRelaunchCaptures {
+    param([string]$Evidence)
+    foreach ($capture in @('status-saved-off', 'status-relaunch-off', 'status-relaunch-on', 'status-relaunch-restored')) {
+        foreach ($extension in @('png', 'json')) {
+            if (!(Test-Path -LiteralPath (Join-Path $Evidence "$capture.$extension") -PathType Leaf)) {
+                throw "Status amount relaunch capture is missing: $capture.$extension"
+            }
+        }
+    }
+}
+
 function Get-UiSmokeJavaLaunchPhases {
     param(
         [Parameter(Mandatory)][string]$Scenario,
@@ -7,7 +28,7 @@ function Get-UiSmokeJavaLaunchPhases {
     )
     if ($PrepareOnly) { return @() }
     if ($ResumeOnly) { return @(2) }
-    if ($Scenario -eq 'cpu-list-total-ttc' -or $ContainsCpuList) { return @(1, 2) }
+    if ($Scenario -in @('cpu-list-total-ttc', 'standard-status-controls') -or $ContainsCpuList) { return @(1, 2) }
     return @(1)
 }
 

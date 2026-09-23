@@ -98,6 +98,7 @@ public final class UiObservationStore {
         }
         var observed = observed(component, transformed(graphics, x, y, x + width, y + height));
         if (observed.key().startsWith("text.ae2craftingtime.")
+                || active.screen.contains("CraftingStatusScreen")
                 || active.cpuCards.stream().anyMatch(card -> observed.bounds().overlaps(card.nameArea))) {
             active.text.add(observed);
         }
@@ -155,7 +156,8 @@ public final class UiObservationStore {
                     var cell = new Rect(active.gui.x() + 9 + visible % 3 * 68,
                             active.gui.y() + 19 + visible / 3 * 23, 67, 22);
                     active.rows.add(new PendingRow(entry.getWhat().getId().toString(),
-                            entry.getActiveAmount() + entry.getPendingAmount(), 0, cell));
+                            entry.getActiveAmount() + entry.getPendingAmount(), 0, cell, null,
+                            entry.getStoredAmount(), entry.getActiveAmount(), entry.getPendingAmount()));
                     active.itemCells.add(new Rect(cell.x() + CELL_WIDTH - 19, cell.y() + 3, 16, 16));
                 }
             }
@@ -173,7 +175,8 @@ public final class UiObservationStore {
         var rows = active.rows.stream().map(row -> new UiSnapshot.Row(row.outputId, row.craftAmount,
                 row.missingAmount, row.cell,
                 row.identity == null ? rowDescription(active.descriptions, active.text, row.outputId, row.cell)
-                        : active.planDescriptions.getOrDefault(row.identity, List.of()))).toList();
+                        : active.planDescriptions.getOrDefault(row.identity, List.of()),
+                row.storedAmount, row.activeAmount, row.pendingAmount)).toList();
         var mergedBadges = merge(active.badges);
         var cpuCards = active.cpuCards.stream().map(card -> {
             var ttc = active.text.stream().filter(text -> text.key().equals("text.ae2craftingtime.ttc")
@@ -290,7 +293,11 @@ public final class UiObservationStore {
         return List.copyOf(merged);
     }
 
-    private record PendingRow(String outputId, long craftAmount, long missingAmount, Rect cell, Object identity) {
+    private record PendingRow(String outputId, long craftAmount, long missingAmount, Rect cell, Object identity,
+            long storedAmount, long activeAmount, long pendingAmount) {
+        private PendingRow(String outputId, long craftAmount, long missingAmount, Rect cell, Object identity) {
+            this(outputId, craftAmount, missingAmount, cell, identity, 0, 0, 0);
+        }
         private PendingRow(String outputId, long craftAmount, long missingAmount, Rect cell) {
             this(outputId, craftAmount, missingAmount, cell, null);
         }

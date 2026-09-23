@@ -217,6 +217,14 @@ foreach ($id in $ids) {
             projectId=$primaryProjects; baseOnly=$primaryBaseOnly; reason='Requested dependency graph'
             adapterPolicy=$(if ($primaryBaseOnly) { 'base AE2 graph for direct cases' } else { 'packaged catalogue graph for direct cases' }) }) + $graphs
     }
+    foreach ($graph in @($graphs)) {
+        if ($graph.cases.Count -gt 1 -and 'standard-status-controls' -cin $graph.cases) {
+            $graph.cases = @($graph.cases | Where-Object { $_ -cne 'standard-status-controls' })
+            $graphs += [pscustomobject]@{ id="$($graph.id)-status-amounts"; profile=$graph.profile
+                cases=@('standard-status-controls'); projectId=$graph.projectId; baseOnly=$graph.baseOnly
+                reason='Status option persistence requires two client processes'; adapterPolicy=$graph.adapterPolicy }
+        }
+    }
     $entries += [pscustomobject]@{ target=$id; graphs=$graphs; mode=$(if ($full) { 'full' } else { 'focused' }); cases=$cases
         notSelectedCases=@($allCases | Where-Object { $_ -cnotin $cases });
         groups=@($(if ($full -or 'standard-ae2' -cin $requested) { 'standard-ae2' })); profile=$(if ($Latest) { 'latest' } else { 'compatible' }) }

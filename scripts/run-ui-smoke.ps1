@@ -264,6 +264,23 @@ pauseOnLostFocus:false
 soundCategory_master:0.0
 "@, [Text.UTF8Encoding]::new($false))
 
+if ($Scenario -eq 'standard-status-controls' -or $selectedCases -contains 'standard-status-controls') {
+    $fontPack = Join-Path $runtime 'resourcepacks/ae2ct-status-wide'
+    $fontPath = Join-Path $fontPack 'assets/minecraft/font'
+    New-Item -ItemType Directory -Path $fontPath -Force | Out-Null
+    $packFormat = switch ($Target) {
+        '1.20.1-forge' { 15 }
+        '1.20.1-fabric' { 15 }
+        '1.21.1-neoforge' { 34 }
+        '26.1.2-neoforge' { 8 }
+    }
+    [IO.File]::WriteAllText((Join-Path $fontPack 'pack.mcmeta'),
+        (@{pack=@{description='AE2 Crafting Time status font probe';pack_format=$packFormat}} | ConvertTo-Json -Depth 3),
+        [Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText((Join-Path $fontPath 'default.json'),
+        '{"providers":[{"type":"reference","id":"minecraft:uniform"}]}', [Text.UTF8Encoding]::new($false))
+}
+
 if ($Scenario -ne 'suite') {
     [ordered]@{schema=1;cases=@(@{scenario=$Scenario;world=$world})} | ConvertTo-Json -Depth 5 |
         Set-Content -LiteralPath (Join-Path $evidence 'suite-plan.json') -Encoding UTF8
@@ -304,7 +321,9 @@ if ($Interactive) {
 
 try {
     try {
-        $continuationPath = if ($Scenario -eq 'suite') {
+        $continuationPath = if ($Scenario -eq 'standard-status-controls') {
+            Join-Path $evidence 'status-amounts-continuation.json'
+        } elseif ($Scenario -eq 'suite') {
             Join-Path $evidence 'cpu-list-total-ttc/cpu-list-continuation.json'
         } else { Join-Path $evidence 'cpu-list-continuation.json' }
         $phase = if ($resumeState) { 2 } else { 1 }
@@ -381,7 +400,7 @@ try {
             $processes += $identity
             Write-Status "running" "client phase $phase"
             $timeout = if ($Interactive) { [TimeSpan]::FromMinutes(30) }
-                elseif ($Scenario -in @("suite", "cpu-list-total-ttc", "delayed-resource-icons", "appmek-resource-icons")) { [TimeSpan]::FromMinutes(40) }
+                elseif ($Scenario -in @("suite", "cpu-list-total-ttc", "standard-status-controls", "delayed-resource-icons", "appmek-resource-icons")) { [TimeSpan]::FromMinutes(40) }
                 else { [TimeSpan]::FromMinutes(8) }
             $deadline = [DateTime]::UtcNow.Add($timeout)
             $watchdogReason = $null
@@ -410,7 +429,7 @@ try {
                 } elseif ($process.WaitForExit(1000)) {
                     break
                 }
-                if ($Scenario -in @('cpu-list-total-ttc', 'recurrent-plan', 'stored-variant-plan', 'delayed-resource-icons', 'appmek-resource-icons') -or
+                if ($Scenario -in @('cpu-list-total-ttc', 'standard-status-controls', 'recurrent-plan', 'stored-variant-plan', 'delayed-resource-icons', 'appmek-resource-icons') -or
                         $selectedCases -contains 'recurrent-plan' -or $selectedCases -contains 'stored-variant-plan') {
                     $progressPath = Join-Path $evidence 'driver-progress.json'
                     if (Test-Path -LiteralPath $progressPath -PathType Leaf) {
@@ -499,6 +518,10 @@ try {
             }
             if ($phase -eq 1 -and (Test-Path -LiteralPath $continuationPath -PathType Leaf)) {
                 if (!$PreparedLaunch) { throw 'Runner-owned relaunch requires a prepared native client' }
+                if ($Scenario -eq 'standard-status-controls') {
+                    Assert-UiSmokeStatusContinuation -Path $continuationPath -World $world -CampaignId $campaignId `
+                        -ConfigPath (Join-Path $runtime 'config/ae2craftingtime-client.toml')
+                }
                 $predecessorHash = (Get-FileHash -LiteralPath $continuationPath -Algorithm SHA256).Hash
                 if ($CaptureResumeOnly) {
                     $resumeOutput = Join-Path $report 'resume'
@@ -518,7 +541,7 @@ try {
             return
         }
         Assert-UiSmokeJavaPhaseIdentities -Processes @($processes) -ExpectedPhases $plannedPhases `
-            -FinalApproval:($Scenario -eq 'cpu-list-total-ttc' -and !$resumeState)
+            -FinalApproval:($Scenario -in @('cpu-list-total-ttc', 'standard-status-controls') -and !$resumeState)
         if ($phase -eq 2) {
             if (!$resumeState -and ($processes.Count -ne 2 -or $processes[0].pid -eq $processes[1].pid -or
                     $processes[0].startedAt -eq $processes[1].startedAt)) {
@@ -537,6 +560,9 @@ try {
                 -DependencyMode $(if($dependencyIdentity){$dependencyIdentity.mode}else{$null}) `
                 -DependencyCatalogueSha256 $(if($dependencyIdentity){$dependencyIdentity.catalogueSha256}else{$null}) `
                 -ControlStatePath $controlStatePath -ResumeOnly:([bool]$resumeState) -FinalApproval:(-not [bool]$resumeState)
+            if ($Scenario -eq 'standard-status-controls') {
+                Assert-UiSmokeStatusRelaunchCaptures -Evidence $evidence
+            }
         }
 
     $caseScenarios = @($Scenario)

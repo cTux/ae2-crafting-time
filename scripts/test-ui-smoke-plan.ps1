@@ -173,7 +173,13 @@ try {
     $full = & $planner -Repository $temp
     $forgeGraphs = @($full.targets[0].graphs)
     $advancedGraphs = @($full.targets.graphs | Where-Object id -eq 'rxYaglEe')
-    Assert ($forgeGraphs.Count -eq 4 -and $forgeGraphs[2].cases.Count -eq 2) 'Full Forge must schedule CPU-list and newest-adapter graphs separately'
+    Assert ($forgeGraphs.Count -eq 5 -and $forgeGraphs[2].cases.Count -eq 2) 'Full Forge must schedule relaunch and newest-adapter graphs separately'
+    foreach ($entry in $full.targets) {
+        $statusGraphs = @($entry.graphs | Where-Object { 'standard-status-controls' -cin $_.cases })
+        Assert ($statusGraphs.Count -eq 1 -and $statusGraphs[0].cases.Count -eq 1) 'Status relaunch must run outside suites'
+    }
+    $statusOnly = & $planner -Repository $temp -Target '1.20.1-forge' -Scenario standard-status-controls
+    Assert ($statusOnly.targets[0].graphs.Count -eq 1) 'Focused status relaunch must not duplicate its graph'
     Assert (!$forgeGraphs[0].baseOnly) 'Full Forge primary graph must install dependencies for direct addon cases'
     Assert (@($forgeGraphs | Where-Object { $_.baseOnly -and $_.cases.Count -eq 1 -and $_.cases[0] -eq 'cpu-list-total-ttc' }).Count -eq 1) `
         'Full Forge must isolate the CPU-list relaunch in one base-only graph'

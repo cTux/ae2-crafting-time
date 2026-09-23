@@ -1,9 +1,12 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import com.ctux.ae2craftingtime.core.CraftingBlockReason;
+import appeng.core.localization.GuiText;
 import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
 import com.ctux.ae2craftingtime.core.StallDiagnostic;
@@ -13,11 +16,83 @@ import java.util.List;
 import java.util.function.BooleanSupplier;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import org.junit.jupiter.api.Test;
 
 class CraftingStatusTableRendererMixinTest {
+    @Test
+    void nativeAmountsCompactWithoutMovingForeignDescriptionLines() throws ReflectiveOperationException {
+        var before = Component.literal("before");
+        var middle = Component.literal("middle");
+        var after = Component.literal("after");
+        var lines = new ArrayList<Component>(List.of(before, GuiText.FromStorage.text("4"), middle,
+                GuiText.Crafting.text("10"), GuiText.Scheduled.text("200"), after));
+        var summary = compact(lines, 4, "4", 10, "10", 200, "200");
+        assertNotNull(summary);
+        assertEquals(List.of(before, summary, middle, after), lines);
+        assertEquals("text.ae2craftingtime.status.amounts", ((TranslatableContents) summary.getContents()).getKey());
+        assertEquals(List.of("4/10/200"), List.of(((TranslatableContents) summary.getContents()).getArgs()));
+    }
+
+    @Test
+    void malformedOrMissingNativeAmountsLeaveEntireDescriptionUntouched() throws ReflectiveOperationException {
+        var valid = GuiText.FromStorage.text("4");
+        for (var lines : List.of(
+                new ArrayList<Component>(List.of(Component.literal("foreign"))),
+                new ArrayList<Component>(List.of(valid, valid.copy())),
+                new ArrayList<Component>(List.of(GuiText.FromStorage.text("5"))),
+                new ArrayList<Component>(List.of(valid.copy().append(" extra"))),
+                new ArrayList<Component>(List.of(valid.copy().withStyle(ChatFormatting.RED))))) {
+            var original = List.copyOf(lines);
+            assertNull(compact(lines, 4, "4", 0, null, 0, null));
+            assertEquals(original, lines);
+        }
+        var absent = new ArrayList<Component>(List.of(GuiText.Crafting.text("10")));
+        assertNull(compact(absent, 0, null, 0, null, 0, null));
+        assertEquals(List.of(GuiText.Crafting.text("10")), absent);
+    }
+
+    @Test
+    void singleAndEmptyNativeAmountsKeepTheirPositions() throws ReflectiveOperationException {
+        var lines = new ArrayList<Component>(List.of(GuiText.Crafting.text("1.5 mB")));
+        var summary = compact(lines, 0, null, 1, "1.5 mB", 0, null);
+        assertEquals(List.of(summary), lines);
+        assertEquals(List.of("C1.5 mB"), List.of(((TranslatableContents) summary.getContents()).getArgs()));
+        lines.clear();
+        assertNull(compact(lines, 0, null, 0, null, 0, null));
+        assertEquals(List.of(), lines);
+    }
+
+    @Test
+    void amountBadgeCopiesOnlyStatusColorAndHasNormalFallback() throws ReflectiveOperationException {
+        var method = CraftingStatusTableRendererMixin.class.getDeclaredMethod("ae2craftingtime$styleAmounts",
+                MutableComponent.class, Component.class);
+        method.setAccessible(true);
+        for (var color : List.of(ChatFormatting.RED, ChatFormatting.YELLOW, ChatFormatting.GREEN)) {
+            var badge = TtcText.statusAmounts("A10");
+            method.invoke(null, badge, Component.literal("warning").withStyle(color, ChatFormatting.BOLD));
+            assertEquals(TextColor.fromLegacyFormat(color), badge.getStyle().getColor());
+            assertEquals(false, badge.getStyle().isBold());
+        }
+        var inherited = TtcText.statusAmounts("A10");
+        method.invoke(null, inherited, Component.literal("status"));
+        assertNull(inherited.getStyle().getColor());
+        var fallback = TtcText.statusAmounts("A10");
+        method.invoke(null, fallback, null);
+        assertEquals(TextColor.fromRgb(com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current()
+                .color(com.ctux.ae2craftingtime.core.ClientConfig.Color.TOTAL)), fallback.getStyle().getColor());
+    }
+
+    private static Component compact(List<Component> lines, long stored, String storedText, long active,
+            String activeText, long pending, String pendingText) throws ReflectiveOperationException {
+        var method = CraftingStatusTableRendererMixin.class.getDeclaredMethod("ae2craftingtime$compactAmounts",
+                List.class, long.class, String.class, long.class, String.class, long.class, String.class);
+        method.setAccessible(true);
+        return (Component) method.invoke(null, lines, stored, storedText, active, activeText, pending, pendingText);
+    }
+
     private static final List<String> CONTROLS = List.of(
             "text.ae2craftingtime.locate_hint",
             "text.ae2craftingtime.details_hint",

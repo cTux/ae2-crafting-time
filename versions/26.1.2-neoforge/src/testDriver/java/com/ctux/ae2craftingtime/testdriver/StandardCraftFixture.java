@@ -24,6 +24,20 @@ import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 
 /** Two actual vanilla smelters; the fixture supplies fuel and imports their output. */
 final class StandardCraftFixture {
+    static final int QUANTITY_CASES = 10;
+
+    static appeng.menu.me.crafting.CraftingStatus quantityStatus(int index) {
+        long[][] amounts = {{4, 10, 200}, {0, 10, 200}, {10, 0, 200}, {4, 10, 0},
+                {10, 0, 0}, {0, 10, 0}, {0, 0, 10}, {0, 0, 0},
+                {1_000_000_000L, 2_000_000_000L, 3_000_000_000L}, {500, 1500, 2500}};
+        var values = amounts[index];
+        var key = index == 9 ? appeng.api.stacks.AEFluidKey.of(net.minecraft.world.level.material.Fluids.WATER)
+                : AEItemKey.of(Items.STONE);
+        return new appeng.menu.me.crafting.CraftingStatus(true, 0, 0, 0,
+                java.util.List.of(new appeng.menu.me.crafting.CraftingStatusEntry(900000L + index, key,
+                        values[0], values[1], values[2])));
+    }
+
     BlockPos terminal;
     private boolean initialized;
     boolean returnedStone;

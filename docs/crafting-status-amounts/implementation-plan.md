@@ -140,6 +140,17 @@ stays enabled. Also check compact on with TTC off, both off, Cancel, both reset
 actions, and the saved value after relaunch. Server profiling off must leave the
 compact option effective; its label must remain usable by a non-operator (Q6).
 
+Run `standard-status-controls` outside multi-case suites so its saved-option
+continuation always owns two client processes. The planner splits that leaf
+while preserving the requested dependency graph. The integrated status fixture
+checks profiling off through the real server runtime and restores it afterward.
+For the separate non-operator check, also run the existing connected
+`cpu-list-total-ttc` fixture on each target. Its final Options checkpoint requires
+the actual server snapshot to grant no edit permission, saves compact amounts
+off and on through native controls, and records `status-nonop-options.json` plus
+four `status-nonop-*.png` captures. The server snapshot must remain unchanged.
+An integrated owner or an editable connected snapshot cannot satisfy this gate.
+
 For Q4 inspect the actual badge bounds, adjacent cell and icon, not only string
 assertions. For Q5 compare native full amounts before/after and verify category
 labels. For Q6 inspect mixin logs and foreign-line fixtures; a successful vanilla

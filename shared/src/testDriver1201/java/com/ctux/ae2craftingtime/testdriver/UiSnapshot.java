@@ -44,7 +44,11 @@ public record UiSnapshot(
         rawCpuSerials = List.copyOf(rawCpuSerials);
     }
 
-    public record Row(String outputId, long craftAmount, long missingAmount, Rect cell, List<ObservedText> description) {
+    public record Row(String outputId, long craftAmount, long missingAmount, Rect cell, List<ObservedText> description,
+            long storedAmount, long activeAmount, long pendingAmount) {
+        public Row(String outputId, long craftAmount, long missingAmount, Rect cell, List<ObservedText> description) {
+            this(outputId, craftAmount, missingAmount, cell, description, 0, 0, 0);
+        }
         public Row {
             description = List.copyOf(description);
         }

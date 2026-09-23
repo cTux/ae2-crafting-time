@@ -23,6 +23,28 @@ import java.util.List;
 import java.util.Optional;
 
 class TtcTextTest {
+    @Test
+    void statusAmountKeysHaveMatchingBilingualSymbolsAndPlaceholders() throws IOException {
+        var line = (TranslatableContents) TtcText.statusAmounts("4/10/200").getContents();
+        var legend = (TranslatableContents) TtcText.statusAmountsLegend().getContents();
+        assertEquals("text.ae2craftingtime.status.amounts", line.getKey());
+        assertEquals(List.of("4/10/200"), List.of(line.getArgs()));
+        assertEquals("text.ae2craftingtime.status.amounts_legend", legend.getKey());
+        for (var locale : List.of("en_us", "uk_ua")) {
+            try (var reader = new InputStreamReader(getClass().getResourceAsStream(
+                    "/assets/ae2craftingtime/lang/" + locale + ".json"), StandardCharsets.UTF_8)) {
+                var translations = JsonParser.parseReader(reader).getAsJsonObject();
+                assertEquals("%s", translations.get(line.getKey()).getAsString());
+                var wording = translations.get(legend.getKey()).getAsString();
+                assertTrue(wording.startsWith("A:"));
+                assertTrue(wording.contains(" / C:"));
+                assertTrue(wording.contains(" / S:"));
+                assertTrue(wording.contains("; -:"));
+                assertTrue(translations.has("config.ae2craftingtime.compactStatusAmounts"));
+            }
+        }
+    }
+
     @ParameterizedTest
     @CsvSource({"en_us, Stored variant", "uk_ua, Інший варіант у сховищі"})
     void storedVariantHasIndependentLocalizedWarningAndGuidance(String locale, String label) throws IOException {

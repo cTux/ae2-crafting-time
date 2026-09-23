@@ -49,6 +49,25 @@ class FeatureOptionsTest {
     }
 
     @Test
+    void compactAmountsAndStatusTimesCanBeToggledIndependently() {
+        var options = new FeatureOptions(OptionFeature.Owner.CLIENT);
+        for (boolean compact : new boolean[] {false, true}) {
+            for (boolean time : new boolean[] {false, true}) {
+                options.setEnabled(OptionFeature.COMPACT_STATUS_AMOUNTS, compact);
+                options.setEnabled(OptionFeature.STATUS_ROWS, time);
+                assertEquals(compact, options.enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
+                assertEquals(time, options.enabled(OptionFeature.STATUS_ROWS));
+            }
+        }
+        options.setEnabled(OptionFeature.COMPACT_STATUS_AMOUNTS, false);
+        var draft = options.copy();
+        draft.setEnabled(OptionFeature.COMPACT_STATUS_AMOUNTS, true);
+        assertFalse(options.enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
+        draft.reset();
+        assertTrue(draft.enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
+    }
+
+    @Test
     void environmentBoundaryRejectsWrongOrMissingSwitches() {
         var server = new FeatureOptions(OptionFeature.Owner.SERVER);
         assertThrows(IllegalArgumentException.class, () -> server.setEnabled(OptionFeature.PLAN_ROWS, false));
