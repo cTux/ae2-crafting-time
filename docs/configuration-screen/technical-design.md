@@ -20,6 +20,12 @@ Shared UI code reads those models rather than loader config objects. The current
 static `Ae2CraftingTimeConfig` accessors become the server-model facade so
 profiling call sites do not gain loader branches.
 
+The [feature-switch inventory](spec.md#feature-switches) is the setting
+contract. Use one boolean per named behavior, all defaulting to true. Do not
+derive independent switches from category flags. `enabled` is the only master:
+when off, dependent server rows are unavailable without changing their stored
+values. Storage sections follow the Client/Server tabs and their logical groups.
+
 ## Storage and migration
 
 | Owner | Forge/NeoForge | Fabric |
@@ -32,6 +38,8 @@ On first load after upgrade, read the existing
 owner file, validate them, then mark migration complete by the presence of the
 new files. Do not delete or rewrite the legacy file. `showInTree` maps to the
 client tree toggle; the other current keys map to `ServerConfig`.
+`notifyOnDelayed` keeps its server-wide meaning, as does `showChatMessages`.
+Missing new keys default on. Existing values are never replaced by new switches.
 
 Client writes use a temporary sibling file followed by replace so an interrupted
 save cannot truncate the last valid config. Server writes remain on the logical
@@ -44,6 +52,12 @@ replace rule and keeps parsing/writing code in its version module.
 data: translation key, control kind, default, range/choices, owner, apply timing,
 and availability predicate. The screen creates native widgets directly from
 those descriptors. There is no plugin/factory layer.
+
+Render Client and Server tabs first, then the groups in the spec. The Server
+tab always shows effective values; only authorized players can edit. Disabled
+optional rows state the missing mod or version. The static
+[mockup](options-mockup.svg) is a layout guide; native widgets determine size,
+focus, narration, and scrolling.
 
 - Boolean rows use cycle buttons.
 - Bounded integral values and opacity use sliders plus their exact numeric value.
@@ -78,6 +92,13 @@ UI mixins replace hard-coded visibility, sort defaults, `TtcColor` constants,
 status/total colors, and `TtcBadge.BACKGROUND` reads with `ClientConfig` getters.
 TTC calculation and server snapshots remain unchanged.
 
+Each renderer checks its switch before reserving space, drawing a badge,
+building a tooltip, or registering a click target. Status switches filter only
+client presentation. Server diagnostic switches gate their collection or
+classification path and clear only related runtime state, retaining throughput
+samples and world saves. Disabled sort controls fall back to AE2 order for
+rendering and hit testing.
+
 Server-owned settings are read only on the logical server. Delay thresholds
 replace the current 10-second and 2x constants at the single classification
 seam. Retention/filter changes apply to new calculations without discarding
@@ -96,6 +117,14 @@ field, write through the server config backend, apply once, increment the
 revision, and broadcast the new snapshot. Reject unauthorized, stale, malformed,
 or oversized updates without partial application. This packet edits only the
 fixed server-setting set; it is not a general remote file/config API.
+
+Persist `receiveCraftWarnings` in client config and send that one boolean on
+login and after Done. Default to true until received so older clients retain
+current behavior. Hold it only in the player's server session and clear it on
+disconnect. Both `DelayedNotificationServer` and `BlockReasonNotifier` check
+the recipient preference at the final chat send point as well as the global
+`notifyOnDelayed` switch. The preference packet cannot write server settings
+or another player's preference. An absent client mod keeps the server default.
 
 ## Validation and failure behavior
 

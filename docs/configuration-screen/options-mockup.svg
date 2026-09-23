@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">AE2 Crafting Time future options, Client and Server pages</title>
+  <desc id="desc">Two dark Minecraft-inspired option panels. Client warnings have an off switch for private craft warning chat. Server diagnostics and notifications have separate switches.</desc>
+  <defs>
+    <linearGradient id="bg" x2="0" y2="1"><stop stop-color="#202631"/><stop offset="1" stop-color="#11161e"/></linearGradient>
+    <style>
+      text {font-family: Arial, sans-serif; fill:#f1f4f7}
+      .muted {fill:#aeb8c4}.small {font-size:17px}.tiny {font-size:14px}
+      .heading {font-size:22px;font-weight:700}.row {font-size:19px}
+      .on {fill:#4bd89a}.off {fill:#9ca4af}
+    </style>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <text x="76" y="74" font-size="38" font-weight="700">AE2 Crafting Time · Options</text>
+  <text x="77" y="106" class="muted small">Concept for issue #117 · each feature can be disabled independently</text>
+
+  <rect x="52" y="140" width="730" height="690" rx="14" fill="#2b313b" stroke="#6e7c8d" stroke-width="2"/>
+  <rect x="818" y="140" width="730" height="690" rx="14" fill="#2b313b" stroke="#6e7c8d" stroke-width="2"/>
+  <rect x="69" y="159" width="695" height="61" rx="7" fill="#394451"/>
+  <rect x="835" y="159" width="695" height="61" rx="7" fill="#394451"/>
+  <text x="95" y="198" class="heading">CLIENT</text><text x="310" y="198" class="muted small">Only affects your display and chat</text>
+  <text x="861" y="198" class="heading">SERVER</text><text x="1077" y="198" class="muted small">Controls shared data for everyone</text>
+
+  <rect x="69" y="237" width="160" height="514" rx="7" fill="#222a34"/>
+  <rect x="835" y="237" width="160" height="514" rx="7" fill="#222a34"/>
+  <rect x="79" y="253" width="140" height="45" rx="5" fill="#415878"/>
+  <rect x="845" y="253" width="140" height="45" rx="5" fill="#415878"/>
+  <text x="99" y="282" class="small">Warnings</text>
+  <text x="865" y="282" class="small">General</text>
+  <text x="99" y="340" class="small muted">Displays</text>
+  <text x="865" y="340" class="small muted">Diagnostics</text>
+  <text x="99" y="398" class="small muted">Appearance</text>
+  <text x="865" y="398" class="small muted">Notifications</text>
+  <text x="99" y="456" class="small muted">Controls</text>
+  <text x="865" y="456" class="small muted">Advanced</text>
+
+  <text x="254" y="274" class="heading">Warnings</text>
+  <text x="254" y="305" class="small muted">Choose what you see and hear</text>
+  <text x="1020" y="274" class="heading">General</text>
+  <text x="1020" y="305" class="small muted">Shared behavior · operator access</text>
+
+  <g fill="#343e4b">
+    <rect x="245" y="324" width="502" height="92" rx="7"/>
+    <rect x="245" y="427" width="502" height="67" rx="7"/>
+    <rect x="245" y="505" width="502" height="67" rx="7"/>
+    <rect x="245" y="583" width="502" height="67" rx="7"/>
+    <rect x="1011" y="324" width="502" height="92" rx="7"/>
+    <rect x="1011" y="427" width="502" height="67" rx="7"/>
+    <rect x="1011" y="505" width="502" height="67" rx="7"/>
+    <rect x="1011" y="583" width="502" height="67" rx="7"/>
+  </g>
+  <text x="262" y="355" class="row">Private craft warning chat</text>
+  <text x="262" y="383" class="small muted">Mute repeated delayed / blocked messages for me</text>
+  <text x="665" y="356" class="row off">OFF</text>
+  <text x="262" y="469" class="row">Delayed status in AE2 screens</text><text x="665" y="469" class="row on">ON</text>
+  <text x="262" y="547" class="row">Waiting / collecting data</text><text x="665" y="547" class="row on">ON</text>
+  <text x="262" y="625" class="row">Blocked reason badges</text><text x="665" y="625" class="row on">ON</text>
+
+  <text x="1028" y="355" class="row">Profiling and TTC</text>
+  <text x="1028" y="383" class="small muted">Master switch for server-derived estimates</text>
+  <text x="1430" y="356" class="row on">ON</text>
+  <text x="1028" y="469" class="row">Save learned history</text><text x="1430" y="469" class="row on">ON</text>
+  <text x="1028" y="547" class="row">Prediction accuracy</text><text x="1430" y="547" class="row on">ON</text>
+  <text x="1028" y="625" class="row">Delayed detection</text><text x="1430" y="625" class="row on">ON</text>
+
+  <text x="252" y="701" class="tiny muted">Default: ON · personal mute works on multiplayer servers</text>
+  <text x="1018" y="701" class="tiny muted">Server values shown read-only without operator permission</text>
+  <rect x="245" y="758" width="156" height="48" rx="6" fill="#536577"/><text x="283" y="789" class="small">Reset group</text>
+  <rect x="591" y="758" width="156" height="48" rx="6" fill="#5b806d"/><text x="647" y="789" class="small">Done</text>
+  <rect x="1011" y="758" width="156" height="48" rx="6" fill="#536577"/><text x="1049" y="789" class="small">Reset group</text>
+  <rect x="1357" y="758" width="156" height="48" rx="6" fill="#5b806d"/><text x="1413" y="789" class="small">Done</text>
+  <text x="54" y="868" class="small muted">Design preview · other groups contain per-surface displays, colors, sorting, controls, diagnostics, and notification settings.</text>
+</svg>
