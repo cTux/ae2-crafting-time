@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -17,7 +16,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 /** Server-effective options; only an operator can submit edits. */
-public final class ServerOptionsScreen extends Screen {
+public final class ServerOptionsScreen extends OptionsBaseScreen {
     private static final List<OptionFeature.Group> GROUPS = List.of(OptionFeature.Group.GENERAL,
             OptionFeature.Group.DIAGNOSTICS, OptionFeature.Group.NOTIFICATIONS,
             OptionFeature.Group.INTEGRATIONS, OptionFeature.Group.ADVANCED);
@@ -32,12 +31,6 @@ public final class ServerOptionsScreen extends Screen {
     private Button doneButton;
     private Button cancelButton;
     private boolean reloadRequired;
-
-    @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        OptionsBackground.render(this, graphics);
-        super.render(graphics, mouseX, mouseY, partialTick);
-    }
 
     @Override
     public void tick() {

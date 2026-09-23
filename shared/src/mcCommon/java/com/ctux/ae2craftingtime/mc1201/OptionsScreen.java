@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.ArrayList;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -17,7 +16,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 /** Native client option widgets. Each navigation action keeps the unsaved working copy. */
-public final class OptionsScreen extends Screen {
+public final class OptionsScreen extends OptionsBaseScreen {
     private static final List<OptionFeature.Group> CLIENT_GROUPS = List.of(
             OptionFeature.Group.DISPLAYS, OptionFeature.Group.WARNINGS,
             OptionFeature.Group.APPEARANCE, OptionFeature.Group.CONTROLS);
@@ -33,12 +32,6 @@ public final class OptionsScreen extends Screen {
     private List<String> resizeValues = List.of();
     private Button doneButton;
     private Button cancelButton;
-
-    @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        OptionsBackground.render(this, graphics);
-        super.render(graphics, mouseX, mouseY, partialTick);
-    }
 
     @Override
     public void tick() {
