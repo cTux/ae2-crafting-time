@@ -278,17 +278,17 @@ if ($Scenario -eq 'standard-status-controls' -or $selectedCases -contains 'stand
         (@{pack=@{description='AE2 Crafting Time status font probe';pack_format=$packFormat}} | ConvertTo-Json -Depth 3),
         [Text.UTF8Encoding]::new($false))
     # Vanilla's uniform font has the same advance as the default font for digits
-    # and slashes. Widen its built-in ASCII bitmap at the provider level so the
-    # actual status quantity string exercises horizontal fitting. Keep the
-    # bitmap at the nine-pixel line height so tooltip rows remain distinct.
+    # and slashes. Use its built-in ASCII bitmap only for amount glyphs so the
+    # actual quantity string exercises horizontal fitting while tooltip prose
+    # keeps the normal font metrics and line spacing.
     $blank = [string]::new([char]0, 16)
     $asciiRows = for ($row = 0; $row -lt 16; $row++) {
-        if ($row -ge 2 -and $row -le 6) { -join @(($row * 16)..($row * 16 + 15) | ForEach-Object { [char]$_ }) }
-        elseif ($row -eq 7) { (-join @(112..126 | ForEach-Object { [char]$_ })) + [char]0 }
+        if ($row -eq 2) { [string]::new([char]0, 15) + '/' }
+        elseif ($row -eq 3) { '0123456789' + [string]::new([char]0, 6) }
         else { $blank }
     }
     $fontDefinition = @{providers=@(
-        @{type='bitmap';file='minecraft:font/ascii.png';ascent=7;height=9;chars=@($asciiRows)},
+        @{type='bitmap';file='minecraft:font/ascii.png';ascent=7;height=8;chars=@($asciiRows)},
         @{type='reference';id='minecraft:uniform'}
     )}
     [IO.File]::WriteAllText((Join-Path $fontPath 'default.json'),
