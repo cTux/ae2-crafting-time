@@ -288,7 +288,7 @@ if ($Scenario -eq 'standard-status-controls' -or $selectedCases -contains 'stand
         else { $blank }
     }
     $fontDefinition = @{providers=@(
-        @{type='bitmap';file='minecraft:font/ascii.png';ascent=7;height=8;chars=@($asciiRows)},
+        @{type='bitmap';file='minecraft:font/ascii.png';ascent=7;height=9;chars=@($asciiRows)},
         @{type='reference';id='minecraft:uniform'}
     )}
     [IO.File]::WriteAllText((Join-Path $fontPath 'default.json'),

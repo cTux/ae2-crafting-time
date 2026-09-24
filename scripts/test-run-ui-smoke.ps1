@@ -321,7 +321,7 @@ try {
     }
     Invoke-Case "pass" -Scenario standard-status-controls -shouldPass $false
     $statusFont = Get-Content -LiteralPath (Join-Path $temp 'build/ui-smoke/1.20.1-forge/compatible/runtime/resourcepacks/ae2ct-status-wide/assets/minecraft/font/default.json') -Raw | ConvertFrom-Json
-    if ($statusFont.providers[0].type -cne 'bitmap' -or $statusFont.providers[0].height -ne 8 -or
+    if ($statusFont.providers[0].type -cne 'bitmap' -or $statusFont.providers[0].height -ne 9 -or
             $statusFont.providers[0].chars[3] -cne ('0123456789' + [string]::new([char]0, 6)) -or
             $statusFont.providers[0].chars[2][15] -cne '/' -or
             $statusFont.providers[1].id -cne 'minecraft:uniform') {
