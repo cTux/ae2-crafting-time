@@ -279,7 +279,8 @@ if ($Scenario -eq 'standard-status-controls' -or $selectedCases -contains 'stand
         [Text.UTF8Encoding]::new($false))
     # Vanilla's uniform font has the same advance as the default font for digits
     # and slashes. Widen its built-in ASCII bitmap at the provider level so the
-    # actual status quantity string exercises horizontal fitting.
+    # actual status quantity string exercises horizontal fitting. Keep the
+    # bitmap at the nine-pixel line height so tooltip rows remain distinct.
     $blank = [string]::new([char]0, 16)
     $asciiRows = for ($row = 0; $row -lt 16; $row++) {
         if ($row -ge 2 -and $row -le 6) { -join @(($row * 16)..($row * 16 + 15) | ForEach-Object { [char]$_ }) }
@@ -287,7 +288,7 @@ if ($Scenario -eq 'standard-status-controls' -or $selectedCases -contains 'stand
         else { $blank }
     }
     $fontDefinition = @{providers=@(
-        @{type='bitmap';file='minecraft:font/ascii.png';ascent=7;height=10;chars=@($asciiRows)},
+        @{type='bitmap';file='minecraft:font/ascii.png';ascent=7;height=9;chars=@($asciiRows)},
         @{type='reference';id='minecraft:uniform'}
     )}
     [IO.File]::WriteAllText((Join-Path $fontPath 'default.json'),
