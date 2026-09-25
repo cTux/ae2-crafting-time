@@ -64,7 +64,7 @@ final class StandardAe2Scenario {
     private final java.nio.file.Path output;
     private final List<String> resultScreenshots;
     private final AmountContinuation amountContinuation;
-    private final List<StandardCraftFixture.AddonQuantityCase> addonQuantityCases;
+    private List<StandardCraftFixture.AddonQuantityCase> addonQuantityCases = List.of();
     StandardAe2Scenario(String leaf, String world, java.nio.file.Path output, boolean connectedDedicated) {
         this(leaf, world, output, connectedDedicated, new java.util.ArrayList<>());
     }
@@ -75,7 +75,6 @@ final class StandardAe2Scenario {
         this.world = world;
         this.output = output;
         this.resultScreenshots = resultScreenshots;
-        addonQuantityCases = leaf.equals("standard-status-controls") ? StandardCraftFixture.addonQuantityCases() : List.of();
         var continuationPath = leaf.equals("standard-status-controls")
                 && Boolean.getBoolean("ae2craftingtime.test.statusRelaunch")
                 ? System.getProperty("ae2craftingtime.test.continuation", "") : "";
@@ -986,6 +985,7 @@ final class StandardAe2Scenario {
             var waiting = rowText(snapshot, "minecraft:smooth_stone", "text.ae2craftingtime.waiting");
             var running = rowText(snapshot, "minecraft:stone", "text.ae2craftingtime.ttc");
             if (leaf.equals("standard-status-controls")) {
+                addonQuantityCases = StandardCraftFixture.addonQuantityCases();
                 var accessor = (com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen;
                 realStatus = accessor.ae2craftingtime_test_driver$status();
                 accessor.ae2craftingtime_test_driver$setStatus(StandardCraftFixture.quantityStatus(quantityCase));
