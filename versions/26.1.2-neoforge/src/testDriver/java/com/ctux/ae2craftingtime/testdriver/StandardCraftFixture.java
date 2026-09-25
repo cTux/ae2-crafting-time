@@ -26,7 +26,7 @@ import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 final class StandardCraftFixture {
     static final int QUANTITY_CASES = 10;
 
-    record AddonQuantityCase(String name, appeng.api.stacks.AEKey key) {}
+    record AddonQuantityCase(String name, appeng.api.stacks.AEKey key, long stored, long active, long pending) {}
 
     static java.util.List<AddonQuantityCase> addonQuantityCases() {
         if (DriverPlatform.isModLoaded("appbot") || DriverPlatform.isModLoaded("appmek")) {
@@ -37,7 +37,8 @@ final class StandardCraftFixture {
 
     static appeng.menu.me.crafting.CraftingStatus addonQuantityStatus(AddonQuantityCase addon) {
         return new appeng.menu.me.crafting.CraftingStatus(true, 0, 0, 0,
-                java.util.List.of(new appeng.menu.me.crafting.CraftingStatusEntry(900010L, addon.key(), 4, 10, 200)));
+                java.util.List.of(new appeng.menu.me.crafting.CraftingStatusEntry(900010L, addon.key(),
+                        addon.stored(), addon.active(), addon.pending())));
     }
 
     static appeng.menu.me.crafting.CraftingStatus quantityStatus(int index) {

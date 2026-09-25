@@ -103,8 +103,10 @@ try {
             captured=@($names)} | ConvertTo-Json -Depth 3 |
             Set-Content -LiteralPath (Join-Path $temp 'status-addon-keys.json')
         foreach ($name in @('mana','chemical')) {
-            foreach ($extension in @('png','json')) {
-                [IO.File]::WriteAllText((Join-Path $temp "status-addon-$name.$extension"), 'fixture')
+            foreach ($capture in @("status-addon-$name", "status-addon-$name-tooltip")) {
+                foreach ($extension in @('png','json')) {
+                    [IO.File]::WriteAllText((Join-Path $temp "$capture.$extension"), 'fixture')
+                }
             }
         }
         Assert-UiSmokeStatusAddonKeys -Evidence $temp -Target $target

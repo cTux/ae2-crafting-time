@@ -1092,7 +1092,8 @@ final class StandardAe2Scenario {
             var addon = addonQuantityCases.get(addonQuantityCase);
             var expected = StandardCraftFixture.addonQuantityStatus(addon).getEntries().get(0);
             var row = snapshot.rows().stream().filter(value -> value.outputId().equals(expected.getWhat().getId().toString())
-                    && value.storedAmount() == 4 && value.activeAmount() == 10 && value.pendingAmount() == 200)
+                    && value.storedAmount() == addon.stored() && value.activeAmount() == addon.active()
+                    && value.pendingAmount() == addon.pending())
                     .findFirst().orElse(null);
             if (row == null) {
                 ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
@@ -1103,12 +1104,13 @@ final class StandardAe2Scenario {
             var summary = row.description().stream().filter(value -> value.key().equals(
                     "text.ae2craftingtime.status.amounts")).findFirst().orElse(null);
             var key = expected.getWhat();
-            var slot = java.util.List.of(4L, 10L, 200L).stream()
+            var slot = java.util.List.of(addon.stored(), addon.active(), addon.pending()).stream()
                     .map(value -> key.formatAmount(value, appeng.api.stacks.AmountFormat.SLOT)).toList();
             if (summary == null || !summary.arguments().equals(List.of(String.join("/", slot)))
                     || summary.bold() || !LayoutValidator.validateBadges(snapshot).isEmpty())
                 throw new IllegalStateException("Addon " + addon.name() + " lost native SLOT amounts or badge bounds");
             if (!addonQuantityHovered) {
+                screenshot.accept("status-addon-" + addon.name() + ".png");
                 moveMouse.accept(row.cell().centerX(), row.cell().centerY());
                 addonQuantityHovered = true;
                 frames.reset();
@@ -1120,7 +1122,7 @@ final class StandardAe2Scenario {
                 throw new IllegalStateException("Addon " + addon.name() + " lost amount legend");
             var labels = List.of(appeng.core.localization.GuiText.FromStorage,
                     appeng.core.localization.GuiText.Crafting, appeng.core.localization.GuiText.Scheduled);
-            long[] raw = {4, 10, 200};
+            long[] raw = {addon.stored(), addon.active(), addon.pending()};
             for (int category = 0; category < raw.length; category++) {
                 String label = ((net.minecraft.network.chat.contents.TranslatableContents)
                         labels.get(category).text("").getContents()).getKey();
@@ -1129,7 +1131,7 @@ final class StandardAe2Scenario {
                         && value.arguments().contains(full)))
                     throw new IllegalStateException("Addon " + addon.name() + " lost native FULL tooltip " + label);
             }
-            screenshot.accept("status-addon-" + addon.name() + ".png");
+            screenshot.accept("status-addon-" + addon.name() + "-tooltip.png");
             moveMouse.accept(0, 0);
             if (++addonQuantityCase < addonQuantityCases.size()) {
                 addonQuantityHovered = false;

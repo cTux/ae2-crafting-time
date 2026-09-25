@@ -36,9 +36,11 @@ function Assert-UiSmokeStatusAddonKeys {
         throw "Status addon-key inventory does not match $Target"
     }
     foreach ($name in $expected) {
-        foreach ($extension in @('png', 'json')) {
-            if (!(Test-Path -LiteralPath (Join-Path $Evidence "status-addon-$name.$extension") -PathType Leaf)) {
-                throw "Status addon-key capture is missing: $name.$extension"
+        foreach ($capture in @("status-addon-$name", "status-addon-$name-tooltip")) {
+            foreach ($extension in @('png', 'json')) {
+                if (!(Test-Path -LiteralPath (Join-Path $Evidence "$capture.$extension") -PathType Leaf)) {
+                    throw "Status addon-key capture is missing: $capture.$extension"
+                }
             }
         }
     }
