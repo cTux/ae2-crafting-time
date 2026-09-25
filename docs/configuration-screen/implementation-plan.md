@@ -24,11 +24,12 @@ the shipped feature inventory in `docs/feature-coverage.md`.
 
 ## 2. Split storage and migrate existing files
 
-- Register client/server TOML specs on Forge and both NeoForge targets.
-- Extend Fabric's existing parser with typed client and world-server files plus
-  atomic save.
-- Migrate known values from `ae2craftingtime-common.toml` only when the new owner
-  key is absent; keep the legacy file untouched.
+- Use shared typed client/world-server parsers and atomic writers on every loader.
+- Migrate known values from `ae2craftingtime-common.toml` when the new owner
+  file is absent; keep the legacy file untouched. Existing owner files take
+  precedence, with missing keys using defaults.
+- Follow the focused [startup-generation plan](server-config-startup/implementation-plan.md)
+  for generating the missing world server file without an edit (#535).
 - Test missing, valid, malformed, partial, interrupted-save, and repeated-migration
   cases on all loader implementations.
 

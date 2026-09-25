@@ -30,21 +30,20 @@ values. Storage sections follow the Client/Server tabs and their logical groups.
 
 | Owner | Forge/NeoForge | Fabric |
 | --- | --- | --- |
-| Client | loader client config, `ae2craftingtime-client.toml` | `config/ae2craftingtime-client.toml` through the existing bounded parser/writer |
-| Server | loader server config, `ae2craftingtime-server.toml` in world server config | world-scoped `ae2craftingtime-server.toml` through the same typed parser/writer |
+| Client | `config/ae2craftingtime-client.toml` through the shared typed parser/writer | same shared backend |
+| Server | `<world>/serverconfig/ae2craftingtime-server.toml` through the shared typed parser/writer | same shared backend |
 
-On first load after upgrade, read the existing
-`ae2craftingtime-common.toml`. Copy only known keys that are absent from their new
-owner file, validate them, then mark migration complete by the presence of the
-new files. Do not delete or rewrite the legacy file. `showInTree` maps to the
+When the new owner file is absent, read known keys from the existing
+`ae2craftingtime-common.toml` and validate them. Existing owner files take
+precedence; missing keys in them use defaults. Do not delete or rewrite the legacy file. `showInTree` maps to the
 client tree toggle; the other current keys map to `ServerConfig`.
 `notifyOnDelayed` keeps its server-wide meaning, as does `showChatMessages`.
 Missing new keys default on. Existing values are never replaced by new switches.
 
-Client writes use a temporary sibling file followed by replace so an interrupted
-save cannot truncate the last valid config. Server writes remain on the logical
-server and use loader save/config events where available. Fabric uses the same
-replace rule and keeps parsing/writing code in its version module.
+Both writers use a temporary sibling followed by atomic replacement. Server
+writes remain on the logical server. Parsing and writing live in Minecraft-free
+shared code on every loader. The focused [startup-generation scope](server-config-startup/spec.md)
+adds creation of a missing world file without an in-game edit.
 
 ## Screen structure
 
