@@ -16,6 +16,11 @@ The old file stays in place. Existing world files aren't rewritten on startup.
 
 Client settings live in `config/ae2craftingtime-client.toml`.
 
+In Client → Appearance, **Text shadow** controls shadows on text drawn by AE2
+Crafting Time. It's on by default. Turn it off for flatter text; AE2's own text
+keeps its original shadow setting. You can also set `textShadow = false` in the
+client file.
+
 - `enabled` turns profiling and server-owned stats on or off.
 - `showInTree` controls Crafting Tree badges, tooltips, spacing, and clicks on
   supported pre-26 targets.

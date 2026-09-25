@@ -105,6 +105,7 @@
   "config.ae2craftingtime.group.displays": "Відображення",
   "config.ae2craftingtime.group.warnings": "Попередження",
   "config.ae2craftingtime.group.appearance": "Вигляд",
+  "config.ae2craftingtime.textShadow": "Тінь тексту",
   "config.ae2craftingtime.group.controls": "Керування",
   "config.ae2craftingtime.group.general": "Загальні",
   "config.ae2craftingtime.group.diagnostics": "Діагностика",

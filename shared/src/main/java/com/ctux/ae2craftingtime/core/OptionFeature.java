@@ -25,6 +25,7 @@ public enum OptionFeature {
     NO_TARGET_STATUS(Owner.CLIENT, Group.WARNINGS, "noTargetStatus"),
     INPUT_BLOCKED_STATUS(Owner.CLIENT, Group.WARNINGS, "inputBlockedStatus"),
     RECEIVE_CRAFT_WARNINGS(Owner.CLIENT, Group.WARNINGS, "receiveCraftWarnings"),
+    TEXT_SHADOW(Owner.CLIENT, Group.APPEARANCE, "textShadow"),
     PLAN_SORT_CONTROL(Owner.CLIENT, Group.CONTROLS, "planSortControl"),
     STATUS_SORT_CONTROL(Owner.CLIENT, Group.CONTROLS, "statusSortControl"),
     CPU_SORT_CONTROL(Owner.CLIENT, Group.CONTROLS, "cpuSortControl"),

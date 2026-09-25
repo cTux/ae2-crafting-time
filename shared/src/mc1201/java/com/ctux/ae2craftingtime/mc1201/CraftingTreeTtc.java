@@ -48,7 +48,7 @@ public final class CraftingTreeTtc {
         var pose = guiGraphics.pose();
         pose.pushPose();
         pose.scale(TEXT_SCALE, TEXT_SCALE, TEXT_SCALE);
-        guiGraphics.drawString(font, text, textX, textY, color, true);
+        guiGraphics.drawString(font, text, textX, textY, color, ClientOptionsRuntime.textShadow());
         pose.popPose();
     }
 

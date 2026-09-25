@@ -6,6 +6,7 @@ import appeng.menu.me.crafting.CraftingStatusMenu;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.CpuTtcLayout;
 import com.ctux.ae2craftingtime.mc1201.CpuTtcClient;
+import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
 import com.ctux.ae2craftingtime.mc1201.TtcBadge;
 import com.ctux.ae2craftingtime.mc1201.TtcText;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -49,7 +50,7 @@ public abstract class CPUSelectionListMixin {
         pose.pushPose();
         pose.translate(right - textWidth - 2, top + 1, 0);
         pose.scale(scale, scale, 1);
-        guiGraphics.drawString(font, text, 0, 0, 0xE0E0E0, true);
+        guiGraphics.drawString(font, text, 0, 0, 0xE0E0E0, ClientOptionsRuntime.textShadow());
         pose.popPose();
         return ae2craftingtime$fitName(name, font, layout.availableNameWidth());
     }
