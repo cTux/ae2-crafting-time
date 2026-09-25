@@ -45,7 +45,7 @@
       "screenshots": ["stored-variant-0.png", "stored-variant-1.png", "stored-variant-2.png", "stored-variant-3.png", "stored-variant-4.png", "stored-variant-5.png", "stored-variant-6.png", "stored-variant-7.png", "stored-variant-sort-0.png", "stored-variant-sort-1.png", "stored-variant-sort-2.png"]
     },
     "standard-status-controls": {
-      "checks": ["submitted", "status", "quantity-cases", "amount-scales", "amount-options", "server-profiling-off", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout"],
+      "checks": ["submitted", "status", "quantity-cases", "addon-key-status", "amount-scales", "amount-options", "server-profiling-off", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout"],
       "screenshots": ["status-default.png", "status-amounts-0.png", "status-amounts-1.png", "status-amounts-2.png", "status-amounts-3.png", "status-amounts-4.png", "status-amounts-5.png", "status-amounts-6.png", "status-amounts-7.png", "status-amounts-8.png", "status-amounts-9.png", "status-scale-default-1.png", "status-scale-default-2.png", "status-scale-default-auto.png", "status-scale-wide-1.png", "status-scale-wide-2.png", "status-scale-wide-auto.png", "status-options-0.png", "status-options-1.png", "status-options-2.png", "status-options-3.png", "status-options-4.png", "status-options-5.png", "status-options-6.png", "status-server-profiling-off.png", "status-sort-1.png", "status-sort-2.png", "status-sort-3.png", "status-tooltip.png", "status-details.png", "status-reset.png", "status-progress.png"]
     },
     "waiting-status": {

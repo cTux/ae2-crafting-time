@@ -169,7 +169,7 @@ launch alone does not establish compatibility with other mixins.
 | Q6 | Option/config/session and independent-switch tests, fallback/foreign-component tests, options/relaunch and compatible-graph smoke |
 | Q7 | Passing current-head CI, all builds, exact-revision four-target evidence |
 
-Record tested commit, artifact identity, AE2/loader versions, scenario result,
-screenshots and visual review in a research follow-up. Update the canonical
-scope status with evidence. Do not close #438 or mark the scope finished while
-its prototype, readability, or tooltip checks remain unverified.
+The tested commits, artifact identity, AE2/loader versions, scenario results,
+screenshots and visual review are recorded in the
+[research follow-up](research.md#implementation-verification-2026-09-25).
+Keep #438 open until the implementation PR is merged and closure is verified.

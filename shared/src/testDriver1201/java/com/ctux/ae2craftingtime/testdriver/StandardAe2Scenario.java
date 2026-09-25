@@ -40,7 +40,7 @@ final class StandardAe2Scenario {
                     "exact-clear", "restored-near", "gold-normal", "variant-tooltip", "unchanged-plan",
                     "variant-sorts", "variant-layout", "exact-only", "other-item", "ordinary-clear",
                     "fluid-clear", "coexistence", "notification-lifecycle", "watcher-cleanup")),
-            Map.entry("standard-status-controls", List.of("submitted", "status", "quantity-cases", "amount-scales", "amount-options", "server-profiling-off", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout")),
+            Map.entry("standard-status-controls", List.of("submitted", "status", "quantity-cases", "addon-key-status", "amount-scales", "amount-options", "server-profiling-off", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout")),
             Map.entry("waiting-status", List.of("submitted", "waiting", "first-dispatch", "recovered", "layout")),
             Map.entry("running-status", List.of("submitted", "running", "progress", "header", "layout")),
             Map.entry("cpu-list-total-ttc", CpuListTtcScenario.CHECKS),
@@ -50,7 +50,7 @@ final class StandardAe2Scenario {
             Map.entry("craft-lifecycle", List.of("plan", "submitted", "status", "profile-sample", "total-cleared", "completed", "output",
                     "plan-no-data", "plan-partial", "accuracy-full", "accuracy-partial", "details-chat")));
     private enum Stage { PREPARE, TERMINAL, AMOUNT, PLAN_SORT, PLAN_TOOLTIP, PLAN_DETAILS, PLAN_RESET,
-        SUBMIT, OPEN_STATUS, ACTIVE, STATUS_AMOUNTS, STATUS_SCALES, STATUS_OPTIONS, STATUS_SORT, STATUS_TOOLTIP, STATUS_DETAILS, STATUS_RESET,
+        SUBMIT, OPEN_STATUS, ACTIVE, STATUS_AMOUNTS, STATUS_ADDON_AMOUNTS, STATUS_SCALES, STATUS_OPTIONS, STATUS_SORT, STATUS_TOOLTIP, STATUS_DETAILS, STATUS_RESET,
         RESTORE, DELAYED, OVERLAP_POSITION, OVERLAP_HIGHLIGHT, OVERLAP_RELEASE, OVERLAP_RECOVERY, OVERLAP_FINISH,
         OVERLAP_REOPEN,
         PUMP, FINISHED, REOPEN, EMPTY, WORLD_POSITION, WORLD_HIGHLIGHT, WORLD_RELEASE, WORLD_FINISHED,
@@ -64,6 +64,7 @@ final class StandardAe2Scenario {
     private final java.nio.file.Path output;
     private final List<String> resultScreenshots;
     private final AmountContinuation amountContinuation;
+    private final List<StandardCraftFixture.AddonQuantityCase> addonQuantityCases;
     StandardAe2Scenario(String leaf, String world, java.nio.file.Path output, boolean connectedDedicated) {
         this(leaf, world, output, connectedDedicated, new java.util.ArrayList<>());
     }
@@ -74,6 +75,7 @@ final class StandardAe2Scenario {
         this.world = world;
         this.output = output;
         this.resultScreenshots = resultScreenshots;
+        addonQuantityCases = leaf.equals("standard-status-controls") ? StandardCraftFixture.addonQuantityCases() : List.of();
         var continuationPath = leaf.equals("standard-status-controls")
                 && Boolean.getBoolean("ae2craftingtime.test.statusRelaunch")
                 ? System.getProperty("ae2craftingtime.test.continuation", "") : "";
@@ -100,6 +102,8 @@ final class StandardAe2Scenario {
     private int sort;
     private int quantityCase;
     private boolean quantityHovered;
+    private int addonQuantityCase;
+    private boolean addonQuantityHovered;
     private appeng.menu.me.crafting.CraftingStatus realStatus;
     private int amountOptionCase;
     private boolean amountOptionOpen;
@@ -1072,9 +1076,73 @@ final class StandardAe2Scenario {
                 return false;
             }
             ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
-                    .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.quantityStatus(8));
+                    .ae2craftingtime_test_driver$setStatus(addonQuantityCases.isEmpty()
+                            ? StandardCraftFixture.quantityStatus(8)
+                            : StandardCraftFixture.addonQuantityStatus(addonQuantityCases.get(0)));
             originalGuiScale = minecraft.options.guiScale().get();
             mark(checks, "quantity-cases", true);
+            if (addonQuantityCases.isEmpty()) {
+                writeAddonKeyEvidence();
+                mark(checks, "addon-key-status", true);
+                phase = Stage.STATUS_SCALES;
+            } else phase = Stage.STATUS_ADDON_AMOUNTS;
+            frames.reset();
+        } else if (phase == Stage.STATUS_ADDON_AMOUNTS) {
+            if (!(minecraft.screen instanceof CraftingStatusScreen)) return false;
+            var addon = addonQuantityCases.get(addonQuantityCase);
+            var expected = StandardCraftFixture.addonQuantityStatus(addon).getEntries().get(0);
+            var row = snapshot.rows().stream().filter(value -> value.outputId().equals(expected.getWhat().getId().toString())
+                    && value.storedAmount() == 4 && value.activeAmount() == 10 && value.pendingAmount() == 200)
+                    .findFirst().orElse(null);
+            if (row == null) {
+                ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
+                        .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.addonQuantityStatus(addon));
+                frames.reset();
+                return false;
+            }
+            var summary = row.description().stream().filter(value -> value.key().equals(
+                    "text.ae2craftingtime.status.amounts")).findFirst().orElse(null);
+            var key = expected.getWhat();
+            var slot = java.util.List.of(4L, 10L, 200L).stream()
+                    .map(value -> key.formatAmount(value, appeng.api.stacks.AmountFormat.SLOT)).toList();
+            if (summary == null || !summary.arguments().equals(List.of(String.join("/", slot)))
+                    || summary.bold() || !LayoutValidator.validateBadges(snapshot).isEmpty())
+                throw new IllegalStateException("Addon " + addon.name() + " lost native SLOT amounts or badge bounds");
+            if (!addonQuantityHovered) {
+                moveMouse.accept(row.cell().centerX(), row.cell().centerY());
+                addonQuantityHovered = true;
+                frames.reset();
+                return false;
+            }
+            if (snapshot.tooltip().isEmpty()) return false;
+            if (snapshot.tooltip().stream().noneMatch(value -> value.key().equals(
+                    "text.ae2craftingtime.status.amounts_legend")))
+                throw new IllegalStateException("Addon " + addon.name() + " lost amount legend");
+            var labels = List.of(appeng.core.localization.GuiText.FromStorage,
+                    appeng.core.localization.GuiText.Crafting, appeng.core.localization.GuiText.Scheduled);
+            long[] raw = {4, 10, 200};
+            for (int category = 0; category < raw.length; category++) {
+                String label = ((net.minecraft.network.chat.contents.TranslatableContents)
+                        labels.get(category).text("").getContents()).getKey();
+                String full = key.formatAmount(raw[category], appeng.api.stacks.AmountFormat.FULL);
+                if (snapshot.tooltip().stream().noneMatch(value -> value.key().equals(label)
+                        && value.arguments().contains(full)))
+                    throw new IllegalStateException("Addon " + addon.name() + " lost native FULL tooltip " + label);
+            }
+            screenshot.accept("status-addon-" + addon.name() + ".png");
+            moveMouse.accept(0, 0);
+            if (++addonQuantityCase < addonQuantityCases.size()) {
+                addonQuantityHovered = false;
+                ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
+                        .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.addonQuantityStatus(
+                                addonQuantityCases.get(addonQuantityCase)));
+                frames.reset();
+                return false;
+            }
+            writeAddonKeyEvidence();
+            mark(checks, "addon-key-status", true);
+            ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
+                    .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.quantityStatus(8));
             phase = Stage.STATUS_SCALES;
             frames.reset();
         } else if (phase == Stage.STATUS_SCALES) {
@@ -1625,6 +1693,21 @@ final class StandardAe2Scenario {
                     .resolve("config/ae2craftingtime-client.toml")));
         } catch (java.io.IOException error) {
             throw new IllegalStateException("Cannot hash saved client options", error);
+        }
+    }
+
+    private void writeAddonKeyEvidence() {
+        var result = new com.google.gson.JsonObject();
+        result.addProperty("schema", 1);
+        result.addProperty("appbotLoaded", DriverPlatform.isModLoaded("appbot"));
+        result.addProperty("appmekLoaded", DriverPlatform.isModLoaded("appmek"));
+        var captured = new com.google.gson.JsonArray();
+        for (var addon : addonQuantityCases) captured.add(addon.name());
+        result.add("captured", captured);
+        try {
+            java.nio.file.Files.writeString(output.resolve("status-addon-keys.json"), result.toString());
+        } catch (java.io.IOException error) {
+            throw new IllegalStateException("Cannot retain addon status key evidence", error);
         }
     }
 

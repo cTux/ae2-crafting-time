@@ -92,6 +92,23 @@ try {
         }
     }
     Assert-UiSmokeStatusRelaunchCaptures -Evidence $temp
+    foreach ($target in @('1.20.1-forge','1.20.1-fabric','1.21.1-neoforge','26.1.2-neoforge')) {
+        $names = @()
+        switch ($target) {
+            '1.20.1-forge' { $names = @('mana','chemical') }
+            '1.20.1-fabric' { $names = @('mana') }
+            '1.21.1-neoforge' { $names = @('chemical') }
+        }
+        @{schema=1;appbotLoaded=('mana' -in $names);appmekLoaded=('chemical' -in $names);
+            captured=@($names)} | ConvertTo-Json -Depth 3 |
+            Set-Content -LiteralPath (Join-Path $temp 'status-addon-keys.json')
+        foreach ($name in @('mana','chemical')) {
+            foreach ($extension in @('png','json')) {
+                [IO.File]::WriteAllText((Join-Path $temp "status-addon-$name.$extension"), 'fixture')
+            }
+        }
+        Assert-UiSmokeStatusAddonKeys -Evidence $temp -Target $target
+    }
     foreach ($capturePath in $capturePaths) {
         Remove-Item -LiteralPath $capturePath
         $refused = $false

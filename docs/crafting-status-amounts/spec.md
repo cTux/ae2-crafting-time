@@ -1,6 +1,6 @@
 # Compact crafting-status amounts
 
-Status: in-progress
+Status: implemented in PR #524; addon-key visual verification remains open
 
 Scope: One quantity line in the native AE2 crafting-status cell.
 
@@ -9,13 +9,11 @@ Issue: [#438](https://github.com/cTux/ae2-crafting-time/issues/438)
 Planning: [Reviewed implementation plan](implementation-plan.md),
 [technical design](technical-design.md), and [research](research.md).
 
-Implementation: [Issue #438](https://github.com/cTux/ae2-crafting-time/issues/438); code and
-test-driver checkpoints are being added. CI, four-target client evidence, font
-readability, option relaunch, and visual review remain open.
-
-The planning review covers consistency and source feasibility. No prototype or
-Minecraft readability test has run for this scope. The issue's runtime research
-gates remain open; merging these documents does not ship or finish the feature.
+Implementation and verification: [PR #524](https://github.com/cTux/ae2-crafting-time/pull/524).
+Four-target native item/fluid and connected-client evidence, font and tooltip
+review, option relaunch, builds, and CI are recorded in the
+[research follow-up](research.md#implementation-verification-2026-09-25).
+The planned addon-key status-row visual check remains open.
 
 ## Behavior
 

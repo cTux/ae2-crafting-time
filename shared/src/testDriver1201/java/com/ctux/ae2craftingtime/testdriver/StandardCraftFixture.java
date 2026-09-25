@@ -25,6 +25,35 @@ import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 final class StandardCraftFixture {
     static final int QUANTITY_CASES = 10;
 
+    record AddonQuantityCase(String name, appeng.api.stacks.AEKey key) {}
+
+    static java.util.List<AddonQuantityCase> addonQuantityCases() {
+        var cases = new java.util.ArrayList<AddonQuantityCase>();
+        if (DriverPlatform.isModLoaded("appbot")) {
+            try {
+                cases.add(new AddonQuantityCase("mana", (appeng.api.stacks.AEKey)
+                        Class.forName("appbot.ae2.ManaKey").getField("KEY").get(null)));
+            } catch (ReflectiveOperationException | LinkageError error) {
+                throw new IllegalStateException("Installed Applied Botanics mana key is unavailable", error);
+            }
+        }
+        if (DriverPlatform.isModLoaded("appmek")) {
+            try {
+                var keys = (java.util.List<?>) Class.forName("com.ctux.ae2craftingtime.testdriver.AppliedMekanisticsFixture")
+                        .getDeclaredMethod("resourceKeys", String.class).invoke(null, "OXYGEN");
+                cases.add(new AddonQuantityCase("chemical", (appeng.api.stacks.AEKey) keys.get(0)));
+            } catch (ReflectiveOperationException | LinkageError error) {
+                throw new IllegalStateException("Installed Applied Mekanistics chemical key is unavailable", error);
+            }
+        }
+        return java.util.List.copyOf(cases);
+    }
+
+    static appeng.menu.me.crafting.CraftingStatus addonQuantityStatus(AddonQuantityCase addon) {
+        return new appeng.menu.me.crafting.CraftingStatus(true, 0, 0, 0,
+                java.util.List.of(new appeng.menu.me.crafting.CraftingStatusEntry(900010L, addon.key(), 4, 10, 200)));
+    }
+
     static appeng.menu.me.crafting.CraftingStatus quantityStatus(int index) {
         long[][] amounts = {{4, 10, 200}, {0, 10, 200}, {10, 0, 200}, {4, 10, 0},
                 {10, 0, 0}, {0, 10, 0}, {0, 0, 10}, {0, 0, 0},

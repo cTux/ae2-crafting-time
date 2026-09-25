@@ -19,6 +19,31 @@ function Assert-UiSmokeStatusRelaunchCaptures {
     }
 }
 
+function Assert-UiSmokeStatusAddonKeys {
+    param([string]$Evidence, [string]$Target)
+    $value = Get-Content -LiteralPath (Join-Path $Evidence 'status-addon-keys.json') -Raw | ConvertFrom-Json
+    $expected = @()
+    switch ($Target) {
+        '1.20.1-forge' { $expected = @('mana', 'chemical') }
+        '1.20.1-fabric' { $expected = @('mana') }
+        '1.21.1-neoforge' { $expected = @('chemical') }
+        '26.1.2-neoforge' { $expected = @() }
+        default { throw "Unknown status addon target: $Target" }
+    }
+    if ($value.schema -ne 1 -or $value.appbotLoaded -ne ('mana' -in $expected) -or
+            $value.appmekLoaded -ne ('chemical' -in $expected) -or
+            (Compare-Object @($value.captured) @($expected) -SyncWindow 0)) {
+        throw "Status addon-key inventory does not match $Target"
+    }
+    foreach ($name in $expected) {
+        foreach ($extension in @('png', 'json')) {
+            if (!(Test-Path -LiteralPath (Join-Path $Evidence "status-addon-$name.$extension") -PathType Leaf)) {
+                throw "Status addon-key capture is missing: $name.$extension"
+            }
+        }
+    }
+}
+
 function Get-UiSmokeJavaLaunchPhases {
     param(
         [Parameter(Mandatory)][string]$Scenario,

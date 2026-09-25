@@ -77,3 +77,53 @@ result. The specification's rule table is authoritative.
 
 See the [design](technical-design.md) and [implementation plan](implementation-plan.md)
 for the exact checks. Keep the research issue open after the planning merge.
+
+## Implementation verification (2026-09-25)
+
+PR [#524](https://github.com/cTux/ae2-crafting-time/pull/524) implements the scope.
+The four compatible-graph `standard-status-controls` runs below used production
+and status-driver code at `b71cde15567d97b321b0928fdbeaa96da845fc32`.
+Each passed with two distinct client processes and exit code 0. All 36 images
+per target were manually reviewed, including ten amount cases, default and
+wider-font scales 1/2/Auto, native full-value tooltips, warning colors, option
+combinations, and saved-off/relaunch-on states. Image hashes matched their
+sidecars. The automatic visual gate remains `REVIEW_REQUIRED` because these
+images have no comparison baselines; the manual review found no visual defect.
+
+| Target | Loader / AE2 / Java | Reviewed status archive |
+| --- | --- | --- |
+| 1.20.1 Forge | 47.4.23 / 15.4.10 / 17 | `build/ui-smoke/archives/20260924T145043363Z-cc8b457e` |
+| 1.20.1 Fabric | 0.19.5 / 15.1.0 / 17 | `build/ui-smoke/archives/20260924T145851986Z-b348fe06` |
+| 1.21.1 NeoForge | 21.1.251 / 19.2.17 / 21 | `build/ui-smoke/archives/20260924T150713151Z-9b91527f` |
+| 26.1.2 NeoForge | 26.1.2.109 / 26.1.10-beta / 25 | `build/ui-smoke/archives/20260924T151042986Z-db9736e5` |
+
+The later driver-only changes add the connected non-operator Options checkpoint,
+clear its screenshot cursor, repair a 26.1.2 stale-click assertion, and recover
+Forge test-client read interest. They do not change production or status-scenario
+rendering. At `35d4baedc80e62b17c5b6c155782af4fee804eaa`, four canonical
+`cpu-list-total-ttc` connected runs passed on sealed bundles (bundle fingerprint
+`0875F350D1D88C3386D59DDF744971C6137283155D1AB6AA73F051E57FCD94C2`):
+
+| Target | Bundle SHA-256 | Connected archive |
+| --- | --- | --- |
+| 1.20.1 Forge | `9C32DCF56DF4E4B4367248BA8130E134B9C1EA48A007187797DC360D98A743EC` | `build/ui-smoke/connected-438/forge-final-35d4baed` |
+| 1.20.1 Fabric | `2F9563B753185E7EE7B6D1A396869ED8D3E4DEEF9D690321BF990061D31493B5` | `build/ui-smoke/connected-438/fabric-final-35d4baed` |
+| 1.21.1 NeoForge | `B86296B213D2DFA59EC086183C882E90E21B205A055436E9E3AEB94412B7E712` | `build/ui-smoke/connected-438/neo121-final-35d4baed` |
+| 26.1.2 NeoForge | `6F35886DEDA83C8EF5BE87A863D434841C3270EA0BF0F0D0600C7B853E3E17A9` | `build/ui-smoke/connected-438/neo261-final-35d4baed` |
+
+Each connected run used two clean client phases, a real non-operator server
+snapshot, and the native Options controls. Its four reviewed screenshots show
+unobscured off/on labels and native/compact saved rows; all 16 image hashes
+match sidecars. `status-nonop-options.json` records `editable=false` and both
+saves, while `fixture-hashes.json` records an unchanged disposable server.
+
+Formatter, config, locale, fallback, and color tests passed, as did the four
+test-driver JAR builds, the Gradle test suite, and the all-version JAR build.
+At the tested implementation head, GitHub's `Gradle tests` and `Build all mod
+JARs` checks both passed. The status fixture captured native AE2 item and water
+fluid keys; it did not create an addon-key status row. The compatible graphs
+contain Applied Mekanistics chemical keys on Forge 1.20.1 and NeoForge 1.21.1,
+and Applied Botanics mana keys on Forge/Fabric 1.20.1. Those installed addons
+do not establish a status-row visual result. Production delegates all keys to
+AE2's `formatAmount(SLOT/FULL)` path, but the planned addon-key status-row
+visual check remains open.

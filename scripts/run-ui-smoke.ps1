@@ -576,6 +576,7 @@ try {
                 -ControlStatePath $controlStatePath -ResumeOnly:([bool]$resumeState) -FinalApproval:(-not [bool]$resumeState)
             if ($Scenario -eq 'standard-status-controls') {
                 Assert-UiSmokeStatusRelaunchCaptures -Evidence $evidence
+                Assert-UiSmokeStatusAddonKeys -Evidence $evidence -Target $Target
             }
         }
 
