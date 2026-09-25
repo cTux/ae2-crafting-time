@@ -105,7 +105,7 @@ public final class UiObservationStore {
     }
 
     public static void fill(GuiGraphics graphics, int x1, int y1, int x2, int y2, int color) {
-        if (active != null && color == 0xB0000000) {
+        if (active != null && color == com.ctux.ae2craftingtime.mc1201.TtcBadge.BACKGROUND) {
             active.badges.add(transformed(graphics, x1, y1, x2, y2));
         }
     }

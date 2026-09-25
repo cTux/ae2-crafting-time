@@ -192,6 +192,20 @@ state under the production lifetime rules. Server mutations use the existing
 revision/sequence guards. Review icon appearance separately from semantic
 assertions; missing evidence fails and unreviewed images remain REVIEW_REQUIRED.
 
+## Badge background standard leaf (#532)
+
+Reuse `StandardAe2Scenario` and its existing standard fixture. At stable Plan
+and Status frames, pause the usual flow to navigate native Client → Appearance
+widgets. Set a distinctive badge RGB and opacity through the actual input boxes,
+save, capture On, save Off, capture Off, then save On and capture restoration.
+The same status rows must survive each client-only change. Keep the Plan's
+missing-input tint through all three captures, then supply its cobblestone and
+replan through the native menu before Start. Use the existing
+frame wait and `DriverScreenshots` sidecar path; add the six distinct Plan/Status
+Off/On screenshots to `ui-smoke-groups.json`. Keep observation checks for text
+and layout, and leave actual pixel judgment to manual review. The leaf ends on
+the native Status screen and leaves client settings restored On.
+
 ## Single-world fixtures and transitions
 
 The [four-client qualification](../automated-ui-testing/prepared-clients-2026-09-08.md)
@@ -928,3 +942,18 @@ not a new launcher. Retain unique screenshots for blocked, tooltip, recovered,
 alternative and negative/lifecycle checkpoints with matching authoritative
 server facts. Existing source markers and disposable-copy/reset rules apply;
 restore original channel mode even on failure and report failed cleanup.
+
+## Badge background focused relaunch (#532)
+
+Keep the suite's `badge-background` case as one launch. For the direct focused
+case, reuse the status-option continuation seam: after the existing Plan and
+Status captures, save Off, write an atomic continuation carrying campaign, world,
+client config hash, completed checks and screenshot names, and stop Java phase 1.
+The host checks the persisted config hash and distinct Java identities before
+accepting phase 2. Phase 2 reads the same continuation, verifies runtime Off and
+the native Appearance toggle, then drives Cancel, Reset Appearance, Reset all,
+and final Done through the existing Options button helper. Capture the draft
+reset states, then reopen Appearance after Done to capture the saved On state;
+validate the final screenshot and
+continuation set in the existing host evidence gate. Keep process provenance in
+`relaunch-evidence.json`; no new runner or fixture format is introduced.

@@ -6,7 +6,7 @@ param(
     [string]$CasesBase64,
     [switch]$Latest,
     [switch]$Interactive,
-    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|stored-variant-plan|delayed-resource-icons|appmek-resource-icons|standard-plan-controls|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-channel-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
+    [ValidatePattern("^(suite|standard-ae2|provider-dispatch-statuses|recurrent-plan|stored-variant-plan|delayed-resource-icons|appmek-resource-icons|standard-plan-controls|badge-background|standard-status-controls|waiting-status|running-status|delayed-status|craft-lifecycle|cpu-list-total-ttc|craft-plan|no-space-status|no-provider-status|no-power-status|no-channel-status|no-target-status|input-blocked-status|locked-status|crafting-tree-screen|merequester-screen|crafting-tree-read-recovery|merequester-read-recovery|ae2networkanalyser-screen|aeinfinitybooster-terminal|ae2importexportcard-terminal|ae2(?:wcwt|wtlib)-terminal|[a-z0-9]+(?:-[a-z0-9]+)*-cpu)$")][string]$Scenario = "craft-plan",
     [string[]]$ProjectId,
     [string]$ArchiveRoot,
     [string]$ReportDirectory,
@@ -337,6 +337,8 @@ try {
     try {
         $continuationPath = if ($Scenario -eq 'standard-status-controls') {
             Join-Path $evidence 'status-amounts-continuation.json'
+        } elseif ($Scenario -eq 'badge-background') {
+            Join-Path $evidence 'badge-background-continuation.json'
         } elseif ($Scenario -eq 'suite') {
             Join-Path $evidence 'cpu-list-total-ttc/cpu-list-continuation.json'
         } else { Join-Path $evidence 'cpu-list-continuation.json' }
@@ -532,7 +534,7 @@ try {
             }
             if ($phase -eq 1 -and (Test-Path -LiteralPath $continuationPath -PathType Leaf)) {
                 if (!$PreparedLaunch) { throw 'Runner-owned relaunch requires a prepared native client' }
-                if ($Scenario -eq 'standard-status-controls') {
+                if ($Scenario -in @('standard-status-controls', 'badge-background')) {
                     Assert-UiSmokeStatusContinuation -Path $continuationPath -World $world -CampaignId $campaignId `
                         -ConfigPath (Join-Path $runtime 'config/ae2craftingtime-client.toml')
                 }
@@ -555,7 +557,7 @@ try {
             return
         }
         Assert-UiSmokeJavaPhaseIdentities -Processes @($processes) -ExpectedPhases $plannedPhases `
-            -FinalApproval:($Scenario -in @('cpu-list-total-ttc', 'standard-status-controls') -and !$resumeState)
+            -FinalApproval:($Scenario -in @('cpu-list-total-ttc', 'standard-status-controls', 'badge-background') -and !$resumeState)
         if ($phase -eq 2) {
             if (!$resumeState -and ($processes.Count -ne 2 -or $processes[0].pid -eq $processes[1].pid -or
                     $processes[0].startedAt -eq $processes[1].startedAt)) {
@@ -577,6 +579,9 @@ try {
             if ($Scenario -eq 'standard-status-controls') {
                 Assert-UiSmokeStatusRelaunchCaptures -Evidence $evidence
                 Assert-UiSmokeStatusAddonKeys -Evidence $evidence -Target $Target
+            }
+            if ($Scenario -eq 'badge-background') {
+                Assert-UiSmokeBadgeRelaunchCaptures -Evidence $evidence
             }
         }
 

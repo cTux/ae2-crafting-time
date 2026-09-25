@@ -21,6 +21,13 @@ Crafting Time. It's on by default. Turn it off for flatter text; AE2's own text
 keeps its original shadow setting. You can also set `textShadow = false` in the
 client file.
 
+**Badge background** in the same Client → Appearance section is on by default.
+Turn it off to hide the rounded backgrounds behind AE2 Crafting Time's badges
+while keeping their text visible. It doesn't hide AE2's own window, row, or
+tooltip backgrounds. Your badge color and opacity stay saved, so turning it
+back on restores them. You can also set `badgeBackground = false` in the client
+file.
+
 - `enabled` turns profiling and server-owned stats on or off.
 - `showInTree` controls Crafting Tree badges, tooltips, spacing, and clicks on
   supported pre-26 targets.

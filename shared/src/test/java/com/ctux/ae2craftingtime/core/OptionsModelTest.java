@@ -19,10 +19,12 @@ class OptionsModelTest {
         assertEquals(2, config.statusSort());
         assertFalse(config.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
         assertTrue(config.features().enabled(OptionFeature.TEXT_SHADOW));
+        assertTrue(config.badgeBackground());
 
         config.features().setEnabled(OptionFeature.PLAN_ROWS, false);
         config.features().setEnabled(OptionFeature.COMPACT_STATUS_AMOUNTS, true);
         config.features().setEnabled(OptionFeature.TEXT_SHADOW, false);
+        config.features().setEnabled(OptionFeature.BADGE_BACKGROUND, false);
         config.setColor(ClientConfig.Color.FAST, 0);
         config.setBadgeOpacity(255);
         config.setPlanSort(0);
@@ -31,6 +33,7 @@ class OptionsModelTest {
         assertFalse(copy.features().enabled(OptionFeature.PLAN_ROWS));
         assertTrue(copy.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
         assertFalse(copy.features().enabled(OptionFeature.TEXT_SHADOW));
+        assertFalse(copy.badgeBackground());
         assertEquals(0, copy.color(ClientConfig.Color.FAST));
         assertEquals(255, copy.badgeOpacity());
         assertEquals(0, copy.planSort());
@@ -40,6 +43,7 @@ class OptionsModelTest {
         assertTrue(copy.features().enabled(OptionFeature.PLAN_ROWS));
         assertFalse(copy.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
         assertTrue(copy.features().enabled(OptionFeature.TEXT_SHADOW));
+        assertTrue(copy.badgeBackground());
         assertEquals(ClientConfig.Color.FAST.defaultRgb(), copy.color(ClientConfig.Color.FAST));
         assertEquals(176, copy.badgeOpacity());
         assertEquals(2, copy.planSort());
@@ -47,6 +51,7 @@ class OptionsModelTest {
         assertFalse(config.features().enabled(OptionFeature.PLAN_ROWS));
         assertTrue(config.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
         assertFalse(config.features().enabled(OptionFeature.TEXT_SHADOW));
+        assertFalse(config.badgeBackground());
     }
 
     @Test
@@ -62,19 +67,38 @@ class OptionsModelTest {
     }
 
     @Test
+    void badgeBackgroundIsIndependentOfAppearanceValues() {
+        var config = new ClientConfig();
+        config.setColor(ClientConfig.Color.BADGE, 0x123456);
+        config.features().setEnabled(OptionFeature.TEXT_SHADOW, false);
+        config.features().setEnabled(OptionFeature.TTC_COLORS, false);
+        for (int opacity : new int[] {0, 127, 255}) {
+            config.setBadgeOpacity(opacity);
+            config.features().setEnabled(OptionFeature.BADGE_BACKGROUND, false);
+            assertFalse(config.badgeBackground());
+            config.features().setEnabled(OptionFeature.BADGE_BACKGROUND, true);
+            assertTrue(config.badgeBackground());
+            assertEquals(0x123456, config.color(ClientConfig.Color.BADGE));
+            assertEquals(opacity, config.badgeOpacity());
+            assertFalse(config.features().enabled(OptionFeature.TEXT_SHADOW));
+            assertFalse(config.features().enabled(OptionFeature.TTC_COLORS));
+        }
+    }
+
+    @Test
     void appearanceRowsMapFeaturesColorsAndOpacityAcrossPages() {
-        int featureRows = 1;
+        int featureRows = 2;
         int totalRows = ClientConfig.appearanceRowCount(featureRows);
         assertEquals(featureRows + ClientConfig.Color.values().length + 1, totalRows);
         assertEquals(2, ClientConfig.appearanceRowsPerPage(145));
         assertEquals(3, ClientConfig.appearanceRowsPerPage(229));
 
-        // At the minimum two rows per page, page one has the toggle and first color.
+        // At the minimum two rows per page, page one contains both toggles.
         assertEquals(0, ClientConfig.appearanceInputIndex(0, featureRows, 0));
         assertEquals(0, ClientConfig.appearanceInputIndex(1, featureRows, 0));
         int secondPage = ClientConfig.appearanceRowsPerPage(145);
-        assertEquals(1, ClientConfig.appearanceInputIndex(secondPage, featureRows, 0));
-        assertEquals(2, ClientConfig.appearanceInputIndex(secondPage, featureRows, 1));
+        assertEquals(0, ClientConfig.appearanceInputIndex(secondPage, featureRows, 0));
+        assertEquals(1, ClientConfig.appearanceInputIndex(secondPage, featureRows, 1));
         assertEquals(ClientConfig.Color.values().length,
                 ClientConfig.appearanceInputIndex(totalRows - 1, featureRows, 0));
     }

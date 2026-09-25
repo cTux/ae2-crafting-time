@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "groups": {
-    "standard-ae2": ["standard-plan-controls", "recurrent-plan", "stored-variant-plan", "standard-status-controls", "waiting-status", "running-status", "delayed-status", "craft-lifecycle", "cpu-list-total-ttc"],
+    "standard-ae2": ["standard-plan-controls", "badge-background", "recurrent-plan", "stored-variant-plan", "standard-status-controls", "waiting-status", "running-status", "delayed-status", "craft-lifecycle", "cpu-list-total-ttc"],
     "provider-dispatch-statuses": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"]
   },
   "focusedCases": {
@@ -33,6 +33,10 @@
     "standard-plan-controls": {
       "checks": ["plan", "plan-sort", "missing-first", "plan-tooltip", "plan-details", "plan-reset", "total-ttc", "layout", "item-resolution"],
       "screenshots": ["plan-default.png", "plan-sort-1.png", "plan-sort-2.png", "plan-sort-3.png", "plan-tooltip.png", "plan-details.png", "plan-reset.png"]
+    },
+    "badge-background": {
+      "checks": ["plan-on", "plan-off", "plan-restored", "status-on", "status-off", "status-restored"],
+      "screenshots": ["plan-badge-on.png", "plan-badge-off.png", "plan-badge-restored.png", "status-badge-on.png", "status-badge-off.png", "status-badge-restored.png"]
     },
     "recurrent-plan": {
       "checks": ["recurrent-row", "red-warning-style", "recurrent-tooltip", "unchanged-quantity", "layout", "variant-clear"],

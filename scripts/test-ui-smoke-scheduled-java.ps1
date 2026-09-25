@@ -5,6 +5,8 @@ $full = @(Get-UiSmokeJavaLaunchPhases -Scenario cpu-list-total-ttc)
 if (Compare-Object @(1, 2) $full -SyncWindow 0) { throw 'Full relaunch does not require exactly two Java launches' }
 $status = @(Get-UiSmokeJavaLaunchPhases -Scenario standard-status-controls)
 if (Compare-Object @(1, 2) $status -SyncWindow 0) { throw 'Status amounts do not require exactly two Java launches' }
+$badge = @(Get-UiSmokeJavaLaunchPhases -Scenario badge-background)
+if (Compare-Object @(1, 2) $badge -SyncWindow 0) { throw 'Badge background does not require exactly two Java launches' }
 $suite = @(Get-UiSmokeJavaLaunchPhases -Scenario suite -ContainsCpuList)
 if (Compare-Object @(1, 2) $suite -SyncWindow 0) { throw 'A suite containing the CPU-list case does not require two Java launches' }
 $resume = @(Get-UiSmokeJavaLaunchPhases -Scenario cpu-list-total-ttc -ResumeOnly)
@@ -92,6 +94,23 @@ try {
         }
     }
     Assert-UiSmokeStatusRelaunchCaptures -Evidence $temp
+    $badgeCapturePaths = foreach ($capture in @('status-badge-off-small','status-badge-off-auto',
+            'badge-saved-off','badge-relaunch-off','badge-reset-group','badge-reset-all','badge-relaunch-restored')) {
+        foreach ($extension in @('png','json')) {
+            $capturePath = Join-Path $temp "$capture.$extension"
+            [IO.File]::WriteAllText($capturePath, 'fixture')
+            $capturePath
+        }
+    }
+    Assert-UiSmokeBadgeRelaunchCaptures -Evidence $temp
+    foreach ($capturePath in $badgeCapturePaths) {
+        Remove-Item -LiteralPath $capturePath
+        $refused = $false
+        try { Assert-UiSmokeBadgeRelaunchCaptures -Evidence $temp }
+        catch { $refused = $_.Exception.Message -like '*capture is missing*' }
+        if (!$refused) { throw "Missing badge capture accepted: $capturePath" }
+        [IO.File]::WriteAllText($capturePath, 'fixture')
+    }
     foreach ($target in @('1.20.1-forge','1.20.1-fabric','1.21.1-neoforge','26.1.2-neoforge')) {
         $names = @()
         switch ($target) {

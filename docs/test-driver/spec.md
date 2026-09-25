@@ -804,6 +804,29 @@ regression. Driver checks observe final frames and real AE2 state, never seed
 production diagnostics. Shared pure tests cover threshold, expiry, priority,
 CPU switching and lifecycle; packet tests cover the shared transport boundary.
 
+## Badge background checkpoints (#532)
+
+The `badge-background` standard AE2 leaf uses the native Client → Appearance
+screen to save a nondefault badge RGB and opacity, then saves Badge background
+Off and On. Capture the Crafting Plan and Crafting Status with the same live rows
+in both states, including a tinted Plan row and unchanged text. Supply the
+missing Plan input and replan before Start. Retain the saved client option and
+selected RGB/opacity through assertions at each capture. A screenshot requires
+human review to confirm the rounded fill disappears and returns while AE2's own
+background remains. Missing rows, labels, or native controls fail the leaf.
+
+When launched as a focused leaf, retain the six Plan/Status captures, then save
+Off and stop the first client with a continuation bound to the campaign, world,
+and saved client config hash. The runner must start a distinct second Java
+process, verify Off from the saved config and native Appearance control, and
+capture Off before restoring On. In that second process, exercise native Cancel,
+Reset Appearance, and Reset all controls; Cancel must leave the saved Off state
+and custom RGB/opacity intact, while both reset controls must show their default
+draft values. Restore On with Done, reopen Appearance, and capture the saved On
+control. Include small and Auto scale
+status captures while Off, with contained native GUI and unchanged text. The
+single-launch suite retains its existing six-check leaf without a continuation.
+
 ## Screenshot refresh checkpoints
 
 For issue #343, `craft-lifecycle` also captures an unprofiled two-row plan,
