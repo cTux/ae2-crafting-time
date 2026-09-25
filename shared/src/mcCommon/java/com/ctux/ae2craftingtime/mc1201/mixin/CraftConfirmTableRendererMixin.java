@@ -1,7 +1,11 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
 import appeng.client.gui.me.crafting.CraftConfirmTableRenderer;
+import appeng.api.stacks.AmountFormat;
+import appeng.core.localization.GuiText;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
+import com.ctux.ae2craftingtime.core.ClientConfig;
+import com.ctux.ae2craftingtime.core.CraftingRowState;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
@@ -14,7 +18,9 @@ import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import com.ctux.ae2craftingtime.mc1201.TtcColorContext;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -41,17 +47,37 @@ public abstract class CraftConfirmTableRendererMixin {
     @Inject(method = "getEntryDescription", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$appendVisibleTimeToCraft(CraftingPlanSummaryEntry entry,
             CallbackInfoReturnable<List<Component>> cir) {
-        var before = cir.getReturnValue().size();
-        if (ae2craftingtime$showStoredVariant(entry)) {
-            cir.getReturnValue().add(TtcText.storedVariant());
+        var lines = cir.getReturnValue();
+        var before = lines.size();
+        MutableComponent amounts = null;
+        if (ClientOptionsRuntime.current().features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS)) {
+            var key = entry.getWhat();
+            long stored = entry.getStoredAmount(), craft = entry.getCraftAmount();
+            amounts = ae2craftingtime$compactAmounts(lines, stored,
+                    stored > 0 ? key.formatAmount(stored, AmountFormat.SLOT) : null,
+                    craft, craft > 0 ? key.formatAmount(craft, AmountFormat.SLOT) : null);
         }
-        ae2craftingtime$appendTtc(entry, cir.getReturnValue());
-        IntegrationLog.growth("plan-row", before, cir.getReturnValue().size());
+        if (ae2craftingtime$showStoredVariant(entry)) {
+            lines.add(TtcText.storedVariant());
+        }
+        var beforeTtc = lines.size();
+        ae2craftingtime$appendTtc(entry, lines);
+        if (amounts != null) {
+            var status = lines.size() > beforeTtc ? lines.get(beforeTtc) : null;
+            var color = status == null ? TextColor.fromRgb(ClientOptionsRuntime.current().color(ClientConfig.Color.TOTAL))
+                    : status.getStyle().getColor();
+            if (color != null) amounts.setStyle(amounts.getStyle().withColor(color));
+        }
+        IntegrationLog.growth("plan-row", before, lines.size());
     }
 
     @Inject(method = "getEntryTooltip", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$appendTooltipTimeToCraft(CraftingPlanSummaryEntry entry,
             CallbackInfoReturnable<List<Component>> cir) {
+        if (ClientOptionsRuntime.current().features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS)
+                && (entry.getStoredAmount() > 0 || entry.getCraftAmount() > 0)) {
+            cir.getReturnValue().add(TtcText.planAmountsLegend());
+        }
         if (ae2craftingtime$showStoredVariant(entry)) {
             cir.getReturnValue().addAll(TtcText.storedVariantHints());
         }
@@ -74,6 +100,34 @@ public abstract class CraftConfirmTableRendererMixin {
                 cir.getReturnValue().add(TtcText.resetHint().withStyle(ChatFormatting.GRAY));
         }
         IntegrationLog.observe("ae2craftingtime", "plan-tooltip");
+    }
+
+    private static MutableComponent ae2craftingtime$compactAmounts(List<Component> lines, long stored,
+            String storedText, long craft, String craftText) {
+        var expected = List.of(GuiText.FromStorage.text(storedText == null ? "" : storedText),
+                GuiText.ToCraft.text(craftText == null ? "" : craftText));
+        var positions = new int[] {-1, -1};
+        for (int i = 0; i < lines.size(); i++) {
+            var line = lines.get(i);
+            if (!(line.getContents() instanceof TranslatableContents text)) continue;
+            for (int category = 0; category < expected.size(); category++) {
+                var nativeText = (TranslatableContents) expected.get(category).getContents();
+                if (!text.getKey().equals(nativeText.getKey())) continue;
+                long amount = category == 0 ? stored : craft;
+                if (amount <= 0 || positions[category] >= 0 || !line.equals(expected.get(category))) return null;
+                positions[category] = i;
+            }
+        }
+        if (stored > 0 && positions[0] < 0 || craft > 0 && positions[1] < 0) return null;
+        int first = Math.min(positions[0] < 0 ? lines.size() : positions[0],
+                positions[1] < 0 ? lines.size() : positions[1]);
+        if (first == lines.size()) return null;
+        for (int i = lines.size() - 1; i >= 0; i--) {
+            if (i == positions[0] || i == positions[1]) lines.remove(i);
+        }
+        var compact = TtcText.statusAmounts(CraftingRowState.compactPlanAmounts(stored, storedText, craft, craftText));
+        lines.add(first, compact);
+        return compact;
     }
 
     private static boolean ae2craftingtime$showStoredVariant(CraftingPlanSummaryEntry entry) {

@@ -45,6 +45,19 @@ class CraftingRowStateTest {
     }
 
     @ParameterizedTest
+    @CsvSource({"4,10,4/10", "4,0,A4", "0,10,C10", "0,0,''", "-1,10,C10"})
+    void compactPlanAmountsKeepAvailableAndToCraftSeparate(long available, long crafting, String expected) {
+        assertEquals(expected, CraftingRowState.compactPlanAmounts(available, Long.toString(available),
+                crafting, Long.toString(crafting)));
+    }
+
+    @org.junit.jupiter.api.Test
+    void compactPlanAmountsKeepNativeFormattedUnits() {
+        assertEquals("1.5 mB/9.22 E", CraftingRowState.compactPlanAmounts(1, "1.5 mB",
+                Long.MAX_VALUE, "9.22 E"));
+    }
+
+    @ParameterizedTest
     @CsvSource({"1,true,true", "1,false,false", "0,true,false", "-1,true,false",
             "9223372036854775807,true,true"})
     void missingProviderRequiresPendingWorkRegardlessOfActiveBatches(long pending, boolean missing,

@@ -1,6 +1,6 @@
 # Compact crafting-status amounts
 
-Status: implemented and verified in PR #524; awaiting merge
+Status: merged in PR #524. Crafting Plan follow-up: #525.
 
 Scope: One quantity line in the native AE2 crafting-status cell.
 

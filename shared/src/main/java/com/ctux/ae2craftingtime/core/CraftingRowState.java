@@ -35,6 +35,13 @@ public final class CraftingRowState {
         return (a ? availableText : "-") + "/" + (c ? craftingText : "-") + "/" + (s ? scheduledText : "-");
     }
 
+    public static String compactPlanAmounts(long available, String availableText, long crafting,
+            String craftingText) {
+        if (available > 0 && crafting > 0) return availableText + "/" + craftingText;
+        if (available > 0) return "A" + availableText;
+        return crafting > 0 ? "C" + craftingText : "";
+    }
+
     private CraftingRowState() {
     }
 
