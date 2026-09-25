@@ -120,10 +120,28 @@ saves, while `fixture-hashes.json` records an unchanged disposable server.
 Formatter, config, locale, fallback, and color tests passed, as did the four
 test-driver JAR builds, the Gradle test suite, and the all-version JAR build.
 At the tested implementation head, GitHub's `Gradle tests` and `Build all mod
-JARs` checks both passed. The status fixture captured native AE2 item and water
-fluid keys; it did not create an addon-key status row. The compatible graphs
-contain Applied Mekanistics chemical keys on Forge 1.20.1 and NeoForge 1.21.1,
-and Applied Botanics mana keys on Forge/Fabric 1.20.1. Those installed addons
-do not establish a status-row visual result. Production delegates all keys to
-AE2's `formatAmount(SLOT/FULL)` path, but the planned addon-key status-row
-visual check remains open.
+JARs` checks both passed.
+
+The addon-key status fixture at `5309f06774e7d9f9cf50f5c7d50545808bcaee6c`
+then passed `standard-status-controls` on all four compatible graphs. Each run
+used two client processes with exit code 0. The fixture records loaded addon
+keys, captures only real supported key rows, and asserts native AE2 SLOT text,
+FULL tooltip values, and badge bounds. No addon key is substituted with an item.
+
+| Target | Addon keys exercised | Reviewed campaign / external archive |
+| --- | --- | --- |
+| 1.20.1 Forge | Applied Botanics mana and Applied Mekanistics oxygen | `20260925T085927147Z` / `20260925T091053806Z-145c7b3e` |
+| 1.20.1 Fabric | Applied Botanics mana | `20260925T091111361Z` / `20260925T091924071Z-8c6e18d1` |
+| 1.21.1 NeoForge | Applied Mekanistics oxygen | `20260925T091936623Z` / `20260925T092851706Z-6554f5eb` |
+| 26.1.2 NeoForge | Neither addon installed; absence asserted | `20260925T092904184Z` / `20260925T093132343Z-eb0c9536` |
+
+All 152 images were manually inspected and their sidecar SHA-256 values matched.
+Original-resolution addon captures show unobscured native SLOT badges of
+`4/10/200` mana and `.004/.01/.2` oxygen, with FULL tooltip values of
+`4/10/200 pools` and `0.004/0.01/0.2 B`, respectively. The automatic visual gate remains
+`REVIEW_REQUIRED` because no baselines exist. In the four status runs, the
+`status-relaunch-off/on.png` cursor tooltip covers the compact option label;
+the independent connected Q6 Options captures above show both labels clearly,
+and the status config and saved-row checks verify relaunch persistence.
+The addon fixture changed only the status test driver and smoke validation;
+production and connected Q6 code paths stayed the same as the earlier runs.

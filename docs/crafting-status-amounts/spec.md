@@ -1,6 +1,6 @@
 # Compact crafting-status amounts
 
-Status: implemented in PR #524; addon-key visual verification remains open
+Status: implemented and verified in PR #524; awaiting merge
 
 Scope: One quantity line in the native AE2 crafting-status cell.
 
@@ -10,10 +10,10 @@ Planning: [Reviewed implementation plan](implementation-plan.md),
 [technical design](technical-design.md), and [research](research.md).
 
 Implementation and verification: [PR #524](https://github.com/cTux/ae2-crafting-time/pull/524).
-Four-target native item/fluid and connected-client evidence, font and tooltip
-review, option relaunch, builds, and CI are recorded in the
+Four-target native item/fluid and installed addon-key evidence, connected-client
+Options checks, font and tooltip review, option relaunch, builds, and CI are
+recorded in the
 [research follow-up](research.md#implementation-verification-2026-09-25).
-The planned addon-key status-row visual check remains open.
 
 ## Behavior
 

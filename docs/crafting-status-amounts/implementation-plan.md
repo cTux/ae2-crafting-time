@@ -162,7 +162,7 @@ launch alone does not establish compatibility with other mixins.
 
 | Criteria | Gate |
 | --- | --- |
-| Q1, Q2 | Exact formatter/composition tests plus four-target item/fluid captures |
+| Q1, Q2 | Exact formatter/composition tests plus four-target item/fluid and installed addon-key status captures |
 | Q3 | Component RGB assertions, config changes and reviewed warning/normal captures |
 | Q4 | Width boundary tests and reviewed scale/font screenshots on all targets |
 | Q5 | Full tooltip comparison, bilingual resource checks and interaction smoke |
