@@ -12,6 +12,12 @@ public final class ServerConfigFile {
         var config = new ServerConfig();
         if (Files.isRegularFile(path)) read(path, config, false);
         else if (Files.isRegularFile(legacyPath)) read(legacyPath, config, true);
+        if (Files.notExists(path)) {
+            try { save(path, config); }
+            catch (IOException error) {
+                LOGGER.log(System.Logger.Level.WARNING, "Could not create server options at " + path, error);
+            }
+        }
         return config;
     }
 
