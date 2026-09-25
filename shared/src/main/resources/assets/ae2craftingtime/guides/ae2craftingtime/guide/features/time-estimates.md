@@ -12,6 +12,10 @@ time covers the full **To Craft** amount, not one pattern operation. The total
 below the CPU details adds the known plan rows; if some rows have no data, it is
 only the known part of the job.
 
+The plan also shows available and to-craft amounts on one line: `4/10`. With
+only one amount, `A4` means available and `C10` means to craft. Missing and
+recurrent warnings stay separate. Hover for AE2's full labeled amounts.
+
 Crafting Status uses the same row estimates while a job runs. Its total follows
 the longest remaining dependency path, so parallel branches are not added as if
 they ran one after another. For example, two independent ten-second branches
@@ -22,9 +26,9 @@ can change the result.
 Crafting Status also puts available, crafting, and scheduled amounts on one line,
 in that order: `4/10/200`. A missing amount is `-`; when only one amount is
 present, its `A`, `C`, or `S` prefix identifies it. Hover for AE2's full labeled
-amounts. Turn **Compact crafting-status amounts** off under **Options > Client >
-Displays** to restore AE2's separate lines. This setting works independently of
-row TTC.
+amounts. Turn **Compact crafting amounts** off under **Options > Client >
+Displays** to restore AE2's separate lines in both windows. This setting works
+independently of row TTC.
 
 ![Crafting Plan with row and total TTC](images/crafting-plan-estimate.png)
 

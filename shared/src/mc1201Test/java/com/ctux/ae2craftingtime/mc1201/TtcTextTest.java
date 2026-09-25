@@ -24,12 +24,14 @@ import java.util.Optional;
 
 class TtcTextTest {
     @Test
-    void statusAmountKeysHaveMatchingBilingualSymbolsAndPlaceholders() throws IOException {
+    void craftingAmountKeysHaveMatchingBilingualSymbolsAndPlaceholders() throws IOException {
         var line = (TranslatableContents) TtcText.statusAmounts("4/10/200").getContents();
         var legend = (TranslatableContents) TtcText.statusAmountsLegend().getContents();
         assertEquals("text.ae2craftingtime.status.amounts", line.getKey());
         assertEquals(List.of("4/10/200"), List.of(line.getArgs()));
         assertEquals("text.ae2craftingtime.status.amounts_legend", legend.getKey());
+        assertEquals("text.ae2craftingtime.plan.amounts_legend",
+                ((TranslatableContents) TtcText.planAmountsLegend().getContents()).getKey());
         for (var locale : List.of("en_us", "uk_ua")) {
             try (var reader = new InputStreamReader(getClass().getResourceAsStream(
                     "/assets/ae2craftingtime/lang/" + locale + ".json"), StandardCharsets.UTF_8)) {
@@ -40,6 +42,9 @@ class TtcTextTest {
                 assertTrue(wording.contains(" / C:"));
                 assertTrue(wording.contains(" / S:"));
                 assertTrue(wording.contains("; -:"));
+                var planWording = translations.get("text.ae2craftingtime.plan.amounts_legend").getAsString();
+                assertTrue(planWording.startsWith("A:"));
+                assertTrue(planWording.contains(" / C:"));
                 assertTrue(translations.has("config.ae2craftingtime.compactStatusAmounts"));
             }
         }
