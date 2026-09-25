@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import appeng.core.localization.GuiText;
+import com.ctux.ae2craftingtime.mc1201.PlanAmountLines;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.network.chat.Component;
@@ -14,7 +15,7 @@ import org.junit.jupiter.api.Test;
 
 class CraftConfirmTableRendererMixinTest {
     @Test
-    void compactsNativeAmountsAndPreservesMissingAndForeignLines() throws ReflectiveOperationException {
+    void compactsNativeAmountsAndPreservesMissingAndForeignLines() {
         var missing = GuiText.Missing.text("5");
         var foreign = Component.literal("foreign");
         var lines = new ArrayList<Component>(List.of(missing, GuiText.FromStorage.text("4"), foreign,
@@ -28,7 +29,7 @@ class CraftConfirmTableRendererMixinTest {
     }
 
     @Test
-    void onlyOneNativeAmountAndEmptyRows() throws ReflectiveOperationException {
+    void onlyOneNativeAmountAndEmptyRows() {
         var lines = new ArrayList<Component>(List.of(GuiText.ToCraft.text("1.5 mB")));
         var compact = compact(lines, 0, null, 1, "1.5 mB");
         assertEquals(List.of(compact), lines);
@@ -39,7 +40,7 @@ class CraftConfirmTableRendererMixinTest {
     }
 
     @Test
-    void uncertainNativeAmountsKeepOriginalDescription() throws ReflectiveOperationException {
+    void uncertainNativeAmountsKeepOriginalDescription() {
         var stored = GuiText.FromStorage.text("4");
         for (var lines : List.of(
                 new ArrayList<Component>(List.of(Component.literal("foreign"))),
@@ -53,10 +54,7 @@ class CraftConfirmTableRendererMixinTest {
     }
 
     private static MutableComponent compact(List<Component> lines, long stored, String storedText,
-            long craft, String craftText) throws ReflectiveOperationException {
-        var method = CraftConfirmTableRendererMixin.class.getDeclaredMethod("ae2craftingtime$compactAmounts",
-                List.class, long.class, String.class, long.class, String.class);
-        method.setAccessible(true);
-        return (MutableComponent) method.invoke(null, lines, stored, storedText, craft, craftText);
+            long craft, String craftText) {
+        return PlanAmountLines.compact(lines, stored, storedText, craft, craftText);
     }
 }
