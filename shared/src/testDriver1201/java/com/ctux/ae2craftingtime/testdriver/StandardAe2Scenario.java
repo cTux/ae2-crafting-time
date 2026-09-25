@@ -57,7 +57,8 @@ final class StandardAe2Scenario {
         OVERLAP_REOPEN,
         PUMP, FINISHED, REOPEN, EMPTY, WORLD_POSITION, WORLD_HIGHLIGHT, WORLD_RELEASE, WORLD_FINISHED,
         GALLERY_PARTIAL_PLAN, GALLERY_PROFILED_PLAN, GALLERY_DETAILS, GALLERY_CHAT, GALLERY_NEXT_JOB,
-        CPU_LIST_REOPEN, CPU_LIST_REOPENED, STATUS_SERVER_OFF, STATUS_PERSIST, STATUS_RELAUNCH }
+        CPU_LIST_REOPEN, CPU_LIST_REOPENED, STATUS_SERVER_OFF, STATUS_PERSIST, STATUS_RELAUNCH,
+        BADGE_PERSIST, BADGE_RELAUNCH }
     private final String leaf;
     private final StandardCraftFixture fixture = new StandardCraftFixture();
     private final CpuListTtcScenario cpuList;
@@ -86,6 +87,15 @@ final class StandardAe2Scenario {
             resultScreenshots.addAll(amountContinuation.screenshots());
             phase = Stage.STATUS_RELAUNCH;
         }
+        var badgePath = leaf.equals("badge-background")
+                && Boolean.getBoolean("ae2craftingtime.test.badgeRelaunch")
+                ? System.getProperty("ae2craftingtime.test.continuation", "") : "";
+        badgeContinuation = badgePath.isBlank() ? null : readBadgeContinuation(
+                java.nio.file.Path.of(badgePath), world);
+        if (badgeContinuation != null) {
+            resultScreenshots.addAll(badgeContinuation.screenshots());
+            phase = Stage.BADGE_RELAUNCH;
+        }
         StoredVariantObservation.enable(leaf.equals("stored-variant-plan"));
         this.connectedDedicated = connectedDedicated;
         recurrenceAddonRoute = connectedDedicated && leaf.equals("recurrent-plan") && RecurrentCampaign.addonRoute(
@@ -111,6 +121,13 @@ final class StandardAe2Scenario {
     private List<String> badgeRowsBefore;
     private List<String> badgeTextBefore;
     private boolean badgePlanStocked;
+    private final BadgeContinuation badgeContinuation;
+    private boolean badgePersistSaving;
+    private boolean badgeContinuationWritten;
+    private int badgeResumeStep;
+    private long badgeResumeRenderedAfter;
+    private int badgeScaleStep;
+    private int badgeOriginalScale;
     private int quantityCase;
     private boolean quantityHovered;
     private int addonQuantityCase;
@@ -233,6 +250,8 @@ final class StandardAe2Scenario {
             reportedCheckpoint = currentCheckpoint;
         }
         if (phase == Stage.STATUS_RELAUNCH) return statusRelaunchTick(minecraft, checks, screenshot);
+        if (phase == Stage.BADGE_RELAUNCH) return badgeRelaunchTick(minecraft, checks, screenshot);
+        if (phase == Stage.BADGE_PERSIST) return badgePersistTick(minecraft, checks, screenshot);
         if (leaf.equals("stored-variant-plan") && connectedDedicated && variantLifecycle == 3) {
             if (minecraft.screen instanceof CraftConfirmScreen) return false;
             if (!StoredVariantControl.request("cancel", minecraft.player.getUUID(), variantSecondMenu,
@@ -1717,6 +1736,8 @@ final class StandardAe2Scenario {
 
     private boolean badgeTick(Minecraft minecraft, Map<String, Boolean> checks, Consumer<String> screenshot) {
         boolean status = phase == Stage.ACTIVE;
+        if (status && badgeStep == 4 && badgeScaleStep > 0 && badgeScaleStep < 4)
+            return badgeScaleTick(minecraft, screenshot);
         if (!status && badgeStep == 0 && !badgeEditOpen) {
             if (!(minecraft.screen instanceof CraftConfirmScreen)) return false;
             var plan = UiObservationStore.latest();
@@ -1766,9 +1787,49 @@ final class StandardAe2Scenario {
             badgeStep = 0;
             badgeRowsBefore = null;
             badgeTextBefore = null;
-            if (status) return true;
+            if (status) {
+                if (!Boolean.getBoolean("ae2craftingtime.test.badgeRelaunch")) return true;
+                phase = Stage.BADGE_PERSIST;
+                return false;
+            }
             phase = Stage.SUBMIT;
-        } else badgeStep = badgeStep == 3 ? 4 : 2;
+        } else {
+            if (status && badgeStep == 3 && Boolean.getBoolean("ae2craftingtime.test.badgeRelaunch")) {
+                badgeOriginalScale = minecraft.options.guiScale().get();
+                badgeScaleStep = 1;
+            }
+            badgeStep = badgeStep == 3 ? 4 : 2;
+        }
+        frames.reset();
+        return false;
+    }
+
+    private boolean badgeScaleTick(Minecraft minecraft, Consumer<String> screenshot) {
+        if (badgeScaleStep == 1) {
+            minecraft.options.guiScale().set(1);
+            DriverPlatform.resizeDisplay(minecraft);
+            badgeScaleStep = 2;
+            frames.reset();
+            return false;
+        }
+        var snapshot = UiObservationStore.latest();
+        if (!(minecraft.screen instanceof CraftingStatusScreen) || snapshot == null
+                || !snapshot.screen().equals(minecraft.screen.getClass().getName())
+                || snapshot.rows().stream().filter(row -> row.craftAmount() > 0).count() < 2
+                || !snapshot.badges().isEmpty() || !LayoutValidator.validateBadges(snapshot).isEmpty()
+                || !frames.observe(List.of(badgeScaleStep, CaptureEvidence.readiness(snapshot)))) return false;
+        if (badgeScaleStep == 2) {
+            if (snapshot.guiScale() != 1) return false;
+            screenshot.accept("status-badge-off-small.png");
+            minecraft.options.guiScale().set(badgeOriginalScale);
+            DriverPlatform.resizeDisplay(minecraft);
+            badgeScaleStep = 3;
+            frames.reset();
+            return false;
+        }
+        if (snapshot.guiScale() <= 1) return false;
+        screenshot.accept("status-badge-off-auto.png");
+        badgeScaleStep = 4;
         frames.reset();
         return false;
     }
@@ -1844,6 +1905,134 @@ final class StandardAe2Scenario {
         return false;
     }
 
+    private boolean badgePersistTick(Minecraft minecraft, Map<String, Boolean> checks,
+            Consumer<String> screenshot) {
+        if (!badgePersistSaving) {
+            if (badgeEditTick(minecraft, 1)) badgePersistSaving = true;
+            return false;
+        }
+        if (!(minecraft.screen instanceof CraftingStatusScreen)) return false;
+        var config = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current();
+        if (config.badgeBackground() || config.color(com.ctux.ae2craftingtime.core.ClientConfig.Color.BADGE) != 0x245A7D
+                || config.badgeOpacity() != 96)
+            throw new IllegalStateException("Badge Off/custom appearance was not saved for relaunch");
+        screenshot.accept("badge-saved-off.png");
+        if (checks.values().stream().anyMatch(value -> !value))
+            throw new IllegalStateException("Cannot relaunch with incomplete badge checks: " + checks);
+        if (!badgeContinuationWritten) {
+            writeBadgeContinuation(new BadgeContinuation(1, world,
+                    System.getProperty("ae2craftingtime.test.campaign", "local"), configHash(minecraft),
+                    checks.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).toList(),
+                    List.copyOf(resultScreenshots)));
+            badgeContinuationWritten = true;
+            minecraft.stop();
+        }
+        return false;
+    }
+
+    private boolean badgeRelaunchTick(Minecraft minecraft, Map<String, Boolean> checks,
+            Consumer<String> screenshot) {
+        if (badgeResumeStep == 0) {
+            if (!java.util.Set.copyOf(badgeContinuation.checks()).equals(java.util.Set.copyOf(CHECKS.get(leaf)))
+                    || !configHash(minecraft).equals(badgeContinuation.configSha256()))
+                throw new IllegalStateException("Badge relaunch predecessor or saved config differs");
+            for (var check : badgeContinuation.checks()) checks.put(check, true);
+            badgeAssertSavedOff(minecraft);
+            minecraft.setScreen(new com.ctux.ae2craftingtime.mc1201.OptionsScreen(null));
+            badgeResumeStep = 1;
+            badgeResumeRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+            return false;
+        }
+        if (TestDriverRuntime.renderedFrames < badgeResumeRenderedAfter) return false;
+        if (badgeResumeStep == 4 || badgeResumeStep == 8 || badgeResumeStep == 12) {
+            if (minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen) return false;
+            badgeAssertSavedOff(minecraft);
+            if (!configHash(minecraft).equals(badgeContinuation.configSha256()))
+                throw new IllegalStateException("Cancel changed saved badge options");
+            minecraft.setScreen(new com.ctux.ae2craftingtime.mc1201.OptionsScreen(null));
+            badgeResumeStep++;
+        } else if (badgeResumeStep == 16) {
+            if (minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen) return false;
+            var config = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current();
+            if (!config.badgeBackground() || config.color(com.ctux.ae2craftingtime.core.ClientConfig.Color.BADGE) != 0x245A7D
+                    || config.badgeOpacity() != 96 || configHash(minecraft).equals(badgeContinuation.configSha256()))
+                throw new IllegalStateException("Badge On/custom appearance did not restore after relaunch");
+            minecraft.setScreen(new com.ctux.ae2craftingtime.mc1201.OptionsScreen(null));
+            badgeResumeStep = 17;
+        } else if (badgeResumeStep == 19) {
+            if (minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen) return false;
+            return true;
+        } else {
+            if (!(minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen)) return false;
+            if (badgeResumeStep == 1 || badgeResumeStep == 5 || badgeResumeStep == 9
+                    || badgeResumeStep == 13 || badgeResumeStep == 17) {
+                clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get(
+                        "config.ae2craftingtime.group.appearance"));
+            } else {
+                var toggle = optionButton(minecraft, net.minecraft.client.resources.language.I18n.get(
+                        "config.ae2craftingtime.badgeBackground") + ": ");
+                if (toggle == null) return false;
+                boolean enabled = toggle.getMessage().getString().endsWith(
+                        net.minecraft.client.resources.language.I18n.get("options.on"));
+                switch (badgeResumeStep) {
+                    case 2 -> {
+                        if (enabled) throw new IllegalStateException("Native badge toggle was not Off after relaunch");
+                        screenshot.accept("badge-relaunch-off.png");
+                        DriverPlatform.click(minecraft, toggle.getX() + 4, toggle.getY() + 4);
+                    }
+                    case 3 -> {
+                        if (!enabled) return false;
+                        clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get("gui.cancel"));
+                    }
+                    case 6 -> {
+                        if (enabled) throw new IllegalStateException("Cancel did not discard badge edit");
+                        clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get(
+                                "config.ae2craftingtime.reset_group"));
+                    }
+                    case 7 -> {
+                        if (!enabled) throw new IllegalStateException("Appearance reset did not enable badge");
+                        screenshot.accept("badge-reset-group.png");
+                        clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get("gui.cancel"));
+                    }
+                    case 10 -> {
+                        if (enabled) throw new IllegalStateException("Cancel did not discard Appearance reset");
+                        clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get(
+                                "config.ae2craftingtime.reset_all"));
+                    }
+                    case 11 -> {
+                        if (!enabled) throw new IllegalStateException("Reset all did not enable badge");
+                        screenshot.accept("badge-reset-all.png");
+                        clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get("gui.cancel"));
+                    }
+                    case 14 -> {
+                        if (enabled) throw new IllegalStateException("Cancel did not discard Reset all");
+                        DriverPlatform.click(minecraft, toggle.getX() + 4, toggle.getY() + 4);
+                    }
+                    case 15 -> {
+                        if (!enabled) return false;
+                        clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get("gui.done"));
+                    }
+                    case 18 -> {
+                        if (!enabled) throw new IllegalStateException("Saved badge option was not On after Done");
+                        screenshot.accept("badge-relaunch-restored.png");
+                        clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get("gui.cancel"));
+                    }
+                    default -> throw new IllegalStateException("Unexpected badge relaunch step " + badgeResumeStep);
+                }
+            }
+            badgeResumeStep++;
+        }
+        badgeResumeRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+        return false;
+    }
+
+    private void badgeAssertSavedOff(Minecraft minecraft) {
+        var config = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current();
+        if (config.badgeBackground() || config.color(com.ctux.ae2craftingtime.core.ClientConfig.Color.BADGE) != 0x245A7D
+                || config.badgeOpacity() != 96)
+            throw new IllegalStateException("Saved Off/custom badge settings changed after relaunch");
+    }
+
     private static net.minecraft.client.gui.components.Button optionButton(Minecraft minecraft, String label) {
         return minecraft.screen.children().stream().filter(net.minecraft.client.gui.components.Button.class::isInstance)
                 .map(net.minecraft.client.gui.components.Button.class::cast)
@@ -1908,6 +2097,34 @@ final class StandardAe2Scenario {
     }
 
     private record AmountContinuation(int schema, String world, String campaign, String configSha256,
+            List<String> checks, List<String> screenshots) {}
+
+    private void writeBadgeContinuation(BadgeContinuation value) {
+        var path = output.resolve("badge-background-continuation.json");
+        try {
+            var temp = path.resolveSibling(path.getFileName() + ".tmp");
+            java.nio.file.Files.writeString(temp, new com.google.gson.Gson().toJson(value));
+            java.nio.file.Files.move(temp, path, java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } catch (java.io.IOException error) {
+            throw new IllegalStateException("Cannot save badge-background relaunch continuation", error);
+        }
+    }
+
+    private static BadgeContinuation readBadgeContinuation(java.nio.file.Path path, String world) {
+        try {
+            var value = new com.google.gson.Gson().fromJson(java.nio.file.Files.readString(path), BadgeContinuation.class);
+            if (value == null || value.schema() != 1 || !world.equals(value.world())
+                    || !System.getProperty("ae2craftingtime.test.campaign", "local").equals(value.campaign())
+                    || value.checks() == null || value.screenshots() == null || value.configSha256() == null)
+                throw new IllegalStateException("Badge relaunch continuation identity differs");
+            return value;
+        } catch (java.io.IOException error) {
+            throw new IllegalStateException("Cannot read badge relaunch continuation", error);
+        }
+    }
+
+    private record BadgeContinuation(int schema, String world, String campaign, String configSha256,
             List<String> checks, List<String> screenshots) {}
 
     private static UiSnapshot.ObservedText rowText(UiSnapshot snapshot, String output, String key) {

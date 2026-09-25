@@ -75,6 +75,17 @@ try {
     if (!$statusArguments.Contains('statusRelaunch=true') -or !$statusArguments.Contains('continuation=')) {
         throw 'Status phase two did not retain its continuation'
     }
+    $parameters.Scenario = 'badge-background'
+    & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -CampaignId 'campaign-a' | Out-Null
+    $badgeArguments = Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw
+    if (!$badgeArguments.Contains('badgeRelaunch=true') -or $badgeArguments.Contains('continuation=')) {
+        throw 'Badge phase one did not enable clean relaunch'
+    }
+    & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -CampaignId 'campaign-a' -ContinuationPath $continuation | Out-Null
+    $badgeArguments = Get-Content (Join-Path $runtime 'ui-smoke-java.args') -Raw
+    if (!$badgeArguments.Contains('badgeRelaunch=true') -or !$badgeArguments.Contains('continuation=')) {
+        throw 'Badge phase two did not retain its continuation'
+    }
     $parameters.Scenario = 'cpu-list-total-ttc'
     $resumed = & (Join-Path $scripts 'prepare-ui-smoke-launch.ps1') @parameters -ContinuationPath $continuation `
         -CampaignId 'campaign-a' -ResumeOnly

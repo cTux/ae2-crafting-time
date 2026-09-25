@@ -942,3 +942,18 @@ not a new launcher. Retain unique screenshots for blocked, tooltip, recovered,
 alternative and negative/lifecycle checkpoints with matching authoritative
 server facts. Existing source markers and disposable-copy/reset rules apply;
 restore original channel mode even on failure and report failed cleanup.
+
+## Badge background focused relaunch (#532)
+
+Keep the suite's `badge-background` case as one launch. For the direct focused
+case, reuse the status-option continuation seam: after the existing Plan and
+Status captures, save Off, write an atomic continuation carrying campaign, world,
+client config hash, completed checks and screenshot names, and stop Java phase 1.
+The host checks the persisted config hash and distinct Java identities before
+accepting phase 2. Phase 2 reads the same continuation, verifies runtime Off and
+the native Appearance toggle, then drives Cancel, Reset Appearance, Reset all,
+and final Done through the existing Options button helper. Capture the draft
+reset states, then reopen Appearance after Done to capture the saved On state;
+validate the final screenshot and
+continuation set in the existing host evidence gate. Keep process provenance in
+`relaunch-evidence.json`; no new runner or fixture format is introduced.

@@ -8,6 +8,18 @@ function Assert-UiSmokeStatusContinuation {
     }
 }
 
+function Assert-UiSmokeBadgeRelaunchCaptures {
+    param([string]$Evidence)
+    foreach ($capture in @('status-badge-off-small', 'status-badge-off-auto', 'badge-saved-off',
+            'badge-relaunch-off', 'badge-reset-group', 'badge-reset-all', 'badge-relaunch-restored')) {
+        foreach ($extension in @('png', 'json')) {
+            if (!(Test-Path -LiteralPath (Join-Path $Evidence "$capture.$extension") -PathType Leaf)) {
+                throw "Badge relaunch capture is missing: $capture.$extension"
+            }
+        }
+    }
+}
+
 function Assert-UiSmokeStatusRelaunchCaptures {
     param([string]$Evidence)
     foreach ($capture in @('status-saved-off', 'status-relaunch-off', 'status-relaunch-on', 'status-relaunch-restored')) {
@@ -55,7 +67,7 @@ function Get-UiSmokeJavaLaunchPhases {
     )
     if ($PrepareOnly) { return @() }
     if ($ResumeOnly) { return @(2) }
-    if ($Scenario -in @('cpu-list-total-ttc', 'standard-status-controls') -or $ContainsCpuList) { return @(1, 2) }
+    if ($Scenario -in @('cpu-list-total-ttc', 'standard-status-controls', 'badge-background') -or $ContainsCpuList) { return @(1, 2) }
     return @(1)
 }
 

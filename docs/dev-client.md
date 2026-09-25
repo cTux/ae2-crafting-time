@@ -197,7 +197,7 @@ the selected target's suite; inspect the plan before launching.
 | Independent case | Behavior checked |
 |---|---|
 | `standard-plan-controls` | Plan sorting, tooltip, details, reset, total TTC, layout and item resolution |
-| `badge-background` | Native Appearance save and Plan/Status badge On, Off, and restored captures |
+| `badge-background` | Native Appearance save and Plan/Status badge On, Off, and restored captures; a focused direct run also proves Off after a distinct Java relaunch, Cancel, Appearance/All reset drafts, and small/Auto scale |
 | `recurrent-plan` | Recurrent plan row and tooltip |
 | `stored-variant-plan` | Live stored-variant plan changes and row behavior |
 | `standard-status-controls` | Submitted-job status, sorting, tooltip, details, reset, header and layout |

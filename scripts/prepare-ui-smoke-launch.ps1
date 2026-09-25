@@ -147,6 +147,9 @@ if ($ContinuationPath) {
 if ($Scenario -eq 'standard-status-controls') {
     $arguments.Insert(0, '-Dae2craftingtime.test.statusRelaunch=true')
 }
+if ($Scenario -eq 'badge-background') {
+    $arguments.Insert(0, '-Dae2craftingtime.test.badgeRelaunch=true')
+}
 if ($ResumeOnly) {
     if (!$ContinuationPath -or $Scenario -ne 'cpu-list-total-ttc') { throw 'Resume-only launch requires a CPU-list continuation' }
     $arguments.Insert(0, '-Dae2craftingtime.test.resumeOnly=true')
