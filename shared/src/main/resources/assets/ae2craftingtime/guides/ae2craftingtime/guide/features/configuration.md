@@ -7,7 +7,14 @@ navigation:
 
 # Configuration
 
-Every loader uses `ae2craftingtime-common.toml`.
+Server settings live in `<world>/serverconfig/ae2craftingtime-server.toml`. Starting
+a world creates this file if it's missing. In singleplayer, `<world>` is that
+save under `saves`; on a dedicated server, it's the world selected by
+`level-name`. If `config/ae2craftingtime-common.toml` contains old server
+settings, the new file starts with those valid values and defaults for the rest.
+The old file stays in place. Existing world files aren't rewritten on startup.
+
+Client settings live in `config/ae2craftingtime-client.toml`.
 
 - `enabled` turns profiling and server-owned stats on or off.
 - `showInTree` controls Crafting Tree badges, tooltips, spacing, and clicks on
@@ -20,9 +27,8 @@ Every loader uses `ae2craftingtime-common.toml`.
 
 For example, set `maxSamples = 20` to retain a longer recent history. Restart
 the game or server after changing the sample window or outlier boundary because
-they are applied when the profiler is created. Invalid Fabric values keep the
-current/default value, and out-of-range numbers are clamped; Forge and NeoForge
-use their native config validation.
+they are applied when the profiler is created. Invalid fields keep their defaults;
+values outside the allowed ranges are rejected.
 
 ![Crafting Tree with TTC display enabled](images/crafting-tree-tooltip.png)
 
