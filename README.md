@@ -17,14 +17,12 @@
   <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-30363d" alt="MIT license"></a>
 </p>
 
-## See what your craft is waiting for
-
 <p align="center">
-  <img src="docs/images/crafting-status-delayed.jpg" alt="AE2 crafting status showing a delayed recipe and a remaining-time estimate" width="705">
+  <img src="docs/images/crafting-status-overview.png" alt="AE2 crafting status showing remaining-time estimates and blocked inputs" width="705">
 </p>
 
 <p align="center">
-  Remaining-time estimates and delayed recipes, directly in AE2.<br>
+  Remaining-time estimates and blocked inputs, directly in AE2.<br>
   <a href="docs/images/README.md">See the screenshot gallery</a>
 </p>
 
