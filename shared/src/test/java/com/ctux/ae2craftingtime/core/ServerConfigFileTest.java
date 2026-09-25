@@ -94,14 +94,13 @@ class ServerConfigFileTest {
     void failedGenerationKeepsMigratedValuesAndExistingDestination() throws IOException {
         var legacy = directory.resolve("common.toml");
         Files.write(legacy, List.of("enabled = false", "maxSamples = 20"));
-        var blocker = directory.resolve("world");
-        Files.writeString(blocker, "leave me alone");
-        var path = blocker.resolve("serverconfig/server.toml");
+        var parent = Files.createDirectory(directory.resolve("serverconfig"));
+        var path = parent.resolve("s".repeat(245) + ".toml");
+        assertTrue(Files.notExists(path));
         var loaded = ServerConfigFile.load(path, legacy);
         assertFalse(loaded.features().enabled(OptionFeature.PROFILING));
         assertEquals(20, loaded.maxSamples());
-        assertEquals("leave me alone", Files.readString(blocker));
-        assertFalse(Files.exists(path));
+        assertTrue(Files.notExists(path));
 
         var occupied = directory.resolve("occupied");
         Files.createDirectory(occupied);
