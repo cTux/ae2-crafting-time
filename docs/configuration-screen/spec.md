@@ -91,6 +91,7 @@ authoritative.
 | Status text | Waiting `#E0E0E0`, delayed/blocked `#FF5555`, collecting-data `#E0E0E0`, and total TTC `#E0E0E0`. |
 | Badges | Background `#000000` with `176/255` opacity, matching `0xB0000000`. |
 | Appearance | [Text shadow](text-shadow/spec.md) (`textShadow`, #531), default on; controls mod-drawn text independently of badge backgrounds and TTC colors. |
+| Appearance | [Badge background](badge-background/spec.md) (`badgeBackground`, #532), default on; hides only mod-owned badge backgrounds while preserving saved color and opacity. |
 
 Options for a feature unavailable on the current target stay visible but disabled
 and explain the missing mod or unsupported target. Guide book content,
