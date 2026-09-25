@@ -136,7 +136,7 @@ public abstract class MERequesterScreenMixin {
                 (int) Math.ceil(labelLeft + labelWidth), top + labelHeight, TtcBadge.BACKGROUND);
         pose.pushPose();
         pose.scale(scale, scale, scale);
-        guiGraphics.drawString(font, label, textX, textY, color, true);
+        guiGraphics.drawString(font, label, textX, textY, color, ClientOptionsRuntime.textShadow());
         pose.popPose();
     }
 

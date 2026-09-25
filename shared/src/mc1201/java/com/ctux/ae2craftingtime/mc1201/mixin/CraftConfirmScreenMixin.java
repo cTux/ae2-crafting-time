@@ -129,7 +129,7 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
             TtcBadge.fillRoundedRect(guiGraphics, textX - 2, 176, textX + totalWidth + 2,
                     178 + font.lineHeight + 2, TtcBadge.BACKGROUND);
             guiGraphics.drawString(font, text, textX, 178,
-                    ClientOptionsRuntime.current().color(ClientConfig.Color.TOTAL), true);
+                    ClientOptionsRuntime.current().color(ClientConfig.Color.TOTAL), ClientOptionsRuntime.textShadow());
             IntegrationLog.observe("ae2craftingtime", "plan-total");
         });
     }

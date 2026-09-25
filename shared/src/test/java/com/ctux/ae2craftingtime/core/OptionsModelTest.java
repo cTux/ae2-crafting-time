@@ -18,9 +18,11 @@ class OptionsModelTest {
         assertEquals(2, config.planSort());
         assertEquals(2, config.statusSort());
         assertFalse(config.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
+        assertTrue(config.features().enabled(OptionFeature.TEXT_SHADOW));
 
         config.features().setEnabled(OptionFeature.PLAN_ROWS, false);
         config.features().setEnabled(OptionFeature.COMPACT_STATUS_AMOUNTS, true);
+        config.features().setEnabled(OptionFeature.TEXT_SHADOW, false);
         config.setColor(ClientConfig.Color.FAST, 0);
         config.setBadgeOpacity(255);
         config.setPlanSort(0);
@@ -28,6 +30,7 @@ class OptionsModelTest {
         var copy = config.copy();
         assertFalse(copy.features().enabled(OptionFeature.PLAN_ROWS));
         assertTrue(copy.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
+        assertFalse(copy.features().enabled(OptionFeature.TEXT_SHADOW));
         assertEquals(0, copy.color(ClientConfig.Color.FAST));
         assertEquals(255, copy.badgeOpacity());
         assertEquals(0, copy.planSort());
@@ -36,12 +39,44 @@ class OptionsModelTest {
         copy.reset();
         assertTrue(copy.features().enabled(OptionFeature.PLAN_ROWS));
         assertFalse(copy.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
+        assertTrue(copy.features().enabled(OptionFeature.TEXT_SHADOW));
         assertEquals(ClientConfig.Color.FAST.defaultRgb(), copy.color(ClientConfig.Color.FAST));
         assertEquals(176, copy.badgeOpacity());
         assertEquals(2, copy.planSort());
         assertEquals(2, copy.statusSort());
         assertFalse(config.features().enabled(OptionFeature.PLAN_ROWS));
         assertTrue(config.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
+        assertFalse(config.features().enabled(OptionFeature.TEXT_SHADOW));
+    }
+
+    @Test
+    void textShadowOnlyOverridesModText() {
+        var config = new ClientConfig();
+        for (boolean enabled : new boolean[] {false, true}) {
+            config.features().setEnabled(OptionFeature.TEXT_SHADOW, enabled);
+            for (boolean nativeShadow : new boolean[] {false, true}) {
+                assertEquals(enabled, config.textShadow(true, nativeShadow));
+                assertEquals(nativeShadow, config.textShadow(false, nativeShadow));
+            }
+        }
+    }
+
+    @Test
+    void appearanceRowsMapFeaturesColorsAndOpacityAcrossPages() {
+        int featureRows = 1;
+        int totalRows = ClientConfig.appearanceRowCount(featureRows);
+        assertEquals(featureRows + ClientConfig.Color.values().length + 1, totalRows);
+        assertEquals(2, ClientConfig.appearanceRowsPerPage(145));
+        assertEquals(3, ClientConfig.appearanceRowsPerPage(229));
+
+        // At the minimum two rows per page, page one has the toggle and first color.
+        assertEquals(0, ClientConfig.appearanceInputIndex(0, featureRows, 0));
+        assertEquals(0, ClientConfig.appearanceInputIndex(1, featureRows, 0));
+        int secondPage = ClientConfig.appearanceRowsPerPage(145);
+        assertEquals(1, ClientConfig.appearanceInputIndex(secondPage, featureRows, 0));
+        assertEquals(2, ClientConfig.appearanceInputIndex(secondPage, featureRows, 1));
+        assertEquals(ClientConfig.Color.values().length,
+                ClientConfig.appearanceInputIndex(totalRows - 1, featureRows, 0));
     }
 
     @Test

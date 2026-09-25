@@ -26,6 +26,22 @@ public final class ClientConfig {
 
     public FeatureOptions features() { return features; }
 
+    public boolean textShadow(boolean modText, boolean nativeShadow) {
+        return modText ? features.enabled(OptionFeature.TEXT_SHADOW) : nativeShadow;
+    }
+
+    public static int appearanceRowCount(int featureRows) {
+        return featureRows + Color.values().length + 1;
+    }
+
+    public static int appearanceRowsPerPage(int screenHeight) {
+        return Math.max(2, (screenHeight - 145) / 28);
+    }
+
+    public static int appearanceInputIndex(int firstVisibleRow, int featureRows, int inputOffset) {
+        return Math.max(firstVisibleRow, featureRows) - featureRows + inputOffset;
+    }
+
     public int color(Color color) { return colors.get(Objects.requireNonNull(color)); }
 
     public void setColor(Color color, int rgb) {

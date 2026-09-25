@@ -72,7 +72,7 @@ public final class OptionsScreen extends OptionsBaseScreen {
         int left = Math.max(4, (width - 430) / 2);
         int right = Math.min(width - 4, left + 430);
         int sidebarWidth = 104;
-        int rows = Math.max(2, (height - 145) / 28);
+        int rows = ClientConfig.appearanceRowsPerPage(height);
         addRenderableWidget(Button.builder(Component.translatable("config.ae2craftingtime.client"), button -> {})
                 .bounds(left, 30, 100, 20).build()).active = false;
         addRenderableWidget(Button.builder(Component.translatable("config.ae2craftingtime.server"), button -> {
@@ -89,12 +89,13 @@ public final class OptionsScreen extends OptionsBaseScreen {
 
         var features = Arrays.stream(OptionFeature.values())
                 .filter(feature -> feature.owner() == OptionFeature.Owner.CLIENT && feature.group() == group).toList();
-        int totalRows = group == OptionFeature.Group.APPEARANCE ? ClientConfig.Color.values().length + 1
+        int totalRows = group == OptionFeature.Group.APPEARANCE ? ClientConfig.appearanceRowCount(features.size())
                 : features.size() + (group == OptionFeature.Group.CONTROLS ? 2 : 0);
         for (int i = page * rows; i < Math.min(totalRows, (page + 1) * rows); i++) {
             int y = 61 + (i - page * rows) * 28;
-            if (group == OptionFeature.Group.APPEARANCE) {
-                addAppearanceRow(i, left + sidebarWidth + 8, y, right - left - sidebarWidth - 8);
+            if (group == OptionFeature.Group.APPEARANCE && i >= features.size()) {
+                addAppearanceRow(ClientConfig.appearanceInputIndex(i, features.size(), 0),
+                        left + sidebarWidth + 8, y, right - left - sidebarWidth - 8);
                 continue;
             }
             if (i >= features.size()) {
@@ -106,6 +107,7 @@ public final class OptionsScreen extends OptionsBaseScreen {
             var label = Component.translatable("config.ae2craftingtime." + feature.key())
                     .append(": ").append(Component.translatable(enabled ? "options.on" : "options.off"));
             var toggle = addRenderableWidget(Button.builder(label, pressed -> {
+                if (!commitInputs()) return;
                 draft.features().setEnabled(feature, !draft.features().enabled(feature));
                 Minecraft.getInstance().setScreen(new OptionsScreen(parent, session, group, page));
             }).bounds(left + sidebarWidth + 8, y,
@@ -127,11 +129,11 @@ public final class OptionsScreen extends OptionsBaseScreen {
         }
 
         addRenderableWidget(Button.builder(Component.translatable("config.ae2craftingtime.reset_group"), pressed -> {
+            for (var feature : features) draft.features().setEnabled(feature, true);
             if (group == OptionFeature.Group.APPEARANCE) {
                 for (var color : ClientConfig.Color.values()) draft.setColor(color, color.defaultRgb());
                 draft.setBadgeOpacity(176);
             } else {
-                for (var feature : features) draft.features().setEnabled(feature, true);
                 if (group == OptionFeature.Group.CONTROLS) {
                     draft.setPlanSort(2);
                     draft.setStatusSort(2);
@@ -230,9 +232,11 @@ public final class OptionsScreen extends OptionsBaseScreen {
     private boolean commitInputs() {
         if (group != OptionFeature.Group.APPEARANCE) return true;
         try {
-            int start = page * Math.max(2, (height - 145) / 28);
+            int featureRows = (int) Arrays.stream(OptionFeature.values())
+                    .filter(feature -> feature.owner() == OptionFeature.Owner.CLIENT && feature.group() == group).count();
+            int firstVisibleRow = page * ClientConfig.appearanceRowsPerPage(height);
             for (int i = 0; i < inputs.size(); i++) {
-                int index = start + i;
+                int index = ClientConfig.appearanceInputIndex(firstVisibleRow, featureRows, i);
                 var value = inputs.get(i).getValue();
                 if (index < ClientConfig.Color.values().length) {
                     if (!value.matches("#[0-9a-fA-F]{6}")) throw new IllegalArgumentException("Invalid RGB");

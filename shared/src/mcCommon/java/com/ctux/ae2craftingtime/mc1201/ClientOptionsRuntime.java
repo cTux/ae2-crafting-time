@@ -28,6 +28,8 @@ public final class ClientOptionsRuntime {
 
     public static ClientConfig current() { return current; }
 
+    public static boolean textShadow() { return current.features().enabled(OptionFeature.TEXT_SHADOW); }
+
     public static boolean profilingEnabled() {
         var snapshot = ClientServerOptions.snapshot();
         return snapshot == null || snapshot.config().features().enabled(OptionFeature.PROFILING);

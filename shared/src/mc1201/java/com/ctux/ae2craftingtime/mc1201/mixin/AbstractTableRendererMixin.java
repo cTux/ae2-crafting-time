@@ -11,6 +11,7 @@ import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcColor;
 import com.ctux.ae2craftingtime.mc1201.AeKeyAmounts;
 import com.ctux.ae2craftingtime.mc1201.ClientStats;
+import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.TtcBadge;
 import com.ctux.ae2craftingtime.mc1201.TtcColorContext;
@@ -57,14 +58,15 @@ public abstract class AbstractTableRendererMixin {
                     pose.pushPose();
                     pose.translate(left, y, 0);
                     pose.scale(scale, 1, 1);
-                    guiGraphics.drawString(font, text, 0, 0, color, true);
+                    guiGraphics.drawString(font, text, 0, 0, color, ClientOptionsRuntime.textShadow());
                     pose.popPose();
                     return x + width;
                 }
                 TtcBadge.fillRoundedRect(guiGraphics, x - 2, y - 2, x + width + 2, y + font.lineHeight + 2,
                         TtcBadge.BACKGROUND);
             }
-            return guiGraphics.drawString(font, text, x, y, color, shadow || isAe2CraftingTime);
+            return guiGraphics.drawString(font, text, x, y, color,
+                    ClientOptionsRuntime.current().textShadow(isAe2CraftingTime, shadow));
         }
         return guiGraphics.drawString(font, text, x, y, color, shadow);
     }

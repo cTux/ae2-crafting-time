@@ -213,7 +213,8 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
                 TtcBadge.BACKGROUND);
         guiGraphics.text(font, ae2craftingtime$titleTtc, ae2craftingtime$titleTtcX,
                 AE2CRAFTINGTIME_TITLE_TOP,
-                0xFF000000 | ClientOptionsRuntime.current().color(ClientConfig.Color.TOTAL), true);
+                0xFF000000 | ClientOptionsRuntime.current().color(ClientConfig.Color.TOTAL),
+                ClientOptionsRuntime.textShadow());
         IntegrationLog.observe("ae2craftingtime", "status-total");
     }
 
