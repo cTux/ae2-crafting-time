@@ -86,8 +86,10 @@ implementation work, not capabilities already supplied by the current driver:
   separately. Save compact off, exit cleanly, then relaunch the same disposable
   client config and verify off before restoring on. Keep that config outside
   pristine per-case fixture resets; record its path/hash and both launch results.
-- Q4: stage a test-only resource pack in the disposable client that maps the
-  default font to Minecraft's built-in uniform font. Await resource reload and
+- Q4: stage a test-only resource pack in the disposable client that widens
+  Minecraft's built-in ASCII bitmap and retains its uniform font as fallback.
+  Vanilla's default and uniform digits/slashes have the same measured advance
+  on 1.21.1, so a uniform-only pack cannot exercise this quantity line. Await resource reload and
   prove the representative quantity string has a greater measured `Font.width`
   than under the default font; otherwise stop and repair the fixture. Capture
   both fonts at requested GUI scales 1, 2 and Auto, recording effective scale,
@@ -140,6 +142,17 @@ stays enabled. Also check compact on with TTC off, both off, Cancel, both reset
 actions, and the saved value after relaunch. Server profiling off must leave the
 compact option effective; its label must remain usable by a non-operator (Q6).
 
+Run `standard-status-controls` outside multi-case suites so its saved-option
+continuation always owns two client processes. The planner splits that leaf
+while preserving the requested dependency graph. The integrated status fixture
+checks profiling off through the real server runtime and restores it afterward.
+For the separate non-operator check, also run the existing connected
+`cpu-list-total-ttc` fixture on each target. Its final Options checkpoint requires
+the actual server snapshot to grant no edit permission, saves compact amounts
+off and on through native controls, and records `status-nonop-options.json` plus
+four `status-nonop-*.png` captures. The server snapshot must remain unchanged.
+An integrated owner or an editable connected snapshot cannot satisfy this gate.
+
 For Q4 inspect the actual badge bounds, adjacent cell and icon, not only string
 assertions. For Q5 compare native full amounts before/after and verify category
 labels. For Q6 inspect mixin logs and foreign-line fixtures; a successful vanilla
@@ -149,14 +162,14 @@ launch alone does not establish compatibility with other mixins.
 
 | Criteria | Gate |
 | --- | --- |
-| Q1, Q2 | Exact formatter/composition tests plus four-target item/fluid captures |
+| Q1, Q2 | Exact formatter/composition tests plus four-target item/fluid and installed addon-key status captures |
 | Q3 | Component RGB assertions, config changes and reviewed warning/normal captures |
 | Q4 | Width boundary tests and reviewed scale/font screenshots on all targets |
 | Q5 | Full tooltip comparison, bilingual resource checks and interaction smoke |
 | Q6 | Option/config/session and independent-switch tests, fallback/foreign-component tests, options/relaunch and compatible-graph smoke |
 | Q7 | Passing current-head CI, all builds, exact-revision four-target evidence |
 
-Record tested commit, artifact identity, AE2/loader versions, scenario result,
-screenshots and visual review in a research follow-up. Update the canonical
-scope status with evidence. Do not close #438 or mark the scope finished while
-its prototype, readability, or tooltip checks remain unverified.
+The tested commits, artifact identity, AE2/loader versions, scenario results,
+screenshots and visual review are recorded in the
+[research follow-up](research.md#implementation-verification-2026-09-25).
+Keep #438 open until the implementation PR is merged and closure is verified.

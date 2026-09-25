@@ -110,8 +110,10 @@ public final class CraftPlanScenario {
         if (state == ScenarioState.FAILED || state == ScenarioState.QUIT_REQUESTED) {
             return;
         }
-        if (elapsed().compareTo(state == ScenarioState.STARTING || standard != null || noSpace != null || noProvider != null
-                || noPower != null || providerDispatchStatus != null ? START_TIMEOUT : STEP_TIMEOUT) > 0) {
+        var timeout = options.scenario().equals("standard-status-controls") ? Duration.ofMinutes(30)
+                : state == ScenarioState.STARTING || standard != null || noSpace != null || noProvider != null
+                || noPower != null || providerDispatchStatus != null ? START_TIMEOUT : STEP_TIMEOUT;
+        if (elapsed().compareTo(timeout) > 0) {
             fail("timeout", state.name(), currentScreen());
             return;
         }

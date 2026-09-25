@@ -1,3 +1,51 @@
+function Assert-UiSmokeStatusContinuation {
+    param([string]$Path, [string]$ConfigPath, [string]$World, [string]$CampaignId)
+    $value = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
+    if ($value.schema -ne 1 -or $value.world -cne $World -or $value.campaign -cne $CampaignId -or
+            !(Test-Path -LiteralPath $ConfigPath -PathType Leaf) -or
+            (Get-FileHash -LiteralPath $ConfigPath -Algorithm SHA256).Hash -ine $value.configSha256) {
+        throw 'Saved compact-off client config does not match the phase-1 continuation'
+    }
+}
+
+function Assert-UiSmokeStatusRelaunchCaptures {
+    param([string]$Evidence)
+    foreach ($capture in @('status-saved-off', 'status-relaunch-off', 'status-relaunch-on', 'status-relaunch-restored')) {
+        foreach ($extension in @('png', 'json')) {
+            if (!(Test-Path -LiteralPath (Join-Path $Evidence "$capture.$extension") -PathType Leaf)) {
+                throw "Status amount relaunch capture is missing: $capture.$extension"
+            }
+        }
+    }
+}
+
+function Assert-UiSmokeStatusAddonKeys {
+    param([string]$Evidence, [string]$Target)
+    $value = Get-Content -LiteralPath (Join-Path $Evidence 'status-addon-keys.json') -Raw | ConvertFrom-Json
+    $expected = @()
+    switch ($Target) {
+        '1.20.1-forge' { $expected = @('mana', 'chemical') }
+        '1.20.1-fabric' { $expected = @('mana') }
+        '1.21.1-neoforge' { $expected = @('chemical') }
+        '26.1.2-neoforge' { $expected = @() }
+        default { throw "Unknown status addon target: $Target" }
+    }
+    if ($value.schema -ne 1 -or $value.appbotLoaded -ne ('mana' -in $expected) -or
+            $value.appmekLoaded -ne ('chemical' -in $expected) -or
+            (Compare-Object @($value.captured) @($expected) -SyncWindow 0)) {
+        throw "Status addon-key inventory does not match $Target"
+    }
+    foreach ($name in $expected) {
+        foreach ($capture in @("status-addon-$name", "status-addon-$name-tooltip")) {
+            foreach ($extension in @('png', 'json')) {
+                if (!(Test-Path -LiteralPath (Join-Path $Evidence "$capture.$extension") -PathType Leaf)) {
+                    throw "Status addon-key capture is missing: $capture.$extension"
+                }
+            }
+        }
+    }
+}
+
 function Get-UiSmokeJavaLaunchPhases {
     param(
         [Parameter(Mandatory)][string]$Scenario,
@@ -7,7 +55,7 @@ function Get-UiSmokeJavaLaunchPhases {
     )
     if ($PrepareOnly) { return @() }
     if ($ResumeOnly) { return @(2) }
-    if ($Scenario -eq 'cpu-list-total-ttc' -or $ContainsCpuList) { return @(1, 2) }
+    if ($Scenario -in @('cpu-list-total-ttc', 'standard-status-controls') -or $ContainsCpuList) { return @(1, 2) }
     return @(1)
 }
 

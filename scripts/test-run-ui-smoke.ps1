@@ -11,10 +11,11 @@ foreach ($file in @('expand-ui-smoke-groups.ps1','release-matrix.json','ui-smoke
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination $scripts
 }
 # This synthetic launcher exercises the single-process runner contract. The
-# native two-process CPU-list contract has its own deterministic self-check.
+# native two-process CPU-list and status-amount contracts have separate checks.
 $fixtureGroupsPath = Join-Path $scripts 'ui-smoke-groups.json'
 $fixtureGroups = Get-Content -LiteralPath $fixtureGroupsPath -Raw | ConvertFrom-Json
-$fixtureGroups.groups.'standard-ae2' = @($fixtureGroups.groups.'standard-ae2' | Where-Object { $_ -ne 'cpu-list-total-ttc' })
+$fixtureGroups.groups.'standard-ae2' = @($fixtureGroups.groups.'standard-ae2' |
+    Where-Object { $_ -notin @('cpu-list-total-ttc', 'standard-status-controls') })
 $fixtureGroups | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $fixtureGroupsPath -Encoding UTF8
 [IO.File]::WriteAllText((Join-Path $temp "gradle.properties"), "modVersion=1.1.0`n", [Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText((Join-Path $source ".ae2-crafting-time-test-fixture.json"), @'
@@ -315,8 +316,16 @@ try {
     $failedStatus = Get-Content -LiteralPath (Join-Path $temp "build\ui-smoke\1.20.1-forge\compatible\craft-plan\status.json") -Raw | ConvertFrom-Json
     if ($failedStatus.phase -ne "failed" -or -not $failedStatus.message) { throw "Smoke failure status was incomplete" }
 
-    foreach ($leaf in @('standard-plan-controls','standard-status-controls','waiting-status','running-status','delayed-status','craft-lifecycle')) {
+    foreach ($leaf in @('standard-plan-controls','waiting-status','running-status','delayed-status','craft-lifecycle')) {
         Invoke-Case "pass" -Scenario $leaf -shouldPass $true
+    }
+    Invoke-Case "pass" -Scenario standard-status-controls -shouldPass $false
+    $statusFont = Get-Content -LiteralPath (Join-Path $temp 'build/ui-smoke/1.20.1-forge/compatible/runtime/resourcepacks/ae2ct-status-wide/assets/minecraft/font/default.json') -Raw | ConvertFrom-Json
+    if ($statusFont.providers[0].type -cne 'bitmap' -or $statusFont.providers[0].height -ne 9 -or
+            $statusFont.providers[0].chars[3] -cne ('0123456789' + [string]::new([char]0, 6)) -or
+            $statusFont.providers[0].chars[2][15] -cne '/' -or
+            $statusFont.providers[1].id -cne 'minecraft:uniform') {
+        throw 'Status font fixture does not widen the actual amount glyphs over the uniform fallback'
     }
     Invoke-Case "pass" -Scenario cpu-list-total-ttc -shouldPass $false
     Invoke-Case "pass" -Scenario standard-ae2 -shouldPass $true

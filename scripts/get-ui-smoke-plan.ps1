@@ -141,6 +141,8 @@ foreach ($change in $changes) {
             $cases = @('stored-variant-plan','standard-plan-controls','recurrent-plan'); $reason = 'English stored-variant labels changed'
         } elseif (!@($keys | Where-Object { $_ -notin @('text.ae2craftingtime.plan.recurrent','text.ae2craftingtime.plan.recurrent_hint') }).Count) {
             $cases = @('recurrent-plan','standard-plan-controls'); $reason = 'English recurrent-plan labels changed'
+        } elseif (!@($keys | Where-Object { $_ -notin @('text.ae2craftingtime.status.amounts','text.ae2craftingtime.status.amounts_legend','config.ae2craftingtime.compactStatusAmounts') }).Count) {
+            $cases = @('standard-status-controls'); $reason = 'English compact-status amount labels changed'
         } elseif (@($keys | Where-Object { $_ -cne 'text.ae2craftingtime.ttc_delayed' }).Count) { $cases = @('suite'); $reason = 'English keys affect general UI' }
         else { $cases = @('delayed-status'); $reason = 'English delayed label changed' }
     } elseif ($behavior.Count) { $cases = @($behavior.cases | Select-Object -Unique); $reason = $behavior.reason -join '; ' }
@@ -211,11 +213,20 @@ foreach ($id in $ids) {
             if ($primaryProjects.Count -ne 1) { throw "AppMek resource fixture has no unique project graph for $id" }
         }
         if ($BaseOnly -and $appmekResource) { throw 'AppMek resource fixture cannot use the base-only graph' }
-        $primaryBaseOnly = $BaseOnly -or (!$appmekResource -and !$ProjectId -and
+        $statusCompatible = 'standard-status-controls' -cin $primary
+        $primaryBaseOnly = $BaseOnly -or (!$appmekResource -and !$statusCompatible -and !$ProjectId -and
             !@($primary | Where-Object { $_ -cin $directCases }).Count)
         $graphs = @([pscustomobject]@{ id='primary'; profile=$(if ($Latest) { 'latest' } else { 'compatible' }); cases=$primary
             projectId=$primaryProjects; baseOnly=$primaryBaseOnly; reason='Requested dependency graph'
             adapterPolicy=$(if ($primaryBaseOnly) { 'base AE2 graph for direct cases' } else { 'packaged catalogue graph for direct cases' }) }) + $graphs
+    }
+    foreach ($graph in @($graphs)) {
+        if ($graph.cases.Count -gt 1 -and 'standard-status-controls' -cin $graph.cases) {
+            $graph.cases = @($graph.cases | Where-Object { $_ -cne 'standard-status-controls' })
+            $graphs += [pscustomobject]@{ id="$($graph.id)-status-amounts"; profile=$graph.profile
+                cases=@('standard-status-controls'); projectId=$graph.projectId; baseOnly=$graph.baseOnly
+                reason='Status option persistence requires two client processes'; adapterPolicy=$graph.adapterPolicy }
+        }
     }
     $entries += [pscustomobject]@{ target=$id; graphs=$graphs; mode=$(if ($full) { 'full' } else { 'focused' }); cases=$cases
         notSelectedCases=@($allCases | Where-Object { $_ -cnotin $cases });

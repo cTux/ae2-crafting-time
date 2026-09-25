@@ -3,6 +3,8 @@ $ErrorActionPreference = 'Stop'
 
 $full = @(Get-UiSmokeJavaLaunchPhases -Scenario cpu-list-total-ttc)
 if (Compare-Object @(1, 2) $full -SyncWindow 0) { throw 'Full relaunch does not require exactly two Java launches' }
+$status = @(Get-UiSmokeJavaLaunchPhases -Scenario standard-status-controls)
+if (Compare-Object @(1, 2) $status -SyncWindow 0) { throw 'Status amounts do not require exactly two Java launches' }
 $suite = @(Get-UiSmokeJavaLaunchPhases -Scenario suite -ContainsCpuList)
 if (Compare-Object @(1, 2) $suite -SyncWindow 0) { throw 'A suite containing the CPU-list case does not require two Java launches' }
 $resume = @(Get-UiSmokeJavaLaunchPhases -Scenario cpu-list-total-ttc -ResumeOnly)
@@ -57,6 +59,67 @@ Assert-UiSmokeJavaPhaseIdentities -Processes $processes -ExpectedPhases $full -F
 $temp = Join-Path ([IO.Path]::GetTempPath()) ('ae2ct-relaunch-evidence-' + [guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $temp -Force | Out-Null
 try {
+    $configPath = Join-Path $temp 'client.toml'
+    $continuationPath = Join-Path $temp 'status-continuation.json'
+    [IO.File]::WriteAllText($configPath, 'compactStatusAmounts = false')
+    $continuation = @{schema=1;world='world';campaign='campaign';configSha256=(Get-FileHash $configPath).Hash}
+    $continuation | ConvertTo-Json | Set-Content -LiteralPath $continuationPath
+    Assert-UiSmokeStatusContinuation -Path $continuationPath -ConfigPath $configPath -World world -CampaignId campaign
+    foreach ($field in @('schema', 'world', 'campaign', 'configSha256')) {
+        $changed = $continuation.Clone()
+        $changed[$field] = 'wrong'
+        $changed | ConvertTo-Json | Set-Content -LiteralPath $continuationPath
+        $refused = $false
+        try { Assert-UiSmokeStatusContinuation -Path $continuationPath -ConfigPath $configPath -World world -CampaignId campaign }
+        catch { $refused = $_.Exception.Message -like '*does not match*' }
+        if (!$refused) { throw "Status continuation accepted changed $field" }
+    }
+    $continuation | ConvertTo-Json | Set-Content -LiteralPath $continuationPath
+    $refused = $false
+    try { Assert-UiSmokeStatusContinuation -Path $continuationPath -ConfigPath "$configPath.missing" -World world -CampaignId campaign }
+    catch { $refused = $_.Exception.Message -like '*does not match*' }
+    if (!$refused) { throw 'Status continuation accepted a missing config' }
+    [IO.File]::WriteAllText($configPath, 'compactStatusAmounts = true')
+    $refused = $false
+    try { Assert-UiSmokeStatusContinuation -Path $continuationPath -ConfigPath $configPath -World world -CampaignId campaign }
+    catch { $refused = $_.Exception.Message -like '*does not match*' }
+    if (!$refused) { throw 'Status continuation accepted a changed config' }
+    $capturePaths = foreach ($capture in @('status-saved-off','status-relaunch-off','status-relaunch-on','status-relaunch-restored')) {
+        foreach ($extension in @('png','json')) {
+            $capturePath = Join-Path $temp "$capture.$extension"
+            [IO.File]::WriteAllText($capturePath, 'fixture')
+            $capturePath
+        }
+    }
+    Assert-UiSmokeStatusRelaunchCaptures -Evidence $temp
+    foreach ($target in @('1.20.1-forge','1.20.1-fabric','1.21.1-neoforge','26.1.2-neoforge')) {
+        $names = @()
+        switch ($target) {
+            '1.20.1-forge' { $names = @('mana','chemical') }
+            '1.20.1-fabric' { $names = @('mana') }
+            '1.21.1-neoforge' { $names = @('chemical') }
+        }
+        @{schema=1;appbotLoaded=('mana' -in $names);appmekLoaded=('chemical' -in $names);
+            captured=@($names)} | ConvertTo-Json -Depth 3 |
+            Set-Content -LiteralPath (Join-Path $temp 'status-addon-keys.json')
+        foreach ($name in @('mana','chemical')) {
+            foreach ($capture in @("status-addon-$name", "status-addon-$name-tooltip")) {
+                foreach ($extension in @('png','json')) {
+                    [IO.File]::WriteAllText((Join-Path $temp "$capture.$extension"), 'fixture')
+                }
+            }
+        }
+        Assert-UiSmokeStatusAddonKeys -Evidence $temp -Target $target
+    }
+    foreach ($capturePath in $capturePaths) {
+        Remove-Item -LiteralPath $capturePath
+        $refused = $false
+        try { Assert-UiSmokeStatusRelaunchCaptures -Evidence $temp }
+        catch { $refused = $_.Exception.Message -like '*capture is missing*' }
+        if (!$refused) { throw "Missing status capture accepted: $capturePath" }
+        [IO.File]::WriteAllText($capturePath, 'fixture')
+    }
+    Assert-UiSmokeJavaPhaseIdentities -Processes $processes -ExpectedPhases $status -FinalApproval
     $control = Join-Path $temp 'state.properties'
     [IO.File]::WriteAllLines($control, @('schema=1', 'state=DONE'), [Text.UTF8Encoding]::new($false))
     $runtimeProcesses = @($processes | ForEach-Object {
@@ -134,7 +197,7 @@ try {
     if ($_.Exception.Message -eq 'Invalid interactive token was accepted' -or
             $_.Exception.Message -notmatch 'InteractiveToken') { throw }
 }
-if ($runner -notmatch "if \(\`$Scenario -in @\('cpu-list-total-ttc', 'recurrent-plan', 'stored-variant-plan', 'delayed-resource-icons', 'appmek-resource-icons'\) -or\s*\`$selectedCases -contains 'recurrent-plan' -or \`$selectedCases -contains 'stored-variant-plan'\) \{\s*\`$progressPath") {
+if ($runner -notmatch "if \(\`$Scenario -in @\('cpu-list-total-ttc', 'standard-status-controls', 'recurrent-plan', 'stored-variant-plan', 'delayed-resource-icons', 'appmek-resource-icons'\) -or\s*\`$selectedCases -contains 'recurrent-plan' -or \`$selectedCases -contains 'stored-variant-plan'\) \{\s*\`$progressPath") {
     throw 'The progress watchdog does not cover every CPU-list process'
 }
 $running = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test -ProcessLookup {

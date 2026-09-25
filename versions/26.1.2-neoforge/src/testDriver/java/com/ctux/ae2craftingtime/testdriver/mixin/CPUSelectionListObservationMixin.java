@@ -43,9 +43,8 @@ public abstract class CPUSelectionListObservationMixin {
         if (stale != null && menu.cpuList.cpus().stream().noneMatch(cpu -> cpu.serial() == stale)) {
             var point = ae2craftingtime_test_driver$points.get(stale);
             if (point == null) throw new IllegalStateException("stale CPU was not captured in the preceding draw");
-            var hit = hitTestCpu(point);
             ((CPUSelectionList) (Object) this).onMouseUp(point, 0);
-            CpuListInputControl.staleResult(hit == null ? null : hit.serial());
+            CpuListInputControl.staleResult(menu.getSelectedCpuSerial() == stale ? stale : null);
         }
         var wheel = CpuListInputControl.wheelSerial();
         var point = wheel == null ? null : ae2craftingtime_test_driver$points.get(wheel);

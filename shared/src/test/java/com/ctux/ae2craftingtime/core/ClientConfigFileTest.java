@@ -19,10 +19,12 @@ class ClientConfigFileTest {
         var path = directory.resolve("client.toml");
         var legacy = directory.resolve("common.toml");
         assertTrue(ClientConfigFile.load(path, legacy).features().enabled(OptionFeature.CRAFTING_TREE));
+        assertTrue(ClientConfigFile.load(path, legacy).features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
         Files.write(legacy, List.of("enabled = false", "showInTree = false"));
         var migrated = ClientConfigFile.load(path, legacy);
         assertFalse(migrated.features().enabled(OptionFeature.CRAFTING_TREE));
         assertTrue(migrated.features().enabled(OptionFeature.PLAN_ROWS));
+        assertTrue(migrated.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
     }
 
     @Test
@@ -32,6 +34,7 @@ class ClientConfigFileTest {
         Files.write(legacy, List.of("showInTree = false"));
         var config = new ClientConfig();
         config.features().setEnabled(OptionFeature.RECEIVE_CRAFT_WARNINGS, false);
+        config.features().setEnabled(OptionFeature.COMPACT_STATUS_AMOUNTS, false);
         config.setPlanSort(0);
         config.setStatusSort(1);
         config.setBadgeOpacity(0);
@@ -39,6 +42,7 @@ class ClientConfigFileTest {
         ClientConfigFile.save(path, config);
         var loaded = ClientConfigFile.load(path, legacy);
         assertFalse(loaded.features().enabled(OptionFeature.RECEIVE_CRAFT_WARNINGS));
+        assertFalse(loaded.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
         assertTrue(loaded.features().enabled(OptionFeature.CRAFTING_TREE));
         assertEquals(0, loaded.planSort());
         assertEquals(1, loaded.statusSort());

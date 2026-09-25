@@ -5,6 +5,7 @@ public enum OptionFeature {
     PLAN_ROWS(Owner.CLIENT, Group.DISPLAYS, "planRows"),
     PLAN_TOTAL(Owner.CLIENT, Group.DISPLAYS, "planTotal"),
     STATUS_ROWS(Owner.CLIENT, Group.DISPLAYS, "statusRows"),
+    COMPACT_STATUS_AMOUNTS(Owner.CLIENT, Group.DISPLAYS, "compactStatusAmounts"),
     STATUS_TOTAL(Owner.CLIENT, Group.DISPLAYS, "statusTotal"),
     CPU_CARD_TOTAL(Owner.CLIENT, Group.DISPLAYS, "cpuCardTotal"),
     CRAFTING_TREE(Owner.CLIENT, Group.DISPLAYS, "showInTree"),

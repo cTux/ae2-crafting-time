@@ -18,6 +18,14 @@ import java.util.Locale;
 import java.util.Optional;
 
 public final class TtcText {
+    public static MutableComponent statusAmounts(String amounts) {
+        return Component.translatable("text.ae2craftingtime.status.amounts", amounts);
+    }
+
+    public static MutableComponent statusAmountsLegend() {
+        return Component.translatable("text.ae2craftingtime.status.amounts_legend");
+    }
+
     public static MutableComponent recurrent(Object... arguments) {
         return Component.translatable("text.ae2craftingtime.plan.recurrent", arguments)
                 .withStyle(style -> style.withColor(ChatFormatting.RED).withBold(true));

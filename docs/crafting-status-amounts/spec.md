@@ -1,6 +1,6 @@
 # Compact crafting-status amounts
 
-Status: ready-to-implement
+Status: implemented and verified in PR #524; awaiting merge
 
 Scope: One quantity line in the native AE2 crafting-status cell.
 
@@ -9,9 +9,11 @@ Issue: [#438](https://github.com/cTux/ae2-crafting-time/issues/438)
 Planning: [Reviewed implementation plan](implementation-plan.md),
 [technical design](technical-design.md), and [research](research.md).
 
-The planning review covers consistency and source feasibility. No prototype or
-Minecraft readability test has run for this scope. The issue's runtime research
-gates remain open; merging these documents does not ship or finish the feature.
+Implementation and verification: [PR #524](https://github.com/cTux/ae2-crafting-time/pull/524).
+Four-target native item/fluid and installed addon-key evidence, connected-client
+Options checks, font and tooltip review, option relaunch, builds, and CI are
+recorded in the
+[research follow-up](research.md#implementation-verification-2026-09-25).
 
 ## Behavior
 

@@ -131,6 +131,11 @@ try {
     Assert (@($variantLanguage.targets | Where-Object { $_.cases.Count -ne 3 -or 'stored-variant-plan' -notin $_.cases -or 'recurrent-plan' -notin $_.cases -or 'standard-plan-controls' -notin $_.cases }).Count -eq 0) `
         'English stored-variant labels must select variant and native-plan regressions'
     Clean
+    Put $lang '{"text.ae2craftingtime.ttc_delayed":"DELAYED","text.ae2craftingtime.status.amounts":"%s","text.ae2craftingtime.status.amounts_legend":"A/C/S","config.ae2craftingtime.compactStatusAmounts":"Compact","other":"value"}'
+    $amountLanguage = Plan
+    Assert (@($amountLanguage.targets | Where-Object { $_.cases.Count -ne 1 -or $_.cases[0] -ne 'standard-status-controls' }).Count -eq 0) `
+        'English compact-status labels must select only the status relaunch leaf'
+    Clean
     $unicodeLanguage = '{"text.ae2craftingtime.ttc_delayed":"DELAYED","other":"value' + [char]0x2026 + '"}'
     Put $lang $unicodeLanguage
     Invoke-FixtureGit @('add','--',$lang)
@@ -173,7 +178,14 @@ try {
     $full = & $planner -Repository $temp
     $forgeGraphs = @($full.targets[0].graphs)
     $advancedGraphs = @($full.targets.graphs | Where-Object id -eq 'rxYaglEe')
-    Assert ($forgeGraphs.Count -eq 4 -and $forgeGraphs[2].cases.Count -eq 2) 'Full Forge must schedule CPU-list and newest-adapter graphs separately'
+    Assert ($forgeGraphs.Count -eq 5 -and $forgeGraphs[2].cases.Count -eq 2) 'Full Forge must schedule relaunch and newest-adapter graphs separately'
+    foreach ($entry in $full.targets) {
+        $statusGraphs = @($entry.graphs | Where-Object { 'standard-status-controls' -cin $_.cases })
+        Assert ($statusGraphs.Count -eq 1 -and $statusGraphs[0].cases.Count -eq 1) 'Status relaunch must run outside suites'
+    }
+    $statusOnly = & $planner -Repository $temp -Target '1.20.1-forge' -Scenario standard-status-controls
+    Assert ($statusOnly.targets[0].graphs.Count -eq 1) 'Focused status relaunch must not duplicate its graph'
+    Assert (!$statusOnly.targets[0].graphs[0].baseOnly) 'Focused status relaunch must use the prepared compatible catalogue'
     Assert (!$forgeGraphs[0].baseOnly) 'Full Forge primary graph must install dependencies for direct addon cases'
     Assert (@($forgeGraphs | Where-Object { $_.baseOnly -and $_.cases.Count -eq 1 -and $_.cases[0] -eq 'cpu-list-total-ttc' }).Count -eq 1) `
         'Full Forge must isolate the CPU-list relaunch in one base-only graph'

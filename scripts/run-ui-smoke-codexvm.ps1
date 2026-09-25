@@ -97,7 +97,11 @@ if ($Stop) {
 # directory creation or Java setup can touch another connected campaign.
 $stageReports = Join-Path $stage 'reports'
 $ledgers = if (Test-Path -LiteralPath $stageReports) {
-    @(Get-ChildItem -LiteralPath $stageReports -Recurse -File -Filter '*-connected-status.json' -ErrorAction Stop)
+    @(foreach ($targetReports in Get-ChildItem -LiteralPath $stageReports -Directory -ErrorAction Stop) {
+        foreach ($profileReports in Get-ChildItem -LiteralPath $targetReports.FullName -Directory -ErrorAction Stop) {
+            Get-ChildItem -LiteralPath $profileReports.FullName -File -Filter '*-connected-status.json' -ErrorAction Stop
+        }
+    })
 } else { @() }
 foreach ($ledger in $ledgers) {
     $previous = Get-Content -LiteralPath $ledger.FullName -Raw | ConvertFrom-Json

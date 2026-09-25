@@ -68,6 +68,11 @@ final class CpuListTtcScenario {
     private long replacedElapsed;
     private boolean opening;
     private long openAttemptedAt;
+    private int amountOptionStep;
+    private long amountOptionFrame;
+    private byte[] amountOptionServerSnapshot;
+    private boolean amountOptionSaving;
+    private boolean amountOptionMouseCleared;
     private boolean reconnectRequested;
     private boolean continuationWritten;
     private boolean crazyPriorityChanged;
@@ -693,11 +698,86 @@ final class CpuListTtcScenario {
                 next(nextStage);
             }
             case DONE -> {
+                if (connectedDedicated && !nonOperatorAmounts(minecraft, screenshot, moveMouse)) return false;
                 if (connectedDedicated && !CpuListTtcControl.request("complete")) return false;
                 return true;
             }
             default -> { }
         }
+        return false;
+    }
+
+    private boolean nonOperatorAmounts(Minecraft minecraft, Consumer<String> screenshot,
+            BiConsumer<Integer, Integer> moveMouse) {
+        if (amountOptionStep == 2) return true;
+        if (TestDriverRuntime.renderedFrames < amountOptionFrame) return false;
+        var snapshot = com.ctux.ae2craftingtime.mc1201.ClientServerOptions.snapshot();
+        if (snapshot == null) return false;
+        if (snapshot.editable()) throw new IllegalStateException("Compact option check requires a real non-operator connection");
+        var encoded = com.ctux.ae2craftingtime.core.ServerOptionsWire.encode(snapshot);
+        if (amountOptionServerSnapshot == null) amountOptionServerSnapshot = encoded;
+        if (!java.util.Arrays.equals(encoded, amountOptionServerSnapshot))
+            throw new IllegalStateException("Client compact option changed the server options");
+        boolean expected = amountOptionStep == 1;
+        if (!(minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen)) {
+            if (amountOptionSaving) {
+                if (com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().features()
+                        .enabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS) != expected)
+                    throw new IllegalStateException("Non-operator compact option did not save");
+                screenshot.accept("status-nonop-saved-" + (expected ? "on" : "off") + ".png");
+                amountOptionSaving = false;
+                if (++amountOptionStep == 2) {
+                    var result = new com.google.gson.JsonObject();
+                    result.addProperty("schema", 1);
+                    result.addProperty("world", world);
+                    result.addProperty("campaign", System.getProperty("ae2craftingtime.test.campaign", "local"));
+                    result.addProperty("editable", false);
+                    result.addProperty("offSaved", true);
+                    result.addProperty("onSaved", true);
+                    result.addProperty("serverSnapshotSha256", CaptureEvidence.sha256(encoded));
+                    try {
+                        java.nio.file.Files.writeString(evidence.resolveSibling("status-nonop-options.json"), result.toString());
+                    } catch (java.io.IOException error) {
+                        throw new IllegalStateException("Cannot retain non-operator options evidence", error);
+                    }
+                    return true;
+                }
+            }
+            minecraft.setScreen(new com.ctux.ae2craftingtime.mc1201.OptionsScreen(minecraft.screen));
+            amountOptionFrame = TestDriverRuntime.renderedFrames + 3;
+            return false;
+        }
+        if (TestDriverRuntime.renderedFrames < amountOptionFrame) return false;
+        var label = net.minecraft.client.resources.language.I18n.get("config.ae2craftingtime.compactStatusAmounts") + ": ";
+        var buttons = minecraft.screen.children().stream().filter(net.minecraft.client.gui.components.Button.class::isInstance)
+                .map(net.minecraft.client.gui.components.Button.class::cast).toList();
+        var toggle = buttons.stream().filter(button -> button.getMessage().getString().startsWith(label)).findFirst().orElse(null);
+        String action;
+        if (toggle == null) action = ">";
+        else {
+            if (!toggle.active) throw new IllegalStateException("Non-operator compact option is disabled");
+            boolean enabled = toggle.getMessage().getString().endsWith(net.minecraft.client.resources.language.I18n.get("options.on"));
+            if (enabled != expected) {
+                DriverPlatform.click(minecraft, toggle.getX() + 4, toggle.getY() + 4);
+                amountOptionMouseCleared = false;
+                amountOptionFrame = TestDriverRuntime.renderedFrames + 3;
+                return false;
+            }
+            if (!amountOptionMouseCleared) {
+                moveMouse.accept(0, 0);
+                amountOptionMouseCleared = true;
+                amountOptionFrame = TestDriverRuntime.renderedFrames + 2;
+                return false;
+            }
+            screenshot.accept("status-nonop-option-" + (expected ? "on" : "off") + ".png");
+            amountOptionMouseCleared = false;
+            action = net.minecraft.client.resources.language.I18n.get("gui.done");
+            amountOptionSaving = true;
+        }
+        var button = buttons.stream().filter(value -> value.getMessage().getString().equals(action)).findFirst()
+                .orElseThrow(() -> new IllegalStateException("Non-operator option control missing: " + action));
+        DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+        amountOptionFrame = TestDriverRuntime.renderedFrames + 3;
         return false;
     }
 

@@ -40,7 +40,7 @@ final class StandardAe2Scenario {
                     "exact-clear", "restored-near", "gold-normal", "variant-tooltip", "unchanged-plan",
                     "variant-sorts", "variant-layout", "exact-only", "other-item", "ordinary-clear",
                     "fluid-clear", "coexistence", "notification-lifecycle", "watcher-cleanup")),
-            Map.entry("standard-status-controls", List.of("submitted", "status", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout")),
+            Map.entry("standard-status-controls", List.of("submitted", "status", "quantity-cases", "addon-key-status", "amount-scales", "amount-options", "server-profiling-off", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout")),
             Map.entry("waiting-status", List.of("submitted", "waiting", "first-dispatch", "recovered", "layout")),
             Map.entry("running-status", List.of("submitted", "running", "progress", "header", "layout")),
             Map.entry("cpu-list-total-ttc", CpuListTtcScenario.CHECKS),
@@ -50,16 +50,21 @@ final class StandardAe2Scenario {
             Map.entry("craft-lifecycle", List.of("plan", "submitted", "status", "profile-sample", "total-cleared", "completed", "output",
                     "plan-no-data", "plan-partial", "accuracy-full", "accuracy-partial", "details-chat")));
     private enum Stage { PREPARE, TERMINAL, AMOUNT, PLAN_SORT, PLAN_TOOLTIP, PLAN_DETAILS, PLAN_RESET,
-        SUBMIT, OPEN_STATUS, ACTIVE, STATUS_SORT, STATUS_TOOLTIP, STATUS_DETAILS, STATUS_RESET,
+        SUBMIT, OPEN_STATUS, ACTIVE, STATUS_AMOUNTS, STATUS_ADDON_AMOUNTS, STATUS_SCALES, STATUS_OPTIONS, STATUS_SORT, STATUS_TOOLTIP, STATUS_DETAILS, STATUS_RESET,
         RESTORE, DELAYED, OVERLAP_POSITION, OVERLAP_HIGHLIGHT, OVERLAP_RELEASE, OVERLAP_RECOVERY, OVERLAP_FINISH,
         OVERLAP_REOPEN,
         PUMP, FINISHED, REOPEN, EMPTY, WORLD_POSITION, WORLD_HIGHLIGHT, WORLD_RELEASE, WORLD_FINISHED,
         GALLERY_PARTIAL_PLAN, GALLERY_PROFILED_PLAN, GALLERY_DETAILS, GALLERY_CHAT, GALLERY_NEXT_JOB,
-        CPU_LIST_REOPEN, CPU_LIST_REOPENED }
+        CPU_LIST_REOPEN, CPU_LIST_REOPENED, STATUS_SERVER_OFF, STATUS_PERSIST, STATUS_RELAUNCH }
     private final String leaf;
     private final StandardCraftFixture fixture = new StandardCraftFixture();
     private final CpuListTtcScenario cpuList;
     private final boolean connectedDedicated;
+    private final String world;
+    private final java.nio.file.Path output;
+    private final List<String> resultScreenshots;
+    private final AmountContinuation amountContinuation;
+    private List<StandardCraftFixture.AddonQuantityCase> addonQuantityCases = List.of();
     StandardAe2Scenario(String leaf, String world, java.nio.file.Path output, boolean connectedDedicated) {
         this(leaf, world, output, connectedDedicated, new java.util.ArrayList<>());
     }
@@ -67,6 +72,18 @@ final class StandardAe2Scenario {
             List<String> resultScreenshots) {
         if (!CHECKS.containsKey(leaf)) throw new IllegalArgumentException("Unknown standard leaf: " + leaf);
         this.leaf = leaf;
+        this.world = world;
+        this.output = output;
+        this.resultScreenshots = resultScreenshots;
+        var continuationPath = leaf.equals("standard-status-controls")
+                && Boolean.getBoolean("ae2craftingtime.test.statusRelaunch")
+                ? System.getProperty("ae2craftingtime.test.continuation", "") : "";
+        amountContinuation = continuationPath.isBlank() ? null : readAmountContinuation(
+                java.nio.file.Path.of(continuationPath), world);
+        if (amountContinuation != null) {
+            resultScreenshots.addAll(amountContinuation.screenshots());
+            phase = Stage.STATUS_RELAUNCH;
+        }
         StoredVariantObservation.enable(leaf.equals("stored-variant-plan"));
         this.connectedDedicated = connectedDedicated;
         recurrenceAddonRoute = connectedDedicated && leaf.equals("recurrent-plan") && RecurrentCampaign.addonRoute(
@@ -82,6 +99,39 @@ final class StandardAe2Scenario {
     private Stage reportedPhase;
     private String reportedCheckpoint;
     private int sort;
+    private int quantityCase;
+    private boolean quantityHovered;
+    private int addonQuantityCase;
+    private boolean addonQuantityBadgeCaptured;
+    private long addonQuantityBadgeFrame;
+    private boolean addonQuantityHovered;
+    private appeng.menu.me.crafting.CraftingStatus realStatus;
+    private int amountOptionCase;
+    private boolean amountOptionOpen;
+    private boolean amountOptionSaving;
+    private int amountOptionSavingTicks;
+    private boolean amountOptionSeenCompact;
+    private boolean amountOptionSeenTime;
+    private int amountOptionOperationStep;
+    private int quantityScaleCase;
+    private boolean quantityScaleSet;
+    private int originalGuiScale;
+    private int defaultAmountFontWidth;
+    private int amountFontMode;
+    private CompletableFuture<Void> amountFontReload;
+    private java.util.Collection<String> originalResourcePacks;
+    private boolean amountPersistOpen;
+    private boolean amountServerOffApplied;
+    private boolean amountServerOffCaptured;
+    private boolean amountOriginalProfiling;
+    private boolean amountPersistSaving;
+    private boolean amountContinuationWritten;
+    private boolean amountResumeOpened;
+    private boolean amountResumeOffCaptured;
+    private boolean amountResumeOnCaptured;
+    private boolean amountResumeSaving;
+    private boolean amountResumeChecksRestored;
+    private long amountOptionRenderedAfter;
     private boolean partialJob;
     private boolean reviewJob;
     private boolean chatCleared;
@@ -169,6 +219,7 @@ final class StandardAe2Scenario {
             reportedPhase = phase;
             reportedCheckpoint = currentCheckpoint;
         }
+        if (phase == Stage.STATUS_RELAUNCH) return statusRelaunchTick(minecraft, checks, screenshot);
         if (leaf.equals("stored-variant-plan") && connectedDedicated && variantLifecycle == 3) {
             if (minecraft.screen instanceof CraftConfirmScreen) return false;
             if (!StoredVariantControl.request("cancel", minecraft.player.getUUID(), variantSecondMenu,
@@ -471,6 +522,8 @@ final class StandardAe2Scenario {
             return false;
         }
         var snapshot = UiObservationStore.latest();
+        boolean optionsVisible = (phase == Stage.STATUS_OPTIONS || phase == Stage.STATUS_PERSIST)
+                && minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen;
         if (leaf.equals("stored-variant-plan") && phase == Stage.PLAN_SORT && variantStep > 0
                 && System.nanoTime() >= variantNextDiagnosticAt) {
             variantNextDiagnosticAt = System.nanoTime() + 10_000_000_000L;
@@ -483,15 +536,17 @@ final class StandardAe2Scenario {
                             "text.ae2craftingtime.plan.stored_variant")),
                     menu == null ? "menu=absent" : StoredVariantObservation.diagnostic(menu));
         }
-        if (snapshot == null || snapshot.frame() == lastFrame) return false;
-        lastFrame = snapshot.frame();
-        if (phase == Stage.PLAN_SORT && leaf.equals("standard-plan-controls") && !planEstimatesReady(snapshot.rows())) {
-            frames.reset();
-            return false;
+        if (!optionsVisible) {
+            if (snapshot == null || snapshot.frame() == lastFrame) return false;
+            lastFrame = snapshot.frame();
+            if (phase == Stage.PLAN_SORT && leaf.equals("standard-plan-controls") && !planEstimatesReady(snapshot.rows())) {
+                frames.reset();
+                return false;
+            }
+            var planDescriptions = leaf.equals("craft-lifecycle") && minecraft.screen instanceof CraftConfirmScreen
+                    ? snapshot.rows().stream().map(UiSnapshot.Row::description).toList() : List.of();
+            if (!frames.observe(List.of(phase, sort, CaptureEvidence.readiness(snapshot), planDescriptions))) return false;
         }
-        var planDescriptions = leaf.equals("craft-lifecycle") && minecraft.screen instanceof CraftConfirmScreen
-                ? snapshot.rows().stream().map(UiSnapshot.Row::description).toList() : List.of();
-        if (!frames.observe(List.of(phase, sort, CaptureEvidence.readiness(snapshot), planDescriptions))) return false;
         if (phase == Stage.PLAN_SORT && leaf.equals("stored-variant-plan")) {
             if (!(minecraft.screen instanceof CraftConfirmScreen screen)) return false;
             var menu = screen.getMenu();
@@ -931,7 +986,16 @@ final class StandardAe2Scenario {
             if (!(minecraft.screen instanceof CraftingStatusScreen)) return false;
             var waiting = rowText(snapshot, "minecraft:smooth_stone", "text.ae2craftingtime.waiting");
             var running = rowText(snapshot, "minecraft:stone", "text.ae2craftingtime.ttc");
-            if (leaf.equals("standard-status-controls")) { phase = Stage.STATUS_SORT; return false; }
+            if (leaf.equals("standard-status-controls")) {
+                addonQuantityCases = StandardCraftFixture.addonQuantityCases();
+                var accessor = (com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen;
+                realStatus = accessor.ae2craftingtime_test_driver$status();
+                accessor.ae2craftingtime_test_driver$setStatus(StandardCraftFixture.quantityStatus(quantityCase));
+                moveMouse.accept(0, 0);
+                phase = Stage.STATUS_AMOUNTS;
+                frames.reset();
+                return false;
+            }
             if (leaf.equals("craft-lifecycle")) {
                 mark(checks, "status", true);
                 screenshot.accept(partialJob ? "status-partial-job.png" : "status-default.png");
@@ -945,6 +1009,469 @@ final class StandardAe2Scenario {
                 screenshot.accept("status-waiting-running.png");
                 phase = Stage.PUMP;
             }
+        } else if (phase == Stage.STATUS_AMOUNTS) {
+            if (!(minecraft.screen instanceof CraftingStatusScreen)) return false;
+            var expected = StandardCraftFixture.quantityStatus(quantityCase).getEntries().get(0);
+            var row = snapshot.rows().stream().filter(value -> value.outputId().equals(expected.getWhat().getId().toString())
+                    && value.storedAmount() == expected.getStoredAmount()
+                    && value.activeAmount() == expected.getActiveAmount()
+                    && value.pendingAmount() == expected.getPendingAmount()).findFirst().orElse(null);
+            if (row == null) {
+                ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
+                        .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.quantityStatus(quantityCase));
+                frames.reset();
+                return false;
+            }
+            var amountLines = row.description().stream()
+                    .filter(text -> text.key().equals("text.ae2craftingtime.status.amounts")).toList();
+            boolean empty = quantityCase == 7;
+            if (amountLines.size() != (empty ? 0 : 1))
+                throw new IllegalStateException("Synthetic native amount case " + quantityCase + " has " + amountLines);
+            if (!empty) {
+                var summary = amountLines.get(0);
+                String amount = quantityCase < 8 ? List.of("4/10/200", "-/10/200", "10/-/200", "4/10/-",
+                        "A10", "C10", "S10").get(quantityCase) :
+                        String.join("/", expected.getWhat().formatAmount(expected.getStoredAmount(), appeng.api.stacks.AmountFormat.SLOT),
+                                expected.getWhat().formatAmount(expected.getActiveAmount(), appeng.api.stacks.AmountFormat.SLOT),
+                                expected.getWhat().formatAmount(expected.getPendingAmount(), appeng.api.stacks.AmountFormat.SLOT));
+                if (!summary.arguments().equals(List.of(amount)) || summary.bold())
+                    throw new IllegalStateException("Synthetic native amount case " + quantityCase + " text " + summary);
+                var ttc = row.description().stream().filter(text ->
+                        com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(text.key())
+                        && !text.key().equals("text.ae2craftingtime.status.amounts")).findFirst();
+                int color = ttc.isPresent() && ttc.get().color() != null ? ttc.get().color()
+                        : com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current()
+                                .color(com.ctux.ae2craftingtime.core.ClientConfig.Color.TOTAL);
+                if (!java.util.Objects.equals(summary.color(), color) || !LayoutValidator.validateBadges(snapshot).isEmpty())
+                    throw new IllegalStateException("Synthetic native amount case " + quantityCase + " color/layout " + summary);
+            }
+            if (!quantityHovered) {
+                moveMouse.accept(row.cell().centerX(), row.cell().centerY());
+                quantityHovered = true;
+                frames.reset();
+                return false;
+            }
+            if (snapshot.tooltip().isEmpty()) return false;
+            if (snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.status.amounts_legend")) == empty)
+                throw new IllegalStateException("Synthetic native amount case " + quantityCase + " lost tooltip legend");
+            var labels = List.of(appeng.core.localization.GuiText.FromStorage,
+                    appeng.core.localization.GuiText.Crafting, appeng.core.localization.GuiText.Scheduled);
+            long[] raw = {expected.getStoredAmount(), expected.getActiveAmount(), expected.getPendingAmount()};
+            for (int category = 0; category < raw.length; category++) {
+                var label = (net.minecraft.network.chat.contents.TranslatableContents)
+                        labels.get(category).text("").getContents();
+                String full = raw[category] > 0 ? expected.getWhat().formatAmount(raw[category],
+                        appeng.api.stacks.AmountFormat.FULL) : null;
+                final int nativeCategory = category;
+                if (snapshot.tooltip().stream().anyMatch(text -> text.key().equals(label.getKey())
+                        && full != null && text.arguments().contains(full)) != (full != null))
+                    throw new IllegalStateException("Synthetic native amount case " + quantityCase
+                            + " lost full tooltip category " + nativeCategory + "=" + full);
+            }
+            screenshot.accept("status-amounts-" + quantityCase + ".png");
+            if (++quantityCase < StandardCraftFixture.QUANTITY_CASES) {
+                ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
+                        .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.quantityStatus(quantityCase));
+                quantityHovered = false;
+                moveMouse.accept(0, 0);
+                frames.reset();
+                return false;
+            }
+            ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
+                    .ae2craftingtime_test_driver$setStatus(addonQuantityCases.isEmpty()
+                            ? StandardCraftFixture.quantityStatus(8)
+                            : StandardCraftFixture.addonQuantityStatus(addonQuantityCases.get(0)));
+            originalGuiScale = minecraft.options.guiScale().get();
+            mark(checks, "quantity-cases", true);
+            if (addonQuantityCases.isEmpty()) {
+                writeAddonKeyEvidence();
+                mark(checks, "addon-key-status", true);
+                phase = Stage.STATUS_SCALES;
+            } else {
+                moveMouse.accept(0, 0);
+                phase = Stage.STATUS_ADDON_AMOUNTS;
+            }
+            frames.reset();
+        } else if (phase == Stage.STATUS_ADDON_AMOUNTS) {
+            if (!(minecraft.screen instanceof CraftingStatusScreen)) return false;
+            var addon = addonQuantityCases.get(addonQuantityCase);
+            var expected = StandardCraftFixture.addonQuantityStatus(addon).getEntries().get(0);
+            var row = snapshot.rows().stream().filter(value -> value.outputId().equals(expected.getWhat().getId().toString())
+                    && value.storedAmount() == addon.stored() && value.activeAmount() == addon.active()
+                    && value.pendingAmount() == addon.pending())
+                    .findFirst().orElse(null);
+            if (row == null) {
+                ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
+                        .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.addonQuantityStatus(addon));
+                frames.reset();
+                return false;
+            }
+            var summary = row.description().stream().filter(value -> value.key().equals(
+                    "text.ae2craftingtime.status.amounts")).findFirst().orElse(null);
+            var key = expected.getWhat();
+            var slot = java.util.List.of(addon.stored(), addon.active(), addon.pending()).stream()
+                    .map(value -> key.formatAmount(value, appeng.api.stacks.AmountFormat.SLOT)).toList();
+            if (summary == null || !summary.arguments().equals(List.of(String.join("/", slot)))
+                    || summary.bold() || !LayoutValidator.validateBadges(snapshot).isEmpty())
+                throw new IllegalStateException("Addon " + addon.name() + " lost native SLOT amounts or badge bounds");
+            if (!addonQuantityBadgeCaptured) {
+                moveMouse.accept(0, 0);
+                screenshot.accept("status-addon-" + addon.name() + ".png");
+                addonQuantityBadgeCaptured = true;
+                addonQuantityBadgeFrame = TestDriverRuntime.renderedFrames + 2;
+                frames.reset();
+                return false;
+            }
+            if (TestDriverRuntime.renderedFrames < addonQuantityBadgeFrame) return false;
+            if (!addonQuantityHovered) {
+                moveMouse.accept(row.cell().centerX(), row.cell().centerY());
+                addonQuantityHovered = true;
+                frames.reset();
+                return false;
+            }
+            if (snapshot.tooltip().isEmpty()) return false;
+            if (snapshot.tooltip().stream().noneMatch(value -> value.key().equals(
+                    "text.ae2craftingtime.status.amounts_legend")))
+                throw new IllegalStateException("Addon " + addon.name() + " lost amount legend");
+            var labels = List.of(appeng.core.localization.GuiText.FromStorage,
+                    appeng.core.localization.GuiText.Crafting, appeng.core.localization.GuiText.Scheduled);
+            long[] raw = {addon.stored(), addon.active(), addon.pending()};
+            for (int category = 0; category < raw.length; category++) {
+                String label = ((net.minecraft.network.chat.contents.TranslatableContents)
+                        labels.get(category).text("").getContents()).getKey();
+                String full = key.formatAmount(raw[category], appeng.api.stacks.AmountFormat.FULL);
+                if (snapshot.tooltip().stream().noneMatch(value -> value.key().equals(label)
+                        && value.arguments().contains(full)))
+                    throw new IllegalStateException("Addon " + addon.name() + " lost native FULL tooltip " + label);
+            }
+            screenshot.accept("status-addon-" + addon.name() + "-tooltip.png");
+            moveMouse.accept(0, 0);
+            if (++addonQuantityCase < addonQuantityCases.size()) {
+                addonQuantityBadgeCaptured = false;
+                addonQuantityHovered = false;
+                ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
+                        .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.addonQuantityStatus(
+                                addonQuantityCases.get(addonQuantityCase)));
+                frames.reset();
+                return false;
+            }
+            writeAddonKeyEvidence();
+            mark(checks, "addon-key-status", true);
+            ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
+                    .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.quantityStatus(8));
+            phase = Stage.STATUS_SCALES;
+            frames.reset();
+        } else if (phase == Stage.STATUS_SCALES) {
+            if (!(minecraft.screen instanceof CraftingStatusScreen)) return false;
+            if (amountFontReload != null) {
+                if (!amountFontReload.isDone()) return false;
+                amountFontReload.join();
+                amountFontReload = null;
+                frames.reset();
+                if (amountFontMode == 1 && minecraft.font.width(com.ctux.ae2craftingtime.mc1201.TtcText
+                        .statusAmounts("4/10/200")) <= defaultAmountFontWidth)
+                    throw new IllegalStateException("Uniform status font is not wider than the default font");
+                if (amountFontMode == 2) {
+                    minecraft.options.guiScale().set(originalGuiScale);
+                    DriverPlatform.resizeDisplay(minecraft);
+                    ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
+                            .ae2craftingtime_test_driver$setStatus(realStatus);
+                    realStatus = null;
+                    mark(checks, "amount-scales", true);
+                    phase = Stage.STATUS_OPTIONS;
+                }
+                return false;
+            }
+            int requested = quantityScaleCase == 2 ? 0 : quantityScaleCase + 1;
+            if (!quantityScaleSet) {
+                minecraft.options.guiScale().set(requested);
+                DriverPlatform.resizeDisplay(minecraft);
+                quantityScaleSet = true;
+                frames.reset();
+                return false;
+            }
+            var row = snapshot.rows().stream().filter(value -> value.storedAmount() == 1_000_000_000L
+                    && value.activeAmount() == 2_000_000_000L && value.pendingAmount() == 3_000_000_000L)
+                    .findFirst().orElse(null);
+            if (row == null) {
+                ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
+                        .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.quantityStatus(8));
+                frames.reset();
+                return false;
+            }
+            if (snapshot.guiScale() <= 0 || requested > 0 && snapshot.guiScale() != requested) return false;
+            var amount = row.description().stream().filter(text -> text.key().equals("text.ae2craftingtime.status.amounts"))
+                    .findFirst().orElse(null);
+            if (amount == null || amount.bounds() == null || !amount.bounds().inside(row.cell())
+                    || !LayoutValidator.validateBadges(snapshot).isEmpty())
+                throw new IllegalStateException("Scaled amount badge escapes its native cell: " + amount);
+            screenshot.accept("status-scale-" + (amountFontMode == 0 ? "default" : "wide") + "-"
+                    + (requested == 0 ? "auto" : requested) + ".png");
+            if (++quantityScaleCase < 3) {
+                quantityScaleSet = false;
+                frames.reset();
+                return false;
+            }
+            var packs = minecraft.getResourcePackRepository();
+            if (amountFontMode == 0) {
+                defaultAmountFontWidth = minecraft.font.width(com.ctux.ae2craftingtime.mc1201.TtcText
+                        .statusAmounts("4/10/200"));
+                originalResourcePacks = List.copyOf(packs.getSelectedIds());
+                packs.reload();
+                if (!packs.getAvailableIds().contains("file/ae2ct-status-wide")
+                        || !packs.addPack("file/ae2ct-status-wide"))
+                    throw new IllegalStateException("Disposable uniform-font pack was not staged");
+                amountFontMode = 1;
+                quantityScaleCase = 0;
+                quantityScaleSet = false;
+            } else {
+                packs.setSelected(originalResourcePacks);
+                amountFontMode = 2;
+            }
+            amountFontReload = minecraft.reloadResourcePacks();
+            frames.reset();
+        } else if (phase == Stage.STATUS_OPTIONS) {
+            boolean compact = amountOptionCase == 1 || amountOptionCase >= 3;
+            boolean time = amountOptionCase == 0 || amountOptionCase >= 3;
+            if (minecraft.screen instanceof CraftingStatusScreen statusScreen) {
+                if (amountOptionSaving) {
+                    var features = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().features();
+                    if (features.enabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS) != compact
+                            || features.enabled(com.ctux.ae2craftingtime.core.OptionFeature.STATUS_ROWS) != time)
+                        throw new IllegalStateException("Saved amount option combination " + amountOptionCase + " differs");
+                    var row = snapshot.rows().stream().filter(value -> value.storedAmount() > 0
+                            || value.activeAmount() > 0 || value.pendingAmount() > 0).findFirst().orElse(null);
+                    if (row == null) return false;
+                    boolean hasSummary = row.description().stream().anyMatch(value -> value.key().equals(
+                            "text.ae2craftingtime.status.amounts"));
+                    if (hasSummary != compact)
+                        throw new IllegalStateException("Amount option combination " + amountOptionCase + " rendered " + row.description());
+                    var nativeKeys = List.of(appeng.core.localization.GuiText.FromStorage,
+                            appeng.core.localization.GuiText.Crafting, appeng.core.localization.GuiText.Scheduled)
+                            .stream().map(label -> ((net.minecraft.network.chat.contents.TranslatableContents)
+                                    label.text("").getContents()).getKey()).toList();
+                    long[] raw = {row.storedAmount(), row.activeAmount(), row.pendingAmount()};
+                    for (int category = 0; category < raw.length; category++) {
+                        String key = nativeKeys.get(category);
+                        int visible = (int) row.description().stream().filter(value -> value.key().equals(key)).count();
+                        if (visible != (!compact && raw[category] > 0 ? 1 : 0))
+                            throw new IllegalStateException("Amount option combination " + amountOptionCase
+                                    + " native category " + key + " count " + visible);
+                    }
+                    if (!time && row.description().stream().anyMatch(value ->
+                            com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(value.key())
+                                    && !value.key().equals("text.ae2craftingtime.status.amounts")))
+                        throw new IllegalStateException("TTC-off amount option rendered a status badge");
+                    screenshot.accept("status-options-" + amountOptionCase + ".png");
+                    amountOptionCase++;
+                    amountOptionSaving = false;
+                    amountOptionSavingTicks = 0;
+                    amountOptionOpen = false;
+                    amountOptionSeenCompact = false;
+                    amountOptionSeenTime = false;
+                    amountOptionOperationStep = 0;
+                    amountOptionRenderedAfter = 0;
+                    if (amountOptionCase == 7) {
+                        mark(checks, "amount-options", true);
+                        phase = Stage.STATUS_SORT;
+                        frames.reset();
+                        return false;
+                    }
+                }
+                if (!amountOptionOpen) {
+                    minecraft.setScreen(new com.ctux.ae2craftingtime.mc1201.OptionsScreen(statusScreen));
+                    amountOptionOpen = true;
+                    amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+                    frames.reset();
+                } else if (!amountOptionSaving && TestDriverRuntime.renderedFrames >= amountOptionRenderedAfter) {
+                    throw new IllegalStateException("Amount options screen closed before save: case=" + amountOptionCase);
+                }
+                return false;
+            }
+            if (!(minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen)
+                    || TestDriverRuntime.renderedFrames < amountOptionRenderedAfter) return false;
+            if (amountOptionSaving) {
+                if (++amountOptionSavingTicks > 100)
+                    throw new IllegalStateException("Amount option save did not close screen: case=" + amountOptionCase
+                            + " controls=" + minecraft.screen.children().stream()
+                            .filter(net.minecraft.client.gui.components.Button.class::isInstance)
+                            .map(net.minecraft.client.gui.components.Button.class::cast)
+                            .map(button -> button.getMessage().getString() + " active=" + button.active)
+                            .toList());
+                return false;
+            }
+            String compactLabel = net.minecraft.client.resources.language.I18n.get(
+                    "config.ae2craftingtime.compactStatusAmounts");
+            String timeLabel = net.minecraft.client.resources.language.I18n.get("config.ae2craftingtime.statusRows");
+            String enabledLabel = net.minecraft.client.resources.language.I18n.get("options.on");
+            if (amountOptionCase >= 4) {
+                var compactButton = minecraft.screen.children().stream()
+                        .filter(net.minecraft.client.gui.components.Button.class::isInstance)
+                        .map(net.minecraft.client.gui.components.Button.class::cast)
+                        .filter(button -> button.getMessage().getString().startsWith(compactLabel + ": "))
+                        .findFirst().orElse(null);
+                if (compactButton == null) {
+                    var next = minecraft.screen.children().stream()
+                            .filter(net.minecraft.client.gui.components.Button.class::isInstance)
+                            .map(net.minecraft.client.gui.components.Button.class::cast)
+                            .filter(button -> button.getMessage().getString().equals(">"))
+                            .findFirst().orElseThrow(() -> new IllegalStateException("Compact option page is missing"));
+                    DriverPlatform.click(minecraft, next.getX() + 4, next.getY() + 4);
+                    amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+                    frames.reset();
+                    return false;
+                }
+                if (amountOptionOperationStep == 0) {
+                    if (!compactButton.getMessage().getString().endsWith(enabledLabel))
+                        throw new IllegalStateException("Compact option must start enabled for reset/cancel");
+                    DriverPlatform.click(minecraft, compactButton.getX() + 4, compactButton.getY() + 4);
+                    amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+                    amountOptionOperationStep = 1;
+                    frames.reset();
+                    return false;
+                }
+                if (amountOptionOperationStep == 1) {
+                    if (compactButton.getMessage().getString().endsWith(enabledLabel)) return false;
+                    String actionKey = amountOptionCase == 4 ? "gui.cancel" : amountOptionCase == 5
+                            ? "config.ae2craftingtime.reset_group" : "config.ae2craftingtime.reset_all";
+                    var action = minecraft.screen.children().stream()
+                            .filter(net.minecraft.client.gui.components.Button.class::isInstance)
+                            .map(net.minecraft.client.gui.components.Button.class::cast)
+                            .filter(button -> button.getMessage().getString().equals(
+                                    net.minecraft.client.resources.language.I18n.get(actionKey)))
+                            .findFirst().orElseThrow(() -> new IllegalStateException("Option action missing: " + actionKey));
+                    DriverPlatform.click(minecraft, action.getX() + 4, action.getY() + 4);
+                    amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+                    amountOptionOperationStep = 2;
+                    if (amountOptionCase == 4) amountOptionSaving = true;
+                    frames.reset();
+                    return false;
+                }
+                if (compactButton.getMessage().getString().endsWith(enabledLabel)) {
+                    var done = minecraft.screen.children().stream()
+                            .filter(net.minecraft.client.gui.components.Button.class::isInstance)
+                            .map(net.minecraft.client.gui.components.Button.class::cast)
+                            .filter(button -> button.getMessage().getString().equals(
+                                    net.minecraft.client.resources.language.I18n.get("gui.done")))
+                            .findFirst().orElseThrow(() -> new IllegalStateException("Done option is missing"));
+                    amountOptionSaving = true;
+                    DriverPlatform.click(minecraft, done.getX() + 4, done.getY() + 4);
+                    amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+                    frames.reset();
+                }
+                return false;
+            }
+            for (var child : minecraft.screen.children()) {
+                if (!(child instanceof net.minecraft.client.gui.components.Button button)) continue;
+                String label = button.getMessage().getString();
+                if (label.startsWith(compactLabel + ": ")) {
+                    amountOptionSeenCompact = true;
+                    if (label.endsWith(enabledLabel) != compact) {
+                        DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+                        amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+                        frames.reset();
+                        return false;
+                    }
+                } else if (label.startsWith(timeLabel + ": ")) {
+                    amountOptionSeenTime = true;
+                    if (label.endsWith(enabledLabel) != time) {
+                        DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+                        amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+                        frames.reset();
+                        return false;
+                    }
+                }
+            }
+            var action = minecraft.screen.children().stream().filter(net.minecraft.client.gui.components.Button.class::isInstance)
+                    .map(net.minecraft.client.gui.components.Button.class::cast)
+                    .filter(button -> button.getMessage().getString().equals(amountOptionSeenCompact && amountOptionSeenTime
+                            ? net.minecraft.client.resources.language.I18n.get("gui.done") : ">"))
+                    .findFirst().orElseThrow(() -> new IllegalStateException("Amount options control is missing"));
+            if (amountOptionSeenCompact && amountOptionSeenTime) amountOptionSaving = true;
+            DriverPlatform.click(minecraft, action.getX() + 4, action.getY() + 4);
+            amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+            frames.reset();
+        } else if (phase == Stage.STATUS_SERVER_OFF) {
+            if (!amountServerOffApplied) {
+                if (!server(minecraft, player -> {
+                    var config = com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.current();
+                    amountOriginalProfiling = config.features().enabled(com.ctux.ae2craftingtime.core.OptionFeature.PROFILING);
+                    config.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.PROFILING, false);
+                    ProfilerBridge.configure(config);
+                    com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.sendTo(player);
+                    return true;
+                })) return false;
+                amountServerOffApplied = true;
+                frames.reset();
+                return false;
+            }
+            if (!amountServerOffCaptured) {
+                if (com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.profilingEnabled()) return false;
+                var descriptions = snapshot.rows().stream().flatMap(row -> row.description().stream()).toList();
+                if (descriptions.stream().noneMatch(text -> text.key().equals("text.ae2craftingtime.status.amounts"))) return false;
+                if (descriptions.stream().anyMatch(text -> com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(text.key())
+                        && !text.key().equals("text.ae2craftingtime.status.amounts"))) return false;
+                screenshot.accept("status-server-profiling-off.png");
+                amountServerOffCaptured = true;
+            }
+            if (!server(minecraft, player -> {
+                var config = com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.current();
+                config.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.PROFILING, amountOriginalProfiling);
+                ProfilerBridge.configure(config);
+                com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.sendTo(player);
+                return true;
+            })) return false;
+            mark(checks, "server-profiling-off", true);
+            if (!Boolean.getBoolean("ae2craftingtime.test.statusRelaunch")) return true;
+            phase = Stage.STATUS_PERSIST;
+            frames.reset();
+        } else if (phase == Stage.STATUS_PERSIST) {
+            if (minecraft.screen instanceof CraftingStatusScreen statusScreen) {
+                if (amountPersistSaving) {
+                    if (com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().features()
+                            .enabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS))
+                        throw new IllegalStateException("Compact amounts were not saved off before relaunch");
+                    var row = snapshot.rows().stream().filter(value -> value.activeAmount() > 0
+                            || value.pendingAmount() > 0 || value.storedAmount() > 0).findFirst().orElse(null);
+                    if (row == null || row.description().stream().anyMatch(value -> value.key().equals(
+                            "text.ae2craftingtime.status.amounts"))) return false;
+                    screenshot.accept("status-saved-off.png");
+                    if (checks.values().stream().anyMatch(value -> !value))
+                        throw new IllegalStateException("Cannot relaunch with incomplete status checks: " + checks);
+                    if (!amountContinuationWritten) {
+                        writeAmountContinuation(new AmountContinuation(1, world,
+                                System.getProperty("ae2craftingtime.test.campaign", "local"), configHash(minecraft),
+                                checks.entrySet().stream().filter(Map.Entry::getValue).map(Map.Entry::getKey).toList(),
+                                List.copyOf(resultScreenshots)));
+                        amountContinuationWritten = true;
+                        minecraft.stop();
+                    }
+                    return false;
+                }
+                if (!amountPersistOpen) {
+                    minecraft.setScreen(new com.ctux.ae2craftingtime.mc1201.OptionsScreen(statusScreen));
+                    amountPersistOpen = true;
+                    frames.reset();
+                }
+                return false;
+            }
+            if (!(minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen)) return false;
+            if (amountPersistSaving) return false;
+            var label = net.minecraft.client.resources.language.I18n.get("config.ae2craftingtime.compactStatusAmounts");
+            var toggle = optionButton(minecraft, label + ": ");
+            if (toggle == null) {
+                clickOptionButton(minecraft, ">");
+                frames.reset();
+                return false;
+            }
+            if (toggle.getMessage().getString().endsWith(net.minecraft.client.resources.language.I18n.get("options.on"))) {
+                DriverPlatform.click(minecraft, toggle.getX() + 4, toggle.getY() + 4);
+                frames.reset();
+                return false;
+            }
+            clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get("gui.done"));
+            amountPersistSaving = true;
+            frames.reset();
         } else if (phase == Stage.RESTORE) {
             moveMouse.accept(0, 0);
             if (server(minecraft, player -> { fixture.seed(player); return true; })) phase = Stage.PUMP;
@@ -1032,7 +1559,9 @@ final class StandardAe2Scenario {
                 mark(checks, "header", true);
                 mark(checks, "layout", true);
                 screenshot.accept("status-progress.png");
-                return true;
+                phase = Stage.STATUS_SERVER_OFF;
+                frames.reset();
+                return false;
             }
             if (complete) {
                 mark(checks, "output", true);
@@ -1105,6 +1634,126 @@ final class StandardAe2Scenario {
         }
         return foundMissing;
     }
+
+    private boolean statusRelaunchTick(Minecraft minecraft, Map<String, Boolean> checks,
+            Consumer<String> screenshot) {
+        if (!amountResumeChecksRestored) {
+            if (!java.util.Set.copyOf(amountContinuation.checks()).equals(java.util.Set.copyOf(CHECKS.get(leaf))))
+                throw new IllegalStateException("Status relaunch predecessor omitted required checks");
+            for (var check : amountContinuation.checks()) checks.put(check, true);
+            if (!configHash(minecraft).equals(amountContinuation.configSha256())
+                    || com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().features()
+                            .enabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS))
+                throw new IllegalStateException("Saved compact-off config changed before relaunch check");
+            amountResumeChecksRestored = true;
+        }
+        if (amountResumeSaving && !(minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen)) {
+            if (!com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().features()
+                    .enabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS))
+                throw new IllegalStateException("Compact amounts did not restore after relaunch");
+            screenshot.accept("status-relaunch-restored.png");
+            return true;
+        }
+        if (!amountResumeOpened) {
+            minecraft.setScreen(new com.ctux.ae2craftingtime.mc1201.OptionsScreen(minecraft.screen));
+            amountResumeOpened = true;
+            amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+            return false;
+        }
+        if (!(minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen)
+                || TestDriverRuntime.renderedFrames < amountOptionRenderedAfter) return false;
+        var label = net.minecraft.client.resources.language.I18n.get("config.ae2craftingtime.compactStatusAmounts");
+        var toggle = optionButton(minecraft, label + ": ");
+        if (toggle == null) {
+            clickOptionButton(minecraft, ">");
+            amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+            return false;
+        }
+        boolean enabled = toggle.getMessage().getString().endsWith(
+                net.minecraft.client.resources.language.I18n.get("options.on"));
+        if (!amountResumeOffCaptured) {
+            if (enabled) throw new IllegalStateException("Relaunched Options screen did not show compact amounts off");
+            screenshot.accept("status-relaunch-off.png");
+            amountResumeOffCaptured = true;
+            DriverPlatform.click(minecraft, toggle.getX() + 4, toggle.getY() + 4);
+            amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+            return false;
+        }
+        if (!enabled) return false;
+        if (!amountResumeOnCaptured) {
+            screenshot.accept("status-relaunch-on.png");
+            amountResumeOnCaptured = true;
+        }
+        clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get("gui.done"));
+        amountResumeSaving = true;
+        return false;
+    }
+
+    private static net.minecraft.client.gui.components.Button optionButton(Minecraft minecraft, String label) {
+        return minecraft.screen.children().stream().filter(net.minecraft.client.gui.components.Button.class::isInstance)
+                .map(net.minecraft.client.gui.components.Button.class::cast)
+                .filter(button -> button.getMessage().getString().startsWith(label)).findFirst().orElse(null);
+    }
+
+    private static void clickOptionButton(Minecraft minecraft, String label) {
+        var button = minecraft.screen.children().stream().filter(net.minecraft.client.gui.components.Button.class::isInstance)
+                .map(net.minecraft.client.gui.components.Button.class::cast)
+                .filter(value -> value.getMessage().getString().equals(label))
+                .findFirst().orElseThrow(() -> new IllegalStateException("Option button missing: " + label));
+        DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+    }
+
+    private static String configHash(Minecraft minecraft) {
+        try {
+            return CaptureEvidence.sha256(java.nio.file.Files.readAllBytes(minecraft.gameDirectory.toPath()
+                    .resolve("config/ae2craftingtime-client.toml")));
+        } catch (java.io.IOException error) {
+            throw new IllegalStateException("Cannot hash saved client options", error);
+        }
+    }
+
+    private void writeAddonKeyEvidence() {
+        var result = new com.google.gson.JsonObject();
+        result.addProperty("schema", 1);
+        result.addProperty("appbotLoaded", DriverPlatform.isModLoaded("appbot"));
+        result.addProperty("appmekLoaded", DriverPlatform.isModLoaded("appmek"));
+        var captured = new com.google.gson.JsonArray();
+        for (var addon : addonQuantityCases) captured.add(addon.name());
+        result.add("captured", captured);
+        try {
+            java.nio.file.Files.writeString(output.resolve("status-addon-keys.json"), result.toString());
+        } catch (java.io.IOException error) {
+            throw new IllegalStateException("Cannot retain addon status key evidence", error);
+        }
+    }
+
+    private void writeAmountContinuation(AmountContinuation value) {
+        var path = output.resolve("status-amounts-continuation.json");
+        try {
+            var temp = path.resolveSibling(path.getFileName() + ".tmp");
+            java.nio.file.Files.writeString(temp, new com.google.gson.Gson().toJson(value));
+            java.nio.file.Files.move(temp, path, java.nio.file.StandardCopyOption.ATOMIC_MOVE,
+                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        } catch (java.io.IOException error) {
+            throw new IllegalStateException("Cannot save status amount relaunch continuation", error);
+        }
+    }
+
+    private static AmountContinuation readAmountContinuation(java.nio.file.Path path, String world) {
+        try {
+            var value = new com.google.gson.Gson().fromJson(java.nio.file.Files.readString(path), AmountContinuation.class);
+            if (value == null || value.schema() != 1 || !world.equals(value.world())
+                    || !System.getProperty("ae2craftingtime.test.campaign", "local").equals(value.campaign())
+                    || value.checks() == null || value.screenshots() == null || value.configSha256() == null)
+                throw new IllegalStateException("Status amount relaunch continuation identity differs");
+            return value;
+        } catch (java.io.IOException error) {
+            throw new IllegalStateException("Cannot read status amount relaunch continuation", error);
+        }
+    }
+
+    private record AmountContinuation(int schema, String world, String campaign, String configSha256,
+            List<String> checks, List<String> screenshots) {}
 
     private static UiSnapshot.ObservedText rowText(UiSnapshot snapshot, String output, String key) {
         var row = snapshot.rows().stream().filter(r -> r.outputId().equals(output)).findFirst();
