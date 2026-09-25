@@ -1737,7 +1737,7 @@ final class StandardAe2Scenario {
         var snapshot = UiObservationStore.latest();
         if (snapshot == null || !snapshot.screen().equals(minecraft.screen.getClass().getName())
                 || snapshot.rows().stream().filter(row -> row.craftAmount() > 0).count() < 2
-                || snapshot.badges().isEmpty() || !LayoutValidator.validateBadges(snapshot).isEmpty()) return false;
+                || snapshot.badges().isEmpty() == (badgeStep != 3) || !LayoutValidator.validateBadges(snapshot).isEmpty()) return false;
         if (!status && (!planEstimatesReady(snapshot.rows()) || !missingFirst(snapshot.rows()))) return false;
         if (!frames.observe(List.of(phase, badgeStep, CaptureEvidence.readiness(snapshot)))) return false;
         var rows = snapshot.rows().stream().map(row -> row.outputId() + ":" + row.craftAmount()).toList();
