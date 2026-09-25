@@ -178,7 +178,7 @@ one resolved set of installed mods and loader versions.
 |---|---|
 | All supported targets, full coverage | `.\scripts\run-ui-smoke.ps1` |
 | Full coverage on one target | `.\scripts\run-ui-smoke.ps1 -Target 1.20.1-fabric` |
-| Six standard AE2 cases on one target | `.\scripts\run-ui-smoke.ps1 -Target 1.21.1-neoforge -Scenario standard-ae2` |
+| Standard AE2 group on one target | `.\scripts\run-ui-smoke.ps1 -Target 1.21.1-neoforge -Scenario standard-ae2` |
 | One case on one target | `.\scripts\run-ui-smoke.ps1 -Target 1.20.1-forge -Scenario delayed-status` |
 | One case on every supported target | `.\scripts\run-ui-smoke.ps1 -Scenario delayed-status` |
 | Coverage selected from changes | `.\scripts\run-ui-smoke.ps1 -Changed -BaseRef origin/master` |
@@ -186,7 +186,7 @@ one resolved set of installed mods and loader versions.
 Valid target IDs are `1.20.1-forge`, `1.20.1-fabric`, `1.21.1-neoforge` and
 `26.1.2-neoforge`. Omitting `-Target` selects all targets in manual mode;
 omitting `-Scenario` selects their full suites. `-Scenario` takes one name,
-not a comma-separated list. Use the standard group when you need all six core
+not a comma-separated list. Use the standard group when you need all core
 cases, or separate invocations for individual cases. Addon cases must exist in
 the selected target's suite; inspect the plan before launching.
 
@@ -197,11 +197,15 @@ the selected target's suite; inspect the plan before launching.
 | Independent case | Behavior checked |
 |---|---|
 | `standard-plan-controls` | Plan sorting, tooltip, details, reset, total TTC, layout and item resolution |
+| `badge-background` | Native Appearance save and Plan/Status badge On, Off, and restored captures |
+| `recurrent-plan` | Recurrent plan row and tooltip |
+| `stored-variant-plan` | Live stored-variant plan changes and row behavior |
 | `standard-status-controls` | Submitted-job status, sorting, tooltip, details, reset, header and layout |
 | `waiting-status` | Waiting state, first dispatch and recovery |
 | `running-status` | Running state, progress, header and layout |
 | `delayed-status` | Delayed row, tooltip, world highlight, recovery, completion, output and profiling |
 | `craft-lifecycle` | Plan, submission, status, completion, output and profiling |
+| `cpu-list-total-ttc` | CPU list totals, selection, sorting, and lifecycle |
 
 Each case owns its setup, assertions and evidence, so it can run directly
 without a preceding case. Group execution uses one Minecraft process with a

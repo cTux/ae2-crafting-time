@@ -192,6 +192,20 @@ state under the production lifetime rules. Server mutations use the existing
 revision/sequence guards. Review icon appearance separately from semantic
 assertions; missing evidence fails and unreviewed images remain REVIEW_REQUIRED.
 
+## Badge background standard leaf (#532)
+
+Reuse `StandardAe2Scenario` and its existing standard fixture. At stable Plan
+and Status frames, pause the usual flow to navigate native Client → Appearance
+widgets. Set a distinctive badge RGB and opacity through the actual input boxes,
+save, capture On, save Off, capture Off, then save On and capture restoration.
+The same status rows must survive each client-only change. Keep the Plan's
+missing-input tint through all three captures, then supply its cobblestone and
+replan through the native menu before Start. Use the existing
+frame wait and `DriverScreenshots` sidecar path; add the six distinct Plan/Status
+Off/On screenshots to `ui-smoke-groups.json`. Keep observation checks for text
+and layout, and leave actual pixel judgment to manual review. The leaf ends on
+the native Status screen and leaves client settings restored On.
+
 ## Single-world fixtures and transitions
 
 The [four-client qualification](../automated-ui-testing/prepared-clients-2026-09-08.md)

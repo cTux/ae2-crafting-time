@@ -244,6 +244,12 @@ final class StandardCraftFixture {
         seed(player, Items.SMOOTH_STONE);
     }
 
+    void supplyPlanInput(ServerPlayer player) {
+        var drive = (DriveBlockEntity) player.serverLevel().getBlockEntity(terminal.east(2));
+        drive.getCellInventory(0).insert(AEItemKey.of(Items.COBBLESTONE), 2, Actionable.MODULATE,
+                IActionSource.empty());
+    }
+
     void setRecurrent(ServerPlayer player, boolean value) {
         recurrentPlan = value;
         pattern(player, 4, value ? Items.SMOOTH_STONE : Items.COBBLESTONE, Items.STONE);

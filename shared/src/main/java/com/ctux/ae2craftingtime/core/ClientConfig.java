@@ -30,6 +30,8 @@ public final class ClientConfig {
         return modText ? features.enabled(OptionFeature.TEXT_SHADOW) : nativeShadow;
     }
 
+    public boolean badgeBackground() { return features.enabled(OptionFeature.BADGE_BACKGROUND); }
+
     public static int appearanceRowCount(int featureRows) {
         return featureRows + Color.values().length + 1;
     }

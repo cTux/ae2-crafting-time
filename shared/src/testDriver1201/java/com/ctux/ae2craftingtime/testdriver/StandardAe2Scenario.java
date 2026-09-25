@@ -34,6 +34,8 @@ final class StandardAe2Scenario {
     static final Map<String, List<String>> CHECKS = Map.ofEntries(
             Map.entry("standard-plan-controls", List.of("plan", "plan-sort", "missing-first", "plan-tooltip",
                     "plan-details", "plan-reset", "total-ttc", "layout", "item-resolution")),
+            Map.entry("badge-background", List.of("plan-on", "plan-off", "plan-restored",
+                    "status-on", "status-off", "status-restored")),
             Map.entry("recurrent-plan", List.of("recurrent-row", "red-warning-style", "recurrent-tooltip", "unchanged-quantity",
                     "layout", "variant-clear")),
             Map.entry("stored-variant-plan", List.of("initial-clear", "live-near", "removed-clear",
@@ -99,6 +101,16 @@ final class StandardAe2Scenario {
     private Stage reportedPhase;
     private String reportedCheckpoint;
     private int sort;
+    private int badgeStep;
+    private boolean badgeEditOpen;
+    private boolean badgeAppearanceOpen;
+    private boolean badgeSaving;
+    private boolean badgeColorEdited;
+    private boolean badgeOpacityEdited;
+    private long badgeRenderedAfter;
+    private List<String> badgeRowsBefore;
+    private List<String> badgeTextBefore;
+    private boolean badgePlanStocked;
     private int quantityCase;
     private boolean quantityHovered;
     private int addonQuantityCase;
@@ -178,6 +190,7 @@ final class StandardAe2Scenario {
     private int variantSecondMenu;
 
     String checkpoint() { return "phase=" + phase + " fixture=" + fixture.checkpoint
+            + (leaf.equals("badge-background") ? " badge=" + badgeStep : "")
             + (leaf.equals("recurrent-plan") ? " recurrence=" + recurrenceCase + " sort=" + sort : "")
             + (leaf.equals("stored-variant-plan") ? " variant=" + variantStep + " lifecycle=" + variantLifecycle : "")
             + (cpuList == null ? "" : " " + cpuList.checkpoint()); }
@@ -272,10 +285,12 @@ final class StandardAe2Scenario {
             var complete = cpuList.tick(minecraft, marker, checks, screenshot, moveMouse);
             return complete;
         }
+        if (leaf.equals("badge-background") && (phase == Stage.PLAN_SORT || phase == Stage.ACTIVE))
+            return badgeTick(minecraft, checks, screenshot);
         if (phase == Stage.PREPARE) {
             fixture.cpuListScenario = leaf.equals("cpu-list-total-ttc");
             fixture.holdFinalOutput = leaf.equals("delayed-status");
-            fixture.missingPlanInput = leaf.equals("standard-plan-controls");
+            fixture.missingPlanInput = leaf.equals("standard-plan-controls") || leaf.equals("badge-background");
             fixture.recurrentPlan = leaf.equals("recurrent-plan");
             fixture.storedVariantPlan = leaf.equals("stored-variant-plan");
             if (fixture.storedVariantPlan) fixture.missingPlanInput = true;
@@ -976,7 +991,18 @@ final class StandardAe2Scenario {
             if (reset && plan) return true;
         } else if (phase == Stage.SUBMIT) {
             moveMouse.accept(0, 0);
-            if (!leaf.equals("craft-lifecycle") && !server(minecraft, player -> { fixture.seed(player); return true; })) return false;
+            if (leaf.equals("badge-background")) {
+                if (!badgePlanStocked) {
+                    if (!server(minecraft, player -> { fixture.seed(player); fixture.supplyPlanInput(player); return true; }))
+                        return false;
+                    badgePlanStocked = true;
+                    ((CraftConfirmScreen) minecraft.screen).getMenu().replan();
+                    frames.reset();
+                    return false;
+                }
+                if (snapshot.rows().stream().anyMatch(row -> row.missingAmount() > 0)) return false;
+            } else if (!leaf.equals("craft-lifecycle") && !server(minecraft, player -> { fixture.seed(player); return true; }))
+                return false;
             var start = minecraft.screen.children().stream().filter(AbstractWidget.class::isInstance)
                     .map(AbstractWidget.class::cast).filter(w -> w.active && w.getMessage().getString().equals("Start"))
                     .findFirst().orElseThrow(() -> new IllegalStateException("Crafting Plan Start button is missing"));
@@ -1686,6 +1712,135 @@ final class StandardAe2Scenario {
         }
         clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get("gui.done"));
         amountResumeSaving = true;
+        return false;
+    }
+
+    private boolean badgeTick(Minecraft minecraft, Map<String, Boolean> checks, Consumer<String> screenshot) {
+        boolean status = phase == Stage.ACTIVE;
+        if (!status && badgeStep == 0 && !badgeEditOpen) {
+            if (!(minecraft.screen instanceof CraftConfirmScreen)) return false;
+            var plan = UiObservationStore.latest();
+            if (plan == null || !plan.screen().equals(minecraft.screen.getClass().getName())
+                    || !planEstimatesReady(plan.rows())) return false;
+        }
+        if ((!status && badgeStep == 0) || badgeStep == 2 || badgeStep == 4) {
+            int action = badgeStep == 0 ? 0 : badgeStep == 2 ? 1 : 2;
+            if (badgeEditTick(minecraft, action)) {
+                badgeStep++;
+                badgeRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+            }
+            return false;
+        }
+        if (TestDriverRuntime.renderedFrames < badgeRenderedAfter) return false;
+        if (status ? !(minecraft.screen instanceof CraftingStatusScreen)
+                : !(minecraft.screen instanceof CraftConfirmScreen)) return false;
+        var snapshot = UiObservationStore.latest();
+        if (snapshot == null || !snapshot.screen().equals(minecraft.screen.getClass().getName())
+                || snapshot.rows().stream().filter(row -> row.craftAmount() > 0).count() < 2
+                || snapshot.badges().isEmpty() || !LayoutValidator.validateBadges(snapshot).isEmpty()) return false;
+        if (!status && (!planEstimatesReady(snapshot.rows()) || !missingFirst(snapshot.rows()))) return false;
+        if (!frames.observe(List.of(phase, badgeStep, CaptureEvidence.readiness(snapshot)))) return false;
+        var rows = snapshot.rows().stream().map(row -> row.outputId() + ":" + row.craftAmount()).toList();
+        var text = snapshot.text().stream().filter(value ->
+                com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(value.key()))
+                .map(value -> value.key() + ":" + value.bounds() + ":" + value.color()).toList();
+        if (text.isEmpty()) return false;
+        if (badgeStep == 1 || status && badgeStep == 0) {
+            badgeRowsBefore = rows;
+            badgeTextBefore = text;
+        } else if (!rows.equals(badgeRowsBefore) || !text.equals(badgeTextBefore))
+            throw new IllegalStateException("Badge switch changed native rows or mod text");
+        boolean enabled = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().badgeBackground();
+        if (enabled != (badgeStep != 3))
+            throw new IllegalStateException("Badge background state differs at " + phase + " step " + badgeStep);
+        var config = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current();
+        if (config.color(com.ctux.ae2craftingtime.core.ClientConfig.Color.BADGE) != 0x245A7D
+                || config.badgeOpacity() != 96)
+            throw new IllegalStateException("Custom badge appearance was lost");
+        String name = (status ? "status" : "plan") + "-badge-"
+                + (badgeStep == 3 ? "off" : badgeStep == 5 ? "restored" : "on");
+        screenshot.accept(name + ".png");
+        mark(checks, (status ? "status" : "plan") + "-"
+                + (badgeStep == 3 ? "off" : badgeStep == 5 ? "restored" : "on"), true);
+        if (badgeStep == 5) {
+            badgeStep = 0;
+            badgeRowsBefore = null;
+            badgeTextBefore = null;
+            if (status) return true;
+            phase = Stage.SUBMIT;
+        } else badgeStep = badgeStep == 3 ? 4 : 2;
+        frames.reset();
+        return false;
+    }
+
+    private boolean badgeEditTick(Minecraft minecraft, int action) {
+        if (!(minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen)) {
+            if (badgeEditOpen) {
+                var config = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current();
+                if (config.badgeBackground() != (action != 1)
+                        || config.color(com.ctux.ae2craftingtime.core.ClientConfig.Color.BADGE) != 0x245A7D
+                        || config.badgeOpacity() != 96)
+                    throw new IllegalStateException("Badge option save did not apply");
+                badgeEditOpen = false;
+                badgeAppearanceOpen = false;
+                badgeSaving = false;
+                badgeColorEdited = false;
+                badgeOpacityEdited = false;
+                frames.reset();
+                return true;
+            }
+            minecraft.setScreen(new com.ctux.ae2craftingtime.mc1201.OptionsScreen(minecraft.screen));
+            badgeEditOpen = true;
+            badgeRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+            return false;
+        }
+        if (TestDriverRuntime.renderedFrames < badgeRenderedAfter) return false;
+        if (badgeSaving) return false;
+        if (!badgeAppearanceOpen) {
+            clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get(
+                    "config.ae2craftingtime.group.appearance"));
+            badgeAppearanceOpen = true;
+            badgeRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+            return false;
+        }
+        if (action == 0 && (!badgeColorEdited || !badgeOpacityEdited)) {
+            var inputs = minecraft.screen.children().stream()
+                    .filter(net.minecraft.client.gui.components.EditBox.class::isInstance)
+                    .map(net.minecraft.client.gui.components.EditBox.class::cast).toList();
+            for (var input : inputs) {
+                if (!badgeColorEdited && input.getMessage().getString().equals(
+                        net.minecraft.client.resources.language.I18n.get("config.ae2craftingtime.color.badge"))) {
+                    input.setValue("#245A7D");
+                    badgeColorEdited = true;
+                } else if (!badgeOpacityEdited && input.getMessage().getString().equals(
+                        net.minecraft.client.resources.language.I18n.get("config.ae2craftingtime.badgeOpacity"))) {
+                    input.setValue("96");
+                    badgeOpacityEdited = true;
+                }
+            }
+            if (!badgeColorEdited || !badgeOpacityEdited) {
+                clickOptionButton(minecraft, ">");
+                badgeRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+                return false;
+            }
+        }
+        String label = net.minecraft.client.resources.language.I18n.get("config.ae2craftingtime.badgeBackground");
+        var toggle = optionButton(minecraft, label + ": ");
+        if (toggle == null) {
+            clickOptionButton(minecraft, "<");
+            badgeRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+            return false;
+        }
+        boolean enabled = toggle.getMessage().getString().endsWith(
+                net.minecraft.client.resources.language.I18n.get("options.on"));
+        if (enabled != (action != 1)) {
+            DriverPlatform.click(minecraft, toggle.getX() + 4, toggle.getY() + 4);
+            badgeRenderedAfter = TestDriverRuntime.renderedFrames + 3;
+            return false;
+        }
+        clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get("gui.done"));
+        badgeSaving = true;
+        badgeRenderedAfter = TestDriverRuntime.renderedFrames + 3;
         return false;
     }
 
