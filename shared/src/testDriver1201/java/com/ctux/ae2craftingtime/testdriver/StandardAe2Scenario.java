@@ -102,6 +102,8 @@ final class StandardAe2Scenario {
     private int quantityCase;
     private boolean quantityHovered;
     private int addonQuantityCase;
+    private boolean addonQuantityBadgeCaptured;
+    private long addonQuantityBadgeFrame;
     private boolean addonQuantityHovered;
     private appeng.menu.me.crafting.CraftingStatus realStatus;
     private int amountOptionCase;
@@ -1085,7 +1087,10 @@ final class StandardAe2Scenario {
                 writeAddonKeyEvidence();
                 mark(checks, "addon-key-status", true);
                 phase = Stage.STATUS_SCALES;
-            } else phase = Stage.STATUS_ADDON_AMOUNTS;
+            } else {
+                moveMouse.accept(0, 0);
+                phase = Stage.STATUS_ADDON_AMOUNTS;
+            }
             frames.reset();
         } else if (phase == Stage.STATUS_ADDON_AMOUNTS) {
             if (!(minecraft.screen instanceof CraftingStatusScreen)) return false;
@@ -1109,8 +1114,16 @@ final class StandardAe2Scenario {
             if (summary == null || !summary.arguments().equals(List.of(String.join("/", slot)))
                     || summary.bold() || !LayoutValidator.validateBadges(snapshot).isEmpty())
                 throw new IllegalStateException("Addon " + addon.name() + " lost native SLOT amounts or badge bounds");
-            if (!addonQuantityHovered) {
+            if (!addonQuantityBadgeCaptured) {
+                moveMouse.accept(0, 0);
                 screenshot.accept("status-addon-" + addon.name() + ".png");
+                addonQuantityBadgeCaptured = true;
+                addonQuantityBadgeFrame = TestDriverRuntime.renderedFrames + 2;
+                frames.reset();
+                return false;
+            }
+            if (TestDriverRuntime.renderedFrames < addonQuantityBadgeFrame) return false;
+            if (!addonQuantityHovered) {
                 moveMouse.accept(row.cell().centerX(), row.cell().centerY());
                 addonQuantityHovered = true;
                 frames.reset();
@@ -1134,6 +1147,7 @@ final class StandardAe2Scenario {
             screenshot.accept("status-addon-" + addon.name() + "-tooltip.png");
             moveMouse.accept(0, 0);
             if (++addonQuantityCase < addonQuantityCases.size()) {
+                addonQuantityBadgeCaptured = false;
                 addonQuantityHovered = false;
                 ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
                         .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.addonQuantityStatus(
