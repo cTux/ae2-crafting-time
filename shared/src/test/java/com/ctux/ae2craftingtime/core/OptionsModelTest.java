@@ -17,14 +17,17 @@ class OptionsModelTest {
         assertEquals(176, config.badgeOpacity());
         assertEquals(2, config.planSort());
         assertEquals(2, config.statusSort());
+        assertFalse(config.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
 
         config.features().setEnabled(OptionFeature.PLAN_ROWS, false);
+        config.features().setEnabled(OptionFeature.COMPACT_STATUS_AMOUNTS, true);
         config.setColor(ClientConfig.Color.FAST, 0);
         config.setBadgeOpacity(255);
         config.setPlanSort(0);
         config.setStatusSort(1);
         var copy = config.copy();
         assertFalse(copy.features().enabled(OptionFeature.PLAN_ROWS));
+        assertTrue(copy.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
         assertEquals(0, copy.color(ClientConfig.Color.FAST));
         assertEquals(255, copy.badgeOpacity());
         assertEquals(0, copy.planSort());
@@ -32,11 +35,13 @@ class OptionsModelTest {
 
         copy.reset();
         assertTrue(copy.features().enabled(OptionFeature.PLAN_ROWS));
+        assertFalse(copy.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
         assertEquals(ClientConfig.Color.FAST.defaultRgb(), copy.color(ClientConfig.Color.FAST));
         assertEquals(176, copy.badgeOpacity());
         assertEquals(2, copy.planSort());
         assertEquals(2, copy.statusSort());
         assertFalse(config.features().enabled(OptionFeature.PLAN_ROWS));
+        assertTrue(config.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
     }
 
     @Test

@@ -4,13 +4,14 @@ import java.util.EnumSet;
 import java.util.Objects;
 import java.util.Set;
 
-/** A working copy of one environment's switches; all features default on. */
+/** A working copy of one environment's switches. */
 public final class FeatureOptions {
     private final OptionFeature.Owner owner;
     private final EnumSet<OptionFeature> disabled = EnumSet.noneOf(OptionFeature.class);
 
     public FeatureOptions(OptionFeature.Owner owner) {
         this.owner = Objects.requireNonNull(owner);
+        reset();
     }
 
     public boolean enabled(OptionFeature feature) {
@@ -26,6 +27,7 @@ public final class FeatureOptions {
 
     public void reset() {
         disabled.clear();
+        if (owner == OptionFeature.Owner.CLIENT) disabled.add(OptionFeature.COMPACT_STATUS_AMOUNTS);
     }
 
     public Set<OptionFeature> disabled() {
@@ -34,6 +36,7 @@ public final class FeatureOptions {
 
     public FeatureOptions copy() {
         var copy = new FeatureOptions(owner);
+        copy.disabled.clear();
         copy.disabled.addAll(disabled);
         return copy;
     }

@@ -65,9 +65,9 @@ actual prepared-client mod graph during smoke testing.
 
 Register `COMPACT_STATUS_AMOUNTS(Owner.CLIENT, Group.DISPLAYS,
 "compactStatusAmounts")` in `OptionFeature`. The existing `OptionsScreen`
-enumeration renders the toggle; `FeatureOptions` supplies the on default and
+enumeration renders the toggle; `FeatureOptions` supplies the off default and
 reset behavior. `ClientConfigFile` already reads/writes client-owned features
-to `ae2craftingtime-client.toml`; a missing key defaults on. Reuse the existing
+to `ae2craftingtime-client.toml`; a missing key defaults off. Reuse the existing
 draft/Done/Cancel flow, with no custom control, config format or server packet.
 
 Read `ClientOptionsRuntime.current().features().enabled(COMPACT_STATUS_AMOUNTS)`
@@ -78,8 +78,8 @@ the summary uses the already-defined `TOTAL` color fallback.
 
 Add `config.ae2craftingtime.compactStatusAmounts` in both locale files:
 
-- English: `Compact crafting-status amounts`
-- Ukrainian: `Стислі кількості в стані виготовлення`
+- English: `Compact crafting amounts`
+- Ukrainian: `Стислі кількості виготовлення`
 
 Use the existing client-option help tooltip. Keep the toggle available without
 operator permission and do not change any sibling setting when it is switched.
@@ -131,7 +131,8 @@ The server and native menu continue to own quantities. All new work is client
 presentation over existing longs and `AEKey.formatAmount`. Only the new local
 boolean is persisted through the existing client config. No packets, retained
 profiling state, saved-data version, dependency, or history-reset changes are
-added. Existing config files need no migration: the missing key defaults on.
+added. Existing config files need no migration: the missing key defaults off;
+saved `true` and `false` choices keep their values.
 Unknown translation/component contracts keep native quantities. Empty entries
 avoid formatting and summary creation. Custom key formatters remain responsible
 for unit display; do not apply `AeKeyAmounts.normalize`, which serves estimates.

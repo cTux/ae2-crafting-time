@@ -57,7 +57,11 @@ public final class ClientConfig {
 
     public ClientConfig copy() {
         var copy = new ClientConfig();
-        for (var feature : features.disabled()) copy.features.setEnabled(feature, false);
+        for (var feature : OptionFeature.values()) {
+            if (feature.owner() == OptionFeature.Owner.CLIENT) {
+                copy.features.setEnabled(feature, features.enabled(feature));
+            }
+        }
         copy.colors.putAll(colors);
         copy.badgeOpacity = badgeOpacity;
         copy.planSort = planSort;

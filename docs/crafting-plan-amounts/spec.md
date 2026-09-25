@@ -1,6 +1,6 @@
 # Compact Crafting Plan amounts
 
-Status: implementing [issue #525](https://github.com/cTux/ae2-crafting-time/issues/525).
+Status: merged in [issue #525](https://github.com/cTux/ae2-crafting-time/issues/525). Default-off follow-up: [issue #529](https://github.com/cTux/ae2-crafting-time/issues/529).
 
 The Crafting Plan grid still uses separate AE2 `Available` and `To Craft` lines
 after the crafting-status change in #438. Show these two amounts on one line
@@ -9,7 +9,7 @@ only, and no quantity line when neither exists. Keep AE2's SLOT formatting,
 including units, and its original full labeled tooltip lines. Keep missing and
 recurrent warnings separate.
 
-The existing default-on `compactStatusAmounts` client choice controls both
+The existing default-off `compactStatusAmounts` client choice controls both
 Crafting Plan and Crafting Status. Its visible label becomes **Compact crafting
 amounts**. Turning it off restores the native lines in both windows without
 changing TTC. The stored config key stays the same so existing choices survive.
