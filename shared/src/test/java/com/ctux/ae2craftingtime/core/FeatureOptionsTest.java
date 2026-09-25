@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashSet;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class FeatureOptionsTest {
@@ -19,16 +20,17 @@ class FeatureOptionsTest {
         assertEquals(OptionFeature.INPUT_BLOCKED_STATUS, OptionFeature.statusFor(CraftingBlockReason.LOCKED));
     }
     @Test
-    void everySwitchHasOneStableKeyAndStartsEnabled() {
+    void everySwitchHasOneStableKeyAndItsExpectedDefault() {
         var keys = new HashSet<String>();
         var client = new FeatureOptions(OptionFeature.Owner.CLIENT);
         var server = new FeatureOptions(OptionFeature.Owner.SERVER);
         for (var feature : OptionFeature.values()) {
             assertTrue(keys.add(feature.key()));
             assertTrue(feature.group() != null);
-            assertTrue((feature.owner() == OptionFeature.Owner.CLIENT ? client : server).enabled(feature));
+            assertEquals(feature != OptionFeature.COMPACT_STATUS_AMOUNTS,
+                    (feature.owner() == OptionFeature.Owner.CLIENT ? client : server).enabled(feature));
         }
-        assertTrue(client.disabled().isEmpty());
+        assertEquals(Set.of(OptionFeature.COMPACT_STATUS_AMOUNTS), client.disabled());
         assertTrue(server.disabled().isEmpty());
     }
 
@@ -38,14 +40,14 @@ class FeatureOptionsTest {
         client.setEnabled(OptionFeature.RECEIVE_CRAFT_WARNINGS, false);
         assertFalse(client.enabled(OptionFeature.RECEIVE_CRAFT_WARNINGS));
         assertTrue(client.enabled(OptionFeature.DELAYED_STATUS));
-        assertEquals(1, client.disabled().size());
+        assertEquals(2, client.disabled().size());
 
         var copy = client.copy();
         copy.setEnabled(OptionFeature.RECEIVE_CRAFT_WARNINGS, true);
         assertTrue(copy.enabled(OptionFeature.RECEIVE_CRAFT_WARNINGS));
         assertFalse(client.enabled(OptionFeature.RECEIVE_CRAFT_WARNINGS));
         client.reset();
-        assertTrue(client.disabled().isEmpty());
+        assertEquals(Set.of(OptionFeature.COMPACT_STATUS_AMOUNTS), client.disabled());
     }
 
     @Test
@@ -64,7 +66,9 @@ class FeatureOptionsTest {
         draft.setEnabled(OptionFeature.COMPACT_STATUS_AMOUNTS, true);
         assertFalse(options.enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
         draft.reset();
-        assertTrue(draft.enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
+        assertFalse(draft.enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
+        options.setEnabled(OptionFeature.COMPACT_STATUS_AMOUNTS, true);
+        assertTrue(options.copy().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
     }
 
     @Test

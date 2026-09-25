@@ -54,8 +54,8 @@ amounts. Zero categories remain omitted there, as in AE2 today.
   dropping a category, or overlapping the icon or adjacent cell. Retain AE2's
   compact values and horizontally shrink only when the measured text exceeds
   the available width. Full amounts stay readable in the tooltip.
-- Add **Compact crafting-status amounts** under **Options > Client > Displays**,
-  default **on**. Off restores AE2's original quantity lines and removes the
+- Show **Compact crafting amounts** under **Options > Client > Displays**,
+  default **off**. Off restores AE2's original quantity lines and removes the
   compact-format legend, without hiding TTC/status. The existing status-row TTC
   switch remains independent: compact amounts can stay on with row TTC off.
   Quantity formatting also remains available when server profiling is off.
