@@ -72,6 +72,7 @@ final class CpuListTtcScenario {
     private long amountOptionFrame;
     private byte[] amountOptionServerSnapshot;
     private boolean amountOptionSaving;
+    private boolean amountOptionMouseCleared;
     private boolean reconnectRequested;
     private boolean continuationWritten;
     private boolean crazyPriorityChanged;
@@ -697,7 +698,7 @@ final class CpuListTtcScenario {
                 next(nextStage);
             }
             case DONE -> {
-                if (connectedDedicated && !nonOperatorAmounts(minecraft, screenshot)) return false;
+                if (connectedDedicated && !nonOperatorAmounts(minecraft, screenshot, moveMouse)) return false;
                 if (connectedDedicated && !CpuListTtcControl.request("complete")) return false;
                 return true;
             }
@@ -706,7 +707,8 @@ final class CpuListTtcScenario {
         return false;
     }
 
-    private boolean nonOperatorAmounts(Minecraft minecraft, Consumer<String> screenshot) {
+    private boolean nonOperatorAmounts(Minecraft minecraft, Consumer<String> screenshot,
+            BiConsumer<Integer, Integer> moveMouse) {
         if (amountOptionStep == 2) return true;
         if (TestDriverRuntime.renderedFrames < amountOptionFrame) return false;
         var snapshot = com.ctux.ae2craftingtime.mc1201.ClientServerOptions.snapshot();
@@ -757,10 +759,18 @@ final class CpuListTtcScenario {
             boolean enabled = toggle.getMessage().getString().endsWith(net.minecraft.client.resources.language.I18n.get("options.on"));
             if (enabled != expected) {
                 DriverPlatform.click(minecraft, toggle.getX() + 4, toggle.getY() + 4);
+                amountOptionMouseCleared = false;
                 amountOptionFrame = TestDriverRuntime.renderedFrames + 3;
                 return false;
             }
+            if (!amountOptionMouseCleared) {
+                moveMouse.accept(0, 0);
+                amountOptionMouseCleared = true;
+                amountOptionFrame = TestDriverRuntime.renderedFrames + 2;
+                return false;
+            }
             screenshot.accept("status-nonop-option-" + (expected ? "on" : "off") + ".png");
+            amountOptionMouseCleared = false;
             action = net.minecraft.client.resources.language.I18n.get("gui.done");
             amountOptionSaving = true;
         }
