@@ -7,7 +7,8 @@ param(
     [Parameter(Mandatory)][ValidatePattern('^[A-Fa-f0-9]{64}$')][string]$ProductionSha256,
     [Parameter(Mandatory)][ValidatePattern('^[A-Fa-f0-9]{64}$')][string]$DriverSha256,
     [Parameter(Mandatory)][datetime]$NotBeforeUtc,
-    [switch]$Unsupported
+    [switch]$Unsupported,
+    [switch]$Prior
 )
 $ErrorActionPreference = 'Stop'
 if (!(Test-Path -LiteralPath $Receipt -PathType Leaf)) { throw "Missing connection observation: $Receipt" }
@@ -24,6 +25,13 @@ if ($data.target -cne $Target -or $data.role -cne $Role -or
 }
 $attempted = @($data.attempted.PSObject.Properties)
 $sent = @($data.sent.PSObject.Properties)
+if ($null -eq $data.attempted -or $null -eq $data.sent) { throw 'Connection observation counters are missing' }
+if ($Prior) {
+    if ($Unsupported -and @($sent | Where-Object { $_.Value -gt 0 }).Count) {
+        throw 'Unsupported prior connection sent a loader payload'
+    }
+    return $data
+}
 if ($Unsupported) {
     $types = if ($Direction -eq 'c2s') {
         @('StatsRequestC2S','StatsChatC2S','ProviderLocateC2S','CpuTtcRequestC2S','WarningPreferenceC2S','ServerOptionsUpdateC2S')

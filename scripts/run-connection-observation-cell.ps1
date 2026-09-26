@@ -100,9 +100,24 @@ if (Compare-Object $expected $actual) { throw 'Client artifact inventory differs
     $manual = Get-Content -LiteralPath $manualPath -Raw | ConvertFrom-Json
     if ($manual.target -cne $Target -or $manual.mode -cne $InstallationMode -or
         $manual.login -ne $true -or $manual.craft -ne $true -or
-        $manual.clientProcessId -ne $client.Id -or $manual.connectionOrdinal -ne $ConnectionOrdinal -or
+        $manual.clientProcessId -ne $client.Id -or
+        $manual.connectionOrdinal -lt $ConnectionOrdinal -or $manual.connectionOrdinal -gt 100 -or
         ([datetime]$manual.observedAt).ToUniversalTime() -lt $cellStartedAt.ToUniversalTime()) {
         throw 'Manual checkpoint identity, login, craft, or freshness failed'
+    }
+    $observedOrdinal = [int]$manual.connectionOrdinal
+    if ([string]$manual.connectionOrdinal -cne [string]$observedOrdinal) {
+        throw 'Manual connection ordinal is not an integer'
+    }
+    $serverOrdinal = 1
+    if ($serverInstalled -and $null -ne $manual.serverConnectionOrdinal) {
+        $serverOrdinal = [int]$manual.serverConnectionOrdinal
+        if ($serverOrdinal -lt 1 -or $serverOrdinal -gt 100 -or
+            [string]$manual.serverConnectionOrdinal -cne [string]$serverOrdinal) {
+            throw 'Manual server connection ordinal is invalid'
+        }
+    } elseif ($serverInstalled -and $observedOrdinal -ne $ConnectionOrdinal) {
+        throw 'Server connection ordinal is required after a client retry'
     }
     $screens = @($manual.planScreenshot, $manual.statusScreenshot)
     foreach ($name in $screens) {
@@ -112,19 +127,33 @@ if (Compare-Object $expected $actual) { throw 'Client artifact inventory differs
         }
     }
     if ($clientInstalled) {
+        for ($ordinal = $ConnectionOrdinal; $ordinal -lt $observedOrdinal; $ordinal++) {
+            & (Join-Path $PSScriptRoot 'verify-connection-observation.ps1') `
+                -Receipt (Join-Path $ClientSessionDirectory "client-observation-$ordinal.json") -Direction c2s -Role client `
+                -Target $Target -ConnectionEpoch "$clientEpoch`:$ordinal" -ProductionSha256 $ProductionSha256 `
+                -DriverSha256 $DriverSha256 -NotBeforeUtc $startedAt `
+                -Unsupported:($InstallationMode -eq 'client-only') -Prior | Out-Null
+        }
         & (Join-Path $PSScriptRoot 'verify-connection-observation.ps1') `
-            -Receipt (Join-Path $ClientSessionDirectory "client-observation-$ConnectionOrdinal.json") -Direction c2s -Role client `
-            -Target $Target -ConnectionEpoch "$clientEpoch`:$ConnectionOrdinal" -ProductionSha256 $ProductionSha256 `
+            -Receipt (Join-Path $ClientSessionDirectory "client-observation-$observedOrdinal.json") -Direction c2s -Role client `
+            -Target $Target -ConnectionEpoch "$clientEpoch`:$observedOrdinal" -ProductionSha256 $ProductionSha256 `
             -DriverSha256 $DriverSha256 -NotBeforeUtc $startedAt `
             -Unsupported:($InstallationMode -eq 'client-only') | Out-Null
-        Copy-Item -LiteralPath (Join-Path $ClientSessionDirectory "client-observation-$ConnectionOrdinal.json") -Destination (Join-Path $ReportDirectory 'client-observation.json')
+        Copy-Item -LiteralPath (Join-Path $ClientSessionDirectory "client-observation-$observedOrdinal.json") -Destination (Join-Path $ReportDirectory 'client-observation.json')
     } elseif (@(Get-ChildItem -LiteralPath $ClientSessionDirectory -File -Filter 'client-observation-*.json').Count) {
         throw 'Absent client unexpectedly produced a Crafting Time observation'
     }
     if ($serverInstalled) {
+        for ($ordinal = 1; $ordinal -lt $serverOrdinal; $ordinal++) {
+            & (Join-Path $PSScriptRoot 'verify-connection-observation.ps1') `
+                -Receipt (Join-Path $ReportDirectory "server-observation-$ordinal.json") -Direction s2c -Role server `
+                -Target $Target -ConnectionEpoch "$ConnectionEpoch`:$ordinal" -ProductionSha256 $ProductionSha256 `
+                -DriverSha256 $DriverSha256 -NotBeforeUtc $ServerStartedAtUtc `
+                -Unsupported:($InstallationMode -eq 'server-only') -Prior | Out-Null
+        }
         & (Join-Path $PSScriptRoot 'verify-connection-observation.ps1') `
-            -Receipt (Join-Path $ReportDirectory 'server-observation-1.json') -Direction s2c -Role server `
-            -Target $Target -ConnectionEpoch "$ConnectionEpoch`:1" -ProductionSha256 $ProductionSha256 `
+            -Receipt (Join-Path $ReportDirectory "server-observation-$serverOrdinal.json") -Direction s2c -Role server `
+            -Target $Target -ConnectionEpoch "$ConnectionEpoch`:$serverOrdinal" -ProductionSha256 $ProductionSha256 `
             -DriverSha256 $DriverSha256 -NotBeforeUtc $ServerStartedAtUtc `
             -Unsupported:($InstallationMode -eq 'server-only') | Out-Null
     } elseif (@(Get-ChildItem -LiteralPath $ReportDirectory -File -Filter 'server-observation-*.json').Count) {
@@ -134,10 +163,11 @@ if (Compare-Object $expected $actual) { throw 'Client artifact inventory differs
         [ordered]@{name=$_;sha256=(Get-FileHash -LiteralPath (Join-Path $evidence $_) -Algorithm SHA256).Hash}
     })
     [ordered]@{target=$Target;mode=$InstallationMode;connectionEpoch=$ConnectionEpoch;login=$true;
-        clientProcessId=$client.Id;clientProcessStartedAt=$session.processStartedAt;connectionOrdinal=$ConnectionOrdinal;
+        clientProcessId=$client.Id;clientProcessStartedAt=$session.processStartedAt;connectionOrdinal=$observedOrdinal;
+        serverConnectionOrdinal=$(if ($serverInstalled) { $serverOrdinal } else { $null });
         manualReceipt=$manualPath;screenHashes=$screenHashes;completedAt=[DateTime]::UtcNow.ToString('o')} |
         ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $ReportDirectory 'connection-cell-evidence.json') -Encoding UTF8
-    $session.lastOrdinal = $ConnectionOrdinal
+    $session.lastOrdinal = $observedOrdinal
     $session | ConvertTo-Json | Set-Content -LiteralPath $sessionPath -Encoding UTF8
     $success = $true
 } finally {
