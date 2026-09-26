@@ -108,6 +108,7 @@ public abstract class CraftingStatusTableRendererMixin {
 
     private static void ae2craftingtime$appendTooltip(List<Component> lines, long active, long pending, boolean noSpace,
             CraftingBlockReason reason, java.util.function.BooleanSupplier appendStats) {
+        if (!ClientOptionsRuntime.enabled(OptionFeature.STATUS_ROWS)) return;
         var showLocateHint = false;
         if (noSpace && ClientOptionsRuntime.enabled(OptionFeature.NO_SPACE_STATUS)) {
             lines.addAll(TtcText.noSpaceTooltip());

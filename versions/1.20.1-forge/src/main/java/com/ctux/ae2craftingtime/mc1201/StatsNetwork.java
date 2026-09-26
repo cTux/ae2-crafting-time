@@ -35,7 +35,7 @@ public final class StatsNetwork {
     public static boolean canSendCpuTtc() { return canSend(); }
 
     public static boolean canSend(ServerPlayer player) {
-        return CHANNEL.isRemotePresent(player.connection.getConnection());
+        return CHANNEL.isRemotePresent(player.connection.connection);
     }
 
     public static void register() {
