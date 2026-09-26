@@ -76,64 +76,66 @@ public final class StatsNetwork {
         ClientPlayNetworking.registerGlobalReceiver(SNAPSHOT_ID,
                 (client, handler, buffer, responseSender) -> {
                     var packet = StatsSnapshotS2C.decode(buffer);
-                    client.execute(packet::handle);
+                    client.execute(com.ctux.ae2craftingtime.mc1201.ClientConnectionSession.guard(handler.getConnection(), packet::handle));
                 });
         ClientPlayNetworking.registerGlobalReceiver(HIGHLIGHT_ID,
                 (client, handler, buffer, responseSender) -> {
                     var packet = ProviderHighlightS2C.decode(buffer);
-                    client.execute(packet::handle);
+                    client.execute(com.ctux.ae2craftingtime.mc1201.ClientConnectionSession.guard(handler.getConnection(), packet::handle));
                 });
         ClientPlayNetworking.registerGlobalReceiver(CPU_TTC_SNAPSHOT_ID,
                 (client, handler, buffer, responseSender) -> {
                     var packet = CpuTtcSnapshotS2C.decode(buffer);
-                    client.execute(packet::handle);
+                    client.execute(com.ctux.ae2craftingtime.mc1201.ClientConnectionSession.guard(handler.getConnection(), packet::handle));
                 });
-        ClientPlayNetworking.registerGlobalReceiver(PLAN_RECURRENCE_ID, (client, handler, buffer, sender) -> { var packet=PlanRecurrenceS2C.decode(buffer); client.execute(packet::handle); });
-        ClientPlayNetworking.registerGlobalReceiver(PLAN_STORED_VARIANTS_ID, (client, handler, buffer, sender) -> { var packet=PlanStoredVariantsS2C.decode(buffer); client.execute(packet::handle); });
+        ClientPlayNetworking.registerGlobalReceiver(PLAN_RECURRENCE_ID, (client, handler, buffer, sender) -> { var packet=PlanRecurrenceS2C.decode(buffer); client.execute(com.ctux.ae2craftingtime.mc1201.ClientConnectionSession.guard(handler.getConnection(), packet::handle)); });
+        ClientPlayNetworking.registerGlobalReceiver(PLAN_STORED_VARIANTS_ID, (client, handler, buffer, sender) -> { var packet=PlanStoredVariantsS2C.decode(buffer); client.execute(com.ctux.ae2craftingtime.mc1201.ClientConnectionSession.guard(handler.getConnection(), packet::handle)); });
         ClientPlayNetworking.registerGlobalReceiver(SERVER_OPTIONS_SNAPSHOT_ID,
                 (client, handler, buffer, sender) -> {
                     var packet = ServerOptionsSnapshotS2C.decode(buffer);
-                    client.execute(packet::handle);
+                    client.execute(com.ctux.ae2craftingtime.mc1201.ClientConnectionSession.guard(handler.getConnection(), packet::handle));
                 });
     }
 
     public static void sendToServer(StatsRequestC2S packet) {
-        ClientPlayNetworking.send(REQUEST_ID, encode(packet));
+        if (ClientPlayNetworking.canSend(REQUEST_ID)) ClientPlayNetworking.send(REQUEST_ID, encode(packet));
     }
 
     public static void sendToServer(StatsChatC2S packet) {
-        ClientPlayNetworking.send(CHAT_ID, encode(packet));
+        if (ClientPlayNetworking.canSend(CHAT_ID)) ClientPlayNetworking.send(CHAT_ID, encode(packet));
     }
 
     public static void sendToServer(ProviderLocateC2S packet) {
-        ClientPlayNetworking.send(LOCATE_ID, encode(packet));
+        if (ClientPlayNetworking.canSend(LOCATE_ID)) ClientPlayNetworking.send(LOCATE_ID, encode(packet));
     }
 
     public static void sendToServer(WarningPreferenceC2S packet) {
-        ClientPlayNetworking.send(WARNING_PREFERENCE_ID, encode(packet));
+        if (ClientPlayNetworking.canSend(WARNING_PREFERENCE_ID)) ClientPlayNetworking.send(WARNING_PREFERENCE_ID, encode(packet));
     }
     public static void sendToServer(ServerOptionsUpdateC2S packet) {
-        ClientPlayNetworking.send(SERVER_OPTIONS_UPDATE_ID, encode(packet));
+        if (ClientPlayNetworking.canSend(SERVER_OPTIONS_UPDATE_ID)) ClientPlayNetworking.send(SERVER_OPTIONS_UPDATE_ID, encode(packet));
     }
 
     public static boolean canSendCpuTtc() {
         return ClientPlayNetworking.canSend(CPU_TTC_REQUEST_ID);
     }
 
+    public static boolean canSend() { return ClientPlayNetworking.canSend(REQUEST_ID); }
+
     public static void sendToServer(CpuTtcRequestC2S packet) {
-        ClientPlayNetworking.send(CPU_TTC_REQUEST_ID, encode(packet));
+        if (canSendCpuTtc()) ClientPlayNetworking.send(CPU_TTC_REQUEST_ID, encode(packet));
     }
 
     public static void sendTo(ServerPlayer player, StatsSnapshotS2C packet) {
-        ServerPlayNetworking.send(player, SNAPSHOT_ID, encode(packet));
+        if (ServerPlayNetworking.canSend(player, SNAPSHOT_ID)) ServerPlayNetworking.send(player, SNAPSHOT_ID, encode(packet));
     }
 
     public static void sendTo(ServerPlayer player, ProviderHighlightS2C packet) {
-        ServerPlayNetworking.send(player, HIGHLIGHT_ID, encode(packet));
+        if (ServerPlayNetworking.canSend(player, HIGHLIGHT_ID)) ServerPlayNetworking.send(player, HIGHLIGHT_ID, encode(packet));
     }
 
     public static void sendTo(ServerPlayer player, CpuTtcSnapshotS2C packet) {
-        ServerPlayNetworking.send(player, CPU_TTC_SNAPSHOT_ID, encode(packet));
+        if (ServerPlayNetworking.canSend(player, CPU_TTC_SNAPSHOT_ID)) ServerPlayNetworking.send(player, CPU_TTC_SNAPSHOT_ID, encode(packet));
     }
     public static void sendTo(ServerPlayer player, ServerOptionsSnapshotS2C packet) {
         if (ServerPlayNetworking.canSend(player, SERVER_OPTIONS_SNAPSHOT_ID))
@@ -203,6 +205,8 @@ public final class StatsNetwork {
         CpuTtcSnapshotS2C.encode(packet, buffer);
         return buffer;
     }
+
+    public static boolean canSend(ServerPlayer player) { return ServerPlayNetworking.canSend(player, SNAPSHOT_ID); }
 
     private StatsNetwork() {
     }

@@ -38,7 +38,7 @@ public abstract class CraftingStatusTableRendererMixin {
             CallbackInfoReturnable<List<Component>> cir) {
         var lines = cir.getReturnValue();
         MutableComponent amounts = null;
-        if (ClientOptionsRuntime.current().features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS)) {
+        if (ClientOptionsRuntime.enabled(OptionFeature.COMPACT_STATUS_AMOUNTS)) {
             var key = entry.getWhat();
             long stored = entry.getStoredAmount(), active = entry.getActiveAmount(), pending = entry.getPendingAmount();
             amounts = ae2craftingtime$compactAmounts(lines, stored,
@@ -57,7 +57,7 @@ public abstract class CraftingStatusTableRendererMixin {
     @Inject(method = "getEntryTooltip", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$appendTooltipTimeToCraft(CraftingStatusEntry entry,
             CallbackInfoReturnable<List<Component>> cir) {
-        if (ClientOptionsRuntime.current().features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS)
+        if (ClientOptionsRuntime.enabled(OptionFeature.COMPACT_STATUS_AMOUNTS)
                 && (entry.getStoredAmount() > 0 || entry.getActiveAmount() > 0 || entry.getPendingAmount() > 0)) {
             cir.getReturnValue().add(TtcText.statusAmountsLegend());
         }

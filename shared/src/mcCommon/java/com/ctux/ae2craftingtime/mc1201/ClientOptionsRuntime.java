@@ -31,12 +31,13 @@ public final class ClientOptionsRuntime {
     public static boolean textShadow() { return current.features().enabled(OptionFeature.TEXT_SHADOW); }
 
     public static boolean profilingEnabled() {
+        if (!StatsNetwork.canSend()) return false;
         var snapshot = ClientServerOptions.snapshot();
         return snapshot == null || snapshot.config().features().enabled(OptionFeature.PROFILING);
     }
 
     public static boolean enabled(OptionFeature feature) {
-        if (!current.features().enabled(feature)) return false;
+        if (!StatsNetwork.canSend() || !current.features().enabled(feature)) return false;
         var snapshot = ClientServerOptions.snapshot();
         if (snapshot != null && feature != OptionFeature.RECEIVE_CRAFT_WARNINGS
                 && !profilingEnabled()) return false;
