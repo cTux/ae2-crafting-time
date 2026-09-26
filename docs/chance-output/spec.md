@@ -1,0 +1,82 @@
+# Chance-based output diagnostics
+
+Status: draft
+
+Scope: Research and proposed status for non-guaranteed processing outputs.
+
+Issue: [#471](https://github.com/cTux/ae2-crafting-time/issues/471).
+
+Open gate: Identify a real machine/mod/version and a trustworthy server-side
+mapping from the dispatched pattern to its effective output probability.
+Final wording, color, precedence, and alert timing remain planning decisions.
+No detector or runtime qualification is claimed.
+
+## Problem and evidence limits
+
+An encoded processing pattern promises a fixed output. A machine that returns
+that output only by chance can leave AE2 waiting: 100 operations at 60% chance
+produce 60 outputs on average, not a guaranteed 60 or a guaranteed completion.
+
+The issue's pinned AE2/source research found no standard probability field in
+`IPatternDetails`. Successful provider dispatch adds expected outputs; accepted
+returns reduce the waiting amount. Neither observation proves the machine has
+finished its attempts. Slow processing, missing fuel, blocked routing, and
+unloaded machines can produce the same partial-return symptom.
+
+`CraftProfiler` and `CraftingCpuLogicMixin` already observe outstanding output,
+progress, and lifecycle. Reuse these boundaries; do not estimate recipe chance
+from the ratio of observed returns to dispatched output or from network stock.
+
+## Proposed behavior to validate
+
+- Provisional **CHANCE OUTPUT** applies only when a supported server integration
+  proves that the job's encoded output is not guaranteed. Show a percentage only
+  when its exact effective value is known.
+- Explain that AE2 may wait for missing output. On a delayed row, include
+  job-specific outstanding amount and idle time only when those values are known.
+- Preserve concrete blocker statuses and retain applicable chance context in the
+  tooltip. Unknown mappings stay DELAYED with a conditional suggestion to check
+  for chance outputs, never a confirmed diagnosis.
+- Reuse owner-targeted delayed alerts, server settings, and episode deduplication.
+  Do not emit duplicate generic/chance messages merely because chance is present.
+- Explain recovery: inspect routing and machines, remove optional random byproducts
+  from promised outputs, or stock random outputs independently. Cancel and correct
+  an unrecoverable job. Extra inputs and batching do not guarantee success.
+
+No scheduler changes, automatic retries/cancellation, invented outputs, or
+probability-based TTC correction are requested. The eventual status needs an
+on/off option through the existing options model.
+
+## Design and verification prerequisites
+
+Map evidence by job/CPU, pattern, and output; one global output ID is insufficient
+for mixed producers. Verify upgrades, pack changes, ambiguous factory patterns,
+and effective server recipes. A recipe-browser tooltip is not server authority.
+Keep snapshots bounded and detection server-owned; avoid per-tick full recipe scans.
+Define reset, cancellation, completion, unload/reload, and stale-evidence handling.
+
+A deterministic fixture may dispatch 100 promised units and return exactly 60
+to verify 40 outstanding. Test a real chance recipe separately without expecting
+an exact random yield. Cover zero returns/no history, partial and late returns,
+guaranteed main outputs with chance byproducts, multiple CPUs, mixed producers,
+and deterministic slow/blocked negative controls.
+
+Review both source variants, packet implementations, status composition,
+`TtcText`, `ProfilerBridge`, snapshot caches/codecs, and notifications. Qualify
+Forge/Fabric 1.20.1 and both NeoForge targets, explicitly excluding unsupported
+addon mappings. If no reliable mapping exists, retain that research result;
+a conditional hint alone does not complete the requested status.
+
+## Documentation and completion
+
+After behavior is implemented and verified, update English/Ukrainian UI text,
+GuideME status pages and indexes, DELAYED cross-links, and diagnostic guidance.
+Publish and verify equivalent English/Ukrainian GitHub wiki pages and navigation.
+Use reviewed runtime captures, not proposal images.
+
+Explain the detection limits, recovery, and average-yield example. Reconcile the
+issue's reported DELAYED documentation timing discrepancy against current
+configuration/code rather than copying the old 30-second claim.
+[#412](https://github.com/cTux/ae2-crafting-time/issues/412) is related guide work,
+not an established blocker. Retain exact source, test, CI, and publication evidence
+before closing the feature.
