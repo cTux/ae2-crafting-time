@@ -98,29 +98,40 @@ public final class StatsNetwork {
     }
 
     public static void sendToServer(StatsRequestC2S packet) {
-        if (ClientPlayNetworking.canSend(REQUEST_ID)) ClientPlayNetworking.send(REQUEST_ID, encode(packet));
+        if (canSendChannel(REQUEST_ID)) ClientPlayNetworking.send(REQUEST_ID, encode(packet));
     }
 
     public static void sendToServer(StatsChatC2S packet) {
-        if (ClientPlayNetworking.canSend(CHAT_ID)) ClientPlayNetworking.send(CHAT_ID, encode(packet));
+        if (canSendChannel(CHAT_ID)) ClientPlayNetworking.send(CHAT_ID, encode(packet));
     }
 
     public static void sendToServer(ProviderLocateC2S packet) {
-        if (ClientPlayNetworking.canSend(LOCATE_ID)) ClientPlayNetworking.send(LOCATE_ID, encode(packet));
+        if (canSendChannel(LOCATE_ID)) ClientPlayNetworking.send(LOCATE_ID, encode(packet));
     }
 
     public static void sendToServer(WarningPreferenceC2S packet) {
-        if (ClientPlayNetworking.canSend(WARNING_PREFERENCE_ID)) ClientPlayNetworking.send(WARNING_PREFERENCE_ID, encode(packet));
+        if (canSendChannel(WARNING_PREFERENCE_ID)) ClientPlayNetworking.send(WARNING_PREFERENCE_ID, encode(packet));
     }
     public static void sendToServer(ServerOptionsUpdateC2S packet) {
-        if (ClientPlayNetworking.canSend(SERVER_OPTIONS_UPDATE_ID)) ClientPlayNetworking.send(SERVER_OPTIONS_UPDATE_ID, encode(packet));
+        if (canSendChannel(SERVER_OPTIONS_UPDATE_ID)) ClientPlayNetworking.send(SERVER_OPTIONS_UPDATE_ID, encode(packet));
     }
 
     public static boolean canSendCpuTtc() {
-        return ClientPlayNetworking.canSend(CPU_TTC_REQUEST_ID);
+        return canSendChannel(CPU_TTC_REQUEST_ID);
     }
 
-    public static boolean canSend() { return ClientPlayNetworking.canSend(REQUEST_ID); }
+    public static boolean canSend() { return canSendChannel(REQUEST_ID); }
+
+    private static boolean canSendChannel(ResourceLocation id) {
+        // Fabric can briefly retain the previous server's advertised channels
+        // while switching servers. The guarded options snapshot proves that
+        // this play connection is talking to Crafting Time.
+        return canSendChannel(() -> ClientPlayNetworking.canSend(id));
+    }
+
+    static boolean canSendChannel(java.util.function.BooleanSupplier advertised) {
+        return ClientServerOptions.snapshot() != null && advertised.getAsBoolean();
+    }
 
     public static void sendToServer(CpuTtcRequestC2S packet) {
         if (canSendCpuTtc()) ClientPlayNetworking.send(CPU_TTC_REQUEST_ID, encode(packet));
