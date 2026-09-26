@@ -13,12 +13,7 @@ Treat the GitHub issue list as the source of truth. Find the matching issue
 before starting a smoke-test task, or create one when none exists. Remove
 secrets, personal data, private paths, and private server details before
 creating or updating an issue.
-For each issue you create, add at least one `area/<context>` label, exactly one
-`priority/<low|medium|high>` label, and exactly one
-`effort/<low|medium|high>` label. Reuse an existing label or create the missing
-label before opening the issue.
-Do not start an issue title with its type, such as `[Feature]` or `[Bug]`.
-Add the type as a plain label instead, such as `feature`, `bug`, or `tests`.
+Follow the [issue-label policy](../../../AGENTS.md#issue-labels).
 
 ## Route
 

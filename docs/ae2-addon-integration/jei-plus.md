@@ -4,7 +4,7 @@ Status: draft
 
 Scope: [#439](https://github.com/cTux/ae2-crafting-time/issues/439).
 
-Hold: `do-not-implement-yet` remains in force.
+Hold: `backlog` remains in force.
 
 ## Requested support and boundaries
 

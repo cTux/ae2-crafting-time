@@ -14,3 +14,16 @@
     and create a detailed GitHub issue for it.
 - Let the discovered repository skills own development, writing, release, issue,
   and Prism workflows. Do not duplicate their detailed rules here.
+
+## Issue Labels
+
+- Give each new issue exactly one `priority/<low|medium|high>` label and one
+  `effort/<low|medium|high>` label. Reuse existing labels.
+- Use `backlog` for deferred work. It is an implementation hold, even when its
+  documentation is ready. Remove the hold only when the user authorizes starting it.
+- Keep `in/progress` for active work, `recurrent` for recurring audits, and
+  `display` for an addon UI that needs a TTC hook, when applicable.
+- Do not create or apply area, issue-type, or LLM-model labels. Do not prefix
+  issue titles with a type such as `[Bug]` or `[Feature]`.
+- Preserve unrelated labels when updating an issue. Apply the same naming rules
+  to open and closed issues.

@@ -17,12 +17,7 @@ when preparing artifacts for a client or modpack smoke test.
    for release work before starting, or create one when none exists. Remove
    secrets, personal data, private paths, and private server details before
    creating or updating an issue.
-   Add at least one `area/<context>` label, exactly one
-   `priority/<low|medium|high>` label, and exactly one
-   `effort/<low|medium|high>` label. Reuse an existing label or create the
-   missing label before opening the issue.
-   Do not start the title with the issue type, such as `[Feature]` or `[Bug]`.
-   Add the type as a plain label instead, such as `feature`, `bug`, or `tests`.
+   Follow the [issue-label policy](../../../AGENTS.md#issue-labels).
 3. Read [the writing skill](../ae2-crafting-time-writing/SKILL.md) before
    changing changelogs, release notes, or text published to CurseForge,
    Modrinth, or GitHub.
