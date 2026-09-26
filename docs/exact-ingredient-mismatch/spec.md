@@ -10,6 +10,9 @@ Connected Fabric 1.20.1 and both NeoForge target checks remain outstanding.
 
 Tracking issue: [#327](https://github.com/cTux/ae2-crafting-time/issues/327).
 
+Follow-up: [Stored variant status background](status-background/spec.md) tracks
+the presentation correction in [#565](https://github.com/cTux/ae2-crafting-time/issues/565).
+
 Source report: [Problem with autocrafting](https://www.reddit.com/r/allthemods/comments/1w5bqj5/problem_with_autocrafting/).
 
 ## Goal
