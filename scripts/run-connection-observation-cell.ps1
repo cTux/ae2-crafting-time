@@ -46,7 +46,7 @@ $clientBundle = Join-Path $ReportDirectory 'client-bundle'
 Copy-Item -LiteralPath $BundleDirectory -Destination $clientBundle -Recurse
 $bundleMods = Join-Path $clientBundle 'mods'
 $manifestPath = Join-Path $bundleMods '.ae2-crafting-time-run-mods.json'
-$manifest = @(Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json)
+$manifest = [string[]](ConvertFrom-Json -InputObject (Get-Content -LiteralPath $manifestPath -Raw))
 if (!$clientInstalled) {
     $manifest = @($manifest | Where-Object { $_ -notlike 'ae2-crafting-time-*.jar' })
     Get-ChildItem -LiteralPath $bundleMods -File -Filter 'ae2-crafting-time-*.jar' | Remove-Item -Force
@@ -80,7 +80,7 @@ $staged = @(Get-ChildItem -LiteralPath (Join-Path $runtime 'mods') -File -Filter
 if (@($staged | Where-Object { $_.name -like 'ae2-crafting-time-*.jar' }).Count -ne $(if($clientInstalled){2}else{0})) {
     throw 'Client installation inventory does not match the selected cell'
 }
-$expectedNames = @(Get-Content -LiteralPath (Join-Path $BundleDirectory 'mods/.ae2-crafting-time-run-mods.json') -Raw | ConvertFrom-Json)
+$expectedNames = [string[]](ConvertFrom-Json -InputObject (Get-Content -LiteralPath (Join-Path $BundleDirectory 'mods/.ae2-crafting-time-run-mods.json') -Raw))
 if (!$clientInstalled) { $expectedNames = @($expectedNames | Where-Object { $_ -notlike 'ae2-crafting-time-*.jar' }) }
 $expected = @($expectedNames | Sort-Object | ForEach-Object {
     if ([IO.Path]::GetFileName($_) -cne $_) { throw 'Invalid expected client artifact name' }
