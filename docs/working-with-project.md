@@ -39,6 +39,9 @@ Use the printed Gradle project names. The current modules are:
 
 ## Documentation Status
 
+The [documentation coverage audit](audits/documentation-coverage.md) links the
+open-issue documentation inventory and recurring audit procedures.
+
 Use the [documentation lifecycle](documentation-status.md) to distinguish draft
 plans, work ready to implement, implementation in progress, and verified completion.
 The canonical status lives in each feature specification; designs and plans link to it.
