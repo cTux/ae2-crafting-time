@@ -56,6 +56,10 @@ class TtcTextTest {
         var name = TtcText.storedVariant();
         assertEquals("text.ae2craftingtime.plan.stored_variant",
                 ((TranslatableContents) name.getContents()).getKey());
+        assertTrue(com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(
+                ((TranslatableContents) name.getContents()).getKey()));
+        assertTrue(com.ctux.ae2craftingtime.core.CraftingRowState.isWidthLimited(
+                ((TranslatableContents) name.getContents()).getKey()));
         assertFalse(name.getStyle().isBold());
         assertEquals(TextColor.fromLegacyFormat(ChatFormatting.GOLD), name.getStyle().getColor());
         var hints = TtcText.storedVariantHints();
