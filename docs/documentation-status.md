@@ -52,7 +52,7 @@ investigated. Keep the feature index as navigation, not another hand-maintained 
 - For a later change, add a separate scope; do not silently relabel an already finished baseline.
   Reopen an existing scope only when its own acceptance is no longer satisfied.
 - Record a pause, cancellation, dependency or authorization hold beside the status.
-  `ready-to-implement` describes the plan and never overrides `do-not-implement-yet`,
+  `ready-to-implement` describes the plan and never overrides `backlog`,
   approval requirements, or a missing external prerequisite. Deferred proposals need
   renewed review before resuming; closed-as-unneeded does not mean `finished`.
 

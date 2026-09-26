@@ -17,15 +17,7 @@ implementation agent.
    secrets, personal data, private paths, and private server details first. Use
    `gh issue create` with a body file, then read the created issue back. If the
    result is uncertain, stop instead of retrying blindly.
-   Add at least one `area/<context>` label, exactly one
-   `priority/<low|medium|high>` label, and exactly one
-   `effort/<low|medium|high>` label. Reuse an existing label or create the
-   missing label before opening the issue.
-   Select exactly one `model/<model-id>` label using
-   `docs/codex-models.md`. Add it when opening the issue, creating the label first
-   when it is missing. Reassess the model label if the approved scope changes.
-   Do not start the title with the issue type, such as `[Feature]` or `[Bug]`.
-   Add the type as a plain label instead, such as `feature`, `bug`, or `tests`.
+   Follow the [issue-label policy](../../../AGENTS.md#issue-labels).
    Link every known blocking issue and describe its impact in the new issue body
    so the dependency is visible.
 2. Read `AGENTS.md`, `docs/architecture.md`, the closest feature documents, and

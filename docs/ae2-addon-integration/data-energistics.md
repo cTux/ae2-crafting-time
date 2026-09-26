@@ -6,7 +6,7 @@ Scope: Optional dependency metadata and qualification for NeoForge 1.21.1.
 
 Issue: [#518](https://github.com/cTux/ae2-crafting-time/issues/518).
 
-Hold: The issue is marked `do-not-implement-yet`. This document does not lift it.
+Hold: The issue is marked `backlog`. This document does not lift it.
 
 ## Requested support
 

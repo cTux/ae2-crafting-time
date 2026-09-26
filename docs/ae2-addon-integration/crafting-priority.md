@@ -2,7 +2,7 @@
 
 Tracking: [#442](https://github.com/cTux/ae2-crafting-time/issues/442).
 
-Hold: The issue is marked `do-not-implement-yet`. This page plans qualification;
+Hold: The issue is marked `backlog`. This page plans qualification;
 no compatibility result is claimed.
 
 ## Targets and overlapping behavior

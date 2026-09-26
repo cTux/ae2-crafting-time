@@ -2,7 +2,7 @@
 
 Tracking: [#441](https://github.com/cTux/ae2-crafting-time/issues/441).
 
-Hold: The issue is marked `do-not-implement-yet`. This is a qualification plan,
+Hold: The issue is marked `backlog`. This is a qualification plan,
 not an executed compatibility result.
 
 ## Target and source review

@@ -4,7 +4,7 @@ Status: draft
 
 Scope: [#440](https://github.com/cTux/ae2-crafting-time/issues/440).
 
-Hold: `do-not-implement-yet` remains in force. Resolve the current matching
+Hold: `backlog` remains in force. Resolve the current matching
 artifact targets before implementing the release relation.
 
 ## Requested behavior
