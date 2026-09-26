@@ -9,6 +9,7 @@ public final class CraftingRowState {
             "text.ae2craftingtime.no_channel",
             "text.ae2craftingtime.no_target", "text.ae2craftingtime.input_blocked",
             "text.ae2craftingtime.locked", "text.ae2craftingtime.plan.recurrent",
+            "text.ae2craftingtime.plan.stored_variant",
             "text.ae2craftingtime.status.amounts");
 
     public static boolean isBadge(String translationKey) {
@@ -21,6 +22,7 @@ public final class CraftingRowState {
 
     public static boolean isWidthLimited(String key) {
         return key.equals("text.ae2craftingtime.plan.recurrent")
+                || key.equals("text.ae2craftingtime.plan.stored_variant")
                 || key.equals("text.ae2craftingtime.status.amounts");
     }
 

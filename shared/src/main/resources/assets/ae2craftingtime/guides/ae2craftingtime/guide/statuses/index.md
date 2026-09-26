@@ -27,6 +27,12 @@ Crafting Plan has one separate diagnosis before you submit a job:
 [Recurrent](recurrent.md). It reports a proven recipe self-dependency, not a
 running-job priority shared with the labels above.
 
+Crafting Plan can also show a gold **Stored variant** label when the network has
+the missing item with different saved data. It keeps AE2's Missing amount and
+doesn't change whether you can start the job. Like the other mod status labels,
+it uses your Badge background color and opacity. Turning Badge background off
+hides the rounded fill while keeping the text visible.
+
 The order matters. `NO SPACE` applies to stored output. The other blocking
 labels apply to scheduled batches; a row can still have an active batch that
 finishes while its next batch is blocked. The mod reports observed conditions,
