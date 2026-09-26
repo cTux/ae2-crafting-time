@@ -18,6 +18,10 @@ public final class TestDriverMod {
                     ConnectionProbe.server(player);
                 }
             });
+            NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) -> {
+                if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer)
+                    ConnectionObservation.endConnection();
+            });
             if (net.neoforged.fml.loading.FMLLoader.getCurrent().getDist().isClient())
                 NeoForge.EVENT_BUS.addListener((net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent.LoggingIn event) -> {
                     ConnectionObservation.beginConnection();

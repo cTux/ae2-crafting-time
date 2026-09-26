@@ -156,6 +156,10 @@ if (Compare-Object $expected $actual) { throw 'Client artifact inventory differs
             -Target $Target -ConnectionEpoch "$ConnectionEpoch`:$serverOrdinal" -ProductionSha256 $ProductionSha256 `
             -DriverSha256 $DriverSha256 -NotBeforeUtc $ServerStartedAtUtc `
             -Unsupported:($InstallationMode -eq 'server-only') | Out-Null
+        $serverReceipt = Get-Content -LiteralPath (Join-Path $ReportDirectory "server-observation-$serverOrdinal.json") -Raw | ConvertFrom-Json
+        if (([datetime]$serverReceipt.flushedAt).ToUniversalTime() -lt ([datetime]$manual.observedAt).ToUniversalTime()) {
+            throw 'Server observation predates the native craft checkpoint; disconnect to flush the final epoch'
+        }
     } elseif (@(Get-ChildItem -LiteralPath $ReportDirectory -File -Filter 'server-observation-*.json').Count) {
         throw 'Absent server unexpectedly produced a Crafting Time observation'
     }

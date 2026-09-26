@@ -19,6 +19,10 @@ public final class TestDriverMod {
                     ConnectionProbe.server(player);
                 }
             });
+            MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) -> {
+                if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer)
+                    ConnectionObservation.endConnection();
+            });
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> MinecraftForge.EVENT_BUS.addListener(
                     (net.minecraftforge.client.event.ClientPlayerNetworkEvent.LoggingIn event) -> {
                         ConnectionObservation.beginConnection();

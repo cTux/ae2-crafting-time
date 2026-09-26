@@ -57,9 +57,12 @@ Copy-Item -LiteralPath (Join-Path $BundleDirectory 'mods') -Destination $Runtime
                 $attempted["s2c:$type`:player"] = 1
             }
             $sent = if ($global:mode -eq 'both') { @{'s2c:StatsSnapshotS2C:player'=1} } else { @{} }
+            $flushedAt = if ($global:staleServerReceipt) {
+                ([datetime]$checkpoint.observedAt).AddMilliseconds(-1).ToString('o')
+            } else { [DateTime]::UtcNow.ToString('o') }
             [ordered]@{target='1.20.1-forge';role='server';connectionEpoch='fixture:1';
-                productionSha256=$productionHash;driverSha256=$driverHash;observerReadyAt=[DateTime]::UtcNow.ToString('o');
-                flushedAt=[DateTime]::UtcNow.ToString('o');attempted=$attempted;sent=$sent} |
+                productionSha256=$productionHash;driverSha256=$driverHash;observerReadyAt=([datetime]$flushedAt).AddSeconds(-1).ToString('o');
+                flushedAt=$flushedAt;attempted=$attempted;sent=$sent} |
                 ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $global:report 'server-observation-1.json')
         }
     }
@@ -79,11 +82,12 @@ Copy-Item -LiteralPath (Join-Path $BundleDirectory 'mods') -Destination $Runtime
         Write-Checkpoints
         $global:process
     }
-    function Run-Cell([string]$Mode,[int]$Ordinal,[int]$Observed=0,[switch]$Keep,[switch]$PoisonPrior,[int]$ServerOrdinal=0) {
+    function Run-Cell([string]$Mode,[int]$Ordinal,[int]$Observed=0,[switch]$Keep,[switch]$PoisonPrior,[int]$ServerOrdinal=0,[switch]$StaleServerReceipt) {
         $global:mode=$Mode; $global:ordinal=$Ordinal
         $global:observedOrdinal=if ($Observed) { $Observed } else { $Ordinal }
         $global:poisonPrior=[bool]$PoisonPrior
         $global:serverOrdinal=$ServerOrdinal
+        $global:staleServerReceipt=[bool]$StaleServerReceipt
         $global:report=Join-Path $root ([guid]::NewGuid().ToString('N'))
         New-Item -ItemType Directory -Path $global:report | Out-Null
         & (Join-Path $root 'run-connection-observation-cell.ps1') -Target '1.20.1-forge' -InstallationMode $Mode `
@@ -120,6 +124,13 @@ Copy-Item -LiteralPath (Join-Path $BundleDirectory 'mods') -Destination $Runtime
     $failed=$false
     try { Run-Cell server-only 1 3 } catch { $failed=$true }
     if (!$failed) { throw 'Server retry without an observed server ordinal was accepted' }
+    $global:session=Join-Path $root 'stale-server-session'
+    $failed=$false
+    try { Run-Cell server-only 1 -StaleServerReceipt } catch {
+        if ($_.Exception.Message -notlike 'Server observation predates the native craft checkpoint*') { throw }
+        $failed=$true
+    }
+    if (!$failed) { throw 'Server receipt predating the craft checkpoint was accepted' }
     Write-Host 'Connection observation session contract passed'
 } finally {
     $resolved = [IO.Path]::GetFullPath($root)

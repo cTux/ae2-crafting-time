@@ -23,9 +23,11 @@ world uses native AE2 registry content, without test-driver blocks, items, or
 fluids. The runner compares its target and level hash before copying.
 
 For each cell, the operator completes a real craft and captures English native
-plan and status screens under `<report>/client/evidence/`. Then write
-`<report>/manual-checkpoints.json` with the matching target/mode, a fresh UTC
-timestamp, and the two screenshot filenames:
+plan and status screens under `<report>/client/evidence/`. Record `observedAt`
+at the final screenshot. For a cell with Crafting Time on the server, disconnect
+the client gracefully and wait for the server observer to flush that connection's
+receipt. Then write `<report>/manual-checkpoints.json` with the matching
+target/mode, the recorded UTC timestamp, and the two screenshot filenames:
 
 ```json
 {
@@ -35,6 +37,7 @@ timestamp, and the two screenshot filenames:
   "craft": true,
   "clientProcessId": 1234,
   "connectionOrdinal": 1,
+  "serverConnectionOrdinal": 1,
   "observedAt": "2026-09-26T12:00:00Z",
   "planScreenshot": "plan.png",
   "statusScreenshot": "status.png"
@@ -42,7 +45,8 @@ timestamp, and the two screenshot filenames:
 ```
 
 The runner waits at most `-ManualTimeoutSeconds` (default 1200), checks both
-inventories, screenshots and installed-side packet receipts, then requests a
+inventories, screenshots and installed-side packet receipts, and rejects a server
+receipt last flushed before `observedAt`. It then requests a
 clean RCON stop of the disposable server. Inspect `server-stop.txt` for `clean`
 and compare the screenshots by eye. A manual receipt or packet count alone does
 not prove correct UI or server-only history retention; restart the saved
