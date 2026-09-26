@@ -45,6 +45,9 @@ description: Develop, debug, test, or port AE2 Crafting Time code and resources.
 - Document every new or changed TTC status and feature in both
   the GuideME book and GitHub wiki. Give each new TTC status and feature an
   on/off option; update both guides when existing behavior changes.
+- Give every AE2 Crafting Time status label in Crafting Plan and Crafting Status
+  rows the shared badge background by default. Respect the client's Badge
+  background switch and configured color and opacity.
 
 ## 100% Coverage Rule
 
