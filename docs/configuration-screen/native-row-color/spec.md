@@ -37,6 +37,8 @@ when enabled, regardless of badge mode. Compact amounts follow the associated
 row color; without a status they use the neutral foreground. Tooltip colors and
 text remain unchanged. The old Waiting color stays readable in saved configs
 but is no longer offered as a row-color setting.
+The Crafting Plan total uses AE2's dark text color without a badge and the
+configured light Total color with a badge.
 
 Keep text, amounts, order, layout, scaling, interactions, and shadow behavior.
 The two appearance switches are client preferences, independent of server
@@ -46,7 +48,7 @@ save/reopen. No new preference, packet, or saved-data format is needed.
 
 ## Boundaries and acceptance
 
-Apply this policy only to Plan and Status rows. Totals, CPU cards, tooltips,
+Apply the row policy only to Plan and Status rows. CPU cards, tooltips,
 chat, Crafting Tree, ME Requester, and other addon surfaces retain their existing
 behavior. Cover Forge/Fabric 1.20.1, NeoForge 1.21.1, and NeoForge 26.1.2.
 

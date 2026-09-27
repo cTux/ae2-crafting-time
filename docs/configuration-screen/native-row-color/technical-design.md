@@ -62,6 +62,9 @@ Comparing RGB with Total is also wrong when custom colors coincide. Choose the
 neutral row copy at the Plan/Status component boundary, before compact amounts
 copy its foreground. The legacy Waiting config key is retained for old files,
 but hidden from Appearance because no row uses it.
+Both Plan screen mixins choose the native dark total foreground without a badge
+and the configured Total foreground with a badge; the same choice colors the
+clock symbol and the draw call.
 
 ## Compatibility and failure boundaries
 

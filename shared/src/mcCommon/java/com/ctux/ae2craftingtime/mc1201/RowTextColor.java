@@ -25,6 +25,10 @@ public final class RowTextColor {
         return line.copy().withStyle(style -> style.withColor(color));
     }
 
+    public static int planTotalColor(ClientConfig config) {
+        return config.badgeBackground() ? config.color(ClientConfig.Color.TOTAL) : 0x404040;
+    }
+
     public static void amounts(MutableComponent amounts, Component status, ClientConfig config) {
         var color = status == null ? null : status.getStyle().getColor();
         if (color == null && config.badgeBackground())

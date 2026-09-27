@@ -14,7 +14,8 @@ marks remain after the symbol: `~12s?` appears as `⏱ ~12s?`. Rates and counts
 stay plain. The symbol uses the game's available font; its appearance can vary
 with fonts, scale, and resource packs.
 In Crafting Plan and Crafting Status rows, symbols match the text color. The
-Crafting Plan total uses the same foreground as the CPU details above it. Other
+Crafting Plan total uses the same foreground as the CPU details above it without
+a badge, or the light Total color with a badge. Other
 screens keep the symbol colors described in the status chapter.
 Without a badge background, Waiting, collecting data, Stored variant, and other
 neutral row text use AE2's text color. With a badge, they use the light Total

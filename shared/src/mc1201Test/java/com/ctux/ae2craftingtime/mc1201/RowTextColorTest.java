@@ -45,6 +45,7 @@ class RowTextColorTest {
         config.setColor(ClientConfig.Color.TOTAL, 0xE0E0E0);
         for (boolean badge : new boolean[] {false, true}) {
             config.features().setEnabled(OptionFeature.BADGE_BACKGROUND, badge);
+            assertEquals(badge ? 0xE0E0E0 : 0x404040, RowTextColor.planTotalColor(config));
             for (boolean colors : new boolean[] {false, true}) {
                 config.features().setEnabled(OptionFeature.TTC_COLORS, colors);
                 for (var original : List.of(TtcText.waiting(), TtcText.ttcCollectingData(),
