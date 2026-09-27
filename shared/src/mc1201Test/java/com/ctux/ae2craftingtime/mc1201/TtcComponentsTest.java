@@ -20,6 +20,20 @@ import org.junit.jupiter.api.Test;
 
 class TtcComponentsTest {
     @Test
+    void craftingRowSymbolsUseTextColorWithoutChangingTheSource() {
+        var source = TtcComponents.decorate(Component.translatable("text.ae2craftingtime.no_power"), true)
+                .withStyle(ChatFormatting.RED);
+        var row = TtcComponents.rowSymbolsInTextColor(source, 0x404040);
+        assertEquals(source.getString(), row.getString());
+        assertEquals(0x404040, row.getSiblings().get(0).getStyle().getColor().getValue());
+        assertEquals(0xFF5555, source.getSiblings().get(0).getStyle().getColor().getValue());
+        var plain = Component.literal("plain").withStyle(ChatFormatting.GREEN);
+        assertEquals(plain.getString(), TtcComponents.rowSymbolsInTextColor(plain, 0x404040).getString());
+        assertEquals(0x55FF55, TtcComponents.rowSymbolsInTextColor(plain, 0x404040)
+                .getSiblings().get(0).getStyle().getColor().getValue());
+    }
+
+    @Test
     void localSettingsAndNestedChatKeepOriginalUntouched() {
         var raw = Component.translatable("chat.type.text", Component.literal("player"),
                 Component.translatable("text.ae2craftingtime.chat.delayed",

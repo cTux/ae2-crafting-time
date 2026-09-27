@@ -6,6 +6,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.contents.TranslatableContents;
+import java.util.Optional;
 
 /** Builds a local display copy; the server and stored chat retain their original components. */
 public final class TtcComponents {
@@ -51,6 +52,20 @@ public final class TtcComponents {
         if (alreadyDecorated(source) && source.getSiblings().get(1).getContents() instanceof TranslatableContents text)
             return text;
         return null;
+    }
+
+    /** Match only symbol glyphs to a crafting row's foreground at render time. */
+    public static Component rowSymbolsInTextColor(Component source, int color) {
+        var result = Component.empty();
+        source.visit((style, part) -> {
+            var symbol = false;
+            for (var candidate : TtcSymbols.Symbol.values()) {
+                if (part.equals(candidate.glyph() + " ")) symbol = true;
+            }
+            result.append(Component.literal(part).setStyle(symbol ? style.withColor(color) : style));
+            return Optional.empty();
+        }, net.minecraft.network.chat.Style.EMPTY);
+        return result;
     }
 
     private static boolean alreadyDecorated(Component source) {
