@@ -57,12 +57,16 @@ public final class TtcComponents {
     /** Match only symbol glyphs to a crafting row's foreground at render time. */
     public static Component rowSymbolsInTextColor(Component source, int color) {
         var result = Component.empty();
+        var foreground = source.getStyle().getColor();
+        if (foreground == null && source.getSiblings().size() > 1)
+            foreground = source.getSiblings().get(1).getStyle().getColor();
+        var textColor = foreground == null ? color : foreground.getValue();
         source.visit((style, part) -> {
             var symbol = false;
             for (var candidate : TtcSymbols.Symbol.values()) {
                 if (part.equals(candidate.glyph() + " ")) symbol = true;
             }
-            result.append(Component.literal(part).setStyle(symbol ? style.withColor(color) : style));
+            result.append(Component.literal(part).setStyle(symbol ? style.withColor(textColor) : style));
             return Optional.empty();
         }, net.minecraft.network.chat.Style.EMPTY);
         return result;
