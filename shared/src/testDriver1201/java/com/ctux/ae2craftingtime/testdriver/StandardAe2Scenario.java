@@ -2016,7 +2016,7 @@ final class StandardAe2Scenario {
                                 "config.ae2craftingtime.reset_all"));
                     }
                     case 11 -> {
-                        if (!enabled) throw new IllegalStateException("Reset all did not enable badge");
+                        if (enabled) throw new IllegalStateException("Reset all did not disable badge");
                         screenshot.accept("badge-reset-all.png");
                         clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get("gui.cancel"));
                     }
