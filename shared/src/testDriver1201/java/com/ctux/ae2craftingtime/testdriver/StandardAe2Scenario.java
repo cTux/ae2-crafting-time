@@ -1269,9 +1269,10 @@ final class StandardAe2Scenario {
             if (snapshot.guiScale() <= 0 || requested > 0 && snapshot.guiScale() != requested) return false;
             var amount = row.description().stream().filter(text -> text.key().equals("text.ae2craftingtime.status.amounts"))
                     .findFirst().orElse(null);
-            if (amount == null || amount.bounds() == null || !amount.bounds().inside(row.cell())
+            var drawn = rowText(snapshot, row.outputId(), "text.ae2craftingtime.status.amounts");
+            if (amount == null || drawn == null || !amount.rendered().equals(drawn.rendered())
                     || !LayoutValidator.validateBadges(snapshot).isEmpty())
-                throw new IllegalStateException("Scaled amount badge escapes its native cell: " + amount);
+                throw new IllegalStateException("Scaled amount badge escapes its native cell: " + amount + " rendered " + drawn);
             screenshot.accept("status-scale-" + (amountFontMode == 0 ? "default" : "wide") + "-"
                     + (requested == 0 ? "auto" : requested) + ".png");
             if (++quantityScaleCase < 3) {
