@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import java.util.List;
 
 /** Preserve translated status semantics before AE2 renders flattened styled text. */
-@Mixin(value = CraftingStatusTableRenderer.class, priority = 900)
+@Mixin(value = CraftingStatusTableRenderer.class, priority = 1100)
 public abstract class CraftingStatusTableRendererObservationMixin {
     @Inject(method = "getEntryDescription", at = @At("RETURN"), remap = false)
     private void ae2craftingtime_test_driver$description(CraftingStatusEntry entry,

@@ -104,15 +104,7 @@ public final class UiObservationStore {
             return;
         }
         var observed = observed(component, transformed(graphics, x, y, x + width, y + height));
-        var semantic = active.descriptions.values().stream().flatMap(List::stream)
-                .filter(line -> line.key().startsWith("text.ae2craftingtime.")
-                        && line.rendered().equals(component.getString()))
-                .findFirst().orElse(null);
-        if (semantic != null) {
-            active.text.add(new UiSnapshot.ObservedText(semantic.key(), semantic.rendered(), semantic.arguments(),
-                    observed.bounds(), semantic.color(), semantic.bold()));
-            return;
-        }
+        if (recordStatusText(component.getString(), observed.bounds())) return;
         if (observed.key().startsWith("text.ae2craftingtime.")
                 || active.screen.contains("CraftingStatusScreen")
                 || active.cpuCards.stream().anyMatch(card -> observed.bounds().overlaps(card.nameArea))) {
@@ -121,10 +113,23 @@ public final class UiObservationStore {
     }
 
     public static void nativeTitle(GuiGraphics graphics, String text, int x, int y, int width, int height) {
+        if (active != null && recordStatusText(text, transformed(graphics, x, y, x + width, y + height))) return;
         if (active != null && active.screen.contains("CraftingStatusScreen") && text.startsWith("TTC:")) {
             active.text.add(new UiSnapshot.ObservedText("native-title", text, List.of(),
                     transformed(graphics, x, y, x + width, y + height)));
         }
+    }
+
+    private static boolean recordStatusText(String rendered, Rect bounds) {
+        var semantic = active.descriptions.values().stream().flatMap(List::stream)
+                .filter(line -> line.key().startsWith("text.ae2craftingtime.")
+                        && line.rendered().equals(rendered))
+                .findFirst().orElse(null);
+        if (semantic == null) return false;
+        if (active.text.stream().noneMatch(line -> line.key().equals(semantic.key()) && bounds.equals(line.bounds())))
+            active.text.add(new UiSnapshot.ObservedText(semantic.key(), semantic.rendered(), semantic.arguments(),
+                    bounds, semantic.color(), semantic.bold()));
+        return true;
     }
 
     public static void fill(GuiGraphics graphics, int x1, int y1, int x2, int y2, int color) {

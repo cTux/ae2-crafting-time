@@ -41,7 +41,11 @@ final class ChanceOutputScenario {
                 if (System.nanoTime() - phase3Started > 30_000_000_000L)
                     throw new IllegalStateException("Sawmill dispatch stalled: " + fixture.dispatchDiagnostic()
                             + " row=" + (row == null ? "absent" : row.activeAmount() + "/" + row.pendingAmount())
-                            + " warning=" + warning(snapshot));
+                            + " warning=" + warning(snapshot)
+                            + " rowDescription=" + (row == null ? List.of() : row.description().stream()
+                                    .map(text -> text.key() + ":" + text.rendered()).toList())
+                            + " drawnText=" + snapshot.text().stream()
+                                    .map(text -> text.key() + ":" + text.rendered()).toList());
                 return false;
             }
             checks.put("real-job", true);
