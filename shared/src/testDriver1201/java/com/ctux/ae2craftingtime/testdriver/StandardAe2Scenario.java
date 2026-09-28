@@ -834,6 +834,9 @@ final class StandardAe2Scenario {
             return false;
         }
         if (phase == Stage.PLAN_TOOLTIP && leaf.equals("recurrent-plan")) {
+            // Closing restores the original option, so the recurrent tooltip can disappear while the server task finishes.
+            if (!connectedDedicated && operation != null)
+                return server(minecraft, player -> { recurrenceFixture.close(); return true; });
             if (snapshot.tooltip().stream().anyMatch(text -> text.key().startsWith(
                     "text.ae2craftingtime.plan.stored_variant"))) return false;
             var recurrent = snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.plan.recurrent_hint"));
@@ -887,8 +890,8 @@ final class StandardAe2Scenario {
                     return false;
                 }
             }
-            if (!connectedDedicated && !server(minecraft, player -> { recurrenceFixture.close(); return true; })) return false;
             if (!recurrenceCaptured) screenshot.accept("recurrent-plan-tooltip.png");
+            if (!connectedDedicated && !server(minecraft, player -> { recurrenceFixture.close(); return true; })) return false;
             return true;
         }
         boolean plan = phase.ordinal() < Stage.OPEN_STATUS.ordinal();
