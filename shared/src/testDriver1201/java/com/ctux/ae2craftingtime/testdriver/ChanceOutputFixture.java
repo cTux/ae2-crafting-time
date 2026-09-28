@@ -27,6 +27,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Future;
 
@@ -111,7 +112,14 @@ final class ChanceOutputFixture {
         if (!calculation.isDone()) return false;
         if (!submitted) {
             try {
-                var result = cpu.getMainNode().getGrid().getCraftingService().submitJob(calculation.get(), null,
+                var plan = calculation.get();
+                if (plan.simulation()) {
+                    var missing = new ArrayList<String>();
+                    for (var entry : plan.missingItems())
+                        missing.add(entry.getKey().getId() + "=" + entry.getLongValue());
+                    throw new IllegalStateException("Sawmill plan is incomplete: missing=" + missing);
+                }
+                var result = cpu.getMainNode().getGrid().getCraftingService().submitJob(plan, null,
                         cpu.getCluster(), false, IActionSource.ofMachine(cpu));
                 if (!result.successful()) throw new IllegalStateException("Sawmill job rejected: " + result);
             } catch (Exception error) {
