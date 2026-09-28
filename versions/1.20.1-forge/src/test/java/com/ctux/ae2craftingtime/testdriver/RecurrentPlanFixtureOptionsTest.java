@@ -15,19 +15,27 @@ import org.objectweb.asm.tree.MethodInsnNode;
 
 class RecurrentPlanFixtureOptionsTest {
     @Test void planLabelIsAttributedToRenderedTextLikeStatusLabels() {
-        var plan = new UiSnapshot.ObservedText("text.ae2craftingtime.plan.recurrent", "↻ Recurrent: 1",
-                java.util.List.of("1"), null, 0xFF5555, false);
+        var plan = com.ctux.ae2craftingtime.mc1201.TtcText.recurrent(1);
         var status = new UiSnapshot.ObservedText("text.ae2craftingtime.ttc", "TTC: 2s",
                 java.util.List.of("2s"), null, 0xFFFFFF, false);
-        var nativeText = new UiSnapshot.ObservedText("gui.ae2.ToCraft", "To Craft: 1",
-                java.util.List.of(), null);
         var descriptions = java.util.Map.of("stone", java.util.List.of(status));
-        java.util.Map<Object, java.util.List<UiSnapshot.ObservedText>> planDescriptions =
-                java.util.Map.of(new Object(), java.util.List.of(nativeText, plan));
-        assertEquals(plan, UiObservationStore.semanticText(descriptions, planDescriptions, "↻ Recurrent: 1"));
+        var identity = new Object();
+        java.util.List<net.minecraft.network.chat.Component> lines = new java.util.ArrayList<>();
+        lines.add(net.minecraft.network.chat.Component.translatable("gui.ae2.ToCraft", 1));
+        java.util.Map<Object, java.util.List<net.minecraft.network.chat.Component>> planDescriptions =
+                java.util.Map.of(identity, lines);
+        assertNull(UiObservationStore.semanticText(descriptions, planDescriptions, plan.getString()));
+        lines.add(plan); // A later production RETURN injector mutates the same list.
+        lines.add(com.ctux.ae2craftingtime.mc1201.TtcText.ttc("~2s"));
+        var observed = UiObservationStore.planDescription(planDescriptions, identity);
+        assertTrue(observed.stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.plan.recurrent")));
+        assertTrue(observed.stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.ttc")));
+        assertEquals(UiObservationStore.observed(java.util.List.of(plan), null).get(0),
+                UiObservationStore.semanticText(descriptions, planDescriptions, plan.getString()));
         assertEquals(status, UiObservationStore.semanticText(descriptions, planDescriptions, "TTC: 2s"));
-        assertNull(UiObservationStore.semanticText(descriptions, planDescriptions, "To Craft: 1"));
+        assertNull(UiObservationStore.semanticText(descriptions, planDescriptions, lines.get(0).getString()));
         assertNull(UiObservationStore.semanticText(descriptions, planDescriptions, "unrelated"));
+        assertEquals(java.util.List.of(), UiObservationStore.planDescription(planDescriptions, new Object()));
     }
 
     @Test void recurrentBadgeFollowsTheClientSwitchAndContainsTheLabel() {

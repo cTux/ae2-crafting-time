@@ -82,7 +82,8 @@ public final class UiObservationStore {
 
     public static void description(CraftingPlanSummaryEntry entry, List<Component> components) {
         if (active != null) {
-            active.planDescriptions.put(entry, observed(components, null));
+            // Production appends TTC at the same RETURN point; observe the list after all injectors finish.
+            active.planDescriptions.put(entry, components);
         }
     }
 
@@ -130,12 +131,16 @@ public final class UiObservationStore {
     }
 
     static UiSnapshot.ObservedText semanticText(Map<String, List<UiSnapshot.ObservedText>> descriptions,
-            Map<Object, List<UiSnapshot.ObservedText>> planDescriptions, String rendered) {
+            Map<Object, List<Component>> planDescriptions, String rendered) {
         return java.util.stream.Stream.concat(descriptions.values().stream(),
-                planDescriptions.values().stream()).flatMap(List::stream)
+                planDescriptions.values().stream().map(lines -> observed(lines, null))).flatMap(List::stream)
                 .filter(line -> line.key().startsWith("text.ae2craftingtime.")
                         && line.rendered().equals(rendered))
                 .findFirst().orElse(null);
+    }
+
+    static List<UiSnapshot.ObservedText> planDescription(Map<Object, List<Component>> descriptions, Object identity) {
+        return observed(descriptions.getOrDefault(identity, List.of()), null);
     }
 
     public static void fill(GuiGraphics graphics, int x1, int y1, int x2, int y2, int color) {
@@ -209,7 +214,7 @@ public final class UiObservationStore {
         var rows = active.rows.stream().map(row -> new UiSnapshot.Row(row.outputId, row.craftAmount,
                 row.missingAmount, row.cell,
                 row.identity == null ? rowDescription(active.descriptions, active.text, row.outputId, row.cell)
-                        : active.planDescriptions.getOrDefault(row.identity, List.of()),
+                        : planDescription(active.planDescriptions, row.identity),
                 row.storedAmount, row.activeAmount, row.pendingAmount)).toList();
         var mergedBadges = merge(active.badges);
         var cpuCards = active.cpuCards.stream().map(card -> {
@@ -366,7 +371,7 @@ public final class UiObservationStore {
         private int scroll;
         private final List<PendingRow> rows = new ArrayList<>();
         private final Map<String, List<UiSnapshot.ObservedText>> descriptions = new LinkedHashMap<>();
-        private final Map<Object, List<UiSnapshot.ObservedText>> planDescriptions = new java.util.IdentityHashMap<>();
+        private final Map<Object, List<Component>> planDescriptions = new java.util.IdentityHashMap<>();
         private final List<UiSnapshot.ObservedText> text = new ArrayList<>();
         private final List<Rect> badges = new ArrayList<>();
         private final List<UiSnapshot.Widget> widgets = new ArrayList<>();
