@@ -37,10 +37,8 @@ AE2 can use it as a seed. The mod explains the loop but does not repair it.
 Timing samples, TTC colors, and running-job order do not control this label.
 Crafting Tree and ME Requester use separate screens.
 
-![A native Crafting Plan row marked Recurrent with its self-dependency explanation](images/crafting-plan-recurrent.png)
-
-*In the A -> B -> A fixture, AE2 reports the missing cobblestone row as
-Recurrent: 100. Another item in the loop does not have to become a missing row.*
+In an A -> B -> A recipe loop, AE2 may report a missing row as Recurrent.
+Another item in the loop does not have to become a missing row.
 
 [Previous: TTC estimate](estimated.md) | [Statuses](index.md) |
 [Time estimates](../features/time-estimates.md)

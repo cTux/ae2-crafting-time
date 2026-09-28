@@ -16,7 +16,7 @@ absent.
 
 ## Presentation
 
-- Show eligible craft-plan and crafting-status rows as bold TTC text on a
+- Show eligible craft-plan and crafting-status rows as TTC text on a
   translucent black rounded badge with two pixels of padding and text shadow.
 - Color known row estimates from green through yellow to red relative to the
   current list. Show delayed rows as normal-weight red `DELAYED`.

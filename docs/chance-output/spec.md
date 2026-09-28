@@ -1,8 +1,8 @@
 # Chance-based output diagnostics
 
-Status: implemented; runtime qualification and documentation update in progress
+Status: implemented and runtime-qualified for the initial 1.20.1 Forge Mekanism integration
 
-Scope: Research and proposed status for non-guaranteed processing outputs.
+Scope: Diagnose non-guaranteed processing outputs when a supported server integration proves the recipe chance.
 
 Issue: [#471](https://github.com/cTux/ae2-crafting-time/issues/471).
 
@@ -10,7 +10,8 @@ Initial integration: Mekanism 10.4.16.80 Precision Sawmill on Minecraft
 1.20.1 Forge. Its server recipe for an acacia hanging sign has a guaranteed
 two-plank main output and a 50% sawdust secondary output. This is the first
 supported detector, not a generic inference from partial returns. Runtime
-qualification is in progress.
+qualification passed on the prepared Forge client at source commit
+`55009dc5432fc710130bddd27a2b42839a82e600`.
 
 ## Problem and evidence limits
 
@@ -28,7 +29,7 @@ unloaded machines can produce the same partial-return symptom.
 progress, and lifecycle. Reuse these boundaries; do not estimate recipe chance
 from the ratio of observed returns to dispatched output or from network stock.
 
-## Proposed behavior to validate
+## Behavior
 
 - **Chance output** applies only when a supported server integration
   proves that the job's encoded output is not guaranteed. Show a percentage only
@@ -74,7 +75,7 @@ fallback. Carry this presentation into both GuideME translations and the Wiki
 when the feature is implemented. The concept preview approves presentation;
 it is not evidence of an implemented detector or Minecraft glyph rendering.
 
-## Design and verification prerequisites
+## Design and verification boundaries
 
 Map evidence by job/CPU, pattern, and output; one global output ID is insufficient
 for mixed producers. Verify upgrades, pack changes, ambiguous factory patterns,
@@ -107,3 +108,13 @@ configuration/code rather than copying the old 30-second claim.
 [#412](https://github.com/cTux/ae2-crafting-time/issues/412) is related guide work,
 not an established blocker. Retain exact source, test, CI, and publication evidence
 before closing the feature.
+
+The prepared Forge client passed the native Mekanism sawmill scenario with 100
+promised sawdust, 60 controlled returns, 40 outstanding, and the recipe's verified
+50% chance. Captures with Badge background both off and on show a normal-weight
+red Chance output row and tooltip heading. The shared red text paths for delayed
+and blocker statuses were checked with current-head unit tests and focused UI
+captures. The Recurrent plan fixture fails before rendering on the current graph;
+that separate test failure is tracked in #602. Optional chance detection is
+limited to the direct Mekanism Sawmill mapping on 1.20.1 Forge; all other
+supported targets retain generic delayed behavior for unsupported mappings.

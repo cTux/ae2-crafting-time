@@ -7,7 +7,7 @@ navigation:
 
 # Chance output
 
-**Label:** `Chance output` (red `⚠ Chance output` with Show emoji on).
+**Label:** `Chance output` (normal-weight red `⚠ Chance output` with Show emoji on).
 
 A processing pattern promises an output that the connected machine produces
 only by chance. AE2 waits for the promised amount even if the machine has
@@ -29,5 +29,9 @@ Cancel and correct a job that can no longer finish.
 The client **Chance output status** and server **Detect chance outputs** options
 can each turn this diagnosis off. Show emoji removes the symbol but keeps the
 red label. Badge background controls the row's shared rounded background.
+
+![Chance output status and the 40-outstanding tooltip](images/crafting-status-chance-output.png)
+
+*A controlled return of 60 sawdust leaves AE2 waiting for 40; the live sawmill recipe has a verified 50% chance per operation.*
 
 [Previous: Waiting](waiting.md) | [Statuses](index.md) | [Next: Delayed](delayed.md)
