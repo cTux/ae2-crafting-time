@@ -1105,9 +1105,10 @@ final class StandardAe2Scenario {
                 var ttc = row.description().stream().filter(text ->
                         com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(text.key())
                         && !text.key().equals("text.ae2craftingtime.status.amounts")).findFirst();
-                int color = ttc.isPresent() && ttc.get().color() != null ? ttc.get().color()
-                        : com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current()
-                                .color(com.ctux.ae2craftingtime.core.ClientConfig.Color.TOTAL);
+                Integer color = ttc.isPresent() ? ttc.get().color() : null;
+                if (color == null && com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().badgeBackground())
+                    color = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current()
+                            .color(com.ctux.ae2craftingtime.core.ClientConfig.Color.TOTAL);
                 if (!java.util.Objects.equals(summary.color(), color) || !LayoutValidator.validateBadges(snapshot).isEmpty())
                     throw new IllegalStateException("Synthetic native amount case " + quantityCase + " color/layout " + summary);
             }
