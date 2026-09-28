@@ -55,9 +55,11 @@ final class ChanceOutputScenario {
             if (row == null || row.activeAmount() + row.pendingAmount() != ChanceOutputFixture.REMAINING
                     || !warning(snapshot)) return false;
             var label = snapshot.text().stream().filter(text -> text.key().equals(KEY)).findFirst().orElseThrow();
+            var badgeContainsLabel = snapshot.badges().stream().anyMatch(badge -> label.bounds().inside(badge));
+            var badgeEnabled = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().badgeBackground();
             if (!label.bold() || !Integer.valueOf(0xFF5555).equals(label.color())
-                    || !label.bounds().inside(snapshot.gui())
-                    || snapshot.badges().stream().noneMatch(badge -> label.bounds().inside(badge))
+                    || !label.bounds().inside(row.cell())
+                    || badgeContainsLabel != badgeEnabled
                     || !LayoutValidator.validateBadges(snapshot).isEmpty())
                 throw new IllegalStateException("Chance output badge is not bold red and contained");
             checks.put("partial-return", true);

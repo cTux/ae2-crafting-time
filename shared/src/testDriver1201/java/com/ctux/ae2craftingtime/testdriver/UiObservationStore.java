@@ -4,6 +4,7 @@ import appeng.client.gui.AEBaseScreen;
 import com.ctux.ae2craftingtime.testdriver.mixin.ContainerScreenAccessor;
 import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
+import appeng.menu.me.crafting.CraftingStatusEntry;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -85,6 +86,12 @@ public final class UiObservationStore {
         }
     }
 
+    public static void description(CraftingStatusEntry entry, List<Component> components) {
+        if (active != null) {
+            active.descriptions.put(entry.getWhat().getId().toString(), observed(components, null));
+        }
+    }
+
     public static void tooltip(CraftingPlanSummaryEntry entry, List<Component> components) {
         if (active != null) {
             active.tooltip.clear();
@@ -97,6 +104,15 @@ public final class UiObservationStore {
             return;
         }
         var observed = observed(component, transformed(graphics, x, y, x + width, y + height));
+        var semantic = active.descriptions.values().stream().flatMap(List::stream)
+                .filter(line -> line.key().startsWith("text.ae2craftingtime.")
+                        && line.rendered().equals(component.getString()))
+                .findFirst().orElse(null);
+        if (semantic != null) {
+            active.text.add(new UiSnapshot.ObservedText(semantic.key(), semantic.rendered(), semantic.arguments(),
+                    observed.bounds(), semantic.color(), semantic.bold()));
+            return;
+        }
         if (observed.key().startsWith("text.ae2craftingtime.")
                 || active.screen.contains("CraftingStatusScreen")
                 || active.cpuCards.stream().anyMatch(card -> observed.bounds().overlaps(card.nameArea))) {
@@ -274,6 +290,8 @@ public final class UiObservationStore {
     private static UiSnapshot.ObservedText observed(Component component, Rect bounds) {
         var translated = com.ctux.ae2craftingtime.mc1201.TtcComponents.translation(component);
         if (translated != null) {
+            var style = component.getContents() instanceof TranslatableContents
+                    ? component.getStyle() : component.getSiblings().get(1).getStyle().applyTo(component.getStyle());
             var arguments = new ArrayList<String>();
             for (var argument : translated.getArgs()) {
                 if (argument instanceof Component nested) {
@@ -284,7 +302,7 @@ public final class UiObservationStore {
                 }
             }
             return new UiSnapshot.ObservedText(translated.getKey(), component.getString(), arguments, bounds,
-                    component.getStyle().getColor() == null ? null : component.getStyle().getColor().getValue(), component.getStyle().isBold());
+                    style.getColor() == null ? null : style.getColor().getValue(), style.isBold());
         }
         return new UiSnapshot.ObservedText("literal", component.getString(), List.of(), bounds);
     }
