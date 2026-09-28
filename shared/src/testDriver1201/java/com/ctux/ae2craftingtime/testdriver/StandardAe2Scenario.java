@@ -808,9 +808,9 @@ final class StandardAe2Scenario {
             if (label != null && snapshot.text().stream()
                     .filter(text -> text.key().equals("text.ae2craftingtime.plan.recurrent"))
                     .noneMatch(text -> !text.bold() && java.util.Objects.equals(text.color(), 0xFF5555)
-                            && text.bounds() != null && snapshot.badges().stream()
-                            .anyMatch(badge -> text.bounds().inside(badge))))
-                throw new IllegalStateException("Recurrent label has no containing rendered badge");
+                            && text.bounds() != null && recurrentBadgeMatches(snapshot.badges(), text.bounds(),
+                                    com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().badgeBackground())))
+                throw new IllegalStateException("Recurrent label or badge differs from client options");
             if (!connectedDedicated && recurrenceFixture.reported() && label != null
                     && !label.arguments().equals(List.of(Long.toString(recurrenceFixture.requestedAmount()))))
                 throw new IllegalStateException("Recurrence label lost requested quantity " + recurrenceFixture.requestedAmount());
@@ -1648,6 +1648,10 @@ final class StandardAe2Scenario {
             return true;
         }
         return false;
+    }
+
+    static boolean recurrentBadgeMatches(List<Rect> badges, Rect text, boolean enabled) {
+        return badges.stream().anyMatch(badge -> text.inside(badge)) == enabled;
     }
 
     static boolean galleryPlanReady(List<UiSnapshot.Row> rows, int knownRows) {

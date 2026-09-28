@@ -13,6 +13,18 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 
 class RecurrentPlanFixtureOptionsTest {
+    @Test void recurrentBadgeFollowsTheClientSwitchAndContainsTheLabel() {
+        var text = new Rect(2, 2, 10, 8);
+        var containing = new Rect(0, 0, 20, 12);
+        var unrelated = new Rect(30, 0, 20, 12);
+        assertTrue(StandardAe2Scenario.recurrentBadgeMatches(java.util.List.of(), text, false));
+        assertFalse(StandardAe2Scenario.recurrentBadgeMatches(java.util.List.of(), text, true));
+        assertTrue(StandardAe2Scenario.recurrentBadgeMatches(java.util.List.of(containing), text, true));
+        assertFalse(StandardAe2Scenario.recurrentBadgeMatches(java.util.List.of(containing), text, false));
+        assertTrue(StandardAe2Scenario.recurrentBadgeMatches(java.util.List.of(unrelated), text, false));
+        assertFalse(StandardAe2Scenario.recurrentBadgeMatches(java.util.List.of(unrelated), text, true));
+    }
+
     @Test void temporaryDetectionPreservesBothOriginalValuesAcrossRepeatedSetup() {
         for (boolean original : new boolean[] {false, true}) {
             var options = new FeatureOptions(OptionFeature.Owner.SERVER);
