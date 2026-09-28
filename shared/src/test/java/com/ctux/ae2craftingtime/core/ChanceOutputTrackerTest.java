@@ -13,7 +13,10 @@ class ChanceOutputTrackerTest {
         var tracker = new ChanceOutputTracker();
         var cpu = new Object();
         var output = new ProfileKey("grid", "mekanism:sawdust");
-        tracker.plan(cpu, java.util.Arrays.asList(null, Set.of(), Set.of(output)));
+        tracker.observe(cpu, Set.of(output), Map.of(output, 5000));
+        assertTrue(tracker.chance(cpu, output).isEmpty());
+        tracker.plan(cpu, java.util.Arrays.asList(null, Set.of(),
+                new java.util.HashSet<>(java.util.Arrays.asList(null, output))));
         tracker.observe(cpu, Set.of(output), Map.of(output, 0));
         assertTrue(tracker.chance(cpu, output).isEmpty());
         tracker.plan(cpu, java.util.List.of(Set.of(output)));
@@ -25,6 +28,9 @@ class ChanceOutputTrackerTest {
         tracker.plan(cpu, java.util.List.of(Set.of(output)));
         tracker.observe(cpu, new java.util.HashSet<>(java.util.Arrays.asList(null, output)), Map.of(output, 1));
         assertEquals(1, tracker.chance(cpu, output).orElseThrow());
+        tracker.plan(cpu, java.util.List.of(Set.of(new ProfileKey("grid", "minecraft:plank"))));
+        tracker.observe(cpu, Set.of(output), Map.of(output, 5000));
+        assertTrue(tracker.chance(cpu, output).isEmpty());
     }
 
     @Test

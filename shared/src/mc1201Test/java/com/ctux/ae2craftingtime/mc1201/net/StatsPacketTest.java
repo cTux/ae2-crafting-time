@@ -23,6 +23,29 @@ import java.util.OptionalLong;
 
 class StatsPacketTest {
     @Test
+    void snapshotRejectsInvalidChanceEvidence() {
+        for (var chance : new int[] {0, 10000}) {
+            var buffer = new FriendlyByteBuf(Unpooled.buffer());
+            StatsPacketCodec.writeKeys(buffer, List.of("mekanism:sawdust"));
+            buffer.writeVarInt(0); // Network amounts.
+            buffer.writeVarInt(0); // Waiting ticks.
+            buffer.writeVarInt(0); // Block reasons.
+            buffer.writeVarInt(1);
+            buffer.writeUtf("mekanism:sawdust");
+            buffer.writeVarInt(chance);
+            assertThrows(IllegalArgumentException.class, () -> StatsSnapshotS2C.decode(buffer));
+        }
+        var unrequested = new FriendlyByteBuf(Unpooled.buffer());
+        StatsPacketCodec.writeKeys(unrequested, List.of());
+        unrequested.writeVarInt(0);
+        unrequested.writeVarInt(0);
+        unrequested.writeVarInt(0);
+        unrequested.writeVarInt(1);
+        unrequested.writeUtf("mekanism:sawdust");
+        assertThrows(IllegalArgumentException.class, () -> StatsSnapshotS2C.decode(unrequested));
+    }
+
+    @Test
     void snapshotRejectsUnknownBlockReason() {
         for (var reason : new int[] {-1, CraftingBlockReason.values().length}) {
             var buffer = new FriendlyByteBuf(Unpooled.buffer());

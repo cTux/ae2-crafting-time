@@ -7,7 +7,7 @@ navigation:
 
 # Chance output
 
-**Label:** red `⚠ Chance output` when Show emoji is on.
+**Label:** `Chance output` (red `⚠ Chance output` with Show emoji on).
 
 A processing pattern promises an output that the connected machine produces
 only by chance. AE2 waits for the promised amount even if the machine has
@@ -28,4 +28,4 @@ The client **Chance output status** and server **Detect chance outputs** options
 can each turn this diagnosis off. Show emoji removes the symbol but keeps the
 red label. Badge background controls the row's shared rounded background.
 
-[Statuses](index.md) | [Delayed](delayed.md)
+[Previous: Waiting](waiting.md) | [Statuses](index.md) | [Next: Delayed](delayed.md)

@@ -243,7 +243,7 @@ public final class ProfilerBridge {
         PROFILER.setJobEstimate(scope, jobEstimate);
         ProviderStartTracker.clear(scope);
         CHANCE.plan(scope, plan.patternTimes().keySet().stream().map(pattern -> {
-            var keys = new HashSet<ProfileKey>();
+            Set<ProfileKey> keys = new HashSet<>();
             for (var output : pattern.getOutputs()) keys.add(key(networkId, output.what()));
             return keys;
         }).toList());

@@ -33,5 +33,5 @@ status instead; a regular Delayed label does not prove a random recipe.
 
 *A processing recipe has exceeded both parts of its learned delay threshold.*
 
-[Previous: Waiting](waiting.md) | [Statuses](index.md) |
+[Previous: Chance output](chance-output.md) | [Statuses](index.md) |
 [Next: No data yet](no-data-yet.md) | [Delay diagnostics](../features/delay-diagnostics.md)
