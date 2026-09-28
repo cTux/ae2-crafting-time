@@ -45,7 +45,7 @@ Existing values are never replaced by new switches.
 
 The [focused scope and status](spec.md#recurrent-detection-default-592) covers the
 default-off follow-up. `FeatureOptions.reset()` owns the defaults;
-`ServerConfigFile.load()` applies explicit values afterward. Before #592,
+`ServerConfigFile.load()` applies explicit values afterward. Before PR #597,
 `ServerConfig.copy()` created a default model and copied only disabled switches,
 so an explicit recurrence opt-in became disabled again. [PR #597](https://github.com/cTux/ae2-crafting-time/pull/597)
 fixed the copy to preserve every switch and numeric value. All four targets

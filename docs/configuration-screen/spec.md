@@ -60,7 +60,7 @@ diagnostics. It is clearly labelled as the master switch.
 
 ### Recurrent detection default (#592)
 
-Status: implementation, verification, merge, and issue closure complete.
+Status: finished.
 
 [PR #593](https://github.com/cTux/ae2-crafting-time/pull/593) shipped the
 default-off change and English/Ukrainian player guidance. The follow-up
