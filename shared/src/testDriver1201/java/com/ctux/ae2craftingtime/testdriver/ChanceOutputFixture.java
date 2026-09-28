@@ -101,7 +101,7 @@ final class ChanceOutputFixture {
                     throw new IllegalStateException("Could not store 100 hanging signs");
                 provider(player).getLogic().getPatternInv().setItemDirect(0,
                         ServerDriverPlatform.processingPattern(List.of(new GenericStack(input, 1)),
-                                List.of(new GenericStack(mainOutput(), 2), new GenericStack(output(), 1))));
+                                List.of(new GenericStack(output(), 1), new GenericStack(mainOutput(), 2))));
                 provider(player).getLogic().updatePatterns();
                 calculation = cpu.getMainNode().getGrid().getCraftingService().beginCraftingCalculation(level,
                         () -> IActionSource.ofMachine(cpu), output(), PROMISED,
