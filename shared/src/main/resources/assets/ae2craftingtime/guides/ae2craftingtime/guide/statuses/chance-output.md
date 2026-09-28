@@ -13,6 +13,8 @@ A processing pattern promises an output that the connected machine produces
 only by chance. AE2 waits for the promised amount even if the machine has
 already processed every input. For example, 100 attempts at 50% chance yield
 about 50 items on average, but any particular job can yield fewer or more.
+In a controlled example, if 100 outputs are promised and only 60 return,
+AE2 still waits for 40. The 60 returns do not prove the recipe's chance.
 
 The tooltip shows the verified per-operation chance and the outstanding amount.
 This diagnosis currently supports a direct, single-target Mekanism Precision
