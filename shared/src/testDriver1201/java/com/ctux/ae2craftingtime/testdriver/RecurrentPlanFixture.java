@@ -42,7 +42,7 @@ final class RecurrentPlanFixture implements ICraftingProvider {
     RecurrentPlanFixture(StandardCraftFixture fixture) { this.fixture = fixture; }
 
     boolean prepare(ServerPlayer player, String name) {
-        server = player.server;
+        server = player.level().getServer();
         if (enableDetection(ServerOptionsRuntime.current().features())) {
             for (var connected : server.getPlayerList().getPlayers()) ServerOptionsRuntime.sendTo(connected);
         }
