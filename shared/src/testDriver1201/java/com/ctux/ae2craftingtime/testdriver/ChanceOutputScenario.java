@@ -20,6 +20,7 @@ final class ChanceOutputScenario {
     private final StableFrames<Integer> frames = new StableFrames<>(3);
     private CompletableFuture<Boolean> operation;
     private int phase;
+    private long phase3Started;
 
     boolean tick(Minecraft minecraft, FixtureMarker marker, Map<String, Boolean> checks,
             Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) {
@@ -33,9 +34,16 @@ final class ChanceOutputScenario {
         var row = snapshot.rows().stream().filter(candidate -> candidate.outputId().equals("mekanism:sawdust"))
                 .findFirst().orElse(null);
         if (phase == 3) {
-            if (!serverStep(minecraft, fixture::dispatched)) return false;
-            if (row == null || row.activeAmount() + row.pendingAmount() != ChanceOutputFixture.PROMISED
-                    || !warning(snapshot)) return false;
+            if (phase3Started == 0) phase3Started = System.nanoTime();
+            var dispatched = serverStep(minecraft, fixture::dispatched);
+            if (!dispatched || row == null || row.activeAmount() + row.pendingAmount() != ChanceOutputFixture.PROMISED
+                    || !warning(snapshot)) {
+                if (System.nanoTime() - phase3Started > 30_000_000_000L)
+                    throw new IllegalStateException("Sawmill dispatch stalled: " + fixture.dispatchDiagnostic()
+                            + " row=" + (row == null ? "absent" : row.activeAmount() + "/" + row.pendingAmount())
+                            + " warning=" + warning(snapshot));
+                return false;
+            }
             checks.put("real-job", true);
             checks.put("sawmill-recipe", true);
             checks.put("zero-return", true);

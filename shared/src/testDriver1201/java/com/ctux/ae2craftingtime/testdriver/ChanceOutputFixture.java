@@ -40,6 +40,9 @@ final class ChanceOutputFixture {
     private Future<ICraftingPlan> calculation;
     private boolean submitted;
     private boolean returned;
+    private volatile String dispatchDiagnostic = "not sampled";
+
+    String dispatchDiagnostic() { return dispatchDiagnostic; }
 
     AEItemKey output() {
         var item = BuiltInRegistries.ITEM.get(ResourceLocation.tryParse("mekanism:sawdust"));
@@ -135,8 +138,15 @@ final class ChanceOutputFixture {
         var cpu = cpu(player);
         var chance = ProfilerBridge.chanceOutput(cpu.getCluster(),
                 ProfilerBridge.key(ProfilerBridge.networkId(cpu.getMainNode().getGrid()), output()));
-        if (chance.isEmpty() || chance.getAsInt() != 5000) return false;
         var waiting = cpu.getCluster().craftingLogic.getWaitingFor(output());
+        int input = 0;
+        for (var slot : sawmillSlots(player.serverLevel().getBlockEntity(cpuPos.east(6).below()))) {
+            var stack = stack(slot);
+            if (stack.is(Items.ACACIA_HANGING_SIGN)) input += stack.getCount();
+        }
+        dispatchDiagnostic = "waitingSawdust=" + waiting + " chanceBasisPoints="
+                + (chance.isPresent() ? chance.getAsInt() : "absent") + " sawmillInput=" + input;
+        if (chance.isEmpty() || chance.getAsInt() != 5000) return false;
         if (waiting < PROMISED) drainSawmillInput(player);
         return waiting == PROMISED;
     }
