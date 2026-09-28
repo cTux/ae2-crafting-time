@@ -106,6 +106,11 @@ public final class UiObservationStore {
         }
         var observed = observed(component, transformed(graphics, x, y, x + width, y + height));
         if (recordStatusText(component.getString(), observed.bounds())) return;
+        var total = planTotalText(active.screen, active.gui, observed);
+        if (total != null) {
+            active.text.add(total);
+            return;
+        }
         if (observed.key().startsWith("text.ae2craftingtime.")
                 || active.screen.contains("CraftingStatusScreen")
                 || active.cpuCards.stream().anyMatch(card -> observed.bounds().overlaps(card.nameArea))) {
@@ -141,6 +146,14 @@ public final class UiObservationStore {
 
     static List<UiSnapshot.ObservedText> planDescription(Map<Object, List<Component>> descriptions, Object identity) {
         return observed(descriptions.getOrDefault(identity, List.of()), null);
+    }
+
+    static UiSnapshot.ObservedText planTotalText(String screen, Rect gui, UiSnapshot.ObservedText text) {
+        // The production footer flattens its translated component to recolor symbols before drawing it.
+        if (!screen.endsWith("CraftConfirmScreen") || text.bounds() == null
+                || text.bounds().y() != gui.y() + 178 || !text.rendered().startsWith("TTC:")) return null;
+        return new UiSnapshot.ObservedText("text.ae2craftingtime.total_ttc", text.rendered(),
+                text.arguments(), text.bounds(), text.color(), text.bold());
     }
 
     public static void fill(GuiGraphics graphics, int x1, int y1, int x2, int y2, int color) {

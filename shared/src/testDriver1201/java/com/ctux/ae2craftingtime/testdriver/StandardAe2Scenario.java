@@ -968,8 +968,12 @@ final class StandardAe2Scenario {
             }
             if (sort == 0) {
                 mark(checks, prefix, true);
-                if (plan && !snapshot.text().stream().anyMatch(t -> t.key().equals("text.ae2craftingtime.total_ttc"))) return false;
-                if (plan && (snapshot.badges().isEmpty() || !LayoutValidator.validateBadges(snapshot).isEmpty())) {
+                var total = plan ? snapshot.text().stream()
+                        .filter(t -> t.key().equals("text.ae2craftingtime.total_ttc")).findFirst().orElse(null) : null;
+                if (plan && total == null) return false;
+                if (plan && (total.bounds() == null || !recurrentBadgeMatches(snapshot.badges(), total.bounds(),
+                        com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().badgeBackground())
+                        || !LayoutValidator.validateBadges(snapshot).isEmpty())) {
                     throw new IllegalStateException("plan badge layout: " + LayoutValidator.validateBadges(snapshot));
                 }
                 if (plan) {
