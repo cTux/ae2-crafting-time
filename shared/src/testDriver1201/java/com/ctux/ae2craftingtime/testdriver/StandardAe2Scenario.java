@@ -1482,10 +1482,22 @@ final class StandardAe2Scenario {
             }
             if (!amountServerOffCaptured) {
                 if (com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.profilingEnabled()) return false;
-                var descriptions = snapshot.rows().stream().flatMap(row -> row.description().stream()).toList();
-                if (descriptions.stream().noneMatch(text -> text.key().equals("text.ae2craftingtime.status.amounts"))) return false;
-                if (descriptions.stream().anyMatch(text -> com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(text.key())
-                        && !text.key().equals("text.ae2craftingtime.status.amounts"))) return false;
+                var row = snapshot.rows().stream().filter(value -> value.storedAmount() > 0
+                        || value.activeAmount() > 0 || value.pendingAmount() > 0).findFirst().orElse(null);
+                if (row == null) return false;
+                var descriptions = snapshot.rows().stream().flatMap(value -> value.description().stream()).toList();
+                var nativeKeys = List.of(appeng.core.localization.GuiText.FromStorage,
+                        appeng.core.localization.GuiText.Crafting, appeng.core.localization.GuiText.Scheduled)
+                        .stream().map(label -> ((net.minecraft.network.chat.contents.TranslatableContents)
+                                label.text("").getContents()).getKey()).toList();
+                long[] raw = {row.storedAmount(), row.activeAmount(), row.pendingAmount()};
+                for (int category = 0; category < raw.length; category++) {
+                    String key = nativeKeys.get(category);
+                    if (raw[category] > 0 && row.description().stream().noneMatch(text -> text.key().equals(key)))
+                        return false;
+                }
+                if (descriptions.stream().anyMatch(text ->
+                        com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(text.key()))) return false;
                 screenshot.accept("status-server-profiling-off.png");
                 amountServerOffCaptured = true;
             }
