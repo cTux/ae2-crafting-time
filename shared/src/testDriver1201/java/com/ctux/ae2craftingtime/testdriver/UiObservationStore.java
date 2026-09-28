@@ -121,15 +121,21 @@ public final class UiObservationStore {
     }
 
     private static boolean recordStatusText(String rendered, Rect bounds) {
-        var semantic = active.descriptions.values().stream().flatMap(List::stream)
-                .filter(line -> line.key().startsWith("text.ae2craftingtime.")
-                        && line.rendered().equals(rendered))
-                .findFirst().orElse(null);
+        var semantic = semanticText(active.descriptions, active.planDescriptions, rendered);
         if (semantic == null) return false;
         if (active.text.stream().noneMatch(line -> line.key().equals(semantic.key()) && bounds.equals(line.bounds())))
             active.text.add(new UiSnapshot.ObservedText(semantic.key(), semantic.rendered(), semantic.arguments(),
                     bounds, semantic.color(), semantic.bold()));
         return true;
+    }
+
+    static UiSnapshot.ObservedText semanticText(Map<String, List<UiSnapshot.ObservedText>> descriptions,
+            Map<Object, List<UiSnapshot.ObservedText>> planDescriptions, String rendered) {
+        return java.util.stream.Stream.concat(descriptions.values().stream(),
+                planDescriptions.values().stream()).flatMap(List::stream)
+                .filter(line -> line.key().startsWith("text.ae2craftingtime.")
+                        && line.rendered().equals(rendered))
+                .findFirst().orElse(null);
     }
 
     public static void fill(GuiGraphics graphics, int x1, int y1, int x2, int y2, int color) {

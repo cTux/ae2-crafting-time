@@ -3,6 +3,7 @@ package com.ctux.ae2craftingtime.testdriver;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.ctux.ae2craftingtime.core.FeatureOptions;
@@ -13,6 +14,22 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 
 class RecurrentPlanFixtureOptionsTest {
+    @Test void planLabelIsAttributedToRenderedTextLikeStatusLabels() {
+        var plan = new UiSnapshot.ObservedText("text.ae2craftingtime.plan.recurrent", "↻ Recurrent: 1",
+                java.util.List.of("1"), null, 0xFF5555, false);
+        var status = new UiSnapshot.ObservedText("text.ae2craftingtime.ttc", "TTC: 2s",
+                java.util.List.of("2s"), null, 0xFFFFFF, false);
+        var nativeText = new UiSnapshot.ObservedText("gui.ae2.ToCraft", "To Craft: 1",
+                java.util.List.of(), null);
+        var descriptions = java.util.Map.of("stone", java.util.List.of(status));
+        java.util.Map<Object, java.util.List<UiSnapshot.ObservedText>> planDescriptions =
+                java.util.Map.of(new Object(), java.util.List.of(nativeText, plan));
+        assertEquals(plan, UiObservationStore.semanticText(descriptions, planDescriptions, "↻ Recurrent: 1"));
+        assertEquals(status, UiObservationStore.semanticText(descriptions, planDescriptions, "TTC: 2s"));
+        assertNull(UiObservationStore.semanticText(descriptions, planDescriptions, "To Craft: 1"));
+        assertNull(UiObservationStore.semanticText(descriptions, planDescriptions, "unrelated"));
+    }
+
     @Test void recurrentBadgeFollowsTheClientSwitchAndContainsTheLabel() {
         var text = new Rect(2, 2, 10, 8);
         var containing = new Rect(0, 0, 20, 12);
