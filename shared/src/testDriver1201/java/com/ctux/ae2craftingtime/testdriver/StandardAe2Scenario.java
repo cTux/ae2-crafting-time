@@ -1050,6 +1050,9 @@ final class StandardAe2Scenario {
             var waiting = rowText(snapshot, "minecraft:smooth_stone", "text.ae2craftingtime.waiting");
             var running = rowText(snapshot, "minecraft:stone", "text.ae2craftingtime.ttc");
             if (leaf.equals("standard-status-controls")) {
+                var client = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+                client.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS, true);
+                com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(client);
                 addonQuantityCases = StandardCraftFixture.addonQuantityCases();
                 var accessor = (com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen;
                 realStatus = accessor.ae2craftingtime_test_driver$status();
