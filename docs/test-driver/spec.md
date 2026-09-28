@@ -315,7 +315,7 @@ of the two craftable rows in AE2 order and both TTC directions.
 
 The [leaf contracts](../automated-ui-testing/technical-design.md#groups-and-independent-standard-flow)
 retain every original assertion. Waiting and running require real dependency
-progress. Delayed checks the active row, bold red label, diagnostic tooltip and
+progress. Delayed checks the active row, normal-weight red label, diagnostic tooltip and
 recovery after actual output. Its two intermediate outputs wait on the same
 provider, where it requires one stable first-retained render icon. A real row
 double-click adds a rainbow edge; releasing that selected output must reveal the

@@ -1,6 +1,6 @@
 # Chance-based output diagnostics
 
-Status: implementation in progress
+Status: implemented; runtime qualification and documentation update in progress
 
 Scope: Research and proposed status for non-guaranteed processing outputs.
 
@@ -10,7 +10,7 @@ Initial integration: Mekanism 10.4.16.80 Precision Sawmill on Minecraft
 1.20.1 Forge. Its server recipe for an acacia hanging sign has a guaranteed
 two-plank main output and a 50% sawdust secondary output. This is the first
 supported detector, not a generic inference from partial returns. Runtime
-qualification is still pending.
+qualification is in progress.
 
 ## Problem and evidence limits
 
@@ -50,10 +50,12 @@ on/off option through the existing options model.
 
 ## Approved presentation
 
-Use **⚠ Chance output**: sentence case, with the label and leading warning
-symbol in Minecraft red (`#FF5555`). Reuse the existing red warning symbol
+Use ⚠ Chance output: sentence case, with the label and leading warning
+symbol in Minecraft red (`#FF5555`) and normal-weight text. All red status
+labels and tooltip headings use normal weight, including Recurrent, Delayed,
+and provider/dispatch blockers. Reuse the existing red warning symbol
 (`TtcSymbols.Symbol.ERROR`, U+26A0) and shared status badge presentation.
-The matching Ukrainian label is **⚠ Випадковий вихід**.
+The matching Ukrainian label is ⚠ Випадковий вихід.
 
 Apply this presentation to the affected output row, its tooltip heading, and
 any applicable delayed alert. Prefix the symbol exactly once at the client
@@ -62,12 +64,12 @@ leaving the red label intact. Respect the existing badge background switch,
 color, and opacity. Do not hard-code the symbol into translation values.
 
 When the effective chance is verified, the tooltip heading may read
-**⚠ Chance output · 60%**. Unknown mappings retain the existing gold
-**⚠ Delayed** status and conditional hint. Red indicates the risk of missing
+⚠ Chance output · 60%. Unknown mappings retain the existing generic
+Delayed status and conditional hint. Red indicates the risk of missing
 promised output; it does not prove that the machine has stopped or finished.
 
 Acceptance: verify the exact English/Ukrainian labels, red label and symbol,
-single prefix, emoji On/Off, shared badge settings, and unchanged gold Delayed
+single prefix, emoji On/Off, shared badge settings, and unchanged generic Delayed
 fallback. Carry this presentation into both GuideME translations and the Wiki
 when the feature is implemented. The concept preview approves presentation;
 it is not evidence of an implemented detector or Minecraft glyph rendering.
