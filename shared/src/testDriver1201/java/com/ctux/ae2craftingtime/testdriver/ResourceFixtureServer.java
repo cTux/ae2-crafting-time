@@ -396,8 +396,8 @@ final class ResourceFixtureServer {
         if (unloadPhase == 0) {
             unloadProvider = grid.resourceProviders().get(0);
             releaseResourceChunks();
-            player.teleportTo(unloadProvider.getX() + 512.5, unloadProvider.getY() + 1,
-                    unloadProvider.getZ() + 512.5);
+            var away = unloadDestination(unloadProvider);
+            player.teleportTo(away.getX() + 0.5, away.getY(), away.getZ() + 0.5);
             unloadPhase = 1;
             return false;
         }
@@ -416,6 +416,11 @@ final class ResourceFixtureServer {
         if (connected) retainResourceChunks(level);
         unloadPhase = 0;
         return true;
+    }
+
+    static BlockPos unloadDestination(BlockPos provider) {
+        // Clear even the maximum 32-chunk client view distance before observing unload.
+        return provider.offset(1024, 1, 1024);
     }
 
     static void requireReceiptHistory(List<Map<String, Object>> receipts,
