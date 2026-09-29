@@ -84,6 +84,10 @@ foreach ($scenario in @('delayed-resource-icons','appmek-resource-icons')) {
             Assert-ResourceFixtureChecks $checks $scenario $connectedMode $fixtureOnly
             $checks.$($names[-1]) = $false
             Assert-Rejected { Assert-ResourceFixtureChecks $checks $scenario $connectedMode $fixtureOnly } 'false fixture check'
+            foreach ($invalid in @('true',1,$null)) {
+                $checks.$($names[-1]) = $invalid
+                Assert-Rejected { Assert-ResourceFixtureChecks $checks $scenario $connectedMode $fixtureOnly } 'non-boolean fixture check'
+            }
             $checks.$($names[-1]) = $true
             $checks.PSObject.Properties.Remove($names[-1])
             Assert-Rejected { Assert-ResourceFixtureChecks $checks $scenario $connectedMode $fixtureOnly } 'missing fixture check'

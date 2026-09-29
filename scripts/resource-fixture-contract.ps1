@@ -11,7 +11,7 @@ function Assert-ResourceFixtureChecks([object]$Checks, [string]$Scenario, [bool]
         $expected += $(if ($Connected) { @('reconnect-clears-beam') } else { @('beam-recovery','beam-expiry') })
     }
     if ((Compare-Object $expected @($Checks.psobject.Properties.Name) -CaseSensitive) -or
-            @($Checks.psobject.Properties | Where-Object { $_.Value -ne $true }).Count) {
+            @($Checks.psobject.Properties | Where-Object { $_.Value -isnot [bool] -or !$_.Value }).Count) {
         throw 'Resource fixture client checks are missing, unexpected, or false'
     }
 }
