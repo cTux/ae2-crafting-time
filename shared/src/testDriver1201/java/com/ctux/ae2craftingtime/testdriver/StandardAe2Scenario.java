@@ -2359,8 +2359,21 @@ final class StandardAe2Scenario {
     private static UiSnapshot.ObservedText rowText(UiSnapshot snapshot, String output, String key) {
         var row = snapshot.rows().stream().filter(r -> r.outputId().equals(output)).findFirst();
         if (row.isEmpty()) return null;
-        return snapshot.text().stream().filter(t -> t.key().equals(key) && t.bounds() != null
-                && t.bounds().inside(row.get().cell())).findFirst().orElse(null);
+        var translated = snapshot.text().stream().filter(t -> t.key().equals(key) && t.bounds() != null
+                && t.bounds().inside(row.get().cell())).findFirst();
+        if (translated.isPresent()) return translated.get();
+        if (!key.equals("text.ae2craftingtime.waiting") && !key.equals("text.ae2craftingtime.ttc")
+                && !key.equals("text.ae2craftingtime.ttc_delayed")) return null;
+        return snapshot.text().stream().filter(t -> t.key().equals("native-status-text") && t.bounds() != null
+                && t.bounds().inside(row.get().cell()) && snapshot.badges().stream()
+                        .anyMatch(badge -> t.bounds().inside(badge))
+                && (key.equals("text.ae2craftingtime.waiting")
+                        ? t.rendered().equals(com.ctux.ae2craftingtime.mc1201.TtcText.waiting().getString())
+                        : key.equals("text.ae2craftingtime.ttc_delayed")
+                                ? t.rendered().equals(com.ctux.ae2craftingtime.mc1201.TtcText.ttcDelayed().getString())
+                                : t.rendered().startsWith(com.ctux.ae2craftingtime.core.TtcSymbols.Symbol.TIME.glyph()
+                                        + " ~")))
+                .findFirst().orElse(null);
     }
 
     private boolean hasPlate(String output, int providerOffset) {

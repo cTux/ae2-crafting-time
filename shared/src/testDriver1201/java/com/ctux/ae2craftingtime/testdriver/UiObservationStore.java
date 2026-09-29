@@ -119,13 +119,15 @@ public final class UiObservationStore {
         }
     }
 
-    public static void nativeTitle(GuiGraphics graphics, String text, int x, int y, int width, int height) {
+    public static void nativeTitle(GuiGraphics graphics, String text, int x, int y, int width, int height,
+            Integer color, boolean bold) {
         if (active != null) {
             var bounds = transformed(graphics, x, y, x + width, y + height);
             if (recordStatusText(text, bounds)) return;
             // Newer AE2 flattens styled row labels into formatted characters.
             if (active.screen.contains("CraftingStatusScreen") && statusRowText(bounds)) {
-                active.text.add(new UiSnapshot.ObservedText("native-status-text", text, List.of(), bounds));
+                active.text.add(new UiSnapshot.ObservedText("native-status-text", text, List.of(), bounds,
+                        color, bold));
                 return;
             }
         }
