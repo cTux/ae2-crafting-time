@@ -7,6 +7,10 @@ navigation:
 
 # Chance output
 
+This is an experimental diagnosis. It currently works only for the Mekanism
+Precision Sawmill on Minecraft 1.20.1 Forge. Other machines may be supported
+later as their live recipe chances can be verified.
+
 **Label:** `Chance output` (normal-weight red `⚠ Chance output` with Show emoji on).
 
 A processing pattern promises an output that the connected machine produces
@@ -17,9 +21,10 @@ In a controlled example, if 100 outputs are promised and only 60 return,
 AE2 still waits for 40. The 60 returns do not prove the recipe's chance.
 
 The tooltip shows the verified per-operation chance and the outstanding amount.
-This diagnosis currently supports a direct, single-target Mekanism Precision
-Sawmill on Minecraft 1.20.1 Forge. Other machines and ambiguous patterns stay
-on the regular Delayed status; missing items alone do not prove chance output.
+Detection needs one direct Pattern Provider target, one matching live recipe,
+and the recipe's chance-based secondary output encoded in the pattern. Other
+machines and ambiguous patterns stay on the regular Delayed status; missing
+items alone do not prove chance output.
 
 Check the machine, output path, and inputs first. For optional random byproducts,
 remove them from promised pattern outputs or supply them independently. More
