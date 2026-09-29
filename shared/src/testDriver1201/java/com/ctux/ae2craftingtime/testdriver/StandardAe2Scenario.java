@@ -1841,7 +1841,11 @@ final class StandardAe2Scenario {
         if (!frames.observe(List.of(phase, badgeStep, CaptureEvidence.readiness(snapshot)))) return false;
         var rows = snapshot.rows().stream().map(row -> row.outputId() + ":" + row.craftAmount()).toList();
         var text = snapshot.text().stream().filter(value ->
-                com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(value.key())
+                (com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(value.key())
+                        || value.key().equals("native-status-text")
+                        && (badgeStep == 3 ? badgeTextBefore != null
+                                && badgeTextBefore.contains(value.key() + ":" + value.bounds())
+                                : snapshot.badges().stream().anyMatch(badge -> value.bounds().inside(badge))))
                         && snapshot.rows().stream().anyMatch(row -> value.bounds().inside(row.cell())))
                 .map(value -> value.key() + ":" + value.bounds()).toList();
         if (text.isEmpty()) return false;
