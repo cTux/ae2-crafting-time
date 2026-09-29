@@ -2358,7 +2358,8 @@ final class StandardAe2Scenario {
     }
 
     private static void validateLayout(UiSnapshot snapshot) {
-        if (!LayoutValidator.validateBadges(snapshot).isEmpty() || snapshot.badges().isEmpty()) {
+        if (!statusBadgesValid(snapshot,
+                com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().badgeBackground())) {
             throw new IllegalStateException("Invalid standard status badge layout");
         }
         var header = snapshot.text().stream().filter(t -> t.key().equals("native-title")
@@ -2368,6 +2369,10 @@ final class StandardAe2Scenario {
         }
     }
 
+    static boolean statusBadgesValid(UiSnapshot snapshot, boolean enabled) {
+        return LayoutValidator.validateBadges(snapshot).isEmpty() && snapshot.badges().isEmpty() != enabled;
+    }
+
     private static boolean delayedTooltip(UiSnapshot snapshot) {
         var key = new com.ctux.ae2craftingtime.core.ProfileKey("minecraft:stone");
         var stall = com.ctux.ae2craftingtime.mc1201.ClientStats.CACHE.stall(key);
@@ -2375,12 +2380,14 @@ final class StandardAe2Scenario {
         var diagnostic = stall.get();
         // Compare rendered numbers to the synchronized diagnostic, not a seeded warning.
         var seconds = (long) Math.ceil(diagnostic.idleTicks() / 20.0);
-        var expected = ", " + net.minecraft.client.resources.language.I18n.get("text.ae2craftingtime.stall.delayed") + ": "
-                + net.minecraft.client.resources.language.I18n.get("text.ae2craftingtime.value.whole_seconds", seconds) + ", "
+        var expected = ", " + com.ctux.ae2craftingtime.mc1201.TtcComponents.text("text.ae2craftingtime.stall.delayed").getString() + ": "
+                + com.ctux.ae2craftingtime.mc1201.TtcComponents.text("text.ae2craftingtime.value.whole_seconds", seconds).getString() + ", "
                 + net.minecraft.client.resources.language.I18n.get("text.ae2craftingtime.stall.typical") + ": "
-                + com.ctux.ae2craftingtime.core.TimeEstimate.formatTicks(diagnostic.typicalDurationTicks());
+                + com.ctux.ae2craftingtime.mc1201.TtcComponents.time(
+                        com.ctux.ae2craftingtime.core.TimeEstimate.formatTicks(diagnostic.typicalDurationTicks())).getString();
         return snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.stats.ttc")
-                && text.rendered().startsWith(net.minecraft.client.resources.language.I18n.get("text.ae2craftingtime.stats.ttc") + ": ")
+                && text.rendered().startsWith(com.ctux.ae2craftingtime.mc1201.TtcComponents.text(
+                        "text.ae2craftingtime.stats.ttc").getString() + ": ")
                 && text.rendered().endsWith(expected))
                 && snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.stall.improvements"))
                 && WarningTooltipChecks.hasControls(snapshot.tooltip());
