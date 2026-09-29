@@ -27,8 +27,9 @@ inputs improve the average yield but cannot guarantee the promised amount.
 Cancel and correct a job that can no longer finish.
 
 The client **Chance output status** and server **Detect chance outputs** options
-can each turn this diagnosis off. Show emoji removes the symbol but keeps the
-red label. Badge background controls the row's shared rounded background.
+are both off by default. Turn on both to use this diagnosis. Show emoji removes
+the symbol but keeps the red label. Badge background controls the row's shared
+rounded background.
 
 ![Chance output status and the 40-outstanding tooltip](images/crafting-status-chance-output.png)
 
