@@ -276,7 +276,14 @@ final class StandardAe2Scenario {
         }
         if (leaf.equals("stored-variant-plan") && !connectedDedicated && variantStep == 9) {
             var closedMenu = variantMenu.containerId;
-            if (!server(minecraft, player -> StoredVariantObservation.closed(closedMenu))) return false;
+            if (!server(minecraft, player -> {
+                if (!StoredVariantObservation.closed(closedMenu)) return false;
+                if (recurrenceFixture.restoreDetection(
+                        com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.current().features())) {
+                    com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.sendTo(player);
+                }
+                return true;
+            })) return false;
             mark(checks, "watcher-cleanup", true);
             return true;
         }
@@ -347,9 +354,16 @@ final class StandardAe2Scenario {
                 phase = Stage.TERMINAL;
                 return false;
             }
-            if (server(minecraft, player -> fixture.prepare(player, marker)
-                    && (!fixture.cpuListScenario || fixture.prepareCpuListJobs(player))
-                    && (!leaf.equals("recurrent-plan") || recurrenceFixture.prepare(player, RecurrentPlanFixture.CASES.get(recurrenceCase))))) {
+            if (server(minecraft, player -> {
+                if (fixture.storedVariantPlan && !connectedDedicated && recurrenceFixture.enableDetection(
+                        com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.current().features())) {
+                    com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.sendTo(player);
+                }
+                return fixture.prepare(player, marker)
+                        && (!fixture.cpuListScenario || fixture.prepareCpuListJobs(player))
+                        && (!leaf.equals("recurrent-plan") || recurrenceFixture.prepare(player,
+                                RecurrentPlanFixture.CASES.get(recurrenceCase)));
+            })) {
                 if (leaf.equals("standard-plan-controls")) {
                     mark(checks, "item-resolution", ProviderHighlightShapes.resolveItem(null).isEmpty()
                             && ProviderHighlightShapes.resolveItem(appeng.api.stacks.AEFluidKey.of(
