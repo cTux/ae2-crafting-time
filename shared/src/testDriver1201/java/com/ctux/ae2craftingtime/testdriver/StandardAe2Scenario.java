@@ -112,6 +112,8 @@ final class StandardAe2Scenario {
     private String reportedCheckpoint;
     private int sort;
     private int badgeStep;
+    private int badgeReplanAttempts;
+    private long badgeNextReplanAt;
     private boolean badgeEditOpen;
     private boolean badgeAppearanceOpen;
     private boolean badgeSaving;
@@ -214,7 +216,7 @@ final class StandardAe2Scenario {
     private int variantSecondMenu;
 
     String checkpoint() { return "phase=" + phase + " fixture=" + fixture.checkpoint
-            + (leaf.equals("badge-background") ? " badge=" + badgeStep : "")
+            + (leaf.equals("badge-background") ? " badge=" + badgeStep + " replan=" + badgeReplanAttempts : "")
             + (leaf.equals("recurrent-plan") ? " recurrence=" + recurrenceCase + " sort=" + sort : "")
             + (leaf.equals("stored-variant-plan") ? " variant=" + variantStep + " lifecycle=" + variantLifecycle : "")
             + (cpuList == null ? "" : " " + cpuList.checkpoint()); }
@@ -1035,6 +1037,7 @@ final class StandardAe2Scenario {
                         return false;
                     badgePlanStocked = true;
                     ((CraftConfirmScreen) minecraft.screen).getMenu().replan();
+                    badgeNextReplanAt = System.nanoTime() + 5_000_000_000L;
                     frames.reset();
                     return false;
                 }
@@ -1044,7 +1047,20 @@ final class StandardAe2Scenario {
             var start = minecraft.screen.children().stream().filter(AbstractWidget.class::isInstance)
                     .map(AbstractWidget.class::cast).filter(w -> w.getMessage().getString().equals("Start"))
                     .findFirst().orElseThrow(() -> new IllegalStateException("Crafting Plan Start button is missing"));
-            if (!start.active) return false;
+            if (!start.active) {
+                if (leaf.equals("badge-background") && System.nanoTime() >= badgeNextReplanAt) {
+                    var menu = ((CraftConfirmScreen) minecraft.screen).getMenu();
+                    if (badgeReplanAttempts++ >= 3) {
+                        throw new IllegalStateException("Crafting Plan stayed partial after supplying input; no CPU="
+                                + menu.hasNoCPU() + ", simulation="
+                                + (menu.getPlan() != null && menu.getPlan().isSimulation()));
+                    }
+                    menu.replan();
+                    badgeNextReplanAt = System.nanoTime() + 10_000_000_000L;
+                    frames.reset();
+                }
+                return false;
+            }
             DriverPlatform.click(minecraft, start.getX() + 4, start.getY() + 4);
             phase = Stage.values()[phase.ordinal() + 1];
         } else if (phase == Stage.ACTIVE) {
