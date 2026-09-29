@@ -237,7 +237,8 @@ public final class UiObservationStore {
     }
 
     private static boolean recordStatusText(String rendered, Rect bounds, int color) {
-        if (!active.screen.endsWith("CraftingCPUScreen") || !statusRowText(bounds)) return false;
+        if (!(active.screen.endsWith("CraftingCPUScreen") || active.screen.endsWith("CraftingStatusScreen"))
+                || !statusRowText(bounds)) return false;
         var semantic = active.descriptions.values().stream().map(lines -> observed(lines, null)).flatMap(List::stream)
                 .filter(line -> line.key().startsWith("text.ae2craftingtime.")
                         && (line.rendered().equals(rendered) || rendered.equals("⚠ " + line.rendered())))
