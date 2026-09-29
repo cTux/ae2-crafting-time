@@ -436,7 +436,8 @@ final class StandardAe2Scenario {
             var state = raw + "|" + rendered + "|" + hasEdge(overlapWinner, 4);
             if (minecraft.screen != null || !overlapFrames.observe(state)) return false;
             if (!raw.equals(java.util.Set.of("minecraft:stone", "minecraft:glass"))
-                    || !rendered.equals(java.util.Set.of(overlapWinner)) || !hasEdge(overlapWinner, 4)) return false;
+                    || !rendered.equals(java.util.Set.of(overlapWinner)) || !hasEdge(overlapWinner, 4)
+                    || hasBeam(4)) return false;
             screenshot.accept("delayed-world-overlap.png");
             mark(checks, "overlap", true);
             mark(checks, "stable-selection", true);
@@ -2349,6 +2350,11 @@ final class StandardAe2Scenario {
     private boolean hasEdge(String output, int providerOffset) {
         return ProviderHighlightClient.liveEdges().stream().anyMatch(edge -> edge.outputId().equals(output)
                 && edge.positions().contains(fixture.terminal.east(providerOffset)));
+    }
+
+    private boolean hasBeam(int providerOffset) {
+        return ProviderHighlightClient.renderBeams().stream()
+                .anyMatch(beam -> beam.position().equals(fixture.terminal.east(providerOffset)));
     }
 
     private static void validateLayout(UiSnapshot snapshot) {
