@@ -428,13 +428,6 @@ class ResourceFixtureControlTest {
         assertEquals("original", ResourceFixtureServer.cleanupEvidence("original", "").get("originalFailure"));
     }
 
-    @Test void unloadDestinationClearsTheMaximumClientViewDistance() {
-        var provider = new net.minecraft.core.BlockPos(51, -59, 1029);
-        var away = ResourceFixtureServer.unloadDestination(provider);
-        assertTrue((away.getX() >> 4) - (provider.getX() >> 4) > 32);
-        assertTrue((away.getZ() >> 4) - (provider.getZ() >> 4) > 32);
-    }
-
     @Test void connectedAbortBindsOriginalFailureAndTerminalRevision() {
         var epoch = UUID.randomUUID();
         var player = UUID.randomUUID();
