@@ -117,7 +117,7 @@ public final class ProviderLocateCommand {
             var server = serverLevel.getServer();
             if (server != null && dimensionId != null && !dimensionId.isBlank()) {
                 for (var level : server.getAllLevels()) {
-                    if (!dimensionId.equals(dimensionIdOf(level))) {
+                    if (!dimensionId.equals(ProfilerBridge.dimensionId(level))) {
                         continue;
                     }
                     var kept = new java.util.ArrayList<BlockPos>();
@@ -148,7 +148,7 @@ public final class ProviderLocateCommand {
             var server = serverLevel.getServer();
             if (server != null && dimensionId != null && !dimensionId.isBlank()) {
                 for (var level : server.getAllLevels()) {
-                    if (dimensionId.equals(dimensionIdOf(level))) {
+                    if (dimensionId.equals(ProfilerBridge.dimensionId(level))) {
                         return level;
                     }
                 }
@@ -156,27 +156,6 @@ public final class ProviderLocateCommand {
             return serverLevel;
         } catch (Exception ignored) {
             return null;
-        }
-    }
-
-    /**
-     * Version-agnostic dimension id: 1.20.1/1.21.1 expose
-     * {@code dimension().location()}, 26.1 exposes
-     * {@code dimension().identifier()}. Reflection keeps this shared file
-     * compiling on both.
-     */
-    private static String dimensionIdOf(net.minecraft.server.level.ServerLevel level) {
-        try {
-            var key = level.dimension();
-            try {
-                var location = key.getClass().getMethod("location").invoke(key);
-                return String.valueOf(location);
-            } catch (NoSuchMethodException missing) {
-                var identifier = key.getClass().getMethod("identifier").invoke(key);
-                return String.valueOf(identifier);
-            }
-        } catch (Exception ignored) {
-            return "";
         }
     }
 

@@ -388,6 +388,10 @@ public final class ProfilerBridge {
         }
     }
 
+    public static String dimensionId(net.minecraft.server.level.ServerLevel level) {
+        return level == null ? "" : level.dimension().identifier().toString();
+    }
+
     /**
      * Provider positions for a delayed output: freshly resolved through the
      * live grid first, persisted fallback second, empty when not locatable.
