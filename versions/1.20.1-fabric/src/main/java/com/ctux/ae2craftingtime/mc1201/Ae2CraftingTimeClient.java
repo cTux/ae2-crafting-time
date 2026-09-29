@@ -63,10 +63,10 @@ public final class Ae2CraftingTimeClient implements ClientModInitializer {
             consumers.endBatch(RenderType.lines());
             for (var beam : ProviderHighlightClient.renderBeams()) {
                 if (!levelDimension.equals(beam.dimensionId())) continue;
-                ProviderHighlightShapes.renderBeam(poseStack, consumers.getBuffer(ProviderHighlightShapes.BEAM),
+                ProviderHighlightShapes.renderBeam(poseStack, consumers.getBuffer(ProviderHighlightShapes.beam()),
                         beam.position(), minecraft.level.getMaxBuildHeight(),
                         minecraft.options.renderDistance().get(), alpha);
-                consumers.endBatch(ProviderHighlightShapes.BEAM);
+                consumers.endBatch(ProviderHighlightShapes.beam());
             }
             // Plates persist while their output still reports a stall.
             for (var plate : ProviderHighlightClient.renderPlates()) {

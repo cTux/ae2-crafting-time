@@ -92,7 +92,7 @@ public final class DelayedNotificationServer {
 
     public static void resync(ServerPlayer player) {
         PLATES.forgetOwner(player.getUUID());
-        sync(player.serverLevel().getServer(), defaultHighlightSender());
+        sync(player.level().getServer(), defaultHighlightSender());
     }
 
     public static void clearAll() {

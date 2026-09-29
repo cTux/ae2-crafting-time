@@ -102,5 +102,10 @@ class ProviderPlateStateTest {
         assertEquals("iron", plate.displayKey());
         state.update(a, null);
         assertEquals(List.of(2, 3), state.pending().get(0).plate().positions());
+
+        var emptyPositions = new ProviderPlateState.Contribution<Integer, String>(null, "iron");
+        assertTrue(emptyPositions.positions().isEmpty());
+        state.update(a, Map.of(RECIPIENT, emptyPositions));
+        assertEquals("iron", state.pending().get(0).plate().displayKey());
     }
 }

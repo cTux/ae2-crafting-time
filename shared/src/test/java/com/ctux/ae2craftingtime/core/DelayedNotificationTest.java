@@ -22,10 +22,14 @@ class DelayedNotificationTest {
         profiler.setJobOwner(second, secondOwner);
         profiler.start(output, first, 1, ProfileUnit.ITEM, 100);
         profiler.startWaiting(second, Set.of(output), 100);
+        assertFalse(profiler.hasActiveOutput(key("minecraft:copper_plate"), firstOwner));
+        assertFalse(profiler.hasActiveOutput(output, UUID.randomUUID()));
+        assertTrue(profiler.hasActiveOutput(output, null));
         assertTrue(profiler.hasActiveOutput(output, firstOwner));
         assertTrue(profiler.hasActiveOutput(output, secondOwner));
         profiler.complete(output, first, 1, 120);
         assertFalse(profiler.hasActiveOutput(output, firstOwner));
+        assertFalse(profiler.hasActiveOutput(key("minecraft:copper_plate"), secondOwner));
         assertTrue(profiler.hasActiveOutput(output, null));
         profiler.clearPending(second);
         assertFalse(profiler.hasActiveOutput(output, null));
@@ -127,9 +131,12 @@ class DelayedNotificationTest {
         profiler.start(output, cpu, 1, ProfileUnit.ITEM, 300);
 
         assertTrue(profiler.liveDelayedKeys(cpu, 400).isEmpty());
+        assertTrue(profiler.liveDelayedKeys(null, 400).isEmpty());
         assertTrue(profiler.delayedKeys(cpu).isEmpty());
         assertEquals(Set.of(output), profiler.liveDelayedKeys(cpu, 800));
         profiler.complete(output, cpu, 1, 801);
+        assertTrue(profiler.liveDelayedKeys(cpu, 802).isEmpty());
+        profiler.setEnabled(false);
         assertTrue(profiler.liveDelayedKeys(cpu, 802).isEmpty());
     }
 

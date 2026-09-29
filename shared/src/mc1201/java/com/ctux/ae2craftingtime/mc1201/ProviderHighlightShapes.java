@@ -14,7 +14,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.RenderStateShard;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -37,15 +36,30 @@ import net.minecraft.world.phys.AABB;
  * touched on a dedicated server.
  */
 public final class ProviderHighlightShapes {
-    public static final RenderType BEAM = RenderType.create("ae2craftingtime_provider_beam",
-            DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.TRIANGLE_STRIP, 1536, false, true,
-            RenderType.CompositeState.builder()
-                    .setShaderState(RenderStateShard.POSITION_COLOR_SHADER)
-                    .setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY)
-                    .setCullState(RenderStateShard.NO_CULL)
-                    .setDepthTestState(RenderStateShard.NO_DEPTH_TEST)
-                    .setWriteMaskState(RenderStateShard.COLOR_WRITE)
-                    .createCompositeState(false));
+    public static RenderType beam() {
+        return BeamState.BEAM;
+    }
+
+    private static final class BeamState extends RenderType {
+        private static final RenderType BEAM = createBeam();
+
+        private BeamState() {
+            super("provider_beam", DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.TRIANGLE_STRIP,
+                    1536, false, true, () -> {}, () -> {});
+        }
+
+        private static RenderType createBeam() {
+            return RenderType.create("ae2craftingtime_provider_beam",
+                    DefaultVertexFormat.POSITION_COLOR, VertexFormat.Mode.TRIANGLE_STRIP, 1536, false, true,
+                    CompositeState.builder()
+                            .setShaderState(POSITION_COLOR_SHADER)
+                            .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                            .setCullState(NO_CULL)
+                            .setDepthTestState(NO_DEPTH_TEST)
+                            .setWriteMaskState(COLOR_WRITE)
+                            .createCompositeState(false));
+        }
+    }
     private static final double[] SHELL_OFFSETS = {0.002, 0.014, 0.026};
     private static final float PLATE_HALF_SIZE = 0.36f;
     private static final float PLATE_MIN_Z = 0.004f;
