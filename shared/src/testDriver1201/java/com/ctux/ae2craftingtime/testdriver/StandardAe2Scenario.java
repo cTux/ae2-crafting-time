@@ -1042,8 +1042,9 @@ final class StandardAe2Scenario {
             } else if (!leaf.equals("craft-lifecycle") && !server(minecraft, player -> { fixture.seed(player); return true; }))
                 return false;
             var start = minecraft.screen.children().stream().filter(AbstractWidget.class::isInstance)
-                    .map(AbstractWidget.class::cast).filter(w -> w.active && w.getMessage().getString().equals("Start"))
+                    .map(AbstractWidget.class::cast).filter(w -> w.getMessage().getString().equals("Start"))
                     .findFirst().orElseThrow(() -> new IllegalStateException("Crafting Plan Start button is missing"));
+            if (!start.active) return false;
             DriverPlatform.click(minecraft, start.getX() + 4, start.getY() + 4);
             phase = Stage.values()[phase.ordinal() + 1];
         } else if (phase == Stage.ACTIVE) {
