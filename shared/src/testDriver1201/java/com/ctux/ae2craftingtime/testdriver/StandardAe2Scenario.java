@@ -1921,6 +1921,22 @@ final class StandardAe2Scenario {
         }
     }
 
+    private boolean suspensionPausedStable(ServerPlayer player) {
+        fixture.pumpSuspension(player);
+        var large = fixture.suspensionState(player, 0);
+        if (!large.busy() || !large.suspended() || !large.profilerSuspended()
+                || !large.jobId().equals(suspensionLargeId)) return false;
+        var tick = player.level().getGameTime();
+        if (suspensionPauseTick == 0) {
+            suspensionPauseTick = tick;
+            suspensionUndispatched = large.undispatched();
+            return false;
+        }
+        if (large.undispatched() != suspensionUndispatched)
+            throw new IllegalStateException("Paused CPU dispatched another pattern");
+        return tick - suspensionPauseTick >= 10;
+    }
+
     private boolean tickSuspension(Minecraft minecraft, FixtureMarker marker, Map<String, Boolean> checks,
             Consumer<String> screenshot) {
         if (!DriverPlatform.TARGET.equals("1.20.1-forge"))
@@ -1940,7 +1956,6 @@ final class StandardAe2Scenario {
                 if (large.undispatched() >= 64 || large.furnaceInput() == 0 || large.networkOutput() == 0)
                     return false;
                 suspensionLargeId = large.jobId();
-                suspensionUndispatched = large.undispatched();
                 suspensionReturned = large.remaining();
                 return !suspensionLargeId.isEmpty();
             })) return false;
@@ -1966,18 +1981,13 @@ final class StandardAe2Scenario {
             mark(checks, "button-geometry", suspend.getX() == cancel.getX() - 60
                     && suspend.getY() == cancel.getY() && suspend.getWidth() == 50 && suspend.getHeight() == 20);
             if (suspensionCycle == 1) screenshot.accept("crafting-suspension-running.png");
+            suspensionPauseTick = 0;
             DriverPlatform.click(minecraft, suspend.getX() + 4, suspend.getY() + 4);
             suspensionStage++;
             return false;
         }
         if (suspensionStage == 3) {
-            if (!server(minecraft, player -> {
-                fixture.pumpSuspension(player);
-                var large = fixture.suspensionState(player, 0);
-                suspensionPauseTick = player.level().getGameTime();
-                return large.suspended() && large.profilerSuspended() && large.jobId().equals(suspensionLargeId)
-                        && large.undispatched() == suspensionUndispatched;
-            })) return false;
+            if (!server(minecraft, this::suspensionPausedStable)) return false;
             mark(checks, "paused-no-dispatch", true);
             var screen = minecraft.screen;
             var observed = UiObservationStore.latest();
@@ -2096,7 +2106,6 @@ final class StandardAe2Scenario {
         if (suspensionStage == 8) {
             if (!server(minecraft, player -> {
                 var large = fixture.suspensionState(player, 0);
-                suspensionUndispatched = large.undispatched();
                 return large.busy() && !large.suspended();
             })) return false;
             var suspend = minecraft.screen.children().stream()
@@ -2105,16 +2114,13 @@ final class StandardAe2Scenario {
                     .filter(button -> button.getMessage().getString().equals("Suspend"))
                     .findFirst().orElse(null);
             if (suspend == null) return false;
+            suspensionPauseTick = 0;
             DriverPlatform.click(minecraft, suspend.getX() + 4, suspend.getY() + 4);
             suspensionStage++;
             return false;
         }
         if (suspensionStage == 9) {
-            if (!server(minecraft, player -> {
-                fixture.pumpSuspension(player);
-                var large = fixture.suspensionState(player, 0);
-                return large.busy() && large.suspended() && large.undispatched() == suspensionUndispatched;
-            })) return false;
+            if (!server(minecraft, this::suspensionPausedStable)) return false;
             var resume = minecraft.screen.children().stream()
                     .filter(net.minecraft.client.gui.components.Button.class::isInstance)
                     .map(net.minecraft.client.gui.components.Button.class::cast)
@@ -2134,12 +2140,13 @@ final class StandardAe2Scenario {
             })) return false;
             var suspend = suspensionButton(minecraft, "Suspend");
             if (suspend == null) return false;
+            suspensionPauseTick = 0;
             DriverPlatform.click(minecraft, suspend.getX() + 4, suspend.getY() + 4);
             suspensionStage = 11;
             return false;
         }
         if (suspensionStage == 11) {
-            if (!server(minecraft, player -> fixture.suspensionState(player, 0).suspended())) return false;
+            if (!server(minecraft, this::suspensionPausedStable)) return false;
             minecraft.setScreen(new com.ctux.ae2craftingtime.mc1201.ServerOptionsScreen(minecraft.screen));
             suspensionStage = 12;
             return false;
