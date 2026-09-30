@@ -66,7 +66,9 @@ if ($runnerText -notmatch "\`$clientParameters\.RuntimeDirectory = Join-Path \`$
     throw 'Connected client runtime must stay on the report-owned guest-local filesystem'
 }
 if ($runnerText.IndexOf("-SimpleMatch ']: Done ('", [StringComparison]::Ordinal) -lt 0 -or
-        $runnerText.IndexOf("'run-ui-smoke.ps1'", [StringComparison]::Ordinal) -lt
+        $runnerText.IndexOf('Invoke-SuspensionClients $connectionEpoch 1', [StringComparison]::Ordinal) -lt
+            $runnerText.IndexOf("-SimpleMatch ']: Done ('", [StringComparison]::Ordinal) -or
+        $runnerText.LastIndexOf("'run-ui-smoke.ps1'", [StringComparison]::Ordinal) -lt
             $runnerText.IndexOf("-SimpleMatch ']: Done ('", [StringComparison]::Ordinal)) {
     throw 'Connected client must wait for the dedicated server startup-complete marker'
 }

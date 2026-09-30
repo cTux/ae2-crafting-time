@@ -567,9 +567,9 @@ public final class DedicatedCpuScenario {
             return;
         }
         if (players.size() != 2) return;
-        var alpha = players.stream().filter(candidate -> candidate.getGameProfile().getName().equals("Ae2ctAlpha"))
+        var alpha = players.stream().filter(candidate -> candidate.getName().getString().equals("Ae2ctAlpha"))
                 .findFirst().orElse(null);
-        var beta = players.stream().filter(candidate -> candidate.getGameProfile().getName().equals("Ae2ctBeta"))
+        var beta = players.stream().filter(candidate -> candidate.getName().getString().equals("Ae2ctBeta"))
                 .findFirst().orElse(null);
         if (alpha == null || beta == null) throw new IllegalStateException("Distinct Alpha/Beta players required");
         if (!connectedPrepared) {

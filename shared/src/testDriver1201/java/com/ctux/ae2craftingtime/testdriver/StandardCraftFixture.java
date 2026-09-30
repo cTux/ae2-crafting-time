@@ -420,7 +420,12 @@ final class StandardCraftFixture {
         var cluster = suspensionCpu(player, index);
         var logic = cluster.craftingLogic;
         var tag = new net.minecraft.nbt.CompoundTag();
-        logic.writeToNBT(tag);
+        try {
+            // The Forge-only suspension case uses AE2 15's one-argument serializer.
+            logic.getClass().getMethod("writeToNBT", net.minecraft.nbt.CompoundTag.class).invoke(logic, tag);
+        } catch (ReflectiveOperationException error) {
+            throw new IllegalStateException("Cannot inspect the Forge crafting job", error);
+        }
         var job = tag.getCompound("job");
         long undispatched = 0;
         var tasks = job.getList("tasks", net.minecraft.nbt.Tag.TAG_COMPOUND);

@@ -107,4 +107,4 @@ Crafting Time. Типово тінь вимкнена. Увімкніть її, 
 *Тестова підказка показує відображення Crafting Tree, яким керує `showInTree`.*
 
 [Назад: Збережена історія](saved-history.md) | [Можливості](index.md) |
-[Далі: AE2: Crafting Tree](crafting-tree.md) | [Достовірність](confidence.md)
+[Далі: Призупинення крафту](crafting-suspension.md) | [Достовірність](confidence.md)

@@ -28,4 +28,9 @@ suspended CPU on its next logic tick; unloaded CPUs resume when they load.
 This switch works even if profiling is off. Only standard AE2 CPUs support this
 Forge backport; addon replacement CPUs keep their normal behavior.
 
-[Features](index.md) | [Configuration](configuration.md)
+![Crafting status while a job is running](images/crafting-status-running.png)
+
+*The running job shows a time estimate; a suspended job shows Suspended instead.*
+
+[Previous: Configuration](configuration.md) | [Features](index.md) |
+[Next: AE2: Crafting Tree](crafting-tree.md)

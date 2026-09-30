@@ -85,6 +85,10 @@ try {
     $suspensionHook = Plan
     Assert ($suspensionHook.targets.Count -eq 1 -and $suspensionHook.targets[0].cases.Count -eq 1 -and
             $suspensionHook.targets[0].cases[0] -eq 'crafting-suspension') 'Forge suspension hook must select the focused case'
+    Reject { & "$PSScriptRoot/expand-ui-smoke-groups.ps1" -Target 1.20.1-fabric -Scenarios crafting-suspension } `
+        'Fabric must reject the Forge-only suspension case'
+    Reject { & "$PSScriptRoot/expand-ui-smoke-groups.ps1" -Target 26.1.2-neoforge -Scenarios crafting-suspension } `
+        'NeoForge 26 must reject the Forge-only suspension case'
     Clean
     Put 'shared/src/main/java/com/ctux/ae2craftingtime/core/StallDiagnostic.java' 'delayed'
     $plan = Plan

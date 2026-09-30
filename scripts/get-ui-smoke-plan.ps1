@@ -68,7 +68,9 @@ foreach ($rule in @($rules.ownership) + @($rules.noRuntime) + @($rules.behavior)
     $null = [regex]::new($rule.pattern, [Text.RegularExpressions.RegexOptions]::CultureInvariant, [TimeSpan]::FromSeconds(1))
     foreach ($id in $rule.targets) { if ($id -cnotin $ids) { throw "Invalid ownership target: $id" } }
     foreach ($case in $rule.cases) {
-        foreach ($id in $ids) { $null = & "$PSScriptRoot/expand-ui-smoke-groups.ps1" -Target $id -Scenarios $case -MatrixDirectory $MatrixDirectory }
+        foreach ($id in $(if ($rule.targets) { $rule.targets } else { $ids })) {
+            $null = & "$PSScriptRoot/expand-ui-smoke-groups.ps1" -Target $id -Scenarios $case -MatrixDirectory $MatrixDirectory
+        }
     }
 }
 $head = (Read-Git @('rev-parse','--verify','--end-of-options','HEAD^{commit}')).Trim()

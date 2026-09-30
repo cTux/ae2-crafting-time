@@ -1974,7 +1974,7 @@ final class StandardAe2Scenario {
             if (!server(minecraft, player -> {
                 fixture.pumpSuspension(player);
                 var large = fixture.suspensionState(player, 0);
-                suspensionPauseTick = player.serverLevel().getGameTime();
+                suspensionPauseTick = player.level().getGameTime();
                 return large.suspended() && large.profilerSuspended() && large.jobId().equals(suspensionLargeId)
                         && large.undispatched() == suspensionUndispatched;
             })) return false;
@@ -2022,7 +2022,7 @@ final class StandardAe2Scenario {
                 var delayTicks = Math.max(400,
                         com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.current()
                                 .minimumNoProgressSeconds() * 20L) + 20;
-                if (player.serverLevel().getGameTime() - suspensionPauseTick < delayTicks) return false;
+                if (player.level().getGameTime() - suspensionPauseTick < delayTicks) return false;
                 var key = com.ctux.ae2craftingtime.mc1201.ProfilerBridge.key(
                         com.ctux.ae2craftingtime.mc1201.ProfilerBridge.networkId(
                                 fixture.suspensionCpu(player, 0).getGrid()),
@@ -2066,7 +2066,7 @@ final class StandardAe2Scenario {
                 if (large.busy() && !large.suspended()) mark(checks, "same-job-resumed", true);
                 if (suspensionCycle == 1 && !suspensionDelayedObserved) {
                     if (large.suspended()) return false;
-                    var tick = player.serverLevel().getGameTime();
+                    var tick = player.level().getGameTime();
                     if (suspensionResumeTick == 0) suspensionResumeTick = tick;
                     var key = com.ctux.ae2craftingtime.mc1201.ProfilerBridge.key(
                             com.ctux.ae2craftingtime.mc1201.ProfilerBridge.networkId(

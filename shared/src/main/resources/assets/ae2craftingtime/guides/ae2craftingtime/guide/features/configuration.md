@@ -104,4 +104,4 @@ are rejected.
 *The seeded tooltip shows the Crafting Tree display controlled by `showInTree`.*
 
 [Previous: Saved history](saved-history.md) | [Features](index.md) |
-[Next: AE2: Crafting Tree](crafting-tree.md) | [Confidence](confidence.md)
+[Next: Crafting suspension](crafting-suspension.md) | [Confidence](confidence.md)
