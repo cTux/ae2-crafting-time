@@ -41,6 +41,11 @@ to mark proven recipe loops as Recurrent in Crafting Plan, or set
 `recurrentDetection = true` in the server file. Existing files that explicitly
 enable it keep that choice; Reset returns it to off.
 
+**Allow crafting suspension** in Server → General starts on for Minecraft
+1.20.1 Forge. Turning it off resumes paused standard AE2 CPUs on their next
+logic tick, including after an unloaded CPU loads. It works independently of
+`enabled` profiling. See [Crafting suspension](crafting-suspension.md).
+
 **Chance output status** in Client → Warnings and **Detect chance outputs** in
 Server → Diagnostics are experimental and off by default. Turn on both to use
 the diagnosis. It currently supports only the Mekanism Precision Sawmill on

@@ -135,6 +135,11 @@ public final class UiObservationStore {
             active.text.add(new UiSnapshot.ObservedText("native-title", text, List.of(),
                     transformed(graphics, x, y, x + width, y + height)));
         }
+        if (active != null && active.screen.contains("CraftingCPUScreen")
+                && text.equals(net.minecraft.client.resources.language.I18n.get("gui.ae2craftingtime.suspended"))) {
+            active.text.add(new UiSnapshot.ObservedText("gui.ae2craftingtime.suspended", text, List.of(),
+                    transformed(graphics, x, y, x + width, y + height)));
+        }
     }
 
     private static boolean statusRowText(Rect bounds) {

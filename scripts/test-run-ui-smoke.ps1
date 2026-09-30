@@ -328,6 +328,9 @@ try {
         throw 'Status font fixture does not widen the actual amount glyphs over the uniform fallback'
     }
     Invoke-Case "pass" -Scenario cpu-list-total-ttc -shouldPass $false
+    Invoke-Case "pass" -Scenario crafting-suspension -shouldPass $true
+    Invoke-Case "missing-screenshot" -Scenario crafting-suspension -shouldPass $false
+    Invoke-Case "pass" -Scenario crafting-suspension -Target 1.20.1-fabric -shouldPass $false
     Invoke-Case "pass" -Scenario standard-ae2 -shouldPass $true
     Invoke-Case "missing-screenshot" -Scenario standard-ae2 -shouldPass $false
     $failedManifest = Join-Path $temp 'build/ui-smoke/1.20.1-forge/compatible/standard-ae2/evidence/resolved-mods.json'

@@ -162,6 +162,7 @@ if (!$Changed) {
         if ($Target -and $id -cne $Target) { continue }
         if ($Scenario -ceq 'appmek-resource-icons' -and $id -notin @('1.20.1-forge','1.21.1-neoforge')) { continue }
         if ($Scenario -ceq 'chance-output-status' -and $id -cne '1.20.1-forge') { continue }
+        if ($Scenario -ceq 'crafting-suspension' -and $id -cne '1.20.1-forge') { continue }
         $selection[$id] = @($Scenario)
     }
 }

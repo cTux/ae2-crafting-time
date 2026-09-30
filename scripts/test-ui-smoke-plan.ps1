@@ -75,6 +75,17 @@ try {
     $nativeFixture = Plan
     Assert ($nativeFixture.targets.Count -eq 1 -and $nativeFixture.targets[0].target -eq '26.1.2-neoforge') 'Native replacement must select only 26.1.2'
     Clean
+    Put 'shared/src/main/java/com/ctux/ae2craftingtime/core/CraftingSuspension.java' 'Forge-only native state'
+    $suspensionCore = Plan
+    Assert ($suspensionCore.targets.Count -eq 1 -and $suspensionCore.targets[0].target -eq '1.20.1-forge') 'Suspension core must own only Forge'
+    Assert ($suspensionCore.targets[0].mode -eq 'focused' -and $suspensionCore.targets[0].cases.Count -eq 1 -and
+            $suspensionCore.targets[0].cases[0] -eq 'crafting-suspension') 'Suspension core must select the focused case'
+    Clean
+    Put 'versions/1.20.1-forge/src/main/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingSuspensionLogicMixin.java' 'native hook'
+    $suspensionHook = Plan
+    Assert ($suspensionHook.targets.Count -eq 1 -and $suspensionHook.targets[0].cases.Count -eq 1 -and
+            $suspensionHook.targets[0].cases[0] -eq 'crafting-suspension') 'Forge suspension hook must select the focused case'
+    Clean
     Put 'shared/src/main/java/com/ctux/ae2craftingtime/core/StallDiagnostic.java' 'delayed'
     $plan = Plan
     Assert ($plan.targets.Count -eq 4) 'Dedicated delayed file must reach all targets'

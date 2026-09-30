@@ -1,6 +1,6 @@
 # Crafting suspension on Forge 1.20.1
 
-Status: ready-to-implement
+Status: in-progress (implementation branch `codex/631-crafting-suspension`)
 
 Scope: Initial Forge 1.20.1 backport and its focused verification.
 
