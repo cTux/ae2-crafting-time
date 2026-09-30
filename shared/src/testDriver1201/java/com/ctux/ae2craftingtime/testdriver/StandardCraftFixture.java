@@ -406,6 +406,18 @@ final class StandardCraftFixture {
         return cpuListCpus(player).get(index).getCluster();
     }
 
+    boolean suspensionRestoredReady(ServerPlayer player) {
+        var cpus = cpuListCpus(player);
+        if (cpus.size() != 2 || cpus.stream().anyMatch(cpu -> cpu.getCluster() == null
+                || !cpu.getCluster().isActive() || cpu.getCluster().getGrid() == null)) return false;
+        for (int offset : new int[] {4, 8}) {
+            if (!(player.serverLevel().getBlockEntity(terminal.east(offset)) instanceof PatternProviderBlockEntity)
+                    || !(player.serverLevel().getBlockEntity(terminal.east(offset).below()) instanceof FurnaceBlockEntity))
+                return false;
+        }
+        return true;
+    }
+
     long pumpSuspension(ServerPlayer player) {
         var storage = suspensionCpu(player, 0).getGrid().getStorageService().getInventory();
         for (int offset : new int[] {4, 8}) {

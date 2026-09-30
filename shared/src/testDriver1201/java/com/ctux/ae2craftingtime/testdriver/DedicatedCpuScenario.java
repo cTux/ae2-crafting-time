@@ -578,7 +578,10 @@ public final class DedicatedCpuScenario {
                 gridFixture.bindTerminal(new net.minecraft.core.BlockPos(origin.terminal().x() + 60,
                         origin.terminal().y(), origin.terminal().z() + 1024));
                 level.setChunkForced(gridFixture.terminal.getX() >> 4, gridFixture.terminal.getZ() >> 4, true);
-                if (level.getBlockEntity(gridFixture.terminal) == null) return;
+                level.setChunkForced(gridFixture.terminal.east(12).getX() >> 4,
+                        gridFixture.terminal.getZ() >> 4, true);
+                if (level.getBlockEntity(gridFixture.terminal) == null
+                        || !gridFixture.suspensionRestoredReady(alpha)) return;
                 var loaded = gridFixture.suspensionState(alpha, 0);
                 var expected = System.getProperty("ae2craftingtime.test.suspensionJob", "");
                 if (!loaded.busy() || !loaded.suspended() || !loaded.jobId().equals(expected))
