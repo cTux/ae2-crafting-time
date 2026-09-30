@@ -404,6 +404,7 @@ if ($ObservationMode) {
 
 $serverProcess = Start-Process -FilePath $java -ArgumentList $launchCommandLine -WorkingDirectory $resolvedServer `
     -PassThru -WindowStyle Hidden -RedirectStandardOutput $serverOut -RedirectStandardError $serverErr
+$null = $serverProcess.Handle
 $serverStartedAt = $serverProcess.StartTime.ToUniversalTime()
 try {
     $deadline = if ($Prewarm) { [DateTimeOffset]::FromUnixTimeMilliseconds($prewarmDeadline).UtcDateTime }
@@ -475,6 +476,7 @@ try {
         $serverProcess = Start-Process -FilePath $java -ArgumentList $phase2Line -WorkingDirectory $resolvedServer `
             -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $report 'server-phase-2.stdout.log') `
             -RedirectStandardError (Join-Path $report 'server-phase-2.stderr.log')
+        $null = $serverProcess.Handle
         $serverStartedAt = $serverProcess.StartTime.ToUniversalTime()
         $deadline = [DateTime]::UtcNow.AddSeconds($ServerStartupTimeoutSeconds)
         $ready = $false
