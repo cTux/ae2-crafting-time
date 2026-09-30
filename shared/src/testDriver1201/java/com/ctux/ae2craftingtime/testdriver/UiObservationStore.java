@@ -113,6 +113,7 @@ public final class UiObservationStore {
             return;
         }
         if (observed.key().startsWith("text.ae2craftingtime.")
+                || observed.key().equals("gui.ae2craftingtime.suspended")
                 || active.screen.contains("CraftingStatusScreen")
                 || active.cpuCards.stream().anyMatch(card -> observed.bounds().overlaps(card.nameArea))) {
             active.text.add(observed);
