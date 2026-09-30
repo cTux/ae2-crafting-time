@@ -777,6 +777,9 @@ final class StandardCraftFixture {
     appeng.me.cluster.implementations.CraftingCPUCluster suspensionCpu(ServerPlayer player, int index) {
         throw new UnsupportedOperationException("Forge-only suspension fixture");
     }
+    boolean suspensionRestoredReady(ServerPlayer player) {
+        throw new UnsupportedOperationException("Forge-only suspension fixture");
+    }
     long pumpSuspension(ServerPlayer player) { throw new UnsupportedOperationException("Forge-only suspension fixture"); }
     SuspensionState suspensionState(ServerPlayer player, int index) {
         throw new UnsupportedOperationException("Forge-only suspension fixture");
