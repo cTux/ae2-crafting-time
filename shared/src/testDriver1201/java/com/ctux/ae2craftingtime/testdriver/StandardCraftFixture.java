@@ -332,16 +332,28 @@ final class StandardCraftFixture {
         var service = cpus.get(0).getMainNode().getGrid().getCraftingService();
         if (suspensionLargePlan == null) {
             suspensionLargePlan = service.beginCraftingCalculation(player.serverLevel(),
-                    () -> IActionSource.ofPlayer(player), AEItemKey.of(Items.IRON_INGOT), suspensionLargeAmount,
+                    () -> IActionSource.ofMachine(cpus.get(0)), AEItemKey.of(Items.IRON_INGOT), suspensionLargeAmount,
                     appeng.api.networking.crafting.CalculationStrategy.REPORT_MISSING_ITEMS);
             return false;
         }
         if (!suspensionLargePlan.isDone()) return false;
         if (!suspensionLargeSubmitted) {
             try {
-                var result = service.submitJob(suspensionLargePlan.get(), null, cpus.get(0).getCluster(), false,
+                var plan = suspensionLargePlan.get();
+                var result = service.submitJob(plan, null, cpus.get(0).getCluster(), false,
                         IActionSource.ofPlayer(player));
-                if (!result.successful()) throw new IllegalStateException("Large suspension job rejected: " + result);
+                if (!result.successful()) {
+                    var raw = AEItemKey.of(Items.RAW_IRON);
+                    var drive = (DriveBlockEntity) player.serverLevel().getBlockEntity(terminal.east(2));
+                    throw new IllegalStateException("Large suspension job rejected: " + result
+                            + " simulation=" + plan.simulation() + " missing="
+                            + plan.missingItems().keySet().stream()
+                                    .map(key -> key + "=" + plan.missingItems().get(key)).toList()
+                            + " patternCount=" + plan.patternTimes().size()
+                            + " rawCell=" + drive.getCellInventory(0).getAvailableStacks().get(raw)
+                            + " rawGrid=" + cpus.get(0).getMainNode().getGrid().getStorageService().getInventory()
+                                    .getAvailableStacks().get(raw));
+                }
             } catch (Exception failure) { throw new IllegalStateException("Large suspension plan failed", failure); }
             suspensionLargeSubmitted = true;
         }
@@ -374,7 +386,7 @@ final class StandardCraftFixture {
         var service = cpus.get(1).getMainNode().getGrid().getCraftingService();
         if (suspensionSmallPlan == null) {
             suspensionSmallPlan = service.beginCraftingCalculation(player.serverLevel(),
-                    () -> IActionSource.ofPlayer(player), AEItemKey.of(Items.IRON_INGOT), 2,
+                    () -> IActionSource.ofMachine(cpus.get(1)), AEItemKey.of(Items.IRON_INGOT), 2,
                     appeng.api.networking.crafting.CalculationStrategy.REPORT_MISSING_ITEMS);
             return false;
         }
