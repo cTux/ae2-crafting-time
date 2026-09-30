@@ -1784,6 +1784,7 @@ final class StandardAe2Scenario {
                 mark(checks, "paused-visible", selected.suspended() && serverJob.suspended());
                 screenshot.accept("crafting-suspension-connected-loaded.png");
             }
+            phase = Stage.ACTIVE;
             suspensionStage = 1;
             return false;
         }
@@ -1945,6 +1946,7 @@ final class StandardAe2Scenario {
             fixture.configureSuspension();
             if (server(minecraft, player -> fixture.prepare(player, marker) && fixture.submitSuspensionLarge(player))) {
                 mark(checks, "standard-cpus", true);
+                phase = Stage.ACTIVE;
                 suspensionStage++;
             }
             return false;

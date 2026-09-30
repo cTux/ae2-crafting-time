@@ -426,6 +426,7 @@ try {
             $processes += $identity
             Write-Status "running" "client phase $phase"
             $timeout = if ($Interactive) { [TimeSpan]::FromMinutes(30) }
+                elseif ($Scenario -eq 'crafting-suspension') { [TimeSpan]::FromMinutes(15) }
                 elseif ($Scenario -in @("suite", "cpu-list-total-ttc", "standard-status-controls", "delayed-resource-icons", "appmek-resource-icons")) { [TimeSpan]::FromMinutes(40) }
                 else { [TimeSpan]::FromMinutes(8) }
             $deadline = [DateTime]::UtcNow.Add($timeout)
@@ -455,7 +456,7 @@ try {
                 } elseif ($process.WaitForExit(1000)) {
                     break
                 }
-                if ($Scenario -in @('cpu-list-total-ttc', 'standard-status-controls', 'recurrent-plan', 'stored-variant-plan', 'delayed-resource-icons', 'appmek-resource-icons') -or
+                if ($Scenario -in @('cpu-list-total-ttc', 'standard-status-controls', 'recurrent-plan', 'stored-variant-plan', 'delayed-resource-icons', 'appmek-resource-icons', 'crafting-suspension') -or
                         $selectedCases -contains 'recurrent-plan' -or $selectedCases -contains 'stored-variant-plan') {
                     $progressPath = Join-Path $evidence 'driver-progress.json'
                     if (Test-Path -LiteralPath $progressPath -PathType Leaf) {
