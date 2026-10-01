@@ -129,6 +129,13 @@ recorded outputs, not guessed directories.
    ./scripts/invoke-ui-smoke-codexvm.ps1 -Target 1.20.1-forge -BaseOnly -Scenario crafting-suspension -Interactive
    ```
 
+   Use the tested implementation branch containing the existing
+   [interactive completion fix](https://github.com/cTux/ae2-crafting-time/blob/efa6093b37ea61f9fb07e68f9aa80631c2588bc4/scripts/ui-smoke-progress.ps1#L56),
+   included in PR #637's `d5b10fe` head. It exempts interactive
+   `state=QUIT_REQUESTED` from checkpoint aging while retaining callback,
+   process and overall deadline supervision. This documentation-only base
+   does not supply the implementation runner; do not disable its other guards.
+
    Use the English prepared runtime, production JAR and isolated test-driver.
    Assert actual button rendering, positioning, labels, and server accounting;
    inspect required screenshots, sidecars and automatic-review outcomes. Capture

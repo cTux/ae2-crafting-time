@@ -179,7 +179,30 @@ in that disposable world. Stock raw iron and fuel only; every returned ingot
 must come from those furnaces. With the automatic leaf finished, collect real
 furnace outputs and insert them through the ME terminal to drive returns.
 
-1. Keep profiling, accuracy and delay warnings on. Finish one normal small iron
+Use the existing native read-only command `/data get block <x> <y> <z>` at each
+observed CPU root for authoritative job facts. A cheats-authorized singleplayer
+observer can run it in normal chat; dedicated checks use the existing operator
+console/RCON or operator observer without granting the tested non-operator
+editing permission. Capture the native command output in chat screenshots and
+the corresponding CPU UI before and after each return. Narrow reads of
+`job.link.craftId`, `job.waitingFor`, `job.tasks` and `job.remainingAmount` avoid
+truncated output: retain all four integer UUID components, waiting item amounts
+under `#`, task amounts under `#craftingProgress`, remaining amount and the
+`ae2craftingtime:suspended` byte. These are the native facts already read by the
+driver's `SuspensionState`; do not write NBT. The UI snapshot's `jobId` is an
+output key, not the native UUID, and completed-leaf fixture observations are
+stale. No new MCP field or observation harness is needed.
+
+1. Keep profiling, accuracy and delay warnings on. Read the configured
+   `maxSamples` and current iron accuracy count before the baseline and again
+   before the job pair. Leave spare capacity for every successful untouched job
+   through the final count; if needed, enlarge the existing Server Options
+   value through Done, up to its supported maximum of 100, preserving history.
+   An unchanged full-window count proves neither sample addition nor omission.
+   Keep this baseline, pair and final count in the same loaded world session:
+   `ProfilerBridge.load` replaces runtime accuracy and pending-job tracking;
+   persisted throughput history does not preserve that accuracy experiment.
+   Finish one normal small iron
    job to establish a real learned estimate. Record the iron accuracy sample
    count through the existing TTC details/chat before and after each later job.
    Submit two estimated jobs on separate CPUs. Pause/resume only one of them;
