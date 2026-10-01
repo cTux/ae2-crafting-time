@@ -119,16 +119,23 @@ recorded outputs, not guessed directories.
    targets against prepared AE2 15.4.10. Check the Forge-only mixin config is
    absent from every other artifact. Parse locale JSON, compare new keys and
    placeholders, check guide/wiki links and `git diff --check`.
-3. Build/package on host and run only the new base scenario first:
+3. Build/package on host and run only the new base scenario first, retaining
+   its fixture for the supplemental manual checks:
 
    ```powershell
-   ./scripts/invoke-ui-smoke-codexvm.ps1 -Target 1.20.1-forge -BaseOnly -Scenario crafting-suspension
+   ./scripts/invoke-ui-smoke-codexvm.ps1 -Target 1.20.1-forge -BaseOnly -Scenario crafting-suspension -Interactive
    ```
 
    Use the English prepared runtime, production JAR and isolated test-driver.
    Assert actual button rendering, positioning, labels, and server accounting;
    inspect required screenshots, sidecars and automatic-review outcomes. Capture
    running, suspended, small-complete, resumed, cancelled and disabled states.
+   After the leaf completes, use the retained fixture to perform all five
+   [supplemental runtime checks](technical-design.md#supplemental-runtime-checks-after-the-automated-leaf).
+   Save the observed UI snapshots, screenshots, accuracy counts, warning and
+   highlight transitions, delay timing and conserved item counts alongside the
+   leaf report. Record the tested head, bundle hashes, timestamps and each
+   manual result; a leaf PASS does not replace these observations.
 4. Reuse that exact head's immutable native bundle. Dispatch connected execution
    through the same host wrapper, with `-BundleDirectory <host-bundle>` and
    `-ServerDirectory <verified-guest-source>` plus `-AcceptMinecraftEula` under
@@ -145,6 +152,9 @@ recorded outputs, not guessed directories.
    no guest Gradle builds. Prove two-player synchronization, disabled/stale
    rejection and the clean restart sequence. Attach phase/PID/start/stop and
    count evidence, both clients' matching-state screenshots, and file hashes.
+   Also retain the supplemental non-operator permission and stopped-file
+   `craftingSuspension = false` recovery evidence described in the technical
+   design, including the server revision, saved config and post-restart state.
 5. Because synchronization must preserve optional installation, use existing
    observation mode on the same Forge source/bundle for server-only and
    client-only peers. Open the native CPU/status screen and prove no addon

@@ -214,6 +214,7 @@ accessible native job, cannot edit Server Options, and a denied edit leaves the
 server revision/config unchanged. Read the saved server file after Done and
 use a stopped disposable-world restart with `craftingSuspension = false` to
 prove file-based recovery. These checks remain mandatory and pending until
-Step 9 retains their current-head evidence; no automated marker substitutes
-for them. Optional-install observation and unsupported-loader artifact checks
+steps 3 and 4 of the [verification ladder](implementation-plan.md#verification-ladder-and-commands)
+retain their current-head evidence; no automated marker substitutes for them.
+Optional-install observation and unsupported-loader artifact checks
 remain separate gates in the implementation plan.
