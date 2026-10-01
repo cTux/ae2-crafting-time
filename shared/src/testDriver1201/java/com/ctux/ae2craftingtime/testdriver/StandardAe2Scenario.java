@@ -1923,16 +1923,23 @@ final class StandardAe2Scenario {
     }
 
     private boolean suspensionPausedStable(ServerPlayer player) {
-        fixture.pumpSuspension(player);
         var large = fixture.suspensionState(player, 0);
         if (!large.busy() || !large.suspended() || !large.profilerSuspended()
                 || !large.jobId().equals(suspensionLargeId)) return false;
         var tick = player.level().getGameTime();
         if (suspensionPauseTick == 0) {
+            if (suspensionStage == 3) {
+                if (large.waiting() == 0 || large.furnaceInput() + large.furnaceOutput() == 0)
+                    throw new IllegalStateException("No in-flight furnace return at pause acknowledgement");
+                suspensionReturned = large.remaining();
+            }
             suspensionPauseTick = tick;
             suspensionUndispatched = large.undispatched();
+            fixture.pumpSuspension(player);
             return false;
         }
+        fixture.pumpSuspension(player);
+        large = fixture.suspensionState(player, 0);
         if (large.undispatched() != suspensionUndispatched)
             throw new IllegalStateException("Paused CPU dispatched another pattern");
         return tick - suspensionPauseTick >= 10;
@@ -1958,7 +1965,6 @@ final class StandardAe2Scenario {
                 if (large.undispatched() >= 64 || large.furnaceInput() == 0 || large.networkOutput() == 0)
                     return false;
                 suspensionLargeId = large.jobId();
-                suspensionReturned = large.remaining();
                 return !suspensionLargeId.isEmpty();
             })) return false;
             mark(checks, "real-dispatch", true);
@@ -2016,7 +2022,12 @@ final class StandardAe2Scenario {
             if (!server(minecraft, player -> {
                 fixture.pumpSuspension(player);
                 var large = fixture.suspensionState(player, 0);
-                if (large.remaining() < suspensionReturned) mark(checks, "in-flight-progress", true);
+                if (!large.busy() || !large.suspended() || !large.profilerSuspended()
+                        || !large.jobId().equals(suspensionLargeId)
+                        || large.undispatched() != suspensionUndispatched)
+                    throw new IllegalStateException("Paused CPU changed before in-flight return");
+                if (large.remaining() >= suspensionReturned) return false;
+                mark(checks, "in-flight-progress", true);
                 if (!fixture.submitSuspensionSmall(player)) return false;
                 var small = fixture.suspensionState(player, 1);
                 return !small.jobId().isEmpty() && !small.jobId().equals(suspensionLargeId);
