@@ -186,8 +186,9 @@ furnace outputs and insert them through the ME terminal to drive returns.
    after both finish, the untouched job must add one accuracy sample and the
    paused job must add none. Retained throughput history must remain available.
 2. To prove overlapping warnings, withhold the real furnace outputs from AE
-   storage after each CPU has dispatched. Pause the large job while it still
-   has undispatched work; withhold furnace fuel as needed to keep the native
+   storage after each CPU has dispatched. For the controlled setup below, pause
+   the large job while it still has undispatched work; withhold furnace fuel as
+   needed to keep the native
    machine capacity and queued work observable. Collect genuine furnace outputs
    into the player inventory, let the second CPU dispatch, then resume the first
    for the warning baseline. Keep the real items for later return. Record both
@@ -199,16 +200,19 @@ furnace outputs and insert them through the ME terminal to drive returns.
    Shared-storage iron returns have no CPU identity. Before and after each
    terminal return, record both UUIDs and per-CPU amounts to identify the actual
    recipient; never assume which job consumes an ingot or finishes first.
-   While the large job remains suspended with undispatched work greater than
-   zero, drain its finite in-flight waiting outputs using the retained real
-   items. Establish and record waiting = 0 and remaining > 0 for that same
-   paused job, with the other job still active. Further genuine returns for the
-   other job cannot fill the paused job's undispatched work. Observe the other
-   job actually complete while the paused UUID remains active: the completed
+   One controlled setup is to keep the large job suspended with undispatched
+   work greater than zero and drain its finite in-flight waiting outputs using
+   the retained real items. Record waiting = 0 and remaining > 0 for that same
+   paused job, with the other job still active; further genuine returns cannot
+   fill the paused job's undispatched work. This setup is optional: direct
+   before/after per-CPU observations that prove the other UUID completed while
+   the paused UUID stayed active with remaining > 0 also satisfy the check.
+   In either case, observe the other job actually complete: the completed
    job's highlight contribution must disappear without the paused job restoring
    it. Record both selected CPU screens, warning chat and world highlights,
-   not only a global output-level boolean. If either ownership or these
-   preconditions cannot be established, record an incomplete check and diagnose
+   not only a global output-level boolean. If return ownership, other-job
+   completion or the paused job's continued activity cannot be established,
+   record an incomplete check and diagnose
    the fixture state; do not claim PASS or repeat the same sequence blindly.
 3. In the terminal Crafting Status screen, select each CPU and switch back,
    including automatic selection after cancellation. Verify the suspended
