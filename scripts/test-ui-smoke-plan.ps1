@@ -88,6 +88,17 @@ try {
     $suspensionHook = Plan
     Assert ($suspensionHook.targets.Count -eq 1 -and $suspensionHook.targets[0].cases.Count -eq 1 -and
             $suspensionHook.targets[0].cases[0] -eq 'crafting-suspension') 'Forge suspension hook must select the focused case'
+    Clean
+    foreach ($fixture in @('StandardAe2Scenario','StandardCraftFixture','DedicatedCpuScenario',
+            'CraftPlanScenario','DriverProgress','CpuListTtcControl')) {
+        Put "shared/src/testDriver1201/java/com/ctux/ae2craftingtime/testdriver/$fixture.java" 'suspension fixture'
+        $fixturePlan = Plan
+        Assert (@($fixturePlan.targets | Where-Object { $_.target -eq '1.20.1-forge' -and
+                    'crafting-suspension' -cin $_.cases }).Count -eq 1) "$fixture must select Forge suspension"
+        Assert (@($fixturePlan.targets | Where-Object { $_.target -ne '1.20.1-forge' -and
+                    'crafting-suspension' -cin $_.cases }).Count -eq 0) "$fixture must not select suspension on other loaders"
+        Clean
+    }
     Reject { & "$PSScriptRoot/expand-ui-smoke-groups.ps1" -Target 1.20.1-fabric -Scenarios crafting-suspension } `
         'Fabric must reject the Forge-only suspension case'
     Reject { & "$PSScriptRoot/expand-ui-smoke-groups.ps1" -Target 26.1.2-neoforge -Scenarios crafting-suspension } `
