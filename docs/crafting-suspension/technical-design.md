@@ -186,15 +186,30 @@ furnace outputs and insert them through the ME terminal to drive returns.
    after both finish, the untouched job must add one accuracy sample and the
    paused job must add none. Retained throughput history must remain available.
 2. To prove overlapping warnings, withhold the real furnace outputs from AE
-   storage after each CPU has dispatched. If necessary pause the first CPU,
-   empty its furnace outputs into the player inventory, let the second CPU
-   dispatch, then resume the first. Keep those real items for later return.
+   storage after each CPU has dispatched. Pause the large job while it still
+   has undispatched work; withhold furnace fuel as needed to keep the native
+   machine capacity and queued work observable. Collect genuine furnace outputs
+   into the player inventory, let the second CPU dispatch, then resume the first
+   for the warning baseline. Keep the real items for later return. Record both
+   native job UUIDs and each CPU's undispatched, waiting and remaining amounts.
    Wait for both jobs to show Delayed and the shared provider highlights.
-   Suspend one job: its selected rows/title lose diagnostics immediately while
-   the other CPU stays Delayed and its provider highlight remains. Complete the
-   other job with the actual retained outputs: its contribution disappears;
-   the suspended job must not resurrect it. Record both selected CPU screens,
-   warning chat and world highlights, not only a global output-level boolean.
+   Suspend the large job: its selected rows/title lose diagnostics immediately while
+   the other CPU stays Delayed and its provider highlight remains.
+
+   Shared-storage iron returns have no CPU identity. Before and after each
+   terminal return, record both UUIDs and per-CPU amounts to identify the actual
+   recipient; never assume which job consumes an ingot or finishes first.
+   While the large job remains suspended with undispatched work greater than
+   zero, drain its finite in-flight waiting outputs using the retained real
+   items. Establish and record waiting = 0 and remaining > 0 for that same
+   paused job, with the other job still active. Further genuine returns for the
+   other job cannot fill the paused job's undispatched work. Observe the other
+   job actually complete while the paused UUID remains active: the completed
+   job's highlight contribution must disappear without the paused job restoring
+   it. Record both selected CPU screens, warning chat and world highlights,
+   not only a global output-level boolean. If either ownership or these
+   preconditions cannot be established, record an incomplete check and diagnose
+   the fixture state; do not claim PASS or repeat the same sequence blindly.
 3. In the terminal Crafting Status screen, select each CPU and switch back,
    including automatic selection after cancellation. Verify the suspended
    selected card immediately has no numeric estimate; other cards retain their
@@ -211,9 +226,16 @@ furnace outputs and insert them through the ME terminal to drive returns.
 
 Also exercise a non-operator connected client: it can Suspend/Resume an
 accessible native job, cannot edit Server Options, and a denied edit leaves the
-server revision/config unchanged. Read the saved server file after Done and
-use a stopped disposable-world restart with `craftingSuspension = false` to
-prove file-based recovery. These checks remain mandatory and pending until
+server revision/config unchanged. Read the saved server file after Done.
+Prove file-based recovery in a separate disposable-world campaign on the same
+tested bundle: save a genuinely suspended job, stop the world cleanly, preserve
+the original stopped-world/config backup, set `craftingSuspension = false`,
+and restart that recovery world. Record its job identity/counts and the loaded
+config, then verify next-tick unstranding and normal completion. Do not edit job
+NBT or reuse the connected persistence campaign's world or backup. That campaign
+keeps exactly two phases and verifies suspension survives its enabled restart;
+file-based recovery adds no phase to it. These checks remain mandatory and
+pending until
 steps 3 and 4 of the [verification ladder](implementation-plan.md#verification-ladder-and-commands)
 retain their current-head evidence; no automated marker substitutes for them.
 Optional-install observation and unsupported-loader artifact checks

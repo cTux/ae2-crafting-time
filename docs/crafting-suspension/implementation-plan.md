@@ -86,6 +86,9 @@ and completes. Do not recreate the grid or resubmit the job after reload.
 Store continuation metadata outside the world with the campaign/head identity;
 validate it against the actual loaded job. Finally cleanly stop server and both
 clients. No process-wide Java kill and no source-fixture mutation.
+Keep suspension enabled for this persistence restart. The supplemental
+file-disabled recovery check uses its own disposable world and retained backup;
+it does not add a phase or modify this campaign's world, config or backup.
 
 ## Verification ladder and commands
 
@@ -152,9 +155,12 @@ recorded outputs, not guessed directories.
    no guest Gradle builds. Prove two-player synchronization, disabled/stale
    rejection and the clean restart sequence. Attach phase/PID/start/stop and
    count evidence, both clients' matching-state screenshots, and file hashes.
-   Also retain the supplemental non-operator permission and stopped-file
-   `craftingSuspension = false` recovery evidence described in the technical
-   design, including the server revision, saved config and post-restart state.
+   Also retain the supplemental non-operator permission evidence. Run the
+   stopped-file `craftingSuspension = false` recovery check in a separate
+   disposable-world campaign as described in the technical design, preserving
+   its original stopped-world/config backup. Record that campaign's identity,
+   server revision, saved config, job counts and post-restart state separately;
+   do not add a phase to the two-phase persistence run or alter its backup.
 5. Because synchronization must preserve optional installation, use existing
    observation mode on the same Forge source/bundle for server-only and
    client-only peers. Open the native CPU/status screen and prove no addon
