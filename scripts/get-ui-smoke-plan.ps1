@@ -128,6 +128,7 @@ foreach ($change in $changes) {
     $behavior = @($rules.behavior | Where-Object { $path -cmatch $_.pattern })
     if ($ignored.Count -and $behavior.Count) { throw "Contradictory runtime classification: $path" }
     $cases = @()
+    $targetedBehavior = $false
     $reason = ''
     $fallback = $false
     if ($ignored.Count) { $reason = $ignored.reason -join '; ' }
@@ -147,7 +148,7 @@ foreach ($change in $changes) {
             $cases = @('standard-status-controls'); $reason = 'English compact-status amount labels changed'
         } elseif (@($keys | Where-Object { $_ -cne 'text.ae2craftingtime.ttc_delayed' }).Count) { $cases = @('suite'); $reason = 'English keys affect general UI' }
         else { $cases = @('delayed-status'); $reason = 'English delayed label changed' }
-    } elseif ($behavior.Count) { $cases = @($behavior.cases | Select-Object -Unique); $reason = $behavior.reason -join '; ' }
+    } elseif ($behavior.Count) { $cases = @($behavior.cases | Select-Object -Unique); $reason = $behavior.reason -join '; '; $targetedBehavior = $true }
     else {
         if ($path -cmatch '/resources/assets/ae2craftingtime/lang/en_us\.json$' -and [IO.File]::Exists((Join-Path $Repository $path))) {
             $null = Read-Language (Get-Content -LiteralPath (Join-Path $Repository $path) -Raw -Encoding UTF8)
@@ -156,7 +157,8 @@ foreach ($change in $changes) {
     }
     $reasons.Add([pscustomobject]@{ path=$path; layer=$change.layer; status=$change.status; targets=@($targets); cases=@($cases); reason=$reason; fallback=$fallback })
     foreach ($id in $targets) {
-        if ($cases.Count) { if (!$selection.ContainsKey($id)) { $selection[$id] = @() }; $selection[$id] += $cases }
+        $targetCases = if ($targetedBehavior) { @($behavior | Where-Object { !$_.targets -or $id -cin $_.targets } | ForEach-Object { $_.cases } | Select-Object -Unique) } else { $cases }
+        if ($targetCases.Count) { if (!$selection.ContainsKey($id)) { $selection[$id] = @() }; $selection[$id] += $targetCases }
     }
 }
 if (!$Changed) {
