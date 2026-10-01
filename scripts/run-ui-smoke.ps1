@@ -503,7 +503,7 @@ try {
                             -CheckpointTimeoutSeconds $CheckpointTimeoutSeconds -ProcessId $process.Id `
                             -ProgressProcessId $progressPid -CallbackSequence $callbackSequence `
                             -StartedAt $scenarioStartedAt -StartupTimeoutSeconds $StartupTimeoutSeconds `
-                            -ActiveScenarioObserved:$activeScenarioObserved -Checkpoint $checkpoint
+                            -ActiveScenarioObserved:$activeScenarioObserved -Interactive:$Interactive -Checkpoint $checkpoint
                     }
                     if ($watchdogReason) { break }
                 }
