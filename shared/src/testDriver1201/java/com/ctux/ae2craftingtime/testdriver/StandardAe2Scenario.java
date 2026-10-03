@@ -63,7 +63,7 @@ final class StandardAe2Scenario {
         OVERLAP_REOPEN,
         PUMP, FINISHED, REOPEN, EMPTY, WORLD_POSITION, WORLD_HIGHLIGHT, WORLD_RELEASE, WORLD_FINISHED,
         GALLERY_PARTIAL_PLAN, GALLERY_PROFILED_PLAN, GALLERY_DETAILS, GALLERY_CHAT, GALLERY_NEXT_JOB,
-        CPU_LIST_REOPEN, CPU_LIST_REOPENED, STATUS_SERVER_OFF, STATUS_PERSIST, STATUS_RELAUNCH,
+        STATUS_SERVER_OFF, STATUS_PERSIST, STATUS_RELAUNCH,
         BADGE_PERSIST, BADGE_RELAUNCH }
     private final String leaf;
     private final StandardCraftFixture fixture = new StandardCraftFixture();
@@ -594,18 +594,6 @@ final class StandardAe2Scenario {
             }
             return false;
         }
-        if (phase == Stage.CPU_LIST_REOPEN) {
-            if (minecraft.screen == null) {
-                minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
-                        new BlockHitResult(Vec3.atCenterOf(fixture.terminal).add(0, 0, -0.5), Direction.NORTH,
-                                fixture.terminal, false));
-            } else if (minecraft.screen instanceof MEStorageScreen<?> screen) {
-                var button = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$statusButton();
-                DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
-                phase = Stage.CPU_LIST_REOPENED;
-            }
-            return false;
-        }
         var snapshot = UiObservationStore.latest();
         boolean optionsVisible = (phase == Stage.STATUS_OPTIONS || phase == Stage.STATUS_PERSIST)
                 && minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen;
@@ -732,11 +720,10 @@ final class StandardAe2Scenario {
                     || ((com.ctux.ae2craftingtime.mc1201.RecurrentPlanMenu) menu)
                             .ae2craftingtime$summaryRevision() != variantRevision)
                 throw new IllegalStateException("Stored-variant transition replaced the native plan");
-            if (!variantAmounts.equals(summary.getEntries().stream().map(value -> List.of(
-                    value.getStoredAmount(), value.getCraftAmount(), value.getMissingAmount())).toList())
-                    || !variantButtons.equals(minecraft.screen.children().stream().filter(AbstractWidget.class::isInstance)
-                            .map(AbstractWidget.class::cast).map(value -> value.active).toList()))
-                throw new IllegalStateException("Stored-variant transition changed quantities or native button state");
+            validateVariantContent(variantAmounts, summary.getEntries().stream().map(value -> List.of(
+                    value.getStoredAmount(), value.getCraftAmount(), value.getMissingAmount())).toList(),
+                    variantButtons, minecraft.screen.children().stream().filter(AbstractWidget.class::isInstance)
+                            .map(AbstractWidget.class::cast).map(value -> value.active).toList());
             for (var control : summary.getEntries()) {
                 if (control == entry) continue;
                 if (((com.ctux.ae2craftingtime.mc1201.RecurrentPlanEntry) control).ae2craftingtime$storedVariant())
@@ -757,8 +744,7 @@ final class StandardAe2Scenario {
             Integer neutralColor = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().badgeBackground()
                     ? com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current()
                             .color(com.ctux.ae2craftingtime.core.ClientConfig.Color.TOTAL) : null;
-            if (expected && (label.bold() || !java.util.Objects.equals(label.color(), neutralColor)))
-                throw new IllegalStateException("Stored-variant label is not normal neutral text");
+            validateStoredVariantLabel(label, expected, neutralColor);
             if (!variantHover) {
                 moveMouse.accept(row.cell().x() + row.cell().width() / 2,
                         row.cell().y() + row.cell().height() / 2);
@@ -781,10 +767,9 @@ final class StandardAe2Scenario {
                 var drawn = snapshot.text().stream().filter(value -> value.key().equals(
                         "text.ae2craftingtime.plan.stored_variant")).toList();
                 if (drawn.size() != 1 || drawn.get(0).bounds() == null) return false;
-                if (!drawn.get(0).bounds().inside(row.cell()))
-                    throw new IllegalStateException("Stored-variant text exceeds its row at narrow layout");
+                validateStoredVariantText(row, drawn.get(0));
             }
-            if (!row.cell().inside(snapshot.gui())) throw new IllegalStateException("Variant row escapes native plan layout");
+            validateStoredVariantRow(snapshot, row);
             mark(checks, "variant-layout", true);
             if (variantStep == 1 && sort < 3) {
                 screenshot.accept("stored-variant-sort-" + sort + ".png");
@@ -847,25 +832,13 @@ final class StandardAe2Scenario {
             var label = row.description().stream().filter(text -> text.key().equals("text.ae2craftingtime.plan.recurrent")).findFirst().orElse(null);
             if (!connectedDedicated && recurrenceFixture.recurrent() && label == null
                     && !RecurrentPlanFixture.CASES.get(recurrenceCase).equals("large")) return false;
-            if (snapshot.text().stream().filter(text -> text.key().equals("text.ae2craftingtime.plan.recurrent"))
-                    .anyMatch(text -> text.bounds() == null || snapshot.rows().stream().noneMatch(value -> text.bounds().inside(value.cell()))))
-                throw new IllegalStateException("Recurrent text escapes its native table cell");
+            validateRecurrenceBounds(snapshot);
             if (connectedDedicated && RecurrentPlanControl.state().recurrent() != (label != null)) return false;
             if (connectedDedicated && label != null
                     && !label.arguments().equals(List.of(Long.toString(RecurrentCampaign.REQUESTED_AMOUNT)))) return false;
-            if (label != null && (label.bold() || !java.util.Objects.equals(label.color(), 0xFF5555)
-                    || label.arguments().size() != 1 || !label.rendered().endsWith(label.arguments().get(0))))
-                throw new IllegalStateException("Recurrence label lost its red warning style or amount");
-            if (label != null && snapshot.text().stream()
-                    .filter(text -> text.key().equals("text.ae2craftingtime.plan.recurrent"))
-                    .noneMatch(text -> !text.bold() && java.util.Objects.equals(text.color(), 0xFF5555)
-                            && text.bounds() != null && recurrentBadgeMatches(snapshot.badges(), text.bounds(),
-                                    com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().badgeBackground())))
-                throw new IllegalStateException("Recurrent label or badge differs from client options");
-            if (!connectedDedicated && recurrenceFixture.reported() && label != null
-                    && !label.arguments().equals(List.of(Long.toString(recurrenceFixture.requestedAmount()))))
-                throw new IllegalStateException("Recurrence label lost requested quantity " + recurrenceFixture.requestedAmount());
-            if (!row.cell().inside(snapshot.gui())) throw new IllegalStateException("Recurrence row escapes plan layout");
+            validateRecurrenceLabel(snapshot, row, label,
+                    com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().badgeBackground(),
+                    connectedDedicated, recurrenceFixture.reported(), recurrenceFixture.requestedAmount());
             mark(checks, "recurrent-row", true);
             mark(checks, "red-warning-style", true);
             mark(checks, "unchanged-quantity", label == null || label.arguments().size() == 1
@@ -1014,19 +987,14 @@ final class StandardAe2Scenario {
         } else if (phase == Stage.PLAN_SORT || phase == Stage.STATUS_SORT) {
             var rows = snapshot.rows().stream().filter(row -> row.craftAmount() > 0).map(UiSnapshot.Row::outputId).toList();
             if (!rows.containsAll(List.of("minecraft:stone", "minecraft:smooth_stone"))) return false;
-            if (plan && !missingFirst(snapshot.rows())) {
-                throw new IllegalStateException("Crafting Plan missing rows are not first: " + snapshot.rows());
-            }
+            validatePlanMissingOrder(snapshot, plan);
             if (sort == 0) {
                 mark(checks, prefix, true);
                 var total = plan ? snapshot.text().stream()
                         .filter(t -> t.key().equals("text.ae2craftingtime.total_ttc")).findFirst().orElse(null) : null;
                 if (plan && total == null) return false;
-                if (plan && (total.bounds() == null || !recurrentBadgeMatches(snapshot.badges(), total.bounds(),
-                        com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().badgeBackground())
-                        || !LayoutValidator.validateBadges(snapshot).isEmpty())) {
-                    throw new IllegalStateException("plan badge layout: " + LayoutValidator.validateBadges(snapshot));
-                }
+                if (plan) validatePlanTotal(snapshot, total,
+                        com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().badgeBackground());
                 if (plan) {
                     mark(checks, "total-ttc", true);
                     mark(checks, "layout", true);
@@ -1037,9 +1005,7 @@ final class StandardAe2Scenario {
             if (sort != 1) {
                 var expected = plan && sort == 2 ? List.of("minecraft:smooth_stone", "minecraft:stone")
                         : List.of("minecraft:stone", "minecraft:smooth_stone");
-                if (!rows.subList(0, 2).equals(expected)) {
-                    throw new IllegalStateException(prefix + " sort " + sort + " row order is " + rows + ", expected " + expected);
-                }
+                validateSortedRows(rows, expected, prefix, sort);
             }
             if (sort > 0) screenshot.accept(prefix + "-sort-" + sort + ".png");
             if (sort++ < 3) {
@@ -1147,11 +1113,8 @@ final class StandardAe2Scenario {
                 frames.reset();
                 return false;
             }
-            var amountLines = row.description().stream()
-                    .filter(text -> text.key().equals("text.ae2craftingtime.status.amounts")).toList();
             boolean empty = quantityCase == 7;
-            if (amountLines.size() != (empty ? 0 : 1))
-                throw new IllegalStateException("Synthetic native amount case " + quantityCase + " has " + amountLines);
+            var amountLines = quantityAmountLines(row, empty, quantityCase);
             if (!empty) {
                 var summary = amountLines.get(0);
                 String amount = quantityCase < 8 ? List.of("4/10/200", "-/10/200", "10/-/200", "4/10/-",
@@ -1159,8 +1122,7 @@ final class StandardAe2Scenario {
                         String.join("/", expected.getWhat().formatAmount(expected.getStoredAmount(), appeng.api.stacks.AmountFormat.SLOT),
                                 expected.getWhat().formatAmount(expected.getActiveAmount(), appeng.api.stacks.AmountFormat.SLOT),
                                 expected.getWhat().formatAmount(expected.getPendingAmount(), appeng.api.stacks.AmountFormat.SLOT));
-                if (!summary.arguments().equals(List.of(amount)) || summary.bold())
-                    throw new IllegalStateException("Synthetic native amount case " + quantityCase + " text " + summary);
+                validateQuantityText(summary, amount, quantityCase);
                 var ttc = row.description().stream().filter(text ->
                         com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(text.key())
                         && !text.key().equals("text.ae2craftingtime.status.amounts")).findFirst();
@@ -1168,8 +1130,7 @@ final class StandardAe2Scenario {
                 if (color == null && com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().badgeBackground())
                     color = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current()
                             .color(com.ctux.ae2craftingtime.core.ClientConfig.Color.TOTAL);
-                if (!java.util.Objects.equals(summary.color(), color) || !LayoutValidator.validateBadges(snapshot).isEmpty())
-                    throw new IllegalStateException("Synthetic native amount case " + quantityCase + " color/layout " + summary);
+                validateQuantityLayout(snapshot, summary, color, quantityCase);
             }
             if (!quantityHovered) {
                 moveMouse.accept(row.cell().centerX(), row.cell().centerY());
@@ -1178,8 +1139,7 @@ final class StandardAe2Scenario {
                 return false;
             }
             if (snapshot.tooltip().isEmpty()) return false;
-            if (snapshot.tooltip().stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.status.amounts_legend")) == empty)
-                throw new IllegalStateException("Synthetic native amount case " + quantityCase + " lost tooltip legend");
+            validateQuantityLegend(snapshot.tooltip(), empty, quantityCase);
             var labels = List.of(appeng.core.localization.GuiText.FromStorage,
                     appeng.core.localization.GuiText.Crafting, appeng.core.localization.GuiText.Scheduled);
             long[] raw = {expected.getStoredAmount(), expected.getActiveAmount(), expected.getPendingAmount()};
@@ -1188,11 +1148,7 @@ final class StandardAe2Scenario {
                         labels.get(category).text("").getContents();
                 String full = raw[category] > 0 ? expected.getWhat().formatAmount(raw[category],
                         appeng.api.stacks.AmountFormat.FULL) : null;
-                final int nativeCategory = category;
-                if (snapshot.tooltip().stream().anyMatch(text -> text.key().equals(label.getKey())
-                        && full != null && text.arguments().contains(full)) != (full != null))
-                    throw new IllegalStateException("Synthetic native amount case " + quantityCase
-                            + " lost full tooltip category " + nativeCategory + "=" + full);
+                validateQuantityTooltipCategory(snapshot.tooltip(), label.getKey(), full, category, quantityCase);
             }
             screenshot.accept("status-amounts-" + quantityCase + ".png");
             if (++quantityCase < StandardCraftFixture.QUANTITY_CASES) {
@@ -1237,9 +1193,7 @@ final class StandardAe2Scenario {
             var key = expected.getWhat();
             var slot = java.util.List.of(addon.stored(), addon.active(), addon.pending()).stream()
                     .map(value -> key.formatAmount(value, appeng.api.stacks.AmountFormat.SLOT)).toList();
-            if (summary == null || !summary.arguments().equals(List.of(String.join("/", slot)))
-                    || summary.bold() || !LayoutValidator.validateBadges(snapshot).isEmpty())
-                throw new IllegalStateException("Addon " + addon.name() + " lost native SLOT amounts or badge bounds");
+            validateAddonSummary(snapshot, summary, slot, addon.name());
             if (!addonQuantityBadgeCaptured) {
                 moveMouse.accept(0, 0);
                 screenshot.accept("status-addon-" + addon.name() + ".png");
@@ -1256,9 +1210,7 @@ final class StandardAe2Scenario {
                 return false;
             }
             if (snapshot.tooltip().isEmpty()) return false;
-            if (snapshot.tooltip().stream().noneMatch(value -> value.key().equals(
-                    "text.ae2craftingtime.status.amounts_legend")))
-                throw new IllegalStateException("Addon " + addon.name() + " lost amount legend");
+            validateAddonLegend(snapshot.tooltip(), addon.name());
             var labels = List.of(appeng.core.localization.GuiText.FromStorage,
                     appeng.core.localization.GuiText.Crafting, appeng.core.localization.GuiText.Scheduled);
             long[] raw = {addon.stored(), addon.active(), addon.pending()};
@@ -1266,9 +1218,7 @@ final class StandardAe2Scenario {
                 String label = ((net.minecraft.network.chat.contents.TranslatableContents)
                         labels.get(category).text("").getContents()).getKey();
                 String full = key.formatAmount(raw[category], appeng.api.stacks.AmountFormat.FULL);
-                if (snapshot.tooltip().stream().noneMatch(value -> value.key().equals(label)
-                        && value.arguments().contains(full)))
-                    throw new IllegalStateException("Addon " + addon.name() + " lost native FULL tooltip " + label);
+                validateAddonTooltip(snapshot.tooltip(), label, full, addon.name());
             }
             screenshot.accept("status-addon-" + addon.name() + "-tooltip.png");
             moveMouse.accept(0, 0);
@@ -1294,9 +1244,8 @@ final class StandardAe2Scenario {
                 amountFontReload.join();
                 amountFontReload = null;
                 frames.reset();
-                if (amountFontMode == 1 && minecraft.font.width(com.ctux.ae2craftingtime.mc1201.TtcText
-                        .statusAmounts("4/10/200")) <= defaultAmountFontWidth)
-                    throw new IllegalStateException("Uniform status font is not wider than the default font");
+                validateAmountFont(amountFontMode, minecraft.font.width(com.ctux.ae2craftingtime.mc1201.TtcText
+                        .statusAmounts("4/10/200")), defaultAmountFontWidth);
                 if (amountFontMode == 2) {
                     minecraft.options.guiScale().set(originalGuiScale);
                     DriverPlatform.resizeDisplay(minecraft);
@@ -1329,9 +1278,7 @@ final class StandardAe2Scenario {
             var amount = row.description().stream().filter(text -> text.key().equals("text.ae2craftingtime.status.amounts"))
                     .findFirst().orElse(null);
             var drawn = rowText(snapshot, row.outputId(), "text.ae2craftingtime.status.amounts");
-            if (amount == null || drawn == null || !amount.rendered().equals(drawn.rendered())
-                    || !LayoutValidator.validateBadges(snapshot).isEmpty())
-                throw new IllegalStateException("Scaled amount badge escapes its native cell: " + amount + " rendered " + drawn);
+            validateScaledAmount(snapshot, amount, drawn);
             screenshot.accept("status-scale-" + (amountFontMode == 0 ? "default" : "wide") + "-"
                     + (requested == 0 ? "auto" : requested) + ".png");
             if (++quantityScaleCase < 3) {
@@ -1363,32 +1310,16 @@ final class StandardAe2Scenario {
             if (minecraft.screen instanceof CraftingStatusScreen statusScreen) {
                 if (amountOptionSaving) {
                     var features = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().features();
-                    if (features.enabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS) != compact
-                            || features.enabled(com.ctux.ae2craftingtime.core.OptionFeature.STATUS_ROWS) != time)
-                        throw new IllegalStateException("Saved amount option combination " + amountOptionCase + " differs");
+                    validateAmountOptionFeatures(features, compact, time, amountOptionCase);
                     var row = snapshot.rows().stream().filter(value -> value.storedAmount() > 0
                             || value.activeAmount() > 0 || value.pendingAmount() > 0).findFirst().orElse(null);
                     if (row == null) return false;
-                    boolean hasSummary = row.description().stream().anyMatch(value -> value.key().equals(
-                            "text.ae2craftingtime.status.amounts"));
-                    if (hasSummary != compact)
-                        throw new IllegalStateException("Amount option combination " + amountOptionCase + " rendered " + row.description());
+                    validateAmountOptionSummary(row, compact, amountOptionCase);
                     var nativeKeys = List.of(appeng.core.localization.GuiText.FromStorage,
                             appeng.core.localization.GuiText.Crafting, appeng.core.localization.GuiText.Scheduled)
                             .stream().map(label -> ((net.minecraft.network.chat.contents.TranslatableContents)
                                     label.text("").getContents()).getKey()).toList();
-                    long[] raw = {row.storedAmount(), row.activeAmount(), row.pendingAmount()};
-                    for (int category = 0; category < raw.length; category++) {
-                        String key = nativeKeys.get(category);
-                        int visible = (int) row.description().stream().filter(value -> value.key().equals(key)).count();
-                        if (visible != (!compact && raw[category] > 0 ? 1 : 0))
-                            throw new IllegalStateException("Amount option combination " + amountOptionCase
-                                    + " native category " + key + " count " + visible);
-                    }
-                    if (!time && row.description().stream().anyMatch(value ->
-                            com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(value.key())
-                                    && !value.key().equals("text.ae2craftingtime.status.amounts")))
-                        throw new IllegalStateException("TTC-off amount option rendered a status badge");
+                    validateAmountOptionCategories(row, nativeKeys, compact, time, amountOptionCase);
                     screenshot.accept("status-options-" + amountOptionCase + ".png");
                     amountOptionCase++;
                     amountOptionSaving = false;
@@ -1441,27 +1372,20 @@ final class StandardAe2Scenario {
                 var button = seekOptionButton(minecraft, label + ": ");
                 if (button == null) return false;
                 boolean enabled = button.getMessage().getString().endsWith(enabledLabel);
+                validateAmountResetInput(amountOptionCase, amountOptionOperationStep, label, enabled);
                 switch (amountOptionOperationStep) {
                     case 0 -> {
-                        if (enabled != (amountOptionCase != 6))
-                            throw new IllegalStateException("Wrong pre-reset compact value: case=" + amountOptionCase);
                         DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
                         amountOptionOperationStep = 1;
                     }
                     case 1 -> {
-                        if (enabled != (amountOptionCase == 6))
-                            throw new IllegalStateException("Compact edit did not apply: case=" + amountOptionCase);
                         amountOptionOperationStep = amountOptionCase == 5 ? 2 : 6;
                     }
                     case 2, 4 -> {
-                        if (enabled != (amountOptionOperationStep == 4))
-                            throw new IllegalStateException("Wrong pre-reset option value: " + label);
                         DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
                         amountOptionOperationStep++;
                     }
                     case 3, 5 -> {
-                        if (enabled != (amountOptionOperationStep == 3))
-                            throw new IllegalStateException("Option edit did not apply: " + label);
                         amountOptionOperationStep++;
                     }
                     case 6 -> {
@@ -1477,19 +1401,14 @@ final class StandardAe2Scenario {
                         if (amountOptionCase == 4) amountOptionSaving = true;
                     }
                     case 7, 8, 9 -> {
-                        if (enabled != (amountOptionOperationStep == 9))
-                            throw new IllegalStateException("Reset did not restore model default: " + label);
                         amountOptionOperationStep = amountOptionCase == 5 ? amountOptionOperationStep + 1 : 10;
                     }
                     case 10 -> {
-                        if (com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().features()
-                                .enabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS)
-                                != (amountOptionCase == 5))
-                            throw new IllegalStateException("Reset changed live compact option before Done: case=" + amountOptionCase);
+                        validateAmountResetSaved(com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().features(),
+                                amountOptionCase);
                         amountOptionSaving = true;
                         clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get("gui.done"));
                     }
-                    default -> throw new IllegalStateException("Unexpected reset step " + amountOptionOperationStep);
                 }
                 amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
                 frames.reset();
@@ -1625,9 +1544,7 @@ final class StandardAe2Scenario {
             stonePlateObserved |= hasPlate("minecraft:stone", 4);
             var warning = rowText(snapshot, "minecraft:stone", "text.ae2craftingtime.ttc_delayed");
             if (warning == null) return false;
-            if (warning.bold() || !Integer.valueOf(0xFF5555).equals(warning.color())) {
-                throw new IllegalStateException("DELAYED must be normal red on the active stone row");
-            }
+            validateDelayedWarning(warning);
             validateLayout(snapshot);
             if (!checks.get("delayed")) {
                 screenshot.accept("status-delayed.png");
@@ -1698,10 +1615,7 @@ final class StandardAe2Scenario {
             var header = snapshot.text().stream().filter(t -> t.bounds() != null && t.bounds().y() < snapshot.gui().y() + 19
                     && t.key().equals("native-title")).findFirst();
             if (leaf.equals("standard-status-controls") && header.isPresent() && !Boolean.TRUE.equals(checks.get("header"))) {
-                if (!header.get().bounds().inside(snapshot.gui()) || !LayoutValidator.validateBadges(snapshot).isEmpty()) {
-                    throw new IllegalStateException("status header " + header.get().bounds() + " GUI " + snapshot.gui()
-                            + " badge layout: " + LayoutValidator.validateBadges(snapshot));
-                }
+                validateStatusHeader(snapshot, header.get());
                 mark(checks, "header", true);
                 mark(checks, "layout", true);
                 screenshot.accept("status-progress.png");
@@ -1717,11 +1631,7 @@ final class StandardAe2Scenario {
         } else if (phase == Stage.FINISHED) {
             // Older AE2 can retain its last incremental row after the CPU becomes idle.
             // Preserve that view, then reopen through the actual return/status buttons.
-            if (leaf.equals("craft-lifecycle") && snapshot.text().stream()
-                    .anyMatch(t -> t.key().equals("text.ae2craftingtime.ttc") && t.bounds() != null
-                            && t.bounds().y() < snapshot.gui().y() + 19)) {
-                throw new IllegalStateException("completed crafting status still shows total TTC");
-            }
+            validateCompletedStatus(snapshot, leaf);
             if (leaf.equals("craft-lifecycle")) mark(checks, "total-cleared", true);
             if (leaf.equals("craft-lifecycle")) screenshot.accept(partialJob ? "status-partial-finished.png" : "status-finished-job.png");
             var button = minecraft.screen.children().stream().filter(appeng.client.gui.widgets.TabButton.class::isInstance)
@@ -1841,8 +1751,7 @@ final class StandardAe2Scenario {
             return false;
         }
         if (role.equals("beta") && suspensionStage == 4) {
-            if (!serverJob.suspended() || !CpuListTtcControl.request("stale-sent")) return false;
-            mark(checks, "stale-rejected", true);
+            if (!acknowledgeStaleSuspension(checks)) return false;
             minecraft.player.closeContainer();
             suspensionStage = 5;
             return false;
@@ -1878,6 +1787,14 @@ final class StandardAe2Scenario {
         return false;
     }
 
+    static boolean acknowledgeStaleSuspension(Map<String, Boolean> checks) {
+        // The server accepts this acknowledgement only while the stale action is rejected
+        // against the paused job. Alpha may resume before Beta consumes that reply.
+        if (!CpuListTtcControl.request("stale-sent")) return false;
+        mark(checks, "stale-rejected", true);
+        return true;
+    }
+
     private void openSuspensionCpu(Minecraft minecraft, int index) {
         var cpu = fixture.terminal.west(2 + index * 2);
         minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
@@ -1909,6 +1826,15 @@ final class StandardAe2Scenario {
         }
     }
 
+    static boolean suspensionCaptureReady(com.ctux.ae2craftingtime.core.CraftingSuspension.Snapshot selected,
+            UiSnapshot observed, boolean completed) {
+        if (selected == null || selected.suspended() || observed == null
+                || !observed.screen().equals("appeng.client.gui.me.crafting.CraftingCPUScreen")) return false;
+        if (observed.text().stream().anyMatch(text -> text.key().equals("gui.ae2craftingtime.suspended")))
+            return false;
+        return completed ? !selected.hasJob() && observed.rows().isEmpty() : !selected.enabled();
+    }
+
     private static void sendStaleSuspension(int container, long context, java.util.UUID job, boolean desired) {
         try {
             var packet = Class.forName("com.ctux.ae2craftingtime.mc1201.net.CraftingSuspensionC2S");
@@ -1924,13 +1850,11 @@ final class StandardAe2Scenario {
 
     private boolean suspensionPausedStable(ServerPlayer player) {
         var large = fixture.suspensionState(player, 0);
-        if (!large.busy() || !large.suspended() || !large.profilerSuspended()
-                || !large.jobId().equals(suspensionLargeId)) return false;
+        if (!suspensionPausedJobReady(large, suspensionLargeId)) return false;
         var tick = player.level().getGameTime();
         if (suspensionPauseTick == 0) {
             if (suspensionStage == 3) {
-                if (large.waiting() == 0 || large.furnaceInput() + large.furnaceOutput() == 0)
-                    throw new IllegalStateException("No in-flight furnace return at pause acknowledgement");
+                validateSuspensionInFlightReturn(large);
                 suspensionReturned = large.remaining();
             }
             suspensionPauseTick = tick;
@@ -1940,8 +1864,7 @@ final class StandardAe2Scenario {
         }
         fixture.pumpSuspension(player);
         large = fixture.suspensionState(player, 0);
-        if (large.undispatched() != suspensionUndispatched)
-            throw new IllegalStateException("Paused CPU dispatched another pattern");
+        validateSuspensionDispatch(large.undispatched(), suspensionUndispatched);
         return tick - suspensionPauseTick >= 10;
     }
 
@@ -2022,10 +1945,7 @@ final class StandardAe2Scenario {
             if (!server(minecraft, player -> {
                 fixture.pumpSuspension(player);
                 var large = fixture.suspensionState(player, 0);
-                if (!large.busy() || !large.suspended() || !large.profilerSuspended()
-                        || !large.jobId().equals(suspensionLargeId)
-                        || large.undispatched() != suspensionUndispatched)
-                    throw new IllegalStateException("Paused CPU changed before in-flight return");
+                validateSuspensionPausedJob(large, suspensionLargeId, suspensionUndispatched);
                 if (large.remaining() >= suspensionReturned) return false;
                 mark(checks, "in-flight-progress", true);
                 if (!fixture.submitSuspensionSmall(player)) return false;
@@ -2040,8 +1960,7 @@ final class StandardAe2Scenario {
                 fixture.pumpSuspension(player);
                 var large = fixture.suspensionState(player, 0);
                 var small = fixture.suspensionState(player, 1);
-                if (large.undispatched() != suspensionUndispatched)
-                    throw new IllegalStateException("Paused CPU dispatched another pattern");
+                validateSuspensionDispatch(large.undispatched(), suspensionUndispatched);
                 var delayTicks = Math.max(400,
                         com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.current()
                                 .minimumNoProgressSeconds() * 20L) + 20;
@@ -2050,10 +1969,9 @@ final class StandardAe2Scenario {
                         com.ctux.ae2craftingtime.mc1201.ProfilerBridge.networkId(
                                 fixture.suspensionCpu(player, 0).getGrid()),
                         appeng.api.stacks.AEItemKey.of(net.minecraft.world.item.Items.IRON_INGOT));
-                if (com.ctux.ae2craftingtime.mc1201.ProfilerBridge.isStillDelayed(key)
-                        || com.ctux.ae2craftingtime.mc1201.ProfilerBridge.remainingJobSeconds(
-                                fixture.suspensionCpu(player, 0)).isPresent())
-                    throw new IllegalStateException("Paused job retained a delayed warning or total estimate");
+                validateSuspensionDiagnostics(com.ctux.ae2craftingtime.mc1201.ProfilerBridge.isStillDelayed(key),
+                        () -> com.ctux.ae2craftingtime.mc1201.ProfilerBridge.remainingJobSeconds(
+                                fixture.suspensionCpu(player, 0)).isPresent());
                 return !small.busy() && large.busy() && large.jobId().equals(suspensionLargeId);
             })) return false;
             mark(checks, "small-completes", true);
@@ -2084,8 +2002,7 @@ final class StandardAe2Scenario {
             if (!server(minecraft, player -> {
                 if (suspensionCycle != 1 || suspensionDelayedObserved) fixture.pumpSuspension(player);
                 var large = fixture.suspensionState(player, 0);
-                if (large.busy() && !large.jobId().equals(suspensionLargeId))
-                    throw new IllegalStateException("Resume replaced the large job");
+                validateSuspensionResumedJob(large, suspensionLargeId);
                 if (large.busy() && !large.suspended()) mark(checks, "same-job-resumed", true);
                 if (suspensionCycle == 1 && !suspensionDelayedObserved) {
                     if (large.suspended()) return false;
@@ -2096,10 +2013,9 @@ final class StandardAe2Scenario {
                                     fixture.suspensionCpu(player, 0).getGrid()),
                             appeng.api.stacks.AEItemKey.of(net.minecraft.world.item.Items.IRON_INGOT));
                     var delayed = com.ctux.ae2craftingtime.mc1201.ProfilerBridge.isStillDelayed(key);
-                    if (delayed && tick - suspensionResumeTick <
-                            com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.current()
-                                    .minimumNoProgressSeconds() * 20L - 5)
-                        throw new IllegalStateException("Resume inherited the paused delay timer");
+                    validateSuspensionDelay(delayed, tick - suspensionResumeTick,
+                            () -> com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.current()
+                                    .minimumNoProgressSeconds() * 20L - 5);
                     if (!delayed) return false;
                     mark(checks, "resume-delay-rearms", true);
                     suspensionDelayedObserved = true;
@@ -2190,6 +2106,8 @@ final class StandardAe2Scenario {
             mark(checks, "disabled-resumes", true);
             mark(checks, "three-cycles", suspensionCycle == 3);
             if (!(minecraft.screen instanceof appeng.client.gui.me.crafting.CraftingCPUScreen<?>)) return false;
+            if (!suspensionCaptureReady(selectedSuspensionSnapshot(minecraft), UiObservationStore.latest(), false))
+                return false;
             screenshot.accept("crafting-suspension-disabled.png");
             var menu = (appeng.menu.me.crafting.CraftingCPUMenu) minecraft.player.containerMenu;
             sendStaleSuspension(menu.containerId,
@@ -2316,8 +2234,7 @@ final class StandardAe2Scenario {
                 }
                 return false;
             })) return false;
-            if (suspensionLargeId.equals(suspensionPreviousId))
-                throw new IllegalStateException("Replacement job reused the prior UUID");
+            validateSuspensionReplacement(suspensionLargeId, suspensionPreviousId);
             if (!(minecraft.player.containerMenu instanceof appeng.menu.me.crafting.CraftingCPUMenu)) {
                 openSuspensionCpu(minecraft, 0);
                 return false;
@@ -2423,6 +2340,8 @@ final class StandardAe2Scenario {
                 return true;
             })) return false;
             mark(checks, "final-inflight-completes", true);
+            if (!suspensionCaptureReady(selectedSuspensionSnapshot(minecraft), UiObservationStore.latest(), true))
+                return false;
             screenshot.accept("crafting-suspension-complete.png");
             minecraft.setScreen(new com.ctux.ae2craftingtime.mc1201.ServerOptionsScreen(minecraft.screen));
             suspensionStage = 31;
@@ -2449,6 +2368,303 @@ final class StandardAe2Scenario {
         return false;
     }
 
+    static boolean suspensionPausedJobReady(StandardCraftFixture.SuspensionState state, String jobId) {
+        return state.busy() && state.suspended() && state.profilerSuspended() && state.jobId().equals(jobId);
+    }
+
+    static void validateSuspensionInFlightReturn(StandardCraftFixture.SuspensionState state) {
+        if (state.waiting() == 0 || state.furnaceInput() + state.furnaceOutput() == 0)
+            throw new IllegalStateException("No in-flight furnace return at pause acknowledgement");
+    }
+
+    static void validateSuspensionDispatch(long undispatched, long previous) {
+        if (undispatched != previous) throw new IllegalStateException("Paused CPU dispatched another pattern");
+    }
+
+    static void validateSuspensionPausedJob(StandardCraftFixture.SuspensionState state, String jobId, long undispatched) {
+        if (!suspensionPausedJobReady(state, jobId) || state.undispatched() != undispatched)
+            throw new IllegalStateException("Paused CPU changed before in-flight return");
+    }
+
+    static void validateSuspensionDiagnostics(boolean delayed, java.util.function.BooleanSupplier hasEstimate) {
+        if (delayed || hasEstimate.getAsBoolean())
+            throw new IllegalStateException("Paused job retained a delayed warning or total estimate");
+    }
+
+    static void validateSuspensionResumedJob(StandardCraftFixture.SuspensionState state, String jobId) {
+        if (state.busy() && !state.jobId().equals(jobId)) throw new IllegalStateException("Resume replaced the large job");
+    }
+
+    static void validateSuspensionDelay(boolean delayed, long elapsed, java.util.function.LongSupplier threshold) {
+        if (delayed && elapsed < threshold.getAsLong())
+            throw new IllegalStateException("Resume inherited the paused delay timer");
+    }
+
+    static void validateSuspensionReplacement(String jobId, String previous) {
+        if (jobId.equals(previous)) throw new IllegalStateException("Replacement job reused the prior UUID");
+    }
+
+    static void validateBadgeBeforeRelaunch(com.ctux.ae2craftingtime.core.ClientConfig config) {
+        if (config.badgeBackground() || config.color(com.ctux.ae2craftingtime.core.ClientConfig.Color.BADGE) != 0x245A7D
+                || config.badgeOpacity() != 96)
+            throw new IllegalStateException("Badge Off/custom appearance was not saved for relaunch");
+    }
+
+    static void validateRestoredBadge(com.ctux.ae2craftingtime.core.ClientConfig config,
+            String actualHash, String priorHash) {
+        if (!config.badgeBackground() || config.color(com.ctux.ae2craftingtime.core.ClientConfig.Color.BADGE) != 0x245A7D
+                || config.badgeOpacity() != 96 || actualHash.equals(priorHash))
+            throw new IllegalStateException("Badge On/custom appearance did not restore after relaunch");
+    }
+
+    static void validateBadgePredecessorChecks(BadgeContinuation continuation, List<String> required) {
+        if (!java.util.Set.copyOf(continuation.checks()).equals(java.util.Set.copyOf(required)))
+            throw new IllegalStateException("Badge relaunch predecessor or saved config differs");
+    }
+
+    static void validateBadgePredecessorConfig(BadgeContinuation continuation, String actualHash) {
+        if (!actualHash.equals(continuation.configSha256()))
+            throw new IllegalStateException("Badge relaunch predecessor or saved config differs");
+    }
+
+    static void validateAmountPredecessorChecks(AmountContinuation continuation, List<String> required) {
+        if (!java.util.Set.copyOf(continuation.checks()).equals(java.util.Set.copyOf(required)))
+            throw new IllegalStateException("Status relaunch predecessor omitted required checks");
+    }
+
+    static void validateAmountPredecessorConfig(AmountContinuation continuation, String actualHash,
+            com.ctux.ae2craftingtime.core.FeatureOptions features) {
+        if (!actualHash.equals(continuation.configSha256())
+                || features.enabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS))
+            throw new IllegalStateException("Saved compact-off config changed before relaunch check");
+    }
+
+    static void validateAmountResetInput(int amountOptionCase, int step, String label, boolean enabled) {
+        switch (step) {
+            case 0 -> {
+                if (enabled != (amountOptionCase != 6))
+                    throw new IllegalStateException("Wrong pre-reset compact value: case=" + amountOptionCase);
+            }
+            case 1 -> {
+                if (enabled != (amountOptionCase == 6))
+                    throw new IllegalStateException("Compact edit did not apply: case=" + amountOptionCase);
+            }
+            case 2, 4 -> {
+                if (enabled != (step == 4))
+                    throw new IllegalStateException("Wrong pre-reset option value: " + label);
+            }
+            case 3, 5 -> {
+                if (enabled != (step == 3))
+                    throw new IllegalStateException("Option edit did not apply: " + label);
+            }
+            case 7, 8, 9 -> {
+                if (enabled != (step == 9))
+                    throw new IllegalStateException("Reset did not restore model default: " + label);
+            }
+            case 6, 10 -> { }
+            default -> throw new IllegalStateException("Unexpected reset step " + step);
+        }
+    }
+
+    static void validateAmountResetSaved(com.ctux.ae2craftingtime.core.FeatureOptions features, int amountOptionCase) {
+        if (features.enabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS)
+                != (amountOptionCase == 5))
+            throw new IllegalStateException("Reset changed live compact option before Done: case=" + amountOptionCase);
+    }
+
+    static void validateAmountOptionFeatures(com.ctux.ae2craftingtime.core.FeatureOptions features,
+            boolean compact, boolean time, int amountOptionCase) {
+        if (features.enabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS) != compact
+                || features.enabled(com.ctux.ae2craftingtime.core.OptionFeature.STATUS_ROWS) != time)
+            throw new IllegalStateException("Saved amount option combination " + amountOptionCase + " differs");
+    }
+
+    static void validateAmountOptionSummary(UiSnapshot.Row row, boolean compact, int amountOptionCase) {
+        boolean hasSummary = row.description().stream().anyMatch(value -> value.key().equals(
+                "text.ae2craftingtime.status.amounts"));
+        if (hasSummary != compact)
+            throw new IllegalStateException("Amount option combination " + amountOptionCase + " rendered " + row.description());
+    }
+
+    static void validateAmountOptionCategories(UiSnapshot.Row row, List<String> nativeKeys,
+            boolean compact, boolean time, int amountOptionCase) {
+        long[] raw = {row.storedAmount(), row.activeAmount(), row.pendingAmount()};
+        for (int category = 0; category < raw.length; category++) {
+            String key = nativeKeys.get(category);
+            int visible = (int) row.description().stream().filter(value -> value.key().equals(key)).count();
+            if (visible != (!compact && raw[category] > 0 ? 1 : 0))
+                throw new IllegalStateException("Amount option combination " + amountOptionCase
+                        + " native category " + key + " count " + visible);
+        }
+        if (!time && row.description().stream().anyMatch(value ->
+                com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(value.key())
+                        && !value.key().equals("text.ae2craftingtime.status.amounts")))
+            throw new IllegalStateException("TTC-off amount option rendered a status badge");
+    }
+
+    static void validateBadgeContent(List<String> rows, List<String> text,
+            List<String> expectedRows, List<String> expectedText) {
+        if (!rows.equals(expectedRows) || !text.equals(expectedText))
+            throw new IllegalStateException("Badge switch changed native rows or mod text");
+    }
+
+    static void validateBadgeAppearance(com.ctux.ae2craftingtime.core.ClientConfig config, int step, String phase) {
+        if (config.badgeBackground() != (step != 3))
+            throw new IllegalStateException("Badge background state differs at " + phase + " step " + step);
+        if (config.color(com.ctux.ae2craftingtime.core.ClientConfig.Color.BADGE) != 0x245A7D
+                || config.badgeOpacity() != 96)
+            throw new IllegalStateException("Custom badge appearance was lost");
+    }
+
+    static void validateAppearanceInput(String label, String expected, String actual) {
+        if (expected == null || !actual.equals(expected))
+            throw new IllegalStateException("Appearance reset value differs: " + label);
+    }
+
+    static void validateAppearanceInputCount(int count) {
+        if (count != com.ctux.ae2craftingtime.core.ClientConfig.appearanceColors().size() + 1)
+            throw new IllegalStateException("Appearance reset did not expose every input");
+    }
+
+    static void validateVariantContent(List<List<Long>> expectedAmounts, List<List<Long>> amounts,
+            List<Boolean> expectedButtons, List<Boolean> buttons) {
+        if (!expectedAmounts.equals(amounts) || !expectedButtons.equals(buttons))
+            throw new IllegalStateException("Stored-variant transition changed quantities or native button state");
+    }
+
+    static void validateDelayedWarning(UiSnapshot.ObservedText warning) {
+        if (warning.bold() || !Integer.valueOf(0xFF5555).equals(warning.color()))
+            throw new IllegalStateException("DELAYED must be normal red on the active stone row");
+    }
+
+    static void validateStatusHeader(UiSnapshot snapshot, UiSnapshot.ObservedText header) {
+        if (!header.bounds().inside(snapshot.gui()) || !LayoutValidator.validateBadges(snapshot).isEmpty())
+            throw new IllegalStateException("status header " + header.bounds() + " GUI " + snapshot.gui()
+                    + " badge layout: " + LayoutValidator.validateBadges(snapshot));
+    }
+
+    static void validateCompletedStatus(UiSnapshot snapshot, String leaf) {
+        if (leaf.equals("craft-lifecycle") && snapshot.text().stream()
+                .anyMatch(t -> t.key().equals("text.ae2craftingtime.ttc") && t.bounds() != null
+                        && t.bounds().y() < snapshot.gui().y() + 19))
+            throw new IllegalStateException("completed crafting status still shows total TTC");
+    }
+
+    static void validatePlanMissingOrder(UiSnapshot snapshot, boolean plan) {
+        if (plan && !missingFirst(snapshot.rows()))
+            throw new IllegalStateException("Crafting Plan missing rows are not first: " + snapshot.rows());
+    }
+
+    static void validatePlanTotal(UiSnapshot snapshot, UiSnapshot.ObservedText total, boolean background) {
+        if (total.bounds() == null || !recurrentBadgeMatches(snapshot.badges(), total.bounds(), background)
+                || !LayoutValidator.validateBadges(snapshot).isEmpty())
+            throw new IllegalStateException("plan badge layout: " + LayoutValidator.validateBadges(snapshot));
+    }
+
+    static void validateSortedRows(List<String> rows, List<String> expected, String prefix, int sort) {
+        if (!rows.subList(0, 2).equals(expected))
+            throw new IllegalStateException(prefix + " sort " + sort + " row order is " + rows + ", expected " + expected);
+    }
+
+    static void validateAddonSummary(UiSnapshot snapshot, UiSnapshot.ObservedText summary,
+            List<String> slot, String addon) {
+        if (summary == null || !summary.arguments().equals(List.of(String.join("/", slot)))
+                || summary.bold() || !LayoutValidator.validateBadges(snapshot).isEmpty())
+            throw new IllegalStateException("Addon " + addon + " lost native SLOT amounts or badge bounds");
+    }
+
+    static void validateAddonLegend(List<UiSnapshot.ObservedText> tooltip, String addon) {
+        if (tooltip.stream().noneMatch(value -> value.key().equals("text.ae2craftingtime.status.amounts_legend")))
+            throw new IllegalStateException("Addon " + addon + " lost amount legend");
+    }
+
+    static void validateAddonTooltip(List<UiSnapshot.ObservedText> tooltip, String label, String full, String addon) {
+        if (tooltip.stream().noneMatch(value -> value.key().equals(label) && value.arguments().contains(full)))
+            throw new IllegalStateException("Addon " + addon + " lost native FULL tooltip " + label);
+    }
+
+    static void validateAmountFont(int mode, int width, int defaultWidth) {
+        if (mode == 1 && width <= defaultWidth)
+            throw new IllegalStateException("Uniform status font is not wider than the default font");
+    }
+
+    static void validateScaledAmount(UiSnapshot snapshot, UiSnapshot.ObservedText amount, UiSnapshot.ObservedText drawn) {
+        if (amount == null || drawn == null || !amount.rendered().equals(drawn.rendered())
+                || !LayoutValidator.validateBadges(snapshot).isEmpty())
+            throw new IllegalStateException("Scaled amount badge escapes its native cell: " + amount + " rendered " + drawn);
+    }
+
+    static List<UiSnapshot.ObservedText> quantityAmountLines(UiSnapshot.Row row, boolean empty, int quantityCase) {
+        var amountLines = row.description().stream()
+                .filter(text -> text.key().equals("text.ae2craftingtime.status.amounts")).toList();
+        if (amountLines.size() != (empty ? 0 : 1))
+            throw new IllegalStateException("Synthetic native amount case " + quantityCase + " has " + amountLines);
+        return amountLines;
+    }
+
+    static void validateQuantityText(UiSnapshot.ObservedText summary, String amount, int quantityCase) {
+        if (!summary.arguments().equals(List.of(amount)) || summary.bold())
+            throw new IllegalStateException("Synthetic native amount case " + quantityCase + " text " + summary);
+    }
+
+    static void validateQuantityLayout(UiSnapshot snapshot, UiSnapshot.ObservedText summary,
+            Integer color, int quantityCase) {
+        if (!java.util.Objects.equals(summary.color(), color) || !LayoutValidator.validateBadges(snapshot).isEmpty())
+            throw new IllegalStateException("Synthetic native amount case " + quantityCase + " color/layout " + summary);
+    }
+
+    static void validateQuantityLegend(List<UiSnapshot.ObservedText> tooltip, boolean empty, int quantityCase) {
+        if (tooltip.stream().anyMatch(text -> text.key().equals("text.ae2craftingtime.status.amounts_legend")) == empty)
+            throw new IllegalStateException("Synthetic native amount case " + quantityCase + " lost tooltip legend");
+    }
+
+    static void validateQuantityTooltipCategory(List<UiSnapshot.ObservedText> tooltip, String key,
+            String full, int category, int quantityCase) {
+        if (tooltip.stream().anyMatch(text -> text.key().equals(key)
+                && full != null && text.arguments().contains(full)) != (full != null))
+            throw new IllegalStateException("Synthetic native amount case " + quantityCase
+                    + " lost full tooltip category " + category + "=" + full);
+    }
+
+    static void validateStoredVariantLabel(UiSnapshot.ObservedText label, boolean expected, Integer neutralColor) {
+        if (expected && (label.bold() || !java.util.Objects.equals(label.color(), neutralColor)))
+            throw new IllegalStateException("Stored-variant label is not normal neutral text");
+    }
+
+    static void validateStoredVariantText(UiSnapshot.Row row, UiSnapshot.ObservedText text) {
+        if (!text.bounds().inside(row.cell()))
+            throw new IllegalStateException("Stored-variant text exceeds its row at narrow layout");
+    }
+
+    static void validateStoredVariantRow(UiSnapshot snapshot, UiSnapshot.Row row) {
+        if (!row.cell().inside(snapshot.gui()))
+            throw new IllegalStateException("Variant row escapes native plan layout");
+    }
+
+    static void validateRecurrenceBounds(UiSnapshot snapshot) {
+        if (snapshot.text().stream().filter(text -> text.key().equals("text.ae2craftingtime.plan.recurrent"))
+                .anyMatch(text -> text.bounds() == null || snapshot.rows().stream().noneMatch(value -> text.bounds().inside(value.cell()))))
+            throw new IllegalStateException("Recurrent text escapes its native table cell");
+    }
+
+    static void validateRecurrenceLabel(UiSnapshot snapshot, UiSnapshot.Row row,
+            UiSnapshot.ObservedText label, boolean background, boolean connectedDedicated,
+            boolean reported, long requested) {
+        if (label != null && (label.bold() || !java.util.Objects.equals(label.color(), 0xFF5555)
+                || label.arguments().size() != 1 || !label.rendered().endsWith(label.arguments().get(0))))
+            throw new IllegalStateException("Recurrence label lost its red warning style or amount");
+        if (label != null && snapshot.text().stream()
+                .filter(text -> text.key().equals("text.ae2craftingtime.plan.recurrent"))
+                .noneMatch(text -> !text.bold() && java.util.Objects.equals(text.color(), 0xFF5555)
+                        && text.bounds() != null && recurrentBadgeMatches(snapshot.badges(), text.bounds(),
+                                background)))
+            throw new IllegalStateException("Recurrent label or badge differs from client options");
+        if (!connectedDedicated && reported && label != null
+                && !label.arguments().equals(List.of(Long.toString(requested))))
+            throw new IllegalStateException("Recurrence label lost requested quantity " + requested);
+        if (!row.cell().inside(snapshot.gui())) throw new IllegalStateException("Recurrence row escapes plan layout");
+    }
+
     static boolean recurrentBadgeMatches(List<Rect> badges, Rect text, boolean enabled) {
         return badges.stream().anyMatch(badge -> text.inside(badge)) == enabled;
     }
@@ -2473,7 +2689,7 @@ final class StandardAe2Scenario {
                 && accuracy.lastPredictedSeconds() > 0 && accuracy.lastActualWallSeconds() > 0;
     }
 
-    private static boolean missingFirst(List<UiSnapshot.Row> rows) {
+    static boolean missingFirst(List<UiSnapshot.Row> rows) {
         var foundMissing = false;
         var foundNonMissing = false;
         for (var row : rows) {
@@ -2490,13 +2706,10 @@ final class StandardAe2Scenario {
     private boolean statusRelaunchTick(Minecraft minecraft, Map<String, Boolean> checks,
             Consumer<String> screenshot) {
         if (!amountResumeChecksRestored) {
-            if (!java.util.Set.copyOf(amountContinuation.checks()).equals(java.util.Set.copyOf(CHECKS.get(leaf))))
-                throw new IllegalStateException("Status relaunch predecessor omitted required checks");
+            validateAmountPredecessorChecks(amountContinuation, CHECKS.get(leaf));
             for (var check : amountContinuation.checks()) checks.put(check, true);
-            if (!configHash(minecraft).equals(amountContinuation.configSha256())
-                    || com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().features()
-                            .enabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS))
-                throw new IllegalStateException("Saved compact-off config changed before relaunch check");
+            validateAmountPredecessorConfig(amountContinuation, configHash(minecraft),
+                    com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().features());
             amountResumeChecksRestored = true;
         }
         if (amountResumeSaving && !(minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen)) {
@@ -2581,15 +2794,10 @@ final class StandardAe2Scenario {
         if (badgeStep == 1 || status && badgeStep == 0) {
             badgeRowsBefore = rows;
             badgeTextBefore = text;
-        } else if (!rows.equals(badgeRowsBefore) || !text.equals(badgeTextBefore))
-            throw new IllegalStateException("Badge switch changed native rows or mod text");
-        boolean enabled = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().badgeBackground();
-        if (enabled != (badgeStep != 3))
-            throw new IllegalStateException("Badge background state differs at " + phase + " step " + badgeStep);
-        var config = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current();
-        if (config.color(com.ctux.ae2craftingtime.core.ClientConfig.Color.BADGE) != 0x245A7D
-                || config.badgeOpacity() != 96)
-            throw new IllegalStateException("Custom badge appearance was lost");
+        } else {
+            validateBadgeContent(rows, text, badgeRowsBefore, badgeTextBefore);
+        }
+        validateBadgeAppearance(com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current(), badgeStep, phase.toString());
         String name = (status ? "status" : "plan") + "-badge-"
                 + (badgeStep == 3 ? "off" : badgeStep == 5 ? "restored" : "on");
         screenshot.accept(name + ".png");
@@ -2725,9 +2933,7 @@ final class StandardAe2Scenario {
         }
         if (!(minecraft.screen instanceof CraftingStatusScreen)) return false;
         var config = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current();
-        if (config.badgeBackground() || config.color(com.ctux.ae2craftingtime.core.ClientConfig.Color.BADGE) != 0x245A7D
-                || config.badgeOpacity() != 96)
-            throw new IllegalStateException("Badge Off/custom appearance was not saved for relaunch");
+        validateBadgeBeforeRelaunch(config);
         screenshot.accept("badge-saved-off.png");
         if (checks.values().stream().anyMatch(value -> !value))
             throw new IllegalStateException("Cannot relaunch with incomplete badge checks: " + checks);
@@ -2745,11 +2951,10 @@ final class StandardAe2Scenario {
     private boolean badgeRelaunchTick(Minecraft minecraft, Map<String, Boolean> checks,
             Consumer<String> screenshot) {
         if (badgeResumeStep == 0) {
-            if (!java.util.Set.copyOf(badgeContinuation.checks()).equals(java.util.Set.copyOf(CHECKS.get(leaf)))
-                    || !configHash(minecraft).equals(badgeContinuation.configSha256()))
-                throw new IllegalStateException("Badge relaunch predecessor or saved config differs");
+            validateBadgePredecessorChecks(badgeContinuation, CHECKS.get(leaf));
+            validateBadgePredecessorConfig(badgeContinuation, configHash(minecraft));
             for (var check : badgeContinuation.checks()) checks.put(check, true);
-            badgeAssertSavedOff(minecraft);
+            validateSavedBadgeOff(com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current());
             minecraft.setScreen(new com.ctux.ae2craftingtime.mc1201.OptionsScreen(null));
             badgeResumeStep = 1;
             badgeResumeRenderedAfter = TestDriverRuntime.renderedFrames + 3;
@@ -2795,7 +3000,7 @@ final class StandardAe2Scenario {
                 if (badge == null) return false;
                 if (badge.getMessage().getString().endsWith(net.minecraft.client.resources.language.I18n.get("options.on")))
                     throw new IllegalStateException("Reset did not restore badge Off");
-                badgeAssertSavedOff(minecraft);
+                validateSavedBadgeOff(com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current());
                 badgeResetCheckPhase = 1;
             }
             if (badgeResetCheckPhase == 1) {
@@ -2829,7 +3034,7 @@ final class StandardAe2Scenario {
         }
         if (badgeResumeStep == 4 || badgeResumeStep == 8 || badgeResumeStep == 12) {
             if (minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen) return false;
-            badgeAssertSavedOff(minecraft);
+            validateSavedBadgeOff(com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current());
             if (!configHash(minecraft).equals(badgeContinuation.configSha256()))
                 throw new IllegalStateException("Cancel changed saved badge options");
             minecraft.setScreen(new com.ctux.ae2craftingtime.mc1201.OptionsScreen(null));
@@ -2837,9 +3042,7 @@ final class StandardAe2Scenario {
         } else if (badgeResumeStep == 16) {
             if (minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen) return false;
             var config = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current();
-            if (!config.badgeBackground() || config.color(com.ctux.ae2craftingtime.core.ClientConfig.Color.BADGE) != 0x245A7D
-                    || config.badgeOpacity() != 96 || configHash(minecraft).equals(badgeContinuation.configSha256()))
-                throw new IllegalStateException("Badge On/custom appearance did not restore after relaunch");
+            validateRestoredBadge(config, configHash(minecraft), badgeContinuation.configSha256());
             minecraft.setScreen(new com.ctux.ae2craftingtime.mc1201.OptionsScreen(null));
             badgeResumeStep = 17;
         } else if (badgeResumeStep == 19) {
@@ -2937,8 +3140,7 @@ final class StandardAe2Scenario {
         return false;
     }
 
-    private void badgeAssertSavedOff(Minecraft minecraft) {
-        var config = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current();
+    static void validateSavedBadgeOff(com.ctux.ae2craftingtime.core.ClientConfig config) {
         if (config.badgeBackground() || config.color(com.ctux.ae2craftingtime.core.ClientConfig.Color.BADGE) != 0x245A7D
                 || config.badgeOpacity() != 96)
             throw new IllegalStateException("Saved Off/custom badge settings changed after relaunch");
@@ -2956,8 +3158,7 @@ final class StandardAe2Scenario {
             }
             if (label.equals(net.minecraft.client.resources.language.I18n.get("config.ae2craftingtime.badgeOpacity")))
                 expected = "176";
-            if (expected == null || !input.getValue().equals(expected))
-                throw new IllegalStateException("Appearance reset value differs: " + label);
+            validateAppearanceInput(label, expected, input.getValue());
             badgeResetInputs.add(label);
         }
         if (optionButton(minecraft, ">") != null) {
@@ -2965,8 +3166,7 @@ final class StandardAe2Scenario {
             badgeResumeRenderedAfter = TestDriverRuntime.renderedFrames + 3;
             return false;
         }
-        if (badgeResetInputs.size() != com.ctux.ae2craftingtime.core.ClientConfig.appearanceColors().size() + 1)
-            throw new IllegalStateException("Appearance reset did not expose every input");
+        validateAppearanceInputCount(badgeResetInputs.size());
         badgeResetInputs.clear();
         return true;
     }
@@ -3006,9 +3206,12 @@ final class StandardAe2Scenario {
     }
 
     private static String configHash(Minecraft minecraft) {
+        return configHash(minecraft.gameDirectory.toPath().resolve("config/ae2craftingtime-client.toml"));
+    }
+
+    static String configHash(java.nio.file.Path path) {
         try {
-            return CaptureEvidence.sha256(java.nio.file.Files.readAllBytes(minecraft.gameDirectory.toPath()
-                    .resolve("config/ae2craftingtime-client.toml")));
+            return CaptureEvidence.sha256(java.nio.file.Files.readAllBytes(path));
         } catch (java.io.IOException error) {
             throw new IllegalStateException("Cannot hash saved client options", error);
         }
@@ -3022,14 +3225,18 @@ final class StandardAe2Scenario {
         var captured = new com.google.gson.JsonArray();
         for (var addon : addonQuantityCases) captured.add(addon.name());
         result.add("captured", captured);
+        writeAddonKeyEvidence(output.resolve("status-addon-keys.json"), result);
+    }
+
+    static void writeAddonKeyEvidence(java.nio.file.Path path, com.google.gson.JsonObject result) {
         try {
-            java.nio.file.Files.writeString(output.resolve("status-addon-keys.json"), result.toString());
+            java.nio.file.Files.writeString(path, result.toString());
         } catch (java.io.IOException error) {
             throw new IllegalStateException("Cannot retain addon status key evidence", error);
         }
     }
 
-    private void writeAmountContinuation(AmountContinuation value) {
+    void writeAmountContinuation(AmountContinuation value) {
         var path = output.resolve("status-amounts-continuation.json");
         try {
             var temp = path.resolveSibling(path.getFileName() + ".tmp");
@@ -3054,10 +3261,10 @@ final class StandardAe2Scenario {
         }
     }
 
-    private record AmountContinuation(int schema, String world, String campaign, String configSha256,
+    record AmountContinuation(int schema, String world, String campaign, String configSha256,
             List<String> checks, List<String> screenshots) {}
 
-    private void writeBadgeContinuation(BadgeContinuation value) {
+    void writeBadgeContinuation(BadgeContinuation value) {
         var path = output.resolve("badge-background-continuation.json");
         try {
             var temp = path.resolveSibling(path.getFileName() + ".tmp");
@@ -3082,10 +3289,10 @@ final class StandardAe2Scenario {
         }
     }
 
-    private record BadgeContinuation(int schema, String world, String campaign, String configSha256,
+    record BadgeContinuation(int schema, String world, String campaign, String configSha256,
             List<String> checks, List<String> screenshots) {}
 
-    private static UiSnapshot.ObservedText rowText(UiSnapshot snapshot, String output, String key) {
+    static UiSnapshot.ObservedText rowText(UiSnapshot snapshot, String output, String key) {
         var row = snapshot.rows().stream().filter(r -> r.outputId().equals(output)).findFirst();
         if (row.isEmpty()) return null;
         var translated = snapshot.text().stream().filter(t -> t.key().equals(key) && t.bounds() != null
@@ -3134,7 +3341,7 @@ final class StandardAe2Scenario {
                 .anyMatch(beam -> beam.position().equals(fixture.terminal.east(providerOffset)));
     }
 
-    private static void validateLayout(UiSnapshot snapshot) {
+    static void validateLayout(UiSnapshot snapshot) {
         if (!statusBadgesValid(snapshot,
                 com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().badgeBackground())) {
             throw new IllegalStateException("Invalid standard status badge layout");
@@ -3181,7 +3388,7 @@ final class StandardAe2Scenario {
                 && t.bounds() != null && t.bounds().y() >= snapshot.gui().y() + 19).toList();
     }
 
-    private static void mark(Map<String, Boolean> checks, String key, boolean value) {
+    static void mark(Map<String, Boolean> checks, String key, boolean value) {
         if (checks.containsKey(key)) checks.put(key, value);
     }
 
@@ -3191,17 +3398,31 @@ final class StandardAe2Scenario {
         var user = User32.INSTANCE;
         var nativeWindow = new com.sun.jna.platform.win32.WinDef.HWND(com.sun.jna.Pointer.createConstant(
                 org.lwjgl.glfw.GLFWNativeWin32.glfwGetWin32Window(window)));
-        var foreground = user.GetForegroundWindow();
+        return focusNativeWindow(nativeWindow, user::GetForegroundWindow,
+                () -> new DWORD(com.sun.jna.platform.win32.Kernel32.INSTANCE.GetCurrentThreadId()),
+                foreground -> user.GetWindowThreadProcessId(foreground, null),
+                (current, foreground) -> user.AttachThreadInput(current, foreground, true),
+                () -> org.lwjgl.glfw.GLFW.glfwFocusWindow(window),
+                (current, foreground) -> user.AttachThreadInput(current, foreground, false));
+    }
+
+    static boolean focusNativeWindow(com.sun.jna.platform.win32.WinDef.HWND nativeWindow,
+            java.util.function.Supplier<com.sun.jna.platform.win32.WinDef.HWND> foregroundWindow,
+            java.util.function.Supplier<DWORD> threadId,
+            java.util.function.ToIntFunction<com.sun.jna.platform.win32.WinDef.HWND> windowThread,
+            java.util.function.BiPredicate<DWORD, DWORD> attach, Runnable requestFocus,
+            java.util.function.BiConsumer<DWORD, DWORD> detach) {
+        var foreground = foregroundWindow.get();
         if (nativeWindow.equals(foreground)) return true;
         // A scheduled client can be visible while another desktop window still owns input.
-        var currentThread = new DWORD(com.sun.jna.platform.win32.Kernel32.INSTANCE.GetCurrentThreadId());
-        var foregroundThread = new DWORD(user.GetWindowThreadProcessId(foreground, null));
+        var currentThread = threadId.get();
+        var foregroundThread = new DWORD(windowThread.applyAsInt(foreground));
         boolean attached = !currentThread.equals(foregroundThread)
-                && user.AttachThreadInput(currentThread, foregroundThread, true);
+                && attach.test(currentThread, foregroundThread);
         try {
-            org.lwjgl.glfw.GLFW.glfwFocusWindow(window);
+            requestFocus.run();
         } finally {
-            if (attached) user.AttachThreadInput(currentThread, foregroundThread, false);
+            if (attached) detach.accept(currentThread, foregroundThread);
         }
         return false;
     }

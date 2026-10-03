@@ -8,6 +8,219 @@ Implementation: [PR #128](https://github.com/cTux/ae2-crafting-time/pull/128), [
 Verification: [prepared-client results](../automated-ui-testing/prepared-clients-2026-09-08.md).
 Stored-variant and resource-icon sections inherit their linked feature status.
 
+## Native options fault checks (#378)
+
+Status: in-progress.
+
+Implementation: [draft PR #643](https://github.com/cTux/ae2-crafting-time/pull/643).
+At `2a03582e`, seventeen native assertion groups pass unattended in CodexVM;
+the native JVM exits successfully and eight original screenshots are reviewed.
+Cancel-file integrity, page recovery and the save deadline pass. The full
+reported-code 100% gate remains incomplete.
+
+The test-only Forge fixture uses the initialized Minecraft client and real
+Options screen to check rejected saves, incorrect reset values and missing
+controls, including sort values and changes leaking across reset groups.
+Check Cancel against the physical saved-file hash. Reject compact restoration
+after exhausting the wrong settings group's pages, then recover through Displays
+and Done. A stuck native save must remain pending for 100 completed callbacks and
+fail on callback 101. Each fault must assert the exact rejection and preserve the saved
+configuration. Successful recovery must pass after restoring valid values.
+Keep its JAR out of production and normal driver launches. Run it only in the
+disposable coverage client, with bounded execution and original screenshots.
+
+At `5a2fde81`, all nineteen native assertion groups pass with JVM exit 0.
+The ten original captures are reviewed; the two new navigation originals are
+also reviewed individually. Exhaust
+the actual wrong group's pages without saving, then recover in Displays by
+turning compact amounts Off and pressing Done. Assert the saved Off value and
+pending persistence state; this Options-only check does not claim a relaunch.
+
+Observation clipping and widget visibility checks pass at `4dee9921`. Use real
+registered item keys in native plan DTOs to assert the exact fifteen visible
+cells before and after scrolling. Hide and restore an actual title-screen
+widget and verify its observation follows visibility. Closing the actual world menu after ordinary scenario completion
+must not publish another snapshot; use the world fixture because closing a title
+returns another title screen. The initial title-close assertion failed and its
+run is preserved without contributing coverage. These assertions check the observation model,
+without claiming a rendered crafting menu for the DTO-only clipping checks.
+At `4dee9921`, both corrected observation groups pass along with the nineteen
+Options groups, JVM exit 0 and ten reviewed captures. The separate real world
+also passes its close-menu assertion, seven faults and thirteen ordinary checks,
+with JVM exit 0; all 36 normal and seven fault captures are reviewed.
+
+## Native crafting fault checks (#378)
+
+Status: in-progress in [draft PR #643](https://github.com/cTux/ae2-crafting-time/pull/643).
+At `82711af0`, all three row/Cancel fault assertions and all thirteen ordinary
+checks pass in the native disposable client, with JVM exit 0. Original captures
+were reviewed with tiny-text and tooltip-occlusion qualifications. The broader
+100% coverage gate remains unfinished. At `358341d3`, the missing-font-pack
+extension also passes, followed by all thirteen ordinary checks and JVM exit 0.
+
+Use the ordinary runtime and standard-status-controls flow in a marked disposable
+world. Remove a native status payload during amount and scale checks, and assert
+that the driver restores its expected row without advancing the case or changing
+saved options. Close actual Options with Cancel before saving and assert the exact
+rejection; reopen Options and let the normal flow recover. Temporarily move the
+owned uniform-font fixture out of the native pack directory, require the exact
+missing-pack rejection, restore the same files, and retry the interrupted scale
+case. Keep saved options and ordinary checks unchanged during each fault.
+Also reject status relaunch while compact amounts are still enabled, and reject
+it when the ordinary check map is incomplete. Use the actual status screen and
+native option values; restore the original configuration before continuing.
+At `b1a3522b`, both persistence guards pass along with all six native faults,
+all thirteen ordinary checks and JVM exit 0. The corrected run checks each
+rejection before intentionally saving the next test setup; the initial setup
+failure is preserved separately.
+In the addon graph, also remove an actual Applied Botanics status row and require
+the same exact native key/amount restoration without advancing the case. This
+extension passes at `60293867`: seven fault checks, thirteen ordinary checks,
+JVM exit 0 and all 36 ordinary plus seven fault captures reviewed. Codecov
+confirms 93.74%, so the broader 100% gate is still unfinished. Require all six
+base faults, the seventh addon fault when
+requested, and the ordinary scenario's full PASS result. Preserve original native
+captures and keep deliberate fault assertions separate from the normal result.
+
+At `2c56fb18`, all nine faults and the real world closure assertion pass,
+followed by thirteen ordinary checks and JVM exit 0. All 36 normal captures and
+nine fault originals are reviewed. Saved-Off persistence waits for a missing native status
+payload before recovering its row, and badge persistence must reject the
+original incomplete ordinary check map after validating saved custom Off
+appearance. Preserve the saved baseline and continuation absence at each guard,
+restore the original payload and configuration, then require the normal PASS.
+
+At `57312de1`, the Start retry guard passes along with ten faults, world closure,
+thirteen ordinary checks and JVM exit 0. All 36 ordinary and ten fault captures
+are reviewed. Codecov confirms 94.07%; the overall gate remains incomplete.
+The guard checks the actual inactive widget, but its original capture shows the
+normal native appearance. At `4e487a48`, the corrected post-render capture shows
+the same real widget inactive. All eleven faults, real menu closure, thirteen
+ordinary checks and JVM exit 0 pass; all 36 normal and eleven fault originals
+are reviewed.
+Deliberately hold the actual Crafting Plan Start widget
+inactive while its real stocked plan remains open. Require three native replans
+with the real ten-second waits, then the exact bounded retry rejection. Preserve
+ordinary checks and saved options, restore the widget, and require normal recovery.
+
+At `4e487a48`, render actual compact status text, then restore the saved Off
+setting before the driver consumes the frame. Require persistence to wait while
+the drawn compact description is stale, without capture or continuation. Restore
+ordinary rendering and require the existing missing-row and incomplete-map guards.
+The stale-description and missing-row guards both pass after their actual eight
+stable frames, preserving saved bytes, ordinary checks and continuation absence.
+The separate connected CPU scenario passes all 41 checks across two native Java
+17 launches with exit 0. All 32 original captures are reviewed. Codecov confirms
+94.17%, with 29 misses and 310 partials; the overall 100% gate remains unfinished.
+
+The unknown suspension-stage boundary must remain pending without changing the
+stage or check map, capturing success, moving the mouse or starting server work.
+At `3d539dae`, the focused test passes locally and against the packaged Forge
+bytecode in CodexVM, without skips or failures. Codecov confirms 94.21%; the
+overall coverage gate remains unfinished.
+
+At `a33773d4`, all 24 native Options assertion groups pass with JVM exit 0,
+twelve original captures reviewed, local checks and both current-head CI checks
+green. Codecov confirms 94.26%; the overall coverage gate remains unfinished.
+Wrong native screens must preserve pending badge,
+scale and status restoration. Before the required redraw callbacks, badge edits
+and both relaunch flows must wait without capture, configuration writes or
+changed checks. A pending badge save must also block repeated edits.
+
+At `ca770773`, thirteen native faults, menu closure and all thirteen ordinary
+checks pass with JVM exit 0. The 36 normal and thirteen fault originals are
+reviewed in contact sheets; the stale profiling-Off checkpoint is also reviewed
+individually. Local checks and both current-head CI checks pass. Codecov confirms
+94.33%; the overall coverage gate remains unfinished.
+For profiling-Off readiness, retain eight unmodified, stable compact frames
+from actual native rendering while profiling is On. After actual server metadata
+reports Off, replay those older observations into a separate status flow and
+require the missing native category descriptions to keep it pending. Restore
+the current observation, remove the actual status payload, and require the
+ordinary Off flow to wait for its row after eight stable frames. Preserve saved
+bytes and checks, restore the payload, then require the full ordinary PASS.
+The replay frames are historical native observations; its checkpoint image shows
+the current Off screen, not a newly rendered stale compact screen.
+
+At `81a2870e`, fourteen native faults, menu closure and all thirteen ordinary
+checks pass with JVM exit 0. The 36 normal and fourteen fault originals are
+reviewed in contact sheets; the badge observation checkpoint is also reviewed
+individually. Local checks and both current-head CI checks pass. Codecov confirms
+94.34%; the overall coverage gate remains unfinished.
+With the actual two-row profiling-Off
+screen, a separate badge flow must reject native row text when its pre-toggle
+text observation is absent or contains only a genuine CPU header. Reach the
+actual stable-frame threshold in both cases without capture, changed checks,
+configuration writes or server work. Retain the native source frames, then
+require the ordinary scenario to pass after the check.
+
+Matching remembered native row text must still reject an
+incorrect saved custom appearance after eight stable frames. Verify the actual
+default Off/black/176 settings before expecting the custom-appearance rejection.
+Also reject
+invalid recurrence rendezvous inputs against the actual native player: another
+player, an incorrect turn and an empty turn for Alpha. Reject Beta as an
+unsupported recurrence role; do not extend the production role contract.
+Preserve screen, player, menu, checks and saved bytes, write no command, and
+restore the original rendezvous properties before ordinary scenario execution.
+This is invalid-input boundary coverage, not a two-client server scenario.
+The first `04e1cccc` launch failed before these assertions because the ordinary
+fixture had not yet created its saved client configuration. Preserve that failed
+launch and exclude its execution data from passing coverage evidence. Run the
+participant checks only after the actual config file exists; no replacement
+configuration or invented saved bytes may satisfy that prerequisite.
+The `1bd6cca0` retry exposed the fixture's incorrect assumption that recurrence
+accepted Beta. Preserve and exclude that failed launch too. The corrected test
+requires the existing unsupported-role exception and retains the three invalid
+Alpha-state assertions; this failed attempt does not verify them.
+At `47e0dcb6`, all four participant assertions passed, but the matching-text
+check failed on its incorrect On-background prerequisite. Preserve and exclude
+that launch. The actual saved default is Off, black and opacity 176; use that
+verified incorrect custom appearance without changing saved bytes. Runtime
+verification of the corrected expectation is recorded below.
+
+Driver highlight queries must require
+both the requested output and the fixture's provider position. Plate/output
+collections must stay bound to that position; beams additionally require a chat
+locate. Verify empty state, wrong output, wrong position, matching data and
+session cleanup through the actual packet-data APIs and coordinate values.
+Enforce 100% line and branch coverage for these five queries and their predicates.
+Run the assertions against the unchanged packaged native class too; these data
+boundaries do not claim rendered world highlights.
+
+At `89ad1a55`, all fifteen native fault groups, menu closure and thirteen ordinary
+checks pass with JVM exit 0. The actual matching-text and participant boundaries
+pass. All 51 originals are reviewed in contact sheets; the badge checkpoint is
+also viewed individually. Four packaged-native highlight assertions and local
+coverage gates pass without skips. Both current-head CI checks pass. Codecov
+confirms 94.46%; the overall 100% target remains unfinished. The three failed
+attempts above remain preserved and excluded from the passing coverage reports.
+
+Missing snapshots, wrong screen identity,
+empty rows, one positive row and an actual panel rectangle used as an invalid
+badge must leave both badge states and scale readiness pending. Verify all fifteen
+combinations against the actual native status screen, preserving stage, zero
+stable-frame count, checks, screen, menu, GUI scale and saved bytes, with no capture
+or server operation. These deliberately invalid observation DTOs are guard inputs,
+not rendered native frames. Restore the original observation in `finally`, keep
+their evidence separate from screenshots, then require the ordinary scenario PASS.
+
+At `2df7a1cc`, all fifteen invalid-observation combinations pass, alongside sixteen
+native fault groups, menu closure and all thirteen ordinary checks, JVM exit 0.
+All 52 original captures are reviewed in contact sheets; the new unchanged-screen
+checkpoint is also viewed individually. Local checks and both current-head CI
+checks pass. Codecov confirms 94.55%; the requested 100% target remains unfinished.
+
+Pending persistence-quantity extension: render scheduled-only, stored-only and
+all-zero status payloads through the actual native screen. Positive scheduled or
+stored quantities must reach the saved-Off checkpoint after genuine stable frames,
+then reject the incomplete check map before writing any continuation. All-zero
+quantities must remain pending after the same threshold, without capture. Preserve
+checks, menu, screen and saved bytes; restore the original status payload on success
+or failure. Keep one actual screenshot and original observations per quantity case.
+These deliberate client payloads test native rendering and guard behavior, not
+actual server job counts. Require the ordinary scenario to pass after restoration.
+
 ## Plan readiness with optional backgrounds (#585)
 
 Status: planned; implementation and runtime verification pending.

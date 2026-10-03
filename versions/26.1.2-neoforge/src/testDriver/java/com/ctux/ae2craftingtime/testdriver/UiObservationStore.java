@@ -108,6 +108,11 @@ public final class UiObservationStore {
         var observed = CraftingTreeScenario.nodeTtcText(active.screen,
                 observed(component, transformed(graphics, x, y, x + width, y + height)));
         if (recordStatusText(component.getString(), observed.bounds(), color)) return;
+        var title = UiSnapshot.nativeStatusTitle(active.screen, active.gui, observed);
+        if (title != null) {
+            active.text.add(title);
+            return;
+        }
         if (active.screen.endsWith("CraftConfirmScreen") && observed.bounds().y() == active.gui.y() + 178
                 && observed.rendered().startsWith("TTC:")) {
             active.text.add(new UiSnapshot.ObservedText("text.ae2craftingtime.total_ttc", observed.rendered(),
@@ -237,12 +242,12 @@ public final class UiObservationStore {
     }
 
     private static boolean recordStatusText(String rendered, Rect bounds, int color) {
-        if (!(active.screen.endsWith("CraftingCPUScreen") || active.screen.endsWith("CraftingStatusScreen"))
+        if (!(active.screen.endsWith("CraftConfirmScreen") || active.screen.endsWith("CraftingCPUScreen")
+                || active.screen.endsWith("CraftingStatusScreen"))
                 || !statusRowText(bounds)) return false;
-        var semantic = active.descriptions.values().stream().map(lines -> observed(lines, null)).flatMap(List::stream)
-                .filter(line -> line.key().startsWith("text.ae2craftingtime.")
-                        && (line.rendered().equals(rendered) || rendered.equals("⚠ " + line.rendered())))
-                .findFirst().orElse(null);
+        var semantic = UiSnapshot.matchingRenderedText(java.util.stream.Stream.concat(
+                active.descriptions.values().stream().map(lines -> observed(lines, null)).flatMap(List::stream),
+                active.planDescriptions.values().stream().flatMap(List::stream)), rendered, true);
         if (semantic == null) return false;
         if (active.text.stream().noneMatch(line -> line.key().equals(semantic.key()) && bounds.equals(line.bounds()))) {
             active.text.add(new UiSnapshot.ObservedText(semantic.key(), rendered, semantic.arguments(),

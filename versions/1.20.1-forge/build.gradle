@@ -81,6 +81,39 @@ sourceSets.test.java.srcDir '../../shared/src/mc1201Test/java'
 sourceSets.test.compileClasspath += sourceSets.main.compileClasspath
 sourceSets.test.runtimeClasspath += sourceSets.main.runtimeClasspath
 
+// Optional real-client fault checks; neither dist nor the ordinary driver depends on this artifact.
+def nativeOptionsMetadata = layout.buildDirectory.file('native-options-boundary/META-INF/mods.toml')
+def nativeOptionsPackMetadata = layout.buildDirectory.file('native-options-boundary/pack.mcmeta')
+def nativeOptionsBoundaryUnmapped = tasks.register('nativeOptionsBoundaryUnmappedJar', Jar) {
+    from(sourceSets.test.output) { include '**/nativetests/Native*.class' }
+    from({ configurations.testRuntimeClasspath.findAll {
+        it.name.startsWith('junit-jupiter-api-') || it.name.startsWith('junit-platform-commons-')
+                || it.name.startsWith('opentest4j-') || it.name.startsWith('apiguardian-api-')
+    }.collect { zipTree(it) } }) { exclude 'META-INF/**', 'module-info.class' }
+    from(nativeOptionsMetadata) { into 'META-INF' }
+    from(nativeOptionsPackMetadata)
+    archiveFileName = 'ae2ct-native-options-boundary-unmapped.jar'
+    destinationDirectory = layout.buildDirectory.dir('native-options-boundary')
+    doFirst {
+        def metadata = nativeOptionsMetadata.get().asFile
+        metadata.parentFile.mkdirs()
+        metadata.text = '''modLoader="javafml"
+loaderVersion="[47,)"
+license="MIT"
+[[mods]]
+modId="ae2ct_native_options_boundary"
+version="1"
+displayName="AE2CT Native Options Boundary Tests"
+'''
+        nativeOptionsPackMetadata.get().asFile.text = '{"pack":{"pack_format":15,"description":"Native options boundary tests"}}'
+    }
+}
+def nativeOptionsBoundaryRemapped = obfuscation.reobfuscate(nativeOptionsBoundaryUnmapped, sourceSets.testDriver) {
+    archiveFileName = 'ae2ct-native-options-boundary.jar'
+    destinationDirectory = layout.buildDirectory.dir('native-options-boundary')
+}
+tasks.register('nativeOptionsBoundaryJar') { dependsOn nativeOptionsBoundaryRemapped }
+
 repositories {
     mavenCentral()
     exclusiveContent {
@@ -289,6 +322,7 @@ def coveredTestDriverClasses = sourceSets.testDriver.output.classesDirs.asFileTr
     include 'com/ctux/ae2craftingtime/testdriver/RecurrentPlanFixture.class'
     include 'com/ctux/ae2craftingtime/testdriver/StandardAe2Scenario.class'
     include 'com/ctux/ae2craftingtime/testdriver/UiObservationStore.class'
+    include 'com/ctux/ae2craftingtime/testdriver/UiSnapshot.class'
     include 'com/ctux/ae2craftingtime/testdriver/CraftPlanScenario$BlockTerminalReadiness.class'
     include 'com/ctux/ae2craftingtime/testdriver/SortObservation.class'
     include 'com/ctux/ae2craftingtime/testdriver/ResourcePrewarmControl.class'
@@ -299,6 +333,35 @@ tasks.named('jacocoTestReport', JacocoReport).configure {
 }
 tasks.named('jacocoTestCoverageVerification', JacocoCoverageVerification).configure {
     classDirectories.from(coveredTestDriverClasses)
+    violationRules.rule {
+        element = 'METHOD'
+        includes = ['com.ctux.ae2craftingtime.testdriver.UiSnapshot.matchingRenderedText*',
+                    'com.ctux.ae2craftingtime.testdriver.UiSnapshot.lambda$matchingRenderedText*',
+                    'com.ctux.ae2craftingtime.testdriver.UiSnapshot.nativeStatusTitle*']
+        limit { counter = 'LINE'; minimum = 1.0 }
+        limit { counter = 'BRANCH'; minimum = 1.0 }
+    }
+    violationRules.rule {
+        element = 'METHOD'
+        includes = ['com.ctux.ae2craftingtime.testdriver.StandardAe2Scenario.suspensionPausedJobReady*',
+                    'com.ctux.ae2craftingtime.testdriver.StandardAe2Scenario.acknowledgeStaleSuspension*',
+                    'com.ctux.ae2craftingtime.testdriver.StandardAe2Scenario.validateSuspension*',
+                    'com.ctux.ae2craftingtime.testdriver.StandardAe2Scenario.focusNativeWindow*',
+                    'com.ctux.ae2craftingtime.testdriver.StandardAe2Scenario.galleryPlanReady*',
+                    'com.ctux.ae2craftingtime.testdriver.StandardAe2Scenario.lambda$galleryPlanReady*',
+                    'com.ctux.ae2craftingtime.testdriver.StandardAe2Scenario.galleryAccuracyReady*']
+        limit { counter = 'LINE'; minimum = 1.0 }
+        limit { counter = 'BRANCH'; minimum = 1.0 }
+    }
+    violationRules.rule {
+        element = 'METHOD'
+        includes = ['hasPlate', 'hasEdge', 'plateOutputsAt', 'renderOutputsAt', 'hasBeam'].collectMany { name ->
+            ['com.ctux.ae2craftingtime.testdriver.StandardAe2Scenario.' + name + '*',
+             'com.ctux.ae2craftingtime.testdriver.StandardAe2Scenario.lambda$' + name + '*']
+        }
+        limit { counter = 'LINE'; minimum = 1.0 }
+        limit { counter = 'BRANCH'; minimum = 1.0 }
+    }
     violationRules.rule {
         element = 'METHOD'
         includes = ['com.ctux.ae2craftingtime.testdriver.RecurrentPlanFixture.enableDetection*',

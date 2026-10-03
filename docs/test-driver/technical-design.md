@@ -2,6 +2,125 @@
 
 Lifecycle: see the [scope status and evidence](spec.md).
 
+## Native options fault checks (#378)
+
+The optional `nativeOptionsBoundaryJar` contains test classes in a separate
+package and its own Forge entrypoint, avoiding a split package with the driver.
+It runs after the native title screen is ready, on completed client
+render callbacks. It calls the existing driver guards against actual screens,
+widgets and configuration; it provides no replacement Minecraft objects.
+Reflection exposes private guards only inside this test artifact. Redirect
+configuration writes to the owned evidence directory, restore the previous
+runtime configuration in `finally`, and capture actual rendered screens.
+Record each assertion and fail the run on any unexpected exception or timeout.
+Use the actual initialized Title and Options screens for transition waits.
+Require the wrong-screen, pending-redraw and pending-save guards to leave the
+native screen, saved bytes and incomplete check map unchanged, without success
+captures. Test these guards separately from normal world/relaunch acceptance.
+For saved-status navigation, keep the real Options screen and the existing
+`STATUS_PERSIST` branch. Exhaust Warnings pages while asserting unchanged saved
+bytes, then reopen Displays with compact amounts On. Verify the actual toggle
+does not save before Done, and Done saves Off and enters pending persistence.
+Stop this Options-only check before any status/relaunch step; no world marker
+or status snapshot is consumed here.
+Observation boundary checks reuse the existing private Frame DTO constructor,
+real registered native item keys and initialized title-screen widgets. Check
+clipped row identities, quantities and cell geometry independently of rendered
+menu claims. Reset observation state after each boundary group and restore the
+actual screen and widget visibility even when an assertion fails.
+
+## Native crafting fault checks (#378)
+
+See the [scope and remaining gate](spec.md#native-crafting-fault-checks-378).
+The optional native fixture owns a `TestDriverRuntime` while the ordinary driver
+entrypoint is in observation mode. Forward actual screen render events to the
+runtime. Pause normal advancement only while checking a fault, and count each
+completed render callback once. Keep the initialized Minecraft client, server,
+player, menus and original fixture marker. Use the native status payload setter
+already used by amount fixtures; never replace a game object. After each assertion,
+restore the actual Options flow or expected status row and resume the ordinary
+scenario. For the missing-font-pack boundary, move only the owned staged fixture
+outside `resourcepacks`, preserving its bytes. After the actual repository rejects
+the missing pack, restore it and retry the scale case that the failed transition
+had incremented. Restore the fixture on unexpected failures too.
+For persistence rejections, use a separate standard flow against the same actual
+status screen and original incomplete check map. Check compact-On rejection and
+unchanged saved bytes before intentionally saving the native compact-Off setup.
+Use that saved file as the second rejection's baseline, then verify native
+compact-Off rendering and incomplete-check rejection. Require no
+continuation file, restore the original runtime configuration, and resume the
+ordinary flow without changing its stage or checks.
+While the saved-Off persistence flow waits, remove its actual status payload,
+require no capture or continuation, then restore the same payload before the
+incomplete-check rejection. Badge persistence uses the same real world and
+original incomplete ordinary check map, with deliberately saved custom Off
+appearance. Its guard must capture only the expected saved-Off checkpoint,
+reject the incomplete map, preserve saved bytes and write no continuation.
+Restore the original configuration before resuming the ordinary scenario.
+For profiling-Off readiness, retain eight immutable `UiSnapshot` records from
+real compact rendering with matching readiness keys and distinct native frame
+IDs. After the real profiling metadata changes to Off, replay those exact older
+records into a separate status flow. Assert no success capture, server work,
+configuration write or changed check after its actual stability threshold. Restore
+the current observation in `finally`; record the source frames separately from
+the screenshot of the current Off screen. Then remove and restore the actual
+native status payload while asserting that the ordinary Off flow stays pending.
+Use the restored two-row Off screen for separate badge flows with absent prior
+text or a prior list containing only the genuine CPU header. Poll each actual
+native observation through the unchanged badge guard. Both flows must remain
+pending after eight stable frames, preserving checks, saved bytes and screen,
+with no server operation or success capture. Retain those original snapshots;
+do not manufacture text, bounds, frame IDs or rendered badge success.
+The matching-text boundary remembers the actual native row text and quantities,
+then requires the unchanged guard to reject the actual saved default appearance
+(background Off, black, opacity 176) where the custom appearance is required.
+Verify those real prerequisites. It must reach its real stable threshold before throwing,
+without capture or changed state. Recurrence participant boundaries write
+invalid file-rendezvous inputs in an owned evidence directory and compare them
+against the actual player UUID and role. Restore the role, campaign and control
+properties in `finally`; assert no command, server operation or screen/menu
+change. These invalid-input assertions do not represent a real server reply or
+replace the retained two-client connected scenario.
+Invalid badge-observation guards use separate flows against the same real native
+status screen. Copy the current observation only to create deliberately invalid
+DTO inputs: wrong screen identity, missing/empty/one-row observations or the actual
+panel rectangle placed in the badge list. Keep the source frame ID and all other
+native fields; never label these inputs rendered frames. Require all fifteen
+badge/scale guard combinations to reject before stable readiness advances, with
+no capture, server work, changed checks, GUI scale or saved bytes. Restore the
+original store observation in `finally`. Record the invalid inputs separately;
+the screenshot shows the unchanged actual screen, not the injected DTO.
+Persistence quantity boundaries use the existing `CraftingStatus` payload setter
+and real registered key from the current native status. Render a scheduled-only,
+stored-only and zero-quantity entry into the actual screen, polling new native
+observations for each separate `STATUS_PERSIST` flow. Check its real stable-frame
+threshold. Positive cases may reach only the saved-Off capture callback before
+the incomplete-check exception; zero quantities must stay pending without capture.
+Require unchanged checks, screen, menu and saved bytes and no continuation or
+server operation. Capture each actual screen, retain its original observations,
+and restore the original payload on success or any failure before normal recovery.
+These deliberately injected client quantities do not prove server job counts.
+The addon graph explicitly requires both installed mana and chemical mods. Wait
+for the first real addon key payload and its rendered row before removing it;
+do not mistake the previous item/fluid frame for an addon row. Reuse the same
+native recovery assertions, and require the ordinary mana and chemical captures.
+Write separate fault evidence, and require the original runtime result
+to pass before reporting the combined run as successful.
+The Start retry boundary uses a separate badge flow against the actual stocked
+Crafting Plan menu. Hold only its real Start widget inactive before rendering;
+do not fabricate CPU state, elapsed time or retry counters. Record each actual
+replan counter increment and monotonic time. After three replans with the native
+ten-second deadline, assert the exact rejection, unchanged ordinary checks and
+saved bytes. Restore the widget on success or failure and resume the normal flow.
+AE2 refreshes the Start state during its render. While the fault is active,
+render the same actual widget inactive in the native post-render callback before
+finishing the observation frame, so the screenshot shows the held state.
+For the compact-description wait, temporarily enable the in-memory compact
+option only during real screen rendering. Restore Off after recording that
+frame, before the guard tick, without saving another file. Assert the observed
+compact description, actual Off setting, unchanged saved bytes and no capture
+or continuation. Resume ordinary rendering before the next persistence fault.
+
 ## Plan readiness with optional backgrounds (#585)
 
 See the [criteria](spec.md#plan-readiness-with-optional-backgrounds-585).
@@ -1108,6 +1227,12 @@ first process from authorizing the second. Existing single-client scenarios
 keep their original lock and launch path.
 
 Both connected clients acknowledge the running job before Alpha pauses it.
+During reload, the server accepts Beta's `stale-sent` acknowledgement only
+while the original job remains suspended and the stale request has been
+rejected. Beta consumes that epoch/sequence/action-bound reply even if Alpha
+has already resumed the job; checking the later suspension flag before reading
+the reply would strand Beta in its acknowledgement stage. A file-rendezvous
+regression covers delayed consumption after resume and mismatched replies.
 The server publishes the final acknowledgement and waits for both clients to
 exit before saving/shutting down, avoiding a disconnect before client evidence
 is written. Progress checkpoints contain the actual native job/furnace counts
