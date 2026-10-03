@@ -225,3 +225,68 @@ merged implementation, published wiki, all required checks and runtime evidence
 linked. Missing two-client/reload proof or skipped production UI hooks remains
 an incomplete gate, even when unit tests pass.
 
+## Addon CPU extension
+
+Lifecycle and scope: [replacement addon CPUs](spec.md#replacement-addon-cpus).
+This extends, rather than rewrites, the completed standard-CPU delivery.
+
+1. Approve the exact final issue text, update/read back #647 and reconcile it
+   with these documents. Only then move the addon scope to ready-to-implement.
+2. Extend the shared pure policy/contract tests for capability, native pause
+   transitions, config recovery, job replacement and selection. Retain complete
+   line/branch coverage. Add Forge-only suspension selection to the existing raw
+   class-inspection machinery, with independent selection from profiling. Record
+   full released member contracts and negative absent/incompatible variants.
+3. Implement Forge adapters in `versions/1.20.1-forge/src/main/java`:
+   `AdvancedCraftingSuspensionLogicMixin`, NeoEco adapters for both retained
+   dispatch families, and `LightningTechCraftingSuspensionLogicMixin`.
+   Register through the Forge suspension configuration. AdvancedAE uses covered
+   state and the namespaced job NBT flag; other adapters use native pause state.
+   Guard every selected dispatch entrance and preserve in-flight returns,
+   lifecycle/cancellation and scheduling cleanup. Keep the native AE2 mixin's
+   priority-2100 regression protection.
+4. Extend `CraftingSuspensionAccess` and add the Forge selected-CPU resolver.
+   Route `CraftingSuspensionMenuMixin` and `CraftingSuspensionC2S` through it.
+   Add boundary coverage for all addon menu slots, grid/serial consistency,
+   diagnostic-option independence, stale UUID, duplicate, closed/wrong menu,
+   unsupported adapter and forged disabled actions. Do not change the wire shape.
+5. Mirror pause changes to each engine's existing profiler scope before any
+   warnings/estimates run, including native actions and reload. Cover config
+   recovery while offline or profiling-disabled, and prove NeoEco internal
+   suspension survives Resume. Inspect CPU-list totals and selected row requests
+   for the same scope; make the smallest Forge-specific correction if needed.
+6. Extend `AddonCpuFixture`, `AdvancedAeFixture`, `NeoEcoFixture` and the existing
+   LightningTech fixture/scenario registration under the test-driver workflow.
+   Parameterize the existing suspension scenario with real replacement engines.
+   Keep standard, NeoEco 20.3.0, NeoEco 20.4.2 and LightningTech variants explicit.
+   Do not reinterpret a native CPU run as addon evidence. Connected variants use
+   the existing two-phase dedicated restart procedure with Alpha and Beta.
+7. Update English/Ukrainian GuideME and wiki, `docs/dependencies.md` and test-driver
+   spec/design/plan. Keep support claims bound to exact verified artifacts.
+   Inspect production screen targets and real startup for any presentation
+   change. Preserve optional-peer screens and ensure there is one pause control.
+8. Review the full diff and `git diff --check`, then make one conventional
+   implementation commit. The hook creates/updates the implementation PR before
+   local test execution. Run required core/boundary checks and focused production
+   smoke under the applicable skills; report GitHub CI separately. Merge and
+   publication require separate authorization. Finish only after the gates below.
+
+### Addon acceptance map
+
+| Criteria | Required evidence |
+| --- | --- |
+| ACS-1 | Contract fixtures and loader registration; real UI selection for each engine/API family; absent/unknown negative cases. |
+| ACS-2 | Actual provider dispatch/return counters, conserved raw/final counts, competing CPU completion and same resumed UUID. Include NeoEco FastPath and LightningTech budgeted scheduling. |
+| ACS-3 | Repeated cycles, rejected submission, final in-flight completion, Cancel/soft-cancel, CPU switch and replacement UUID boundary/runtime cases. |
+| ACS-4 | Alpha/Beta snapshots before and after clean dedicated save/restart; same world/job, valid resume and exact final counts. |
+| ACS-5 | Live switch and startup-file disable on each engine, profiling/diagnostic-off cases, native pause setter synchronization and unchanged NeoEco internal flag. |
+| ACS-6 | Paused selected rows/title/cards, scoped warning/highlight cleanup, independent active job, fresh post-resume delay and accuracy exclusion. |
+| ACS-7 | Coverage and contract checks, raw/remapped/transformed hook evidence, reviewed captures, locale/link checks, wiki readback, other-target artifact isolation and current-head CI. |
+
+Use focused Forge addon profiles plus the standard suspension regression. Include
+the shared-provider setup and dedicated-restart case for each replacement engine;
+both NeoEco API families need dispatch and persistence evidence. A unit pass,
+successful client launch or native addon pause alone cannot satisfy this matrix.
+Retain job UUID, CPU/logic type, addon hashes, source commit, dispatch/return counts
+and reviewed screenshots in each report. Verification is not run by this plan.
+
