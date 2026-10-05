@@ -63,6 +63,20 @@ public record UiSnapshot(
         }
     }
 
+    static ObservedText matchingRenderedText(java.util.stream.Stream<ObservedText> descriptions,
+            String rendered, boolean warningPrefix) {
+        return descriptions.filter(line -> line.key().startsWith("text.ae2craftingtime.")
+                        && (line.rendered().equals(rendered)
+                                || warningPrefix && rendered.equals("⚠ " + line.rendered())))
+                .findFirst().orElse(null);
+    }
+
+    static ObservedText nativeStatusTitle(String screen, Rect gui, ObservedText text) {
+        if (!screen.endsWith("CraftingStatusScreen") || text.bounds() == null
+                || text.bounds().y() >= gui.y() + 19 || !text.rendered().startsWith("TTC:")) return null;
+        return new ObservedText("native-title", text.rendered(), text.arguments(), text.bounds(), text.color(), text.bold());
+    }
+
     public record Widget(String type, String state, Rect bounds, List<ObservedText> tooltip) {
         public Widget {
             tooltip = List.copyOf(tooltip);

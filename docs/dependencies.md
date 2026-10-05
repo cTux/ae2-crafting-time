@@ -446,3 +446,21 @@ fueled vanilla furnaces and, for connected proof, distinct Alpha/Beta clients
 with two clean server phases on one disposable world. Fabric and NeoForge
 retain their existing native crafting paths; the new Forge mixin configuration
 must not appear in their artifacts.
+
+Supplemental native coverage at issue #378 uses the same prepared base
+client and standard CPUs. It holds actual furnace inputs and provider patterns,
+checks native menu recovery and rejects separate stale observation DTOs. Client
+Options clicks use the native screen API so enumerating test-platform methods
+does not require absent optional addons. Ordinary output conservation remains
+mandatory. At `9701cc45`, all five supplemental groups and 23 ordinary checks
+pass with JVM exit 0; native input counts and job UUIDs restore. Invalid DTOs are
+not rendered frames, and screenshots do not prove server-only inventories.
+
+Verified NeoForge 1.21.1 native coverage at `3f881b94` (#378) opens an actual standard CPU
+in the prepared base client to check that the Forge-only suspension API is absent.
+The missing API check and thirteen ordinary status checks pass. It does not enable
+Forge suspension mixins or advertise suspension support on NeoForge.
+
+Pending Forge #378 guard extensions use the same prepared base client and actual
+ME terminal/idle CPU, followed by mandatory stored-variant recovery. They add no
+optional dependency requirement and do not claim a real wireless screen or job.

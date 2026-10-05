@@ -284,6 +284,9 @@ public final class DedicatedCpuScenario {
         }
         if (!active.prepare(rolePlayer, origin)) return;
         if (!variantGridsReady) {
+            com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.current().features().setEnabled(
+                    com.ctux.ae2craftingtime.core.OptionFeature.RECURRENT_DETECTION, true);
+            com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.sendTo(rolePlayer);
             if (variantSecond == null) variantSecond = gridFixture.variantSecondGrid();
             if (!variantSecond.prepare(rolePlayer, origin)) return;
             variantSecond.setStoredVariantStock(rolePlayer, true, false);
@@ -412,6 +415,9 @@ public final class DedicatedCpuScenario {
             }
         }
         if (!recurrentFixture.prepare(rolePlayer, origin)) return;
+        // The managed diagnostic provider must survive the deliberate client disconnect.
+        level.setChunkForced(recurrentFixture.terminal.getX() >> 4, recurrentFixture.terminal.getZ() >> 4, true);
+        level.setChunkForced(recurrentFixture.terminal.east(8).getX() >> 4, recurrentFixture.terminal.getZ() >> 4, true);
         if (recurrentAddonRoute && !prepareRecurrentAddons(rolePlayer)) return;
         if (recurrentPatterns == null) recurrentPatterns = new RecurrentPlanFixture(recurrentFixture);
         if (!recurrentPatterns.prepare(rolePlayer, RecurrentCampaign.plan(recurrentFixture.recurrentPlan))) return;
@@ -455,6 +461,8 @@ public final class DedicatedCpuScenario {
         if (visited && !recurrentSwapped) {
             recurrentFixture.setRecurrent(rolePlayer, true);
             recurrentSwapped = true;
+            // Publish the swap only after prepare installs the new diagnostic patterns.
+            return;
         }
         var swapped = recurrentSwapped && "swapped".equals(recurrentAction);
         recurrentReplanned |= swapped;
