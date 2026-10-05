@@ -555,7 +555,7 @@ public final class CraftProfiler {
         }
         for (var status : statuses) {
             if (status != null) {
-                statusesDirty |= !status.equals(rememberedStatuses.put(status.key(), status));
+                rememberedStatuses.put(status.key(), status);
             }
         }
     }
