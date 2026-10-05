@@ -359,6 +359,17 @@ AdvancedAE CPU, and NeoEco/LightningTech logic instances. Passing the selected
 CPU object blindly to `ProfilerBridge` would create a second, unrelated scope.
 Expose that scope through the adapter rather than adding global job registries.
 
+Descriptor probes alone cannot verify method behavior: the existing ASM reader
+skips code. Gate suspension on the exact whole-JAR SHA-512 values in
+`addon-evidence.md`, in addition to version and member checks. Read Forge's
+discovered original mod-file bytes before class initialization, not transformed
+classes. Add hash eligibility to suspension candidates only. Any unlisted or
+missing hash disables suspension while profiling retains its existing selection.
+Add new hashes only after dirtying/load/save bytecode inspection and runtime
+restart verification. Test identical members with a wrong/missing hash and
+independent profiling selection. Thus the persistence selection requirements
+above are enforced by exact-artifact identity; member names alone are insufficient.
+
 Route selected-row requests in `StatsRequestContext.current`/`StatsRequestHandler`
 through the Forge resolver's verified addon selection and `profilerScope()`.
 Route each live listed CPU in `CpuTtcRequestHandler.collect` through the same

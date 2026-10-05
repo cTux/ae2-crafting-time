@@ -286,6 +286,31 @@ This extends, rather than rewrites, the completed standard-CPU delivery.
 
 ### Addon acceptance map
 
+### NeoEco 20.3 runtime graph
+
+Implementation must add an immutable `neoeco-20.3` verification profile to the
+version matrix and bundle preparation. Clone the compatible Forge graph,
+replace only NeoEco with the hash-pinned 20.3.0 artifact in addon-evidence, and
+seal client and dedicated-server bundles with the same graph identity. Preserve
+the normal compatible 20.4.2 graph. Add `-VerificationProfile neoeco-20.3` to
+preparation and `run-ui-smoke-codexvm.ps1`; retain the profile and dependency
+hashes in the prepared manifest and dedicated source contract. Extend connected
+validation to accept this named sealed graph while rejecting latest, unsealed
+and mismatched graphs. Do not replace mods in an existing sealed bundle.
+
+After those script changes, run singleplayer with
+`pwsh scripts/run-ui-smoke-codexvm.ps1 -Target 1.20.1-forge -VerificationProfile neoeco-20.3 -Scenario crafting-suspension -HeadSha <commit>`.
+Prepare its matching sealed dedicated server, then run
+`pwsh scripts/run-ui-smoke-codexvm.ps1 -Target 1.20.1-forge -VerificationProfile neoeco-20.3 -Scenario crafting-suspension -ServerDirectory <sealed-server> -HeadSha <commit>`.
+The wrapper passes that graph's prepared launch/bundle to the connected runner
+for both Alpha/Beta restart phases. Repeat on compatible 20.4.2. Script self-tests
+cover profile propagation, pinned hashes, client/server mismatches and restart
+manifest reuse. Runtime results record the loaded NeoEco version/hash; a 20.4.2
+run cannot count as 20.3 evidence. These flags and bundles are required future
+implementation work, not available commands or evidence from this docs PR.
+
+### Acceptance checks
+
 | Criteria | Required evidence |
 | --- | --- |
 | ACS-1 | Contract fixtures and loader registration; real UI selection for each engine/API family; absent/unknown negative cases. |

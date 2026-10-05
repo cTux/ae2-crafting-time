@@ -1,7 +1,8 @@
 # Approved issue text
 
 This exact replacement title/body was approved on 2026-10-05, applied to issue
-#647 and read back without differences. It remains here as the approval record.
+#647 and read back without differences. The user later approved review
+corrections; the body below is now synchronized with those refinements.
 
 ## Title
 
@@ -37,7 +38,10 @@ from #641. Fabric and newer NeoForge targets are outside this extension.
 ### Acceptance
 
 1. Real replacement CPUs from AdvancedAE, both retained Forge NeoEco API
-   families and LightningTech can be selected, suspended and resumed.
+   families and LightningTech from the beta.4 suspension floor can be selected,
+   suspended and resumed on exact hash-approved artifacts. Beta.2/beta.3 remain
+   profiling-only. Unlisted hashes disable suspension independently of profiling
+   until separately verified.
 2. Normal, batched, FastPath and budgeted time-wheel dispatch stop while paused.
    In-flight returns remain valid, another CPU finishes through shared
    providers, and the same resumed job conserves exact input/output counts.
@@ -47,8 +51,10 @@ from #641. Fabric and newer NeoForge targets are outside this extension.
    duplicate or forged requests cannot mutate another job.
 5. Live and startup-file disable recovery work with profiling/diagnostics off.
    Native pause actions update TTC state, and NeoEco internal suspension survives.
-6. Paused rows, totals, cards, warnings, automatic highlights and accuracy use
-   the actual addon profiler scope and leave another active job unaffected.
+6. Paused rows, totals and cards remain visible, with Suspended totals and
+   unknown card estimates. Suppress estimates, false blocked diagnostics,
+   warnings and automatic highlights through the actual addon profiler scope;
+   leave another job unaffected and exclude paused accuracy samples.
 7. Core coverage, contract/boundary checks, transformed production hooks,
    reviewed focused runtime evidence, current-head CI, English/Ukrainian
    GuideME/wiki and dependency documentation agree.
@@ -77,7 +83,7 @@ are verified. A planning PR alone does not deliver addon suspension.
 ## Approved review refinements
 
 On 2026-10-05 the user approved fixing the planning PR review findings before
-merge. The historical approved body above remains unchanged. The current spec
+merge. The corrected body above supersedes the original wording. The current spec
 clarifies visible paused rows/totals/cards, independent capability selection,
 mandatory adapter-scope statistics routing, the verified NeoEco 20.3 native
 persistence contract, per-engine NBT descriptors, config-file description
