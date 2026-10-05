@@ -121,6 +121,18 @@ public final class UiObservationStore {
         }
     }
 
+    public static void nativeTitle(GuiGraphicsExtractor graphics, String text, int x, int y, int width, int height,
+            Integer color, boolean bold) {
+        if (active == null) return;
+        var bounds = transformed(graphics, x, y, x + width, y + height);
+        if (recordStatusText(text, bounds, color == null ? 0xffffff : color)) return;
+        if (active.screen.contains("CraftingStatusScreen") && statusRowText(bounds)) {
+            active.text.add(new UiSnapshot.ObservedText("native-status-text", text, List.of(), bounds, color, bold));
+        } else if (active.screen.contains("CraftingStatusScreen") && text.startsWith("TTC:")) {
+            active.text.add(new UiSnapshot.ObservedText("native-title", text, List.of(), bounds, color, bold));
+        }
+    }
+
     public static void fill(GuiGraphicsExtractor graphics, int x1, int y1, int x2, int y2, int color) {
         if (active != null && color == com.ctux.ae2craftingtime.mc1201.TtcBadge.BACKGROUND) {
             active.badges.add(transformed(graphics, x1, y1, x2, y2));
