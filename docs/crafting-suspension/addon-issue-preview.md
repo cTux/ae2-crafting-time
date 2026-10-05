@@ -73,3 +73,13 @@ release. No other known issue blocks the defined planning scope.
 
 Keep the issue open until the implementation is delivered and all gates above
 are verified. A planning PR alone does not deliver addon suspension.
+
+## Approved review refinements
+
+On 2026-10-05 the user approved fixing the planning PR review findings before
+merge. The historical approved body above remains unchanged. The current spec
+clarifies visible paused rows/totals/cards, independent capability selection,
+mandatory adapter-scope statistics routing, the verified NeoEco 20.3 native
+persistence contract, per-engine NBT descriptors, config-file description
+updates, and the LightningTech beta.4 suspension floor (earlier profiling stays
+supported). Default-off behavior from #655 remains in force.

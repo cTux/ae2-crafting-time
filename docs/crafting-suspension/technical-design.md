@@ -308,6 +308,18 @@ before class initialization. Use the existing `IntegrationContract` inspection
 machinery, but choose suspension separately from profiling so a missing pause
 API cannot disable an otherwise compatible profiler or the reverse.
 
+Change `IntegrationSelection` from dependency-only decision keys to immutable
+`(dependency, capability)` keys. Add a capability field to candidates and
+decisions; migrate existing candidates to `profiling`, and use `suspension`
+for the new contracts. Mixin ownership, duplicate-candidate checks, the decision
+cache, snapshots and newest-variant lookup use that pair. Installed-version
+lookup still receives the real dependency ID, never a synthetic capability ID.
+Each capability independently selects its first matching variant. Update callers
+and diagnostics accordingly. Boundary tests cover both capabilities selected,
+either contract failing while the other succeeds, absence, wrong side/target,
+independent fallback variants and duplicate ownership. No combined candidate
+matrix or shared decision that can disable the other capability.
+
 Each suspension contract lists CPU/logic identity, selected-menu access, native
 pause API where used, job UUID, dirtying, tick reconciliation and all required
 dispatch entrances. Retain released-artifact fixture hashes and descriptors.
@@ -319,7 +331,13 @@ required injection with `require = 0`.
 AdvancedAE gets the existing covered `CraftingSuspension` state and namespaced
 job-compound NBT flag. Clear it on accepted submission and finish; mark its CPU
 dirty on mutations. NeoEco and LightningTech delegate to their native state and
-NBT. Reconciliation clears only player pause when the server option is disabled,
+NBT. The inspected NeoEco 20.3.0 setter changes `job.userPaused`, calls
+`cpu.markDirty()` when a CPU exists, then `postChange(null)`; its job NBT writes
+and reads `userPaused` independently from `suspended`. Both retained families
+therefore use native persistence. Include those members and dirtying/persistence
+behavior in each family's contract and restart checks; do not select an adapter
+when those seams fail. No extra NBT boolean or duplicate dirtying is needed for
+the inspected 20.3.0 artifact. Reconciliation clears only player pause when the server option is disabled,
 then mirrors the resulting state to the profiler. NeoEco never calls
 `setJobSuspended(false)` for Resume or recovery. Native pause setters and load/tick
 reconciliation feed the same profiler transitions, including actions issued
@@ -329,6 +347,16 @@ Use the identities already used at dispatch/return/finish: standard AE2 cluster,
 AdvancedAE CPU, and NeoEco/LightningTech logic instances. Passing the selected
 CPU object blindly to `ProfilerBridge` would create a second, unrelated scope.
 Expose that scope through the adapter rather than adding global job registries.
+
+Route selected-row requests in `StatsRequestContext.current`/`StatsRequestHandler`
+through the Forge resolver's verified addon selection and `profilerScope()`.
+Route each live listed CPU in `CpuTtcRequestHandler.collect` through the same
+CPU-to-adapter scope mapping before `ProfilerBridge.remainingJobSeconds`, while
+retaining the CPU object for busy/grid/list/serial validation. Standard scope is
+the cluster; AdvancedAE is its CPU; NeoEco and LightningTech are their logic.
+Keep this routing Forge-specific and the existing other-target path unchanged.
+Test selected rows and listed cards for each scope, paused/active competing
+jobs, diagnostic switches off, null selection and unsupported adapters.
 
 ### Selection and actions
 
@@ -358,7 +386,12 @@ and needs a remapped production-target check plus real startup.
 
 Map ACS-1 through ACS-7 to the [implementation plan](implementation-plan.md#addon-cpu-extension).
 Extend real addon fixtures instead of creating fake CPU classes. Inspect raw
-and transformed descriptors independently: cached released jars expose
-HolderLookup-bearing persistence descriptors in the inspected engines, so do
-not assume Forge addon NBT hooks have AE2's one-argument signature.
+and transformed descriptors independently. AdvancedAE 1.3.6 uses one-argument
+`readFromNBT(CompoundTag)`/`writeToNBT(CompoundTag)` hooks, descriptor
+`(Lnet/minecraft/nbt/CompoundTag;)V`. NeoEco 20.3.0 uses
+`readFromNBT(CompoundTag, HolderLookup.Provider)` and the corresponding writer,
+descriptor `(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/core/HolderLookup$Provider;)V`.
+For NeoEco 20.4.2 and LightningTech, retain their own released member descriptors
+in separate contract fixtures and check native job load/save and dirtying;
+do not infer their signatures from AdvancedAE, NeoEco 20.3.0 or standard AE2.
 Keep native internal-suspension and intentional user-pause tests separate.

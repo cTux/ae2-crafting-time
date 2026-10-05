@@ -164,7 +164,11 @@ option. Disabling a diagnostic integration must neither strand a paused job nor
 remove access to Resume. A missing or incompatible suspension API hides only
 that suspension adapter; it must not disable working profiling integration.
 
-No dependency minimum or newest-release claim changes in this scope. Verify
+The LightningTech suspension capability floor is `2.1.0-beta.4-forge.1.20.1`,
+the inspected artifact. Beta.2 and beta.3 retain their existing profiling
+support but do not expose TTC suspension; test that capability boundary.
+Later versions require a matching suspension contract before enabling it.
+No broader dependency minimum or newest-release claim changes in this scope. Verify
 the pinned compatible artifacts and retained supported API families. A changed
 addon API needs a verified adapter before its control is enabled. LightningTech
 source-discovery issue [#460](https://github.com/cTux/ae2-crafting-time/issues/460)
@@ -175,12 +179,12 @@ claiming that artifact is the latest available release.
 
 | ID | Completion gate |
 | --- | --- |
-| ACS-1 | AdvancedAE, both retained Forge NeoEco API families and LightningTech expose Suspend/Resume for the actual selected replacement CPU. Unknown replacements and absent addons remain safe. |
+| ACS-1 | AdvancedAE, both retained Forge NeoEco API families and contract-compatible LightningTech at or above the beta.4 suspension floor expose Suspend/Resume for the actual selected replacement CPU. Earlier LightningTech versions retain profiling only; unknown replacements and absent addons remain safe. |
 | ACS-2 | Normal, batched, FastPath and time-wheel dispatch stop while paused; in-flight returns still count. A competing CPU finishes, then the same resumed UUID finishes with exact input/output conservation. |
 | ACS-3 | Three pause/resume cycles, failed submission, completion, cancellation, soft cancellation and replacement-job/CPU-switch stale requests preserve native behavior. |
 | ACS-4 | Two real clients, reopen and clean dedicated restart retain UUID/state/counts. Repeated and forged requests cannot mutate a different job. |
 | ACS-5 | Live and startup-file disable recovery work with profiling and addon diagnostics off. Internal NeoEco suspension remains untouched, and native pause actions update TTC state. |
-| ACS-6 | Actual addon profiler scopes suppress paused rows, totals, cards, warnings and automatic highlights without suppressing another job; resume starts a fresh delay interval and paused jobs contribute no accuracy sample. |
+| ACS-6 | Paused rows, totals and CPU cards remain visible: the total says Suspended and the card estimate is unknown. Actual addon profiler scopes suppress estimates, false blocked diagnostics, warnings and automatic highlights on those surfaces without suppressing another job; resume starts a fresh delay interval and paused jobs contribute no accuracy sample. |
 | ACS-7 | Contract selection, core coverage, transformed production hooks, focused runtime captures, English/Ukrainian GuideME/wiki and dependency documentation agree. Other target artifacts and optional-peer installs keep their existing behavior. |
 
 Do not mark this scope finished until every row has source-bound verification

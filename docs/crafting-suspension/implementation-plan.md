@@ -236,6 +236,11 @@ This extends, rather than rewrites, the completed standard-CPU delivery.
    transitions, config recovery, job replacement and selection. Retain complete
    line/branch coverage. Add Forge-only suspension selection to the existing raw
    class-inspection machinery, with independent selection from profiling. Record
+   `(dependency, capability)` keys throughout candidate ownership, decisions,
+   snapshots and diagnostics as specified in the technical design; keep the
+   installed-mod lookup keyed by dependency. Test independent success/failure
+   and fallback for both capabilities, including LightningTech beta.2/beta.3
+   profiling-only and the beta.4 suspension floor.
    full released member contracts and negative absent/incompatible variants.
 3. Implement Forge adapters in `versions/1.20.1-forge/src/main/java`:
    `AdvancedCraftingSuspensionLogicMixin`, NeoEco adapters for both retained
@@ -253,8 +258,13 @@ This extends, rather than rewrites, the completed standard-CPU delivery.
 5. Mirror pause changes to each engine's existing profiler scope before any
    warnings/estimates run, including native actions and reload. Cover config
    recovery while offline or profiling-disabled, and prove NeoEco internal
-   suspension survives Resume. Inspect CPU-list totals and selected row requests
-   for the same scope; make the smallest Forge-specific correction if needed.
+   suspension survives Resume. Route `StatsRequestContext.current` and
+   `StatsRequestHandler` selected-row requests through the verified selected
+   adapter's profiler scope. Route `CpuTtcRequestHandler.collect` estimates
+   through each listed CPU's adapter scope while keeping CPU/serial/grid
+   validation unchanged. Cover both paths for standard, AdvancedAE, NeoEco and
+   LightningTech, competing jobs and profiling switches off. These routing
+   corrections are required, not optional inspection follow-ups.
 6. Extend `AddonCpuFixture`, `AdvancedAeFixture`, `NeoEcoFixture` and the existing
    LightningTech fixture/scenario registration under the test-driver workflow.
    Parameterize the existing suspension scenario with real replacement engines.
@@ -263,6 +273,9 @@ This extends, rather than rewrites, the completed standard-CPU delivery.
    the existing two-phase dedicated restart procedure with Alpha and Beta.
 7. Update English/Ukrainian GuideME and wiki, `docs/dependencies.md` and test-driver
    spec/design/plan. Keep support claims bound to exact verified artifacts.
+   Update the `ServerConfigFile` craftingSuspension description from standard
+   CPUs only to standard and supported replacement CPUs, and its test assertion.
+   Preserve the default-off behavior and explicit saved choices from #655.
    Inspect production screen targets and real startup for any presentation
    change. Preserve optional-peer screens and ensure there is one pause control.
 8. Review the full diff and `git diff --check`, then make one conventional
