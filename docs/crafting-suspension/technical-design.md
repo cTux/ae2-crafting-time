@@ -320,6 +320,17 @@ either contract failing while the other succeeds, absence, wrong side/target,
 independent fallback variants and duplicate ownership. No combined candidate
 matrix or shared decision that can disable the other capability.
 
+Add a candidate `versionAllowed` predicate receiving the installed dependency
+version. In `choose`, reject an ineligible variant with `unsupported_version`
+before probing its bytecode. Existing profiling candidates allow their existing
+version range. The Forge LightningTech suspension candidate uses Forge's native
+Maven version comparison to require at least `2.1.0-beta.4`; treat the
+`-forge.1.20.1` packaging suffix as target metadata, not a prerelease increment.
+Unknown or malformed versions reject suspension only. Both version eligibility
+and the raw member contract must pass. Test beta.2/beta.3 rejection even with
+identical beta.4 members, beta.4 with/without the packaging suffix, later valid
+versions, malformed versions and below-floor profiling remaining selected.
+
 Each suspension contract lists CPU/logic identity, selected-menu access, native
 pause API where used, job UUID, dirtying, tick reconciliation and all required
 dispatch entrances. Retain released-artifact fixture hashes and descriptors.
