@@ -82,7 +82,7 @@ public final class UiObservationStore {
 
     public static void description(CraftingPlanSummaryEntry entry, List<Component> components) {
         if (active != null) {
-            active.planDescriptions.put(entry, observed(components, null));
+            active.planDescriptions.put(entry, components);
         }
     }
 
@@ -192,7 +192,7 @@ public final class UiObservationStore {
         var rows = active.rows.stream().map(row -> new UiSnapshot.Row(row.outputId, row.craftAmount,
                 row.missingAmount, row.cell,
                 row.identity == null ? rowDescription(active.descriptions, active.text, row.outputId, row.cell)
-                        : active.planDescriptions.getOrDefault(row.identity, List.of()),
+                        : observed(active.planDescriptions.getOrDefault(row.identity, List.of()), null),
                 row.storedAmount, row.activeAmount, row.pendingAmount)).toList();
         var mergedBadges = merge(active.badges);
         var cpuCards = active.cpuCards.stream().map(card -> {
@@ -237,18 +237,23 @@ public final class UiObservationStore {
     }
 
     private static boolean recordStatusText(String rendered, Rect bounds, int color) {
-        if (!(active.screen.endsWith("CraftingCPUScreen") || active.screen.endsWith("CraftingStatusScreen"))
-                || !statusRowText(bounds)) return false;
-        var semantic = active.descriptions.values().stream().map(lines -> observed(lines, null)).flatMap(List::stream)
-                .filter(line -> line.key().startsWith("text.ae2craftingtime.")
-                        && (line.rendered().equals(rendered) || rendered.equals("⚠ " + line.rendered())))
-                .findFirst().orElse(null);
+        if (!statusRowText(bounds)) return false;
+        var semantic = semanticText(active.descriptions, active.planDescriptions, rendered);
         if (semantic == null) return false;
         if (active.text.stream().noneMatch(line -> line.key().equals(semantic.key()) && bounds.equals(line.bounds()))) {
             active.text.add(new UiSnapshot.ObservedText(semantic.key(), rendered, semantic.arguments(),
                     bounds, semantic.color() == null ? color & 0xffffff : semantic.color(), semantic.bold()));
         }
         return true;
+    }
+
+    static UiSnapshot.ObservedText semanticText(Map<String, List<Component>> descriptions,
+            Map<Object, List<Component>> planDescriptions, String rendered) {
+        return java.util.stream.Stream.concat(descriptions.values().stream(), planDescriptions.values().stream())
+                .map(lines -> observed(lines, null)).flatMap(List::stream)
+                .filter(line -> line.key().startsWith("text.ae2craftingtime.")
+                        && (line.rendered().equals(rendered) || rendered.equals("⚠ " + line.rendered())))
+                .findFirst().orElse(null);
     }
 
     private static boolean statusRowText(Rect bounds) {
@@ -373,7 +378,7 @@ public final class UiObservationStore {
         private int scroll;
         private final List<PendingRow> rows = new ArrayList<>();
         private final Map<String, List<Component>> descriptions = new LinkedHashMap<>();
-        private final Map<Object, List<UiSnapshot.ObservedText>> planDescriptions = new java.util.IdentityHashMap<>();
+        private final Map<Object, List<Component>> planDescriptions = new java.util.IdentityHashMap<>();
         private final List<UiSnapshot.ObservedText> text = new ArrayList<>();
         private final List<Rect> badges = new ArrayList<>();
         private final List<UiSnapshot.Widget> widgets = new ArrayList<>();
