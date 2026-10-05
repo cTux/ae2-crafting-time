@@ -62,6 +62,7 @@ public final class Ae2CraftingTime {
     private void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
             ProfilerBridge.flushCompletedSamples();
+        ProviderStartTracker.endTick();
         }
     }
 
@@ -70,6 +71,7 @@ public final class Ae2CraftingTime {
         ProfilerBridge.flushCompletedSamples();
         CpuTtcRequestHandler.clear();
         WarningPreferenceServer.clearAll();
+        ProviderStartTracker.clearAll();
         ServerOptionsRuntime.clear();
     }
 

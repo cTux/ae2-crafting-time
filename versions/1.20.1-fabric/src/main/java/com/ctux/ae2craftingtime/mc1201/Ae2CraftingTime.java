@@ -35,12 +35,16 @@ public final class Ae2CraftingTime implements ModInitializer {
                             Ae2CraftingTimeSavedData.FILE_ID);
             ProfilerBridge.load(data);
         });
-        ServerTickEvents.END_SERVER_TICK.register(server -> ProfilerBridge.flushCompletedSamples());
+        ServerTickEvents.END_SERVER_TICK.register(server -> {
+            ProfilerBridge.flushCompletedSamples();
+            ProviderStartTracker.endTick();
+        });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
             ProfilerBridge.flushCompletedSamples();
             CpuTtcRequestHandler.clear();
             WarningPreferenceServer.clearAll();
-            ServerOptionsRuntime.clear();
+            ProviderStartTracker.clearAll();
+        ServerOptionsRuntime.clear();
         });
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             ProfilerBridge.resyncPlatesForPlayer(handler.getPlayer());

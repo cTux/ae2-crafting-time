@@ -55,12 +55,14 @@ public final class Ae2CraftingTime {
 
     private void onServerTick(ServerTickEvent.Post event) {
         ProfilerBridge.flushCompletedSamples();
+        ProviderStartTracker.endTick();
     }
 
     private void onServerStopping(ServerStoppingEvent event) {
         ProfilerBridge.flushCompletedSamples();
         CpuTtcRequestHandler.clear();
         WarningPreferenceServer.clearAll();
+        ProviderStartTracker.clearAll();
         ServerOptionsRuntime.clear();
     }
 

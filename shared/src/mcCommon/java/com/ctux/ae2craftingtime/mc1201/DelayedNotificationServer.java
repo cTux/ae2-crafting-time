@@ -24,6 +24,11 @@ public final class DelayedNotificationServer {
             new ProviderPlateState<>(PacketLimits.MAX_HIGHLIGHT_POSITIONS);
 
     public static void tick(Object scope, IGrid grid, Object logic, long tick, MinecraftServer server) {
+        if (!ProfilerBridge.trackingEnabled(scope)) {
+            ProfilerBridge.discardDisabledScope(scope, tick, server);
+            clearScope(scope, server);
+            return;
+        }
         if (ProfilerBridge.isSuspended(scope)) {
             clearScope(scope, server);
             return;

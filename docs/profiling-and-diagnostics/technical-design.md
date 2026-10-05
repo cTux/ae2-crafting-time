@@ -237,6 +237,12 @@ same-tick amendment (including overflow removal), reset, load and configuration
 updates invalidate the cached result. Unknown outputs are never cached. Stall
 idle time and capacity expiry remain live; they are not part of this cache.
 
+Provider positions use one lazy identity index per grid and server tick, shared
+by dispatch-candidate capture and warning lookup. The server end-tick hook and
+world cleanup discard the index, so it cannot retain old grids across ticks or
+worlds. Disabled profiling/scopes bypass observer creation and diagnostic tick
+work; crafting suspension keeps its independent hooks.
+
 Remove cumulative `inProgressStats` from throughput lookup when the interval
 collector is installed: the first real interval is retained at end tick and
 provides the useful one-sample estimate. Before then, use retained history or

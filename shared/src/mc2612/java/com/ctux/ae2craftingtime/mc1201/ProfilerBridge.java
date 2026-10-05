@@ -43,7 +43,7 @@ public final class ProfilerBridge {
 
     public static void observeProviders(String networkId, Object scope, IPatternDetails pattern,
             boolean hasProvider) {
-        isEnabled();
+        if (!trackingEnabled(scope)) return;
         var outputs = new HashMap<ProfileKey, Long>();
         for (var output : pattern.getOutputs()) {
             outputs.merge(key(networkId, output.what()), output.amount(), Long::sum);
@@ -77,7 +77,7 @@ public final class ProfilerBridge {
     }
     public static void observeDispatchPower(String networkId, Object scope, IPatternDetails pattern,
             double required, double extracted, long tick) {
-        isEnabled();
+        if (!trackingEnabled(scope)) return;
         var outputs = new HashMap<ProfileKey, Long>();
         for (var output : pattern.getOutputs()) {
             outputs.merge(key(networkId, output.what()), output.amount(), Long::sum);
@@ -89,7 +89,7 @@ public final class ProfilerBridge {
 
     public static void observeProviderDispatch(String networkId, Object scope, IPatternDetails pattern,
             CraftingBlockReason reason, long tick) {
-        isEnabled();
+        if (!trackingEnabled(scope)) return;
         var outputs = new HashMap<ProfileKey, Long>();
         for (var output : pattern.getOutputs()) {
             outputs.merge(key(networkId, output.what()), output.amount(), Long::sum);
@@ -564,6 +564,11 @@ public final class ProfilerBridge {
             persistStatuses();
         }
         return cleared;
+    }
+
+    public static boolean trackingEnabled(Object scope) {
+        return ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.PROFILING)
+                && ServerOptionsRuntime.scopeEnabled(scope);
     }
 
     private static boolean isEnabled() {
