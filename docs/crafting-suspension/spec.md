@@ -113,7 +113,7 @@ delivered with the verification evidence linked above.
 
 ## Replacement addon CPUs
 
-Status: draft
+Status: ready-to-implement
 
 Scope: Extend suspension to the project's supported replacement CPU engines on
 Forge 1.20.1 only. Fabric and newer NeoForge targets are outside this extension.
@@ -123,8 +123,9 @@ Issue: [#647](https://github.com/cTux/ae2-crafting-time/issues/647)
 Planning: [Addon implementation plan](implementation-plan.md#addon-cpu-extension)
 and [addon technical design](technical-design.md#addon-cpu-extension).
 
-Hold: The documents have been self-reviewed. Approval of the exact final issue
-text is pending under the planning workflow. No addon support is delivered yet.
+The documents have been self-reviewed. The exact final issue text was approved
+on 2026-10-05, applied to #647 and read back without differences. No addon
+support is delivered yet.
 
 ### Player behavior and boundaries
 

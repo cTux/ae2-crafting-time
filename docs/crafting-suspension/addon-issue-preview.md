@@ -1,7 +1,7 @@
-# Final issue text for approval
+# Approved issue text
 
-This is the exact replacement title/body proposed for issue #647. It has not
-been applied. The planning workflow requires explicit approval before replacement.
+This exact replacement title/body was approved on 2026-10-05, applied to issue
+#647 and read back without differences. It remains here as the approval record.
 
 ## Title
 
