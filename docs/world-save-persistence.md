@@ -22,6 +22,13 @@ while Save History is off and reconcile on the next enabled flush, including
 configuration trimming. Aggregate-stat caching has separate invalidation and
 cannot consume persistence updates.
 
+Provider records and statuses have separate dirty state. Notification polling
+does not serialize them; the shared end-tick/save flush snapshots each changed
+collection once. Repeated NO POWER/NO PROVIDER observations keep the episode's
+original timestamp instead of rewriting an unused timestamp every tick. Waiting
+and delayed timing, resolution, deletion and owner-bound click fallbacks retain
+their existing meaning. Save History off leaves dirty changes pending.
+
 ## Does It Fit?
 
 Yes. Minecraft's `SavedData` already handles this, so direct file IO would only

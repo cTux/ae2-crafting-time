@@ -134,12 +134,10 @@ public final class DelayedNotificationServer {
         keys.addAll(newlyDelayed.stream().map(event -> event.key()).toList());
         var owner = ownerOf(scope, keys);
         if (owner == null) {
-            ProfilerBridge.persistProviderState();
             return;
         }
         var player = server.getPlayerList().getPlayer(owner);
         if (player == null) {
-            ProfilerBridge.persistProviderState();
             return;
         }
         var dimension = ProfilerBridge.dimensionId(grid);
@@ -149,7 +147,6 @@ public final class DelayedNotificationServer {
                     event.diagnostic().idleTicks(), event.diagnostic().typicalDurationTicks(), highlightSender,
                     chatEnabled);
         }
-        ProfilerBridge.persistProviderState();
     }
 
     static UUID ownerOf(Object scope, List<ProfileKey> keys) {

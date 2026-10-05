@@ -194,17 +194,17 @@ public final class ProfilerBridge {
             else ProviderLocateRecords.removeStarts(Set.of(profileKey), owner);
             if (owner == null) ProviderLocateRecords.removeRecordsForKeys(Set.of(profileKey));
             else ProviderLocateRecords.removeRecordsForKeys(Set.of(profileKey), owner);
-            persistProviderState();
         }
     }
 
     public static boolean flushCompletedSamples() {
-        if (!isEnabled()) return false;
+        var enabled = isEnabled();
+        flushProviderState();
+        if (!enabled) return false;
         var changed = PROFILER.flushCompletedSamples();
         if (savedData != null) {
             if (ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.SAVE_HISTORY))
                 savedData.updateSamples(PROFILER.takeChangedSamples());
-            if (changed) persistStatuses();
         }
         return changed;
     }
@@ -267,7 +267,6 @@ public final class ProfilerBridge {
             ProviderLocateRecords.noteStart(key(networkId, crafted.getKey()), owner, "", null,
                     displayNameOf(crafted.getKey()), crafted.getKey());
         }
-        persistProviderState();
         var predictedSeconds = jobEstimate.remainingSeconds((key, amount) -> estimateSeconds(key, amount)).orElse(0);
         if (ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.ACCURACY_RECORDING))
             ACCURACY.start(key(networkId, plan.finalOutput().what()), scope, predictedSeconds, knownRows, totalRows, tick,
@@ -454,18 +453,13 @@ public final class ProfilerBridge {
         return PROFILER.hasPending(key);
     }
 
-    public static void persistProviderState() {
-        if (savedData != null && ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.SAVE_HISTORY)) {
+    private static void flushProviderState() {
+        if (savedData == null || !ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.SAVE_HISTORY)) return;
+        if (ProviderLocateRecords.takeDirty()) {
             savedData.replaceProviderStarts(ProviderLocateRecords.snapshotStarts());
             savedData.replaceProviderRecords(ProviderLocateRecords.snapshotRecords());
         }
-        persistStatuses();
-    }
-
-    public static void persistStatuses() {
-        if (savedData != null && ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.SAVE_HISTORY)) {
-            savedData.replaceStatuses(PROFILER.snapshotStatuses());
-        }
+        PROFILER.takeChangedStatuses().ifPresent(savedData::replaceStatuses);
     }
 
     public static void finishJob(Object scope, boolean success, long tick, long nanoTime) {
@@ -496,7 +490,6 @@ public final class ProfilerBridge {
             if (owner == null) ProviderLocateRecords.removeRecordsForKeys(releasable);
             else ProviderLocateRecords.removeRecordsForKeys(releasable, owner);
         }
-        persistProviderState();
     }
 
     /** Replays only live reconciled warning plates; the next CPU tick refreshes them. */
@@ -569,7 +562,6 @@ public final class ProfilerBridge {
         if (cleared && savedData != null) {
             if (ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.SAVE_HISTORY))
                 savedData.updateSamples(PROFILER.takeChangedSamples());
-            persistStatuses();
         }
         return cleared;
     }
