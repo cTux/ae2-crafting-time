@@ -36,6 +36,7 @@ public final class CraftProfiler {
     private final Set<ProfileKey> dirtySampleKeys = new HashSet<>();
     private final Map<ProfileKey, Long> retainedTailTicks = new HashMap<>();
     private final Map<ProfileKey, ArrayDeque<CraftSample>> samples = new HashMap<>();
+    private final Map<ProfileKey, ProfileStats> statistics = new HashMap<>();
     private final Map<ProfileKey, PersistedOutputStatus> rememberedStatuses = new HashMap<>();
     private final MissingProviderTracker<Object> missingProviders = new MissingProviderTracker<>();
     private final DispatchPowerTracker dispatchPower = new DispatchPowerTracker();
@@ -81,6 +82,7 @@ public final class CraftProfiler {
     }
 
     public void configure(ServerConfig config) {
+        statistics.clear();
         maxSamples = config.maxSamples();
         outlierMultiplier = config.outlierMultiplier();
         minimumDelayTicks = config.minimumNoProgressSeconds() * 20L;
@@ -610,7 +612,10 @@ public final class CraftProfiler {
         if (queue == null) {
             return Optional.empty();
         }
+        return Optional.of(statistics.computeIfAbsent(key, ignored -> calculateStats(queue)));
+    }
 
+    private ProfileStats calculateStats(ArrayDeque<CraftSample> queue) {
         long durationTotal = 0;
         long lastDuration = 0;
         var filtered = filteredSamples(queue, outlierMultiplier);
@@ -636,7 +641,7 @@ public final class CraftProfiler {
 
         var averageDuration = (double) durationTotal / queue.size();
         var amountPerTick = (double) weightedAmountTotal / weightedDurationTotal;
-        return Optional.of(new ProfileStats(
+        return new ProfileStats(
                 queue.size(),
                 averageDuration,
                 amountPerTick,
@@ -647,10 +652,11 @@ public final class CraftProfiler {
                 filtered.size(),
                 outlierMultiplier,
                 sampleDurationTicks,
-                sampleAmounts));
+                sampleAmounts);
     }
 
     public boolean clearSamples(ProfileKey key) {
+        statistics.remove(key);
         var cleared = samples.remove(key) != null;
         completionIntervals.remove(key);
         dirtySampleKeys.remove(key);
@@ -688,6 +694,7 @@ public final class CraftProfiler {
     }
 
     private void addSample(ProfileKey key, CraftSample sample) {
+        statistics.remove(key);
         var queue = samples.computeIfAbsent(key, ignored -> new ArrayDeque<>());
         queue.addLast(sample);
         trim(queue);
@@ -712,6 +719,7 @@ public final class CraftProfiler {
     }
 
     public void loadSamples(List<PersistedOutputSamples> persisted) {
+        statistics.clear();
         suspended.clear();
         ignoreRemembered.clear();
         samples.clear();
@@ -792,6 +800,7 @@ public final class CraftProfiler {
     private void recordCompleted(ProfileKey key, long amount, long tick) {
         var tailTick = retainedTailTicks.get(key);
         if (tailTick != null) {
+            statistics.remove(key);
             var queue = samples.get(key);
             var tail = queue.removeLast();
             try {
