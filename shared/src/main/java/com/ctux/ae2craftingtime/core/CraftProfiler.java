@@ -37,6 +37,7 @@ public final class CraftProfiler {
     private final Map<ProfileKey, Long> retainedTailTicks = new HashMap<>();
     private final Map<ProfileKey, ArrayDeque<CraftSample>> samples = new HashMap<>();
     private final Map<ProfileKey, ProfileStats> statistics = new HashMap<>();
+    private final Set<ProfileKey> changedHistories = new HashSet<>();
     private final Map<ProfileKey, PersistedOutputStatus> rememberedStatuses = new HashMap<>();
     private final MissingProviderTracker<Object> missingProviders = new MissingProviderTracker<>();
     private final DispatchPowerTracker dispatchPower = new DispatchPowerTracker();
@@ -83,6 +84,7 @@ public final class CraftProfiler {
 
     public void configure(ServerConfig config) {
         statistics.clear();
+        changedHistories.addAll(samples.keySet());
         maxSamples = config.maxSamples();
         outlierMultiplier = config.outlierMultiplier();
         minimumDelayTicks = config.minimumNoProgressSeconds() * 20L;
@@ -657,6 +659,7 @@ public final class CraftProfiler {
 
     public boolean clearSamples(ProfileKey key) {
         statistics.remove(key);
+        changedHistories.add(key);
         var cleared = samples.remove(key) != null;
         completionIntervals.remove(key);
         dirtySampleKeys.remove(key);
@@ -695,6 +698,7 @@ public final class CraftProfiler {
 
     private void addSample(ProfileKey key, CraftSample sample) {
         statistics.remove(key);
+        changedHistories.add(key);
         var queue = samples.computeIfAbsent(key, ignored -> new ArrayDeque<>());
         queue.addLast(sample);
         trim(queue);
@@ -706,20 +710,31 @@ public final class CraftProfiler {
 
     public List<PersistedOutputSamples> snapshotSamples() {
         var snapshot = new ArrayList<PersistedOutputSamples>();
-        for (var entry : samples.entrySet()) {
-            var persisted = new ArrayList<PersistedCraftSample>();
-            ProfileUnit unit = null;
-            for (var sample : entry.getValue()) {
-                unit = sample.unit;
-                persisted.add(new PersistedCraftSample(sample.amount, sample.durationTicks));
-            }
-            snapshot.add(new PersistedOutputSamples(entry.getKey(), unit, persisted));
-        }
+        for (var key : samples.keySet()) snapshot.add(snapshotSamples(key));
         return snapshot;
+    }
+
+    /** Empty sample lists are deletions. Independent of interval flush and stats-cache invalidation. */
+    public List<PersistedOutputSamples> takeChangedSamples() {
+        var updates = new ArrayList<PersistedOutputSamples>(changedHistories.size());
+        for (var key : changedHistories) updates.add(snapshotSamples(key));
+        changedHistories.clear();
+        return updates;
+    }
+
+    private PersistedOutputSamples snapshotSamples(ProfileKey key) {
+        var persisted = new ArrayList<PersistedCraftSample>();
+        var unit = ProfileUnit.ITEM;
+        for (var sample : samples.getOrDefault(key, new ArrayDeque<>())) {
+            unit = sample.unit;
+            persisted.add(new PersistedCraftSample(sample.amount, sample.durationTicks));
+        }
+        return new PersistedOutputSamples(key, unit, persisted);
     }
 
     public void loadSamples(List<PersistedOutputSamples> persisted) {
         statistics.clear();
+        changedHistories.addAll(samples.keySet());
         suspended.clear();
         ignoreRemembered.clear();
         samples.clear();
@@ -801,6 +816,7 @@ public final class CraftProfiler {
         var tailTick = retainedTailTicks.get(key);
         if (tailTick != null) {
             statistics.remove(key);
+            changedHistories.add(key);
             var queue = samples.get(key);
             var tail = queue.removeLast();
             try {

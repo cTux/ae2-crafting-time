@@ -199,15 +199,14 @@ public final class ProfilerBridge {
     }
 
     public static boolean flushCompletedSamples() {
-        if (!isEnabled() || !PROFILER.flushCompletedSamples()) {
-            return false;
-        }
+        if (!isEnabled()) return false;
+        var changed = PROFILER.flushCompletedSamples();
         if (savedData != null) {
             if (ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.SAVE_HISTORY))
-                savedData.replaceFrom(PROFILER.snapshotSamples());
-            persistStatuses();
+                savedData.updateSamples(PROFILER.takeChangedSamples());
+            if (changed) persistStatuses();
         }
-        return true;
+        return changed;
     }
 
     public static void startJob(String networkId, Object scope, ICraftingPlan plan, long tick, long nanoTime) {
@@ -569,7 +568,7 @@ public final class ProfilerBridge {
         ACCURACY.clear(key);
         if (cleared && savedData != null) {
             if (ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.SAVE_HISTORY))
-                savedData.replaceFrom(PROFILER.snapshotSamples());
+                savedData.updateSamples(PROFILER.takeChangedSamples());
             persistStatuses();
         }
         return cleared;

@@ -14,6 +14,14 @@ Persist collected crafting times in the Minecraft world save:
 This history preserves the learned throughput used by TTC estimates and
 slow-craft diagnostics across restarts.
 
+Tick flushes update only changed output histories in an indexed SavedData model.
+Unchanged outputs retain their immutable sample records. Reset and overflow
+removal are explicit deletions. The serializer takes a stable list at save time;
+the version-1 output fields and file ID are unchanged. Changes remain pending
+while Save History is off and reconcile on the next enabled flush, including
+configuration trimming. Aggregate-stat caching has separate invalidation and
+cannot consume persistence updates.
+
 ## Does It Fit?
 
 Yes. Minecraft's `SavedData` already handles this, so direct file IO would only
