@@ -37,6 +37,7 @@ public final class Ae2CraftingTime implements ModInitializer {
         });
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             ProfilerBridge.flushCompletedSamples();
+            DelayedNotificationServer.flush(server);
             ProviderStartTracker.endTick();
         });
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {

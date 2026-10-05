@@ -62,7 +62,8 @@ public final class Ae2CraftingTime {
     private void onServerTick(TickEvent.ServerTickEvent event) {
         if (event.phase == TickEvent.Phase.END) {
             ProfilerBridge.flushCompletedSamples();
-        ProviderStartTracker.endTick();
+        DelayedNotificationServer.flush(event.getServer());
+            ProviderStartTracker.endTick();
         }
     }
 

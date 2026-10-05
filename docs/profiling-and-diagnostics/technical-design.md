@@ -243,6 +243,12 @@ world cleanup discard the index, so it cannot retain old grids across ticks or
 worlds. Disabled profiling/scopes bypass observer creation and diagnostic tick
 work; crafting suspension keeps its independent hooks.
 
+CPU warning reconciliation updates only that CPU's plate contribution. The
+server end-tick hook merges all contributions and sends their difference once,
+before clearing provider-position indexes. Explicit clears join that same flush;
+login replay remains immediate. Shared recipients stay highlighted until their
+last CPU contribution clears, and offline recipients remain pending.
+
 Remove cumulative `inProgressStats` from throughput lookup when the interval
 collector is installed: the first real interval is retained at end tick and
 provides the useful one-sample estimate. Before then, use retained history or

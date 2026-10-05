@@ -70,7 +70,11 @@ public final class DelayedNotificationServer {
             }
         }
         PLATES.update(scope, current);
-        sync(server, sender);
+    }
+
+    /** Called once after all CPU contributions have been collected for this tick. */
+    public static void flush(MinecraftServer server) {
+        sync(server, defaultHighlightSender());
     }
 
     private static void sync(MinecraftServer server,
@@ -92,12 +96,10 @@ public final class DelayedNotificationServer {
 
     public static void clearScope(Object scope, MinecraftServer server) {
         PLATES.update(scope, Map.of());
-        if (server != null) sync(server, defaultHighlightSender());
     }
 
     public static void clearKey(Object scope, ProfileKey key, MinecraftServer server) {
         PLATES.clearKey(scope, key);
-        if (server != null) sync(server, defaultHighlightSender());
     }
 
     public static void resync(ServerPlayer player) {
