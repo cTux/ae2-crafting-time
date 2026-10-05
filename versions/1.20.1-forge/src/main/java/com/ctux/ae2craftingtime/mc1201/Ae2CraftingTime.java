@@ -71,6 +71,7 @@ public final class Ae2CraftingTime {
         ProfilerBridge.clearChanceEvidence();
         ProfilerBridge.flushCompletedSamples();
         CpuTtcRequestHandler.clear();
+        StatsRequestHandler.clear();
         WarningPreferenceServer.clearAll();
         ProviderStartTracker.clearAll();
         ServerOptionsRuntime.clear();
@@ -79,6 +80,7 @@ public final class Ae2CraftingTime {
     private void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
             CpuTtcRequestHandler.clear(player.getUUID());
+            StatsRequestHandler.clear(player.getUUID());
             WarningPreferenceServer.clear(player);
         }
     }

@@ -43,6 +43,7 @@ public final class Ae2CraftingTime implements ModInitializer {
         ServerLifecycleEvents.SERVER_STOPPING.register(server -> {
             ProfilerBridge.flushCompletedSamples();
             CpuTtcRequestHandler.clear();
+        StatsRequestHandler.clear();
             WarningPreferenceServer.clearAll();
             ProviderStartTracker.clearAll();
         ServerOptionsRuntime.clear();
@@ -53,6 +54,7 @@ public final class Ae2CraftingTime implements ModInitializer {
         });
         ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> {
             CpuTtcRequestHandler.clear(handler.getPlayer().getUUID());
+            StatsRequestHandler.clear(handler.getPlayer().getUUID());
             WarningPreferenceServer.clear(handler.getPlayer());
         });
         IntegrationLog.summary();
