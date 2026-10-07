@@ -287,7 +287,8 @@ this investigation does not require an unrelated four-target full smoke.
    inject at `formatStorage` on AE2 19.2.18; case three did not run. Resolve this
    separate target mismatch before repeating affected controls. Retain the
    uncertainty around Thunderbolt's earlier Plan cancellation for specific
-   entries. Keep controlled graphs separate from the unchanged full-pack run.
+   entries. Keep controlled graphs separate from the blocked baseline and the
+   official-compatible full-pack acceptance run.
 5. **AJ-05, dependency and target check:** the minimum supported 1.21.1 NeoForge
    version 21.1.1 supplies MixinExtras 0.3.5, which lacks `@WrapMethod`; the
    resumed 21.1.252 graph supplies 0.5.3, which supports it. Package
@@ -299,18 +300,28 @@ this investigation does not require an unrelated four-target full smoke.
    26.1.2.71. Compile/remap the production target and start all four clients.
    Compilation alone does not prove that the runtime selected a compatible
    MixinExtras copy.
-6. **AJ-03/04, full smoke:** expand `standard-ae2` from
-   `scripts/ui-smoke-groups.json`; select applicable installed integrations and
-   general status cases from `scripts/ui-smoke-neoforge-suite.json`. Retain the
-   case list and absent/unsupported reasons. Use one schema-2 suite per graph
-   with pristine state between cases. Restore the exact full graph for a clean
-   final run on the reviewed source; verify real crafts and review screenshots.
+6. **AJ-03/04, full smoke:** run `scripts/expand-ui-smoke-groups.ps1` for the
+   exact target to expand `standard-ae2` from `scripts/ui-smoke-groups.json`.
+   Filter those selectors against the selected graph, add applicable installed
+   integrations and general Status cases from
+   `scripts/ui-smoke-neoforge-suite.json`, and retain the final eligible case
+   list plus absent/unsupported reasons. Pass the filtered selectors to
+   `prepare-ui-smoke-suite.ps1`; expansion computes and records the eligible
+   count but does not itself create the suite plan or world. Prepare one
+   schema-2 shared-world suite per graph and restore pristine state between
+   cases. Keep the unchanged supplied graph as the blocked baseline comparison;
+   it need not pass again. Run final acceptance on a separately identified
+   full-pack graph with official compatible replacements and dependency closure,
+   preserving pack identity, Minecraft/loader and every unrelated installed
+   mod. Verify real crafts and review screenshots.
 7. **AJ-05, close evidence:** verify the production and exported driver observe
    the final Plan/Status descriptions and tooltips in the resumed graph. Run
    checks required by the actual correction, separately report current-head
    GitHub CI, and record artifact, revision and graph identities. Update
    dependency claims only where demonstrated. Do not mark the scope finished
-   while required graphs, full-pack cases or visual evidence are missing.
+   while required controlled gates, full-pack acceptance cases or visual
+   evidence are missing. The blocked original graph is a comparison baseline,
+   not a required passing graph.
 
 Before runtime work, record planned launches, known cold-start cost and a
 wall-time budget. Use bounded lack-of-progress detection. Diagnostic resumes
@@ -318,6 +329,64 @@ remain diagnostic; final acceptance requires a clean run on the final graph
 and source. Collect timings and failures per actual run, close only the tested
 client, and cleanly shut down CodexVM after immediate visual follow-up. Verify
 its VMX is absent from `vmrun -T ws list`, including after a failed campaign.
+
+## Applied Journey continuation gates
+
+The renderer correction is merged in PR #669. Preserve its existing verification;
+do not repeat all four client targets for dependency-only investigation.
+See the canonical [AJ-04 status and acceptance boundary](spec.md#remaining-prerequisite-qualification).
+Only a fully identified full-pack graph with official compatible releases can
+satisfy AJ-04. Reduced graphs and unpublished DEV prerequisites are diagnostic
+evidence only.
+
+1. **AJ-01/02:** qualify official Data releases against the full installed
+   dependency closure. Data 3.3.4's published minimum JEI 19.56.0.438 exceeds the
+   supplied graph's JEI 19.54.0.427; do not call it full-pack compatible without
+   a verified official closure. For any selected artifact, verify its advertised
+   SHA-256, nested metadata and all present dependency ranges. Rehash the retained
+   one-class Thunderbolt DEV artifact for diagnostic use only. Keep the managed
+   196-JAR graph and historical export unchanged.
+2. **AJ-02/05:** run the standalone Architectury diagnostic described in the
+   design against original 13.0.11, then any exact reviewed candidate. Prove
+   callback registration/removal/clear, cached and single-listener behavior,
+   latch-controlled mutation, non-null concurrent invokers and dispatch outside
+   the lock. Identify source/dependency closure before compiling; use no foreign
+   Gradle build or new runner framework. Independently review evidence and the
+   exact DEV class delta before guest installation. Retain unknown writer identity.
+3. **AJ-02/03:** use existing controlled-case fixtures and launch/watch helpers
+   for Core settings persistence, Data Status, Omni Status and Both Status.
+   Pass `statusRelaunch=true` for both persistence phases. Verify ordinary and
+   native CPU row/tooltip values, final TTC results, and reviewed images. Inspect
+   finite/infinite Data and Thunderbolt formatting handlers statically. No
+   prepared native Trinity CPU fixture exists, so native Trinity rows, tooltips,
+   hit-testing and crafting remain unverified; do not claim them as runtime
+   passes. A new Data version invalidates affected prior graph evidence.
+4. **AJ-03/04:** only after prerequisites and controlled gates pass, run
+   `scripts/expand-ui-smoke-groups.ps1` for the exact target, filter expanded
+   selectors against the selected graph, and record the eligible count and
+   cases. The current 29 selector entries expand to 38 leaves on
+   `1.21.1-neoforge`; the filtered qualification run may select fewer. Add the
+   applicable installed integrations and general Status cases, then pass the
+   filtered selectors to `prepare-ui-smoke-suite.ps1` to create the schema-2
+   shared-world suite. The expansion helper alone does not prepare the suite
+   plan, mark/copy its world, or establish the schema-2 fixture. Use official
+   compatible dependency replacements on the full-pack acceptance graph,
+   preserving pack identity, Minecraft/loader and every unrelated mod. Start
+   clean and record assertions, screenshots, timings and failures. The original
+   incompatible graph remains a blocked baseline comparison and need not pass;
+   reduced graphs and unpublished DEV prerequisites remain diagnostic only.
+   Retain historical unavailability explicitly.
+5. **AJ-01/05:** reconcile graph/artifact identities and remaining blocked
+   criteria, preserve the original baseline, and verify CodexVM shutdown. No
+   completion claim until an official compatible full-pack acceptance graph
+   passes AJ-04 and every other mandatory gate is satisfied.
+
+Plan approximately 90 minutes for remaining qualification, subject to measured
+progress: successful cold starts previously cost roughly 1.5–5 minutes, and
+eight controlled Status/persistence launches alone can cost 20–40 minutes.
+Record a separate full-suite wall budget after selection. Use one bounded
+startup diagnostic with a stop-on-unchanged-failure rule; do not debug by repeated
+full-pack launches. The budget is an estimate, not permission to omit acceptance.
 
 ## Final compatibility sweep
 

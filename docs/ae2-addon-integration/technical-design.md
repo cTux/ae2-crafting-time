@@ -398,7 +398,8 @@ See the [scope and acceptance](spec.md#applied-journey-investigation) and
 [archive boundary](applied-journey.md). The historical report has no retained
 UI reproduction. The resumed graph has a confirmed Plan composition
 obstruction, but its contribution to every reported missing row remains
-unverified. No source correction or full-pack acceptance has been established.
+unverified. PR #669 delivered the renderer correction described below. See the
+canonical [AJ-04 status and acceptance boundary](spec.md#remaining-prerequisite-qualification).
 
 The retained transformed Plan class has SHA-256
 `940E4D3E55FE1D0CF3CCF2B4C6EBEEB696658E871C0AB9210648E0E83C4ED67A`. Its
@@ -432,7 +433,7 @@ clean runs.
 Thunderbolt's earlier conditional Plan cancellation is still unknown for each
 live entry.
 
-The smallest proposed production change uses MixinExtras `@WrapMethod` on the
+The production correction delivered in PR #669 uses MixinExtras `@WrapMethod` on the
 shared Plan and Status description/tooltip methods with `require = 0` and
 `remap = false`: invoke the transformed original once, copy its returned list
 into a mutable list, apply the existing Crafting Time decorations, then return
@@ -505,6 +506,66 @@ does not authorize building a replacement runner. Before execution, verify the
 exact Codex instance, Java 21, guest-local runtime, fixture marker and matching
 production/driver hashes. Missing downloads or guest prerequisites are explicit
 preflight gates. Install the supplied export when no matching instance exists.
+
+### Remaining external prerequisites
+
+Data Energistics 3.2.2 also requires the absent `CPUSelectionList.formatStorage`
+target. Official 3.3.4 source at
+[`78d87827`](https://github.com/ModularMCLib/DataEnergistics/tree/78d87827eb7edeac7a98bec7b4068c20eb41b5d9)
+contains the correction from
+[`00a16497`](https://github.com/ModularMCLib/DataEnergistics/commit/00a16497d09ebc38372aef9b60f3ed21bbabe67f):
+it formats the actual `drawBackgroundLayer` byte-amount expression and handles
+`getTooltip` byte/processor values separately. Source dependency minima fit
+AE2 19.2.18, NeoForge 21.1.252 and installed LDLib 2.2.41; published metadata
+requires JEI 19.56.0.438, above the supplied graph's 19.54.0.427. Verify an
+official compatible dependency closure before selecting this artifact for
+full-pack acceptance.
+Disabling the obsolete Data hook alone would not preserve its intended labels.
+
+Thunderbolt's upstream
+[`9c95dd44`](https://github.com/AE2-Lightning-Tech-Reborn/Thunderbolt-Core-Reborn/commit/9c95dd44024c419406c1e608f8a974622fba1941)
+makes only the obsolete injection optional. Its existing `TooltipsByteAmountMixin`
+handles `getByteAmount(Long.MAX_VALUE)`; AE2 rows call that method and tooltip
+`ofBytes` delegates to it. Thus both storage paths remain covered statically.
+The existing one-class DEV replacement has static finite/infinite handler
+coverage through these methods; no released Thunderbolt correction was located
+in the continuation investigation. No prepared native Trinity CPU fixture exists,
+so native Trinity row, tooltip, hit-test and crafting behavior remain unverified.
+
+Architectury 13.0.11 `EventFactory.EventImpl` passes its mutable `ArrayList` to
+event dispatch. Registration, removal and clearing can invalidate its iterator;
+unsynchronized cache invalidation can also race with `invoker()` returning the
+field. Current upstream 1.21 source retains this implementation. The crashing
+stack identifies the collection mechanism, not its writer. OC2's three POST
+registrations outside `enqueueWork` remain a hypothesis; other registrants
+include FTB Library, Observable and PolyLib. A single-processor flag did not
+prevent the crash and must not be repeated as a proposed fix.
+
+Before any guest correction, use a tiny standalone diagnostic against the
+installed `EventImpl`, instantiated reflectively with a `Function` returning a
+for-each `Runnable` dispatcher. Two initial listeners avoid its single-listener
+shortcut; one registers a third during dispatch. Add latch-controlled concurrent
+mutation and register/unregister/clear boundaries. This proves the mechanism
+without attributing the pack writer or launching Minecraft.
+
+A candidate upstream correction uses `CopyOnWriteArrayList`, removes both
+`trimToSize` calls, and serializes all listener/cache state methods, including
+`invoker` and `update`. Constructor replacement or `volatile` alone is
+insufficient. Dispatch remains outside the state lock; each iteration observes
+a snapshot, with mutations visible on a subsequent dispatch. Retain the direct
+single-listener optimization and test cached invokers, custom factories,
+duplicates, empty state and non-null concurrent results. Compile only after
+identifying the exact source/dependency closure, independently review the
+before/after diagnostic and bytecode delta, and only then consider a disposable
+DEV prerequisite. Do not put this external correction into TTC production.
+Retain Architectury's LGPL notices and the exact corresponding source as a
+sidecar with any diagnostic artifact; do not publish or install it in the
+managed pack as part of this qualification.
+
+See the canonical [AJ-04 status and acceptance boundary](spec.md#remaining-prerequisite-qualification).
+The original graph remains a blocked baseline. Unpublished DEV prerequisites
+are diagnostic only; an acceptance candidate must use official compatible
+replacements and preserve every unrelated mod, including OC2.
 
 ## Development-client profiles
 

@@ -125,20 +125,56 @@ graph and configuration for the historical baseline; record the one Crafting
 Time artifact replacement for current-source verification. Inventory enabled
 JAR metadata, nested mods, file hashes and overrides before selecting cases.
 
-Use `prepare-ui-smoke-suite.ps1` and its `standard-ae2` expansion, plus every
-applicable installed integration and general status case from the NeoForge
-suite. Record each selected case and every absent or unsupported case with its
-reason. Do not add mods just to satisfy the prepared-client suite. Run one
-shared-world suite per installed graph, restoring fixture, player, profiler
-and client cache state between cases. Review screenshots as well as assertions;
-startup alone cannot satisfy this request.
+Run `scripts/expand-ui-smoke-groups.ps1` for the exact target, filter the
+expanded `standard-ae2` selectors against that graph, and add every applicable
+installed integration and general Status case from the NeoForge suite. Pass
+the filtered selectors to `prepare-ui-smoke-suite.ps1` to create the schema-2
+suite plan and shared world; group expansion alone does not prepare that
+fixture. Record each eligible selected case and every absent or unsupported
+case with its reason. Do not add mods just to satisfy the suite. Restore
+fixture, player, profiler and client-cache state between cases. Review
+screenshots as well as assertions; startup alone cannot satisfy this request.
 
-Keep controlled addon comparisons separate from the unchanged full graph.
-Record any temporary diagnostic mod/config change and restore the exact graph
-for the final full run. A failing dependency graph or VM prerequisite is a
-reported blocker, not permission to call a reduced graph a full-pack pass.
+Keep controlled addon comparisons separate from both full-pack graphs. Preserve
+the supplied, unchanged graph as the blocked baseline comparison; it need not
+pass again. For final acceptance, use the separately identified full-pack graph
+with official compatible replacements for the incompatible projects and their
+dependency closure, preserving pack identity, Minecraft/loader and every
+unrelated installed mod. Record diagnostic changes and restore the selected
+graph before its run. A failing baseline or VM prerequisite is a reported
+blocker, not permission to call a reduced graph a full-pack pass.
 
 ## Completion evidence
+
+### Continuation after partial renderer delivery
+
+[PR #669](https://github.com/cTux/ae2-crafting-time/pull/669) merged the renderer
+composition correction as `dd535d61c0e3fa82a100acc883fbf9e4df5270f3`, with the
+same source tree as tested `17d7561e30fa3945dfd9eec4c5d226fc6721edf2`.
+Five controlled Plan graphs passed. See the [canonical AJ-04 status and
+acceptance boundary](spec.md#remaining-prerequisite-qualification).
+Core Status controls passed without its separate persistence check, Data Status
+hit its required missing `formatStorage` target, and Omni/Both Status remain
+unverified. A disposable full graph with the one-class Thunderbolt DEV correction
+passed Plan, then its Status startup crashed in Architectury event dispatch.
+
+Identify official compatible Data and Thunderbolt releases for a full-pack
+acceptance graph, following the [continuation gates](implementation-plan.md#applied-journey-continuation-gates).
+Data 3.3.4's published JEI floor exceeds the supplied graph's installed version,
+so its dependency closure needs review. Prove the Architectury collection
+mechanism deterministically before reviewing any disposable correction; the
+listener-list writer remains unknown. Use
+existing fixtures for ordinary native CPU rows, tooltips, controls and settings
+persistence. Inspect finite/infinite Data and Thunderbolt formatting handlers
+statically; native Trinity row, tooltip, hit-test and crafting behavior remain
+unverified without a prepared fixture. Retain every replacement hash and source
+revision. Keep the managed pack and blocked original graph as the baseline. DEV
+prerequisites are diagnostic only; only an official compatible full-pack graph
+may meet AJ-04 as described in the canonical [status and acceptance
+boundary](spec.md#remaining-prerequisite-qualification).
+Historical NeoForge 21.1.249 evidence remains separately unavailable/unverified.
+
+### Required final record
 
 Record the tested commit, dependency graph, configuration, logs, and reviewed
 screenshots for the failing baseline and corrected case. Ordinary CPU estimates
