@@ -9,7 +9,7 @@ Transfinite has been established as the cause.
 
 ## Reproduction boundary
 
-The supplied export identifies Applied Journey 0.0.1, Minecraft 1.21.1,
+The historical export identifies Applied Journey 0.0.1, Minecraft 1.21.1,
 NeoForge 21.1.249, and 200 manifest entries. Its relevant CurseForge IDs are:
 
 | Mod | Project | File |
@@ -23,13 +23,32 @@ The export contains no runtime logs or crash reports. Obtain the pack through
 an authorized source; the unpublished archive is not part of this repository.
 Keep private server details and account information out of retained evidence.
 
-The supplied archive's SHA-256 is
+The historical archive's SHA-256 is
 `015d222a3577cfd8f746812db1fc3e734d530fc893d7111d89a21605802bb344`.
 It also bundles `overrides/mods/ae2_extended-1.0-SNAPSHOT.jar`, outside the
 200 manifest downloads. Its metadata identifies `ae2_extended` version
 `1.0-SNAPSHOT`; its required mixins include `MixinCraftingCPUCluster` and
 storage/network hooks. Include it in the exact graph. This observation does
 not establish a conflict.
+
+The resumed investigation uses a newer user-supplied export of Applied Journey
+0.0.1 on Minecraft 1.21.1, NeoForge 21.1.252, with 197 manifest entries.
+Its SHA-256 is
+`073c2a514a6a52f58d8aed734278cbeb99762a0d77104e58108b54739c23063f`.
+Its relevant CurseForge file IDs are Crafting Time `9016846`, AE2 `8992605`,
+Data Energistics `8841396`, and OmniSequence `9043224`, under the same projects
+listed above. It retains the bundled `ae2_extended` override.
+
+Installed JAR metadata identifies Crafting Time 1.2.12, AE2 19.2.18, Data
+Energistics 3.2.2, and OmniSequence 2.0.7 (`molecularmanipulator`). The installed
+1.2.12 artifact is the resumed baseline, not the historical 1.2.9 artifact.
+The user reports entering a world in this newer graph; the available log shows
+a normal shutdown. This does not verify the reported crafting UI behavior.
+
+Apply the full-pack criteria to this newer graph while retaining the historical
+archive boundary. A pass here does not reproduce or explain the historical
+report. If the old archive or artifact is unavailable, record that comparison
+as blocked; do not substitute the newer graph for historical evidence.
 
 The issue's [acceptance criteria](spec.md#applied-journey-investigation),
 [design](technical-design.md#applied-journey-investigation), and

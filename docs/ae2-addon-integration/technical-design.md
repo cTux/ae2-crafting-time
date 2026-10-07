@@ -395,8 +395,10 @@ must be checked:
 ## Applied Journey investigation
 
 See the [scope and acceptance](spec.md#applied-journey-investigation) and
-[archive boundary](applied-journey.md). The current report has no runtime
-evidence, so the cause and correction remain open.
+[archive boundary](applied-journey.md). The historical report has no retained
+UI reproduction. The user reports world entry on the newer supplied graph,
+with normal shutdown in its log; this is not crafting UI acceptance. The cause
+and correction remain open.
 
 Ordinary `CraftingCpuLogicMixin` observes dispatch, accepted output, job finish
 and capacity. `ProfilerBridge` scopes and normalizes these events for
@@ -425,7 +427,10 @@ The export's bundled AE2 Extended CPU/storage mixins and other installed UI
 addons are candidates for isolation, not diagnosed causes. Compare observed
 hook execution, actual screen class, channel availability, options, request
 responses and completion samples at the first differing graph. Retain the
-historical artifact baseline separately from the current-source replacement.
+historical artifact baseline separately from the resumed graph's installed
+Crafting Time 1.2.12 and its current-source replacement. The newer archive's
+NeoForge 21.1.252 graph cannot stand in for the historical 21.1.249 graph;
+record unavailable historical comparisons as blocked.
 If current source already fixes the report, identify the existing correction
 through before/after evidence rather than introducing speculative code.
 
