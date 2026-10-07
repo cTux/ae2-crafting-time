@@ -34,7 +34,7 @@ class CraftConfirmTableRendererMixinTest {
                 var method = CraftConfirmTableRendererMixin.class.getDeclaredMethod(methodName,
                         CraftingPlanSummaryEntry.class, Operation.class);
                 method.setAccessible(true);
-                for (var input : List.of(List.<Component>of(), List.of(Component.literal("first"),
+                for (var input : List.<List<Component>>of(List.of(), List.of(Component.literal("first"),
                         Component.literal("addon")))) {
                     var expected = List.copyOf(input);
                     var calls = new AtomicInteger();
