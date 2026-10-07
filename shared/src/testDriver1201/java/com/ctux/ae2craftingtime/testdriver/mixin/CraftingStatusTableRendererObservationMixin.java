@@ -3,6 +3,7 @@ package com.ctux.ae2craftingtime.testdriver.mixin;
 import appeng.client.gui.me.crafting.CraftingStatusTableRenderer;
 import appeng.menu.me.crafting.CraftingStatusEntry;
 import com.ctux.ae2craftingtime.testdriver.UiObservationStore;
+import com.ctux.ae2craftingtime.testdriver.StatusWrapperProbe;
 import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.network.chat.Component;
@@ -17,6 +18,7 @@ public abstract class CraftingStatusTableRendererObservationMixin {
     private List<Component> ae2craftingtime_test_driver$description(CraftingStatusEntry entry,
             Operation<List<Component>> original) {
         var lines = original.call(entry);
+        StatusWrapperProbe.observe((CraftingStatusTableRenderer) (Object) this, entry);
         UiObservationStore.description(entry, lines);
         return lines;
     }
