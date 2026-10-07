@@ -143,22 +143,23 @@ for its JAR.
 | `1.21.1 NeoForge` | Minecraft `[1.21.1]`, NeoForge `[21.1.1,)`, Applied Energistics 2 `[19.0.24,20.0.0)`; GuideME `[21.1.0,)` is optional for the in-game guide |
 | `26.1.2 NeoForge` | Minecraft `[26.1.2]`, NeoForge `[26.1.2.71,)`, Java `>=25`, Applied Energistics 2 `[26.1.10-beta,27.0.0)`; GuideME `[26.1.10-alpha,)` is optional for the in-game guide |
 
-### Why the 1.20.1 JARs are larger
+### Bundled MixinExtras
 
-The Fabric and Forge 1.20.1 JARs embed MixinExtras `0.5.5`; the NeoForge
-JARs use the copy included with NeoForge. Fabric keeps its own copy because
+The Fabric and Forge 1.20.1 JARs and the NeoForge 1.21.1 JAR embed MixinExtras
+`0.5.5`; NeoForge 26.1.2 uses its bundled `0.5.4` copy. Fabric keeps its own copy because
 the supported Fabric Loader minimum, `0.14.21`, predates Loader's built-in
 MixinExtras. Version `0.5.5` also prevents world-entry crashes when newer
 Fabric Mixin versions compile `Redirect.at` as an array. Forge uses the
-library's recommended Jar-in-Jar setup.
-The 1.21.1 summary hook uses `WrapOperation`, available in NeoForge `21.1.1`'s
-bundled MixinExtras `0.3.5`, so the loader floor stays unchanged.
+library's recommended Jar-in-Jar setup. NeoForge 1.21.1 also embeds the
+NeoForge flavor through Jar-in-Jar because its `21.1.1` loader floor bundles
+MixinExtras `0.3.5`, which lacks the `WrapMethod` API used by Plan and Status
+renderers. The loader floor stays unchanged.
 
 MixinExtras is intentionally not a separate player-installed dependency.
 Externalizing it would mostly move the same bytes into another JAR and add a
 missing-dependency failure point. The Fabric copy could be removed by raising
-the minimum Fabric Loader version to `0.15.0`, but Forge 1.20.1 would still
-bundle it. See the [MixinExtras setup instructions][mixinextras-setup].
+the minimum Fabric Loader version to `0.15.0`, but Forge 1.20.1 and NeoForge
+1.21.1 would still bundle it. See the [MixinExtras setup instructions][mixinextras-setup].
 
 ## Dependency and integration matrix
 

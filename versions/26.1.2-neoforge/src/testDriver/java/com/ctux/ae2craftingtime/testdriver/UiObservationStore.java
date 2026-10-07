@@ -88,12 +88,19 @@ public final class UiObservationStore {
 
     public static void description(CraftingStatusEntry entry, List<Component> components) {
         if (active != null) {
-            // The production RETURN injector may append the warning after this observer runs.
+            // The outer renderer wrapper passes the final decorated list here.
             active.descriptions.put(entry.getWhat().getId().toString(), components);
         }
     }
 
     public static void tooltip(CraftingPlanSummaryEntry entry, List<Component> components) {
+        if (active != null) {
+            active.tooltip.clear();
+            active.tooltip.addAll(observed(components, null));
+        }
+    }
+
+    public static void tooltip(CraftingStatusEntry entry, List<Component> components) {
         if (active != null) {
             active.tooltip.clear();
             active.tooltip.addAll(observed(components, null));

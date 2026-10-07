@@ -27,18 +27,18 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Mixin(CraftingStatusTableRenderer.class)
 public abstract class CraftingStatusTableRendererMixin {
-    @Inject(method = "getEntryDescription", at = @At("RETURN"), remap = false)
-    private void ae2craftingtime$appendVisibleTimeToCraft(CraftingStatusEntry entry,
-            CallbackInfoReturnable<List<Component>> cir) {
-        var lines = cir.getReturnValue();
+    @WrapMethod(method = "getEntryDescription", require = 0, remap = false)
+    private List<Component> ae2craftingtime$appendVisibleTimeToCraft(CraftingStatusEntry entry,
+            Operation<List<Component>> original) {
+        var lines = new ArrayList<>(original.call(entry));
         MutableComponent amounts = null;
         if (ClientOptionsRuntime.enabled(OptionFeature.COMPACT_STATUS_AMOUNTS)) {
             var key = entry.getWhat();
@@ -55,29 +55,32 @@ public abstract class CraftingStatusTableRendererMixin {
                     ClientOptionsRuntime.current());
         }
         if (amounts != null || lines.size() > beforeTtc) IntegrationLog.observe("ae2craftingtime", "status-row");
+        return lines;
     }
 
-    @Inject(method = "getEntryTooltip", at = @At("RETURN"), remap = false)
-    private void ae2craftingtime$appendTooltipTimeToCraft(CraftingStatusEntry entry,
-            CallbackInfoReturnable<List<Component>> cir) {
+    @WrapMethod(method = "getEntryTooltip", require = 0, remap = false)
+    private List<Component> ae2craftingtime$appendTooltipTimeToCraft(CraftingStatusEntry entry,
+            Operation<List<Component>> original) {
+        var lines = new ArrayList<>(original.call(entry));
         if (ClientOptionsRuntime.enabled(OptionFeature.COMPACT_STATUS_AMOUNTS)
                 && (entry.getStoredAmount() > 0 || entry.getActiveAmount() > 0 || entry.getPendingAmount() > 0)) {
-            cir.getReturnValue().add(TtcText.statusAmountsLegend());
+            lines.add(TtcText.statusAmountsLegend());
         }
-        if (StatsNetwork.selectedSuspended()) return;
-        ae2craftingtime$appendTooltip(cir.getReturnValue(), entry.getActiveAmount(), entry.getPendingAmount(),
+        if (StatsNetwork.selectedSuspended()) return lines;
+        ae2craftingtime$appendTooltip(lines, entry.getActiveAmount(), entry.getPendingAmount(),
                 ae2craftingtime$noSpace(entry), ae2craftingtime$blockReason(entry),
                 () -> (ClientOptionsRuntime.enabled(OptionFeature.DETAILED_TOOLTIPS)
                         || ClientOptionsRuntime.enabled(OptionFeature.CHANCE_OUTPUT_STATUS)
                         && ClientStats.chanceOutput(ProfilerBridge.key(entry.getWhat())).isPresent())
-                        && ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue()));
+                        && ae2craftingtime$appendStatsTooltip(entry, lines));
         var reason = ae2craftingtime$blockReason(entry);
         if (reason != null && ClientOptionsRuntime.enabled(OptionFeature.statusFor(reason))
                 && ClientOptionsRuntime.enabled(OptionFeature.CHANCE_OUTPUT_STATUS)) {
             ClientStats.chanceOutput(ProfilerBridge.key(entry.getWhat())).ifPresent(chance ->
-                    cir.getReturnValue().add(Component.translatable("text.ae2craftingtime.chance_output.context",
+                    lines.add(Component.translatable("text.ae2craftingtime.chance_output.context",
                             java.math.BigDecimal.valueOf(chance, 2).stripTrailingZeros().toPlainString())));
         }
+        return lines;
     }
 
     private static MutableComponent ae2craftingtime$compactAmounts(List<Component> lines, long stored, String storedText,

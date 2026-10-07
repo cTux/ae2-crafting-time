@@ -20,9 +20,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
 
+import java.util.ArrayList;
 import java.util.List;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
@@ -41,10 +41,10 @@ public abstract class CraftConfirmTableRendererMixin {
                 ? TtcText.recurrent(arguments) : original.call(text, arguments);
     }
 
-    @Inject(method = "getEntryDescription", at = @At("RETURN"), remap = false)
-    private void ae2craftingtime$appendVisibleTimeToCraft(CraftingPlanSummaryEntry entry,
-            CallbackInfoReturnable<List<Component>> cir) {
-        var lines = cir.getReturnValue();
+    @WrapMethod(method = "getEntryDescription", require = 0, remap = false)
+    private List<Component> ae2craftingtime$appendVisibleTimeToCraft(CraftingPlanSummaryEntry entry,
+            Operation<List<Component>> original) {
+        var lines = new ArrayList<>(original.call(entry));
         var before = lines.size();
         MutableComponent amounts = null;
         if (ClientOptionsRuntime.enabled(OptionFeature.COMPACT_STATUS_AMOUNTS)) {
@@ -64,37 +64,40 @@ public abstract class CraftConfirmTableRendererMixin {
             RowTextColor.amounts(amounts, status, ClientOptionsRuntime.current());
         }
         IntegrationLog.growth("plan-row", before, lines.size());
+        return lines;
     }
 
-    @Inject(method = "getEntryTooltip", at = @At("RETURN"), remap = false)
-    private void ae2craftingtime$appendTooltipTimeToCraft(CraftingPlanSummaryEntry entry,
-            CallbackInfoReturnable<List<Component>> cir) {
+    @WrapMethod(method = "getEntryTooltip", require = 0, remap = false)
+    private List<Component> ae2craftingtime$appendTooltipTimeToCraft(CraftingPlanSummaryEntry entry,
+            Operation<List<Component>> original) {
+        var lines = new ArrayList<>(original.call(entry));
         if (ClientOptionsRuntime.enabled(OptionFeature.COMPACT_STATUS_AMOUNTS)
                 && (entry.getStoredAmount() > 0 || entry.getCraftAmount() > 0)) {
-            cir.getReturnValue().add(TtcText.planAmountsLegend());
+            lines.add(TtcText.planAmountsLegend());
         }
         if (ae2craftingtime$showStoredVariant(entry)) {
-            cir.getReturnValue().addAll(TtcText.storedVariantHints());
+            lines.addAll(TtcText.storedVariantHints());
         }
         if (entry.getMissingAmount() > 0 && ((RecurrentPlanEntry) entry).ae2craftingtime$recurrent()
                 && ClientOptionsRuntime.enabled(OptionFeature.RECURRENT_STATUS)
                 && ClientOptionsRuntime.profilingEnabled()) {
-            cir.getReturnValue().add(TtcText.recurrentHint());
+            lines.add(TtcText.recurrentHint());
         }
         if (entry.getCraftAmount() <= 0) {
-            return;
+            return lines;
         }
 
         if (ClientOptionsRuntime.enabled(OptionFeature.DETAILED_TOOLTIPS)) {
-            ae2craftingtime$appendStatsTooltip(entry, cir.getReturnValue());
+            ae2craftingtime$appendStatsTooltip(entry, lines);
         }
         if (ClientOptionsRuntime.enabled(OptionFeature.CONTROL_HINTS)) {
             if (ClientOptionsRuntime.enabled(OptionFeature.TTC_DETAILS_CLICK))
-                cir.getReturnValue().add(TtcText.detailsHint().withStyle(ChatFormatting.GRAY));
+                lines.add(TtcText.detailsHint().withStyle(ChatFormatting.GRAY));
             if (ClientOptionsRuntime.enabled(OptionFeature.RESET_HISTORY_CLICK))
-                cir.getReturnValue().add(TtcText.resetHint().withStyle(ChatFormatting.GRAY));
+                lines.add(TtcText.resetHint().withStyle(ChatFormatting.GRAY));
         }
         IntegrationLog.observe("ae2craftingtime", "plan-tooltip");
+        return lines;
     }
 
     private static boolean ae2craftingtime$showStoredVariant(CraftingPlanSummaryEntry entry) {

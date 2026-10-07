@@ -3,17 +3,69 @@ package com.ctux.ae2craftingtime.mc1201.mixin;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 
 import appeng.core.localization.GuiText;
+import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
+import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
 import com.ctux.ae2craftingtime.mc1201.PlanAmountLines;
+import com.ctux.ae2craftingtime.mc1201.RecurrentPlanEntry;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import org.junit.jupiter.api.Test;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 
 class CraftConfirmTableRendererMixinTest {
+    @Test
+    void wrapsOriginalOnceAndCopiesImmutableRowsWithoutChangingDisabledContent() throws ReflectiveOperationException {
+        var support = ClientOptionsRuntime.class.getDeclaredMethod("setConnectionSupportForTests", BooleanSupplier.class);
+        support.setAccessible(true);
+        support.invoke(null, (BooleanSupplier) () -> false);
+        try {
+            var renderer = new CraftConfirmTableRendererMixin() { };
+            var entry = new EmptyEntry();
+            for (var methodName : List.of("ae2craftingtime$appendVisibleTimeToCraft",
+                    "ae2craftingtime$appendTooltipTimeToCraft")) {
+                var method = CraftConfirmTableRendererMixin.class.getDeclaredMethod(methodName,
+                        CraftingPlanSummaryEntry.class, Operation.class);
+                method.setAccessible(true);
+                for (var input : List.of(List.<Component>of(), List.of(Component.literal("first"),
+                        Component.literal("addon")))) {
+                    var expected = List.copyOf(input);
+                    var calls = new AtomicInteger();
+                    Operation<List<Component>> original = args -> {
+                        calls.incrementAndGet();
+                        assertEquals(entry, args[0]);
+                        return input;
+                    };
+                    @SuppressWarnings("unchecked")
+                    var result = (List<Component>) method.invoke(renderer, entry, original);
+                    assertEquals(1, calls.get());
+                    assertNotSame(input, result);
+                    assertEquals(input, result);
+                    result.add(Component.literal("new"));
+                    assertEquals(input.size() + 1, result.size());
+                    assertEquals(expected, input);
+                }
+            }
+        } finally {
+            support.invoke(null, new Object[] {null});
+        }
+    }
+
+    private static final class EmptyEntry extends CraftingPlanSummaryEntry implements RecurrentPlanEntry {
+        private EmptyEntry() { super(null, 0, 0, 0); }
+        public boolean ae2craftingtime$recurrent() { return false; }
+        public void ae2craftingtime$recurrent(boolean value) { }
+        public boolean ae2craftingtime$storedVariant() { return false; }
+        public void ae2craftingtime$storedVariant(boolean value) { }
+    }
+
     @Test
     void compactsNativeAmountsAndPreservesMissingAndForeignLines() {
         var missing = GuiText.Missing.text("5");
