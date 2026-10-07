@@ -220,10 +220,12 @@ Qualify official Data Energistics 3.3.4 separately from the original 3.2.2.
 The existing upstream-derived Thunderbolt DEV artifact and any independently
 reviewed Architectury DEV correction remain disposable prerequisites, never
 official releases or changes to the managed pack. Record every replacement,
-source revision, artifact hash, dependency and configuration difference.
-Verify finite/infinite CPU storage in both rows and tooltips, ordinary CPU
-behavior, remaining Status controls and settings persistence before considering
-a clean full-suite run. Preserve blocked historical comparisons explicitly.
+source revision, artifact hash, dependency and configuration difference. Use
+existing fixtures for ordinary native CPU rows/tooltips, Status controls and
+settings persistence. Inspect finite/infinite Data and Thunderbolt formatting
+handlers statically; no prepared native Trinity CPU fixture exists. Record native
+Trinity storage rows, tooltips, hit-testing and crafting behavior as unverified.
+Preserve blocked historical comparisons explicitly.
 
 ## Not included
 

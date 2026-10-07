@@ -323,8 +323,8 @@ its VMX is absent from `vmrun -T ws list`, including after a failed campaign.
 
 The renderer correction is merged in PR #669. Preserve its existing verification;
 do not repeat all four client targets for dependency-only investigation.
-Original AJ-04 remains blocked until its exact graph's prerequisites are
-officially resolved; qualified-graph results cannot replace it or close #534.
+See the canonical [AJ-04 status and acceptance boundary](spec.md#remaining-prerequisite-qualification).
+Qualified-graph results cannot replace original-graph acceptance.
 
 1. **AJ-01/02:** acquire official Data 3.3.4 only for disposable qualification,
    verify its advertised SHA-256
@@ -342,13 +342,19 @@ officially resolved; qualified-graph results cannot replace it or close #534.
 3. **AJ-02/03:** use existing controlled-case fixtures and launch/watch helpers
    for Core settings persistence, Data Status, Omni Status and Both Status.
    Pass `statusRelaunch=true` for both persistence phases. Verify ordinary and
-   addon finite/infinite CPU row/tooltip values, final TTC results, and reviewed
-   images. A new Data version invalidates affected prior graph evidence.
-4. **AJ-03/04:** only after prerequisite and controlled gates pass, select the
-   existing 29-case full suite on the explicitly identified qualification graph,
-   preserving all unrelated mods. Start from clean fixture state and record all
-   assertions, screenshots, timings and failures. This remains additional
-   evidence, not an original AJ-04 pass. Keep historical unavailability explicit.
+   native CPU row/tooltip values, final TTC results, and reviewed images. Inspect
+   finite/infinite Data and Thunderbolt formatting handlers statically. No
+   prepared native Trinity CPU fixture exists, so native Trinity rows, tooltips,
+   hit-testing and crafting remain unverified; do not claim them as runtime
+   passes. A new Data version invalidates affected prior graph evidence.
+4. **AJ-03/04:** only after prerequisite and controlled gates pass, expand the
+   suite with `scripts/expand-ui-smoke-groups.ps1` for the exact target and record
+   the selected eligible case count after installed-graph filtering. The current
+   29 selector entries expand to 38 leaves on `1.21.1-neoforge`; the filtered
+   qualification run may select fewer. Preserve all unrelated mods. Start from
+   clean fixture state and record assertions, screenshots, timings and failures.
+   Qualified-graph results cannot replace original-graph acceptance. Keep
+   historical unavailability explicit.
 5. **AJ-01/05:** reconcile graph/artifact identities and remaining blocked
    criteria, preserve originals, and verify CodexVM shutdown. No completion
    claim while original AJ-04 or another mandatory gate remains unsatisfied.

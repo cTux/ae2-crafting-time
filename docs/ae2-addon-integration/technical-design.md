@@ -398,8 +398,8 @@ See the [scope and acceptance](spec.md#applied-journey-investigation) and
 [archive boundary](applied-journey.md). The historical report has no retained
 UI reproduction. The resumed graph has a confirmed Plan composition
 obstruction, but its contribution to every reported missing row remains
-unverified. PR #669 delivered the renderer correction described below; full-pack
-acceptance has not been established.
+unverified. PR #669 delivered the renderer correction described below. See the
+canonical [AJ-04 status and acceptance boundary](spec.md#remaining-prerequisite-qualification).
 
 The retained transformed Plan class has SHA-256
 `940E4D3E55FE1D0CF3CCF2B4C6EBEEB696658E871C0AB9210648E0E83C4ED67A`. Its
@@ -525,8 +525,10 @@ Thunderbolt's upstream
 makes only the obsolete injection optional. Its existing `TooltipsByteAmountMixin`
 handles `getByteAmount(Long.MAX_VALUE)`; AE2 rows call that method and tooltip
 `ofBytes` delegates to it. Thus both storage paths remain covered statically.
-The existing one-class DEV replacement needs runtime finite/infinite checks;
-no released Thunderbolt correction was located in the continuation investigation.
+The existing one-class DEV replacement has static finite/infinite handler
+coverage through these methods; no released Thunderbolt correction was located
+in the continuation investigation. No prepared native Trinity CPU fixture exists,
+so native Trinity row, tooltip, hit-test and crafting behavior remain unverified.
 
 Architectury 13.0.11 `EventFactory.EventImpl` passes its mutable `ArrayList` to
 event dispatch. Registration, removal and clearing can invalidate its iterator;
@@ -558,9 +560,9 @@ Retain Architectury's LGPL notices and the exact corresponding source as a
 sidecar with any diagnostic artifact; do not publish or install it in the
 managed pack as part of this qualification.
 
-Original AJ-04 remains blocked. Official Data plus DEV prerequisites define a
-separate qualification graph, preserving all unrelated original mods including
-OC2; even a clean pass there cannot close #534 or establish an original-pack pass.
+See the canonical [AJ-04 status and acceptance boundary](spec.md#remaining-prerequisite-qualification).
+Official Data plus DEV prerequisites define a separate qualification graph,
+preserving all unrelated original mods including OC2.
 
 ## Development-client profiles
 
