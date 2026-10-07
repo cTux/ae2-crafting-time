@@ -319,6 +319,47 @@ and source. Collect timings and failures per actual run, close only the tested
 client, and cleanly shut down CodexVM after immediate visual follow-up. Verify
 its VMX is absent from `vmrun -T ws list`, including after a failed campaign.
 
+## Applied Journey continuation gates
+
+The renderer correction is merged in PR #669. Preserve its existing verification;
+do not repeat all four client targets for dependency-only investigation.
+Original AJ-04 remains blocked until its exact graph's prerequisites are
+officially resolved; qualified-graph results cannot replace it or close #534.
+
+1. **AJ-01/02:** acquire official Data 3.3.4 only for disposable qualification,
+   verify its advertised SHA-256
+   `69441bd856d427354f33ee16ca8ee7a1a4c15cd1691419e3c907bc1b4893f6cf`,
+   actual mod/nested metadata and all present dependency ranges. Rehash the
+   retained one-class Thunderbolt DEV artifact against its receipt. Keep the
+   managed 196-JAR graph and historical export unchanged.
+2. **AJ-02/05:** run the standalone Architectury diagnostic described in the
+   design against original 13.0.11, then any exact reviewed candidate. Prove
+   callback registration/removal/clear, cached and single-listener behavior,
+   latch-controlled mutation, non-null concurrent invokers and dispatch outside
+   the lock. Identify source/dependency closure before compiling; use no foreign
+   Gradle build or new runner framework. Independently review evidence and the
+   exact DEV class delta before guest installation. Retain unknown writer identity.
+3. **AJ-02/03:** use existing controlled-case fixtures and launch/watch helpers
+   for Core settings persistence, Data Status, Omni Status and Both Status.
+   Pass `statusRelaunch=true` for both persistence phases. Verify ordinary and
+   addon finite/infinite CPU row/tooltip values, final TTC results, and reviewed
+   images. A new Data version invalidates affected prior graph evidence.
+4. **AJ-03/04:** only after prerequisite and controlled gates pass, select the
+   existing 29-case full suite on the explicitly identified qualification graph,
+   preserving all unrelated mods. Start from clean fixture state and record all
+   assertions, screenshots, timings and failures. This remains additional
+   evidence, not an original AJ-04 pass. Keep historical unavailability explicit.
+5. **AJ-01/05:** reconcile graph/artifact identities and remaining blocked
+   criteria, preserve originals, and verify CodexVM shutdown. No completion
+   claim while original AJ-04 or another mandatory gate remains unsatisfied.
+
+Plan approximately 90 minutes for remaining qualification, subject to measured
+progress: successful cold starts previously cost roughly 1.5–5 minutes, and
+eight controlled Status/persistence launches alone can cost 20–40 minutes.
+Record a separate full-suite wall budget after selection. Use one bounded
+startup diagnostic with a stop-on-unchanged-failure rule; do not debug by repeated
+full-pack launches. The budget is an estimate, not permission to omit acceptance.
+
 ## Final compatibility sweep
 
 - Run required CI for every changed supported row.

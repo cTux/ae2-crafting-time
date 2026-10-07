@@ -206,6 +206,25 @@ AJ-05 covers original-call count, immutable input, preserved content/order,
 disabled and empty results, remapped targets, runtime dependency selection,
 and client startup on every affected target.
 
+### Remaining prerequisite qualification
+
+[PR #669](https://github.com/cTux/ae2-crafting-time/pull/669) delivered the
+renderer composition correction. The original resumed graph still cannot pass
+Status with Data Energistics 3.2.2 and Thunderbolt 2.0.0 on AE2 19.2.18, and
+full-pack startup has an intermittent Architectury event-list failure.
+AJ-04 remains **blocked** until the exact original graph's prerequisites are
+officially resolved. A corrected prerequisite graph supplies additional
+diagnostic evidence; it cannot replace the original graph's pass or close #534.
+
+Qualify official Data Energistics 3.3.4 separately from the original 3.2.2.
+The existing upstream-derived Thunderbolt DEV artifact and any independently
+reviewed Architectury DEV correction remain disposable prerequisites, never
+official releases or changes to the managed pack. Record every replacement,
+source revision, artifact hash, dependency and configuration difference.
+Verify finite/infinite CPU storage in both rows and tooltips, ordinary CPU
+behavior, remaining Status controls and settings persistence before considering
+a clean full-suite run. Preserve blocked historical comparisons explicitly.
+
 ## Not included
 
 - Guessing addon crafting methods from discovered `ICraftingCPU` classes.

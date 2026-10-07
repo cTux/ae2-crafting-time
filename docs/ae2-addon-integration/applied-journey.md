@@ -140,6 +140,32 @@ reported blocker, not permission to call a reduced graph a full-pack pass.
 
 ## Completion evidence
 
+### Continuation after partial renderer delivery
+
+[PR #669](https://github.com/cTux/ae2-crafting-time/pull/669) merged the renderer
+composition correction as `dd535d61c0e3fa82a100acc883fbf9e4df5270f3`, with the
+same source tree as tested `17d7561e30fa3945dfd9eec4c5d226fc6721edf2`.
+Five controlled Plan graphs passed; original-pack acceptance remains incomplete.
+Core Status controls passed without its separate persistence check, Data Status
+hit its required missing `formatStorage` target, and Omni/Both Status remain
+unverified. A disposable full graph with the one-class Thunderbolt DEV correction
+passed Plan, then its Status startup crashed in Architectury event dispatch.
+
+Qualify official Data 3.3.4 and the retained upstream-derived Thunderbolt DEV
+separately, following the [continuation gates](implementation-plan.md#applied-journey-continuation-gates).
+Prove the Architectury collection mechanism deterministically before reviewing
+any disposable correction; the listener-list writer remains unknown. Review
+finite/infinite storage rows and tooltips as well as TTC Status/persistence.
+Retain every replacement hash and source revision. This changes the diagnostic
+graph, not the managed pack or historical baseline.
+
+Original **AJ-04 remains blocked** until the exact original graph's prerequisites
+are officially resolved. A qualified graph, including a full-suite pass, is
+additional evidence only and cannot close #534 or replace original acceptance.
+Historical NeoForge 21.1.249 evidence remains separately unavailable/unverified.
+
+### Required final record
+
 Record the tested commit, dependency graph, configuration, logs, and reviewed
 screenshots for the failing baseline and corrected case. Ordinary CPU estimates
 and controls must work with and without the implicated addons on NeoForge
