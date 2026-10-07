@@ -246,16 +246,20 @@ specific, reproduced contract gap.
 
 Use the [scoped criteria](spec.md#applied-journey-investigation) and
 [design](technical-design.md#applied-journey-investigation). The primary target
-is `1.21.1-neoforge`, Applied Journey 0.0.1, NeoForge 21.1.249, in Prism's Codex
-group. Required verification of other rows follows the eventual changed code;
+is `1.21.1-neoforge`, Applied Journey 0.0.1, NeoForge 21.1.252, in Prism's Codex
+group, using the newer supplied archive identified in the investigation guide.
+Retain the historical 21.1.249/200-entry export as a separate comparison;
+mark it blocked if unavailable. Required verification of other rows follows
+the eventual changed code;
 this investigation does not require an unrelated four-target full smoke.
 
 1. **AJ-01, preflight:** verify the supplied archive hash, install the exact
    export through Prism if absent, and inventory enabled/nested JAR metadata
    and overrides. Verify Java 21, guest-local staging, source fixture marker,
    and session worktree share. Build on the host after the PR exists, following
-   repository ordering. Preserve the original Crafting Time artifact for its
-   historical baseline and hash the replacement production/driver pair.
+   repository ordering. Identify the historical Crafting Time artifact
+   separately from the resumed graph's installed 1.2.12 baseline, and hash
+   the replacement production/driver pair.
 2. **AJ-01/02, reproduce:** capture ordinary Plan and Status behavior in the
    exact pack, including options, channel support, selected/observed hooks,
    logs and screenshots. Compare the same craft and settings in the five

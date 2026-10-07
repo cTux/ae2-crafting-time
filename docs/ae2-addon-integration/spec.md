@@ -166,8 +166,12 @@ not add new AE2 majors or combine different Minecraft builds into one JAR.
 Status: in-progress
 
 Scope: Diagnose the reported missing native AE2 UI and complete a full smoke
-against the supplied Applied Journey 0.0.1 export on Minecraft 1.21.1,
-NeoForge 21.1.249.
+against the supplied Applied Journey 0.0.1 exports on Minecraft 1.21.1.
+The resumed full-pack target is NeoForge 21.1.252 (197 manifest entries);
+retain NeoForge 21.1.249 (200 entries) as the historical reproduction boundary.
+Archive identities and baseline artifacts are recorded in the
+[investigation guide](applied-journey.md#reproduction-boundary). AJ-01 through
+AJ-05 remain unchanged; unavailable historical comparisons must be explicit.
 
 Issue: [#534](https://github.com/cTux/ae2-crafting-time/issues/534).
 
