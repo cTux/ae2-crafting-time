@@ -324,14 +324,17 @@ its VMX is absent from `vmrun -T ws list`, including after a failed campaign.
 The renderer correction is merged in PR #669. Preserve its existing verification;
 do not repeat all four client targets for dependency-only investigation.
 See the canonical [AJ-04 status and acceptance boundary](spec.md#remaining-prerequisite-qualification).
-Qualified-graph results cannot replace original-graph acceptance.
+Only a fully identified full-pack graph with official compatible releases can
+satisfy AJ-04. Reduced graphs and unpublished DEV prerequisites are diagnostic
+evidence only.
 
-1. **AJ-01/02:** acquire official Data 3.3.4 only for disposable qualification,
-   verify its advertised SHA-256
-   `69441bd856d427354f33ee16ca8ee7a1a4c15cd1691419e3c907bc1b4893f6cf`,
-   actual mod/nested metadata and all present dependency ranges. Rehash the
-   retained one-class Thunderbolt DEV artifact against its receipt. Keep the
-   managed 196-JAR graph and historical export unchanged.
+1. **AJ-01/02:** qualify official Data releases against the full installed
+   dependency closure. Data 3.3.4's published minimum JEI 19.56.0.438 exceeds the
+   supplied graph's JEI 19.54.0.427; do not call it full-pack compatible without
+   a verified official closure. For any selected artifact, verify its advertised
+   SHA-256, nested metadata and all present dependency ranges. Rehash the retained
+   one-class Thunderbolt DEV artifact for diagnostic use only. Keep the managed
+   196-JAR graph and historical export unchanged.
 2. **AJ-02/05:** run the standalone Architectury diagnostic described in the
    design against original 13.0.11, then any exact reviewed candidate. Prove
    callback registration/removal/clear, cached and single-listener behavior,
@@ -347,17 +350,20 @@ Qualified-graph results cannot replace original-graph acceptance.
    prepared native Trinity CPU fixture exists, so native Trinity rows, tooltips,
    hit-testing and crafting remain unverified; do not claim them as runtime
    passes. A new Data version invalidates affected prior graph evidence.
-4. **AJ-03/04:** only after prerequisite and controlled gates pass, expand the
+4. **AJ-03/04:** only after prerequisites and controlled gates pass, expand the
    suite with `scripts/expand-ui-smoke-groups.ps1` for the exact target and record
    the selected eligible case count after installed-graph filtering. The current
    29 selector entries expand to 38 leaves on `1.21.1-neoforge`; the filtered
-   qualification run may select fewer. Preserve all unrelated mods. Start from
-   clean fixture state and record assertions, screenshots, timings and failures.
-   Qualified-graph results cannot replace original-graph acceptance. Keep
-   historical unavailability explicit.
+   qualification run may select fewer. Preserve every unrelated mod and use only
+   official compatible dependency replacements on the full-pack acceptance
+   graph. Start clean and record assertions, screenshots, timings and failures.
+   Reduced graphs and unpublished DEV prerequisites remain diagnostic only.
+   Keep the original incompatible graph as a blocked baseline comparison and
+   retain historical unavailability explicitly.
 5. **AJ-01/05:** reconcile graph/artifact identities and remaining blocked
    criteria, preserve originals, and verify CodexVM shutdown. No completion
-   claim while original AJ-04 or another mandatory gate remains unsatisfied.
+   claim until an official full-pack graph passes AJ-04 and every other mandatory
+   gate is satisfied.
 
 Plan approximately 90 minutes for remaining qualification, subject to measured
 progress: successful cold starts previously cost roughly 1.5–5 minutes, and

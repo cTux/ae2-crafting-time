@@ -152,16 +152,19 @@ hit its required missing `formatStorage` target, and Omni/Both Status remain
 unverified. A disposable full graph with the one-class Thunderbolt DEV correction
 passed Plan, then its Status startup crashed in Architectury event dispatch.
 
-Qualify official Data 3.3.4 and the retained upstream-derived Thunderbolt DEV
-separately, following the [continuation gates](implementation-plan.md#applied-journey-continuation-gates).
-Prove the Architectury collection mechanism deterministically before reviewing
-any disposable correction; the listener-list writer remains unknown. Use
+Identify official compatible Data and Thunderbolt releases for a full-pack
+acceptance graph, following the [continuation gates](implementation-plan.md#applied-journey-continuation-gates).
+Data 3.3.4's published JEI floor exceeds the supplied graph's installed version,
+so its dependency closure needs review. Prove the Architectury collection
+mechanism deterministically before reviewing any disposable correction; the
+listener-list writer remains unknown. Use
 existing fixtures for ordinary native CPU rows, tooltips, controls and settings
 persistence. Inspect finite/infinite Data and Thunderbolt formatting handlers
 statically; native Trinity row, tooltip, hit-test and crafting behavior remain
 unverified without a prepared fixture. Retain every replacement hash and source
-revision. This changes the diagnostic graph, not the managed pack or historical
-baseline. See the canonical [AJ-04 status and acceptance
+revision. Keep the managed pack and blocked original graph as the baseline. DEV
+prerequisites are diagnostic only; only an official compatible full-pack graph
+may meet AJ-04 as described in the canonical [status and acceptance
 boundary](spec.md#remaining-prerequisite-qualification).
 Historical NeoForge 21.1.249 evidence remains separately unavailable/unverified.
 

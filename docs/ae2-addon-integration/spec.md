@@ -197,7 +197,7 @@ Collecting Data when enabled. Intentionally disabled features remain off.
 | AJ-01 | Bind the historical and current-source runs to the archive, loaded JAR graph including bundled/nested mods, configuration and artifact hashes; record exact missing UI or a non-reproduction. |
 | AJ-02 | Compare a consistent ordinary CPU craft in core-only, Data Energistics, OmniSequence plus required dependencies, both addons, and full-pack graphs. Distinguish channel/options, renderer and profiling causes; record blocked graphs explicitly. |
 | AJ-03 | On the corrected or already-correct source, ordinary Plan/Status rows, tooltips, sort/details/reset controls, totals, real output and completion profiling pass the standard cases; no-history and disabled-profiling behavior remain correct. |
-| AJ-04 | The exact full pack passes all applicable standard, installed integration and general status cases, with reviewed screenshots and assertions. List absent/unsupported cases; a reduced graph or startup-only result cannot pass. |
+| AJ-04 | An explicitly identified full-pack graph passes all applicable standard, installed integration and general Status cases, with reviewed screenshots and assertions. Preserve the pack identity, Minecraft/loader and every unrelated installed mod; only official compatible releases may replace incompatible projects or dependencies. Record each changed version, hash and dependency closure. Keep the original incompatible graph as a blocked baseline comparison: it need not pass again and its failure is never a pass. Reduced graphs and unpublished DEV prerequisites are diagnostic evidence only; startup alone cannot pass. |
 | AJ-05 | Any source change has required coverage and checks on affected targets. Presentation wrappers use `require = 0` and `remap = false`, and verify the remapped production target plus client startup on `1.20.1-forge`, `1.20.1-fabric`, `1.21.1-neoforge`, and `26.1.2-neoforge`. Evidence identifies the tested revision, final graph and cleanup. |
 
 The intended composition behavior and target-specific runtime requirements are
@@ -209,23 +209,34 @@ and client startup on every affected target.
 ### Remaining prerequisite qualification
 
 [PR #669](https://github.com/cTux/ae2-crafting-time/pull/669) delivered the
-renderer composition correction. The original resumed graph still cannot pass
-Status with Data Energistics 3.2.2 and Thunderbolt 2.0.0 on AE2 19.2.18, and
-full-pack startup has an intermittent Architectury event-list failure.
-AJ-04 remains **blocked** until the exact original graph's prerequisites are
-officially resolved. A corrected prerequisite graph supplies additional
-diagnostic evidence; it cannot replace the original graph's pass or close #534.
+renderer composition correction. The original resumed graph is a blocked
+baseline: Data Energistics 3.2.2 and Thunderbolt 2.0.0 target the absent
+`formatStorage` method on AE2 19.2.18, and full-pack startup has an intermittent
+Architectury event-list failure. Retain that baseline and its failures; do not
+call it a pass or require it to pass again.
 
-Qualify official Data Energistics 3.3.4 separately from the original 3.2.2.
-The existing upstream-derived Thunderbolt DEV artifact and any independently
-reviewed Architectury DEV correction remain disposable prerequisites, never
-official releases or changes to the managed pack. Record every replacement,
-source revision, artifact hash, dependency and configuration difference. Use
+AJ-04 remains **blocked** until an explicitly identified full-pack graph passes
+the criteria above. It may use official compatible replacements for the
+incompatible installed projects and their dependency closure while preserving
+the pack identity, Minecraft/loader and every unrelated mod. Reduced graphs and
+unpublished DEV prerequisites remain diagnostic evidence only; they cannot
+satisfy AJ-04.
+
+Qualify official Data Energistics replacements separately from the original
+3.2.2. Data 3.3.4 contains the source correction, but its published metadata
+requires JEI 19.56.0.438 or newer while the supplied graph has JEI 19.54.0.427;
+verify a compatible official dependency closure before using it in a full-pack
+candidate. The existing upstream-derived Thunderbolt DEV artifact and any
+independently reviewed Architectury DEV correction remain disposable diagnostic
+prerequisites, never acceptance-graph replacements. Record every candidate
+version, source revision, artifact hash, dependency and configuration difference. Use
 existing fixtures for ordinary native CPU rows/tooltips, Status controls and
 settings persistence. Inspect finite/infinite Data and Thunderbolt formatting
 handlers statically; no prepared native Trinity CPU fixture exists. Record native
 Trinity storage rows, tooltips, hit-testing and crafting behavior as unverified.
-Preserve blocked historical comparisons explicitly.
+For AJ-04, test a clean full-pack graph using official compatible releases and
+the existing acceptance suite; all unpublished DEV graph results stay
+diagnostic. Preserve blocked historical comparisons explicitly.
 
 ## Not included
 

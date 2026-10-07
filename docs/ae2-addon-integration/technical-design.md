@@ -516,8 +516,10 @@ contains the correction from
 [`00a16497`](https://github.com/ModularMCLib/DataEnergistics/commit/00a16497d09ebc38372aef9b60f3ed21bbabe67f):
 it formats the actual `drawBackgroundLayer` byte-amount expression and handles
 `getTooltip` byte/processor values separately. Source dependency minima fit
-AE2 19.2.18, NeoForge 21.1.252 and installed LDLib 2.2.41; actual published
-metadata and every present optional dependency still require inspection.
+AE2 19.2.18, NeoForge 21.1.252 and installed LDLib 2.2.41; published metadata
+requires JEI 19.56.0.438, above the supplied graph's 19.54.0.427. Verify an
+official compatible dependency closure before selecting this artifact for
+full-pack acceptance.
 Disabling the obsolete Data hook alone would not preserve its intended labels.
 
 Thunderbolt's upstream
@@ -561,8 +563,9 @@ sidecar with any diagnostic artifact; do not publish or install it in the
 managed pack as part of this qualification.
 
 See the canonical [AJ-04 status and acceptance boundary](spec.md#remaining-prerequisite-qualification).
-Official Data plus DEV prerequisites define a separate qualification graph,
-preserving all unrelated original mods including OC2.
+The original graph remains a blocked baseline. Unpublished DEV prerequisites
+are diagnostic only; an acceptance candidate must use official compatible
+replacements and preserve every unrelated mod, including OC2.
 
 ## Development-client profiles
 
