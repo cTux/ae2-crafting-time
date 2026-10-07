@@ -266,23 +266,51 @@ this investigation does not require an unrelated four-target full smoke.
    graphs defined in the investigation guide. Include each addon's required
    dependencies and record graph differences. Keep hypotheses separate from
    findings; report a blocked graph without substituting another version.
-3. **AJ-03/05, correct:** update this design with the confirmed cause and exact
-   affected code before editing behavior. Fix the smallest shared seam and
-   cover changed decisions through existing tests. If the historical artifact
-   fails but current source passes, record the existing correction and its
-   evidence. For an external defect, retain a minimal reproducer and follow-up.
-4. **AJ-03/04, full smoke:** expand `standard-ae2` from
+3. **AJ-03/05, correct:** update the design with the transformed Plan method
+   ordering and its limits before editing behavior. Wrap the shared Plan and
+   Status description/tooltip methods: call the original exactly once, copy
+   the returned list to a mutable list, apply existing TTC decorations, and
+   return the result. Set `require = 0` and `remap = false`. Preserve
+   native/addon content and all original return paths; disabled features add
+   no lines. Keep the test-driver observation
+   outside the production wrapper so it captures the final result, including
+   the separate 26.1.2 Status observer. Add focused tests for immutable input,
+   content/order preservation, disabled and empty results, and original-call
+   count. Do not introduce a new helper abstraction unless these methods cannot
+   share the existing decoration code safely.
+4. **AJ-02, controlled differential:** the paired removal of AppliedEnhancements
+   1.1.0 and required OmniSequence 2.0.7 passed the standard-plan-controls
+   case. That comparison alone does not identify which mod caused its result;
+   bytecode separately confirms AppliedEnhancements' early Plan return
+   cancellation. It does not prove full-pack acceptance. A second case
+   disconnected when Thunderbolt's `CPUSelectionListStorageMixin` could not
+   inject at `formatStorage` on AE2 19.2.18; case three did not run. Resolve this
+   separate target mismatch before repeating affected controls. Retain the
+   uncertainty around Thunderbolt's earlier Plan cancellation for specific
+   entries. Keep controlled graphs separate from the unchanged full-pack run.
+5. **AJ-05, dependency and target check:** the minimum supported 1.21.1 NeoForge
+   version 21.1.1 supplies MixinExtras 0.3.5, which lacks `@WrapMethod`; the
+   resumed 21.1.252 graph supplies 0.5.3, which supports it. Package
+   `io.github.llamalad7:mixinextras-neoforge` 0.5.5 using the existing
+   Jar-in-Jar pattern and verify the nested artifact, metadata, minimum loader
+   requirement, and selected runtime version. Use the NeoForge flavor, not the
+   similarly versioned Forge artifact. Check the existing 0.5.5 copies on
+   `1.20.1-forge`/`1.20.1-fabric` and the 0.5.4 copy on `26.1.2-neoforge`
+   26.1.2.71. Compile/remap the production target and start all four clients.
+   Compilation alone does not prove that the runtime selected a compatible
+   MixinExtras copy.
+6. **AJ-03/04, full smoke:** expand `standard-ae2` from
    `scripts/ui-smoke-groups.json`; select applicable installed integrations and
    general status cases from `scripts/ui-smoke-neoforge-suite.json`. Retain the
    case list and absent/unsupported reasons. Use one schema-2 suite per graph
    with pristine state between cases. Restore the exact full graph for a clean
    final run on the reviewed source; verify real crafts and review screenshots.
-5. **AJ-05, close evidence:** run checks required by the actual correction,
-   separately report current-head GitHub CI, and record artifact/revision and
-   graph identities. Any changed optional presentation mixin needs `require = 0`,
-   remapped-target verification and client startup. Update dependency claims
-   only where demonstrated. Do not mark the scope finished while required
-   graphs, full-pack cases or visual evidence are missing.
+7. **AJ-05, close evidence:** verify the production and exported driver observe
+   the final Plan/Status descriptions and tooltips in the resumed graph. Run
+   checks required by the actual correction, separately report current-head
+   GitHub CI, and record artifact, revision and graph identities. Update
+   dependency claims only where demonstrated. Do not mark the scope finished
+   while required graphs, full-pack cases or visual evidence are missing.
 
 Before runtime work, record planned launches, known cold-start cost and a
 wall-time budget. Use bounded lack-of-progress detection. Diagnostic resumes
