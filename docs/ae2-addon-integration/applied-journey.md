@@ -125,18 +125,24 @@ graph and configuration for the historical baseline; record the one Crafting
 Time artifact replacement for current-source verification. Inventory enabled
 JAR metadata, nested mods, file hashes and overrides before selecting cases.
 
-Use `prepare-ui-smoke-suite.ps1` and its `standard-ae2` expansion, plus every
-applicable installed integration and general status case from the NeoForge
-suite. Record each selected case and every absent or unsupported case with its
-reason. Do not add mods just to satisfy the prepared-client suite. Run one
-shared-world suite per installed graph, restoring fixture, player, profiler
-and client cache state between cases. Review screenshots as well as assertions;
-startup alone cannot satisfy this request.
+Run `scripts/expand-ui-smoke-groups.ps1` for the exact target, filter the
+expanded `standard-ae2` selectors against that graph, and add every applicable
+installed integration and general Status case from the NeoForge suite. Pass
+the filtered selectors to `prepare-ui-smoke-suite.ps1` to create the schema-2
+suite plan and shared world; group expansion alone does not prepare that
+fixture. Record each eligible selected case and every absent or unsupported
+case with its reason. Do not add mods just to satisfy the suite. Restore
+fixture, player, profiler and client-cache state between cases. Review
+screenshots as well as assertions; startup alone cannot satisfy this request.
 
-Keep controlled addon comparisons separate from the unchanged full graph.
-Record any temporary diagnostic mod/config change and restore the exact graph
-for the final full run. A failing dependency graph or VM prerequisite is a
-reported blocker, not permission to call a reduced graph a full-pack pass.
+Keep controlled addon comparisons separate from both full-pack graphs. Preserve
+the supplied, unchanged graph as the blocked baseline comparison; it need not
+pass again. For final acceptance, use the separately identified full-pack graph
+with official compatible replacements for the incompatible projects and their
+dependency closure, preserving pack identity, Minecraft/loader and every
+unrelated installed mod. Record diagnostic changes and restore the selected
+graph before its run. A failing baseline or VM prerequisite is a reported
+blocker, not permission to call a reduced graph a full-pack pass.
 
 ## Completion evidence
 
