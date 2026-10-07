@@ -82,7 +82,7 @@ public final class UiObservationStore {
 
     public static void description(CraftingPlanSummaryEntry entry, List<Component> components) {
         if (active != null) {
-            // Production appends TTC at the same RETURN point; observe the list after all injectors finish.
+            // The outer renderer wrapper passes the final decorated list here.
             active.planDescriptions.put(entry, components);
         }
     }
@@ -94,6 +94,13 @@ public final class UiObservationStore {
     }
 
     public static void tooltip(CraftingPlanSummaryEntry entry, List<Component> components) {
+        if (active != null) {
+            active.tooltip.clear();
+            active.tooltip.addAll(observed(components, null));
+        }
+    }
+
+    public static void tooltip(CraftingStatusEntry entry, List<Component> components) {
         if (active != null) {
             active.tooltip.clear();
             active.tooltip.addAll(observed(components, null));

@@ -3,20 +3,31 @@ package com.ctux.ae2craftingtime.testdriver.mixin;
 import appeng.client.gui.me.crafting.CraftingStatusTableRenderer;
 import appeng.menu.me.crafting.CraftingStatusEntry;
 import com.ctux.ae2craftingtime.testdriver.UiObservationStore;
+import com.ctux.ae2craftingtime.testdriver.StatusWrapperProbe;
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 
 /** Retain the mutable status description through rendering, including production warnings. */
-@Mixin(value = CraftingStatusTableRenderer.class, priority = 900)
+@Mixin(value = CraftingStatusTableRenderer.class, priority = 1100)
 public abstract class CraftingStatusTableRendererObservationMixin {
-    @Inject(method = "getEntryDescription", at = @At("RETURN"), remap = false)
-    private void ae2craftingtime_test_driver$description(CraftingStatusEntry entry,
-            CallbackInfoReturnable<List<Component>> cir) {
-        UiObservationStore.description(entry, cir.getReturnValue());
+    @WrapMethod(method = "getEntryDescription", require = 0, remap = false)
+    private List<Component> ae2craftingtime_test_driver$description(CraftingStatusEntry entry,
+            Operation<List<Component>> original) {
+        var lines = original.call(entry);
+        StatusWrapperProbe.observe((CraftingStatusTableRenderer) (Object) this, entry);
+        UiObservationStore.description(entry, lines);
+        return lines;
+    }
+
+    @WrapMethod(method = "getEntryTooltip", require = 0, remap = false)
+    private List<Component> ae2craftingtime_test_driver$tooltip(CraftingStatusEntry entry,
+            Operation<List<Component>> original) {
+        var lines = original.call(entry);
+        UiObservationStore.tooltip(entry, lines);
+        return lines;
     }
 }

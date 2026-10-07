@@ -42,7 +42,7 @@ final class StandardAe2Scenario {
                     "exact-clear", "restored-near", "neutral-normal", "variant-tooltip", "unchanged-plan",
                     "variant-sorts", "variant-layout", "exact-only", "other-item", "ordinary-clear",
                     "fluid-clear", "coexistence", "notification-lifecycle", "watcher-cleanup")),
-            Map.entry("standard-status-controls", List.of("submitted", "status", "quantity-cases", "addon-key-status", "amount-scales", "amount-options", "server-profiling-off", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout")),
+            Map.entry("standard-status-controls", List.of("submitted", "status", "status-wrapper-probe", "quantity-cases", "addon-key-status", "amount-scales", "amount-options", "server-profiling-off", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout")),
             Map.entry("waiting-status", List.of("submitted", "waiting", "first-dispatch", "recovered", "layout")),
             Map.entry("running-status", List.of("submitted", "running", "progress", "header", "layout")),
             Map.entry("cpu-list-total-ttc", CpuListTtcScenario.CHECKS),
@@ -98,6 +98,7 @@ final class StandardAe2Scenario {
             List<String> resultScreenshots) {
         if (!CHECKS.containsKey(leaf)) throw new IllegalArgumentException("Unknown standard leaf: " + leaf);
         this.leaf = leaf;
+        if (leaf.equals("standard-status-controls")) StatusWrapperProbe.arm();
         this.world = world;
         this.output = output;
         this.resultScreenshots = resultScreenshots;
@@ -1109,6 +1110,8 @@ final class StandardAe2Scenario {
             var waiting = rowText(snapshot, "minecraft:smooth_stone", "text.ae2craftingtime.waiting");
             var running = rowText(snapshot, "minecraft:stone", "text.ae2craftingtime.ttc");
             if (leaf.equals("standard-status-controls")) {
+                StatusWrapperProbe.requirePassed();
+                mark(checks, "status-wrapper-probe", true);
                 var client = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
                 client.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS, true);
                 com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(client);

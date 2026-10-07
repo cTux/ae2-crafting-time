@@ -80,6 +80,13 @@ repositories {
 }
 
 dependencies {
+    jarJar(implementation('io.github.llamalad7:mixinextras-neoforge:0.5.5')) {
+        version {
+            strictly '[0.5.5,)'
+            prefer '0.5.5'
+        }
+    }
+    additionalRuntimeClasspath 'io.github.llamalad7:mixinextras-neoforge:0.5.5'
     def ae2Group = providers.gradleProperty('runtimeAe2NeoForge1211Group').getOrElse('appeng')
     implementation "${ae2Group}:appliedenergistics2:${providers.gradleProperty('runtimeAe2NeoForge1211Version').getOrElse('19.0.24')}"
     compileOnly 'org.appliedenergistics:guideme:21.1.0'
