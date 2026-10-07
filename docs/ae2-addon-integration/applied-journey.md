@@ -2,10 +2,12 @@
 
 Tracking: [#534](https://github.com/cTux/ae2-crafting-time/issues/534).
 
-This is an investigation plan, not a reproduced compatibility diagnosis. The
-report says Crafting Time UI and estimates disappear on ordinary AE2 CPUs in
-Applied Journey on NeoForge 1.21.1. Neither Data Energistics nor OmniSequence:
-Transfinite has been established as the cause.
+This investigation has confirmed a composition obstruction in the resumed
+Applied Journey graph's Plan description and tooltip methods. The user's
+original UI report and full-pack acceptance remain open; the finding does not
+establish that one addon explains every missing row or every graph. Data
+Energistics and OmniSequence: Transfinite are not the early cancellation shown
+by the transformed Plan methods.
 
 ## Reproduction boundary
 
@@ -50,6 +52,44 @@ archive boundary. A pass here does not reproduce or explain the historical
 report. If the old archive or artifact is unavailable, record that comparison
 as blocked; do not substitute the newer graph for historical evidence.
 
+## Confirmed Plan composition obstruction
+
+On the resumed graph, the transformed `CraftConfirmTableRenderer` bytecode
+shows AppliedEnhancements 1.1.0 cancelling `getEntryDescription` after it
+builds the vanilla and addon lines, before the later Data Energistics return
+modifier, Crafting Time return injection, and test-driver observer. The
+transformed `getEntryTooltip` has the same ordering. This is a confirmed reason
+those later return handlers do not see these Plan results; it is not evidence
+that AppliedEnhancements alone explains every missing UI element.
+
+Thunderbolt's conditional HEAD handler can return even earlier for entries
+with ExactPlanReports amounts. The retained export does not establish which
+live entries take that branch. Data Energistics runs after the observed
+AppliedEnhancements cancellation, so a Data replacement is not the cause of
+this observed obstruction. The earlier Data hypothesis is superseded by the
+transformed-method evidence.
+
+With OC2 off, both the installed Crafting Time 1.2.12 baseline and the
+current-source artifact reached Plan. The footer displayed an estimate of
+about seven seconds while TTC row descriptions were absent. `0/3` was the
+smoke case-pass count, not a footer count or elapsed-time measurement. The
+separate OC2 startup hypothesis remains unconfirmed; this renderer result does
+not establish whether OC2 caused any startup failure.
+
+In a controlled standard-plan-controls comparison, removing AppliedEnhancements
+1.1.0 together with its required OmniSequence 2.0.7 dependency passed the
+tested Plan controls. That comparison alone does not identify which member
+caused its result; bytecode separately confirms AppliedEnhancements' early
+Plan return cancellation. It does not pass full-pack acceptance. Case two
+disconnected in the pair-off runtime when Thunderbolt's
+`CPUSelectionListStorageMixin` could not inject at `formatStorage`. Stock AE2
+19.2.18 lacks that method, and the removed mods do not supply it. This separate
+target mismatch does not explain the Plan row descriptions; full-graph CPU
+class loading was not tested, and case three did not run. The exact full graph,
+historical graph, and remaining comparisons are blocked or unrun, so none has
+a pass result. Thunderbolt may also cancel the Plan method earlier for entries
+with ExactPlanReports amounts; that per-entry branch remains unknown.
+
 The issue's [acceptance criteria](spec.md#applied-journey-investigation),
 [design](technical-design.md#applied-journey-investigation), and
 [execution plan](implementation-plan.md#applied-journey-investigation) also
@@ -63,15 +103,19 @@ cover the requested full pack smoke.
 2. Compare AE2 plus Crafting Time alone, then Data Energistics, then
    OmniSequence with its required dependencies, then both addons, then the pack.
    Keep the recipe, CPU, options, and screen consistent between comparisons.
-3. Inspect the shared Crafting Plan/Status mixins and `TtcText` rendering path,
-   client options, server snapshots, and `IntegrationCatalog`/`IntegrationSelection`
-   diagnostics. Use the first differing runtime evidence to narrow the fault;
-   update history alone does not prove an addon conflict.
+3. Trace the transformed Plan description and tooltip order using the retained
+   class and disassembly evidence identified in the technical design. Compare
+   the first return modifier, return cancellation, Crafting Time decoration,
+   and driver observation. Check the Thunderbolt ExactPlanReports condition per row. Then
+   inspect the shared Plan/Status hooks, `TtcText` rendering path, options,
+   snapshots, and `IntegrationCatalog`/`IntegrationSelection` diagnostics;
+   startup history alone does not prove an addon conflict.
    Record the negotiated Crafting Time channel and client/server options:
    an unavailable channel or disabled server profiling intentionally hides UI.
-4. Fix the confirmed shared seam, or retain a minimal reproducer and link an
-   external follow-up when the defect belongs upstream. Do not add an adapter
-   merely because an addon appears in the pack.
+4. Follow the reviewed [technical design](technical-design.md#applied-journey-investigation)
+   for the proposed shared Plan/Status wrapper and final-result driver
+   observation. Do not implement before the plan is approved or add an addon
+   adapter merely because an addon appears in the pack.
 
 ## Full pack smoke
 

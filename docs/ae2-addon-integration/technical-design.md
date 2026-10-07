@@ -396,9 +396,74 @@ must be checked:
 
 See the [scope and acceptance](spec.md#applied-journey-investigation) and
 [archive boundary](applied-journey.md). The historical report has no retained
-UI reproduction. The user reports world entry on the newer supplied graph,
-with normal shutdown in its log; this is not crafting UI acceptance. The cause
-and correction remain open.
+UI reproduction. The resumed graph has a confirmed Plan composition
+obstruction, but its contribution to every reported missing row remains
+unverified. No source correction or full-pack acceptance has been established.
+
+The retained transformed Plan class has SHA-256
+`940E4D3E55FE1D0CF3CCF2B4C6EBEEB696658E871C0AB9210648E0E83C4ED67A`. Its
+disassembly shows that in `getEntryDescription`, Thunderbolt's conditional HEAD
+handler may cancel first for entries with ExactPlanReports amounts. Otherwise
+vanilla builds its rows, then AppliedEnhancements 1.1.0
+unconditionally calls `setReturnValue` after replacing the craft amounts,
+including for entries with no cyclic amount. That cancellation returns before
+Data Energistics' `ModifyReturnValue`, Crafting Time's `@Inject(at = RETURN)`,
+and the driver observer. The tooltip method has the same order. This proves
+those later return handlers miss that result. Data Energistics runs after the
+observed cancellation and cannot cause this obstruction. Thunderbolt's
+per-entry branch remains unknown; do not infer that it runs for every row.
+
+With OC2 disabled, both the installed 1.2.12 baseline and current-source
+artifact reached Plan; the footer displayed an estimate of about seven seconds
+while TTC row descriptions were absent. `0/3` was the smoke case-pass count.
+This Plan result is separate from the unconfirmed OC2 startup hypothesis and
+does not establish its cause.
+
+The paired AppliedEnhancements 1.1.0 plus required OmniSequence 2.0.7 removal
+passed the standard-plan-controls case. That comparison alone does not identify
+which mod caused its result; bytecode separately confirms AppliedEnhancements'
+early Plan return cancellation. It does not prove full-pack acceptance. Case
+two disconnected in the pair-off runtime when Thunderbolt's
+`CPUSelectionListStorageMixin` could not inject at `formatStorage`. Stock AE2
+19.2.18 lacks that method, and the removed mods do not supply it. This is a
+separate target mismatch. Full-graph CPU class loading was not tested, and
+case three did not run. The full graph and historical graph are blocked pending
+clean runs.
+Thunderbolt's earlier conditional Plan cancellation is still unknown for each
+live entry.
+
+The smallest proposed production change uses MixinExtras `@WrapMethod` on the
+shared Plan and Status description/tooltip methods with `require = 0` and
+`remap = false`: invoke the transformed original once, copy its returned list
+into a mutable list, apply the existing Crafting Time decorations, then return
+it. If an optional target method changes, the wrapper can miss without
+disabling AE2's original UI. This keeps rows supplied by native
+AE2, AppliedEnhancements, Thunderbolt, and other earlier return handlers while
+allowing TTC's presentation to run after their result. Copy before editing so
+an immutable addon list is safe. Apply this to Status as well to give the shared
+Plan/Status seam one composition rule; the retained bytecode proof specifically
+covers the Plan renderer, not an AppliedEnhancements Status cancellation.
+Disabled options add no TTC lines, and an empty result still flows through the
+same wrapper. The existing tooltip/detail and row helper logic remains the
+source of TTC text and option behavior.
+
+Move the test-driver observation around the method result in its outer wrapper
+so it records the final list after production decoration. The 26.1.2 Status
+observer is target-specific and must stay wired alongside its Plan observer.
+Prove the packaged/exported driver reads these final results in the affected
+runtime graph; successful startup or a source-level unit test is insufficient.
+
+MixinExtras supplies `@WrapMethod`, but the runtime copy is target-specific.
+The minimum supported 1.21.1 NeoForge version, 21.1.1, supplies 0.3.5 without
+this API. The resumed 21.1.252 graph supplies 0.5.3, which supports it. To
+support the minimum version, package `io.github.llamalad7:mixinextras-neoforge`
+0.5.5 using the existing Jar-in-Jar pattern; use the NeoForge artifact flavor,
+not the similarly versioned Forge artifact. Verify the produced mod JAR's
+nested artifact and metadata, minimum loader requirements, and selected runtime
+version at startup. The 1.20.1 Forge and Fabric targets already package 0.5.5.
+NeoForge 26.1.2.71 provides 0.5.4 with the needed API; still verify its
+selected runtime copy. Do not assume that compile dependency resolution proves
+the runtime class is present.
 
 Ordinary `CraftingCpuLogicMixin` observes dispatch, accepted output, job finish
 and capacity. `ProfilerBridge` scopes and normalizes these events for
@@ -424,7 +489,7 @@ normalized units, bounded packets and saved history. An addon adapter requires
 evidence of a distinct execution or UI path.
 
 The export's bundled AE2 Extended CPU/storage mixins and other installed UI
-addons are candidates for isolation, not diagnosed causes. Compare observed
+addons remain candidates for isolation, not diagnosed causes. Compare observed
 hook execution, actual screen class, channel availability, options, request
 responses and completion samples at the first differing graph. Retain the
 historical artifact baseline separately from the resumed graph's installed

@@ -171,7 +171,8 @@ The resumed full-pack target is NeoForge 21.1.252 (197 manifest entries);
 retain NeoForge 21.1.249 (200 entries) as the historical reproduction boundary.
 Archive identities and baseline artifacts are recorded in the
 [investigation guide](applied-journey.md#reproduction-boundary). AJ-01 through
-AJ-05 remain unchanged; unavailable historical comparisons must be explicit.
+AJ-05 remain the acceptance criteria; unavailable historical comparisons must
+be explicit.
 
 Issue: [#534](https://github.com/cTux/ae2-crafting-time/issues/534).
 
@@ -179,15 +180,17 @@ Planning: [Investigation guide](applied-journey.md),
 [design](technical-design.md#applied-journey-investigation),
 [plan](implementation-plan.md#applied-journey-investigation).
 
-Remaining gate: reproduce or explain the historical report, verify any
-correction, and retain reviewed full-pack runtime evidence. No culprit or
-source correction has been established.
+The resumed graph's transformed Plan methods show an earlier addon return
+cancellation that prevents later Crafting Time return handlers from running.
+This establishes a composition obstruction for those methods, not full-pack
+acceptance or an explanation for every missing row. The historical report and
+clean full-pack verification remain open.
 
 This restores existing behavior without changing profiling, wire formats,
-saved data or optional dependency requirements. With the matching mod on both
-sides and profiling/UI options enabled, ordinary AE2 crafting must retain its
-Plan/Status text, controls, estimates and completion samples. Missing history
-shows Collecting Data when enabled. Intentionally disabled features remain off.
+saved data or addon requirements. With the matching mod on both sides and
+profiling/UI options enabled, ordinary AE2 crafting must retain its Plan/Status
+text, controls, estimates and completion samples. Missing history shows
+Collecting Data when enabled. Intentionally disabled features remain off.
 
 | Criterion | Required evidence |
 | --- | --- |
@@ -195,7 +198,13 @@ shows Collecting Data when enabled. Intentionally disabled features remain off.
 | AJ-02 | Compare a consistent ordinary CPU craft in core-only, Data Energistics, OmniSequence plus required dependencies, both addons, and full-pack graphs. Distinguish channel/options, renderer and profiling causes; record blocked graphs explicitly. |
 | AJ-03 | On the corrected or already-correct source, ordinary Plan/Status rows, tooltips, sort/details/reset controls, totals, real output and completion profiling pass the standard cases; no-history and disabled-profiling behavior remain correct. |
 | AJ-04 | The exact full pack passes all applicable standard, installed integration and general status cases, with reviewed screenshots and assertions. List absent/unsupported cases; a reduced graph or startup-only result cannot pass. |
-| AJ-05 | Any source change has required coverage and checks on affected targets; optional presentation mixin changes also verify the remapped production target and client startup. Evidence identifies the tested revision, final graph and cleanup. |
+| AJ-05 | Any source change has required coverage and checks on affected targets. Presentation wrappers use `require = 0` and `remap = false`, and verify the remapped production target plus client startup on `1.20.1-forge`, `1.20.1-fabric`, `1.21.1-neoforge`, and `26.1.2-neoforge`. Evidence identifies the tested revision, final graph and cleanup. |
+
+The intended composition behavior and target-specific runtime requirements are
+defined in the [technical design](technical-design.md#applied-journey-investigation).
+AJ-05 covers original-call count, immutable input, preserved content/order,
+disabled and empty results, remapped targets, runtime dependency selection,
+and client startup on every affected target.
 
 ## Not included
 
