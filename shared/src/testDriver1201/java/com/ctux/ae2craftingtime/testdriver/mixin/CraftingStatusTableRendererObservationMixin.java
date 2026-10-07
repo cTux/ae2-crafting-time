@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import java.util.List;
 
 /** Preserve translated status semantics before AE2 renders flattened styled text. */
-@Mixin(value = CraftingStatusTableRenderer.class, priority = 900)
+@Mixin(value = CraftingStatusTableRenderer.class, priority = 1100)
 public abstract class CraftingStatusTableRendererObservationMixin {
     @WrapMethod(method = "getEntryDescription", require = 0, remap = false)
     private List<Component> ae2craftingtime_test_driver$description(CraftingStatusEntry entry,

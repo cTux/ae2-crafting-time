@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.Mixin;
 
 import java.util.List;
 
-@Mixin(value = CraftConfirmTableRenderer.class, priority = 900)
+@Mixin(value = CraftConfirmTableRenderer.class, priority = 1100)
 public abstract class CraftConfirmTableRendererMixin {
     @WrapMethod(method = "getEntryDescription", require = 0, remap = false)
     private List<Component> ae2craftingtime_test_driver$description(CraftingPlanSummaryEntry entry,
