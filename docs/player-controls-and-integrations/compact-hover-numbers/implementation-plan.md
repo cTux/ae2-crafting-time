@@ -99,8 +99,17 @@ both full-rate fields and the selected node's exact requested amount in the
 actual received chat component. Add a `full-chat-rates` required result check
 to the `crafting-tree-screen` contract and a corresponding chat screenshot in
 the visual manifest. Run on the supported 1.20.1/1.21.1 targets with Tree installed;
-cover both widget mixin layouts with the existing variant fixtures or focused
-request-boundary tests. No new throughput tooltip is added to Tree. Record Tree
+cover both widget mixin layouts with the real `crafting-tree-screen` scenario:
+use the Forge 1.20.1 Tree dependency for the helper layout and the NeoForge
+1.21.1 Tree dependency for the direct-amount layout. Before each run, inspect the
+resolved widget/data class members and record which mixin applies; a changed
+dependency layout blocks that layout's gate rather than silently counting the
+other one twice. For each run, record the selected node's output ID and source
+amount (`amountHelper.craftAmount` or `amount`), Ctrl+click that node, and assert
+the received chat has that output, its normalized amount and both full rates.
+Use two sibling nodes with distinct positive amounts and click each to detect a
+wrong-node match. The TSV adapter descriptions are not executable click evidence.
+No new throughput tooltip is added to Tree. Record Tree
 coverage in `docs/dependencies.md` alongside the standard-suite change.
 
 Own a parameterized seed operation beside `StandardCraftFixture.seed` in both
@@ -120,8 +129,12 @@ This tests server-owned presentation data, not natural production at those speed
 
 Open the native plan for the same stone output, await the normal snapshot and
 hover it, then submit the small real job with its output held so the same row
-remains in native Status. Reseed after submission if lifecycle setup cleared or
-changed history; await the next normal snapshot before capture. Use
+remains in native Status. Never clear or reseed stats after job submission:
+`clearStats` also removes pending profiler state. Seed only while the fixture
+has no active job. Hold returned output during capture so no new completion
+changes the retained rate; if setup changed the expected rate, fail that case,
+cancel and clean up the job, then prepare a fresh case. Await the next normal
+snapshot before capture. Use
 `StatsInteraction` for a real Ctrl+click in each screen and inspect the received
 chat component for both full rates and the clicked amount. Toggle compact
 formatting and capture both modes. Never infer chat correctness from hover text.
@@ -154,6 +167,21 @@ Keep command/state evidence for the server settings and the selected grid.
 Do not pass the new leaf to `run-connected-dedicated-ui-smoke.ps1` or route it
 through `ResourceFixtureClient`; no connected runner/fixture extension is planned.
 This case does not claim seeded extreme-rate dedicated-server coverage.
+
+Sorted/scrolled row identity is a manual native-screen case on each target.
+In the disposable world, prepare a composite processing pattern with more
+distinct craftable ingredients than the current viewport can display, each
+backed by a processing pattern and retained history. Hold their returned outputs
+so the accepted job keeps enough pending rows for Status. Record two target
+outputs with different IDs, requested amounts and rates. In Plan, cycle both TTC
+sort directions, move the scrollbar until a target initially outside the viewport
+is visible, hover it and Ctrl+click. Assert the chat output ID and amount match
+that visible row and both rates match its full server-owned details. Submit the
+job and repeat in Status after sorting and scrolling there. Capture viewport
+before/after scrolling, selected tooltip and resulting chat. Record mandatory
+manual checks `plan-scrolled-identity` and `status-scrolled-identity`; a fixture
+with no scrollbar or fewer pending rows fails setup. Do not count CPU-card scroll
+tests or the single-output automated leaf as this evidence.
 
 Relaunch is also a manual acceptance case on each prepared target. Record the
 initial client config, set the new option off through Done, capture the option
