@@ -16,7 +16,7 @@ reported Crafting Plan screenshot shows long per-tick and per-second rates.
 
 Shorten Crafting Time throughput in Crafting Plan and Crafting Status hover
 details with decimal k/M/B/T/P/E suffixes and up to two decimal places. Mark
-abbreviations with `~`, promote a rounded 1000 to the next suffix, and use
+abbreviations with `~`, promote a rounded 1000 to the next suffix only for already-suffixed values; values below 1,000 retain two-decimal formatting (999.995 becomes 1000.00), and use
 scientific notation beyond the E range. Keep small positive rates visible.
 
 Add a default-on Compact hover numbers client display option. Turning it off
