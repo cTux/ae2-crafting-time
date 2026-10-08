@@ -62,8 +62,13 @@ request, change the broadcast recipients or bypass server context/cooldown.
 ## Configuration and text
 
 Add `COMPACT_HOVER_NUMBERS(Owner.CLIENT, Group.DISPLAYS, "compactHoverNumbers")`
-to `OptionFeature`. The existing default-enabled feature model supplies on;
-verify generic serialization, screen enumeration, reset and missing-key behavior.
+to `OptionFeature` and add its required entry to `ClientConfigFile.DESCRIPTIONS`.
+`ClientConfigFile.save` requires a description for every client feature with
+`Objects.requireNonNull`; the enum and localized UI text alone would make Done
+fail. Describe compact throughput, the legacy format when off, and unchanged chat
+output in that TOML comment. The existing default-enabled feature model supplies
+on; verify saving writes the comment and boolean, reloading preserves both toggle
+states, and screen enumeration, reset and missing-key behavior remain correct.
 Do not alias `compactStatusAmounts`, whose separate default stays unchanged.
 
 Update English and Ukrainian option label/description, control hint and changed

@@ -23,9 +23,12 @@ Implementation contract: [technical design](technical-design.md).
    Double.MAX_VALUE and the screenshot-scale values. Compare full output to
    the canonical decimal representation, not an invented exact integer recovered
    from a double. Cover changed pure logic completely by lines and branches.
-2. Own `OptionFeature`, option configuration tests and localized option text.
-   Verify default on, missing-key on, persistence, Done/Cancel, both reset paths
-   and independence from existing switches. Reuse generic option plumbing.
+2. Own `OptionFeature`, the required `ClientConfigFile.DESCRIPTIONS` entry,
+   option configuration tests and localized option text. Extend
+   `ClientConfigFileTest` to save each toggle state without throwing, assert the
+   new TOML description and `compactHoverNumbers` boolean, and reload that state.
+   Verify default on, missing-key on, Done/Cancel, both reset paths and
+   independence from existing switches. Reuse the existing option plumbing.
 3. Own shared `TtcText`, `StatsChatServer` and their English/Ukrainian chat and
    hint templates. Change only the throughput call sites. Extend `TtcTextTest`
    and `StatsChatServerTest` with compact/on, legacy/off, full chat, both units
