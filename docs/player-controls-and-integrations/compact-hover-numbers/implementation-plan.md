@@ -37,7 +37,7 @@ Implementation contract: [technical design](technical-design.md).
    Add a server summary/handler assertion using `9_007_199_254_740_993L`, checking
    the unchanged integral component argument and rendered `9007199254740993`;
    the small runtime job is not evidence for long precision. Use parameterized
-   `ProfileStats` with ITEM, MB and MANA units in hover/client/server component
+   `ProfileStats` with ITEM, MILLIBUCKET and MANA units in hover/client/server component
    tests; verify both rate fields and translated units in each mode. Test fluid
    and chemical normalization through the existing `ProfileAmountsTest` and
    `AeKeyAmounts` boundary coverage before display. These non-item unit checks
@@ -169,7 +169,7 @@ checks, plus layout inspection if its changed text alters the available width.
 | --- | --- |
 | H1 | Formatter/component tests cover all boundaries including scientific notation; native captures cover ordinary through exascale on four targets. |
 | H2 | Server/client detail tests and connected chat capture with both full rates and exact long amount. |
-| H3 | Renderer preservation, ITEM/MB/MANA component cases, normalization boundary tests and unchanged diagnostics; only item throughput has runtime captures. |
+| H3 | Renderer preservation, ITEM/MILLIBUCKET/MANA component cases, normalization boundary tests and unchanged diagnostics; only item throughput has runtime captures. |
 | H4 | Generic option/config tests plus interactive save, Cancel, reset and the manual process-relaunch procedure above on four targets. |
 | H5 | Existing request boundary tests and sorted/scrolled, disabled-chat, reset and cooldown scenarios. |
 | H6 | Locale parity, documentation/link review, four builds/CI and reviewed visual evidence. |

@@ -94,7 +94,7 @@ extreme-rate fixture, record that dependency and leave that acceptance gate open
 | --- | --- |
 | H1 | Shared text/component tests cover the complete table for both native screen call paths, including scientific notation and the E ceiling. Native-screen runtime captures cover ordinary through exascale rates; synthetic scientific and invalid inputs are component-test evidence only. |
 | H2 | Ctrl+click reports the selected output's unchanged integer amount and both full rates, including a rate that would lose digits under two-decimal rounding. No compact suffix leaks into chat. |
-| H3 | Units, sample counts, sample durations, confidence, accuracy and native/foreign tooltip content keep their existing meaning and order. ITEM/MB/MANA component and normalization boundary tests cover non-item resource semantics; runtime throughput captures use items. |
+| H3 | Units, sample counts, sample durations, confidence, accuracy and native/foreign tooltip content keep their existing meaning and order. ITEM/MILLIBUCKET/MANA component and normalization boundary tests cover non-item resource semantics; runtime throughput captures use items. |
 | H4 | On/off, Done, Cancel, resets, missing config key and relaunch work independently of compact crafting amounts and detailed-tooltip visibility. |
 | H5 | Sorted/scrolled rows keep click identity; disabled chat, missing stats, reset, network isolation and cooldown retain their behavior. No packets or saved samples change. |
 | H6 | English and Ukrainian placeholders match; guide and wiki explain abbreviated hover, full stored rates and public Ctrl+click chat. Four-target builds and reviewed UI evidence pass, with no new overlap caused by throughput text. |
