@@ -34,6 +34,14 @@ Implementation contract: [technical design](technical-design.md).
    hint templates. Change only the throughput call sites. Extend `TtcTextTest`
    and `StatsChatServerTest` with compact/on, legacy/off, full chat, both units
    of time, fractional precision and unchanged sample/confidence/accuracy cases.
+   Add a server summary/handler assertion using `9_007_199_254_740_993L`, checking
+   the unchanged integral component argument and rendered `9007199254740993`;
+   the small runtime job is not evidence for long precision. Use parameterized
+   `ProfileStats` with ITEM, MB and MANA units in hover/client/server component
+   tests; verify both rate fields and translated units in each mode. Test fluid
+   and chemical normalization through the existing `ProfileAmountsTest` and
+   `AeKeyAmounts` boundary coverage before display. These non-item unit checks
+   are component/boundary evidence, not addon runtime claims.
    Assert invalid rates render `?` with the option both on and off; legacy
    two-decimal output applies only to valid positive rates. Assert `999.995`
    remains `1000.00` and `999995` promotes to `~1M`. Supply constructed
@@ -67,6 +75,11 @@ leaf to the existing standard suite/group expansion and its four-target
 coverage/visual manifests (`scripts/ui-smoke-groups.json`,
 `scripts/ui-smoke-coverage.json`, `scripts/ui-smoke-visuals.json`); use the
 existing runner and evidence archive, not a new launch script.
+Add `scripts/ui-smoke-impact.json` rules selecting the leaf for changes to
+`ThroughputNumbers`, `OptionFeature`, `ClientConfigFile`, `TtcText`,
+`StatsChatServer`, both native renderer mixins and the new driver helper.
+Extend `scripts/test-ui-smoke-plan.ps1` with each path and a negative unrelated
+path to prove focused `-Changed` selection includes the leaf when required.
 
 Own a parameterized seed operation beside `StandardCraftFixture.seed` in both
 the shared driver and `versions/26.1.2-neoforge/src/testDriver` adapter. Reuse
@@ -123,9 +136,11 @@ original config. Archive before/after config, process-exit/relaunch evidence and
 count as relaunch. No runner continuation file or resumed leaf is added, and
 automated leaf completion alone cannot pass H4.
 
-Item/fluid/addon unit checks below reuse existing real resource fixtures. Update
-the test-driver spec/design with the integrated leaf, mark manual cases separately
-in coverage evidence, and keep all fixture changes out of production JARs.
+Non-item unit checks use the component/boundary tests named in step 3; existing
+resource-icon and addon CPU scenarios do not establish throughput-format coverage
+and are not extended by this plan. Update the test-driver spec/design with the
+integrated item leaf, mark manual cases separately in coverage evidence, and
+keep all fixture changes out of production JARs.
 
 ### Execution and evidence
 
@@ -137,8 +152,9 @@ not extreme-value profiler arithmetic or OmniSequence compatibility.
 
 For each target inspect Crafting Plan and Status with ordinary, fractional,
 thousand, petascale and exascale rates. Capture tooltip and Ctrl+click chat for
-the same output. Use actual item and fluid fixtures; test installed chemical/mana
-keys where supported by that target without claiming absent addons were tested.
+the same item output. Fluid, chemical and mana formatting use the parameterized
+component and normalization boundary tests above; this gate does not claim live
+addon throughput coverage or require new addon fixtures.
 Inspect default and wide fonts at supported GUI scales, including near screen
 edges. Existing sample-list wrapping is outside scope; record any remaining
 width issue separately rather than claiming the entire tooltip now always fits.
@@ -153,7 +169,7 @@ checks, plus layout inspection if its changed text alters the available width.
 | --- | --- |
 | H1 | Formatter/component tests cover all boundaries including scientific notation; native captures cover ordinary through exascale on four targets. |
 | H2 | Server/client detail tests and connected chat capture with both full rates and exact long amount. |
-| H3 | Renderer preservation tests, unit-specific fixtures and unchanged diagnostic assertions. |
+| H3 | Renderer preservation, ITEM/MB/MANA component cases, normalization boundary tests and unchanged diagnostics; only item throughput has runtime captures. |
 | H4 | Generic option/config tests plus interactive save, Cancel, reset and the manual process-relaunch procedure above on four targets. |
 | H5 | Existing request boundary tests and sorted/scrolled, disabled-chat, reset and cooldown scenarios. |
 | H6 | Locale parity, documentation/link review, four builds/CI and reviewed visual evidence. |
