@@ -54,7 +54,8 @@ Implementation contract: [technical design](technical-design.md).
    shared path, detailed-tooltip off remains off, and disabled chat/context/
    cooldown behavior is unchanged. No packet fixture or NBT shape should change;
    run existing relevant boundary tests to establish that fact.
-5. Update the parent controls/profiling docs and the three guide topics in both
+5. Update `docs/dependencies.md` for the changed standard-suite coverage and
+   counts on all four targets. Update the parent controls/profiling docs and the three guide topics in both
    locales using [player-documentation.md](player-documentation.md). Match wiki
    topics after reading current pages. Update screenshots only from reviewed
    evidence. Keep feature/index status honest about remaining validation.
@@ -71,15 +72,28 @@ Add a `compact-hover-numbers` leaf to the shared `StandardAe2Scenario` check
 registry and dispatch, with a focused `CompactHoverNumbersScenario` helper under
 `shared/src/testDriver1201/java/com/ctux/ae2craftingtime/testdriver/`. Extend
 `TestDriverCoreTest` for leaf registration and mandatory result checks. Add the
-leaf to the existing standard suite/group expansion and its four-target
-coverage/visual manifests (`scripts/ui-smoke-groups.json`,
-`scripts/ui-smoke-coverage.json`, `scripts/ui-smoke-visuals.json`); use the
+leaf to the `standard-ae2` group in `scripts/ui-smoke-groups.json` and its
+visual contract in `scripts/ui-smoke-visuals.json`; group expansion supplies it
+on all four targets. Leave `scripts/ui-smoke-coverage.json` unchanged: it maps
+dependency project IDs to top-level scenarios, not individual leaves. Use the
 existing runner and evidence archive, not a new launch script.
 Add `scripts/ui-smoke-impact.json` rules selecting the leaf for changes to
 `ThroughputNumbers`, `OptionFeature`, `ClientConfigFile`, `TtcText`,
-`StatsChatServer`, both native renderer mixins and the new driver helper.
+`StatsChatServer`, both native renderer mixins, the new driver helper, and
+`shared/src/main/resources/assets/ae2craftingtime/lang/en_us.json` and `uk_ua.json`.
 Extend `scripts/test-ui-smoke-plan.ps1` with each path and a negative unrelated
 path to prove focused `-Changed` selection includes the leaf when required.
+Also select `crafting-tree-screen` for shared chat/locale changes on targets
+where Tree is supported; retain the existing absent-addon/26.1.2 exclusion.
+
+Extend `CraftingTreeScenario` and its existing `StatsInteraction` call to assert
+both full-rate fields and the selected node's exact requested amount in the
+actual received chat component. Add a `full-chat-rates` required result check
+to the `crafting-tree-screen` contract and a corresponding chat screenshot in
+the visual manifest. Run on the supported 1.20.1/1.21.1 targets with Tree installed;
+cover both widget mixin layouts with the existing variant fixtures or focused
+request-boundary tests. No new throughput tooltip is added to Tree. Record Tree
+coverage in `docs/dependencies.md` alongside the standard-suite change.
 
 Own a parameterized seed operation beside `StandardCraftFixture.seed` in both
 the shared driver and `versions/26.1.2-neoforge/src/testDriver` adapter. Reuse
