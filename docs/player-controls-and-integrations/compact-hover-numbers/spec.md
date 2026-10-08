@@ -38,7 +38,8 @@ added to Crafting Tree or ME Requester.
   10^18. These suffixes and the decimal point are the same in English and Ukrainian.
   Keep translated resource units and `/t` and `/s` meanings unchanged.
 - Values below 1,000 retain the existing two decimals, except a positive value
-  below 0.005 displays `<0.01` rather than zero. At or above 1,000 use at most
+  below 0.005 displays `<0.01` rather than zero. Tier-zero values never promote:
+  `999.995` renders `1000.00`. At or above 1,000 use at most
   two decimals, round half up and remove trailing zeroes. Promote to the next
   suffix when rounding would produce 1,000. At the E ceiling use scientific
   notation with up to three significant digits when the scaled value rounds
@@ -62,6 +63,7 @@ added to Crafting Tree or ME Requester.
 | 0.004 | `<0.01` |
 | 1 | `1.00` |
 | 999.99 | `999.99` |
+| 999.995 | `1000.00` |
 | 1,000 | `~1k` |
 | 1,234 | `~1.23k` |
 | 999,995 | `~1M` |
@@ -90,7 +92,7 @@ extreme-rate fixture, record that dependency and leave that acceptance gate open
 
 | ID | Observable result |
 | --- | --- |
-| H1 | Both native screens render the table above consistently; suffix boundaries, promotion, tiny rates, invalid rates and the E ceiling are covered. |
+| H1 | Shared text/component tests cover the complete table for both native screen call paths, including scientific notation and the E ceiling. Native-screen runtime captures cover ordinary through exascale rates; synthetic scientific and invalid inputs are component-test evidence only. |
 | H2 | Ctrl+click reports the selected output's unchanged integer amount and both full rates, including a rate that would lose digits under two-decimal rounding. No compact suffix leaks into chat. |
 | H3 | Units, sample counts, sample durations, confidence, accuracy and native/foreign tooltip content keep their existing meaning and order. |
 | H4 | On/off, Done, Cancel, resets, missing config key and relaunch work independently of compact crafting amounts and detailed-tooltip visibility. |

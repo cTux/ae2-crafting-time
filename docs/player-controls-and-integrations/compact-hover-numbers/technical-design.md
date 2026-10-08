@@ -35,7 +35,10 @@ Minecraft-free `ThroughputNumbers` helper in
 
 Use `BigDecimal.valueOf(value)` for decimal display only. It represents the
 canonical decimal value of the existing double; do not convert integral row
-amounts to double and do not change profiling arithmetic. In `compact`, choose
+amounts to double and do not change profiling arithmetic. In `compact`, return
+the tiny-value marker or legacy two-decimal formatting immediately for values
+below 1,000; tier zero does not participate in promotion (`999.995` becomes
+`1000.00`). For values at or above 1,000, choose
 the base-1000 tier, divide by its decimal power, round to two places with
 `HALF_UP`, then promote on a rounded 1000 before stripping zeroes. Use explicit
 suffixes from the spec. For the scientific fallback, round the original decimal

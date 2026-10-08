@@ -35,7 +35,11 @@ Implementation contract: [technical design](technical-design.md).
    and `StatsChatServerTest` with compact/on, legacy/off, full chat, both units
    of time, fractional precision and unchanged sample/confidence/accuracy cases.
    Assert invalid rates render `?` with the option both on and off; legacy
-   two-decimal output applies only to valid positive rates. Check translation
+   two-decimal output applies only to valid positive rates. Assert `999.995`
+   remains `1000.00` and `999995` promotes to `~1M`. Supply constructed
+   `ProfileStats` at `1e21` and around the E ceiling to the shared text/component
+   tests used by both native renderers. This is renderer-component evidence,
+   not a claim that the server seed can produce that rate. Check translation
    placeholder counts and types in both locales.
 4. Extend the nearest existing renderer/configuration tests to demonstrate
    native and foreign tooltip lines remain intact, both native screens use the
@@ -94,13 +98,34 @@ its image. Fail on missing snapshots, wrong output or unexpected rate changes.
 Reuse suite cleanup to restore samples/options and remove held jobs, including
 failure paths; the helper owns no production hooks or persistent user settings.
 
-Connected-server coverage uses a separate ordinary-rate real processing job
-through the existing resource fixture control path and `StatsInteraction`.
-Compare its server snapshot, received hover text and chat rates, and test chat
-off/cooldown/reset. It does not claim to reproduce seeded extreme rates on a
-dedicated server. Item/fluid/addon unit checks below reuse those existing real
-resource fixtures. Update the test-driver spec/design with this new leaf and
-keep all fixture changes out of production JARs.
+Connected-server coverage is a manual acceptance case, not a new connected
+runner scenario. Use the prepared dedicated server and a disposable test world;
+connect the matching client, build a powered native AE2 grid with a crafting CPU,
+terminal and a furnace processing pattern, and complete at least one stone job.
+Request another stone job, hover the plan, Ctrl+click, then submit it and repeat
+on the pending Status row. Record the full chat components and tooltip screenshots
+for the same output. Verify the compact values are the defined rounding of the
+reported full rates; use two clients to check broadcast and two distinct grids
+to check isolation. Test chat off, a repeat click within the cooldown, and reset.
+Keep command/state evidence for the server settings and the selected grid.
+Do not pass the new leaf to `run-connected-dedicated-ui-smoke.ps1` or route it
+through `ResourceFixtureClient`; no connected runner/fixture extension is planned.
+This case does not claim seeded extreme-rate dedicated-server coverage.
+
+Relaunch is also a manual acceptance case on each prepared target. Record the
+initial client config, set the new option off through Done, capture the option
+screen and a legacy-format tooltip, then exit the Minecraft process normally.
+Inspect the saved `compactHoverNumbers = false`, relaunch the same instance and
+world without deleting or regenerating config, and capture the still-off option
+and tooltip. Repeat with on. Test Cancel and reset separately, then restore the
+original config. Archive before/after config, process-exit/relaunch evidence and
+`compact-hover-relaunch-<on|off>-<options|tooltip>.png`. A screen reopen does not
+count as relaunch. No runner continuation file or resumed leaf is added, and
+automated leaf completion alone cannot pass H4.
+
+Item/fluid/addon unit checks below reuse existing real resource fixtures. Update
+the test-driver spec/design with the integrated leaf, mark manual cases separately
+in coverage evidence, and keep all fixture changes out of production JARs.
 
 ### Execution and evidence
 
@@ -126,10 +151,10 @@ checks, plus layout inspection if its changed text alters the available width.
 
 | Criterion | Required evidence |
 | --- | --- |
-| H1 | Pure formatter edge cases, shared text tests and both native tooltip captures on four targets. |
+| H1 | Formatter/component tests cover all boundaries including scientific notation; native captures cover ordinary through exascale on four targets. |
 | H2 | Server/client detail tests and connected chat capture with both full rates and exact long amount. |
 | H3 | Renderer preservation tests, unit-specific fixtures and unchanged diagnostic assertions. |
-| H4 | Generic option/config tests plus interactive save, Cancel, reset and relaunch checks. |
+| H4 | Generic option/config tests plus interactive save, Cancel, reset and the manual process-relaunch procedure above on four targets. |
 | H5 | Existing request boundary tests and sorted/scrolled, disabled-chat, reset and cooldown scenarios. |
 | H6 | Locale parity, documentation/link review, four builds/CI and reviewed visual evidence. |
 
