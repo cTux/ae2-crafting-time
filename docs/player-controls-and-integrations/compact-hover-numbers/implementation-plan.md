@@ -152,6 +152,14 @@ toggle and restore it explicitly on success, failure and cancellation, before
 finalizing the result. Wire this idempotent close operation through the scenario
 and `CraftPlanScenario.cleanup` lifecycle; `SuiteFixture.restore` does not restore
 client options. Observe the restored value before setting `fixture-restored`.
+The 26.1.2 driver owns separate `CraftPlanScenario` and `TestDriverRuntime`
+classes under `versions/26.1.2-neoforge/src/testDriver/java/com/ctux/ae2craftingtime/testdriver/`.
+Add the corresponding idempotent scenario cleanup entrypoint there, and call it
+from that runtime before result finalization, before advancing to another leaf,
+and on exception/cancellation/shutdown paths. Its existing between-leaf
+`SuiteFixture.restore` call alone is insufficient. Exercise the 26.1.2 adapter
+with a failure after toggling and verify the next leaf sees the original option;
+include this adapter in lifecycle boundary tests and native smoke evidence.
 Extend lifecycle tests for success, failed capture, cancellation and double close.
 Use suite cleanup for samples/world state and cancel held jobs; do not rely on
 post-result cleanup to prove an already-written check. The automated helper does
