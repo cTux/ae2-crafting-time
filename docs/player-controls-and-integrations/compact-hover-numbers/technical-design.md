@@ -91,7 +91,7 @@ not a reason to broaden this presentation patch. No save or wire migration occur
   fractional rate precision and entangles resource amount units with rate units.
 - Abbreviating chat or retaining two-decimal rounding fails the full-value request.
 - Rewriting native quantity components adds independent scope and conflicts with
-  the existing full-tooltip contract; it needs explicit scope confirmation.
+  the existing full-tooltip contract; the approved scope leaves it unchanged.
 
 ## Documentation delivery
 

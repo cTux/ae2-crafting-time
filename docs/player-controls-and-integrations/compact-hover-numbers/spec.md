@@ -1,18 +1,18 @@
 # Compact hover numbers
 
-Status: draft
+Status: ready-to-implement
 
 Scope: Compact throughput in Crafting Time hover details, with unabbreviated
 throughput in the existing Ctrl+click chat action.
 
 Issue: [#677](https://github.com/cTux/ae2-crafting-time/issues/677)
 
-Planning: [Implementation plan](implementation-plan.md) and
+Planning: [Reviewed implementation plan](implementation-plan.md) and
 [technical design](technical-design.md).
 
-Hold: Implementation remains in backlog. The documents have been checked together;
-approval of the [final issue text](issue-preview.md) remains pending. The proposed
-scope is Crafting Time throughput only, pending the user's scope clarification.
+Hold: Implementation remains in backlog until starting it is authorized.
+The user approved the [final issue text](issue-preview.md) and throughput-only
+scope on 2026-10-08. The issue, specification, design and plan agree.
 
 ## Goal and scope
 
@@ -23,7 +23,7 @@ tooltip. This is a presentation request, not proof of an OmniSequence defect.
 Apply this change to Crafting Time's throughput line in native Crafting Plan and
 Crafting Status hover details. Keep native AE2 quantities, foreign tooltip lines,
 resource names and identifiers intact. The screenshot's native `To Craft` amount
-therefore remains full-sized under this proposed scope. No new throughput line is
+therefore remains full-sized under this approved scope. No new throughput line is
 added to Crafting Tree or ME Requester.
 
 ## Player behavior

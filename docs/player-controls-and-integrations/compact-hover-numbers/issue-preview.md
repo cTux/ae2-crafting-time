@@ -1,7 +1,7 @@
-# Final issue text for approval
+# Approved issue text
 
-This is the proposed replacement for the initial tracking text of #677.
-It has not been applied. Approval is required by the repository planning skill.
+The user approved this replacement for the initial tracking text of #677 on
+2026-10-08. It was applied and read back from GitHub without changing the body.
 
 Title: Compact large hover numbers and retain full values in chat
 

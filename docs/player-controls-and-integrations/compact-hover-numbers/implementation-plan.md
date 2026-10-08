@@ -5,10 +5,10 @@ Implementation contract: [technical design](technical-design.md).
 
 ## Before implementation
 
-1. Obtain approval of the final issue wording and resolve the proposed
-   throughput-only scope. Mark the scope ready-to-implement only after these
-   decisions and consistency review. Keep `backlog` until starting implementation
-   is explicitly authorized; this planning PR does not close #677.
+1. The user approved the final issue wording and throughput-only scope on
+   2026-10-08. Consistency review is complete and the scope is ready-to-implement.
+   Keep `backlog` until starting implementation is explicitly authorized;
+   this planning PR does not close #677.
 2. Recheck the actual head, callers of `statsLines`, `compactMessages`,
    `normalizedDetails` and `StatsChatServer.details`, release matrix and #616.
    If numeric overflow blocks the real fixture, record the blocker before
