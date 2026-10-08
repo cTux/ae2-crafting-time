@@ -47,8 +47,10 @@ For `full`, use `stripTrailingZeros().toPlainString()`. Even the smallest positi
 or largest finite double has bounded decimal length; test these boundaries.
 No new dependency, cache, parser or packet is needed. Formatting is display-only.
 
-In `TtcText.statsLines`, select compact or existing `rate` for the two throughput
-arguments using the new option. Do not route samples, slowdown, percentages,
+In `TtcText.statsLines`, reject nonpositive/nonfinite throughput as `?` before
+reading the option. For valid rates select compact or existing `rate` for the two
+throughput arguments using the new option. Legacy formatting when off applies
+only to valid positive rates. Do not route samples, slowdown, percentages,
 accuracy or time estimates through the helper. Keep existing order and styling.
 
 In `StatsChatServer.details` and `TtcText.normalizedDetails`, format both rates
@@ -71,11 +73,14 @@ on; verify saving writes the comment and boolean, reloading preserves both toggl
 states, and screen enumeration, reset and missing-key behavior remain correct.
 Do not alias `compactStatusAmounts`, whose separate default stays unchanged.
 
-Update English and Ukrainian option label/description, control hint and changed
+Add the English and Ukrainian option label at
+`config.ae2craftingtime.compactHoverNumbers`. Keep the existing generic
+`config.ae2craftingtime.client_help` toggle tooltip in `OptionsScreen`; no
+per-option description key or renderer is added. Explain the behavior in the
+TOML comment and player guides instead. Update the control hint and changed
 chat placeholders in `shared/src/main/resources/assets/ae2craftingtime/lang/`.
 The suffix policy is language-independent; unit labels remain localized.
-Use the established Client options descriptions and generic screen rather than
-adding a dedicated settings page.
+Use the established generic screen rather than adding a dedicated settings page.
 
 ## Failure and compatibility boundaries
 

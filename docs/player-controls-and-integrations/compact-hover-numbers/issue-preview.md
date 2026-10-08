@@ -49,10 +49,10 @@ English/Ukrainian text, GuideME and the GitHub wiki.
 
 ## Documentation
 
-- [Specification](https://github.com/cTux/ae2-crafting-time/blob/codex/compact-hover-number-plan/docs/player-controls-and-integrations/compact-hover-numbers/spec.md)
-- [Technical design](https://github.com/cTux/ae2-crafting-time/blob/codex/compact-hover-number-plan/docs/player-controls-and-integrations/compact-hover-numbers/technical-design.md)
-- [Implementation plan](https://github.com/cTux/ae2-crafting-time/blob/codex/compact-hover-number-plan/docs/player-controls-and-integrations/compact-hover-numbers/implementation-plan.md)
-- [English and Ukrainian player copy](https://github.com/cTux/ae2-crafting-time/blob/codex/compact-hover-number-plan/docs/player-controls-and-integrations/compact-hover-numbers/player-documentation.md)
+- [Specification](https://github.com/cTux/ae2-crafting-time/blob/master/docs/player-controls-and-integrations/compact-hover-numbers/spec.md)
+- [Technical design](https://github.com/cTux/ae2-crafting-time/blob/master/docs/player-controls-and-integrations/compact-hover-numbers/technical-design.md)
+- [Implementation plan](https://github.com/cTux/ae2-crafting-time/blob/master/docs/player-controls-and-integrations/compact-hover-numbers/implementation-plan.md)
+- [English and Ukrainian player copy](https://github.com/cTux/ae2-crafting-time/blob/master/docs/player-controls-and-integrations/compact-hover-numbers/player-documentation.md)
 
 ## Related work and delivery
 

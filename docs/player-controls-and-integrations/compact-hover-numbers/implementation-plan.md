@@ -28,12 +28,15 @@ Implementation contract: [technical design](technical-design.md).
    `ClientConfigFileTest` to save each toggle state without throwing, assert the
    new TOML description and `compactHoverNumbers` boolean, and reload that state.
    Verify default on, missing-key on, Done/Cancel, both reset paths and
-   independence from existing switches. Reuse the existing option plumbing.
+   independence from existing switches. Reuse the existing option plumbing
+   and generic client-help tooltip; only the new screen label is localized.
 3. Own shared `TtcText`, `StatsChatServer` and their English/Ukrainian chat and
    hint templates. Change only the throughput call sites. Extend `TtcTextTest`
    and `StatsChatServerTest` with compact/on, legacy/off, full chat, both units
    of time, fractional precision and unchanged sample/confidence/accuracy cases.
-   Check translation placeholder counts and types in both locales.
+   Assert invalid rates render `?` with the option both on and off; legacy
+   two-decimal output applies only to valid positive rates. Check translation
+   placeholder counts and types in both locales.
 4. Extend the nearest existing renderer/configuration tests to demonstrate
    native and foreign tooltip lines remain intact, both native screens use the
    shared path, detailed-tooltip off remains off, and disabled chat/context/
@@ -49,6 +52,57 @@ Implementation contract: [technical design](technical-design.md).
    build all four release targets and report GitHub CI separately.
 
 ## Runtime acceptance matrix
+
+### Fixture implementation owned by this feature
+
+Add a `compact-hover-numbers` leaf to the shared `StandardAe2Scenario` check
+registry and dispatch, with a focused `CompactHoverNumbersScenario` helper under
+`shared/src/testDriver1201/java/com/ctux/ae2craftingtime/testdriver/`. Extend
+`TestDriverCoreTest` for leaf registration and mandatory result checks. Add the
+leaf to the existing standard suite/group expansion and its four-target
+coverage/visual manifests (`scripts/ui-smoke-groups.json`,
+`scripts/ui-smoke-coverage.json`, `scripts/ui-smoke-visuals.json`); use the
+existing runner and evidence archive, not a new launch script.
+
+Own a parameterized seed operation beside `StandardCraftFixture.seed` in both
+the shared driver and `versions/26.1.2-neoforge/src/testDriver` adapter. Reuse
+the real grid, stone processing pattern and held-output job. On the integrated
+server thread, clear only the fixture output's retained stats, then call
+`ProfilerBridge.start` and `complete` with one positive amount/duration pair,
+following the existing seed path. Flush through the normal server tick before
+checking `ProfilerBridge.stats`. Do not inject the client cache or fake chat.
+
+Use independent cases `(amount, durationTicks)` of `(1, 20)`, `(1, 1000)`,
+`(1000, 1)`, `(1000000000000000, 1)` and `(1000000000000000000, 1)` for ordinary,
+tiny fractional, thousand, petascale and exascale rates. One sample per case
+avoids weighted accumulation overflow; derive expected `/t` and `/s` from the
+server snapshot and compare against independently specified expected strings.
+This tests server-owned presentation data, not natural production at those speeds.
+
+Open the native plan for the same stone output, await the normal snapshot and
+hover it, then submit the small real job with its output held so the same row
+remains in native Status. Reseed after submission if lifecycle setup cleared or
+changed history; await the next normal snapshot before capture. Use
+`StatsInteraction` for a real Ctrl+click in each screen and inspect the received
+chat component for both full rates and the clicked amount. Toggle compact
+formatting and capture both modes. Never infer chat correctness from hover text.
+
+Require checks `seeded-server-rate`, `plan-throughput`, `status-throughput`,
+`full-chat-rates`, `legacy-hover` and `fixture-restored` for every case; write
+`compact-hover-<case>-<plan|status|chat|legacy>.png` and map each visible check to
+its image. Fail on missing snapshots, wrong output or unexpected rate changes.
+Reuse suite cleanup to restore samples/options and remove held jobs, including
+failure paths; the helper owns no production hooks or persistent user settings.
+
+Connected-server coverage uses a separate ordinary-rate real processing job
+through the existing resource fixture control path and `StatsInteraction`.
+Compare its server snapshot, received hover text and chat rates, and test chat
+off/cooldown/reset. It does not claim to reproduce seeded extreme rates on a
+dedicated server. Item/fluid/addon unit checks below reuse those existing real
+resource fixtures. Update the test-driver spec/design with this new leaf and
+keep all fixture changes out of production JARs.
+
+### Execution and evidence
 
 Use the prepared-client smoke workflow on Forge 1.20.1, Fabric 1.20.1,
 NeoForge 1.21.1 and NeoForge 26.1.2. Run real connected server/client chat checks

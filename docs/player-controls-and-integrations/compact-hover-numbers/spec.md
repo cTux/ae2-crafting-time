@@ -29,7 +29,8 @@ added to Crafting Tree or ME Requester.
 ## Player behavior
 
 - Add **Compact hover numbers** in **Options > Client > Displays**, default on.
-  On abbreviates throughput; off restores its existing two-decimal hover text.
+  On abbreviates throughput; off restores two-decimal hover text for valid
+  positive rates. Both modes show `?` for nonpositive or nonfinite rates.
   This choice is independent of **Compact crafting amounts** and detailed-tooltip
   visibility. Done applies and saves, Cancel discards, reset restores on, and the
   choice survives relaunch without changing other options.
