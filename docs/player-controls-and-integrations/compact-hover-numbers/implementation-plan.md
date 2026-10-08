@@ -100,8 +100,12 @@ actual received chat component. Add a `full-chat-rates` required result check
 to the `crafting-tree-screen` contract and a corresponding chat screenshot in
 the visual manifest. Run on the supported 1.20.1/1.21.1 targets with Tree installed;
 cover both widget mixin layouts with the real `crafting-tree-screen` scenario:
-use the Forge 1.20.1 Tree dependency for the helper layout and the NeoForge
-1.21.1 Tree dependency for the direct-amount layout. Before each run, inspect the
+use the Forge 1.20.1 artifact identified by the source URL and SHA-512 in
+`shared/src/test/resources/integration-contracts/tree-helper-forge.tsv` for the
+helper layout, and the NeoForge 1.21.1 artifact pinned by
+`tree-layout-neo.tsv` in that directory for the direct-amount layout. Prepare
+separate disposable dependency selections; never install both Tree artifacts
+in one client. Before each run, inspect the
 resolved widget/data class members and record which mixin applies; a changed
 dependency layout blocks that layout's gate rather than silently counting the
 other one twice. For each run, record the selected node's output ID and source
