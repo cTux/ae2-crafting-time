@@ -63,6 +63,7 @@ work. Their specifications own the current status; this index does not duplicate
 - [No Space Status](no-space-status/spec.md)
 - [Finite Outlier Configuration and TTC](nonfinite-outlier-multiplier/spec.md)
 - [Player Controls And Integrations Spec](player-controls-and-integrations/spec.md)
+- [Compact hover numbers](player-controls-and-integrations/compact-hover-numbers/spec.md)
 - [Profiling And Diagnostics Spec](profiling-and-diagnostics/spec.md)
 - [Project Infinity 0.1 Full UI Smoke Spec](project-infinity-0-1-smoke/spec.md)
 - [NO CHANNEL status](provider-dispatch-statuses/no-channel/spec.md)
