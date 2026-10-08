@@ -74,13 +74,21 @@ registry and dispatch, with a focused `CompactHoverNumbersScenario` helper under
 `TestDriverCoreTest` for leaf registration and mandatory result checks. Add the
 leaf to the `standard-ae2` group in `scripts/ui-smoke-groups.json` and its
 visual contract in `scripts/ui-smoke-visuals.json`; group expansion supplies it
-on all four targets. Leave `scripts/ui-smoke-coverage.json` unchanged: it maps
+on all four targets. Define its `cases` catalogue entry in `ui-smoke-groups.json`
+with the mandatory checks and screenshot names below, and add the scenario to
+the `scripts/run-ui-smoke.ps1` allowlist. Extend `scripts/test-run-ui-smoke.ps1`
+and `scripts/test-ui-smoke-plan.ps1` to prove group expansion and standalone
+scenario launch accept it with the required result contract. Leave
+`scripts/ui-smoke-coverage.json` unchanged: it maps
 dependency project IDs to top-level scenarios, not individual leaves. Use the
 existing runner and evidence archive, not a new launch script.
 Add `scripts/ui-smoke-impact.json` rules selecting the leaf for changes to
 `ThroughputNumbers`, `OptionFeature`, `ClientConfigFile`, `TtcText`,
 `StatsChatServer`, both native renderer mixins, the new driver helper, and
-`shared/src/main/resources/assets/ae2craftingtime/lang/en_us.json` and `uk_ua.json`.
+`shared/src/main/resources/assets/ae2craftingtime/lang/en_us.json`.
+Keep `uk_ua.json` under the existing `ukrainian` noRuntime rule and static locale
+validation; never match it with a behavior rule. Add a planner test proving a
+Ukrainian-only change causes no rule conflict and selects no visual smoke leaf.
 Extend `scripts/test-ui-smoke-plan.ps1` with each path and a negative unrelated
 path to prove focused `-Changed` selection includes the leaf when required.
 Also select `crafting-tree-screen` for shared chat/locale changes on targets
@@ -122,8 +130,16 @@ Require checks `seeded-server-rate`, `plan-throughput`, `status-throughput`,
 `full-chat-rates`, `legacy-hover` and `fixture-restored` for every case; write
 `compact-hover-<case>-<plan|status|chat|legacy>.png` and map each visible check to
 its image. Fail on missing snapshots, wrong output or unexpected rate changes.
-Reuse suite cleanup to restore samples/options and remove held jobs, including
-failure paths; the helper owns no production hooks or persistent user settings.
+The helper must capture the original in-memory client option before its first
+toggle and restore it explicitly on success, failure and cancellation, before
+finalizing the result. Wire this idempotent close operation through the scenario
+and `CraftPlanScenario.cleanup` lifecycle; `SuiteFixture.restore` does not restore
+client options. Observe the restored value before setting `fixture-restored`.
+Extend lifecycle tests for success, failed capture, cancellation and double close.
+Use suite cleanup for samples/world state and cancel held jobs; do not rely on
+post-result cleanup to prove an already-written check. The automated helper does
+not save persistent user settings; saving and restoring files belongs to the
+explicit manual relaunch case below.
 
 Connected-server coverage is a manual acceptance case, not a new connected
 runner scenario. Use the prepared dedicated server and a disposable test world;
