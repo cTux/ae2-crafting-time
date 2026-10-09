@@ -7,6 +7,12 @@ navigation:
 
 # Configuration
 
+**Options > Client > Displays > Compact hover numbers** starts on. Turn it off
+to restore two-decimal throughput in hover details. It is independent of
+**Compact crafting amounts** and detailed tooltips, and never changes chat.
+**Done** saves the choice, **Cancel** discards edits and reset restores On.
+The client file stores it as `compactHoverNumbers`.
+
 Server settings belong to the world and live in
 `<world>/serverconfig/ae2craftingtime-server.toml`. Starting a world creates this
 file if it's missing. In singleplayer, `<world>` is that save under `saves`; on

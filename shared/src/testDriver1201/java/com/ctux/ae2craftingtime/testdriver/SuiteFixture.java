@@ -75,4 +75,6 @@ final class SuiteFixture {
         player.setYRot(yaw); player.setXRot(pitch);
         player.inventoryMenu.broadcastChanges();
     }
+
+    boolean samplesRestored() { return data.samples().equals(samples); }
 }

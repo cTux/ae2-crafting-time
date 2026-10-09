@@ -155,6 +155,7 @@ public final class TestDriverRuntime implements AutoCloseable {
         if (scenario.evidenceReady() && (scenario.state() == ScenarioState.RESULT_WRITTEN || scenario.state() == ScenarioState.FAILED)) {
             switching = true;
             try {
+                scenario.cleanup();
                 boolean passed = scenario.state() == ScenarioState.RESULT_WRITTEN;
                 boolean next = progress.finish(passed, Instant.now());
                 writeProgress();
@@ -175,6 +176,7 @@ public final class TestDriverRuntime implements AutoCloseable {
     }
 
     private void switchCase() {
+        scenario.cleanup();
         switchingNow = true;
         try {
             if (scenario.reconnectRequested() || reconnectStep != 0) {
@@ -286,6 +288,7 @@ public final class TestDriverRuntime implements AutoCloseable {
 
     @Override
     public void close() throws Exception {
+        scenario.cleanup();
         if (endpoint != null) {
             endpoint.close();
         }

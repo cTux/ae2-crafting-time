@@ -33,7 +33,7 @@ absent.
 ## Details And Reset
 
 - Ctrl-click an eligible row or Crafting Tree node to publish a compact TTC
-  summary and sample details to server chat.
+  summary, sample details and both full stored throughput rates to server chat.
 - Ctrl-Alt-click the same target to clear retained stats for that output on the
   player's current AE2 network.
 - The configurable mouse binding defaults to the left button. Ctrl and Alt are

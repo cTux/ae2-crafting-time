@@ -127,7 +127,11 @@ The automated cross-target suite records every selected project in `coverage.jso
 direct UI, direct behavior, coexistence, tooling, or excluded with a reason.
 Declared driver coverage is separate from each run's PASS/FAIL/NOT_RUN result.
 `standard-ae2` adds plan/status input, real smelting, row states and output checks
-to all four drivers. See [the suite specification](automated-ui-testing/spec.md).
+to all four drivers. Its compact-hover leaf checks five server-owned item rates,
+both native screens, full chat and option restoration on all four targets.
+Declared suite sizes are 43 Forge, 25 Fabric, 39 NeoForge 1.21.1 and 28 NeoForge
+26.1.2 leaves. Tree chat also verifies both full-rate fields and selected amount;
+runtime results remain separate from these contracts. See [the suite specification](automated-ui-testing/spec.md).
 Its CPU-list leaf additionally cycles both-list TTC sorting, binds input to
 actual rendered CPU identities, and captures bounded full-list request coverage.
 
