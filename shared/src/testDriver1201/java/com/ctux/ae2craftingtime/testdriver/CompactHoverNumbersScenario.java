@@ -169,8 +169,8 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
         lastFrame = snapshot.frame();
         var row = snapshot.rows().stream().filter(value -> value.outputId().equals("minecraft:stone")).findFirst().orElse(null);
         if (row == null) return false;
+        moveMouse.accept(row.cell().centerX(), row.cell().centerY());
         if (!hovered) {
-            moveMouse.accept(row.cell().centerX(), row.cell().centerY());
             hovered = true;
             frames.reset();
             return false;
