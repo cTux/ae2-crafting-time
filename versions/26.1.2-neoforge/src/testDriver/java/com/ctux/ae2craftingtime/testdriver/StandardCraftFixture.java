@@ -257,7 +257,7 @@ final class StandardCraftFixture {
         var network = ProfilerBridge.networkId(grid);
         var key = AEItemKey.of(Items.STONE);
         ProfilerBridge.clearStats(ProfilerBridge.key(network, key));
-        var tick = player.serverLevel().getGameTime();
+        var tick = ((net.minecraft.server.level.ServerLevel) player.level()).getGameTime();
         ProfilerBridge.start(network, this, key, amount, tick);
         ProfilerBridge.complete(network, this, key, amount, tick + durationTicks);
     }

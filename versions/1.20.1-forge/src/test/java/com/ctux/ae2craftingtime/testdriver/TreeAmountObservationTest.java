@@ -1,13 +1,31 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 import static org.junit.jupiter.api.Assertions.*;
-import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
+import appeng.api.stacks.AEKeyType;
 import appeng.api.stacks.GenericStack;
 import java.util.List;
-import net.minecraft.world.item.Items;
 import org.junit.jupiter.api.Test;
 
 class TreeAmountObservationTest {
+    private static final AEKeyType TYPE = new AEKeyType(new net.minecraft.resources.ResourceLocation("test", "item"),
+            Key.class, net.minecraft.network.chat.Component.literal("Test item")) {
+        public AEKey readFromPacket(net.minecraft.network.FriendlyByteBuf buffer) { throw new UnsupportedOperationException(); }
+        public AEKey loadKeyFromTag(net.minecraft.nbt.CompoundTag tag) { throw new UnsupportedOperationException(); }
+    };
+    private static final class Key extends AEKey {
+        private final net.minecraft.resources.ResourceLocation id;
+        Key(String name) { id = new net.minecraft.resources.ResourceLocation("minecraft", name); }
+        public AEKeyType getType() { return TYPE; }
+        public AEKey dropSecondary() { return this; }
+        public net.minecraft.nbt.CompoundTag toTag() { throw new UnsupportedOperationException(); }
+        public Object getPrimaryKey() { return id; }
+        public net.minecraft.resources.ResourceLocation getId() { return id; }
+        public void writeToPacket(net.minecraft.network.FriendlyByteBuf buffer) { throw new UnsupportedOperationException(); }
+        protected net.minecraft.network.chat.Component computeDisplayName() { return net.minecraft.network.chat.Component.literal(id.toString()); }
+        public void addDrops(long amount, List<net.minecraft.world.item.ItemStack> drops,
+                net.minecraft.world.level.Level level, net.minecraft.core.BlockPos position) { throw new UnsupportedOperationException(); }
+    }
     record Amount(Long craftAmount) {}
     static final class HelperNode {
         public GenericStack stack;
@@ -23,9 +41,9 @@ class TreeAmountObservationTest {
 
     @Test
     void bothWidgetLayoutsExposeExactAmountsAndRequireDistinctSiblingAmounts() {
-        var stone = new GenericStack(AEItemKey.of(Items.STONE), 1);
-        var glass = new GenericStack(AEItemKey.of(Items.GLASS), 1);
-        var root = new GenericStack(AEItemKey.of(Items.SMOOTH_STONE), 1);
+        var stone = new GenericStack(new Key("stone"), 1);
+        var glass = new GenericStack(new Key("glass"), 1);
+        var root = new GenericStack(new Key("smooth_stone"), 1);
         var rows = List.of(new UiSnapshot.Row("minecraft:stone", 3, 0, new Rect(0,0,16,16), List.of()),
                 new UiSnapshot.Row("minecraft:glass", 7, 0, new Rect(20,0,16,16), List.of()));
         try {
@@ -51,7 +69,7 @@ class TreeAmountObservationTest {
     }
     @Test
     void absentNativeAmountsAndStacksAreNotCraftedNodes() {
-        var stone = new GenericStack(AEItemKey.of(Items.STONE), 1);
+        var stone = new GenericStack(new Key("stone"), 1);
         try {
             var helper = new HelperNode(stone, 1, null);
             helper.amountHelper = null;

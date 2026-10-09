@@ -1050,7 +1050,7 @@ class TestDriverCoreTest {
     void addonFixturesAreRegisteredInOnePlace() {
         assertTrue(AddonCpuFixture.supports("crafting-tree-screen"));
         assertNull(AddonCpuFixture.create("crafting-tree-screen"));
-        assertEquals(List.of("screen", "node-ttc", "tooltip", "layout", "details", "reset"),
+        assertEquals(List.of("screen", "node-ttc", "tooltip", "layout", "details", "full-chat-rates", "reset"),
                 DriverResult.requiredChecks("crafting-tree-screen"));
         assertTrue(AddonCpuFixture.supports("craft-plan"));
         assertTrue(AddonCpuFixture.supports("advancedae-cpu"));

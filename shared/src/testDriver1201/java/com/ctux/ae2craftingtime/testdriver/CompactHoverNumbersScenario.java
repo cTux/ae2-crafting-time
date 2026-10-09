@@ -66,7 +66,7 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
                 setCompact(true);
             }
             if (server(minecraft, player -> {
-                if (pristine == null) pristine = new SuiteFixture(player.serverLevel(), player, marker);
+                if (pristine == null) pristine = new SuiteFixture(((net.minecraft.server.level.ServerLevel) player.level()), player, marker);
                 return fixture.prepare(player, marker);
             })) next(Stage.SEED);
             return false;
@@ -75,10 +75,10 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
             if (server(minecraft, player -> {
                 if (seededAt == 0) {
                     fixture.seed(player, rate.amount(), rate.ticks());
-                    seededAt = player.serverLevel().getGameTime();
+                    seededAt = ((net.minecraft.server.level.ServerLevel) player.level()).getGameTime();
                     return false;
                 }
-                if (player.serverLevel().getGameTime() <= seededAt) return false;
+                if (((net.minecraft.server.level.ServerLevel) player.level()).getGameTime() <= seededAt) return false;
                 var stats = ProfilerBridge.stats(ProfilerBridge.key(
                         ProfilerBridge.networkId(fixture.cpu(player).getMainNode().getGrid()), AEItemKey.of(Items.STONE)));
                 if (stats.isEmpty()) return false;

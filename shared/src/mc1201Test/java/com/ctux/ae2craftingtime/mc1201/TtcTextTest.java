@@ -76,11 +76,13 @@ class TtcTextTest {
     }
     @BeforeEach
     void textOnlyForExistingStructureChecks() {
+        ClientOptionsRuntime.setConnectionSupportForTests(() -> true);
         ClientOptionsRuntime.current().features().setEnabled(OptionFeature.SHOW_EMOJI, false);
     }
 
     @AfterEach
     void restoreDefault() {
+        ClientOptionsRuntime.setConnectionSupportForTests(null);
         ClientOptionsRuntime.current().features().setEnabled(OptionFeature.SHOW_EMOJI, true);
     }
     @Test

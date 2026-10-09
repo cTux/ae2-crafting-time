@@ -34,7 +34,7 @@ class CompactHoverLifecycleTest {
             }
             var bytecode = new org.objectweb.asm.tree.ClassNode();
             new org.objectweb.asm.ClassReader(TestDriverRuntime.class.getName()).accept(bytecode, 0);
-            for (String method : new String[] {"close", "switchCase", "tick"}) {
+            for (String method : new String[] {"close", "switchCase", "tickLifecycle"}) {
                 assertTrue(bytecode.methods.stream().filter(candidate -> candidate.name.equals(method))
                         .anyMatch(candidate -> java.util.Arrays.stream(candidate.instructions.toArray())
                                 .filter(org.objectweb.asm.tree.MethodInsnNode.class::isInstance)
