@@ -46,6 +46,57 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
     @Test
+    void compactHoverRestoresOptionsOnCompletionFailureCancellationAndDoubleClose() {
+        var feature = com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_HOVER_NUMBERS;
+        var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().features();
+        boolean initial = options.enabled(feature);
+        try {
+            for (boolean original : new boolean[] {false, true}) {
+                for (String outcome : List.of("success", "failed-capture", "cancellation")) {
+                    options.setEnabled(feature, original);
+                    var scenario = new CompactHoverNumbersScenario();
+                    try {
+                        options.setEnabled(feature, !original);
+                        if (!outcome.equals("success")) throw new IllegalStateException(outcome);
+                    } catch (IllegalStateException expected) {
+                        assertEquals(outcome, expected.getMessage());
+                    } finally {
+                        scenario.close();
+                    }
+                    assertEquals(original, options.enabled(feature));
+                    scenario.close();
+                    assertEquals(original, options.enabled(feature));
+                }
+            }
+            assertTrue(StandardAe2Scenario.supports("compact-hover-numbers"));
+            assertEquals(CompactHoverNumbersScenario.CHECKS, StandardAe2Scenario.CHECKS.get("compact-hover-numbers"));
+        } finally {
+            options.setEnabled(feature, initial);
+        }
+    }
+
+    @Test
+    void fullChatContractRejectsWrongNodeAmountRateAndMissingFields() {
+        var details = Component.translatable("text.ae2craftingtime.chat.details.rate", 1, "0.123456789",
+                Component.literal("items"), "2.46913578", Component.literal("items"));
+        var summary = Component.translatable("text.ae2craftingtime.chat.summary", "minecraft:stone",
+                9_007_199_254_740_993L, "~1s").append(" | ").append(details);
+        assertTrue(CraftingTreeScenario.fullChatRates(summary, "minecraft:stone", 9_007_199_254_740_993L,
+                "0.123456789", "2.46913578"));
+        assertTrue(CraftingTreeScenario.fullChatRates(Component.Serializer.fromJson(Component.Serializer.toJson(summary)),
+                "minecraft:stone", 9_007_199_254_740_993L, "0.123456789", "2.46913578"));
+        assertTrue(CraftingTreeScenario.fullChatRates(Component.translatable("chat.type.text", "player", summary),
+                "minecraft:stone", 9_007_199_254_740_993L, "0.123456789", "2.46913578"));
+        assertFalse(CraftingTreeScenario.fullChatRates(summary, "minecraft:glass", 9_007_199_254_740_993L,
+                "0.123456789", "2.46913578"));
+        assertFalse(CraftingTreeScenario.fullChatRates(summary, "minecraft:stone", 9_007_199_254_740_992L,
+                "0.123456789", "2.46913578"));
+        assertFalse(CraftingTreeScenario.fullChatRates(summary, "minecraft:stone", 9_007_199_254_740_993L,
+                "0.12", "2.47"));
+        assertFalse(CraftingTreeScenario.fullChatRates(Component.literal("stone x1: 2.47"), "minecraft:stone", 1,
+                "0.123456789", "2.46913578"));
+    }
+    @Test
     void fixturePreparationSendsAbsoluteProviderFacingRotation() throws Exception {
         var node = new ClassNode();
         try (var input = getClass().getResourceAsStream(
@@ -348,7 +399,7 @@ class TestDriverCoreTest {
     @Test
     void standardResultCannotOmitAnyRequiredPlanStatusOrOutputCheck() {
         assertFalse(AddonCpuFixture.supports("standard-ae2"));
-        assertEquals(11, StandardAe2Scenario.CHECKS.size());
+        assertEquals(12, StandardAe2Scenario.CHECKS.size());
         assertEquals(List.of("plan-on", "plan-off", "plan-restored", "status-on", "status-off", "status-restored"),
                 StandardAe2Scenario.CHECKS.get("badge-background"));
         for (var entry : StandardAe2Scenario.CHECKS.entrySet()) {

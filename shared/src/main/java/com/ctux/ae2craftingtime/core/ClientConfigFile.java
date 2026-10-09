@@ -17,6 +17,7 @@ public final class ClientConfigFile {
             Map.entry(OptionFeature.PLAN_TOTAL, "Show the TTC total in Crafting Plan. False hides only that added total."),
             Map.entry(OptionFeature.STATUS_ROWS, "Show TTC estimates beside AE2 Crafting Status rows. False hides only the added estimates."),
             Map.entry(OptionFeature.COMPACT_STATUS_AMOUNTS, "Shorten item and fluid amounts in Crafting Plan and Crafting Status TTC rows. False keeps full amounts."),
+            Map.entry(OptionFeature.COMPACT_HOVER_NUMBERS, "Shorten throughput in hover details. False restores two-decimal rates. Chat always shows full stored rates."),
             Map.entry(OptionFeature.STATUS_TOTAL, "Show the TTC total in Crafting Status. False hides only that added total."),
             Map.entry(OptionFeature.CPU_CARD_TOTAL, "Show time totals on crafting CPU cards. False hides those totals locally."),
             Map.entry(OptionFeature.CRAFTING_TREE, "Show timing information in the optional Crafting Tree addon. False hides only this overlay; the addon still works."),

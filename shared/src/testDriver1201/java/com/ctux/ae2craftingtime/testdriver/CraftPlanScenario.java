@@ -80,6 +80,12 @@ public final class CraftPlanScenario {
     private final BlockTerminalReadiness blockTerminalReadiness = new BlockTerminalReadiness();
     private boolean amountSubmitted;
     private boolean treeHoverStarted;
+    private int treeNode;
+    private boolean treeDetails;
+    private boolean treeTooltip;
+    private List<String> treeTargets;
+    private StandardCraftFixture treeFixture;
+    private CompletableFuture<Boolean> treeSetup;
     private final StatsInteraction treeStats = new StatsInteraction();
     private final ResourceFixtureClient resourceFixture;
 
@@ -209,6 +215,24 @@ public final class CraftPlanScenario {
         marker = FixtureMarker.read(world);
         if (!marker.disposableWorldId().equals(options.world())) {
             throw new IllegalArgumentException("fixture world ID mismatch");
+        }
+        if (CraftingTreeScenario.supports(options.scenario())) {
+            if (treeFixture == null) {
+                treeFixture = new StandardCraftFixture();
+                treeFixture.holdFinalOutput = true;
+                treeFixture.treePlan = true;
+            }
+            if (treeSetup == null) treeSetup = minecraft.getSingleplayerServer().submit(() -> treeFixture.prepare(
+                    minecraft.getSingleplayerServer().getPlayerList().getPlayer(minecraft.player.getUUID()), marker));
+            if (!treeSetup.isDone()) return;
+            if (!treeSetup.join()) { treeSetup = null; return; }
+            var terminal = treeFixture.terminal;
+            marker = new FixtureMarker(1, "craft-plan", "ae2-crafting-time", options.world(),
+                    new FixtureMarker.Position(terminal.getX(), terminal.getY(), terminal.getZ(), "NORTH"),
+                    "minecraft:smooth_stone");
+            outputId = marker.outputId();
+            advance(ScenarioState.WORLD_READY);
+            return;
         }
         if (standard != null || noSpace != null || noProvider != null || noPower != null
                 || providerDispatchStatus != null || chanceOutput != null) {
@@ -554,8 +578,13 @@ public final class CraftPlanScenario {
             verifyReadRecovery(snapshot, true);
             return;
         }
-        var target = snapshot.rows().stream().filter(row -> row.outputId().equals(outputId)).findFirst();
-        if (target.isEmpty() || (!checks.get("node-ttc") && !CraftingTreeScenario.nodeTtcDrawn(snapshot, target.get()))
+        if (treeTargets == null) {
+            treeTargets = TreeAmountObservation.pair(snapshot.rows());
+            if (treeTargets.isEmpty()) throw new IllegalStateException("Tree fixture requires two sibling outputs with distinct positive amounts");
+        }
+        var selectedOutput = treeTargets.get(treeNode);
+        var target = snapshot.rows().stream().filter(row -> row.outputId().equals(selectedOutput)).findFirst();
+        if (target.isEmpty() || (!treeDetails && !CraftingTreeScenario.nodeTtcDrawn(snapshot, target.get()))
                 || !stableRows.observe(ids(snapshot))) {
             return;
         }
@@ -563,25 +592,46 @@ public final class CraftPlanScenario {
         checks.put("node-ttc", true);
         checks.put("layout", LayoutValidator.validate(snapshot).isEmpty());
         if (!treeHoverStarted) {
-            screenshot("crafting-tree-screen.png");
+            screenshot("crafting-tree-screen-" + treeNode + ".png");
             moveMouse(target.get().cell().centerX(), target.get().cell().centerY());
             treeHoverStarted = true;
             stableRows.reset();
             return;
         }
-        if (!checks.get("tooltip") && !CraftingTreeScenario.tooltipReady(snapshot)) {
+        if (!treeTooltip && !CraftingTreeScenario.tooltipReady(snapshot)) {
             return;
         }
-        if (!checks.get("tooltip")) {
+        if (!treeTooltip) {
+            treeTooltip = true;
             checks.put("tooltip", true);
-            screenshot("crafting-tree-tooltip.png");
+            screenshot("crafting-tree-tooltip-" + treeNode + ".png");
         }
-        boolean reset = checks.get("details");
-        if (!treeStats.click(minecraft, snapshot, outputId, reset)) return;
-        checks.put(reset ? "reset" : "details", true);
-        screenshot(reset ? "crafting-tree-reset.png" : "crafting-tree-details.png");
+        boolean reset = treeDetails;
+        long amount = target.get().craftAmount();
+        if (!treeStats.click(minecraft, snapshot, selectedOutput, reset, amount)) return;
+        if (!reset) {
+            var stats = com.ctux.ae2craftingtime.mc1201.ClientStats.CACHE.get(new ProfileKey(selectedOutput)).orElseThrow();
+            if (!CraftingTreeScenario.fullChatRates(treeStats.received(), selectedOutput, amount,
+                    com.ctux.ae2craftingtime.core.ThroughputNumbers.full(stats.amountPerTick()),
+                    com.ctux.ae2craftingtime.core.ThroughputNumbers.full(stats.amountPerSecond())))
+                throw new IllegalStateException("Tree chat changed the selected node amount or full rates");
+            treeDetails = true;
+        }
+        screenshot((reset ? "crafting-tree-reset-" : "crafting-tree-details-") + treeNode + ".png");
         treeStats.next();
-        if (reset) writePass();
+        if (reset) {
+            if (++treeNode < treeTargets.size()) {
+                treeDetails = false;
+                treeTooltip = false;
+                treeHoverStarted = false;
+                stableRows.reset();
+            } else {
+                checks.put("details", true);
+                checks.put("full-chat-rates", true);
+                checks.put("reset", true);
+                writePass();
+            }
+        }
     }
 
     private void verifyReadRecovery(UiSnapshot snapshot, boolean tree) throws IOException {
@@ -786,6 +836,7 @@ public final class CraftPlanScenario {
         AdapterSmokePolicy.verify(DriverPlatform.TARGET, options.scenario(),
                 minecraft.getLanguageManager().getSelected(),
                 com.ctux.ae2craftingtime.integration.IntegrationMixinPlugin.snapshot());
+        cleanup();
         var failed = checks.entrySet().stream().filter(entry -> !entry.getValue()).map(java.util.Map.Entry::getKey)
                 .toList();
         if (!failed.isEmpty()) {
@@ -809,7 +860,9 @@ public final class CraftPlanScenario {
         advance(ScenarioState.QUIT_REQUESTED);
     }
 
+    void cleanup() { if (standard != null) standard.cleanup(); }
     void cleanup(ServerPlayer player) {
+        cleanup();
         if (addonFixture != null) addonFixture.cleanup(player);
     }
 

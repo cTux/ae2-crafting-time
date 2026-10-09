@@ -1,4 +1,26 @@
 {
   "schema": 1,
-  "checkpoints": []
+  "checkpoints": [
+    {"scenario":"compact-hover-numbers","image":"compact-hover-ordinary-plan.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-ordinary-status.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-ordinary-chat.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-ordinary-legacy.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-fractional-plan.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-fractional-status.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-fractional-chat.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-fractional-legacy.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-thousand-plan.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-thousand-status.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-thousand-chat.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-thousand-legacy.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-petascale-plan.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-petascale-status.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-petascale-chat.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-petascale-legacy.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-exascale-plan.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-exascale-status.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-exascale-chat.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"compact-hover-numbers","image":"compact-hover-exascale-legacy.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"crafting-tree-screen","image":"crafting-tree-details-0.png","environmentId":"pending-qualification","disposition":"review"}
+  ]
 }

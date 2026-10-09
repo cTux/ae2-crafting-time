@@ -17,8 +17,11 @@ final class StatsInteraction {
     private long nextStatsClick;
     private long clickedAt;
     private long clickedAmount;
+    private net.minecraft.network.chat.Component received;
 
-    void next() { clicked = false; }
+    net.minecraft.network.chat.Component received() { return received; }
+
+    void next() { clicked = false; received = null; }
 
     boolean click(Minecraft minecraft, UiSnapshot snapshot, String output, boolean reset) {
         return click(minecraft, snapshot, output, reset, true, 1);
@@ -66,6 +69,9 @@ final class StatsInteraction {
             return System.nanoTime() - clickedAt > java.util.concurrent.TimeUnit.SECONDS.toNanos(1);
         }
         boolean received = matches == 1;
+        if (received) this.received = chat.subList(0, chat.size() - chatCount).stream()
+                .map(message -> message.content()).filter(message -> message.getString().contains(expected))
+                .findFirst().orElseThrow();
         if (received) nextStatsClick = System.nanoTime() + java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(
                 com.ctux.ae2craftingtime.core.PlayerMessageRateLimit.COOLDOWN_MILLIS);
         return received;

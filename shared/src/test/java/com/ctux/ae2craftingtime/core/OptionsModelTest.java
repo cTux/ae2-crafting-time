@@ -9,6 +9,24 @@ import org.junit.jupiter.api.Test;
 
 class OptionsModelTest {
     @Test
+    void compactHoverDraftCancelAndBothResetsKeepIndependentSettings() {
+        var config = new ClientConfig();
+        assertTrue(config.features().enabled(OptionFeature.COMPACT_HOVER_NUMBERS));
+        var draft = config.copy();
+        draft.features().setEnabled(OptionFeature.COMPACT_HOVER_NUMBERS, false);
+        assertTrue(config.features().enabled(OptionFeature.COMPACT_HOVER_NUMBERS));
+        assertFalse(draft.features().enabled(OptionFeature.COMPACT_HOVER_NUMBERS));
+        draft.features().setEnabled(OptionFeature.COMPACT_STATUS_AMOUNTS, true);
+        draft.features().setEnabled(OptionFeature.DETAILED_TOOLTIPS, false);
+        draft.features().reset();
+        assertTrue(draft.features().enabled(OptionFeature.COMPACT_HOVER_NUMBERS));
+        draft.features().setEnabled(OptionFeature.COMPACT_HOVER_NUMBERS, false);
+        draft.reset();
+        assertTrue(draft.features().enabled(OptionFeature.COMPACT_HOVER_NUMBERS));
+        assertFalse(draft.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
+        assertTrue(draft.features().enabled(OptionFeature.DETAILED_TOOLTIPS));
+    }
+    @Test
     void clientDefaultsEditsCopiesAndResets() {
         var config = new ClientConfig();
         for (var color : ClientConfig.Color.values()) {

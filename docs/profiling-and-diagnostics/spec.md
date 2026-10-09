@@ -18,6 +18,10 @@ as the world runs without pretending that an estimate is exact.
 
 ## Learned Throughput
 
+Hover throughput uses optional compact decimal suffixes. Ctrl-click chat keeps
+both full stored rates; see [compact hover numbers](../player-controls-and-integrations/compact-hover-numbers/spec.md)
+for the independent display setting and verification status.
+
 - Identify history by AE2 network and output id. Two separate networks must not
   share samples.
 - Measure a continuous production window from the first dispatched batch until
