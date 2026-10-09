@@ -41,6 +41,9 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
     private StandardCraftFixture fixture;
     private SuiteFixture pristine;
     private final StatsInteraction interaction = new StatsInteraction();
+    // A previous suite leaf can still own the server's player chat cooldown.
+    private final long firstChatClickAt = System.nanoTime() + java.util.concurrent.TimeUnit.MILLISECONDS.toNanos(
+            com.ctux.ae2craftingtime.core.PlayerMessageRateLimit.COOLDOWN_MILLIS);
     private final StableFrames<Object> frames = new StableFrames<>(8);
     private final boolean original = ClientOptionsRuntime.current().features().enabled(OptionFeature.COMPACT_HOVER_NUMBERS);
     private boolean closed;
@@ -188,6 +191,7 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
             return false;
         }
         if (stage == Stage.PLAN_CHAT || stage == Stage.STATUS_CHAT) {
+            if (stage == Stage.PLAN_CHAT && System.nanoTime() < firstChatClickAt) return false;
             long amount = minecraft.screen instanceof CraftConfirmScreen ? row.craftAmount() : row.activeAmount() + row.pendingAmount();
             if (!interaction.click(minecraft, snapshot, "minecraft:stone", false, amount)) return false;
             if (!CraftingTreeScenario.fullChatRates(interaction.received(), "minecraft:stone", amount, rate.tick(), rate.second()))
