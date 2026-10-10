@@ -1,0 +1,5 @@
+interface:
+  display_name: "Inspect Skill Setup"
+  short_description: "Reconcile project skill configuration"
+policy:
+  allow_implicit_invocation: false

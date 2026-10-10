@@ -1,0 +1,5 @@
+interface:
+  display_name: "Implement AE2 Spec"
+  short_description: "Complete a dependency graph on one branch"
+policy:
+  allow_implicit_invocation: false

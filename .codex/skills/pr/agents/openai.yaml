@@ -1,0 +1,3 @@
+interface:
+  display_name: "Project Pull Request"
+  short_description: "Describe and verify the hook-created PR"

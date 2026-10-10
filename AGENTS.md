@@ -31,3 +31,9 @@
   issue titles with a type such as `[Bug]` or `[Feature]`.
 - Preserve unrelated labels when updating an issue. Apply the same naming rules
   to open and closed issues.
+
+## Local skills
+
+Prefer the project-adapted skills in `.codex/skills/` over same-purpose global
+workflows. For their provenance, replacements, and tracker/domain configuration,
+see [Codex skills](docs/codex-skills.md).
