@@ -1,0 +1,5 @@
+interface:
+  display_name: "Implement AE2 Feature"
+  short_description: "Implement and review an approved AE2 plan"
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,5 @@
+interface:
+  display_name: "Coordinate Project Goal"
+  short_description: "Track an explicitly requested project goal"
+policy:
+  allow_implicit_invocation: false

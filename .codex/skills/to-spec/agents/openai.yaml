@@ -1,0 +1,5 @@
+interface:
+  display_name: "Plan AE2 Feature"
+  short_description: "Create a reviewed issue, spec, and design"
+policy:
+  allow_implicit_invocation: true
