@@ -372,6 +372,8 @@ try {
     Invoke-Case "pass" -Scenario crafting-suspension -shouldPass $true
     Invoke-Case "missing-screenshot" -Scenario crafting-suspension -shouldPass $false
     Invoke-Case "pass" -Scenario crafting-suspension -Target 1.20.1-fabric -shouldPass $false
+    Invoke-Case "pass" -Scenario compact-hover-numbers -shouldPass $true
+    Invoke-Case "missing-screenshot" -Scenario compact-hover-numbers -shouldPass $false
     Invoke-Case "pass" -Scenario standard-ae2 -shouldPass $true
     Invoke-Case "missing-screenshot" -Scenario standard-ae2 -shouldPass $false
     $failedManifest = Join-Path $temp 'build/ui-smoke/1.20.1-forge/compatible/standard-ae2/evidence/resolved-mods.json'

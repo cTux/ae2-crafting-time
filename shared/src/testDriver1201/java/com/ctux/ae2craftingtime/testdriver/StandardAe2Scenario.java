@@ -34,6 +34,7 @@ final class StandardAe2Scenario {
     static final Map<String, List<String>> CHECKS = Map.ofEntries(
             Map.entry("standard-plan-controls", List.of("plan", "plan-sort", "missing-first", "plan-tooltip",
                     "plan-details", "plan-reset", "total-ttc", "layout", "item-resolution")),
+            Map.entry("compact-hover-numbers", CompactHoverNumbersScenario.CHECKS),
             Map.entry("badge-background", List.of("plan-on", "plan-off", "plan-restored",
                     "status-on", "status-off", "status-restored")),
             Map.entry("recurrent-plan", List.of("recurrent-row", "red-warning-style", "recurrent-tooltip", "unchanged-quantity",
@@ -85,6 +86,7 @@ final class StandardAe2Scenario {
     private boolean suspensionDelayedObserved;
     private boolean suspensionResumedCaptured;
     private final CpuListTtcScenario cpuList;
+    private final CompactHoverNumbersScenario compactHover;
     private final boolean connectedDedicated;
     private final String world;
     private final java.nio.file.Path output;
@@ -98,6 +100,7 @@ final class StandardAe2Scenario {
             List<String> resultScreenshots) {
         if (!CHECKS.containsKey(leaf)) throw new IllegalArgumentException("Unknown standard leaf: " + leaf);
         this.leaf = leaf;
+        compactHover = leaf.equals("compact-hover-numbers") ? new CompactHoverNumbersScenario() : null;
         if (leaf.equals("standard-status-controls")) StatusWrapperProbe.arm();
         this.world = world;
         this.output = output;
@@ -239,7 +242,7 @@ final class StandardAe2Scenario {
     private long variantSecondRevision;
     private int variantSecondMenu;
 
-    String checkpoint() { return "phase=" + phase + " fixture=" + fixture.checkpoint
+    String checkpoint() { if (compactHover != null) return compactHover.checkpoint(); return "phase=" + phase + " fixture=" + fixture.checkpoint
             + (leaf.equals("crafting-suspension") ? " suspension=" + suspensionStage : "")
             + (leaf.equals("badge-background") ? " badge=" + badgeStep + " replan=" + badgeReplanAttempts : "")
             + (leaf.equals("recurrent-plan") ? " recurrence=" + recurrenceCase + " sort=" + sort : "")
@@ -265,6 +268,7 @@ final class StandardAe2Scenario {
 
     boolean tick(Minecraft minecraft, FixtureMarker marker, Map<String, Boolean> checks,
             Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) throws Exception {
+        if (compactHover != null) return compactHover.tick(minecraft, marker, checks, screenshot, moveMouse);
         if (leaf.equals("crafting-suspension")) return connectedDedicated
                 ? tickConnectedSuspension(minecraft, checks, screenshot)
                 : tickSuspension(minecraft, marker, checks, screenshot);
@@ -3191,7 +3195,8 @@ final class StandardAe2Scenario {
         if (checks.containsKey(key)) checks.put(key, value);
     }
 
-    void releaseKeys() { stats.releaseKeys(); }
+    void releaseKeys() { stats.releaseKeys(); cleanup(); }
+    void cleanup() { if (compactHover != null) compactHover.close(); }
 
     static boolean focus(long window) {
         var user = User32.INSTANCE;

@@ -27,7 +27,7 @@ public record DriverResult(
     public static final List<String> WIRELESS_TERMINAL_CHECKS = List.of("screen", "ttc-tooltip", "plan-ttc");
     public static final List<String> ME_REQUESTER_CHECKS = List.of("screen", "ttc-row", "total-ttc", "layout");
     public static final List<String> VISUAL_TOOL_CHECKS = List.of("screen", "layout");
-    public static final List<String> CRAFTING_TREE_CHECKS = List.of("screen", "node-ttc", "tooltip", "layout", "details", "reset");
+    public static final List<String> CRAFTING_TREE_CHECKS = List.of("screen", "node-ttc", "tooltip", "layout", "details", "full-chat-rates", "reset");
     public static final List<String> WIRELESS_RANGE_CHECKS = List.of("screen", "plan-ttc");
     public static final List<String> READ_RECOVERY_CHECKS = List.of("screen", "host-content", "overlay-absent", "layout");
     public static final List<String> TREE_RECOVERY_CHECKS = List.of("screen", "host-content", "overlay-absent", "layout",

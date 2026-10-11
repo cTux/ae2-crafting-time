@@ -7,6 +7,12 @@ navigation:
 
 # Details and reset
 
+Ctrl-click publishes both per-tick and per-second throughput without compact
+suffixes, exponent notation or two-decimal rounding. The requested amount stays
+an exact integer. Full rates show the decimal precision stored by the profiler.
+Everyone on the server can see the message; the existing chat switch and
+cooldown still apply.
+
 Hover a supported row or Crafting Tree node for timing, sample, confidence, and
 accuracy details. Hold Ctrl and click it to print a compact report in chat. Hold
 Ctrl+Alt and click the same target to clear retained history for that output on

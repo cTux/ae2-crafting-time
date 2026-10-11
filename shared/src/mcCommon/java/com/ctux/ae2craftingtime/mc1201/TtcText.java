@@ -6,6 +6,8 @@ import com.ctux.ae2craftingtime.core.StallDiagnostic;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
 import com.ctux.ae2craftingtime.core.ClientConfig;
+import com.ctux.ae2craftingtime.core.OptionFeature;
+import com.ctux.ae2craftingtime.core.ThroughputNumbers;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
@@ -173,8 +175,9 @@ public final class TtcText {
     public static List<Component> statsLines(ProfileStats stats) {
         var lines = new ArrayList<Component>();
         lines.add(statsLine("text.ae2craftingtime.stats.throughput",
-                I18n.get("text.ae2craftingtime.value.throughput", rate(stats.amountPerTick()), unitName(stats),
-                        rate(stats.amountPerSecond()), unitName(stats))));
+                I18n.get("text.ae2craftingtime.value.throughput",
+                        ThroughputNumbers.hover(stats.amountPerTick(), ClientOptionsRuntime.enabled(OptionFeature.COMPACT_HOVER_NUMBERS)), unitName(stats),
+                        ThroughputNumbers.hover(stats.amountPerSecond(), ClientOptionsRuntime.enabled(OptionFeature.COMPACT_HOVER_NUMBERS)), unitName(stats))));
         if (stats.usedSampleCount() != stats.sampleCount()) {
             lines.add(statsLine("text.ae2craftingtime.stats.used_samples",
                     I18n.get("text.ae2craftingtime.value.used_samples", stats.usedSampleCount(),
@@ -332,12 +335,14 @@ public final class TtcText {
         var latest = stats.latestTicksPerUnit();
         if (average.isEmpty() || latest.isEmpty()) {
             return I18n.get("text.ae2craftingtime.chat.details.rate", stats.sampleCount(),
-                    rate(stats.amountPerSecond()), unitName(stats));
+                    ThroughputNumbers.full(stats.amountPerTick()), unitName(stats),
+                    ThroughputNumbers.full(stats.amountPerSecond()), unitName(stats));
         }
         return I18n.get("text.ae2craftingtime.chat.details", stats.sampleCount(), singularUnitName(stats),
                 TimeEstimate.formatSampleTicks(average.getAsDouble()).orElse("?"), singularUnitName(stats),
                 TimeEstimate.formatSampleTicks(latest.getAsDouble()).orElse("?"),
-                rate(stats.amountPerSecond()), unitName(stats));
+                ThroughputNumbers.full(stats.amountPerTick()), unitName(stats),
+                ThroughputNumbers.full(stats.amountPerSecond()), unitName(stats));
     }
 
     private static String confidence(ProfileStats stats) {

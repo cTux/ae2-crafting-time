@@ -42,6 +42,7 @@ public final class UiObservationStore {
     }
 
     public static void begin(Minecraft minecraft) {
+        TreeAmountObservation.reset();
         if (!(minecraft.screen instanceof AEBaseScreen<?> screen)
                 || (!(screen instanceof CraftConfirmScreen)
                 && !(screen instanceof appeng.client.gui.me.crafting.CraftingCPUScreen<?>)
@@ -307,7 +308,7 @@ public final class UiObservationStore {
     public static void treeNode(GuiGraphics graphics, AEKey key, int x, int y) {
         if (active != null && CraftingTreeScenario.isScreen(active.screen)) {
             var bounds = transformed(graphics, x, y, x + 16, y + 16);
-            active.rows.add(new PendingRow(key.getId().toString(), 0, 0, bounds));
+            active.rows.add(new PendingRow(key.getId().toString(), TreeAmountObservation.amount(key.getId().toString()), 0, bounds));
             active.itemCells.add(bounds);
         }
     }

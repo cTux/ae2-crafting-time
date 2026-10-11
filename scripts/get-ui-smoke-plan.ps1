@@ -146,6 +146,11 @@ foreach ($change in $changes) {
             $cases = @('recurrent-plan','standard-plan-controls'); $reason = 'English recurrent-plan labels changed'
         } elseif (!@($keys | Where-Object { $_ -notin @('text.ae2craftingtime.status.amounts','text.ae2craftingtime.status.amounts_legend','config.ae2craftingtime.compactStatusAmounts') }).Count) {
             $cases = @('standard-status-controls'); $reason = 'English compact-status amount labels changed'
+        } elseif (!@($keys | Where-Object { $_ -notin @('config.ae2craftingtime.compactHoverNumbers',
+                'text.ae2craftingtime.chat.details','text.ae2craftingtime.chat.details.rate',
+                'text.ae2craftingtime.details_hint','key.ae2craftingtime.show_ttc_details') }).Count) {
+            $behavior = @($behavior | Where-Object { $_.id -in @('compact-hover-numbers','compact-hover-tree-chat') })
+            $targetedBehavior = $true; $reason = 'English compact-hover and full-chat labels changed'
         } elseif (@($keys | Where-Object { $_ -cne 'text.ae2craftingtime.ttc_delayed' }).Count) { $cases = @('suite'); $reason = 'English keys affect general UI' }
         else { $cases = @('delayed-status'); $reason = 'English delayed label changed' }
     } elseif ($behavior.Count) { $cases = @($behavior.cases | Select-Object -Unique); $reason = $behavior.reason -join '; '; $targetedBehavior = $true }

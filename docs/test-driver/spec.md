@@ -977,3 +977,15 @@ UUID, resumes through Alpha's menu, and finishes the native job. The runner
 records artifact hashes, phase/PID ledgers, server checkpoints, client
 screenshots and sidecars outside the world. Other connected leaves retain their
 one-client launch path.
+
+## Compact hover numbers (#677)
+
+The integrated `compact-hover-numbers` leaf seeds five independent server-owned
+stone rates before accepting a held-output job. It captures Plan, Status, full
+chat and legacy hover for each case. It restores the original in-memory client
+option before result finalization, leaf transitions, failure and shutdown on
+both shared and 26.1.2 adapters. No production JAR contains the fixture.
+
+See the [approved implementation and manual acceptance matrix](../player-controls-and-integrations/compact-hover-numbers/implementation-plan.md).
+Process relaunch, connected broadcast/isolation and sorted/scrolled row identity
+remain separate manual gates; automated leaf success does not pass them.

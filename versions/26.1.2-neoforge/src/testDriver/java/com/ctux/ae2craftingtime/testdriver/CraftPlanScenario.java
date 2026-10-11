@@ -679,6 +679,7 @@ public final class CraftPlanScenario {
         if (!screenshotWrite.isDone()) { pendingPass = true; return; }
         screenshotWrite.join();
         pendingPass = false;
+        cleanup();
         var failed = checks.entrySet().stream().filter(entry -> !entry.getValue()).map(java.util.Map.Entry::getKey)
                 .toList();
         if (!failed.isEmpty()) {
@@ -689,6 +690,7 @@ public final class CraftPlanScenario {
         advance(ScenarioState.RESULT_WRITTEN);
     }
 
+    void cleanup() { if (standard != null) standard.cleanup(); }
     private void requestQuit() {
         if (standard != null) standard.releaseKeys();
         if (providerDispatchStatus != null) {

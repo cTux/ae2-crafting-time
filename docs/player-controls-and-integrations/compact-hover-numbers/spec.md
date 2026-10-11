@@ -1,6 +1,6 @@
 # Compact hover numbers
 
-Status: ready-to-implement
+Status: finished
 
 Scope: Compact throughput in Crafting Time hover details, with unabbreviated
 throughput in the existing Ctrl+click chat action.
@@ -10,7 +10,10 @@ Issue: [#677](https://github.com/cTux/ae2-crafting-time/issues/677)
 Planning: [Reviewed implementation plan](implementation-plan.md) and
 [technical design](technical-design.md).
 
-Hold: Implementation remains in backlog until starting it is authorized.
+Implementation: [PR #679](https://github.com/cTux/ae2-crafting-time/pull/679).
+Verification: [H1-H6 acceptance report](acceptance-report.md), including the
+tested revision, all four client targets, dedicated-server behavior and limits.
+Completion and merge authorized on 2026-10-11; final-head CI is checked at merge.
 The user approved the [final issue text](issue-preview.md) and throughput-only
 scope on 2026-10-08. The issue, specification, design and plan agree.
 

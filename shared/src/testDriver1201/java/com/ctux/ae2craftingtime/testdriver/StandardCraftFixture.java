@@ -73,6 +73,7 @@ final class StandardCraftFixture {
     private boolean initialized;
     boolean returnedStone;
     boolean holdFinalOutput;
+    boolean treePlan;
     boolean missingPlanInput;
     boolean unprofiledPlan;
     boolean cpuListScenario;
@@ -279,7 +280,8 @@ final class StandardCraftFixture {
                 pattern(player, 4, 0, recurrentPlan ? Items.SMOOTH_STONE : Items.COBBLESTONE, Items.STONE);
                 if (holdFinalOutput) {
                     pattern(player, 4, 1, Items.SAND, Items.GLASS);
-                    pattern(player, 8, java.util.List.of(Items.STONE, Items.GLASS), Items.SMOOTH_STONE);
+                    pattern(player, 8, treePlan ? java.util.List.of(Items.STONE, Items.GLASS, Items.GLASS)
+                            : java.util.List.of(Items.STONE, Items.GLASS), Items.SMOOTH_STONE);
                 } else {
                     if (storedVariantPlan) storedVariantPattern(player);
                     else pattern(player, 8, Items.STONE, Items.SMOOTH_STONE);
@@ -314,6 +316,16 @@ final class StandardCraftFixture {
         pattern(player, 4, value ? Items.SMOOTH_STONE : Items.COBBLESTONE, Items.STONE);
     }
 
+    void seed(ServerPlayer player, long amount, long durationTicks) {
+        var grid = cpu(player).getMainNode().getGrid();
+        if (cpu(player).getCluster().isBusy()) throw new IllegalStateException("Seed requires an idle fixture");
+        var network = ProfilerBridge.networkId(grid);
+        var key = AEItemKey.of(Items.STONE);
+        ProfilerBridge.clearStats(ProfilerBridge.key(network, key));
+        var tick = player.serverLevel().getGameTime();
+        ProfilerBridge.start(network, this, key, amount, tick);
+        ProfilerBridge.complete(network, this, key, amount, tick + durationTicks);
+    }
     void seed(ServerPlayer player, net.minecraft.world.item.Item item) {
         var grid = cpu(player).getMainNode().getGrid();
         var network = ProfilerBridge.networkId(grid);

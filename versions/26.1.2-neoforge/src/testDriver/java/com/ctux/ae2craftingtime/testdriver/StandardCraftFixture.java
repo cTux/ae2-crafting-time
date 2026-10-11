@@ -251,6 +251,16 @@ final class StandardCraftFixture {
         pattern(player, 4, value ? Items.SMOOTH_STONE : Items.COBBLESTONE, Items.STONE);
     }
 
+    void seed(ServerPlayer player, long amount, long durationTicks) {
+        var grid = cpu(player).getMainNode().getGrid();
+        if (cpu(player).getCluster().isBusy()) throw new IllegalStateException("Seed requires an idle fixture");
+        var network = ProfilerBridge.networkId(grid);
+        var key = AEItemKey.of(Items.STONE);
+        ProfilerBridge.clearStats(ProfilerBridge.key(network, key));
+        var tick = ((net.minecraft.server.level.ServerLevel) player.level()).getGameTime();
+        ProfilerBridge.start(network, this, key, amount, tick);
+        ProfilerBridge.complete(network, this, key, amount, tick + durationTicks);
+    }
     void seed(ServerPlayer player, net.minecraft.world.item.Item item) {
         var grid = cpu(player).getMainNode().getGrid();
         var network = ProfilerBridge.networkId(grid);

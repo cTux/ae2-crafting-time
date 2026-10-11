@@ -22,6 +22,7 @@
     "ClientStatsAccessor",
     "AEBaseScreenMixin",
     "AEKeyRenderingMixin",
+    "CraftingTreeAmountObservationMixin",
     "AbstractTableRendererMixin",
     "CraftAmountScreenAccessor",
     "ContainerScreenAccessor",

@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "groups": {
-    "standard-ae2": ["standard-plan-controls", "badge-background", "recurrent-plan", "stored-variant-plan", "standard-status-controls", "waiting-status", "running-status", "delayed-status", "craft-lifecycle", "cpu-list-total-ttc"],
+    "standard-ae2": ["standard-plan-controls", "badge-background", "recurrent-plan", "stored-variant-plan", "standard-status-controls", "waiting-status", "running-status", "delayed-status", "craft-lifecycle", "cpu-list-total-ttc", "compact-hover-numbers"],
     "provider-dispatch-statuses": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"]
   },
   "focusedCases": {
@@ -11,6 +11,14 @@
     "26.1.2-neoforge": ["delayed-resource-icons"]
   },
   "cases": {
+    "compact-hover-numbers": {
+      "checks": ["seeded-server-rate", "plan-throughput", "status-throughput", "full-chat-rates", "legacy-hover", "fixture-restored"],
+      "screenshots": ["compact-hover-ordinary-plan.png", "compact-hover-ordinary-status.png", "compact-hover-ordinary-chat.png", "compact-hover-ordinary-legacy.png", "compact-hover-fractional-plan.png", "compact-hover-fractional-status.png", "compact-hover-fractional-chat.png", "compact-hover-fractional-legacy.png", "compact-hover-thousand-plan.png", "compact-hover-thousand-status.png", "compact-hover-thousand-chat.png", "compact-hover-thousand-legacy.png", "compact-hover-petascale-plan.png", "compact-hover-petascale-status.png", "compact-hover-petascale-chat.png", "compact-hover-petascale-legacy.png", "compact-hover-exascale-plan.png", "compact-hover-exascale-status.png", "compact-hover-exascale-chat.png", "compact-hover-exascale-legacy.png"]
+    },
+    "crafting-tree-screen": {
+      "checks": ["screen", "node-ttc", "tooltip", "layout", "details", "full-chat-rates", "reset"],
+      "screenshots": ["crafting-tree-screen-0.png", "crafting-tree-tooltip-0.png", "crafting-tree-details-0.png", "crafting-tree-reset-0.png", "crafting-tree-screen-1.png", "crafting-tree-tooltip-1.png", "crafting-tree-details-1.png", "crafting-tree-reset-1.png"]
+    },
     "crafting-suspension": {
       "checks": ["standard-cpus", "real-dispatch", "button-geometry", "paused-no-dispatch", "in-flight-progress", "small-completes", "same-job-resumed", "exact-output", "suspended-title", "three-cycles", "paused-diagnostics-clean", "resume-delay-rearms", "option-visible", "disabled-resumes", "disabled-action-rejected", "profiling-off-recovery", "stale-job-rejected", "cancel-while-paused", "cancel-conserved", "final-inflight-completes", "final-output-conserved", "suspended-badge", "suspended-rows"],
       "screenshots": ["crafting-suspension-running.png", "crafting-suspension-paused.png", "crafting-suspension-small-complete.png", "crafting-suspension-resumed.png", "crafting-suspension-disabled.png", "crafting-suspension-cancelled.png", "crafting-suspension-complete.png"],

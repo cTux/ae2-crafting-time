@@ -156,7 +156,7 @@ try {
         'Mixed CPU-list and runner changes must keep Forge suspension scoped'
     Clean
     Put 'shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingStatusTableRendererMixin.java' 'only delayed method changed'
-    Assert ((Plan).targets[0].cases.Count -eq 12) 'Never narrow mixed renderers by keywords'
+    Assert ((Plan).targets[0].cases.Count -eq 13) 'Never narrow mixed renderers by keywords'
     Clean
     Put $lang '{"text.ae2craftingtime.ttc_delayed":"late","other":"value"}'
     Assert ((Plan).targets[0].cases[0] -eq 'delayed-status') 'English delayed value must narrow'
@@ -248,10 +248,10 @@ try {
     $tree = & $planner -Repository $temp -Target '1.20.1-forge' -Scenario 'crafting-tree-screen'
     Assert (!$tree.targets[0].graphs[0].baseOnly) 'Direct addon UI scenario must install its dependency catalogue'
     Assert ($advancedGraphs.Count -eq 3 -and @($advancedGraphs | Where-Object { $_.cases.Count -ne 5 }).Count -eq 0) 'AdvancedAE must repeat all provider status leaves on three targets'
-    Assert ($full.targets[0].cases.Count -eq 42) 'Expanded Forge suite must contain 42 leaves'
-    Assert ($full.targets[1].cases.Count -eq 24) 'Expanded Fabric suite must contain 24 leaves'
-    Assert ($full.targets[2].cases.Count -eq 38) 'Expanded NeoForge suite must contain 38 leaves'
-    Assert ($full.targets[3].cases.Count -eq 27) 'Expanded 26.1.2 suite must contain 27 leaves'
+    Assert ($full.targets[0].cases.Count -eq 43) 'Expanded Forge suite must contain 43 leaves'
+    Assert ($full.targets[1].cases.Count -eq 25) 'Expanded Fabric suite must contain 25 leaves'
+    Assert ($full.targets[2].cases.Count -eq 39) 'Expanded NeoForge suite must contain 39 leaves'
+    Assert ($full.targets[3].cases.Count -eq 28) 'Expanded 26.1.2 suite must contain 28 leaves'
     $channel = & $planner -Repository $temp -Scenario no-channel-status
     Assert (@($channel.targets.graphs | Where-Object id -eq 'rxYaglEe').Count -eq 3) 'Native base graph must not suppress later AdvancedAE targets'
     $nativeChannel = & $planner -Repository $temp -Scenario no-channel-status -BaseOnly
@@ -329,6 +329,36 @@ try {
     Assert ((& $expand -Target '1.20.1-fabric' -Scenarios 'merequester-read-recovery') -ceq 'merequester-read-recovery') 'Fabric must accept focused Requester recovery'
     Reject { & $expand -Target '1.20.1-fabric' -Scenarios 'crafting-tree-read-recovery' } 'Unavailable Fabric Tree must remain unsupported'
     Reject { & $expand -Target '26.1.2-neoforge' -Scenarios 'merequester-read-recovery' } 'Unavailable 26 Requester must remain unsupported'
+    Clean
+    foreach ($path in @(
+        'shared/src/main/java/com/ctux/ae2craftingtime/core/ThroughputNumbers.java',
+        'shared/src/main/java/com/ctux/ae2craftingtime/core/OptionFeature.java',
+        'shared/src/main/java/com/ctux/ae2craftingtime/core/ClientConfigFile.java',
+        'shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/TtcText.java',
+        'shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/StatsChatServer.java',
+        'shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftConfirmTableRendererMixin.java',
+        'shared/src/mcCommon/java/com/ctux/ae2craftingtime/mc1201/mixin/CraftingStatusTableRendererMixin.java',
+        'shared/src/testDriver1201/java/com/ctux/ae2craftingtime/testdriver/CompactHoverNumbersScenario.java')) {
+        Put $path 'changed'
+        Assert (@((Plan).targets | Where-Object { 'compact-hover-numbers' -notin $_.cases }).Count -eq 0) "Missing compact hover selection: $path"
+        Clean
+    }
+    Clean
+    Put $lang '{"text.ae2craftingtime.ttc_delayed":"DELAYED","other":"value","config.ae2craftingtime.compactHoverNumbers":"Compact hover"}'
+    $hoverLanguage = Plan
+    Assert (@($hoverLanguage.targets | Where-Object { 'compact-hover-numbers' -notin $_.cases }).Count -eq 0) 'English hover label must select native hover on every target'
+    Assert (@($hoverLanguage.targets | Where-Object { $_.target -in @('1.20.1-fabric','26.1.2-neoforge') -and 'crafting-tree-screen' -in $_.cases }).Count -eq 0) 'Absent Tree must remain excluded'
+    Clean
+    Put 'shared/src/main/resources/assets/ae2craftingtime/lang/uk_ua.json' '{}'
+    Assert ((Plan).result -eq 'NOT_REQUIRED') 'Ukrainian-only text must not select compact hover or conflict with behavior rules'
+    Clean
+    Put 'shared/src/main/java/com/ctux/ae2craftingtime/core/StallDiagnostic.java' 'changed'
+    Assert ('compact-hover-numbers' -notin (Plan).targets.cases) 'Unrelated diagnostics must not select compact hover'
+    Clean
+    foreach ($targetId in @('1.20.1-forge','1.20.1-fabric','1.21.1-neoforge','26.1.2-neoforge')) {
+        Assert ('compact-hover-numbers' -cin @(& $expand -Target $targetId -Scenarios 'standard-ae2')) "Group missing compact hover: $targetId"
+        Assert ((& $expand -Target $targetId -Scenarios 'compact-hover-numbers') -ceq 'compact-hover-numbers') "Standalone compact hover rejected: $targetId"
+    }
     Write-Host 'PASS: diff ownership, union, language keys, aliases, manual modes and freshness'
 } finally {
     $resolved = [IO.Path]::GetFullPath($temp)

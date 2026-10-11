@@ -17,6 +17,26 @@ class ClientConfigFileTest {
     @TempDir Path directory;
 
     @Test
+    void compactHoverDefaultsAndBothValuesPersistIndependently() throws IOException {
+        var path = directory.resolve("client.toml");
+        var legacy = directory.resolve("missing.toml");
+        Files.writeString(path, "compactStatusAmounts = true\ndetailedTooltips = false\n");
+        var config = ClientConfigFile.load(path, legacy);
+        assertTrue(config.features().enabled(OptionFeature.COMPACT_HOVER_NUMBERS));
+        for (boolean compact : new boolean[] {false, true}) {
+            config.features().setEnabled(OptionFeature.COMPACT_HOVER_NUMBERS, compact);
+            ClientConfigFile.save(path, config);
+            var text = Files.readString(path);
+            assertTrue(text.contains("compactHoverNumbers = " + compact));
+            assertTrue(text.contains("Chat always shows full stored rates."));
+            var loaded = ClientConfigFile.load(path, legacy);
+            assertEquals(compact, loaded.features().enabled(OptionFeature.COMPACT_HOVER_NUMBERS));
+            assertTrue(loaded.features().enabled(OptionFeature.COMPACT_STATUS_AMOUNTS));
+            assertFalse(loaded.features().enabled(OptionFeature.DETAILED_TOOLTIPS));
+        }
+    }
+
+    @Test
     void missingAndLegacyFilesUseSafeDefaults() throws IOException {
         var path = directory.resolve("client.toml");
         var legacy = directory.resolve("common.toml");

@@ -1116,3 +1116,15 @@ The profiling-off case pauses a live job with profiling disabled, then disables
 suspension through Options/Done and waits for native recovery. Supplemental
 CS-6, permission and file-reload checks are listed in the
 [feature design](../crafting-suspension/technical-design.md#supplemental-runtime-checks-after-the-automated-leaf).
+
+## Compact hover numbers (#677)
+
+The integrated `compact-hover-numbers` leaf seeds five independent server-owned
+stone rates before accepting a held-output job. It captures Plan, Status, full
+chat and legacy hover for each case. It restores the original in-memory client
+option before result finalization, leaf transitions, failure and shutdown on
+both shared and 26.1.2 adapters. No production JAR contains the fixture.
+
+See the [approved implementation and manual acceptance matrix](../player-controls-and-integrations/compact-hover-numbers/implementation-plan.md).
+Process relaunch, connected broadcast/isolation and sorted/scrolled row identity
+remain separate manual gates; automated leaf success does not pass them.
