@@ -61,9 +61,14 @@ public final class TtcText {
     }
 
     public static MutableComponent totalTtc(TtcEstimate eta) {
-        return TtcComponents.text("text.ae2craftingtime.total_ttc", TtcComponents.estimate(eta))
-                .withStyle(style -> style.withColor(eta.instant()
-                        && ClientOptionsRuntime.enabled(OptionFeature.INSTANT_STATUS) ? 0x55FF55
+        return totalTtc(eta, true);
+    }
+
+    public static MutableComponent totalTtc(TtcEstimate eta, boolean allowInstant) {
+        var instant = allowInstant && ClientOptionsRuntime.enabled(OptionFeature.INSTANT_STATUS);
+        return TtcComponents.text("text.ae2craftingtime.total_ttc", TtcComponents.estimate(eta, instant,
+                        ClientOptionsRuntime.enabled(OptionFeature.SHOW_EMOJI)))
+                .withStyle(style -> style.withColor(eta.instant() && instant ? 0x55FF55
                         : ClientOptionsRuntime.current().color(ClientConfig.Color.TOTAL)));
     }
 
@@ -349,11 +354,11 @@ public final class TtcText {
         var average = stats.averageTicksPerUnit();
         var latest = stats.latestTicksPerUnit();
         if (average.isEmpty() || latest.isEmpty()) {
-            return I18n.get("text.ae2craftingtime.chat.details.rate", stats.sampleCount(),
+            return I18n.get("text.ae2craftingtime.chat.details.rate.ms", stats.sampleCount(),
                     ThroughputNumbers.full(stats.amountPerMillisecond()), unitName(stats),
                     ThroughputNumbers.full(stats.amountPerSecond()), unitName(stats));
         }
-        return I18n.get("text.ae2craftingtime.chat.details", stats.sampleCount(), singularUnitName(stats),
+        return I18n.get("text.ae2craftingtime.chat.details.ms", stats.sampleCount(), singularUnitName(stats),
                 TimeEstimate.formatSampleTicks(average.getAsDouble()).orElse("?"), singularUnitName(stats),
                 TimeEstimate.formatSampleTicks(latest.getAsDouble()).orElse("?"),
                 ThroughputNumbers.full(stats.amountPerSecond()), unitName(stats));

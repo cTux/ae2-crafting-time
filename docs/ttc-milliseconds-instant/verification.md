@@ -145,3 +145,11 @@ All target tests, GuideME validation and shared 100% coverage passed in 47s
 (`build/ttc-hidden-status-tests.log`). No smoke testing was run for these final
 corrections, as explicitly requested by the user. Earlier captures retain their
 own revisions and are not proof of the later spacing or hidden-status change.
+
+Final review also required numeric TTC for no-space CPU titles and partially
+missing Plan rows, plus versioned chat formatting. New `.ms` detail keys carry
+seven timed arguments or five rate-only arguments with accurate fallback text.
+Legacy keys keep their previous tick-based contracts for older server messages;
+Fabric chat uses `stats_chat_v3`. Current builders never use those legacy keys.
+Component, locale-placeholder and vanilla serializer tests cover the changed
+contracts. These corrections also use non-smoke verification only.

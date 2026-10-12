@@ -28,7 +28,7 @@ public final class StatsNetwork {
     private static final ResourceLocation SNAPSHOT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
             "stats_snapshot_v14");
     private static final ResourceLocation ROW_JOB_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "row_stats_job_v1");
-    private static final ResourceLocation CHAT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "stats_chat_v2");
+    private static final ResourceLocation CHAT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "stats_chat_v3");
     private static final ResourceLocation HIGHLIGHT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
             "provider_highlight_v6");
     private static final ResourceLocation LOCATE_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,

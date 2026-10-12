@@ -68,8 +68,9 @@ class TtcTextTest {
                     var chat = TtcText.compactMessages("minecraft:stone", 9_007_199_254_740_993L, stats);
                     assertTrue(chat.get(0).contains("9007199254740993"));
                     assertTrue(chat.get(1).contains(com.ctux.ae2craftingtime.core.ThroughputNumbers.full(value)));
-                    assertEquals(7, translations.get("text.ae2craftingtime.chat.details").split("%s", -1).length - 1);
-                    assertEquals(5, translations.get("text.ae2craftingtime.chat.details.rate").split("%s", -1).length - 1);
+                    assertEquals(7, translations.get("text.ae2craftingtime.chat.details.ms").split("%s", -1).length - 1);
+                    assertEquals(9, translations.get("text.ae2craftingtime.chat.details").split("%s", -1).length - 1);
+                    assertEquals(5, translations.get("text.ae2craftingtime.chat.details.rate.ms").split("%s", -1).length - 1);
                 }
                 }
             }

@@ -164,7 +164,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         Component display = getGuiDisplayName(GuiText.CraftingStatus.text());
         var eta = TimeEstimate.total(List.of(ClientStats.totalTtcEstimate()));
         if (eta.isPresent()) {
-            display = TtcComponents.rowSymbolsInTextColor(TtcText.totalTtc(eta.get())
+            display = TtcComponents.rowSymbolsInTextColor(TtcText.totalTtc(eta.get(), !menu.isCantStoreItems())
                     .withStyle(style -> style.withColor(0x404040)), 0x404040);
             IntegrationLog.observe("ae2craftingtime", "status-total");
         }

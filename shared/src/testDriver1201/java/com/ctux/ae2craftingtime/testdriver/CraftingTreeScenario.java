@@ -22,9 +22,9 @@ final class CraftingTreeScenario {
         return message.getSiblings().stream().anyMatch(component -> {
             if (!(component.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents details))
                 return false;
-            if (details.getKey().equals("text.ae2craftingtime.chat.details"))
+            if (details.getKey().equals("text.ae2craftingtime.chat.details.ms"))
                 return details.getArgs().length == 7 && perSecond.equals(details.getArgs()[5]);
-            return details.getKey().equals("text.ae2craftingtime.chat.details.rate") && details.getArgs().length == 5
+            return details.getKey().equals("text.ae2craftingtime.chat.details.rate.ms") && details.getArgs().length == 5
                     && perMillisecond.equals(details.getArgs()[1]) && perSecond.equals(details.getArgs()[3]);
         });
     }

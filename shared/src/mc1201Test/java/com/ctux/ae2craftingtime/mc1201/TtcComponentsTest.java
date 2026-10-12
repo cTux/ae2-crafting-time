@@ -20,6 +20,18 @@ import org.junit.jupiter.api.Test;
 
 class TtcComponentsTest {
     @Test
+    void nonReadyTotalKeepsNumericTimeAndNormalColor() {
+        ClientOptionsRuntime.setConnectionSupportForTests(() -> true);
+        try {
+            var fast = new com.ctux.ae2craftingtime.core.TtcEstimate(5, true);
+            var numeric = TtcText.totalTtc(fast, false);
+            assertTrue(((Component) ((TranslatableContents) numeric.getContents()).getArgs()[0])
+                    .getString().endsWith("5ms"));
+            assertEquals(ClientOptionsRuntime.current().color(com.ctux.ae2craftingtime.core.ClientConfig.Color.TOTAL),
+                    numeric.getStyle().getColor().getValue());
+        } finally { ClientOptionsRuntime.setConnectionSupportForTests(null); }
+    }
+    @Test
     void instantIsGreenAndConfidenceWinsForEachClient() {
         var low = new com.ctux.ae2craftingtime.core.TtcEstimate(1, false);
         assertEquals("5ms?", TtcComponents.estimate(low, true, false).getString());

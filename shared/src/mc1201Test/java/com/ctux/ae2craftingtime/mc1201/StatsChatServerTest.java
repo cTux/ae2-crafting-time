@@ -44,7 +44,8 @@ class StatsChatServerTest {
 
         var contents = (TranslatableContents) StatsChatServer.details(stats).getContents();
 
-        assertEquals("text.ae2craftingtime.chat.details", contents.getKey());
+        assertEquals("text.ae2craftingtime.chat.details.ms", contents.getKey());
+        assertEquals("%s observations · average: 1 %s / %sms · latest: 1 %s / %sms · %s %s/s", contents.getFallback());
         assertEquals(7, contents.getArgs().length);
         assertEquals("2750", contents.getArgs()[2]);
         assertEquals("5000", contents.getArgs()[4]);
@@ -58,7 +59,7 @@ class StatsChatServerTest {
 
         var contents = (TranslatableContents) StatsChatServer.details(stats).getContents();
 
-        assertEquals("text.ae2craftingtime.chat.details.rate", contents.getKey());
+        assertEquals("text.ae2craftingtime.chat.details.rate.ms", contents.getKey());
         assertEquals(5, contents.getArgs().length);
     }
 }

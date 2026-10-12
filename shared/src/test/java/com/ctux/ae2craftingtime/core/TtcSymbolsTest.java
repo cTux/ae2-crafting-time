@@ -70,7 +70,7 @@ class TtcSymbolsTest {
             assertEquals(true, TtcSymbols.timeArgument(key, entry.getValue()));
             assertEquals(false, TtcSymbols.timeArgument(key, 99));
         }
-        assertEquals(true, TtcSymbols.timeArgument("text.ae2craftingtime.chat.details", 4));
+        assertEquals(true, TtcSymbols.timeArgument("text.ae2craftingtime.chat.details.ms", 4));
         assertEquals(true, TtcSymbols.timeArgument("text.ae2craftingtime.chat.delayed", 3));
         assertEquals(true, TtcSymbols.timeArgument("text.ae2craftingtime.value.latest_accuracy", 1));
         assertEquals(true, TtcSymbols.timeArgument("text.ae2craftingtime.value.latest_accuracy", 2));

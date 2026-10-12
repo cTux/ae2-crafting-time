@@ -93,13 +93,13 @@ class TestDriverCoreTest {
     @Test
     void fullChatContractRejectsWrongNodeAmountRateAndMissingFields() {
         var timed = Component.translatable("text.ae2craftingtime.chat.summary", "minecraft:stone", 1, "5ms")
-                .append(Component.translatable("text.ae2craftingtime.chat.details", 1, "item", "5", "item", "5", "200", "items"));
+                .append(Component.translatable("text.ae2craftingtime.chat.details.ms", 1, "item", "5", "item", "5", "200", "items"));
         assertTrue(CraftingTreeScenario.fullChatRates(timed, "minecraft:stone", 1, "0.2", "200"));
         assertFalse(CraftingTreeScenario.fullChatRates(timed, "minecraft:stone", 1, "0.2", "20"));
         var malformed = Component.translatable("text.ae2craftingtime.chat.summary", "minecraft:stone", 1, "5ms")
-                .append(Component.translatable("text.ae2craftingtime.chat.details", 1, "item", "5"));
+                .append(Component.translatable("text.ae2craftingtime.chat.details.ms", 1, "item", "5"));
         assertFalse(CraftingTreeScenario.fullChatRates(malformed, "minecraft:stone", 1, "0.2", "200"));
-        var details = Component.translatable("text.ae2craftingtime.chat.details.rate", 1, "0.123456789",
+        var details = Component.translatable("text.ae2craftingtime.chat.details.rate.ms", 1, "0.123456789",
                 Component.literal("items"), "2.46913578", Component.literal("items"));
         var summary = Component.translatable("text.ae2craftingtime.chat.summary", "minecraft:stone",
                 9_007_199_254_740_993L, "~1s").append(" | ").append(details);
