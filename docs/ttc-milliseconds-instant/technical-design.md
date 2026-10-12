@@ -60,6 +60,33 @@ unsupported peers get unavailable TTC, not an invented zero/Instant value.
 No persisted sample schema changes are required. These are future implementation
 requirements; this documentation commit changes no packet or runtime code.
 
+### Accuracy boundary
+
+Accuracy remains a seconds-based diagnostic, with fractional seconds retained.
+At job acceptance pass `durationMs / 1000.0` to `TtcAccuracyTracker.start` as a
+`double`; require a finite strictly positive prediction. Change `predictedSeconds`
+in that method, `PendingJob`, and `AccuracySample`, plus
+`TtcAccuracyStats.lastPredictedSeconds`, from `long` to `double`. Keep existing
+actual wall/tick seconds and signed-error seconds as doubles. Do not use integer
+division, ceiling, the 5ms display floor, or a formatted string in this path.
+The existing ratio/error formulas continue to operate entirely in seconds.
+
+Update every accuracy snapshot codec and loader adapter to encode/decode the
+prediction as a finite positive double under the same new protocol/ID versions;
+retain the existing absence/no-sample representation. Preserve the accepted-job
+freeze point, successful-completion-only recording and coverage semantics.
+Accuracy is runtime-only, so no saved-history migration is needed.
+
+At tooltip/chat accuracy presentation boundaries convert predicted/actual seconds
+to ms with `* 1000.0` before duration formatting, so a 0.05s prediction displays
+50ms. Signed errors use ms when their absolute magnitude is below 1s, preserve
+zero/sign and do not acquire Instant or the positive-duration floor. Latest-job
+diagnostic durations remain numeric; Instant applies only to live TTC estimates.
+Test a frozen 50ms prediction and 100ms successful completion: the sample remains,
+the actual/predicted ratio is 2, and signed error is +50ms. Cover packet round
+trips, display, zero/invalid predictions, cancelled jobs and existing coverage
+filtering alongside tracker tests.
+
 ## Aggregate confidence
 
 Evaluate remaining rows once using their existing `ProfileStats.reliableEstimate()`

@@ -15,6 +15,10 @@ This plan does not authorize implementation or remove the issue's backlog hold.
    Carry graph completeness from dependency construction, including ambiguous
    crafted-input choices. Test aggregate confidence and unknown/overflow handling. Cover MS-1 through
    MS-5, MS-9 and MS-11 in formatter, total, CPU and packet tests.
+   Migrate accuracy predicted-second fields to double at the explicit
+   `durationMs / 1000.0` boundary, including tracker records, snapshots/codecs
+   and latest-job display. Verify subsecond recording, ratios, signed error and
+   packet round trips with the design's 50ms/100ms case.
 3. Update tooltip and chat tick-unit translations together, including normalized
    average/latest fields and sample lists. Retain full precision in calculations
    and existing output-unit normalization. Cover MS-2, MS-3 and MS-6.
