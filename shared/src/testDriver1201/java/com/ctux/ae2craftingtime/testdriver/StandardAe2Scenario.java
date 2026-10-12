@@ -1334,6 +1334,11 @@ final class StandardAe2Scenario {
                 return false;
             }
             if (snapshot.guiScale() <= 0 || requested > 0 && snapshot.guiScale() != requested) return false;
+            if (!snapshot.tooltip().isEmpty()) {
+                moveMouse.accept(0, 0);
+                frames.reset();
+                return false;
+            }
             var amount = row.description().stream().filter(text -> text.key().equals("text.ae2craftingtime.status.amounts"))
                     .findFirst().orElse(null);
             var drawn = rowText(snapshot, row.outputId(), "text.ae2craftingtime.status.amounts");
