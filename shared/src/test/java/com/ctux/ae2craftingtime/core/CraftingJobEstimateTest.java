@@ -111,4 +111,23 @@ class CraftingJobEstimateTest {
         org.junit.jupiter.api.Assertions.assertTrue(new CraftingJobEstimate(ROOT, Map.of(ROOT, 0L), Map.of())
                 .remainingEstimate((key, amount) -> Optional.empty()).isEmpty());
     }
+
+    @Test
+    void offRootCyclesAndDepthLimitsCannotProduceInstant() {
+        var cyclic = new CraftingJobEstimate(ROOT, Map.of(ROOT, 1L, MIDDLE, 1L, LEAF, 1L),
+                Map.of(MIDDLE, Set.of(LEAF), LEAF, Set.of(MIDDLE)));
+        assertEquals(new TtcEstimate(1, false), cyclic.remainingEstimate((key, amount) ->
+                Optional.of(new TtcEstimate(1, true))).orElseThrow());
+        var amounts = new HashMap<ProfileKey, Long>();
+        var edges = new HashMap<ProfileKey, Set<ProfileKey>>();
+        amounts.put(ROOT, 1L);
+        edges.put(ROOT, Set.of(new ProfileKey("test:off_root_300")));
+        for (int i = 0; i < 600; i++) {
+            var key = new ProfileKey("test:off_root_" + i);
+            amounts.put(key, 1L);
+            edges.put(key, Set.of(new ProfileKey("test:off_root_" + (i + 1))));
+        }
+        assertFalse(new CraftingJobEstimate(ROOT, amounts, edges).remainingEstimate((key, amount) ->
+                Optional.of(new TtcEstimate(0.001, true))).orElseThrow().reliable());
+    }
 }

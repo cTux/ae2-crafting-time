@@ -42,7 +42,7 @@ final class CraftingTreeScenario {
 
     static UiSnapshot.ObservedText nodeTtcText(String screen, UiSnapshot.ObservedText text) {
         if (!isScreen(screen) || !text.key().equals("literal")
-                || !text.rendered().matches("(?:⏱ )?~\\d+(?:s|:\\d{2}(?::\\d{2})?)")) return text;
+                || !text.rendered().matches("(?:⏱ )?(?:~\\d+(?:s|:\\d{2}(?::\\d{2})?)|\\d+ms)\\??|(?:🥇)?Instant")) return text;
         return new UiSnapshot.ObservedText("text.ae2craftingtime.tree_ttc", text.rendered(), text.arguments(),
                 text.bounds(), text.color(), text.bold());
     }

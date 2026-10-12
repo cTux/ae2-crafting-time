@@ -76,7 +76,9 @@ public final class CraftingJobEstimate {
             }
         }
         var state = new Traversal(reliable);
-        var critical = path(root, rows, new HashMap<>(), new HashSet<>(), 0, state);
+        var cache = new HashMap<ProfileKey, Double>();
+        var critical = path(root, rows, cache, new HashSet<>(), 0, state);
+        for (var key : rows.keySet()) path(key, rows, cache, new HashSet<>(), 0, state);
         var total = Math.max(critical, longestKnownRow);
         return total > 0 && Double.isFinite(total)
                 ? Optional.of(new TtcEstimate(total, state.reliable)) : Optional.empty();
@@ -90,6 +92,7 @@ public final class CraftingJobEstimate {
         }
         var cached = cache.get(key);
         if (cached != null) {
+            if (depth + state.depths.get(key) > MAX_DEPENDENCY_DEPTH) state.reliable = false;
             return cached;
         }
         if (!visiting.add(key)) {
@@ -99,8 +102,10 @@ public final class CraftingJobEstimate {
 
         var self = rows.getOrDefault(key, Optional.empty());
         double longestDependency = -1;
+        int longestDepth = 0;
         for (var dependency : dependencies.getOrDefault(key, Set.of())) {
             longestDependency = Math.max(longestDependency, path(dependency, rows, cache, visiting, depth + 1, state));
+            longestDepth = Math.max(longestDepth, state.depths.getOrDefault(dependency, 0));
         }
         visiting.remove(key);
 
@@ -108,6 +113,7 @@ public final class CraftingJobEstimate {
                 ? -1
                 : self.map(TtcEstimate::durationMs).orElse(0.0) + Math.max(0, longestDependency);
         cache.put(key, result);
+        state.depths.put(key, longestDepth + 1);
         return result;
     }
 
@@ -118,6 +124,7 @@ public final class CraftingJobEstimate {
 
     private static final class Traversal {
         private boolean reliable;
+        private final Map<ProfileKey, Integer> depths = new HashMap<>();
         private Traversal(boolean reliable) { this.reliable = reliable; }
     }
 }
