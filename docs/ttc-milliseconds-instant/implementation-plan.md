@@ -3,8 +3,8 @@
 See the [canonical status and requirements](spec.md) and [design](technical-design.md).
 This plan does not authorize implementation or remove the issue's backlog hold.
 
-1. Resolve the fractional-ms rounding, Instant option default/label, and medal
-   rendering decisions listed in the spec. Review the issue and all three
+1. Resolve the fractional-ms rounding and Instant option default/label
+   decisions listed in the spec. Review the issue and all three
    documents together, then mark the scope ready-to-implement. Keep backlog
    until the user authorizes implementation.
 2. Trace every `TimeEstimate` caller, total/CPU duration field and packet unit.
@@ -14,7 +14,8 @@ This plan does not authorize implementation or remove the issue's backlog hold.
 3. Update tooltip and chat tick-unit translations together, including normalized
    average/latest fields and sample lists. Retain full precision in calculations
    and existing output-unit normalization. Cover MS-2, MS-3 and MS-6.
-4. Add the Instant status at existing presentation boundaries, after higher-priority
+4. Add the Instant status with the plain 🥇 emoji through the existing text/symbol
+   path at existing presentation boundaries, after higher-priority
    states and only for confident estimates. Add the client option, defaults,
    persistence/reset behavior, English/Ukrainian strings and Show emoji behavior.
    Cover MS-4 through MS-7 with component, row and configuration tests.

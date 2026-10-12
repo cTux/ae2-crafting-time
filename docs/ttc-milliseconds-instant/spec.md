@@ -23,7 +23,8 @@ must be settled before implementation is marked ready.
 4. Keep the existing confidence decision. A low-confidence estimate at or below
    5ms displays `5ms?`, never Instant.
 5. A confident TTC estimate of 5ms or less displays a new custom green status,
-   `🥇Instant`. Use the [user's medal reference](https://discord.com/assets/08b871e132a77f8b.svg).
+   `🥇Instant`. The medal is the plain 🥇 emoji (U+1F947), rendered through
+   the existing text/symbol path. No custom artwork or special rendering is needed.
    Evaluate eligibility before display rounding; a value above 5ms must not
    become Instant just because its displayed value rounds down.
 6. Unknown, missing, invalid, blocked, waiting, and completed states retain
@@ -61,9 +62,6 @@ Update English and Ukrainian text, GuideME, and the GitHub wiki when implemented
 - Choose rounding for fractional ms and the 999.xms boundary, while preserving
   the strict 5ms Instant threshold and the minimum display.
 - Select the Instant option's default and its configuration label.
-- Verify the medal's rendering path and settle whether the linked artwork or a
-  font glyph is required. The existing single-code-point policy is not proof
-  that this supplementary-plane medal renders correctly on all targets.
 
 ## Compatibility and non-goals
 

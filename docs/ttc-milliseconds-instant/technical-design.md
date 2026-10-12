@@ -41,9 +41,9 @@ Raw sample durations remain numeric ms, even when very short. Signed diagnostic
 errors and elapsed zero values retain their meaning. Keep rate quantities,
 output normalization, compact number behavior, and confidence thresholds intact.
 
-The supplied Discord URL is a visual reference, not a runtime dependency.
-The medal rendering decision remains open in the spec. Do not fetch remote art
-while rendering or silently replace the requested medal with another symbol.
+Use the plain 🥇 emoji (U+1F947) through the existing text/symbol path. The user
+confirmed that no custom artwork or special rendering is required. Do not add
+an SVG asset, image download, custom font, or separate rendering path.
 
 ## Verification boundaries
 
