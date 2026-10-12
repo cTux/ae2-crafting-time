@@ -1,5 +1,8 @@
 # Time To Craft Lines
 
+Planned change: [millisecond TTC and Instant status](ttc-milliseconds-instant/spec.md)
+records the new display requirements; it is not implemented by the planning docs.
+
 Date: 2026-06-21
 
 ## Goal

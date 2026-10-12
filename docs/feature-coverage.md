@@ -35,6 +35,8 @@ Shipped behavior can still have unfinished verification or separately planned ad
 
 ## Other feature and verification scopes
 
+- [Planned millisecond display and confident Instant status](ttc-milliseconds-instant/spec.md)
+
 These links include proposals, implementation in progress, and completed verification
 work. Their specifications own the current status; this index does not duplicate it.
 
