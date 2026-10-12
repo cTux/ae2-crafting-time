@@ -589,7 +589,8 @@ try {
                 -ControlStatePath $controlStatePath -ResumeOnly:([bool]$resumeState) -FinalApproval:(-not [bool]$resumeState)
             if ($Scenario -eq 'standard-status-controls') {
                 Assert-UiSmokeStatusRelaunchCaptures -Evidence $evidence
-                Assert-UiSmokeStatusAddonKeys -Evidence $evidence -Target $Target
+                Assert-UiSmokeStatusAddonKeys -Evidence $evidence -Target $Target `
+                    -DependencyMode $(if($dependencyIdentity){$dependencyIdentity.mode}else{$null})
             }
             if ($Scenario -eq 'badge-background') {
                 Assert-UiSmokeBadgeRelaunchCaptures -Evidence $evidence
