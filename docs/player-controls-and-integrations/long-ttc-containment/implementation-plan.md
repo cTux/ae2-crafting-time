@@ -13,8 +13,8 @@
 4. Complete review, conventional commit and hook-created PR before running
    tests. Run shared unit/coverage and relevant component checks. Inspect
    `scripts/run-ui-smoke.ps1 -Changed -BaseRef origin/master -PlanOnly` and
-   retain the selection. Run its required coverage without silently expanding
-   to full release suites (C1, C5).
+   retain the selection. Review its cases against the actual delta and use the
+   scoped coverage below without silently expanding to full suites (C1, C5).
 
 ## Existing runtime prerequisite
 
@@ -69,14 +69,30 @@ different Minecraft version or change the compatible dependency graph.
 First run `scripts/run-ui-smoke-matrix.ps1 -Target 26.1.2-neoforge
 -Scenario standard-status-controls -BaseOnly` as one command. After it passes,
 run the same native scenario sequentially for the other three targets, using
-the matching prepared manifests. These four launches cover the explicit issue
-criterion; additional changed-selector cases cover connected affected paths.
+the matching prepared manifests. Add `standard-plan-controls` and
+`delayed-status` on 26.1.2 NeoForge and `badge-background` on 1.20.1 Forge:
+these seven scoped cases cover both renderer families, both changed TTC keys,
+the shared plan path and optional background. Six cases have native source
+`e3e2c374e53e629d9c3f3e56cf02b0aa9c7d2f1e`. The 1.20.1 Forge
+`standard-status-controls` archive retains native source
+`52240e6e7efce3d6c66c7624e15b842f5b549dc5`; it was accepted only after a
+separate host-validator recheck at the e3e2 head. Its original wrapper and gate
+FAIL remain preserved. The recheck is not a new native execution and must not
+retag the archived capture as an e3e native run. Generic selector matches for
+block reason labels, CPU cards with their own fitting and AdvancedAE do not add
+changed behavior: their keys, fit logic and integration adapters are unchanged.
+Retain this scope rationale with the original selection; do not claim those
+unrun scenarios passed.
 Budget roughly 30 minutes for four focused launches and review, plus asset
 download/build time; measure actual phases and adjust after the first launch.
 This is a planning budget, not measured performance.
 
-Review each default/wide scale capture and sidecar for the full estimate,
-uncertainty, originating cell containment, compact amounts and readable glyphs.
+Review every default/wide capture at scales 1, 2 and Auto for the full estimate,
+uncertainty, originating cell containment and compact amounts. Require readable
+glyphs at representative scales 2 and Auto. Record scale-1 readability separately
+and preserve its eight original FAIL receipts without overwriting them as PASS.
+Link the scope clarification and the [scale-1 readability follow-up #689](https://github.com/cTux/ae2-crafting-time/issues/689) in the final acceptance report;
+broader scale-1 font presentation remains separate work.
 Retain SHA-256 hashes and effective scales; follow `docs/ui-smoke-evidence.md`
 for archive and review receipts (C3, C4). Preserve raw failures and distinguish
 diagnostic retries from clean final proof. Confirm tested-client exit before
@@ -84,5 +100,5 @@ the next launch. Cleanly shut down exact CodexVM afterward and verify it is
 absent from `vmrun -T ws list`, including on failure.
 
 Finish only when current-head checks, native evidence and review pass and the
-merged implementation is linked from the canonical spec. No current smoke or
-before/after result is claimed by these planning documents.
+merged implementation is linked from the canonical spec. The recorded scoped
+runs are not a matched before/after comparison or a scale-1 readability pass.
