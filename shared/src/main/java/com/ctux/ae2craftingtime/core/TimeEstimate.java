@@ -29,8 +29,12 @@ public final class TimeEstimate {
     }
 
     public static Optional<TtcEstimate> total(Iterable<Optional<TtcEstimate>> estimates) {
+        return total(estimates, true);
+    }
+
+    public static Optional<TtcEstimate> total(Iterable<Optional<TtcEstimate>> estimates, boolean complete) {
         double duration = 0;
-        boolean reliable = true;
+        boolean reliable = complete;
         for (var estimate : estimates) {
             if (estimate.isPresent()) {
                 duration += estimate.get().durationMs();

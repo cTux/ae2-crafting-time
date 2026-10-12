@@ -123,7 +123,8 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
             if (entry.getCraftAmount() > 0) estimates.add(ae2craftingtime$estimate(entry));
         }
 
-        TimeEstimate.total(estimates).ifPresent(eta -> {
+        var complete = plan.getEntries().stream().noneMatch(entry -> entry.getMissingAmount() > 0);
+        TimeEstimate.total(estimates, complete).ifPresent(eta -> {
             var config = ClientOptionsRuntime.current();
             int color = RowTextColor.planTotalColor(config);
             var text = TtcComponents.rowSymbolsInTextColor(

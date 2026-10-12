@@ -18,4 +18,15 @@ class ProfileStatsDisplayTest {
         assertFalse(stats(List.of(1L), List.of(0L)).hasSampleTimes());
         assertTrue(stats(List.of(0L, 1L), List.of(1L, 1L)).hasSampleTimes());
     }
+
+    @Test
+    void incompletePlansRetainKnownTimeButNeverBecomeInstant() {
+        var known = List.of(java.util.Optional.of(new TtcEstimate(5, true)));
+        assertTrue(TimeEstimate.total(known, true).orElseThrow().instant());
+        var incomplete = TimeEstimate.total(known, false).orElseThrow();
+        assertEquals(5, incomplete.durationMs());
+        assertEquals("5ms?", TimeEstimate.format(incomplete));
+        assertFalse(incomplete.instant());
+        assertTrue(TimeEstimate.total(List.of(), false).isEmpty());
+    }
 }

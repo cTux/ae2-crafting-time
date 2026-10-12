@@ -127,3 +127,9 @@ in 1m 4s (`build/ttc-blocked-total-tests.log`). The regression covers blocked an
 waiting rows, completed blocked rows, existing low confidence, empty estimates,
 and dispatch recovery. Native throughput screenshots above remain evidence for
 the rate display change; no dedicated live 5ms blocked-job scenario was run.
+
+A second review correction covers incomplete Crafting Plans, including
+missing-only rows. Both native Plan adapters pass AE2's full missing-ingredient
+state to the shared total. A regression preserves the known 5ms duration as
+`5ms?` while excluding Instant; a fully covered plan can still be Instant.
+The throughput captures retain their original runtime provenance.
