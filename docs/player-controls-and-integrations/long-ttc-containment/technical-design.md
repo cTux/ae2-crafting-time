@@ -17,6 +17,17 @@ adapter serves Forge/Fabric 1.20.1 and NeoForge 1.21.1; mc2612 serves NeoForge
 26.1.2. Crafting Plan uses the same render path. Header, tooltip and chat text
 do not pass through this row fit.
 
+Both renderer adapters and their vertical transforms are unchanged from
+`b27d4b96463f3d18438d887e37aeee5de9bc2641` and documentation base
+`f2562485bd8ddb788f02ba927d805ab6279c279e`. Native half-height row text and the
+compact-amount width cap predate this fix. At GUI scale 1 the reviewed amount
+and TTC glyphs are about five physical pixels high and insufficiently readable.
+This establishes inherited geometry, not unchanged readability: newly fitting
+TTC horizontally can also affect glyph clarity. The [scale-1 readability
+follow-up #689](https://github.com/cTux/ae2-crafting-time/issues/689) owns the
+broader scale-1 presentation work. Preserve all eight failed readability
+receipts.
+
 `StandardCraftFixture.quantityStatus(8)` already supplies the reported row in
 both fixture implementations. The shared `StandardAe2Scenario` scale stage
 captures default/uniform fonts at 1, 2 and Auto, but currently requires only

@@ -1,12 +1,20 @@
 # Keep long row estimates inside their cells
 
-Status: ready-to-implement
+Status: in-progress
 
 Scope: Restore native Crafting Plan and Crafting Status row containment.
 
 Issue: [#670](https://github.com/cTux/ae2-crafting-time/issues/670)
 
 Planning: [Implementation plan](implementation-plan.md)
+
+Implementation: [PR #688](https://github.com/cTux/ae2-crafting-time/pull/688).
+Six scoped cases have native source
+`e3e2c374e53e629d9c3f3e56cf02b0aa9c7d2f1e`. The 1.20.1 Forge
+`standard-status-controls` archive retains native source
+`52240e6e7efce3d6c66c7624e15b842f5b549dc5` and was accepted only after a
+separate host-validator recheck at the e3e2 head; this is not a new native run.
+Final acceptance review and merge remain outstanding.
 
 The 26.1.2 status fixture has 1 billion stored, 2 billion active and 3 billion
 pending items. Its 5 billion remaining items produce `⏱ ~6944444:26:40?`.
@@ -25,10 +33,25 @@ to Crafting Plan rows through the same renderer.
 | --- | --- |
 | C1 | Regular and delayed TTC labels use the existing 90-font-pixel horizontal limit; short labels and unrelated keys keep their behavior. |
 | C2 | The existing 1B/2B/3B status fixture checks the exact full estimate and its observed bounds inside its originating row cell, alongside compact amount containment. |
-| C3 | Native `standard-status-controls` passes default and uniform fonts at scales 1, 2 and Auto on 26.1.2 NeoForge and the other three supported targets. Required changed-selector coverage also passes. |
-| C4 | Review retained native PNGs and matching sidecars, recording hashes, actual scale, cell/text bounds and readability. Semantic PASS alone cannot satisfy this criterion. |
+| C3 | Native `standard-status-controls` verifies default and uniform fonts at scales 1, 2 and Auto on all four supported targets. Require full text and cell containment at all three scales, and readable estimates at representative scales 2 and Auto. Also verify `standard-plan-controls` and `delayed-status` on 26.1.2 NeoForge and `badge-background` on 1.20.1 Forge. |
+| C4 | Review retained native PNGs and matching sidecars, recording hashes, actual scale, cell/text bounds and readability. Preserve all eight scale-1 readability FAIL receipts as a known limitation tracked in the [scale-1 readability follow-up #689](https://github.com/cTux/ae2-crafting-time/issues/689). Semantic completeness and containment do not constitute a readability pass. |
 | C5 | Shared logic keeps full line/branch coverage, existing component behavior passes, and GuideME/wiki explain the fitted long row text without promising arbitrary-font readability. |
 
-The finite reported estimate must remain readable at the required checkpoints.
-This fix does not establish readability for every resource pack or arbitrarily
-long label. A failed required visual checkpoint needs correction before closure.
+For C3 provenance, six cases have native source
+`e3e2c374e53e629d9c3f3e56cf02b0aa9c7d2f1e`. The 1.20.1 Forge
+`standard-status-controls` archive retains source
+`52240e6e7efce3d6c66c7624e15b842f5b549dc5`; only a separate host-validator
+recheck at the e3e2 head was accepted. The original wrapper and gate FAIL remain
+preserved. This validator recheck is not a new native run.
+
+The original issue requests representative GUI scales without naming scale 1.
+This scope preserves AE2's existing row font and requires readability at scales
+2 and Auto while retaining scale-1 exact-text and containment checks. The
+reviewed scale-1 glyphs are about
+five physical pixels high and remain insufficiently readable. The native
+vertical transform is unchanged from the investigation and documentation bases,
+but the new TTC horizontal compression may contribute to the readability loss.
+Source comparison is not matched before/after image proof. Track broader
+scale-1 row presentation in the [scale-1 readability follow-up #689](https://github.com/cTux/ae2-crafting-time/issues/689), preserve the failed
+receipts, and make no claim of scale-1 readability. Arbitrary resource packs and labels are also not
+covered by a universal readability guarantee.
