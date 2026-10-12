@@ -30,13 +30,18 @@ Merge these document changes before implementation.
    reasons. Report GitHub CI separately. No tests run before PR creation.
 4. Run two clean compatible `1.21.1-neoforge -BaseOnly -Scenario cpu-list-total-ttc`
    campaigns: one with no saved client config (default Off), one with backgrounds
-   On. Before the On launch, use SSH to stage a test-only
-   `config/ae2craftingtime-client.toml` containing `badgeBackground = true` in
-   `build/ui-smoke/1.21.1-neoforge/compatible/runtime` after runtime cleanup.
-   The smoke launch preparation leaves this file intact; verify its value and
-   hash before both phases. Keep it absent in the Off run and restore the On
-   runtime to that absent state afterward. Each campaign must finish both native
-   process phases and every existing check;
+   On. In the CodexVM staged checkout, first run `scripts/run-ui-smoke.ps1` with
+   the same target, scenario, prepared `21.1.251/launch.json` and selected bundle,
+   plus `-PrepareOnly`. After it returns before Java starts, use SSH to stage a
+   test-only `config/ae2craftingtime-client.toml` containing
+   `badgeBackground = true` in
+   `build/ui-smoke/1.21.1-neoforge/compatible/runtime`. Then run the normal
+   campaign against that same staged checkout. Later source mirroring excludes
+   `build`, and smoke launch preparation leaves this client config intact;
+   verify its value and hash before launch and after both phases. Keep it absent
+   in the Off run and restore the On runtime to that absent state afterward.
+   Each campaign must finish both native process phases and every existing
+   check;
    a resumed diagnostic alone is insufficient (CPU696-3/4). Use the exact prepared
    `21.1.251/launch.json`, guest Java 21, English, 8 GiB and a maximized window.
    Read-only preflight verified the running CodexVM, SSH, this manifest and guest
