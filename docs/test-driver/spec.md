@@ -152,8 +152,10 @@ config, and with backgrounds On as in the compatible suite.
   containing the text and clear of those areas. Missing enabled badges fail;
   unexpected backgrounds while Off fail. Preserve viewport and name checks.
 - **CPU696-3:** Do not change client options, production defaults, continuation
-  data or existing restoration behavior. Both initial and resumed phases use
-  the same checks, and suite ordering is not a prerequisite.
+  data or existing restoration behavior. Run the same layout and background
+  presence checks on fresh observations in both initial and resumed phases;
+  cover missing enabled and unexpected disabled badges after relaunch. Suite
+  ordering is not a prerequisite.
 - **CPU696-4:** Retain focused geometry/interaction regressions and clean
   two-process `cpu-list-total-ttc` evidence with backgrounds Off and On. Preserve
   every existing scenario check and review the captures in both modes.

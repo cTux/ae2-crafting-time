@@ -13,13 +13,18 @@ Merge these document changes before implementation.
 1. Update shared `CpuListTtcScenario` selection and tooltip hover to use observed
    TTC bounds when no badge is drawn (CPU696-1). Make layout validation respect
    the current background option while retaining every containment and overlap
-   check (CPU696-2). Leave configuration and continuation handling unchanged
-   (CPU696-3); all four targets share this scenario.
+   check (CPU696-2). Run the same layout/background validation on the fresh
+   observation after relaunch by calling `validateLayout` from
+   `afterRelaunchFreshObservation`; phase two currently resumes without calling
+   the initial layout validator (CPU696-3). Leave configuration and continuation
+   handling unchanged; all four targets share this scenario.
 2. Extend Forge `TestDriverCoreTest` with On/Off interaction and geometry cases:
    serial reordering, missing enabled or unexpected disabled badges, text/card
    containment, text/badge containment, name/info/progress collisions, and
-   unknown/idle cards. Cover each changed branch; confirm production defaults
-   and existing option restoration remain unchanged (CPU696-1/2/3).
+   unknown/idle cards, and resumed-phase layout/background validation including
+   missing enabled and unexpected disabled badges. Cover each changed branch;
+   confirm production defaults and existing option restoration remain
+   unchanged (CPU696-1/2/3).
 3. After the hook-created PR exists, run the focused driver regressions, compile
    all four driver consumers, and retain changed-mode `-PlanOnly` selection and
    reasons. Report GitHub CI separately. No tests run before PR creation.

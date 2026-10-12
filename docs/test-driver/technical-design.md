@@ -193,6 +193,11 @@ it for initial and resumed execution; `CpuListContinuation` carries the existing
 checks and fixture identity into phase two. No configuration override or new
 saved state is needed. Keep those interfaces and the outer cleanup paths intact.
 
+The resumed flow starts at `RELAUNCH_PREPARE`; `RELAUNCH_FRESH` currently checks
+the TTC value and matching totals without running `validateLayout`. Call the
+shared layout/background validation on that fresh observation too, so phase two
+checks the same Off/On geometry and badge-presence rules as phase one.
+
 ### Existing CPU-list design
 
 `CpuListTtcScenario` owns one bounded multi-CPU fixture and reuses the normal
