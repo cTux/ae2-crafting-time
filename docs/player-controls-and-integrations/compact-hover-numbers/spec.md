@@ -39,7 +39,7 @@ added to Crafting Tree or ME Requester.
   choice survives relaunch without changing other options.
 - Use decimal suffixes `k`, `M`, `B`, `T`, `P`, `E` for powers of 1,000 through
   10^18. These suffixes and the decimal point are the same in English and Ukrainian.
-  Keep translated resource units and `/t` and `/s` meanings unchanged.
+  Keep translated resource units. The millisecond TTC follow-up replaces visible `/t` with `/ms`, or omits that rate when sample times already show ms.
 - Values below 1,000 retain the existing two decimals, except a positive value
   below 0.005 displays `<0.01` rather than zero. Tier-zero values never promote:
   `999.995` renders `1000.00`. At or above 1,000 use at most
@@ -49,7 +49,7 @@ added to Crafting Tree or ME Requester.
   to 1,000. Prefix abbreviated/scientific values with `~` so they cannot be
   mistaken for full values. Nonpositive or nonfinite throughput displays `?`.
 - Ctrl+click keeps the existing public server-chat action and selected output.
-  Report both per-tick and per-second rates without suffixes, exponent notation,
+  Report per-second rates and, when sample times are absent, per-millisecond rates without suffixes, exponent notation,
   grouping, or fixed two-decimal rounding. Preserve the existing exact integer
   requested amount. Keep sample averages, latest sample, confidence and accuracy
   semantics unchanged. Chat formatting does not depend on the client's toggle.

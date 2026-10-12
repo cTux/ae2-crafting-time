@@ -155,3 +155,11 @@ direct in-memory component tests alone do not establish chat transport behavior.
 No optional integration should gain a required dependency. If implementation
 changes an optional presentation mixin, retain `require = 0` and verify its
 remapped production target plus client startup under repository policy.
+
+## Throughput presentation follow-up
+
+Retain per-tick stats and payloads internally. ProfileStats converts rates with
+amountPerTick / 50 and detects valid normalized sample times. Shared hover text
+uses only per-second rates when ms samples are displayed, otherwise per-ms and
+per-second rates. Both detail builders omit the redundant rate from timed chat
+and use per-ms in the rate-only fallback. Both locales keep matching placeholders.

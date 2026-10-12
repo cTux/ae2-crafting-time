@@ -1028,3 +1028,9 @@ both shared and 26.1.2 adapters. No production JAR contains the fixture.
 See the [approved implementation and manual acceptance matrix](../player-controls-and-integrations/compact-hover-numbers/implementation-plan.md).
 Process relaunch, connected broadcast/isolation and sorted/scrolled row identity
 remain separate manual gates; automated leaf success does not pass them.
+
+The millisecond TTC follow-up removes per-tick throughput from the compact-hover
+fixture. Its hover asserts per-second throughput with nearby ms samples, no
+redundant per-ms rate, and chat with normalized ms times plus full per-second
+precision. The tree chat observer accepts this timed detail shape and the
+rate-only per-ms/per-second fallback.

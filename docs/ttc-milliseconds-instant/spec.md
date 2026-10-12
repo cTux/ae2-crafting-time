@@ -12,7 +12,7 @@ Implementation: [PR #694](https://github.com/cTux/ae2-crafting-time/pull/694).
 
 Verification: [Implementation checks, native evidence and timings](verification.md).
 
-Remaining gate: an authorized merge. Full NeoForge 1.21.1 addon qualification
+Remaining gate: verification of the per-tick throughput follow-up and an authorized merge. Full NeoForge 1.21.1 addon qualification
 is blocked by the known NeoEco renderer crash (#627); GUI scale 1 readability
 is tracked separately in #695. These limits remain explicit in the verification report.
 
@@ -20,6 +20,13 @@ The user confirmed that low confidence takes precedence over Instant and
 approved the defaults below. Implementation and review are complete; the PR is open.
 
 ## Display rules
+
+Follow-up requirement: player-visible throughput must not use `/t` (or `/т`).
+Where sample or average/latest times already show ms, omit the per-tick rate
+and retain the per-second rate. Rate-only displays use amounts/ms and amounts/s;
+convert the stored per-tick rate by dividing by 50. Keep profiling and packet
+fields in their existing units. Tests cover valid, absent and invalid samples,
+both locales, resource units, compact/regular hovers and full chat precision.
 
 1. Display numeric durations below one second in milliseconds, with the `ms`
    suffix. The requested minimum is exactly `5ms`, not `~5ms` or `0ms`.

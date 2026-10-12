@@ -62,10 +62,9 @@ public final class StatsChatServer {
                 ? Component.translatable("text.ae2craftingtime.chat.details", stats.sampleCount(), unit,
                         TimeEstimate.formatSampleTicks(average.getAsDouble()).orElse("?"), unit,
                         TimeEstimate.formatSampleTicks(latest.getAsDouble()).orElse("?"),
-                        ThroughputNumbers.full(stats.amountPerTick()), Component.translatable(stats.unit().translationKey()),
                         ThroughputNumbers.full(stats.amountPerSecond()), Component.translatable(stats.unit().translationKey()))
                 : Component.translatable("text.ae2craftingtime.chat.details.rate", stats.sampleCount(),
-                        ThroughputNumbers.full(stats.amountPerTick()), Component.translatable(stats.unit().translationKey()),
+                        ThroughputNumbers.full(stats.amountPerMillisecond()), Component.translatable(stats.unit().translationKey()),
                         ThroughputNumbers.full(stats.amountPerSecond()), Component.translatable(stats.unit().translationKey()));
         if (stats.usedSampleCount() != stats.sampleCount()) {
             component.append(Component.translatable("text.ae2craftingtime.chat.details.used",

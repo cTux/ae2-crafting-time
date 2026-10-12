@@ -187,9 +187,12 @@ public final class TtcText {
     public static List<Component> statsLines(ProfileStats stats) {
         var lines = new ArrayList<Component>();
         lines.add(statsLine("text.ae2craftingtime.stats.throughput",
-                I18n.get("text.ae2craftingtime.value.throughput",
-                        ThroughputNumbers.hover(stats.amountPerTick(), ClientOptionsRuntime.enabled(OptionFeature.COMPACT_HOVER_NUMBERS)), unitName(stats),
-                        ThroughputNumbers.hover(stats.amountPerSecond(), ClientOptionsRuntime.enabled(OptionFeature.COMPACT_HOVER_NUMBERS)), unitName(stats))));
+                stats.hasSampleTimes()
+                        ? I18n.get("text.ae2craftingtime.value.throughput",
+                                ThroughputNumbers.hover(stats.amountPerSecond(), ClientOptionsRuntime.enabled(OptionFeature.COMPACT_HOVER_NUMBERS)), unitName(stats))
+                        : I18n.get("text.ae2craftingtime.value.throughput.rate",
+                                ThroughputNumbers.hover(stats.amountPerMillisecond(), ClientOptionsRuntime.enabled(OptionFeature.COMPACT_HOVER_NUMBERS)), unitName(stats),
+                                ThroughputNumbers.hover(stats.amountPerSecond(), ClientOptionsRuntime.enabled(OptionFeature.COMPACT_HOVER_NUMBERS)), unitName(stats))));
         if (stats.usedSampleCount() != stats.sampleCount()) {
             lines.add(statsLine("text.ae2craftingtime.stats.used_samples",
                     I18n.get("text.ae2craftingtime.value.used_samples", stats.usedSampleCount(),
@@ -347,13 +350,12 @@ public final class TtcText {
         var latest = stats.latestTicksPerUnit();
         if (average.isEmpty() || latest.isEmpty()) {
             return I18n.get("text.ae2craftingtime.chat.details.rate", stats.sampleCount(),
-                    ThroughputNumbers.full(stats.amountPerTick()), unitName(stats),
+                    ThroughputNumbers.full(stats.amountPerMillisecond()), unitName(stats),
                     ThroughputNumbers.full(stats.amountPerSecond()), unitName(stats));
         }
         return I18n.get("text.ae2craftingtime.chat.details", stats.sampleCount(), singularUnitName(stats),
                 TimeEstimate.formatSampleTicks(average.getAsDouble()).orElse("?"), singularUnitName(stats),
                 TimeEstimate.formatSampleTicks(latest.getAsDouble()).orElse("?"),
-                ThroughputNumbers.full(stats.amountPerTick()), unitName(stats),
                 ThroughputNumbers.full(stats.amountPerSecond()), unitName(stats));
     }
 

@@ -51,21 +51,26 @@ class TtcTextTest {
         try {
             for (double value : new double[] {0.004, 999.995, 999995, 1e18, 9.99995e20, 1e21,
                     Double.NaN, 0, -1, Double.POSITIVE_INFINITY}) {
+                for (boolean samples : new boolean[] {true, false}) {
                 var stats = new ProfileStats(2, 95, value, value, 100, unit, true, 2, 4,
-                        List.of(90L, 100L), List.of(9L, 1L));
+                        samples ? List.of(90L, 100L) : List.of(), samples ? List.of(9L, 1L) : List.of());
                 for (boolean compact : new boolean[] {false, true}) {
                     ClientOptionsRuntime.current().features().setEnabled(OptionFeature.COMPACT_HOVER_NUMBERS, compact);
                     var expected = com.ctux.ae2craftingtime.core.ThroughputNumbers.hover(value, compact);
                     var throughput = TtcText.statsLines(stats).get(0).getSiblings().get(1).getString();
-                    assertEquals(String.format(java.util.Locale.ROOT,
+                    var expectedText = samples ? String.format(java.util.Locale.ROOT,
                             translations.get("text.ae2craftingtime.value.throughput"), expected,
-                            translations.get(unit.translationKey()), expected, translations.get(unit.translationKey())),
-                            throughput);
+                            translations.get(unit.translationKey())) : String.format(java.util.Locale.ROOT,
+                            translations.get("text.ae2craftingtime.value.throughput.rate"),
+                            com.ctux.ae2craftingtime.core.ThroughputNumbers.hover(value / 50.0, compact),
+                            translations.get(unit.translationKey()), expected, translations.get(unit.translationKey()));
+                    assertEquals(expectedText, throughput);
                     var chat = TtcText.compactMessages("minecraft:stone", 9_007_199_254_740_993L, stats);
                     assertTrue(chat.get(0).contains("9007199254740993"));
                     assertTrue(chat.get(1).contains(com.ctux.ae2craftingtime.core.ThroughputNumbers.full(value)));
-                    assertEquals(9, translations.get("text.ae2craftingtime.chat.details").split("%s", -1).length - 1);
+                    assertEquals(7, translations.get("text.ae2craftingtime.chat.details").split("%s", -1).length - 1);
                     assertEquals(5, translations.get("text.ae2craftingtime.chat.details.rate").split("%s", -1).length - 1);
+                }
                 }
             }
         } finally {

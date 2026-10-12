@@ -6,6 +6,7 @@ import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.client.gui.me.crafting.CraftingStatusScreen;
 import appeng.api.stacks.AEItemKey;
 import com.ctux.ae2craftingtime.core.OptionFeature;
+import com.ctux.ae2craftingtime.core.ThroughputNumbers;
 import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.testdriver.mixin.CraftAmountScreenAccessor;
@@ -195,9 +196,8 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
         if (stage == Stage.PLAN || stage == Stage.STATUS || stage == Stage.LEGACY) {
             var value = snapshot.tooltip().stream().filter(text -> text.key().equals("text.ae2craftingtime.stats.throughput"))
                     .map(UiSnapshot.ObservedText::rendered).findFirst().orElse("");
-            var tick = stage == Stage.LEGACY ? String.format(java.util.Locale.ROOT, "%.2f", Double.parseDouble(rate.tick())) : rate.compactTick();
             var second = stage == Stage.LEGACY ? String.format(java.util.Locale.ROOT, "%.2f", Double.parseDouble(rate.second())) : rate.compactSecond();
-            if (!value.contains(tick + " items/t") || !value.contains(second + " items/s")) return false;
+            if (value.contains("items/t") || value.contains("items/ms") || !value.contains(second + " items/s")) return false;
             if (rate.ticks() == 1) {
                 var rendered = row.description().stream().map(UiSnapshot.ObservedText::rendered)
                         .collect(java.util.stream.Collectors.joining(" "));
@@ -222,7 +222,7 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
             if (stage == Stage.PLAN_CHAT && System.nanoTime() < firstChatClickAt) return false;
             long amount = minecraft.screen instanceof CraftConfirmScreen ? row.craftAmount() : row.activeAmount() + row.pendingAmount();
             if (!interaction.click(minecraft, snapshot, "minecraft:stone", false, amount)) return false;
-            if (!CraftingTreeScenario.fullChatRates(interaction.received(), "minecraft:stone", amount, rate.tick(), rate.second()))
+            if (!CraftingTreeScenario.fullChatRates(interaction.received(), "minecraft:stone", amount, ThroughputNumbers.full(Double.parseDouble(rate.tick()) / 50.0), rate.second()))
                 throw new IllegalStateException("Received chat did not retain the selected amount and both full rates");
             interaction.next();
             if (stage == Stage.PLAN_CHAT) {

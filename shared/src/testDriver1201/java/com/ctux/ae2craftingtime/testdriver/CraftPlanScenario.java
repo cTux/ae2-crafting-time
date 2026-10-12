@@ -612,7 +612,7 @@ public final class CraftPlanScenario {
         if (!reset) {
             var stats = com.ctux.ae2craftingtime.mc1201.ClientStats.CACHE.get(new ProfileKey(selectedOutput)).orElseThrow();
             if (!CraftingTreeScenario.fullChatRates(treeStats.received(), selectedOutput, amount,
-                    com.ctux.ae2craftingtime.core.ThroughputNumbers.full(stats.amountPerTick()),
+                    com.ctux.ae2craftingtime.core.ThroughputNumbers.full(stats.amountPerMillisecond()),
                     com.ctux.ae2craftingtime.core.ThroughputNumbers.full(stats.amountPerSecond())))
                 throw new IllegalStateException("Tree chat changed the selected node amount or full rates");
             treeDetails = true;
