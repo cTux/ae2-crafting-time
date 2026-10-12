@@ -57,6 +57,8 @@ Any unreliable or unknown remaining row, ambiguous dependency choice, or incompl
 an available aggregate low confidence. This includes rows outside the longest
 path. Preserve existing partial numeric estimates, but append `?` and never show
 Instant for them. With no usable estimate, preserve the unknown state.
+Remaining waiting, blocked or delayed rows also exclude Instant in CPU and
+Status totals, preserving the higher-priority row state and numeric duration.
 
 Chat recipients apply their own Instant and Show emoji settings to the same
 semantic estimate. One recipient's settings must not affect another's display.

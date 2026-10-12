@@ -83,7 +83,8 @@ passed (`gradlew test jacocoTestReport checkGuideResources`, 1m 37s). Boundary
 tests cover valid/absent/invalid samples, both languages and resource units,
 compact/regular hover, full chat precision and the two chat argument shapes.
 GitHub build/tests passed and automatic review completed without new findings
-on this runtime commit. Later commits change documentation only.
+on this runtime commit. The later blocked-total review correction is recorded
+below; these native throughput captures are not relabelled as that later build.
 
 Focused BaseOnly `compact-hover-numbers` native runs passed on NeoForge 26.1.2
 and Fabric 1.20.1. Each captured 24 full PNG/JSON pairs. All 48 were manually
@@ -111,3 +112,18 @@ Immutable archives: `20261012T182825729Z-3af59319` (NeoForge 26.1.2) and
 | Screenshot review | overlapping, not measured separately | Manual full-frame review of all 48 captures while clients ran sequentially. |
 | Failed attempts/retries | none | Both focused native runs passed on their first execution. |
 | Total measured execution window | 6m 10s | From first run receipt at 18:27:01.237 UTC through final archive at 18:33:11 UTC; includes dispatch gaps and overlapping review. Earlier setup and final documentation are not measured. |
+
+## Blocked-total review correction
+
+Review on the documentation head found that reliable historical 5ms estimates
+could still make a blocked/waiting CPU total Instant. Runtime correction
+`bbf104a5` applies current block/delayed keys to both CPU-card and Status-total
+requests; the shared profiler also lowers aggregate confidence for remaining
+waiting rows. It preserves the underlying numeric duration and excludes completed
+rows. Historical row estimates remain available for calculations.
+
+All four target tests, GuideME validation and shared 100% coverage passed again
+in 1m 4s (`build/ttc-blocked-total-tests.log`). The regression covers blocked and
+waiting rows, completed blocked rows, existing low confidence, empty estimates,
+and dispatch recovery. Native throughput screenshots above remain evidence for
+the rate display change; no dedicated live 5ms blocked-job scenario was run.
