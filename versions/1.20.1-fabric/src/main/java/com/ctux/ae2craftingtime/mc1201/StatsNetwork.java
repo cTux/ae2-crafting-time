@@ -24,9 +24,9 @@ public final class StatsNetwork {
     public static boolean supportsCraftingSuspension() { return false; }
     public static boolean selectedSuspended() { return false; }
     private static final ResourceLocation REQUEST_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
-            "stats_request_v4");
+            "stats_request_v5");
     private static final ResourceLocation SNAPSHOT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
-            "stats_snapshot_v13");
+            "stats_snapshot_v14");
     private static final ResourceLocation ROW_JOB_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "row_stats_job_v1");
     private static final ResourceLocation CHAT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "stats_chat_v2");
     private static final ResourceLocation HIGHLIGHT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
@@ -34,9 +34,9 @@ public final class StatsNetwork {
     private static final ResourceLocation LOCATE_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
             "provider_locate_v1");
     private static final ResourceLocation CPU_TTC_REQUEST_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
-            "cpu_ttc_request_v1");
+            "cpu_ttc_request_v2");
     private static final ResourceLocation CPU_TTC_SNAPSHOT_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID,
-            "cpu_ttc_snapshot_v1");
+            "cpu_ttc_snapshot_v2");
     private static final ResourceLocation PLAN_RECURRENCE_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "plan_recurrence_v1");
     private static final ResourceLocation PLAN_STORED_VARIANTS_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "plan_stored_variants_v1");
     private static final ResourceLocation WARNING_PREFERENCE_ID = new ResourceLocation(Ae2CraftingTime.MOD_ID, "warning_preference_v1");

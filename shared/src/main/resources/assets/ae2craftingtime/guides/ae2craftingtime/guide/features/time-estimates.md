@@ -27,6 +27,16 @@ time covers the full **To Craft** amount, not one pattern operation. The total
 below the CPU details adds the known plan rows; if some rows have no data, it is
 only the known part of the job.
 
+Times below one second use milliseconds: `50ms`, `500ms`, or `5ms` at the
+minimum. Fractional milliseconds round up for display. Samples and average/latest
+timings also use ms instead of ticks; one simulation tick is 50ms.
+
+Reliable TTC of 5ms or less shows the green `🥇Instant` status. Low confidence
+shows `5ms?` instead. Under **Options > Client > Displays**, **Instant status**
+starts on; turn it off for numeric time. **Show emoji** hides only the medal.
+Each chat recipient uses their own settings. Partial totals keep a question mark
+and never show Instant when any remaining row is unknown or unreliable.
+
 With **Compact crafting amounts** on, the plan shows available and to-craft
 amounts on one line: `4/10`. With only one amount, `A4` means available and
 `C10` means to craft. Missing and

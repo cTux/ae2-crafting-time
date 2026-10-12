@@ -1,5 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import java.util.Optional;
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import appeng.api.networking.IGrid;
 import com.ctux.ae2craftingtime.core.PlayerRequestRateLimit;
@@ -60,7 +62,7 @@ public final class StatsRequestHandler {
         }
         return new Response(entries, networkAmounts(context.grid(), keys,
                 RowStatsCollection.needsInventory(player.containerMenu.getClass().getName())), waitingTicks, blockReasons, chanceOutputs,
-                ProfilerBridge.remainingJobSeconds(context.craftingCpu()),
+                ProfilerBridge.remainingJobEstimate(context.craftingCpu()),
                 StatsRequestContext.cpuContext(player.containerMenu));
     }
 
@@ -77,6 +79,6 @@ public final class StatsRequestHandler {
     public record Response(List<StatsEntry> entries, Map<String, Long> networkAmounts,
             Map<String, Long> waitingTicks, Map<String, CraftingBlockReason> blockReasons,
             Map<String, Integer> chanceOutputs,
-            OptionalLong totalTtcSeconds, long cpuContext) {
+            Optional<TtcEstimate> totalTtcEstimate, long cpuContext) {
     }
 }

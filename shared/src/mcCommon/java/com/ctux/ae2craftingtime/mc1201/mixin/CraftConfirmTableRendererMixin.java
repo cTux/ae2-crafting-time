@@ -115,7 +115,7 @@ public abstract class CraftConfirmTableRendererMixin {
         var key = ProfilerBridge.key(entry.getWhat());
         ClientStatsRequests.request(key);
         ClientStats.CACHE.get(key).ifPresentOrElse(stats -> TimeEstimate
-                .format(AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()), stats)
+                .milliseconds(AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()), stats)
                 .ifPresentOrElse(eta -> lines.add(ttcLine(key, eta)),
                         () -> ae2craftingtime$addCollecting(lines)),
                 () -> ae2craftingtime$addCollecting(lines));
@@ -133,7 +133,7 @@ public abstract class CraftConfirmTableRendererMixin {
         }, () -> ClientStatsRequests.request(key));
     }
 
-    private static Component ttcLine(com.ctux.ae2craftingtime.core.ProfileKey key, String eta) {
+    private static Component ttcLine(com.ctux.ae2craftingtime.core.ProfileKey key, com.ctux.ae2craftingtime.core.TtcEstimate eta) {
         return RowTextColor.estimate(eta, TtcColorContext.get(key), ClientOptionsRuntime.current());
     }
 }

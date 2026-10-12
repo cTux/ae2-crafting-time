@@ -2,6 +2,9 @@ package com.ctux.ae2craftingtime.mc1201;
 
 import com.ctux.ae2craftingtime.core.OptionFeature;
 import com.ctux.ae2craftingtime.core.TtcSymbols;
+import com.ctux.ae2craftingtime.core.TtcEstimate;
+import com.ctux.ae2craftingtime.core.TtcChatEstimate;
+import com.ctux.ae2craftingtime.core.TimeEstimate;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
@@ -19,31 +22,58 @@ public final class TtcComponents {
                 ? prefix(TtcSymbols.Symbol.TIME, Component.literal(value)) : Component.literal(value);
     }
 
+    public static MutableComponent estimate(TtcEstimate value) {
+        return estimate(value, ClientOptionsRuntime.enabled(OptionFeature.INSTANT_STATUS),
+                ClientOptionsRuntime.enabled(OptionFeature.SHOW_EMOJI));
+    }
+
+    public static MutableComponent estimate(TtcEstimate value, boolean instant, boolean emoji) {
+        if (instant && value.instant()) {
+            var label = Component.translatable("text.ae2craftingtime.instant");
+            return (emoji ? Component.literal("🥇").append(label) : label)
+                    .withStyle(style -> style.withColor(0x55FF55).withBold(false));
+        }
+        var label = Component.literal(TimeEstimate.format(value));
+        return emoji ? prefix(TtcSymbols.Symbol.TIME, label) : label;
+    }
+
+    public static MutableComponent semanticEstimate(TtcEstimate value) {
+        return Component.translatableWithFallback(TtcChatEstimate.key(value), "%1$s",
+                TimeEstimate.format(value), Double.toString(value.durationMs()));
+    }
+
     public static MutableComponent decorate(Component source) {
         return decorate(source, ClientOptionsRuntime.current().features().enabled(OptionFeature.SHOW_EMOJI));
     }
 
     public static MutableComponent decorate(Component source, boolean showEmoji) {
-        if (!showEmoji || alreadyDecorated(source)) return source.copy();
-        var style = TtcHover.decorate(source.getStyle(), value -> decorate(value, true));
+        if (alreadyDecorated(source)) return source.copy();
+        var style = TtcHover.decorate(source.getStyle(), value -> decorate(value, showEmoji));
         MutableComponent result;
         if (source.getContents() instanceof TranslatableContents text) {
+            var estimate = TtcChatEstimate.read(text.getKey(), text.getArgs());
+            if (estimate.isPresent()) {
+                var display = estimate(estimate.get(), ClientOptionsRuntime.enabled(OptionFeature.INSTANT_STATUS), showEmoji);
+                display.setStyle(display.getStyle().applyTo(style));
+                for (var sibling : source.getSiblings()) display.append(decorate(sibling, showEmoji));
+                return display;
+            }
             var args = text.getArgs().clone();
             for (int i = 0; i < args.length; i++) {
-                if (args[i] instanceof Component nested) args[i] = decorate(nested, true);
-                else if (TtcSymbols.timeArgument(text.getKey(), i) && args[i] != null)
+                if (args[i] instanceof Component nested) args[i] = decorate(nested, showEmoji);
+                else if (showEmoji && TtcSymbols.timeArgument(text.getKey(), i) && args[i] != null)
                     args[i] = prefix("?".equals(args[i].toString()) ? TtcSymbols.Symbol.INFO
                             : TtcSymbols.Symbol.TIME, Component.literal(args[i].toString()));
             }
             result = Component.translatableWithFallback(text.getKey(), text.getFallback(), args)
                     .setStyle(style);
-            for (var sibling : source.getSiblings()) result.append(decorate(sibling, true));
-            var symbol = TtcSymbols.heading(text.getKey());
+            for (var sibling : source.getSiblings()) result.append(decorate(sibling, showEmoji));
+            var symbol = showEmoji ? TtcSymbols.heading(text.getKey()) : null;
             if (symbol != null) return prefix(symbol, result);
             return result;
         }
         result = MutableComponent.create(source.getContents()).setStyle(style);
-        for (var sibling : source.getSiblings()) result.append(decorate(sibling, true));
+        for (var sibling : source.getSiblings()) result.append(decorate(sibling, showEmoji));
         return result;
     }
 

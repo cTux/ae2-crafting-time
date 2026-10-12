@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import appeng.menu.me.crafting.CraftingStatusMenu;
 import com.ctux.ae2craftingtime.core.CpuTtcCache;
 import com.ctux.ae2craftingtime.core.CpuTtcDisplayOrder;
@@ -8,7 +9,7 @@ import com.ctux.ae2craftingtime.mc1201.net.CpuTtcPacketCodec;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import net.minecraft.client.Minecraft;
@@ -20,7 +21,7 @@ public final class CpuTtcClient {
     private static CraftingStatusMenu activeMenu;
     private static int sortMode = 2;
     private static long frameRevision = Long.MIN_VALUE;
-    private static Map<Integer, Long> frameSeconds = Map.of();
+    private static Map<Integer, TtcEstimate> frameEstimates = Map.of();
     private static final CpuTtcDisplayOrder.State DISPLAY = new CpuTtcDisplayOrder.State();
 
     public static void open(CraftingStatusMenu menu) {
@@ -56,14 +57,14 @@ public final class CpuTtcClient {
         }
         var snapshot = CACHE.snapshot(now);
         frameRevision = snapshot.revision();
-        frameSeconds = enabled ? snapshot.seconds() : Map.of();
+        frameEstimates = enabled ? snapshot.estimate() : Map.of();
     }
 
     public static List<CraftingStatusMenu.CraftingCpuListEntry> displayList(CraftingStatusMenu menu) {
         var raw = menu.cpuList.cpus();
         var enabled = CpuTtcRequests.enabled();
         return DISPLAY.display(raw, CraftingStatusMenu.CraftingCpuListEntry::serial,
-                cpu -> cpu.currentJob() != null, cpu -> seconds(cpu.serial()), frameRevision,
+                cpu -> cpu.currentJob() != null, cpu -> estimate(cpu.serial()), frameRevision,
                 ClientOptionsRuntime.enabled(OptionFeature.CPU_SORT_CONTROL) ? sortMode : 0, enabled);
     }
 
@@ -98,14 +99,14 @@ public final class CpuTtcClient {
         CACHE.apply(snapshot.session(), snapshot.sequence(), snapshot.entries(), now());
     }
 
-    public static OptionalLong seconds(int serial) {
+    public static Optional<TtcEstimate> estimate(int serial) {
         var player = Minecraft.getInstance().player;
         if (activeMenu != null && player != null && activeMenu == player.containerMenu
                 && com.ctux.ae2craftingtime.core.CraftingSuspension.masksSelectedCard(
                         serial, activeMenu.getSelectedCpuSerial(), StatsNetwork.selectedSuspended()))
-            return OptionalLong.empty();
-        var seconds = frameSeconds.get(serial);
-        return seconds == null ? OptionalLong.empty() : OptionalLong.of(seconds);
+            return Optional.empty();
+        var seconds = frameEstimates.get(serial);
+        return seconds == null ? Optional.empty() : Optional.of(seconds);
     }
 
     public static CpuTtcCache.CpuView view(CraftingStatusMenu.CraftingCpuListEntry cpu) {
@@ -125,7 +126,7 @@ public final class CpuTtcClient {
         activeMenu = null;
         sortMode = 2;
         frameRevision = Long.MIN_VALUE;
-        frameSeconds = Map.of();
+        frameEstimates = Map.of();
         invalidateOrder();
     }
 

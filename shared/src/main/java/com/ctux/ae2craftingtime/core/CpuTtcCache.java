@@ -6,7 +6,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalLong;
+import java.util.Optional;
 import java.util.Set;
 
 public final class CpuTtcCache {
@@ -127,7 +127,7 @@ public final class CpuTtcCache {
             return Optional.empty();
         }
 
-        var generations = new LinkedHashMap<Integer, Long>();
+        var generations = new LinkedHashMap<Integer, TtcEstimate>();
         requested.forEach(serial -> generations.put(serial, views.get(serial).generation()));
         lastRequestAt = nowMillis;
         var request = new Request(container, session, ++sequence, List.copyOf(requested));
@@ -141,10 +141,10 @@ public final class CpuTtcCache {
                 || nowMillis - outstanding.sentAt() >= REQUEST_TIMEOUT_MILLIS) {
             return false;
         }
-        var values = new LinkedHashMap<Integer, OptionalLong>();
+        var values = new LinkedHashMap<Integer, Optional<TtcEstimate>>();
         for (var entry : entries) {
             if (!outstanding.generations().containsKey(entry.serial())
-                    || values.putIfAbsent(entry.serial(), entry.seconds()) != null) {
+                    || values.putIfAbsent(entry.serial(), entry.estimate()) != null) {
                 return false;
             }
         }
@@ -158,10 +158,10 @@ public final class CpuTtcCache {
             var generation = outstanding.generations().get(entry.getKey());
             if (observed == null || observed.generation() != generation || !observed.view().busy()
                     || !fullList && !priorities.contains(entry.getKey())
-                    || entry.getValue().isEmpty() || entry.getValue().getAsLong() <= 0) {
+                    || entry.getValue().isEmpty() || entry.getValue().get().durationMs() <= 0) {
                 totals.remove(entry.getKey());
             } else {
-                totals.put(entry.getKey(), new Value(entry.getValue().getAsLong(), generation, nowMillis,
+                totals.put(entry.getKey(), new Value(entry.getValue().get(), generation, nowMillis,
                         deadline(nowMillis, expiry)));
             }
         }
@@ -174,14 +174,14 @@ public final class CpuTtcCache {
         if (clampAndExpire(nowMillis)) {
             revision++;
         }
-        var values = new LinkedHashMap<Integer, Long>();
-        totals.forEach((serial, value) -> values.put(serial, value.seconds()));
+        var values = new LinkedHashMap<Integer, TtcEstimate>();
+        totals.forEach((serial, value) -> values.put(serial, value.estimate()));
         return new Snapshot(revision, values);
     }
 
-    public OptionalLong seconds(int serial, long nowMillis) {
-        var value = snapshot(nowMillis).seconds().get(serial);
-        return value == null ? OptionalLong.empty() : OptionalLong.of(value);
+    public Optional<TtcEstimate> estimate(int serial, long nowMillis) {
+        var value = snapshot(nowMillis).estimate().get(serial);
+        return value == null ? Optional.empty() : Optional.of(value);
     }
 
     public void channelUnavailable() {
@@ -233,7 +233,7 @@ public final class CpuTtcCache {
             var value = entry.getValue();
             var deadline = deadline(value.receivedAt(), expiry);
             if (deadline < value.deadline()) {
-                entry.setValue(new Value(value.seconds(), value.generation(), value.receivedAt(), deadline));
+                entry.setValue(new Value(value.estimate(), value.generation(), value.receivedAt(), deadline));
                 changed = true;
             }
         }
@@ -293,26 +293,26 @@ public final class CpuTtcCache {
         }
     }
 
-    public record Entry(int serial, OptionalLong seconds) {
+    public record Entry(int serial, Optional<TtcEstimate> estimate) {
         public Entry {
-            if (serial <= 0 || seconds == null || seconds.isPresent() && seconds.getAsLong() < 0) {
+            if (serial <= 0 || estimate == null) {
                 throw new IllegalArgumentException("invalid CPU TTC entry");
             }
         }
     }
 
-    public record Snapshot(long revision, Map<Integer, Long> seconds) {
+    public record Snapshot(long revision, Map<Integer, TtcEstimate> estimate) {
         public Snapshot {
-            seconds = Map.copyOf(seconds);
+            estimate = Map.copyOf(estimate);
         }
     }
 
     private record Observed(CpuView view, long generation) {
     }
 
-    private record Value(long seconds, long generation, long receivedAt, long deadline) {
+    private record Value(TtcEstimate estimate, long generation, long receivedAt, long deadline) {
     }
 
-    private record Outstanding(long sequence, long sentAt, Map<Integer, Long> generations) {
+    private record Outstanding(long sequence, long sentAt, Map<Integer, TtcEstimate> generations) {
     }
 }

@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import appeng.api.stacks.GenericStack;
 import appeng.client.gui.AEBaseScreen;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
@@ -56,7 +57,7 @@ public abstract class CraftingTreeWidgetMixin {
 
     private Object ae2craftingtime$colorRoot;
     private int ae2craftingtime$baseSpacingY;
-    private Map<Object, Long> ae2craftingtime$secondsByNode = Map.of();
+    private Map<Object, TtcEstimate> ae2craftingtime$estimatesByNode = Map.of();
     private Map<Object, Integer> ae2craftingtime$colorsByNode = Map.of();
 
     @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true, require = 0)
@@ -85,7 +86,7 @@ public abstract class CraftingTreeWidgetMixin {
         }
 
         ae2craftingtime$colorRoot = null;
-        ae2craftingtime$secondsByNode = Map.of();
+        ae2craftingtime$estimatesByNode = Map.of();
         ae2craftingtime$colorsByNode = Map.of();
         spacingY = ae2craftingtime$baseSpacingY;
         if (!IntegrationLog.treeEnabled() || !ClientOptionsRuntime.enabled(OptionFeature.CRAFTING_TREE)) return;
@@ -115,7 +116,7 @@ public abstract class CraftingTreeWidgetMixin {
             }
 
             ae2craftingtime$refreshColors();
-            var seconds = ae2craftingtime$secondsByNode.get(node);
+            var seconds = ae2craftingtime$estimatesByNode.get(node);
             if (seconds == null) {
                 return;
             }
@@ -145,9 +146,9 @@ public abstract class CraftingTreeWidgetMixin {
                 var data = ae2craftingtime$hoveredDataNode(mouseX + screen.getGuiLeft(), mouseY + screen.getGuiTop());
                 var stack = data == null ? null : IntegrationRead.field(data, "stack", GenericStack.class);
                 if (stack != null) {
-                    var seconds = ae2craftingtime$secondsByNode.get(data);
+                    var seconds = ae2craftingtime$estimatesByNode.get(data);
                     if (seconds != null) {
-                        TimeEstimate.formatTotal(List.of(OptionalLong.of(seconds)))
+                        TimeEstimate.total(List.of(java.util.Optional.of(seconds)))
                                 .ifPresent(eta -> additions.add(TtcText.ttc(eta)));
                     }
                     additions.add(TtcText.detailsHint());
@@ -208,7 +209,7 @@ public abstract class CraftingTreeWidgetMixin {
         }
 
         ae2craftingtime$colorRoot = root;
-        var seconds = CraftingTreeTtc.computeSeconds(List.of(root),
+        var seconds = CraftingTreeTtc.computeEstimates(List.of(root),
                 d -> IntegrationRead.field(d, "stack", GenericStack.class),
                 d -> {
                     var helper = IntegrationRead.field(d, "amountHelper", Object.class);
@@ -225,13 +226,13 @@ public abstract class CraftingTreeWidgetMixin {
                     }
                     return result;
                 });
-        ae2craftingtime$secondsByNode = seconds;
+        ae2craftingtime$estimatesByNode = seconds;
         ae2craftingtime$colorsByNode = CraftingTreeTtc.computeColors(seconds);
     }
     private void ae2craftingtime$disable(IntegrationRead.Failure failure) {
         IntegrationLog.disable("ae2ct", failure);
         ae2craftingtime$colorRoot = null;
-        ae2craftingtime$secondsByNode = Map.of();
+        ae2craftingtime$estimatesByNode = Map.of();
         ae2craftingtime$colorsByNode = Map.of();
         if (ae2craftingtime$baseSpacingY != 0) spacingY = ae2craftingtime$baseSpacingY;
     }

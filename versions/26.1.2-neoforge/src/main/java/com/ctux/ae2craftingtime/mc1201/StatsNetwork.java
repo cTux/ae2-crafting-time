@@ -28,7 +28,7 @@ public final class StatsNetwork {
     }
 
     private static void registerPayloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("27").optional();
+        var registrar = event.registrar("28").optional();
         registrar.playToClient(RowStatsJobS2C.TYPE, RowStatsJobS2C.STREAM_CODEC, RowStatsJobS2C::handle);
         registrar.playToServer(StatsRequestC2S.TYPE, StatsRequestC2S.STREAM_CODEC, StatsRequestC2S::handle);
         registrar.playToServer(StatsChatC2S.TYPE, StatsChatC2S.STREAM_CODEC, StatsChatC2S::handle);

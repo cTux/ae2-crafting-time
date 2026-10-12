@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
-import java.util.OptionalLong;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class CpuTtcDisplayOrderTest {
@@ -125,8 +125,8 @@ class CpuTtcDisplayOrderTest {
     }
 
     private record Row(int serial, boolean busy, Long seconds, String name) {
-        OptionalLong secondsValue() {
-            return seconds == null ? OptionalLong.empty() : OptionalLong.of(seconds);
+        Optional<TtcEstimate> secondsValue() {
+            return seconds == null ? Optional.empty() : Optional.of(new TtcEstimate(seconds, true));
         }
     }
 }

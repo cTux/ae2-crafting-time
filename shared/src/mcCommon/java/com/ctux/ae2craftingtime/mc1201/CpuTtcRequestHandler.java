@@ -36,7 +36,7 @@ public final class CpuTtcRequestHandler {
         var serialMap = accessor.ae2craftingtime$getCpuSerialMap();
         var entries = resolveListed(request.serials(), serialMap, listed,
                 context.grid().getCraftingService().getCpus(), ICraftingCPU::isBusy,
-                ProfilerBridge::remainingJobSeconds);
+                ProfilerBridge::remainingJobEstimate);
         return new Response(request.session(), request.sequence(), entries);
     }
 

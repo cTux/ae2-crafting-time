@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.OptionalLong;
+import java.util.Optional;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 
@@ -81,7 +81,7 @@ class CpuTtcCacheTest {
         var request = cache.refresh(List.of(1), 0).orElseThrow();
         assertTrue(cache.refresh(List.of(2), 1).isEmpty());
         assertTrue(cache.apply(1, request.sequence(), seconds(request.serials(), 10), 2));
-        assertFalse(cache.seconds(1, 2).isPresent());
+        assertFalse(cache.estimate(1, 2).isPresent());
     }
 
     @Test
@@ -90,16 +90,16 @@ class CpuTtcCacheTest {
         cache.observe(views(40), true, 0);
         var first = cache.refresh(List.of(1), 0).orElseThrow();
         assertTrue(cache.apply(1, first.sequence(), seconds(first.serials(), 10), 1));
-        assertEquals(10, cache.seconds(1, 1).orElseThrow());
+        assertEquals(10, cache.estimate(1, 1).orElseThrow().durationMs());
         assertTrue(cache.refresh(List.of(33), 999).isEmpty());
         var second = cache.refresh(List.of(33), 1_000).orElseThrow();
         var reply = seconds(second.serials(), 20);
         reply.set(reply.indexOf(reply.stream().filter(entry -> entry.serial() == 33).findFirst().orElseThrow()),
-                new CpuTtcCache.Entry(33, OptionalLong.empty()));
+                new CpuTtcCache.Entry(33, Optional.empty()));
         assertTrue(cache.apply(1, second.sequence(), reply, 1_001));
-        assertEquals(10, cache.seconds(25, 1_001).orElseThrow());
-        assertEquals(20, cache.seconds(1, 1_001).orElseThrow());
-        assertFalse(cache.seconds(33, 1_001).isPresent());
+        assertEquals(10, cache.estimate(25, 1_001).orElseThrow().durationMs());
+        assertEquals(20, cache.estimate(1, 1_001).orElseThrow().durationMs());
+        assertFalse(cache.estimate(33, 1_001).isPresent());
     }
 
     @Test
@@ -109,14 +109,14 @@ class CpuTtcCacheTest {
         var request = cache.refresh(List.of(1, 2), 0).orElseThrow();
         cache.observe(List.of(view(1, "a", 1, 11), view(2, "b", 2, 0)), true, 1);
         assertTrue(cache.apply(1, request.sequence(), List.of(entry(1, 5), entry(2, 6)), 2));
-        assertEquals(5, cache.seconds(1, 2).orElseThrow());
-        assertFalse(cache.seconds(2, 2).isPresent());
+        assertEquals(5, cache.estimate(1, 2).orElseThrow().durationMs());
+        assertFalse(cache.estimate(2, 2).isPresent());
 
         var next = cache.refresh(List.of(1, 2), 1_000).orElseThrow();
         cache.observe(List.of(view(1, "a", 1, 1), idle(2)), true, 1_001);
         assertTrue(cache.apply(1, next.sequence(), List.of(entry(1, 7), entry(2, 8)), 1_002));
-        assertFalse(cache.seconds(1, 1_002).isPresent());
-        assertFalse(cache.seconds(2, 1_002).isPresent());
+        assertFalse(cache.estimate(1, 1_002).isPresent());
+        assertFalse(cache.estimate(2, 1_002).isPresent());
     }
 
     @Test
@@ -140,23 +140,23 @@ class CpuTtcCacheTest {
         cache.observe(views(100), true, 0);
         var request = cache.refresh(List.of(1), 0).orElseThrow();
         assertTrue(cache.apply(1, request.sequence(), seconds(request.serials(), 10), 1));
-        assertEquals(10, cache.seconds(1, 5_999).orElseThrow());
-        assertFalse(cache.seconds(1, 6_001).isPresent());
+        assertEquals(10, cache.estimate(1, 5_999).orElseThrow().durationMs());
+        assertFalse(cache.estimate(1, 6_001).isPresent());
 
         cache = open();
         cache.observe(views(1_000), true, 0);
         request = cache.refresh(List.of(1), 0).orElseThrow();
         assertTrue(cache.apply(1, request.sequence(), seconds(request.serials(), 10), 1));
         cache.observe(views(100), true, 2);
-        assertEquals(10, cache.seconds(1, 5_999).orElseThrow());
-        assertFalse(cache.seconds(1, 6_001).isPresent());
+        assertEquals(10, cache.estimate(1, 5_999).orElseThrow().durationMs());
+        assertFalse(cache.estimate(1, 6_001).isPresent());
 
         cache = open();
         cache.observe(views(100), true, 0);
         request = cache.refresh(List.of(1), 0).orElseThrow();
         assertTrue(cache.apply(1, request.sequence(), seconds(request.serials(), 10), 1));
         cache.observe(views(1_000), true, 2);
-        assertFalse(cache.seconds(1, 6_001).isPresent());
+        assertFalse(cache.estimate(1, 6_001).isPresent());
         exercisesDeadlineOverflow();
     }
 
@@ -166,19 +166,19 @@ class CpuTtcCacheTest {
         cache.observe(views(40), true, 0);
         var first = cache.refresh(List.of(1), 0).orElseThrow();
         assertTrue(cache.apply(1, first.sequence(), seconds(first.serials(), 10), 1));
-        assertTrue(cache.seconds(20, 1).isPresent());
+        assertTrue(cache.estimate(20, 1).isPresent());
         cache.setCollectionMode(false, 2);
-        assertTrue(cache.seconds(1, 2).isPresent());
-        assertFalse(cache.seconds(20, 2).isPresent());
+        assertTrue(cache.estimate(1, 2).isPresent());
+        assertFalse(cache.estimate(20, 2).isPresent());
 
         cache.setCollectionMode(true, 1_000);
         var second = cache.refresh(List.of(1), 1_000).orElseThrow();
         cache.setCollectionMode(false, 1_001);
         assertFalse(cache.apply(1, second.sequence(), seconds(second.serials(), 30), 1_002));
-        assertEquals(10, cache.seconds(1, 1_002).orElseThrow());
-        assertFalse(cache.seconds(33, 1_002).isPresent());
+        assertEquals(10, cache.estimate(1, 1_002).orElseThrow().durationMs());
+        assertFalse(cache.estimate(33, 1_002).isPresent());
         cache.observe(views(40), false, 1_003);
-        assertFalse(cache.seconds(1, 4_002).isPresent());
+        assertFalse(cache.estimate(1, 4_002).isPresent());
     }
 
     @Test
@@ -218,7 +218,7 @@ class CpuTtcCacheTest {
         assertTrue(cache.apply(1, first.sequence(), seconds(first.serials(), 10), 1));
         var replacement = IntStream.rangeClosed(101, 132).mapToObj(i -> view(i, "new-" + i, i)).toList();
         cache.observe(replacement, true, 2);
-        assertFalse(cache.seconds(1, 2).isPresent());
+        assertFalse(cache.estimate(1, 2).isPresent());
         assertEquals(IntStream.rangeClosed(101, 132).boxed().toList(),
                 cache.refresh(List.of(), 1_000).orElseThrow().serials());
     }
@@ -230,8 +230,8 @@ class CpuTtcCacheTest {
         var request = cache.refresh(List.of(1, 2), 0).orElseThrow();
         cache.observe(List.of(view(2, "b", 1, 1)), true, 1);
         assertTrue(cache.apply(1, request.sequence(), List.of(entry(1, 4), entry(2, 5)), 2));
-        assertFalse(cache.seconds(1, 2).isPresent());
-        assertEquals(5, cache.seconds(2, 2).orElseThrow());
+        assertFalse(cache.estimate(1, 2).isPresent());
+        assertEquals(5, cache.estimate(2, 2).orElseThrow().durationMs());
     }
 
     @Test
@@ -240,10 +240,10 @@ class CpuTtcCacheTest {
         cache.observe(List.of(view(1, "a", 1), view(2, "b", 1)), false, 0);
         var first = cache.refresh(List.of(1, 2), 0).orElseThrow();
         assertTrue(cache.apply(1, first.sequence(), List.of(entry(1, 4), entry(2, 5)), 1));
-        assertTrue(cache.seconds(2, 1).isPresent());
+        assertTrue(cache.estimate(2, 1).isPresent());
         assertTrue(cache.refresh(List.of(1), 1_000).isPresent());
-        assertTrue(cache.seconds(1, 1_000).isPresent());
-        assertFalse(cache.seconds(2, 1_000).isPresent());
+        assertTrue(cache.estimate(1, 1_000).isPresent());
+        assertFalse(cache.estimate(2, 1_000).isPresent());
     }
 
     @Test
@@ -264,7 +264,7 @@ class CpuTtcCacheTest {
         assertFalse(cache.apply(1, request.sequence(), List.of(entry(1, 1)), 1));
         assertTrue(cache.apply(2, reopened.sequence(), List.of(entry(1, 2)), 1));
         cache.clear();
-        assertFalse(cache.seconds(1, 1).isPresent());
+        assertFalse(cache.estimate(1, 1).isPresent());
     }
 
     @Test
@@ -279,18 +279,18 @@ class CpuTtcCacheTest {
         var first = cache.refresh(java.util.Arrays.asList(null, 99, 2, 1), 0).orElseThrow();
         assertEquals(List.of(2, 1), first.serials());
         assertTrue(cache.apply(1, first.sequence(), List.of(entry(2, 4),
-                new CpuTtcCache.Entry(1, OptionalLong.empty())), 1));
-        assertFalse(cache.seconds(1, 1).isPresent());
-        assertFalse(cache.seconds(2, 1).isPresent());
+                new CpuTtcCache.Entry(1, Optional.empty())), 1));
+        assertFalse(cache.estimate(1, 1).isPresent());
+        assertFalse(cache.estimate(2, 1).isPresent());
 
         var second = cache.refresh(List.of(1), 1_000).orElseThrow();
         assertTrue(cache.apply(1, second.sequence(), List.of(entry(1, 0)), 1_001));
-        assertFalse(cache.seconds(1, 1_001).isPresent());
+        assertFalse(cache.estimate(1, 1_001).isPresent());
 
         var third = cache.refresh(List.of(1), 2_000).orElseThrow();
         assertTrue(cache.apply(1, third.sequence(), List.of(entry(1, 5)), 2_001));
         cache.observe(List.of(idle(2)), false, 2_002);
-        assertFalse(cache.seconds(1, 2_002).isPresent());
+        assertFalse(cache.estimate(1, 2_002).isPresent());
         cache.observe(List.of(view(1, "a", 1), idle(2)), false, 2_003);
         cache.setCollectionMode(false, 2_003);
         assertTrue(cache.refresh(List.of(), 3_000).isEmpty());
@@ -308,8 +308,8 @@ class CpuTtcCacheTest {
         assertThrows(IllegalArgumentException.class, () -> cache.refresh(null, 0));
         assertThrows(IllegalArgumentException.class, () -> new CpuTtcCache.CpuView(1, "x", -1, 0));
         assertThrows(IllegalArgumentException.class, () -> new CpuTtcCache.CpuView(1, "x", 1, -1));
-        assertThrows(IllegalArgumentException.class, () -> new CpuTtcCache.Entry(0, OptionalLong.empty()));
-        assertThrows(IllegalArgumentException.class, () -> new CpuTtcCache.Entry(1, OptionalLong.of(-1)));
+        assertThrows(IllegalArgumentException.class, () -> new CpuTtcCache.Entry(0, Optional.empty()));
+        assertThrows(IllegalArgumentException.class, () -> new CpuTtcCache.Entry(1, Optional.of(new TtcEstimate(-1, true))));
         assertThrows(IllegalArgumentException.class, () -> new CpuTtcCache.Entry(1, null));
         assertThrows(IllegalArgumentException.class, () -> new CpuTtcCache.Request(0, 0, 0, null));
         var serials = new ArrayList<>(List.of(1));
@@ -330,10 +330,10 @@ class CpuTtcCacheTest {
         var request = cache.refresh(List.of(), 0).orElseThrow();
         assertTrue(cache.apply(1, request.sequence(), List.of(entry(1, 4), entry(2, 5)), 1));
         cache.observe(List.of(idle(1), view(2, "b", 1)), true, 2);
-        assertFalse(cache.seconds(1, 2).isPresent());
-        assertEquals(5, cache.seconds(2, 2).orElseThrow());
+        assertFalse(cache.estimate(1, 2).isPresent());
+        assertEquals(5, cache.estimate(2, 2).orElseThrow().durationMs());
         cache.channelUnavailable();
-        assertTrue(cache.snapshot(2).seconds().isEmpty());
+        assertTrue(cache.snapshot(2).estimate().isEmpty());
     }
 
     private static CpuTtcCache open() {
@@ -347,7 +347,7 @@ class CpuTtcCacheTest {
     }
 
     private static List<CpuTtcCache.Entry> unknown(List<Integer> serials) {
-        return serials.stream().map(serial -> new CpuTtcCache.Entry(serial, OptionalLong.empty())).toList();
+        return serials.stream().map(serial -> new CpuTtcCache.Entry(serial, Optional.empty())).toList();
     }
 
     private static ArrayList<CpuTtcCache.Entry> seconds(List<Integer> serials, long seconds) {
@@ -367,7 +367,7 @@ class CpuTtcCacheTest {
     }
 
     private static CpuTtcCache.Entry entry(int serial, long seconds) {
-        return new CpuTtcCache.Entry(serial, OptionalLong.of(seconds));
+        return new CpuTtcCache.Entry(serial, Optional.of(new TtcEstimate(seconds, true)));
     }
 
     private static void exercisesDeadlineOverflow() {
@@ -375,6 +375,6 @@ class CpuTtcCacheTest {
         cache.observe(List.of(view(1, "a", 1)), true, Long.MAX_VALUE - 1);
         var request = cache.refresh(List.of(1), Long.MAX_VALUE - 1).orElseThrow();
         assertTrue(cache.apply(1, request.sequence(), List.of(entry(1, 1)), Long.MAX_VALUE - 1));
-        assertEquals(1, cache.seconds(1, Long.MAX_VALUE - 1).orElseThrow());
+        assertEquals(1, cache.estimate(1, Long.MAX_VALUE - 1).orElseThrow().durationMs());
     }
 }

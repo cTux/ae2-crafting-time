@@ -1,16 +1,15 @@
 # Millisecond TTC and Instant status
 
-Status: draft
+Status: in-progress
 
-Scope: New display requirements; implementation is on hold (`backlog`).
+Scope: New display requirements; implementation authorized by the user.
 
 Issue: [#692](https://github.com/cTux/ae2-crafting-time/issues/692)
 
 Planning: [Technical design](technical-design.md) and [implementation plan](implementation-plan.md).
 
-The user confirmed that low confidence takes precedence over Instant. This
-draft records the requirements; the remaining presentation decisions below
-must be settled before implementation is marked ready.
+The user confirmed that low confidence takes precedence over Instant and
+approved the defaults below. Implementation and verification are underway.
 
 ## Display rules
 
@@ -70,12 +69,12 @@ Update English and Ukrainian text, GuideME, and the GitHub wiki when implemented
 | MS-10 | Two chat recipients with opposite Instant settings see Instant and numeric time respectively; changing settings refreshes from the original semantic message without losing confidence. |
 | MS-11 | Total/CPU payload round trips preserve milliseconds and confidence; incompatible payload versions cannot interpret milliseconds as seconds. |
 
-## Decisions still needed before implementation
+## Approved display defaults
 
-- Choose rounding for fractional ms and the 999.xms boundary, while preserving
-  the strict 5ms Instant threshold and the minimum display.
-- Select the Instant option's default, configuration label, and configuration
-  group (`Displays`, `Warnings`, or `Appearance`).
+- Round numeric milliseconds up to a whole ms; 999.1ms displays 1000ms.
+  Determine the ms/seconds format from the unrounded value. Preserve the strict
+  5ms Instant threshold and minimum display.
+- Add `Instant status` to Displays, enabled by default.
 
 ## Compatibility and non-goals
 

@@ -404,11 +404,11 @@ public final class CraftProfiler {
         }
     }
 
-    public OptionalLong remainingJobSeconds(Object scope,
-            BiFunction<ProfileKey, Long, OptionalLong> estimate) {
-        if (suspended.contains(scope)) return OptionalLong.empty();
+    public Optional<TtcEstimate> remainingJobEstimate(Object scope,
+            BiFunction<ProfileKey, Long, Optional<TtcEstimate>> estimate) {
+        if (suspended.contains(scope)) return Optional.empty();
         var jobEstimate = jobEstimates.get(scope);
-        return jobEstimate == null ? OptionalLong.empty() : jobEstimate.remainingSeconds(estimate);
+        return jobEstimate == null ? Optional.empty() : jobEstimate.remainingEstimate(estimate);
     }
 
     public Optional<UUID> jobOwner(Object scope) {        if (scope == null || !enabled) {

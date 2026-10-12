@@ -24,9 +24,9 @@ public final class TtcAccuracyTracker {
         for (var queue : samples.values()) while (queue.size() > maxSamples) queue.removeFirst();
     }
 
-    public void start(ProfileKey finalOutput, Object scope, long predictedSeconds, int knownRows, int totalRows,
+    public void start(ProfileKey finalOutput, Object scope, double predictedSeconds, int knownRows, int totalRows,
             long tick, long nanoTime) {
-        if (finalOutput == null || scope == null || predictedSeconds <= 0 || knownRows <= 0 || totalRows < knownRows) {
+        if (finalOutput == null || scope == null || !Double.isFinite(predictedSeconds) || predictedSeconds <= 0 || knownRows <= 0 || totalRows < knownRows) {
             return;
         }
         pending.put(scope, new PendingJob(finalOutput, predictedSeconds, knownRows, totalRows, tick, nanoTime));
@@ -87,11 +87,11 @@ public final class TtcAccuracyTracker {
         samples.clear();
     }
 
-    private record PendingJob(ProfileKey finalOutput, long predictedSeconds, int knownRows, int totalRows,
+    private record PendingJob(ProfileKey finalOutput, double predictedSeconds, int knownRows, int totalRows,
             long startedTick, long startedNanoTime) {
     }
 
-    private record AccuracySample(long predictedSeconds, double actualTickSeconds, double actualWallSeconds,
+    private record AccuracySample(double predictedSeconds, double actualTickSeconds, double actualWallSeconds,
             int knownRows, int totalRows) {
         private double coverage() {
             return (double) knownRows / totalRows;

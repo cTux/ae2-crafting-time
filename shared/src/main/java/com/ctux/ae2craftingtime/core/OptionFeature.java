@@ -3,6 +3,7 @@ package com.ctux.ae2craftingtime.core;
 /** The stable setting keys and UI groups for independent feature switches. */
 public enum OptionFeature {
     PLAN_ROWS(Owner.CLIENT, Group.DISPLAYS, "planRows"),
+    INSTANT_STATUS(Owner.CLIENT, Group.DISPLAYS, "instantStatus"),
     PLAN_TOTAL(Owner.CLIENT, Group.DISPLAYS, "planTotal"),
     STATUS_ROWS(Owner.CLIENT, Group.DISPLAYS, "statusRows"),
     COMPACT_STATUS_AMOUNTS(Owner.CLIENT, Group.DISPLAYS, "compactStatusAmounts"),

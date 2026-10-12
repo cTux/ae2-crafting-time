@@ -188,7 +188,7 @@ public abstract class CraftingStatusTableRendererMixin {
                 lines.add(delayedTtcLine());
                 return;
             }
-            TimeEstimate.format(AeKeyAmounts.normalize(entry.getWhat(), amount), stats)
+            TimeEstimate.milliseconds(AeKeyAmounts.normalize(entry.getWhat(), amount), stats)
                     .ifPresentOrElse(eta -> lines.add(ttcLine(key, eta)),
                             () -> { if (ClientOptionsRuntime.enabled(OptionFeature.COLLECTING_STATUS))
                                 lines.add(RowTextColor.neutral(TtcText.ttcCollectingData(),
@@ -242,7 +242,7 @@ public abstract class CraftingStatusTableRendererMixin {
                 ClientStats.blockReason(ProfilerBridge.key(entry.getWhat())));
     }
 
-    private static Component ttcLine(com.ctux.ae2craftingtime.core.ProfileKey key, String eta) {
+    private static Component ttcLine(com.ctux.ae2craftingtime.core.ProfileKey key, com.ctux.ae2craftingtime.core.TtcEstimate eta) {
         return RowTextColor.estimate(eta, TtcColorContext.get(key), ClientOptionsRuntime.current());
     }
 }

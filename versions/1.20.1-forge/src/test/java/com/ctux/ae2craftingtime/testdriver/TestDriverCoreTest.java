@@ -603,9 +603,9 @@ class TestDriverCoreTest {
     @Test
     void relaunchIdentityIgnoresPhaseLocalSerialAndElapsedButNotPhysicalJobIdentity() {
         var firstCpu = new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:stone", 8,
-                true, true, 10L, 11, 12);
+                true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(10L * 1000, true), 11, 12);
         var nextCpu = new CpuListTtcControl.CpuState("1,2,3", 99, "minecraft:stone", 8,
-                true, true, 9L, 999, 13);
+                true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(9L * 1000, true), 999, 13);
         var before = new CpuListTtcControl.ServerState("network", 1, -1, true, true, List.of(firstCpu));
         var after = new CpuListTtcControl.ServerState("network", 77, -1, true, true, List.of(nextCpu));
         assertTrue(CpuListTtcScenario.samePhysicalJobs(before, after));
@@ -614,7 +614,7 @@ class TestDriverCoreTest {
         assertFalse(CpuListTtcScenario.samePhysicalJobs(before,
                 new CpuListTtcControl.ServerState("network", 77, -1, true, true, List.of(
                         new CpuListTtcControl.CpuState("1,2,4", 99, "minecraft:stone", 8,
-                                true, true, 9L, 999, 13)))));
+                                true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(9L * 1000, true), 999, 13)))));
     }
 
     @Test
@@ -682,7 +682,7 @@ class TestDriverCoreTest {
                         true, true, null, 9, 10)));
         var live = new CpuListTtcControl.ServerState("network", 1, -1, true, true, List.of(
                 new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:stone", 8,
-                        true, true, 7L, 9, 10)));
+                        true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(7L * 1000, true), 9, 10)));
         assertTrue(CpuListTtcScenario.requiresJobRefresh(false, restored));
         assertFalse(CpuListTtcScenario.requiresJobRefresh(true, restored));
         assertFalse(CpuListTtcScenario.requiresJobRefresh(false, live));
@@ -704,7 +704,7 @@ class TestDriverCoreTest {
     void completedPreambleObservationAdvancesRelaunchFreshWithoutAnotherObservation() {
         var state = new CpuListTtcControl.ServerState("network", 1, 4, true, true, List.of(
                 new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:smooth_stone", 8,
-                        true, true, 3600L, 9, 10)));
+                        true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(3600L * 1000, true), 9, 10)));
         var rendered = TtcText.ttc("~1:00:00").getString();
         var card = new UiSnapshot.CpuCard(4, "CPU", "minecraft:smooth_stone", 8, 9, false,
                 null, null, null, null,
@@ -1565,8 +1565,7 @@ class TestDriverCoreTest {
 
     private static CpuListTtcControl.CpuState cpuState(int serial, String jobId, long amount,
             boolean busy, long progress) {
-        return new CpuListTtcControl.CpuState("0,0," + serial, serial, jobId, amount, busy, busy,
-                busy ? 1L : null, 1, progress);
+        return new CpuListTtcControl.CpuState("0,0," + serial, serial, jobId, amount, busy, busy, new com.ctux.ae2craftingtime.core.TtcEstimate(busy ? 1L : null * 1000, true), 1, progress);
     }
 
     private static CpuListTtcControl.ServerState serverState(CpuListTtcControl.CpuState... cpus) {

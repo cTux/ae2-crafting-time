@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201.net;
 
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -20,7 +21,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
+import java.util.Optional;
 
 class StatsPacketTest {
     @Test
@@ -79,7 +80,7 @@ class StatsPacketTest {
     void snapshotRoundTripsEveryBlockReason() {
         for (var reason : CraftingBlockReason.values()) {
             var packet = new StatsSnapshotS2C(List.of("minecraft:iron_ingot"), List.of(), Map.of(), Map.of(),
-                    Map.of("minecraft:iron_ingot", reason), Map.of(), OptionalLong.empty(), 7, new RowStatsRequestId(3, 4, 7, new java.util.UUID(123, 456)));
+                    Map.of("minecraft:iron_ingot", reason), Map.of(), Optional.empty(), 7, new RowStatsRequestId(3, 4, 7, new java.util.UUID(123, 456)));
             var buffer = new FriendlyByteBuf(Unpooled.buffer());
             StatsSnapshotS2C.encode(packet, buffer);
             assertEquals(packet, StatsSnapshotS2C.decode(buffer));
@@ -90,7 +91,7 @@ class StatsPacketTest {
     void snapshotRoundTripsMissingProvidersWithoutLearnedStatsAtBothSizeLimits() {
         for (var count : new int[] {0, PacketLimits.MAX_KEYS}) {
             var keys = java.util.stream.IntStream.range(0, count).mapToObj(i -> "test:output_" + i).toList();
-            var packet = new StatsSnapshotS2C(keys, List.of(), Map.of(), Map.of(), keys.stream().collect(java.util.stream.Collectors.toMap(key -> key, key -> CraftingBlockReason.NO_POWER)), Map.of(), OptionalLong.empty(), 0x123456789L, new RowStatsRequestId(3, 4, 0x123456789L, new java.util.UUID(123, 456)));
+            var packet = new StatsSnapshotS2C(keys, List.of(), Map.of(), Map.of(), keys.stream().collect(java.util.stream.Collectors.toMap(key -> key, key -> CraftingBlockReason.NO_POWER)), Map.of(), Optional.empty(), 0x123456789L, new RowStatsRequestId(3, 4, 0x123456789L, new java.util.UUID(123, 456)));
             var buffer = new FriendlyByteBuf(Unpooled.buffer());
             StatsSnapshotS2C.encode(packet, buffer);
             assertEquals(packet, StatsSnapshotS2C.decode(buffer));
@@ -200,7 +201,7 @@ class StatsPacketTest {
                         new ProfileStats(1, 20, 50, 1000, 20, ProfileUnit.MILLIBUCKET))),
                 Map.of("minecraft:water", 8_000L, "minecraft:lava", 0L),
                 Map.of("minecraft:water", 40L), Map.of("minecraft:lava", CraftingBlockReason.NO_PROVIDER),
-                Map.of("minecraft:water", 5000), OptionalLong.of(2_445), 0x123456789L, new RowStatsRequestId(3, 4, 0x123456789L, new java.util.UUID(123, 456)));
+                Map.of("minecraft:water", 5000), Optional.of(new TtcEstimate(2_445, true)), 0x123456789L, new RowStatsRequestId(3, 4, 0x123456789L, new java.util.UUID(123, 456)));
 
         StatsSnapshotS2C.encode(packet, buffer);
 
@@ -243,7 +244,7 @@ class StatsPacketTest {
         assertEquals(Map.of(), packet.waitingTicks());
         assertEquals(Map.of(), packet.blockReasons());
         assertEquals(Map.of(), packet.chanceOutputs());
-        assertFalse(packet.totalTtcSeconds().isPresent());
+        assertFalse(packet.totalTtcEstimate().isPresent());
         assertEquals(-1, packet.cpuContext());
         assertEquals(new RowStatsRequestId(3, 4, -1, new java.util.UUID(123, 456)), packet.requestId());
     }

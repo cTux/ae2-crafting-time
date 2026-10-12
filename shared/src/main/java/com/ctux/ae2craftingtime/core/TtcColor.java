@@ -5,11 +5,11 @@ public final class TtcColor {
     public static final int YELLOW = 0xFFFF55;
     public static final int RED = 0xFF5555;
 
-    public static int forSeconds(long seconds, long minSeconds, long maxSeconds) {
-        return forSeconds(seconds, minSeconds, maxSeconds, GREEN, YELLOW, RED);
+    public static int forMilliseconds(double seconds, double minSeconds, double maxSeconds) {
+        return forMilliseconds(seconds, minSeconds, maxSeconds, GREEN, YELLOW, RED);
     }
 
-    public static int forSeconds(long seconds, long minSeconds, long maxSeconds,
+    public static int forMilliseconds(double seconds, double minSeconds, double maxSeconds,
             int fast, int middle, int slow) {
         if (maxSeconds <= minSeconds) {
             return fast;

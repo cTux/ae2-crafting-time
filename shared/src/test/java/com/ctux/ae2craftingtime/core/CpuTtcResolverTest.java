@@ -6,33 +6,33 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 class CpuTtcResolverTest {
     @Test
     void sameNamesAndOutputsStillResolveThroughDistinctCpuIdentities() {
-        record Cpu(String name, String output, long seconds) { }
+        record Cpu(String name, String output, long estimate) { }
         var first = new Cpu("CPU", "stone", 5);
         var second = new Cpu("CPU", "stone", 9);
         var values = CpuTtcResolver.resolve(List.of(2, 1), Map.of(first, 1, second, 2),
-                List.of(first, second), cpu -> true, cpu -> OptionalLong.of(cpu.seconds()));
-        assertEquals(List.of(new CpuTtcCache.Entry(2, OptionalLong.of(9)),
-                new CpuTtcCache.Entry(1, OptionalLong.of(5))), values);
+                List.of(first, second), cpu -> true, cpu -> Optional.of(new TtcEstimate(cpu.estimate(), true)));
+        assertEquals(List.of(new CpuTtcCache.Entry(2, Optional.of(new TtcEstimate(9, true))),
+                new CpuTtcCache.Entry(1, Optional.of(new TtcEstimate(5, true)))), values);
     }
 
     @Test
     void returnsOneOrderedValueForEveryRequestedLiveBusyCpu() {
         var entries = CpuTtcResolver.resolve(List.of(2, 1, 3, 4), Map.of("a", 1, "b", 2, "idle", 3),
                 Set.of("a", "b", "idle", "foreign"), cpu -> !cpu.equals("idle"),
-                cpu -> cpu.equals("a") ? OptionalLong.of(10) : OptionalLong.empty());
+                cpu -> cpu.equals("a") ? Optional.of(new TtcEstimate(10, true)) : Optional.empty());
 
         assertEquals(List.of(2, 1, 3, 4), entries.stream().map(CpuTtcCache.Entry::serial).toList());
-        assertFalse(entries.get(0).seconds().isPresent());
-        assertEquals(10, entries.get(1).seconds().orElseThrow());
-        assertFalse(entries.get(2).seconds().isPresent());
-        assertFalse(entries.get(3).seconds().isPresent());
+        assertFalse(entries.get(0).estimate().isPresent());
+        assertEquals(10, entries.get(1).estimate().orElseThrow().durationMs());
+        assertFalse(entries.get(2).estimate().isPresent());
+        assertFalse(entries.get(3).estimate().isPresent());
     }
 
     @Test

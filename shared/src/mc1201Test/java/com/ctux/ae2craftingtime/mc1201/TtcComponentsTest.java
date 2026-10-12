@@ -20,6 +20,17 @@ import org.junit.jupiter.api.Test;
 
 class TtcComponentsTest {
     @Test
+    void instantIsGreenAndConfidenceWinsForEachClient() {
+        var low = new com.ctux.ae2craftingtime.core.TtcEstimate(1, false);
+        assertEquals("5ms?", TtcComponents.estimate(low, true, false).getString());
+        var fast = new com.ctux.ae2craftingtime.core.TtcEstimate(5, true);
+        assertEquals("🥇text.ae2craftingtime.instant", TtcComponents.estimate(fast, true, true).getString());
+        assertEquals(0x55FF55, TtcComponents.estimate(fast, true, false).getStyle().getColor().getValue());
+        assertEquals("5ms", TtcComponents.estimate(fast, false, false).getString());
+        assertEquals("6ms", TtcComponents.estimate(new com.ctux.ae2craftingtime.core.TtcEstimate(5.01, true),
+                true, false).getString());
+    }
+    @Test
     void craftingRowSymbolsUseTextColorWithoutChangingTheSource() {
         var source = TtcComponents.decorate(Component.translatable("text.ae2craftingtime.no_power")
                 .withStyle(ChatFormatting.RED), true);

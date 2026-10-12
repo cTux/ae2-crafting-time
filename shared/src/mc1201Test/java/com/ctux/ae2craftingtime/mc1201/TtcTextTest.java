@@ -311,7 +311,7 @@ class TtcTextTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"en_us, 50 ticks", "uk_ua, 50 тіків"})
+    @CsvSource({"en_us, 50ms", "uk_ua, 50ms"})
     void normalizedSamplesShowOnlyLocalizedTime(String locale, String expected) throws IOException {
         try (var reader = new InputStreamReader(getClass().getResourceAsStream(
                 "/assets/ae2craftingtime/lang/" + locale + ".json"), StandardCharsets.UTF_8)) {

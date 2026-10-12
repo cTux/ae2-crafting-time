@@ -11,7 +11,7 @@ public final class ClientStatsCache {
     private final Map<ProfileKey, Long> waitingTicks = new HashMap<>();
     private long blockContext = -1;
     private long totalTtcContext = -1;
-    private OptionalLong totalTtcSeconds = OptionalLong.empty();
+    private Optional<TtcEstimate> totalTtcEstimate = Optional.empty();
     private final Map<ProfileKey, CraftingBlockReason> blockReasons = new HashMap<>();
     private final Map<ProfileKey, Integer> chanceOutputs = new HashMap<>();
 
@@ -79,13 +79,13 @@ public final class ClientStatsCache {
         chanceOutputs.putAll(values);
     }
 
-    public OptionalLong totalTtcSeconds(long cpuContext) {
-        return totalTtcContext == cpuContext ? totalTtcSeconds : OptionalLong.empty();
+    public Optional<TtcEstimate> totalTtcEstimate(long cpuContext) {
+        return totalTtcContext == cpuContext ? totalTtcEstimate : Optional.empty();
     }
 
-    public void replaceTotalTtcSeconds(OptionalLong value, long cpuContext) {
+    public void replaceTotalTtcEstimate(Optional<TtcEstimate> value, long cpuContext) {
         totalTtcContext = cpuContext;
-        totalTtcSeconds = value;
+        totalTtcEstimate = value;
     }
 
     public void clearCpuState() {
@@ -94,7 +94,7 @@ public final class ClientStatsCache {
         chanceOutputs.clear();
         blockContext = -1;
         totalTtcContext = -1;
-        totalTtcSeconds = OptionalLong.empty();
+        totalTtcEstimate = Optional.empty();
     }
 
     public void remove(ProfileKey key) {

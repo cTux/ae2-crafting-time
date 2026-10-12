@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.OptionalLong;
+import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class TtcSortTest {
@@ -12,8 +12,8 @@ class TtcSortTest {
     void arrivingStatsRefreshOrderWithoutChangingEntriesOrMovingWaitingAhead() {
         var entries = List.of("waiting", "running");
         var times = new java.util.HashMap<String, Long>();
-        java.util.function.Function<String, OptionalLong> seconds = key -> times.containsKey(key)
-                ? OptionalLong.of(times.get(key)) : OptionalLong.empty();
+        java.util.function.Function<String, Optional<TtcEstimate>> seconds = key -> times.containsKey(key)
+                ? Optional.of(new TtcEstimate(times.get(key), true)) : Optional.empty();
         assertEquals(entries, TtcSort.copySorted(entries, seconds, Comparator.naturalOrder(), true));
         times.put("running", 5L);
         for (boolean descending : List.of(false, true)) {
@@ -25,8 +25,8 @@ class TtcSortTest {
 
     @Test
     void knownTimesSortBeforeUnknownAndKeepStableUnknownOrder() {
-        var entries = List.of(entry("unknown-a", OptionalLong.empty()), entry("slow", OptionalLong.of(10)),
-                entry("unknown-b", OptionalLong.empty()), entry("fast", OptionalLong.of(2)));
+        var entries = List.of(entry("unknown-a", Optional.empty()), entry("slow", Optional.of(new TtcEstimate(10, true))),
+                entry("unknown-b", Optional.empty()), entry("fast", Optional.of(new TtcEstimate(2, true))));
 
         var sorted = TtcSort.copySorted(entries, Entry::seconds, Comparator.comparing(Entry::name), false);
 
@@ -36,8 +36,8 @@ class TtcSortTest {
 
     @Test
     void descendingReversesKnownTimesOnly() {
-        var entries = List.of(entry("unknown", OptionalLong.empty()), entry("slow", OptionalLong.of(10)),
-                entry("fast", OptionalLong.of(2)));
+        var entries = List.of(entry("unknown", Optional.empty()), entry("slow", Optional.of(new TtcEstimate(10, true))),
+                entry("fast", Optional.of(new TtcEstimate(2, true))));
 
         var sorted = TtcSort.copySorted(entries, Entry::seconds, Comparator.comparing(Entry::name), true);
 
@@ -46,7 +46,7 @@ class TtcSortTest {
 
     @Test
     void equalKnownTimesUseFallbackOrder() {
-        var entries = List.of(entry("b", OptionalLong.of(2)), entry("a", OptionalLong.of(2)));
+        var entries = List.of(entry("b", Optional.of(new TtcEstimate(2, true))), entry("a", Optional.of(new TtcEstimate(2, true))));
 
         var sorted = TtcSort.copySorted(entries, Entry::seconds, Comparator.comparing(Entry::name), false);
 
@@ -55,9 +55,9 @@ class TtcSortTest {
 
     @Test
     void priorityRowsStayFirstInAe2OrderAndBothTtcDirections() {
-        var entries = List.of(entry("normal-unknown", OptionalLong.empty(), false),
-                entry("missing-fast", OptionalLong.of(2), true), entry("normal-slow", OptionalLong.of(10), false),
-                entry("missing-slow", OptionalLong.of(8), true), entry("missing-unknown", OptionalLong.empty(), true));
+        var entries = List.of(entry("normal-unknown", Optional.empty(), false),
+                entry("missing-fast", Optional.of(new TtcEstimate(2, true)), true), entry("normal-slow", Optional.of(new TtcEstimate(10, true)), false),
+                entry("missing-slow", Optional.of(new TtcEstimate(8, true)), true), entry("missing-unknown", Optional.empty(), true));
 
         assertNames(List.of("missing-fast", "missing-slow", "missing-unknown", "normal-unknown", "normal-slow"),
                 TtcSort.copyPrioritizedSorted(entries, Entry::priority, Entry::seconds, Comparator.comparing(Entry::name), false, false));
@@ -69,9 +69,9 @@ class TtcSortTest {
 
     @Test
     void priorityGroupsKeepEqualTtcFallbackOrder() {
-        var entries = List.of(entry("missing-b", OptionalLong.of(2), true),
-                entry("normal-b", OptionalLong.of(2), false), entry("missing-a", OptionalLong.of(2), true),
-                entry("normal-a", OptionalLong.of(2), false));
+        var entries = List.of(entry("missing-b", Optional.of(new TtcEstimate(2, true)), true),
+                entry("normal-b", Optional.of(new TtcEstimate(2, true)), false), entry("missing-a", Optional.of(new TtcEstimate(2, true)), true),
+                entry("normal-a", Optional.of(new TtcEstimate(2, true)), false));
 
         assertNames(List.of("missing-a", "missing-b", "normal-a", "normal-b"),
                 TtcSort.copyPrioritizedSorted(entries, Entry::priority, Entry::seconds,
@@ -80,16 +80,16 @@ class TtcSortTest {
 
     @Test
     void arrivingStatsReorderOnlyInsidePriorityGroups() {
-        var entries = List.of(entry("normal", OptionalLong.empty(), false),
-                entry("missing-unknown", OptionalLong.empty(), true),
-                entry("missing-known", OptionalLong.of(5), true));
+        var entries = List.of(entry("normal", Optional.empty(), false),
+                entry("missing-unknown", Optional.empty(), true),
+                entry("missing-known", Optional.of(new TtcEstimate(5, true)), true));
 
         assertNames(List.of("missing-known", "missing-unknown", "normal"),
                 TtcSort.copyPrioritizedSorted(entries, Entry::priority, Entry::seconds,
                         Comparator.comparing(Entry::name), true, true));
-        var refreshed = List.of(entry("normal", OptionalLong.of(20), false),
-                entry("missing-unknown", OptionalLong.of(10), true),
-                entry("missing-known", OptionalLong.of(5), true));
+        var refreshed = List.of(entry("normal", Optional.of(new TtcEstimate(20, true)), false),
+                entry("missing-unknown", Optional.of(new TtcEstimate(10, true)), true),
+                entry("missing-known", Optional.of(new TtcEstimate(5, true)), true));
         assertNames(List.of("missing-unknown", "missing-known", "normal"),
                 TtcSort.copyPrioritizedSorted(refreshed, Entry::priority, Entry::seconds,
                         Comparator.comparing(Entry::name), true, true));
@@ -99,14 +99,14 @@ class TtcSortTest {
         assertEquals(expected, entries.stream().map(Entry::name).toList());
     }
 
-    private static Entry entry(String name, OptionalLong seconds) {
+    private static Entry entry(String name, Optional<TtcEstimate> seconds) {
         return entry(name, seconds, false);
     }
 
-    private static Entry entry(String name, OptionalLong seconds, boolean priority) {
+    private static Entry entry(String name, Optional<TtcEstimate> seconds, boolean priority) {
         return new Entry(name, seconds, priority);
     }
 
-    private record Entry(String name, OptionalLong seconds, boolean priority) {
+    private record Entry(String name, Optional<TtcEstimate> seconds, boolean priority) {
     }
 }

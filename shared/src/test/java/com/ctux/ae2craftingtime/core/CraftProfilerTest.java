@@ -43,7 +43,7 @@ class CraftProfilerTest {
         assertTrue(profiler.liveDelayedKeys(paused, 100).isEmpty());
         assertTrue(profiler.pollNewlyDelayed(paused, 100).isEmpty());
         assertTrue(profiler.blockReasons(paused, 100, Set.of(output)).isEmpty());
-        assertTrue(profiler.remainingJobSeconds(paused, (key, amount) -> OptionalLong.of(1)).isEmpty());
+        assertTrue(profiler.remainingJobEstimate(paused, (key, amount) -> Optional.of(new TtcEstimate(1, true))).isEmpty());
         assertTrue(profiler.hasActiveOutput(output, null));
         assertTrue(profiler.stall(output, other, 100).isPresent());
         assertTrue(profiler.setSuspended(paused, false, 100));
@@ -51,7 +51,7 @@ class CraftProfilerTest {
         assertTrue(profiler.rememberedReasons(paused).isEmpty());
         assertEquals(1, profiler.waitingTicks(waiting, paused, 101).orElseThrow());
         assertTrue(profiler.stall(output, paused, 101).isEmpty());
-        assertEquals(1, profiler.remainingJobSeconds(paused, (key, amount) -> OptionalLong.of(1)).orElseThrow());
+        assertEquals(1, profiler.remainingJobEstimate(paused, (key, amount) -> Optional.of(new TtcEstimate(1, true))).orElseThrow().durationMs());
         assertEquals(1, profiler.stats(output).orElseThrow().sampleCount());
         profiler.clearPending(paused);
         assertFalse(profiler.ignoreRemembered(paused));
@@ -105,11 +105,11 @@ class CraftProfilerTest {
         profiler.setJobEstimate(cpu,
                 new CraftingJobEstimate(root, Map.of(root, 5L, leaf, 20L), Map.of(root, Set.of(leaf))));
 
-        assertEquals(25, profiler.remainingJobSeconds(cpu, (key, amount) -> OptionalLong.of(amount)).orElseThrow());
+        assertEquals(25, profiler.remainingJobEstimate(cpu, (key, amount) -> Optional.of(new TtcEstimate(amount, true))).orElseThrow().durationMs());
         profiler.complete(leaf, cpu, 12, 1);
-        assertEquals(13, profiler.remainingJobSeconds(cpu, (key, amount) -> OptionalLong.of(amount)).orElseThrow());
+        assertEquals(13, profiler.remainingJobEstimate(cpu, (key, amount) -> Optional.of(new TtcEstimate(amount, true))).orElseThrow().durationMs());
         profiler.clearPending(cpu);
-        assertFalse(profiler.remainingJobSeconds(cpu, (key, amount) -> OptionalLong.of(amount)).isPresent());
+        assertFalse(profiler.remainingJobEstimate(cpu, (key, amount) -> Optional.of(new TtcEstimate(amount, true))).isPresent());
     }
 
     @Test
@@ -123,17 +123,17 @@ class CraftProfilerTest {
 
         profiler.rebindJobEstimate(previousCpu, currentCpu);
 
-        assertFalse(profiler.remainingJobSeconds(previousCpu, (key, amount) -> OptionalLong.of(amount)).isPresent());
-        assertEquals(12, profiler.remainingJobSeconds(currentCpu,
-                (key, amount) -> OptionalLong.of(amount)).orElseThrow());
+        assertFalse(profiler.remainingJobEstimate(previousCpu, (key, amount) -> Optional.of(new TtcEstimate(amount, true))).isPresent());
+        assertEquals(12, profiler.remainingJobEstimate(currentCpu,
+                (key, amount) -> Optional.of(new TtcEstimate(amount, true))).orElseThrow().durationMs());
 
         profiler.rebindJobEstimate(null, currentCpu);
         profiler.rebindJobEstimate(previousCpu, null);
         profiler.rebindJobEstimate(currentCpu, currentCpu);
         profiler.rebindJobEstimate(new Object(), currentCpu);
 
-        assertEquals(12, profiler.remainingJobSeconds(currentCpu,
-                (key, amount) -> OptionalLong.of(amount)).orElseThrow());
+        assertEquals(12, profiler.remainingJobEstimate(currentCpu,
+                (key, amount) -> Optional.of(new TtcEstimate(amount, true))).orElseThrow().durationMs());
     }
 
     @Test
@@ -231,7 +231,7 @@ class CraftProfilerTest {
         assertEquals(2.0, fourSamples.amountPerSecond());
         assertEquals(4, fourSamples.usedSampleCount());
         assertTrue(fourSamples.reliableEstimate());
-        assertEquals(5, TimeEstimate.seconds(10, fourSamples).orElseThrow());
+        assertEquals(5000, TimeEstimate.milliseconds(10, fourSamples).orElseThrow().durationMs());
 
         profiler.start(ironPlate, 1, ProfileUnit.ITEM, 100);
         profiler.complete(ironPlate, 1, 1_100);
@@ -241,7 +241,7 @@ class CraftProfilerTest {
         assertEquals(2.0, fiveSamples.amountPerSecond());
         assertEquals(4, fiveSamples.usedSampleCount());
         assertFalse(fiveSamples.reliableEstimate());
-        assertEquals(5, TimeEstimate.seconds(10, fiveSamples).orElseThrow());
+        assertEquals(5000, TimeEstimate.milliseconds(10, fiveSamples).orElseThrow().durationMs());
     }
 
     @Test

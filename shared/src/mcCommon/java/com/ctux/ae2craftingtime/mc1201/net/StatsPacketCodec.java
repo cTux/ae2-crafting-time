@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201.net;
 
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import com.ctux.ae2craftingtime.core.PacketLimits;
 import com.ctux.ae2craftingtime.core.ProfileKey;
@@ -98,8 +99,7 @@ public final class StatsPacketCodec {
             buffer.writeBoolean(entry.stall().isPresent());
             entry.stall().ifPresent(value -> StallDiagnosticPacketCodec.write(buffer, value));
         }
-        buffer.writeBoolean(snapshot.totalTtcSeconds().isPresent());
-        snapshot.totalTtcSeconds().ifPresent(buffer::writeVarLong);
+        TtcEstimatePacketCodec.write(buffer, snapshot.totalTtcEstimate());
         buffer.writeLong(snapshot.cpuContext());
         writeRequestId(buffer, snapshot.requestId());
     }
@@ -169,17 +169,14 @@ public final class StatsPacketCodec {
                     amountPerSecond, lastDurationTicks, unit, reliableEstimate, usedSampleCount, outlierMultiplier,
                     durations, amounts), accuracy, stall));
         }
-        var totalTtcSeconds = buffer.readBoolean() ? OptionalLong.of(buffer.readVarLong()) : OptionalLong.empty();
-        if (totalTtcSeconds.isPresent() && totalTtcSeconds.getAsLong() < 0) {
-            throw new IllegalArgumentException("total TTC must not be negative");
-        }
-        return new Snapshot(requestedKeys, entries, networkAmounts, waitingTicks, blockReasons, chanceOutputs, totalTtcSeconds,
+        var totalTtcEstimate = TtcEstimatePacketCodec.read(buffer);
+        return new Snapshot(requestedKeys, entries, networkAmounts, waitingTicks, blockReasons, chanceOutputs, totalTtcEstimate,
                 buffer.readLong(), readRequestId(buffer));
     }
 
     public record Snapshot(List<String> requestedKeys, List<StatsEntry> entries, Map<String, Long> networkAmounts,
             Map<String, Long> waitingTicks, Map<String, CraftingBlockReason> blockReasons,
             Map<String, Integer> chanceOutputs,
-            OptionalLong totalTtcSeconds, long cpuContext, RowStatsRequestId requestId) {
+            Optional<TtcEstimate> totalTtcEstimate, long cpuContext, RowStatsRequestId requestId) {
     }
 }

@@ -4,6 +4,7 @@ import com.ctux.ae2craftingtime.core.ProfileStats;
 import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import com.ctux.ae2craftingtime.core.StallDiagnostic;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
 import com.ctux.ae2craftingtime.core.ClientConfig;
 import com.ctux.ae2craftingtime.core.OptionFeature;
@@ -53,6 +54,17 @@ public final class TtcText {
 
     public static MutableComponent ttc(String eta) {
         return TtcComponents.text("text.ae2craftingtime.ttc", eta);
+    }
+
+    public static MutableComponent ttc(TtcEstimate eta) {
+        return TtcComponents.text("text.ae2craftingtime.ttc", TtcComponents.estimate(eta));
+    }
+
+    public static MutableComponent totalTtc(TtcEstimate eta) {
+        return TtcComponents.text("text.ae2craftingtime.total_ttc", TtcComponents.estimate(eta))
+                .withStyle(style -> style.withColor(eta.instant()
+                        && ClientOptionsRuntime.enabled(OptionFeature.INSTANT_STATUS) ? 0x55FF55
+                        : ClientOptionsRuntime.current().color(ClientConfig.Color.TOTAL)));
     }
 
     public static MutableComponent tooltipTtc(Component value) {
@@ -200,10 +212,10 @@ public final class TtcText {
 
     public static List<Component> stallLines(long amount, long scheduledAmount, ProfileStats stats, StallDiagnostic stall) {
         var lines = new ArrayList<Component>();
-        var eta = TimeEstimate.format(amount, stats);
+        var eta = TimeEstimate.milliseconds(amount, stats);
         lines.add(TtcComponents.text("text.ae2craftingtime.stats.ttc").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(": ").withStyle(ChatFormatting.AQUA))
-                .append(eta.<Component>map(value -> TtcComponents.time(value).withStyle(ChatFormatting.AQUA))
+                .append(eta.<Component>map(value -> TtcComponents.estimate(value))
                         .orElseGet(() -> TtcComponents.text("text.ae2craftingtime.unknown")
                                 .withStyle(ChatFormatting.AQUA)))
                 .append(Component.literal(", ").withStyle(ChatFormatting.AQUA))
@@ -362,12 +374,12 @@ public final class TtcText {
         }
         return I18n.get("text.ae2craftingtime.value.accuracy", stats.fullyCoveredSampleCount(), stats.sampleCount(),
                 rate(stats.meanAbsolutePercentageError()), rate(stats.meanActualToPredictedRatio()),
-                String.format(Locale.ROOT, "%+.2f", stats.meanSignedErrorSeconds()), percent(stats.averageCoverage()));
+                TimeEstimate.formatSignedSeconds(stats.meanSignedErrorSeconds()), percent(stats.averageCoverage()));
     }
 
     private static String latestAccuracy(TtcAccuracyStats stats) {
-        return I18n.get("text.ae2craftingtime.value.latest_accuracy", stats.lastPredictedSeconds(),
-                rate(stats.lastActualWallSeconds()), rate(stats.lastActualTickSeconds()), stats.lastKnownRows(),
+        return I18n.get("text.ae2craftingtime.value.latest_accuracy", TimeEstimate.formatDuration(stats.lastPredictedSeconds() * 1000),
+                TimeEstimate.formatDuration(stats.lastActualWallSeconds() * 1000), TimeEstimate.formatDuration(stats.lastActualTickSeconds() * 1000), stats.lastKnownRows(),
                 stats.lastTotalRows());
     }
 

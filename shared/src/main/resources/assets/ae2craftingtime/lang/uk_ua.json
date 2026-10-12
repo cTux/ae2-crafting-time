@@ -15,10 +15,9 @@
   "text.ae2craftingtime.locked.explanation": "Блокування крафту Pattern Provider не дає запустити наступну партію.",
   "text.ae2craftingtime.locked.suggestion": "Перевірте умови редстоуну або поверніть попередній результат до його провайдера.",
   "text.ae2craftingtime.dispatch_status.scheduled_only": "Цей статус стосується запланованих партій; активні партії ще можуть завершитися.",
-
   "key.categories.ae2craftingtime": "AE2 Crafting Time",
   "key.ae2craftingtime.show_ttc_details": "Ctrl-клік — повна пропускна здатність у чаті",
-  "text.ae2craftingtime.chat.details": "%s спостережень · середнє: 1 %s / %s тіків · останнє: 1 %s / %s тіків · %s %s/т · %s %s/с",
+  "text.ae2craftingtime.chat.details": "%s спостережень · середнє: 1 %s / %sms · останнє: 1 %s / %sms · %s %s/т · %s %s/с",
   "text.ae2craftingtime.chat.details.rate": "%s спостережень · %s %s/т · %s %s/с",
   "text.ae2craftingtime.chat.details.low_confidence": " · низька впевненість",
   "text.ae2craftingtime.chat.details.used": " · використано %s/%s",
@@ -82,10 +81,10 @@
   "text.ae2craftingtime.unit.millibucket": "мВ",
   "text.ae2craftingtime.unit.mana": "мани",
   "text.ae2craftingtime.unknown": "невідомо",
-  "text.ae2craftingtime.value.accuracy": "%s/%s завдань повністю покрито · MAPE %s%% · факт/TTC %sx · похибка %sс · сер. покриття %s%%",
+  "text.ae2craftingtime.value.accuracy": "%s/%s завдань повністю покрито · MAPE %s%% · факт/TTC %sx · похибка %s · сер. покриття %s%%",
   "text.ae2craftingtime.value.accuracy_pending": "Відстежено %s завдань, але повністю покритих планів ще немає · сер. покриття %s%%",
-  "text.ae2craftingtime.value.latest_accuracy": "TTC %sс · реальний час %sс · тікі %sс · покриття %s/%s",
-  "text.ae2craftingtime.value.window": "%s тіків",
+  "text.ae2craftingtime.value.latest_accuracy": "TTC %s · реальний час %s · тікі %s · покриття %s/%s",
+  "text.ae2craftingtime.value.window": "%sms",
   "text.ae2craftingtime.value.seconds": "%sс",
   "text.ae2craftingtime.value.throughput": "%s %s/т, %s %s/с",
   "text.ae2craftingtime.value.used_samples": "%s/%s",
@@ -205,5 +204,9 @@
   "config.ae2craftingtime.maxSamples": "Збережені зразки (1-100)",
   "config.ae2craftingtime.outlierMultiplier": "Множник викидів (1-1000)",
   "config.ae2craftingtime.minimumNoProgressSeconds": "Мінімум без прогресу, с (1-3600)",
-  "config.ae2craftingtime.typicalDurationMultiplier": "Множник типового часу (1-1000)"
+  "config.ae2craftingtime.typicalDurationMultiplier": "Множник типового часу (1-1000)",
+  "config.ae2craftingtime.instantStatus": "Статус миттєвого виконання",
+  "text.ae2craftingtime.instant": "Миттєво",
+  "text.ae2craftingtime.estimate.reliable": "%1$s",
+  "text.ae2craftingtime.estimate.unreliable": "%1$s"
 }

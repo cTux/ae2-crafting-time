@@ -3,9 +3,10 @@ package com.ctux.ae2craftingtime.core;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
-import java.util.OptionalLong;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
@@ -38,11 +39,11 @@ class TimeEstimateTest {
     }
 
     @Test
-    void nonZeroWorkRoundsUpToOneSecond() {
+    void subsecondWorkKeepsMillisecondPrecision() {
         var stats = new ProfileStats(1, 20, 100, 100.0, 20, ProfileUnit.ITEM);
 
-        assertEquals("~1s", TimeEstimate.format(1, stats).orElseThrow());
-        assertEquals(1, TimeEstimate.seconds(1, stats).orElseThrow());
+        assertEquals("10ms", TimeEstimate.format(1, stats).orElseThrow());
+        assertEquals(10, TimeEstimate.milliseconds(1, stats).orElseThrow().durationMs());
     }
 
     @Test
@@ -56,23 +57,24 @@ class TimeEstimateTest {
     void invalidInputsHaveNoEstimate() {
         for (var rate : List.of(Double.NaN, Double.POSITIVE_INFINITY, Double.NEGATIVE_INFINITY, 0.0, -1.0)) {
             var stats = new ProfileStats(1, 20, 1, rate, 20, ProfileUnit.ITEM);
-            assertFalse(TimeEstimate.seconds(10, stats).isPresent());
+            assertFalse(TimeEstimate.milliseconds(10, stats).isPresent());
             assertFalse(TimeEstimate.format(10, stats).isPresent());
         }
 
         var stats = new ProfileStats(1, 20, 1, 1.0, 20, ProfileUnit.ITEM);
         for (var amount : List.of(0L, -1L)) {
-            assertFalse(TimeEstimate.seconds(amount, stats).isPresent());
+            assertFalse(TimeEstimate.milliseconds(amount, stats).isPresent());
             assertFalse(TimeEstimate.format(amount, stats).isPresent());
         }
     }
 
     @Test
     void totalCraftEtaAddsKnownRows() {
-        var total = TimeEstimate.formatTotal(List.of(OptionalLong.of(4), OptionalLong.empty(), OptionalLong.of(9)));
+        var total = TimeEstimate.formatTotal(List.of(Optional.of(new TtcEstimate(4000, true)), Optional.empty(),
+                Optional.of(new TtcEstimate(9000, true))));
 
-        assertEquals("~13s", total.orElseThrow());
-        assertFalse(TimeEstimate.formatTotal(List.of(OptionalLong.empty())).isPresent());
+        assertEquals("~13s?", total.orElseThrow());
+        assertFalse(TimeEstimate.formatTotal(List.of(Optional.empty())).isPresent());
     }
 
     @Test
@@ -84,19 +86,53 @@ class TimeEstimateTest {
 
     @Test
     void negativeTicksFormatAsZero() {
-        assertEquals("~0s", TimeEstimate.formatTicks(-1));
+        assertEquals("0ms", TimeEstimate.formatTicks(-1));
     }
 
     @Test
     void formatsPerUnitTicksWithoutLosingSmallOrFractionalValues() {
-        assertEquals("10", TimeEstimate.formatSampleTicks(10).orElseThrow());
-        assertEquals("41.1", TimeEstimate.formatSampleTicks(41.1).orElseThrow());
-        assertEquals("0.063", TimeEstimate.formatSampleTicks(1.0 / 16.0).orElseThrow());
-        assertEquals("0.001", TimeEstimate.formatSampleTicks(0.001).orElseThrow());
-        assertEquals("<0.001", TimeEstimate.formatSampleTicks(0.0001).orElseThrow());
+        assertEquals("500", TimeEstimate.formatSampleTicks(10).orElseThrow());
+        assertEquals("2055", TimeEstimate.formatSampleTicks(41.1).orElseThrow());
+        assertEquals("5", TimeEstimate.formatSampleTicks(1.0 / 16.0).orElseThrow());
+        assertEquals("5", TimeEstimate.formatSampleTicks(0.001).orElseThrow());
+        assertEquals("5", TimeEstimate.formatSampleTicks(0.0001).orElseThrow());
         assertFalse(TimeEstimate.formatSampleTicks(0).isPresent());
         assertFalse(TimeEstimate.formatSampleTicks(Double.POSITIVE_INFINITY).isPresent());
         assertFalse(TimeEstimate.formatSampleTicks(Double.NaN).isPresent());
+    }
+
+    @Test
+    void floorsOnlyDisplayAndPreservesThresholdConfidenceAndAggregatePrecision() {
+        assertEquals("5ms", TimeEstimate.format(new TtcEstimate(1, true)));
+        assertEquals("5ms?", TimeEstimate.format(new TtcEstimate(1, false)));
+        assertEquals("6ms", TimeEstimate.formatDuration(5.001));
+        assertEquals("1000ms", TimeEstimate.formatDuration(999.1));
+        assertEquals("~1s", TimeEstimate.formatDuration(1000));
+        assertEquals("?", TimeEstimate.formatDuration(Double.NaN));
+        assertEquals("?", TimeEstimate.formatDuration(-1));
+        assertEquals("50ms", TimeEstimate.formatTicks(1));
+        assertEquals("+50ms", TimeEstimate.formatSignedSeconds(0.05));
+        assertEquals("-50ms", TimeEstimate.formatSignedSeconds(-0.05));
+        assertEquals("+0ms", TimeEstimate.formatSignedSeconds(0));
+        assertEquals("+1.00s", TimeEstimate.formatSignedSeconds(1));
+        var sum = TimeEstimate.total(List.of(Optional.of(new TtcEstimate(1.1, true)),
+                Optional.of(new TtcEstimate(1.2, true)))).orElseThrow();
+        assertEquals(2.3, sum.durationMs(), 0.00001);
+        assertTrue(sum.instant());
+        assertFalse(TimeEstimate.total(List.of(Optional.of(new TtcEstimate(1, false))))
+                .orElseThrow().reliable());
+        assertTrue(TimeEstimate.total(List.of(Optional.of(new TtcEstimate(0, true)))).isEmpty());
+        assertTrue(TimeEstimate.total(List.of(Optional.of(new TtcEstimate(Double.MAX_VALUE, true)),
+                Optional.of(new TtcEstimate(Double.MAX_VALUE, true)))).isEmpty());
+        assertTrue(TimeEstimate.milliseconds(Long.MAX_VALUE,
+                new ProfileStats(1, 1, 1, Double.MIN_VALUE, 1, ProfileUnit.ITEM)).isEmpty());
+        assertTrue(TimeEstimate.formatSampleTicks(Double.MAX_VALUE).isEmpty());
+        assertTrue(new TtcEstimate(5, true).instant());
+        assertFalse(new TtcEstimate(5, false).instant());
+        assertFalse(new TtcEstimate(0, true).instant());
+        assertFalse(new TtcEstimate(5.01, true).instant());
+        for (var invalid : List.of(Double.NaN, Double.POSITIVE_INFINITY, -1.0))
+            assertThrows(IllegalArgumentException.class, () -> new TtcEstimate(invalid, true));
     }
 
     @Test

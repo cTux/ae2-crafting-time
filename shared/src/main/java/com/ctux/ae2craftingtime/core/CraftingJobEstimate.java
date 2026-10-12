@@ -4,7 +4,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 
@@ -13,18 +13,26 @@ public final class CraftingJobEstimate {
     private final ProfileKey root;
     private final Map<ProfileKey, Long> remainingAmounts;
     private final Map<ProfileKey, Set<ProfileKey>> dependencies;
+    private final boolean complete;
 
     public CraftingJobEstimate(ProfileKey root, Map<ProfileKey, Long> remainingAmounts,
             Map<ProfileKey, Set<ProfileKey>> dependencies) {
+        this(root, remainingAmounts, new DependencyGraph(dependencies, true));
+    }
+
+    public CraftingJobEstimate(ProfileKey root, Map<ProfileKey, Long> remainingAmounts,
+            DependencyGraph graph) {
         this.root = root;
         this.remainingAmounts = new HashMap<>(remainingAmounts);
         this.dependencies = new HashMap<>();
-        dependencies.forEach((key, values) -> this.dependencies.put(key, Set.copyOf(values)));
+        graph.edges().forEach((key, values) -> this.dependencies.put(key, Set.copyOf(values)));
+        complete = graph.complete();
     }
 
-    public static Map<ProfileKey, Set<ProfileKey>> dependencies(Set<ProfileKey> crafted,
+    public static DependencyGraph dependencies(Set<ProfileKey> crafted,
             List<Pattern> patterns) {
         var dependencies = new HashMap<ProfileKey, Set<ProfileKey>>();
+        boolean complete = true;
         for (var pattern : patterns) {
             if (pattern.uses <= 0) {
                 continue;
@@ -35,6 +43,8 @@ public final class CraftingJobEstimate {
                 candidates.retainAll(crafted);
                 if (candidates.size() == 1) {
                     inputs.add(candidates.iterator().next());
+                } else if (candidates.size() > 1) {
+                    complete = false;
                 }
             }
             for (var output : pattern.outputs) {
@@ -45,30 +55,37 @@ public final class CraftingJobEstimate {
                 inputs.stream().filter(input -> !input.equals(output)).forEach(outputDependencies::add);
             }
         }
-        return dependencies;
+        return new DependencyGraph(dependencies, complete);
     }
 
     public void complete(ProfileKey key, long amount) {
         remainingAmounts.computeIfPresent(key, (ignored, remaining) -> Math.max(0, remaining - amount));
     }
 
-    public OptionalLong remainingSeconds(BiFunction<ProfileKey, Long, OptionalLong> estimate) {
-        var cache = new HashMap<ProfileKey, Long>();
-        var critical = path(root, estimate, cache, new HashSet<>(), 0);
-        long longestKnownRow = -1;
+    public Optional<TtcEstimate> remainingEstimate(BiFunction<ProfileKey, Long, Optional<TtcEstimate>> estimate) {
+        var rows = new HashMap<ProfileKey, Optional<TtcEstimate>>();
+        boolean reliable = complete;
+        double longestKnownRow = -1;
         for (var entry : remainingAmounts.entrySet()) {
+            if (entry.getValue() <= 0) continue;
             var row = estimate.apply(entry.getKey(), entry.getValue());
+            rows.put(entry.getKey(), row);
+            reliable &= row.isPresent() && row.get().reliable();
             if (row.isPresent()) {
-                longestKnownRow = Math.max(longestKnownRow, row.getAsLong());
+                longestKnownRow = Math.max(longestKnownRow, row.get().durationMs());
             }
         }
+        var state = new Traversal(reliable);
+        var critical = path(root, rows, new HashMap<>(), new HashSet<>(), 0, state);
         var total = Math.max(critical, longestKnownRow);
-        return total >= 0 ? OptionalLong.of(total) : OptionalLong.empty();
+        return total > 0 && Double.isFinite(total)
+                ? Optional.of(new TtcEstimate(total, state.reliable)) : Optional.empty();
     }
 
-    private long path(ProfileKey key, BiFunction<ProfileKey, Long, OptionalLong> estimate,
-            Map<ProfileKey, Long> cache, Set<ProfileKey> visiting, int depth) {
+    private double path(ProfileKey key, Map<ProfileKey, Optional<TtcEstimate>> rows,
+            Map<ProfileKey, Double> cache, Set<ProfileKey> visiting, int depth, Traversal state) {
         if (depth >= MAX_DEPENDENCY_DEPTH) {
+            state.reliable = false;
             return -1;
         }
         var cached = cache.get(key);
@@ -76,23 +93,31 @@ public final class CraftingJobEstimate {
             return cached;
         }
         if (!visiting.add(key)) {
+            state.reliable = false;
             return -1;
         }
 
-        var self = estimate.apply(key, remainingAmounts.getOrDefault(key, 0L));
-        long longestDependency = -1;
+        var self = rows.getOrDefault(key, Optional.empty());
+        double longestDependency = -1;
         for (var dependency : dependencies.getOrDefault(key, Set.of())) {
-            longestDependency = Math.max(longestDependency, path(dependency, estimate, cache, visiting, depth + 1));
+            longestDependency = Math.max(longestDependency, path(dependency, rows, cache, visiting, depth + 1, state));
         }
         visiting.remove(key);
 
         var result = self.isEmpty() && longestDependency < 0
                 ? -1
-                : self.orElse(0) + Math.max(0, longestDependency);
+                : self.map(TtcEstimate::durationMs).orElse(0.0) + Math.max(0, longestDependency);
         cache.put(key, result);
         return result;
     }
 
     public record Pattern(long uses, List<ProfileKey> outputs, List<Set<ProfileKey>> inputChoices) {
+    }
+
+    public record DependencyGraph(Map<ProfileKey, Set<ProfileKey>> edges, boolean complete) { }
+
+    private static final class Traversal {
+        private boolean reliable;
+        private Traversal(boolean reliable) { this.reliable = reliable; }
     }
 }

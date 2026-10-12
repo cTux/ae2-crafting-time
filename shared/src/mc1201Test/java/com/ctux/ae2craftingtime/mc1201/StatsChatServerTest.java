@@ -47,8 +47,8 @@ class StatsChatServerTest {
 
         assertEquals("text.ae2craftingtime.chat.details", contents.getKey());
         assertEquals(9, contents.getArgs().length);
-        assertEquals("55", contents.getArgs()[2]);
-        assertEquals("100", contents.getArgs()[4]);
+        assertEquals("2750", contents.getArgs()[2]);
+        assertEquals("5000", contents.getArgs()[4]);
         assertEquals("text.ae2craftingtime.unit.item.singular",
                 ((TranslatableContents) ((Component) contents.getArgs()[1]).getContents()).getKey());
     }

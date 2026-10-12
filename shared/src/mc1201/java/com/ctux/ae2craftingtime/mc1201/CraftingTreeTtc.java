@@ -4,6 +4,7 @@ import appeng.api.stacks.GenericStack;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcColor;
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 
@@ -12,7 +13,7 @@ import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
+import java.util.Optional;
 import java.util.function.Function;
 
 public final class CraftingTreeTtc {
@@ -24,14 +25,13 @@ public final class CraftingTreeTtc {
     }
 
     public static void drawBadge(GuiGraphics guiGraphics, int outputX, int outputY, int spacingX, int spacingY,
-            Point point, long seconds, int color) {
-        var text = TimeEstimate.formatTotal(List.of(OptionalLong.of(seconds))).orElse(null);
-        if (text == null) {
+            Point point, TtcEstimate estimate, int color) {
+        if (estimate.durationMs() <= 0) {
             return;
         }
 
         var font = Minecraft.getInstance().font;
-        var display = TtcComponents.time(text).withStyle(style -> style.withColor(color));
+        var display = TtcComponents.estimate(estimate);
         var scaledTextWidth = font.width(display) * TEXT_SCALE;
         var labelWidth = (int) Math.ceil(scaledTextWidth) + LABEL_PADDING * 2;
         var labelHeight = (int) Math.ceil(font.lineHeight * TEXT_SCALE) + LABEL_PADDING * 2;
@@ -53,11 +53,11 @@ public final class CraftingTreeTtc {
         pose.popPose();
     }
 
-    public static IdentityHashMap<Object, Long> computeSeconds(List<Object> roots,
+    public static IdentityHashMap<Object, TtcEstimate> computeEstimates(List<Object> roots,
             Function<Object, GenericStack> stackOf,
             Function<Object, Long> craftAmountOf,
             Function<Object, List<Object>> childrenOf) {
-        var seconds = new IdentityHashMap<Object, Long>();
+        var seconds = new IdentityHashMap<Object, TtcEstimate>();
         if (roots != null) {
             for (var root : roots) {
                 addSeconds(root, seconds, stackOf, craftAmountOf, childrenOf);
@@ -66,7 +66,7 @@ public final class CraftingTreeTtc {
         return seconds;
     }
 
-    private static void addSeconds(Object data, IdentityHashMap<Object, Long> cache,
+    private static void addSeconds(Object data, IdentityHashMap<Object, TtcEstimate> cache,
             Function<Object, GenericStack> stackOf,
             Function<Object, Long> craftAmountOf,
             Function<Object, List<Object>> childrenOf) {
@@ -74,7 +74,7 @@ public final class CraftingTreeTtc {
             return;
         }
 
-        long total = 0;
+        var estimates = new ArrayList<Optional<TtcEstimate>>();
         var stack = stackOf.apply(data);
         var craftAmount = craftAmountOf.apply(data);
         if (stack != null && craftAmount != null && craftAmount > 0) {
@@ -82,11 +82,9 @@ public final class CraftingTreeTtc {
             var stats = ClientStats.CACHE.get(key);
             if (stats.isEmpty()) {
                 ClientStatsRequests.request(key);
+                estimates.add(Optional.empty());
             } else {
-                var self = TimeEstimate.seconds(AeKeyAmounts.normalize(stack.what(), craftAmount), stats.get());
-                if (self.isPresent()) {
-                    total += self.getAsLong();
-                }
+                estimates.add(TimeEstimate.milliseconds(AeKeyAmounts.normalize(stack.what(), craftAmount), stats.get()));
             }
         }
 
@@ -94,32 +92,32 @@ public final class CraftingTreeTtc {
             addSeconds(child, cache, stackOf, craftAmountOf, childrenOf);
             var childSeconds = cache.get(child);
             if (childSeconds != null) {
-                total += childSeconds;
+                estimates.add(Optional.of(childSeconds));
             }
         }
 
-        cache.put(data, total);
+        cache.put(data, TimeEstimate.total(estimates).orElse(new TtcEstimate(0, estimates.isEmpty())));
     }
 
-    public static IdentityHashMap<Object, Integer> computeColors(IdentityHashMap<Object, Long> seconds) {
+    public static IdentityHashMap<Object, Integer> computeColors(IdentityHashMap<Object, TtcEstimate> seconds) {
         var colors = new IdentityHashMap<Object, Integer>();
         if (seconds == null || seconds.isEmpty()) {
             return colors;
         }
 
-        long min = Long.MAX_VALUE;
-        long max = Long.MIN_VALUE;
+        double min = Double.POSITIVE_INFINITY;
+        double max = Double.NEGATIVE_INFINITY;
         for (var value : seconds.values()) {
-            if (value < min) {
-                min = value;
+            if (value.durationMs() < min) {
+                min = value.durationMs();
             }
-            if (value > max) {
-                max = value;
+            if (value.durationMs() > max) {
+                max = value.durationMs();
             }
         }
 
         for (var entry : seconds.entrySet()) {
-            colors.put(entry.getKey(), ClientOptionsRuntime.ttcColor(entry.getValue(), min, max));
+            colors.put(entry.getKey(), ClientOptionsRuntime.ttcColor(entry.getValue().durationMs(), min, max));
         }
         return colors;
     }

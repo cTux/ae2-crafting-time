@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201.net;
 
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -9,7 +10,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.OptionalLong;
+import java.util.Optional;
 
 class CpuTtcPacketTest {
     @Test
@@ -26,14 +27,14 @@ class CpuTtcPacketTest {
     @Test
     void roundTripsPresentAndMissingSnapshotEntries() {
         var packet = new CpuTtcPacketCodec.Snapshot(5, 6, List.of(
-                new CpuTtcCache.Entry(1, OptionalLong.of(9)),
-                new CpuTtcCache.Entry(2, OptionalLong.empty())));
+                new CpuTtcCache.Entry(1, Optional.of(new TtcEstimate(9, true))),
+                new CpuTtcCache.Entry(2, Optional.empty())));
         var buffer = new FriendlyByteBuf(Unpooled.buffer());
         CpuTtcPacketCodec.writeSnapshot(buffer, packet);
         assertEquals(packet, CpuTtcPacketCodec.readSnapshot(buffer));
         for (var entries : List.of(List.<CpuTtcCache.Entry>of(),
                 java.util.stream.IntStream.rangeClosed(1, CpuTtcCache.MAX_CPUS)
-                        .mapToObj(serial -> new CpuTtcCache.Entry(serial, OptionalLong.of(Long.MAX_VALUE))).toList())) {
+                        .mapToObj(serial -> new CpuTtcCache.Entry(serial, Optional.of(new TtcEstimate(Long.MAX_VALUE, true)))).toList())) {
             var boundary = new CpuTtcPacketCodec.Snapshot(0, Long.MAX_VALUE, entries);
             var boundaryBuffer = new FriendlyByteBuf(Unpooled.buffer());
             CpuTtcPacketCodec.writeSnapshot(boundaryBuffer, boundary);
@@ -69,10 +70,10 @@ class CpuTtcPacketTest {
         assertThrows(IllegalArgumentException.class,
                 () -> new CpuTtcPacketCodec.Snapshot(0, 0,
                         java.util.stream.IntStream.rangeClosed(1, 33)
-                                .mapToObj(serial -> new CpuTtcCache.Entry(serial, OptionalLong.empty())).toList()));
+                                .mapToObj(serial -> new CpuTtcCache.Entry(serial, Optional.empty())).toList()));
         assertThrows(IllegalArgumentException.class, () -> new CpuTtcPacketCodec.Snapshot(0, 0, List.of(
-                new CpuTtcCache.Entry(1, OptionalLong.empty()),
-                new CpuTtcCache.Entry(1, OptionalLong.of(2)))));
+                new CpuTtcCache.Entry(1, Optional.empty()),
+                new CpuTtcCache.Entry(1, Optional.of(new TtcEstimate(2, true))))));
 
         var oversized = new FriendlyByteBuf(Unpooled.buffer());
         oversized.writeVarInt(0);
@@ -106,7 +107,8 @@ class CpuTtcPacketTest {
         negativeSeconds.writeVarInt(1);
         negativeSeconds.writeVarInt(1);
         negativeSeconds.writeBoolean(true);
-        negativeSeconds.writeVarLong(-1);
+        negativeSeconds.writeDouble(-1);
+        negativeSeconds.writeBoolean(true);
         assertThrows(IllegalArgumentException.class, () -> CpuTtcPacketCodec.readSnapshot(negativeSeconds));
         assertThrows(RuntimeException.class,
                 () -> CpuTtcPacketCodec.readRequest(new FriendlyByteBuf(Unpooled.buffer())));

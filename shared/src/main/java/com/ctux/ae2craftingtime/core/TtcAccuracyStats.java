@@ -7,9 +7,13 @@ public record TtcAccuracyStats(
         double meanSignedErrorSeconds,
         double meanAbsolutePercentageError,
         double meanActualToPredictedRatio,
-        long lastPredictedSeconds,
+        double lastPredictedSeconds,
         double lastActualWallSeconds,
         double lastActualTickSeconds,
         int lastKnownRows,
         int lastTotalRows) {
+    public TtcAccuracyStats {
+        if (!Double.isFinite(lastPredictedSeconds) || lastPredictedSeconds <= 0)
+            throw new IllegalArgumentException("invalid accuracy prediction");
+    }
 }

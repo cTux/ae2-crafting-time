@@ -48,7 +48,8 @@ public final class StatsChatServer {
 
     static net.minecraft.network.chat.MutableComponent summary(String outputId, long amount, ProfileStats stats) {
         return Component.translatable("text.ae2craftingtime.chat.summary", outputId, amount,
-                TimeEstimate.format(amount, stats).orElse("?")).append(Component.literal(" | ")).append(details(stats));
+                TimeEstimate.milliseconds(amount, stats).<Component>map(TtcComponents::semanticEstimate)
+                        .orElseGet(() -> Component.literal("?"))).append(Component.literal(" | ")).append(details(stats));
     }
 
     static Component details(ProfileStats stats) {
@@ -84,13 +85,13 @@ public final class StatsChatServer {
         return Component.translatable("text.ae2craftingtime.value.accuracy", stats.fullyCoveredSampleCount(),
                 stats.sampleCount(), decimal(stats.meanAbsolutePercentageError()),
                 decimal(stats.meanActualToPredictedRatio()),
-                String.format(Locale.ROOT, "%+.2f", stats.meanSignedErrorSeconds()),
+                TimeEstimate.formatSignedSeconds(stats.meanSignedErrorSeconds()),
                 percent(stats.averageCoverage()));
     }
 
     private static Component latestAccuracy(TtcAccuracyStats stats) {
-        return Component.translatable("text.ae2craftingtime.value.latest_accuracy", stats.lastPredictedSeconds(),
-                decimal(stats.lastActualWallSeconds()), decimal(stats.lastActualTickSeconds()), stats.lastKnownRows(),
+        return Component.translatable("text.ae2craftingtime.value.latest_accuracy", TimeEstimate.formatDuration(stats.lastPredictedSeconds() * 1000),
+                TimeEstimate.formatDuration(stats.lastActualWallSeconds() * 1000), TimeEstimate.formatDuration(stats.lastActualTickSeconds() * 1000), stats.lastKnownRows(),
                 stats.lastTotalRows());
     }
 
