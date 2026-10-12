@@ -112,15 +112,12 @@ try {
         [IO.File]::WriteAllText($capturePath, 'fixture')
     }
     foreach ($target in @('1.20.1-forge','1.20.1-fabric','1.21.1-neoforge','26.1.2-neoforge')) {
-        $names = @()
+        $catalogueNames = @()
         switch ($target) {
-            '1.20.1-forge' { $names = @('mana','chemical') }
-            '1.20.1-fabric' { $names = @('mana') }
-            '1.21.1-neoforge' { $names = @('chemical') }
+            '1.20.1-forge' { $catalogueNames = @('mana','chemical') }
+            '1.20.1-fabric' { $catalogueNames = @('mana') }
+            '1.21.1-neoforge' { $catalogueNames = @('chemical') }
         }
-        @{schema=1;appbotLoaded=('mana' -in $names);appmekLoaded=('chemical' -in $names);
-            captured=@($names)} | ConvertTo-Json -Depth 3 |
-            Set-Content -LiteralPath (Join-Path $temp 'status-addon-keys.json')
         foreach ($name in @('mana','chemical')) {
             foreach ($capture in @("status-addon-$name", "status-addon-$name-tooltip")) {
                 foreach ($extension in @('png','json')) {
@@ -128,7 +125,20 @@ try {
                 }
             }
         }
-        Assert-UiSmokeStatusAddonKeys -Evidence $temp -Target $target
+        foreach ($mode in @('catalogue','base')) {
+            $names = if ($mode -eq 'base') { @() } else { @($catalogueNames) }
+            @{schema=1;appbotLoaded=('mana' -in $names);appmekLoaded=('chemical' -in $names);
+                captured=@($names)} | ConvertTo-Json -Depth 3 |
+                Set-Content -LiteralPath (Join-Path $temp 'status-addon-keys.json')
+            Assert-UiSmokeStatusAddonKeys -Evidence $temp -Target $target -DependencyMode $mode
+            @{schema=1;appbotLoaded=('mana' -in $names);appmekLoaded=('chemical' -in $names);
+                captured=@('unexpected')} |
+                ConvertTo-Json -Depth 3 | Set-Content -LiteralPath (Join-Path $temp 'status-addon-keys.json')
+            $rejected = $false
+            try { Assert-UiSmokeStatusAddonKeys -Evidence $temp -Target $target -DependencyMode $mode }
+            catch { $rejected = $_.Exception.Message -like '*inventory does not match*' }
+            if (!$rejected) { throw "Unexpected status addon keys accepted: $target $mode" }
+        }
     }
     foreach ($capturePath in $capturePaths) {
         Remove-Item -LiteralPath $capturePath
@@ -216,7 +226,7 @@ try {
     if ($_.Exception.Message -eq 'Invalid interactive token was accepted' -or
             $_.Exception.Message -notmatch 'InteractiveToken') { throw }
 }
-if ($runner -notmatch "if \(\`$Scenario -in @\('cpu-list-total-ttc', 'standard-status-controls', 'recurrent-plan', 'stored-variant-plan', 'delayed-resource-icons', 'appmek-resource-icons'\) -or\s*\`$selectedCases -contains 'recurrent-plan' -or \`$selectedCases -contains 'stored-variant-plan'\) \{\s*\`$progressPath") {
+if ($runner -notmatch "if \(\`$Scenario -in @\('cpu-list-total-ttc', 'standard-status-controls', 'recurrent-plan', 'stored-variant-plan', 'delayed-resource-icons', 'appmek-resource-icons', 'crafting-suspension'\) -or\s*\`$selectedCases -contains 'recurrent-plan' -or \`$selectedCases -contains 'stored-variant-plan'\) \{\s*\`$progressPath") {
     throw 'The progress watchdog does not cover every CPU-list process'
 }
 $running = Get-UiSmokeScheduledJavaProcessState -ProcessId 42 -TaskName test -ProcessLookup {

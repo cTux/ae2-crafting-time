@@ -32,7 +32,7 @@ function Assert-UiSmokeStatusRelaunchCaptures {
 }
 
 function Assert-UiSmokeStatusAddonKeys {
-    param([string]$Evidence, [string]$Target)
+    param([string]$Evidence, [string]$Target, [string]$DependencyMode)
     $value = Get-Content -LiteralPath (Join-Path $Evidence 'status-addon-keys.json') -Raw | ConvertFrom-Json
     $expected = @()
     switch ($Target) {
@@ -42,6 +42,7 @@ function Assert-UiSmokeStatusAddonKeys {
         '26.1.2-neoforge' { $expected = @() }
         default { throw "Unknown status addon target: $Target" }
     }
+    if ($DependencyMode -eq 'base') { $expected = @() }
     if ($value.schema -ne 1 -or $value.appbotLoaded -ne ('mana' -in $expected) -or
             $value.appmekLoaded -ne ('chemical' -in $expected) -or
             (Compare-Object @($value.captured) @($expected) -SyncWindow 0)) {
