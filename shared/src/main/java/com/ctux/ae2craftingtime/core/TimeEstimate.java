@@ -2,8 +2,13 @@ package com.ctux.ae2craftingtime.core;
 
 import java.util.Locale;
 import java.util.Optional;
+import java.util.OptionalLong;
 
 public final class TimeEstimate {
+    public static boolean hasPendingAmount(long requested, OptionalLong available) {
+        return requested > 0 && (available.isEmpty() || requested > available.getAsLong());
+    }
+
     public static Optional<TtcEstimate> milliseconds(long amount, ProfileStats stats) {
         if (amount <= 0 || !Double.isFinite(stats.amountPerSecond()) || stats.amountPerSecond() <= 0) {
             return Optional.empty();

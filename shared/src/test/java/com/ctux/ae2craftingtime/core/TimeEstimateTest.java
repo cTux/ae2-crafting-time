@@ -12,6 +12,21 @@ import org.junit.jupiter.api.Test;
 
 class TimeEstimateTest {
     @Test
+    void fulfilledRequesterRowsDoNotBecomeUnknownPendingWork() {
+        assertFalse(TimeEstimate.hasPendingAmount(0, java.util.OptionalLong.empty()));
+        assertFalse(TimeEstimate.hasPendingAmount(-1, java.util.OptionalLong.of(0)));
+        assertFalse(TimeEstimate.hasPendingAmount(10, java.util.OptionalLong.of(10)));
+        assertFalse(TimeEstimate.hasPendingAmount(10, java.util.OptionalLong.of(20)));
+        assertTrue(TimeEstimate.hasPendingAmount(10, java.util.OptionalLong.empty()));
+        assertTrue(TimeEstimate.hasPendingAmount(10, java.util.OptionalLong.of(9)));
+        var remainingRows = java.util.stream.Stream.of(0L, 1L)
+                .filter(amount -> TimeEstimate.hasPendingAmount(amount, java.util.OptionalLong.of(0)))
+                .map(amount -> Optional.of(new TtcEstimate(1, true))).toList();
+        assertTrue(TimeEstimate.total(remainingRows).orElseThrow().instant());
+        assertFalse(TimeEstimate.total(List.of(Optional.of(new TtcEstimate(1, true)), Optional.empty()))
+                .orElseThrow().instant());
+    }
+    @Test
     void formatsDiagnosticTickDurations() {
         assertEquals("~12s", TimeEstimate.formatTicks(240));
         assertEquals("~1:01", TimeEstimate.formatTicks(1_201));

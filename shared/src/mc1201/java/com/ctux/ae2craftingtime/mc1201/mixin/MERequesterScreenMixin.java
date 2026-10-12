@@ -105,7 +105,8 @@ public abstract class MERequesterScreenMixin {
             });
         }
 
-        TimeEstimate.total(estimates.stream().map(MERequesterEstimate::seconds).toList())
+        TimeEstimate.total(estimates.stream().filter(estimate -> estimate.label().isPresent())
+                .map(MERequesterEstimate::seconds).toList())
                 .ifPresent(eta -> {
                     ae2craftingtime$drawBadge(guiGraphics, 160, 6, TtcText.totalTtc(eta),
                             ClientOptionsRuntime.current().color(ClientConfig.Color.TOTAL),
@@ -154,17 +155,17 @@ public abstract class MERequesterScreenMixin {
         var profileKey = ProfilerBridge.key(key.get());
         ClientStatsRequests.request(profileKey);
         var networkAmount = ClientStats.networkAmount(profileKey);
-        if (networkAmount.isEmpty() || amount <= networkAmount.getAsLong()) {
+        if (!TimeEstimate.hasPendingAmount(amount, networkAmount)) {
             return MERequesterEstimate.empty();
         }
         var stats = ClientStats.CACHE.get(profileKey);
-        if (stats.isEmpty()) {
+        if (stats.isEmpty() || networkAmount.isEmpty()) {
             return new MERequesterEstimate(Optional.of(TtcText.noStats()), Optional.empty());
         }
 
         var normalized = AeKeyAmounts.normalize(key.get(), amount - networkAmount.getAsLong());
         var seconds = TimeEstimate.milliseconds(normalized, stats.get());
-        var label = TimeEstimate.milliseconds(normalized, stats.get()).map(eta -> (Component) TtcText.ttc(eta));
+        var label = Optional.of(seconds.<Component>map(TtcText::ttc).orElseGet(TtcText::noStats));
         return new MERequesterEstimate(label, seconds);
     }
 
