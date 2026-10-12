@@ -5,6 +5,38 @@ Lifecycle: see the [scope status and evidence](spec.md).
 Implement this as one feature commit. Let the commit hook create the PR before
 running Gradle checks, then report local verification and GitHub CI separately.
 
+## Optional badge backgrounds (#696)
+
+Lifecycle and criteria: [spec](spec.md#optional-badge-backgrounds-696).
+Merge these document changes before implementation.
+
+1. Update shared `CpuListTtcScenario` selection and tooltip hover to use observed
+   TTC bounds when no badge is drawn (CPU696-1). Make layout validation respect
+   the current background option while retaining every containment and overlap
+   check (CPU696-2). Leave configuration and continuation handling unchanged
+   (CPU696-3); all four targets share this scenario.
+2. Extend Forge `TestDriverCoreTest` with On/Off interaction and geometry cases:
+   serial reordering, missing enabled or unexpected disabled badges, text/card
+   containment, text/badge containment, name/info/progress collisions, and
+   unknown/idle cards. Cover each changed branch; confirm production defaults
+   and existing option restoration remain unchanged (CPU696-1/2/3).
+3. After the hook-created PR exists, run the focused driver regressions, compile
+   all four driver consumers, and retain changed-mode `-PlanOnly` selection and
+   reasons. Report GitHub CI separately. No tests run before PR creation.
+4. Run two clean compatible `1.21.1-neoforge -BaseOnly -Scenario cpu-list-total-ttc`
+   campaigns: one with no saved client config (default Off), one with backgrounds
+   On. Each must finish both native process phases and every existing check;
+   a resumed diagnostic alone is insufficient (CPU696-3/4). Use the exact prepared
+   `21.1.251/launch.json`, guest Java 21, English, 8 GiB and a maximized window.
+   Read-only preflight verified the running CodexVM, SSH, this manifest and guest
+   JDK. Recheck classpath/native files and the disposable fixture marker before
+   launch; reuse existing preparation, host builds and guest-local staging.
+5. Archive each run before the next, inspect Off/On captures and sidecar bounds,
+   verify unchanged background values through both phases, and retain launch
+   receipts and actual timing. Preserve original runtime config around test setup.
+   Finish only after the reviewed implementation, focused checks, both clean
+   two-phase runs, visual review and current-head CI pass (CPU696-4).
+
 ## Readable Status restart captures (#674)
 
 Lifecycle and criteria: [spec](spec.md#readable-status-restart-captures-674).
