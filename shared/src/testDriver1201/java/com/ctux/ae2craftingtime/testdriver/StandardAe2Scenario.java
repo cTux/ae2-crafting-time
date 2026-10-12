@@ -194,6 +194,7 @@ final class StandardAe2Scenario {
     private boolean amountResumeOpened;
     private boolean amountResumeOffCaptured;
     private boolean amountResumeOnCaptured;
+    private int amountResumeParkedCaptures;
     private boolean amountResumeSaving;
     private boolean amountResumeChecksRestored;
     private long amountOptionRenderedAfter;
@@ -290,7 +291,7 @@ final class StandardAe2Scenario {
             reportedPhase = phase;
             reportedCheckpoint = currentCheckpoint;
         }
-        if (phase == Stage.STATUS_RELAUNCH) return statusRelaunchTick(minecraft, checks, screenshot);
+        if (phase == Stage.STATUS_RELAUNCH) return statusRelaunchTick(minecraft, checks, screenshot, moveMouse);
         if (phase == Stage.BADGE_RELAUNCH) return badgeRelaunchTick(minecraft, checks, screenshot);
         if (phase == Stage.BADGE_PERSIST) return badgePersistTick(minecraft, checks, screenshot);
         if (leaf.equals("stored-variant-plan") && connectedDedicated && variantLifecycle == 3) {
@@ -2498,7 +2499,7 @@ final class StandardAe2Scenario {
     }
 
     private boolean statusRelaunchTick(Minecraft minecraft, Map<String, Boolean> checks,
-            Consumer<String> screenshot) {
+            Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) {
         if (!amountResumeChecksRestored) {
             if (!java.util.Set.copyOf(amountContinuation.checks()).equals(java.util.Set.copyOf(CHECKS.get(leaf))))
                 throw new IllegalStateException("Status relaunch predecessor omitted required checks");
@@ -2535,6 +2536,7 @@ final class StandardAe2Scenario {
                 net.minecraft.client.resources.language.I18n.get("options.on"));
         if (!amountResumeOffCaptured) {
             if (enabled) throw new IllegalStateException("Relaunched Options screen did not show compact amounts off");
+            if (!statusCaptureReady(1, TestDriverRuntime.renderedFrames, moveMouse)) return false;
             screenshot.accept("status-relaunch-off.png");
             amountResumeOffCaptured = true;
             DriverPlatform.click(minecraft, toggle.getX() + 4, toggle.getY() + 4);
@@ -2543,12 +2545,23 @@ final class StandardAe2Scenario {
         }
         if (!enabled) return false;
         if (!amountResumeOnCaptured) {
+            if (!statusCaptureReady(2, TestDriverRuntime.renderedFrames, moveMouse)) return false;
             screenshot.accept("status-relaunch-on.png");
             amountResumeOnCaptured = true;
         }
         clickOptionButton(minecraft, net.minecraft.client.resources.language.I18n.get("gui.done"));
         amountResumeSaving = true;
         return false;
+    }
+
+    boolean statusCaptureReady(int capture, long renderedFrames, BiConsumer<Integer, Integer> moveMouse) {
+        if (amountResumeParkedCaptures != capture) {
+            moveMouse.accept(0, 0);
+            amountResumeParkedCaptures = capture;
+            amountOptionRenderedAfter = renderedFrames + 1;
+            return false;
+        }
+        return renderedFrames >= amountOptionRenderedAfter;
     }
 
     private boolean badgeTick(Minecraft minecraft, Map<String, Boolean> checks, Consumer<String> screenshot) {
