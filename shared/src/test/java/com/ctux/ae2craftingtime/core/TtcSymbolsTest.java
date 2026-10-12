@@ -60,7 +60,7 @@ class TtcSymbolsTest {
     void onlyDurationArgumentsReceiveTimeSymbol() {
         var positions = Map.ofEntries(
                 Map.entry("ttc", 0), Map.entry("total_ttc", 0), Map.entry("chat.summary", 2),
-                Map.entry("chat.details", 2), Map.entry("chat.delayed", 2),
+                Map.entry("chat.details", 2), Map.entry("chat.details.ms", 2), Map.entry("chat.delayed", 2),
                 Map.entry("chat.chance_output", 3),
                 Map.entry("value.window", 0), Map.entry("value.whole_seconds", 0),
                 Map.entry("value.seconds", 0), Map.entry("value.accuracy", 4),
