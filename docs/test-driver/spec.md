@@ -131,6 +131,42 @@ environment gates; none of these new checkpoints is claimed as implemented.
 
 ## CPU-list total TTC scenario
 
+### Optional badge backgrounds (#696)
+
+Status: ready-to-implement
+
+Scope: Restore isolated CPU-list smoke with optional badge backgrounds.
+
+Issue: [#696](https://github.com/cTux/ae2-crafting-time/issues/696).
+Planning: [design](technical-design.md#optional-badge-backgrounds-696)
+and [plan](implementation-plan.md#optional-badge-backgrounds-696).
+
+The isolated leaf must work with Badge background Off, including a missing client
+config, and with backgrounds On as in the compatible suite.
+
+- **CPU696-1:** Use the observed TTC text for selection and tooltip hover when
+  backgrounds are Off; use the observed badge when On. Keep selection tied to
+  the CPU serial and current job. If the same serial is observed with a
+  different job, do not use the stale job's interaction bounds.
+- **CPU696-2:** Always require TTC text inside its card and clear of the name,
+  info area and progress area. When On, also require a badge inside the card,
+  containing the text and clear of those areas. Missing enabled badges fail;
+  unexpected backgrounds while Off fail. Preserve viewport and name checks.
+- **CPU696-3:** Do not change client options, production defaults, continuation
+  data or existing restoration behavior. Run the same layout and background
+  presence checks on fresh observations in both initial and resumed phases;
+  cover missing enabled and unexpected disabled badges after relaunch. Suite
+  ordering is not a prerequisite.
+- **CPU696-4:** Retain focused geometry/interaction regressions and clean
+  two-process `cpu-list-total-ttc` evidence with backgrounds Off and On. Preserve
+  every existing scenario check and review the captures in both modes. Include
+  a same-serial/different-job interaction regression. Use no client config for
+  Off; for On, stage a test-only client config with `badgeBackground = true` in
+  the isolated runtime before phase one, then verify the same config remains in
+  place through phase two.
+
+### Existing CPU-list coverage
+
 `cpu-list-total-ttc` opens the real Crafting Status screen on eight native CPUs:
 five busy jobs include distinct totals, an equal-total tie, one unknown total,
 and an off-screen shortest job; three CPUs are idle. Actual rendered-card

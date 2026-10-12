@@ -171,6 +171,43 @@ not claim the current bilingual driver states have already been removed.
 
 ## CPU-list total TTC scenario
 
+### Optional badge backgrounds (#696)
+
+Lifecycle and criteria: [spec](spec.md#optional-badge-backgrounds-696).
+
+At `dade951d3f4164bff1def705726bb5152f96b913`, `UiObservationStore` correctly
+records a null badge when no background was drawn. Shared `CpuListTtcScenario`
+still requires it in `validateLayout`, returns it from `selectionBadge`, and
+dereferences it directly for tooltip hover. This fails the isolated default-Off
+case before its process restart; the earlier suite badge case hides the problem.
+
+Reuse one observed interaction rectangle for click and hover: the badge when
+present, otherwise the TTC text bounds. Validate observed presence against the
+current Badge background option, so the fallback cannot hide a missing enabled
+badge. Check text containment and name/info/progress overlap in either mode;
+retain the same checks for the badge plus text-inside-badge when enabled.
+Keep unknown and idle cards without TTC on their existing path.
+
+All four targets consume this shared scenario. `StandardAe2Scenario` constructs
+it for initial and resumed execution; `CpuListContinuation` carries the existing
+checks and fixture identity into phase two. No configuration override or new
+saved state is needed. Keep those interfaces and the outer cleanup paths intact.
+
+The resumed flow starts at `RELAUNCH_PREPARE`; `RELAUNCH_FRESH` currently checks
+the TTC value and matching totals without running `validateLayout`. Call the
+shared layout/background validation on that fresh observation too, so phase two
+checks the same Off/On geometry and badge-presence rules as phase one.
+
+The smoke runner reads client options from
+`config/ae2craftingtime-client.toml` in its isolated runtime. For On-mode native
+evidence, stage a test-only file with `badgeBackground = true` there after
+runtime cleanup and before launch. The launch preparation rewrites loader files
+and mod JARs but leaves this client config alone; verify its hash and value
+before both phases. Keep it absent for the default-Off run, then remove the
+test-only file to restore that original state.
+
+### Existing CPU-list design
+
 `CpuListTtcScenario` owns one bounded multi-CPU fixture and reuses the normal
 Crafting Status menu, final-frame observation store, screenshot writer, suite
 reset, and result model. The fixture submits real jobs to specific native CPUs,
