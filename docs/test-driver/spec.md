@@ -10,10 +10,11 @@ Stored-variant and resource-icon sections inherit their linked feature status.
 
 ## Readable Status restart captures (#674)
 
-Status: in-progress
+Status: finished
 
-Implementation is under review. Runtime verification, current-head CI and merge
-remain pending. See the [investigation and merged planning evidence](https://github.com/cTux/ae2-crafting-time/issues/674#issuecomment-6121707172).
+Implementation: [PR #685](https://github.com/cTux/ae2-crafting-time/pull/685), merged as [commit `de0b111`](https://github.com/cTux/ae2-crafting-time/commit/de0b1118370bdfc62695879cf134ab134ba99f00).
+
+Verification: [Run and visual evidence](https://github.com/cTux/ae2-crafting-time/issues/674#issuecomment-6122195768). Tested head [`09acaeec`](https://github.com/cTux/ae2-crafting-time/commit/09acaeec11fec95b2f215f825ffdb75835de9853) passed the focused regression check, all four test-driver compiles, and both CI workflows. A clean `standard-status-controls` run on NeoForge 1.21.1 with loader `21.1.251` passed all 14 Status checks, including the wrapper probe, with config and continuation validation. Manual OFF/ON review and sidecar hash checks passed; the automatic visual gate remains `REVIEW_REQUIRED`.
 
 Scope: Restore readable native Options evidence in `standard-status-controls`.
 
