@@ -1,6 +1,6 @@
 # Keep long row estimates inside their cells
 
-Status: in-progress
+Status: finished
 
 Scope: Restore native Crafting Plan and Crafting Status row containment.
 
@@ -8,13 +8,23 @@ Issue: [#670](https://github.com/cTux/ae2-crafting-time/issues/670)
 
 Planning: [Implementation plan](implementation-plan.md)
 
-Implementation: [PR #688](https://github.com/cTux/ae2-crafting-time/pull/688).
-Six scoped cases have native source
-`e3e2c374e53e629d9c3f3e56cf02b0aa9c7d2f1e`. The 1.20.1 Forge
-`standard-status-controls` archive retains native source
-`52240e6e7efce3d6c66c7624e15b842f5b549dc5` and was accepted only after a
-separate host-validator recheck at the e3e2 head; this is not a new native run.
-Final acceptance review and merge remain outstanding.
+Implementation: [PR #688](https://github.com/cTux/ae2-crafting-time/pull/688),
+merged as [ce0414ec9ae1e46c98189f5c376718b12a3221aa](https://github.com/cTux/ae2-crafting-time/commit/ce0414ec9ae1e46c98189f5c376718b12a3221aa).
+Tested implementation head: `e3e2c374e53e629d9c3f3e56cf02b0aa9c7d2f1e`.
+Six native cases have source at that head. The 1.20.1 Forge
+`standard-status-controls` archive retains source
+`52240e6e7efce3d6c66c7624e15b842f5b549dc5`; its separate host-validator
+recheck at e3e2 is not a new native run or a relabeled original gate. The
+accepted seven-case native evidence and retained visual verdicts are recorded
+in [issue #670 comment 6124650100](https://github.com/cTux/ae2-crafting-time/issues/670#issuecomment-6124650100).
+Build and Gradle tests passed on the tested head ([Build](https://github.com/cTux/ae2-crafting-time/actions/runs/38242890242),
+[Gradle tests](https://github.com/cTux/ae2-crafting-time/actions/runs/38242890268)).
+The scope was clarified in [PR #690](https://github.com/cTux/ae2-crafting-time/pull/690):
+AE2's existing row font is preserved; scale-1 readability, including possible
+horizontal-fit regression, remains an unresolved limitation tracked in
+[follow-up #689](https://github.com/cTux/ae2-crafting-time/issues/689). All
+eight scale-1 readability failures remain failures, with no non-regression
+claim. Wiki publication was read back in [issue #670 comment 6123468901](https://github.com/cTux/ae2-crafting-time/issues/670#issuecomment-6123468901).
 
 The 26.1.2 status fixture has 1 billion stored, 2 billion active and 3 billion
 pending items. Its 5 billion remaining items produce `⏱ ~6944444:26:40?`.
