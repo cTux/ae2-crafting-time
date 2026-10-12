@@ -39,7 +39,7 @@ tick-labelled sample fields specifically change to ms, including larger values.
 
 For totals and CPU estimates, confidence is high only when every remaining row
 has usable, reliable stats and the aggregate dependency calculation is complete.
-Any unreliable or unknown remaining row, or an incomplete graph traversal, makes
+Any unreliable or unknown remaining row, ambiguous dependency choice, or incomplete graph traversal makes
 an available aggregate low confidence. This includes rows outside the longest
 path. Preserve existing partial numeric estimates, but append `?` and never show
 Instant for them. With no usable estimate, preserve the unknown state.

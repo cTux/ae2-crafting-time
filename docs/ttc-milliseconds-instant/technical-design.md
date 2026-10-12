@@ -66,6 +66,11 @@ Evaluate remaining rows once using their existing `ProfileStats.reliableEstimate
 decision. Aggregate reliability is the conjunction of reliable, usable stats for
 all positive remaining rows and complete dependency traversal. Missing rows,
 cycles or depth truncation make an otherwise available partial estimate unreliable.
+`CraftingJobEstimate.dependencies` currently omits an edge when an input has
+multiple crafted candidates. Return and retain a graph-completeness flag alongside
+the dependency map: any such ambiguous choice marks it incomplete. Propagate that
+flag from plan capture through remaining-job estimation and aggregate reliability;
+reliable row samples alone cannot restore confidence in an ambiguous graph.
 Retain the existing numeric sum versus critical-path semantics. Carry reliability
 with the duration through snapshots, CPU replies and caches; do not infer it
 from a selected row or from the duration. No known duration means absent estimate.
@@ -75,13 +80,19 @@ from a selected row or from the duration. No known duration means absent estimat
 `StatsChatServer.summary` must not choose Instant on the server. Replace its
 preformatted estimate argument with a nested semantic translatable component:
 separate reliable/unreliable TTC keys, with argument 0 containing the numeric
-fallback text and argument 1 containing the unrounded `durationMs` number.
+fallback text and argument 1 containing the unrounded `durationMs` encoded with
+`Double.toString` as a locale-independent string. Numeric Java arguments do not
+survive vanilla 1.20.1 component serialization as numeric types, so use the string
+transport deliberately on every target.
 Use `%1$s` as each key's translation/fallback so a client without the decorator
 still sees readable numeric text; confidence is also present in the fallback.
 Unknown estimates retain the current unknown component, not a numeric marker.
 
 At the receiving client's `TtcComponents` boundary, recognize only these exact
-keys and validate argument count, numeric type, finiteness and nonnegative value.
+keys and validate argument count and a string metadata argument of at most 32
+characters. Parse that metadata with `Double.parseDouble`, catching malformed
+values, and require a finite nonnegative result. Parse only this designated
+machine-readable argument, never the localized fallback or other display text.
 Use the key's reliability and raw ms to choose the local Instant/numeric display;
 malformed components keep their fallback. Never parse translated display text.
 Preserve original semantic components for settings refresh, as with existing
@@ -107,9 +118,12 @@ These tests cannot establish glyph appearance, clipping, or addon compatibility;
 focused client evidence must cover those on each affected release target.
 
 Add aggregate tests for mixed confidence, missing rows, off-critical-path low
-confidence, cycles/depth limits and overflow. Add codec round-trip and malformed
+confidence, ambiguous dependency choices, cycles/depth limits and overflow. Add codec round-trip and malformed
 value tests, plus Fabric capability/version mismatch checks. Test one broadcast
 rendered by clients with opposite settings and re-rendered after toggling them.
+Round-trip the semantic component through each target's actual vanilla component
+serializer/deserializer before rendering, particularly both 1.20.1 loaders;
+direct in-memory component tests alone do not establish chat transport behavior.
 
 No optional integration should gain a required dependency. If implementation
 changes an optional presentation mixin, retain `require = 0` and verify its

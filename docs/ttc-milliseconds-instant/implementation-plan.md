@@ -12,7 +12,8 @@ This plan does not authorize implementation or remove the issue's backlog hold.
    estimate plus reliability, including sum/critical-path calculations, caches,
    sorting/colors, both codecs and four loader adapters. Apply the documented
    protocol/ID version changes and capability gates without clamping source data.
-   Test aggregate confidence and unknown/overflow handling. Cover MS-1 through
+   Carry graph completeness from dependency construction, including ambiguous
+   crafted-input choices. Test aggregate confidence and unknown/overflow handling. Cover MS-1 through
    MS-5, MS-9 and MS-11 in formatter, total, CPU and packet tests.
 3. Update tooltip and chat tick-unit translations together, including normalized
    average/latest fields and sample lists. Retain full precision in calculations
@@ -22,7 +23,9 @@ This plan does not authorize implementation or remove the issue's backlog hold.
    states and only for confident estimates. Add the client option, defaults,
    persistence/reset behavior, English/Ukrainian strings and Show emoji behavior.
    Replace the server-selected chat estimate with the design's semantic TTC
-   component and client-local selection/refresh. Cover MS-4 through MS-7 and
+   component using invariant string metadata and client-local selection/refresh.
+   Round-trip it through each target's vanilla component serializer before
+   rendering in tests. Cover MS-4 through MS-7 and
    MS-10 with component, row, configuration and two-recipient chat tests.
 5. Update GuideME and the GitHub wiki with ms examples, the 5ms floor, confidence
    precedence and the Instant control. Reconcile the older profiling examples,
