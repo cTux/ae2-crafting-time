@@ -17,7 +17,8 @@ class CraftingRowStateTest {
     }
 
     @ParameterizedTest
-    @CsvSource({"plan.recurrent,true", "plan.stored_variant,true", "status.amounts,true", "chance_output,true", "ttc,false",
+    @CsvSource({"plan.recurrent,true", "plan.stored_variant,true", "status.amounts,true", "chance_output,true",
+            "ttc,true", "ttc_delayed,true", "waiting,false",
             "plan.stored_variant.explanation,false", "unknown,false"})
     void onlyLongBadgesAreWidthLimited(String suffix, boolean expected) {
         assertEquals(expected, CraftingRowState.isWidthLimited("text.ae2craftingtime." + suffix));

@@ -14,6 +14,11 @@ Plan it covers the row's full **To Craft** amount. In Crafting Status it estimat
 remaining active and scheduled work; the total follows the longest dependency
 path instead of adding parallel branches.
 
+Long TTC row estimates shrink horizontally to fit their Crafting Plan or
+Crafting Status cell. The full time and any `?` uncertainty marker remain visible;
+the text keeps its height. Very long labels or custom fonts may still be hard to
+read.
+
 ## What to check
 
 1. Hover the time to see sample count, spread, and recent activity.

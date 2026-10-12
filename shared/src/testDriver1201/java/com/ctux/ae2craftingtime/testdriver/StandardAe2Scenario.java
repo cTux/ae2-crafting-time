@@ -1340,6 +1340,11 @@ final class StandardAe2Scenario {
             if (amount == null || drawn == null || !amount.rendered().equals(drawn.rendered())
                     || !LayoutValidator.validateBadges(snapshot).isEmpty())
                 throw new IllegalStateException("Scaled amount badge escapes its native cell: " + amount + " rendered " + drawn);
+            var expectedTtc = com.ctux.ae2craftingtime.mc1201.TtcText.ttc("~6944444:26:40?").getString();
+            var ttc = rowText(snapshot, row.outputId(), "text.ae2craftingtime.ttc");
+            if (ttc == null || !expectedTtc.equals(ttc.rendered()))
+                throw new IllegalStateException("Scaled TTC escapes its native cell or changed text: expected "
+                        + expectedTtc + " rendered " + ttc);
             screenshot.accept("status-scale-" + (amountFontMode == 0 ? "default" : "wide") + "-"
                     + (requested == 0 ? "auto" : requested) + ".png");
             if (++quantityScaleCase < 3) {
