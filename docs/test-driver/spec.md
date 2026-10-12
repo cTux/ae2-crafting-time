@@ -146,7 +146,8 @@ config, and with backgrounds On as in the compatible suite.
 
 - **CPU696-1:** Use the observed TTC text for selection and tooltip hover when
   backgrounds are Off; use the observed badge when On. Keep selection tied to
-  the CPU serial and current job.
+  the CPU serial and current job. If the same serial is observed with a
+  different job, do not use the stale job's interaction bounds.
 - **CPU696-2:** Always require TTC text inside its card and clear of the name,
   info area and progress area. When On, also require a badge inside the card,
   containing the text and clear of those areas. Missing enabled badges fail;
@@ -158,10 +159,11 @@ config, and with backgrounds On as in the compatible suite.
   ordering is not a prerequisite.
 - **CPU696-4:** Retain focused geometry/interaction regressions and clean
   two-process `cpu-list-total-ttc` evidence with backgrounds Off and On. Preserve
-  every existing scenario check and review the captures in both modes. Use no
-  client config for Off; for On, stage a test-only client config with
-  `badgeBackground = true` in the isolated runtime before phase one, then verify
-  the same config remains in place through phase two.
+  every existing scenario check and review the captures in both modes. Include
+  a same-serial/different-job interaction regression. Use no client config for
+  Off; for On, stage a test-only client config with `badgeBackground = true` in
+  the isolated runtime before phase one, then verify the same config remains in
+  place through phase two.
 
 ### Existing CPU-list coverage
 

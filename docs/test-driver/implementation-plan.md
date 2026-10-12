@@ -21,8 +21,9 @@ Merge these document changes before implementation.
 2. Extend Forge `TestDriverCoreTest` with On/Off interaction and geometry cases:
    serial reordering, missing enabled or unexpected disabled badges, text/card
    containment, text/badge containment, name/info/progress collisions, and
-   unknown/idle cards, and resumed-phase layout/background validation including
-   missing enabled and unexpected disabled badges. Cover each changed branch;
+   unknown/idle cards, same-serial/different-job stale-bound rejection, and
+   resumed-phase layout/background validation including missing enabled and
+   unexpected disabled badges. Cover each changed branch;
    confirm production defaults and existing option restoration remain
    unchanged (CPU696-1/2/3).
 3. After the hook-created PR exists, run the focused driver regressions, compile
@@ -31,8 +32,9 @@ Merge these document changes before implementation.
 4. Run two clean compatible `1.21.1-neoforge -BaseOnly -Scenario cpu-list-total-ttc`
    campaigns: one with no saved client config (default Off), one with backgrounds
    On. In the CodexVM staged checkout, first run `scripts/run-ui-smoke.ps1` with
-   the same target, scenario, prepared `21.1.251/launch.json` and selected bundle,
-   plus `-PrepareOnly`. After it returns before Java starts, use SSH to stage a
+   the same target, scenario, prepared `21.1.251/launch.json`, selected bundle,
+   and the immutable implementation SHA via `-HeadSha <40-character-SHA>`, plus
+   `-PrepareOnly`. After it returns before Java starts, use SSH to stage a
    test-only `config/ae2craftingtime-client.toml` containing
    `badgeBackground = true` in
    `build/ui-smoke/1.21.1-neoforge/compatible/runtime`. Then run the normal
