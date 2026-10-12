@@ -158,7 +158,10 @@ config, and with backgrounds On as in the compatible suite.
   ordering is not a prerequisite.
 - **CPU696-4:** Retain focused geometry/interaction regressions and clean
   two-process `cpu-list-total-ttc` evidence with backgrounds Off and On. Preserve
-  every existing scenario check and review the captures in both modes.
+  every existing scenario check and review the captures in both modes. Use no
+  client config for Off; for On, stage a test-only client config with
+  `badgeBackground = true` in the isolated runtime before phase one, then verify
+  the same config remains in place through phase two.
 
 ### Existing CPU-list coverage
 

@@ -198,6 +198,14 @@ the TTC value and matching totals without running `validateLayout`. Call the
 shared layout/background validation on that fresh observation too, so phase two
 checks the same Off/On geometry and badge-presence rules as phase one.
 
+The smoke runner reads client options from
+`config/ae2craftingtime-client.toml` in its isolated runtime. For On-mode native
+evidence, stage a test-only file with `badgeBackground = true` there after
+runtime cleanup and before launch. The launch preparation rewrites loader files
+and mod JARs but leaves this client config alone; verify its hash and value
+before both phases. Keep it absent for the default-Off run, then remove the
+test-only file to restore that original state.
+
 ### Existing CPU-list design
 
 `CpuListTtcScenario` owns one bounded multi-CPU fixture and reuses the normal
