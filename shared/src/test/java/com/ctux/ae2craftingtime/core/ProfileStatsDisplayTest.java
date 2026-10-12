@@ -29,4 +29,13 @@ class ProfileStatsDisplayTest {
         assertFalse(incomplete.instant());
         assertTrue(TimeEstimate.total(List.of(), false).isEmpty());
     }
+
+    @Test
+    void nonTimeStatesPreventInstantIndependentlyOfLabelVisibility() {
+        assertTrue(CraftingRowState.canShowInstant(false, false, false, false));
+        assertFalse(CraftingRowState.canShowInstant(true, false, false, false));
+        assertFalse(CraftingRowState.canShowInstant(false, true, false, false));
+        assertFalse(CraftingRowState.canShowInstant(false, false, true, false));
+        assertFalse(CraftingRowState.canShowInstant(false, false, false, true));
+    }
 }

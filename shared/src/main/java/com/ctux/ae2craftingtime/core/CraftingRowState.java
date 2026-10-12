@@ -58,4 +58,8 @@ public final class CraftingRowState {
     public static CraftingBlockReason blockReason(long pending, CraftingBlockReason reason) {
         return pending > 0 ? reason : null;
     }
+
+    public static boolean canShowInstant(boolean blocked, boolean waiting, boolean delayed, boolean chanceOutput) {
+        return !blocked && !waiting && !delayed && !chanceOutput;
+    }
 }
