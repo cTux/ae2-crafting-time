@@ -171,6 +171,7 @@ final class StandardAe2Scenario {
     private long addonQuantityBadgeFrame;
     private boolean addonQuantityHovered;
     private appeng.menu.me.crafting.CraftingStatus realStatus;
+    private Boolean originalDelayedStatus;
     private int amountOptionCase;
     private boolean amountOptionOpen;
     private boolean amountOptionSaving;
@@ -1120,6 +1121,10 @@ final class StandardAe2Scenario {
                 var client = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
                 client.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS, true);
                 com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(client);
+                // A real job can stall while this synthetic row cycles through fonts and GUI scales.
+                originalDelayedStatus = client.features().enabled(com.ctux.ae2craftingtime.core.OptionFeature.DELAYED_STATUS);
+                com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().features()
+                        .setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.DELAYED_STATUS, false);
                 addonQuantityCases = StandardCraftFixture.addonQuantityCases();
                 var accessor = (com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen;
                 realStatus = accessor.ae2craftingtime_test_driver$status();
@@ -1311,6 +1316,7 @@ final class StandardAe2Scenario {
                     ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
                             .ae2craftingtime_test_driver$setStatus(realStatus);
                     realStatus = null;
+                    restoreDelayedStatus();
                     mark(checks, "amount-scales", true);
                     phase = Stage.STATUS_OPTIONS;
                 }
@@ -3219,7 +3225,14 @@ final class StandardAe2Scenario {
     }
 
     void releaseKeys() { stats.releaseKeys(); cleanup(); }
-    void cleanup() { if (compactHover != null) compactHover.close(); }
+    void cleanup() { if (compactHover != null) compactHover.close(); restoreDelayedStatus(); }
+
+    private void restoreDelayedStatus() {
+        if (originalDelayedStatus == null) return;
+        com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().features()
+                .setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.DELAYED_STATUS, originalDelayedStatus);
+        originalDelayedStatus = null;
+    }
 
     static boolean focus(long window) {
         var user = User32.INSTANCE;
