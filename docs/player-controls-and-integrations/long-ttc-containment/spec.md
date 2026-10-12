@@ -33,7 +33,7 @@ to Crafting Plan rows through the same renderer.
 | --- | --- |
 | C1 | Regular and delayed TTC labels use the existing 90-font-pixel horizontal limit; short labels and unrelated keys keep their behavior. |
 | C2 | The existing 1B/2B/3B status fixture checks the exact full estimate and its observed bounds inside its originating row cell, alongside compact amount containment. |
-| C3 | Native `standard-status-controls` verifies default and uniform fonts at scales 1, 2 and Auto on all four supported targets. Require full text and cell containment at all three scales, and readable estimates at representative scales 2 and Auto. At scale 1, require matched before/after evidence that the candidate does not reduce readability; without that evidence C3 remains unresolved and the implementation cannot be accepted. Also verify `standard-plan-controls` and `delayed-status` on 26.1.2 NeoForge and `badge-background` on 1.20.1 Forge. |
+| C3 | Native `standard-status-controls` verifies default and uniform fonts at scales 1, 2 and Auto on all four supported targets. Require full text and cell containment at all three scales, and readable estimates at representative scales 2 and Auto. Also verify `standard-plan-controls` and `delayed-status` on 26.1.2 NeoForge and `badge-background` on 1.20.1 Forge. |
 | C4 | Review retained native PNGs and matching sidecars, recording hashes, actual scale, cell/text bounds and readability. Preserve all eight scale-1 readability FAIL receipts as a known limitation tracked in the [scale-1 readability follow-up #689](https://github.com/cTux/ae2-crafting-time/issues/689). Semantic completeness and containment do not constitute a readability pass. |
 | C5 | Shared logic keeps full line/branch coverage, existing component behavior passes, and GuideME/wiki explain the fitted long row text without promising arbitrary-font readability. |
 
@@ -46,8 +46,12 @@ preserved. This validator recheck is not a new native run.
 
 The original issue requests representative GUI scales without naming scale 1.
 This scope preserves AE2's existing row font and requires readability at scales
-2 and Auto while retaining scale-1 exact-text and containment checks. The
-reviewed scale-1 glyphs are about
+2 and Auto while retaining scale-1 exact-text and containment checks.
+requester chose to preserve AE2's row font and defer scale-1 readability,
+including any regression caused by horizontal fitting, to #689. Matched
+before/after readability is unresolved; it is outside this fix's approved
+completion gate, and no non-regression claim is made.
+Reviewed scale-1 glyphs are about
 five physical pixels high and remain insufficiently readable. The native
 vertical transform is unchanged from the investigation and documentation bases,
 but the new TTC horizontal compression may contribute to the readability loss.
