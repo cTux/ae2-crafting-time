@@ -5,6 +5,33 @@ Lifecycle: see the [scope status and evidence](spec.md).
 Implement this as one feature commit. Let the commit hook create the PR before
 running Gradle checks, then report local verification and GitHub CI separately.
 
+## Readable Status restart captures (#674)
+
+Lifecycle and criteria: [spec](spec.md#readable-status-restart-captures-674).
+
+1. Pass the existing mouse callback into shared `statusRelaunchTick`; park in
+   the verified blank margin and gate each OFF/ON capture on subsequent rendering
+   (RC674-1). Preserve both outer client adapters and all existing checks (RC674-2).
+2. Add the smallest regression check for move-before-render-before-capture ordering
+   at the existing driver test boundary. Cover both captures and ensure repeated
+   polling cannot postpone capture forever. Let the hook create the PR before
+   executing tests. Run the focused check and compile affected driver consumers.
+3. Inspect changed-mode `-PlanOnly` selection. Run only the representative compatible
+   `1.21.1-neoforge` `standard-status-controls` leaf as a clean two-process campaign.
+   Use loader `21.1.251` and its exact prepared `21.1.251/launch.json`, not the older
+   generic fallback. The 2026-10-12 preflight verified guest Java 21, all 107
+   classpath entries, native libraries and the tracked `SOURCE_ONLY` fixture.
+   Recheck prerequisites before launch; build on the host and stage into the
+   guest-local disposable runtime. Keep English, 8 GiB and maximized-window rules.
+4. Budget two launches, record actual phase timing and retain bounded progress
+   timeouts. Preserve all 14 checks, wrapper/config/continuation results, original
+   PNGs and schema-2 sidecars. Inspect both complete captions, verify PNG hashes,
+   and record manual review separately without overriding `REVIEW_REQUIRED`
+   (RC674-1/2/3). Diagnostic resume evidence cannot replace the clean final run.
+5. Archive evidence and cleanly shut down the exact CodexVM after visual review;
+   verify its VMX is absent from `vmrun list`. Report CI separately. Complete this
+   scope only after current-head checks, visual evidence and implementation merge.
+
 ## Plan readiness with optional backgrounds (#585)
 
 Merge the spec and design before implementation.

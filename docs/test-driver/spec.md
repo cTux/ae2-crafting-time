@@ -8,6 +8,32 @@ Implementation: [PR #128](https://github.com/cTux/ae2-crafting-time/pull/128), [
 Verification: [prepared-client results](../automated-ui-testing/prepared-clients-2026-09-08.md).
 Stored-variant and resource-icon sections inherit their linked feature status.
 
+## Readable Status restart captures (#674)
+
+Status: ready-to-implement
+
+Scope: Restore readable native Options evidence in `standard-status-controls`.
+
+Issue: [#674](https://github.com/cTux/ae2-crafting-time/issues/674).
+Planning: [design](technical-design.md#readable-status-restart-captures-674)
+and [plan](implementation-plan.md#readable-status-restart-captures-674).
+
+The restart assertions pass while a hover tooltip can hide the compact-amount
+caption. This repair changes only test-driver capture timing and cursor placement.
+
+- **RC674-1:** Before each OFF/ON restart capture, park the actual game cursor
+  in a verified blank area after the target control exists, then wait for a
+  rendered frame. Both original PNGs must show the complete readable
+  **Compact crafting amounts: OFF** and **Compact crafting amounts: ON** captions.
+- **RC674-2:** Preserve all 14 Status checks, including the wrapper probe, saved
+  config/hash and continuation validation, native toggle/save actions and real
+  process restart. Do not change production behavior or evidence schemas.
+- **RC674-3:** A clean compatible 1.21.1 NeoForge run with loader `21.1.251`
+  retains native `status-relaunch-off.png` and `status-relaunch-on.png`, their
+  SHA-256 hashes and schema-2 sidecars. Record manual visual review separately;
+  keep the automatic verdict `REVIEW_REQUIRED`. Expand runtime coverage only
+  for an observed target-specific difference in this shared capture path.
+
 ## Plan readiness with optional backgrounds (#585)
 
 Status: planned; implementation and runtime verification pending.
