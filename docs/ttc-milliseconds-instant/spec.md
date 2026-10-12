@@ -37,6 +37,16 @@ waiting timer. Preserve zero and sign where they carry diagnostic meaning.
 Existing second/minute/hour presentation remains the baseline at or above 1s;
 tick-labelled sample fields specifically change to ms, including larger values.
 
+For totals and CPU estimates, confidence is high only when every remaining row
+has usable, reliable stats and the aggregate dependency calculation is complete.
+Any unreliable or unknown remaining row, or an incomplete graph traversal, makes
+an available aggregate low confidence. This includes rows outside the longest
+path. Preserve existing partial numeric estimates, but append `?` and never show
+Instant for them. With no usable estimate, preserve the unknown state.
+
+Chat recipients apply their own Instant and Show emoji settings to the same
+semantic estimate. One recipient's settings must not affect another's display.
+
 ## Configuration and documentation
 
 Provide an on/off client option for the new Instant status under the repository's
@@ -56,12 +66,16 @@ Update English and Ukrainian text, GuideME, and the GitHub wiki when implemented
 | MS-6 | No-data and higher-priority statuses never turn into Instant. Sorting and totals use underlying durations, not labels or clamped row values. |
 | MS-7 | Instant Off restores numeric TTC; Show emoji Off hides only the medal. Both locales and both guides explain these controls. |
 | MS-8 | Native and supported addon surfaces agree across all four release targets; the medal renders legibly without clipping or a missing glyph. |
+| MS-9 | A total or CPU estimate containing an unreliable or unknown remaining row never shows Instant, even when its known duration is at most 5ms. Fully covered reliable totals can show Instant. |
+| MS-10 | Two chat recipients with opposite Instant settings see Instant and numeric time respectively; changing settings refreshes from the original semantic message without losing confidence. |
+| MS-11 | Total/CPU payload round trips preserve milliseconds and confidence; incompatible payload versions cannot interpret milliseconds as seconds. |
 
 ## Decisions still needed before implementation
 
 - Choose rounding for fractional ms and the 999.xms boundary, while preserving
   the strict 5ms Instant threshold and the minimum display.
-- Select the Instant option's default and its configuration label.
+- Select the Instant option's default, configuration label, and configuration
+  group (`Displays`, `Warnings`, or `Appearance`).
 
 ## Compatibility and non-goals
 

@@ -14,7 +14,6 @@ Shipped behavior can still have unfinished verification or separately planned ad
 | --- | --- |
 | Learned throughput, retained samples, confidence, and outlier filtering | [Profiling and diagnostics spec](profiling-and-diagnostics/spec.md) and [technical design](profiling-and-diagnostics/technical-design.md) |
 | Craft-plan and crafting-status row estimates and totals | [Time To Craft lines](time-to-craft-plan.md) |
-| Planned millisecond display and confident Instant status | [Requirements and acceptance](ttc-milliseconds-instant/spec.md) |
 | Remaining total TTC in every visible Crafting CPU card | [CPU-list total TTC spec](cpu-list-total-ttc/spec.md) and [technical design](cpu-list-total-ttc/technical-design.md) |
 | Running-job total based on the remaining dependency critical path | [Time To Craft lines](time-to-craft-plan.md#estimate-formula) |
 | Prediction-accuracy history | [Profiling and diagnostics spec](profiling-and-diagnostics/spec.md) and [technical design](profiling-and-diagnostics/technical-design.md#prediction-accuracy) |
@@ -35,6 +34,8 @@ Shipped behavior can still have unfinished verification or separately planned ad
 | Builds, development clients, release automation, automatic PR setup, CI, and review | [Building](building.md), [development client](dev-client.md), [release](release.md), [working with this project](working-with-project.md), and [repository workflow](../AGENTS.md) |
 
 ## Other feature and verification scopes
+
+- [Planned millisecond display and confident Instant status](ttc-milliseconds-instant/spec.md)
 
 These links include proposals, implementation in progress, and completed verification
 work. Their specifications own the current status; this index does not duplicate it.
