@@ -202,9 +202,9 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
                 var rendered = row.description().stream().map(UiSnapshot.ObservedText::rendered)
                         .collect(java.util.stream.Collectors.joining(" "));
                 var expected = rate.samples() >= 3
-                        ? stage == Stage.LEGACY ? "5ms" : "🥇Instant" : "5ms?";
+                        ? stage == Stage.LEGACY ? "5ms" : "🥇 Instant" : "5ms?";
                 if (!rendered.contains(expected)) return false;
-                if (expected.equals("🥇Instant") && row.description().stream()
+                if (expected.equals("🥇 Instant") && row.description().stream()
                         .noneMatch(text -> text.rendered().contains(expected)
                                 && java.util.Objects.equals(text.color(), 0x55FF55))) return false;
             }

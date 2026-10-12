@@ -31,7 +31,7 @@ Times below one second use milliseconds: `50ms`, `500ms`, or `5ms` at the
 minimum. Fractional milliseconds round up for display. Samples and average/latest
 timings also use ms instead of ticks; one simulation tick is 50ms.
 
-Reliable TTC of 5ms or less shows the green `🥇Instant` status. Low confidence
+Reliable TTC of 5ms or less shows the green `🥇 Instant` status. Low confidence
 shows `5ms?` instead. Under **Options > Client > Displays**, **Instant status**
 starts on; turn it off for numeric time. **Show emoji** hides only the medal.
 Each chat recipient uses their own settings. Partial totals keep a question mark

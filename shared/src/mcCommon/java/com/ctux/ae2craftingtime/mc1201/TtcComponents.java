@@ -30,7 +30,7 @@ public final class TtcComponents {
     public static MutableComponent estimate(TtcEstimate value, boolean instant, boolean emoji) {
         if (instant && value.instant()) {
             var label = Component.translatable("text.ae2craftingtime.instant");
-            return (emoji ? Component.literal("🥇").append(label) : label)
+            return (emoji ? Component.literal("🥇 ").append(label) : label)
                     .withStyle(style -> style.withColor(0x55FF55).withBold(false));
         }
         var label = Component.literal(TimeEstimate.format(value));

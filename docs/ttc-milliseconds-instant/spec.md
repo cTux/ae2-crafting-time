@@ -37,7 +37,7 @@ both locales, resource units, compact/regular hovers and full chat precision.
 4. Keep the existing confidence decision. A low-confidence estimate at or below
    5ms displays `5ms?`, never Instant.
 5. A confident TTC estimate of 5ms or less displays a new custom green status,
-   `🥇Instant`. The medal is the plain 🥇 emoji (U+1F947), rendered through
+   `🥇 Instant`. The medal is the plain 🥇 emoji (U+1F947), rendered through
    the existing text/symbol path. No custom artwork or special rendering is needed.
    Evaluate eligibility before display rounding; a value above 5ms must not
    become Instant just because its displayed value rounds down.
@@ -77,7 +77,7 @@ Update English and Ukrainian text, GuideME, and the GitHub wiki when implemented
 | MS-1 | A 50ms or 500ms estimate uses ms rather than rounded whole seconds; 1s retains the existing seconds presentation. |
 | MS-2 | A sample of 1 tick shows 50ms; 10 ticks shows 500ms; 20 ticks shows 1000ms in a formerly tick-labelled field. |
 | MS-3 | Positive sample durations below 5ms display 5ms without changing stored values or calculated throughput. |
-| MS-4 | Confident TTC values of 1ms and 5ms show green 🥇Instant; 6ms does not. |
+| MS-4 | Confident TTC values of 1ms and 5ms show green 🥇 Instant; 6ms does not. |
 | MS-5 | Low-confidence TTC values of 1ms and 5ms show 5ms?; a 50ms low-confidence estimate preserves its question mark. |
 | MS-6 | No-data and higher-priority statuses never turn into Instant. Sorting and totals use underlying durations, not labels or clamped row values. |
 | MS-7 | Instant Off restores numeric TTC; Show emoji Off hides only the medal. Both locales and both guides explain these controls. |
