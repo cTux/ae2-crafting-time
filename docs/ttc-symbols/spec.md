@@ -31,6 +31,7 @@ emoji selectors or a custom bitmap font.
 | Symbol | Role and placement | Icon color |
 | --- | --- | --- |
 | ⏱ U+23F1 | Every displayed numeric time | Aqua |
+| 🥇 U+1F947 | Confident TTC of at most 5ms: Instant ([#692](../ttc-milliseconds-instant/spec.md)) | Green |
 | ⌛ U+231B | Waiting | Yellow |
 | ⚠ U+26A0 | DELAYED, low confidence, expired provider link, Stored variant | Gold |
 | ⚠ U+26A0 | NO PROVIDER, NO CHANNEL, NO TARGET, INPUT BLOCKED, LOCKED, NO SPACE | Red |

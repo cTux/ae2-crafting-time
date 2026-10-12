@@ -64,9 +64,9 @@ public final class ClientOptionsRuntime {
         return serverFeature == null || snapshot == null || snapshot.config().features().enabled(serverFeature);
     }
 
-    public static int ttcColor(long seconds, long min, long max) {
+    public static int ttcColor(double seconds, double min, double max) {
         if (!enabled(OptionFeature.TTC_COLORS)) return current.color(ClientConfig.Color.TOTAL);
-        return TtcColor.forSeconds(seconds, min, max,
+        return TtcColor.forMilliseconds(seconds, min, max,
                 current.color(ClientConfig.Color.FAST), current.color(ClientConfig.Color.MIDDLE),
                 current.color(ClientConfig.Color.SLOW));
     }
@@ -77,7 +77,9 @@ public final class ClientOptionsRuntime {
 
     public static void apply(ClientConfig changed) throws IOException {
         var emojiChanged = current.features().enabled(OptionFeature.SHOW_EMOJI)
-                != changed.features().enabled(OptionFeature.SHOW_EMOJI);
+                != changed.features().enabled(OptionFeature.SHOW_EMOJI)
+                || current.features().enabled(OptionFeature.INSTANT_STATUS)
+                != changed.features().enabled(OptionFeature.INSTANT_STATUS);
         ClientConfigFile.save(path, changed);
         current = changed.copy();
         TtcBadge.BACKGROUND = badgeBackground();

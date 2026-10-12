@@ -1,5 +1,15 @@
 # AE2 Crafting Time Test Driver Technical Design
 
+## Millisecond TTC coverage (#692)
+
+Extend `CompactHoverNumbersScenario` with a three-sample high-throughput case.
+Seed one observation per completed server tick and clear history only before
+the first. Validate sample count and rates before opening the native plan.
+For one-tick high-throughput cases, additionally check the stone row's numeric
+or Instant label; Instant must be green. Disable Instant for the existing legacy
+capture, restore it for Status, and restore all original switches on close.
+Both `StandardCraftFixture` implementations support retaining seed history.
+
 Lifecycle: see the [scope status and evidence](spec.md).
 
 ## Readable Status restart captures (#674)
@@ -1153,3 +1163,9 @@ both shared and 26.1.2 adapters. No production JAR contains the fixture.
 See the [approved implementation and manual acceptance matrix](../player-controls-and-integrations/compact-hover-numbers/implementation-plan.md).
 Process relaunch, connected broadcast/isolation and sorted/scrolled row identity
 remain separate manual gates; automated leaf success does not pass them.
+
+The millisecond TTC follow-up removes per-tick throughput from the compact-hover
+fixture. Its hover asserts per-second throughput with nearby ms samples, no
+redundant per-ms rate, and chat with normalized ms times plus full per-second
+precision. The tree chat observer accepts this timed detail shape and the
+rate-only per-ms/per-second fallback.

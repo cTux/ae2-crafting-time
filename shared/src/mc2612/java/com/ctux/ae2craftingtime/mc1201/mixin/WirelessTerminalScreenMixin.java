@@ -41,7 +41,7 @@ public abstract class WirelessTerminalScreenMixin {
         var key = ProfilerBridge.key(entry.getWhat());
         ClientStatsRequests.request(key);
         ClientStats.CACHE.get(key).ifPresentOrElse(
-                stats -> TimeEstimate.format(AeKeyAmounts.normalize(entry.getWhat(), 1), stats)
+                stats -> TimeEstimate.milliseconds(AeKeyAmounts.normalize(entry.getWhat(), 1), stats)
                         .ifPresentOrElse(eta -> result.add(TtcText.tooltipTtc(TtcText.ttc(eta))),
                                 () -> result.add(TtcText.tooltipTtc(TtcText.ttcCollectingData()))),
                 () -> result.add(TtcText.tooltipTtc(TtcText.ttcCollectingData())));

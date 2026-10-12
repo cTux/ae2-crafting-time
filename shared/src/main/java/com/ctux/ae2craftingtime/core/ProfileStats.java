@@ -60,4 +60,13 @@ public record ProfileStats(
     public OptionalDouble latestTicksPerUnit() {
         return sampleTicksPerUnit(sampleAmounts.size() - 1);
     }
+
+    public double amountPerMillisecond() {
+        return amountPerTick / 50.0;
+    }
+
+    public boolean hasSampleTimes() {
+        return java.util.stream.IntStream.range(0, sampleDurationTicks.size())
+                .anyMatch(index -> sampleTicksPerUnit(index).isPresent());
+    }
 }

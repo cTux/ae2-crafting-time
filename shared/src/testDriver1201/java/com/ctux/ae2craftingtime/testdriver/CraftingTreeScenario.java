@@ -9,23 +9,23 @@ final class CraftingTreeScenario {
     static boolean supports(String scenario) { return SCENARIO.equals(scenario) || RECOVERY.equals(scenario); }
 
     static boolean fullChatRates(net.minecraft.network.chat.Component message, String output, long amount,
-            String perTick, String perSecond) {
+            String perMillisecond, String perSecond) {
         if (!(message.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents summary))
-            return message.getSiblings().stream().anyMatch(child -> fullChatRates(child, output, amount, perTick, perSecond));
+            return message.getSiblings().stream().anyMatch(child -> fullChatRates(child, output, amount, perMillisecond, perSecond));
         if (!summary.getKey().equals("text.ae2craftingtime.chat.summary")) {
             return java.util.Arrays.stream(summary.getArgs()).filter(net.minecraft.network.chat.Component.class::isInstance)
                     .map(net.minecraft.network.chat.Component.class::cast)
-                    .anyMatch(child -> fullChatRates(child, output, amount, perTick, perSecond));
+                    .anyMatch(child -> fullChatRates(child, output, amount, perMillisecond, perSecond));
         }
         if (summary.getArgs().length != 3 || !output.equals(summary.getArgs()[0])
                 || !Long.toString(amount).equals(summary.getArgs()[1].toString())) return false;
         return message.getSiblings().stream().anyMatch(component -> {
             if (!(component.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents details))
                 return false;
-            int start = details.getKey().equals("text.ae2craftingtime.chat.details") ? 5
-                    : details.getKey().equals("text.ae2craftingtime.chat.details.rate") ? 1 : -1;
-            return start >= 0 && details.getArgs().length == start + 4
-                    && perTick.equals(details.getArgs()[start]) && perSecond.equals(details.getArgs()[start + 2]);
+            if (details.getKey().equals("text.ae2craftingtime.chat.details.ms"))
+                return details.getArgs().length == 7 && perSecond.equals(details.getArgs()[5]);
+            return details.getKey().equals("text.ae2craftingtime.chat.details.rate.ms") && details.getArgs().length == 5
+                    && perMillisecond.equals(details.getArgs()[1]) && perSecond.equals(details.getArgs()[3]);
         });
     }
     private static final Set<String> SCREENS = Set.of(
@@ -42,7 +42,7 @@ final class CraftingTreeScenario {
 
     static UiSnapshot.ObservedText nodeTtcText(String screen, UiSnapshot.ObservedText text) {
         if (!isScreen(screen) || !text.key().equals("literal")
-                || !text.rendered().matches("(?:⏱ )?~\\d+(?:s|:\\d{2}(?::\\d{2})?)")) return text;
+                || !text.rendered().matches("(?:⏱ )?(?:~\\d+(?:s|:\\d{2}(?::\\d{2})?)|\\d+ms)\\??|(?:🥇 )?Instant")) return text;
         return new UiSnapshot.ObservedText("text.ae2craftingtime.tree_ttc", text.rendered(), text.arguments(),
                 text.bounds(), text.color(), text.bold());
     }

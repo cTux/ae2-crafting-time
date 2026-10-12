@@ -150,7 +150,7 @@ public final class CpuListTtcControl {
             String serverState) { }
     public record Command(String epoch, long sequence, String action) { }
     public record CpuState(String position, int serial, String jobId, long amount, boolean live, boolean busy,
-            Long seconds, long elapsedNanos, long progress) { }
+            com.ctux.ae2craftingtime.core.TtcEstimate estimate, long elapsedNanos, long progress) { }
     public record ServerState(String network, int container, int selectedSerial, boolean stoneProfile, boolean smoothProfile,
             java.util.List<CpuState> cpus) { }
     private record ServerMarker(int schema, String sourceFixtureId, String role, String target) { }

@@ -52,12 +52,12 @@ class ClientStatsCacheTest {
     void totalTtcIsScopedToTheSelectedCpu() {
         var cache = new ClientStatsCache();
 
-        cache.replaceTotalTtcSeconds(OptionalLong.of(2_445), 7);
+        cache.replaceTotalTtcEstimate(Optional.of(new TtcEstimate(2_445, true)), 7);
 
-        assertEquals(2_445, cache.totalTtcSeconds(7).orElseThrow());
-        assertFalse(cache.totalTtcSeconds(8).isPresent());
+        assertEquals(2_445, cache.totalTtcEstimate(7).orElseThrow().durationMs());
+        assertFalse(cache.totalTtcEstimate(8).isPresent());
         cache.clearCpuState();
-        assertFalse(cache.totalTtcSeconds(7).isPresent());
+        assertFalse(cache.totalTtcEstimate(7).isPresent());
     }
 
     @Test

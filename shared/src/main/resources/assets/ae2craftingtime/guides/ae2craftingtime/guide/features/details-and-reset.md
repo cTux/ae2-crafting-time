@@ -7,7 +7,7 @@ navigation:
 
 # Details and reset
 
-Ctrl-click publishes both per-tick and per-second throughput without compact
+Ctrl-click publishes average/latest times in ms and per-second throughput without compact
 suffixes, exponent notation or two-decimal rounding. The requested amount stays
 an exact integer. Full rates show the decimal precision stored by the profiler.
 Everyone on the server can see the message; the existing chat switch and

@@ -30,8 +30,7 @@ public final class CpuTtcPacketCodec {
         buffer.writeVarInt(snapshot.entries().size());
         for (var entry : snapshot.entries()) {
             buffer.writeVarInt(entry.serial());
-            buffer.writeBoolean(entry.seconds().isPresent());
-            entry.seconds().ifPresent(buffer::writeVarLong);
+            TtcEstimatePacketCodec.write(buffer, entry.estimate());
         }
     }
 
@@ -42,8 +41,7 @@ public final class CpuTtcPacketCodec {
         var entries = new ArrayList<CpuTtcCache.Entry>(count);
         for (var i = 0; i < count; i++) {
             var serial = buffer.readVarInt();
-            var seconds = buffer.readBoolean() ? OptionalLong.of(buffer.readVarLong()) : OptionalLong.empty();
-            entries.add(new CpuTtcCache.Entry(serial, seconds));
+            entries.add(new CpuTtcCache.Entry(serial, TtcEstimatePacketCodec.read(buffer)));
         }
         return new Snapshot(session, sequence, entries);
     }

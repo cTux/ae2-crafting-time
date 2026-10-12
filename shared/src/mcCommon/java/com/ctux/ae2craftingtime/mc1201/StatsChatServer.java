@@ -48,7 +48,8 @@ public final class StatsChatServer {
 
     static net.minecraft.network.chat.MutableComponent summary(String outputId, long amount, ProfileStats stats) {
         return Component.translatable("text.ae2craftingtime.chat.summary", outputId, amount,
-                TimeEstimate.format(amount, stats).orElse("?")).append(Component.literal(" | ")).append(details(stats));
+                TimeEstimate.milliseconds(amount, stats).<Component>map(TtcComponents::semanticEstimate)
+                        .orElseGet(() -> Component.literal("?"))).append(Component.literal(" | ")).append(details(stats));
     }
 
     static Component details(ProfileStats stats) {
@@ -58,13 +59,12 @@ public final class StatsChatServer {
                 ? "text.ae2craftingtime.unit.item.singular"
                 : stats.unit().translationKey());
         var component = average.isPresent() && latest.isPresent()
-                ? Component.translatable("text.ae2craftingtime.chat.details", stats.sampleCount(), unit,
+                ? Component.translatableWithFallback("text.ae2craftingtime.chat.details.ms", "%s observations · average: 1 %s / %sms · latest: 1 %s / %sms · %s %s/s", stats.sampleCount(), unit,
                         TimeEstimate.formatSampleTicks(average.getAsDouble()).orElse("?"), unit,
                         TimeEstimate.formatSampleTicks(latest.getAsDouble()).orElse("?"),
-                        ThroughputNumbers.full(stats.amountPerTick()), Component.translatable(stats.unit().translationKey()),
                         ThroughputNumbers.full(stats.amountPerSecond()), Component.translatable(stats.unit().translationKey()))
-                : Component.translatable("text.ae2craftingtime.chat.details.rate", stats.sampleCount(),
-                        ThroughputNumbers.full(stats.amountPerTick()), Component.translatable(stats.unit().translationKey()),
+                : Component.translatableWithFallback("text.ae2craftingtime.chat.details.rate.ms", "%s observations · %s %s/ms · %s %s/s", stats.sampleCount(),
+                        ThroughputNumbers.full(stats.amountPerMillisecond()), Component.translatable(stats.unit().translationKey()),
                         ThroughputNumbers.full(stats.amountPerSecond()), Component.translatable(stats.unit().translationKey()));
         if (stats.usedSampleCount() != stats.sampleCount()) {
             component.append(Component.translatable("text.ae2craftingtime.chat.details.used",
@@ -84,13 +84,13 @@ public final class StatsChatServer {
         return Component.translatable("text.ae2craftingtime.value.accuracy", stats.fullyCoveredSampleCount(),
                 stats.sampleCount(), decimal(stats.meanAbsolutePercentageError()),
                 decimal(stats.meanActualToPredictedRatio()),
-                String.format(Locale.ROOT, "%+.2f", stats.meanSignedErrorSeconds()),
+                TimeEstimate.formatSignedSeconds(stats.meanSignedErrorSeconds()),
                 percent(stats.averageCoverage()));
     }
 
     private static Component latestAccuracy(TtcAccuracyStats stats) {
-        return Component.translatable("text.ae2craftingtime.value.latest_accuracy", stats.lastPredictedSeconds(),
-                decimal(stats.lastActualWallSeconds()), decimal(stats.lastActualTickSeconds()), stats.lastKnownRows(),
+        return Component.translatable("text.ae2craftingtime.value.latest_accuracy", TimeEstimate.formatDuration(stats.lastPredictedSeconds() * 1000),
+                TimeEstimate.formatDuration(stats.lastActualWallSeconds() * 1000), TimeEstimate.formatDuration(stats.lastActualTickSeconds() * 1000), stats.lastKnownRows(),
                 stats.lastTotalRows());
     }
 

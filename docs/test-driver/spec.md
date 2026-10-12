@@ -1,5 +1,14 @@
 # AE2 Crafting Time Test Driver Spec
 
+## Millisecond TTC coverage (#692)
+
+The `compact-hover-numbers` leaf also captures reliable `🥇Instant`, unreliable
+`5ms?`, and numeric `5ms` with Instant disabled in native plan/status views.
+The reliable case seeds three identical server observations. Keep the existing
+throughput/chat assertions and restore Compact hover numbers, Instant status,
+and Show emoji after success, failure, or cancellation. Evidence remains under
+the leaf's existing plan, legacy, status, and chat captures.
+
 Status: finished
 
 Scope: Shipped driver baseline, excluding separately tracked extensions.
@@ -1019,3 +1028,9 @@ both shared and 26.1.2 adapters. No production JAR contains the fixture.
 See the [approved implementation and manual acceptance matrix](../player-controls-and-integrations/compact-hover-numbers/implementation-plan.md).
 Process relaunch, connected broadcast/isolation and sorted/scrolled row identity
 remain separate manual gates; automated leaf success does not pass them.
+
+The millisecond TTC follow-up removes per-tick throughput from the compact-hover
+fixture. Its hover asserts per-second throughput with nearby ms samples, no
+redundant per-ms rate, and chat with normalized ms times plus full per-second
+precision. The tree chat observer accepts this timed detail shape and the
+rate-only per-ms/per-second fallback.

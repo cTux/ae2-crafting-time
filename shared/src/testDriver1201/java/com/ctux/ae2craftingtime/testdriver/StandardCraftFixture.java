@@ -317,11 +317,15 @@ final class StandardCraftFixture {
     }
 
     void seed(ServerPlayer player, long amount, long durationTicks) {
+        seed(player, amount, durationTicks, true);
+    }
+
+    void seed(ServerPlayer player, long amount, long durationTicks, boolean clear) {
         var grid = cpu(player).getMainNode().getGrid();
         if (cpu(player).getCluster().isBusy()) throw new IllegalStateException("Seed requires an idle fixture");
         var network = ProfilerBridge.networkId(grid);
         var key = AEItemKey.of(Items.STONE);
-        ProfilerBridge.clearStats(ProfilerBridge.key(network, key));
+        if (clear) ProfilerBridge.clearStats(ProfilerBridge.key(network, key));
         var tick = player.serverLevel().getGameTime();
         ProfilerBridge.start(network, this, key, amount, tick);
         ProfilerBridge.complete(network, this, key, amount, tick + durationTicks);
@@ -818,7 +822,7 @@ final class StandardCraftFixture {
 
     String cpuListServerEstimates(ServerPlayer player) {
         return liveCpuListCpus(player).stream().filter(cpu -> cpu.getCluster().isBusy()).map(cpu ->
-                ProfilerBridge.remainingJobSeconds(cpu.getCluster()).stream().mapToObj(Long::toString)
+                ProfilerBridge.remainingJobEstimate(cpu.getCluster()).stream().map(value -> Double.toString(value.durationMs() / 1000))
                         .findFirst().orElse("unknown")).collect(java.util.stream.Collectors.joining(","));
     }
 
@@ -852,11 +856,11 @@ final class StandardCraftFixture {
             var cluster = live ? block.getCluster() : null;
             var status = cluster == null ? null : cluster.getJobStatus();
             var job = status == null ? null : status.crafting();
-            var estimate = status == null ? java.util.OptionalLong.empty() : ProfilerBridge.remainingJobSeconds(cluster);
+            var estimate = status == null ? java.util.Optional.<com.ctux.ae2craftingtime.core.TtcEstimate>empty() : ProfilerBridge.remainingJobEstimate(cluster);
             rows.add(new CpuListTtcControl.CpuState(block.getBlockPos().toShortString(),
                     cluster == null ? -1 : serials.getOrDefault(cluster, -1),
                     job == null ? null : job.what().getId().toString(), job == null ? 0 : job.amount(),
-                    live, status != null, estimate.isPresent() ? estimate.getAsLong() : null,
+                    live, status != null, estimate.orElse(null),
                     status == null ? 0 : status.elapsedTimeNanos(), status == null ? 0 : status.progress()));
         }
         var network = ProfilerBridge.networkId(grid);

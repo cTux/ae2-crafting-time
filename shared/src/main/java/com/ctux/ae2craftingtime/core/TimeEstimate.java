@@ -1,37 +1,54 @@
 package com.ctux.ae2craftingtime.core;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalLong;
 
 public final class TimeEstimate {
-    public static OptionalLong seconds(long amount, ProfileStats stats) {
-        if (amount <= 0 || !Double.isFinite(stats.amountPerSecond()) || stats.amountPerSecond() <= 0) {
-            return OptionalLong.empty();
-        }
-
-        return OptionalLong.of((long) Math.ceil(amount / stats.amountPerSecond()));
+    public static boolean hasPendingAmount(long requested, OptionalLong available) {
+        return requested > 0 && (available.isEmpty() || requested > available.getAsLong());
     }
 
-    public static Optional<String> format(long amount, ProfileStats stats) {
-        var estimate = seconds(amount, stats);
-        if (estimate.isEmpty()) {
+    public static Optional<TtcEstimate> milliseconds(long amount, ProfileStats stats) {
+        if (amount <= 0 || !Double.isFinite(stats.amountPerSecond()) || stats.amountPerSecond() <= 0) {
             return Optional.empty();
         }
 
-        var text = formatSeconds(estimate.getAsLong());
-        return Optional.of(stats.reliableEstimate() ? text : text + "?");
+        var duration = amount / stats.amountPerSecond() * 1000;
+        return Double.isFinite(duration) ? Optional.of(new TtcEstimate(duration, stats.reliableEstimate()))
+                : Optional.empty();
     }
 
-    public static Optional<String> formatTotal(Iterable<OptionalLong> estimates) {
-        long totalSeconds = 0;
+    public static Optional<String> format(long amount, ProfileStats stats) {
+        return milliseconds(amount, stats).map(TimeEstimate::format);
+    }
+
+    public static String format(TtcEstimate estimate) {
+        var text = formatDuration(estimate.durationMs());
+        return estimate.reliable() ? text : text + "?";
+    }
+
+    public static Optional<TtcEstimate> total(Iterable<Optional<TtcEstimate>> estimates) {
+        return total(estimates, true);
+    }
+
+    public static Optional<TtcEstimate> total(Iterable<Optional<TtcEstimate>> estimates, boolean complete) {
+        double duration = 0;
+        boolean reliable = complete;
         for (var estimate : estimates) {
             if (estimate.isPresent()) {
-                totalSeconds += estimate.getAsLong();
+                duration += estimate.get().durationMs();
+                reliable &= estimate.get().reliable();
+            } else {
+                reliable = false;
             }
         }
-        return totalSeconds == 0 ? Optional.empty() : Optional.of(formatSeconds(totalSeconds));
+        return duration > 0 && Double.isFinite(duration)
+                ? Optional.of(new TtcEstimate(duration, reliable)) : Optional.empty();
+    }
+
+    public static Optional<String> formatTotal(Iterable<Optional<TtcEstimate>> estimates) {
+        return total(estimates).map(TimeEstimate::format);
     }
 
     public static boolean hasMeasuredProgress(long startItems, long remainingItems) {
@@ -39,31 +56,35 @@ public final class TimeEstimate {
     }
 
     public static String formatTicks(double ticks) {
-        return formatSeconds((long) Math.ceil(Math.max(0, ticks) / 20.0));
+        return formatDuration(Math.max(0, ticks) * 50);
     }
 
     public static Optional<String> formatSampleTicks(double ticks) {
-        if (!Double.isFinite(ticks) || ticks <= 0) {
-            return Optional.empty();
-        }
-        if (ticks < 0.001) {
-            return Optional.of("<0.001");
-        }
-        return Optional.of(BigDecimal.valueOf(ticks).setScale(3, RoundingMode.HALF_UP)
-                .stripTrailingZeros().toPlainString());
+        var duration = ticks * 50;
+        return !Double.isFinite(duration) || duration <= 0 ? Optional.empty()
+                : Optional.of(Long.toString((long) Math.ceil(Math.max(5, duration))));
     }
 
-    private static String formatSeconds(long seconds) {
+    public static String formatDuration(double durationMs) {
+        if (!Double.isFinite(durationMs) || durationMs < 0) return "?";
+        if (durationMs == 0) return "0ms";
+        if (durationMs < 1000) return (long) Math.ceil(Math.max(5, durationMs)) + "ms";
+        var seconds = (long) Math.ceil(durationMs / 1000);
         var hours = seconds / 3600;
         var minutes = (seconds % 3600) / 60;
         var remainingSeconds = seconds % 60;
         if (hours > 0) {
-            return String.format("~%d:%02d:%02d", hours, minutes, remainingSeconds);
+            return String.format(Locale.ROOT, "~%d:%02d:%02d", hours, minutes, remainingSeconds);
         }
         if (minutes > 0) {
-            return String.format("~%d:%02d", minutes, remainingSeconds);
+            return String.format(Locale.ROOT, "~%d:%02d", minutes, remainingSeconds);
         }
         return "~" + seconds + "s";
+    }
+
+    public static String formatSignedSeconds(double seconds) {
+        return Math.abs(seconds) < 1 ? String.format(Locale.ROOT, "%+.0fms", seconds * 1000)
+                : String.format(Locale.ROOT, "%+.2fs", seconds);
     }
 
     private TimeEstimate() {

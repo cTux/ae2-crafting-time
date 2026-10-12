@@ -3,6 +3,7 @@ package com.ctux.ae2craftingtime.mc1201;
 import com.ctux.ae2craftingtime.core.ClientConfig;
 import com.ctux.ae2craftingtime.core.OptionFeature;
 import com.ctux.ae2craftingtime.core.RowColorPolicy;
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import java.util.OptionalInt;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -10,6 +11,22 @@ import net.minecraft.network.chat.TextColor;
 
 /** Applies row-only foregrounds before AE2 renders descriptions with its palette. */
 public final class RowTextColor {
+    public static Component estimate(TtcEstimate eta, OptionalInt color, ClientConfig config) {
+        return estimate(eta, color, config, true);
+    }
+
+    public static Component estimate(TtcEstimate eta, OptionalInt color, ClientConfig config, boolean allowInstant) {
+        var instant = allowInstant && config.features().enabled(OptionFeature.INSTANT_STATUS);
+        var line = TtcComponents.text("text.ae2craftingtime.ttc", TtcComponents.estimate(eta, instant,
+                config.features().enabled(OptionFeature.SHOW_EMOJI)));
+        if (eta.instant() && instant)
+            return line.withStyle(style -> style.withColor(0x55FF55));
+        if (!RowColorPolicy.inheritNative(config.badgeBackground(),
+                config.features().enabled(OptionFeature.TTC_COLORS)) && color.isPresent())
+            line.withStyle(style -> style.withColor(TextColor.fromRgb(color.getAsInt())));
+        return line;
+    }
+
     public static Component estimate(String eta, OptionalInt color, ClientConfig config) {
         var line = TtcText.ttc(eta);
         if (!RowColorPolicy.inheritNative(config.badgeBackground(),

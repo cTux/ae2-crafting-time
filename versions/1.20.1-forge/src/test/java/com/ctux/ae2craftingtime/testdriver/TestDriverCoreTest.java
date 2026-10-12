@@ -92,7 +92,14 @@ class TestDriverCoreTest {
 
     @Test
     void fullChatContractRejectsWrongNodeAmountRateAndMissingFields() {
-        var details = Component.translatable("text.ae2craftingtime.chat.details.rate", 1, "0.123456789",
+        var timed = Component.translatable("text.ae2craftingtime.chat.summary", "minecraft:stone", 1, "5ms")
+                .append(Component.translatable("text.ae2craftingtime.chat.details.ms", 1, "item", "5", "item", "5", "200", "items"));
+        assertTrue(CraftingTreeScenario.fullChatRates(timed, "minecraft:stone", 1, "0.2", "200"));
+        assertFalse(CraftingTreeScenario.fullChatRates(timed, "minecraft:stone", 1, "0.2", "20"));
+        var malformed = Component.translatable("text.ae2craftingtime.chat.summary", "minecraft:stone", 1, "5ms")
+                .append(Component.translatable("text.ae2craftingtime.chat.details.ms", 1, "item", "5"));
+        assertFalse(CraftingTreeScenario.fullChatRates(malformed, "minecraft:stone", 1, "0.2", "200"));
+        var details = Component.translatable("text.ae2craftingtime.chat.details.rate.ms", 1, "0.123456789",
                 Component.literal("items"), "2.46913578", Component.literal("items"));
         var summary = Component.translatable("text.ae2craftingtime.chat.summary", "minecraft:stone",
                 9_007_199_254_740_993L, "~1s").append(" | ").append(details);
@@ -603,9 +610,9 @@ class TestDriverCoreTest {
     @Test
     void relaunchIdentityIgnoresPhaseLocalSerialAndElapsedButNotPhysicalJobIdentity() {
         var firstCpu = new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:stone", 8,
-                true, true, 10L, 11, 12);
+                true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(10L * 1000, true), 11, 12);
         var nextCpu = new CpuListTtcControl.CpuState("1,2,3", 99, "minecraft:stone", 8,
-                true, true, 9L, 999, 13);
+                true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(9L * 1000, true), 999, 13);
         var before = new CpuListTtcControl.ServerState("network", 1, -1, true, true, List.of(firstCpu));
         var after = new CpuListTtcControl.ServerState("network", 77, -1, true, true, List.of(nextCpu));
         assertTrue(CpuListTtcScenario.samePhysicalJobs(before, after));
@@ -614,7 +621,7 @@ class TestDriverCoreTest {
         assertFalse(CpuListTtcScenario.samePhysicalJobs(before,
                 new CpuListTtcControl.ServerState("network", 77, -1, true, true, List.of(
                         new CpuListTtcControl.CpuState("1,2,4", 99, "minecraft:stone", 8,
-                                true, true, 9L, 999, 13)))));
+                                true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(9L * 1000, true), 999, 13)))));
     }
 
     @Test
@@ -682,7 +689,7 @@ class TestDriverCoreTest {
                         true, true, null, 9, 10)));
         var live = new CpuListTtcControl.ServerState("network", 1, -1, true, true, List.of(
                 new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:stone", 8,
-                        true, true, 7L, 9, 10)));
+                        true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(7L * 1000, true), 9, 10)));
         assertTrue(CpuListTtcScenario.requiresJobRefresh(false, restored));
         assertFalse(CpuListTtcScenario.requiresJobRefresh(true, restored));
         assertFalse(CpuListTtcScenario.requiresJobRefresh(false, live));
@@ -704,7 +711,7 @@ class TestDriverCoreTest {
     void completedPreambleObservationAdvancesRelaunchFreshWithoutAnotherObservation() {
         var state = new CpuListTtcControl.ServerState("network", 1, 4, true, true, List.of(
                 new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:smooth_stone", 8,
-                        true, true, 3600L, 9, 10)));
+                        true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(3600L * 1000, true), 9, 10)));
         var rendered = TtcText.ttc("~1:00:00").getString();
         var card = new UiSnapshot.CpuCard(4, "CPU", "minecraft:smooth_stone", 8, 9, false,
                 null, null, null, null,
@@ -1035,7 +1042,8 @@ class TestDriverCoreTest {
     void treeReadinessRequiresDurationDrawAtTheTargetNode() {
         var screen = "com.neuvillette.ae2ct.gui.CraftingTreeScreen";
         var node = new UiSnapshot.Row("diamond", 1, 0, new Rect(10, 10, 16, 16), List.of());
-        for (var label : List.of("~1s", "⏱ ~1:02", "~1:02:03", "Item ~1", "TTC: ~1s")) {
+        for (var label : List.of("~1s", "⏱ ~1:02", "~1:02:03", "⏱ ~11s?", "50ms", "⏱ 5ms?",
+                "🥇 Instant", "Instant", "Item ~1", "TTC: ~1s")) {
             var literal = new UiSnapshot.ObservedText("literal", label, List.of(), new Rect(8, 31, 20, 5));
             var text = CraftingTreeScenario.nodeTtcText(screen, literal);
             boolean duration = !label.startsWith("Item") && !label.startsWith("TTC:");
@@ -1566,7 +1574,7 @@ class TestDriverCoreTest {
     private static CpuListTtcControl.CpuState cpuState(int serial, String jobId, long amount,
             boolean busy, long progress) {
         return new CpuListTtcControl.CpuState("0,0," + serial, serial, jobId, amount, busy, busy,
-                busy ? 1L : null, 1, progress);
+                busy ? new com.ctux.ae2craftingtime.core.TtcEstimate(1000, true) : null, 1, progress);
     }
 
     private static CpuListTtcControl.ServerState serverState(CpuListTtcControl.CpuState... cpus) {

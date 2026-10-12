@@ -3,7 +3,7 @@ package com.ctux.ae2craftingtime.core;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.OptionalLong;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
@@ -17,8 +17,8 @@ public final class CpuTtcDisplayOrder {
         private List<Integer> orderedSerials = List.of();
 
         public <T> List<T> display(List<T> raw, ToIntFunction<T> serial, Predicate<T> busy,
-                Function<T, OptionalLong> seconds, long revision, int mode, boolean channel) {
-            if (raw == null || serial == null || busy == null || seconds == null) {
+                Function<T, Optional<TtcEstimate>> estimate, long revision, int mode, boolean channel) {
+            if (raw == null || serial == null || busy == null || estimate == null) {
                 throw new IllegalArgumentException("invalid CPU display input");
             }
             var ttcOrder = ttcOrderActive(mode, channel);
@@ -26,7 +26,7 @@ public final class CpuTtcDisplayOrder {
             if (this.revision != revision || this.mode != mode || this.channel != channel
                     || !rawSerials.equals(currentSerials)) {
                 var sorted = !ttcOrder ? List.copyOf(raw)
-                        : TtcSort.copyPrioritizedSorted(raw, busy, seconds, (left, right) -> 0, true, mode == 2);
+                        : TtcSort.copyPrioritizedSorted(raw, busy, estimate, (left, right) -> 0, true, mode == 2);
                 orderedSerials = sorted.stream().mapToInt(serial).boxed().toList();
                 rawSerials = List.copyOf(currentSerials);
                 this.revision = revision;

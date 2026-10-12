@@ -311,7 +311,7 @@ final class CpuListTtcScenario {
                 var state = serverState();
                 if (partialState == null && state.stoneProfile() && !state.smoothProfile()
                         && state.cpus().stream().filter(cpu -> "minecraft:smooth_stone".equals(cpu.jobId()))
-                                .noneMatch(cpu -> cpu.seconds() == null)) partialState = state;
+                                .noneMatch(cpu -> cpu.estimate() == null)) partialState = state;
                 if (partialState == null
                         || snapshot.cpuCards().stream().filter(card -> "minecraft:smooth_stone".equals(card.jobId()))
                                 .noneMatch(card -> card.ttc() != null)
@@ -537,7 +537,7 @@ final class CpuListTtcScenario {
                 var state = serverState();
                 if (snapshot.scroll() != 0 || snapshot.rawCpuSerials().size() != 33
                         || state.cpus().stream().filter(CpuListTtcControl.CpuState::busy).count() != 33
-                        || state.cpus().stream().anyMatch(cpu -> cpu.busy() && cpu.seconds() == null)) return false;
+                        || state.cpus().stream().anyMatch(cpu -> cpu.busy() && cpu.estimate() == null)) return false;
                 var requests = CpuTtcPacketControl.requestCapture();
                 if (requests.batches().size() < 2
                         || requests.batches().stream().anyMatch(batch -> batch.serials().size() > 32
@@ -931,26 +931,26 @@ final class CpuListTtcScenario {
         var rawIndex = new java.util.HashMap<Integer, Integer>();
         for (int index = 0; index < snapshot.rawCpuSerials().size(); index++)
             rawIndex.put(snapshot.rawCpuSerials().get(index), index);
-        Long previous = null;
+        Double previous = null;
         var previousGroup = -1;
         var previousRawIndex = -1;
         for (var card : snapshot.cpuCards()) {
             var cpu = state.cpus().stream().filter(value -> value.serial() == card.serial()).findFirst().orElseThrow();
-            var group = !cpu.busy() ? 2 : cpu.seconds() == null ? 1 : 0;
+            var group = !cpu.busy() ? 2 : cpu.estimate() == null ? 1 : 0;
             if (group < previousGroup) throw new IllegalStateException("CPU TTC groups are out of order");
             if (group == 0 && previous != null) {
-                var comparison = Long.compare(cpu.seconds(), previous);
+                var comparison = Double.compare(cpu.estimate().durationMs(), previous);
                 if (descending ? comparison > 0 : comparison < 0) {
                     throw new IllegalStateException("CPU TTC values are out of order");
                 }
             }
             var currentRawIndex = rawIndex.getOrDefault(card.serial(), -1);
             if (currentRawIndex < 0) throw new IllegalStateException("rendered CPU is absent from raw AE2 order");
-            if (group == previousGroup && (group != 0 || java.util.Objects.equals(cpu.seconds(), previous))
+            if (group == previousGroup && (group != 0 || java.util.Objects.equals(cpu.estimate().durationMs(), previous))
                     && currentRawIndex < previousRawIndex)
                 throw new IllegalStateException("equal CPU TTC group did not preserve AE2 order");
             previousGroup = group;
-            previous = group == 0 ? cpu.seconds() : null;
+            previous = group == 0 ? cpu.estimate().durationMs() : null;
             previousRawIndex = currentRawIndex;
         }
     }
@@ -997,8 +997,8 @@ final class CpuListTtcScenario {
         for (var card : snapshot.cpuCards()) {
             var cpu = state.cpus().stream().filter(value -> value.serial() == card.serial()).findFirst().orElse(null);
             if (cpu == null || !java.util.Objects.equals(cpu.jobId(), card.jobId()) || cpu.amount() != card.amount()) return false;
-            var expected = com.ctux.ae2craftingtime.core.TimeEstimate.formatTotal(java.util.List.of(
-                    cpu.seconds() == null ? java.util.OptionalLong.empty() : java.util.OptionalLong.of(cpu.seconds())))
+            var expected = com.ctux.ae2craftingtime.core.TimeEstimate.total(java.util.List.of(
+                    java.util.Optional.ofNullable(cpu.estimate())))
                     .map(value -> com.ctux.ae2craftingtime.mc1201.TtcText.ttc(value).getString()).orElse(null);
             if (!java.util.Objects.equals(expected, card.ttc() == null ? null : card.ttc().rendered())) return false;
         }
@@ -1035,7 +1035,7 @@ final class CpuListTtcScenario {
         return !connectedDedicated && state != null
                 && state.cpus().stream().anyMatch(CpuListTtcControl.CpuState::busy)
                 && state.cpus().stream().filter(CpuListTtcControl.CpuState::busy)
-                        .noneMatch(cpu -> cpu.seconds() != null);
+                        .noneMatch(cpu -> cpu.estimate() != null);
     }
 
     static Stage afterRelaunchFreshObservation(UiSnapshot snapshot, CpuListTtcControl.ServerState state) {

@@ -48,7 +48,7 @@ public record StatsRequestC2S(List<String> keys, RowStatsRequestId requestId) im
             if (response != null) {
                 StatsNetwork.sendTo(player,
                         new StatsSnapshotS2C(packet.keys, response.entries(), response.networkAmounts(),
-                                response.waitingTicks(), response.blockReasons(), response.chanceOutputs(), response.totalTtcSeconds(),
+                                response.waitingTicks(), response.blockReasons(), response.chanceOutputs(), response.totalTtcEstimate(),
                                 response.cpuContext(), packet.requestId));
             }
         });

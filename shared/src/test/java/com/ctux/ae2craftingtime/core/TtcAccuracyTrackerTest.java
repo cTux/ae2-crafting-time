@@ -7,6 +7,25 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import org.junit.jupiter.api.Test;
 
 class TtcAccuracyTrackerTest {
+    @org.junit.jupiter.api.Test
+    void recordsFractionalPredictionsWithoutRoundingOrChangingRatios() {
+        var tracker = new TtcAccuracyTracker(2);
+        var key = new ProfileKey("test:subsecond");
+        var scope = new Object();
+        for (double invalid : new double[] {Double.NaN, Double.POSITIVE_INFINITY}) {
+            tracker.start(key, scope, invalid, 1, 1, 0, 1);
+            org.junit.jupiter.api.Assertions.assertFalse(tracker.finish(scope, true, 2, 100_000_001));
+        }
+        for (double invalid : new double[] {Double.NaN, 0, -1})
+            org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class,
+                    () -> new TtcAccuracyStats(1, 1, 1, 0, 0, 1, invalid, 1, 1, 1, 1));
+        tracker.start(key, scope, 0.05, 1, 1, 0, 1);
+        org.junit.jupiter.api.Assertions.assertTrue(tracker.finish(scope, true, 2, 100_000_001));
+        var stats = tracker.stats(key).orElseThrow();
+        org.junit.jupiter.api.Assertions.assertEquals(0.05, stats.lastPredictedSeconds());
+        org.junit.jupiter.api.Assertions.assertEquals(2, stats.meanActualToPredictedRatio());
+        org.junit.jupiter.api.Assertions.assertEquals(0.05, stats.meanSignedErrorSeconds());
+    }
     @Test
     void reconfiguringSampleLimitTrimsOldestWithoutDroppingLatest() {
         var tracker = new TtcAccuracyTracker(3);

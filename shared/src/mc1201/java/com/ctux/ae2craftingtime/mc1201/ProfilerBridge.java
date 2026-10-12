@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import appeng.api.crafting.IPatternDetails;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingPlan;
@@ -258,8 +259,8 @@ public final class ProfilerBridge {
             waitingKeys.add(key);
             remainingAmounts.put(key, normalizeAmount(crafted.getKey(), crafted.getLongValue()));
             var stats = PROFILER.stats(key);
-            var estimate = stats.isEmpty() ? java.util.OptionalLong.empty()
-                    : TimeEstimate.seconds(normalizeAmount(crafted.getKey(), crafted.getLongValue()), stats.get());
+            var estimate = stats.isEmpty() ? java.util.Optional.<TtcEstimate>empty()
+                    : TimeEstimate.milliseconds(normalizeAmount(crafted.getKey(), crafted.getLongValue()), stats.get());
             if (estimate.isPresent()) {
                 knownRows++;
             }
@@ -285,13 +286,14 @@ public final class ProfilerBridge {
             ProviderLocateRecords.noteStart(key(networkId, crafted.getKey()), owner, "", null,
                     displayNameOf(crafted.getKey()), crafted.getKey());
         }
-        var predictedSeconds = jobEstimate.remainingSeconds((key, amount) -> estimateSeconds(key, amount)).orElse(0);
+        var predictedSeconds = jobEstimate.remainingEstimate(ProfilerBridge::estimateMilliseconds)
+                .map(value -> value.durationMs() / 1000.0).orElse(0.0);
         if (ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.ACCURACY_RECORDING))
             ACCURACY.start(key(networkId, plan.finalOutput().what()), scope, predictedSeconds, knownRows, totalRows, tick,
                     nanoTime);
     }
 
-    private static Map<ProfileKey, Set<ProfileKey>> dependencies(String networkId, ICraftingPlan plan,
+    private static CraftingJobEstimate.DependencyGraph dependencies(String networkId, ICraftingPlan plan,
             KeyCounter craftedAmounts) {
         var crafted = new HashSet<ProfileKey>();
         for (var stack : craftedAmounts) {
@@ -319,18 +321,25 @@ public final class ProfilerBridge {
         return CraftingJobEstimate.dependencies(crafted, patterns);
     }
 
-    private static OptionalLong estimateSeconds(ProfileKey key, long amount) {
+    private static Optional<TtcEstimate> estimateMilliseconds(ProfileKey key, long amount) {
         if (amount <= 0) {
-            return OptionalLong.empty();
+            return Optional.empty();
         }
         var stats = PROFILER.stats(key);
-        return stats.isEmpty() ? OptionalLong.empty() : TimeEstimate.seconds(amount, stats.get());
+        return stats.isEmpty() ? Optional.empty() : TimeEstimate.milliseconds(amount, stats.get());
     }
 
-    public static OptionalLong remainingJobSeconds(Object scope) {
+    public static Optional<TtcEstimate> remainingJobEstimate(Object scope, IGrid grid, long tick) {
+        var blocked = new HashSet<>(blockReasons(scope, grid, tick).keySet());
+        blocked.addAll(liveDelayedKeys(scope, tick));
         return scope == null || !isEnabled() || !ServerOptionsRuntime.scopeEnabled(scope)
-                ? OptionalLong.empty()
-                : PROFILER.remainingJobSeconds(scope, ProfilerBridge::estimateSeconds);
+                ? Optional.empty() : PROFILER.remainingJobEstimate(scope, ProfilerBridge::estimateMilliseconds, blocked);
+    }
+
+    public static Optional<TtcEstimate> remainingJobEstimate(Object scope) {
+        return scope == null || !isEnabled() || !ServerOptionsRuntime.scopeEnabled(scope)
+                ? Optional.empty()
+                : PROFILER.remainingJobEstimate(scope, ProfilerBridge::estimateMilliseconds);
     }
 
     public static boolean isSuspended(Object scope) { return PROFILER.isSuspended(scope); }

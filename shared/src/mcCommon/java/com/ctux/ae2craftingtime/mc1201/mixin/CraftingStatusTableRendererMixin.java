@@ -170,9 +170,10 @@ public abstract class CraftingStatusTableRendererMixin {
             lines.add(TtcText.blockReason(reason));
             return;
         }
-        if (entry.getActiveAmount() == 0 && entry.getPendingAmount() > 0) {
-            var waiting = ClientStats.CACHE.waitingTicks(key);
-            if (waiting.isPresent() && ClientOptionsRuntime.enabled(OptionFeature.WAITING_STATUS)) {
+        var waiting = entry.getActiveAmount() == 0 && entry.getPendingAmount() > 0
+                && ClientStats.CACHE.waitingTicks(key).isPresent();
+        if (waiting) {
+            if (ClientOptionsRuntime.enabled(OptionFeature.WAITING_STATUS)) {
                 lines.add(RowTextColor.neutral(TtcText.waiting(), ClientOptionsRuntime.current()));
                 return;
             }
@@ -188,8 +189,9 @@ public abstract class CraftingStatusTableRendererMixin {
                 lines.add(delayedTtcLine());
                 return;
             }
-            TimeEstimate.format(AeKeyAmounts.normalize(entry.getWhat(), amount), stats)
-                    .ifPresentOrElse(eta -> lines.add(ttcLine(key, eta)),
+            TimeEstimate.milliseconds(AeKeyAmounts.normalize(entry.getWhat(), amount), stats)
+                    .ifPresentOrElse(eta -> lines.add(ttcLine(key, eta, CraftingRowState.canShowInstant(
+                                    reason != null, waiting, stall.isPresent(), ClientStats.chanceOutput(key).isPresent()))),
                             () -> { if (ClientOptionsRuntime.enabled(OptionFeature.COLLECTING_STATUS))
                                 lines.add(RowTextColor.neutral(TtcText.ttcCollectingData(),
                                         ClientOptionsRuntime.current())); });
@@ -242,7 +244,8 @@ public abstract class CraftingStatusTableRendererMixin {
                 ClientStats.blockReason(ProfilerBridge.key(entry.getWhat())));
     }
 
-    private static Component ttcLine(com.ctux.ae2craftingtime.core.ProfileKey key, String eta) {
-        return RowTextColor.estimate(eta, TtcColorContext.get(key), ClientOptionsRuntime.current());
+    private static Component ttcLine(com.ctux.ae2craftingtime.core.ProfileKey key, com.ctux.ae2craftingtime.core.TtcEstimate eta,
+            boolean allowInstant) {
+        return RowTextColor.estimate(eta, TtcColorContext.get(key), ClientOptionsRuntime.current(), allowInstant);
     }
 }

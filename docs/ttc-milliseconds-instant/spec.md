@@ -1,18 +1,33 @@
 # Millisecond TTC and Instant status
 
-Status: draft
+Status: in-progress
 
-Scope: New display requirements; implementation is on hold (`backlog`).
+Scope: New display requirements; implementation authorized by the user.
 
 Issue: [#692](https://github.com/cTux/ae2-crafting-time/issues/692)
 
 Planning: [Technical design](technical-design.md) and [implementation plan](implementation-plan.md).
 
-The user confirmed that low confidence takes precedence over Instant. This
-draft records the requirements; the remaining presentation decisions below
-must be settled before implementation is marked ready.
+Implementation: [PR #694](https://github.com/cTux/ae2-crafting-time/pull/694).
+
+Verification: [Implementation checks, native evidence and timings](verification.md).
+
+Merge is authorized. Remaining qualification: full NeoForge 1.21.1 addon evidence
+is blocked by the known NeoEco renderer crash (#627); GUI scale 1 readability
+is tracked in #695. The delivery status stays in-progress until the broader
+MS-8 gate is satisfied. These limits remain explicit in the verification report.
+
+The user confirmed that low confidence takes precedence over Instant and
+approved the defaults below. Implementation and review are complete; the PR is open.
 
 ## Display rules
+
+Follow-up requirement: player-visible throughput must not use `/t` (or `/т`).
+Where sample or average/latest times already show ms, omit the per-tick rate
+and retain the per-second rate. Rate-only displays use amounts/ms and amounts/s;
+convert the stored per-tick rate by dividing by 50. Keep profiling and packet
+fields in their existing units. Tests cover valid, absent and invalid samples,
+both locales, resource units, compact/regular hovers and full chat precision.
 
 1. Display numeric durations below one second in milliseconds, with the `ms`
    suffix. The requested minimum is exactly `5ms`, not `~5ms` or `0ms`.
@@ -23,7 +38,7 @@ must be settled before implementation is marked ready.
 4. Keep the existing confidence decision. A low-confidence estimate at or below
    5ms displays `5ms?`, never Instant.
 5. A confident TTC estimate of 5ms or less displays a new custom green status,
-   `🥇Instant`. The medal is the plain 🥇 emoji (U+1F947), rendered through
+   `🥇 Instant`. The medal is the plain 🥇 emoji (U+1F947), rendered through
    the existing text/symbol path. No custom artwork or special rendering is needed.
    Evaluate eligibility before display rounding; a value above 5ms must not
    become Instant just because its displayed value rounds down.
@@ -43,6 +58,8 @@ Any unreliable or unknown remaining row, ambiguous dependency choice, or incompl
 an available aggregate low confidence. This includes rows outside the longest
 path. Preserve existing partial numeric estimates, but append `?` and never show
 Instant for them. With no usable estimate, preserve the unknown state.
+Remaining waiting, blocked or delayed rows also exclude Instant in CPU and
+Status totals, preserving the higher-priority row state and numeric duration.
 
 Chat recipients apply their own Instant and Show emoji settings to the same
 semantic estimate. One recipient's settings must not affect another's display.
@@ -61,7 +78,7 @@ Update English and Ukrainian text, GuideME, and the GitHub wiki when implemented
 | MS-1 | A 50ms or 500ms estimate uses ms rather than rounded whole seconds; 1s retains the existing seconds presentation. |
 | MS-2 | A sample of 1 tick shows 50ms; 10 ticks shows 500ms; 20 ticks shows 1000ms in a formerly tick-labelled field. |
 | MS-3 | Positive sample durations below 5ms display 5ms without changing stored values or calculated throughput. |
-| MS-4 | Confident TTC values of 1ms and 5ms show green 🥇Instant; 6ms does not. |
+| MS-4 | Confident TTC values of 1ms and 5ms show green 🥇 Instant; 6ms does not. |
 | MS-5 | Low-confidence TTC values of 1ms and 5ms show 5ms?; a 50ms low-confidence estimate preserves its question mark. |
 | MS-6 | No-data and higher-priority statuses never turn into Instant. Sorting and totals use underlying durations, not labels or clamped row values. |
 | MS-7 | Instant Off restores numeric TTC; Show emoji Off hides only the medal. Both locales and both guides explain these controls. |
@@ -69,23 +86,24 @@ Update English and Ukrainian text, GuideME, and the GitHub wiki when implemented
 | MS-9 | A total or CPU estimate containing an unreliable or unknown remaining row never shows Instant, even when its known duration is at most 5ms. Fully covered reliable totals can show Instant. |
 | MS-10 | Two chat recipients with opposite Instant settings see Instant and numeric time respectively; changing settings refreshes from the original semantic message without losing confidence. |
 | MS-11 | Total/CPU payload round trips preserve milliseconds and confidence; incompatible payload versions cannot interpret milliseconds as seconds. |
+| MS-12 | Visible throughput has no per-tick rate. Hover and chat omit that rate beside ms sample times; rate-only fallback uses correctly converted amounts/ms and amounts/s. Both locales and resource units agree. |
 
-## Decisions still needed before implementation
+## Approved display defaults
 
-- Choose rounding for fractional ms and the 999.xms boundary, while preserving
-  the strict 5ms Instant threshold and the minimum display.
-- Select the Instant option's default, configuration label, and configuration
-  group (`Displays`, `Warnings`, or `Appearance`).
+- Round numeric milliseconds up to a whole ms; 999.1ms displays 1000ms.
+  Determine the ms/seconds format from the unrounded value. Preserve the strict
+  5ms Instant threshold and minimum display.
+- Add `Instant status` to Displays, enabled by default.
 
 ## Compatibility and non-goals
 
 Cover Forge/Fabric 1.20.1, NeoForge 1.21.1, and NeoForge 26.1.2. Do not change
 profiling cadence, confidence thresholds, sample retention, job scheduling,
-network visibility, or rate/count formatting. This is not a claim of 5ms server
+network visibility, or count formatting. This is not a claim of 5ms server
 tick resolution or guaranteed instantaneous crafting.
 
-The future implementation supersedes tick-unit presentation examples in
+The implementation supersedes tick-unit presentation examples in
 [profiling and diagnostics](../profiling-and-diagnostics/spec.md), the tick-text
 preservation boundary in [compact hover numbers](../player-controls-and-integrations/compact-hover-numbers/spec.md),
-and extends the [symbol palette](../ttc-symbols/spec.md). Those documents still
-describe the existing baseline until this feature is implemented.
+and extends the [symbol palette](../ttc-symbols/spec.md). Those documents and both
+player guides have been updated; the feature remains unreleased until publication.

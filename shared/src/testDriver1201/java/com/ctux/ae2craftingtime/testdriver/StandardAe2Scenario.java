@@ -2078,7 +2078,7 @@ final class StandardAe2Scenario {
                                 fixture.suspensionCpu(player, 0).getGrid()),
                         appeng.api.stacks.AEItemKey.of(net.minecraft.world.item.Items.IRON_INGOT));
                 if (com.ctux.ae2craftingtime.mc1201.ProfilerBridge.isStillDelayed(key)
-                        || com.ctux.ae2craftingtime.mc1201.ProfilerBridge.remainingJobSeconds(
+                        || com.ctux.ae2craftingtime.mc1201.ProfilerBridge.remainingJobEstimate(
                                 fixture.suspensionCpu(player, 0)).isPresent())
                     throw new IllegalStateException("Paused job retained a delayed warning or total estimate");
                 return !small.busy() && large.busy() && large.jobId().equals(suspensionLargeId);

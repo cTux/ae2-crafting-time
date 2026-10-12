@@ -11,7 +11,7 @@ public final class TtcAccuracyPacketCodec {
         buffer.writeDouble(stats.meanSignedErrorSeconds());
         buffer.writeDouble(stats.meanAbsolutePercentageError());
         buffer.writeDouble(stats.meanActualToPredictedRatio());
-        buffer.writeVarLong(stats.lastPredictedSeconds());
+        buffer.writeDouble(stats.lastPredictedSeconds());
         buffer.writeDouble(stats.lastActualWallSeconds());
         buffer.writeDouble(stats.lastActualTickSeconds());
         buffer.writeVarInt(stats.lastKnownRows());
@@ -20,7 +20,7 @@ public final class TtcAccuracyPacketCodec {
 
     public static TtcAccuracyStats read(FriendlyByteBuf buffer) {
         return new TtcAccuracyStats(buffer.readVarInt(), buffer.readVarInt(), buffer.readDouble(), buffer.readDouble(),
-                buffer.readDouble(), buffer.readDouble(), buffer.readVarLong(), buffer.readDouble(), buffer.readDouble(),
+                buffer.readDouble(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble(),
                 buffer.readVarInt(), buffer.readVarInt());
     }
 

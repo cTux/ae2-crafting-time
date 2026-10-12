@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import appeng.api.stacks.AEKey;
 import appeng.client.gui.widgets.Scrollbar;
 import com.ctux.ae2craftingtime.core.RequesterTtcLayout;
@@ -32,7 +33,7 @@ import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
-import java.util.OptionalLong;
+import java.util.Optional;
 
 @Pseudo
 @Mixin(targets = "com.almostreliable.merequester.client.abstraction.AbstractRequesterScreen", remap = false)
@@ -88,13 +89,14 @@ public abstract class MERequesterScreenMixin {
             return;
         }
 
-        var knownSeconds = estimates.stream().flatMapToLong(estimate -> estimate.seconds().stream()).toArray();
+        var knownSeconds = estimates.stream().flatMap(estimate -> estimate.seconds().stream())
+                .mapToDouble(TtcEstimate::durationMs).toArray();
         var minSeconds = knownSeconds.length == 0 ? 0 : java.util.Arrays.stream(knownSeconds).min().orElseThrow();
         var maxSeconds = knownSeconds.length == 0 ? 0 : java.util.Arrays.stream(knownSeconds).max().orElseThrow();
         for (var row = 0; row < estimates.size(); row++) {
             var estimate = estimates.get(row);
             var color = estimate.seconds().isPresent()
-                    ? ClientOptionsRuntime.ttcColor(estimate.seconds().getAsLong(), minSeconds, maxSeconds)
+                    ? ClientOptionsRuntime.ttcColor(estimate.seconds().get().durationMs(), minSeconds, maxSeconds)
                     : ClientOptionsRuntime.current().color(ClientConfig.Color.COLLECTING);
             var rowIndex = row;
             estimate.label().ifPresent(label -> {
@@ -103,7 +105,8 @@ public abstract class MERequesterScreenMixin {
             });
         }
 
-        TimeEstimate.formatTotal(estimates.stream().map(MERequesterEstimate::seconds).toList())
+        TimeEstimate.total(estimates.stream().filter(estimate -> estimate.label().isPresent())
+                .map(MERequesterEstimate::seconds).toList())
                 .ifPresent(eta -> {
                     ae2craftingtime$drawBadge(guiGraphics, 160, 6, TtcText.totalTtc(eta),
                             ClientOptionsRuntime.current().color(ClientConfig.Color.TOTAL),
@@ -152,17 +155,17 @@ public abstract class MERequesterScreenMixin {
         var profileKey = ProfilerBridge.key(key.get());
         ClientStatsRequests.request(profileKey);
         var networkAmount = ClientStats.networkAmount(profileKey);
-        if (networkAmount.isEmpty() || amount <= networkAmount.getAsLong()) {
+        if (!TimeEstimate.hasPendingAmount(amount, networkAmount)) {
             return MERequesterEstimate.empty();
         }
         var stats = ClientStats.CACHE.get(profileKey);
-        if (stats.isEmpty()) {
-            return new MERequesterEstimate(Optional.of(TtcText.noStats()), OptionalLong.empty());
+        if (stats.isEmpty() || networkAmount.isEmpty()) {
+            return new MERequesterEstimate(Optional.of(TtcText.noStats()), Optional.empty());
         }
 
         var normalized = AeKeyAmounts.normalize(key.get(), amount - networkAmount.getAsLong());
-        var seconds = TimeEstimate.seconds(normalized, stats.get());
-        var label = TimeEstimate.format(normalized, stats.get()).map(eta -> (Component) TtcText.ttc(eta));
+        var seconds = TimeEstimate.milliseconds(normalized, stats.get());
+        var label = Optional.of(seconds.<Component>map(TtcText::ttc).orElseGet(TtcText::noStats));
         return new MERequesterEstimate(label, seconds);
     }
 
@@ -178,9 +181,9 @@ public abstract class MERequesterScreenMixin {
     }
 
     @Unique
-    private record MERequesterEstimate(Optional<Component> label, OptionalLong seconds) {
+    private record MERequesterEstimate(Optional<Component> label, Optional<TtcEstimate> seconds) {
         private static MERequesterEstimate empty() {
-            return new MERequesterEstimate(Optional.empty(), OptionalLong.empty());
+            return new MERequesterEstimate(Optional.empty(), Optional.empty());
         }
     }
 }

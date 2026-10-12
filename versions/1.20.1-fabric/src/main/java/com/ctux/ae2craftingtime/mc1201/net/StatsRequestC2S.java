@@ -27,7 +27,7 @@ public record StatsRequestC2S(List<String> keys, RowStatsRequestId requestId) {
         var response = StatsRequestHandler.collect(player, keys, requestId);
         if (response != null) {
             StatsNetwork.sendTo(player, new StatsSnapshotS2C(keys, response.entries(), response.networkAmounts(),
-                    response.waitingTicks(), response.blockReasons(), response.chanceOutputs(), response.totalTtcSeconds(),
+                    response.waitingTicks(), response.blockReasons(), response.chanceOutputs(), response.totalTtcEstimate(),
                     response.cpuContext(), requestId));
         }
     }

@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import appeng.client.gui.me.crafting.AbstractTableRenderer;
 import appeng.client.gui.me.crafting.CraftConfirmTableRenderer;
 import appeng.client.gui.me.crafting.CraftingStatusTableRenderer;
@@ -30,7 +31,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
+import java.util.Optional;
 
 @Mixin(AbstractTableRenderer.class)
 public abstract class AbstractTableRendererMixin {
@@ -102,9 +103,9 @@ public abstract class AbstractTableRendererMixin {
     }
 
     private static Map<ProfileKey, Integer> colors(List<?> entries) {
-        var secondsByKey = new HashMap<ProfileKey, Long>();
-        var min = Long.MAX_VALUE;
-        var max = Long.MIN_VALUE;
+        var secondsByKey = new HashMap<ProfileKey, Double>();
+        var min = Double.POSITIVE_INFINITY;
+        var max = Double.NEGATIVE_INFINITY;
 
         for (var entry : entries) {
             var seconds = seconds(entry);
@@ -113,7 +114,7 @@ public abstract class AbstractTableRendererMixin {
             }
 
             var key = key(entry);
-            var value = seconds.getAsLong();
+            var value = seconds.get().durationMs();
             secondsByKey.put(key, value);
             min = Math.min(min, value);
             max = Math.max(max, value);
@@ -126,45 +127,45 @@ public abstract class AbstractTableRendererMixin {
         return colors;
     }
 
-    private static OptionalLong seconds(Object entry) {
+    private static Optional<TtcEstimate> seconds(Object entry) {
         if (entry instanceof CraftingPlanSummaryEntry planEntry) {
             if (planEntry.getCraftAmount() <= 0) {
-                return OptionalLong.empty();
+                return Optional.empty();
             }
 
             var key = ProfilerBridge.key(planEntry.getWhat());
             var stats = ClientStats.CACHE.get(key);
             if (stats.isEmpty()) {
-                return OptionalLong.empty();
+                return Optional.empty();
             }
 
-            return TimeEstimate.seconds(AeKeyAmounts.normalize(planEntry.getWhat(), planEntry.getCraftAmount()),
+            return TimeEstimate.milliseconds(AeKeyAmounts.normalize(planEntry.getWhat(), planEntry.getCraftAmount()),
                     stats.get());
         }
 
         if (!(entry instanceof CraftingStatusEntry statusEntry)) {
-            return OptionalLong.empty();
+            return Optional.empty();
         }
 
         var amount = statusEntry.getActiveAmount() + statusEntry.getPendingAmount();
         if (amount <= 0) {
-            return OptionalLong.empty();
+            return Optional.empty();
         }
 
         var key = ProfilerBridge.key(statusEntry.getWhat());
         if (CraftingRowState.blockReason(statusEntry.getPendingAmount(), ClientStats.blockReason(key)) != null) {
-            return OptionalLong.empty();
+            return Optional.empty();
         }
         if (statusEntry.getActiveAmount() == 0 && statusEntry.getPendingAmount() > 0
                 && ClientStats.CACHE.waitingTicks(key).isPresent()) {
-            return OptionalLong.empty();
+            return Optional.empty();
         }
         var stats = ClientStats.CACHE.get(key);
         if (stats.isEmpty()) {
-            return OptionalLong.empty();
+            return Optional.empty();
         }
 
-        return TimeEstimate.seconds(AeKeyAmounts.normalize(statusEntry.getWhat(), amount),
+        return TimeEstimate.milliseconds(AeKeyAmounts.normalize(statusEntry.getWhat(), amount),
                 stats.get());
     }
 

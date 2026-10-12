@@ -30,7 +30,7 @@ public final class StatsNetwork {
                 && ((CraftingSuspensionMenuState) menu).ae2craftingtime$suspensionSnapshot() != null
                 && ((CraftingSuspensionMenuState) menu).ae2craftingtime$suspensionSnapshot().suspended();
     }
-    private static final String PROTOCOL = "28";
+    private static final String PROTOCOL = "29";
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation(Ae2CraftingTime.MOD_ID, "main"),
             () -> PROTOCOL,

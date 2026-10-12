@@ -1,5 +1,7 @@
 package com.ctux.ae2craftingtime.mc1201;
 
+import java.util.Optional;
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import com.ctux.ae2craftingtime.core.ClientStatsCache;
 import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import com.ctux.ae2craftingtime.core.ProfileKey;
@@ -57,18 +59,18 @@ public final class ClientStats {
                 values.entrySet().stream().collect(Collectors.toMap(entry -> new ProfileKey(entry.getKey()), Map.Entry::getValue)), cpuContext);
     }
 
-    public static OptionalLong totalTtcSeconds() {
+    public static Optional<TtcEstimate> totalTtcEstimate() {
         if (Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> screen
                 && screen.getMenu() instanceof CraftingStatusMenu status && CpuTtcRequests.enabled()) {
-            return CpuTtcClient.seconds(status.getSelectedCpuSerial());
+            return CpuTtcClient.estimate(status.getSelectedCpuSerial());
         }
         var context = Minecraft.getInstance().screen instanceof AbstractContainerScreen<?> screen
                 ? StatsRequestContext.cpuContext(screen.getMenu()) : -1;
-        return CACHE.totalTtcSeconds(context);
+        return CACHE.totalTtcEstimate(context);
     }
 
-    public static void replaceTotalTtcSeconds(OptionalLong value, long cpuContext) {
-        CACHE.replaceTotalTtcSeconds(value, cpuContext);
+    public static void replaceTotalTtcEstimate(Optional<TtcEstimate> value, long cpuContext) {
+        CACHE.replaceTotalTtcEstimate(value, cpuContext);
     }
 
     public static void clear() {

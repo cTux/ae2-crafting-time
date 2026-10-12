@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.me.crafting.CraftingCPUScreen;
 import appeng.client.gui.me.crafting.CraftingStatusScreen;
@@ -43,7 +44,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.OptionalLong;
+import java.util.Optional;
 
 @Mixin(CraftingCPUScreen.class)
 public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends AEBaseScreen<T>
@@ -128,7 +129,7 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
             return entries;
         }
 
-        var sorted = TtcSort.copySorted(entries, CraftingCPUScreenMixin::ae2craftingtime$seconds,
+        var sorted = TtcSort.copySorted(entries, CraftingCPUScreenMixin::ae2craftingtime$estimate,
                 Comparator.naturalOrder(), ae2craftingtime$ttcSortMode == 2);
         IntegrationLog.observe("ae2craftingtime", "status-sort");
         return sorted;
@@ -161,13 +162,14 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
         }
 
         Component display = getGuiDisplayName(GuiText.CraftingStatus.text());
-        var eta = TimeEstimate.formatTotal(List.of(ClientStats.totalTtcSeconds()));
+        var cantStoreItems = menu.isCantStoreItems();
+        var eta = TimeEstimate.total(List.of(ClientStats.totalTtcEstimate()));
         if (eta.isPresent()) {
-            display = TtcComponents.rowSymbolsInTextColor(TtcText.totalTtc(eta.get())
+            display = TtcComponents.rowSymbolsInTextColor(TtcText.totalTtc(eta.get(), !cantStoreItems)
                     .withStyle(style -> style.withColor(0x404040)), 0x404040);
             IntegrationLog.observe("ae2craftingtime", "status-total");
         }
-        if (menu.isCantStoreItems()) {
+        if (cantStoreItems) {
             display = display.copy().append(" - ")
                     .append(GuiText.CantStoreItems.text().withStyle(ChatFormatting.RED));
         }
@@ -278,26 +280,26 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
     }
 
     @Unique
-    private static OptionalLong ae2craftingtime$seconds(CraftingStatusEntry entry) {
+    private static Optional<TtcEstimate> ae2craftingtime$estimate(CraftingStatusEntry entry) {
         var amount = entry.getActiveAmount() + entry.getPendingAmount();
         if (amount <= 0) {
-            return OptionalLong.empty();
+            return Optional.empty();
         }
 
         var key = ProfilerBridge.key(entry.getWhat());
         ClientStatsRequests.requestBackground(key);
         if (CraftingRowState.blockReason(entry.getPendingAmount(), ClientStats.blockReason(key)) != null) {
-            return OptionalLong.empty();
+            return Optional.empty();
         }
         if (entry.getActiveAmount() == 0 && entry.getPendingAmount() > 0
                 && ClientStats.CACHE.waitingTicks(key).isPresent()) {
-            return OptionalLong.empty();
+            return Optional.empty();
         }
         var stats = ClientStats.CACHE.get(key);
         if (stats.isEmpty()) {
-            return OptionalLong.empty();
+            return Optional.empty();
         }
 
-        return TimeEstimate.seconds(AeKeyAmounts.normalize(entry.getWhat(), amount), stats.get());
+        return TimeEstimate.milliseconds(AeKeyAmounts.normalize(entry.getWhat(), amount), stats.get());
     }
 }

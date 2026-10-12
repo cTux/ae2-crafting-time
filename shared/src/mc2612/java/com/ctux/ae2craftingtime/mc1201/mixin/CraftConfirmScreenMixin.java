@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.client.gui.me.crafting.CraftConfirmTableRenderer;
@@ -41,7 +42,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.OptionalLong;
+import java.util.Optional;
 
 @Mixin(CraftConfirmScreen.class)
 public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmMenu> implements StatsClickHandler {
@@ -101,7 +102,7 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
             remap = false)
     private List<CraftingPlanSummaryEntry> ae2craftingtime$sortPlanByTtc(List<CraftingPlanSummaryEntry> entries) {
         var sorted = TtcSort.copyPrioritizedSorted(entries, entry -> entry.getMissingAmount() > 0,
-                CraftConfirmScreenMixin::ae2craftingtime$seconds, Comparator.naturalOrder(),
+                CraftConfirmScreenMixin::ae2craftingtime$estimate, Comparator.naturalOrder(),
                 ClientOptionsRuntime.enabled(OptionFeature.PLAN_SORT_CONTROL) && ae2craftingtime$ttcSortMode != 0,
                 ae2craftingtime$ttcSortMode == 2);
         IntegrationLog.observe("ae2craftingtime", "plan-sort");
@@ -117,12 +118,13 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
             return;
         }
 
-        var estimates = new ArrayList<OptionalLong>();
+        var estimates = new ArrayList<Optional<TtcEstimate>>();
         for (var entry : plan.getEntries()) {
-            estimates.add(ae2craftingtime$seconds(entry));
+            if (entry.getCraftAmount() > 0) estimates.add(ae2craftingtime$estimate(entry));
         }
 
-        TimeEstimate.formatTotal(estimates).ifPresent(eta -> {
+        var complete = plan.getEntries().stream().noneMatch(entry -> entry.getMissingAmount() > 0);
+        TimeEstimate.total(estimates, complete).ifPresent(eta -> {
             var config = ClientOptionsRuntime.current();
             int color = RowTextColor.planTotalColor(config);
             var text = TtcComponents.rowSymbolsInTextColor(
@@ -215,18 +217,18 @@ public abstract class CraftConfirmScreenMixin extends AEBaseScreen<CraftConfirmM
     }
 
     @Unique
-    private static OptionalLong ae2craftingtime$seconds(CraftingPlanSummaryEntry entry) {
+    private static Optional<TtcEstimate> ae2craftingtime$estimate(CraftingPlanSummaryEntry entry) {
         if (entry.getCraftAmount() <= 0) {
-            return OptionalLong.empty();
+            return Optional.empty();
         }
 
         var key = ProfilerBridge.key(entry.getWhat());
         var stats = ClientStats.CACHE.get(key);
         if (stats.isEmpty()) {
             ClientStatsRequests.requestBackground(key);
-            return OptionalLong.empty();
+            return Optional.empty();
         }
 
-        return TimeEstimate.seconds(AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()), stats.get());
+        return TimeEstimate.milliseconds(AeKeyAmounts.normalize(entry.getWhat(), entry.getCraftAmount()), stats.get());
     }
 }

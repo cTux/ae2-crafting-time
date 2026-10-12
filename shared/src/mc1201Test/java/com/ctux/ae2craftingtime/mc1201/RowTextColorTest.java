@@ -15,6 +15,19 @@ import org.junit.jupiter.api.Test;
 
 class RowTextColorTest {
     @Test
+    void hiddenNonTimeStatusUsesNumericTimeWithoutInstantColor() {
+        var config = new ClientConfig();
+        config.features().setEnabled(OptionFeature.INSTANT_STATUS, true);
+        config.features().setEnabled(OptionFeature.SHOW_EMOJI, false);
+        config.features().setEnabled(OptionFeature.TTC_COLORS, false);
+        var time = new com.ctux.ae2craftingtime.core.TtcEstimate(5, true);
+        var numeric = RowTextColor.estimate(time, OptionalInt.empty(), config, false);
+        assertEquals("5ms", ((Component) ((TranslatableContents) numeric.getContents()).getArgs()[0]).getString());
+        assertEquals(null, numeric.getStyle().getColor());
+        assertEquals(0x55FF55, RowTextColor.estimate(time, OptionalInt.empty(), config, true)
+                .getStyle().getColor().getValue());
+    }
+    @Test
     void planAndStatusEstimatesAndAmountsFollowAllFourSwitchStates() {
         var config = new ClientConfig();
         config.setColor(ClientConfig.Color.TOTAL, 0x123456);
