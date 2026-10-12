@@ -406,9 +406,16 @@ public final class CraftProfiler {
 
     public Optional<TtcEstimate> remainingJobEstimate(Object scope,
             BiFunction<ProfileKey, Long, Optional<TtcEstimate>> estimate) {
+        return remainingJobEstimate(scope, estimate, Set.of());
+    }
+
+    public Optional<TtcEstimate> remainingJobEstimate(Object scope,
+            BiFunction<ProfileKey, Long, Optional<TtcEstimate>> estimate, Set<ProfileKey> blocked) {
         if (suspended.contains(scope)) return Optional.empty();
         var jobEstimate = jobEstimates.get(scope);
-        return jobEstimate == null ? Optional.empty() : jobEstimate.remainingEstimate(estimate);
+        return jobEstimate == null ? Optional.empty() : jobEstimate.remainingEstimate((key, amount) ->
+                estimate.apply(key, amount).map(value -> new TtcEstimate(value.durationMs(),
+                        value.reliable() && !blocked.contains(key) && waitingTicks(key, scope, 0).isEmpty())));
     }
 
     public Optional<UUID> jobOwner(Object scope) {        if (scope == null || !enabled) {

@@ -62,7 +62,7 @@ public final class StatsRequestHandler {
         }
         return new Response(entries, networkAmounts(context.grid(), keys,
                 RowStatsCollection.needsInventory(player.containerMenu.getClass().getName())), waitingTicks, blockReasons, chanceOutputs,
-                ProfilerBridge.remainingJobEstimate(context.craftingCpu()),
+                ProfilerBridge.remainingJobEstimate(context.craftingCpu(), context.grid(), gameTick),
                 StatsRequestContext.cpuContext(player.containerMenu));
     }
 

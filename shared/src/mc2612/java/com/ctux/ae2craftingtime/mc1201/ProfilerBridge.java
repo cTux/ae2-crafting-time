@@ -328,6 +328,13 @@ public final class ProfilerBridge {
         return stats.isEmpty() ? Optional.empty() : TimeEstimate.milliseconds(amount, stats.get());
     }
 
+    public static Optional<TtcEstimate> remainingJobEstimate(Object scope, IGrid grid, long tick) {
+        var blocked = new HashSet<>(blockReasons(scope, grid, tick).keySet());
+        blocked.addAll(liveDelayedKeys(scope, tick));
+        return scope == null || !isEnabled() || !ServerOptionsRuntime.scopeEnabled(scope)
+                ? Optional.empty() : PROFILER.remainingJobEstimate(scope, ProfilerBridge::estimateMilliseconds, blocked);
+    }
+
     public static Optional<TtcEstimate> remainingJobEstimate(Object scope) {
         return scope == null || !isEnabled() || !ServerOptionsRuntime.scopeEnabled(scope)
                 ? Optional.empty()

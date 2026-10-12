@@ -114,6 +114,28 @@ class CraftProfilerTest {
     }
 
     @Test
+    void blockedOrWaitingRemainingRowsCannotMakeInstantTotals() {
+        var profiler = new CraftProfiler(10);
+        var cpu = new Object();
+        var root = new ProfileKey("test:root");
+        var done = new ProfileKey("test:done");
+        profiler.setJobEstimate(cpu, new CraftingJobEstimate(root, Map.of(root, 1L, done, 0L), Map.of()));
+        java.util.function.BiFunction<ProfileKey, Long, Optional<TtcEstimate>> reliable =
+                (key, amount) -> Optional.of(new TtcEstimate(5, true));
+        assertTrue(profiler.remainingJobEstimate(cpu, reliable, Set.of(done)).orElseThrow().instant());
+        var blocked = profiler.remainingJobEstimate(cpu, reliable, Set.of(root)).orElseThrow();
+        assertEquals(5, blocked.durationMs());
+        assertFalse(blocked.instant());
+        assertFalse(profiler.remainingJobEstimate(cpu, (key, amount) -> Optional.of(new TtcEstimate(5, false)),
+                Set.of()).orElseThrow().reliable());
+        profiler.startWaiting(cpu, List.of(root), 1);
+        assertFalse(profiler.remainingJobEstimate(cpu, reliable).orElseThrow().instant());
+        profiler.start(root, cpu, 1, ProfileUnit.ITEM, 2);
+        assertTrue(profiler.remainingJobEstimate(cpu, reliable).orElseThrow().instant());
+        assertTrue(profiler.remainingJobEstimate(cpu, (key, amount) -> Optional.empty(), Set.of()).isEmpty());
+    }
+
+    @Test
     void jobEstimateFollowsAReplacementCpuScope() {
         var profiler = new CraftProfiler(10);
         var previousCpu = new Object();
