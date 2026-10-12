@@ -47,7 +47,7 @@ preserved. This validator recheck is not a new native run.
 The original issue requests representative GUI scales without naming scale 1.
 This scope preserves AE2's existing row font and requires readability at scales
 2 and Auto while retaining scale-1 exact-text and containment checks.
-requester chose to preserve AE2's row font and defer scale-1 readability,
+The requester chose to preserve AE2's row font and defer scale-1 readability,
 including any regression caused by horizontal fitting, to #689. Matched
 before/after readability is unresolved; it is outside this fix's approved
 completion gate, and no non-regression claim is made.
