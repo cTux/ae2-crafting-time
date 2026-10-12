@@ -2,6 +2,31 @@
 
 Lifecycle: see the [scope status and evidence](spec.md).
 
+## Readable Status restart captures (#674)
+
+Lifecycle and criteria: [spec](spec.md#readable-status-restart-captures-674).
+
+At `94cadd841838a896bcf431a2c951f8622ca8d968`, shared
+`StandardAe2Scenario.tick()` receives `moveMouse` but does not pass it to
+`statusRelaunchTick()`. That method captures widget-message-validated OFF/ON
+states without clearing hover. `DriverPlatform.click()` dispatches native screen
+clicks without moving the game cursor; widget messages cannot prove clear pixels.
+
+Pass the existing callback into the relaunch method. Once the compact toggle is
+found, use the blank upper-left margin at GUI `(0, 0)`; current `OptionsScreen`
+widgets start inside positive margins. Move through `CraftPlanScenario.moveMouse`,
+which converts GUI coordinates through `MouseHandlerAccessor`, and defer capture
+until a later rendered frame. Repeat after toggling because Options rebuilds its
+screen. Reuse the existing frame deadline/state; do not reset the deadline on
+every polling tick or capture in the same tick as the move.
+
+All four targets share this state machine. The 26.1.2 outer `CraftPlanScenario`
+already supplies the same callback through its native window adapter. Preserve
+pagination, missing-control polling, OFF/ON assertions, saving and continuation
+failures. Keep screenshots on the existing native framebuffer/sidecar path.
+Cursor recentering is a possible trigger, not an established cause; if hover
+persists, inspect the transition and rendered frames before changing the design.
+
 ## Plan readiness with optional backgrounds (#585)
 
 See the [criteria](spec.md#plan-readiness-with-optional-backgrounds-585).
