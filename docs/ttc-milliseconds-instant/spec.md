@@ -10,10 +10,14 @@ Planning: [Technical design](technical-design.md) and [implementation plan](impl
 
 Implementation: [PR #694](https://github.com/cTux/ae2-crafting-time/pull/694).
 
-Remaining gate: native UI verification, review, and an authorized merge.
+Verification: [Implementation checks, native evidence and timings](verification.md).
+
+Remaining gate: an authorized merge. Full NeoForge 1.21.1 addon qualification
+is blocked by the known NeoEco renderer crash (#627); GUI scale 1 readability
+is tracked separately in #695. These limits remain explicit in the verification report.
 
 The user confirmed that low confidence takes precedence over Instant and
-approved the defaults below. Implementation and verification are underway.
+approved the defaults below. Implementation and review are complete; the PR is open.
 
 ## Display rules
 
@@ -87,8 +91,8 @@ profiling cadence, confidence thresholds, sample retention, job scheduling,
 network visibility, or rate/count formatting. This is not a claim of 5ms server
 tick resolution or guaranteed instantaneous crafting.
 
-The future implementation supersedes tick-unit presentation examples in
+The implementation supersedes tick-unit presentation examples in
 [profiling and diagnostics](../profiling-and-diagnostics/spec.md), the tick-text
 preservation boundary in [compact hover numbers](../player-controls-and-integrations/compact-hover-numbers/spec.md),
-and extends the [symbol palette](../ttc-symbols/spec.md). Those documents still
-describe the existing baseline until this feature is implemented.
+and extends the [symbol palette](../ttc-symbols/spec.md). Those documents and both
+player guides have been updated; the feature remains unreleased until publication.
