@@ -1,5 +1,14 @@
 # AE2 Crafting Time Test Driver Spec
 
+## Millisecond TTC coverage (#692)
+
+The `compact-hover-numbers` leaf also captures reliable `🥇Instant`, unreliable
+`5ms?`, and numeric `5ms` with Instant disabled in native plan/status views.
+The reliable case seeds three identical server observations. Keep the existing
+throughput/chat assertions and restore Compact hover numbers, Instant status,
+and Show emoji after success, failure, or cancellation. Evidence remains under
+the leaf's existing plan, legacy, status, and chat captures.
+
 Status: finished
 
 Scope: Shipped driver baseline, excluding separately tracked extensions.

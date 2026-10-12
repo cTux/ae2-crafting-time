@@ -1,5 +1,15 @@
 # AE2 Crafting Time Test Driver Technical Design
 
+## Millisecond TTC coverage (#692)
+
+Extend `CompactHoverNumbersScenario` with a three-sample high-throughput case.
+Seed one observation per completed server tick and clear history only before
+the first. Validate sample count and rates before opening the native plan.
+For one-tick high-throughput cases, additionally check the stone row's numeric
+or Instant label; Instant must be green. Disable Instant for the existing legacy
+capture, restore it for Status, and restore all original switches on close.
+Both `StandardCraftFixture` implementations support retaining seed history.
+
 Lifecycle: see the [scope status and evidence](spec.md).
 
 ## Readable Status restart captures (#674)

@@ -8,6 +8,10 @@ Issue: [#692](https://github.com/cTux/ae2-crafting-time/issues/692)
 
 Planning: [Technical design](technical-design.md) and [implementation plan](implementation-plan.md).
 
+Implementation: [PR #694](https://github.com/cTux/ae2-crafting-time/pull/694).
+
+Remaining gate: native UI verification, review, and an authorized merge.
+
 The user confirmed that low confidence takes precedence over Instant and
 approved the defaults below. Implementation and verification are underway.
 

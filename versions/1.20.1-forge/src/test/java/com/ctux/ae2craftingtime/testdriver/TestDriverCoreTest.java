@@ -1565,7 +1565,8 @@ class TestDriverCoreTest {
 
     private static CpuListTtcControl.CpuState cpuState(int serial, String jobId, long amount,
             boolean busy, long progress) {
-        return new CpuListTtcControl.CpuState("0,0," + serial, serial, jobId, amount, busy, busy, new com.ctux.ae2craftingtime.core.TtcEstimate(busy ? 1L : null * 1000, true), 1, progress);
+        return new CpuListTtcControl.CpuState("0,0," + serial, serial, jobId, amount, busy, busy,
+                busy ? new com.ctux.ae2craftingtime.core.TtcEstimate(1000, true) : null, 1, progress);
     }
 
     private static CpuListTtcControl.ServerState serverState(CpuListTtcControl.CpuState... cpus) {

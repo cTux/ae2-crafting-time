@@ -317,11 +317,15 @@ final class StandardCraftFixture {
     }
 
     void seed(ServerPlayer player, long amount, long durationTicks) {
+        seed(player, amount, durationTicks, true);
+    }
+
+    void seed(ServerPlayer player, long amount, long durationTicks, boolean clear) {
         var grid = cpu(player).getMainNode().getGrid();
         if (cpu(player).getCluster().isBusy()) throw new IllegalStateException("Seed requires an idle fixture");
         var network = ProfilerBridge.networkId(grid);
         var key = AEItemKey.of(Items.STONE);
-        ProfilerBridge.clearStats(ProfilerBridge.key(network, key));
+        if (clear) ProfilerBridge.clearStats(ProfilerBridge.key(network, key));
         var tick = player.serverLevel().getGameTime();
         ProfilerBridge.start(network, this, key, amount, tick);
         ProfilerBridge.complete(network, this, key, amount, tick + durationTicks);

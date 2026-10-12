@@ -13,7 +13,8 @@ import java.util.UUID;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
+import java.util.Optional;
+import com.ctux.ae2craftingtime.core.TtcEstimate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -42,7 +43,7 @@ public final class CpuTtcRequestHandler {
 
     static <T> List<CpuTtcCache.Entry> resolveListed(List<Integer> requested, Map<T, Integer> serials,
             Collection<T> listed, Collection<T> gridCpus, Predicate<T> busy,
-            Function<T, OptionalLong> estimate) {
+            Function<T, Optional<TtcEstimate>> estimate) {
         var liveListed = gridCpus.stream().filter(listed::contains).toList();
         return CpuTtcResolver.resolve(requested, serials, liveListed, busy, estimate);
     }

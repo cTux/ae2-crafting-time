@@ -127,7 +127,7 @@ public final class CpuTtcCache {
             return Optional.empty();
         }
 
-        var generations = new LinkedHashMap<Integer, TtcEstimate>();
+        var generations = new LinkedHashMap<Integer, Long>();
         requested.forEach(serial -> generations.put(serial, views.get(serial).generation()));
         lastRequestAt = nowMillis;
         var request = new Request(container, session, ++sequence, List.copyOf(requested));
@@ -313,6 +313,6 @@ public final class CpuTtcCache {
     private record Value(TtcEstimate estimate, long generation, long receivedAt, long deadline) {
     }
 
-    private record Outstanding(long sequence, long sentAt, Map<Integer, TtcEstimate> generations) {
+    private record Outstanding(long sequence, long sentAt, Map<Integer, Long> generations) {
     }
 }

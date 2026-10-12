@@ -13,7 +13,7 @@ public final class CpuTtcResolver {
         return requested.stream().map(serial -> {
             var cpu = live.stream().filter(candidate -> serial.equals(serials.get(candidate))).findFirst();
             return new CpuTtcCache.Entry(serial,
-                    cpu.filter(busy).map(estimate).orElseGet(Optional<TtcEstimate>::empty));
+                    cpu.filter(busy).map(estimate).orElseGet(Optional::empty));
         }).toList();
     }
 

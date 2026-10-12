@@ -84,7 +84,8 @@ Keep server authority, packets, saved samples, calculations, TTC sorting, reset,
 provider locate and chat audience unchanged. Only the local display choice adds
 persisted state; missing keys get the new default.
 
-Do not shorten the sample list, change `<0.001 ticks`, compact times or accuracy
+Do not shorten the sample list, change the millisecond time formatting and `5ms`
+floor defined in [#692](../../ttc-milliseconds-instant/spec.md), compact times or accuracy
 percentages, reformat native AE2 amounts, add configurable precision, or change
 row layout. This does not fix arithmetic overflow in
 [#616](https://github.com/cTux/ae2-crafting-time/issues/616) or row containment in

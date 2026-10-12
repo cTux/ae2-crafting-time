@@ -23,8 +23,8 @@ public final class TtcComponents {
     }
 
     public static MutableComponent estimate(TtcEstimate value) {
-        return estimate(value, ClientOptionsRuntime.enabled(OptionFeature.INSTANT_STATUS),
-                ClientOptionsRuntime.enabled(OptionFeature.SHOW_EMOJI));
+        return estimate(value, ClientOptionsRuntime.current().features().enabled(OptionFeature.INSTANT_STATUS),
+                ClientOptionsRuntime.current().features().enabled(OptionFeature.SHOW_EMOJI));
     }
 
     public static MutableComponent estimate(TtcEstimate value, boolean instant, boolean emoji) {
@@ -53,7 +53,7 @@ public final class TtcComponents {
         if (source.getContents() instanceof TranslatableContents text) {
             var estimate = TtcChatEstimate.read(text.getKey(), text.getArgs());
             if (estimate.isPresent()) {
-                var display = estimate(estimate.get(), ClientOptionsRuntime.enabled(OptionFeature.INSTANT_STATUS), showEmoji);
+                var display = estimate(estimate.get(), ClientOptionsRuntime.current().features().enabled(OptionFeature.INSTANT_STATUS), showEmoji);
                 display.setStyle(display.getStyle().applyTo(style));
                 for (var sibling : source.getSiblings()) display.append(decorate(sibling, showEmoji));
                 return display;

@@ -215,7 +215,7 @@ public final class TtcText {
         var eta = TimeEstimate.milliseconds(amount, stats);
         lines.add(TtcComponents.text("text.ae2craftingtime.stats.ttc").withStyle(ChatFormatting.GRAY)
                 .append(Component.literal(": ").withStyle(ChatFormatting.AQUA))
-                .append(eta.<Component>map(value -> TtcComponents.estimate(value))
+                .append(eta.<Component>map(value -> TtcComponents.time(TimeEstimate.format(value)).withStyle(ChatFormatting.AQUA))
                         .orElseGet(() -> TtcComponents.text("text.ae2craftingtime.unknown")
                                 .withStyle(ChatFormatting.AQUA)))
                 .append(Component.literal(", ").withStyle(ChatFormatting.AQUA))

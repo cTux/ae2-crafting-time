@@ -29,11 +29,17 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
     static final List<String> CHECKS = List.of("seeded-server-rate", "plan-throughput", "status-throughput",
             "full-chat-rates", "legacy-hover", "fixture-restored");
     record RateCase(String name, long amount, long ticks, String tick, String second,
-            String compactTick, String compactSecond) {}
+            String compactTick, String compactSecond, int samples) {
+        RateCase(String name, long amount, long ticks, String tick, String second,
+                String compactTick, String compactSecond) {
+            this(name, amount, ticks, tick, second, compactTick, compactSecond, 1);
+        }
+    }
     static final List<RateCase> CASES = List.of(
             new RateCase("ordinary", 1, 20, "0.05", "1", "0.05", "1.00"),
             new RateCase("fractional", 1, 1000, "0.001", "0.02", "<0.01", "0.02"),
             new RateCase("thousand", 1000, 1, "1000", "20000", "~1k", "~20k"),
+            new RateCase("instant", 1000, 1, "1000", "20000", "~1k", "~20k", 3),
             new RateCase("petascale", 1_000_000_000_000_000L, 1, "1000000000000000", "20000000000000000", "~1P", "~20P"),
             new RateCase("exascale", 1_000_000_000_000_000_000L, 1, "1000000000000000000", "20000000000000000000", "~1E", "~20E"));
     private enum Stage { PREPARE, SEED, TERMINAL, AMOUNT, PLAN, PLAN_CHAT, LEGACY,
@@ -46,6 +52,8 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
             com.ctux.ae2craftingtime.core.PlayerMessageRateLimit.COOLDOWN_MILLIS);
     private final StableFrames<Object> frames = new StableFrames<>(8);
     private final boolean original = ClientOptionsRuntime.current().features().enabled(OptionFeature.COMPACT_HOVER_NUMBERS);
+    private final boolean originalInstant = ClientOptionsRuntime.current().features().enabled(OptionFeature.INSTANT_STATUS);
+    private final boolean originalEmoji = ClientOptionsRuntime.current().features().enabled(OptionFeature.SHOW_EMOJI);
     private boolean closed;
     private int index;
     private Stage stage = Stage.PREPARE;
@@ -54,6 +62,7 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
     private boolean clicked;
     private long lastFrame = -1;
     private long seededAt;
+    private int samplesSeeded;
 
     String checkpoint() { return "compact-hover=" + index + ":" + stage; }
 
@@ -67,6 +76,8 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
                 fixture.unprofiledPlan = true;
                 fixture.holdFinalOutput = true;
                 setCompact(true);
+                ClientOptionsRuntime.current().features().setEnabled(OptionFeature.INSTANT_STATUS, true);
+                ClientOptionsRuntime.current().features().setEnabled(OptionFeature.SHOW_EMOJI, true);
             }
             if (server(minecraft, player -> {
                 if (pristine == null) pristine = new SuiteFixture(((net.minecraft.server.level.ServerLevel) player.level()), player, marker);
@@ -76,8 +87,10 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
         }
         if (stage == Stage.SEED) {
             if (server(minecraft, player -> {
-                if (seededAt == 0) {
-                    fixture.seed(player, rate.amount(), rate.ticks());
+                if (samplesSeeded < rate.samples() && (seededAt == 0
+                        || ((net.minecraft.server.level.ServerLevel) player.level()).getGameTime() > seededAt)) {
+                    fixture.seed(player, rate.amount(), rate.ticks(), samplesSeeded == 0);
+                    samplesSeeded++;
                     seededAt = ((net.minecraft.server.level.ServerLevel) player.level()).getGameTime();
                     return false;
                 }
@@ -85,7 +98,7 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
                 var stats = ProfilerBridge.stats(ProfilerBridge.key(
                         ProfilerBridge.networkId(fixture.cpu(player).getMainNode().getGrid()), AEItemKey.of(Items.STONE)));
                 if (stats.isEmpty()) return false;
-                if (stats.get().sampleCount() != 1 || stats.get().amountPerTick() != Double.parseDouble(rate.tick())
+                if (stats.get().sampleCount() != rate.samples() || stats.get().amountPerTick() != Double.parseDouble(rate.tick())
                         || stats.get().amountPerSecond() != Double.parseDouble(rate.second()))
                     throw new IllegalStateException("Unexpected server seed: " + stats.get());
                 return true;
@@ -162,6 +175,7 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
                 }
                 fixture = null;
                 seededAt = 0;
+                samplesSeeded = 0;
                 next(Stage.PREPARE);
             }
             return false;
@@ -184,9 +198,23 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
             var tick = stage == Stage.LEGACY ? String.format(java.util.Locale.ROOT, "%.2f", Double.parseDouble(rate.tick())) : rate.compactTick();
             var second = stage == Stage.LEGACY ? String.format(java.util.Locale.ROOT, "%.2f", Double.parseDouble(rate.second())) : rate.compactSecond();
             if (!value.contains(tick + " items/t") || !value.contains(second + " items/s")) return false;
+            if (rate.ticks() == 1) {
+                var rendered = row.description().stream().map(UiSnapshot.ObservedText::rendered)
+                        .collect(java.util.stream.Collectors.joining(" "));
+                var expected = rate.samples() >= 3
+                        ? stage == Stage.LEGACY ? "5ms" : "🥇Instant" : "5ms?";
+                if (!rendered.contains(expected)) return false;
+                if (expected.equals("🥇Instant") && row.description().stream()
+                        .noneMatch(text -> text.rendered().contains(expected)
+                                && java.util.Objects.equals(text.color(), 0x55FF55))) return false;
+            }
             if (!frames.observe(value)) return false;
             screenshot.accept(image(rate, stage == Stage.LEGACY ? "legacy" : stage == Stage.PLAN ? "plan" : "status"));
-            if (stage == Stage.LEGACY) { setCompact(true); next(Stage.SUBMIT); }
+            if (stage == Stage.LEGACY) {
+                setCompact(true);
+                ClientOptionsRuntime.current().features().setEnabled(OptionFeature.INSTANT_STATUS, true);
+                next(Stage.SUBMIT);
+            }
             else next(stage == Stage.PLAN ? Stage.PLAN_CHAT : Stage.STATUS_CHAT);
             return false;
         }
@@ -197,7 +225,11 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
             if (!CraftingTreeScenario.fullChatRates(interaction.received(), "minecraft:stone", amount, rate.tick(), rate.second()))
                 throw new IllegalStateException("Received chat did not retain the selected amount and both full rates");
             interaction.next();
-            if (stage == Stage.PLAN_CHAT) { setCompact(false); next(Stage.LEGACY); }
+            if (stage == Stage.PLAN_CHAT) {
+                setCompact(false);
+                ClientOptionsRuntime.current().features().setEnabled(OptionFeature.INSTANT_STATUS, false);
+                next(Stage.LEGACY);
+            }
             else {
                 DriverPlatform.openChat(minecraft);
                 next(Stage.CHAT_CAPTURE);
@@ -229,6 +261,13 @@ final class CompactHoverNumbersScenario implements AutoCloseable {
     }
     @Override public void close() {
         try { interaction.releaseKeys(); }
-        finally { if (!closed) { setCompact(original); closed = true; } }
+        finally {
+            if (!closed) {
+                setCompact(original);
+                ClientOptionsRuntime.current().features().setEnabled(OptionFeature.INSTANT_STATUS, originalInstant);
+                ClientOptionsRuntime.current().features().setEnabled(OptionFeature.SHOW_EMOJI, originalEmoji);
+                closed = true;
+            }
+        }
     }
 }
