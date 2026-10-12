@@ -10,7 +10,10 @@ Stored-variant and resource-icon sections inherit their linked feature status.
 
 ## Readable Status restart captures (#674)
 
-Status: ready-to-implement
+Status: in-progress
+
+Implementation is under review. Runtime verification, current-head CI and merge
+remain pending. See the [investigation and merged planning evidence](https://github.com/cTux/ae2-crafting-time/issues/674#issuecomment-6121707172).
 
 Scope: Restore readable native Options evidence in `standard-status-controls`.
 

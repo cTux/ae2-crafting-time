@@ -46,6 +46,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
     @Test
+    void statusRelaunchParksOnceBeforeEachRenderedCapture(@TempDir Path output) {
+        var scenario = new StandardAe2Scenario("standard-plan-controls", "world", output, false);
+        var moves = new ArrayList<String>();
+        BiConsumer<Integer, Integer> moveMouse = (x, y) -> moves.add(x + "," + y);
+
+        assertFalse(scenario.statusCaptureReady(1, 10, moveMouse));
+        assertFalse(scenario.statusCaptureReady(1, 10, moveMouse));
+        assertTrue(scenario.statusCaptureReady(1, 11, moveMouse));
+        assertFalse(scenario.statusCaptureReady(2, 12, moveMouse));
+        assertFalse(scenario.statusCaptureReady(2, 12, moveMouse));
+        assertTrue(scenario.statusCaptureReady(2, 13, moveMouse));
+        assertEquals(List.of("0,0", "0,0"), moves);
+    }
+
+    @Test
     void compactHoverRestoresOptionsOnCompletionFailureCancellationAndDoubleClose() {
         var feature = com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_HOVER_NUMBERS;
         var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().features();
