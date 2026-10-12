@@ -56,10 +56,12 @@ throughput arguments using the new option. Legacy formatting when off applies
 only to valid positive rates. Do not route samples, slowdown, percentages,
 accuracy or time estimates through the helper. Keep existing order and styling.
 
-In `StatsChatServer.details` and `TtcText.normalizedDetails`, format both rates
-with `full`, regardless of the hover option. Update the two shared chat detail
-translation templates (`chat.details` and `chat.details.rate`) to include
-per-tick and per-second values, updating both callers and both locales together.
+In `StatsChatServer.details` and `TtcText.normalizedDetails`, format rates
+with `full`, regardless of the hover option. The millisecond TTC follow-up uses
+per-second values beside average/latest ms times. Rate-only details add a
+per-millisecond value, converted from the stored per-tick rate by dividing by 50.
+Update both callers and both locales together. Hovers omit the redundant rate
+beside valid ms samples; absent or invalid samples use the rate-only format.
 Retain the exact requested long amount in the summary and all existing suffix
 details (used samples, confidence, accuracy). Do not add a client option to the
 request, change the broadcast recipients or bypass server context/cooldown.

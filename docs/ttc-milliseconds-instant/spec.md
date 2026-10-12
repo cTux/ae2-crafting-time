@@ -12,7 +12,7 @@ Implementation: [PR #694](https://github.com/cTux/ae2-crafting-time/pull/694).
 
 Verification: [Implementation checks, native evidence and timings](verification.md).
 
-Remaining gate: verification of the per-tick throughput follow-up and an authorized merge. Full NeoForge 1.21.1 addon qualification
+Remaining gate: an authorized merge. Full NeoForge 1.21.1 addon qualification
 is blocked by the known NeoEco renderer crash (#627); GUI scale 1 readability
 is tracked separately in #695. These limits remain explicit in the verification report.
 
@@ -83,6 +83,7 @@ Update English and Ukrainian text, GuideME, and the GitHub wiki when implemented
 | MS-9 | A total or CPU estimate containing an unreliable or unknown remaining row never shows Instant, even when its known duration is at most 5ms. Fully covered reliable totals can show Instant. |
 | MS-10 | Two chat recipients with opposite Instant settings see Instant and numeric time respectively; changing settings refreshes from the original semantic message without losing confidence. |
 | MS-11 | Total/CPU payload round trips preserve milliseconds and confidence; incompatible payload versions cannot interpret milliseconds as seconds. |
+| MS-12 | Visible throughput has no per-tick rate. Hover and chat omit that rate beside ms sample times; rate-only fallback uses correctly converted amounts/ms and amounts/s. Both locales and resource units agree. |
 
 ## Approved display defaults
 
@@ -95,7 +96,7 @@ Update English and Ukrainian text, GuideME, and the GitHub wiki when implemented
 
 Cover Forge/Fabric 1.20.1, NeoForge 1.21.1, and NeoForge 26.1.2. Do not change
 profiling cadence, confidence thresholds, sample retention, job scheduling,
-network visibility, or rate/count formatting. This is not a claim of 5ms server
+network visibility, or count formatting. This is not a claim of 5ms server
 tick resolution or guaranteed instantaneous crafting.
 
 The implementation supersedes tick-unit presentation examples in
