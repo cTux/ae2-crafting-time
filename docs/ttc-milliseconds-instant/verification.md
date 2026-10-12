@@ -133,3 +133,15 @@ missing-only rows. Both native Plan adapters pass AE2's full missing-ingredient
 state to the shared total. A regression preserves the known 5ms duration as
 `5ms?` while excluding Instant; a fully covered plan can still be Instant.
 The throughput captures retain their original runtime provenance.
+
+## Final spacing and hidden-status correction
+
+The medal prefix now contains exactly one space: `🥇 Instant`. Component and
+native-fixture expectations were updated. Hiding a blocked, waiting, delayed or
+chance-output label now selects numeric TTC rather than Instant; row state and
+label visibility are independent. Regression tests cover each non-time state,
+the numeric fallback's retained confidence and color, and the ready Instant case.
+All target tests, GuideME validation and shared 100% coverage passed in 47s
+(`build/ttc-hidden-status-tests.log`). No smoke testing was run for these final
+corrections, as explicitly requested by the user. Earlier captures retain their
+own revisions and are not proof of the later spacing or hidden-status change.

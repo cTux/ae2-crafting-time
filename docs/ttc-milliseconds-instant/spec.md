@@ -12,9 +12,10 @@ Implementation: [PR #694](https://github.com/cTux/ae2-crafting-time/pull/694).
 
 Verification: [Implementation checks, native evidence and timings](verification.md).
 
-Remaining gate: an authorized merge. Full NeoForge 1.21.1 addon qualification
+Merge is authorized. Remaining qualification: full NeoForge 1.21.1 addon evidence
 is blocked by the known NeoEco renderer crash (#627); GUI scale 1 readability
-is tracked separately in #695. These limits remain explicit in the verification report.
+is tracked in #695. The delivery status stays in-progress until the broader
+MS-8 gate is satisfied. These limits remain explicit in the verification report.
 
 The user confirmed that low confidence takes precedence over Instant and
 approved the defaults below. Implementation and review are complete; the PR is open.
