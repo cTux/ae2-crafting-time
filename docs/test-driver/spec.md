@@ -1,5 +1,17 @@
 # AE2 Crafting Time Test Driver Spec
 
+## GUI scale 1 readability proof (#695)
+
+The native CPU-list leaf captures two settled scale-1 frames, verifies the
+full-size TTC preview and its card/badge separation from the lower job row,
+then hovers the truncated preview and captures its matching full tooltip.
+The existing Status leaf covers scale 1, 2, and Auto with default and uniform
+fonts. The issue's [acceptance plan](../gui-scale-one-readability/implementation-plan.md)
+also requires manual five-line Plan, compact-off four-line Status, actual
+hover/click/scroll, repeated framebuffer/VNC, and qualified foreground-pixel
+review on the two native adapters. A semantic leaf result alone cannot pass
+those visual and interaction gates.
+
 ## Millisecond TTC coverage (#692)
 
 The `compact-hover-numbers` leaf also captures reliable `🥇Instant`, unreliable

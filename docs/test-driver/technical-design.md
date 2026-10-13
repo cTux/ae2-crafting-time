@@ -1,5 +1,17 @@
 # AE2 Crafting Time Test Driver Technical Design
 
+## GUI scale 1 readability proof (#695)
+
+Reuse `cpu-list-total-ttc` in the native prepared clients. At scale 1, validate
+the CPU card against the actual rendered name and TTC bounds while retaining
+the native lower-row and progress-area collision checks. Capture successive
+settled frames, hover a truncated TTC badge, and require the observed full
+tooltip to extend the preview's numeric prefix. Record the screenshots and
+check in the existing scenario group. For Status font height, query actual
+drawn text within the native row cell; semantic description entries have no
+pixel bounds. Keep manual Plan/Status interaction and VNC comparison as
+separate evidence under the [issue plan](../gui-scale-one-readability/implementation-plan.md).
+
 ## Millisecond TTC coverage (#692)
 
 Extend `CompactHoverNumbersScenario` with a three-sample high-throughput case.
