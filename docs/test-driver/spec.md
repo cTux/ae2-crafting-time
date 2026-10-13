@@ -8,8 +8,8 @@ then hovers the truncated preview and captures its matching full tooltip.
 The existing Status leaf covers scale 1, 2, and Auto with default and uniform
 fonts. Its compact-off case captures four native lines at scale 1 using a
 seeded status entry; the stored-variant Plan leaf captures five native lines
-at scale 1 with compact amounts off using a controlled client-only summary
-entry after the real stored-variant lifecycle passes. Both require observed
+at scale 1 with compact amounts off in the local fixture using a controlled
+client-only summary entry after the real stored-variant lifecycle passes. Both require observed
 glyphs inside the native cell. The issue's [acceptance plan](../gui-scale-one-readability/implementation-plan.md)
 also requires manual interaction, contemporaneous framebuffer/VNC comparison,
 and qualified foreground-pixel review on the two native adapters. A semantic

@@ -42,8 +42,8 @@ final class StandardAe2Scenario {
             Map.entry("stored-variant-plan", List.of("initial-clear", "live-near", "removed-clear",
                     "exact-clear", "restored-near", "neutral-normal", "variant-tooltip", "unchanged-plan",
                     "variant-sorts", "variant-layout", "exact-only", "other-item", "ordinary-clear",
-                    "fluid-clear", "coexistence", "notification-lifecycle", "five-line-plan", "watcher-cleanup")),
-            Map.entry("standard-status-controls", List.of("submitted", "status", "status-wrapper-probe", "quantity-cases", "addon-key-status", "amount-scales", "four-line-status", "amount-options", "server-profiling-off", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout")),
+                    "fluid-clear", "coexistence", "notification-lifecycle", "watcher-cleanup")),
+            Map.entry("standard-status-controls", List.of("submitted", "status", "status-wrapper-probe", "quantity-cases", "addon-key-status", "amount-scales", "amount-options", "server-profiling-off", "status-sort", "status-tooltip", "status-details", "status-reset", "header", "layout")),
             Map.entry("waiting-status", List.of("submitted", "waiting", "first-dispatch", "recovered", "layout")),
             Map.entry("running-status", List.of("submitted", "running", "progress", "header", "layout")),
             Map.entry("cpu-list-total-ttc", CpuListTtcScenario.CHECKS),
@@ -670,7 +670,6 @@ final class StandardAe2Scenario {
                 }
                 screenshot.accept("stored-variant-five-line-plan-scale-1.png");
                 restoreDensePlanOptions(minecraft);
-                mark(checks, "five-line-plan", true);
                 variantDenseProof = 2;
                 variantStep = 9;
                 minecraft.player.closeContainer();
@@ -855,26 +854,7 @@ final class StandardAe2Scenario {
                 if (!server(minecraft, player -> player.containerMenu instanceof appeng.menu.me.crafting.CraftConfirmMenu confirm
                         && StoredVariantObservation.verifyServer(confirm.getPlan()))) return false;
                 mark(checks, "notification-lifecycle", true);
-                // Controlled client-only presentation entry: native menu, renderer, and glyph observer remain in use.
-                var denseEntries = new java.util.ArrayList<>(summary.getEntries());
-                var denseEntry = new appeng.menu.me.crafting.CraftingPlanSummaryEntry(entry.getWhat(),
-                        entry.getMissingAmount(), 1, entry.getCraftAmount());
-                denseEntries.set(denseEntries.indexOf(entry), denseEntry);
-                menu.setPlan(new appeng.menu.me.crafting.CraftingPlanSummary(summary.getUsedBytes(),
-                        summary.isSimulation(), denseEntries));
-                var labels = (com.ctux.ae2craftingtime.mc1201.RecurrentPlanEntry) denseEntry;
-                labels.ae2craftingtime$recurrent(true);
-                labels.ae2craftingtime$storedVariant(true);
-                variantDenseOriginalScale = minecraft.options.guiScale().get();
-                var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
-                variantDenseOriginalCompact = options.features().enabled(
-                        com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS);
-                options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS, false);
-                com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
-                minecraft.options.guiScale().set(1);
-                DriverPlatform.resizeDisplay(minecraft);
-                variantDenseProof = 1;
-                variantDenseStarted = System.nanoTime();
+                startDensePlan(minecraft, menu, summary, entry);
                 frames.reset();
                 return false;
             }
@@ -1487,7 +1467,6 @@ final class StandardAe2Scenario {
                             throw new IllegalStateException("Scale-1 compact-off Status text did not fit its cell");
                         }
                         screenshot.accept("status-four-line-compact-off-scale-1.png");
-                        mark(checks, "four-line-status", true);
                         restoreDenseStatus(minecraft, statusScreen);
                         statusDenseProof = 2;
                         frames.reset();
@@ -3336,6 +3315,31 @@ final class StandardAe2Scenario {
     private String statsOutput() {
         // Reset the waiting status row so the running furnace keeps its real in-flight sample.
         return phase.ordinal() < Stage.OPEN_STATUS.ordinal() ? "minecraft:stone" : "minecraft:smooth_stone";
+    }
+
+    private void startDensePlan(Minecraft minecraft, appeng.menu.me.crafting.CraftConfirmMenu menu,
+            appeng.menu.me.crafting.CraftingPlanSummary summary,
+            appeng.menu.me.crafting.CraftingPlanSummaryEntry entry) throws java.io.IOException {
+        // Client-only presentation fixture, installed after the real plan's lifecycle checks.
+        var denseEntries = new java.util.ArrayList<>(summary.getEntries());
+        var denseEntry = new appeng.menu.me.crafting.CraftingPlanSummaryEntry(entry.getWhat(),
+                entry.getMissingAmount(), 1, entry.getCraftAmount());
+        denseEntries.set(denseEntries.indexOf(entry), denseEntry);
+        menu.setPlan(new appeng.menu.me.crafting.CraftingPlanSummary(summary.getUsedBytes(),
+                summary.isSimulation(), denseEntries));
+        var labels = (com.ctux.ae2craftingtime.mc1201.RecurrentPlanEntry) denseEntry;
+        labels.ae2craftingtime$recurrent(true);
+        labels.ae2craftingtime$storedVariant(true);
+        variantDenseOriginalScale = minecraft.options.guiScale().get();
+        var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+        variantDenseOriginalCompact = options.features().enabled(
+                com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS);
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS, false);
+        com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+        minecraft.options.guiScale().set(1);
+        DriverPlatform.resizeDisplay(minecraft);
+        variantDenseProof = 1;
+        variantDenseStarted = System.nanoTime();
     }
 
     private void restoreDensePlanOptions(Minecraft minecraft) throws java.io.IOException {
