@@ -56,11 +56,11 @@ try {
     $data.capture.scenario='craft-plan'; $data.capture.id="$world/craft-plan/checkpoint.png"; Write-Json $sidecar $data
     Write-Json $plan @{schema=2;cases=@(@{scenario='craft-plan';world=$world})}
     $changed=[Drawing.Bitmap]::new($image)
-    try {$changed.SetPixel(3,3,[Drawing.Color]::Blue); $changed.Save((Join-Path $temp 'changed.png'),[Drawing.Imaging.ImageFormat]::Png)} finally {$changed.Dispose()}
+    try {$changed.SetPixel(3,3,[Drawing.Color]::White); $changed.Save((Join-Path $temp 'changed.png'),[Drawing.Imaging.ImageFormat]::Png)} finally {$changed.Dispose()}
     Copy-Item (Join-Path $temp 'changed.png') $image -Force
     Assert ((Read-Visual)[0].reason -match 'hash') 'Stale capture hash must fail'
     $data.capture.sha256=(Get-FileHash $image).Hash; Write-Json $sidecar $data
-    Assert ((Read-Visual)[0].reason -match 'Visual mismatch') 'Wrong pixel color must fail even with valid identity'
+    Assert ((Read-Visual)[0].reason -match 'Visual mismatch') 'Deleted unmasked foreground pixel must fail even with valid identity'
     Assert (Test-Path (Join-Path $temp 'visuals/craft-plan-checkpoint-1.diff.png')) 'Mismatch must save a diff'
     $contract.regions[0].masks=@(@{rect=@(3,3,1,1);reason='synthetic clock';assertion='clock'}); Write-Json $contractPath $contracts
     Assert ((Read-Visual)[0].result -eq 'PASS') 'Explicit independently asserted mask must work'

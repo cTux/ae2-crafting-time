@@ -6,6 +6,10 @@ import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 import appeng.menu.me.crafting.CraftingStatusEntry;
 import com.ctux.ae2craftingtime.mc1201.TtcSortButton;
+import com.ctux.ae2craftingtime.core.NativeTableLayout;
+import com.ctux.ae2craftingtime.core.PresentationHooks;
+import com.ctux.ae2craftingtime.core.OptionFeature;
+import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import appeng.api.stacks.AEKey;
@@ -22,22 +26,20 @@ import java.util.Set;
 public final class UiObservationStore {
     private static final int TABLE_X = 9;
     private static final int TABLE_Y = 19;
-    private static final int CELL_WIDTH = 67;
-    private static final int CELL_HEIGHT = 22;
-    private static final int PITCH_X = 68;
-    private static final int PITCH_Y = 23;
     private static final Set<String> WIRELESS_SCREENS = Set.of(
             "appeng.client.gui.me.common.MEStorageScreen",
             "com.lhy.wcwt.client.WirelessComprehensiveWorkTerminalScreen",
             "de.mari_023.ae2wtlib.wct.WCTScreen");
     private static Frame active;
     private static volatile UiSnapshot latest;
+    private static Map<String, Object> latestNativeHover = Map.of();
     private static volatile List<UiSnapshot.ObservedText> wirelessTooltip = List.of();
     private static long sequence;
 
     public static void reset() {
         active = null;
         latest = null;
+        latestNativeHover = Map.of();
         wirelessTooltip = List.of();
     }
 
@@ -65,19 +67,19 @@ public final class UiObservationStore {
         }
         active.scroll = scroll;
         active.rows.clear();
+        var layout = tableLayout(false);
         for (int i = 0; i < entries.size(); i++) {
             if (!(entries.get(i) instanceof CraftingPlanSummaryEntry entry)) {
                 continue;
             }
-            var visibleIndex = i - scroll * 3;
-            if (visibleIndex < 0 || visibleIndex >= 15) {
+            var visibleIndex = i - scroll * layout.columns();
+            if (visibleIndex < 0 || visibleIndex >= layout.rows() * layout.columns()) {
                 continue;
             }
-            var cell = new Rect(active.gui.x() + TABLE_X + visibleIndex % 3 * PITCH_X,
-                    active.gui.y() + TABLE_Y + visibleIndex / 3 * PITCH_Y, CELL_WIDTH, CELL_HEIGHT);
+            var cell = cell(layout, visibleIndex);
             active.rows.add(new PendingRow(entry.getWhat().getId().toString(), entry.getCraftAmount(),
                     entry.getMissingAmount(), cell, entry));
-            active.itemCells.add(new Rect(cell.x() + CELL_WIDTH - 19, cell.y() + 3, 16, 16));
+            active.itemCells.add(new Rect(cell.x() + layout.cellWidth() - 19, cell.y() + 3, 16, 16));
         }
     }
 
@@ -152,12 +154,24 @@ public final class UiObservationStore {
     }
 
     private static boolean statusRowText(Rect bounds) {
-        for (int index = 0; index < 18; index++) {
-            var cell = new Rect(active.gui.x() + TABLE_X + index % 3 * PITCH_X,
-                    active.gui.y() + TABLE_Y + index / 3 * PITCH_Y, CELL_WIDTH, CELL_HEIGHT);
+        var layout = tableLayout(true);
+        for (int index = 0; index < layout.rows() * layout.columns(); index++) {
+            var cell = cell(layout, index);
             if (bounds.inside(cell)) return true;
         }
         return false;
+    }
+
+    private static NativeTableLayout tableLayout(boolean status) {
+        return NativeTableLayout.of((int) active.guiScale, 3, 67, 22, status ? 6 : 5,
+                ClientOptionsRuntime.enabled(status ? OptionFeature.STATUS_ROWS : OptionFeature.PLAN_ROWS)
+                        && PresentationHooks.table(status));
+    }
+
+    private static Rect cell(NativeTableLayout layout, int visible) {
+        return new Rect(active.gui.x() + TABLE_X + visible % layout.columns() * (layout.cellWidth() + 1),
+                active.gui.y() + TABLE_Y + visible / layout.columns() * (layout.cellHeight() + 1),
+                layout.cellWidth(), layout.cellHeight());
     }
 
     private static boolean recordStatusText(String rendered, Rect bounds) {
@@ -236,15 +250,16 @@ public final class UiObservationStore {
                 active.rows.clear();
                 int scroll = accessor.ae2craftingtime_test_driver$scrollbar().getCurrentScroll();
                 var entries = status.getEntries();
-                for (int i = scroll * 3; i < Math.min(entries.size(), scroll * 3 + 18); i++) {
+                var layout = tableLayout(true);
+                for (int i = scroll * layout.columns();
+                        i < Math.min(entries.size(), (scroll + layout.rows()) * layout.columns()); i++) {
                     var entry = entries.get(i);
-                    int visible = i - scroll * 3;
-                    var cell = new Rect(active.gui.x() + 9 + visible % 3 * 68,
-                            active.gui.y() + 19 + visible / 3 * 23, 67, 22);
+                    int visible = i - scroll * layout.columns();
+                    var cell = cell(layout, visible);
                     active.rows.add(new PendingRow(entry.getWhat().getId().toString(),
                             entry.getActiveAmount() + entry.getPendingAmount(), 0, cell, null,
                             entry.getStoredAmount(), entry.getActiveAmount(), entry.getPendingAmount()));
-                    active.itemCells.add(new Rect(cell.x() + CELL_WIDTH - 19, cell.y() + 3, 16, 16));
+                    active.itemCells.add(new Rect(cell.x() + layout.cellWidth() - 19, cell.y() + 3, 16, 16));
                 }
             }
         }
@@ -271,10 +286,22 @@ public final class UiObservationStore {
             return new UiSnapshot.CpuCard(card.serial, card.name, card.jobId, card.amount, card.elapsedNanos,
                     card.selected, card.bounds, card.nameArea, card.infoArea, card.progressArea, ttc, badge);
         }).toList();
+        latestNativeHover = active.nativeHover;
         latest = new UiSnapshot(active.screen, active.menu, active.gui, active.screenWidth, active.screenHeight,
                 active.guiScale, ++sequence, active.scroll, rows, active.text, mergedBadges, active.widgets,
                 active.itemCells, active.tooltip, cpuCards, active.rawCpuSerials);
         active = null;
+    }
+
+    public static void nativeHover(appeng.client.gui.StackWithBounds hovered) {
+        if (active == null || hovered == null) return;
+        var bounds = hovered.bounds();
+        active.nativeHover = Map.of("outputId", hovered.stack().what().getId().toString(),
+                "bounds", new Rect(bounds.getX(), bounds.getY(), bounds.getWidth(), bounds.getHeight()));
+    }
+
+    public static Map<String, Object> nativeHover(UiSnapshot snapshot) {
+        return snapshot == latest ? latestNativeHover : Map.of();
     }
 
     public static UiSnapshot latest() {
@@ -409,6 +436,7 @@ public final class UiObservationStore {
     }
 
     private static final class Frame {
+        private Map<String, Object> nativeHover = Map.of();
         private final String screen;
         private final String menu;
         private final Rect gui;

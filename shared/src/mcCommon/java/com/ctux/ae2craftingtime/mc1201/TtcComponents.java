@@ -6,6 +6,7 @@ import com.ctux.ae2craftingtime.core.TtcEstimate;
 import com.ctux.ae2craftingtime.core.TtcChatEstimate;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import net.minecraft.network.chat.Component;
+import net.minecraft.client.gui.Font;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.TextColor;
 import net.minecraft.network.chat.contents.TranslatableContents;
@@ -100,6 +101,23 @@ public final class TtcComponents {
             return Optional.empty();
         }, net.minecraft.network.chat.Style.EMPTY);
         return result;
+    }
+
+    public static Component fitWithEllipsis(Component text, Font font, int width) {
+        return fitWithEllipsis(text, font.getSplitter(), width);
+    }
+
+    static Component fitWithEllipsis(Component text, net.minecraft.client.StringSplitter splitter, int width) {
+        if (splitter.stringWidth(text) <= width) return text;
+        var ellipsis = Component.literal("...").setStyle(text.getStyle());
+        int available = width - (int) Math.ceil(splitter.stringWidth(ellipsis));
+        if (available < 0) return Component.empty();
+        var preview = Component.empty();
+        splitter.headByWidth(text, available, net.minecraft.network.chat.Style.EMPTY).visit((style, part) -> {
+            preview.append(Component.literal(part).setStyle(style));
+            return Optional.empty();
+        }, net.minecraft.network.chat.Style.EMPTY);
+        return preview.append(ellipsis);
     }
 
     private static boolean alreadyDecorated(Component source) {

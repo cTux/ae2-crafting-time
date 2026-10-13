@@ -12,6 +12,11 @@ import java.util.List;
 
 @Mixin(AbstractTableRenderer.class)
 public abstract class AbstractTableRendererMixin {
+    @Inject(method = "render", at = @At("RETURN"), remap = false)
+    private void ae2craftingtime_test_driver$nativeHover(GuiGraphics graphics, int mouseX, int mouseY,
+            List<?> entries, int scrollOffset, CallbackInfo ci) {
+        UiObservationStore.nativeHover(((AbstractTableRenderer<?>) (Object) this).getHoveredStack());
+    }
     @Inject(method = "render", at = @At("HEAD"), remap = false)
     private void ae2craftingtime_test_driver$rows(GuiGraphics graphics, int mouseX, int mouseY, List<?> entries,
             int scrollOffset, CallbackInfo ci) {

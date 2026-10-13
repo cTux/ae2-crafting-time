@@ -1,6 +1,8 @@
 {
   "schema": 1,
   "checkpoints": [
+    {"scenario":"standard-status-controls","image":"status-scale-default-1.png","environmentId":"pending-qualification","disposition":"review"},
+    {"scenario":"cpu-list-total-ttc","image":"cpu-list-total-ttc-smallest-scale.png","environmentId":"pending-qualification","disposition":"review"},
     {"scenario":"compact-hover-numbers","image":"compact-hover-ordinary-plan.png","environmentId":"pending-qualification","disposition":"review"},
     {"scenario":"compact-hover-numbers","image":"compact-hover-ordinary-status.png","environmentId":"pending-qualification","disposition":"review"},
     {"scenario":"compact-hover-numbers","image":"compact-hover-ordinary-chat.png","environmentId":"pending-qualification","disposition":"review"},

@@ -53,6 +53,13 @@ instead of AE2's elapsed estimate. Without a known total, it shows the normal
 CPU name. The red storage warning still appears when needed. Turn off
 **Crafting Status total** to use AE2's original title.
 
+At GUI scale 1, Crafting Plan and Crafting Status use one wider column so row
+text stays readable. Fewer rows fit at once; scroll to reach the rest. A line
+that is too long for its cell shows an ellipsis, with the full line on hover.
+CPU-card TTC also uses full-size text at scale 1. If its preview ends in an
+ellipsis, hover the card for the complete estimate. Other GUI scales keep their
+usual layout. The row and CPU-card display options control these corrections.
+
 With the same option on, Crafting Status puts available, crafting, and scheduled
 amounts on one line, in that order: `4/10/200`. A missing amount is `-`; when only one amount is
 present, its `A`, `C`, or `S` prefix identifies it. Hover for AE2's full labeled

@@ -51,5 +51,15 @@ class CpuTtcResolverTest {
         assertThrows(IllegalArgumentException.class, () -> CpuTtcLayout.badge(1, -1, 1, 1));
         assertThrows(IllegalArgumentException.class, () -> CpuTtcLayout.badge(1, 1, -1, 1));
         assertThrows(IllegalArgumentException.class, () -> CpuTtcLayout.badge(1, 1, 1, 0));
+        var onePixel = CpuTtcLayout.badge(80, 32, 54, 0.8, 1);
+        assertEquals(1, onePixel.scale());
+        assertEquals(54, onePixel.textWidth());
+        assertEquals(58, onePixel.width());
+        assertEquals(11, onePixel.height());
+        assertEquals(18, onePixel.availableNameWidth());
+        assertEquals(54, CpuTtcLayout.badge(80, 32, 400, 0.8, 1).textWidth());
+        assertEquals(0, CpuTtcLayout.badge(7, 32, 400, 0.8, 1).textWidth());
+        assertEquals(0, CpuTtcLayout.badge(80, 32, 0, 0.8, 1).textWidth());
+        assertEquals(CpuTtcLayout.badge(80, 32, 20, 0.8), CpuTtcLayout.badge(80, 32, 20, 0.8, 2));
     }
 }

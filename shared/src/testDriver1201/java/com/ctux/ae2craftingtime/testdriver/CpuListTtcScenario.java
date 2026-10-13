@@ -591,6 +591,9 @@ final class CpuListTtcScenario {
             case SCALE_SMALL -> {
                 if (snapshot.guiScale() != 1 || snapshot.cpuCards().stream().noneMatch(card -> card.ttc() != null)) return false;
                 validateLayout(snapshot, badgeBackground());
+                if (snapshot.rows().isEmpty() || snapshot.rows().stream().flatMap(row -> row.description().stream())
+                        .noneMatch(text -> text.bounds() != null && text.bounds().height() >= 9))
+                    throw new IllegalStateException("scale-1 status text did not render at full font height");
                 mark(checks, "small-scale");
                 screenshot.accept("cpu-list-total-ttc-smallest-scale.png");
                 minecraft.options.guiScale().set(0);

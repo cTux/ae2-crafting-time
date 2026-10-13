@@ -3,8 +3,8 @@
 [Scope and status](spec.md)
 
 1. Deliver these documents and the requirement clarification below through the
-   documentation workflow. Keep the native-hardware authority/scope decision
-   visibly pending; it blocks final completion, not implementation. Keep #695 claimed.
+   documentation workflow. Record the user's CodexVM choice and the accepted
+   native-GPU verification limit. Keep #695 claimed.
 2. On the implementation branch, inspect the pinned AE2 source/bytecode in both
    adapters and map table render, scroll range, hover bounds, and both TTC click
    consumers. Implement the shared geometry policy and pure boundary tests,
@@ -30,8 +30,9 @@
    geometry coherently. Update both adapters and changed mixin registrations.
 5. Extend existing native scenarios for one-column indexing, scrolling, scale
    transitions, long TTC, complete amount/status lines, tooltip recovery and
-   CPU collision checks. Include at least three description lines and multiple
-   pages of entries. Keep real observed bounds in sidecars. Update the CPU and
+   CPU collision checks. Include five Plan lines and four Status lines with
+   compact amounts off, plus multiple pages of entries. Label expected cell
+   geometry separately from observed glyph/badge bounds in sidecars. Update the CPU and
    long-TTC docs, GuideME and wiki source to describe the narrow scale-1 preview
    exception and the full hover value; update English/Ukrainian together if new
    player-facing text is needed.
@@ -46,13 +47,18 @@
    background and shadow on/off. Check real item hover, TTC Ctrl-click, scroll
    and selection. Use base-only native fixtures when no addon path changed;
    do not turn this into a full dependency campaign. Archive every attempt.
+   At scale 1, retain native-hover and Ctrl-click evidence for the first and
+   last entries at nonzero scroll and after resizing, plus a shortened CPU
+   preview and its complete tooltip. These interaction and five/four-line
+   checkpoints are required manual follow-ups when the existing automated
+   scenarios do not cover them. Predicted cell rectangles do not satisfy them.
 8. Qualify deterministic scale-1 amount/TTC and CPU text regions using the
    existing exact-pixel contract engine. Add its smallest self-check that a
    missing unmasked foreground stroke fails. Keep environment/font identity,
    original PNGs and manual legibility review. A changing estimate cannot be
    masked wholesale and called a text contract; freeze the fixture value.
-9. Complete the native diagnostic only through the separately authorized path,
-   or record the explicitly accepted limitation without claiming native proof.
+9. Verify runtime behavior on CodexVM and record native-GPU behavior as
+   unverified, as the user selected. Do not claim native proof.
    Finish current-head CI and review gates, retain evidence and update canonical
    status only when every required criterion is supported.
 
@@ -84,7 +90,7 @@ observations, reproduction details and evidence links:
 > interaction behavior. This is a narrow scale-1 exception to earlier
 > no-truncation presentation requirements. Investigate settled-frame capture
 > timing during post-PR verification and correct the patch if it disproves the
-> proposed rendering cause. Native-hardware investigation
-> remains pending separate execution authority and must not be inferred from
-> VMware results. Preserve the original captures and qualify a visual contract
+> proposed rendering cause. Native-GPU runtime testing is outside this verification
+> scope, following the user's decision to use CodexVM. Record it as unverified
+> and never infer it from VMware results. Preserve the original captures and qualify a visual contract
 > that rejects a missing foreground stroke.

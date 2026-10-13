@@ -23,18 +23,28 @@ mechanism, not a proven SVGA-only defect or before-change regression.
 Shared `CraftPlanScenario.screenshot` reads the framebuffer synchronously.
 `CpuListTtcScenario.SCALE_SMALL` captures before restoring Auto; Fabric's runtime
 callback is at `GameRenderer.render` TAIL. That rules out the obvious queued
-capture/scale-reset race. Compare settled-frame PNGs with the VM display before
-changing production layout to resolve the remaining capture question.
+capture/scale-reset race. During post-PR verification, compare settled-frame PNGs
+with the VM display and revisit the patch if capture timing explains the loss.
 
 ## Shared geometry and thin adapters
 
 Add one pure shared layout policy for native tables. Inputs are effective GUI
 scale, original column count/cell dimensions/visible rows, and whether the
 affected TTC presentation is active. The scale-1 policy returns one column,
-width `columns * (cellWidth + 1) - 1`, cell height 32, text scale 1, and
-`max(1, (originalRows * (cellHeight + 1)) / 33)` visible rows. The native mode
-returns original geometry. Centralize row index, hit-test and scroll calculations
+width `columns * (cellWidth + 1) - 1`, cell height 54, text scale 1, and
+`max(1, (originalRows * (cellHeight + 1)) / 55)` visible rows. The native mode
+returns original geometry, as does a footprint too short for one complete cell.
+Centralize row index, hit-test and scroll calculations
 in this policy rather than reproducing constants in screen mixins.
+
+54 pixels accommodates the five supported Plan lines: three native amounts,
+the stored-variant warning, and TTC/collecting. Status has at most three native
+amounts plus one status/TTC line. Five unscaled lines need 49 pixels including
+spacing; the remaining margin contains the badge. Both tables show two rows at
+scale 1. Compact amounts remains independent and may stay off.
+Scale-1 row badges keep horizontal padding but use no vertical padding. AE2's
+one-pixel line gap would otherwise let the next badge paint over the preceding
+glyph row. Larger scales retain their existing padding.
 
 Preserve AE2's renderer and its item/tooltip flow. Adapt its geometry constants,
 text scale/inverse scale, line height, loop limits and instance scroll count at
@@ -56,6 +66,14 @@ than caching it in constructors; screen class transformation completes before
 that screen renders. The Plan screen needs its own interaction hooks; the
 Status screen needs its own, not an unrelated screen to have loaded first.
 
+Readiness-sensitive hooks use standard Mixin injections: a table-tooltip
+redirect and a CPU-name STORE modification. MixinExtras WrapOperation and
+ModifyExpressionValue apply in a later extension phase, after plugin postApply,
+so their call sites cannot establish readiness here. The pinned renderer has
+five integer-width sites and four integer-height sites; its icon Y offset is
+already folded to three. Include the optional text-draw site and the input
+helper's callers in readiness. Preserve the native line-height field on fallback.
+
 An absent/mismatched site keeps the entire table policy inactive, including
 scroll and click consumers. Preserve original constants and behavior on that
 path. CPU presentation has its own fit/tooltip readiness pair and likewise
@@ -71,8 +89,12 @@ Consumers to update together:
   independently use 67/22/3 constants for TTC click lookup.
 - Native renderer scroll-range calculation and hovered-stack bounds; their
   geometry must match the screen click consumers, including after scale changes.
-- Both native test-driver row observers/fixtures. Update observed native
-  geometry, never invent replacement geometry in screenshot sidecars.
+- Both native test-driver row observers/fixtures. Their cell rectangles are
+  expected policy bounds, explicitly labeled in sidecars, while glyph/badge
+  bounds are observed draw calls. `nativeHoveredCell` records AE2's actual
+  hovered stack identity and rectangle after rendering. Verify native hover bounds, hit identity and
+  rendered layout directly in the focused runtime checks; expected rectangles
+  cannot establish renderer correctness.
 
 The mc1201 adapter serves Forge/Fabric 1.20.1 and NeoForge 1.21.1. mc2612 serves
 NeoForge 26.1.2. Read the actual pinned AE2 implementation in each target before
@@ -108,8 +130,8 @@ compatible lock; base manifests can contain older loaders. Preflight is not
 a successful client launch or a full library-integrity check.
 
 The existing disposable fixture/host-build/guest-local-launch lifecycle applies.
-No new runner or native-host installation is part of this plan. Native hardware
-remains conditional on explicit authority and a verified disposable launch path.
+No new runner or native-host installation is part of this plan. The user chose
+CodexVM verification; native-GPU runtime behavior remains unverified.
 The existing `SmokePixels.Compare` exact-region engine is sufficient for the
 glyph contract; qualify a fixed text region with no foreground mask and prove a
 missing-stroke rejection. Do not add OCR or a new screenshot framework.

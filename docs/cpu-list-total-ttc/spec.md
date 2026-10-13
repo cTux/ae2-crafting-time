@@ -38,6 +38,11 @@ card in the left Crafting CPUs list, as requested in the reference screenshot.
 - Reserve space for TTC on the name line. Shorten an overlapping name with an
   ellipsis; the existing CPU tooltip still shows the full name. Fit long time
   values without dropping digits or spilling outside the card.
+
+The later [scale-1 readability change](../gui-scale-one-readability/spec.md)
+uses unscaled card text at effective GUI scale 1. A time too long for its card
+may show an ellipsis preview; hovering shows the complete matching TTC. The
+full-digit rule above continues at larger scales.
 - Refresh visible and selected CPUs first without selecting them, then visit
   every other busy CPU through bounded round-robin requests. The selected card
   and title use the same frame snapshot. Hide expired values; TTC-mode expiry

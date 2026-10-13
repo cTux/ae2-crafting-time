@@ -8,16 +8,18 @@ Issue: [#695](https://github.com/cTux/ae2-crafting-time/issues/695)
 
 Planning: [Implementation plan](implementation-plan.md)
 
-The presentation policy is settled below. Implementation can proceed while
-native-hardware diagnostic authority is pending. Completion still requires a
-native result or the user's explicit acceptance of that verification limitation.
+The presentation policy is settled below. The user selected CodexVM for runtime
+verification and accepted native-GPU behavior as unverified. Completion records
+that limit without describing VM evidence as native-hardware proof.
 
 ## Behavior
 
 At effective GUI scale 1, draw native crafting-table text at one physical pixel
 per font pixel. Reuse the table's existing 203-pixel width as one wide column,
-with 32-pixel cells and a one-pixel border. Keep its existing height and show as
-many complete rows as fit. Scroll through the remaining entries. Scale 2 and
+with 54-pixel cells and a one-pixel border. Keep its existing height and show as
+many complete rows as fit (two in both supported tables). The height contains
+all five supported Plan lines, including a stored-variant warning and TTC when
+compact amounts is off. Scroll through the remaining entries. Scale 2 and
 larger retain their existing layout. Changing scale while a screen is open
 updates rendering, scroll range, and hit testing together.
 
