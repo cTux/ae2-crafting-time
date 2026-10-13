@@ -172,6 +172,10 @@ final class StandardAe2Scenario {
     private boolean addonQuantityHovered;
     private appeng.menu.me.crafting.CraftingStatus realStatus;
     private Boolean originalDelayedStatus;
+    private Boolean originalStatusBadgeBackground;
+    private Boolean originalStatusTextShadow;
+    private Boolean originalStatusRows;
+    private int statusVisualCase;
     private int amountOptionCase;
     private int statusDenseProof;
     private appeng.menu.me.crafting.CraftingStatus statusDenseOriginal;
@@ -1152,7 +1156,14 @@ final class StandardAe2Scenario {
                 StatusWrapperProbe.requirePassed();
                 mark(checks, "status-wrapper-probe", true);
                 var client = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+                originalStatusBadgeBackground = client.badgeBackground();
+                originalStatusTextShadow = client.features().enabled(
+                        com.ctux.ae2craftingtime.core.OptionFeature.TEXT_SHADOW);
+                originalStatusRows = client.features().enabled(
+                        com.ctux.ae2craftingtime.core.OptionFeature.STATUS_ROWS);
                 client.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS, true);
+                client.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.BADGE_BACKGROUND, false);
+                client.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.TEXT_SHADOW, false);
                 com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(client);
                 // A real job can stall while this synthetic row cycles through fonts and GUI scales.
                 originalDelayedStatus = client.features().enabled(com.ctux.ae2craftingtime.core.OptionFeature.DELAYED_STATUS);
@@ -1350,6 +1361,7 @@ final class StandardAe2Scenario {
                             .ae2craftingtime_test_driver$setStatus(realStatus);
                     realStatus = null;
                     restoreDelayedStatus();
+                    restoreStatusVisualOptions();
                     mark(checks, "amount-scales", true);
                     phase = Stage.STATUS_OPTIONS;
                 }
@@ -1386,11 +1398,45 @@ final class StandardAe2Scenario {
                 throw new IllegalStateException("Scaled amount badge escapes its native cell: " + amount + " rendered " + drawn);
             var expectedTtc = com.ctux.ae2craftingtime.mc1201.TtcText.ttc("~6944444:26:40?").getString();
             var ttc = rowText(snapshot, row.outputId(), "text.ae2craftingtime.ttc");
-            if (ttc == null || !expectedTtc.equals(ttc.rendered()))
+            boolean ttcOff = amountFontMode == 0 && quantityScaleCase == 0 && statusVisualCase == 2;
+            if (ttcOff ? ttc != null : ttc == null || !expectedTtc.equals(ttc.rendered()))
                 throw new IllegalStateException("Scaled TTC escapes its native cell or changed text: expected "
                         + expectedTtc + " rendered " + ttc);
-            screenshot.accept("status-scale-" + (amountFontMode == 0 ? "default" : "wide") + "-"
-                    + (requested == 0 ? "auto" : requested) + ".png");
+            if (amountFontMode == 0 && quantityScaleCase == 0) {
+                if (statusVisualCase == 0) {
+                    if (!snapshot.badges().isEmpty())
+                        throw new IllegalStateException("Pinned scale-1 Status background-off has a badge");
+                    screenshot.accept("status-scale-default-1.png");
+                    setStatusVisualOptions(true, true, true);
+                    statusVisualCase = 1;
+                    frames.reset();
+                    return false;
+                }
+                if (statusVisualCase == 1) {
+                    if (snapshot.badges().isEmpty())
+                        throw new IllegalStateException("Scale-1 Status background-on lost its badge");
+                    screenshot.accept("status-scale-default-1-background-shadow-on.png");
+                    setStatusVisualOptions(false, false, false);
+                    statusVisualCase = 2;
+                    frames.reset();
+                    return false;
+                }
+                if (statusVisualCase == 2) {
+                    if (row.description().stream().anyMatch(text ->
+                            com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(text.key())
+                                    && !text.key().equals("text.ae2craftingtime.status.amounts"))
+                            || !snapshot.badges().isEmpty())
+                        throw new IllegalStateException("Scale-1 Status TTC-off still drew a badge");
+                    screenshot.accept("status-scale-default-1-ttc-off.png");
+                    setStatusVisualOptions(false, false, true);
+                    statusVisualCase = 3;
+                    frames.reset();
+                    return false;
+                }
+            } else {
+                screenshot.accept("status-scale-" + (amountFontMode == 0 ? "default" : "wide") + "-"
+                        + (requested == 0 ? "auto" : requested) + ".png");
+            }
             if (++quantityScaleCase < 3) {
                 quantityScaleSet = false;
                 frames.reset();
@@ -3286,7 +3332,40 @@ final class StandardAe2Scenario {
     }
 
     void releaseKeys() { stats.releaseKeys(); cleanup(); }
-    void cleanup() { if (compactHover != null) compactHover.close(); restoreDelayedStatus(); }
+    void cleanup() {
+        if (compactHover != null) compactHover.close();
+        restoreDelayedStatus();
+        try {
+            restoreStatusVisualOptions();
+        } catch (java.io.IOException error) {
+            throw new java.io.UncheckedIOException(error);
+        }
+    }
+
+    private void setStatusVisualOptions(boolean background, boolean shadow, boolean statusRows)
+            throws java.io.IOException {
+        var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.BADGE_BACKGROUND, background);
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.TEXT_SHADOW, shadow);
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.STATUS_ROWS, statusRows);
+        com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+    }
+
+    private void restoreStatusVisualOptions() throws java.io.IOException {
+        if (originalStatusBadgeBackground == null || originalStatusTextShadow == null
+                || originalStatusRows == null) return;
+        var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.BADGE_BACKGROUND,
+                originalStatusBadgeBackground);
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.TEXT_SHADOW,
+                originalStatusTextShadow);
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.STATUS_ROWS,
+                originalStatusRows);
+        com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+        originalStatusBadgeBackground = null;
+        originalStatusTextShadow = null;
+        originalStatusRows = null;
+    }
 
     private void restoreDelayedStatus() {
         if (originalDelayedStatus == null) return;

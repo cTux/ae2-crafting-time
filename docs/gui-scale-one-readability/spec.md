@@ -1,6 +1,9 @@
 # Readable text at GUI scale 1
 
-Status: ready-to-implement
+Status: in-progress. Implementation and the native CodexVM verification are tracked in
+[PR #701](https://github.com/cTux/ae2-crafting-time/pull/701). The remaining
+acceptance gates are scale-1 interaction evidence, the second native adapter,
+and qualification of the deterministic visual contract.
 
 Scope: Native Crafting Plan/Status row text and CPU-card TTC at effective GUI scale 1.
 
