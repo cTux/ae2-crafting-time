@@ -162,12 +162,12 @@ final class CpuListTtcScenario {
                     throw new IllegalStateException("shortest CPU was not off-screen in raw AE2 order");
                 }
                 assertCpuOrder(snapshot, true);
-                validateLayout(snapshot);
+                validateLayout(snapshot, badgeBackground());
                 if (!sortState(snapshot).contains("longest")) return false;
                 if (!Boolean.TRUE.equals(CpuListInputControl.noFirstDraw())) return false;
                 mark(checks, "initial-distinct", "unknown-hidden", "idle-hidden", "initial-mode", "no-first-draw", "layout");
                 screenshot.accept("cpu-list-total-ttc-unselected-large.png");
-                var badge = selectionBadge(snapshot.cpuCards(), selectedSerial);
+                var badge = selectionBounds(snapshot.cpuCards(), selectedSerial, "minecraft:smooth_stone", 8);
                 releasedFrame = snapshot.frame();
                 DriverPlatform.clickAndRelease(minecraft, badge.centerX(), badge.centerY());
                 next(Stage.SELECTED);
@@ -238,8 +238,9 @@ final class CpuListTtcScenario {
             }
             case CHANNEL_RESTORED -> {
                 if (snapshot.cpuCards().stream().noneMatch(card -> card.ttc() != null)) return false;
-                var selected = card(snapshot, selectedSerial);
-                moveMouse.accept(selected.badge().centerX(), selected.badge().centerY());
+                validateLayout(snapshot, badgeBackground());
+                var hover = selectionBounds(snapshot.cpuCards(), selectedSerial, "minecraft:smooth_stone", 8);
+                moveMouse.accept(hover.centerX(), hover.centerY());
                 next(Stage.TOOLTIP);
             }
             case TOOLTIP -> {
@@ -258,7 +259,7 @@ final class CpuListTtcScenario {
                     throw new IllegalStateException("wheel-before-draw hit a row that was not displayed");
                 if (serverState().selectedSerial() != firstVisibleSerial) return false;
                 mark(checks, "wheel-before-draw");
-                var badge = selectionBadge(snapshot.cpuCards(), selectedSerial);
+                var badge = selectionBounds(snapshot.cpuCards(), selectedSerial, "minecraft:smooth_stone", 8);
                 DriverPlatform.clickAndRelease(minecraft, badge.centerX(), badge.centerY());
                 next(Stage.SCROLL_DOWN);
             }
@@ -589,7 +590,7 @@ final class CpuListTtcScenario {
             }
             case SCALE_SMALL -> {
                 if (snapshot.guiScale() != 1 || snapshot.cpuCards().stream().noneMatch(card -> card.ttc() != null)) return false;
-                validateLayout(snapshot);
+                validateLayout(snapshot, badgeBackground());
                 mark(checks, "small-scale");
                 screenshot.accept("cpu-list-total-ttc-smallest-scale.png");
                 minecraft.options.guiScale().set(0);
@@ -604,7 +605,7 @@ final class CpuListTtcScenario {
                     DriverPlatform.resizeDisplay(minecraft);
                     return false;
                 }
-                validateLayout(snapshot);
+                validateLayout(snapshot, badgeBackground());
                 mark(checks, "large-scale");
                 screenshot.accept("cpu-list-total-ttc-largest-scale.png");
                 minecraft.player.closeContainer();
@@ -691,7 +692,7 @@ final class CpuListTtcScenario {
                 }
             }
             case RELAUNCH_FRESH -> {
-                var nextStage = afterRelaunchFreshObservation(snapshot, serverState());
+                var nextStage = afterRelaunchFreshObservation(snapshot, serverState(), badgeBackground());
                 if (nextStage != Stage.DONE) return false;
                 mark(checks, "reconnect");
                 screenshot.accept("cpu-list-total-ttc-reconnect.png");
@@ -835,9 +836,16 @@ final class CpuListTtcScenario {
         return snapshot.cpuCards().stream().filter(value -> value.serial() == serial).findFirst()
                 .orElseThrow(() -> new IllegalStateException("CPU serial " + serial + " is not visible"));
     }
-    static Rect selectionBadge(java.util.List<UiSnapshot.CpuCard> cards, int serial) {
-        return cards.stream().filter(value -> value.serial() == serial).findFirst()
-                .orElseThrow(() -> new IllegalStateException("CPU serial " + serial + " is not visible")).badge();
+    static Rect selectionBounds(java.util.List<UiSnapshot.CpuCard> cards, int serial, String jobId, long amount) {
+        var card = cards.stream().filter(value -> value.serial() == serial
+                && jobId.equals(value.jobId()) && amount == value.amount()).findFirst()
+                .orElseThrow(() -> new IllegalStateException("CPU job for serial " + serial + " is not visible"));
+        return interactionBounds(card);
+    }
+    private static Rect interactionBounds(UiSnapshot.CpuCard card) {
+        if (card.badge() != null) return card.badge();
+        if (card.ttc() != null && card.ttc().bounds() != null) return card.ttc().bounds();
+        throw new IllegalStateException("CPU TTC interaction bounds are missing for serial " + card.serial());
     }
     static int firstVisibleSerial(java.util.List<UiSnapshot.CpuCard> cards) {
         return cards.stream().findFirst().orElseThrow(() -> new IllegalStateException("CPU list is empty")).serial();
@@ -861,7 +869,11 @@ final class CpuListTtcScenario {
         return snapshot.text().stream().filter(text -> text.key().equals("native-title")
                 && text.bounds() != null && text.bounds().y() < snapshot.gui().y() + 19).findFirst().orElse(null);
     }
-    private static void validateLayout(UiSnapshot snapshot) {
+    private static boolean badgeBackground() {
+        return com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().badgeBackground();
+    }
+
+    static void validateLayout(UiSnapshot snapshot, boolean badgeBackground) {
         if (!fits(snapshot)) throw new IllegalStateException("CPU-list screen does not fit the viewport");
         for (var card : snapshot.cpuCards()) {
             var name = snapshot.text().stream().filter(text -> text.bounds() != null
@@ -871,11 +883,16 @@ final class CpuListTtcScenario {
             if (!name.bounds().inside(card.nameArea()))
                 throw new IllegalStateException("CPU name escapes its card for serial " + card.serial());
             if (card.ttc() == null) continue;
-            if (card.badge() == null || !card.badge().inside(card.bounds()) || !card.ttc().bounds().inside(card.badge())
-                    || card.badge().overlaps(card.infoArea()) || card.badge().overlaps(card.progressArea()))
+            var text = card.ttc().bounds();
+            if (text == null || !text.inside(card.bounds()) || text.overlaps(card.infoArea())
+                    || text.overlaps(card.progressArea()) || name.bounds().overlaps(text))
                 throw new IllegalStateException("CPU card layout collision for serial " + card.serial());
-            if (name.bounds().overlaps(card.badge()))
-                throw new IllegalStateException("CPU name overlaps its TTC badge");
+            if ((card.badge() != null) != badgeBackground)
+                throw new IllegalStateException("CPU badge presence differs from client option for serial " + card.serial());
+            if (badgeBackground && (!card.badge().inside(card.bounds()) || !text.inside(card.badge())
+                    || card.badge().overlaps(card.infoArea()) || card.badge().overlaps(card.progressArea())
+                    || name.bounds().overlaps(card.badge())))
+                throw new IllegalStateException("CPU badge layout collision for serial " + card.serial());
         }
     }
 
@@ -1038,9 +1055,12 @@ final class CpuListTtcScenario {
                         .noneMatch(cpu -> cpu.estimate() != null);
     }
 
-    static Stage afterRelaunchFreshObservation(UiSnapshot snapshot, CpuListTtcControl.ServerState state) {
-        return snapshot.cpuCards().stream().anyMatch(card -> card.ttc() != null) && totalsMatch(snapshot, state)
-                ? Stage.DONE : Stage.RELAUNCH_FRESH;
+    static Stage afterRelaunchFreshObservation(UiSnapshot snapshot, CpuListTtcControl.ServerState state,
+            boolean badgeBackground) {
+        if (snapshot.cpuCards().stream().noneMatch(card -> card.ttc() != null) || !totalsMatch(snapshot, state))
+            return Stage.RELAUNCH_FRESH;
+        validateLayout(snapshot, badgeBackground);
+        return Stage.DONE;
     }
 
     private static String physicalJob(CpuListTtcControl.CpuState state) {
