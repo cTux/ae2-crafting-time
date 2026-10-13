@@ -269,6 +269,9 @@ final class StandardAe2Scenario {
     private int variantSecondMenu;
 
     String checkpoint() { if (compactHover != null) return compactHover.checkpoint(); return "phase=" + phase + " fixture=" + fixture.checkpoint
+            + (phase == Stage.STATUS_SCALES ? " font-mode=" + amountFontMode + " scale-case=" + quantityScaleCase
+                    + " scale-set=" + quantityScaleSet + " unicode-prepared=" + unicodeFontPrepared
+                    + " font-reload=" + (amountFontReload == null ? "none" : amountFontReload.isDone() ? "done" : "pending") : "")
             + (leaf.equals("crafting-suspension") ? " suspension=" + suspensionStage : "")
             + (leaf.equals("badge-background") ? " badge=" + badgeStep + " replan=" + badgeReplanAttempts : "")
             + (leaf.equals("recurrent-plan") ? " recurrence=" + recurrenceCase + " sort=" + sort : "")

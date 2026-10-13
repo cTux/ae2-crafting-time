@@ -184,6 +184,10 @@ and selected packs; the screenshot sidecar records the renderer. Restore the
 original pack list, font option and requested scale before the next case on
 success. Terminal failure cleanup restores option and pack selection, starts a
 best-effort reload and aborts without claiming a settled restoration frame.
+The Status-scale progress checkpoint includes the font mode, scale case,
+scale-setting state, Unicode preparation and reload state. Each actual
+transition advances the existing watchdog; a reload that remains pending still
+fails under the same 60-second deadline.
 The earlier forced-uniform effective-scale-1 PNGs remain failed evidence.
 
 ## Capture evidence binding
