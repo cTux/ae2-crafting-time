@@ -133,16 +133,22 @@ environment gates; none of these new checkpoints is claimed as implemented.
 
 ### Optional badge backgrounds (#696)
 
-Status: in-progress
+Status: finished
 
 Scope: Restore isolated CPU-list smoke with optional badge backgrounds.
 
 Issue: [#696](https://github.com/cTux/ae2-crafting-time/issues/696).
+
 Planning: [design](technical-design.md#optional-badge-backgrounds-696)
 and [plan](implementation-plan.md#optional-badge-backgrounds-696).
-Implementation: [PR #698](https://github.com/cTux/ae2-crafting-time/pull/698).
+
+Implementation: [PR #698](https://github.com/cTux/ae2-crafting-time/pull/698), merged in [`6e82579`](https://github.com/cTux/ae2-crafting-time/commit/6e82579eadfc200ed64fd851ba295105c0f10529).
+
 Verification: Tested source revision [`c9fb0705`](https://github.com/cTux/ae2-crafting-time/commit/c9fb0705acdf566a168ab31cd58f585a0939972f) passed the focused Forge driver tests and all four driver-consumer compiles. Separate NeoForge 1.21.1 BaseOnly Off and On runs each passed both client processes; all 56 captures were reviewed. The automatic visual gate reported `REVIEW_REQUIRED` because no qualified baselines exist. Archived runs: `20261013T081920148Z-7b0246ab` (Off, no config) and `20261013T082822272Z-a8977e0f` (On, test-only config). The On config was removed afterward and the VM was shut down.
-Remaining gate: verify CI for the final PR head, merge PR #698, and close #696.
+
+The final PR head [`68d39890`](https://github.com/cTux/ae2-crafting-time/commit/68d39890dcce1084b9acf812b21fcf3472dfe10a) passed `Build all mod JARs` and `Gradle tests`.
+
+Issue: [#696](https://github.com/cTux/ae2-crafting-time/issues/696) is closed.
 
 The isolated leaf must work with Badge background Off, including a missing client
 config, and with backgrounds On as in the compatible suite.
