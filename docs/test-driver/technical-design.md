@@ -5,12 +5,18 @@
 Reuse `cpu-list-total-ttc` in the native prepared clients. At scale 1, validate
 the CPU card against the actual rendered name and TTC bounds while retaining
 the native lower-row and progress-area collision checks. Capture successive
-settled frames, hover a truncated TTC badge, and require the observed full
-tooltip to extend the preview's numeric prefix. Record the screenshots and
-check in the existing scenario group. For Status font height, query actual
-drawn text within the native row cell; semantic description entries have no
-pixel bounds. Keep manual Plan/Status interaction and VNC comparison as
-separate evidence under the [issue plan](../gui-scale-one-readability/implementation-plan.md).
+settled frames with a 15-second hold for live VNC capture, hover a truncated
+TTC badge, and require the observed full tooltip to extend the preview's
+numeric prefix and identify the same CPU. Record the screenshots and check in
+the existing scenario group. After real stored-variant lifecycle checks, its
+leaf temporarily installs a client-only native summary entry with stored,
+craft, missing, recurrent, and variant states; it disables compact amounts and
+sets scale 1 for the five-line Plan capture, then closes the screen. The Status
+leaf briefly seeds a four-line native status at scale 1, then restores its
+original status and scale before the next options capture. Query actual drawn text within
+the native row cell; semantic description entries have no pixel bounds. Keep
+manual interaction and VNC comparison as separate evidence under the
+[issue plan](../gui-scale-one-readability/implementation-plan.md).
 
 ## Millisecond TTC coverage (#692)
 

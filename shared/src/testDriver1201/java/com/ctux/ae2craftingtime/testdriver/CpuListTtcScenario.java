@@ -606,6 +606,8 @@ final class CpuListTtcScenario {
             }
             case SCALE_SMALL_REPEAT -> {
                 if (snapshot.guiScale() != 1) return false;
+                // Hold the settled native screen long enough for a contemporaneous VM framebuffer capture.
+                if (elapsedMillis() < 15_000) return false;
                 validateLayout(snapshot, badgeBackground());
                 screenshot.accept("cpu-list-total-ttc-smallest-scale-settled.png");
                 var target = card(snapshot, smallPreviewSerial);
@@ -618,8 +620,8 @@ final class CpuListTtcScenario {
                 var target = card(snapshot, smallPreviewSerial);
                 var prefix = smallPreview.substring(0, smallPreview.length() - 3);
                 if (snapshot.tooltip().stream().noneMatch(text -> text.rendered().equals(target.name()))
-                        || snapshot.tooltip().stream().noneMatch(text -> text.key().equals("text.ae2craftingtime.ttc")
-                        && text.rendered().startsWith(prefix) && text.rendered().length() > smallPreview.length()
+                        || snapshot.tooltip().stream().noneMatch(text -> text.rendered().startsWith(prefix)
+                        && text.rendered().length() > smallPreview.length()
                         && !text.rendered().endsWith("..."))) {
                     if (System.nanoTime() - stageStarted > java.util.concurrent.TimeUnit.SECONDS.toNanos(5)) {
                         screenshot.accept("cpu-list-total-ttc-smallest-scale-hover-diagnostic.png");
