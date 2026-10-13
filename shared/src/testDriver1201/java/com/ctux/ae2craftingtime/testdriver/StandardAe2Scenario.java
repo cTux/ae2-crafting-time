@@ -3395,9 +3395,7 @@ final class StandardAe2Scenario {
         var accessor = (com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) screen;
         if (statusInteractionStep == 0) {
             if (!server(minecraft, player -> {
-                fixture.seed(player, net.minecraft.world.item.Items.STONE);
-                fixture.seed(player, net.minecraft.world.item.Items.GLASS);
-                fixture.seed(player, net.minecraft.world.item.Items.SMOOTH_STONE);
+                // Stone and smooth stone already have samples; reseeding changes the fixed TTC scale fixture.
                 fixture.seed(player, net.minecraft.world.item.Items.DIRT);
                 return true;
             })) return false;
