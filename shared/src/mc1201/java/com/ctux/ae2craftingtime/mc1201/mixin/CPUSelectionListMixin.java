@@ -43,7 +43,7 @@ public abstract class CPUSelectionListMixin {
         if (guiScale == 1 && !PresentationHooks.cpu()) guiScale = 2;
         if (eta.isEmpty()) return ae2craftingtime$fitName(name, font,
                 CpuTtcLayout.badge(buttonBg.getSrcWidth(), buttonBg.getSrcHeight(), 0, 0.8, guiScale).availableNameWidth());
-        var text = TtcText.ttc(eta.get());
+        Component text = TtcText.ttc(eta.get());
         var layout = CpuTtcLayout.badge(buttonBg.getSrcWidth(), buttonBg.getSrcHeight(), font.width(text), 0.8, guiScale);
         if (guiScale == 1) text = TtcComponents.fitWithEllipsis(text, font, layout.textWidth());
         var scale = (float) layout.scale();
