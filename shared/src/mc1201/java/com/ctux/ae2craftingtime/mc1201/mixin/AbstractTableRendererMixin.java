@@ -4,6 +4,7 @@ import com.ctux.ae2craftingtime.core.TtcEstimate;
 import appeng.client.gui.me.crafting.AbstractTableRenderer;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.me.crafting.CraftingCPUScreen;
+import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.client.gui.me.crafting.CraftConfirmTableRenderer;
 import appeng.client.gui.me.crafting.CraftingStatusTableRenderer;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
@@ -56,8 +57,12 @@ public abstract class AbstractTableRendererMixin {
 
     @Unique
     private NativeTableLayout ae2craftingtime$layout() {
-        boolean status = screen instanceof CraftingCPUScreen<?>;
-        boolean enabled = ClientOptionsRuntime.enabled(status ? OptionFeature.STATUS_ROWS : OptionFeature.PLAN_ROWS);
+        boolean status = screen instanceof CraftingCPUScreen<?>
+                && (Object) this instanceof CraftingStatusTableRenderer;
+        boolean plan = screen instanceof CraftConfirmScreen
+                && (Object) this instanceof CraftConfirmTableRenderer;
+        boolean enabled = (status || plan)
+                && ClientOptionsRuntime.enabled(status ? OptionFeature.STATUS_ROWS : OptionFeature.PLAN_ROWS);
         return NativeTableLayout.of((int) net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScale(),
                 3, 67, 22, rows, enabled && PresentationHooks.table(status));
     }
