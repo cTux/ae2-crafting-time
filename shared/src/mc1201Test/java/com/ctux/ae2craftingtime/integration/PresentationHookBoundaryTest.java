@@ -16,6 +16,15 @@ class PresentationHookBoundaryTest {
         assertTrue(IntegrationMixinPlugin.tableReady(older));
         var newest = renderer(true);
         assertTrue(IntegrationMixinPlugin.tableReady(newest));
+        var render = method(newest, "render");
+        for (var instruction : render.instructions) {
+            if (instruction instanceof MethodInsnNode call && call.name.endsWith("$beginTtcColors")) {
+                render.instructions.remove(instruction);
+                break;
+            }
+        }
+        assertFalse(IntegrationMixinPlugin.tableReady(newest));
+        newest = renderer(true);
         call(method(newest, "render"), "ae2craftingtime$textScale");
         assertFalse(IntegrationMixinPlugin.tableReady(newest));
         method(older, "render").instructions.remove(method(older, "render").instructions.getFirst());
@@ -55,6 +64,7 @@ class PresentationHookBoundaryTest {
         }
         for (int i = 0; i < (newest ? 2 : 3); i++) call(render, "ae2craftingtime$textScale");
         for (int i = 0; i < 2; i++) call(render, "ae2craftingtime$lineHeight");
+        call(render, "ae2craftingtime$beginTtcColors");
         for (var name : new String[] {"columnPitch", "rowPitch", "columnCount", "indexColumns",
                 "inverseX", "inverseY", "visibleRows", "centeringHeight", "fullRowTooltip", "drawTextWithShadow"}) {
             call(render, "ae2craftingtime$" + name);

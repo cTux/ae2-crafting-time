@@ -115,6 +115,7 @@ public final class IntegrationMixinPlugin implements IMixinConfigPlugin {
                 && calls(render, "inverseX") == 1 && calls(render, "inverseY") == 1
                 && calls(render, "visibleRows") == 1 && calls(render, "lineHeight") == 2
                 && calls(render, "drawTextWithShadow") == 1
+                && calls(render, "beginTtcColors") == 1
                 && calls(render, "centeringHeight") == 1 && calls(render, "fullRowTooltip") == 1
                 && calls(scroll, "scrollRows") == 1;
     }

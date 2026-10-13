@@ -48,6 +48,8 @@ import java.util.Optional;
 public abstract class AbstractTableRendererMixin {
     @Shadow(remap = false) @Final private AEBaseScreen<?> screen;
     @Shadow(remap = false) @Final private int rows;
+    @Shadow(remap = false) @Final private int x;
+    @Shadow(remap = false) @Final private int y;
     @Shadow(remap = false) @Final private float lineHeight;
     @Shadow(remap = false) protected abstract List<Component> getEntryDescription(Object entry);
     @Shadow(remap = false) protected abstract List<Component> getEntryTooltip(Object entry);
@@ -185,6 +187,21 @@ public abstract class AbstractTableRendererMixin {
     @Inject(method = "render", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$beginTtcColors(GuiGraphics guiGraphics, int mouseX, int mouseY,
             List<?> entries, int scrollOffset, CallbackInfo ci) {
+        var layout = ae2craftingtime$layout();
+        if (layout.textScale() == 1f) {
+            var background = screen.getStyle().getBackground();
+            if (background != null) {
+                int left = screen.getGuiLeft() + x + 1;
+                int top = screen.getGuiTop() + y;
+                background.copy().src(9, 22, 1, 1).dest(left, top, layout.cellWidth(), rows * 23 - 1)
+                        .blit(guiGraphics);
+                for (int row = 1; row <= layout.rows(); row++) {
+                    background.copy().src(10, 41, 1, 1)
+                            .dest(left, top + row * (layout.cellHeight() + 1) - 1, layout.cellWidth(), 1)
+                            .blit(guiGraphics);
+                }
+            }
+        }
         if (!ae2craftingtime$hasTtc((Object) this)) {
             return;
         }
