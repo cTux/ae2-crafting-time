@@ -4,8 +4,8 @@ Status: in-progress. Implementation and native CodexVM verification are tracked 
 [PR #701](https://github.com/cTux/ae2-crafting-time/pull/701). Scale-1 Plan,
 Status, CPU, and interaction evidence now covers Forge 1.20.1 and NeoForge
 26.1.2. The deterministic Forge Status glyph contract is qualified for its
-reviewed render environment. Final native suite confirmation, review, and CI
-remain open.
+reviewed render environment. The focused Forge checks and NeoForge native base
+suite passed. Final review and current-head CI remain open.
 
 Scope: Native Crafting Plan/Status row text and CPU-card TTC at effective GUI scale 1.
 
