@@ -1476,7 +1476,6 @@ final class StandardAe2Scenario {
             } else if (amountFontMode == 2) {
                 if (requested == 1 && expectedScale != 2)
                     throw new IllegalStateException("Native Unicode font did not promote GUI scale 1 to 2");
-                if (!frames.observe(List.of(requested, CaptureEvidence.readiness(snapshot)))) return false;
                 var image = requested == 1 ? "status-scale-unicode-requested-1-effective-2.png"
                         : "status-scale-unicode-auto.png";
                 screenshot.accept(image);
