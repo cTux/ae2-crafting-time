@@ -180,6 +180,7 @@ final class StandardAe2Scenario {
     private appeng.menu.me.crafting.CraftingStatus statusInteractionOriginal;
     private appeng.menu.me.crafting.CraftingStatus statusInteractionFixture;
     private Boolean originalStatusInstant;
+    private Boolean originalStatusSortControl;
     private com.ctux.ae2craftingtime.core.ProfileKey statusInstantKey;
     private com.ctux.ae2craftingtime.core.ProfileStats statusInstantOriginal;
     private long statusInstantStarted;
@@ -3409,6 +3410,11 @@ final class StandardAe2Scenario {
                         appeng.api.stacks.AEItemKey.of(items.get(index)), 0, 1, 0));
             }
             statusInteractionFixture = new appeng.menu.me.crafting.CraftingStatus(true, 0, 0, 0, entries);
+            var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+            originalStatusSortControl = options.features().enabled(
+                    com.ctux.ae2craftingtime.core.OptionFeature.STATUS_SORT_CONTROL);
+            options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.STATUS_SORT_CONTROL, false);
+            com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
             accessor.ae2craftingtime_test_driver$setStatus(statusInteractionFixture);
             stats.next();
             moveMouse.accept(0, 0);
@@ -3555,6 +3561,13 @@ final class StandardAe2Scenario {
                     originalStatusInstant);
             com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
             originalStatusInstant = null;
+        }
+        if (originalStatusSortControl != null) {
+            var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+            options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.STATUS_SORT_CONTROL,
+                    originalStatusSortControl);
+            com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+            originalStatusSortControl = null;
         }
     }
 
