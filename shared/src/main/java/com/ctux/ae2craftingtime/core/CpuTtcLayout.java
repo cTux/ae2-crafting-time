@@ -2,15 +2,22 @@ package com.ctux.ae2craftingtime.core;
 
 public final class CpuTtcLayout {
     public static Badge badge(int cardWidth, int cardHeight, int textWidth, double nameScale) {
+        return badge(cardWidth, cardHeight, textWidth, nameScale, 2);
+    }
+
+    public static Badge badge(int cardWidth, int cardHeight, int textWidth, double nameScale, int guiScale) {
         if (cardWidth < 0 || cardHeight < 0 || textWidth < 0 || nameScale <= 0) {
             throw new IllegalArgumentException("invalid CPU-card dimensions");
         }
-        double scale = 0.6;
-        if (textWidth > 0) scale = Math.min(scale, Math.max(0, (cardWidth - 8.0) / textWidth));
-        scale = Math.min(scale, Math.max(0, (cardHeight - 16.0) / 9.0));
-        int scaledTextWidth = (int) Math.ceil(textWidth * scale);
+        double scale = guiScale == 1 ? 1 : 0.6;
+        if (guiScale != 1) {
+            if (textWidth > 0) scale = Math.min(scale, Math.max(0, (cardWidth - 8.0) / textWidth));
+            scale = Math.min(scale, Math.max(0, (cardHeight - 16.0) / 9.0));
+        }
+        int scaledTextWidth = guiScale == 1 ? Math.min(textWidth, Math.max(0, cardWidth - 26))
+                : (int) Math.ceil(textWidth * scale);
         int width = scaledTextWidth + 4;
-        int height = (int) Math.ceil(9 * scale) + 2;
+        int height = guiScale == 1 ? 9 : (int) Math.ceil(9 * scale) + 2;
         int availableNameWidth = Math.max(0, (int) ((cardWidth - width - 7) / nameScale));
         return new Badge(scale, scaledTextWidth, width, height, availableNameWidth);
     }

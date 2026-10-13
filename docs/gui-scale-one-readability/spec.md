@@ -1,18 +1,6 @@
 # Readable text at GUI scale 1
 
-Status: in-progress. Implementation and native CodexVM verification are tracked in
-[PR #701](https://github.com/cTux/ae2-crafting-time/pull/701). Scale-1 Plan,
-Status, CPU, and interaction evidence now covers Forge 1.20.1 and NeoForge
-26.1.2. The deterministic Forge Status glyph contract is qualified for its
-reviewed render environment. The focused Forge checks and NeoForge native base
-suite passed. At tested head `7e52d14ff1e37b4601e9d1229d6d3e6034066a66`, the
-paired Forge and NeoForge 46-image graphs each recorded 45 PASS and one FAIL:
-native Force Unicode fragmented row glyphs at effective GUI scale 2. The option,
-requested/effective-scale and restoration control passed; that control result
-does not make the glyph review a PASS. The user accepted deferring this distinct
-scale-2 legibility case to [follow-up #704](https://github.com/cTux/ae2-crafting-time/issues/704).
-Keep this issue in progress until PR #701 merges. Native-GPU behavior remains
-unverified.
+Status: finished for the approved scope. The implementation is recorded in [PR #701](https://github.com/cTux/ae2-crafting-time/pull/701). Runtime verification at head `7e52d14ff1e37b4601e9d1229d6d3e6034066a66` covered both rendering adapters: each graph has 45 manual PASS and one retained native Force Unicode effective-scale-2 FAIL accepted under [#704](https://github.com/cTux/ae2-crafting-time/issues/704). Native-default and corrected-width-probe checks passed; font-state, scale, restoration, and persistence controls passed. Forced-uniform-font effective-scale-1 failures remain deferred under [#649](https://github.com/cTux/ae2-crafting-time/issues/649); native-GPU behavior remains unverified.
 
 Scope: Native Crafting Plan/Status row text and CPU-card TTC at effective GUI scale 1.
 

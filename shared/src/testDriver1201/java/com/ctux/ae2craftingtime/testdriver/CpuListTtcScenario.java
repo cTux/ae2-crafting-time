@@ -27,7 +27,7 @@ final class CpuListTtcScenario {
             "native-cancel", "stale-hit", "mode-switch-late", "ae2-expiry", "default-reopen", "background-coverage",
             "scroll-down", "scroll-up", "partial", "stalled", "reordered", "finished", "cancelled",
             "replacement", "removed", "drop-expiry", "delayed-expiry", "close-reopen", "second-grid",
-            "small-scale", "large-scale", "same-jvm-clear", "process-relaunch", "reconnect", "layout");
+            "small-scale", "small-scale-tooltip", "large-scale", "same-jvm-clear", "process-relaunch", "reconnect", "layout");
 
     enum Stage { INITIAL, MODE_AE2, MODE_SHORTEST, MODE_LONGEST, CHANNEL_FALLBACK, CHANNEL_RESTORED,
         SELECTED, TOOLTIP, WHEEL, SCROLL_DOWN, SCROLL_UP, AE2_HOLD, AE2_LATE, AE2_EXPIRED, MODE_RESTORED,
@@ -36,7 +36,7 @@ final class CpuListTtcScenario {
         REOPEN, REOPENED, SECOND_PREPARE, SECOND_OPEN, SECOND_SCREEN, LARGE_PREPARE, LARGE_OPEN, LARGE_SCREEN,
         LARGE_HOLD, LARGE_SWITCHED,
         RETURN_SECOND, RETURN_OPEN, RETURN_SCREEN,
-        SCALE_SMALL, SCALE_LARGE,
+        SCALE_SMALL, SCALE_SMALL_REPEAT, SCALE_SMALL_TOOLTIP, SCALE_LARGE,
         REJOIN_REQUEST, REJOIN_PREPARE, REJOIN_OPEN, REJOIN_EMPTY, REJOIN_REFRESH, REJOIN_FRESH, RELAUNCH_READY,
         RELAUNCH_PREPARE, RELAUNCH_OPEN, RELAUNCH_EMPTY, RELAUNCH_REFRESH, RELAUNCH_FRESH, DONE }
 
@@ -60,6 +60,8 @@ final class CpuListTtcScenario {
     private int finishSerial = -1;
     private int removeSerial = -1;
     private int shortestSerial = -1;
+    private int smallPreviewSerial = -1;
+    private String smallPreview;
     private long stalledElapsed;
     private String activeAction;
     private boolean actionComplete;
@@ -591,8 +593,50 @@ final class CpuListTtcScenario {
             case SCALE_SMALL -> {
                 if (snapshot.guiScale() != 1 || snapshot.cpuCards().stream().noneMatch(card -> card.ttc() != null)) return false;
                 validateLayout(snapshot, badgeBackground());
+                if (!fullHeightStatusText(snapshot))
+                    throw new IllegalStateException("scale-1 status text did not render at full font height");
                 mark(checks, "small-scale");
                 screenshot.accept("cpu-list-total-ttc-smallest-scale.png");
+                var truncated = snapshot.cpuCards().stream().filter(card -> card.ttc() != null
+                        && card.ttc().rendered().endsWith("...")).findFirst().orElseThrow(() ->
+                                new IllegalStateException("scale-1 CPU did not show a truncated TTC preview"));
+                smallPreviewSerial = truncated.serial();
+                smallPreview = truncated.ttc().rendered();
+                next(Stage.SCALE_SMALL_REPEAT);
+            }
+            case SCALE_SMALL_REPEAT -> {
+                if (snapshot.guiScale() != 1) return false;
+                // Hold the settled native screen long enough for a contemporaneous VM framebuffer capture.
+                if (elapsedMillis() < 15_000) return false;
+                validateLayout(snapshot, badgeBackground());
+                screenshot.accept("cpu-list-total-ttc-smallest-scale-settled.png");
+                var target = card(snapshot, smallPreviewSerial);
+                var preview = target.badge() != null ? target.badge()
+                        : target.ttc() == null ? null : target.ttc().bounds();
+                if (preview == null) throw new IllegalStateException("scale-1 TTC preview was not drawn");
+                moveMouse.accept(preview.centerX(), preview.centerY());
+                next(Stage.SCALE_SMALL_TOOLTIP);
+            }
+            case SCALE_SMALL_TOOLTIP -> {
+                if (snapshot.guiScale() != 1) return false;
+                var target = card(snapshot, smallPreviewSerial);
+                var prefix = smallPreview.substring(0, smallPreview.length() - 3);
+                if (snapshot.tooltip().stream().noneMatch(text -> text.rendered().equals(target.name()))
+                        || snapshot.tooltip().stream().noneMatch(text -> text.rendered().startsWith(prefix)
+                        && text.rendered().length() > smallPreview.length()
+                        && !text.rendered().endsWith("..."))) {
+                    if (System.nanoTime() - stageStarted > java.util.concurrent.TimeUnit.SECONDS.toNanos(5)) {
+                        screenshot.accept("cpu-list-total-ttc-smallest-scale-hover-diagnostic.png");
+                        throw new IllegalStateException("scale-1 CPU tooltip missing full matching TTC: serial="
+                                + smallPreviewSerial + " name=" + target.name() + " preview=" + smallPreview
+                                + " observed=" + snapshot.tooltip());
+                    }
+                    return false;
+                }
+                validateLayout(snapshot, badgeBackground());
+                mark(checks, "small-scale-tooltip");
+                screenshot.accept("cpu-list-total-ttc-smallest-scale-tooltip.png");
+                moveMouse.accept(0, 0);
                 minecraft.options.guiScale().set(0);
                 DriverPlatform.resizeDisplay(minecraft);
                 next(Stage.SCALE_LARGE);
@@ -896,6 +940,14 @@ final class CpuListTtcScenario {
         }
     }
 
+    static boolean fullHeightStatusText(UiSnapshot snapshot) {
+        return !snapshot.rows().isEmpty() && snapshot.rows().stream().anyMatch(row -> snapshot.text().stream()
+                .anyMatch(text -> text.bounds() != null && text.bounds().inside(row.cell())
+                        && text.bounds().height() >= 9
+                        && (text.key().equals("text.ae2craftingtime.status.amounts")
+                        || text.key().equals("text.ae2craftingtime.ttc"))));
+    }
+
     private static boolean renderedName(String name, String rendered) {
         return name.equals(rendered) || rendered.endsWith("...")
                 && name.startsWith(rendered.substring(0, rendered.length() - 3));
@@ -1093,7 +1145,7 @@ final class CpuListTtcScenario {
                     REPLACE_EMPTY, REPLACE_STARTED, REPLACE, RESTART_CLEARED, RESTART_FRESH, REMOVE_SCROLL,
                     REMOVE, DROP_EXPIRED, HOLD, HOLD_EXPIRED, HOLD_RELEASED, REOPENED, SECOND_SCREEN, LARGE_SCREEN,
                     LARGE_HOLD, LARGE_SWITCHED,
-                    RETURN_SCREEN, SCALE_SMALL,
+                    RETURN_SCREEN, SCALE_SMALL, SCALE_SMALL_REPEAT, SCALE_SMALL_TOOLTIP,
                     SCALE_LARGE, REJOIN_EMPTY, REJOIN_FRESH, RELAUNCH_EMPTY, RELAUNCH_FRESH -> true;
             default -> false;
         };

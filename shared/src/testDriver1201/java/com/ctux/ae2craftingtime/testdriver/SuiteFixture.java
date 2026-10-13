@@ -76,5 +76,19 @@ final class SuiteFixture {
         player.inventoryMenu.broadcastChanges();
     }
 
-    boolean samplesRestored() { return data.samples().equals(samples); }
+    boolean samplesRestored() { return sameSampleHistories(samples, data.samples()); }
+
+    static boolean sameSampleHistories(List<com.ctux.ae2craftingtime.core.PersistedOutputSamples> expected,
+            List<com.ctux.ae2craftingtime.core.PersistedOutputSamples> actual) {
+        if (expected.size() != actual.size()) return false;
+        var byKey = new java.util.HashMap<com.ctux.ae2craftingtime.core.ProfileKey,
+                com.ctux.ae2craftingtime.core.PersistedOutputSamples>();
+        for (var output : expected) {
+            if (byKey.putIfAbsent(output.key(), output) != null) return false;
+        }
+        for (var output : actual) {
+            if (!output.equals(byKey.remove(output.key()))) return false;
+        }
+        return byKey.isEmpty();
+    }
 }

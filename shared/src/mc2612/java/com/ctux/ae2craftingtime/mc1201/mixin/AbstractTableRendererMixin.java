@@ -2,11 +2,17 @@ package com.ctux.ae2craftingtime.mc1201.mixin;
 
 import com.ctux.ae2craftingtime.core.TtcEstimate;
 import appeng.client.gui.me.crafting.AbstractTableRenderer;
+import appeng.client.gui.AEBaseScreen;
+import appeng.client.gui.me.crafting.CraftingCPUScreen;
+import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import appeng.client.gui.me.crafting.CraftConfirmTableRenderer;
 import appeng.client.gui.me.crafting.CraftingStatusTableRenderer;
 import appeng.menu.me.crafting.CraftingPlanSummaryEntry;
 import appeng.menu.me.crafting.CraftingStatusEntry;
 import com.ctux.ae2craftingtime.core.CraftingRowState;
+import com.ctux.ae2craftingtime.core.NativeTableLayout;
+import com.ctux.ae2craftingtime.core.PresentationHooks;
+import com.ctux.ae2craftingtime.core.OptionFeature;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcColor;
@@ -22,11 +28,17 @@ import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.contents.TranslatableContents;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.objectweb.asm.Opcodes;
 
 import java.util.HashMap;
 import java.util.List;
@@ -35,13 +47,99 @@ import java.util.Optional;
 
 @Mixin(AbstractTableRenderer.class)
 public abstract class AbstractTableRendererMixin {
+    @Shadow(remap = false) @Final private AEBaseScreen<?> screen;
+    @Shadow(remap = false) @Final private int rows;
+    @Shadow(remap = false) @Final private int x;
+    @Shadow(remap = false) @Final private int y;
+    @Shadow(remap = false) @Final private float lineHeight;
+    @Shadow(remap = false) protected abstract List<Component> getEntryDescription(Object entry);
+    @Shadow(remap = false) protected abstract List<Component> getEntryTooltip(Object entry);
+
+    @Unique
+    private NativeTableLayout ae2craftingtime$layout() {
+        boolean status = screen instanceof CraftingCPUScreen<?>
+                && (Object) this instanceof CraftingStatusTableRenderer;
+        boolean plan = screen instanceof CraftConfirmScreen
+                && (Object) this instanceof CraftConfirmTableRenderer;
+        boolean enabled = (status || plan)
+                && ClientOptionsRuntime.enabled(status ? OptionFeature.STATUS_ROWS : OptionFeature.PLAN_ROWS);
+        return NativeTableLayout.of((int) net.minecraft.client.Minecraft.getInstance().getWindow().getGuiScale(),
+                3, 67, 22, rows, enabled && PresentationHooks.table(status));
+    }
+
+    @ModifyConstant(method = "render", constant = @Constant(intValue = 67), require = 0, remap = false)
+    private int ae2craftingtime$cellWidth(int nativeWidth) { return ae2craftingtime$layout().cellWidth(); }
+
+    @ModifyConstant(method = "render", constant = @Constant(intValue = 22), require = 0, remap = false)
+    private int ae2craftingtime$cellHeight(int nativeHeight) { return ae2craftingtime$layout().cellHeight(); }
+
+    @ModifyConstant(method = "render", constant = @Constant(floatValue = 22f), require = 0, remap = false)
+    private float ae2craftingtime$centeringHeight(float nativeHeight) { return ae2craftingtime$layout().cellHeight(); }
+
+    @ModifyConstant(method = "render", constant = @Constant(intValue = 68), require = 0, remap = false)
+    private int ae2craftingtime$columnPitch(int nativePitch) { return ae2craftingtime$layout().cellWidth() + 1; }
+
+    @ModifyConstant(method = "render", constant = @Constant(intValue = 23), require = 0, remap = false)
+    private int ae2craftingtime$rowPitch(int nativePitch) { return ae2craftingtime$layout().cellHeight() + 1; }
+
+    @ModifyConstant(method = "render", constant = @Constant(intValue = 3, ordinal = 0), require = 0, remap = false)
+    private int ae2craftingtime$columnCount(int nativeCount) { return ae2craftingtime$layout().columns(); }
+
+    @ModifyConstant(method = "render", constant = @Constant(intValue = 3, ordinal = 1), require = 0, remap = false)
+    private int ae2craftingtime$indexColumns(int nativeCount) { return ae2craftingtime$layout().columns(); }
+
+    @ModifyConstant(method = "render", constant = @Constant(floatValue = 0.5f), require = 0, remap = false)
+    private float ae2craftingtime$textScale(float nativeScale) { return ae2craftingtime$layout().textScale(); }
+
+    @ModifyConstant(method = "render", constant = @Constant(floatValue = 2f, ordinal = 1), require = 0, remap = false)
+    private float ae2craftingtime$inverseX(float nativeScale) { return 1f / ae2craftingtime$layout().textScale(); }
+
+    @ModifyConstant(method = "render", constant = @Constant(floatValue = 2f, ordinal = 2), require = 0, remap = false)
+    private float ae2craftingtime$inverseY(float nativeScale) { return 1f / ae2craftingtime$layout().textScale(); }
+
+    @Redirect(method = "render", at = @At(value = "FIELD",
+            target = "Lappeng/client/gui/me/crafting/AbstractTableRenderer;rows:I", opcode = Opcodes.GETFIELD),
+            require = 0, remap = false)
+    private int ae2craftingtime$visibleRows(AbstractTableRenderer<?> renderer) {
+        return ae2craftingtime$layout().rows();
+    }
+
+    @Redirect(method = "render", at = @At(value = "FIELD",
+            target = "Lappeng/client/gui/me/crafting/AbstractTableRenderer;lineHeight:F", opcode = Opcodes.GETFIELD),
+            require = 0, remap = false)
+    private float ae2craftingtime$lineHeight(AbstractTableRenderer<?> renderer) {
+        return lineHeight * (ae2craftingtime$layout().textScale() / 0.5f);
+    }
+
+    @Inject(method = "getScrollableRows(I)I", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
+    private void ae2craftingtime$scrollRows(int entries, CallbackInfoReturnable<Integer> cir) {
+        if (ae2craftingtime$layout().textScale() == 1f) {
+            cir.setReturnValue(ae2craftingtime$layout().scrollableRows(entries));
+        }
+    }
+
+    @Redirect(method = "render", at = @At(value = "INVOKE",
+            target = "Lappeng/client/gui/me/crafting/AbstractTableRenderer;getEntryTooltip(Ljava/lang/Object;)Ljava/util/List;"),
+            require = 0, remap = false)
+    private List<Component> ae2craftingtime$fullRowTooltip(AbstractTableRenderer<?> renderer, Object entry) {
+        var nativeLines = getEntryTooltip(entry);
+        if (ae2craftingtime$layout().textScale() != 1f) return nativeLines;
+        int available = ae2craftingtime$layout().cellWidth() - 23;
+        var font = net.minecraft.client.Minecraft.getInstance().font;
+        var fullLines = getEntryDescription(entry).stream().filter(line -> font.width(line) > available).toList();
+        if (fullLines.isEmpty()) return nativeLines;
+        var result = new java.util.ArrayList<>(nativeLines);
+        result.addAll(fullLines);
+        return result;
+    }
+
     @Redirect(
             method = "render",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/gui/GuiGraphicsExtractor;text(Lnet/minecraft/client/gui/Font;Lnet/minecraft/network/chat/Component;IIIZ)V",
                     remap = true),
-            remap = false)
+            require = 0, remap = false)
     @SuppressWarnings("mapping")
     private void ae2craftingtime$drawTextWithShadow(GuiGraphicsExtractor guiGraphics, Font font, Component text,
             int x, int y, int color, boolean shadow) {
@@ -50,9 +148,14 @@ public abstract class AbstractTableRendererMixin {
             var isAe2CraftingTime = translatable.getKey().startsWith("text.ae2craftingtime.");
             if (isAe2CraftingTime && ae2craftingtime$isTtcLine(translatable))
                 text = TtcComponents.rowSymbolsInTextColor(text, color);
+            if (ae2craftingtime$layout().textScale() == 1f) {
+                int widthBefore = font.width(text);
+                text = TtcComponents.fitWithEllipsis(text, font, ae2craftingtime$layout().cellWidth() - 23);
+                x += widthBefore - font.width(text);
+            }
             if (isAe2CraftingTime && ae2craftingtime$isTtcLine(translatable)) {
                 var width = font.width(text);
-                var scale = CraftingRowState.isWidthLimited(translatable.getKey())
+                var scale = ae2craftingtime$layout().textScale() != 1f && CraftingRowState.isWidthLimited(translatable.getKey())
                         ? CraftingRowState.badgeTextScale(width) : 1f;
                 if (scale < 1f) {
                     var left = x + width - CraftingRowState.BADGE_TEXT_WIDTH;
@@ -66,12 +169,18 @@ public abstract class AbstractTableRendererMixin {
                     pose.popMatrix();
                     return;
                 }
-                TtcBadge.fillRoundedRect(guiGraphics, x - 2, y - 2, x + width + 2, y + font.lineHeight + 2,
+                int padding = ae2craftingtime$layout().badgeVerticalPadding();
+                TtcBadge.fillRoundedRect(guiGraphics, x - 2, y - padding, x + width + 2, y + font.lineHeight + padding,
                         TtcBadge.BACKGROUND);
             }
             guiGraphics.text(font, text, x, y, color,
                     ClientOptionsRuntime.current().textShadow(isAe2CraftingTime, shadow));
             return;
+        }
+        if (ae2craftingtime$layout().textScale() == 1f) {
+            int widthBefore = font.width(text);
+            text = TtcComponents.fitWithEllipsis(text, font, ae2craftingtime$layout().cellWidth() - 23);
+            x += widthBefore - font.width(text);
         }
         guiGraphics.text(font, text, x, y, color, shadow);
     }
@@ -81,9 +190,24 @@ public abstract class AbstractTableRendererMixin {
         return CraftingRowState.isBadge(translatable.getKey());
     }
 
-    @Inject(method = "render", at = @At("HEAD"), remap = false)
+    @Inject(method = "render", at = @At("HEAD"), require = 0, remap = false)
     private void ae2craftingtime$beginTtcColors(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY,
             List<?> entries, int scrollOffset, CallbackInfo ci) {
+        var layout = ae2craftingtime$layout();
+        if (layout.textScale() == 1f) {
+            var background = screen.getStyle().getBackground();
+            if (background != null) {
+                int left = x + 1;
+                int top = y;
+                background.copy().src(9, 22, 1, 1).dest(left, top, layout.cellWidth(), rows * 23 - 1)
+                        .blit(guiGraphics);
+                for (int row = 1; row <= layout.rows(); row++) {
+                    background.copy().src(10, 41, 1, 1)
+                            .dest(left, top + row * (layout.cellHeight() + 1) - 1, layout.cellWidth(), 1)
+                            .blit(guiGraphics);
+                }
+            }
+        }
         if (!ae2craftingtime$hasTtc((Object) this)) {
             return;
         }
@@ -91,7 +215,7 @@ public abstract class AbstractTableRendererMixin {
         TtcColorContext.set(colors(entries));
     }
 
-    @Inject(method = "render", at = @At("RETURN"), remap = false)
+    @Inject(method = "render", at = @At("RETURN"), require = 0, remap = false)
     private void ae2craftingtime$endTtcColors(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY,
             List<?> entries, int scrollOffset, CallbackInfo ci) {
         if (ae2craftingtime$hasTtc((Object) this)) {

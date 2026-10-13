@@ -24,6 +24,8 @@ class CaptureEvidenceTest {
         CaptureEvidence.write(image, options, snapshot, 160, 120, 10, "renderer", System.nanoTime());
         var json = JsonParser.parseString(Files.readString(directory.resolve("checkpoint.json"))).getAsJsonObject();
         assertEquals(9, json.get("frame").getAsLong());
+        assertTrue(json.get("tableCellBoundsSource").getAsString().startsWith("expected-layout-policy"));
+        assertTrue(json.getAsJsonObject("nativeHoveredCell").entrySet().isEmpty());
         var capture = json.getAsJsonObject("capture");
         assertEquals(10, capture.get("frame").getAsLong());
         assertEquals(world + "/craft-plan/checkpoint.png", capture.get("id").getAsString());

@@ -20,6 +20,24 @@ import org.junit.jupiter.api.Test;
 
 class TtcComponentsTest {
     @Test
+    void ellipsisUsesStyledCodepointWidthsAndKeepsTheFullSource() {
+        var splitter = new net.minecraft.client.StringSplitter((codepoint, style) -> style.isBold() ? 2f : 1f);
+        var text = Component.literal("A").withStyle(ChatFormatting.RED)
+                .append(Component.literal("😀BC").withStyle(ChatFormatting.BOLD))
+                .append(Component.literal(" tail").withStyle(ChatFormatting.GREEN));
+        assertEquals(text, TtcComponents.fitWithEllipsis(text, splitter, 12));
+        assertEquals(text, TtcComponents.fitWithEllipsis(text, splitter, 13));
+        var fitted = TtcComponents.fitWithEllipsis(text, splitter, 6);
+        assertEquals("A😀...", fitted.getString());
+        assertEquals(TextColor.fromLegacyFormat(ChatFormatting.RED), fitted.getSiblings().get(0).getStyle().getColor());
+        assertTrue(fitted.getSiblings().get(1).getStyle().isBold());
+        assertEquals("A😀BC tail", text.getString());
+        assertEquals("...", TtcComponents.fitWithEllipsis(text, splitter, 3).getString());
+        assertEquals("", TtcComponents.fitWithEllipsis(text, splitter, 2).getString());
+        assertEquals("", TtcComponents.fitWithEllipsis(Component.empty(), splitter, 0).getString());
+    }
+
+    @Test
     void nonReadyTotalKeepsNumericTimeAndNormalColor() {
         ClientOptionsRuntime.setConnectionSupportForTests(() -> true);
         try {

@@ -1190,6 +1190,21 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void alternatingStatusScaleReadinessKeysCannotBothSettle() {
+        var frames = new StableFrames<Object>(8);
+        var outer = List.of("STATUS_SCALES", 0, "same-rendered-row", List.of());
+        var inner = List.of(1, "same-rendered-row");
+        for (int tick = 0; tick < 40; tick++) {
+            if (frames.observe(outer)) {
+                assertFalse(frames.observe(inner));
+            }
+        }
+        frames.reset();
+        for (int tick = 0; tick < 7; tick++) assertFalse(frames.observe(outer));
+        assertTrue(frames.observe(outer));
+    }
+
+    @Test
     void scenarioClockStartsOnFirstObservation() {
         assertEquals(7, CraftPlanScenario.startTime(0, 7));
         assertEquals(3, CraftPlanScenario.startTime(3, 7));

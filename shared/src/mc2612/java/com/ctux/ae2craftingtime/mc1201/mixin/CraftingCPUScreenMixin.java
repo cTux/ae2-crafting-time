@@ -1,6 +1,8 @@
 package com.ctux.ae2craftingtime.mc1201.mixin;
 
 import com.ctux.ae2craftingtime.core.TtcEstimate;
+import com.ctux.ae2craftingtime.core.NativeTableLayout;
+import com.ctux.ae2craftingtime.core.PresentationHooks;
 import appeng.client.gui.AEBaseScreen;
 import appeng.client.gui.me.crafting.CraftingCPUScreen;
 import appeng.client.gui.me.crafting.CraftingStatusScreen;
@@ -53,16 +55,6 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
     private static final int AE2CRAFTINGTIME_TABLE_X = 9;
     @Unique
     private static final int AE2CRAFTINGTIME_TABLE_Y = 19;
-    @Unique
-    private static final int AE2CRAFTINGTIME_CELL_WIDTH = 67;
-    @Unique
-    private static final int AE2CRAFTINGTIME_CELL_HEIGHT = 22;
-    @Unique
-    private static final int AE2CRAFTINGTIME_CELL_BORDER = 1;
-    @Unique
-    private static final int AE2CRAFTINGTIME_COLS = 3;
-    @Unique
-    private static final int AE2CRAFTINGTIME_ROWS = 6;
     @Unique
     private int ae2craftingtime$ttcSortMode = 2;
 
@@ -250,18 +242,10 @@ public abstract class CraftingCPUScreenMixin<T extends CraftingCPUMenu> extends 
     private int ae2craftingtime$clickedTableIndex(double mouseX, double mouseY) {
         var x = (int) mouseX - getGuiLeft() - AE2CRAFTINGTIME_TABLE_X;
         var y = (int) mouseY - getGuiTop() - AE2CRAFTINGTIME_TABLE_Y;
-        var pitchX = AE2CRAFTINGTIME_CELL_WIDTH + AE2CRAFTINGTIME_CELL_BORDER;
-        var pitchY = AE2CRAFTINGTIME_CELL_HEIGHT + AE2CRAFTINGTIME_CELL_BORDER;
-        if (x < 0 || y < 0 || x % pitchX >= AE2CRAFTINGTIME_CELL_WIDTH || y % pitchY >= AE2CRAFTINGTIME_CELL_HEIGHT) {
-            return -1;
-        }
-
-        var col = x / pitchX;
-        var row = y / pitchY;
-        if (col >= AE2CRAFTINGTIME_COLS || row >= AE2CRAFTINGTIME_ROWS) {
-            return -1;
-        }
-        return (row + scrollbar.getCurrentScroll()) * AE2CRAFTINGTIME_COLS + col;
+        boolean enabled = ClientOptionsRuntime.enabled(OptionFeature.STATUS_ROWS);
+        var layout = NativeTableLayout.of((int) getMinecraft().getWindow().getGuiScale(),
+                3, 67, 22, 6, enabled && PresentationHooks.table(true));
+        return layout.entryAt(x, y, scrollbar.getCurrentScroll());
     }
 
     @Unique

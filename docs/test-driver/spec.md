@@ -1,5 +1,33 @@
 # AE2 Crafting Time Test Driver Spec
 
+## GUI scale 1 readability proof (#695)
+
+The native CPU-list leaf captures two settled scale-1 frames, verifies the
+full-size TTC preview and its card/badge separation from the lower job row,
+then hovers its actual badge or TTC glyph, according to the background option,
+and captures the matching full tooltip.
+The existing Status leaf covers effective scale 1, 2, and Auto with the native
+default font and a wider-amount fixture that keeps default ASCII glyphs. A
+separate Force Unicode check requests scale 1, records the native effective
+scale 2, and captures Auto with the actual option enabled. It saves and restores
+the font option, resource packs, and requested GUI scale. The old forced-uniform
+scale-1 screenshots remain failed evidence. The compact-off case captures four
+native lines at scale 1 using a seeded status entry; the stored-variant Plan
+leaf captures five native lines
+at scale 1 with compact amounts off in the local fixture using a controlled
+client-only summary entry after the real stored-variant lifecycle passes. Both
+require observed glyphs inside the native cell.
+The Status leaf also pins background and shadow for the scale-1 reference,
+captures the enabled pair and disabled TTC fallback, then uses four controlled
+native status entries to check real hover and Ctrl-click identity on the last
+scroll page and after a 1-to-2-to-1 scale change. A reliable sub-5ms client sample
+must render an actual Instant line inside the native scale-1 row. These
+presentation fixtures are restored before the ordinary options checks.
+The issue's [acceptance plan](../gui-scale-one-readability/implementation-plan.md)
+also requires manual interaction, contemporaneous framebuffer/VNC comparison,
+and qualified foreground-pixel review on the two native adapters. A semantic
+leaf result alone cannot pass those visual and interaction gates.
+
 ## Millisecond TTC coverage (#692)
 
 The `compact-hover-numbers` leaf also captures reliable `🥇Instant`, unreliable
@@ -123,7 +151,9 @@ This planned extension is outside the shipped driver baseline. Extend
 `standard-status-controls` with the eight quantity combinations, item/fluid
 boundaries, native tooltip comparison, independent compact/TTC controls,
 Done/Cancel/resets and saved-option relaunch checks. Exercise default and wider
-fonts at scales 1, 2 and Auto on all four targets. Existing status leaves retain
+amount-width fixtures at scales 1, 2 and Auto on all four targets. The real
+Unicode-font control records requested and effective scales separately.
+Existing status leaves retain
 their real waiting, running and warning checks and also inspect the new badge.
 The [feature plan](../crafting-status-amounts/implementation-plan.md#verification-prerequisites)
 defines fixture ownership, synthetic-row limits, capture requirements and

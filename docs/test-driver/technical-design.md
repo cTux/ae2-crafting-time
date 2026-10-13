@@ -1,5 +1,31 @@
 # AE2 Crafting Time Test Driver Technical Design
 
+## GUI scale 1 readability proof (#695)
+
+Reuse `cpu-list-total-ttc` in the native prepared clients. At scale 1, validate
+the CPU card against the actual rendered name and TTC bounds while retaining
+the native lower-row and progress-area collision checks. Capture successive
+settled frames with a 15-second hold for live VNC capture, hover the observed
+truncated TTC badge or glyph when backgrounds are off, and require the full tooltip to extend the preview's
+numeric prefix and identify the same CPU. Record the screenshots and check in
+the existing scenario group. After real local stored-variant lifecycle checks,
+its leaf temporarily installs a client-only native summary entry with stored,
+craft, missing, recurrent, and variant states; it disables compact amounts and
+sets scale 1 for the five-line Plan capture, then closes the screen. The Status
+leaf briefly seeds a four-line native status at scale 1, then restores its
+original status and scale before the next options capture. It pins background
+and shadow to a known reference state, captures the enabled pair and disabled
+row fallback, and uses four controlled status entries to reach the last native
+scroll page. Its actual hovered cell and Ctrl-click chat response must identify
+the first and last visible entries, including after a scale change. A reliable
+sub-5ms client sample exercises Instant through the native row renderer; restore
+the original sample and options afterward. Observe AE2's native
+stored and craft amount glyphs alongside the three decorated Plan lines, and
+query actual drawn text within the native row cell; semantic description entries
+have no pixel bounds. Keep
+manual interaction and VNC comparison as separate evidence under the
+[issue plan](../gui-scale-one-readability/implementation-plan.md).
+
 ## Millisecond TTC coverage (#692)
 
 Extend `CompactHoverNumbersScenario` with a three-sample high-throughput case.
@@ -147,6 +173,22 @@ owns the exact checkpoints, test-only wider-font pack, resource-reload wait,
 scale restoration and two-launch config persistence check. Keep the pack and
 saved config in the disposable runtime, with capture/artifact identity in the
 campaign evidence. Add no general fixture engine or second runner.
+
+For #695, the width probe maps only digits and `/` to its wider bitmap. It
+references Minecraft's default ASCII provider before the uniform fallback, and
+keeps the newer font schema's `uniform:false` filter. The separate native
+Force Unicode stage removes the probe pack, enables the real option, waits for
+font reload and stable frames, and captures requested scale 1/effective scale 2
+plus Auto. Its side evidence records requested/effective scale, option value,
+and selected packs; the screenshot sidecar records the renderer. Restore the
+original pack list, font option and requested scale before the next case on
+success. Terminal failure cleanup restores option and pack selection, starts a
+best-effort reload and aborts without claiming a settled restoration frame.
+The Status-scale progress checkpoint includes the font mode, scale case,
+scale-setting state, Unicode preparation and reload state. Each actual
+transition advances the existing watchdog; a reload that remains pending still
+fails under the same 60-second deadline.
+The earlier forced-uniform effective-scale-1 PNGs remain failed evidence.
 
 ## Capture evidence binding
 

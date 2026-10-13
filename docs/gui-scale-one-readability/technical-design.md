@@ -189,9 +189,12 @@ resource-pack identity and renderer.
 Assert the observed native scale policy rather than relabeling the capture
 scale 1.
 
-Save the original font option and selected resource packs, restore them after
-this case and on failure cleanup, and wait for restoration to settle. Reuse the
-existing scenario, resource-pack reload and screenshot mechanisms. This
+Save the original font option and selected resource packs. On success, await
+resource-pack reload and restore the option and requested scale before the next
+case. On terminal failure, synchronously restore the option, selected pack list
+and requested scale, start a best-effort pack reload, then abort the run; no
+later case advances or claims a settled failure frame. Reuse the existing
+scenario, resource-pack reload and screenshot mechanisms. This
 correction requires no production font provider, new rendering policy, new
 configuration switch or custom font atlas.
 

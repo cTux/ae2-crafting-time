@@ -164,14 +164,26 @@ tasks.register('checkTestDriverArtifacts') {
             if (!parsedMappings) {
                 throw new GradleException("Missing mixin mappings in ${artifact}")
             }
-            def cpuListMixin = name == 'production'
-                    ? 'com/ctux/ae2craftingtime/mc1201/mixin/CPUSelectionListMixin'
-                    : 'com/ctux/ae2craftingtime/testdriver/mixin/CPUSelectionListObservationMixin'
-            def getCpuName = 'Lappeng/client/gui/widgets/CPUSelectionList;getCpuName(Lappeng/menu/me/crafting/CraftingStatusMenu$CraftingCpuListEntry;)Lnet/minecraft/network/chat/Component;'
-            if (!parsedMappings[cpuListMixin]?.get(getCpuName)?.endsWith('Lnet/minecraft/class_2561;')) {
-                throw new GradleException("${name} CPU list invocation descriptor is not remapped for Fabric: ${artifact}")
-            }
-            if (name == 'driver') {
+            if (name == 'production') {
+                def output = new StringWriter()
+                def errors = new StringWriter()
+                def javap = java.util.spi.ToolProvider.findFirst('javap').orElseThrow()
+                def result = javap.run(new PrintWriter(output), new PrintWriter(errors), '-classpath',
+                        artifact.absolutePath, '-p', '-v', 'com.ctux.ae2craftingtime.mc1201.mixin.CPUSelectionListMixin')
+                def bytecode = output.toString()
+                def callbackStart = bytecode.indexOf('ae2craftingtime$drawTtc(')
+                def callback = callbackStart < 0 ? '' : bytecode.substring(callbackStart)
+                if (result != 0 || !callback.contains('descriptor: (Lnet/minecraft/class_2561;Lappeng/menu/me/crafting/CraftingStatusMenu$CraftingCpuListEntry;Lnet/minecraft/class_332;II)Lnet/minecraft/class_2561;')
+                        || !callback.contains('org.spongepowered.asm.mixin.injection.ModifyVariable(')
+                        || !callback.contains('value="STORE"')) {
+                    throw new GradleException("Production CPU STORE callback is not remapped for Fabric: ${artifact} ${errors}")
+                }
+            } else {
+                def cpuListMixin = 'com/ctux/ae2craftingtime/testdriver/mixin/CPUSelectionListObservationMixin'
+                def getCpuName = 'Lappeng/client/gui/widgets/CPUSelectionList;getCpuName(Lappeng/menu/me/crafting/CraftingStatusMenu$CraftingCpuListEntry;)Lnet/minecraft/network/chat/Component;'
+                if (!parsedMappings[cpuListMixin]?.get(getCpuName)?.endsWith('Lnet/minecraft/class_2561;')) {
+                    throw new GradleException("Driver CPU list invocation descriptor is not remapped for Fabric: ${artifact}")
+                }
                 def observer = parsedMappings['com/ctux/ae2craftingtime/testdriver/mixin/StatsNetworkObservationMixin']
                 def serverSend = 'Lnet/fabricmc/fabric/api/networking/v1/ServerPlayNetworking;send(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/network/FriendlyByteBuf;)V'
                 def clientSend = 'Lnet/fabricmc/fabric/api/client/networking/v1/ClientPlayNetworking;send(Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/network/FriendlyByteBuf;)V'

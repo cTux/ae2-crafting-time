@@ -172,7 +172,24 @@ final class StandardAe2Scenario {
     private boolean addonQuantityHovered;
     private appeng.menu.me.crafting.CraftingStatus realStatus;
     private Boolean originalDelayedStatus;
+    private Boolean originalStatusBadgeBackground;
+    private Boolean originalStatusTextShadow;
+    private Boolean originalStatusRows;
+    private int statusVisualCase;
+    private int statusInteractionStep;
+    private appeng.menu.me.crafting.CraftingStatus statusInteractionOriginal;
+    private appeng.menu.me.crafting.CraftingStatus statusInteractionFixture;
+    private Boolean originalStatusInstant;
+    private Boolean originalStatusSortControl;
+    private com.ctux.ae2craftingtime.core.ProfileKey statusInstantKey;
+    private com.ctux.ae2craftingtime.core.ProfileStats statusInstantOriginal;
+    private long statusInstantStarted;
+    private int statusInstantClearFrames;
+    private String statusInteractionLastOutput;
+    private List<String> statusInteractionTopOutputs = List.of();
     private int amountOptionCase;
+    private int statusDenseProof;
+    private appeng.menu.me.crafting.CraftingStatus statusDenseOriginal;
     private boolean amountOptionOpen;
     private boolean amountOptionSaving;
     private int amountOptionSavingTicks;
@@ -182,8 +199,11 @@ final class StandardAe2Scenario {
     private int quantityScaleCase;
     private boolean quantityScaleSet;
     private int originalGuiScale;
+    private boolean originalForceUnicodeFont;
+    private boolean fontStateSaved;
     private int defaultAmountFontWidth;
     private int amountFontMode;
+    private boolean unicodeFontPrepared;
     private CompletableFuture<Void> amountFontReload;
     private java.util.Collection<String> originalResourcePacks;
     private boolean amountPersistOpen;
@@ -236,6 +256,10 @@ final class StandardAe2Scenario {
     private List<Boolean> variantButtons;
     private boolean variantScaleRequested;
     private int variantCapturedStep = -1;
+    private int variantDenseProof;
+    private long variantDenseStarted;
+    private int variantDenseOriginalScale;
+    private boolean variantDenseOriginalCompact;
     private int variantLifecycle;
     private boolean variantReconnectRequested;
     private boolean variantCancelCaptured;
@@ -245,6 +269,9 @@ final class StandardAe2Scenario {
     private int variantSecondMenu;
 
     String checkpoint() { if (compactHover != null) return compactHover.checkpoint(); return "phase=" + phase + " fixture=" + fixture.checkpoint
+            + (phase == Stage.STATUS_SCALES ? " font-mode=" + amountFontMode + " scale-case=" + quantityScaleCase
+                    + " scale-set=" + quantityScaleSet + " unicode-prepared=" + unicodeFontPrepared
+                    + " font-reload=" + (amountFontReload == null ? "none" : amountFontReload.isDone() ? "done" : "pending") : "")
             + (leaf.equals("crafting-suspension") ? " suspension=" + suspensionStage : "")
             + (leaf.equals("badge-background") ? " badge=" + badgeStep + " replan=" + badgeReplanAttempts : "")
             + (leaf.equals("recurrent-plan") ? " recurrence=" + recurrenceCase + " sort=" + sort : "")
@@ -644,6 +671,33 @@ final class StandardAe2Scenario {
             var menu = screen.getMenu();
             var summary = menu.getPlan();
             if (summary == null) return false;
+            if (variantDenseProof == 1) {
+                var dense = snapshot.rows().stream().filter(value -> value.outputId().equals("minecraft:iron_pickaxe"))
+                        .findFirst().orElse(null);
+                if (snapshot.guiScale() != 1 || dense == null || dense.description().size() != 5) {
+                    if (System.nanoTime() - variantDenseStarted > java.util.concurrent.TimeUnit.SECONDS.toNanos(5)) {
+                        screenshot.accept("stored-variant-five-line-diagnostic.png");
+                        restoreDensePlanOptions(minecraft);
+                        throw new IllegalStateException("Seeded native Plan did not render five lines: "
+                                + (dense == null ? "no row" : dense.description()));
+                    }
+                    return false;
+                }
+                long drawnLines = snapshot.text().stream().filter(text -> text.bounds() != null
+                        && text.bounds().inside(dense.cell())).count();
+                if (drawnLines < 5 || dense.cell().height() != 54) {
+                    screenshot.accept("stored-variant-five-line-diagnostic.png");
+                    restoreDensePlanOptions(minecraft);
+                    throw new IllegalStateException("Scale-1 seeded native Plan glyphs escaped 54px row: "
+                            + dense.description());
+                }
+                screenshot.accept("stored-variant-five-line-plan-scale-1.png");
+                restoreDensePlanOptions(minecraft);
+                variantDenseProof = 2;
+                variantStep = 9;
+                minecraft.player.closeContainer();
+                return false;
+            }
             if (!variantScaleRequested) {
                 variantScaleRequested = true;
                 minecraft.options.guiScale().set(0);
@@ -823,8 +877,8 @@ final class StandardAe2Scenario {
                 if (!server(minecraft, player -> player.containerMenu instanceof appeng.menu.me.crafting.CraftConfirmMenu confirm
                         && StoredVariantObservation.verifyServer(confirm.getPlan()))) return false;
                 mark(checks, "notification-lifecycle", true);
-                variantStep = 9;
-                minecraft.player.closeContainer();
+                startDensePlan(minecraft, menu, summary, entry);
+                frames.reset();
                 return false;
             }
             variantPendingStep = variantStep + 1;
@@ -1119,7 +1173,14 @@ final class StandardAe2Scenario {
                 StatusWrapperProbe.requirePassed();
                 mark(checks, "status-wrapper-probe", true);
                 var client = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+                originalStatusBadgeBackground = client.badgeBackground();
+                originalStatusTextShadow = client.features().enabled(
+                        com.ctux.ae2craftingtime.core.OptionFeature.TEXT_SHADOW);
+                originalStatusRows = client.features().enabled(
+                        com.ctux.ae2craftingtime.core.OptionFeature.STATUS_ROWS);
                 client.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS, true);
+                client.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.BADGE_BACKGROUND, false);
+                client.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.TEXT_SHADOW, false);
                 com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(client);
                 // A real job can stall while this synthetic row cycles through fonts and GUI scales.
                 originalDelayedStatus = client.features().enabled(com.ctux.ae2craftingtime.core.OptionFeature.DELAYED_STATUS);
@@ -1221,6 +1282,8 @@ final class StandardAe2Scenario {
                             ? StandardCraftFixture.quantityStatus(8)
                             : StandardCraftFixture.addonQuantityStatus(addonQuantityCases.get(0)));
             originalGuiScale = minecraft.options.guiScale().get();
+            originalForceUnicodeFont = minecraft.options.forceUnicodeFont().get();
+            fontStateSaved = true;
             mark(checks, "quantity-cases", true);
             if (addonQuantityCases.isEmpty()) {
                 writeAddonKeyEvidence();
@@ -1309,24 +1372,41 @@ final class StandardAe2Scenario {
                 frames.reset();
                 if (amountFontMode == 1 && minecraft.font.width(com.ctux.ae2craftingtime.mc1201.TtcText
                         .statusAmounts("4/10/200")) <= defaultAmountFontWidth)
-                    throw new IllegalStateException("Uniform status font is not wider than the default font");
-                if (amountFontMode == 2) {
+                    throw new IllegalStateException("Amount-width probe did not widen the default font");
+                if (amountFontMode == 2 && !unicodeFontPrepared) {
+                    minecraft.options.forceUnicodeFont().set(true);
+                    DriverPlatform.resizeDisplay(minecraft);
+                    unicodeFontPrepared = true;
+                    amountFontReload = minecraft.reloadResourcePacks();
+                    return false;
+                }
+                if (amountFontMode == 3) {
                     minecraft.options.guiScale().set(originalGuiScale);
                     DriverPlatform.resizeDisplay(minecraft);
                     ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
                             .ae2craftingtime_test_driver$setStatus(realStatus);
                     realStatus = null;
                     restoreDelayedStatus();
+                    restoreStatusVisualOptions();
                     mark(checks, "amount-scales", true);
                     phase = Stage.STATUS_OPTIONS;
                 }
                 return false;
             }
-            int requested = quantityScaleCase == 2 ? 0 : quantityScaleCase + 1;
+            int requested = amountFontMode == 2
+                    ? (quantityScaleCase == 0 ? 1 : 0)
+                    : quantityScaleCase == 2 ? 0 : quantityScaleCase + 1;
             if (!quantityScaleSet) {
                 minecraft.options.guiScale().set(requested);
                 DriverPlatform.resizeDisplay(minecraft);
                 quantityScaleSet = true;
+                frames.reset();
+                return false;
+            }
+            if (amountFontMode == 0 && quantityScaleCase == 0 && statusVisualCase == 3) {
+                if (tickScaleOneStatusInteraction(minecraft, snapshot, screenshot, moveMouse)) {
+                    statusVisualCase = 4;
+                }
                 frames.reset();
                 return false;
             }
@@ -1339,7 +1419,12 @@ final class StandardAe2Scenario {
                 frames.reset();
                 return false;
             }
-            if (snapshot.guiScale() <= 0 || requested > 0 && snapshot.guiScale() != requested) return false;
+            int expectedScale = minecraft.getWindow().calculateScale(requested,
+                    minecraft.options.forceUnicodeFont().get());
+            if (snapshot.guiScale() <= 0 || snapshot.guiScale() != expectedScale) return false;
+            if (amountFontMode == 2 && (!minecraft.options.forceUnicodeFont().get()
+                    || !List.copyOf(minecraft.getResourcePackRepository().getSelectedIds()).equals(originalResourcePacks)))
+                throw new IllegalStateException("Native Unicode font probe retained the wider-amount resource pack");
             if (!snapshot.tooltip().isEmpty()) {
                 moveMouse.accept(0, 0);
                 frames.reset();
@@ -1353,12 +1438,53 @@ final class StandardAe2Scenario {
                 throw new IllegalStateException("Scaled amount badge escapes its native cell: " + amount + " rendered " + drawn);
             var expectedTtc = com.ctux.ae2craftingtime.mc1201.TtcText.ttc("~6944444:26:40?").getString();
             var ttc = rowText(snapshot, row.outputId(), "text.ae2craftingtime.ttc");
-            if (ttc == null || !expectedTtc.equals(ttc.rendered()))
+            boolean ttcOff = amountFontMode == 0 && quantityScaleCase == 0 && statusVisualCase == 2;
+            if (ttcOff ? ttc != null : ttc == null || !expectedTtc.equals(ttc.rendered()))
                 throw new IllegalStateException("Scaled TTC escapes its native cell or changed text: expected "
                         + expectedTtc + " rendered " + ttc);
-            screenshot.accept("status-scale-" + (amountFontMode == 0 ? "default" : "wide") + "-"
-                    + (requested == 0 ? "auto" : requested) + ".png");
-            if (++quantityScaleCase < 3) {
+            if (amountFontMode == 0 && quantityScaleCase == 0) {
+                if (statusVisualCase == 0) {
+                    if (!snapshot.badges().isEmpty())
+                        throw new IllegalStateException("Pinned scale-1 Status background-off has a badge");
+                    screenshot.accept("status-scale-default-1.png");
+                    setStatusVisualOptions(true, true, true);
+                    statusVisualCase = 1;
+                    frames.reset();
+                    return false;
+                }
+                if (statusVisualCase == 1) {
+                    if (snapshot.badges().isEmpty())
+                        throw new IllegalStateException("Scale-1 Status background-on lost its badge");
+                    screenshot.accept("status-scale-default-1-background-shadow-on.png");
+                    setStatusVisualOptions(false, false, false);
+                    statusVisualCase = 2;
+                    frames.reset();
+                    return false;
+                }
+                if (statusVisualCase == 2) {
+                    if (row.description().stream().anyMatch(text ->
+                            com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(text.key())
+                                    && !text.key().equals("text.ae2craftingtime.status.amounts"))
+                            || !snapshot.badges().isEmpty())
+                        throw new IllegalStateException("Scale-1 Status TTC-off still drew a badge");
+                    screenshot.accept("status-scale-default-1-ttc-off.png");
+                    setStatusVisualOptions(false, false, true);
+                    statusVisualCase = 3;
+                    frames.reset();
+                    return false;
+                }
+            } else if (amountFontMode == 2) {
+                if (requested == 1 && expectedScale != 2)
+                    throw new IllegalStateException("Native Unicode font did not promote GUI scale 1 to 2");
+                var image = requested == 1 ? "status-scale-unicode-requested-1-effective-2.png"
+                        : "status-scale-unicode-auto.png";
+                screenshot.accept(image);
+                writeUnicodeFontEvidence(minecraft, image, requested, snapshot.guiScale());
+            } else {
+                screenshot.accept("status-scale-" + (amountFontMode == 0 ? "default" : "wide") + "-"
+                        + (requested == 0 ? "auto" : requested) + ".png");
+            }
+            if (++quantityScaleCase < (amountFontMode == 2 ? 2 : 3)) {
                 quantityScaleSet = false;
                 frames.reset();
                 return false;
@@ -1375,9 +1501,14 @@ final class StandardAe2Scenario {
                 amountFontMode = 1;
                 quantityScaleCase = 0;
                 quantityScaleSet = false;
-            } else {
+            } else if (amountFontMode == 1) {
                 packs.setSelected(originalResourcePacks);
                 amountFontMode = 2;
+                quantityScaleCase = 0;
+                quantityScaleSet = false;
+            } else {
+                minecraft.options.forceUnicodeFont().set(originalForceUnicodeFont);
+                amountFontMode = 3;
             }
             amountFontReload = minecraft.reloadResourcePacks();
             frames.reset();
@@ -1390,6 +1521,16 @@ final class StandardAe2Scenario {
                     if (features.enabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS) != compact
                             || features.enabled(com.ctux.ae2craftingtime.core.OptionFeature.STATUS_ROWS) != time)
                         throw new IllegalStateException("Saved amount option combination " + amountOptionCase + " differs");
+                    if (amountOptionCase == 0 && statusDenseProof == 0) {
+                        var accessor = (com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) statusScreen;
+                        statusDenseOriginal = accessor.ae2craftingtime_test_driver$status();
+                        accessor.ae2craftingtime_test_driver$setStatus(StandardCraftFixture.quantityStatus(8));
+                        minecraft.options.guiScale().set(1);
+                        DriverPlatform.resizeDisplay(minecraft);
+                        statusDenseProof = 1;
+                        frames.reset();
+                        return false;
+                    }
                     var row = snapshot.rows().stream().filter(value -> value.storedAmount() > 0
                             || value.activeAmount() > 0 || value.pendingAmount() > 0).findFirst().orElse(null);
                     if (row == null) return false;
@@ -1413,6 +1554,24 @@ final class StandardAe2Scenario {
                             com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(value.key())
                                     && !value.key().equals("text.ae2craftingtime.status.amounts")))
                         throw new IllegalStateException("TTC-off amount option rendered a status badge");
+                    if (amountOptionCase == 0 && statusDenseProof == 1) {
+                        if (snapshot.guiScale() != 1 || row.description().size() != 4 || row.cell().height() != 54) {
+                            restoreDenseStatus(minecraft, statusScreen);
+                            throw new IllegalStateException("Scale-1 compact-off Status lost four native lines: "
+                                    + row.description());
+                        }
+                        long drawnLines = snapshot.text().stream().filter(text -> text.bounds() != null
+                                && text.bounds().inside(row.cell())).count();
+                        if (drawnLines < 4) {
+                            restoreDenseStatus(minecraft, statusScreen);
+                            throw new IllegalStateException("Scale-1 compact-off Status text did not fit its cell");
+                        }
+                        screenshot.accept("status-four-line-compact-off-scale-1.png");
+                        restoreDenseStatus(minecraft, statusScreen);
+                        statusDenseProof = 2;
+                        frames.reset();
+                        return false;
+                    }
                     screenshot.accept("status-options-" + amountOptionCase + ".png");
                     amountOptionCase++;
                     amountOptionSaving = false;
@@ -3068,6 +3227,23 @@ final class StandardAe2Scenario {
         }
     }
 
+    private void writeUnicodeFontEvidence(Minecraft minecraft, String image, int requested, double effective) {
+        var result = new com.google.gson.JsonObject();
+        result.addProperty("schema", 1);
+        result.addProperty("image", image);
+        result.addProperty("requestedGuiScale", requested);
+        result.addProperty("effectiveGuiScale", effective);
+        result.addProperty("forceUnicodeFont", minecraft.options.forceUnicodeFont().get());
+        var packs = new com.google.gson.JsonArray();
+        for (var id : minecraft.getResourcePackRepository().getSelectedIds()) packs.add(id);
+        result.add("selectedResourcePacks", packs);
+        try {
+            java.nio.file.Files.writeString(output.resolve(image.replace(".png", "-font-state.json")), result.toString());
+        } catch (java.io.IOException error) {
+            throw new IllegalStateException("Cannot retain native Unicode font state", error);
+        }
+    }
+
     private void writeAmountContinuation(AmountContinuation value) {
         var path = output.resolve("status-amounts-continuation.json");
         try {
@@ -3225,7 +3401,234 @@ final class StandardAe2Scenario {
     }
 
     void releaseKeys() { stats.releaseKeys(); cleanup(); }
-    void cleanup() { if (compactHover != null) compactHover.close(); restoreDelayedStatus(); }
+    void cleanup() {
+        if (compactHover != null) compactHover.close();
+        restoreDelayedStatus();
+        try {
+            var minecraft = Minecraft.getInstance();
+            if (originalResourcePacks != null) {
+                var packs = minecraft.getResourcePackRepository();
+                if (!List.copyOf(packs.getSelectedIds()).equals(originalResourcePacks)) {
+                    packs.setSelected(originalResourcePacks);
+                    minecraft.reloadResourcePacks();
+                }
+            }
+            if (fontStateSaved) {
+                minecraft.options.forceUnicodeFont().set(originalForceUnicodeFont);
+                minecraft.options.guiScale().set(originalGuiScale);
+                DriverPlatform.resizeDisplay(minecraft);
+            }
+            restoreStatusInteraction(minecraft);
+            restoreStatusVisualOptions();
+        } catch (java.io.IOException error) {
+            throw new java.io.UncheckedIOException(error);
+        }
+    }
+
+    private void setStatusVisualOptions(boolean background, boolean shadow, boolean statusRows)
+            throws java.io.IOException {
+        var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.BADGE_BACKGROUND, background);
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.TEXT_SHADOW, shadow);
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.STATUS_ROWS, statusRows);
+        com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+    }
+
+    private void restoreStatusVisualOptions() throws java.io.IOException {
+        if (originalStatusBadgeBackground == null || originalStatusTextShadow == null
+                || originalStatusRows == null) return;
+        var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.BADGE_BACKGROUND,
+                originalStatusBadgeBackground);
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.TEXT_SHADOW,
+                originalStatusTextShadow);
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.STATUS_ROWS,
+                originalStatusRows);
+        com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+        originalStatusBadgeBackground = null;
+        originalStatusTextShadow = null;
+        originalStatusRows = null;
+    }
+
+    private boolean tickScaleOneStatusInteraction(Minecraft minecraft, UiSnapshot snapshot,
+            Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) throws Exception {
+        if (!(minecraft.screen instanceof CraftingStatusScreen screen)) return false;
+        var accessor = (com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) screen;
+        if (statusInteractionStep == 0) {
+            if (!server(minecraft, player -> {
+                // Stone and smooth stone already have samples; reseeding changes the fixed TTC scale fixture.
+                fixture.seed(player, net.minecraft.world.item.Items.DIRT);
+                return true;
+            })) return false;
+            statusInteractionOriginal = accessor.ae2craftingtime_test_driver$status();
+            var items = List.of(net.minecraft.world.item.Items.STONE, net.minecraft.world.item.Items.GLASS,
+                    net.minecraft.world.item.Items.SMOOTH_STONE, net.minecraft.world.item.Items.DIRT);
+            var entries = new java.util.ArrayList<appeng.menu.me.crafting.CraftingStatusEntry>();
+            for (int index = 0; index < items.size(); index++) {
+                entries.add(new appeng.menu.me.crafting.CraftingStatusEntry(910000L + index,
+                        appeng.api.stacks.AEItemKey.of(items.get(index)), 0, 1, 0));
+            }
+            statusInteractionFixture = new appeng.menu.me.crafting.CraftingStatus(true, 0, 0, 0, entries);
+            var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+            originalStatusSortControl = options.features().enabled(
+                    com.ctux.ae2craftingtime.core.OptionFeature.STATUS_SORT_CONTROL);
+            options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.STATUS_SORT_CONTROL, false);
+            com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+            accessor.ae2craftingtime_test_driver$setStatus(statusInteractionFixture);
+            stats.next();
+            moveMouse.accept(0, 0);
+            statusInteractionStep = 1;
+            return false;
+        }
+        if (accessor.ae2craftingtime_test_driver$status() != statusInteractionFixture) {
+            accessor.ae2craftingtime_test_driver$setStatus(statusInteractionFixture);
+            return false;
+        }
+        if (statusInteractionStep == 1) {
+            if (snapshot.guiScale() != 1 || snapshot.scroll() != 0 || snapshot.rows().size() != 2) return false;
+            statusInteractionTopOutputs = snapshot.rows().stream().map(UiSnapshot.Row::outputId).toList();
+            moveMouse.accept(snapshot.rows().get(0).cell().centerX(), snapshot.rows().get(0).cell().centerY());
+            statusInteractionStep = 2;
+            return false;
+        }
+        if (statusInteractionStep == 2) {
+            var first = snapshot.rows().get(0);
+            if (!first.outputId().equals(UiObservationStore.nativeHover(snapshot).get("outputId"))) return false;
+            if (!stats.click(minecraft, snapshot, first.outputId(), false, 1)) return false;
+            screenshot.accept("status-scale-1-first-native-hover-click.png");
+            stats.next();
+            accessor.ae2craftingtime_test_driver$scrollbar().setCurrentScroll(2);
+            moveMouse.accept(0, 0);
+            statusInteractionStep = 3;
+            return false;
+        }
+        if (statusInteractionStep == 3) {
+            if (snapshot.scroll() != 2 || snapshot.rows().size() != 2) return false;
+            if (snapshot.rows().stream().anyMatch(row -> statusInteractionTopOutputs.contains(row.outputId())))
+                throw new IllegalStateException("Native scale-1 last page reused a first-page entry");
+            moveMouse.accept(snapshot.rows().get(0).cell().centerX(), snapshot.rows().get(0).cell().centerY());
+            statusInteractionStep = 4;
+            return false;
+        }
+        if (statusInteractionStep == 4) {
+            var first = snapshot.rows().get(0);
+            if (!first.outputId().equals(UiObservationStore.nativeHover(snapshot).get("outputId"))) return false;
+            if (!stats.click(minecraft, snapshot, first.outputId(), false, 1)) return false;
+            screenshot.accept("status-scale-1-scroll-first-native-hover-click.png");
+            stats.next();
+            moveMouse.accept(snapshot.rows().get(1).cell().centerX(), snapshot.rows().get(1).cell().centerY());
+            statusInteractionStep = 5;
+            return false;
+        }
+        if (statusInteractionStep == 5) {
+            var last = snapshot.rows().get(1);
+            if (!last.outputId().equals(UiObservationStore.nativeHover(snapshot).get("outputId"))) return false;
+            if (!stats.click(minecraft, snapshot, last.outputId(), false, 1)) return false;
+            statusInteractionLastOutput = last.outputId();
+            screenshot.accept("status-scale-1-scroll-last-native-hover-click.png");
+            stats.next();
+            minecraft.options.guiScale().set(2);
+            DriverPlatform.resizeDisplay(minecraft);
+            statusInteractionStep = 6;
+            return false;
+        }
+        if (statusInteractionStep == 6) {
+            if (snapshot.guiScale() != 2) return false;
+            minecraft.options.guiScale().set(1);
+            DriverPlatform.resizeDisplay(minecraft);
+            statusInteractionStep = 7;
+            return false;
+        }
+        if (statusInteractionStep == 7) {
+            if (snapshot.guiScale() != 1) return false;
+            accessor.ae2craftingtime_test_driver$scrollbar().setCurrentScroll(2);
+            statusInteractionStep = 8;
+            return false;
+        }
+        if (statusInteractionStep == 8) {
+            if (snapshot.scroll() != 2 || snapshot.rows().size() != 2) return false;
+            var last = snapshot.rows().get(1);
+            moveMouse.accept(last.cell().centerX(), last.cell().centerY());
+            statusInteractionStep = 9;
+            return false;
+        }
+        if (statusInteractionStep == 9) {
+            var last = snapshot.rows().get(1);
+            if (!last.outputId().equals(statusInteractionLastOutput)
+                    || !last.outputId().equals(UiObservationStore.nativeHover(snapshot).get("outputId"))) return false;
+            if (!stats.click(minecraft, snapshot, last.outputId(), false, 1)) return false;
+            screenshot.accept("status-scale-1-after-resize-native-hover-click.png");
+            stats.next();
+            statusInstantKey = new com.ctux.ae2craftingtime.core.ProfileKey(last.outputId());
+            statusInstantOriginal = com.ctux.ae2craftingtime.mc1201.ClientStats.CACHE.get(statusInstantKey)
+                    .orElse(null);
+            var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+            originalStatusInstant = options.features().enabled(
+                    com.ctux.ae2craftingtime.core.OptionFeature.INSTANT_STATUS);
+            options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.INSTANT_STATUS, true);
+            com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+            moveMouse.accept(0, 0);
+            statusInstantStarted = System.nanoTime();
+            statusInteractionStep = 10;
+            return false;
+        }
+        var instant = new com.ctux.ae2craftingtime.core.ProfileStats(3, 1, 1000, 20000, 1,
+                com.ctux.ae2craftingtime.core.ProfileUnit.ITEM, true);
+        com.ctux.ae2craftingtime.mc1201.ClientStats.CACHE.replace(
+                List.of(new com.ctux.ae2craftingtime.core.StatsEntry(statusInstantKey, instant)));
+        var row = snapshot.rows().stream().filter(value -> value.outputId().equals(statusInstantKey.outputId()))
+                .findFirst().orElse(null);
+        var line = row == null ? null : row.description().stream().filter(value ->
+                value.key().equals("text.ae2craftingtime.ttc") && value.rendered().contains(
+                        net.minecraft.client.resources.language.I18n.get("text.ae2craftingtime.instant")))
+                .findFirst().orElse(null);
+        if (line == null) {
+            if (System.nanoTime() - statusInstantStarted > java.util.concurrent.TimeUnit.SECONDS.toNanos(5))
+                throw new IllegalStateException("Controlled native scale-1 Status row did not render Instant");
+            return false;
+        }
+        if (!snapshot.tooltip().isEmpty()) {
+            moveMouse.accept(0, 0);
+            statusInstantClearFrames = 0;
+            return false;
+        }
+        if (++statusInstantClearFrames < 2) return false;
+        if (snapshot.guiScale() != 1 || row.cell().height() != 54 || snapshot.text().stream().noneMatch(value ->
+                value.bounds() != null && value.rendered().equals(line.rendered())
+                        && value.bounds().inside(row.cell())))
+            throw new IllegalStateException("Instant glyph did not fit its native 54px Status row");
+        screenshot.accept("status-scale-1-instant-row.png");
+        restoreStatusInteraction(minecraft);
+        return true;
+    }
+
+    private void restoreStatusInteraction(Minecraft minecraft) throws java.io.IOException {
+        if (statusInteractionOriginal != null && minecraft.screen instanceof CraftingStatusScreen screen) {
+            ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) screen)
+                    .ae2craftingtime_test_driver$setStatus(statusInteractionOriginal);
+            statusInteractionOriginal = null;
+        }
+        if (statusInstantKey != null) {
+            if (statusInstantOriginal == null) com.ctux.ae2craftingtime.mc1201.ClientStats.CACHE.remove(statusInstantKey);
+            else com.ctux.ae2craftingtime.mc1201.ClientStats.CACHE.replace(List.of(
+                    new com.ctux.ae2craftingtime.core.StatsEntry(statusInstantKey, statusInstantOriginal)));
+            statusInstantKey = null;
+        }
+        if (originalStatusInstant != null) {
+            var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+            options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.INSTANT_STATUS,
+                    originalStatusInstant);
+            com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+            originalStatusInstant = null;
+        }
+        if (originalStatusSortControl != null) {
+            var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+            options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.STATUS_SORT_CONTROL,
+                    originalStatusSortControl);
+            com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+            originalStatusSortControl = null;
+        }
+    }
 
     private void restoreDelayedStatus() {
         if (originalDelayedStatus == null) return;
@@ -3256,6 +3659,48 @@ final class StandardAe2Scenario {
     private String statsOutput() {
         // Reset the waiting status row so the running furnace keeps its real in-flight sample.
         return phase.ordinal() < Stage.OPEN_STATUS.ordinal() ? "minecraft:stone" : "minecraft:smooth_stone";
+    }
+
+    private void startDensePlan(Minecraft minecraft, appeng.menu.me.crafting.CraftConfirmMenu menu,
+            appeng.menu.me.crafting.CraftingPlanSummary summary,
+            appeng.menu.me.crafting.CraftingPlanSummaryEntry entry) throws java.io.IOException {
+        // Client-only presentation fixture, installed after the real plan's lifecycle checks.
+        var denseEntries = new java.util.ArrayList<>(summary.getEntries());
+        var denseEntry = new appeng.menu.me.crafting.CraftingPlanSummaryEntry(entry.getWhat(),
+                entry.getMissingAmount(), 1, entry.getCraftAmount());
+        denseEntries.set(denseEntries.indexOf(entry), denseEntry);
+        menu.setPlan(new appeng.menu.me.crafting.CraftingPlanSummary(summary.getUsedBytes(),
+                summary.isSimulation(), denseEntries));
+        var labels = (com.ctux.ae2craftingtime.mc1201.RecurrentPlanEntry) denseEntry;
+        labels.ae2craftingtime$recurrent(true);
+        labels.ae2craftingtime$storedVariant(true);
+        variantDenseOriginalScale = minecraft.options.guiScale().get();
+        var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+        variantDenseOriginalCompact = options.features().enabled(
+                com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS);
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS, false);
+        com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+        minecraft.options.guiScale().set(1);
+        DriverPlatform.resizeDisplay(minecraft);
+        variantDenseProof = 1;
+        variantDenseStarted = System.nanoTime();
+    }
+
+    private void restoreDensePlanOptions(Minecraft minecraft) throws java.io.IOException {
+        var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.COMPACT_STATUS_AMOUNTS,
+                variantDenseOriginalCompact);
+        com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+        minecraft.options.guiScale().set(variantDenseOriginalScale);
+        DriverPlatform.resizeDisplay(minecraft);
+    }
+
+    private void restoreDenseStatus(Minecraft minecraft, CraftingStatusScreen screen) {
+        ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) screen)
+                .ae2craftingtime_test_driver$setStatus(statusDenseOriginal);
+        statusDenseOriginal = null;
+        minecraft.options.guiScale().set(originalGuiScale);
+        DriverPlatform.resizeDisplay(minecraft);
     }
 
     private boolean server(Minecraft minecraft, Function<ServerPlayer, Boolean> action) {

@@ -39,6 +39,12 @@ adding an option or changing time arithmetic, tooltips, chat, packets or saves.
 Both renderer families serve the four supported targets; the fit also applies
 to Crafting Plan rows through the same renderer.
 
+The later [scale-1 readability change](../../gui-scale-one-readability/spec.md)
+uses a wider, single-column native table at effective GUI scale 1. There,
+unscaled text takes priority over horizontal compression; an exceptional line
+that still exceeds its cell shows an ellipsis preview and its full value on
+hover. This does not alter the completed #670 evidence above.
+
 | Criterion | Required result |
 | --- | --- |
 | C1 | Regular and delayed TTC labels use the existing 90-font-pixel horizontal limit; short labels and unrelated keys keep their behavior. |

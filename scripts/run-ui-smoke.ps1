@@ -285,18 +285,22 @@ if ($Scenario -eq 'standard-status-controls' -or $selectedCases -contains 'stand
     [IO.File]::WriteAllText((Join-Path $fontPack 'pack.mcmeta'),
         (@{pack=@{description='AE2 Crafting Time status font probe';pack_format=$packFormat}} | ConvertTo-Json -Depth 3),
         [Text.UTF8Encoding]::new($false))
-    # Vanilla's uniform font has the same advance as the default font for digits
-    # and slashes. Use its built-in ASCII bitmap only for amount glyphs so the
-    # actual quantity string exercises horizontal fitting while tooltip prose
-    # keeps the normal font metrics and line spacing.
+    # Widen only the numeric amount glyphs. Keep the normal ASCII bitmap for
+    # labels, suffixes and tooltip prose; the Unicode-font option has its own
+    # native even-scale control in the Status driver.
     $blank = [string]::new([char]0, 16)
     $asciiRows = for ($row = 0; $row -lt 16; $row++) {
         if ($row -eq 2) { [string]::new([char]0, 15) + '/' }
         elseif ($row -eq 3) { '0123456789' + [string]::new([char]0, 6) }
         else { $blank }
     }
+    $defaultProvider = @{type='reference';id='minecraft:include/default'}
+    if ($Target -eq '1.21.1-neoforge' -or $Target -eq '26.1.2-neoforge') {
+        $defaultProvider.filter = @{uniform=$false}
+    }
     $fontDefinition = @{providers=@(
         @{type='bitmap';file='minecraft:font/ascii.png';ascent=7;height=9;chars=@($asciiRows)},
+        $defaultProvider,
         @{type='reference';id='minecraft:uniform'}
     )}
     [IO.File]::WriteAllText((Join-Path $fontPath 'default.json'),
