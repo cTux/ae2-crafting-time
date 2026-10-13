@@ -199,8 +199,11 @@ final class StandardAe2Scenario {
     private int quantityScaleCase;
     private boolean quantityScaleSet;
     private int originalGuiScale;
+    private boolean originalForceUnicodeFont;
+    private boolean fontStateSaved;
     private int defaultAmountFontWidth;
     private int amountFontMode;
+    private boolean unicodeFontPrepared;
     private CompletableFuture<Void> amountFontReload;
     private java.util.Collection<String> originalResourcePacks;
     private boolean amountPersistOpen;
@@ -1276,6 +1279,8 @@ final class StandardAe2Scenario {
                             ? StandardCraftFixture.quantityStatus(8)
                             : StandardCraftFixture.addonQuantityStatus(addonQuantityCases.get(0)));
             originalGuiScale = minecraft.options.guiScale().get();
+            originalForceUnicodeFont = minecraft.options.forceUnicodeFont().get();
+            fontStateSaved = true;
             mark(checks, "quantity-cases", true);
             if (addonQuantityCases.isEmpty()) {
                 writeAddonKeyEvidence();
@@ -1364,8 +1369,15 @@ final class StandardAe2Scenario {
                 frames.reset();
                 if (amountFontMode == 1 && minecraft.font.width(com.ctux.ae2craftingtime.mc1201.TtcText
                         .statusAmounts("4/10/200")) <= defaultAmountFontWidth)
-                    throw new IllegalStateException("Uniform status font is not wider than the default font");
-                if (amountFontMode == 2) {
+                    throw new IllegalStateException("Amount-width probe did not widen the default font");
+                if (amountFontMode == 2 && !unicodeFontPrepared) {
+                    minecraft.options.forceUnicodeFont().set(true);
+                    DriverPlatform.resizeDisplay(minecraft);
+                    unicodeFontPrepared = true;
+                    amountFontReload = minecraft.reloadResourcePacks();
+                    return false;
+                }
+                if (amountFontMode == 3) {
                     minecraft.options.guiScale().set(originalGuiScale);
                     DriverPlatform.resizeDisplay(minecraft);
                     ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
@@ -1378,7 +1390,9 @@ final class StandardAe2Scenario {
                 }
                 return false;
             }
-            int requested = quantityScaleCase == 2 ? 0 : quantityScaleCase + 1;
+            int requested = amountFontMode == 2
+                    ? (quantityScaleCase == 0 ? 1 : 0)
+                    : quantityScaleCase == 2 ? 0 : quantityScaleCase + 1;
             if (!quantityScaleSet) {
                 minecraft.options.guiScale().set(requested);
                 DriverPlatform.resizeDisplay(minecraft);
@@ -1402,7 +1416,12 @@ final class StandardAe2Scenario {
                 frames.reset();
                 return false;
             }
-            if (snapshot.guiScale() <= 0 || requested > 0 && snapshot.guiScale() != requested) return false;
+            int expectedScale = minecraft.getWindow().calculateScale(requested,
+                    minecraft.options.forceUnicodeFont().get());
+            if (snapshot.guiScale() <= 0 || snapshot.guiScale() != expectedScale) return false;
+            if (amountFontMode == 2 && (!minecraft.options.forceUnicodeFont().get()
+                    || !List.copyOf(minecraft.getResourcePackRepository().getSelectedIds()).equals(originalResourcePacks)))
+                throw new IllegalStateException("Native Unicode font probe retained the wider-amount resource pack");
             if (!snapshot.tooltip().isEmpty()) {
                 moveMouse.accept(0, 0);
                 frames.reset();
@@ -1451,11 +1470,19 @@ final class StandardAe2Scenario {
                     frames.reset();
                     return false;
                 }
+            } else if (amountFontMode == 2) {
+                if (requested == 1 && expectedScale != 2)
+                    throw new IllegalStateException("Native Unicode font did not promote GUI scale 1 to 2");
+                if (!frames.observe(List.of(requested, CaptureEvidence.readiness(snapshot)))) return false;
+                var image = requested == 1 ? "status-scale-unicode-requested-1-effective-2.png"
+                        : "status-scale-unicode-auto.png";
+                screenshot.accept(image);
+                writeUnicodeFontEvidence(minecraft, image, requested, snapshot.guiScale());
             } else {
                 screenshot.accept("status-scale-" + (amountFontMode == 0 ? "default" : "wide") + "-"
                         + (requested == 0 ? "auto" : requested) + ".png");
             }
-            if (++quantityScaleCase < 3) {
+            if (++quantityScaleCase < (amountFontMode == 2 ? 2 : 3)) {
                 quantityScaleSet = false;
                 frames.reset();
                 return false;
@@ -1472,9 +1499,14 @@ final class StandardAe2Scenario {
                 amountFontMode = 1;
                 quantityScaleCase = 0;
                 quantityScaleSet = false;
-            } else {
+            } else if (amountFontMode == 1) {
                 packs.setSelected(originalResourcePacks);
                 amountFontMode = 2;
+                quantityScaleCase = 0;
+                quantityScaleSet = false;
+            } else {
+                minecraft.options.forceUnicodeFont().set(originalForceUnicodeFont);
+                amountFontMode = 3;
             }
             amountFontReload = minecraft.reloadResourcePacks();
             frames.reset();
@@ -3193,6 +3225,23 @@ final class StandardAe2Scenario {
         }
     }
 
+    private void writeUnicodeFontEvidence(Minecraft minecraft, String image, int requested, double effective) {
+        var result = new com.google.gson.JsonObject();
+        result.addProperty("schema", 1);
+        result.addProperty("image", image);
+        result.addProperty("requestedGuiScale", requested);
+        result.addProperty("effectiveGuiScale", effective);
+        result.addProperty("forceUnicodeFont", minecraft.options.forceUnicodeFont().get());
+        var packs = new com.google.gson.JsonArray();
+        for (var id : minecraft.getResourcePackRepository().getSelectedIds()) packs.add(id);
+        result.add("selectedResourcePacks", packs);
+        try {
+            java.nio.file.Files.writeString(output.resolve(image.replace(".png", "-font-state.json")), result.toString());
+        } catch (java.io.IOException error) {
+            throw new IllegalStateException("Cannot retain native Unicode font state", error);
+        }
+    }
+
     private void writeAmountContinuation(AmountContinuation value) {
         var path = output.resolve("status-amounts-continuation.json");
         try {
@@ -3354,12 +3403,20 @@ final class StandardAe2Scenario {
         if (compactHover != null) compactHover.close();
         restoreDelayedStatus();
         try {
-            if (statusInteractionOriginal != null) {
-                var minecraft = Minecraft.getInstance();
+            var minecraft = Minecraft.getInstance();
+            if (originalResourcePacks != null) {
+                var packs = minecraft.getResourcePackRepository();
+                if (!List.copyOf(packs.getSelectedIds()).equals(originalResourcePacks)) {
+                    packs.setSelected(originalResourcePacks);
+                    minecraft.reloadResourcePacks();
+                }
+            }
+            if (fontStateSaved) {
+                minecraft.options.forceUnicodeFont().set(originalForceUnicodeFont);
                 minecraft.options.guiScale().set(originalGuiScale);
                 DriverPlatform.resizeDisplay(minecraft);
             }
-            restoreStatusInteraction(Minecraft.getInstance());
+            restoreStatusInteraction(minecraft);
             restoreStatusVisualOptions();
         } catch (java.io.IOException error) {
             throw new java.io.UncheckedIOException(error);

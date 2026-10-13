@@ -174,6 +174,18 @@ scale restoration and two-launch config persistence check. Keep the pack and
 saved config in the disposable runtime, with capture/artifact identity in the
 campaign evidence. Add no general fixture engine or second runner.
 
+For #695, the width probe maps only digits and `/` to its wider bitmap. It
+references Minecraft's default ASCII provider before the uniform fallback, and
+keeps the newer font schema's `uniform:false` filter. The separate native
+Force Unicode stage removes the probe pack, enables the real option, waits for
+font reload and stable frames, and captures requested scale 1/effective scale 2
+plus Auto. Its side evidence records requested/effective scale, option value,
+and selected packs; the screenshot sidecar records the renderer. Restore the
+original pack list, font option and requested scale before the next case on
+success. Terminal failure cleanup restores option and pack selection, starts a
+best-effort reload and aborts without claiming a settled restoration frame.
+The earlier forced-uniform effective-scale-1 PNGs remain failed evidence.
+
 ## Capture evidence binding
 
 `CaptureEvidence` writes a sidecar only after the PNG completes, preserving the

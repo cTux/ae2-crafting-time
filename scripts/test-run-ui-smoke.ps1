@@ -365,8 +365,22 @@ try {
     if ($statusFont.providers[0].type -cne 'bitmap' -or $statusFont.providers[0].height -ne 9 -or
             $statusFont.providers[0].chars[3] -cne ('0123456789' + [string]::new([char]0, 6)) -or
             $statusFont.providers[0].chars[2][15] -cne '/' -or
-            $statusFont.providers[1].id -cne 'minecraft:uniform') {
-        throw 'Status font fixture does not widen the actual amount glyphs over the uniform fallback'
+            $statusFont.providers[1].id -cne 'minecraft:include/default' -or
+            $null -ne $statusFont.providers[1].filter -or
+            $statusFont.providers[2].id -cne 'minecraft:uniform') {
+        throw 'Status font fixture does not isolate wider amount glyphs from the default ASCII fallback'
+    }
+    foreach ($target in @('1.21.1-neoforge', '26.1.2-neoforge')) {
+        Invoke-Case 'pass' -Target $target -Scenario standard-status-controls -shouldPass $false
+        $path = Join-Path $temp "build/ui-smoke/$target/compatible/runtime/resourcepacks/ae2ct-status-wide/assets/minecraft/font/default.json"
+        $font = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
+        if ($font.providers.Count -ne 3 -or
+                $font.providers[0].chars[3] -cne ('0123456789' + [string]::new([char]0, 6)) -or
+                $font.providers[1].id -cne 'minecraft:include/default' -or
+                $font.providers[1].filter.uniform -cne $false -or
+                $font.providers[2].id -cne 'minecraft:uniform') {
+            throw "NeoForge $target status font probe lost the default ASCII fallback or native uniform filter"
+        }
     }
     Invoke-Case "pass" -Scenario cpu-list-total-ttc -shouldPass $false
     Invoke-Case "pass" -Scenario crafting-suspension -shouldPass $true
