@@ -1,6 +1,12 @@
 # Readable text at GUI scale 1
 
-Status: ready-to-implement
+Status: in-progress. Implementation and native CodexVM verification are tracked in
+[PR #701](https://github.com/cTux/ae2-crafting-time/pull/701). Scale-1 Plan,
+Status, CPU, and interaction evidence now covers Forge 1.20.1 and NeoForge
+26.1.2. The deterministic Forge Status glyph contract is qualified for its
+reviewed render environment. The focused Forge checks and NeoForge native base
+suite passed. The revised font-fixture/control checks, final review and
+final-head CI remain pending.
 
 Scope: Native Crafting Plan/Status row text and CPU-card TTC at effective GUI scale 1.
 
@@ -8,16 +14,32 @@ Issue: [#695](https://github.com/cTux/ae2-crafting-time/issues/695)
 
 Planning: [Implementation plan](implementation-plan.md)
 
-The presentation policy is settled below. Implementation can proceed while
-native-hardware diagnostic authority is pending. Completion still requires a
-native result or the user's explicit acceptance of that verification limitation.
+The presentation policy is settled below. The user selected CodexVM for runtime
+verification and accepted native-GPU behavior as unverified. Completion records
+that limit without describing VM evidence as native-hardware proof.
+
+Font scope: preserve Minecraft’s native default-font behavior and use its real
+Force Unicode option. Record requested and effective GUI scales separately.
+On the verified native path, requested scale 1 selects effective scale 2; that
+run is a scale-2 control, not effective-scale-1 uniform-font evidence. The wide
+amount fixture is a width and containment probe: enlarge its intended numeric
+glyphs while retaining the native default provider for other characters.
+
+The user accepted deferring resource packs that force the uniform provider at
+effective GUI scale 1 while bypassing native Force Unicode scaling. Their known
+missing-stroke failures remain unresolved and retained. Correcting the wide
+fixture does not fix or pass that configuration. This exception concerns font
+rasterization only; ordinary scale-1 amounts, TTC, status labels and their
+containment remain required.
 
 ## Behavior
 
 At effective GUI scale 1, draw native crafting-table text at one physical pixel
 per font pixel. Reuse the table's existing 203-pixel width as one wide column,
-with 32-pixel cells and a one-pixel border. Keep its existing height and show as
-many complete rows as fit. Scroll through the remaining entries. Scale 2 and
+with 54-pixel cells and a one-pixel border. Keep its existing height and show as
+many complete rows as fit (two in both supported tables). The height contains
+all five supported Plan lines, including a stored-variant warning and TTC when
+compact amounts is off. Scroll through the remaining entries. Scale 2 and
 larger retain their existing layout. Changing scale while a screen is open
 updates rendering, scroll range, and hit testing together.
 
@@ -45,11 +67,11 @@ not already exist; a tooltip containing only the CPU name is insufficient.
 
 | ID | Required result |
 | --- | --- |
-| R1 | Scale-1 amount, numeric TTC, Instant, and status text have intact, distinguishable strokes in retained PNGs. Font pixels are not fractionally reduced. |
+| R1 | At effective GUI scale 1 under the approved native default-font behavior, amount, numeric TTC, Instant and status text have intact, distinguishable strokes in retained PNGs. The mod adds no fractional font reduction. Forced-uniform resource packs that bypass the native Force Unicode scale policy are an explicitly accepted, unresolved exception; their old failures remain failures. |
 | R2 | All table description lines remain visible, inside their cell, clear of the icon and adjacent rows. The existing long-TTC fixture retains its full text when it fits the wide cell. |
 | R3 | Every entry remains reachable by scrolling; native item hover and TTC Ctrl-click resolve the same entry before/after a scale change and at nonzero scroll. Sorting and selected CPU identity are unchanged. |
 | R4 | CPU TTC remains inside its card, clear of progress/job content; a shortened preview has a complete matching tooltip including uncertainty/symbols. Name tooltip and selection still work. |
-| R5 | Scale 2/Auto, default/uniform fonts, background on/off, shadow on/off, and disabled TTC options keep their documented behavior. |
+| R5 | Scale 2/Auto, the corrected wide-amount containment probe, background on/off, shadow on/off and disabled TTC options keep their documented behavior. Exercise actual native Force Unicode separately and record its requested/effective scale pair; requested scale 1/effective scale 2 verifies that native control, never effective-scale-1 uniform rendering. Restore the original font option and resource-pack state after the case. |
 | R6 | Repeated settled-frame captures and a contemporaneous VM framebuffer view distinguish runtime loss from screenshot timing. Original failed captures remain unchanged. |
 | R7 | A qualified exact-pixel contract covers deterministic text; deleting an unmasked foreground stroke fails it. Semantics or bounds alone cannot pass legibility. |
 | R8 | Both rendering adapters compile and pass focused native startup/UI checks. Native-hardware investigation has a recorded authorized result or explicitly accepted scope decision; VM evidence is never described as native-hardware proof. |
