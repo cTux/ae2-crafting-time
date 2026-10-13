@@ -124,6 +124,9 @@ public final class UiObservationStore {
         }
         if (observed.key().startsWith("text.ae2craftingtime.")
                 || observed.key().equals("gui.ae2craftingtime.suspended")
+                || active.screen.contains("CraftConfirmScreen")
+                && (observed.key().equals("gui.ae2.FromStorage") || observed.key().equals("gui.ae2.ToCraft"))
+                && active.rows.stream().anyMatch(row -> observed.bounds().inside(row.cell()))
                 || active.screen.contains("CraftingStatusScreen")
                 || active.cpuCards.stream().anyMatch(card -> observed.bounds().overlaps(card.nameArea))) {
             active.text.add(observed);
@@ -135,6 +138,7 @@ public final class UiObservationStore {
         if (active != null) {
             var bounds = transformed(graphics, x, y, x + width, y + height);
             if (recordStatusText(text, bounds)) return;
+            if (recordNativePlanAmount(text, bounds, color, bold)) return;
             // Newer AE2 flattens styled row labels into formatted characters.
             if (active.screen.contains("CraftingStatusScreen") && statusRowText(bounds)) {
                 active.text.add(new UiSnapshot.ObservedText("native-status-text", text, List.of(), bounds,
@@ -151,6 +155,26 @@ public final class UiObservationStore {
             active.text.add(new UiSnapshot.ObservedText("gui.ae2craftingtime.suspended", text, List.of(),
                     transformed(graphics, x, y, x + width, y + height)));
         }
+    }
+
+    private static boolean recordNativePlanAmount(String text, Rect bounds, Integer color, boolean bold) {
+        if (active == null || !active.screen.contains("CraftConfirmScreen")) return false;
+        for (var row : active.rows) {
+            if (!bounds.inside(row.cell())) continue;
+            var description = active.planDescriptions.get(row.identity());
+            if (description == null) continue;
+            for (var component : description) {
+                var observed = observed(component, bounds);
+                if (!(observed.key().equals("gui.ae2.FromStorage") || observed.key().equals("gui.ae2.ToCraft"))
+                        || !observed.rendered().equals(text)) continue;
+                if (active.text.stream().noneMatch(existing -> existing.key().equals(observed.key())
+                        && existing.bounds().equals(bounds)))
+                    active.text.add(new UiSnapshot.ObservedText(observed.key(), text, observed.arguments(), bounds,
+                            color, bold));
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean statusRowText(Rect bounds) {

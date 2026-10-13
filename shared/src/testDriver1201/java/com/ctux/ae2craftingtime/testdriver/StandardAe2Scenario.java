@@ -655,6 +655,7 @@ final class StandardAe2Scenario {
                         .findFirst().orElse(null);
                 if (snapshot.guiScale() != 1 || dense == null || dense.description().size() != 5) {
                     if (System.nanoTime() - variantDenseStarted > java.util.concurrent.TimeUnit.SECONDS.toNanos(5)) {
+                        screenshot.accept("stored-variant-five-line-diagnostic.png");
                         restoreDensePlanOptions(minecraft);
                         throw new IllegalStateException("Seeded native Plan did not render five lines: "
                                 + (dense == null ? "no row" : dense.description()));
@@ -664,6 +665,7 @@ final class StandardAe2Scenario {
                 long drawnLines = snapshot.text().stream().filter(text -> text.bounds() != null
                         && text.bounds().inside(dense.cell())).count();
                 if (drawnLines < 5 || dense.cell().height() != 54) {
+                    screenshot.accept("stored-variant-five-line-diagnostic.png");
                     restoreDensePlanOptions(minecraft);
                     throw new IllegalStateException("Scale-1 seeded native Plan glyphs escaped 54px row: "
                             + dense.description());

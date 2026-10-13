@@ -13,8 +13,10 @@ its leaf temporarily installs a client-only native summary entry with stored,
 craft, missing, recurrent, and variant states; it disables compact amounts and
 sets scale 1 for the five-line Plan capture, then closes the screen. The Status
 leaf briefly seeds a four-line native status at scale 1, then restores its
-original status and scale before the next options capture. Query actual drawn text within
-the native row cell; semantic description entries have no pixel bounds. Keep
+original status and scale before the next options capture. Observe AE2's native
+stored and craft amount glyphs alongside the three decorated Plan lines, and
+query actual drawn text within the native row cell; semantic description entries
+have no pixel bounds. Keep
 manual interaction and VNC comparison as separate evidence under the
 [issue plan](../gui-scale-one-readability/implementation-plan.md).
 

@@ -124,6 +124,9 @@ public final class UiObservationStore {
             return;
         }
         if (observed.key().startsWith("text.ae2craftingtime.")
+                || active.screen.contains("CraftConfirmScreen")
+                && (observed.key().equals("gui.ae2.FromStorage") || observed.key().equals("gui.ae2.ToCraft"))
+                && active.rows.stream().anyMatch(row -> observed.bounds().inside(row.cell()))
                 || active.screen.contains("CraftingStatusScreen")
                 || active.cpuCards.stream().anyMatch(card -> observed.bounds().overlaps(card.nameArea))) {
             active.text.add(observed);
@@ -135,11 +138,32 @@ public final class UiObservationStore {
         if (active == null) return;
         var bounds = transformed(graphics, x, y, x + width, y + height);
         if (recordStatusText(text, bounds, color == null ? 0xffffff : color)) return;
+        if (recordNativePlanAmount(text, bounds, color, bold)) return;
         if (active.screen.contains("CraftingStatusScreen") && statusRowText(bounds)) {
             active.text.add(new UiSnapshot.ObservedText("native-status-text", text, List.of(), bounds, color, bold));
         } else if (active.screen.contains("CraftingStatusScreen") && text.startsWith("TTC:")) {
             active.text.add(new UiSnapshot.ObservedText("native-title", text, List.of(), bounds, color, bold));
         }
+    }
+
+    private static boolean recordNativePlanAmount(String text, Rect bounds, Integer color, boolean bold) {
+        if (active == null || !active.screen.contains("CraftConfirmScreen")) return false;
+        for (var row : active.rows) {
+            if (!bounds.inside(row.cell())) continue;
+            var description = active.planDescriptions.get(row.identity());
+            if (description == null) continue;
+            for (var component : description) {
+                var observed = observed(component, bounds);
+                if (!(observed.key().equals("gui.ae2.FromStorage") || observed.key().equals("gui.ae2.ToCraft"))
+                        || !observed.rendered().equals(text)) continue;
+                if (active.text.stream().noneMatch(existing -> existing.key().equals(observed.key())
+                        && existing.bounds().equals(bounds)))
+                    active.text.add(new UiSnapshot.ObservedText(observed.key(), text, observed.arguments(), bounds,
+                            color, bold));
+                return true;
+            }
+        }
+        return false;
     }
 
     public static void fill(GuiGraphicsExtractor graphics, int x1, int y1, int x2, int y2, int color) {
