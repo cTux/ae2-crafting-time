@@ -176,6 +176,15 @@ final class StandardAe2Scenario {
     private Boolean originalStatusTextShadow;
     private Boolean originalStatusRows;
     private int statusVisualCase;
+    private int statusInteractionStep;
+    private appeng.menu.me.crafting.CraftingStatus statusInteractionOriginal;
+    private appeng.menu.me.crafting.CraftingStatus statusInteractionFixture;
+    private Boolean originalStatusInstant;
+    private com.ctux.ae2craftingtime.core.ProfileKey statusInstantKey;
+    private com.ctux.ae2craftingtime.core.ProfileStats statusInstantOriginal;
+    private long statusInstantStarted;
+    private String statusInteractionLastOutput;
+    private List<String> statusInteractionTopOutputs = List.of();
     private int amountOptionCase;
     private int statusDenseProof;
     private appeng.menu.me.crafting.CraftingStatus statusDenseOriginal;
@@ -1372,6 +1381,13 @@ final class StandardAe2Scenario {
                 minecraft.options.guiScale().set(requested);
                 DriverPlatform.resizeDisplay(minecraft);
                 quantityScaleSet = true;
+                frames.reset();
+                return false;
+            }
+            if (amountFontMode == 0 && quantityScaleCase == 0 && statusVisualCase == 3) {
+                if (tickScaleOneStatusInteraction(minecraft, snapshot, screenshot, moveMouse)) {
+                    statusVisualCase = 4;
+                }
                 frames.reset();
                 return false;
             }
@@ -3336,6 +3352,12 @@ final class StandardAe2Scenario {
         if (compactHover != null) compactHover.close();
         restoreDelayedStatus();
         try {
+            if (statusInteractionOriginal != null) {
+                var minecraft = Minecraft.getInstance();
+                minecraft.options.guiScale().set(originalGuiScale);
+                DriverPlatform.resizeDisplay(minecraft);
+            }
+            restoreStatusInteraction(Minecraft.getInstance());
             restoreStatusVisualOptions();
         } catch (java.io.IOException error) {
             throw new java.io.UncheckedIOException(error);
@@ -3365,6 +3387,169 @@ final class StandardAe2Scenario {
         originalStatusBadgeBackground = null;
         originalStatusTextShadow = null;
         originalStatusRows = null;
+    }
+
+    private boolean tickScaleOneStatusInteraction(Minecraft minecraft, UiSnapshot snapshot,
+            Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) throws Exception {
+        if (!(minecraft.screen instanceof CraftingStatusScreen screen)) return false;
+        var accessor = (com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) screen;
+        if (statusInteractionStep == 0) {
+            if (!server(minecraft, player -> {
+                fixture.seed(player, net.minecraft.world.item.Items.STONE);
+                fixture.seed(player, net.minecraft.world.item.Items.GLASS);
+                fixture.seed(player, net.minecraft.world.item.Items.SMOOTH_STONE);
+                fixture.seed(player, net.minecraft.world.item.Items.DIRT);
+                return true;
+            })) return false;
+            statusInteractionOriginal = accessor.ae2craftingtime_test_driver$status();
+            var items = List.of(net.minecraft.world.item.Items.STONE, net.minecraft.world.item.Items.GLASS,
+                    net.minecraft.world.item.Items.SMOOTH_STONE, net.minecraft.world.item.Items.DIRT);
+            var entries = new java.util.ArrayList<appeng.menu.me.crafting.CraftingStatusEntry>();
+            for (int index = 0; index < items.size(); index++) {
+                entries.add(new appeng.menu.me.crafting.CraftingStatusEntry(910000L + index,
+                        appeng.api.stacks.AEItemKey.of(items.get(index)), 0, 1, 0));
+            }
+            statusInteractionFixture = new appeng.menu.me.crafting.CraftingStatus(true, 0, 0, 0, entries);
+            accessor.ae2craftingtime_test_driver$setStatus(statusInteractionFixture);
+            stats.next();
+            moveMouse.accept(0, 0);
+            statusInteractionStep = 1;
+            return false;
+        }
+        if (accessor.ae2craftingtime_test_driver$status() != statusInteractionFixture) {
+            accessor.ae2craftingtime_test_driver$setStatus(statusInteractionFixture);
+            return false;
+        }
+        if (statusInteractionStep == 1) {
+            if (snapshot.guiScale() != 1 || snapshot.scroll() != 0 || snapshot.rows().size() != 2) return false;
+            statusInteractionTopOutputs = snapshot.rows().stream().map(UiSnapshot.Row::outputId).toList();
+            moveMouse.accept(snapshot.rows().get(0).cell().centerX(), snapshot.rows().get(0).cell().centerY());
+            statusInteractionStep = 2;
+            return false;
+        }
+        if (statusInteractionStep == 2) {
+            var first = snapshot.rows().get(0);
+            if (!first.outputId().equals(UiObservationStore.nativeHover(snapshot).get("outputId"))) return false;
+            if (!stats.click(minecraft, snapshot, first.outputId(), false, 1)) return false;
+            screenshot.accept("status-scale-1-first-native-hover-click.png");
+            stats.next();
+            accessor.ae2craftingtime_test_driver$scrollbar().setCurrentScroll(2);
+            moveMouse.accept(0, 0);
+            statusInteractionStep = 3;
+            return false;
+        }
+        if (statusInteractionStep == 3) {
+            if (snapshot.scroll() != 2 || snapshot.rows().size() != 2) return false;
+            if (snapshot.rows().stream().anyMatch(row -> statusInteractionTopOutputs.contains(row.outputId())))
+                throw new IllegalStateException("Native scale-1 last page reused a first-page entry");
+            moveMouse.accept(snapshot.rows().get(0).cell().centerX(), snapshot.rows().get(0).cell().centerY());
+            statusInteractionStep = 4;
+            return false;
+        }
+        if (statusInteractionStep == 4) {
+            var first = snapshot.rows().get(0);
+            if (!first.outputId().equals(UiObservationStore.nativeHover(snapshot).get("outputId"))) return false;
+            if (!stats.click(minecraft, snapshot, first.outputId(), false, 1)) return false;
+            screenshot.accept("status-scale-1-scroll-first-native-hover-click.png");
+            stats.next();
+            moveMouse.accept(snapshot.rows().get(1).cell().centerX(), snapshot.rows().get(1).cell().centerY());
+            statusInteractionStep = 5;
+            return false;
+        }
+        if (statusInteractionStep == 5) {
+            var last = snapshot.rows().get(1);
+            if (!last.outputId().equals(UiObservationStore.nativeHover(snapshot).get("outputId"))) return false;
+            if (!stats.click(minecraft, snapshot, last.outputId(), false, 1)) return false;
+            statusInteractionLastOutput = last.outputId();
+            screenshot.accept("status-scale-1-scroll-last-native-hover-click.png");
+            stats.next();
+            minecraft.options.guiScale().set(2);
+            DriverPlatform.resizeDisplay(minecraft);
+            statusInteractionStep = 6;
+            return false;
+        }
+        if (statusInteractionStep == 6) {
+            if (snapshot.guiScale() != 2) return false;
+            minecraft.options.guiScale().set(1);
+            DriverPlatform.resizeDisplay(minecraft);
+            statusInteractionStep = 7;
+            return false;
+        }
+        if (statusInteractionStep == 7) {
+            if (snapshot.guiScale() != 1) return false;
+            accessor.ae2craftingtime_test_driver$scrollbar().setCurrentScroll(2);
+            statusInteractionStep = 8;
+            return false;
+        }
+        if (statusInteractionStep == 8) {
+            if (snapshot.scroll() != 2 || snapshot.rows().size() != 2) return false;
+            var last = snapshot.rows().get(1);
+            moveMouse.accept(last.cell().centerX(), last.cell().centerY());
+            statusInteractionStep = 9;
+            return false;
+        }
+        if (statusInteractionStep == 9) {
+            var last = snapshot.rows().get(1);
+            if (!last.outputId().equals(statusInteractionLastOutput)
+                    || !last.outputId().equals(UiObservationStore.nativeHover(snapshot).get("outputId"))) return false;
+            if (!stats.click(minecraft, snapshot, last.outputId(), false, 1)) return false;
+            screenshot.accept("status-scale-1-after-resize-native-hover-click.png");
+            stats.next();
+            statusInstantKey = new com.ctux.ae2craftingtime.core.ProfileKey(last.outputId());
+            statusInstantOriginal = com.ctux.ae2craftingtime.mc1201.ClientStats.CACHE.get(statusInstantKey)
+                    .orElse(null);
+            var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+            originalStatusInstant = options.features().enabled(
+                    com.ctux.ae2craftingtime.core.OptionFeature.INSTANT_STATUS);
+            options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.INSTANT_STATUS, true);
+            com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+            statusInstantStarted = System.nanoTime();
+            statusInteractionStep = 10;
+            return false;
+        }
+        var instant = new com.ctux.ae2craftingtime.core.ProfileStats(3, 1, 1000, 20000, 1,
+                com.ctux.ae2craftingtime.core.ProfileUnit.ITEM, true);
+        com.ctux.ae2craftingtime.mc1201.ClientStats.CACHE.replace(
+                List.of(new com.ctux.ae2craftingtime.core.StatsEntry(statusInstantKey, instant)));
+        var row = snapshot.rows().stream().filter(value -> value.outputId().equals(statusInstantKey.outputId()))
+                .findFirst().orElse(null);
+        var line = row == null ? null : row.description().stream().filter(value ->
+                value.key().equals("text.ae2craftingtime.ttc") && value.rendered().contains(
+                        net.minecraft.client.resources.language.I18n.get("text.ae2craftingtime.instant")))
+                .findFirst().orElse(null);
+        if (line == null) {
+            if (System.nanoTime() - statusInstantStarted > java.util.concurrent.TimeUnit.SECONDS.toNanos(5))
+                throw new IllegalStateException("Controlled native scale-1 Status row did not render Instant");
+            return false;
+        }
+        if (snapshot.guiScale() != 1 || row.cell().height() != 54 || snapshot.text().stream().noneMatch(value ->
+                value.bounds() != null && value.rendered().equals(line.rendered())
+                        && value.bounds().inside(row.cell())))
+            throw new IllegalStateException("Instant glyph did not fit its native 54px Status row");
+        screenshot.accept("status-scale-1-instant-row.png");
+        restoreStatusInteraction(minecraft);
+        return true;
+    }
+
+    private void restoreStatusInteraction(Minecraft minecraft) throws java.io.IOException {
+        if (statusInteractionOriginal != null && minecraft.screen instanceof CraftingStatusScreen screen) {
+            ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) screen)
+                    .ae2craftingtime_test_driver$setStatus(statusInteractionOriginal);
+            statusInteractionOriginal = null;
+        }
+        if (statusInstantKey != null) {
+            if (statusInstantOriginal == null) com.ctux.ae2craftingtime.mc1201.ClientStats.CACHE.remove(statusInstantKey);
+            else com.ctux.ae2craftingtime.mc1201.ClientStats.CACHE.replace(List.of(
+                    new com.ctux.ae2craftingtime.core.StatsEntry(statusInstantKey, statusInstantOriginal)));
+            statusInstantKey = null;
+        }
+        if (originalStatusInstant != null) {
+            var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+            options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.INSTANT_STATUS,
+                    originalStatusInstant);
+            com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+            originalStatusInstant = null;
+        }
     }
 
     private void restoreDelayedStatus() {

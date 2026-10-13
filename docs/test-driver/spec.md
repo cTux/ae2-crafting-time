@@ -10,8 +10,15 @@ The existing Status leaf covers scale 1, 2, and Auto with default and uniform
 fonts. Its compact-off case captures four native lines at scale 1 using a
 seeded status entry; the stored-variant Plan leaf captures five native lines
 at scale 1 with compact amounts off in the local fixture using a controlled
-client-only summary entry after the real stored-variant lifecycle passes. Both require observed
-glyphs inside the native cell. The issue's [acceptance plan](../gui-scale-one-readability/implementation-plan.md)
+client-only summary entry after the real stored-variant lifecycle passes. Both
+require observed glyphs inside the native cell.
+The Status leaf also pins background and shadow for the scale-1 reference,
+captures the enabled pair and disabled TTC fallback, then uses four controlled
+native status entries to check real hover and Ctrl-click identity on the last
+scroll page and after a 1-to-2-to-1 scale change. A reliable sub-5ms client sample
+must render an actual Instant line inside the native scale-1 row. These
+presentation fixtures are restored before the ordinary options checks.
+The issue's [acceptance plan](../gui-scale-one-readability/implementation-plan.md)
 also requires manual interaction, contemporaneous framebuffer/VNC comparison,
 and qualified foreground-pixel review on the two native adapters. A semantic
 leaf result alone cannot pass those visual and interaction gates.

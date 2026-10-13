@@ -13,7 +13,13 @@ its leaf temporarily installs a client-only native summary entry with stored,
 craft, missing, recurrent, and variant states; it disables compact amounts and
 sets scale 1 for the five-line Plan capture, then closes the screen. The Status
 leaf briefly seeds a four-line native status at scale 1, then restores its
-original status and scale before the next options capture. Observe AE2's native
+original status and scale before the next options capture. It pins background
+and shadow to a known reference state, captures the enabled pair and disabled
+row fallback, and uses four controlled status entries to reach the last native
+scroll page. Its actual hovered cell and Ctrl-click chat response must identify
+the first and last visible entries, including after a scale change. A reliable
+sub-5ms client sample exercises Instant through the native row renderer; restore
+the original sample and options afterward. Observe AE2's native
 stored and craft amount glyphs alongside the three decorated Plan lines, and
 query actual drawn text within the native row cell; semantic description entries
 have no pixel bounds. Keep
