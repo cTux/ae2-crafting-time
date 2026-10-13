@@ -312,12 +312,53 @@ class TestDriverCoreTest {
     @Test
     void cpuListSelectionFollowsTheDerivedSerialWhenKnownCardsReorder() {
         var expected = new Rect(20, 30, 8, 6);
+        var text = new UiSnapshot.ObservedText("ttc", "~1s", List.of(), new Rect(21, 31, 6, 4));
         var cards = List.of(
                 new UiSnapshot.CpuCard(4, "Delta", "minecraft:smooth_stone", 16, 0, false,
                         null, null, null, null, null, new Rect(1, 2, 3, 4)),
                 new UiSnapshot.CpuCard(2, "Beta", "minecraft:smooth_stone", 8, 0, false,
-                        null, null, null, null, null, expected));
-        assertEquals(expected, CpuListTtcScenario.selectionBadge(cards, 2));
+                        null, null, null, null, text, expected));
+        assertEquals(expected, CpuListTtcScenario.selectionBounds(cards, 2, "minecraft:smooth_stone", 8));
+        var unboxed = new UiSnapshot.CpuCard(2, "Beta", "minecraft:smooth_stone", 8, 0, false,
+                null, null, null, null, text, null);
+        assertEquals(text.bounds(), CpuListTtcScenario.selectionBounds(List.of(cards.get(0), unboxed), 2,
+                "minecraft:smooth_stone", 8));
+        assertThrows(IllegalStateException.class, () -> CpuListTtcScenario.selectionBounds(
+                List.of(cards.get(0), new UiSnapshot.CpuCard(2, "Beta", "minecraft:glass", 8, 0, false,
+                        null, null, null, null, text, expected)), 2, "minecraft:smooth_stone", 8));
+        assertThrows(IllegalStateException.class, () -> CpuListTtcScenario.selectionBounds(
+                List.of(unboxed), 2, "minecraft:smooth_stone", 9));
+        assertThrows(IllegalStateException.class, () -> CpuListTtcScenario.selectionBounds(
+                List.of(new UiSnapshot.CpuCard(2, "Beta", "minecraft:smooth_stone", 8, 0, false,
+                        null, null, null, null, null, null)), 2, "minecraft:smooth_stone", 8));
+        var missingBounds = cpuSnapshotWithText(new UiSnapshot.ObservedText("ttc", "~1s", List.of(), null), null);
+        assertThrows(IllegalStateException.class, () -> CpuListTtcScenario.selectionBounds(
+                missingBounds.cpuCards(), 4, "minecraft:smooth_stone", 8));
+    }
+
+    @Test
+    void cpuListLayoutValidatesTtcTextAndOptionalBadge() {
+        var text = new Rect(60, 20, 20, 8);
+        var badge = new Rect(58, 18, 24, 12);
+        CpuListTtcScenario.validateLayout(cpuSnapshot(text, null), false);
+        CpuListTtcScenario.validateLayout(cpuSnapshot(text, badge), true);
+        assertThrows(IllegalStateException.class, () -> CpuListTtcScenario.validateLayout(cpuSnapshot(text, null), true));
+        assertThrows(IllegalStateException.class, () -> CpuListTtcScenario.validateLayout(cpuSnapshot(text, badge), false));
+        var missingBounds = cpuSnapshotWithText(new UiSnapshot.ObservedText("ttc", "~1s", List.of(), null), null);
+        assertThrows(IllegalStateException.class, () -> CpuListTtcScenario.validateLayout(missingBounds, false));
+        for (var invalid : List.of(new Rect(105, 20, 20, 8), new Rect(20, 17, 20, 8),
+                new Rect(15, 46, 20, 8), new Rect(65, 46, 20, 8))) {
+            assertThrows(IllegalStateException.class,
+                    () -> CpuListTtcScenario.validateLayout(cpuSnapshot(invalid, null), false));
+        }
+        for (var invalid : List.of(new Rect(58, 18, 54, 12), new Rect(58, 18, 12, 12),
+                new Rect(12, 18, 70, 37), new Rect(58, 18, 24, 37), new Rect(12, 14, 70, 16))) {
+            assertThrows(IllegalStateException.class,
+                    () -> CpuListTtcScenario.validateLayout(cpuSnapshot(text, invalid), true));
+        }
+        var idle = cpuSnapshot(null, null);
+        CpuListTtcScenario.validateLayout(idle, false);
+        CpuListTtcScenario.validateLayout(idle, true);
     }
 
     @Test
@@ -713,14 +754,20 @@ class TestDriverCoreTest {
                 new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:smooth_stone", 8,
                         true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(3600L * 1000, true), 9, 10)));
         var rendered = TtcText.ttc("~1:00:00").getString();
-        var card = new UiSnapshot.CpuCard(4, "CPU", "minecraft:smooth_stone", 8, 9, false,
-                null, null, null, null,
-                new UiSnapshot.ObservedText("text.ae2craftingtime.ttc", rendered, List.of(rendered), null), null);
-        var snapshot = new UiSnapshot("screen", "menu", null, 100, 100, 2, 1, 0,
-                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of(card));
-
+        var snapshot = cpuSnapshot(new Rect(60, 20, 20, 8), null, rendered);
         assertEquals(CpuListTtcScenario.Stage.DONE,
-                CpuListTtcScenario.afterRelaunchFreshObservation(snapshot, state));
+                CpuListTtcScenario.afterRelaunchFreshObservation(snapshot, state, false));
+        var boxed = cpuSnapshot(new Rect(60, 20, 20, 8), new Rect(58, 18, 24, 12), rendered);
+        assertEquals(CpuListTtcScenario.Stage.DONE,
+                CpuListTtcScenario.afterRelaunchFreshObservation(boxed, state, true));
+        assertThrows(IllegalStateException.class,
+                () -> CpuListTtcScenario.afterRelaunchFreshObservation(snapshot, state, true));
+        assertThrows(IllegalStateException.class,
+                () -> CpuListTtcScenario.afterRelaunchFreshObservation(boxed, state, false));
+        assertEquals(CpuListTtcScenario.Stage.RELAUNCH_FRESH,
+                CpuListTtcScenario.afterRelaunchFreshObservation(cpuSnapshot(null, null), state, false));
+        assertEquals(CpuListTtcScenario.Stage.RELAUNCH_FRESH,
+                CpuListTtcScenario.afterRelaunchFreshObservation(cpuSnapshot(new Rect(60, 20, 20, 8), null), state, false));
     }
 
     @Test
@@ -1569,6 +1616,24 @@ class TestDriverCoreTest {
             List<Rect> cells, Rect gui) {
         return new UiSnapshot("screen", "menu", gui, 100, 100, 1, 1, 0, List.of(), List.of(text), List.of(),
                 widgets, cells, List.of());
+    }
+
+    private static UiSnapshot cpuSnapshot(Rect textBounds, Rect badge) {
+        return cpuSnapshot(textBounds, badge, "~1s");
+    }
+
+    private static UiSnapshot cpuSnapshot(Rect textBounds, Rect badge, String rendered) {
+        return cpuSnapshotWithText(textBounds == null ? null
+                : new UiSnapshot.ObservedText("text.ae2craftingtime.ttc", rendered, List.of(rendered), textBounds), badge);
+    }
+
+    private static UiSnapshot cpuSnapshotWithText(UiSnapshot.ObservedText text, Rect badge) {
+        var card = new UiSnapshot.CpuCard(4, "CPU", "minecraft:smooth_stone", 8, 9, false,
+                new Rect(10, 10, 100, 60), new Rect(12, 12, 30, 12), new Rect(12, 45, 30, 10),
+                new Rect(60, 45, 30, 10), text, badge);
+        var name = new UiSnapshot.ObservedText("native-name", "CPU", List.of(), new Rect(14, 14, 20, 8));
+        return new UiSnapshot("screen", "menu", new Rect(0, 0, 120, 80), 200, 100, 2, 1, 0,
+                List.of(), List.of(name), List.of(), List.of(), List.of(), List.of(), List.of(card));
     }
 
     private static CpuListTtcControl.CpuState cpuState(int serial, String jobId, long amount,
