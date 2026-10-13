@@ -17,7 +17,7 @@ public final class CpuTtcLayout {
         int scaledTextWidth = guiScale == 1 ? Math.min(textWidth, Math.max(0, cardWidth - 26))
                 : (int) Math.ceil(textWidth * scale);
         int width = scaledTextWidth + 4;
-        int height = (int) Math.ceil(9 * scale) + 2;
+        int height = guiScale == 1 ? 9 : (int) Math.ceil(9 * scale) + 2;
         int availableNameWidth = Math.max(0, (int) ((cardWidth - width - 7) / nameScale));
         return new Badge(scale, scaledTextWidth, width, height, availableNameWidth);
     }

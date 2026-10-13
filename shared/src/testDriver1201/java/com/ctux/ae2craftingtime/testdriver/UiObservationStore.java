@@ -295,7 +295,8 @@ public final class UiObservationStore {
     static UiSnapshot.ObservedText cpuTtcText(List<UiSnapshot.ObservedText> drawn, Rect card) {
         var text = drawn.stream().filter(value -> value.bounds() != null && value.bounds().inside(card)
                 && (value.key().equals("text.ae2craftingtime.ttc")
-                || value.key().equals("literal") && value.rendered().startsWith(
+                || value.key().equals("literal") && value.bounds().x() >= card.x() + card.width() / 4
+                && value.rendered().startsWith(
                         com.ctux.ae2craftingtime.core.TtcSymbols.Symbol.TIME.glyph() + " ")))
                 .findFirst().orElse(null);
         if (text == null || !text.key().equals("literal")) return text;

@@ -49,11 +49,11 @@ public abstract class CPUSelectionListMixin {
         var scale = (float) layout.scale();
         var textWidth = layout.textWidth();
         var right = x + buttonBg.getSrcWidth() - 2;
-        var top = y + 2;
+        var top = y + (guiScale == 1 ? 1 : 2);
         TtcBadge.fillRoundedRect(guiGraphics, right - layout.width(), top, right, top + layout.height(), TtcBadge.BACKGROUND);
         var pose = guiGraphics.pose();
         pose.pushPose();
-        pose.translate(right - textWidth - 2, top + 1, 0);
+        pose.translate(right - textWidth - 2, top + (guiScale == 1 ? 0 : 1), 0);
         pose.scale(scale, scale, 1);
         guiGraphics.drawString(font, text, 0, 0, 0xE0E0E0, ClientOptionsRuntime.textShadow());
         pose.popPose();

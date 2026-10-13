@@ -218,8 +218,7 @@ public final class UiObservationStore {
                 row.storedAmount, row.activeAmount, row.pendingAmount)).toList();
         var mergedBadges = merge(active.badges);
         var cpuCards = active.cpuCards.stream().map(card -> {
-            var ttc = active.text.stream().filter(text -> text.key().equals("text.ae2craftingtime.ttc")
-                    && text.bounds() != null && text.bounds().inside(card.bounds)).findFirst().orElse(null);
+            var ttc = cpuTtcText(active.text, card.bounds);
             var badge = mergedBadges.stream().filter(rect -> rect.inside(card.bounds)).findFirst().orElse(null);
             return new UiSnapshot.CpuCard(card.serial, card.name, card.jobId, card.amount, card.elapsedNanos,
                     card.selected, card.bounds, card.nameArea, card.infoArea, card.progressArea, ttc, badge);
@@ -229,6 +228,18 @@ public final class UiObservationStore {
                 active.guiScale, ++sequence, active.scroll, rows, active.text, mergedBadges, active.widgets,
                 active.itemCells, active.tooltip, cpuCards, active.rawCpuSerials);
         active = null;
+    }
+
+    static UiSnapshot.ObservedText cpuTtcText(List<UiSnapshot.ObservedText> drawn, Rect card) {
+        var text = drawn.stream().filter(value -> value.bounds() != null && value.bounds().inside(card)
+                && (value.key().equals("text.ae2craftingtime.ttc")
+                || value.key().equals("literal") && value.bounds().x() >= card.x() + card.width() / 4
+                && value.rendered().startsWith(
+                        com.ctux.ae2craftingtime.core.TtcSymbols.Symbol.TIME.glyph() + " ")))
+                .findFirst().orElse(null);
+        if (text == null || !text.key().equals("literal")) return text;
+        return new UiSnapshot.ObservedText("text.ae2craftingtime.ttc", text.rendered(),
+                text.arguments(), text.bounds(), text.color(), text.bold());
     }
 
     public static void nativeHover(appeng.client.gui.StackWithBounds hovered) {

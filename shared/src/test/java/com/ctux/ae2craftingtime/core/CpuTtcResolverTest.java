@@ -55,7 +55,7 @@ class CpuTtcResolverTest {
         assertEquals(1, onePixel.scale());
         assertEquals(54, onePixel.textWidth());
         assertEquals(58, onePixel.width());
-        assertEquals(11, onePixel.height());
+        assertEquals(9, onePixel.height());
         assertEquals(18, onePixel.availableNameWidth());
         assertEquals(54, CpuTtcLayout.badge(80, 32, 400, 0.8, 1).textWidth());
         assertEquals(0, CpuTtcLayout.badge(7, 32, 400, 0.8, 1).textWidth());

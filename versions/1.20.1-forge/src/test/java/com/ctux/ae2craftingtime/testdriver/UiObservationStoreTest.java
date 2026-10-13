@@ -17,6 +17,8 @@ class UiObservationStoreTest {
                 new Rect(80, 22, 35, 9), 0xE0E0E0, false);
         var unrelated = new UiSnapshot.ObservedText("literal", "CPU #1", List.of(),
                 new Rect(12, 22, 30, 9), null, false);
+        var clockNamedCpu = new UiSnapshot.ObservedText("literal", glyph + " CPU", List.of(),
+                new Rect(12, 22, 31, 9), null, false);
         var observed = UiObservationStore.cpuTtcText(List.of(outside, unrelated, preview), card);
         assertEquals("text.ae2craftingtime.ttc", observed.key());
         assertEquals(preview.rendered(), observed.rendered());
@@ -29,5 +31,6 @@ class UiObservationStoreTest {
                 new Rect(80, 22, 35, 9), null, false);
         assertNull(UiObservationStore.cpuTtcText(List.of(translatedOutside), card));
         assertNull(UiObservationStore.cpuTtcText(List.of(outside, unrelated), card));
+        assertNull(UiObservationStore.cpuTtcText(List.of(clockNamedCpu), card));
     }
 }
