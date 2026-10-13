@@ -183,6 +183,7 @@ final class StandardAe2Scenario {
     private com.ctux.ae2craftingtime.core.ProfileKey statusInstantKey;
     private com.ctux.ae2craftingtime.core.ProfileStats statusInstantOriginal;
     private long statusInstantStarted;
+    private int statusInstantClearFrames;
     private String statusInteractionLastOutput;
     private List<String> statusInteractionTopOutputs = List.of();
     private int amountOptionCase;
@@ -3501,6 +3502,7 @@ final class StandardAe2Scenario {
                     com.ctux.ae2craftingtime.core.OptionFeature.INSTANT_STATUS);
             options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.INSTANT_STATUS, true);
             com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+            moveMouse.accept(0, 0);
             statusInstantStarted = System.nanoTime();
             statusInteractionStep = 10;
             return false;
@@ -3520,6 +3522,12 @@ final class StandardAe2Scenario {
                 throw new IllegalStateException("Controlled native scale-1 Status row did not render Instant");
             return false;
         }
+        if (!snapshot.tooltip().isEmpty()) {
+            moveMouse.accept(0, 0);
+            statusInstantClearFrames = 0;
+            return false;
+        }
+        if (++statusInstantClearFrames < 2) return false;
         if (snapshot.guiScale() != 1 || row.cell().height() != 54 || snapshot.text().stream().noneMatch(value ->
                 value.bounds() != null && value.rendered().equals(line.rendered())
                         && value.bounds().inside(row.cell())))
