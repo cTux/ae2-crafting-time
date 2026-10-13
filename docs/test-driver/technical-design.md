@@ -5,8 +5,8 @@
 Reuse `cpu-list-total-ttc` in the native prepared clients. At scale 1, validate
 the CPU card against the actual rendered name and TTC bounds while retaining
 the native lower-row and progress-area collision checks. Capture successive
-settled frames with a 15-second hold for live VNC capture, hover a truncated
-TTC badge, and require the observed full tooltip to extend the preview's
+settled frames with a 15-second hold for live VNC capture, hover the observed
+truncated TTC badge or glyph when backgrounds are off, and require the full tooltip to extend the preview's
 numeric prefix and identify the same CPU. Record the screenshots and check in
 the existing scenario group. After real local stored-variant lifecycle checks,
 its leaf temporarily installs a client-only native summary entry with stored,

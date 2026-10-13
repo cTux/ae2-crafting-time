@@ -611,8 +611,10 @@ final class CpuListTtcScenario {
                 validateLayout(snapshot, badgeBackground());
                 screenshot.accept("cpu-list-total-ttc-smallest-scale-settled.png");
                 var target = card(snapshot, smallPreviewSerial);
-                if (target.badge() == null) throw new IllegalStateException("scale-1 TTC badge was not drawn");
-                moveMouse.accept(target.badge().centerX(), target.badge().centerY());
+                var preview = target.badge() != null ? target.badge()
+                        : target.ttc() == null ? null : target.ttc().bounds();
+                if (preview == null) throw new IllegalStateException("scale-1 TTC preview was not drawn");
+                moveMouse.accept(preview.centerX(), preview.centerY());
                 next(Stage.SCALE_SMALL_TOOLTIP);
             }
             case SCALE_SMALL_TOOLTIP -> {

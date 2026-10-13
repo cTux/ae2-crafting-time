@@ -4,7 +4,8 @@
 
 The native CPU-list leaf captures two settled scale-1 frames, verifies the
 full-size TTC preview and its card/badge separation from the lower job row,
-then hovers the truncated preview and captures its matching full tooltip.
+then hovers its actual badge or TTC glyph, according to the background option,
+and captures the matching full tooltip.
 The existing Status leaf covers scale 1, 2, and Auto with default and uniform
 fonts. Its compact-off case captures four native lines at scale 1 using a
 seeded status entry; the stored-variant Plan leaf captures five native lines
