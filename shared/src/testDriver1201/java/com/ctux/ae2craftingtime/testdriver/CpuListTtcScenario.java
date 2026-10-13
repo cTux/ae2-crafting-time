@@ -620,7 +620,15 @@ final class CpuListTtcScenario {
                 if (snapshot.tooltip().stream().noneMatch(text -> text.rendered().equals(target.name()))
                         || snapshot.tooltip().stream().noneMatch(text -> text.key().equals("text.ae2craftingtime.ttc")
                         && text.rendered().startsWith(prefix) && text.rendered().length() > smallPreview.length()
-                        && !text.rendered().endsWith("..."))) return false;
+                        && !text.rendered().endsWith("..."))) {
+                    if (System.nanoTime() - stageStarted > java.util.concurrent.TimeUnit.SECONDS.toNanos(5)) {
+                        screenshot.accept("cpu-list-total-ttc-smallest-scale-hover-diagnostic.png");
+                        throw new IllegalStateException("scale-1 CPU tooltip missing full matching TTC: serial="
+                                + smallPreviewSerial + " name=" + target.name() + " preview=" + smallPreview
+                                + " observed=" + snapshot.tooltip());
+                    }
+                    return false;
+                }
                 validateLayout(snapshot, badgeBackground());
                 mark(checks, "small-scale-tooltip");
                 screenshot.accept("cpu-list-total-ttc-smallest-scale-tooltip.png");
