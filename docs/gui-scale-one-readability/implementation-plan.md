@@ -4,9 +4,11 @@
 
 1. Deliver these documents and the accepted font-scope clarification through
    the documentation workflow. Record the user's CodexVM choice and accepted
-   native-GPU verification limit. Keep forced-uniform effective-scale-1 packs
-   as an accepted unresolved exception; retain their failures and keep #695
-   claimed.
+   native-GPU verification limit. Keep two distinct accepted exceptions:
+   forced-uniform effective-scale-1 packs that bypass native Force Unicode
+   remain under #649, and native Force Unicode glyph legibility at effective
+   scale 2 is deferred to #704. Retain both sets of failures and keep #695
+   claimed and in progress until PR #701 merges.
 2. On the implementation branch, inspect the pinned AE2 source/bytecode in both
    adapters and map table render, scroll range, hover bounds, and both TTC click
    consumers. Implement the shared geometry policy and pure boundary tests,
@@ -41,7 +43,10 @@
    Correct the wide-amount fixture’s non-custom fallback to native default
    while preserving its numeric width stress. Add an independent actual Force
    Unicode stage with saved/restored option and pack state, settled
-   reload/resize, and explicit requested/effective scale observations.
+   reload/resize, and explicit requested/effective scale observations. A
+   passing option/scale/restoration control is not a glyph-legibility pass:
+   preserve the effective-scale-2 glyph FAILs under #704, without changing
+   semantic text, containment or restoration requirements.
    Preserve old failures and distinguish new fixture provenance. Extend the
    closest fixture self-check for provider identity and retained width stress;
    do not weaken glyph assertions.
@@ -55,7 +60,10 @@
 7. Review English native-default and corrected-wide-probe captures at
    effective scale 1, 2 and Auto, with background/shadow variants. Review
    actual Force Unicode separately at its observed effective scales, recording
-   that requested scale 1/effective scale 2 is not a uniform scale-1 pass.
+   that requested scale 1/effective scale 2 is neither a uniform scale-1 pass
+   nor a glyph-legibility pass. Preserve the two observed effective-scale-2
+   visual FAILs as the accepted #704 exception; the option-state, scale-pair
+   and restoration control remains a separate PASS.
    Check real item hover, TTC Ctrl-click, scroll and selection. Use base-only
    native fixtures when no addon path changed;
    do not turn this into a full dependency campaign. Archive every attempt.
@@ -70,9 +78,13 @@
    original PNGs and manual legibility review. A changing estimate cannot be
    masked wholesale and called a text contract; freeze the fixture value.
 9. Verify runtime behavior on CodexVM and record native-GPU behavior as
-   unverified, as the user selected. Do not claim native proof.
+   unverified, as the user selected. Do not claim native proof. Keep the
+   native-default and corrected width-probe requirements at scales 1, 2 and
+   Auto. The accepted effective-scale-2 Force Unicode legibility exception is
+   tracked separately under #704; the effective-scale-1 forced-uniform pack
+   exception remains under #649.
    Finish current-head CI and review gates, retain evidence and update canonical
-   status only when every required criterion is supported.
+   status only when every in-scope criterion is supported and PR #701 merges.
 
 ## Criterion mapping
 
@@ -81,7 +93,7 @@
 | R1, R2 | Shared geometry, table text adapter | Covered geometry cases; scale-1 PNG stroke review and full long-TTC fixture |
 | R3 | Renderer/scroll/hover and screen click consumers | First/last entries, nonzero scroll, sort and scale transitions |
 | R4 | CPU scale/fit and tooltip | Exact fit/overflow unit cases; card collision and matching full hover |
-| R5 | Native-mode passthrough and option behavior | Native default and corrected width probe at effective 1/2/Auto; actual Force Unicode requested/effective scale pairs; restoration; shadow/background cases |
+| R5 | Native-mode passthrough and option behavior | Native default and corrected width probe at effective 1/2/Auto; actual Force Unicode option state, requested/effective scale pair, and restoration. A passing control does not override the effective-scale-2 glyph FAIL deferred to #704; shadow/background cases remain required. |
 | R6 | Existing synchronous capture diagnostic | Repeated settled PNG plus contemporaneous VNC comparison |
 | R7 | Existing exact-pixel visual contract | Good reference accepted, erased foreground stroke rejected |
 | R8 | Both adapters and authorized diagnostics | Four-target compile/remap; two-adapter focused startup/UI; native result or accepted limit |
@@ -118,6 +130,12 @@ Append this font-scope clarification after the existing issue clarification:
 > Unicode in a separate control that records requested and effective scales.
 > Neither result is a PASS for forced-uniform effective scale 1: that resource
 > pack configuration remains a known unresolved limitation and is deferred.
+> Native Force Unicode at requested scale 1 selects effective scale 2. Its
+> option/scale/restoration control passed, but row glyph review failed on both
+> adapters; preserve both failures and defer this separate legibility case to
+> #704. A control PASS is not a glyph PASS. Keep semantic text, containment,
+> hover/interaction and restoration checks, and do not override the font option
+> or GUI-scale setting.
 > Native-default scale-1 legibility, all original interaction/containment
 > checks, capture-timing evidence and the missing-stroke visual contract remain
 > required. The accepted CodexVM/native-GPU boundary remains unchanged.
