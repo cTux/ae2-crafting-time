@@ -5,8 +5,14 @@ Status: in-progress. Implementation and native CodexVM verification are tracked 
 Status, CPU, and interaction evidence now covers Forge 1.20.1 and NeoForge
 26.1.2. The deterministic Forge Status glyph contract is qualified for its
 reviewed render environment. The focused Forge checks and NeoForge native base
-suite passed. The revised font-fixture/control checks, final review and
-final-head CI remain pending.
+suite passed. At tested head `7e52d14ff1e37b4601e9d1229d6d3e6034066a66`, the
+paired Forge and NeoForge 46-image graphs each recorded 45 PASS and one FAIL:
+native Force Unicode fragmented row glyphs at effective GUI scale 2. The option,
+requested/effective-scale and restoration control passed; that control result
+does not make the glyph review a PASS. The user accepted deferring this distinct
+scale-2 legibility case to [follow-up #704](https://github.com/cTux/ae2-crafting-time/issues/704).
+Keep this issue in progress until PR #701 merges. Native-GPU behavior remains
+unverified.
 
 Scope: Native Crafting Plan/Status row text and CPU-card TTC at effective GUI scale 1.
 
@@ -31,6 +37,16 @@ missing-stroke failures remain unresolved and retained. Correcting the wide
 fixture does not fix or pass that configuration. This exception concerns font
 rasterization only; ordinary scale-1 amounts, TTC, status labels and their
 containment remain required.
+
+Native Force Unicode at requested scale 1 is a separate mode: it selects
+effective scale 2. On the tested PR #701 head, the native-font state and scale
+control passed, but glyph review failed on Forge 1.20.1 and NeoForge 26.1.2.
+The user accepted that effective-scale-2 readability exception under
+[follow-up #704](https://github.com/cTux/ae2-crafting-time/issues/704). Preserve
+the native option, requested/effective scales, semantic text, containment,
+interaction and restoration behavior; do not treat the control PASS as a glyph
+PASS or override the font option or GUI-scale setting. The native-default and
+corrected width-probe requirements at scales 1, 2 and Auto remain unchanged.
 
 ## Behavior
 
@@ -71,7 +87,7 @@ not already exist; a tooltip containing only the CPU name is insufficient.
 | R2 | All table description lines remain visible, inside their cell, clear of the icon and adjacent rows. The existing long-TTC fixture retains its full text when it fits the wide cell. |
 | R3 | Every entry remains reachable by scrolling; native item hover and TTC Ctrl-click resolve the same entry before/after a scale change and at nonzero scroll. Sorting and selected CPU identity are unchanged. |
 | R4 | CPU TTC remains inside its card, clear of progress/job content; a shortened preview has a complete matching tooltip including uncertainty/symbols. Name tooltip and selection still work. |
-| R5 | Scale 2/Auto, the corrected wide-amount containment probe, background on/off, shadow on/off and disabled TTC options keep their documented behavior. Exercise actual native Force Unicode separately and record its requested/effective scale pair; requested scale 1/effective scale 2 verifies that native control, never effective-scale-1 uniform rendering. Restore the original font option and resource-pack state after the case. |
+| R5 | Native-default and corrected wide-amount cases keep their documented behavior at scales 1, 2 and Auto, with background/shadow variants and disabled TTC options. Test actual native Force Unicode separately and record option state, requested/effective scales, resource-pack identity and restoration. Its state/scale control can pass while effective-scale-2 glyph legibility remains the accepted FAIL deferred to #704; never count that control as a glyph PASS. Restore the original font option and resource-pack state after the case. |
 | R6 | Repeated settled-frame captures and a contemporaneous VM framebuffer view distinguish runtime loss from screenshot timing. Original failed captures remain unchanged. |
 | R7 | A qualified exact-pixel contract covers deterministic text; deleting an unmasked foreground stroke fails it. Semantics or bounds alone cannot pass legibility. |
 | R8 | Both rendering adapters compile and pass focused native startup/UI checks. Native-hardware investigation has a recorded authorized result or explicitly accepted scope decision; VM evidence is never described as native-hardware proof. |
