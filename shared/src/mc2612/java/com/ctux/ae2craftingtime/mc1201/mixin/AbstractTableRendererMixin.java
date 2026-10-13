@@ -185,15 +185,15 @@ public abstract class AbstractTableRendererMixin {
         return CraftingRowState.isBadge(translatable.getKey());
     }
 
-    @Inject(method = "render", at = @At("HEAD"), remap = false)
+    @Inject(method = "render", at = @At("HEAD"), require = 0, remap = false)
     private void ae2craftingtime$beginTtcColors(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY,
             List<?> entries, int scrollOffset, CallbackInfo ci) {
         var layout = ae2craftingtime$layout();
         if (layout.textScale() == 1f) {
             var background = screen.getStyle().getBackground();
             if (background != null) {
-                int left = screen.getGuiLeft() + x + 1;
-                int top = screen.getGuiTop() + y;
+                int left = x + 1;
+                int top = y;
                 background.copy().src(9, 22, 1, 1).dest(left, top, layout.cellWidth(), rows * 23 - 1)
                         .blit(guiGraphics);
                 for (int row = 1; row <= layout.rows(); row++) {
@@ -210,7 +210,7 @@ public abstract class AbstractTableRendererMixin {
         TtcColorContext.set(colors(entries));
     }
 
-    @Inject(method = "render", at = @At("RETURN"), remap = false)
+    @Inject(method = "render", at = @At("RETURN"), require = 0, remap = false)
     private void ae2craftingtime$endTtcColors(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY,
             List<?> entries, int scrollOffset, CallbackInfo ci) {
         if (ae2craftingtime$hasTtc((Object) this)) {
