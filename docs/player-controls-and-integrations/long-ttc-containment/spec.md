@@ -49,7 +49,7 @@ hover. This does not alter the completed #670 evidence above.
 | --- | --- |
 | C1 | Regular and delayed TTC labels use the existing 90-font-pixel horizontal limit; short labels and unrelated keys keep their behavior. |
 | C2 | The existing 1B/2B/3B status fixture checks the exact full estimate and its observed bounds inside its originating row cell, alongside compact amount containment. |
-| C3 | Native `standard-status-controls` verifies default and uniform fonts at scales 1, 2 and Auto on all four supported targets. Require full text and cell containment at all three scales, and readable estimates at representative scales 2 and Auto. Also verify `standard-plan-controls` and `delayed-status` on 26.1.2 NeoForge and `badge-background` on 1.20.1 Forge. |
+| C3 | For #695, verify native-default and corrected width-probe text at effective scales 1, 2 and Auto. Exercise actual Force Unicode separately, recording requested and effective scales. Compile and check production remapping for all four release targets; focused native verification covers Forge 1.20.1 and NeoForge 26.1.2, representing both rendering adapters. Retain the earlier four-target evidence below as historical provenance. The forced-uniform effective-scale-1 glyph failure remains a separate accepted exception under [#649](https://github.com/cTux/ae2-crafting-time/issues/649). For the native control, preserve option state, semantic text, containment and restoration. Its requested-1/effective-2 glyph fragmentation is the known FAIL deferred to [#704](https://github.com/cTux/ae2-crafting-time/issues/704); an option/scale/restoration control PASS is not a glyph-legibility PASS. Native Force Unicode Auto at effective scale 4 remains a readable control. Do not override the font option or GUI-scale setting. Also verify `standard-plan-controls` and `delayed-status` on 26.1.2 NeoForge and `badge-background` on 1.20.1 Forge. |
 | C4 | Review retained native PNGs and matching sidecars, recording hashes, actual scale, cell/text bounds and readability. Preserve all eight scale-1 readability FAIL receipts as a known limitation tracked in the [scale-1 readability follow-up #689](https://github.com/cTux/ae2-crafting-time/issues/689). Semantic completeness and containment do not constitute a readability pass. |
 | C5 | Shared logic keeps full line/branch coverage, existing component behavior passes, and GuideME/wiki explain the fitted long row text without promising arbitrary-font readability. |
 
@@ -60,18 +60,26 @@ For C3 provenance, six cases have native source
 recheck at the e3e2 head was accepted. The original wrapper and gate FAIL remain
 preserved. This validator recheck is not a new native run.
 
-The original issue requests representative GUI scales without naming scale 1.
-This scope preserves AE2's existing row font and requires readability at scales
-2 and Auto while retaining scale-1 exact-text and containment checks.
-The requester chose to preserve AE2's row font and defer scale-1 readability,
-including any regression caused by horizontal fitting, to #689. Matched
-before/after readability is unresolved; it is outside this fix's approved
-completion gate, and no non-regression claim is made.
-Reviewed scale-1 glyphs are about
-five physical pixels high and remain insufficiently readable. The native
-vertical transform is unchanged from the investigation and documentation bases,
-but the new TTC horizontal compression may contribute to the readability loss.
-Source comparison is not matched before/after image proof. Track broader
-scale-1 row presentation in the [scale-1 readability follow-up #689](https://github.com/cTux/ae2-crafting-time/issues/689), preserve the failed
-receipts, and make no claim of scale-1 readability. Arbitrary resource packs and labels are also not
-covered by a universal readability guarantee.
+The original #670 scope requested representative GUI scales without naming
+scale 1. Its earlier #689 follow-up recorded eight scale-1 readability failures
+and made no non-regression claim; keep those historical receipts and verdicts
+unchanged. Issue #695 later authorized a separate native-default scale-1
+readability correction, currently tracked in [PR #701](https://github.com/cTux/ae2-crafting-time/pull/701).
+That newer work does not relabel the eight #689 failures or turn containment
+into a readability result.
+
+The native Force Unicode requested-1/effective-2 glyph failures are a separate
+accepted deferral under [#704](https://github.com/cTux/ae2-crafting-time/issues/704).
+The forced-uniform resource-pack case at effective scale 1, which bypasses the
+native Force Unicode scale policy, remains separately deferred under
+[#649](https://github.com/cTux/ae2-crafting-time/issues/649). Neither exception
+reduces the native-default readability requirement in #695. Arbitrary resource
+packs and labels are not covered by a universal readability guarantee.
+
+The original #688 review found scale-1 glyphs about five physical pixels high.
+The native vertical transform was unchanged from that investigation, while the
+new TTC horizontal compression could have contributed to the historical loss.
+That source comparison was not matched before/after image proof and does not
+establish whether the behavior was inherited or introduced. Preserve that
+uncertainty; the later #695 and #704 evidence records distinct font modes and
+their separate visual outcomes.

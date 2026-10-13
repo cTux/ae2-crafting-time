@@ -12,6 +12,14 @@ sidecars. The Forge `status-scale-default-1.png` SHA-256 is
 Its sidecar records 2558x1093, scale 1, SVGA3D, five-pixel table text and
 six-pixel CPU TTC. Keep those captures as failure evidence.
 
+The original manual checkpoint ledger contains 257 historical images and
+records 255 PASS / 2 FAIL. An append-only reinspection of two hybrid wide-probe
+scale-2 images found both also fail visually, bringing the reconciled historical
+result to 253 PASS / 4 FAIL. The reinspection CSV has SHA-256
+`6bf8eb7a489499f95de297821ce88162bbdf7525d78914551592844e9b2182d2`. Keep the
+original ledger, PNGs, sidecars and verdicts unchanged; do not replace the
+original 255/2 ledger rows with the reconciled summary.
+
 `CpuTtcLayout.badge` starts at 0.6 scale and may shrink further to fit.
 Both `CPUSelectionListMixin` adapters apply that scale to both axes.
 AE2 `AbstractTableRenderer` uses 67x22 cells, three columns, 0.5 text scale,
@@ -144,6 +152,31 @@ and `f332fe34cd46be67db5d2753501d2b1178e294262a3e30772a4fe98529fd1d28`.
 The exact per-pixel sampling explanation remains an inference from cached
 sources and those captures.
 
+## Native Force Unicode at effective scale 2
+
+The real native Force Unicode control is distinct from the forced-uniform
+effective-scale-1 resource-pack case. It promotes requested GUI scale 1 to
+effective scale 2. On PR #701 head
+`7e52d14ff1e37b4601e9d1229d6d3e6034066a66`, the Forge 1.20.1 and NeoForge
+26.1.2 image graphs each contain 46 checkpoints: 45 PASS and one visual FAIL.
+Both FAILs are the native Force Unicode requested-1/effective-2 row-glyph
+captures. The option state, requested/effective scale pair and restoration
+control passed, but those results do not pass glyph legibility. The text
+fragmentation is visible in the two original receipts listed in
+[follow-up #704](https://github.com/cTux/ae2-crafting-time/issues/704): Forge
+archive `20261013T164437329Z-69ace389`, PNG SHA-256
+`0926e629089944726013f36b6bde6e8565d28a6ef9e24c7a4544ef70408af6c2`; NeoForge
+archive `20261013T164719453Z-89ac1900`, PNG SHA-256
+`1ac90bda465ab50f8a3f455e6948ddc2ec7040e008572a6746a18fd98b81f856`. Keep both
+as FAILs. No matched baseline establishes whether this fragmentation was
+inherited or introduced by the current change; treat the cause as unproven. The
+user accepted deferring this effective-scale-2 legibility issue to #704. Keep
+semantic content, containment, hover/interaction and restoration requirements;
+do not substitute a font or override the player's font or GUI scale settings.
+The native-default and corrected width-probe cases at scales 1, 2 and Auto
+remain required. Native Force Unicode Auto at effective scale 4 is readable; it
+does not settle the effective-scale-2 failure.
+
 Correct the wide fixture’s fallback provider in `scripts/run-ui-smoke.ps1` to
 preserve native default font behavior for non-custom characters. Keep its
 oversized numeric glyphs and the same long amount/TTC inputs so it still
@@ -169,8 +202,12 @@ Preserve every original forced-uniform scale-1 failed PNG, sidecar and review
 verdict. Give the corrected fixture distinct provenance so old and new runs
 cannot be mistaken for identical inputs. Its PASS means native-default glyph
 legibility plus the retained width stress passed; it is not uniform scale-1
-qualification. The deferred configuration remains a known limitation under
-the user-accepted scope.
+qualification. The forced-uniform effective-scale-1 configuration remains the
+separate accepted limitation under [issue #649](https://github.com/cTux/ae2-crafting-time/issues/649).
+Native Force Unicode effective-scale-2 glyph legibility is a second, distinct
+accepted exception under #704. Neither exception reduces native-default
+scale-1 legibility or semantic/containment requirements. Native-GPU behavior
+remains unverified by the selected CodexVM runs.
 
 ## Verification prerequisites
 
