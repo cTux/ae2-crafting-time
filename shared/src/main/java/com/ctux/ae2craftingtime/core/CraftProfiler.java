@@ -718,14 +718,15 @@ public final class CraftProfiler {
 
         var samples = List.copyOf(queue);
         var durationsPerUnit = new ArrayList<Double>(samples.size());
+        // Judge outliers at the same 5ms minimum shown to players.
         for (var sample : samples) {
-            durationsPerUnit.add((double) sample.durationTicks / sample.amount);
+            durationsPerUnit.add(Math.max(0.1, (double) sample.durationTicks / sample.amount));
         }
         durationsPerUnit.sort(Double::compare);
         var median = durationsPerUnit.get(durationsPerUnit.size() / 2);
         var filtered = new ArrayList<CraftSample>();
         for (var sample : samples) {
-            var durationPerUnit = (double) sample.durationTicks / sample.amount;
+            var durationPerUnit = Math.max(0.1, (double) sample.durationTicks / sample.amount);
             if (durationPerUnit >= median / outlierMultiplier && durationPerUnit <= median * outlierMultiplier) {
                 filtered.add(sample);
             }

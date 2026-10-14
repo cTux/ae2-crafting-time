@@ -19,6 +19,11 @@ be ignored instead of making every later estimate look slow. The tooltip shows
 retained and used sample counts. A low configured sample limit can prevent an
 estimate from ever becoming reliable.
 
+Outlier comparisons use the same 5ms minimum as the sample display. Hidden
+differences below 5ms don't lower confidence when all samples show 5ms. With
+at least three consistent samples, a TTC of 5ms or less shows Instant when
+that status is enabled. Throughput and total TTC still use the precise timings.
+
 ![Low-confidence TTC tooltip](images/ttc-low-confidence.png)
 
 *The seeded first sample remains useful, but the question mark warns that confidence is low.*

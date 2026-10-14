@@ -34,6 +34,9 @@ for the independent display setting and verification status.
 - Starting with five samples, exclude duration-per-unit values outside the
   median divided or multiplied by `outlierMultiplier`. The default is 4.0 and
   the accepted range is 1.0 through 1000.0.
+- Apply the displayed 5ms minimum to both the median inputs and outlier
+  comparisons. Hidden sub-5ms differences must not reduce confidence when all
+  samples display 5ms. Keep stored samples and weighted throughput precise.
 - Mark an estimate reliable only when at least three samples exist and none was
   excluded. Low-confidence estimates remain visible with a `?`.
 - Keep items in item units. Normalize fluids and chemical-style keys to

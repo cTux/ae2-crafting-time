@@ -239,6 +239,67 @@ class CraftProfilerTest {
     }
 
     @Test
+    void minimumDisplayedSamplesStayReliableWithoutClampingThroughput() {
+        var key = new ProfileKey("minecraft:oak_planks");
+        var profiler = new CraftProfiler(10);
+        var samples = List.of(
+                new PersistedCraftSample(10_000, 1),
+                new PersistedCraftSample(1_000, 1),
+                new PersistedCraftSample(100, 1),
+                new PersistedCraftSample(10, 1),
+                new PersistedCraftSample(10_000, 1),
+                new PersistedCraftSample(1_000, 1),
+                new PersistedCraftSample(100, 1),
+                new PersistedCraftSample(10, 1),
+                new PersistedCraftSample(100, 1),
+                new PersistedCraftSample(10, 1));
+        profiler.loadSamples(List.of(new PersistedOutputSamples(key, ProfileUnit.ITEM, samples)));
+
+        var stats = profiler.stats(key).orElseThrow();
+        assertEquals(10, stats.sampleCount());
+        assertEquals(10, stats.usedSampleCount());
+        assertTrue(stats.reliableEstimate());
+        for (var i = 0; i < samples.size(); i++) {
+            assertEquals("5", TimeEstimate.formatSampleTicks(stats.sampleTicksPerUnit(i).orElseThrow()).orElseThrow());
+        }
+        assertEquals(70_120.0 / 55, stats.amountPerTick());
+        assertEquals(samples, profiler.snapshotSamples().get(0).samples());
+        assertTrue(TimeEstimate.milliseconds(12, stats).orElseThrow().instant());
+        assertEquals("5ms", TimeEstimate.format(12, stats).orElseThrow());
+    }
+
+    @Test
+    void minimumDisplayedSamplesStillFilterVisiblySlowOutliers() {
+        var key = new ProfileKey("minecraft:oak_planks");
+        var profiler = new CraftProfiler(10);
+        profiler.loadSamples(List.of(new PersistedOutputSamples(key, ProfileUnit.ITEM, List.of(
+                new PersistedCraftSample(10_000, 1),
+                new PersistedCraftSample(1_000, 1),
+                new PersistedCraftSample(100, 1),
+                new PersistedCraftSample(10, 1),
+                new PersistedCraftSample(1, 1)))));
+
+        var stats = profiler.stats(key).orElseThrow();
+        assertEquals(4, stats.usedSampleCount());
+        assertFalse(stats.reliableEstimate());
+        assertFalse(TimeEstimate.milliseconds(12, stats).orElseThrow().instant());
+        assertEquals("5ms?", TimeEstimate.format(12, stats).orElseThrow());
+    }
+
+    @Test
+    void minimumDisplayedSamplesStillNeedThreeObservations() {
+        var key = new ProfileKey("minecraft:oak_planks");
+        var profiler = new CraftProfiler(10);
+        profiler.loadSamples(List.of(new PersistedOutputSamples(key, ProfileUnit.ITEM, List.of(
+                new PersistedCraftSample(10_000, 1), new PersistedCraftSample(10, 1)))));
+
+        var stats = profiler.stats(key).orElseThrow();
+        assertEquals(2, stats.usedSampleCount());
+        assertFalse(stats.reliableEstimate());
+        assertFalse(TimeEstimate.milliseconds(12, stats).orElseThrow().instant());
+    }
+
+    @Test
     void fallbackMultiplierKeepsFourAndFiveSampleEstimatesFinite() {
         var multiplier = ConfigNumbers.parseDouble("NaN", 4.0, 1.0, 1000.0);
         var profiler = new CraftProfiler(10, multiplier);
