@@ -5,6 +5,62 @@ Lifecycle: see the [scope status and evidence](spec.md).
 Implement this as one feature commit. Let the commit hook create the PR before
 running Gradle checks, then report local verification and GitHub CI separately.
 
+## Fresh native Status evidence (#671)
+
+Lifecycle and criteria: [spec](spec.md#fresh-native-status-evidence-671).
+Merge these document changes before implementation.
+
+1. Extend shared `UiSnapshot` and both shared/native26 `UiObservationStore`
+   adapters with status timing, progress, provenance and selected CPU/job fields.
+   Preserve existing constructors/callers and null semantics. Extend
+   `CaptureEvidenceTest` to prove sidecar serialization alongside CPU-card data
+   and unchanged dynamic-time layout readiness (NS671-1).
+2. Update shared `StandardAe2Scenario` to reacquire native status after synthetic
+   probes and gate the final native-title capture on new native status identity
+   or revision, same selected job/CPU and a later frame. Reuse existing native
+   actions, deadlines and cleanup. Extend `TestDriverCoreTest` for stale/restored
+   and synthetic rejection, missing status/selection, changed job, repeated polls,
+   render ordering, zero progress and measured progress (NS671-2/3). Keep pure
+   decisions at the existing covered test boundary; change no production ETA.
+3. After the hook creates the implementation PR, retain changed-mode
+   `scripts/run-ui-smoke.ps1 -Changed -BaseRef origin/master -PlanOnly` selection
+   and reasons. Run focused driver/capture tests and compile all four test-driver
+   consumers. Run required shared coverage checks and report current-head GitHub
+   CI separately. Review broader automatic selection against this test-only scope.
+4. Before launching, recheck CodexVM SSH, guest JDK 17/25, disposable fixture
+   markers, native libraries/assets, FML template and exact versioned manifests:
+   compatible `1.20.1-forge/1.20.1-47.4.23/launch.json` and
+   `26.1.2-neoforge/26.1.2.109/launch.json`. The 2026-10-15 read-only preflight
+   verified these manifests, guest JDKs, source fixtures and the existing shared
+   source root. Use that existing share through `-GuestSourceRoot`; build on the
+   host and stage into guest-local storage. Preparation inserts `-Xmx8G`.
+   Native26's manifest also names a missing `versions/neoforge-26.1.2.109/`
+   `neoforge-26.1.2.109.jar`, while its installed universal library exists.
+   Resolve this before launch: inspect the installed loader JSON and classpath to
+   establish whether it is an unused installer placeholder. If required, repair
+   the same native installation through the official NeoForge installer and
+   regenerate its versioned manifest following [prepared-client setup](../dev-client.md#prepared-ui-smoke).
+   Do not substitute a loader, silently ignore a required missing file, or build
+   a new launcher. An unresolved prerequisite blocks the runtime gate.
+5. Run a clean compatible `standard-status-controls` campaign on Forge 1.20.1
+   first, then NeoForge 26.1.2, covering shared and native26 observers (NS671-4).
+   Preserve each leaf's restart/config continuation: two launches per target,
+   four planned launches total. Budget 3–5 minutes cold startup per launch and
+   five minutes for scenario work per launch, excluding host builds and review;
+   record actual timing. Keep existing bounded lack-of-progress deadlines.
+   Diagnose at a validated checkpoint when useful, but require clean final runs
+   on the current head. Use English, 8 GiB and a maximized window.
+6. Archive fresh native-title and diagnostic PNG/sidecar pairs before retries.
+   Compare raw zero/measured-progress inputs, selected identity and native title;
+   document any remaining native ETA anomaly and fixture/upstream attribution
+   without changing production behavior (NS671-1/2/3). Inspect images manually,
+   verify hashes and report visual review separately from semantic results;
+   preserve `REVIEW_REQUIRED` where no qualified baseline exists (NS671-4).
+   Cleanly shut down the exact CodexVM after review and verify its absence from
+   `vmrun list`. Finish only after focused checks, both clean campaigns, review,
+   current-head CI and implementation merge; implementation and verification are
+   currently pending.
+
 ## Optional badge backgrounds (#696)
 
 Lifecycle and criteria: [spec](spec.md#optional-badge-backgrounds-696).
