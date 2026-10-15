@@ -44,7 +44,7 @@ public final class CaptureEvidence {
         data.add("capture", capture);
         var sidecar = image.resolveSibling(image.getFileName().toString().replace(".png", ".json"));
         var temporary = sidecar.resolveSibling(sidecar.getFileName() + ".tmp");
-        Files.writeString(temporary, new Gson().toJson(data));
+        Files.writeString(temporary, data.toString());
         Files.move(temporary, sidecar, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
 

@@ -77,23 +77,18 @@ class TestDriverCoreTest {
 
     @Test
     void nativeEtaAssertionsUsePositiveElapsedWithZeroAndMeasuredProgress() {
-        var zero = StandardCraftFixture.progressStatus(10_000_000_000L, 100);
-        var measured = StandardCraftFixture.progressStatus(10_000_000_000L, 50);
-        var zeroInput = new UiSnapshot.StatusObservation(1, "synthetic", zero.getElapsedTime(),
-                zero.getStartItemCount(), zero.getRemainingItemCount(), 0, 0, null, null, null, null);
-        var measuredInput = new UiSnapshot.StatusObservation(2, "synthetic", measured.getElapsedTime(),
-                measured.getStartItemCount(), measured.getRemainingItemCount(), 50, 0.5, null, null, null, null);
-        var title = appeng.core.localization.GuiText.CraftingStatus.text().getString() + " - ";
-        var format = appeng.core.localization.GuiText.ETAFormat.getLocal();
-        assertTrue(StandardAe2Scenario.nativeEtaMatches(zeroInput, title
-                + org.apache.commons.lang3.time.DurationFormatUtils.formatDuration(1_000_000L, format)));
-        assertTrue(StandardAe2Scenario.nativeEtaMatches(measuredInput, title
-                + org.apache.commons.lang3.time.DurationFormatUtils.formatDuration(10_000L, format)));
-        assertFalse(StandardAe2Scenario.nativeEtaMatches(null, title));
-        assertFalse(StandardAe2Scenario.nativeEtaMatches(zeroInput, null));
-        assertFalse(StandardAe2Scenario.nativeEtaMatches(zeroInput, title + "wrong"));
+        var zeroInput = new UiSnapshot.StatusObservation(1, "synthetic", 10_000_000_000L,
+                100, 100, 0, 0, null, null, null, null);
+        var measuredInput = new UiSnapshot.StatusObservation(2, "synthetic", 10_000_000_000L,
+                100, 50, 50, 0.5, null, null, null, null);
+        var format = "mm:ss";
+        assertTrue(StandardAe2Scenario.nativeEtaMatches(zeroInput, "Status - 16:40", "Status", format));
+        assertTrue(StandardAe2Scenario.nativeEtaMatches(measuredInput, "Status - 00:10", "Status", format));
+        assertFalse(StandardAe2Scenario.nativeEtaMatches(null, "Status", "Status", format));
+        assertFalse(StandardAe2Scenario.nativeEtaMatches(zeroInput, null, "Status", format));
+        assertFalse(StandardAe2Scenario.nativeEtaMatches(zeroInput, "Status - wrong", "Status", format));
         assertFalse(StandardAe2Scenario.nativeEtaMatches(new UiSnapshot.StatusObservation(3, "synthetic",
-                0, 100, 100, 0, 0, null, null, null, null), title));
+                0, 100, 100, 0, 0, null, null, null, null), "Status", "Status", format));
     }
 
     @Test

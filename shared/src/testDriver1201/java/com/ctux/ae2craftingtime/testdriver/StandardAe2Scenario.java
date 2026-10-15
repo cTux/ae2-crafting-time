@@ -1746,7 +1746,9 @@ final class StandardAe2Scenario {
                 if (statusProgressStep == 1) {
                     if (observed.elapsedNanos() != 10_000_000_000L || observed.startCount() != 100
                             || observed.remainingCount() != 100 || observed.completedCount() != 0
-                            || observed.progress() != 0 || !nativeEtaMatches(observed, title))
+                            || observed.progress() != 0 || !nativeEtaMatches(observed, title,
+                                    appeng.core.localization.GuiText.CraftingStatus.text().getString(),
+                                    appeng.core.localization.GuiText.ETAFormat.getLocal()))
                         throw new IllegalStateException("Zero-progress native Status title or inputs changed");
                     statusZeroTitle = title;
                     screenshot.accept("status-native-zero-progress.png");
@@ -1758,7 +1760,9 @@ final class StandardAe2Scenario {
                 if (observed.elapsedNanos() != 10_000_000_000L || observed.startCount() != 100
                         || observed.remainingCount() != 50 || observed.completedCount() != 50
                         || observed.progress() != 0.5 || title.equals(statusZeroTitle)
-                        || !nativeEtaMatches(observed, title))
+                        || !nativeEtaMatches(observed, title,
+                                appeng.core.localization.GuiText.CraftingStatus.text().getString(),
+                                appeng.core.localization.GuiText.ETAFormat.getLocal()))
                     throw new IllegalStateException("Measured-progress native Status title or inputs changed");
                 screenshot.accept("status-native-measured-progress.png");
                 accessor.ae2craftingtime_test_driver$setStatus(statusProgressOriginal);
@@ -3819,15 +3823,16 @@ final class StandardAe2Scenario {
                 && status.cpuElapsedNanos() != null;
     }
 
-    static boolean nativeEtaMatches(UiSnapshot.StatusObservation status, String title) {
+    static boolean nativeEtaMatches(UiSnapshot.StatusObservation status, String title,
+            String statusText, String etaFormat) {
         if (status == null || title == null) return false;
         long eta = (long) (status.elapsedNanos()
                 / Math.max(1d, (double) status.completedCount()) * status.remainingCount());
         if (eta <= 0) return false;
         var formatted = org.apache.commons.lang3.time.DurationFormatUtils.formatDuration(
                 java.util.concurrent.TimeUnit.MILLISECONDS.convert(eta, java.util.concurrent.TimeUnit.NANOSECONDS),
-                appeng.core.localization.GuiText.ETAFormat.getLocal());
-        return title.equals(appeng.core.localization.GuiText.CraftingStatus.text().getString() + " - " + formatted);
+                etaFormat);
+        return title.equals(statusText + " - " + formatted);
     }
 
     private boolean server(Minecraft minecraft, Function<ServerPlayer, Boolean> action) {
