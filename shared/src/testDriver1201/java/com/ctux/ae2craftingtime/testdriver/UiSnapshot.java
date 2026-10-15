@@ -18,7 +18,15 @@ public record UiSnapshot(
         List<Rect> itemCells,
         List<ObservedText> tooltip,
         List<CpuCard> cpuCards,
-        List<Integer> rawCpuSerials) {
+        List<Integer> rawCpuSerials,
+        StatusObservation status) {
+    public UiSnapshot(String screen, String menu, Rect gui, int screenWidth, int screenHeight, double guiScale,
+            long frame, int scroll, List<Row> rows, List<ObservedText> text, List<Rect> badges,
+            List<Widget> widgets, List<Rect> itemCells, List<ObservedText> tooltip, List<CpuCard> cpuCards,
+            List<Integer> rawCpuSerials) {
+        this(screen, menu, gui, screenWidth, screenHeight, guiScale, frame, scroll, rows, text, badges, widgets,
+                itemCells, tooltip, cpuCards, rawCpuSerials, null);
+    }
     public UiSnapshot(String screen, String menu, Rect gui, int screenWidth, int screenHeight, double guiScale,
             long frame, int scroll, List<Row> rows, List<ObservedText> text, List<Rect> badges,
             List<Widget> widgets, List<Rect> itemCells, List<ObservedText> tooltip, List<CpuCard> cpuCards) {
@@ -71,5 +79,10 @@ public record UiSnapshot(
 
     public record CpuCard(int serial, String name, String jobId, long amount, long elapsedNanos, boolean selected,
             Rect bounds, Rect nameArea, Rect infoArea, Rect progressArea, ObservedText ttc, Rect badge) {
+    }
+
+    public record StatusObservation(int identity, String provenance, long elapsedNanos, long startCount,
+            long remainingCount, long completedCount, double progress, Integer selectedCpuSerial,
+            String selectedJobUuid, String selectedOutputId, Long cpuElapsedNanos) {
     }
 }

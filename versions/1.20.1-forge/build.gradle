@@ -311,7 +311,9 @@ tasks.named('jacocoTestCoverageVerification', JacocoCoverageVerification).config
         includes = ['com.ctux.ae2craftingtime.testdriver.UiObservationStore.semanticText*',
                     'com.ctux.ae2craftingtime.testdriver.UiObservationStore.planDescription*',
                     'com.ctux.ae2craftingtime.testdriver.UiObservationStore.planTotalText*',
-                    'com.ctux.ae2craftingtime.testdriver.StandardAe2Scenario.recurrentBadgeMatches*']
+                    'com.ctux.ae2craftingtime.testdriver.StandardAe2Scenario.recurrentBadgeMatches*',
+                    'com.ctux.ae2craftingtime.testdriver.StandardAe2Scenario.freshNativeStatus*',
+                    'com.ctux.ae2craftingtime.testdriver.StandardAe2Scenario.nativeEtaMatches*']
         limit { counter = 'LINE'; minimum = 1.0 }
         limit { counter = 'BRANCH'; minimum = 1.0 }
     }

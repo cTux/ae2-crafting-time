@@ -24,6 +24,7 @@ public final class CaptureEvidence {
     public static void write(Path image, DriverOptions options, UiSnapshot snapshot,
             int width, int height, long frame, String renderer, long started) throws IOException {
         var data = new Gson().toJsonTree(snapshot).getAsJsonObject();
+        if (snapshot.status() == null) data.add("status", com.google.gson.JsonNull.INSTANCE);
         data.addProperty("tableCellBoundsSource", "expected-layout-policy; glyph and badge bounds are observed");
         data.add("nativeHoveredCell", new Gson().toJsonTree(UiObservationStore.nativeHover(snapshot)));
         var capture = new com.google.gson.JsonObject();
@@ -43,7 +44,7 @@ public final class CaptureEvidence {
         data.add("capture", capture);
         var sidecar = image.resolveSibling(image.getFileName().toString().replace(".png", ".json"));
         var temporary = sidecar.resolveSibling(sidecar.getFileName() + ".tmp");
-        Files.writeString(temporary, new Gson().toJson(data));
+        Files.writeString(temporary, data.toString());
         Files.move(temporary, sidecar, StandardCopyOption.ATOMIC_MOVE, StandardCopyOption.REPLACE_EXISTING);
     }
 

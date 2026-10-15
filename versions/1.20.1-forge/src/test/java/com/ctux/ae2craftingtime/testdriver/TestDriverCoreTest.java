@@ -46,6 +46,85 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
     @Test
+    void nativeStatusFreshnessRequiresReplacementSameSelectedJobAndLaterFrame() {
+        String job = "00000000-0000-0000-0000-000000000001";
+        var measured = new UiSnapshot.StatusObservation(2, "native", 10_000_000_000L,
+                100, 50, 50, 0.5, 4, job, "minecraft:stone", 11_000_000_000L);
+        assertFalse(StandardAe2Scenario.freshNativeStatus(null, 4, job, "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(new UiSnapshot.StatusObservation(1, "synthetic",
+                10_000_000_000L, 100, 100, 0, 0, 4, job, "minecraft:stone", 0L),
+                4, job, "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 4, job, "minecraft:stone", 11, 10, false));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 4, job, "minecraft:stone", 10, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 5, job, "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 4, null, "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 4, "", "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 4,
+                "00000000-0000-0000-0000-000000000002", "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 4, job, null, 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 4, job, "minecraft:glass", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(new UiSnapshot.StatusObservation(2, "native",
+                10_000_000_000L, 100, 50, 50, 0.5, null, job, "minecraft:stone", 11_000_000_000L),
+                4, job, "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(new UiSnapshot.StatusObservation(2, "native",
+                10_000_000_000L, 100, 50, 50, 0.5, 4, null, "minecraft:stone", 11_000_000_000L),
+                4, job, "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(new UiSnapshot.StatusObservation(2, "native",
+                10_000_000_000L, 100, 50, 50, 0.5, 4, job, "minecraft:stone", null),
+                4, job, "minecraft:stone", 11, 10, true));
+        assertTrue(StandardAe2Scenario.freshNativeStatus(measured, 4, job, "minecraft:stone", 11, 10, true));
+    }
+
+    @Test
+    void nativeStatusRefreshUsesMenuReopenInsteadOfCoalescedSelection() throws Exception {
+        var node = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/StandardAe2Scenario.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, 0);
+        }
+        var tick = node.methods.stream().filter(method -> method.name.equals("tick")).findFirst().orElseThrow();
+        var instructions = java.util.Arrays.asList(tick.instructions.toArray());
+        var calls = instructions.stream().filter(MethodInsnNode.class::isInstance)
+                .map(MethodInsnNode.class::cast).toList();
+        assertEquals(0, calls.stream().filter(call -> call.name.equals("selectCpu")).count(),
+                "selecting away and back in one client tick can coalesce before native status refresh");
+        assertTrue(calls.stream().filter(call -> call.name.equals("ae2craftingtime_test_driver$statusButton")).count() >= 3,
+                "the refresh must reopen Status through AE2's real menu button");
+        assertTrue(instructions.stream().filter(org.objectweb.asm.tree.LdcInsnNode.class::isInstance)
+                .map(org.objectweb.asm.tree.LdcInsnNode.class::cast)
+                .anyMatch(value -> "waiting-for-storage".equals(value.cst)));
+        assertTrue(instructions.stream().filter(org.objectweb.asm.tree.LdcInsnNode.class::isInstance)
+                .map(org.objectweb.asm.tree.LdcInsnNode.class::cast)
+                .anyMatch(value -> "waiting-for-status".equals(value.cst)));
+        int reopen = java.util.stream.IntStream.range(0, instructions.size())
+                .filter(i -> instructions.get(i) instanceof org.objectweb.asm.tree.LdcInsnNode value
+                        && "waiting-for-status".equals(value.cst)).findFirst().orElseThrow();
+        int firstSnapshot = java.util.stream.IntStream.range(0, instructions.size())
+                .filter(i -> instructions.get(i) instanceof MethodInsnNode call
+                        && call.owner.equals("com/ctux/ae2craftingtime/testdriver/UiObservationStore")
+                        && call.name.equals("latest")).findFirst().orElseThrow();
+        assertTrue(reopen < firstSnapshot,
+                "storage screens have no observation frame, so refresh navigation must precede the frame gate");
+    }
+
+    @Test
+    void nativeEtaAssertionsUsePositiveElapsedWithZeroAndMeasuredProgress() {
+        var zeroInput = new UiSnapshot.StatusObservation(1, "synthetic", 10_000_000_000L,
+                100, 100, 0, 0, null, null, null, null);
+        var measuredInput = new UiSnapshot.StatusObservation(2, "synthetic", 10_000_000_000L,
+                100, 50, 50, 0.5, null, null, null, null);
+        var format = "mm:ss";
+        assertTrue(StandardAe2Scenario.nativeEtaMatches(zeroInput, "Status - 16:40", "Status", format));
+        assertTrue(StandardAe2Scenario.nativeEtaMatches(measuredInput, "Status - 00:10", "Status", format));
+        assertFalse(StandardAe2Scenario.nativeEtaMatches(null, "Status", "Status", format));
+        assertFalse(StandardAe2Scenario.nativeEtaMatches(zeroInput, null, "Status", format));
+        assertFalse(StandardAe2Scenario.nativeEtaMatches(zeroInput, "Status - wrong", "Status", format));
+        assertFalse(StandardAe2Scenario.nativeEtaMatches(new UiSnapshot.StatusObservation(3, "synthetic",
+                0, 100, 100, 0, 0, null, null, null, null), "Status", "Status", format));
+    }
+
+    @Test
     void statusRelaunchParksOnceBeforeEachRenderedCapture(@TempDir Path output) {
         var scenario = new StandardAe2Scenario("standard-plan-controls", "world", output, false);
         var moves = new ArrayList<String>();

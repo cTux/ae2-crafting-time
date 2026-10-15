@@ -53,6 +53,11 @@ final class StandardCraftFixture {
                         values[0], values[1], values[2])));
     }
 
+    static appeng.menu.me.crafting.CraftingStatus progressStatus(long elapsedNanos, long remaining) {
+        return new appeng.menu.me.crafting.CraftingStatus(true,
+                elapsedNanos, remaining, 100, quantityStatus(0).getEntries());
+    }
+
     BlockPos terminal;
     private boolean initialized;
     boolean returnedStone;

@@ -2,14 +2,15 @@
 
 ## Fresh native Status evidence (#671)
 
-Status: ready-to-implement
+Status: finished
 
 Scope: Fresh status observations and native ETA diagnostics in `standard-status-controls`.
 
 Issue: [#671](https://github.com/cTux/ae2-crafting-time/issues/671).
 Planning: [design](technical-design.md#fresh-native-status-evidence-671)
 and [plan](implementation-plan.md#fresh-native-status-evidence-671).
-Implementation and runtime verification are pending.
+Implementation: [PR #713](https://github.com/cTux/ae2-crafting-time/pull/713).
+Verification: [2026-10-15 runtime evidence](native-status-evidence-2026-10-15.md).
 
 The retained native 26.1.2 capture shows an enormous native ETA, but its sidecar
 omits the screen status's timing and progress. The scenario restores an older

@@ -35,11 +35,18 @@ public final class UiObservationStore {
     private static Map<String, Object> latestNativeHover = Map.of();
     private static volatile List<UiSnapshot.ObservedText> wirelessTooltip = List.of();
     private static long sequence;
+    private static appeng.menu.me.crafting.CraftingStatus syntheticStatus;
+
+    static appeng.menu.me.crafting.CraftingStatus synthetic(appeng.menu.me.crafting.CraftingStatus status) {
+        syntheticStatus = status;
+        return status;
+    }
 
     public static void reset() {
         active = null;
         latest = null;
         latestNativeHover = Map.of();
+        syntheticStatus = null;
         wirelessTooltip = List.of();
     }
 
@@ -141,7 +148,10 @@ public final class UiObservationStore {
         if (recordNativePlanAmount(text, bounds, color, bold)) return;
         if (active.screen.contains("CraftingStatusScreen") && statusRowText(bounds)) {
             active.text.add(new UiSnapshot.ObservedText("native-status-text", text, List.of(), bounds, color, bold));
-        } else if (active.screen.contains("CraftingStatusScreen") && text.startsWith("TTC:")) {
+        } else if (active.screen.contains("CraftingStatusScreen") && new Rect(bounds.x(), bounds.y(), 0, 0).inside(active.gui)
+                && bounds.y() < active.gui.y() + 19
+                && (text.startsWith("TTC:")
+                        || text.startsWith(appeng.core.localization.GuiText.CraftingStatus.text().getString()))) {
             active.text.add(new UiSnapshot.ObservedText("native-title", text, List.of(), bounds, color, bold));
         }
     }
@@ -205,10 +215,28 @@ public final class UiObservationStore {
                     .map(slot -> new Rect(active.gui.x() + slot.x, active.gui.y() + slot.y, 16, 16))
                     .forEach(active.itemCells::add);
         }
+        UiSnapshot.StatusObservation statusObservation = null;
         if (minecraft.screen instanceof appeng.client.gui.me.crafting.CraftingCPUScreen<?> screen) {
             var accessor = (com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) screen;
             var status = accessor.ae2craftingtime_test_driver$status();
             if (status != null) {
+                int serial = screen.getMenu() instanceof appeng.menu.me.crafting.CraftingStatusMenu menu
+                        ? menu.getSelectedCpuSerial() : -1;
+                var card = active.cpuCards.stream().filter(cpu -> cpu.serial == serial).findFirst().orElse(null);
+                var synced = ((com.ctux.ae2craftingtime.mc1201.RowStatsJobMenu) screen.getMenu())
+                        .ae2craftingtime$rowStatsJob().forContext(
+                                com.ctux.ae2craftingtime.mc1201.StatsRequestContext.cpuContext(screen.getMenu()));
+                String jobUuid = synced.equals(com.ctux.ae2craftingtime.core.RowStatsJob.NO_JOB)
+                        || synced.equals(com.ctux.ae2craftingtime.core.RowStatsJob.UNAVAILABLE_JOB)
+                        ? null : synced.toString();
+                long completed = status.getStartItemCount() - status.getRemainingItemCount();
+                statusObservation = new UiSnapshot.StatusObservation(System.identityHashCode(status),
+                        status == syntheticStatus ? "synthetic" : "native",
+                        status.getElapsedTime(), status.getStartItemCount(), status.getRemainingItemCount(),
+                        completed, status.getStartItemCount() == 0 ? 0
+                                : (double) completed / status.getStartItemCount(),
+                        serial == -1 ? null : serial, jobUuid, card == null ? null : card.jobId,
+                        card == null ? null : card.elapsedNanos);
                 active.rows.clear();
                 int scroll = accessor.ae2craftingtime_test_driver$scrollbar().getCurrentScroll();
                 var entries = status.getEntries();
@@ -250,7 +278,7 @@ public final class UiObservationStore {
         latestNativeHover = active.nativeHover;
         latest = new UiSnapshot(active.screen, active.menu, active.gui, active.screenWidth, active.screenHeight,
                 active.guiScale, ++sequence, active.scroll, rows, active.text, mergedBadges, active.widgets,
-                active.itemCells, active.tooltip, cpuCards, active.rawCpuSerials);
+                active.itemCells, active.tooltip, cpuCards, active.rawCpuSerials, statusObservation);
         active = null;
     }
 
