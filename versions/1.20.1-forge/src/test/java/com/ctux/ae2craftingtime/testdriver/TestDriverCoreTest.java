@@ -97,6 +97,15 @@ class TestDriverCoreTest {
         assertTrue(instructions.stream().filter(org.objectweb.asm.tree.LdcInsnNode.class::isInstance)
                 .map(org.objectweb.asm.tree.LdcInsnNode.class::cast)
                 .anyMatch(value -> "waiting-for-status".equals(value.cst)));
+        int reopen = java.util.stream.IntStream.range(0, instructions.size())
+                .filter(i -> instructions.get(i) instanceof org.objectweb.asm.tree.LdcInsnNode value
+                        && "waiting-for-status".equals(value.cst)).findFirst().orElseThrow();
+        int firstSnapshot = java.util.stream.IntStream.range(0, instructions.size())
+                .filter(i -> instructions.get(i) instanceof MethodInsnNode call
+                        && call.owner.equals("com/ctux/ae2craftingtime/testdriver/UiObservationStore")
+                        && call.name.equals("latest")).findFirst().orElseThrow();
+        assertTrue(reopen < firstSnapshot,
+                "storage screens have no observation frame, so refresh navigation must precede the frame gate");
     }
 
     @Test

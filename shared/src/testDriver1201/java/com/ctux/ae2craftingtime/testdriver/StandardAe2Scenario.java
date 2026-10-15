@@ -654,6 +654,15 @@ final class StandardAe2Scenario {
             }
             return false;
         }
+        // Storage screens are outside the observation boundary; reopen Status before the frame gate.
+        if (phase == Stage.STATUS_SERVER_OFF && statusRefreshStep == 1) {
+            if (!(minecraft.screen instanceof MEStorageScreen<?> storage)) return false;
+            var button = ((MEStorageScreenAccessor) storage).ae2craftingtime_test_driver$statusButton();
+            DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+            statusRefreshStep = 2;
+            statusRefreshDiagnostic = "waiting-for-status";
+            return false;
+        }
         var snapshot = UiObservationStore.latest();
         boolean optionsVisible = (phase == Stage.STATUS_OPTIONS || phase == Stage.STATUS_PERSIST)
                 && minecraft.screen instanceof com.ctux.ae2craftingtime.mc1201.OptionsScreen;
@@ -1775,14 +1784,6 @@ final class StandardAe2Scenario {
                 return false;
             }
             if (statusRefreshStep < 3) {
-                if (statusRefreshStep == 1) {
-                    if (!(minecraft.screen instanceof MEStorageScreen<?> storage)) return false;
-                    var button = ((MEStorageScreenAccessor) storage).ae2craftingtime_test_driver$statusButton();
-                    DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
-                    statusRefreshStep = 2;
-                    statusRefreshDiagnostic = "waiting-for-status";
-                    return false;
-                }
                 if (!(minecraft.screen instanceof CraftingStatusScreen statusScreen)) return false;
                 var current = ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) statusScreen)
                         .ae2craftingtime_test_driver$status();
