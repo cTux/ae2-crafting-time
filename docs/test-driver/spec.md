@@ -1,5 +1,45 @@
 # AE2 Crafting Time Test Driver Spec
 
+## Fresh native Status evidence (#671)
+
+Status: ready-to-implement
+
+Scope: Fresh status observations and native ETA diagnostics in `standard-status-controls`.
+
+Issue: [#671](https://github.com/cTux/ae2-crafting-time/issues/671).
+Planning: [design](technical-design.md#fresh-native-status-evidence-671)
+and [plan](implementation-plan.md#fresh-native-status-evidence-671).
+Implementation and runtime verification are pending.
+
+The retained native 26.1.2 capture shows an enormous native ETA, but its sidecar
+omits the screen status's timing and progress. The scenario restores an older
+status after synthetic quantity cases, so the separately observed CPU-card time
+cannot explain that title on its own.
+
+- **NS671-1:** Capture status elapsed nanoseconds, start and remaining counts,
+  completed count and progress together with the selected CPU serial, job identity
+  and CPU-card elapsed time in the same frame's sidecar. Distinguish absent status
+  or selection from zero values, and synthetic observations from fresh native ones.
+- **NS671-2:** Reacquire native status after synthetic cases and before the final
+  native-title checkpoint. Prove a new native status observation after refresh,
+  on the same selected CPU and job, in a later rendered frame. A restored object,
+  a new frame alone, or newer CPU-card elapsed time cannot satisfy freshness.
+- **NS671-3:** Add focused zero-progress and measured-progress fixture assertions.
+  Capture the native title with the addon's total title disabled, retaining its
+  raw inputs and existing learned TTC/row checks separately. An implausible fresh
+  native ETA requires fixture-versus-AE2 attribution before any production change;
+  do not present that estimate as elapsed time or force it to pass as plausible.
+- **NS671-4:** Preserve existing quantity, font, options, wrapper, sorting, reset
+  and restart checks. Verify both shared and native26 observation paths with clean
+  compatible Forge 1.20.1 and NeoForge 26.1.2 `standard-status-controls` runs.
+  Retain PNGs, sidecars, hashes and source identity; report semantic assertions
+  separately from visual review. No qualified baseline image exists.
+
+This scope changes development-only evidence and fixture behavior. It preserves
+the [initial Status ETA contract](../initial-status-eta/spec.md), including AE2's
+native title when Status total is off, measured-progress estimates and learned
+TTC presentation. It does not change production estimators, packets or saves.
+
 ## GUI scale 1 readability proof (#695)
 
 The native CPU-list leaf captures two settled scale-1 frames, verifies the

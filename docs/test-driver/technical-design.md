@@ -1,5 +1,57 @@
 # AE2 Crafting Time Test Driver Technical Design
 
+## Fresh native Status evidence (#671)
+
+Lifecycle and criteria: [spec](spec.md#fresh-native-status-evidence-671).
+
+At `5c6f8d342e6d4003e2b1f2f71808bc93f6446313`, shared
+`StandardAe2Scenario` saves `realStatus` in `ACTIVE` and restores it after the
+synthetic quantity/font stages in `STATUS_SCALES`. The dense options probe also
+restores its earlier status. `STATUS_SERVER_OFF` checks profiling and native row
+text before capture, without checking status freshness. Both shared and native26
+`UiObservationStore` read the status entries but omit elapsed/progress inputs.
+Their CPU-card observation already records serial, job identity and elapsed time.
+This establishes an evidence gap, not the cause of the historical title value.
+
+Extend shared `UiSnapshot` with an optional immutable status observation, filled
+by both observers from the current `CraftingStatusAccessor` and selected native
+menu CPU. Record elapsed nanoseconds, start/remaining/completed counts, progress,
+selected serial/job and the observation's native or synthetic provenance. Keep
+the selected card's elapsed data in the same snapshot; record their association
+without assuming independently updated native values must be numerically equal.
+`CaptureEvidence` already serializes the snapshot and binds the completed PNG.
+Keep changing elapsed/progress values out of its layout-readiness signature.
+
+Reuse the scenario's native status open/refresh lifecycle, issuing the action
+once and polling within the existing deadline. Retain the pre-refresh status
+identity or native update revision, selected CPU/job and rendered frame. Require
+a subsequent native status instance/revision, the same selected job/CPU, and a
+later rendered observation before capture. Explicitly reject the saved real
+object and synthetic replacements. If the job completes or selection changes,
+fail the intended checkpoint rather than silently comparing different jobs.
+Perform this after synthetic cases and recheck before `STATUS_SERVER_OFF`; a
+later dense probe must not undo the freshness guarantee.
+
+Use controlled native status inputs for zero and measurable progress assertions,
+labelled synthetic, and separate fresh live-job evidence. Cover absent status,
+missing selection, unchanged/replaced status, changed job, and render ordering.
+Do not seed rendered text or fabricated observation results. Restore fixture
+options and preserve the existing server-profiling-off checkpoint. The production
+`CraftingCPUScreenMixin` intentionally returns AE2's title when Status total is
+disabled. A fresh excessive ETA needs recorded raw inputs and native arithmetic
+attribution before considering any upstream or production correction.
+
+Retain the original #671 evidence identities unchanged: source
+`17d7561e30fa3945dfd9eec4c5d226fc6721edf2`, PR #669;
+`status-server-profiling-off.png` SHA-256
+`3ecd589a236816f828c7eb98a893de4fbca101ed91367256d1b10a58b07ee6f3`;
+sidecar SHA-256
+`6117444ea39210d67e5850f19c1a63e43e97e444cd957d8d5db5a2f2bcdf29b1`;
+AE2 26.1.10-beta runtime JAR SHA-256
+`8412A2208E56989B90E783E0A594C91A955AB8785D7D020FA4D8F342346110F2`.
+These identify the reported observation, not a qualified baseline or proof of
+the raw inputs behind its title.
+
 ## GUI scale 1 readability proof (#695)
 
 Reuse `cpu-list-total-ttc` in the native prepared clients. At scale 1, validate
