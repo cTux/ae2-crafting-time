@@ -3,7 +3,7 @@ package com.ctux.ae2craftingtime.core;
 /** Exact TTC translation roles; never infer a duration or warning from rendered prose. */
 public final class TtcSymbols {
     public enum Symbol {
-        TIME("⏱", 0x55FFFF), WAITING("⌛", 0xFFFF55), WARNING("⚠", 0xFFAA00),
+        TIME("⌚", 0x55FFFF), WAITING("⌛", 0xFFFF55), WARNING("⚠", 0xFFAA00),
         ERROR("⚠", 0xFF5555), POWER("⚡", 0xFF5555), INFO("ℹ", 0x55FFFF),
         SUCCESS("✓", 0x55FF55), LOCATE("→", 0x55FFFF), RECURRENT("↻", 0xFF5555),
         SUGGESTIONS("⚙", 0xFFAA00);

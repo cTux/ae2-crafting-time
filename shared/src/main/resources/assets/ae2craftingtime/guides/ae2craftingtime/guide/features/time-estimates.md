@@ -7,10 +7,10 @@ navigation:
 
 # Time estimates
 
-With **Show emoji** on, each displayed time starts with ⏱. It appears
+With **Show emoji** on, each displayed time starts with ⌚. It appears
 on row and total estimates, CPU cards, tooltips, samples, delayed durations,
 accuracy timings, chat, and supported addon displays. Approximate and uncertain
-marks remain after the symbol: `~12s?` appears as `⏱ ~12s?`. Rates and counts
+marks remain after the symbol: `~12s?` appears as `⌚ ~12s?`. Rates and counts
 stay plain. The symbol uses the game's available font; its appearance can vary
 with fonts, scale, and resource packs.
 In Crafting Plan and Crafting Status rows, symbols match the text color. The
@@ -48,7 +48,7 @@ they ran one after another. For example, two independent ten-second branches
 can still finish in about ten seconds, while two dependent steps take about
 twenty. Estimates are not deadlines: machine speed, other work, and server load
 can change the result.
-When a total is known, the title shows `TTC: ⏱ ...` in the normal title color
+When a total is known, the title shows `TTC: ⌚ ...` in the normal title color
 instead of AE2's elapsed estimate. Without a known total, it shows the normal
 CPU name. The red storage warning still appears when needed. Turn off
 **Crafting Status total** to use AE2's original title.

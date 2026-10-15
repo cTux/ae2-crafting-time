@@ -16,7 +16,7 @@ Tracking: [#350](https://github.com/cTux/ae2-crafting-time/issues/350),
 
 On both the directly opened `CraftingCPUScreen` and the terminal's
 `CraftingStatusScreen`, an active job with a learned total shows only
-`TTC: ⏱ <estimate>` as its title. The TTC text and symbol use the native dark
+`TTC: ⌚ <estimate>` as its title. The TTC text and symbol use the native dark
 title color. Do not show AE2's elapsed estimate or a separate TTC badge.
 When a total is unavailable, show the normal display name, including a custom
 CPU name, without an elapsed estimate. Preserve the red can't-store warning.

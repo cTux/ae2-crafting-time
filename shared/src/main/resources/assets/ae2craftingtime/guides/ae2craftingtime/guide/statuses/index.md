@@ -14,7 +14,7 @@ blocks it. Start at the top and use the first label you see:
 With **Show emoji** on, the full labels keep their usual colors and gain these
 symbols: red ⚠ for No space, No provider, No channel, Locked, Input blocked,
 No target, and Chance output; red ⚡ for No power; yellow ⌛ for Waiting; gold ⚠ for Delayed;
-and aqua ℹ for No data yet. Numeric estimates use ⏱. In Crafting Plan and
+and aqua ℹ for No data yet. Numeric estimates use ⌚. In Crafting Plan and
 Crafting Status rows, symbols match the text color. Crafting Plan uses
 red ↻ for Recurrent and gold ⚠ for Stored variant. Details use ℹ, successful
 stats resets use green ✓, locate hints and throughput use aqua →, and the

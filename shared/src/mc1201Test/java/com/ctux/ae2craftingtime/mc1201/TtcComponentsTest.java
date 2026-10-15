@@ -68,7 +68,7 @@ class TtcComponentsTest {
         assertEquals(source.getString(), row.getString());
         assertEquals(0xFF5555, row.getSiblings().get(0).getStyle().getColor().getValue());
         assertEquals(0xFF5555, source.getSiblings().get(0).getStyle().getColor().getValue());
-        var estimate = Component.empty().append(Component.literal("⏱ ").withStyle(ChatFormatting.AQUA))
+        var estimate = Component.empty().append(Component.literal("⌚ ").withStyle(ChatFormatting.AQUA))
                 .append(Component.literal("~1s"));
         assertEquals(0x404040, TtcComponents.rowSymbolsInTextColor(estimate, 0x404040)
                 .getSiblings().get(0).getStyle().getColor().getValue());
@@ -94,8 +94,8 @@ class TtcComponentsTest {
         var args = ((TranslatableContents) nested.getContents()).getArgs();
         assertEquals("⚠ ", ((Component) args[1]).getSiblings().get(0).getString());
         var seconds = (Component) ((TranslatableContents) ((Component) args[2]).getContents()).getArgs()[0];
-        assertEquals("⏱ ", seconds.getSiblings().get(0).getString());
-        assertEquals("⏱ ", ((Component) args[3]).getSiblings().get(0).getString());
+        assertEquals("⌚ ", seconds.getSiblings().get(0).getString());
+        assertEquals("⌚ ", ((Component) args[3]).getSiblings().get(0).getString());
         assertEquals(raw.getString(), off.getString());
         assertEquals(on, TtcComponents.decorate(on, true));
     }
@@ -166,7 +166,7 @@ class TtcComponentsTest {
         var accuracy = TtcComponents.decorate(Component.translatable("text.ae2craftingtime.value.accuracy",
                 1, 2, "10", "1", "+1.25", "100"), true);
         var accuracyArgs = TtcComponents.translation(accuracy).getArgs();
-        assertEquals("⏱ ", ((Component) accuracyArgs[4]).getSiblings().get(0).getString());
+        assertEquals("⌚ ", ((Component) accuracyArgs[4]).getSiblings().get(0).getString());
         assertEquals("10", accuracyArgs[2]);
         assertEquals("100", accuracyArgs[5]);
     }
@@ -189,8 +189,8 @@ class TtcComponentsTest {
                 }
                 if (show) {
                     assertEquals("ℹ ", parts.get(0).getString());
-                    assertEquals("⏱ ", parts.get(3).getSiblings().get(0).getString());
-                    assertEquals("⏱ ", parts.get(11).getSiblings().get(0).getString());
+                    assertEquals("⌚ ", parts.get(3).getSiblings().get(0).getString());
+                    assertEquals("⌚ ", parts.get(11).getSiblings().get(0).getString());
                 }
             }
         } finally {

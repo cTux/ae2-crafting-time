@@ -128,7 +128,7 @@ in parallel; no eight- or nine-slot Unobtainium capacity is assumed.
 
 ### Requirements
 
-- **N1 — Meaning:** Display each observation as `⏱ Mms` under `Samples (per unit)`, with M equal
+- **N1 — Meaning:** Display each observation as `⌚ Mms` under `Samples (per unit)`, with M equal
   to its elapsed ticks multiplied by 50 and divided by completed output amount. Never call this
   isolated machine processing time or equate one output item with one recipe.
 - **N2 — Precision:** Under [#692](../ttc-milliseconds-instant/spec.md), round positive
@@ -186,13 +186,13 @@ collection. Default retention is ten unless stated otherwise.
 
 | ID | Observation | Expected |
 | --- | --- | --- |
-| A1 | 1 item in 200 ticks | `⏱ 10000ms` |
-| A2 | 9 items in 90 ticks | `⏱ 500ms`; one sample |
-| A3 | 8 items in 90 ticks | `⏱ 563ms` |
-| A4 | 10 items in 411 ticks | `⏱ 2055ms` |
-| A5 | 9 items in 1 tick | `⏱ 6ms` |
-| A6 | 10,000 items in 1 tick | `⏱ 5ms` |
-| A7 | One recipe yields 4 items in 80 ticks | `⏱ 1000ms`; one observation |
+| A1 | 1 item in 200 ticks | `⌚ 10000ms` |
+| A2 | 9 items in 90 ticks | `⌚ 500ms`; one sample |
+| A3 | 8 items in 90 ticks | `⌚ 563ms` |
+| A4 | 10 items in 411 ticks | `⌚ 2055ms` |
+| A5 | 9 items in 1 tick | `⌚ 6ms` |
+| A6 | 10,000 items in 1 tick | `⌚ 5ms` |
+| A7 | One recipe yields 4 items in 80 ticks | `⌚ 1000ms`; one observation |
 | A8 | Nine distinct 1-item/200-tick intervals | Nine observations, not one whole-order sample |
 | A9 | 1,000 mB/20 ticks; 100 mana/20 ticks | `1 mB / 5ms`; `1 mana / 10ms` |
 | A10 | (1 item, 100 ticks), (9 items, 90 ticks) | Average 2750ms/unit; latest 500ms; weighted rate unchanged for these pairs |
