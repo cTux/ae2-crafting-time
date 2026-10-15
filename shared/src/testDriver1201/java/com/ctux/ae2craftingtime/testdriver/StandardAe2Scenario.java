@@ -177,6 +177,7 @@ final class StandardAe2Scenario {
     private String statusRefreshJob;
     private String statusRefreshOutput;
     private long statusRefreshFrame;
+    private String statusRefreshDiagnostic = "pending";
     private int statusProgressStep;
     private appeng.menu.me.crafting.CraftingStatus statusProgressOriginal;
     private appeng.menu.me.crafting.CraftingStatus statusProgressFixture;
@@ -283,6 +284,8 @@ final class StandardAe2Scenario {
             + (phase == Stage.STATUS_SCALES ? " font-mode=" + amountFontMode + " scale-case=" + quantityScaleCase
                     + " scale-set=" + quantityScaleSet + " unicode-prepared=" + unicodeFontPrepared
                     + " font-reload=" + (amountFontReload == null ? "none" : amountFontReload.isDone() ? "done" : "pending") : "")
+            + (phase == Stage.STATUS_SERVER_OFF ? " status-progress=" + statusProgressStep
+                    + " refresh=" + statusRefreshStep + " refresh-observation=" + statusRefreshDiagnostic : "")
             + (leaf.equals("crafting-suspension") ? " suspension=" + suspensionStage : "")
             + (leaf.equals("badge-background") ? " badge=" + badgeStep + " replan=" + badgeReplanAttempts : "")
             + (leaf.equals("recurrent-plan") ? " recurrence=" + recurrenceCase + " sort=" + sort : "")
@@ -1772,12 +1775,30 @@ final class StandardAe2Scenario {
                 return false;
             }
             if (statusRefreshStep < 3) {
+                if (statusRefreshStep == 1) {
+                    if (!(minecraft.screen instanceof MEStorageScreen<?> storage)) return false;
+                    var button = ((MEStorageScreenAccessor) storage).ae2craftingtime_test_driver$statusButton();
+                    DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+                    statusRefreshStep = 2;
+                    statusRefreshDiagnostic = "waiting-for-status";
+                    return false;
+                }
                 if (!(minecraft.screen instanceof CraftingStatusScreen statusScreen)) return false;
-                var menu = statusScreen.getMenu();
                 var current = ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) statusScreen)
                         .ae2craftingtime_test_driver$status();
+                var observed = snapshot.status();
+                statusRefreshDiagnostic = "new-object=" + (current != statusBeforeRefresh)
+                        + " observation-matches=" + (observed != null && current != null
+                        && observed.identity() == System.identityHashCode(current))
+                        + " native=" + (observed != null && "native".equals(observed.provenance()))
+                        + " serial-matches=" + (observed != null
+                        && java.util.Objects.equals(observed.selectedCpuSerial(), statusRefreshSerial))
+                        + " job-matches=" + (observed != null
+                        && java.util.Objects.equals(observed.selectedJobUuid(), statusRefreshJob))
+                        + " output-matches=" + (observed != null
+                        && java.util.Objects.equals(observed.selectedOutputId(), statusRefreshOutput))
+                        + " frame-advanced=" + (snapshot.frame() > statusRefreshFrame);
                 if (statusRefreshStep == 0) {
-                    var observed = snapshot.status();
                     if (current == null || observed == null
                             || observed.identity() != System.identityHashCode(current)
                             || observed.selectedCpuSerial() == null || observed.cpuElapsedNanos() == null
@@ -1788,9 +1809,13 @@ final class StandardAe2Scenario {
                     statusRefreshJob = observed.selectedJobUuid();
                     statusRefreshOutput = observed.selectedOutputId();
                     statusRefreshFrame = snapshot.frame();
-                    menu.selectCpu(-1);
-                    menu.selectCpu(statusRefreshSerial);
+                    var back = statusScreen.children().stream()
+                            .filter(appeng.client.gui.widgets.TabButton.class::isInstance)
+                            .map(appeng.client.gui.widgets.TabButton.class::cast)
+                            .filter(button -> button.visible).findFirst().orElseThrow();
+                    DriverPlatform.click(minecraft, back.getX() + 4, back.getY() + 4);
                     statusRefreshStep = 1;
+                    statusRefreshDiagnostic = "waiting-for-storage";
                     return false;
                 }
                 if (current == null || snapshot.status() == null

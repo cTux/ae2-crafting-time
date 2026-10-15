@@ -76,6 +76,30 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void nativeStatusRefreshUsesMenuReopenInsteadOfCoalescedSelection() throws Exception {
+        var node = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/StandardAe2Scenario.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, 0);
+        }
+        var tick = node.methods.stream().filter(method -> method.name.equals("tick")).findFirst().orElseThrow();
+        var instructions = java.util.Arrays.asList(tick.instructions.toArray());
+        var calls = instructions.stream().filter(MethodInsnNode.class::isInstance)
+                .map(MethodInsnNode.class::cast).toList();
+        assertEquals(0, calls.stream().filter(call -> call.name.equals("selectCpu")).count(),
+                "selecting away and back in one client tick can coalesce before native status refresh");
+        assertTrue(calls.stream().filter(call -> call.name.equals("ae2craftingtime_test_driver$statusButton")).count() >= 3,
+                "the refresh must reopen Status through AE2's real menu button");
+        assertTrue(instructions.stream().filter(org.objectweb.asm.tree.LdcInsnNode.class::isInstance)
+                .map(org.objectweb.asm.tree.LdcInsnNode.class::cast)
+                .anyMatch(value -> "waiting-for-storage".equals(value.cst)));
+        assertTrue(instructions.stream().filter(org.objectweb.asm.tree.LdcInsnNode.class::isInstance)
+                .map(org.objectweb.asm.tree.LdcInsnNode.class::cast)
+                .anyMatch(value -> "waiting-for-status".equals(value.cst)));
+    }
+
+    @Test
     void nativeEtaAssertionsUsePositiveElapsedWithZeroAndMeasuredProgress() {
         var zeroInput = new UiSnapshot.StatusObservation(1, "synthetic", 10_000_000_000L,
                 100, 100, 0, 0, null, null, null, null);
