@@ -1168,7 +1168,7 @@ class TestDriverCoreTest {
     void treeReadinessRequiresDurationDrawAtTheTargetNode() {
         var screen = "com.neuvillette.ae2ct.gui.CraftingTreeScreen";
         var node = new UiSnapshot.Row("diamond", 1, 0, new Rect(10, 10, 16, 16), List.of());
-        for (var label : List.of("~1s", "⏱ ~1:02", "~1:02:03", "⏱ ~11s?", "50ms", "⏱ 5ms?",
+        for (var label : List.of("~1s", "⌚ ~1:02", "~1:02:03", "⌚ ~11s?", "50ms", "⌚ 5ms?",
                 "🥇 Instant", "Instant", "Item ~1", "TTC: ~1s")) {
             var literal = new UiSnapshot.ObservedText("literal", label, List.of(), new Rect(8, 31, 20, 5));
             var text = CraftingTreeScenario.nodeTtcText(screen, literal);

@@ -86,7 +86,7 @@ GitHub glyph rendering or concept art as evidence of the implemented appearance.
 
 ## Time glyph compatibility (#658)
 
-Status: ready-to-implement
+Status: in-progress ([PR #715](https://github.com/cTux/ae2-crafting-time/pull/715)); native font/scale captures and current-head CI remain.
 
 Scope: Restore a visible time symbol on the prepared NeoForge 26.1.2 client;
 [#658](https://github.com/cTux/ae2-crafting-time/issues/658).

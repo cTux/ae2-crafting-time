@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 class TtcSymbolsTest {
     @Test
     void everyStatusAndHeadingHasItsSpecifiedSymbol() {
+        assertEquals("⌚", TtcSymbols.Symbol.TIME.glyph());
         var expected = Map.ofEntries(
                 Map.entry(TtcSymbols.Symbol.WAITING, "waiting"),
                 Map.entry(TtcSymbols.Symbol.POWER, "no_power"),
