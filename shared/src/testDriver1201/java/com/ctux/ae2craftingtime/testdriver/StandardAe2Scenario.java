@@ -171,6 +171,17 @@ final class StandardAe2Scenario {
     private long addonQuantityBadgeFrame;
     private boolean addonQuantityHovered;
     private appeng.menu.me.crafting.CraftingStatus realStatus;
+    private appeng.menu.me.crafting.CraftingStatus statusBeforeRefresh;
+    private int statusRefreshStep;
+    private int statusRefreshSerial;
+    private String statusRefreshJob;
+    private String statusRefreshOutput;
+    private long statusRefreshFrame;
+    private int statusProgressStep;
+    private appeng.menu.me.crafting.CraftingStatus statusProgressOriginal;
+    private appeng.menu.me.crafting.CraftingStatus statusProgressFixture;
+    private String statusZeroTitle;
+    private Boolean originalStatusTotal;
     private Boolean originalDelayedStatus;
     private Boolean originalStatusBadgeBackground;
     private Boolean originalStatusTextShadow;
@@ -1189,7 +1200,7 @@ final class StandardAe2Scenario {
                 addonQuantityCases = StandardCraftFixture.addonQuantityCases();
                 var accessor = (com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen;
                 realStatus = accessor.ae2craftingtime_test_driver$status();
-                accessor.ae2craftingtime_test_driver$setStatus(StandardCraftFixture.quantityStatus(quantityCase));
+                accessor.ae2craftingtime_test_driver$setStatus(UiObservationStore.synthetic(StandardCraftFixture.quantityStatus(quantityCase)));
                 moveMouse.accept(0, 0);
                 phase = Stage.STATUS_AMOUNTS;
                 frames.reset();
@@ -1217,7 +1228,7 @@ final class StandardAe2Scenario {
                     && value.pendingAmount() == expected.getPendingAmount()).findFirst().orElse(null);
             if (row == null) {
                 ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
-                        .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.quantityStatus(quantityCase));
+                        .ae2craftingtime_test_driver$setStatus(UiObservationStore.synthetic(StandardCraftFixture.quantityStatus(quantityCase)));
                 frames.reset();
                 return false;
             }
@@ -1271,16 +1282,16 @@ final class StandardAe2Scenario {
             screenshot.accept("status-amounts-" + quantityCase + ".png");
             if (++quantityCase < StandardCraftFixture.QUANTITY_CASES) {
                 ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
-                        .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.quantityStatus(quantityCase));
+                        .ae2craftingtime_test_driver$setStatus(UiObservationStore.synthetic(StandardCraftFixture.quantityStatus(quantityCase)));
                 quantityHovered = false;
                 moveMouse.accept(0, 0);
                 frames.reset();
                 return false;
             }
             ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
-                    .ae2craftingtime_test_driver$setStatus(addonQuantityCases.isEmpty()
+                    .ae2craftingtime_test_driver$setStatus(UiObservationStore.synthetic(addonQuantityCases.isEmpty()
                             ? StandardCraftFixture.quantityStatus(8)
-                            : StandardCraftFixture.addonQuantityStatus(addonQuantityCases.get(0)));
+                            : StandardCraftFixture.addonQuantityStatus(addonQuantityCases.get(0))));
             originalGuiScale = minecraft.options.guiScale().get();
             originalForceUnicodeFont = minecraft.options.forceUnicodeFont().get();
             fontStateSaved = true;
@@ -1304,7 +1315,7 @@ final class StandardAe2Scenario {
                     .findFirst().orElse(null);
             if (row == null) {
                 ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
-                        .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.addonQuantityStatus(addon));
+                        .ae2craftingtime_test_driver$setStatus(UiObservationStore.synthetic(StandardCraftFixture.addonQuantityStatus(addon)));
                 frames.reset();
                 return false;
             }
@@ -1352,15 +1363,15 @@ final class StandardAe2Scenario {
                 addonQuantityBadgeCaptured = false;
                 addonQuantityHovered = false;
                 ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
-                        .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.addonQuantityStatus(
-                                addonQuantityCases.get(addonQuantityCase)));
+                        .ae2craftingtime_test_driver$setStatus(UiObservationStore.synthetic(StandardCraftFixture.addonQuantityStatus(
+                                addonQuantityCases.get(addonQuantityCase))));
                 frames.reset();
                 return false;
             }
             writeAddonKeyEvidence();
             mark(checks, "addon-key-status", true);
             ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
-                    .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.quantityStatus(8));
+                    .ae2craftingtime_test_driver$setStatus(UiObservationStore.synthetic(StandardCraftFixture.quantityStatus(8)));
             phase = Stage.STATUS_SCALES;
             frames.reset();
         } else if (phase == Stage.STATUS_SCALES) {
@@ -1415,7 +1426,7 @@ final class StandardAe2Scenario {
                     .findFirst().orElse(null);
             if (row == null) {
                 ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
-                        .ae2craftingtime_test_driver$setStatus(StandardCraftFixture.quantityStatus(8));
+                        .ae2craftingtime_test_driver$setStatus(UiObservationStore.synthetic(StandardCraftFixture.quantityStatus(8)));
                 frames.reset();
                 return false;
             }
@@ -1524,7 +1535,7 @@ final class StandardAe2Scenario {
                     if (amountOptionCase == 0 && statusDenseProof == 0) {
                         var accessor = (com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) statusScreen;
                         statusDenseOriginal = accessor.ae2craftingtime_test_driver$status();
-                        accessor.ae2craftingtime_test_driver$setStatus(StandardCraftFixture.quantityStatus(8));
+                        accessor.ae2craftingtime_test_driver$setStatus(UiObservationStore.synthetic(StandardCraftFixture.quantityStatus(8)));
                         minecraft.options.guiScale().set(1);
                         DriverPlatform.resizeDisplay(minecraft);
                         statusDenseProof = 1;
@@ -1709,6 +1720,81 @@ final class StandardAe2Scenario {
             amountOptionRenderedAfter = TestDriverRuntime.renderedFrames + 3;
             frames.reset();
         } else if (phase == Stage.STATUS_SERVER_OFF) {
+            if (statusProgressStep < 3) {
+                if (!(minecraft.screen instanceof CraftingStatusScreen screen)) return false;
+                var accessor = (com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) screen;
+                if (statusProgressStep == 0) {
+                    statusProgressOriginal = accessor.ae2craftingtime_test_driver$status();
+                    if (statusProgressOriginal == null) return false;
+                    var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+                    originalStatusTotal = options.features().enabled(
+                            com.ctux.ae2craftingtime.core.OptionFeature.STATUS_TOTAL);
+                    options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.STATUS_TOTAL, false);
+                    com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+                    statusProgressFixture = StandardCraftFixture.progressStatus(10_000_000_000L, 100);
+                    accessor.ae2craftingtime_test_driver$setStatus(UiObservationStore.synthetic(statusProgressFixture));
+                    statusProgressStep = 1;
+                    return false;
+                }
+                var observed = snapshot.status();
+                if (accessor.ae2craftingtime_test_driver$status() != statusProgressFixture
+                        || observed == null || observed.identity() != System.identityHashCode(statusProgressFixture)
+                        || !"synthetic".equals(observed.provenance())) return false;
+                var title = snapshot.text().stream().filter(text -> text.key().equals("native-title"))
+                        .map(UiSnapshot.ObservedText::rendered).findFirst().orElse(null);
+                if (title == null) return false;
+                if (statusProgressStep == 1) {
+                    if (observed.elapsedNanos() != 10_000_000_000L || observed.startCount() != 100
+                            || observed.remainingCount() != 100 || observed.completedCount() != 0
+                            || observed.progress() != 0 || !nativeEtaMatches(observed, title))
+                        throw new IllegalStateException("Zero-progress native Status title or inputs changed");
+                    statusZeroTitle = title;
+                    screenshot.accept("status-native-zero-progress.png");
+                    statusProgressFixture = StandardCraftFixture.progressStatus(10_000_000_000L, 50);
+                    accessor.ae2craftingtime_test_driver$setStatus(UiObservationStore.synthetic(statusProgressFixture));
+                    statusProgressStep = 2;
+                    return false;
+                }
+                if (observed.elapsedNanos() != 10_000_000_000L || observed.startCount() != 100
+                        || observed.remainingCount() != 50 || observed.completedCount() != 50
+                        || observed.progress() != 0.5 || title.equals(statusZeroTitle)
+                        || !nativeEtaMatches(observed, title))
+                    throw new IllegalStateException("Measured-progress native Status title or inputs changed");
+                screenshot.accept("status-native-measured-progress.png");
+                accessor.ae2craftingtime_test_driver$setStatus(statusProgressOriginal);
+                statusProgressFixture = null;
+                statusProgressOriginal = null;
+                statusProgressStep = 3;
+                return false;
+            }
+            if (statusRefreshStep < 3) {
+                if (!(minecraft.screen instanceof CraftingStatusScreen statusScreen)) return false;
+                var menu = statusScreen.getMenu();
+                var current = ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) statusScreen)
+                        .ae2craftingtime_test_driver$status();
+                if (statusRefreshStep == 0) {
+                    var observed = snapshot.status();
+                    if (current == null || observed == null
+                            || observed.identity() != System.identityHashCode(current)
+                            || observed.selectedCpuSerial() == null || observed.cpuElapsedNanos() == null
+                            || observed.selectedJobUuid() == null || observed.selectedOutputId() == null
+                            || !"native".equals(observed.provenance())) return false;
+                    statusBeforeRefresh = current;
+                    statusRefreshSerial = observed.selectedCpuSerial();
+                    statusRefreshJob = observed.selectedJobUuid();
+                    statusRefreshOutput = observed.selectedOutputId();
+                    statusRefreshFrame = snapshot.frame();
+                    menu.selectCpu(-1);
+                    menu.selectCpu(statusRefreshSerial);
+                    statusRefreshStep = 1;
+                    return false;
+                }
+                if (current == null || snapshot.status() == null
+                        || snapshot.status().identity() != System.identityHashCode(current)
+                        || !freshNativeStatus(snapshot.status(), statusRefreshSerial, statusRefreshJob, statusRefreshOutput,
+                        snapshot.frame(), statusRefreshFrame, current != statusBeforeRefresh)) return false;
+                statusRefreshStep = 3;
+            }
             if (!amountServerOffApplied) {
                 if (!server(minecraft, player -> {
                     var config = com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime.current();
@@ -1724,6 +1810,12 @@ final class StandardAe2Scenario {
             }
             if (!amountServerOffCaptured) {
                 if (com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.profilingEnabled()) return false;
+                var current = ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) minecraft.screen)
+                        .ae2craftingtime_test_driver$status();
+                if (current == null || snapshot.status() == null
+                        || snapshot.status().identity() != System.identityHashCode(current)
+                        || !freshNativeStatus(snapshot.status(), statusRefreshSerial, statusRefreshJob, statusRefreshOutput,
+                        snapshot.frame(), statusRefreshFrame, current != statusBeforeRefresh)) return false;
                 var row = snapshot.rows().stream().filter(value -> value.storedAmount() > 0
                         || value.activeAmount() > 0 || value.pendingAmount() > 0).findFirst().orElse(null);
                 if (row == null) return false;
@@ -1740,7 +1832,9 @@ final class StandardAe2Scenario {
                 }
                 if (descriptions.stream().anyMatch(text ->
                         com.ctux.ae2craftingtime.core.CraftingRowState.isBadge(text.key()))) return false;
+                if (snapshot.text().stream().noneMatch(text -> text.key().equals("native-title"))) return false;
                 screenshot.accept("status-server-profiling-off.png");
+                restoreNativeTitleOption();
                 amountServerOffCaptured = true;
             }
             if (!server(minecraft, player -> {
@@ -3419,6 +3513,10 @@ final class StandardAe2Scenario {
                 DriverPlatform.resizeDisplay(minecraft);
             }
             restoreStatusInteraction(minecraft);
+            if (statusProgressOriginal != null && minecraft.screen instanceof CraftingStatusScreen screen)
+                ((com.ctux.ae2craftingtime.testdriver.mixin.CraftingStatusAccessor) screen)
+                        .ae2craftingtime_test_driver$setStatus(statusProgressOriginal);
+            restoreNativeTitleOption();
             restoreStatusVisualOptions();
         } catch (java.io.IOException error) {
             throw new java.io.UncheckedIOException(error);
@@ -3474,14 +3572,14 @@ final class StandardAe2Scenario {
                     com.ctux.ae2craftingtime.core.OptionFeature.STATUS_SORT_CONTROL);
             options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.STATUS_SORT_CONTROL, false);
             com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
-            accessor.ae2craftingtime_test_driver$setStatus(statusInteractionFixture);
+            accessor.ae2craftingtime_test_driver$setStatus(UiObservationStore.synthetic(statusInteractionFixture));
             stats.next();
             moveMouse.accept(0, 0);
             statusInteractionStep = 1;
             return false;
         }
         if (accessor.ae2craftingtime_test_driver$status() != statusInteractionFixture) {
-            accessor.ae2craftingtime_test_driver$setStatus(statusInteractionFixture);
+            accessor.ae2craftingtime_test_driver$setStatus(UiObservationStore.synthetic(statusInteractionFixture));
             return false;
         }
         if (statusInteractionStep == 1) {
@@ -3701,6 +3799,35 @@ final class StandardAe2Scenario {
         statusDenseOriginal = null;
         minecraft.options.guiScale().set(originalGuiScale);
         DriverPlatform.resizeDisplay(minecraft);
+    }
+
+    private void restoreNativeTitleOption() throws java.io.IOException {
+        if (originalStatusTotal == null) return;
+        var options = com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.current().copy();
+        options.features().setEnabled(com.ctux.ae2craftingtime.core.OptionFeature.STATUS_TOTAL,
+                originalStatusTotal);
+        com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime.apply(options);
+        originalStatusTotal = null;
+    }
+
+    static boolean freshNativeStatus(UiSnapshot.StatusObservation status, int serial, String job, String output,
+            long frame, long beforeFrame, boolean newStatusObject) {
+        return status != null && "native".equals(status.provenance()) && newStatusObject
+                && frame > beforeFrame && java.util.Objects.equals(status.selectedCpuSerial(), serial)
+                && job != null && !job.isBlank() && job.equals(status.selectedJobUuid())
+                && output != null && output.equals(status.selectedOutputId())
+                && status.cpuElapsedNanos() != null;
+    }
+
+    static boolean nativeEtaMatches(UiSnapshot.StatusObservation status, String title) {
+        if (status == null || title == null) return false;
+        long eta = (long) (status.elapsedNanos()
+                / Math.max(1d, (double) status.completedCount()) * status.remainingCount());
+        if (eta <= 0) return false;
+        var formatted = org.apache.commons.lang3.time.DurationFormatUtils.formatDuration(
+                java.util.concurrent.TimeUnit.MILLISECONDS.convert(eta, java.util.concurrent.TimeUnit.NANOSECONDS),
+                appeng.core.localization.GuiText.ETAFormat.getLocal());
+        return title.equals(appeng.core.localization.GuiText.CraftingStatus.text().getString() + " - " + formatted);
     }
 
     private boolean server(Minecraft minecraft, Function<ServerPlayer, Boolean> action) {

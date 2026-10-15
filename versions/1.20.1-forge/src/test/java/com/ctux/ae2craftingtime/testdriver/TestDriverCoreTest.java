@@ -46,6 +46,57 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
     @Test
+    void nativeStatusFreshnessRequiresReplacementSameSelectedJobAndLaterFrame() {
+        String job = "00000000-0000-0000-0000-000000000001";
+        var measured = new UiSnapshot.StatusObservation(2, "native", 10_000_000_000L,
+                100, 50, 50, 0.5, 4, job, "minecraft:stone", 11_000_000_000L);
+        assertFalse(StandardAe2Scenario.freshNativeStatus(null, 4, job, "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(new UiSnapshot.StatusObservation(1, "synthetic",
+                10_000_000_000L, 100, 100, 0, 0, 4, job, "minecraft:stone", 0L),
+                4, job, "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 4, job, "minecraft:stone", 11, 10, false));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 4, job, "minecraft:stone", 10, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 5, job, "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 4, null, "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 4, "", "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 4,
+                "00000000-0000-0000-0000-000000000002", "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 4, job, null, 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(measured, 4, job, "minecraft:glass", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(new UiSnapshot.StatusObservation(2, "native",
+                10_000_000_000L, 100, 50, 50, 0.5, null, job, "minecraft:stone", 11_000_000_000L),
+                4, job, "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(new UiSnapshot.StatusObservation(2, "native",
+                10_000_000_000L, 100, 50, 50, 0.5, 4, null, "minecraft:stone", 11_000_000_000L),
+                4, job, "minecraft:stone", 11, 10, true));
+        assertFalse(StandardAe2Scenario.freshNativeStatus(new UiSnapshot.StatusObservation(2, "native",
+                10_000_000_000L, 100, 50, 50, 0.5, 4, job, "minecraft:stone", null),
+                4, job, "minecraft:stone", 11, 10, true));
+        assertTrue(StandardAe2Scenario.freshNativeStatus(measured, 4, job, "minecraft:stone", 11, 10, true));
+    }
+
+    @Test
+    void nativeEtaAssertionsUsePositiveElapsedWithZeroAndMeasuredProgress() {
+        var zero = StandardCraftFixture.progressStatus(10_000_000_000L, 100);
+        var measured = StandardCraftFixture.progressStatus(10_000_000_000L, 50);
+        var zeroInput = new UiSnapshot.StatusObservation(1, "synthetic", zero.getElapsedTime(),
+                zero.getStartItemCount(), zero.getRemainingItemCount(), 0, 0, null, null, null, null);
+        var measuredInput = new UiSnapshot.StatusObservation(2, "synthetic", measured.getElapsedTime(),
+                measured.getStartItemCount(), measured.getRemainingItemCount(), 50, 0.5, null, null, null, null);
+        var title = appeng.core.localization.GuiText.CraftingStatus.text().getString() + " - ";
+        var format = appeng.core.localization.GuiText.ETAFormat.getLocal();
+        assertTrue(StandardAe2Scenario.nativeEtaMatches(zeroInput, title
+                + org.apache.commons.lang3.time.DurationFormatUtils.formatDuration(1_000_000L, format)));
+        assertTrue(StandardAe2Scenario.nativeEtaMatches(measuredInput, title
+                + org.apache.commons.lang3.time.DurationFormatUtils.formatDuration(10_000L, format)));
+        assertFalse(StandardAe2Scenario.nativeEtaMatches(null, title));
+        assertFalse(StandardAe2Scenario.nativeEtaMatches(zeroInput, null));
+        assertFalse(StandardAe2Scenario.nativeEtaMatches(zeroInput, title + "wrong"));
+        assertFalse(StandardAe2Scenario.nativeEtaMatches(new UiSnapshot.StatusObservation(3, "synthetic",
+                0, 100, 100, 0, 0, null, null, null, null), title));
+    }
+
+    @Test
     void statusRelaunchParksOnceBeforeEachRenderedCapture(@TempDir Path output) {
         var scenario = new StandardAe2Scenario("standard-plan-controls", "world", output, false);
         var moves = new ArrayList<String>();

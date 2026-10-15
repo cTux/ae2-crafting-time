@@ -24,6 +24,7 @@ public final class CaptureEvidence {
     public static void write(Path image, DriverOptions options, UiSnapshot snapshot,
             int width, int height, long frame, String renderer, long started) throws IOException {
         var data = new Gson().toJsonTree(snapshot).getAsJsonObject();
+        if (snapshot.status() == null) data.add("status", com.google.gson.JsonNull.INSTANCE);
         data.addProperty("tableCellBoundsSource", "expected-layout-policy; glyph and badge bounds are observed");
         data.add("nativeHoveredCell", new Gson().toJsonTree(UiObservationStore.nativeHover(snapshot)));
         var capture = new com.google.gson.JsonObject();
