@@ -58,8 +58,8 @@ Merge these document changes before implementation.
    preserve `REVIEW_REQUIRED` where no qualified baseline exists (NS671-4).
    Cleanly shut down the exact CodexVM after review and verify its absence from
    `vmrun list`. Finish only after focused checks, both clean campaigns, review,
-   current-head CI and implementation merge; implementation and verification are
-   currently pending.
+   current-head CI and implementation merge. The 2026-10-15
+   [runtime evidence](native-status-evidence-2026-10-15.md) records the checks.
 
 ## Optional badge backgrounds (#696)
 
