@@ -86,7 +86,11 @@ GitHub glyph rendering or concept art as evidence of the implemented appearance.
 
 ## Time glyph compatibility (#658)
 
-Status: in-progress ([PR #715](https://github.com/cTux/ae2-crafting-time/pull/715)); native font/scale captures and current-head CI remain.
+Status: finished
+
+Implementation: [PR #715](https://github.com/cTux/ae2-crafting-time/pull/715) merged at [`a6ee988faa26999b02c5ce6bf8fe66bd29c219a0`](https://github.com/cTux/ae2-crafting-time/commit/a6ee988faa26999b02c5ce6bf8fe66bd29c219a0) and tested at [`5fa7c04a5b2e2c5c978782d4ba49b47a82eb68be`](https://github.com/cTux/ae2-crafting-time/commit/5fa7c04a5b2e2c5c978782d4ba49b47a82eb68be).
+
+Verification: `./gradlew test jacocoTestReport checkGuideResources`, all four `distMod` builds, and current-head Build and Gradle tests passed on the tested revision. NeoForge 26.1.2 Plan/status/CPU and Forge 1.20.1 Plan captures were manually inspected; default and built-in uniform fonts were checked at effective GUI scales 2 and 4, including Show emoji Off. EN/UK GuideME and published wiki text matched. The automated visual gate requested review because no qualified baseline exists; manual inspection found no missing glyph, clipping, or overlap.
 
 Scope: Restore a visible time symbol on the prepared NeoForge 26.1.2 client;
 [#658](https://github.com/cTux/ae2-crafting-time/issues/658).
