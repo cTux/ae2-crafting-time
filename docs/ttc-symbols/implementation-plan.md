@@ -50,3 +50,47 @@ Lifecycle and acceptance: [spec](spec.md). Architecture: [technical design](tech
 | A4: preserve behavior/styles | Steps 2-4; click/hover, nested components, row policy, raw-log boundary and layout source review |
 | A5: supported targets/docs | Steps 3/5/6; registered adapters, all-target build, locales, GuideME resources and wiki readback |
 | A6: verification limits | Steps 6/7; no smoke; explicit unverified glyph/visual appearance statement |
+
+## Time glyph compatibility (#658)
+
+Lifecycle and acceptance: [follow-up scope](spec.md#time-glyph-compatibility-658).
+Design: [glyph evidence and boundaries](technical-design.md#time-glyph-compatibility-658).
+
+1. Replace only `TtcSymbols.Symbol.TIME` with U+231A WATCH. Trace existing
+   `TtcComponents` callers and audit literal U+23F1 assertions, driver patterns
+   and current documentation examples. Preserve historical evidence. Keep all
+   other symbols, component composition, option behavior and colors unchanged.
+2. Update the nearest existing symbol/component regression expectations for one
+   prefix, uncertainty, Off and style preservation. Update current English and
+   Ukrainian GuideME and wiki examples where they show the time symbol. No new
+   option, dependency or packaged font is required.
+3. Prepare focused cases in the existing native scenario only where its current
+   captures cannot prove G3. Use the prepared `26.1.2-neoforge` compatible profile
+   with `standard-plan-controls`, `standard-status-controls` and
+   `cpu-list-total-ttc`; capture rows, footer/total, tooltips and CPU cards under
+   default and native uniform fonts at effective GUI scales 2 and 4. Reuse
+   disposable fixtures and restore modified font/scale/options. Do not introduce
+   a runner or expand into the full addon matrix.
+4. Review and commit through the normal hook-created PR before running local
+   checks. Run the existing shared/component tests, coverage and guide-resource
+   validation, plus all-target builds for Forge/Fabric 1.20.1, NeoForge 1.21.1
+   and NeoForge 26.1.2. Inspect `-Changed` smoke selection and use the focused
+   leaves above; run a representative prepared `1.20.1-forge` compatible native
+   plan/CPU capture for the older renderer. If a required capture is missing,
+   complete that focused case rather than treating a string assertion as proof.
+5. Inspect retained screenshots for recognizable glyphs, baseline, clipping and
+   overlap; compare sidecars for original values and record font, effective scale,
+   run timestamp and duration. Confirm Show emoji Off with existing component
+   checks and a focused native toggle capture. Report current-head GitHub checks
+   separately. Publish and read back changed wiki examples through the normal
+   documentation workflow when applicable.
+6. Mark only the #658 scope finished after merged implementation, current-head
+   verification and required visual evidence exist. Keep the original #450
+   verification history intact and record any third-party font-pack limits.
+
+| Criteria | Changes and checks |
+| --- | --- |
+| G1–G2 | Steps 1–2/4–5: shared constant, caller/literal audit, existing symbol/component tests and Off capture |
+| G3 | Steps 3/5: NeoForge 26.1.2 native screenshots across the specified surfaces, fonts and scales |
+| G4 | Steps 4–6: Forge representative smoke, shared/component coverage, four-target builds, exact-head CI and merge evidence |
+| G5 | Steps 1–2/5: current examples, paired GuideME locales, applicable wiki publication/readback |

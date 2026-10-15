@@ -83,3 +83,31 @@ blocked-chat translation needs reason-aware decoration, never unconditional ligh
 
 No new screenshots are required for this run. Do not present prior screenshots,
 GitHub glyph rendering or concept art as evidence of the implemented appearance.
+
+## Time glyph compatibility (#658)
+
+Status: ready-to-implement
+
+Scope: Restore a visible time symbol on the prepared NeoForge 26.1.2 client;
+[#658](https://github.com/cTux/ae2-crafting-time/issues/658).
+
+Planning: [Technical design](technical-design.md#time-glyph-compatibility-658)
+and [implementation plan](implementation-plan.md#time-glyph-compatibility-658).
+
+This follow-up replaces the baseline's time symbol with ⌚ (U+231A WATCH) on
+all supported targets. It supersedes only the U+23F1 choice and the no-smoke
+verification limit for this fix. Keep the rest of the palette and presentation
+policy. No new option or font resource is needed.
+
+| ID | Required result |
+| --- | --- |
+| G1 | Every existing numeric-duration surface uses exactly one ⌚ prefix when Show emoji is On. Values, units, approximation, uncertainty and current color boundaries remain unchanged. |
+| G2 | Show emoji Off remains text-only. Other symbols, rates, counts, raw server messages and stored data remain unchanged. |
+| G3 | On prepared NeoForge 26.1.2, inspect native row, footer/total, tooltip and CPU-card screenshots with default and uniform fonts at GUI scales 2 and 4. The symbol is recognizable, with no missing-glyph box, clipping or overlap. Record effective scale and font state. |
+| G4 | A representative Forge 1.20.1 native smoke run confirms the replacement renders and preserves layout. Shared/component checks and all four supported-target builds pass; current-head CI is reported separately. |
+| G5 | Current examples and English/Ukrainian player guides use the new symbol consistently; historical reports remain accurate records of U+23F1. |
+
+Existing scenario runners and disposable fixtures provide the verification path.
+Extend an existing native scenario only as needed to capture the required font,
+scale and surface combinations. Do not add a standalone runner. Arbitrary third-party
+font packs are outside this fix's guarantee.

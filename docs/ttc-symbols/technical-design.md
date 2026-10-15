@@ -90,3 +90,43 @@ Do not launch Minecraft or add a smoke runner: the user explicitly excluded smok
 Font glyph presence, GUI scale/resource-pack appearance and visual overlap remain
 unverified. Single Unicode code points use existing fonts; no bitmap font or
 variation selector is added. The Off option is the supported text-only fallback.
+
+## Time glyph compatibility (#658)
+
+Lifecycle and acceptance: [follow-up scope](spec.md#time-glyph-compatibility-658).
+Investigated base: `f6de12d16cf212fd6ecc5e103e6baa4607785198`.
+
+The issue records U+23F1 in component sidecars but a hollow box in 26.1.2
+pixels. `TtcSymbols.Symbol.TIME` supplies that character; shared
+`mcCommon/TtcComponents.prefix` applies color without selecting a font.
+`time`, `estimate` and `decorate` route through it. `TtcText` feeds the plan,
+status, total, CPU-card and tooltip consumers in both version source sets;
+client chat and Crafting Tree reuse the same presentation policy.
+`rowSymbolsInTextColor` matches the enum glyph and preserves its existing
+row-specific color behavior after the constant changes.
+
+Cached official client JARs for 1.20.1, 1.21.1 and 26.1.2 contain U+231A in
+`assets/minecraft/font/include/default.json`, but not U+23F1. The official
+26.1.2 [asset index](https://piston-meta.mojang.com/v1/packages/5edb22a42a242f687e2c0f7a12948ed4eb0d3750/30.json)
+references Unifont archive `ccd5ac4767ce0a9c71d1dd62f2dc25449789b5dd`;
+its `unifont_all_no_pua-17.0.01.hex` contains both characters. The stopwatch
+is therefore not simply absent from Minecraft's assets. The exact engine or
+runtime fallback failure is unproven. Choosing the existing bitmap watch avoids
+that default-font fallback and retains Unicode-font coverage without packaging
+a font or changing component styles. Runtime screenshots must establish the fix.
+
+Change the shared TIME constant to U+231A and update current literal expectations
+and examples. No per-loader production branch, translation-key change, protocol,
+saved-data change, new dependency or setting is needed. Existing Off and
+idempotence behavior remain authoritative; tests must preserve uncertainty and
+style boundaries, including row color normalization.
+
+The existing `standard-plan-controls`, `standard-status-controls` and
+`cpu-list-total-ttc` leaves provide native fixtures and screenshots.
+`StandardAe2Scenario` already switches default/native Unicode fonts and GUI
+scales in its status probes, but those probes alone do not establish every
+required plan/footer/tooltip/CPU combination. Add only focused capture cases to
+that existing scenario where necessary, restore options afterward, and inspect
+pixels as well as sidecars. The prepared smoke runner provisions the VM share
+and disposable runtime. Host JDK 17/21/25 and the VM launch path were confirmed
+available during investigation; the VM was off and no client was launched.
