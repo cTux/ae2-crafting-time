@@ -128,11 +128,12 @@ function Write-SourceMarker([string]$source, [string]$target, [int]$java, [strin
 }
 $temporary = Join-Path ([IO.Path]::GetTempPath()) ('ae2 ct connected runner ' + [Guid]::NewGuid())
 $fixtureRoot = Join-Path ([IO.Path]::GetTempPath()) ('f' + [Guid]::NewGuid().ToString('N').Substring(0,8))
+$emptyCleanup = Join-Path ([IO.Path]::GetTempPath()) ('ae2ct-empty-' + [Guid]::NewGuid().ToString('N'))
 $retainedWorkspaces = @()
 $tooLongTemp = $null
 $originalTmp = $env:TMP; $originalTemp = $env:TEMP
 try {
-    New-Item -ItemType Directory -Path $temporary,$fixtureRoot | Out-Null
+    New-Item -ItemType Directory -Path $temporary,$fixtureRoot,$emptyCleanup | Out-Null
     $global:connectedSetupLaunches = 0
     function Start-Process { $global:connectedSetupLaunches++; throw 'Unexpected process launch during connected setup checks' }
     $source = Join-Path $fixtureRoot 'source'
@@ -635,17 +636,17 @@ param([string]$OutputPath)
             Remove-Item -LiteralPath $owned -Recurse -Force
         }
     }
-    if (Test-Path -LiteralPath $fixtureRoot) {
-        $emptyFixture = Join-Path $temporary 'empty-cleanup'
-        New-Item -ItemType Directory -Path $emptyFixture -Force | Out-Null
-        # Robocopy removes the deliberately overlong archive paths before legacy PowerShell cleanup.
-        & (Join-Path $env:WINDIR 'System32/robocopy.exe') $emptyFixture $fixtureRoot /MIR /R:0 /W:0 /XJ | Out-Null
-        if ($LASTEXITCODE -lt 0 -or $LASTEXITCODE -gt 7) { throw 'Could not clean up long-path test fixtures' }
-        Remove-Item -LiteralPath $fixtureRoot -Recurse -Force
+    # Robocopy removes deliberately overlong paths before legacy PowerShell cleanup.
+    foreach ($root in @($fixtureRoot,$temporary)) {
+        $resolvedRoot = [IO.Path]::GetFullPath($root)
+        $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath()).TrimEnd('\') + '\'
+        if (!$resolvedRoot.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase)) { throw 'Cleanup root escaped the test temp directory' }
+        if (Test-Path -LiteralPath $resolvedRoot) {
+            & (Join-Path $env:WINDIR 'System32/robocopy.exe') $emptyCleanup $resolvedRoot /MIR /R:0 /W:0 /XJ | Out-Null
+            if ($LASTEXITCODE -lt 0 -or $LASTEXITCODE -gt 7) { throw 'Could not clean up long-path test fixtures' }
+            Remove-Item -LiteralPath $resolvedRoot -Recurse -Force
+        }
     }
     if ($tooLongTemp -and (Test-Path -LiteralPath $tooLongTemp)) { Remove-Item -LiteralPath $tooLongTemp -Recurse -Force }
-    $resolved = [IO.Path]::GetFullPath($temporary); $tempRoot = [IO.Path]::GetFullPath([IO.Path]::GetTempPath())
-    if ($resolved.StartsWith($tempRoot, [StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $resolved)) {
-        Remove-Item -LiteralPath $resolved -Recurse -Force
-    }
+    if (Test-Path -LiteralPath $emptyCleanup) { Remove-Item -LiteralPath $emptyCleanup -Recurse -Force }
 }
