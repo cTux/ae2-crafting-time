@@ -7,6 +7,43 @@ client qualification are complete. Their current contracts live in the
 [specification](spec.md) and [technical design](technical-design.md); merged pull
 requests retain the implementation history.
 
+## Dependency selection cache identity
+
+Lifecycle and criteria: [cache identity](spec.md#dependency-selection-cache-identity).
+Implementation follows the [design](technical-design.md#dependency-selection-cache-identity).
+
+1. Add the smallest shared canonical selection calculation used by the matrix
+   path and cache seal. Use effective `graph.projectId`, preserve case, sort
+   ordinally and remove duplicates. Extend the seal schema and compare the full
+   selection on reuse; reject old or missing contracts (**DC-01–03**).
+2. Wire the matrix and all cache consumers: `prepare-ui-smoke-adapters.ps1`,
+   `invoke-ui-smoke-codexvm.ps1` and `dedicated-source-contract.ps1`. Preserve
+   request-aware versus sealed-bundle semantics and all existing validation
+   and evidence retention (**DC-04**).
+3. Extend `test-ui-smoke-bundle-cache.ps1` and `test-ui-smoke-matrix.ps1` with
+   same-source focused/full/different-set cases, order and duplicate reuse,
+   base/catalogue and target/profile separation, mismatched reuse, legacy and
+   missing selection rejection, and unchanged bytes after rejection
+   (**DC-01–04**). Assert resolver-call counts and sealed identities, not just
+   path strings. The focused-then-full regression must fail on the original code.
+4. Update fixture callers in `test-prepare-ui-smoke-adapters.ps1`,
+   `test-invoke-ui-smoke-bundle-contract.ps1` and
+   `test-prepare-dedicated-ui-smoke-server.ps1` as needed. Exercise changed
+   adapter/connected consumer branches with temporary deterministic fixtures;
+   do not silently require packaged JARs or a new runtime campaign (**DC-04**).
+5. After the hook creates the implementation PR, run the cache, matrix and
+   planner self-tests plus affected consumer checks under Windows PowerShell
+   5.1 and PowerShell 7. Both interpreters and Git are available; existing cache
+   and matrix checks use synthetic temporary fixtures. The existing adapter
+   integration test needs production/test-driver JARs and a JDK: use a
+   deterministic fixture for the changed script boundary unless those artifacts
+   are explicitly prepared. Keep adapter catalogue behavior unchanged. Record
+   exact commands, fixture limits and current-head CI separately.
+
+Done means **DC-01–04** pass, every changed script branch has deterministic
+coverage, review and required CI pass, and implementation is merged. Update the
+spec's scope status with that evidence. No Minecraft or VM launch is required.
+
 ## Java runtime metadata
 
 Lifecycle and criteria: [Java runtime metadata](spec.md#java-runtime-metadata).

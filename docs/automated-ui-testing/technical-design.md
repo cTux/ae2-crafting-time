@@ -2,6 +2,41 @@
 
 Lifecycle: see scope status and evidence for [base workflow](spec.md) and [unattended qualification](spec.md#unattended-evidence-gate).
 
+## Dependency selection cache identity
+
+Lifecycle and criteria: [cache identity](spec.md#dependency-selection-cache-identity).
+
+At base `73b756a8bda9853f7e445b8b00a056feaeb3fd5e`,
+`get-ui-smoke-plan.ps1` fingerprints source and rule files, then emits effective
+`graphs[].projectId` selections. `run-ui-smoke-matrix.ps1` keys bundles by head,
+fingerprint, target, profile, dependency mode and graph ID. Its cache arguments
+and `use-ui-smoke-bundle-cache.ps1` schema-2 seal omit the project set. Manual
+focused and full requests both use `primary`, so the second request can reuse
+the first bundle. `prepare-ui-smoke-adapters.ps1` correctly rejects the resulting
+adapter mismatch; that check is not the defect.
+
+Canonicalize the effective project IDs once using ordinal sorting and duplicate
+removal, without changing case. An empty set means no project filter; `baseOnly`
+still distinguishes base from full catalogue. Use an unambiguous serialized
+selection and its deterministic digest for a short cache-path component, keeping
+Windows path limits in mind. Bind the complete canonical selection in the seal
+and compare it on reuse, so a path digest alone never authorizes reuse. Keep the
+source fingerprint and existing bundle-content hash algorithm intact.
+
+Advance the seal schema and reject older or incomplete identities. New matrix
+requests use a new key and resolve normally; existing sealed artifacts and
+campaign evidence stay untouched. An explicitly supplied legacy bundle fails
+closed instead of being silently resealed.
+
+The matrix passes each graph's effective IDs to sealing and reuse. Adapter
+preflight passes the request IDs to reuse before validating the adapter catalogue.
+The connected prewarm path in `invoke-ui-smoke-codexvm.ps1` and the consumer in
+`dedicated-source-contract.ps1` forward the recorded IDs because those paths
+intentionally consume an already selected bundle. Keep their existing target,
+profile, source and content checks. Update synthetic seals in their test fixtures
+to exercise this contract. No loader implementation or Java adapter changes are
+needed.
+
 ## Java runtime metadata
 
 Lifecycle and criteria: [Java runtime metadata](spec.md#java-runtime-metadata).
