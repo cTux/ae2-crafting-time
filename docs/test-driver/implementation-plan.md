@@ -5,6 +5,47 @@ Lifecycle: see the [scope status and evidence](spec.md).
 Implement this as one feature commit. Let the commit hook create the PR before
 running Gradle checks, then report local verification and GitHub CI separately.
 
+## Short connected server paths (#632)
+
+Lifecycle and criteria: [spec](spec.md#short-connected-server-paths-632).
+Merge these documents before implementation. Limit this repair to the connected
+runner and its existing deterministic self-test; preserve the surrounding
+scenario, launcher and wrapper contracts.
+
+1. Implement short temporary workspace allocation and destination-length preflight
+   in `scripts/run-connected-dedicated-ui-smoke.ps1` (CP632-1/2). Preserve source
+   validation and seals; bind workspace ownership to the report/campaign before
+   copy and retain the actual live path in existing manifests.
+2. Add one finalization boundary covering setup, PlanOnly and execution. Archive
+   the owned server to the existing report runtime location with robocopy after
+   process shutdown. Validate ownership/containment before deleting only a
+   successfully archived workspace; retain and identify it on failure (CP632-3).
+3. Extend `scripts/test-run-connected-dedicated-ui-smoke.ps1` (CP632-1/2/3/4).
+   Reproduce the issue's generated report shape and
+   `libraries/com/google/errorprone/error_prone_annotations/2.1.3/error_prone_annotations-2.1.3.jar`
+   suffix; assert that its former report-owned live path exceeds the legacy limit.
+   Compare the retained bytes with a short-report control. Cover sealed-source
+   bytes/attributes, unsuitable temp roots, collisions/foreign ownership, linked
+   paths, partial-copy/setup failure, PlanOnly, archive failure and cleanup refusal.
+   Assert zero server/client launches on setup failure, preserve the first error,
+   and prove failed archival leaves recoverable contents. Exercise every new
+   branch with deterministic fixtures or narrow command stubs, including process
+   shutdown ordering; keep all four existing target launch-layout checks.
+4. After the hook-created implementation PR exists, run the connected self-test
+   under `powershell.exe -NoProfile -ExecutionPolicy Bypass`. Retain long-path
+   failing-control evidence from the original staging operation and passing-fix
+   evidence at the current PR head. Windows PowerShell 5.1 and robocopy are present
+   on the host; the existing test already creates synthetic server/bundle/Java
+   fixtures. No guest provisioning or Minecraft process is required.
+5. Retain `scripts/run-ui-smoke.ps1 -Changed -BaseRef origin/master -PlanOnly`
+   selection reasons. Broad runner impact rules do not create a native scenario
+   requirement for this filesystem-only scope. Record deterministic archive and
+   lifecycle results separately from GitHub CI; claim no native gameplay/UI pass.
+
+Completion requires CP632-1 through CP632-4 evidence on the frozen implementation
+head, successful report archive readback and current-head CI/review. No production
+artifact, dependency, world format or target-specific Java change is in scope.
+
 ## Fresh native Status evidence (#671)
 
 Lifecycle and criteria: [spec](spec.md#fresh-native-status-evidence-671).

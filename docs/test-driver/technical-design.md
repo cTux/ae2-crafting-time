@@ -1,5 +1,50 @@
 # AE2 Crafting Time Test Driver Technical Design
 
+## Short connected server paths (#632)
+
+Lifecycle and criteria: [spec](spec.md#short-connected-server-paths-632).
+
+At `dce06822e180c642f7742f6cc1fb2e1e186e66fe`,
+`run-ui-smoke-codexvm.ps1` generates a target/profile/scenario/GUID report path.
+`run-connected-dedicated-ui-smoke.ps1` then copies the prepared server into
+`report/runtime/server-<target>`. Deep loader libraries exceed legacy MAX_PATH.
+A different copy command alone is insufficient: seal validation and writable
+attribute traversal also use PowerShell filesystem commands. The source contract
+rejects extended-path prefixes and linked ancestors.
+
+Use a unique short leaf below `[IO.Path]::GetTempPath()` for the live server.
+Before copying, check actual source-relative destination lengths, including
+directories and runner-created paths, against the PowerShell 5.1 limits (file
+paths must remain below 260 characters). Validate containment and reject linked
+ancestors. Do not assume the current user's temp root is short enough. Allocate
+without replacing an existing directory and record report/campaign ownership
+outside the copied source tree, so source-marker/seal validation stays intact.
+Retain the existing source validation, copy-seal verification and conversion to
+a writable disposable marker. Keep the source untouched.
+
+The runner plan and artifact manifest identify the live server path. Add retained
+evidence identifying its report archive and archival outcome, including on early
+setup failure. Keep Java arguments, launcher-relative files, client runtime,
+control paths and process ownership unchanged. The wrapper continues archiving
+the complete report through its existing robocopy path.
+
+Place workspace allocation, setup, PlanOnly and execution inside one finalization
+boundary. After existing owned-process shutdown, archive any created server tree
+with robocopy into `report/runtime/server-<target>`; accept exit codes 0 through 7
+and reject higher codes. Keep the ownership record separate from the server copy.
+Before removing the temporary workspace, revalidate its exact resolved location,
+containment, ownership marker and absence of links. Never remove the source or
+another run's workspace. If archival or ownership validation fails, retain the
+workspace and report its path without masking the original failure. A failed
+archive must not become a successful run. No new configurable root, filesystem
+alias or general runtime manager is needed.
+
+Adapt the connected runner self-test's assumption that `disposableServer` starts
+with the report path. Keep that field as the actual launch path; after PlanOnly
+cleanup, inspect retained files through the explicit archive path instead.
+Assert ownership and archive contents in the same deterministic test; no
+production Java or loader implementation changes.
+
 ## Fresh native Status evidence (#671)
 
 Lifecycle and criteria: [spec](spec.md#fresh-native-status-evidence-671).
@@ -360,8 +405,10 @@ Reconnect uses Minecraft's normal server connection screen while the disposable
 server and fixture persist.
 The connected runner never mutates the prepared server. It requires a target-
 matched source marker, validates launch and artifact identities before copying,
-writes a disposable marker in a report-owned runtime, and launches Java through
-a UTF-8 argument file so result/control paths containing spaces remain one argument.
+writes a disposable marker in a report-owned runtime (with the short live path
+and retained archive defined by [#632](#short-connected-server-paths-632)), and
+launches Java through a UTF-8 argument file so result/control paths containing
+spaces remain one argument.
 
 ## Stored-variant plan scenario (planned)
 
