@@ -10,7 +10,7 @@ Unattended visual qualification is tracked separately below.
 
 ## Java runtime metadata
 
-Status: ready-to-implement
+Status: in-progress
 
 Scope: Correct the Java runtime identity in schema-2 smoke receipts.
 
@@ -18,6 +18,11 @@ Issue: [#638](https://github.com/cTux/ae2-crafting-time/issues/638).
 
 Planning: [Design](technical-design.md#java-runtime-metadata) and
 [reviewed plan](implementation-plan.md#java-runtime-metadata).
+
+Implementation: [`run-ui-smoke.ps1`](../../scripts/run-ui-smoke.ps1) and its
+[`test-run-ui-smoke.ps1`](../../scripts/test-run-ui-smoke.ps1) regression checks.
+
+Verification: runner and prepared-launch self-tests, current-head CI, and merge pending.
 
 The receipt must identify the Java selected by the validated native launcher.
 The wrapper's environment can name a different JDK. This metadata correction
