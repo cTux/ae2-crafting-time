@@ -1,13 +1,22 @@
 # Keep running-job totals after restart
 
-Status: implementation in progress; pending independent code review, post-PR
-coverage/build checks, and clean two-process native restart verification.
+Status: finished
 
 Scope: Save and restore the existing remaining-job estimate for supported CPUs.
 
 Issue: [#636](https://github.com/cTux/ae2-crafting-time/issues/636).
 
 Planning: [Design](technical-design.md) and [reviewed plan](implementation-plan.md).
+
+Implementation: [PR #735](https://github.com/cTux/ae2-crafting-time/pull/735),
+squash-merged as [`b50068b9`](https://github.com/cTux/ae2-crafting-time/commit/b50068b907679951aaecde69af504cfca850ecb3).
+
+Verification: Reviewed and tested head
+[`3f2f76bb`](https://github.com/cTux/ae2-crafting-time/commit/3f2f76bb8984391d787ef10080eb35425cc756e4)
+passed [Build](https://github.com/cTux/ae2-crafting-time/actions/runs/39153769095)
+and [Tests](https://github.com/cTux/ae2-crafting-time/actions/runs/39153769150).
+[R1-R6, native restart and manual visual evidence](https://github.com/cTux/ae2-crafting-time/issues/636#issuecomment-6253538991)
+records the accepted runtime results and remaining addon limits.
 
 ## Behavior
 
