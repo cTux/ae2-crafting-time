@@ -100,7 +100,7 @@ uses the integrated server and has the full feature set.
 - [Codex Skills](docs/codex-skills.md)
 - [Dependencies and integrations](docs/dependencies.md)
 - [Client and modpack coverage](docs/mod-automation-coverage.md)
-- [Known Issues](https://github.com/cTux/ae2-crafting-time/issues?q=is%3Aissue%20is%3Aopen%20label%3Abug)
+- [Known Issues](https://github.com/cTux/ae2-crafting-time/issues?q=is%3Aissue%20is%3Aopen)
 - [Architecture](docs/architecture.md)
 - [Feature documentation map](docs/feature-coverage.md)
 - [Profiling and diagnostics](docs/profiling-and-diagnostics/spec.md)

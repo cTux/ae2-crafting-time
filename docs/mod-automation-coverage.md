@@ -35,12 +35,15 @@ positive runtime claim.
 The final focused NeoForge 1.21.1 ME Bridge rerun also passed with its named
 native CPU, exact output counts, a fresh sample, and reopened TTC.
 
-The full Forge suite remains blocked: its latest attempts passed 14 of 29 cases
+At the September 3 #211 baseline, the full Forge suite was blocked: attempts passed 14 of 29 cases
 before ProjectCell timed out, first during dispatch and then while opening its
 initial plan. Earlier attempts also recorded intermittent AdvancedAE stalls.
 These failures remain part of the evidence; successful focused cases do not
 constitute a full Forge-suite pass. Dependency pins and ProjectCell behavior
-were not changed to hide the failure. Runtime acceptance is therefore incomplete.
+were not changed to hide the failure. That campaign did not complete runtime acceptance. Later [millisecond-display
+verification](ttc-milliseconds-instant/verification.md) records successful Forge,
+Fabric and 26.1.2 catalogues and a separate NeoForge 1.21.1 addon blocker. Neither
+record establishes a new all-target pass for this audit.
 
 Retained class-contract snapshots are in
 `shared/src/test/resources/integration-contracts`. They cover original Tree

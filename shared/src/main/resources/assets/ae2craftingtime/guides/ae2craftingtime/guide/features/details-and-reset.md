@@ -20,7 +20,7 @@ your current AE2 network. The mouse button is configurable and defaults to left
 click.
 
 For example, reset an output after permanently replacing a slow machine setup.
-The next request shows no estimate until new production windows are learned.
+The next request shows no estimate until new completion intervals are learned.
 Reset is server-validated, works only for an eligible target with retained
 samples, and has a short per-player message cooldown. Turning chat messages off
 hides both details and the reset confirmation, but the reset still happens.

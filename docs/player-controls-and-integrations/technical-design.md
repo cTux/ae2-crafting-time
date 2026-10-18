@@ -10,7 +10,8 @@ They do not replace AE2's table renderer.
 
 `AbstractTableRendererMixin` scans the current plan or status list once, builds
 a render-scoped `ProfileKey -> RGB` map with `TtcColor`, draws TTC backgrounds
-through `TtcBadge`, and enables text shadow. It clears the context after the
+through `TtcBadge`, and applies the independent background, color and shadow options.
+It clears the context after the
 render. The same path covers normal TTC and `DELAYED` rows without adding a
 custom widget tree.
 
@@ -19,10 +20,12 @@ The screen mixins own totals and sort state:
 - `CraftConfirmScreenMixin` sums known plan-row estimates and draws the total
   below CPU details.
 - `CraftingCPUScreenMixin` renders the server-calculated remaining dependency critical path
-  and appends it beside the title only when the measured text fits.
-- both screens start with sort mode `2` and use `TtcSort.copySorted(...)` on a
-  copied list; mode `0` returns AE2 order, `1` is shortest first, and `2` is
-  longest first.
+  as the title when known; otherwise it uses the CPU name. The native title is
+  retained when the Status-total option is off.
+- both screens initialize from configured sort modes, default `2`; mode `0` is
+  AE2 order, `1` shortest first and `2` longest first. Plan uses
+  `TtcSort.copyPrioritizedSorted(...)` to keep missing rows first in every mode;
+  Status uses `copySorted(...)` and its separate CPU-list ordering path.
 
 Minecraft 26.1.2 uses the same behavior through `mc2612` screen copies that
 adapt the upstream input and rendering API types.
@@ -56,15 +59,17 @@ block the reset mutation.
 
 ## Configuration
 
-Forge and NeoForge register `Ae2CraftingTimeConfig.SPEC` as a common config.
-Fabric loads the same filename with a small line-based `key=value` reader,
-ignores unknown or malformed lines, and clamps numeric ranges.
+The loader common configs remain legacy migration sources. `ClientOptionsRuntime`
+loads client-local `config/ae2craftingtime-client.toml`; `ServerOptionsRuntime`
+loads the world's `serverconfig/ae2craftingtime-server.toml`. `OptionsScreen`
+keeps separate client/server drafts. Client Done saves locally; server Done sends
+a bounded update that validates authority and revision, saves before applying,
+and returns effective values. Cancel discards drafts; resets use model defaults.
 
-`ProfilerBridge` creates `CraftProfiler` and `TtcAccuracyTracker` from
-`maxSamples` and `outlierMultiplier`. Runtime event paths read `enabled`, and UI
-or message paths read `showInTree` and `showChatMessages` where needed.
-
-No custom config screen, sync packet, watcher, or hot-reload layer exists.
+The server applies profiling, sample-window and outlier changes live after a
+successful save. External file edits load at the corresponding startup.
+See the [configuration design](../configuration-screen/technical-design.md) for
+packets, permission boundaries and failure handling.
 
 ## Optional UI Adapters
 

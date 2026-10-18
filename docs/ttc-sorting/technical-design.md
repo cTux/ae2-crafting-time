@@ -8,8 +8,8 @@ This design implements the [specification](spec.md) for
 ## Current behavior and ownership
 
 `CraftConfirmScreenMixin` intercepts the list passed to AE2's
-`CraftConfirmTableRenderer`. It stores sort mode `2` as the per-screen default,
-uses `TtcSort.copySorted` for TTC modes, and reuses the same sorted list for TTC
+`CraftConfirmTableRenderer`. It stores the configured plan sort mode (default `2`),
+uses `TtcSort.copyPrioritizedSorted` for Plan grouping, and reuses the same sorted list for TTC
 details and reset hit testing.
 
 The Minecraft 1.20.1/1.21.1 seam lives in `shared/src/mc1201`; Minecraft 26.1.2
@@ -56,8 +56,8 @@ resolution. This keeps the visible row, scrollbar index, hover lookup, details
 click, and reset click on one ordering path. Stats requests and total TTC still
 iterate the original plan because neither depends on display order.
 
-TTC seconds continue to use the visible craft amount normalized through
-`AeKeyAmounts`, then `TimeEstimate.seconds` with the current `ClientStats` value.
+Precise TTC milliseconds use the visible craft amount normalized through
+`AeKeyAmounts`, then `TimeEstimate.milliseconds` with the current `ClientStats` value.
 The change does not alter estimation, TTC colors, or stats requests. Color range
 calculation receives the displayed entries through the existing renderer path.
 
@@ -68,7 +68,7 @@ calculation receives the displayed entries through the existing renderer path.
 - Missing priority applies even when TTC data is absent or arrives later.
 - Unknown TTC remains unknown and is never replaced with a sentinel duration.
 - A null plan follows the existing no-render and no-click paths.
-- Sort mode remains local to the screen and resets to longest-first when a new
+- Sort mode remains local to the screen and starts from the configured mode when a new
   Crafting Plan opens.
 
 ## Compatibility

@@ -1,6 +1,6 @@
 # Native Plan and Status row colors
 
-Status: ready-to-implement
+Status: in-progress
 
 Scope: Ordinary row foreground when both decoration switches are off.
 
@@ -12,6 +12,10 @@ Verification limit: The user explicitly excluded smoke testing for the current
 2026-09-26 implementation run. Automated checks can establish color selection
 and compatibility; visual acceptance below remains unverified by this run.
 This does not permanently remove that acceptance requirement.
+
+Implementation: [PR #571](https://github.com/cTux/ae2-crafting-time/pull/571) is merged.
+The implementation is present; A6 visual acceptance (smoke was explicitly omitted) remains an explicit
+qualification boundary unless supported by separate retained evidence.
 
 ## Behavior
 

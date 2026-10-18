@@ -7,7 +7,7 @@ navigation:
 
 # Confidence
 
-Each completed production window is one sample. Newer usable samples count more
+Each accepted completion interval is one sample; same-tick returns are combined. Newer usable samples count more
 than older ones. An estimate becomes reliable after at least three samples when
 none had to be excluded; before that, TTC stays visible with a `?` so you know
 the history is thin.

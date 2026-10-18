@@ -28,7 +28,7 @@ non-missing groups. TTC longest first remains the default mode.
 - In either TTC mode, rows without TTC data remain after rows with known TTC
   inside their own group and preserve their relative order.
 - Equal TTC values continue to use AE2's natural row order.
-- The screen opens in **TTC: longest first**. The mode remains local to the open
+- The screen opens in its configured mode, **TTC: longest first** by default. The mode remains local to the open
   screen and continues to cycle through AE2 order, shortest first, and longest
   first.
 - Newly received TTC data may reorder a row inside its group, but never move a

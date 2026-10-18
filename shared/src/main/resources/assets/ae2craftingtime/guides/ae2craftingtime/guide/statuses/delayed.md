@@ -10,11 +10,14 @@ navigation:
 **Label:** `Delayed`
 
 This appears on active Crafting Status rows when production stops for both the
-configured minimum (10 seconds by default) and more than twice the learned
-average production interval. Scheduled
+configured minimum (10 seconds by default) and the configured multiple of the
+learned average completion interval (2.0 by default). Scheduled
 blocking labels apply to scheduled work instead.
 
 ## What to check
+
+Both thresholds are server options. Reload clears live timers; a remembered
+status can remain until fresh observations replace it.
 
 1. Hover the row for recent activity and capacity details.
 2. Check the active machine, its output path, fuel, and required inputs.

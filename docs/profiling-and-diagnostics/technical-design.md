@@ -2,7 +2,8 @@
 
 Lifecycle: see scope status and evidence for [baseline](spec.md) and [live-learning extension](spec.md#planned-normalized-sample-details-114).
 
-The sections above the planned #114 design describe the current runtime.
+Current collection follows the implemented #114 completion-interval extension
+below. Its dated research tables retain the preimplementation baseline.
 
 ## Ownership
 
@@ -29,33 +30,20 @@ Requester menus collect inventory amounts; ordinary craft screens skip that
 scan. All four transports have a new protocol/channel version.
 
 See the [wire and scheduling contract](../server-client-stats.md#statsrequestc2s).
-Regression sources are added. Compilation, executed tests, coverage and runtime
-performance for this follow-up remain unverified.
+Implemented in [PR #661](https://github.com/cTux/ae2-crafting-time/pull/661).
+Its verification record owns executed checks; this reference adds no new runtime
+performance claim.
 
-## Production Windows
+## Completion intervals
 
-`CraftingCpuLogicMixin` observes two AE2 execution points:
-
-```text
-expected output dispatch -> ProfilerBridge.start(...)
-accepted returned output -> ProfilerBridge.complete(...)
-```
-
-Pending queues use the concrete crafting CPU object as an identity scope. A
-`BusyWindow` uses `ProfileKey(networkId, outputId)` and spans every CPU scope
-that is currently producing that output. Completion consumes only the matching
-CPU queue. The window closes and creates one sample after no scope has matching
-pending work.
-
-This split keeps cancellation safe while still measuring real network-wide
-parallel throughput. `finishJob(...)` clears the CPU scope and rebuilds any
-affected network window from work that other CPUs still own.
-
-Before the first window closes, a stats request may preview its completed amount
-over its elapsed ticks. This lets a running status row leave `No data yet`
-without waiting for the next order. The preview is always low confidence and is
-never retained or persisted; the normal completed window remains the only
-throughput sample.
+AE2 dispatch and accepted-return hooks call `ProfilerBridge`, which delegates
+to `CraftProfiler`. Pending queues are CPU-scoped; accepted returns are combined
+by network/output and server tick. `flushCompletedSamples()` finalizes each
+accepted interval while pending work can remain. The first interval starts at
+dispatch; later intervals start at the preceding accepted return. Same-tick
+returns across CPUs are one observation, with a minimum one-tick duration.
+Cancellation clears only that CPU's unmatched work. No idle-only BusyWindow
+sample or unretained preview replaces this live-learning path.
 
 ## Throughput Calculation
 
@@ -95,6 +83,8 @@ metrics.
 
 ## Delayed Output Diagnostics
 
+The defaults are 10 seconds and 2.0. Server Options applies validated changes live.
+
 `CraftProfiler` keeps last-progress ticks per CPU/output and a recent
 `CapacityState` per CPU. The status request resolves the player's selected CPU,
 then asks for a `StallDiagnostic` alongside its network/output stats.
@@ -102,7 +92,7 @@ then asks for a `StallDiagnostic` alongside its network/output stats.
 The delay threshold is:
 
 ```text
-max(600 ticks, ceil(averageDurationTicks * 2))
+max(configuredMinimumSeconds * 20, ceil(averageDurationTicks * configuredMultiplier))
 ```
 
 Capacity expires after 20 ticks. `StallDiagnostic.hints(...)` selects at most
@@ -117,7 +107,7 @@ and capacity are deliberately absent from NBT.
 
 `StatsRequestHandler` resolves the active grid and selected standard or
 AdvancedAE CPU on the server. The response contains aggregate `StatsEntry`
-values and current network amounts. Packet collection and string limits are
+values; only ME Requester contexts also collect current network amounts. Packet collection and string limits are
 defined by `PacketLimits` and checked while decoding.
 
 ## Version Adapters
@@ -126,7 +116,7 @@ defined by `PacketLimits` and checked while decoding.
   text, and table integrations.
 - `shared/src/mc1201` and `shared/src/mc2612`: API-specific key conversion,
   bridge, persistence tag, input, and screen code.
-- `shared/src/neoforge`: optional AdvancedAE execution hooks shared by both
+- `shared/src/neoforge`: optional AdvancedAE execution hooks shared by Forge and both
   NeoForge targets.
 - `versions/<target>`: entrypoints, networking registration, and `SavedData`
   glue.

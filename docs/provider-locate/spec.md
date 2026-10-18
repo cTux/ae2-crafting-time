@@ -9,7 +9,7 @@ Verification: [prepared-client results](../automated-ui-testing/prepared-clients
 Later icon and red-warning beam scopes are tracked separately below.
 
 The sections before [Planned red sky beam](#planned-red-sky-beam) describe the
-existing delayed-only plate behavior and manual rainbow outlines. Issue #488
+historical delayed-only plate behavior and manual rainbow outlines. The implemented #488 scope
 extends automatic plates to every red warning and adds a red sky beam only to
 a successful chat-link locate, sharing that locate's rainbow expiry.
 
@@ -284,16 +284,18 @@ fix; the existing red plate may currently appear without a non-item icon.
 
 ## Planned red sky beam
 
-Status: ready-to-implement
+Status: in-progress
 
 Scope: automatic plates for all eight red warnings and temporary chat-locate beams ([#488](https://github.com/cTux/ae2-crafting-time/issues/488)).
 
-Planning: [PR #489](https://github.com/cTux/ae2-crafting-time/pull/489), [PR #491](https://github.com/cTux/ae2-crafting-time/pull/491). No implementation is recorded for this extension.
+Planning: [PR #489](https://github.com/cTux/ae2-crafting-time/pull/489), [PR #491](https://github.com/cTux/ae2-crafting-time/pull/491). Implementation: [PR #626](https://github.com/cTux/ae2-crafting-time/pull/626),
+with [#630](https://github.com/cTux/ae2-crafting-time/pull/630) preserving chunk unload.
+The full original runtime/visual gate is not established by merge alone.
 
 [Issue #488](https://github.com/cTux/ae2-crafting-time/issues/488) extends automatic
 red backgrounds with output icons to every red warning status. Clicking a valid
 provider link in chat adds a red sky beam alongside the rainbow borders for the
-same 15 seconds. This is planned, not shipped.
+same 15 seconds. This behavior is implemented; its full qualification remains separate.
 See the [design](technical-design.md#red-sky-beam-design) and
 [implementation plan](implementation-plan.md#red-sky-beam-implementation).
 

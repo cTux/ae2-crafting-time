@@ -1,7 +1,9 @@
-# Player documentation draft
+# Compact hover number guidance
 
-Future copy for the behavior in the [specification](spec.md). Do not describe
-this as available until implementation and verification are complete.
+The original copy below now follows the shipped #679 feature and #694 time-unit
+follow-up. Current player pages are the bilingual GuideME Learning throughput,
+Details and reset, and Configuration pages. The dated acceptance report retains
+the original per-tick output as historical evidence.
 
 ## English
 
@@ -20,8 +22,9 @@ existing per-unit format, and AE2's own quantity lines keep their full values.
 ### Details and reset
 
 Ctrl+click an eligible crafted row to publish its full throughput values to
-server chat. The message includes rates per tick and per second without compact
-suffixes or two-decimal rounding. Full values show the precision stored by the
+server chat. Alongside sample timings in ms, the message shows the full per-second rate.
+Rate-only fallback uses per-ms and per-second values, without compact suffixes
+or two-decimal rounding. Full values show the precision stored by the
 profiler; they are still measurements, not exact promises about future crafts.
 Everyone on the server can see this message. Existing chat settings and cooldown
 still apply. Ctrl+Alt+click keeps its separate reset action.
@@ -50,8 +53,9 @@ Crafting Time скорочує великі значення пропускно�
 ### Подробиці та скидання
 
 Натисніть Ctrl і клацніть відповідний рядок крафту, щоб опублікувати повні
-значення пропускної здатності в чаті сервера. Повідомлення містить швидкість
-за такт і за секунду без скорочень та округлення до двох десяткових знаків.
+значення пропускної здатності в чаті сервера. Поруч із часом зразків у мс
+повідомлення містить повну швидкість за секунду. Без часу зразків показуються
+швидкості за мс і за секунду, без скорочень та округлення до двох десяткових знаків.
 Це значення з точністю, яку зберігає профайлер, а не гарантія швидкості майбутніх
 крафтів. Повідомлення бачать усі гравці сервера. Налаштування чату й обмеження
 частоти повідомлень діють як раніше. Ctrl+Alt+клацання окремо скидає історію.

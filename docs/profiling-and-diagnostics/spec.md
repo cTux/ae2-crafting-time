@@ -19,7 +19,7 @@ as the world runs without pretending that an estimate is exact.
 ## Learned Throughput
 
 Hover throughput uses optional compact decimal suffixes. Ctrl-click chat keeps
-both full stored rates; see [compact hover numbers](../player-controls-and-integrations/compact-hover-numbers/spec.md)
+full-precision rates in the current ms/s presentation; see [compact hover numbers](../player-controls-and-integrations/compact-hover-numbers/spec.md)
 for the independent display setting and verification status.
 
 - Identify history by AE2 network and output id. Two separate networks must not
@@ -59,8 +59,8 @@ for the independent display setting and verification status.
 
 - Diagnose only outputs that still have pending work and retained throughput
   history on the selected crafting CPU.
-- Mark an output delayed after both 30 seconds without progress and twice its
-  learned average production-window duration.
+- Mark an output delayed after the configured no-progress minimum (10 seconds
+  by default) and learned-interval multiplier (2.0 by default).
 - Treat partial accepted output as progress and restart the idle timer.
 - Show active and scheduled amounts plus recently used parallel slots when that
   capacity sample is no more than 20 ticks old.

@@ -1,6 +1,6 @@
 # Explain generated configuration files
 
-Status: ready-to-implement
+Status: in-progress
 
 Scope: Comments for every generated server and client setting, plus configuration ownership and editing guidance.
 
@@ -8,9 +8,13 @@ Issue: [#590](https://github.com/cTux/ae2-crafting-time/issues/590)
 
 Planning: [Technical design](technical-design.md) and [reviewed implementation plan](implementation-plan.md).
 
+Implementation: [PR #595](https://github.com/cTux/ae2-crafting-time/pull/595) is merged.
+The implementation is present; the full recorded A5/A6 wiki and validation acceptance remains an explicit
+qualification boundary unless supported by separate retained evidence.
+
 ## Problem
 
-Server owners naturally look in `config`, but active server settings belong to a world. The generated file currently lists settings without explaining their effects. The older common file can add confusion because it remains after migration.
+Server owners naturally look in `config`, but active server settings belong to a world. Before #595, the generated file listed settings without explaining their effects. The older common file can add confusion because it remains after migration.
 
 The startup generation fix is already implemented under [#535](https://github.com/cTux/ae2-crafting-time/issues/535). This scope explains the files and their settings; the separate in-game save investigation stays in [#536](https://github.com/cTux/ae2-crafting-time/issues/536).
 
@@ -28,8 +32,7 @@ Newly generated files and later explicit saves contain the comments. Loading an 
 
 ## Details that must stay accurate
 
-- `recurrentDetection` defaults off on the implementation base. Other server switches default on.
-- Client `compactStatusAmounts`, `ttcColors`, `textShadow` and `badgeBackground` default off; other client switches default on.
+- Keep descriptions aligned with the current [feature defaults](../spec.md#feature-switches), including the default-Off chance-output and suspension switches. The original implementation-base enumeration is not a permanent list of all switches.
 - `waitingColor` remains serialized for compatibility but currently has no rendering effect. Say so rather than implying it changes Waiting text.
 - Sort values are `0` for AE2 order, `1` for shortest first and `2` for longest first; both default to `2`.
 - Colors use quoted six-digit RGB strings. Badge opacity is `0` through `255`, default `176`; it affects visible badge backgrounds when enabled.

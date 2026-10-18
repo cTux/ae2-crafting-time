@@ -2,10 +2,11 @@
 
 Lifecycle and acceptance: [spec](spec.md). Work: [#450](https://github.com/cTux/ae2-crafting-time/issues/450).
 
-## Current paths
+## Original investigation paths
 
 Investigated base: `17c7b5e540bd8e8b3022c1528d4f8960c72c5895`.
-The merged proposal has no implementation. Text is assembled in several places;
+At that investigation revision, the proposal had no implementation.
+The current merged implementation and follow-up are linked in the specification. Text is assembled in several places;
 changing translation strings alone cannot preserve separate icon colors or a local toggle.
 
 | Surface | Current owners and callers |

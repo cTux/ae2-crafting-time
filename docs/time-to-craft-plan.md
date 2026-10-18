@@ -1,7 +1,8 @@
 # Time To Craft Lines
 
-Planned change: [millisecond TTC and Instant status](ttc-milliseconds-instant/spec.md)
-records the new display requirements; it is not implemented by the planning docs.
+Current formatting: [millisecond TTC and Instant status](ttc-milliseconds-instant/spec.md).
+The original implementation steps below are historical; current behavior follows
+this reference and the linked feature scopes.
 
 Date: 2026-06-21
 
@@ -58,9 +59,10 @@ Do not calculate timing on the client.
 
 The current server snapshot already carries `amountPerSecond`, so no new packet type is required.
 
-`amountPerSecond` is derived from continuous production windows that combine
-concurrent batches for the same network output. Individual pattern latency is
-not treated as if every parallel batch ran sequentially.
+`amountPerSecond` comes from accepted completion intervals. Returns for the
+same network/output in one tick form one observation, including concurrent CPUs.
+The server tick flush retains samples while work remains; learning does not wait
+for the whole order to finish.
 
 ## Estimate Formula
 
@@ -77,7 +79,8 @@ Only show the line when:
 - server stats exist for `entry.what`
 - `amountPerSecond > 0`
 
-No stats: show nothing and request stats for that output key.
+No stats: request the output key and show the applicable no-data/collecting
+state instead of inventing a numeric estimate.
 
 For the whole ordered craft, use the plan entries and calculate each known row
 with the same formula. Display the total as the sum of known row ETAs. If no row
@@ -133,8 +136,9 @@ use, and up to two possible improvements.
 
 An active output is delayed only when both conditions hold:
 
-- no accepted output for at least 10 seconds
-- no accepted output for at least twice its learned average production-window duration
+- no accepted output for the configured minimum (10 seconds by default)
+- no accepted output for the configured multiple of its learned average
+  completion interval (twice by default)
 
 Partial output resets the timer. Diagnostics are scoped to the selected crafting
 CPU and are not persisted.
@@ -177,20 +181,15 @@ and Forge/NeoForge metadata only orders after `appmek` when it is installed.
 
 ## Time Format
 
-Format with a `~` prefix:
+`TimeEstimate.milliseconds` retains precise duration and confidence. Positive
+durations below one second display whole milliseconds, rounded up with a 5ms
+minimum. At or above one second, round up to seconds and use `~12s`, `~2:15`,
+or `~31:04:09`. Low confidence appends `?`; unknown remains unknown.
 
-```text
-Time To Craft: ~1s
-Time To Craft: ~2:15
-Time To Craft: ~31:04:09
-```
-
-Rules:
-
-- round up to nearest second so nonzero work is never shown as `~000:00:00`
-- show seconds-only for values under a minute
-- show `M:SS` for values under an hour
-- show `H:MM:SS` for hour-scale values
+Reliable TTC at or below 5ms can show green Instant when enabled. Partial or
+unreliable totals never show Instant. The display clamp does not alter estimates,
+sorting or retained samples. See the linked millisecond specification for
+status precedence, per-recipient chat and the Show emoji option.
 
 ## UI Placement
 
@@ -226,12 +225,12 @@ Crafting: M
 Time To Craft: ~000:02:15
 ```
 
-Visible Crafting Tree TTC badges use a compact dark background with two pixels
+When enabled, Crafting Tree TTC badges use a compact dark background with two pixels
 of padding and four-pixel rounded corners, centered below the node with Minecraft text shadow. The tree reserves
 extra vertical spacing for the badge so it does not cover the node amount or
 connector lines.
 
-ME Requester uses the same compact dark badge and text shadow. Row TTC badges
+ME Requester follows the same optional badge-background and text-shadow settings. Row TTC badges
 sit below the amount fields, clear of the item icon, and are colored by relative duration.
 The status bar keeps its right edge and gives the badge room on its left. Row badges
 use one pixel of vertical padding and fit long labels within that space;
@@ -245,13 +244,13 @@ whose wanted amount is already available does not show a TTC badge.
 Small tests that matter:
 
 - `TimeEstimate` formats `0`, `1`, `75`, and large hour values
-- ETA rounds up fractional seconds
+- subsecond ETA uses ms; longer durations round up fractional seconds
 - no ETA when throughput is `0`
 - total craft ETA sums known row ETAs
 - packet snapshot roundtrip still carries `amountPerSecond`
 - mixin config keeps AE2/Crafting Tree UI mixins client-only
 
-## Implementation Steps
+## Original implementation steps (historical)
 
 1. Add shared `TimeEstimate` helper.
 2. Add tests for `TimeEstimate`.

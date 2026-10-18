@@ -1,5 +1,10 @@
 # Provider Locate Technical Design
 
+Current #488 behavior is implemented by [PR #626](https://github.com/cTux/ae2-crafting-time/pull/626).
+The [canonical scope](spec.md#planned-red-sky-beam) owns its remaining qualification.
+Earlier delayed-only boundaries and planning wording are historical; the extension
+supersedes them without changing the separate resource-icon acceptance scope.
+
 Lifecycle: see scope status and evidence for [baseline](spec.md), [shared-provider icons](spec.md#planned-shared-provider-icon-correction), [resource icons](resource-icons/spec.md), and [red sky beams](spec.md#planned-red-sky-beam).
 
 ## Research findings
