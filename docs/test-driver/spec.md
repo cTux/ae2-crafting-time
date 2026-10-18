@@ -1,5 +1,37 @@
 # AE2 Crafting Time Test Driver Spec
 
+## Short connected server paths (#632)
+
+Status: ready-to-implement
+
+Scope: Restore connected server staging under generated long report paths.
+
+Issue: [#632](https://github.com/cTux/ae2-crafting-time/issues/632).
+Planning: [design](technical-design.md#short-connected-server-paths-632)
+and [plan](implementation-plan.md#short-connected-server-paths-632).
+
+Deep loader libraries can exceed Windows PowerShell 5.1's path limit when
+copied below the generated report directory. Keep the live disposable server
+in a unique short temporary workspace, owned by the report, and retain its
+contents below the report when setup or execution ends.
+
+- **CP632-1:** Stage the same source successfully with the reported long report
+  shape and a short report control. Validate every source-relative destination
+  against the supported path limit before copying. Refuse an unsuitable temp
+  path before any server or client launch; no global Windows setting is required.
+- **CP632-2:** Preserve source bytes, attributes, marker and seal. Keep target,
+  dependency, launcher and artifact checks. Bind the separate workspace to this
+  report/campaign, refuse existing or linked workspaces, and mutate only its copy.
+- **CP632-3:** Retain server contents under `runtime/server-<target>` in the report
+  on success, setup/execution failure and `-PlanOnly`. Archive only after owned
+  processes exit. Delete the verified owned temporary workspace only after a
+  successful archive. On archival failure, retain it and report its location
+  alongside the original failure; never report a successful run or lose evidence.
+- **CP632-4:** Cover long/short paths, source integrity, zero launches on setup
+  failure and every new ownership/archive/cleanup branch with deterministic
+  Windows PowerShell 5.1 checks. Existing four-target launch contracts remain
+  intact. This filesystem-only repair requires no Minecraft launch or UI claim.
+
 ## Fresh native Status evidence (#671)
 
 Status: finished
@@ -314,7 +346,9 @@ server/client logs, hashes, authoritative estimates, and semantic screenshots.
 The prepared server is an immutable source marked by
 `.ae2-crafting-time-dedicated-fixture.json`; the runner validates its target,
 launch files, profile, and exactly one production/driver artifact pair before
-creating a separately marked disposable copy below the report directory.
+creating a separately marked disposable copy owned by the report. The
+[#632 scope](#short-connected-server-paths-632) separates its short live path
+from the archived copy below the report directory.
 
 The [#482 provisioning expansion](connected-resource-fixtures/spec.md) adds a
 bounded preparer for the four compatible connected targets and their supported
