@@ -8,6 +8,39 @@ Implementation: [PR #208](https://github.com/cTux/ae2-crafting-time/pull/208), [
 Verification: implementation checks in those PRs and [prepared-client results](prepared-clients-2026-09-08.md).
 Unattended visual qualification is tracked separately below.
 
+## Dependency selection cache identity
+
+Status: ready-to-implement
+
+Scope: Restore correct bundle reuse for effective dependency selections in
+[#646](https://github.com/cTux/ae2-crafting-time/issues/646).
+
+Planning: [Design](technical-design.md#dependency-selection-cache-identity) and
+[reviewed plan](implementation-plan.md#dependency-selection-cache-identity).
+
+Verification: implementation, deterministic checks, review and CI pending.
+
+A focused request and a full catalogue request can currently share a cache key.
+Adapter preflight rejects the wrong bundle, but the campaign cannot proceed.
+This correction covers the shared scripts, all four targets, compatible/latest
+profiles, and Windows PowerShell 5.1/PowerShell 7. It needs no Minecraft launch
+and changes no gameplay, world format or dependency resolution policy.
+
+- **DC-01:** The cache path and sealed identity distinguish the effective
+  project set for each planned graph. Different focused sets and the full
+  catalogue (no project filter) cannot reuse one another at the same source
+  fingerprint. Use the planner's graph selection, including implicit selections.
+- **DC-02:** Project order and duplicate IDs do not change that identity or cause
+  another resolution. Preserve ID spelling and case; normalize only ordering
+  and duplicates. Base-only, target and profile remain separate identities.
+- **DC-03:** Reuse rejects a different selection or an old seal without the
+  selection contract before launching a client. Never upgrade, overwrite or
+  delete sealed bundles to make validation pass; resolve into the new key.
+- **DC-04:** Preserve source-fingerprint validation, artifact hashes, sealed
+  adapter expectations, adapter preflight and immutable failure evidence.
+  Connected/prewarm consumers retain the sealed selection when host selectors
+  are intentionally absent. Request-aware validation checks the actual request.
+
 ## Java runtime metadata
 
 Status: in-progress
