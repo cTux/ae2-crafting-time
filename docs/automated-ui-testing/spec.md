@@ -10,7 +10,7 @@ Unattended visual qualification is tracked separately below.
 
 ## Dependency selection cache identity
 
-Status: in-progress
+Status: finished
 
 Scope: Restore correct bundle reuse for effective dependency selections in
 [#646](https://github.com/cTux/ae2-crafting-time/issues/646).
@@ -18,10 +18,21 @@ Scope: Restore correct bundle reuse for effective dependency selections in
 Planning: [Design](technical-design.md#dependency-selection-cache-identity) and
 [reviewed plan](implementation-plan.md#dependency-selection-cache-identity).
 
-Verification: implementation, deterministic checks, review and CI pending.
+Implementation: [PR #721](https://github.com/cTux/ae2-crafting-time/pull/721),
+merged as [`8f7df83a`](https://github.com/cTux/ae2-crafting-time/commit/8f7df83ab9a6252f0673667135f29ae3c480ee10).
 
-A focused request and a full catalogue request can currently share a cache key.
-Adapter preflight rejects the wrong bundle, but the campaign cannot proceed.
+Verification: reviewed and tested head
+[`cdd1a596`](https://github.com/cTux/ae2-crafting-time/commit/cdd1a596c74d6f4dcb78e829949b288b530eaf0e)
+passed [Gradle tests and coverage](https://github.com/cTux/ae2-crafting-time/actions/runs/39120104306)
+and [all target builds](https://github.com/cTux/ae2-crafting-time/actions/runs/39120104333).
+Cache, matrix, planner, adapter-selection boundary, invocation-contract and
+dedicated-preparation self-checks passed under Windows PowerShell 5.1 and
+PowerShell 7. The isolated original code failed the focused-then-full resolver
+count check; the corrected matrix passed. No Minecraft launch was required.
+
+Before this correction, a focused request and a full catalogue request could
+share a cache key. Adapter preflight rejected the wrong bundle, preventing the
+campaign from proceeding.
 This correction covers the shared scripts, all four targets, compatible/latest
 profiles, and Windows PowerShell 5.1/PowerShell 7. It needs no Minecraft launch
 and changes no gameplay, world format or dependency resolution policy.
