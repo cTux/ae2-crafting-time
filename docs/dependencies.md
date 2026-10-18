@@ -327,8 +327,9 @@ dependency declaration. Runtime diagnostics report the packaged hook separately.
 - ExtendedAE-Plus needs ExtendedAE. Focused Forge 1.20.1 and NeoForge 1.21.1
   compatible development runs install the pinned ExtendedAE prerequisite even when the
   addon's Modrinth version omits that dependency. Forge ExtendedAE-Plus stays
-  pinned to 1.5.5; the controlled Forge 1.6.2 investigation is tracked under
-  [#461](https://github.com/cTux/ae2-crafting-time/issues/461).
+  pinned to 1.5.5. The isolated Forge 1.6.2 focused CPU run also passed after
+  the test fixture supplied a native CPU; this does not promote that version or
+  qualify the full addon graph. See [#461](https://github.com/cTux/ae2-crafting-time/issues/461).
 - AEInfinityBooster uses AE2's normal Crafting Plan and has no recorded Fabric
   release for the supported target. Advanced Peripherals has no recorded Fabric
   1.20.1 or NeoForge 26.1.2 release; NeoForge 1.21.1 uses an alpha.

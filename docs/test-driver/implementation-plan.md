@@ -27,9 +27,14 @@ Scope, status and criteria: [spec](spec.md#extendedae-plus-focused-graph-461).
    -BundleDirectory <bundle> -ProjectId xr109llC -Scenario extendedae-plus-cpu`.
    Use existing result/evidence helpers and retain loaded artifact hashes.
    Never use `-Latest`, alter tracked campaign inputs or mutate a sealed bundle.
-5. Budget three sequential clean launches, initially 30 minutes; measure actual
-   times. Preflight confirmed host JDKs, source-world markers, SSH and exact
-   guest Forge `1.20.1-47.4.23` / NeoForge `21.1.251` manifests with intact
+5. The initial three-launch budget expanded to five sequential launches after
+   the pinned Forge run reproduced the missing CPU and the shared ExtendedAE
+   fixture needed a sibling regression run. Measured client campaigns took
+   282.7 s (original failing Forge 1.5.5), 215.8 s (corrected Forge 1.5.5),
+   201.5 s (ExtendedAE-only sibling), 186.8 s (pinned NeoForge 1.6.2), and
+   187.2 s (isolated Forge 1.6.2). Preflight confirmed host JDKs,
+   source-world markers, SSH, and exact guest Forge `1.20.1-47.4.23` /
+   NeoForge `21.1.251` manifests with intact
    classpaths. Recheck guest Java 17/21 and 8 GiB heap. Follow the existing
    [smoke and archive contract](../ui-smoke-evidence.md), including visual
    review, fresh disposable worlds and confirmed client exit between runs.
@@ -38,6 +43,13 @@ Scope, status and criteria: [spec](spec.md#extendedae-plus-focused-graph-461).
    after EP461-1/2/3 pass, EP461-4 has a supported investigation outcome and
    current-head CI/review passes. Link evidence in the spec without promoting
    the candidate. Cleanly stop CodexVM and verify its VMX is absent from `vmrun -T ws list`.
+
+Execution at `4661326c`: all four corrected focused runs passed seven native
+CPU checks with one dispatch and one completion each. All four full plan images
+passed manual review; each automated visual gate remains `REVIEW_REQUIRED`
+without a qualified baseline. Archives were produced by the existing evidence
+gate, including the isolated candidate campaign. The exact CodexVM shut down
+cleanly with zero running VMs reported. The tracked Forge 1.5.5 pin remains.
 
 Lifecycle: see the [scope status and evidence](spec.md).
 
