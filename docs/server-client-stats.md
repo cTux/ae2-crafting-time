@@ -66,7 +66,7 @@ Server owns:
 - `CraftProfiler`
 - pending operation matching
 - rolling sample buffers
-- concurrent production-window aggregation
+- completion intervals with same-tick returns aggregated across CPUs
 - per-CPU first-dispatch waiting state
 - average duration and throughput calculation
 - config value that affects collection: `enabled`
@@ -155,8 +155,8 @@ Rules:
   its own inventory observation and is unchanged.
 - Server replies with known stats for the player's active AE2 network and silently omits unknown keys.
 
-The row-stat wire boundary is Forge protocol `28`, NeoForge registrar `27` on
-both targets, and Fabric channels `stats_request_v4` / `stats_snapshot_v13`.
+The row-stat wire boundary is Forge protocol `29`, NeoForge registrar `28` on
+both targets, and Fabric channels `stats_request_v5` / `stats_snapshot_v14`.
 Update both client and server. Older peers cannot negotiate this row-stat
 exchange; single-key clients must not silently hit the new four-packet limit.
 
@@ -216,9 +216,10 @@ entries: list {
 Rules:
 
 - Snapshot is immutable display data.
-- A sample describes one continuous production window for an output across all
-  crafting CPUs on the AE2 network, not one individual pattern push. This makes
-  its amount-per-time rate include parallel batches.
+- A sample describes an observed completion interval for a network/output.
+  Returns in the same tick combine across CPUs into one observation. The
+  server-tick flush makes it available while the order is still running;
+  finishing the order does not add a duplicate whole-order observation.
 - Pending pattern outputs are still matched per crafting CPU. Finishing or
   cancelling a CPU job discards its unmatched pending outputs so they cannot
   inflate a future sample.
@@ -237,16 +238,21 @@ Rules:
 ### CPU-list TTC packets
 
 `CpuTtcRequestC2S` carries the open container id, a per-screen session id, a
-monotonic sequence, and at most 32 positive, unique CPU serials. The client sends
-the visible six plus the selected CPU at most once per second. The server accepts
+monotonic sequence, and at most 32 positive, unique CPU serials. At most once per
+second, the client prioritizes the visible six plus the selected CPU. TTC sorting
+modes fill the remaining slots from a persistent round-robin queue of busy CPUs;
+AE2-order mode requests only the visible and selected CPUs. The server accepts
 four packets and 128 serials per player per second, then resolves only CPUs in
 the current Crafting Status menu's existing serial map and live grid CPU set.
 
 `CpuTtcSnapshotS2C` echoes session and sequence and returns one present-or-empty
 total for every requested serial. The client accepts only the latest outstanding
-request for the active screen, replaces the whole batch, and expires it after
-three seconds. Idle, unknown, zero, removed, replaced, or foreign CPUs stay
-blank. The selected card and title read this same batch.
+request for the active screen and merges its entries into the session cache.
+In TTC modes, values expire after `max(3, ceil(busy / 25) + 2)` seconds; list
+growth cannot extend an existing value's deadline. AE2-order mode retains only
+visible/selected values with a three-second bound. Idle, unknown, zero, removed,
+replaced, or foreign CPUs stay blank. The selected card and title read the same
+frozen frame snapshot. See [CPU sorting](ttc-sorting/cpu-list/spec.md).
 
 ### `ProviderLocateC2S`
 
@@ -337,8 +343,8 @@ Rules:
   The packet layout appends a bounded optional typed key after `networkId`;
   older packets without that field retain a plate without an icon.
 
-Wire versions: Forge channel protocol `28`; Fabric uses `provider_highlight_v6`
-with the row-stat channels listed above; NeoForge registrars are `27`. The new
+Wire versions: Forge channel protocol `29`; Fabric uses `provider_highlight_v6`
+with the row-stat channels listed above; NeoForge registrars are `28`. The
 chat provenance field has a marker before the optional typed key so old
 packets decode with no beam.
 
@@ -391,9 +397,10 @@ it from the open CPU screen each frame.
 
 Optional UI mod not installed:
 
-- Client sends no requests.
-- Server still may collect stats when `enabled = true`, but no UI exists.
-- No fallback screen.
+- That addon's UI integration sends no requests and has no fallback screen.
+- Native AE2 Crafting Plan and Crafting Status still request and display stats
+  when both peers support Crafting Time. Server collection remains available
+  when `enabled = true`.
 
 Singleplayer:
 

@@ -30,7 +30,7 @@ description: Develop, debug, test, or port AE2 Crafting Time code and resources.
 - Server owns profiling, retained samples, persistence, resets, accuracy, stalls, and aggregate stats. Client owns requests, cache, formatting, sort state, and input only.
 - Put every calculation, branch, parser, validation rule, and state transition that can be Minecraft-free in `shared/src/main/java`.
 - Keep AE2/Minecraft and loader code as thin, branchless adapters wherever possible.
-- Reuse `mcCommon` across every target, `mc1201` across 1.20.1/1.21.1, `mc2612` for 26.1.2, and `neoforge` only for both NeoForge targets. Add loader copies only when APIs require them.
+- Reuse `mcCommon` across every target, `mc1201` across 1.20.1/1.21.1, `mc2612` for 26.1.2, and `neoforge` for both NeoForge targets plus Forge's existing optional CPU mixin subset. Add loader copies only when APIs require them.
 - Preserve the `networkId + outputId` profile identity, normalized item/fluid units, bounded packets, server-side trust decisions, and exact world-save compatibility.
 - Keep craft-plan and crafting-status UI behavior consistent unless the underlying semantics differ. Append through AE2 paths instead of replacing renderers.
 - Keep optional integrations optional: string-target mixins or compile-only dependencies must not make absent mods required.
@@ -41,8 +41,8 @@ description: Develop, debug, test, or port AE2 Crafting Time code and resources.
   the GuideME book and GitHub wiki. Give each new TTC status and feature an
   on/off option; update both guides when existing behavior changes.
 - Give every AE2 Crafting Time status label in Crafting Plan and Crafting Status
-  rows the shared badge background by default. Respect the client's Badge
-  background switch and configured color and opacity.
+  rows the shared badge background when the client's Badge background switch
+  is enabled. Preserve its default-Off setting and configured color and opacity.
 
 ## 100% Coverage Rule
 

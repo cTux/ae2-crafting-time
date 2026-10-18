@@ -365,8 +365,10 @@ The following remains the final production-icon acceptance contract.
 
 For [#376](https://github.com/cTux/ae2-crafting-time/issues/376), implement the
 [resource-icon acceptance matrix](../provider-locate/resource-icons/implementation-plan.md#runtime-acceptance-matrix)
-through these existing bounded cases. Their ordinary production acceptance mode
-is required future coverage; the existing fixture-only mode is not an icon pass.
+through these existing bounded cases. Ordinary production acceptance mode is
+implemented, but its full runtime qualification remains outstanding. Explicit
+fixture-only mode is not an icon pass; production-mode success still requires
+the documented evidence and visual review.
 
 | Scenario | Targets and real fixture outputs |
 | --- | --- |

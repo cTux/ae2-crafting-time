@@ -52,8 +52,11 @@ belong to the client; profiling and shared behavior remain server-authoritative.
 ### Feature switches
 
 Switches default **on** except recurrent ingredient detection, fast-to-slow TTC
-colors, compact crafting amounts, text shadow, and badge background, which default
-**off**. Turning one off removes only the named feature; it does not erase learned samples, change active
+colors, compact crafting amounts, text shadow, badge background, chance-output
+display/detection, and crafting suspension, which default **off**. Chance output
+keeps its [experimental scope](../chance-output/spec.md); suspension keeps its
+[Forge-only scope](../crafting-suspension/spec.md). Turning one off removes only
+the named feature; it does not erase learned samples, change active
 crafts, or silently turn off sibling features. The server profiling master
 (`enabled`) is the exception: turning it off suspends all server-derived TTC and
 diagnostics. It is clearly labelled as the master switch.
@@ -74,10 +77,12 @@ Implementation: [PR #610](https://github.com/cTux/ae2-crafting-time/pull/610) me
 Verification: [Issue completion evidence](https://github.com/cTux/ae2-crafting-time/issues/607#issuecomment-5877065808) confirms [PR #610](https://github.com/cTux/ae2-crafting-time/pull/610) merged after [tested head 36296cf1b20fcf61b7a6440582286df8ce7d8509](https://github.com/cTux/ae2-crafting-time/commit/36296cf1b20fcf61b7a6440582286df8ce7d8509) passed [Gradle tests/coverage](https://github.com/cTux/ae2-crafting-time/actions/runs/36469909276), [all four builds](https://github.com/cTux/ae2-crafting-time/actions/runs/36469909142), and local validation of all 201 locale keys/placeholders, both templates' two arguments, and fresh owner-specific model usage. No Minecraft launch was required for this tooltip-only scope.
 
 Every switch tooltip must describe its fresh model default in English and
-Ukrainian. Compact crafting amounts, TTC colors, text shadow, and badge background
-default Off on the client; recurrent detection defaults Off on the server. Other
-switches default On. The displayed default stays the same when the saved or draft
-value changes. Keep the existing explanation, apply timing, and ownership text.
+Ukrainian. At the #607 baseline, Compact crafting amounts, TTC colors, text shadow,
+and badge background defaulted Off on the client; recurrent detection defaulted
+Off on the server. Later options follow the current default list above and the
+fresh model, not this historical enumeration. The displayed default stays the
+same when the saved or draft value changes. Keep the existing explanation,
+apply timing, and ownership text.
 
 | ID | Acceptance criterion |
 | --- | --- |
@@ -106,14 +111,16 @@ Planning: [Design](technical-design.md#client-section-reset-defaults-608) and
 
 Client Reset section must use the same switch defaults as a fresh client config
 and Reset All. Displays restores Compact crafting amounts and TTC colors to Off;
-Appearance restores Text shadow and Badge background to Off. Other client
-switches restore On. This restores existing intent without changing any default.
+Appearance restores Text shadow and Badge background to Off, and Warnings
+restores Chance output to Off. Every switch follows its fresh model default,
+including later additions. This restores existing intent without changing any
+default.
 The scope covers the shared screen on 1.20.1 Forge/Fabric, 1.21.1 NeoForge, and
 26.1.2 NeoForge.
 
 | ID | Acceptance criterion |
 | --- | --- |
-| R1 | Reset restores every selected switch to its fresh model default, including all four default-Off switches and default-On switches. |
+| R1 | Reset restores every selected switch to its fresh model default, including every current default-Off and default-On switch. |
 | R2 | Only the selected client group changes. Appearance still resets every color to its model default and opacity to 176; Controls still resets both sort modes to 2. Other groups and the server draft retain their values. |
 | R3 | Reset changes only the session draft until Done saves it. Cancel discards it; reopening reflects the saved values. Reset All retains its existing behavior. |
 | R4 | Regression checks exercise the native reset action with both default-On and default-Off values, current-head tests/coverage and all four target builds pass, and focused UI evidence is retained. |
