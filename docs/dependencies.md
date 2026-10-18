@@ -131,7 +131,7 @@ Declared driver coverage is separate from each run's PASS/FAIL/NOT_RUN result.
 `standard-ae2` adds plan/status input, real smelting, row states and output checks
 to all four drivers. Its compact-hover leaf checks five server-owned item rates,
 both native screens, full chat and option restoration on all four targets.
-Declared suite sizes are 43 Forge, 25 Fabric, 39 NeoForge 1.21.1 and 28 NeoForge
+Declared suite sizes are 43 Forge, 25 Fabric, 38 NeoForge 1.21.1 and 28 NeoForge
 26.1.2 leaves. Tree chat also verifies both full-rate fields and selected amount;
 runtime results remain separate from these contracts. See [the suite specification](automated-ui-testing/spec.md).
 Its CPU-list leaf additionally cycles both-list TTC sorting, binds input to
@@ -206,8 +206,17 @@ Focused read-recovery scenarios cover Crafting Tree on Forge 1.20.1 and NeoForge
 fixtures with a renamed read member, verify that the original screen remains
 usable without TTC additions, and run `craft-lifecycle` afterward in the same
 client process. These negative fixtures are not part of the compatible suite. The NeoEco fixture
-mounts a native item cell and supplies its ingredients so the newest-adapter graph
-does not depend on storage supplied by other addons.
+mounts a native item cell and supplies its ingredients, but on NeoForge 1.21.1 it
+is intended for explicit latest-graph diagnostics. NeoEco 21.1.1 is excluded
+from that target's compatible client because its renderer can crash during an
+asynchronous section rebuild ([#627](https://github.com/cTux/ae2-crafting-time/issues/627)).
+The compatible graph installs LDLib2 directly for OmniSequence's required library
+after removing NeoEco.
+The [upstream origin-copy fix](https://github.com/DancingSnow0517/NeoECOAEExtension/commit/e9c4031eee32ea1d3a0dcedd431e7f80ff60418f)
+is in a later lineage; the diagnostic fixture does not qualify its newer CPU API.
+The [original failure](https://github.com/cTux/ae2-crafting-time/issues/627) and
+[second failed campaign](https://github.com/cTux/ae2-crafting-time/issues/627#issuecomment-6128845981)
+remain historical failures, not passing smoke evidence.
 Fabric Crafting Tree has no available runtime artifact and is excluded from
 issue #193's runtime acceptance by explicit user decision.
 
@@ -239,7 +248,7 @@ optional-mod graph run.
 | Applied Mekanistics (`appmek`; optional) | `1.4.3` | Yes (`appmek-cpu`) | — | — | `1.6.3` | Yes (`appmek-cpu`) | — | — | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.4.3`; NeoForge: `>=1.6.2` | TTC profiling and Crafting Plan display for chemicals stored in the ME network through Applied Mekanistics' native AE2 key. | [CF][appmek-cf] / [MR][appmek-mr] / [#68](https://github.com/cTux/ae2-crafting-time/issues/68) |
 | AdvancedAE (`advanced_ae`; optional) | `1.3.6-1.20.1` | Yes (scenario) | — | — | `1.6.12-1.21.1` | Yes (`advancedae-cpu`) | `26.1.7` | Yes (`advancedae-cpu`) | `1.21.1 NeoForge`, `26.1.2 NeoForge` | 1.21.1: `>=1.6.11`; 26.1.2: `>=26.1.7` | TTC profiling for AdvancedAE crafting CPUs, including the Quantum Computer. | [CF][advancedae-cf] / [MR][advancedae-mr] / [#67](https://github.com/cTux/ae2-crafting-time/issues/67) |
 | ME Requester (`merequester`; optional) | `1.20.1-1.2.1+forge` | Yes (`merequester-screen`) | `1.20.1-1.1.4+fabric` | Yes (`merequester-screen`) | `1.21.1-1.5.0+neoforge` | Yes (`merequester-screen`) | — | — | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | Forge/Fabric: `>=1.20.1`; NeoForge: `>=1.21.1` | TTC row labels below the amount fields, beside a shortened status bar, plus header total hints. The Forge layout check includes item-slot bounds. A focused Forge smoke and the refreshed diamond-request screenshot confirm the icon overlap is fixed. | [CF][merequester-cf] / [MR][merequester-mr] / [#70](https://github.com/cTux/ae2-crafting-time/issues/70) / [#197](https://github.com/cTux/ae2-crafting-time/issues/197) |
-| NeoEco AE (`neoecoae`; optional) | `20.4.2` | Yes (scenario) | — | — | `21.1.1` | Yes (`neoeco-cpu`) | — | — | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=20.3.0`; NeoForge: `>=21.1.1` | TTC profiling for C-series ECO crafting CPUs, including normal and FastPath dispatch. Version 20.4.2 passed the Project Infinity update graph's CPU smoke with LightningTech and Thunderbolt installed; results for other dependency graphs can differ. | [CF][neoecoae-cf] / [MR][neoecoae-mr] / [#66](https://github.com/cTux/ae2-crafting-time/issues/66) |
+| NeoEco AE (`neoecoae`; optional) | `20.4.2` | Yes (scenario) | — | — | `21.1.1` | No compatible scenario; explicit latest `neoeco-cpu` diagnostic | — | — | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=20.3.0`; NeoForge: `>=21.1.1` | TTC profiling for C-series ECO crafting CPUs, including normal and FastPath dispatch. Version 20.4.2 passed the Project Infinity update graph's CPU smoke with LightningTech and Thunderbolt installed; results for other dependency graphs can differ. NeoForge 1.21.1's compatible client excludes the renderer-crashing 21.1.1 pin; newer APIs remain unqualified under [#457](https://github.com/cTux/ae2-crafting-time/issues/457). | [CF][neoecoae-cf] / [MR][neoecoae-mr] / [#66](https://github.com/cTux/ae2-crafting-time/issues/66) / [#627](https://github.com/cTux/ae2-crafting-time/issues/627) |
 | AE2 Lightning Tech (`ae2lt`; optional) | `2.1.0-beta.4-forge.1.20.1` | Yes (scenario) | — | — | `2.1.0-beta.5` | Yes (`lightningtech-cpu`) | `1.0.1alpha-26.1.2neoforge` | Yes (`lightningtech-cpu`) | `1.20.1 Forge`, `1.21.1 NeoForge` | `>=2.1.0-beta.2` | TTC profiling for Tianshu time-wheel crafting CPUs on 1.20.1/1.21.1. Runtime smoke pins use CurseForge because the former Modrinth project is no longer available. The 26.1.2 alpha has no Tianshu CPU; its smoke case verifies real crafting through its overloaded pattern provider and a native AE2 CPU. | [CF][ae2lt-cf] / [#72](https://github.com/cTux/ae2-crafting-time/issues/72) |
 | OmniSequence: Transfinite (`molecularmanipulator`; optional) | `1.3.9-forge` | Yes (scenario) | — | — | `1.3.9-hotfix` | Yes (`omnisequence-cpu`) | — | — | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.3.8-hotfix-forge`; NeoForge: `>=1.3.9-hotfix` | TTC profiling for Omni-Computation Core crafting CPUs through AE2's native execution path. | [CF][omnisequence-cf] / [#71](https://github.com/cTux/ae2-crafting-time/issues/71) |
 | ExtendedAE (optional) | `1.20-1.4.18-forge` | Yes (scenario) | `1.20-1.0.2-fabric` | Yes (`extendedae-cpu`) | `1.21-2.2.35-neoforge` | Yes (`extendedae-cpu`) | `26.1-1.0.3-neoforge` | Yes (`extendedae-cpu`) | — | — | Assembler/provider integration through AE2 UI and execution paths; Forge and Fabric drivers available. | [CF][extendedae-cf] / [#73](https://github.com/cTux/ae2-crafting-time/issues/73) |

@@ -26,7 +26,9 @@ $supported = @($suite | ForEach-Object { if ($_ -cin $groups) { $catalogue.group
 # Fixture-only leaves are explicit focused cases and never ordinary suite members.
 $focused = @($catalogue.focusedCases.$Target)
 foreach ($case in $focused) {
-    if ($case -cnotin $leaves) { throw "Unknown focused case for ${Target}: $case" }
+    if ($case -cnotin $leaves -and $case -cnotin @($catalogue.adapterCases.psobject.Properties | ForEach-Object Value)) {
+        throw "Unknown focused case for ${Target}: $case"
+    }
 }
 $supported += $focused
 # Focused adapter fixtures can intentionally live outside the compatible suite.
