@@ -15,6 +15,7 @@ import appeng.crafting.inv.ListCraftingInventory;
 import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.mc1201.BlockReasonNotifier;
 import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
+import com.ctux.ae2craftingtime.mc1201.EstimateRecoveryAccess;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import com.ctux.ae2craftingtime.mc1201.ProviderDispatchObserver;
@@ -154,22 +155,25 @@ public abstract class AdvancedCraftingCpuLogicMixin {
         var waiting = ((AdvCraftingCPULogic) (Object) this).getWaitingFor(what);
         var accepted = Math.min(amount, waiting);
         if (accepted > 0) {
+            ((EstimateRecoveryAccess) this).ae2craftingtime$recoverEstimate(true);
             ProfilerBridge.complete(ProfilerBridge.networkId(cpu.getGrid()), cpu, what, accepted,
                     cpu.getLevel().getGameTime());
             IntegrationLog.cpu("advanced_ae", "cpu-output");
         }
     }
 
-    @Inject(method = "finishJob", at = @At("HEAD"), remap = false, require = 0)
+    @Inject(method = "finishJob", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$clearPendingOutputs(boolean success, CallbackInfo ci) {
+        ((EstimateRecoveryAccess) this).ae2craftingtime$clearRecovery();
         ProfilerBridge.finishJob(cpu, success, cpu.getLevel().getGameTime(), System.nanoTime(),
                 cpu.getLevel().getServer());
         IntegrationLog.cpu("advanced_ae", "cpu-finish");
     }
 
-    @Inject(method = "trySubmitJob", at = @At("RETURN"), remap = false, require = 0)
+    @Inject(method = "trySubmitJob", at = @At("RETURN"), remap = false)
     private void ae2craftingtime$startJobAccuracy(IGrid grid, ICraftingPlan plan, IActionSource source,
             ICraftingRequester requester, CallbackInfoReturnable<ICraftingSubmitResult> cir) {
+        if (cir.getReturnValue().successful()) ((EstimateRecoveryAccess) this).ae2craftingtime$clearRecovery();
         if (cir.getReturnValue().successful() && ProfilerBridge.trackingEnabled(cpu)) {
             ProfilerBridge.startJob(ProfilerBridge.networkId(grid), cpu, plan, cpu.getLevel().getGameTime(),
                     System.nanoTime(), ProfilerBridge.jobOwner(source));
@@ -187,5 +191,11 @@ public abstract class AdvancedCraftingCpuLogicMixin {
         ProfilerBridge.updateCapacity(cpu, usedSlots, totalSlots, tick);
         IntegrationLog.cpu("advanced_ae", "cpu-capacity");
         DelayedNotificationServer.tick(cpu, cpu.getGrid(), this, tick, server);
+    }
+
+    @Inject(method = "tickCraftingLogic", at = @At("HEAD"), remap = false)
+    private void ae2craftingtime$recoverBeforeDispatch(IEnergyService energyService,
+            CraftingService craftingService, CallbackInfo ci) {
+        ((EstimateRecoveryAccess) this).ae2craftingtime$recoverEstimate(false);
     }
 }

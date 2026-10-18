@@ -150,9 +150,19 @@ public final class CpuListTtcControl {
             String serverState) { }
     public record Command(String epoch, long sequence, String action) { }
     public record CpuState(String position, int serial, String jobId, long amount, boolean live, boolean busy,
-            com.ctux.ae2craftingtime.core.TtcEstimate estimate, long elapsedNanos, long progress) { }
+            com.ctux.ae2craftingtime.core.TtcEstimate estimate, long elapsedNanos, long progress, String craftId) {
+        public CpuState(String position, int serial, String jobId, long amount, boolean live, boolean busy,
+                com.ctux.ae2craftingtime.core.TtcEstimate estimate, long elapsedNanos, long progress) {
+            this(position, serial, jobId, amount, live, busy, estimate, elapsedNanos, progress, null);
+        }
+    }
     public record ServerState(String network, int container, int selectedSerial, boolean stoneProfile, boolean smoothProfile,
-            java.util.List<CpuState> cpus) { }
+            java.util.List<CpuState> cpus, long cobblestoneStock, long sandStock, int stoneSamples, int smoothSamples) {
+        public ServerState(String network, int container, int selectedSerial, boolean stoneProfile, boolean smoothProfile,
+                java.util.List<CpuState> cpus) {
+            this(network, container, selectedSerial, stoneProfile, smoothProfile, cpus, -1, -1, -1, -1);
+        }
+    }
     private record ServerMarker(int schema, String sourceFixtureId, String role, String target) { }
     private CpuListTtcControl() { }
 }

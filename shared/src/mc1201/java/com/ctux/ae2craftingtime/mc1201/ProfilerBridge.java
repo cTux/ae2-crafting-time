@@ -12,6 +12,9 @@ import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.core.CraftProfiler;
 import com.ctux.ae2craftingtime.core.CraftingBlockReason;
 import com.ctux.ae2craftingtime.core.CraftingJobEstimate;
+import com.ctux.ae2craftingtime.core.CraftingJobEstimateCodec;
+import com.ctux.ae2craftingtime.core.CraftingJobRecovery;
+import com.ctux.ae2craftingtime.core.OptionFeature;
 import com.ctux.ae2craftingtime.core.PersistedOutputStatus;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.ProfileStats;
@@ -41,6 +44,55 @@ public final class ProfilerBridge {
     private static TtcAccuracyTracker ACCURACY = new TtcAccuracyTracker(Ae2CraftingTimeConfig.MAX_SAMPLES.get());
     private static final Map<ProfileKey, String> DISPLAY_NAMES = new ConcurrentHashMap<>();
     private static Ae2CraftingTimeSavedData savedData;
+    private static final CraftingJobRecovery.Lifecycle RECOVERY = new CraftingJobRecovery.Lifecycle();
+
+    public static void beginServer(net.minecraft.server.MinecraftServer server) { RECOVERY.begin(server); }
+    public static void endServer(net.minecraft.server.MinecraftServer server) { RECOVERY.stop(server); }
+    public static net.minecraft.server.MinecraftServer recoveryServer() {
+        return (net.minecraft.server.MinecraftServer) RECOVERY.server();
+    }
+    public static CraftingJobRecovery newRecovery() { return new CraftingJobRecovery(RECOVERY); }
+
+    public static void readEstimate(Object scope, CraftingJobRecovery recovery, byte[] bytes) {
+        PROFILER.removeJobEstimate(scope);
+        recovery.read(bytes, integration(scope));
+    }
+
+    public static void restoreEstimate(Object scope, CraftingJobRecovery recovery,
+            net.minecraft.server.MinecraftServer server, UUID jobId, AEKey output, IGrid grid,
+            boolean acceptedOutput) {
+        recovery.attach(server, jobId, output == null ? null : key(output).outputId(),
+                grid == null ? null : networkId(grid), trackingEnabled(scope))
+                .ifPresent(estimate -> PROFILER.setJobEstimate(scope, estimate));
+        if (acceptedOutput) recovery.missedOutput();
+    }
+
+    public static Optional<byte[]> saveEstimate(Object scope, CraftingJobRecovery recovery,
+            net.minecraft.server.MinecraftServer server, UUID jobId, AEKey output, IGrid grid) {
+        if (jobId == null || output == null || !trackingEnabled(scope)) return Optional.empty();
+        var network = grid == null ? null : networkId(grid);
+        var outputId = key(output).outputId();
+        var live = PROFILER.jobEstimate(scope);
+        if (live.isPresent()) {
+            recovery.clear();
+            return live.filter(estimate -> estimate.snapshot().filter(snapshot ->
+                            snapshot.root().networkId().equals(network) && snapshot.root().outputId().equals(outputId))
+                            .isPresent())
+                    .flatMap(estimate -> CraftingJobEstimateCodec.encode(jobId, estimate));
+        }
+        return recovery.savePending(server, jobId, outputId, network, trackingEnabled(scope));
+    }
+
+    private static OptionFeature integration(Object scope) {
+        if (scope == null) return null;
+        var type = scope.getClass().getName();
+        if (type.startsWith("net.pedroksl.advanced_ae.")) return OptionFeature.ADVANCED_AE;
+        if (type.startsWith("cn.dancingsnow.neoecoae.")) return OptionFeature.NEO_ECO;
+        if (type.startsWith("com.moakiee.ae2lt.")) return OptionFeature.AE2_LIGHTNING_TECH;
+        return null;
+    }
+
+    public static void disabled(OptionFeature feature) { RECOVERY.disable(feature); }
 
     public static void observeProviders(String networkId, Object scope, IPatternDetails pattern,
             boolean hasProvider) {
@@ -653,6 +705,7 @@ public final class ProfilerBridge {
             if (ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.SAVE_HISTORY))
                 savedData.replaceFrom(migrated);
         }
+        RECOVERY.ready(ServerOptionsRuntime.server());
     }
 
     private static boolean reasonEnabled(CraftingBlockReason reason) {
@@ -671,6 +724,7 @@ public final class ProfilerBridge {
         PROFILER.configure(config);
         ACCURACY.configure(config.maxSamples());
         isEnabled();
+        PROFILER.removeJobEstimates(scope -> !ServerOptionsRuntime.scopeEnabled(scope));
     }
 
     private static String displayNameOf(AEKey key) {

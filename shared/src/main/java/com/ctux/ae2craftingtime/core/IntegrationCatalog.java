@@ -23,11 +23,13 @@ public final class IntegrationCatalog {
             eco("pending-accounting", "1.20.1-forge", "NeoEcoPendingDispatchMixin",
                     "(L" + ECO + "$PendingPatternAccounting;)V"),
             eco("batched-int", "1.21.1-neoforge", "NeoEcoIntBatchDispatchMixin", BATCH + "I)V"),
-            singleton("advanced_ae", "advanced-cpu",
-                    Set.of("1.20.1-forge", "1.21.1-neoforge", "26.1.2-neoforge"), false,
-                    "AdvancedCraftingCpuLogicMixin", "net/pedroksl/advanced_ae/common/logic/AdvCraftingCPULogic"),
-            singleton("ae2lt", "time-wheel", Set.of("1.20.1-forge", "1.21.1-neoforge"), false,
-                    "Ae2LtTimeWheelCraftingCpuLogicMixin", "com/moakiee/ae2lt/crafting/timewheel/Ae2LtTimeWheelCraftingCpuLogic"),
+            advanced("advanced-cpu-1201", "1.20.1-forge", "AdvancedCpuEstimate1201Mixin"),
+            advanced("advanced-cpu-1211", "1.21.1-neoforge", "AdvancedCpuEstimate1211Mixin"),
+            advanced("advanced-cpu-26", "26.1.2-neoforge", "AdvancedCpuEstimate26Mixin"),
+            new IntegrationSelection.Candidate("ae2lt", "time-wheel", Set.of("1.20.1-forge", "1.21.1-neoforge"),
+                    false, Set.of("Ae2LtTimeWheelCraftingCpuLogicMixin", "Ae2LtEstimateMixin"),
+                    List.of(new IntegrationContract.Member("com/moakiee/ae2lt/crafting/timewheel/"
+                            + "Ae2LtTimeWheelCraftingCpuLogic", "", ""))),
             singleton("merequester", "requester-screen", PRE_26, true, "MERequesterScreenMixin",
                     "com/almostreliable/merequester/client/abstraction/AbstractRequesterScreen"));
 
@@ -37,9 +39,18 @@ public final class IntegrationCatalog {
                 List.of(new IntegrationContract.Member(owner, "", "")));
     }
 
+    private static IntegrationSelection.Candidate advanced(String variant, String target, String estimateMixin) {
+        return new IntegrationSelection.Candidate("advanced_ae", variant, Set.of(target), false,
+                Set.of("AdvancedCraftingCpuLogicMixin", estimateMixin),
+                List.of(new IntegrationContract.Member("net/pedroksl/advanced_ae/common/logic/AdvCraftingCPULogic",
+                        "", "")));
+    }
+
     private static IntegrationSelection.Candidate eco(String variant, String target, String mixin, String descriptor) {
         return new IntegrationSelection.Candidate("neoecoae", variant, Set.of(target), false,
-                Set.of("ECOCraftingCpuLogicMixin", mixin), List.of(method(ECO, "recordPushedPattern", descriptor)));
+                Set.of("ECOCraftingCpuLogicMixin", "NeoEcoEstimateMixin", mixin),
+                List.of(method(ECO, "recordPushedPattern", descriptor),
+                        method(ECO, "getCraftingJobId", "()Ljava/util/UUID;")));
     }
 
     private static List<IntegrationContract.Member> widget(String owner, String node, String clickReturn) {

@@ -21,6 +21,11 @@ public final class Ae2CraftingTime implements ModInitializer {
         IntegrationLog.required("config-registration", () -> Ae2CraftingTimeConfig.load(FabricLoader.getInstance().getConfigDir().resolve(COMMON_CONFIG_FILE)));
         IntegrationLog.configuration();
         IntegrationLog.required("network-registration", StatsNetwork::registerServer);
+        ServerLifecycleEvents.SERVER_STARTING.register(ProfilerBridge::beginServer);
+        ServerLifecycleEvents.SERVER_STOPPED.register(server -> {
+            ProfilerBridge.endServer(server);
+            ServerOptionsRuntime.clear();
+        });
         UseItemCallback.EVENT.register(CraftingTimeGuideBook::use);
         CommandRegistrationCallback.EVENT.register((dispatcher, access, environment) -> dispatcher.register(
                 ProviderLocateCommand.build((source, id) -> ProviderLocateCommand.locate(source, id,
@@ -46,7 +51,6 @@ public final class Ae2CraftingTime implements ModInitializer {
         StatsRequestHandler.clear();
             WarningPreferenceServer.clearAll();
             ProviderStartTracker.clearAll();
-        ServerOptionsRuntime.clear();
         });
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             ProfilerBridge.resyncPlatesForPlayer(handler.getPlayer());

@@ -197,14 +197,12 @@ public final class CraftProfiler {
         }
 
         var jobEstimate = jobEstimates.get(scope);
-        if (jobEstimate != null) {
-            jobEstimate.complete(key, amount);
-        }
+        var graphMatched = jobEstimate != null && jobEstimate.complete(key, amount);
 
         var scopedPending = pending.get(scope);
         var queue = scopedPending == null ? null : scopedPending.get(key);
         if (queue == null) {
-            return false;
+            return graphMatched;
         }
 
         advanceTick(key, tick);
@@ -392,6 +390,18 @@ public final class CraftProfiler {
 
     public void setJobEstimate(Object scope, CraftingJobEstimate estimate) {
         jobEstimates.put(scope, estimate);
+    }
+
+    public Optional<CraftingJobEstimate> jobEstimate(Object scope) {
+        return Optional.ofNullable(jobEstimates.get(scope));
+    }
+
+    public void removeJobEstimate(Object scope) {
+        jobEstimates.remove(scope);
+    }
+
+    public void removeJobEstimates(java.util.function.Predicate<Object> disabledScope) {
+        jobEstimates.keySet().removeIf(disabledScope);
     }
 
     public void rebindJobEstimate(Object previousScope, Object currentScope) {

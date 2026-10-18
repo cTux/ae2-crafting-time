@@ -11,7 +11,9 @@ import appeng.api.stacks.AEItemKey;
 import appeng.api.stacks.GenericStack;
 import appeng.blockentity.crafting.PatternProviderBlockEntity;
 import appeng.blockentity.grid.AENetworkBlockEntity;
+import appeng.blockentity.storage.DriveBlockEntity;
 import appeng.core.definitions.AEBlocks;
+import appeng.core.definitions.AEItems;
 import appeng.menu.me.crafting.CraftConfirmMenu;
 import com.ctux.ae2craftingtime.testdriver.mixin.CraftConfirmMenuAccessor;
 import com.moakiee.ae2lt.block.TianshuSupercomputerControllerBlock;
@@ -36,6 +38,8 @@ import java.util.List;
 import java.util.Objects;
 
 final class LightningTechFixture extends AddonCpuFixture<LightningTechFixture.Placement> {
+    private boolean storageCellInstalled;
+
     @Override
     protected Placement place(ServerPlayer player, FixtureMarker marker) {
         if (player == null) {
@@ -113,9 +117,32 @@ final class LightningTechFixture extends AddonCpuFixture<LightningTechFixture.Pl
                 GridHelper.createConnection(terminalNode, node);
             }
         }
-        terminalNode.getGrid().getStorageService().getInventory()
-                .insert(AEItemKey.of(Items.STONE), 64, Actionable.MODULATE, IActionSource.ofPlayer(player));
-        return true;
+        var grid = terminalNode.getGrid();
+        var drive = grid.getMachines(DriveBlockEntity.class).stream()
+                .filter(candidate -> candidate.getMainNode().isActive()).findFirst().orElse(null);
+        if (drive == null) return false;
+        if (!storageCellInstalled) {
+            var cells = drive.getInternalInventory();
+            var slot = -1;
+            for (var index = 0; index < cells.size(); index++) {
+                if (cells.getStackInSlot(index).isEmpty()) {
+                    slot = index;
+                    break;
+                }
+            }
+            if (slot < 0) throw new IllegalStateException("LightningTech fixture drive has no empty cell slot");
+            cells.setItemDirect(slot, AEItems.ITEM_CELL_1K.stack());
+            drive.onChangeInventory(cells, slot);
+            storageCellInstalled = true;
+        }
+        var storage = grid.getStorageService().getInventory();
+        var stone = AEItemKey.of(Items.STONE);
+        var source = IActionSource.ofPlayer(player);
+        var available = storage.extract(stone, 64, Actionable.SIMULATE, source);
+        if (available < 64) {
+            storage.insert(stone, 64 - available, Actionable.MODULATE, source);
+        }
+        return storage.extract(stone, 64, Actionable.SIMULATE, source) == 64;
     }
 
     @Override

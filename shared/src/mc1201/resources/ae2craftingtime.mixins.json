@@ -7,11 +7,13 @@
   "refmap": "ae2craftingtime.refmap.json",
   "mixins": [
     "Ae2LtTimeWheelCraftingCpuLogicMixin",
+    "Ae2LtEstimateMixin",
     "CraftingCPUMenuAccessor",
     "RowStatsJobMenuMixin",
     "RowStatsJobMenuSyncMixinSrg",
     "CraftingStatusMenuAccessor",
     "CraftingCpuLogicMixin",
+    "CraftingCpuEstimate1201Mixin",
     "CraftingCalculationMixin",
     "CraftConfirmMenuMixinSrg",
     "StorageServiceAccessor",
@@ -22,6 +24,7 @@
     "PatternProviderLogicMixin",
     "PatternProviderLogicHostAccessor",
     "ECOCraftingCpuLogicMixin",
+    "NeoEcoEstimateMixin",
     "NeoEcoPendingDispatchMixin",
     "NeoEcoLongBatchDispatchMixin",
     "NeoEcoIntBatchDispatchMixin"

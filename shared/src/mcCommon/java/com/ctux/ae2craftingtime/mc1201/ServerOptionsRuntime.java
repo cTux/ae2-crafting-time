@@ -32,6 +32,7 @@ public final class ServerOptionsRuntime {
     }
 
     public static ServerConfig current() { return current; }
+    public static MinecraftServer server() { return activeServer; }
 
     public static boolean enabled(OptionFeature feature) { return current.features().enabled(feature); }
 
@@ -67,6 +68,11 @@ public final class ServerOptionsRuntime {
                 return;
             }
             ServerConfigFile.save(file, update.config());
+            for (var feature : new OptionFeature[] { OptionFeature.PROFILING, OptionFeature.ADVANCED_AE,
+                    OptionFeature.NEO_ECO, OptionFeature.AE2_LIGHTNING_TECH }) {
+                if (current.features().enabled(feature) && !update.config().features().enabled(feature))
+                    ProfilerBridge.disabled(feature);
+            }
             current = update.config().copy();
             ProfilerBridge.clearChanceEvidence();
             ProfilerBridge.configure(current);

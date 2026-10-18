@@ -1,6 +1,10 @@
 package com.ctux.ae2craftingtime.core;
 
 public final class CpuTtcLayout {
+    public static int textColor(boolean badgeBackground) {
+        return badgeBackground ? 0xE0E0E0 : 0x404040;
+    }
+
     public static Badge badge(int cardWidth, int cardHeight, int textWidth, double nameScale) {
         return badge(cardWidth, cardHeight, textWidth, nameScale, 2);
     }

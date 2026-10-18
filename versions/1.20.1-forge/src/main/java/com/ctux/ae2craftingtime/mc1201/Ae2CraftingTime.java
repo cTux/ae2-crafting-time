@@ -5,6 +5,8 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.RegisterCommandsEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.event.server.ServerAboutToStartEvent;
+import net.minecraftforge.event.server.ServerStoppedEvent;
 import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.fml.ModLoadingContext;
@@ -33,6 +35,11 @@ public final class Ae2CraftingTime {
         });
         IntegrationLog.required("network-registration", StatsNetwork::register);
         MinecraftForge.EVENT_BUS.addListener(this::onServerStarted);
+        MinecraftForge.EVENT_BUS.addListener((ServerAboutToStartEvent event) -> ProfilerBridge.beginServer(event.getServer()));
+        MinecraftForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> {
+            ProfilerBridge.endServer(event.getServer());
+            ServerOptionsRuntime.clear();
+        });
         MinecraftForge.EVENT_BUS.addListener(this::onServerTick);
         MinecraftForge.EVENT_BUS.addListener(this::onServerStopping);
         MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.TagsUpdatedEvent event) ->
@@ -74,7 +81,6 @@ public final class Ae2CraftingTime {
         StatsRequestHandler.clear();
         WarningPreferenceServer.clearAll();
         ProviderStartTracker.clearAll();
-        ServerOptionsRuntime.clear();
     }
 
     private void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {

@@ -11,6 +11,8 @@ import appeng.hooks.ticking.TickHandler;
 import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.mc1201.BlockReasonNotifier;
 import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
+import com.ctux.ae2craftingtime.mc1201.Ae2LtGrid;
+import com.ctux.ae2craftingtime.mc1201.EstimateRecoveryAccess;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import java.lang.reflect.Method;
@@ -36,6 +38,7 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
     private void ae2craftingtime$startJobAccuracy(IGrid grid, ICraftingPlan plan, IActionSource source,
             ICraftingRequester requester, CallbackInfoReturnable<ICraftingSubmitResult> cir) {
         if (cir.getReturnValue().successful()) {
+            ((EstimateRecoveryAccess) this).ae2craftingtime$clearRecovery();
             ae2craftingtime$grid = grid;
             ProfilerBridge.startJob(ProfilerBridge.networkId(grid), this, plan, ae2craftingtime$tick(),
                     System.nanoTime(), ProfilerBridge.jobOwner(source));
@@ -65,6 +68,7 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
     private void ae2craftingtime$profileCompletedOutput(@Coerce Object activeJob, AEKey what, long amount,
             CallbackInfoReturnable<Long> cir) {
         // Standalone final outputs complete waiting demand but fall through to ME storage: insert returns zero.
+        if (cir.getReturnValue() > 0) ((EstimateRecoveryAccess) this).ae2craftingtime$recoverEstimate(true);
         ProfilerBridge.complete(ProfilerBridge.networkId(ae2craftingtime$grid), this, what, cir.getReturnValue(),
                 ae2craftingtime$tick());
         IntegrationLog.positive("ae2lt", "cpu-output", cir.getReturnValue());
@@ -72,6 +76,7 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
 
     @Inject(method = "finishJob", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$finishJob(boolean success, CallbackInfo ci) {
+        ((EstimateRecoveryAccess) this).ae2craftingtime$clearRecovery();
         ProfilerBridge.finishJob(this, success, ae2craftingtime$tick(), System.nanoTime(),
                 ae2craftingtime$server());
         IntegrationLog.cpu("ae2lt", "cpu-finish");
@@ -92,6 +97,24 @@ public abstract class Ae2LtTimeWheelCraftingCpuLogicMixin {
                 maxOps, tick);
         IntegrationLog.cpu("ae2lt", "cpu-capacity");
         DelayedNotificationServer.tick(this, ae2craftingtime$grid, this, tick, server);
+    }
+
+    @Inject(method = "restoreJobFromNBT(Lnet/minecraft/nbt/CompoundTag;Lnet/minecraft/nbt/CompoundTag;"
+                    + "Lnet/minecraft/core/HolderLookup$Provider;)V", at = @At("RETURN"), remap = false)
+    private void ae2craftingtime$restoredJob(net.minecraft.nbt.CompoundTag job,
+            net.minecraft.nbt.CompoundTag overload, net.minecraft.core.HolderLookup.Provider registries,
+            CallbackInfo ci) {
+        ae2craftingtime$grid = Ae2LtGrid.get(this);
+        ((EstimateRecoveryAccess) this).ae2craftingtime$recoverEstimate(false);
+    }
+
+    @Inject(method = "tickCraftingLogic(Lappeng/api/networking/energy/IEnergyService;"
+                    + "Lappeng/me/service/CraftingService;IJLcom/moakiee/thunderbolt/core/crafting/batch/"
+                    + "TickProviderDispatchSchedule;)Lcom/moakiee/ae2lt/crafting/timewheel/"
+                    + "Ae2LtTimeWheelCraftingCpuLogic$TickUsage;", at = @At("HEAD"), remap = false)
+    private void ae2craftingtime$recoverBeforeDispatch(IEnergyService energyService, CraftingService craftingService,
+            int maxOps, long maxCopies, @Coerce Object dispatchSchedule, CallbackInfoReturnable<?> cir) {
+        ((EstimateRecoveryAccess) this).ae2craftingtime$recoverEstimate(false);
     }
 
     @Unique

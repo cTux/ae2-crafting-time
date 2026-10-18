@@ -2,6 +2,7 @@ package com.ctux.ae2craftingtime.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -45,7 +46,8 @@ class CraftingJobEstimateTest {
                 Map.of(ROOT, Set.of(MIDDLE, other), MIDDLE, Set.of(LEAF), other, Set.of(LEAF)));
 
         assertEquals(35, estimate.remainingEstimate(CraftingJobEstimateTest::seconds).orElseThrow().durationMs());
-        estimate.complete(LEAF, 12);
+        assertFalse(estimate.complete(new ProfileKey("test:absent"), 12));
+        assertTrue(estimate.complete(LEAF, 12));
         assertEquals(23, estimate.remainingEstimate(CraftingJobEstimateTest::seconds).orElseThrow().durationMs());
     }
 

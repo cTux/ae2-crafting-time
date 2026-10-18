@@ -13,6 +13,7 @@ import appeng.hooks.ticking.TickHandler;
 import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.mc1201.BlockReasonNotifier;
 import com.ctux.ae2craftingtime.mc1201.DelayedNotificationServer;
+import com.ctux.ae2craftingtime.mc1201.EstimateRecoveryAccess;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.IntegrationLog;
 import org.spongepowered.asm.mixin.Mixin;
@@ -49,11 +50,18 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
     private void ae2craftingtime$startJobAccuracy(IGrid grid, ICraftingPlan plan, IActionSource source,
             ICraftingRequester requester, CallbackInfoReturnable<ICraftingSubmitResult> cir) {
         if (cir.getReturnValue().successful()) {
+            ((EstimateRecoveryAccess) this).ae2craftingtime$clearRecovery();
             ae2craftingtime$grid = grid;
             ProfilerBridge.startJob(ProfilerBridge.networkId(grid), this, plan, ae2craftingtime$tick(),
                     System.nanoTime(), ProfilerBridge.jobOwner(source));
             IntegrationLog.cpu("neoecoae", "cpu-submit");
         }
+    }
+
+    @Inject(method = "onRestoredToGrid(Lappeng/api/networking/IGrid;)Z", at = @At("RETURN"), remap = false)
+    private void ae2craftingtime$restoredGrid(IGrid grid, CallbackInfoReturnable<Boolean> cir) {
+        if (cir.getReturnValue()) ae2craftingtime$grid = grid;
+        ((EstimateRecoveryAccess) this).ae2craftingtime$recoverEstimate(false);
     }
 
     @ModifyVariable(method = "executeCrafting", at = @At("HEAD"), argsOnly = true, ordinal = 0, remap = false)
@@ -84,6 +92,7 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
     @Inject(method = "tickCraftingLogic", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$beginCapacity(IEnergyService energyService, CraftingService craftingService,
             CallbackInfo ci) {
+        ((EstimateRecoveryAccess) this).ae2craftingtime$recoverEstimate(false);
         ae2craftingtime$usedSlots = 0;
         ae2craftingtime$totalSlots = 1;
     }
@@ -117,6 +126,7 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
 
         var accepted = cir.getReturnValue();
         if (accepted > 0) {
+            ((EstimateRecoveryAccess) this).ae2craftingtime$recoverEstimate(true);
             ProfilerBridge.complete(ProfilerBridge.networkId(ae2craftingtime$grid), this, what, accepted,
                     ae2craftingtime$tick());
             IntegrationLog.cpu("neoecoae", "cpu-output");
@@ -131,6 +141,7 @@ public abstract class ECOCraftingCpuLogicMixin implements NeoEcoDispatchObserver
 
     @Inject(method = "finishJob", at = @At("HEAD"), remap = false)
     private void ae2craftingtime$finishJob(boolean success, CallbackInfo ci) {
+        ((EstimateRecoveryAccess) this).ae2craftingtime$clearRecovery();
         if (ae2craftingtime$inserting) {
             ae2craftingtime$deferredFinish = true;
             ae2craftingtime$deferredSuccess = success;

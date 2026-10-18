@@ -579,7 +579,7 @@ class TestDriverCoreTest {
                 "initial-mode", "cpu-sort-cycle", "raw-order", "stable-groups", "offscreen-promoted",
                 "item-sort-cycle", "channel-fallback", "server-selection", "wheel-before-draw", "no-first-draw",
                 "native-cancel", "stale-hit", "mode-switch-late", "ae2-expiry", "default-reopen",
-                "background-coverage", "reconnect", "layout")));
+                "background-coverage", "relaunch-progress", "reconnect", "layout")));
     }
 
     @Test
@@ -730,9 +730,9 @@ class TestDriverCoreTest {
     @Test
     void relaunchIdentityIgnoresPhaseLocalSerialAndElapsedButNotPhysicalJobIdentity() {
         var firstCpu = new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:stone", 8,
-                true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(10L * 1000, true), 11, 12);
+                true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(10L * 1000, true), 11, 12, "job-a");
         var nextCpu = new CpuListTtcControl.CpuState("1,2,3", 99, "minecraft:stone", 8,
-                true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(9L * 1000, true), 999, 13);
+                true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(9L * 1000, true), 999, 13, "job-a");
         var before = new CpuListTtcControl.ServerState("network", 1, -1, true, true, List.of(firstCpu));
         var after = new CpuListTtcControl.ServerState("network", 77, -1, true, true, List.of(nextCpu));
         assertTrue(CpuListTtcScenario.samePhysicalJobs(before, after));
@@ -742,6 +742,28 @@ class TestDriverCoreTest {
                 new CpuListTtcControl.ServerState("network", 77, -1, true, true, List.of(
                         new CpuListTtcControl.CpuState("1,2,4", 99, "minecraft:stone", 8,
                                 true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(9L * 1000, true), 999, 13)))));
+        assertFalse(CpuListTtcScenario.samePhysicalJobs(before,
+                new CpuListTtcControl.ServerState("network", 77, -1, true, true, List.of(
+                        new CpuListTtcControl.CpuState("1,2,3", 99, "minecraft:stone", 8,
+                                true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(9L * 1000, true),
+                                999, 13, "replacement-job")))));
+        var saved = new CpuListTtcControl.ServerState("network", 1, -1, true, true,
+                List.of(firstCpu), 4096, 256, 3, 4);
+        assertFalse(CpuListTtcScenario.samePhysicalJobs(saved,
+                new CpuListTtcControl.ServerState("network", 77, -1, true, true,
+                        List.of(nextCpu), 4097, 256, 3, 4)));
+        assertFalse(CpuListTtcScenario.samePhysicalJobs(saved,
+                new CpuListTtcControl.ServerState("network", 77, -1, true, true,
+                        List.of(nextCpu), 4096, 256, 3, 5)));
+    }
+
+    @Test
+    void onlySavedCpuListGridsUsePhysicalRestartWiring() {
+        var saved = new StandardCraftFixture();
+        assertTrue(saved.persistentCpuListWiring);
+        var temporaryLarge = saved.largeCpuGrid();
+        assertTrue(temporaryLarge.cpuListScenario);
+        assertFalse(temporaryLarge.persistentCpuListWiring);
     }
 
     @Test
@@ -803,16 +825,28 @@ class TestDriverCoreTest {
     }
 
     @Test
-    void onlyIntegratedRestoredJobsNeedOneFreshRuntimeGraph() {
-        var restored = new CpuListTtcControl.ServerState("network", 1, -1, true, true, List.of(
-                new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:stone", 8,
-                        true, true, null, 9, 10)));
-        var live = new CpuListTtcControl.ServerState("network", 1, -1, true, true, List.of(
-                new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:stone", 8,
-                        true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(7L * 1000, true), 9, 10)));
-        assertTrue(CpuListTtcScenario.requiresJobRefresh(false, restored));
-        assertFalse(CpuListTtcScenario.requiresJobRefresh(true, restored));
-        assertFalse(CpuListTtcScenario.requiresJobRefresh(false, live));
+    void relaunchRequiresEveryKnownSavedJobAndKeepsUnknownControl() {
+        var known = java.util.stream.IntStream.range(0, 4).mapToObj(index ->
+                new CpuListTtcControl.CpuState("1,2," + index, index, "minecraft:smooth_stone", 8,
+                        true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(7000, true),
+                        9, 10, "job-" + index)).toList();
+        var unknown = new CpuListTtcControl.CpuState("1,2,5", 5, "minecraft:glass", 4,
+                true, true, null, 9, 10, "unknown-job");
+        var all = new java.util.ArrayList<>(known);
+        assertFalse(CpuListTtcScenario.allKnownRecovered(serverState(known.toArray(CpuListTtcControl.CpuState[]::new))));
+        all.add(unknown);
+        assertTrue(CpuListTtcScenario.allKnownRecovered(serverState(all.toArray(CpuListTtcControl.CpuState[]::new))));
+        for (int index = 0; index < 4; index++) {
+            var missing = new java.util.ArrayList<>(all);
+            var cpu = known.get(index);
+            missing.set(index, new CpuListTtcControl.CpuState(cpu.position(), cpu.serial(), cpu.jobId(), cpu.amount(),
+                    true, true, null, 9, 10, cpu.craftId()));
+            assertFalse(CpuListTtcScenario.allKnownRecovered(
+                    serverState(missing.toArray(CpuListTtcControl.CpuState[]::new))));
+        }
+        all.set(4, new CpuListTtcControl.CpuState("1,2,5", 5, "minecraft:glass", 4,
+                true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(7000, true), 9, 10, "unknown-job"));
+        assertFalse(CpuListTtcScenario.allKnownRecovered(serverState(all.toArray(CpuListTtcControl.CpuState[]::new))));
     }
 
     @Test
@@ -829,14 +863,20 @@ class TestDriverCoreTest {
 
     @Test
     void completedPreambleObservationAdvancesRelaunchFreshWithoutAnotherObservation() {
-        var state = new CpuListTtcControl.ServerState("network", 1, 4, true, true, List.of(
-                new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:smooth_stone", 8,
-                        true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(3600L * 1000, true), 9, 10)));
+        var cpus = new ArrayList<CpuListTtcControl.CpuState>();
+        cpus.add(new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:smooth_stone", 8,
+                true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(3600L * 1000, true), 9, 10, "job-a"));
+        for (int index = 0; index < 3; index++) cpus.add(new CpuListTtcControl.CpuState("1,2," + index,
+                5 + index, "minecraft:stone", 8, true, true,
+                new com.ctux.ae2craftingtime.core.TtcEstimate(1000, true), 9, 10, "job-" + index));
+        cpus.add(new CpuListTtcControl.CpuState("1,2,9", 9, "minecraft:glass", 4,
+                true, true, null, 9, 10, "unknown-job"));
+        var state = new CpuListTtcControl.ServerState("network", 1, 4, true, true, cpus);
         var rendered = TtcText.ttc("~1:00:00").getString();
-        var snapshot = cpuSnapshot(new Rect(60, 20, 20, 8), null, rendered);
+        var snapshot = selectedCpuSnapshot(new Rect(60, 20, 20, 8), null, rendered);
         assertEquals(CpuListTtcScenario.Stage.DONE,
                 CpuListTtcScenario.afterRelaunchFreshObservation(snapshot, state, false));
-        var boxed = cpuSnapshot(new Rect(60, 20, 20, 8), new Rect(58, 18, 24, 12), rendered);
+        var boxed = selectedCpuSnapshot(new Rect(60, 20, 20, 8), new Rect(58, 18, 24, 12), rendered);
         assertEquals(CpuListTtcScenario.Stage.DONE,
                 CpuListTtcScenario.afterRelaunchFreshObservation(boxed, state, true));
         assertThrows(IllegalStateException.class,
@@ -850,6 +890,35 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void restartCaptureWaitsForSelectedJobNativeRowsAndNewStatus() {
+        var cpu = new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:smooth_stone", 8,
+                true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(7000, true), 9, 10, "job-a");
+        var state = new CpuListTtcControl.ServerState("network", 1, 4, true, true, List.of(cpu));
+        var base = selectedCpuSnapshot(new Rect(60, 20, 20, 8), null, "~7s");
+        var row = new UiSnapshot.Row("minecraft:smooth_stone", 8, 0, new Rect(1, 1, 16, 16), List.of());
+        var oldRow = new UiSnapshot.Row("minecraft:glass", 4, 0, new Rect(1, 1, 16, 16), List.of());
+        var current = new UiSnapshot.StatusObservation(2, "native", 1, 1, 1, 0, 0, 4,
+                "job-a", "minecraft:smooth_stone", 1L);
+        var missingJob = new UiSnapshot.StatusObservation(2, "native", 1, 1, 1, 0, 0, 4,
+                null, "minecraft:smooth_stone", 1L);
+        var ready = new UiSnapshot(base.screen(), base.menu(), base.gui(), base.screenWidth(),
+                base.screenHeight(), base.guiScale(), 2, base.scroll(), List.of(row), base.text(),
+                base.badges(), base.widgets(), base.itemCells(), base.tooltip(), base.cpuCards(),
+                base.rawCpuSerials(), current);
+        assertTrue(CpuListTtcScenario.freshSelectedCpuStatus(ready, state, 1, 1));
+        assertFalse(CpuListTtcScenario.freshSelectedCpuStatus(ready, state, 2, 1));
+        assertFalse(CpuListTtcScenario.freshSelectedCpuStatus(ready, state, 1, 2));
+        assertFalse(CpuListTtcScenario.freshSelectedCpuStatus(new UiSnapshot(ready.screen(), ready.menu(),
+                ready.gui(), ready.screenWidth(), ready.screenHeight(), ready.guiScale(), ready.frame(),
+                ready.scroll(), List.of(oldRow), ready.text(), ready.badges(), ready.widgets(),
+                ready.itemCells(), ready.tooltip(), ready.cpuCards(), ready.rawCpuSerials(), current), state, 1, 1));
+        assertFalse(CpuListTtcScenario.freshSelectedCpuStatus(new UiSnapshot(ready.screen(), ready.menu(),
+                ready.gui(), ready.screenWidth(), ready.screenHeight(), ready.guiScale(), ready.frame(),
+                ready.scroll(), ready.rows(), ready.text(), ready.badges(), ready.widgets(),
+                ready.itemCells(), ready.tooltip(), ready.cpuCards(), ready.rawCpuSerials(), missingJob), state, 1, 1));
+    }
+
+    @Test
     void connectedRelaunchUsesTheTwoProcessScenarioBudget() {
         assertEquals(40, DedicatedCpuScenario.timeoutMinutes("cpu-list-total-ttc-connected"));
         assertEquals(5, DedicatedCpuScenario.timeoutMinutes("startup-only"));
@@ -860,7 +929,7 @@ class TestDriverCoreTest {
         assertEquals("batched-long", SmokeAdapterCatalog.newest("1.20.1-forge").get("neoecoae"));
         assertEquals("batched-int", SmokeAdapterCatalog.newest("1.21.1-neoforge").get("neoecoae"));
         assertEquals("tree-layout", SmokeAdapterCatalog.newest("1.20.1-fabric").get("ae2ct"));
-        assertEquals(java.util.Map.of("advanced_ae", "advanced-cpu"), SmokeAdapterCatalog.newest("26.1.2-neoforge"));
+        assertEquals(java.util.Map.of("advanced_ae", "advanced-cpu-26"), SmokeAdapterCatalog.newest("26.1.2-neoforge"));
         assertTrue(SmokeAdapterCatalog.newest("unknown").isEmpty());
         assertThrows(IllegalArgumentException.class, () -> SmokeAdapterCatalog.main(new String[0]));
         SmokeAdapterCatalog.main(new String[] { "unknown" });
@@ -1728,6 +1797,20 @@ class TestDriverCoreTest {
         var name = new UiSnapshot.ObservedText("native-name", "CPU", List.of(), new Rect(14, 14, 20, 8));
         return new UiSnapshot("screen", "menu", new Rect(0, 0, 120, 80), 200, 100, 2, 1, 0,
                 List.of(), List.of(name), List.of(), List.of(), List.of(), List.of(), List.of(card));
+    }
+
+    private static UiSnapshot selectedCpuSnapshot(Rect textBounds, Rect badge, String rendered) {
+        var base = cpuSnapshot(textBounds, badge, rendered);
+        var original = base.cpuCards().get(0);
+        var card = new UiSnapshot.CpuCard(original.serial(), original.name(), original.jobId(), original.amount(),
+                original.elapsedNanos(), true, original.bounds(), original.nameArea(), original.infoArea(),
+                original.progressArea(), original.ttc(), original.badge());
+        var texts = new ArrayList<>(base.text());
+        texts.add(new UiSnapshot.ObservedText("native-title", "TTC: " + rendered,
+                List.of(), new Rect(5, 2, 80, 8)));
+        return new UiSnapshot(base.screen(), base.menu(), base.gui(), base.screenWidth(), base.screenHeight(),
+                base.guiScale(), base.frame(), base.scroll(), base.rows(), texts, base.badges(), base.widgets(),
+                base.itemCells(), base.tooltip(), List.of(card));
     }
 
     private static CpuListTtcControl.CpuState cpuState(int serial, String jobId, long amount,

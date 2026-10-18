@@ -1,6 +1,7 @@
 # Keep running-job totals after restart
 
-Status: ready-to-implement
+Status: implementation in progress; pending independent code review, post-PR
+coverage/build checks, and clean two-process native restart verification.
 
 Scope: Save and restore the existing remaining-job estimate for supported CPUs.
 
