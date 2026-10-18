@@ -171,7 +171,7 @@ function Get-DedicatedGraph([string]$Target, [string]$BundleDirectory, [string]$
     Assert-DedicatedPath $BundleDirectory -Tree | Out-Null
     & (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') -Mode Reuse -CacheDirectory $BundleDirectory `
         -HeadSha $identity.headSha -Fingerprint $identity.fingerprint -Target $Target -Profile compatible `
-        -GraphId $identity.graphId -BaseOnly:([bool]$identity.baseOnly) | Out-Null
+        -GraphId $identity.graphId -BaseOnly:([bool]$identity.baseOnly) -ProjectId $identity.projectId | Out-Null
     $loaderVersion = $profile.loader -replace ('^' + [regex]::Escape($row[0].minecraftVersion) + '-'),''
     if (!@($launch.arguments | Where-Object { $_ -match "(^|[-])$([regex]::Escape($loaderVersion))($|[-])" }).Count) {
         throw 'Prepared client loader does not match the exact compatible loader'

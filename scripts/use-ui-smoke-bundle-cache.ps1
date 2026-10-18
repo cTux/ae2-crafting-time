@@ -6,11 +6,13 @@ param(
     [Parameter(Mandatory)][string]$Target,
     [Parameter(Mandatory)][string]$Profile,
     [Parameter(Mandatory)][string]$GraphId,
+    [string[]]$ProjectId,
     [switch]$BaseOnly
 )
 $ErrorActionPreference = 'Stop'
 $cache = [IO.Path]::GetFullPath($CacheDirectory)
 $identityPath = Join-Path $cache 'bundle-identity.json'
+$selection = & (Join-Path $PSScriptRoot 'get-ui-smoke-project-selection.ps1') -ProjectId $ProjectId
 if (!(Test-Path -LiteralPath (Join-Path $cache 'expected-adapters.json') -PathType Leaf)) {
     throw 'UI-smoke bundle must contain expected-adapters.json before sealing or reuse'
 }
@@ -32,17 +34,23 @@ if ($Mode -eq 'Seal') {
     if (!(Test-Path -LiteralPath (Join-Path $cache 'mods') -PathType Container)) { throw "Cannot seal a missing UI-smoke bundle: $cache" }
     if (Test-Path -LiteralPath $identityPath) { throw 'UI-smoke bundle cache is already sealed' }
     $tree = Get-BundleIdentity
-    $identity = [ordered]@{schema=2;headSha=$HeadSha.ToLowerInvariant();fingerprint=$Fingerprint;target=$Target;profile=$Profile
-        graphId=$GraphId;baseOnly=[bool]$BaseOnly;bundleSha256=$tree.sha256;artifacts=@($tree.files);sealedAt=[DateTime]::UtcNow.ToString('o')}
+    $identity = [ordered]@{schema=3;headSha=$HeadSha.ToLowerInvariant();fingerprint=$Fingerprint;target=$Target;profile=$Profile
+        graphId=$GraphId;baseOnly=[bool]$BaseOnly;projectId=@($selection.projectId);bundleSha256=$tree.sha256;artifacts=@($tree.files);sealedAt=[DateTime]::UtcNow.ToString('o')}
     [IO.File]::WriteAllText($identityPath,($identity|ConvertTo-Json -Depth 8),[Text.UTF8Encoding]::new($false))
     return [pscustomobject]@{reused=$false;bundleSha256=$tree.sha256;identityPath=$identityPath}
 }
 if (!(Test-Path -LiteralPath $identityPath -PathType Leaf)) { throw 'UI-smoke bundle cache is not sealed' }
 $identity = Get-Content -LiteralPath $identityPath -Raw | ConvertFrom-Json
-if ($identity.schema -ne 2 -or $identity.headSha -ne $HeadSha.ToLowerInvariant() -or $identity.fingerprint -ne $Fingerprint -or
+if ($identity.schema -ne 3 -or $identity.projectId -isnot [array] -or @($identity.projectId).Count -ne @($selection.projectId).Count -or
+        $identity.headSha -ne $HeadSha.ToLowerInvariant() -or $identity.fingerprint -ne $Fingerprint -or
         $identity.target -ne $Target -or $identity.profile -ne $Profile -or $identity.graphId -ne $GraphId -or
         [bool]$identity.baseOnly -ne [bool]$BaseOnly) {
     throw 'UI-smoke bundle cache identity mismatch'
+}
+for ($i = 0; $i -lt @($selection.projectId).Count; $i++) {
+    if ($identity.projectId[$i] -isnot [string] -or $identity.projectId[$i] -cne $selection.projectId[$i]) {
+        throw 'UI-smoke bundle cache identity mismatch'
+    }
 }
 $tree = Get-BundleIdentity
 if ($tree.sha256 -ne $identity.bundleSha256) { throw 'UI-smoke bundle cache content changed after sealing' }

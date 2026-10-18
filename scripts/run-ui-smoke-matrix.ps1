@@ -52,6 +52,7 @@ foreach ($targetEntry in $targets) {
     $runLatest = $graph.profile -eq 'latest'
     $profile = $graph.profile
     $runProjects = @($graph.projectId)
+    $selection = & (Join-Path $PSScriptRoot 'get-ui-smoke-project-selection.ps1') -ProjectId $runProjects
     $Scenario = if ($runCases.Count -eq 1) { $runCases[0] } else { 'suite' }
     $casesBase64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes((ConvertTo-Json -InputObject @($runCases) -Compress)))
     $report = Join-Path $campaign "$($row.target)/$($graph.id)"
@@ -69,8 +70,11 @@ foreach ($targetEntry in $targets) {
         $dependencyMode = if ($graph.baseOnly) { 'base' } else { 'catalogue' }
         # Keep the Windows cache path below the legacy directory-length limit;
         # the full immutable identities are still validated inside the seal.
-        $cache = Join-Path $root "build/ui-smoke/bundle-cache/$($commit.Substring(0,12))/$($plan.fingerprint.Substring(0,12))/$($row.target)/$profile/$dependencyMode/$($graph.id)"
-        $cacheParameters = @{CacheDirectory=$cache;HeadSha=$commit;Fingerprint=$plan.fingerprint;Target=$row.target;Profile=$profile;GraphId=$graph.id;BaseOnly=[bool]$graph.baseOnly}
+        $sha = [Security.Cryptography.SHA256]::Create()
+        try { $cacheKey = ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes("$($plan.fingerprint):$($selection.digest)"))) -replace '-', '').Substring(0,12).ToLowerInvariant() }
+        finally { $sha.Dispose() }
+        $cache = Join-Path $root "build/ui-smoke/bundle-cache/$($commit.Substring(0,12))/$cacheKey/$($row.target)/$profile/$dependencyMode/$($graph.id)"
+        $cacheParameters = @{CacheDirectory=$cache;HeadSha=$commit;Fingerprint=$plan.fingerprint;Target=$row.target;Profile=$profile;GraphId=$graph.id;BaseOnly=[bool]$graph.baseOnly;ProjectId=$runProjects}
         if (Test-Path -LiteralPath (Join-Path $cache 'bundle-identity.json') -PathType Leaf) {
             $cacheIdentity = & (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') @cacheParameters -Mode Reuse
         } else {

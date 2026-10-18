@@ -122,7 +122,8 @@ try {
                 loader=$pin.loader_version;ae2=$pin.ae2_version;dependencyMode=$(if($chemical){'catalogue'}else{'base'})}
             Json (Join-Path $bundle 'expected-adapters.json') @{}
             & (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') -Mode Seal -CacheDirectory $bundle -HeadSha $head `
-                -Fingerprint fixed -Target $target -Profile compatible -GraphId primary -BaseOnly:(!$chemical) | Out-Null
+                -Fingerprint fixed -Target $target -Profile compatible -GraphId primary -BaseOnly:(!$chemical) `
+                -ProjectId $(if($chemical){@('IiATswDj')}else{@()}) | Out-Null
             $preparedRoot=Join-Path $case 'prepared';New-Item -ItemType Directory -Path $preparedRoot | Out-Null
             $launch=Join-Path $preparedRoot 'launch.json'
             Json $launch @{target=$target;java=$major;arguments=@(($pin.loader_version -replace '^1\.20\.1-',''))}

@@ -16,8 +16,8 @@ function Assert-ProcessRejected([string[]]$Arguments, [string]$Reason) {
 }
 New-Item -ItemType Directory -Path $scripts -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'run-ui-smoke-matrix.ps1'), (Join-Path $PSScriptRoot 'release-matrix.json') -Destination $scripts
-foreach ($file in @('get-ui-smoke-plan.ps1','get-ui-smoke-results.ps1','expand-ui-smoke-groups.ps1','run-client-versions.json',
-        'use-ui-smoke-bundle-cache.ps1',
+foreach ($file in @('get-ui-smoke-plan.ps1','get-ui-smoke-results.ps1','resource-fixture-contract.ps1','expand-ui-smoke-groups.ps1','run-client-versions.json',
+        'use-ui-smoke-bundle-cache.ps1','get-ui-smoke-project-selection.ps1',
         'ui-smoke-impact.json','ui-smoke-groups.json','ui-smoke-coverage.json','ui-smoke-forge-suite.json',
         'ui-smoke-fabric-suite.json','ui-smoke-neoforge-suite.json','ui-smoke-neoforge-26.1.2-suite.json')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $file) -Destination $scripts
@@ -30,6 +30,8 @@ param([string]$Target,[string]$BundleDirectory,[switch]$BaseOnly,[string[]]$Proj
 $path=Join-Path $BundleDirectory 'expected-adapters.json'
 if($ValidateOnly){
     if(!(Test-Path -LiteralPath $path) -or !(Test-Path -LiteralPath (Join-Path $BundleDirectory 'bundle-identity.json'))){throw 'Copied bundle was not sealed with adapter expectations'}
+    $sealed=Get-Content (Join-Path $BundleDirectory 'bundle-identity.json') -Raw|ConvertFrom-Json
+    $null=& (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') -Mode Reuse -CacheDirectory $BundleDirectory -HeadSha $sealed.headSha -Fingerprint $sealed.fingerprint -Target $Target -Profile $sealed.profile -GraphId $sealed.graphId -BaseOnly:$BaseOnly -ProjectId $ProjectId
 }else{
     if(Test-Path -LiteralPath (Join-Path $BundleDirectory 'bundle-identity.json')){throw 'Adapter producer tried to mutate a sealed cache'}
     [IO.File]::WriteAllText($path,'{}')
@@ -43,6 +45,8 @@ param([string]$Target,[switch]$Latest)
 param([string]$Target,[switch]$Latest,[switch]$ResolveOnly,[switch]$Packaged,[string]$RuntimeDirectory,[string[]]$ProjectId,[switch]$BaseOnly)
 if (-not $ResolveOnly -or -not $Packaged) { throw 'Guest build path selected' }
 $graph = Split-Path -Leaf $RuntimeDirectory
+$cacheRoot = Join-Path (Split-Path -Parent $PSScriptRoot) 'build/ui-smoke/bundle-cache'
+if (($RuntimeDirectory.Substring($cacheRoot.Length).TrimStart('\','/') -split '[/\\]').Count -ne 6) { throw 'Cache selection expanded the Windows path budget' }
 [pscustomobject]@{target=$Target;graph=$graph;baseOnly=[bool]$BaseOnly;projectId=@($ProjectId)} | ConvertTo-Json -Compress |
     Add-Content $env:AE2CT_RESOLVER_CALLS
 if ($Target -eq '1.20.1-fabric') { throw 'intentional resolution failure' }
@@ -51,7 +55,7 @@ New-Item -ItemType Directory -Path (Join-Path $RuntimeDirectory 'mods') -Force |
 @'
 param([string]$Target,[switch]$Latest,[string]$Scenario,[string]$BundleDirectory,[string]$PreparedLaunchRoot,[string]$GuestSourceRoot,[string]$CasesBase64,[string[]]$ProjectId,[switch]$BaseOnly,[switch]$Interactive,[switch]$ResourceFixtureOnly,[int]$StartupTimeoutSeconds)
 $sealed=Get-Content (Join-Path $BundleDirectory 'bundle-identity.json') -Raw|ConvertFrom-Json
-$null=& (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') -Mode Reuse -CacheDirectory $BundleDirectory -HeadSha $sealed.headSha -Fingerprint $sealed.fingerprint -Target $Target -Profile $sealed.profile -GraphId $sealed.graphId -BaseOnly:$BaseOnly
+$null=& (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') -Mode Reuse -CacheDirectory $BundleDirectory -HeadSha $sealed.headSha -Fingerprint $sealed.fingerprint -Target $Target -Profile $sealed.profile -GraphId $sealed.graphId -BaseOnly:$BaseOnly -ProjectId $ProjectId
 $profile=if($Latest){'latest'}else{'compatible'}
 $live=Join-Path (Split-Path -Parent $PSScriptRoot) "build/ui-smoke/$Target/$profile/$Scenario"
 $cases = [Text.Encoding]::UTF8.GetString([Convert]::FromBase64String($CasesBase64)) | ConvertFrom-Json
@@ -179,6 +183,24 @@ try {
             throw 'Failure classification or evidence was lost'
         }
     }
+    $resolverCalls = $temp + '-selection-resolver-calls.jsonl'
+    $env:AE2CT_RESOLVER_CALLS = $resolverCalls
+    Remove-Item $resolverCalls -ErrorAction SilentlyContinue
+    $focused = @('-NoProfile','-File',(Join-Path $scripts 'run-ui-smoke-matrix.ps1'),'-Target','1.20.1-forge','-Scenario','aeinfinitybooster-terminal')
+    & $shell @focused -ProjectId VQhDBNs8
+    if ($LASTEXITCODE -ne 0 -or @(Get-Content $resolverCalls).Count -ne 1) { throw 'Focused selection did not resolve its own bundle' }
+    $campaign = Get-ChildItem (Join-Path $temp 'build/ui-smoke/campaigns') -Directory | Sort-Object Name | Select-Object -Last 1
+    $focusedIdentity = Get-Content -LiteralPath (Join-Path $campaign.FullName 'compatible/1.20.1-forge/primary/bundle/bundle-identity.json') -Raw | ConvertFrom-Json
+    if ($focusedIdentity.schema -ne 3 -or $focusedIdentity.graphId -cne 'primary' -or
+            @($focusedIdentity.projectId).Count -ne 1 -or $focusedIdentity.projectId[0] -cne 'VQhDBNs8') {
+        throw "Focused graph selection was not sealed separately from full: schema=$($focusedIdentity.schema) graph=$($focusedIdentity.graphId) ids=$(@($focusedIdentity.projectId) -join ',')"
+    }
+    & $shell @focused -ProjectId VQhDBNs8
+    if ($LASTEXITCODE -ne 0 -or @(Get-Content $resolverCalls).Count -ne 1) { throw 'Exact focused selection caused another resolution' }
+    & $shell @focused -ProjectId rxYaglEe
+    if ($LASTEXITCODE -ne 0 -or @(Get-Content $resolverCalls).Count -ne 2) { throw 'Different focused set reused the wrong graph' }
+    & $shell -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -Target 1.20.1-forge
+    if ($LASTEXITCODE -ne 0 -or @(Get-Content $resolverCalls).Count -ne 2) { throw 'Full graph did not reuse its separate cached bundle' }
     $env:AE2CT_STATUS_GAP = '1'
     try {
         & $shell -NoProfile -File (Join-Path $scripts 'run-ui-smoke-matrix.ps1') -Target 1.20.1-forge -Scenario waiting-status

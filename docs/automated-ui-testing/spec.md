@@ -10,7 +10,7 @@ Unattended visual qualification is tracked separately below.
 
 ## Dependency selection cache identity
 
-Status: ready-to-implement
+Status: in-progress
 
 Scope: Restore correct bundle reuse for effective dependency selections in
 [#646](https://github.com/cTux/ae2-crafting-time/issues/646).
