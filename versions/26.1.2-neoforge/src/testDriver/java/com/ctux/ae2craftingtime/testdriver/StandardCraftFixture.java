@@ -65,6 +65,7 @@ final class StandardCraftFixture {
     boolean missingPlanInput;
     boolean unprofiledPlan;
     boolean cpuListScenario;
+    boolean persistentCpuListWiring = true;
     boolean recurrentPlan;
     boolean resourceFixture;
     boolean storedVariantPlan;
@@ -163,7 +164,7 @@ final class StandardCraftFixture {
                 PartHelper.setPart(level, obstruction, null, player, AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT));
                 PartHelper.setPart(level, obstruction, Direction.NORTH, player, AEParts.CRAFTING_TERMINAL.get());
             }
-            if (cpuListScenario || Boolean.getBoolean("ae2craftingtime.test.persistentFixture")) {
+            if (cpuListScenario ? persistentCpuListWiring : Boolean.getBoolean("ae2craftingtime.test.persistentFixture")) {
                 var cable = AEParts.COVERED_DENSE_CABLE.item(appeng.api.util.AEColor.TRANSPARENT);
                 for (int offset = 1; offset < (cpuListScenario ? cpuCount * 2 : 2); offset += 2) {
                     PartHelper.setPart(level, terminal.west(offset), null, player, cable);
@@ -640,6 +641,7 @@ final class StandardCraftFixture {
     StandardCraftFixture largeCpuGrid() {
         var fixture = new StandardCraftFixture();
         fixture.cpuListScenario = true;
+        fixture.persistentCpuListWiring = false;
         fixture.sampleMultiplier = sampleMultiplier * 2;
         fixture.originShift = 120;
         fixture.cpuCount = 33;

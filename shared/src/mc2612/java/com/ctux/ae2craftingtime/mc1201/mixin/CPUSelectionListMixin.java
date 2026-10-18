@@ -55,7 +55,9 @@ public abstract class CPUSelectionListMixin {
         pose.pushMatrix();
         pose.translate(right - textWidth - 2, top + (guiScale == 1 ? 0 : 1));
         pose.scale(scale);
-        guiGraphics.text(font, text, 0, 0, 0xFFE0E0E0, ClientOptionsRuntime.textShadow());
+        guiGraphics.text(font, text, 0, 0,
+                0xFF000000 | CpuTtcLayout.textColor(ClientOptionsRuntime.current().badgeBackground()),
+                ClientOptionsRuntime.textShadow());
         pose.popMatrix();
         return ae2craftingtime$fitName(name, font, layout.availableNameWidth());
     }

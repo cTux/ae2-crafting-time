@@ -69,6 +69,8 @@ that is too long for its cell shows an ellipsis, with the full line on hover.
 CPU-card TTC also uses full-size text at scale 1. If its preview ends in an
 ellipsis, hover the card for the complete estimate. Other GUI scales keep their
 usual layout. The row and CPU-card display options control these corrections.
+CPU-card totals use dark text when badge backgrounds are off, so they remain
+readable on unselected cards; enabling badge backgrounds uses light text.
 
 With the same option on, Crafting Status puts available, crafting, and scheduled
 amounts on one line, in that order: `4/10/200`. A missing amount is `-`; when only one amount is

@@ -758,6 +758,15 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void onlySavedCpuListGridsUsePhysicalRestartWiring() {
+        var saved = new StandardCraftFixture();
+        assertTrue(saved.persistentCpuListWiring);
+        var temporaryLarge = saved.largeCpuGrid();
+        assertTrue(temporaryLarge.cpuListScenario);
+        assertFalse(temporaryLarge.persistentCpuListWiring);
+    }
+
+    @Test
     void relaunchWritesToAPhaseLocalCheckpointLedger() {
         assertEquals("cpu-list-checkpoints.jsonl", CpuListTtcScenario.checkpointFile(false));
         assertEquals("cpu-list-checkpoints.phase-2.jsonl", CpuListTtcScenario.checkpointFile(true));

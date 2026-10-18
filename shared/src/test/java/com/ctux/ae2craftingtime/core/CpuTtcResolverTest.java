@@ -12,6 +12,12 @@ import org.junit.jupiter.api.Test;
 
 class CpuTtcResolverTest {
     @Test
+    void cpuCardTextStaysReadableWithOrWithoutBadgeBackground() {
+        assertEquals(0x404040, CpuTtcLayout.textColor(false));
+        assertEquals(0xE0E0E0, CpuTtcLayout.textColor(true));
+    }
+
+    @Test
     void sameNamesAndOutputsStillResolveThroughDistinctCpuIdentities() {
         record Cpu(String name, String output, long estimate) { }
         var first = new Cpu("CPU", "stone", 5);
