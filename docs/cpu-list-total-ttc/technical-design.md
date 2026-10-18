@@ -2,6 +2,9 @@
 
 Lifecycle: see the [scope status and evidence](spec.md).
 
+The [restart recovery design](restart/technical-design.md) supersedes only the
+baseline's restored-job/no-persistence boundary for #636.
+
 Historical planning status: implementation in progress in [PR #381](https://github.com/cTux/ae2-crafting-time/pull/381).
 Implements [the specification](spec.md) for
 [issue #324](https://github.com/cTux/ae2-crafting-time/issues/324).

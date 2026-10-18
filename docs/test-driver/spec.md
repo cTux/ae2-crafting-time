@@ -1,5 +1,18 @@
 # AE2 Crafting Time Test Driver Spec
 
+## Unchanged-job restart recovery (#636)
+
+Scope/status: [restart recovery](../cpu-list-total-ttc/restart/spec.md).
+
+For that extension, `cpu-list-total-ttc` must prove fresh totals for the same
+saved crafting-link UUIDs after process restart. Keep the held-response empty
+cache proof, but remove recovery by cancellation/resubmission or positional
+test-only graph rebind. Check every expected known job and an unknown control;
+real output progress must reduce a recovered estimate. Use saved physical
+connections and attach to the existing jobs without rebuilding the fixture.
+The [focused plan](../cpu-list-total-ttc/restart/implementation-plan.md) defines
+the three native API-family runs and explicitly limited addon coverage.
+
 ## Short connected server paths (#632)
 
 Status: finished

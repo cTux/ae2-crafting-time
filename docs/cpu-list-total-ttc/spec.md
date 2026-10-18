@@ -8,6 +8,9 @@ Implementation: [PR #381](https://github.com/cTux/ae2-crafting-time/pull/381) is
 Verification: full completion evidence for this plan is not recorded in that PR.
 The [CPU sorting extension](../ttc-sorting/cpu-list/spec.md) records later work separately.
 
+The [restart recovery extension](restart/spec.md) defines #636's separate
+save/restore scope and supersedes this baseline's no-persistence boundary.
+
 The [active-order TTC sorting extension](../ttc-sorting/cpu-list/spec.md) adds
 full-list collection and ordering in TTC modes. Its explicit ordering and
 adaptive freshness rules supersede the original visible-only refresh boundary;
