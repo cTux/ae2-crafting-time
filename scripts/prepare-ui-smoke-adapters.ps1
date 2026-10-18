@@ -12,7 +12,7 @@ if (Test-Path -LiteralPath $identityPath) {
     if ($identity.target -cne $Target -or [bool]$identity.baseOnly -ne [bool]$BaseOnly) { throw 'Sealed adapter graph policy mismatch' }
     $null = & (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') -Mode Reuse -CacheDirectory $BundleDirectory `
         -HeadSha $identity.headSha -Fingerprint $identity.fingerprint -Target $Target -Profile $identity.profile `
-        -GraphId $identity.graphId -BaseOnly:$BaseOnly
+        -GraphId $identity.graphId -BaseOnly:$BaseOnly -ProjectId $ProjectId
     $ValidateOnly = $true
 }
 $mods = Join-Path $BundleDirectory 'mods'

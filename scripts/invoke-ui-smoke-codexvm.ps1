@@ -71,7 +71,7 @@ if ($BundleDirectory) {
             $identity = Get-Content -LiteralPath (Join-Path $bundlePath 'bundle-identity.json') -Raw | ConvertFrom-Json
             $null = & (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') -Mode Reuse -CacheDirectory $bundlePath `
                 -HeadSha $headSha -Fingerprint $identity.fingerprint -Target $Target -Profile compatible `
-                -GraphId $identity.graphId -BaseOnly:([bool]$identity.baseOnly)
+                -GraphId $identity.graphId -BaseOnly:([bool]$identity.baseOnly) -ProjectId $identity.projectId
         } else {
             & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target $Target -BundleDirectory $bundlePath -ProjectId $ProjectId -BaseOnly:$BaseOnly
         }
