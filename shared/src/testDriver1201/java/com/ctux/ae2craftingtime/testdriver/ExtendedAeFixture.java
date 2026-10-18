@@ -14,9 +14,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-class ExtendedAeFixture extends AddonCpuFixture<List<BlockPos>> {
+class ExtendedAeFixture extends AddonCpuFixture<ExtendedAeFixture.Placement> {
+    private final NativeCpuFixture nativeCpu = new NativeCpuFixture();
+
     @Override
-    protected List<BlockPos> place(ServerPlayer player, FixtureMarker marker) {
+    protected Placement place(ServerPlayer player, FixtureMarker marker) {
         if (player == null) {
             throw new IllegalStateException("fixture player is unavailable");
         }
@@ -40,16 +42,16 @@ class ExtendedAeFixture extends AddonCpuFixture<List<BlockPos>> {
         if (replaced.isEmpty()) {
             throw new IllegalStateException("fixture has no AE2 molecular assemblers to replace");
         }
-        return List.copyOf(replaced);
+        return new Placement(List.copyOf(replaced), nativeCpu.place(player, marker));
     }
 
     @Override
-    protected boolean finish(ServerPlayer player, List<BlockPos> positions) {
+    protected boolean finish(ServerPlayer player, Placement placement) {
         if (player == null) {
             throw new IllegalStateException("fixture player is unavailable");
         }
         var level = player.serverLevel();
-        for (var position : positions) {
+        for (var position : placement.assemblers()) {
             if (!(level.getBlockEntity(position) instanceof IInWorldGridNodeHost assembler)) {
                 throw new IllegalStateException("ExtendedAE assembler was not placed at " + position);
             }
@@ -58,13 +60,14 @@ class ExtendedAeFixture extends AddonCpuFixture<List<BlockPos>> {
                 return false;
             }
         }
-        return true;
+        return nativeCpu.finish(player, placement.cpu());
     }
 
     @Override
-    protected ICraftingCPU cpu(ServerPlayer player, List<BlockPos> positions, IGrid grid) {
-        return grid.getCraftingService().getCpus().stream()
-                .filter(candidate -> !candidate.isBusy())
-                .findFirst().orElse(null);
+    protected ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {
+        return nativeCpu.cpu(player, placement.cpu(), grid);
+    }
+
+    record Placement(List<BlockPos> assemblers, NativeCpuFixture.Placement cpu) {
     }
 }

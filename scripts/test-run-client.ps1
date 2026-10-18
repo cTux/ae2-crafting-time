@@ -48,6 +48,7 @@ foreach ($entry in $matrix) {
 [IO.File]::WriteAllText($testMatrix, ($matrix | ConvertTo-Json -Depth 20), [Text.UTF8Encoding]::new($false))
 
 $global:Ae2CtVersions = @{}
+$global:Ae2CtRequestedUris = [Collections.Generic.List[string]]::new()
 $releaseTargets = @((Get-Content -LiteralPath (Join-Path $PSScriptRoot "release-matrix.json") -Raw | ConvertFrom-Json).id)
 if (Compare-Object $releaseTargets @($matrix.id)) { throw "Run-client and release target matrices differ" }
 foreach ($entry in $matrix) {
@@ -87,6 +88,7 @@ function New-TestVersion([string]$project, [string]$version) {
 
 function Invoke-RestMethod {
     param([string]$Uri)
+    $global:Ae2CtRequestedUris.Add($Uri)
     $versionId = [regex]::Match($Uri, "/version/([^/?]+)").Groups[1].Value
     if ($versionId) {
         $record = $global:Ae2CtVersions[$versionId]
@@ -200,6 +202,35 @@ try {
         $focusedMods = Get-Content (Join-Path $focusedRuntime "mods/.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
         if (@($focusedMods).Count -ne 2 -or "u6dRKJwZ.jar" -notin $focusedMods) {
             throw "Focused $focusedTarget must allow an absent driver dependency list"
+        }
+    }
+    foreach ($focusedTarget in @('1.20.1-forge', '1.21.1-neoforge')) {
+        $entry = $matrix | Where-Object id -eq $focusedTarget
+        $plus = $entry.projects | Where-Object project_id -eq 'xr109llC'
+        if (@($plus.modrinth_dependencies).Count -ne 1 -or $plus.modrinth_dependencies[0] -ne 'JiOqfoFM') {
+            throw "ExtendedAE-Plus must declare exactly one ExtendedAE prerequisite for $focusedTarget"
+        }
+        foreach ($latestProfile in @($false, $true)) {
+            $global:Ae2CtRequestedUris.Clear()
+            $focusedRuntime = Join-Path $temp "extendedae-plus-$focusedTarget-$latestProfile"
+            $params = @{ Target = $focusedTarget; Root = $temp; VersionMatrix = $testMatrix
+                RuntimeDirectory = $focusedRuntime; ProjectId = 'xr109llC'; ResolveOnly = $true }
+            if ($latestProfile) { $params.Latest = $true }
+            & $script @params 6>&1 | Out-Null
+            $leaf = if ($focusedTarget -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' }
+            $focusedMods = @(Get-Content (Join-Path $focusedRuntime "$leaf/.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json)
+            $driver = "ae2-crafting-time-$modVersion-$(if ($focusedTarget -eq '1.20.1-forge') { 'forge-1.20.1' } else { 'neoforge-1.21.1' })-test-driver.jar"
+            if ($focusedMods.Count -ne 3 -or @($focusedMods | Where-Object { $_ -eq 'JiOqfoFM.jar' }).Count -ne 1 -or
+                    'xr109llC.jar' -notin $focusedMods -or $driver -notin $focusedMods) {
+                throw "Focused ExtendedAE-Plus graph included missing, duplicate, or unrelated projects for $focusedTarget (latest=$latestProfile): $($focusedMods -join ', ')"
+            }
+            foreach ($project in @('xr109llC', 'JiOqfoFM')) {
+                $pin = $entry.compatible.versions | Where-Object project_id -eq $project
+                $expected = if ($latestProfile) { "/project/$project/version?" } else { "/version/$($pin.version_id)" }
+                if (-not @($global:Ae2CtRequestedUris | Where-Object { $_.Contains($expected) }).Count) {
+                    throw "Focused ExtendedAE-Plus graph did not request $project through $expected for $focusedTarget"
+                }
+            }
         }
     }
     $customRuntime = Join-Path $temp "custom-runtime"
