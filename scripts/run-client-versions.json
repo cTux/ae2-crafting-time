@@ -277,6 +277,9 @@
         "project_id": 1565514,
         "mod_id": "data_energistics",
         "version": "3.3.5",
+        "compatible_full_profile": false,
+        "reason": "Lightning Tech and Thunderbolt declare Data Energistics incompatible; test Data Energistics in a focused compatible graph (cTux/ae2-crafting-time#742).",
+        "issue_url": "https://github.com/cTux/ae2-crafting-time/issues/742",
         "modrinth_dependencies": ["B1CBVXHX"],
         "compatible": { "file_id": 9095664, "filename": "data_energistics-1.21.1-3.3.5.jar", "sha512": "08828754faf99dafb16d448d7fa1d37428bf6b6f5a6492e9a21850b43d7536386f834ccad685f60e365bd03edf27cd85e45bf0eb4951237dedff1a1981d6017f" },
         "latest": { "file_id": 9095664, "filename": "data_energistics-1.21.1-3.3.5.jar", "sha512": "08828754faf99dafb16d448d7fa1d37428bf6b6f5a6492e9a21850b43d7536386f834ccad685f60e365bd03edf27cd85e45bf0eb4951237dedff1a1981d6017f" }

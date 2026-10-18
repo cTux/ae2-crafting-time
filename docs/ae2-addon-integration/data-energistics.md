@@ -1,6 +1,6 @@
 # Data Energistics optional dependency
 
-Status: ready-to-implement
+Status: in-progress; focused runtime checks passed, combined graph pending
 
 Scope: Optional dependency metadata and qualification for NeoForge 1.21.1.
 
@@ -11,7 +11,21 @@ Planning: [requirements](spec.md#data-energistics-qualification),
 [implementation plan](implementation-plan.md#data-energistics-qualification).
 
 The user authorized implementation and prepared-client qualification on
-2026-10-18. Runtime qualification is still outstanding.
+2026-10-18. Implementation and focused runtime evidence are in
+[PR #741](https://github.com/cTux/ae2-crafting-time/pull/741).
+
+Ordinary crafting passed with the addon absent and present, the adaptive-provider
+fixture passed, Status controls survived a client restart, and Crafting Tree
+1.21.1-1.1.1 passed its screen checks. The largest compatible graph containing
+Data Energistics still needs its final lifecycle run. Automatic screenshot gates
+remain `REVIEW_REQUIRED` without qualified baselines; every captured PNG receives
+manual review instead.
+
+AE2 Lightning Tech 2.1.0-beta.5 and Thunderbolt Core 2.0.0-beta.4 explicitly
+declare all Data Energistics versions incompatible. A combined launch reproduced
+that loader rejection. Preserve their existing primary profile and qualify Data
+Energistics separately; never strip the declarations. Coexistence is tracked in
+[#742](https://github.com/cTux/ae2-crafting-time/issues/742).
 
 ## Requested support
 
@@ -49,5 +63,7 @@ runtime qualification.
 
 [#534](https://github.com/cTux/ae2-crafting-time/issues/534) separately investigates
 missing UI in Applied Journey. Its report does not establish Data Energistics as
-the culprit or prove this optional dependency supported. This page records
-qualification requirements, not a completed compatibility result.
+the culprit or prove this optional dependency supported. The qualified scope is
+ordinary AE2 CPUs and the Adaptive Pattern Provider's native-provider mode with
+vanilla processing. Trinity CPUs and other provider modes remain unqualified
+([#740](https://github.com/cTux/ae2-crafting-time/issues/740)).

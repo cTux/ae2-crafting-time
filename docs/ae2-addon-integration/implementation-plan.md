@@ -405,7 +405,7 @@ Follow [DE-01 through DE-06](spec.md#data-energistics-qualification), the
 
 1. Resolve and retain the exact 3.3.5 CurseForge artifact/hash and dependency
    closure. Update only the NeoForge 1.21.1 client pins needed by this addon:
-   AE2 19.2.18, LDLib2 2.2.40 and JEI 19.56.0.438. Inspect installed optional
+   AE2 19.2.18, LDLib2 2.2.40, JEI 19.56.0.438 and its MezzConfig 0.6.8 library. Inspect installed optional
    constraints before committing; preserve unrelated pins unless a concrete
    conflict blocks this graph. Record any required compatible-profile exclusion
    with evidence and an issue; do not silently exclude the requested addon.
@@ -432,12 +432,19 @@ Follow [DE-01 through DE-06](spec.md#data-energistics-qualification), the
    pins: (a) `-BaseOnly -Scenario craft-lifecycle` for absence;
    (b) `-ProjectId 1565514 -Scenario craft-lifecycle` for presence;
    (c) `-ProjectId 1565514 -Scenario data-energistics-cpu` for adaptive dispatch;
-   (d) full compatible dependency graph with `-Scenario craft-lifecycle` for
-   coexistence and prerequisite pin qualification; (e) focused Data
+   (d) largest compatible Data-containing graph with `-Scenario craft-lifecycle`
+   and explicit compatible project IDs except Lightning Tech/Thunderbolt Core
+   (their metadata rejects Data; #742), for coexistence and prerequisite pin
+   qualification; (e) focused Data
    `standard-status-controls` for the known Status injection boundary; and
    (f) `-ProjectId 1086241 -Scenario crafting-tree-screen` for the required
    Crafting Tree replacement. Use
-   `scripts/run-ui-smoke-matrix.ps1` for these existing selection paths.
+   `scripts/run-ui-smoke-matrix.ps1` for these selection paths. A bare direct
+   lifecycle scenario uses a base-only primary and may add focused graphs;
+   inspect every graph's `baseOnly` and actual JAR manifest before calling a run
+   combined-graph evidence. Keep Data
+   outside the Lightning Tech primary profile and select its compatible focused
+   graph through the existing coverage policy.
    Review `-Changed` selection and run any additional mandatory selected cases;
    explain why other loaders and a full UI suite are unnecessary.
 7. Archive every run's logs, sidecars, images, server observations, versions and

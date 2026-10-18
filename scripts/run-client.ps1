@@ -202,7 +202,7 @@ if ($BaseOnly) {
         }
     }
 } else {
-    foreach ($dependency in @($matrixEntry.curseforge | Where-Object { $_ })) {
+    foreach ($dependency in @($matrixEntry.curseforge | Where-Object { $_ -and ($Latest -or $_.compatible_full_profile -ne $false) })) {
         $null = $curseforgeProjects.Add([string]$dependency.project_id)
     }
 }

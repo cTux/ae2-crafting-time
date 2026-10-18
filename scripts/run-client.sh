@@ -229,7 +229,7 @@ while IFS= read -r dependency; do
   group="${file_id:0:4}"; rest="${file_id:4}"
   file="$(echo "$file" | jq -c --arg url "https://mediafilez.forgecdn.net/files/$group/$rest/$filename" '. + {url:$url, hashes:{sha512:.sha512}}')"
   install_file "$file"
-done < <(jq -c --arg target "$Target" '.[] | select(.id==$target) | .curseforge[]?' "$matrix")
+done < <(jq -c --arg target "$Target" --argjson latest "$Latest" '.[] | select(.id==$target) | .curseforge[]? | select($latest == 1 or .compatible_full_profile != false)' "$matrix")
 
 if [ "$Latest" -eq 1 ]; then
   loaderVersion="$(get_latest_maven_version "$LoaderMetadata" "$LoaderPrefix")"

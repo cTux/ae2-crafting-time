@@ -156,7 +156,8 @@ try {
             $_.compatible -ne $false -and $_.project_id -notin $replacedProjects
         })
         foreach ($project in $compatibleProjects.project_id) { Assert-Line $output "mod $project.jar" }
-        $extraProjects = @(@($entry.curseforge.modrinth_dependencies) + @($entry.projects.modrinth_dependencies) | Where-Object {
+        $compatibleCurse = @($entry.curseforge | Where-Object { $_ -and $_.compatible_full_profile -ne $false })
+        $extraProjects = @(@($compatibleCurse.modrinth_dependencies) + @($entry.projects.modrinth_dependencies) | Where-Object {
             $_ -and $_ -notin $compatibleProjects.project_id
         } | Sort-Object -Unique)
         foreach ($project in $extraProjects) { Assert-Line $output "mod $project.jar" }
@@ -165,7 +166,10 @@ try {
         if ($entry.id -eq '1.21.1-neoforge' -and 'udZtKfzP.jar' -in $manifest) {
             throw 'Known-crashing NeoEco leaked into the compatible NeoForge graph'
         }
-        $curseCount = @($entry.curseforge | Where-Object { $_ }).Count
+        if ($entry.id -eq '1.21.1-neoforge' -and 'data_energistics-1.21.1-3.3.5.jar' -in $manifest) {
+            throw 'Data Energistics leaked into the incompatible full NeoForge graph'
+        }
+        $curseCount = $compatibleCurse.Count
         $driverCount = if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) { 1 } else { 0 }
         if ($manifest.Count -ne $compatibleProjects.Count + $extraProjects.Count + $curseCount + $driverCount) { throw "Unexpected compatible managed-mod count for $($entry.id)" }
         foreach ($project in $replacedProjects) {
@@ -190,6 +194,9 @@ try {
             ConvertFrom-Json).ForEach({ [string]$_ }))
         if ($entry.id -eq '1.21.1-neoforge' -and 'udZtKfzP.jar' -notin $latestManifest) {
             throw 'NeoEco disappeared from the latest NeoForge diagnostic graph'
+        }
+        if ($entry.id -eq '1.21.1-neoforge' -and 'data_energistics-1.21.1-3.3.5.jar' -notin $latestManifest) {
+            throw 'Data Energistics disappeared from the latest NeoForge diagnostic graph'
         }
     }
 
@@ -258,6 +265,15 @@ try {
             "omnisequence-transfinite-1.3.9-forge.jar" -notin $curseManifest -or
             "ProjectE-1.20.1-PE1.0.1.jar" -notin $curseManifest) {
         throw "Focused CurseForge profile omitted an explicit dependency"
+    }
+    $dataRuntime = Join-Path $temp 'focused-data-energistics'
+    & $script -Target '1.21.1-neoforge' -Root $temp -VersionMatrix $testMatrix -RuntimeDirectory $dataRuntime `
+        -ProjectId 1565514 -ResolveOnly 6>&1 | Out-Null
+    $dataManifest = @((Get-Content -LiteralPath (Join-Path $dataRuntime 'mods/.ae2-crafting-time-run-mods.json') -Raw |
+        ConvertFrom-Json).ForEach({ [string]$_ }))
+    if ('data_energistics-1.21.1-3.3.5.jar' -notin $dataManifest -or 'B1CBVXHX.jar' -notin $dataManifest -or
+            'ae2lt-2.1.0-beta.5.jar' -in $dataManifest -or 'thunderbolt-2.0.0-beta.4.jar' -in $dataManifest) {
+        throw 'Focused Data Energistics graph lost its prerequisite or included incompatible Lightning Tech/Thunderbolt'
     }
 
     try {

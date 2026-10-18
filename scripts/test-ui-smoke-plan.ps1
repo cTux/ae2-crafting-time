@@ -237,7 +237,9 @@ try {
     Assert ($forgeGraphs.Count -eq 5 -and $forgeGraphs[2].cases.Count -eq 2) 'Full Forge must schedule relaunch and newest-adapter graphs separately'
     foreach ($entry in $full.targets) {
         $statusGraphs = @($entry.graphs | Where-Object { 'standard-status-controls' -cin $_.cases })
-        Assert ($statusGraphs.Count -eq 1 -and $statusGraphs[0].cases.Count -eq 1) 'Status relaunch must run outside suites'
+        $expectedStatusGraphs = if ($entry.target -eq '1.21.1-neoforge') { 2 } else { 1 }
+        Assert ($statusGraphs.Count -eq $expectedStatusGraphs -and @($statusGraphs | Where-Object { $_.cases.Count -ne 1 }).Count -eq 0) `
+            'Status relaunch must run outside suites'
     }
     $statusOnly = & $planner -Repository $temp -Target '1.20.1-forge' -Scenario standard-status-controls
     Assert ($statusOnly.targets[0].graphs.Count -eq 1) 'Focused status relaunch must not duplicate its graph'
@@ -254,6 +256,16 @@ try {
             'neoeco-cpu' -cnotin $full.targets[2].cases -and
             @($full.targets[2].graphs | Where-Object { $_.profile -eq 'latest' -or $_.id -eq 'udZtKfzP' }).Count -eq 0) `
         'Full compatible NeoForge suite must exclude NeoEco and latest graphs'
+    $dataGraphs = @($full.targets[2].graphs | Where-Object { $_.id -eq '1565514' -or $_.id -eq '1565514-status-amounts' })
+    Assert ($dataGraphs.Count -eq 2 -and @($dataGraphs | Where-Object {
+        $_.profile -eq 'compatible' -and @($_.projectId).Count -eq 1 -and [string]$_.projectId[0] -eq '1565514'
+    }).Count -eq 2) 'Data Energistics must use focused compatible graphs'
+    Assert (@($dataGraphs | Where-Object { 'data-energistics-cpu' -cin $_.cases -and 'craft-lifecycle' -cin $_.cases }).Count -eq 1 -and
+            @($dataGraphs | Where-Object { @($_.cases).Count -eq 1 -and $_.cases[0] -eq 'standard-status-controls' }).Count -eq 1) `
+        'Data Energistics focused graphs must cover CPU, native lifecycle, and status relaunch'
+    Assert (@($full.targets[2].graphs | Where-Object id -eq 'primary' | Where-Object {
+        'data-energistics-cpu' -cin $_.cases -or 'craft-lifecycle' -cnotin $_.cases
+    }).Count -eq 0) 'NeoForge primary graph must retain native lifecycle without the Data CPU fixture'
     Assert ($full.targets[3].cases.Count -eq 28) 'Expanded 26.1.2 suite must contain 28 leaves'
     $neoecoLatest = & $planner -Repository $temp -Target '1.21.1-neoforge' -Scenario neoeco-cpu -Latest -ProjectId udZtKfzP
     Assert ($neoecoLatest.targets[0].cases.Count -eq 1 -and $neoecoLatest.targets[0].graphs.Count -eq 1 -and

@@ -114,10 +114,12 @@
     "neoecoae": ["neoeco-cpu", "neoeco-fastpath-cpu"],
     "advanced_ae": ["advancedae-cpu"],
     "ae2lt": ["lightningtech-cpu"],
-    "merequester": ["merequester-screen"]
+    "merequester": ["merequester-screen"],
+    "data_energistics": ["data-energistics-cpu"]
   },
   "adapterBehaviorCases": {
-    "advanced_ae": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"]
+    "advanced_ae": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"],
+    "data_energistics": ["craft-lifecycle", "standard-status-controls"]
   },
   "readRecoveryCases": {
     "ae2ct": ["crafting-tree-read-recovery"],

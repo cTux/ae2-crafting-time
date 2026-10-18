@@ -602,7 +602,7 @@ See [DE-01 through DE-06](spec.md#data-energistics-qualification) and the
 [scope status](data-energistics.md).
 
 The missing integration is metadata, client inventory and qualification, not a
-proven profiler defect. `AddonCpuFixture.FIXTURES` has no Data Energistics entry.
+proven profiler defect. Before this change, `AddonCpuFixture.FIXTURES` had no Data Energistics entry.
 `NativeCpuFixture` already creates/selects native CPUs, and `CraftPlanScenario`
 already proves dispatch, completion, profile samples and reopened Plan estimates.
 `StandardAe2Scenario`'s `craft-lifecycle` leaf adds native Status and output checks;
@@ -619,7 +619,17 @@ Configuration `3.1.1-neoforge` below 4. JEI is optional, but installed JEI must 
 `19.56.0.438+`. The current compatible AE2 `19.2.17` and JEI `19.51.0.417`
 therefore cannot qualify this addon. Inspect every installed optional constraint
 in the packaged metadata during resolution, including Crafting Tree's minimum;
-resolve actual conflicts before running the full graph.
+resolve actual conflicts before running the combined graph. JEI's required
+MezzConfig library is pinned to `0.6.8` (`idpM3DKC`).
+
+AE2 Lightning Tech and Thunderbolt Core declare Data Energistics incompatible
+with every version. Keep Data's artifact in the compatible inventory but outside
+the default primary profile. Reuse `FOCUSED_BEHAVIOR` for its compatible graph,
+including native lifecycle and Status checks. The planner considers CurseForge
+entries as well as Modrinth entries. An explicit Data-containing combined graph
+omits only the two declared conflicts; the existing Lightning Tech primary graph
+and latest diagnostic inventory remain available. See
+[#742](https://github.com/cTux/ae2-crafting-time/issues/742).
 
 At that source revision, `AdaptivePatternProviderBlockEntity` extends AE2's
 `PatternProviderBlockEntity`, exposes `getProviderInventory()`, and owns
@@ -644,4 +654,4 @@ The prepared target, host Java 21, existing VM dispatcher, fixture markers and
 NeoForge 21.1.251 installation exist. Use the matching version-child launch
 manifest, not the older root manifest. The only new runtime fixture is the small
 provider substitution authorized by #518; no new VM or launcher infrastructure
-is planned. Runtime success remains unverified.
+is planned. Follow the canonical scope status for measured runtime results.
