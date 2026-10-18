@@ -396,3 +396,58 @@ full-pack launches. The budget is an estimate, not permission to omit acceptance
 - Check that samples are recorded once, persisted, requested, reset, and shown.
 - Update `docs/dependencies.md`, loader metadata, and candidate status only for code
   and versions that were actually verified.
+
+## Data Energistics qualification
+
+Follow [DE-01 through DE-06](spec.md#data-energistics-qualification), the
+[design](technical-design.md#data-energistics-qualification), and the canonical
+[scope status](data-energistics.md).
+
+1. Resolve and retain the exact 3.3.5 CurseForge artifact/hash and dependency
+   closure. Update only the NeoForge 1.21.1 client pins needed by this addon:
+   AE2 19.2.18, LDLib2 2.2.40 and JEI 19.56.0.438. Inspect installed optional
+   constraints before committing; preserve unrelated pins unless a concrete
+   conflict blocks this graph. Record any required compatible-profile exclusion
+   with evidence and an issue; do not silently exclude the requested addon.
+2. Add optional loader metadata and CurseForge relations in both deployment
+   implementations. Extend existing metadata/release self-checks for correct
+   target, optionality and unchanged required relations (DE-01, DE-02, DE-06).
+3. Add `data-energistics-cpu` via `AddonCpuFixture`'s lazy registry and a
+   NeoForge-only fixture/compile dependency. Reuse native CPU setup and the
+   common craft-plan state machine; replace the fixture processing provider
+   with the real adaptive block and install its native provider stack. Preserve
+   clean fixture reset and actual furnace output return. Extend registry and
+   artifact-isolation checks, smoke coverage/selection metadata and test-driver
+   docs (DE-04, DE-06). Do not put a scenario branch in `CraftPlanScenario`.
+4. Audit ordinary and alternate addon crafting paths. Record the supported
+   boundary in `docs/dependencies.md`. Add a production compatibility hook only
+   after a concrete qualified-path failure identifies its missing API contract;
+   update this design before implementing such a hook (DE-05).
+5. Commit and let the hook create the implementation PR before running tests.
+   Then run release self-checks, optional-integration validation, focused shared
+   driver tests and coverage, NeoForge compile/artifact isolation, and the
+   changed-smoke plan-only selection. Resolve cheap failures before Minecraft.
+6. Run sequentially in CodexVM, English, Java 21, 8 GiB, maximized window, on
+   prepared `1.21.1-neoforge` / NeoForge 21.1.251 with the same new compatible
+   pins: (a) `-BaseOnly -Scenario craft-lifecycle` for absence;
+   (b) `-ProjectId 1565514 -Scenario craft-lifecycle` for presence;
+   (c) `-ProjectId 1565514 -Scenario data-energistics-cpu` for adaptive dispatch;
+   (d) full compatible dependency graph with `-Scenario craft-lifecycle` for
+   coexistence and prerequisite pin qualification; (e) focused Data
+   `standard-status-controls` for the known Status injection boundary; and
+   (f) `-ProjectId 1086241 -Scenario crafting-tree-screen` for the required
+   Crafting Tree replacement. Use
+   `scripts/run-ui-smoke-matrix.ps1` for these existing selection paths.
+   Review `-Changed` selection and run any additional mandatory selected cases;
+   explain why other loaders and a full UI suite are unnecessary.
+7. Archive every run's logs, sidecars, images, server observations, versions and
+   exact tested head. Review all required captures and record actual timings.
+   Shut down the configured VM and verify its absence from `vmrun list`.
+   Complete current-head CI/review before merge. Mark the scope finished only
+   with merged implementation and DE-01 through DE-06 evidence; otherwise name
+   the remaining gate. Positive targeted runs are not full-suite qualification.
+
+Plan six clean scenario runs plus bounded diagnostic retries. Measure cold startup
+and progress before setting the runtime budget; never rerun a full matrix as a
+debugging loop. Missing artifacts or an unsatisfied optional version constraint
+are setup failures, not passing absent/present evidence.

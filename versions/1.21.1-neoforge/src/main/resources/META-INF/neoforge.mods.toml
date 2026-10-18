@@ -45,6 +45,13 @@ ordering="AFTER"
 side="CLIENT"
 
 [[dependencies."${mod_id}"]]
+modId="data_energistics"
+type="OPTIONAL"
+versionRange="[3.3.5,)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies."${mod_id}"]]
 modId="appmek"
 type="OPTIONAL"
 versionRange="[1.6.2,)"

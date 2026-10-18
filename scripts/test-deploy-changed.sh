@@ -97,7 +97,7 @@ assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: XxWD5pD3:requir
   "Release dry run did not include NeoForge Modrinth dependencies"
 assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: XxWD5pD3:required, Ck4E7v7R:optional, rxYaglEe:optional' \
   "Release dry run did not include 26.1.2 NeoForge Modrinth dependencies"
-if [ "$(printf '%s\n' "$releaseDryRun" | grep -cF 'dry-run CurseForge relations: applied-energistics-2:requiredDependency, guideme:optionalDependency')" -ne 3 ]; then
+if [ "$(printf '%s\n' "$releaseDryRun" | grep -cF 'dry-run CurseForge relations: applied-energistics-2:requiredDependency, guideme:optionalDependency')" -ne 3 ] || [ "$(printf '%s\n' "$releaseDryRun" | grep -cF 'data-energistics:optionalDependency')" -ne 1 ]; then
   echo "Release dry run did not scope GuideME CurseForge relations to supported targets" >&2
   exit 1
 fi

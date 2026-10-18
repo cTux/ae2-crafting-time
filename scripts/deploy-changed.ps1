@@ -86,10 +86,14 @@ function Get-CurseForgeRelations($entry) {
     if (-not @($entry.modrinthDependencies | Where-Object project_id -eq "Ck4E7v7R")) {
         return @()
     }
-    return @(
+    $relations = @(
         [ordered]@{ slug = "applied-energistics-2"; type = "requiredDependency" },
         [ordered]@{ slug = "guideme"; type = "optionalDependency" }
     )
+    if ($entry.id -eq "1.21.1-neoforge") {
+        $relations += [ordered]@{ slug = "data-energistics"; type = "optionalDependency" }
+    }
+    return $relations
 }
 
 function Next-PatchVersion([string]$version) {

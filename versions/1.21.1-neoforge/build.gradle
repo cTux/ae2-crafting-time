@@ -174,7 +174,7 @@ sourceSets.testDriver.java.exclude { element ->
 sourceSets.testDriver.resources.setSrcDirs(['src/testDriver/resources'])
 dependencies {
     testDriverCompileOnly 'maven.modrinth:692GClaE:jH6bsw4F'
-    testDriverCompileOnly 'maven.modrinth:B1CBVXHX:bpcbGDy4'
+    testDriverCompileOnly 'maven.modrinth:B1CBVXHX:A8dTTrXo'
     testDriverCompileOnly 'maven.modrinth:gu7yAYhd:1ewzHZYg'
     testDriverCompileOnly 'maven.modrinth:ArHeh5Fz:RSF7tEIt'
     testDriverCompileOnly 'maven.modrinth:Ce6I4WUE:5KzzycBT'
@@ -192,6 +192,7 @@ dependencies {
     testDriverCompileOnly 'maven.modrinth:SOw6jD6x:Awt8eCuo'
     testDriverCompileOnly 'maven.modrinth:SyKS54UY:me5XWMw9'
     testDriverCompileOnly 'maven.modrinth:udZtKfzP:gWMhHBje'
+    testDriverCompileOnly 'curse.maven:data-energistics-1565514:9095664'
     testDriverCompileOnly 'curse.maven:omnisequence-1624558:8622739'
     testDriverCompileOnly 'curse.maven:projecte-226410:6611984'
 }

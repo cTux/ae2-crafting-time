@@ -14,6 +14,10 @@ what their evidence does and does not prove.
 - All prepared smoke scenarios use English (`en_us`). Results record language
   and startup adapter decisions. The driver rejects a direct adapter scenario
   if the selected variant is not the newest one implemented for its target.
+- NeoForge 1.21.1 pins Data Energistics 3.3.5 and its required client graph.
+  `data-energistics-cpu` exercises its Adaptive Pattern Provider through a native
+  AE2 CPU. Ordinary `craft-lifecycle` runs with the addon absent, present, and
+  in the full graph remain qualification work; no runtime pass is claimed yet.
 
 ## Versioned adapter verification
 

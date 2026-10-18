@@ -1272,6 +1272,8 @@ class TestDriverCoreTest {
                 DriverResult.requiredChecks("crafting-tree-screen"));
         assertTrue(AddonCpuFixture.supports("craft-plan"));
         assertTrue(AddonCpuFixture.supports("advancedae-cpu"));
+          assertTrue(AddonCpuFixture.supports("data-energistics-cpu"));
+          assertThrows(IllegalStateException.class, () -> AddonCpuFixture.create("data-energistics-cpu"));
         assertTrue(AddonCpuFixture.supports("extendedae-cpu"));
         assertTrue(AddonCpuFixture.supports("extendedae-plus-cpu"));
         assertTrue(AddonCpuFixture.supports("bmaddon-cpu"));

@@ -1,12 +1,17 @@
 # Data Energistics optional dependency
 
-Status: draft
+Status: ready-to-implement
 
 Scope: Optional dependency metadata and qualification for NeoForge 1.21.1.
 
 Issue: [#518](https://github.com/cTux/ae2-crafting-time/issues/518).
 
-Hold: The issue is marked `backlog`. This document does not lift it.
+Planning: [requirements](spec.md#data-energistics-qualification),
+[design](technical-design.md#data-energistics-qualification), and
+[implementation plan](implementation-plan.md#data-energistics-qualification).
+
+The user authorized implementation and prepared-client qualification on
+2026-10-18. Runtime qualification is still outstanding.
 
 ## Requested support
 

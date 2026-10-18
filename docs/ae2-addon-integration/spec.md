@@ -263,3 +263,24 @@ An addon is marked covered only when all relevant checks pass:
   every matching `-latest` script resolves current versions without fallback.
 - The four ordinary clients and four latest clients use separate managed mod
   directories, and resolution failures remain visible to the caller.
+
+## Data Energistics qualification
+
+Issue [#518](https://github.com/cTux/ae2-crafting-time/issues/518). Lifecycle and
+scope: [Data Energistics](data-energistics.md). This addition does not finish the
+other integration scopes above.
+
+| ID | Acceptance criterion |
+| --- | --- |
+| DE-01 | Declare `data_energistics` optional, minimum `3.3.5` with no upper cap, only on NeoForge 1.21.1. Add its CurseForge optional relation and truthful dependency documentation; preserve required AE2 and other targets. |
+| DE-02 | Add the official artifact and required dependency closure to `run-client-versions.json`, compatible and latest inventory. Qualify the necessary compatible AE2 19.2.18, LDLib2 2.2.40 and JEI 19.56.0.438 prerequisites; do not raise Crafting Time's production AE2 minimum. |
+| DE-03 | On the same prepared NeoForge 1.21.1 pins, prove ordinary AE2 crafting with Data Energistics absent and present: Plan TTC, native Status updates, new server profile sample, completed craft and expected output. |
+| DE-04 | Register a development-only `data-energistics-cpu` fixture that dispatches a real craft through an Adaptive Pattern Provider to a vanilla processing machine, using a native AE2 CPU. Prove dispatch, accepted output, new sample and reopened Plan TTC. Never substitute an ordinary provider and call that adaptive coverage. |
+| DE-05 | Inspect custom dispatch/output paths, including Trinity CPU execution, and record which reuse the existing hooks and which remain unqualified. Add production hooks only for a reproduced gap in the qualified path. Do not advertise universal support for every custom CPU or provider mode. |
+| DE-06 | Preserve addon-absent startup and production JAR isolation. Complete applicable unit, boundary, release-metadata and selected smoke checks after PR creation, including a full compatible graph startup with ordinary Plan/Status coverage to check the prerequisite pin changes. |
+
+The first qualified scope is ordinary AE2 CPUs plus the Adaptive Pattern Provider
+with an installed native provider and vanilla processing. Trinity-specific CPUs,
+reusable-input planning and third-party machine adapters require separate evidence
+before claiming support. Their source audit is part of DE-05; unsupported paths
+must be stated in the dependency inventory.

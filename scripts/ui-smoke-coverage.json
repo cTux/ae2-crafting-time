@@ -171,6 +171,14 @@
       "disposition": "DIRECT_UI",
       "scenario": "crafting-tree-screen"
     },
+    "1086241": {
+      "disposition": "DIRECT_UI",
+      "scenario": "crafting-tree-screen"
+    },
+    "1565514": {
+      "disposition": "DIRECT_BEHAVIOR",
+      "scenario": "data-energistics-cpu"
+    },
     "IiATswDj": {
       "disposition": "DIRECT_BEHAVIOR",
       "scenario": "appmek-cpu"
