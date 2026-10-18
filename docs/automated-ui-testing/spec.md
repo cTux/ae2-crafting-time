@@ -8,6 +8,36 @@ Implementation: [PR #208](https://github.com/cTux/ae2-crafting-time/pull/208), [
 Verification: implementation checks in those PRs and [prepared-client results](prepared-clients-2026-09-08.md).
 Unattended visual qualification is tracked separately below.
 
+## Java runtime metadata
+
+Status: ready-to-implement
+
+Scope: Correct the Java runtime identity in schema-2 smoke receipts.
+
+Issue: [#638](https://github.com/cTux/ae2-crafting-time/issues/638).
+
+Planning: [Design](technical-design.md#java-runtime-metadata) and
+[reviewed plan](implementation-plan.md#java-runtime-metadata).
+
+The receipt must identify the Java selected by the validated native launcher.
+The wrapper's environment can name a different JDK. This metadata correction
+applies to all four targets, compatible/latest profiles, scheduled and direct
+launches, and continuation phases. It requires no Minecraft launch.
+
+- **JM-01:** `status.json.javaHome` is the parent of the `bin` directory in the
+  validated launch executable. It agrees with the executable passed to the
+  native process launcher even when the wrapper's `JAVA_HOME` differs.
+- **JM-02:** Before native preparation succeeds, `javaHome` is null. It is also
+  null for the legacy wrapper-only path, whose client runtime is not observed
+  by this writer. Preparation failures must not substitute the wrapper JDK.
+- **JM-03:** Prepare-only receipts may identify the successfully prepared Java
+  home without claiming a process started. Later running, validating and final
+  receipts retain the selected home, including after process exit. Each
+  continuation uses its own prepared executable.
+- **JM-04:** `wrapperJavaHome` separately records the wrapper's `JAVA_HOME`.
+  Keep schema 2, existing process evidence, launcher selection and target/Java
+  validation. Matching wrapper and native homes still report the correct home.
+
 ## Failed native evidence retention
 
 [#424](https://github.com/cTux/ae2-crafting-time/issues/424) restores failure

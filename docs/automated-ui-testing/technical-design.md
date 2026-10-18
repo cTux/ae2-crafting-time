@@ -2,6 +2,45 @@
 
 Lifecycle: see scope status and evidence for [base workflow](spec.md) and [unattended qualification](spec.md#unattended-evidence-gate).
 
+## Java runtime metadata
+
+Lifecycle and criteria: [Java runtime metadata](spec.md#java-runtime-metadata).
+
+At base `c151e8c59ea9d58655caf6e95f729621b34102ca`, `Write-Status` in
+[`run-ui-smoke.ps1`](../../scripts/run-ui-smoke.ps1) writes `javaHome` from
+`$env:JAVA_HOME`. Native execution instead calls
+[`prepare-ui-smoke-launch.ps1`](../../scripts/prepare-ui-smoke-launch.ps1),
+which validates the manifest against the bundle and resolves the required Java
+major through `get-java-home.ps1`. Its returned `executable` is used by both
+direct `Start-Process` and scheduled Java execution, and recorded in
+`processes[].executable`. The wrapper environment is not that selection's source.
+
+Use the successful prepared launch result as the metadata source in the shared
+status writer. Derive the home by taking the executable's parent twice; the
+existing launcher returns an absolute `<home>/bin/java.exe` path. Do not resolve
+Java again, parse an unvalidated manifest, or change the environment to make the
+fields agree. Keep the wrapper environment in a separate `wrapperJavaHome` field.
+
+Initialize native launch state as unresolved. Clear it before each preparation
+attempt so a failed continuation cannot inherit a previous phase's selection.
+Publish the derived home only after preparation returns successfully. This also
+covers prepare-only mode; PID and process-start fields retain their existing
+meaning. Preserve a successful selection through process startup failure,
+validation, exit and final status. The home identifies selected Java, while the
+existing process fields establish whether it actually started.
+
+The legacy path launches `powershell.exe` and lets `run-client.ps1` select Java
+inside the child. Report null runtime home there rather than deriving a JDK from
+PowerShell or guessing from the wrapper environment. All status calls share the
+same rule, including initial preparation and error receipts. No Java, loader,
+gameplay, fixture, process-control or persisted-world behavior changes.
+
+Extend the existing AST-based checks in `test-run-ui-smoke.ps1` to execute the
+production writer and read its JSON with synthetic launch state. Assert values,
+nulls and process fields for the cases in the plan. Preserve native selection
+checks in `test-prepare-ui-smoke-launch.ps1`; its stub resolver and manifests
+already avoid real Java and Minecraft prerequisites.
+
 ## Failed native evidence retention
 
 Investigation for [#424](https://github.com/cTux/ae2-crafting-time/issues/424)
