@@ -183,34 +183,30 @@ Call `setDirty()` whenever a completed craft sample is recorded. Minecraft later
 
 ## Code Shape
 
-Shared module:
-
-- add a small persisted sample DTO, e.g. `CraftSampleSnapshot`
-- expose profiler import/export methods:
-  - `List<PersistedOutputSamples> snapshotSamples()`
-  - `void loadSamples(List<PersistedOutputSamples> samples)`
-
-`versions/1.20.1-forge`:
-
-- `Ae2CraftingTimeSavedData extends SavedData`
-- NBT encode/decode
-- bridge from `SavedData` to `ProfilerBridge`
-- server lifecycle hook to initialize from overworld storage
+The pure-Java core owns `PersistedOutputSamples`, `PersistedCraftSample`,
+`SavedSampleHistory`, and profiler import/export. Each of the four loader modules
+owns its `Ae2CraftingTimeSavedData` adapter. Shared API-specific tag serializers
+handle NBT; `ProfilerBridge` hydrates the profiler from overworld storage.
 
 ## Dirty Tracking
 
-Smallest reliable path:
+The current update path is:
 
 1. `ProfilerBridge` owns a nullable `Ae2CraftingTimeSavedData`.
 2. On load, saved data hydrates `CraftProfiler`.
-3. When `CraftProfiler.complete(...)` records at least one completed sample, `ProfilerBridge` calls:
+3. At the server-tick/save flush, finalized intervals produce only changed
+   output histories. While Save History is enabled, the bridge calls:
 
 ```java
-savedData.replaceFrom(profiler.snapshotSamples());
-savedData.setDirty();
+savedData.updateSamples(profiler.takeChangedSamples());
 ```
 
-This rewrites the retained sample snapshot in memory, but the disk write still happens through Minecraft's normal save. The retained window is only 10 samples per output, so this is simpler than incremental mutation and good enough.
+`updateSamples` marks nonempty changes dirty. Empty histories delete reset or
+removed outputs; unchanged immutable records remain in the index. Full
+`replaceFrom` remains available for hydration/migration, not normal tick updates.
+Provider/status collections have separate dirty tracking. Save History off
+leaves changes pending for the next enabled flush. Disk writes still use the
+normal Minecraft save pipeline.
 
 ## Existing Config Impact
 
@@ -226,18 +222,20 @@ If disabled, do not record new samples. Loaded samples can remain in memory, but
 
 ## Risks
 
-- `SavedData` format is version-specific Minecraft code, so keep it under `versions/1.20.1-forge`.
-- Persisting only aggregates would lose the latest-10 behavior after restart. Persist samples instead.
+- Keep loader SavedData glue in each version module and reuse API-specific tag serializers.
+- Persisting only aggregates would lose the configured retained history after restart. Persist samples instead.
 - If output ids disappear because a mod is removed, keep their saved entries harmlessly. They will not be requested by the UI if those items are gone.
-- The save file can grow with every distinct output ever crafted. Each output keeps only 10 samples, so growth is bounded by output variety, not craft count.
+- The save file can grow with every distinct output ever crafted. Each output
+  keeps at most `maxSamples` observations (default 10, range 1-100), so growth is
+  bounded per output, not globally by craft count.
 
 ## Tests
 
 Shared tests:
 
-- profiler exports latest 10 samples for an output
+- profiler exports the configured latest sample window for an output
 - profiler imports samples and produces the same `ProfileStats`
-- importing more than 10 samples keeps the latest 10
+- importing more than `maxSamples` observations keeps the newest `maxSamples`
 
 Version tests:
 

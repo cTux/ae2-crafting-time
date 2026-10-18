@@ -33,7 +33,8 @@ Use the printed Gradle project names. The current modules are:
 - Put AE2/Minecraft code used unchanged by every target in `shared/src/mcCommon/java`.
 - Put Minecraft 1.20.1/1.21.1 API-specific code in `shared/src/mc1201/java`.
 - Put Minecraft 26.1.2/AE2 26 API ports in `shared/src/mc2612/java`.
-- Put code shared only by NeoForge targets in `shared/src/neoforge/java`.
+- Put NeoForge-shared code in `shared/src/neoforge/java`. Forge also includes
+  its shared optional CPU mixin directory for AdvancedAE support.
 - Put loader-only entrypoints, networking glue, saved-data glue, metadata, and tests under the matching `versions/<minecraft>-<loader>` folder.
 - Keep `scripts/release-matrix.json` as the source of truth for build/release rows.
 
@@ -48,9 +49,9 @@ The canonical status lives in each feature specification; designs and plans link
 
 ## Everyday Development
 
-Commit each fix or feature so the post-commit hook opens or updates its PR. Tests
-run only in the required GitHub Actions check; do not run them locally before
-creating the PR.
+Commit each fix or feature so the post-commit hook opens or updates its PR. Do
+not run local tests before that PR exists. Afterward, run the checks required
+by the applicable skill and report GitHub CI separately.
 
 When you need the JARs, run:
 
@@ -67,15 +68,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\build-all-versions
 - Status row TTC estimates use `activeAmount + pendingAmount`.
 - The running-job total uses the selected CPU's remaining dependency critical
   path instead of summing rows that may execute in parallel.
-- Throughput samples aggregate all concurrent crafting-CPU batches for the same
-  network output from the first dispatch until the output becomes idle.
+- Throughput samples record completion intervals for each network/output.
+  Same-tick returns combine into one observation across CPUs; the server-tick
+  flush publishes it while the order can still have pending work.
 - Pending batches are scoped by crafting CPU and cleared when its job finishes
   or its retained stats are reset.
 - Job-accuracy diagnostics compare a submission-time frozen total with successful
   completion wall/tick time; cancelled jobs are excluded and partial-plan
   predictions do not contribute to aggregate error metrics.
 - Delayed-output diagnostics require a 10-second minimum and twice the learned
-  production-window duration. Partial output resets the no-progress timer.
+  raw completion-interval duration by default. Partial output resets the no-progress timer.
 - AE2 co-processors increase the rolling pattern-dispatch budget; describe it as
   recently used parallel slots, not as machines that stay busy until output returns.
 - Fluid estimates must be checked in normalized units before changing math.

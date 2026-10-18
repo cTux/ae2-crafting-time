@@ -23,7 +23,8 @@ world still has a logical server.
 - `shared/src/mcCommon/java`: AE2/Minecraft-facing code shared by every target.
 - `shared/src/mc1201/java`: Minecraft 1.20.1/1.21.1 API boundary.
 - `shared/src/mc2612/java`: Minecraft 26.1.2/AE2 26 API boundary.
-- `shared/src/neoforge/java`: code shared by both NeoForge targets.
+- `shared/src/neoforge/java`: code shared by both NeoForge targets; Forge also
+  includes the optional CPU mixin directory for AdvancedAE support.
 - `versions/<minecraft>-<loader>`: loader entrypoints, packet glue, config,
   saved-data glue, metadata, and loader tests.
 
@@ -64,14 +65,14 @@ only after AE2 accepts a plan, and completion is recorded only when
 `finishJob(true)` runs. They are not persisted and never alter throughput
 samples or displayed TTC calculations.
 
-Stall diagnostics are also runtime-only. For the selected crafting CPU, the
+Live stall tracking is runtime-only. For the selected crafting CPU, the
 server tracks the last accepted output and AE2's rolling pattern-dispatch use.
 An output is delayed after at least 10 seconds without progress and at least
 twice its learned average completion-interval duration. Partial output resets the
 timer. The client only renders the server snapshot alongside AE2's active and
 scheduled amounts.
 
-First-dispatch waiting state is runtime-only too. The server registers every
+Live first-dispatch waiting tracking is runtime-only too. The server registers every
 crafted output when AE2 accepts a job, removes each output after its first
 pattern dispatch, and sends elapsed waiting ticks for requested rows. This lets
 the client distinguish work that has never started from a later gap between
@@ -82,7 +83,10 @@ CPU. Before sending a status snapshot, the server rechecks those exact patterns
 and removes restored providers. A combined output stays blocked if any of its
 scheduled patterns still lacks a provider. The client shows normal-weight red
 `NO PROVIDER` only for pending work and the matching menu/CPU context.
-This state is runtime-only and clears with the job, disable, or sample reload.
+Live missing-provider tracking clears with the job, disable, or sample reload.
+The saved remembered-status fallback is separate from these live trackers:
+delayed, waiting, no-provider, and no-power rows can survive a reload until live
+observations supersede them. See [world-save persistence](world-save-persistence.md).
 See the [specification](no-provider-status/spec.md),
 [technical design](no-provider-status/technical-design.md), and
 [implementation plan](no-provider-status/implementation-plan.md).
@@ -130,8 +134,10 @@ Retained samples are saved through Minecraft `SavedData` as:
 
 The saved payload stores `version`, `networkId`, `key`, `unit`, and retained
 `samples`. Returns from the same tick become one observation, even across CPUs.
-Pending crafts, unfinalized intervals, and first-dispatch waiting state are
-runtime-only and are not persisted.
+Pending crafts and unfinalized intervals are runtime-only and are not persisted.
+Separate provider links, locate records, and bounded remembered statuses are
+saved beside samples. Live trackers are rebuilt; remembered statuses do not
+restore runtime warning plates by themselves.
 
 ## Startup and integration diagnostics
 

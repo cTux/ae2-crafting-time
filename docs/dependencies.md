@@ -66,9 +66,11 @@ production icon coverage or change dependency minimums.
 
 [Issue #376](https://github.com/cTux/ae2-crafting-time/issues/376) requires
 `delayed-resource-icons` on all four native targets and `appmek-resource-icons`
-on Forge 1.20.1 / NeoForge 1.21.1. These scenarios currently run only with explicit
-`-ResourceFixtureOnly`; ordinary production acceptance still needs the
-[mode and evidence extension](provider-locate/resource-icons/technical-design.md#production-acceptance-on-the-existing-fixtures).
+on Forge 1.20.1 / NeoForge 1.21.1. These scenarios support ordinary production
+acceptance mode and explicit `-ResourceFixtureOnly` prerequisite runs. The
+[mode and evidence contract](provider-locate/resource-icons/technical-design.md#production-acceptance-on-the-existing-fixtures)
+keeps fixture success separate from production and visual qualification; mode
+availability does not establish a passing production campaign.
 Existing `appmek-cpu` mounts oxygen storage and a native CPU;
 it does not prove a delayed chemical output or a visible provider icon.
 

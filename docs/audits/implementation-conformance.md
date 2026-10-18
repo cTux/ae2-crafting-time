@@ -6,6 +6,9 @@ Each run asks whether code, configuration, automation, or workflows depart from
 repository documentation. This is a recurring audit procedure, not a claim that
 the current implementation has been checked.
 
+The [2026-10-18 run](../implementation-conformance/spec.md) records its exact
+audited revision, static evidence, corrections and remaining delivery gates.
+
 ## Establish authority and scope
 
 Record the exact audited default-branch revision. Read applicable contributor

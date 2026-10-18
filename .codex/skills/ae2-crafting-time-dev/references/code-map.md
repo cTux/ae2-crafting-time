@@ -11,7 +11,7 @@ then recheck the current files because supported targets and upstream APIs move.
 | `shared/src/mcCommon/java` | AE2/Minecraft code shared by every target: server hooks, request handling, codecs, chat, client text/cache bridges, and common UI mixins. |
 | `shared/src/mc1201/java` | AE2 15/19 and Minecraft 1.20.1/1.21.1 API adapters, UI mixins, input, persistence tags, and profiler bridge. |
 | `shared/src/mc2612/java` | AE2 26 and Minecraft 26.1.2 ports of the API-sensitive adapters. |
-| `shared/src/neoforge/java` | Config and AdvancedAE integration shared by NeoForge targets. |
+| `shared/src/neoforge/java` | Config and integrations shared by NeoForge targets; Forge also includes the optional CPU mixin directory for AdvancedAE. |
 | `versions/<target>` | Loader entrypoints, networking registration and packet records, SavedData glue, metadata, target tests, and Gradle packaging. |
 | `shared/src/main/resources` | English and Ukrainian translations. |
 | `shared/src/mc1201/resources`, `versions/*/src/main/resources` | Mixin registration, pack metadata, and loader dependency metadata. |
@@ -21,7 +21,7 @@ Current Gradle projects are `:shared`, `:fabric_1_20_1`, `:mc_1_20_1_forge`, `:m
 
 ## The Pure-Java Core
 
-- `CraftProfiler` owns pending work per CPU identity, network-wide busy windows, retained samples, weighted throughput, outlier filtering, stall timing, capacity freshness, import/export, and reset behavior.
+- `CraftProfiler` owns pending work per CPU identity, network-wide completion intervals, retained samples, weighted throughput, outlier filtering, stall timing, capacity freshness, import/export, and reset behavior.
 - `TtcAccuracyTracker` freezes accepted-plan estimates and records successful completion accuracy. Cancelled, invalid, and partially covered jobs must not pollute fully covered accuracy.
 - `TimeEstimate`, `TtcSort`, and `TtcColor` are the reusable display calculations. Never reimplement their math in a mixin.
 - `ClientStatsCache` replaces requested keys before applying a response so omitted entries remove stale client state.
@@ -57,7 +57,7 @@ adapter only for a proven custom or overridden crafting loop.
 ## Profiling Semantics
 
 - Identity is `networkId + outputId`; controller-backed networks use the lowest controller anchor. Do not merge different networks.
-- A throughput sample is one continuous network production window for an output, including concurrent batches from multiple CPUs.
+- A throughput sample is one observed completion interval for a network/output. Same-tick returns combine across CPUs; the server-tick flush publishes the observation while work can still be pending. Job completion adds no duplicate whole-order sample.
 - Pending work stays scoped by CPU identity and is cleared when that CPU finishes or its stats are reset.
 - Retain only the configured latest sample window. Throughput is recent-weighted and rejects extreme duration-per-unit outliers using the configured multiplier.
 - Item amounts stay in items. Fluid/chemical-style keys use normalized millibuckets through `AeKeyAmounts`; inspect normalization and saved/runtime samples before changing TTC math.
@@ -70,18 +70,18 @@ adapter only for a proven custom or overridden crafting loop.
 - Plan-row TTC uses the row's `craftAmount`.
 - Status-row TTC uses `activeAmount + pendingAmount`.
 - Plan total adds known row estimates; rows without stats are omitted rather than assigned an invented TTC.
-- Running-job total uses elapsed time and overall completed-work progress because rows may execute in parallel.
+- Running-job total follows the remaining dependency critical path. Unknown or unreliable remaining rows and incomplete graphs make available totals low confidence; no elapsed-progress estimate is substituted.
 - Sorting copies the AE2 list; known TTC rows precede unknown rows, equal TTC uses AE2 order, and unknown order stays stable.
 - Color context is render-scoped across the current plan: green fastest, yellow midpoint, red slowest; equal known values are green.
 - Ctrl-click shows server-authoritative details; Ctrl-Alt-click resets retained stats. Chat actions carry structured intent, never arbitrary client text.
 - Prefer `CraftConfirmTableRendererMixin`, `CraftingStatusTableRendererMixin`, and existing screen mixins. `TtcText`, `ClientStats`, `ClientStatsRequests`, and `StatsChatMessages` are the shared UI paths.
-- AE2: Crafting Tree and ME Requester integrations exist only on pre-26 targets. Applied Mekanistics is handled through key normalization where supported. AdvancedAE profiling is NeoForge-only.
+- AE2: Crafting Tree and ME Requester integrations exist only on pre-26 targets. Applied Mekanistics is handled through key normalization where supported. AdvancedAE profiling supports Forge 1.20.1 and both NeoForge targets.
 
 ## Wire, Persistence, and Configuration Boundaries
 
 - Requests allow at most 256 output IDs, each at most 128 characters and matching the namespaced ID pattern. Per-player request cost is at most 512 IDs/second; chat detail/reset messages use a two-second player cooldown.
 - Snapshot collections and sample lists must be bounded before allocation. Keep packet fields synchronized across Forge, Fabric, NeoForge 1.21.1, and NeoForge 26.1.2.
-- SavedData ID is exactly `ae2-crafting-time`, producing `<world>/data/ae2-crafting-time.dat`. NBT version 1 stores retained `(networkId, key, unit, amount, durationTicks)` samples. Pending work, accuracy, and stalls are runtime-only.
+- SavedData ID is exactly `ae2-crafting-time`, producing `<world>/data/ae2-crafting-time.dat`. NBT version 1 stores retained `(networkId, key, unit, amount, durationTicks)` samples plus separate provider/locate records and remembered delayed/waiting/no-provider/no-power statuses. Pending work, unfinalized intervals, accuracy, and live diagnostic trackers are runtime-only. Remembered statuses cannot restore runtime warning plates by themselves.
 - Config semantics are stable across loaders: `enabled`, `showInTree`, `showChatMessages`, `maxSamples`, and `outlierMultiplier`. Server behavior must not depend on a client-only setting.
 - Mixin JSON must keep server mixins under `mixins` and renderer/input integrations under `client`. Optional string-target mixins use tolerant injection only where absence or upstream variation is expected.
 - Required and optional dependencies must agree across Gradle, loader metadata, `docs/dependencies.md`, run-client profiles, and actual code.

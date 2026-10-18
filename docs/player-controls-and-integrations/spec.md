@@ -26,7 +26,7 @@ absent.
   button cycles through AE2 order, shortest first, and longest first. Sort state
   lasts only for that open screen.
 - Keep unknown rows after known rows and keep their original order.
-- Tooltips may explain throughput, retained production windows, confidence,
+- Tooltips may explain throughput, retained completion intervals, confidence,
   accuracy, delay evidence, and controls. They must not expose server internals
   beyond aggregate statistics.
 
@@ -47,7 +47,10 @@ absent.
 
 ## Configuration
 
-The common file is `ae2craftingtime-common.toml` on every loader.
+The original common file was `ae2craftingtime-common.toml`. Current world-owned
+server options use `serverconfig/ae2craftingtime-server.toml`; the common file is
+a legacy migration source. See the [configuration file guidance](../configuration-screen/config-file-comments/spec.md)
+for current ownership, paths and migration precedence.
 
 | Key | Default | Range | Behavior |
 | --- | --- | --- | --- |
@@ -57,10 +60,14 @@ The common file is `ae2craftingtime-common.toml` on every loader.
 | `maxSamples` | `10` | 1-100 | Sets the retained throughput and runtime accuracy window per output. |
 | `outlierMultiplier` | `4.0` | 1.0-1000.0 | Sets the median-relative throughput outlier boundary. |
 
-Invalid Fabric values keep the current/default value; numeric values outside a
-range are clamped. Forge and NeoForge use their native config specifications.
-Sample-window and outlier settings are applied when the profiler is created, so
-changing them requires a game/server restart.
+The original common-config adapters keep their loader-specific parsing rules.
+Current server options use the shared validated configuration model.
+Valid changes saved with Server Options **Done** apply live after the server
+successfully saves them, including sample-window and outlier settings. External
+file edits load at world/server startup. The
+[configuration specification](../configuration-screen/spec.md) defines current
+independent display switches and defaults; the original presentation baseline
+here does not require enabling disabled colors, shadows, or badge backgrounds.
 
 ## Optional Integrations
 
