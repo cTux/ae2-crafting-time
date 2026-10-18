@@ -6,6 +6,77 @@ New-Item -ItemType Directory -Path $scripts, $source -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot "run-ui-smoke.ps1") -Destination (Join-Path $scripts "run-ui-smoke.ps1")
 $runnerAst = [System.Management.Automation.Language.Parser]::ParseFile(
     (Join-Path $scripts 'run-ui-smoke.ps1'), [ref]$null, [ref]$null)
+$statusWriters = @($runnerAst.FindAll({ param($node)
+    $node -is [System.Management.Automation.Language.FunctionDefinitionAst] -and $node.Name -ceq 'Write-Status'
+}, $true))
+if ($statusWriters.Count -ne 1) { throw 'Smoke status writer was not unique' }
+. ([scriptblock]::Create($statusWriters[0].Extent.Text))
+$launchResets = @($runnerAst.FindAll({ param($node)
+    $node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
+        $node.Left.Extent.Text -ceq '$launch' -and $node.Right.Extent.Text -ceq '$null'
+}, $true) | Sort-Object { $_.Extent.StartOffset })
+if ($launchResets.Count -ne 3) { throw 'Expected initial, prepare-only, and phase launch resets' }
+$nextAssignments = @('$processDisappeared', '$launch', '$executable')
+for ($index = 0; $index -lt $launchResets.Count; $index++) {
+    $statements = @($launchResets[$index].Parent.Statements)
+    $position = [array]::IndexOf($statements, $launchResets[$index])
+    if ($position -lt 0 -or $position + 1 -ge $statements.Count -or
+            $statements[$position + 1] -isnot [System.Management.Automation.Language.AssignmentStatementAst] -or
+            $statements[$position + 1].Left.Extent.Text -cne $nextAssignments[$index]) {
+        throw "Launch reset $index moved away from its preparation path"
+    }
+}
+if ($launchResets[1].Parent.Extent.Text -notmatch 'prepare-ui-smoke-launch.ps1' -or
+        $launchResets[2].Parent.Extent.Text -notmatch 'prepare-ui-smoke-launch.ps1') {
+    throw 'Native preparation no longer follows the launch resets'
+}
+$statusPath = Join-Path $temp 'writer-status.json'
+$runId = 'writer-test'; $campaignId = 'writer-campaign'; $Target = '1.20.1-forge'
+$profile = 'compatible'; $Scenario = 'craft-plan'; $startedAt = [DateTime]::UtcNow.ToString('o')
+$process = $null; $processes = @(); $launch = $null; $PreparedLaunch = $null
+$root = $temp; $stdout = Join-Path $temp 'stdout.log'; $stderr = Join-Path $temp 'stderr.log'
+$evidence = Join-Path $temp 'evidence'; $world = 'writer-world'; $dependencyIdentity = $null
+$runtime = Join-Path $temp 'runtime'; $StartupTimeoutSeconds = 300
+$CallbackTimeoutSeconds = 20; $CheckpointTimeoutSeconds = 60
+$previousJavaHome = $env:JAVA_HOME
+try {
+    $nativeA = Join-Path $temp 'native-a/bin/java.exe'
+    $nativeB = Join-Path $temp 'native-b/bin/java.exe'
+    foreach ($case in @(
+            @{name='initial'; launch=$nativeA; reset=0; wrapper='C:\Wrapper'; phase='preparing'; started=$false},
+            @{name='wrapper-unset'; launch=$null; wrapper=$null; phase='preparing'; started=$false},
+            @{name='prepare-only-preparation-failure'; launch=$nativeA; reset=1; wrapper='C:\Wrapper'; phase='failed'; started=$false},
+            @{name='mismatch-prepared'; launch=$nativeA; wrapper='C:\Wrapper'; phase='diagnostic-prepared'; started=$false},
+            @{name='agreement'; launch=$nativeA; wrapper=(Split-Path -Parent (Split-Path -Parent $nativeA)); phase='running'; started=$true},
+            @{name='validating'; launch=$nativeA; wrapper='C:\Wrapper'; phase='validating'; started=$true},
+            @{name='final'; launch=$nativeA; wrapper='C:\Wrapper'; phase='passed'; started=$true},
+            @{name='startup-failure'; launch=$nativeA; wrapper='C:\Wrapper'; phase='failed'; started=$false},
+            @{name='continuation'; launch=$nativeB; wrapper='C:\Wrapper'; phase='running'; started=$true},
+            @{name='failed-continuation-preparation'; launch=$nativeB; reset=2; wrapper='C:\Wrapper'; phase='failed'; started=$false},
+            @{name='legacy'; launch=$null; wrapper='C:\Wrapper'; phase='running'; started=$true; legacy=$true}
+        )) {
+        $env:JAVA_HOME = $case.wrapper
+        $launch = if ($case.launch) { [pscustomobject]@{executable=$case.launch} } else { $null }
+        if ($case.ContainsKey('reset')) { . ([scriptblock]::Create($launchResets[$case.reset].Extent.Text)) }
+        $PreparedLaunch = if ($case.legacy) { $null } else { 'prepared.json' }
+        $process = if ($case.started) { [pscustomobject]@{Id=1234;StartTime=[DateTime]::UtcNow} } else { $null }
+        $processes = if ($case.started) { @([pscustomobject]@{phase=1;pid=1234;executable=$(if ($case.legacy) {'powershell.exe'} else {$case.launch})}) } else { @() }
+        Write-Status $case.phase $case.name
+        $status = Get-Content -LiteralPath $statusPath -Raw | ConvertFrom-Json
+        $expectedHome = if ($case.ContainsKey('reset') -or !$case.launch) { $null }
+            else { Split-Path -Parent (Split-Path -Parent $case.launch) }
+        if ($status.schema -ne 2 -or $status.phase -ne $case.phase -or
+                $status.javaHome -cne $expectedHome -or $status.wrapperJavaHome -cne $case.wrapper -or
+                $status.pid -ne $(if ($case.started) {1234} else {$null}) -or
+                [bool]$status.processStartedAt -ne $case.started -or
+                @($status.processes).Count -ne $(if ($case.started) {1} else {0}) -or
+                ($case.started -and $status.processes[0].executable -cne $(if ($case.legacy) {'powershell.exe'} else {$case.launch}))) {
+            throw "Incorrect status receipt for $($case.name)"
+        }
+    }
+} finally {
+    $env:JAVA_HOME = $previousJavaHome
+}
 $timeoutAssignments = @($runnerAst.FindAll({ param($node)
     $node -is [System.Management.Automation.Language.AssignmentStatementAst] -and
         $node.Left.Extent.Text -ceq '$timeout'

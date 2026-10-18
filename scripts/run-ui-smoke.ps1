@@ -159,6 +159,7 @@ $resourceFixtureId = if ($resourceScenario -or @($selectedCases | Where-Object {
 if ($campaignId -cnotmatch '^[A-Za-z0-9._-]{1,128}$') { throw 'Invalid UI-smoke campaign identity' }
 $startedAt = [DateTime]::UtcNow.ToString("o")
 $process = $null
+$launch = $null
 $processDisappeared = $false
 $processExitObserved = $false
 $observedExitCode = $null
@@ -184,7 +185,9 @@ function Write-Status([string]$phase, [string]$message = "", [Nullable[int]]$exi
     $status = [ordered]@{
         schema = 2; runId = $runId; campaignId = $campaignId; target = $Target; profile = $profile; scenario = $Scenario
         phase = $phase; pid = $(if ($process) { $process.Id } else { $null }); exitCode = $exitCode
-        startedAt = $startedAt; updatedAt = [DateTime]::UtcNow.ToString("o"); javaHome = $env:JAVA_HOME
+        startedAt = $startedAt; updatedAt = [DateTime]::UtcNow.ToString("o")
+        javaHome = $(if ($launch) { Split-Path -Parent (Split-Path -Parent $launch.executable) } else { $null })
+        wrapperJavaHome = $env:JAVA_HOME
         stagedRoot = $root; stdout = $stdout; stderr = $stderr; evidence = $evidence; message = $message
         processStartedAt = $(if ($process) { $process.StartTime.ToUniversalTime().ToString('o') } else { $null })
         processes = @($processes)
@@ -373,6 +376,7 @@ try {
             if ($ResourceFixtureOnly) { $launchParameters.ResourceFixtureOnly = $true }
             if ($Prewarm) { $launchParameters.Prewarm=$true; $launchParameters.PrewarmDeadline=$PrewarmDeadline
                 $launchParameters.PrewarmHead=$headSha; $launchParameters.PrewarmBundle=$PrewarmBundle }
+            $launch = $null
             $launch = & (Join-Path $PSScriptRoot 'prepare-ui-smoke-launch.ps1') @launchParameters
             [ordered]@{schema=1;phase=$phase;world=$world;campaignId=$campaignId;executable=$launch.executable
                 arguments=$launch.arguments;finalApproval=$launch.finalApproval;runtime=$runtime;evidence=$evidence} | ConvertTo-Json -Depth 5 |
@@ -382,6 +386,7 @@ try {
             return
         }
         do {
+            $launch = $null
             $executable = 'powershell.exe'
             $phaseArguments = $arguments
             if ($PreparedLaunch) {
