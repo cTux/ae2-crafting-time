@@ -10,6 +10,10 @@ Scope, status and criteria: [spec](spec.md#extendedae-plus-focused-graph-461).
    targets, no upstream ExtendedAE relationship, exactly one prerequisite,
    no unrelated projects, compatible pin requests and latest traversal.
    Record JAR metadata and update `docs/dependencies.md` (EP461-1/2).
+   The first focused Forge 1.5.5 run reproduced no available CPU before
+   dispatch. Compose `NativeCpuFixture` into shared `ExtendedAeFixture`,
+   retaining active assembler checks; compile both targets and verify the
+   affected `extendedae-cpu` sibling alongside Plus.
 3. After PR creation, run that self-test and changed-mode `-PlanOnly`. Run
    `scripts/run-ui-smoke-matrix.ps1 -ProjectId xr109llC -Scenario extendedae-plus-cpu`
    once each with `-Target 1.20.1-forge` and `-Target 1.21.1-neoforge` (EP461-3).

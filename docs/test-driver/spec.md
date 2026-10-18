@@ -11,8 +11,12 @@ Issue: [#461](https://github.com/cTux/ae2-crafting-time/issues/461).
 Planning: [design](technical-design.md#extendedae-plus-focused-graph-461)
 and [plan](implementation-plan.md#extendedae-plus-focused-graph-461).
 
-Verification pending: the focused resolver self-test, both compatible CPU runs,
-the controlled Forge 1.6.2 investigation, and current-head CI/review.
+The focused resolver self-test passed at `d1a7218e`. A clean Forge 1.5.5
+focused run at that revision reproduced the unavailable-CPU screen: the plan
+and TTC rendered, but no CPU appeared and dispatch never started. The fixture
+created no CPU of its own. The shared fixture correction and both compatible
+CPU runs, the controlled Forge 1.6.2 investigation, and current-head CI/review
+remain to be verified.
 
 - **EP461-1:** Selecting only `xr109llC` includes ExtendedAE (`JiOqfoFM`)
   and its required dependencies on Forge 1.20.1 and NeoForge 1.21.1, even when

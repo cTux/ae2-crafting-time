@@ -17,13 +17,16 @@ Official Forge 1.5.5 (`pN9pMjiW`) and 1.6.2 (`A3uRgnwT`) JARs require
 pins satisfy the embedded requirements; keep their transitive resolution.
 
 `AddonCpuFixture` selects `ExtendedAePlusFixture`, which checks mod presence
-and inherits `ExtendedAeFixture`: replace native assemblers, wait for active
-grid nodes, select an existing idle CPU. `CraftPlanScenario` then starts the
-native job and verifies dispatch and profiling. The historical unavailable-CPU
-screen proves neither a current fixture defect nor an addon API break. Compare
-the same current fixture under pinned Forge 1.5.5 and isolated 1.6.2 before
-changing this shared path. Any necessary fixture correction also reaches the
-ExtendedAE scenario and requires corresponding boundary verification.
+and inherits `ExtendedAeFixture`. The clean focused Forge 1.5.5 run reproduced
+the historical unavailable-CPU screen while the plan and TTC rendered. The
+fixture replaced assemblers and waited for active grid nodes, but relied on
+an existing idle CPU from the saved world. The focused graph has no such CPU
+available. Compose the existing `NativeCpuFixture` to place, form, connect,
+and select a native CPU on the fixture grid. Keep the assembler checks and
+reuse the same correction for `extendedae-cpu`. `CraftPlanScenario` still
+starts the native job and verifies dispatch and profiling. This observation
+does not establish an ExtendedAE-Plus addon API failure; compare pinned Forge
+1.5.5 with isolated 1.6.2 after the fixture is corrected.
 
 The existing `run-client.ps1 -VersionMatrix` and packaged-bundle dispatch support
 the controlled candidate without new infrastructure. Keep its matrix under
