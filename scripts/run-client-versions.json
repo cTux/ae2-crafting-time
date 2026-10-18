@@ -287,6 +287,7 @@
         "mod_id": "molecularmanipulator",
         "version": "1.3.9-hotfix",
         "dependencies": [226410],
+        "modrinth_dependencies": ["B1CBVXHX"],
         "compatible": { "file_id": 8622739, "filename": "omnisequence-transfinite-1.3.9-hotfix.jar", "sha512": "39bb7084f853b9b4dfd0abf176d3d931a936749dc1c72acd37b793bcc18b87a4fb8806afcb9305782e11e90336a0332f9263de9d2bbb81587b3bb558cc018ebf" },
         "latest": { "file_id": 8622739, "filename": "omnisequence-transfinite-1.3.9-hotfix.jar", "sha512": "39bb7084f853b9b4dfd0abf176d3d931a936749dc1c72acd37b793bcc18b87a4fb8806afcb9305782e11e90336a0332f9263de9d2bbb81587b3bb558cc018ebf" }
       },

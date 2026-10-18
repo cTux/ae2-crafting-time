@@ -7,6 +7,12 @@ if ("p19vrgc2" -notin @($crazyAe2.modrinth_dependencies) -or
         "p19vrgc2" -notin @($forge.compatible.versions.project_id)) {
     throw "Crazy AE2 Addons 2.6.2 compatible graph must include its required Fusion dependency"
 }
+$neoForge = $matrix | Where-Object id -eq "1.21.1-neoforge"
+$omniSequence = $neoForge.curseforge | Where-Object project_id -eq 1624558
+if ("B1CBVXHX" -notin @($omniSequence.modrinth_dependencies) -or
+        "B1CBVXHX" -notin @($neoForge.compatible.versions.project_id)) {
+    throw "OmniSequence 1.3.9-hotfix compatible graph must include its required LDLib2 dependency"
+}
 $temp = Join-Path ([IO.Path]::GetTempPath()) ("ae2ct-run-client-" + [guid]::NewGuid().ToString("N"))
 $bytes = [Text.Encoding]::UTF8.GetBytes("test mod")
 $sha512 = [Security.Cryptography.SHA512]::Create()

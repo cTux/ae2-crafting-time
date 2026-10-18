@@ -210,6 +210,8 @@ mounts a native item cell and supplies its ingredients, but on NeoForge 1.21.1 i
 is intended for explicit latest-graph diagnostics. NeoEco 21.1.1 is excluded
 from that target's compatible client because its renderer can crash during an
 asynchronous section rebuild ([#627](https://github.com/cTux/ae2-crafting-time/issues/627)).
+The compatible graph installs LDLib2 directly for OmniSequence's required library
+after removing NeoEco.
 The [upstream origin-copy fix](https://github.com/DancingSnow0517/NeoECOAEExtension/commit/e9c4031eee32ea1d3a0dcedd431e7f80ff60418f)
 is in a later lineage; the diagnostic fixture does not qualify its newer CPU API.
 The [original failure](https://github.com/cTux/ae2-crafting-time/issues/627) and
