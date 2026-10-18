@@ -28,6 +28,13 @@ starts the native job and verifies dispatch and profiling. This observation
 does not establish an ExtendedAE-Plus addon API failure; compare pinned Forge
 1.5.5 with isolated 1.6.2 after the fixture is corrected.
 
+The comparison at source `4661326c` passed on both Forge pins. The earlier
+1.5.5 run failed before dispatch with no available CPU; after native CPU
+composition, both runs dispatched and completed one job through
+`CraftingCPUCluster`. The shared ExtendedAE-only sibling and pinned NeoForge
+Plus run passed too. This identifies missing fixture CPU formation as the
+reproduced cause; it does not establish an addon API regression.
+
 The existing `run-client.ps1 -VersionMatrix` and packaged-bundle dispatch support
 the controlled candidate without new infrastructure. Keep its matrix under
 `build/issue-461`, change only the Forge Plus pin, bind its hash and source SHA

@@ -2,7 +2,7 @@
 
 ## ExtendedAE-Plus focused graph (#461)
 
-Status: in-progress
+Status: finished
 
 Scope: Restore focused prerequisites on both supported targets and investigate
 the reported Forge 1.6.2 CPU failure with a controlled candidate graph.
@@ -11,12 +11,45 @@ Issue: [#461](https://github.com/cTux/ae2-crafting-time/issues/461).
 Planning: [design](technical-design.md#extendedae-plus-focused-graph-461)
 and [plan](implementation-plan.md#extendedae-plus-focused-graph-461).
 
+Implementation: [PR #738](https://github.com/cTux/ae2-crafting-time/pull/738),
+merged as [`17a8901`](https://github.com/cTux/ae2-crafting-time/commit/17a89013884b3f144f83f4d267dc0dfba79bbbf2).
+Reviewed and tested source:
+[`4661326`](https://github.com/cTux/ae2-crafting-time/commit/4661326ccf5ad7494e6cfb39f0a05fc28c779ec4).
+
+Verification: The focused resolver self-test passed in 7.8 seconds; both test
+drivers compiled and 89 tests passed in 51 seconds. [Gradle tests](https://github.com/cTux/ae2-crafting-time/actions/runs/39157288414)
+and [Build all mod JARs](https://github.com/cTux/ae2-crafting-time/actions/runs/39157288416)
+passed on the reviewed source. Four corrected focused CPU runs passed seven
+native checks each, and all four plan images passed manual review. Automated
+visual gates remain `REVIEW_REQUIRED` because no qualified baseline exists.
+
 The focused resolver self-test passed at `d1a7218e`. A clean Forge 1.5.5
 focused run at that revision reproduced the unavailable-CPU screen: the plan
 and TTC rendered, but no CPU appeared and dispatch never started. The fixture
-created no CPU of its own. The shared fixture correction and both compatible
-CPU runs, the controlled Forge 1.6.2 investigation, and current-head CI/review
-remain to be verified.
+created no CPU of its own. At `4661326c`, the corrected shared fixture supplies
+a native CPU. Forge 1.5.5 Plus, Forge ExtendedAE without Plus, NeoForge 1.6.2
+Plus, and isolated Forge 1.6.2 Plus all passed native CPU selection, dispatch,
+completion, profiling, and TTC checks. Each retained plan image was reviewed;
+the automatic visual gates remain `REVIEW_REQUIRED` because no qualified
+baseline exists. Both PR CI workflows passed at that source revision.
+
+The controlled Forge 1.6.2 matrix changed only the Plus pin from
+`1.5.5`/`pN9pMjiW` to `1.6.2`/`A3uRgnwT`; its matrix SHA-256 is
+`0767BE67A1C666BB98B7B285924B0432811F3C52C41BFC126042040F076808AB`.
+The sealed bundle SHA-256 is
+`75554B5D20FAD1F3EE933A120C97F2338EFB93EAD46ED49E1D914A60395E8DA7`.
+The historical failure was reproduced on pinned 1.5.5 before the fixture fix,
+then absent on both Forge versions after it. That evidence supports a missing
+fixture CPU, not a version-specific Plus failure. Forge 1.5.5 remains pinned;
+the candidate result qualifies only this focused graph.
+
+| Focused run | UTC window, 2026-10-18 | Result | Retained archive ID |
+| --- | --- | --- | --- |
+| Original Forge 1.5.5 Plus | 18:59:01–19:03:44 | No CPU; no dispatch | `20261018T190344502Z-ea30b2f9` |
+| Corrected Forge 1.5.5 Plus | 19:07:36–19:11:11 | Native CPU PASS | `20261018T191112332Z-2fa92cc9` |
+| Forge ExtendedAE only | 19:11:43–19:15:05 | Native CPU PASS | `20261018T191505493Z-cb9914a4` |
+| Pinned NeoForge 1.6.2 Plus | 19:15:24–19:18:31 | Native CPU PASS | `20261018T191831779Z-82ef912f` |
+| Isolated Forge 1.6.2 Plus | 19:18:53–19:22:00 | Native CPU PASS | `20261018T192234890Z-e67c8106` |
 
 - **EP461-1:** Selecting only `xr109llC` includes ExtendedAE (`JiOqfoFM`)
   and its required dependencies on Forge 1.20.1 and NeoForge 1.21.1, even when
