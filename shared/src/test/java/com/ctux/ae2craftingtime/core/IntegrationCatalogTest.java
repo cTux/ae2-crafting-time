@@ -50,8 +50,14 @@ class IntegrationCatalogTest {
                 }
                 var selection = selector(target, client, present);
                 assertEquals(!target.equals("1.20.1-fabric"), selection.shouldApply("AdvancedCraftingCpuLogicMixin"));
+                assertEquals(!target.equals("1.20.1-fabric"), selection.shouldApply(
+                        target.equals("1.20.1-forge") ? "AdvancedCpuEstimate1201Mixin"
+                                : target.equals("1.21.1-neoforge") ? "AdvancedCpuEstimate1211Mixin"
+                                : "AdvancedCpuEstimate26Mixin"));
                 assertEquals(target.equals("1.20.1-forge") || target.equals("1.21.1-neoforge"),
                         selection.shouldApply("Ae2LtTimeWheelCraftingCpuLogicMixin"));
+                assertEquals(target.equals("1.20.1-forge") || target.equals("1.21.1-neoforge"),
+                        selection.shouldApply("Ae2LtEstimateMixin"));
                 assertEquals(client && !target.equals("26.1.2-neoforge"), selection.shouldApply("MERequesterScreenMixin"));
                 assertFalse(selection.shouldApply("ECOCraftingCpuLogicMixin"));
                 assertFalse(selection.shouldApply("CraftingTreeWidgetMixin"));
@@ -71,9 +77,9 @@ class IntegrationCatalogTest {
         return switch (variant) {
             case "tree-helper" -> Set.of("CraftingTreeWidgetMixin");
             case "tree-layout" -> Set.of("CraftingTreeNewWidgetMixin");
-            case "pending-accounting" -> Set.of("ECOCraftingCpuLogicMixin", "NeoEcoPendingDispatchMixin");
-            case "batched-long" -> Set.of("ECOCraftingCpuLogicMixin", "NeoEcoLongBatchDispatchMixin");
-            case "batched-int" -> Set.of("ECOCraftingCpuLogicMixin", "NeoEcoIntBatchDispatchMixin");
+            case "pending-accounting" -> Set.of("ECOCraftingCpuLogicMixin", "NeoEcoEstimateMixin", "NeoEcoPendingDispatchMixin");
+            case "batched-long" -> Set.of("ECOCraftingCpuLogicMixin", "NeoEcoEstimateMixin", "NeoEcoLongBatchDispatchMixin");
+            case "batched-int" -> Set.of("ECOCraftingCpuLogicMixin", "NeoEcoEstimateMixin", "NeoEcoIntBatchDispatchMixin");
             default -> throw new AssertionError(variant);
         };
     }

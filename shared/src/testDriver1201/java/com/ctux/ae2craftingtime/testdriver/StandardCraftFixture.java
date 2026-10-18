@@ -146,17 +146,33 @@ final class StandardCraftFixture {
     }
     void refreshCpuIdentities() { cpuListIdentities = null; }
     void refreshCpuIdentities(ServerPlayer player) {
-        var previous = cpuListIdentities;
         cpuListIdentities = null;
         var current = cpuListCpus(player);
-        if (previous != null) {
-            for (var currentCpu : current) {
-                previous.stream().filter(oldCpu -> oldCpu.getBlockPos().equals(currentCpu.getBlockPos()))
-                        .findFirst().ifPresent(oldCpu -> ProfilerBridge.rebindJobEstimate(
-                                oldCpu.getCluster(), currentCpu.getCluster()));
-            }
-        }
         cpuListIdentities = current;
+    }
+
+    boolean attachSavedCpuList(ServerPlayer player) {
+        if (terminal == null || !cpuListScenario) throw new IllegalStateException("Saved CPU-list terminal is not bound");
+        var level = player.serverLevel();
+        if (!(level.getBlockEntity(terminal.south(2)) instanceof IInWorldGridNodeHost controller)
+                || controller.getGridNode(Direction.UP) == null) return false;
+        var grid = controller.getGridNode(Direction.UP).getGrid();
+        if (grid == null || !(level.getBlockEntity(terminal.east(2)) instanceof DriveBlockEntity drive)
+                || drive.getCellInventory(0) == null) return false;
+        cpuListIdentities = null;
+        var cpus = cpuListCpus(player);
+        if (cpus.size() != cpuCount) return false;
+        for (var block : cpus) {
+            var cluster = block.getCluster();
+            if (cluster == null || !cluster.isActive() || cluster.getGrid() != grid) return false;
+        }
+        if (cpus.stream().filter(block -> block.getCluster().isBusy()).count() != busyCpuCount) return false;
+        var network = ProfilerBridge.networkId(grid);
+        if (ProfilerBridge.stats(ProfilerBridge.key(network, AEItemKey.of(Items.STONE))).isEmpty()
+                || ProfilerBridge.stats(ProfilerBridge.key(network, AEItemKey.of(Items.SMOOTH_STONE))).isEmpty())
+            return false;
+        cpuListIdentities = cpus;
+        return true;
     }
 
     boolean prepare(ServerPlayer player, FixtureMarker marker) {
@@ -199,7 +215,7 @@ final class StandardCraftFixture {
                 PartHelper.setPart(level, obstruction, null, player, AEParts.GLASS_CABLE.item(appeng.api.util.AEColor.TRANSPARENT));
                 PartHelper.setPart(level, obstruction, Direction.NORTH, player, AEParts.CRAFTING_TERMINAL.asItem());
             }
-            if (Boolean.getBoolean("ae2craftingtime.test.persistentFixture")) {
+            if (cpuListScenario || Boolean.getBoolean("ae2craftingtime.test.persistentFixture")) {
                 var cable = AEParts.COVERED_DENSE_CABLE.item(appeng.api.util.AEColor.TRANSPARENT);
                 for (int offset = 1; offset < (cpuListScenario ? cpuCount * 2 : 2); offset += 2) {
                     PartHelper.setPart(level, terminal.west(offset), null, player, cable);
@@ -208,7 +224,15 @@ final class StandardCraftFixture {
                     var position = terminal.east(offset);
                     if (level.isEmptyBlock(position)) PartHelper.setPart(level, position, null, player, cable);
                 }
-                if (cpuListScenario) PartHelper.setPart(level, terminal.south(), null, player, cable);
+                if (cpuListScenario) {
+                    // Keep every CPU and provider on one physical channel backbone after a process restart.
+                    for (int x = -(cpuCount * 2); x <= 12; x++) {
+                        for (int south = 1; south <= 2; south++) {
+                            var position = terminal.offset(x, 0, south);
+                            if (level.isEmptyBlock(position)) PartHelper.setPart(level, position, null, player, cable);
+                        }
+                    }
+                }
             }
             // Face the provider four blocks east and three south; send absolute rotation to the client.
             player.connection.teleport(terminal.getX() + 0.5, terminal.getY() - 1, terminal.getZ() - 2.5,
@@ -735,6 +759,27 @@ final class StandardCraftFixture {
 
     void cancelSecondCpu(ServerPlayer player) { cpuListCpus(player).get(1).getCluster().craftingLogic.cancel(); }
 
+    boolean acceptRestoredCpuOutput(ServerPlayer player) {
+        var cluster = cpuListCpus(player).get(1).getCluster();
+        if (cluster == null || !cluster.isBusy()) throw new IllegalStateException("Restored CPU is no longer busy");
+        var output = AEItemKey.of(Items.SMOOTH_STONE);
+        var waiting = cluster.craftingLogic.getWaitingFor(output);
+        if (waiting == 0) return false;
+        var before = ProfilerBridge.remainingJobEstimate(cluster).orElseThrow();
+        var link = cluster.craftingLogic.getLastLink();
+        if (link == null) throw new IllegalStateException("Restored CPU lost its crafting link");
+        var accepted = cluster.getGrid().getStorageService().getInventory().insert(output, 1,
+                Actionable.MODULATE, IActionSource.ofMachine(cpuListCpus(player).get(1)));
+        if (accepted != 1 || cluster.craftingLogic.getWaitingFor(output) != waiting - 1)
+            throw new IllegalStateException("Restored CPU did not accept one real output");
+        if (!link.getCraftingID().equals(cluster.craftingLogic.getLastLink().getCraftingID()))
+            throw new IllegalStateException("Accepted output changed the restored crafting UUID");
+        var after = ProfilerBridge.remainingJobEstimate(cluster).orElseThrow();
+        if (!(after.durationMs() < before.durationMs()))
+            throw new IllegalStateException("Accepted output did not reduce the restored remaining estimate");
+        return true;
+    }
+
     boolean replaceSecondCpu(ServerPlayer player) {
         var replacementCpu = cpuListCpus(player).get(1);
         var service = cpu(player).getMainNode().getGrid().getCraftingService();
@@ -862,19 +907,28 @@ final class StandardCraftFixture {
             var status = cluster == null ? null : cluster.getJobStatus();
             var job = status == null ? null : status.crafting();
             var estimate = status == null ? java.util.Optional.<com.ctux.ae2craftingtime.core.TtcEstimate>empty() : ProfilerBridge.remainingJobEstimate(cluster);
+            var link = cluster == null ? null : cluster.craftingLogic.getLastLink();
             rows.add(new CpuListTtcControl.CpuState(block.getBlockPos().toShortString(),
                     cluster == null ? -1 : serials.getOrDefault(cluster, -1),
                     job == null ? null : job.what().getId().toString(), job == null ? 0 : job.amount(),
                     live, status != null, estimate.orElse(null),
-                    status == null ? 0 : status.elapsedTimeNanos(), status == null ? 0 : status.progress()));
+                    status == null ? 0 : status.elapsedTimeNanos(), status == null ? 0 : status.progress(),
+                    link == null ? null : link.getCraftingID().toString()));
         }
         var network = ProfilerBridge.networkId(grid);
         var selected = player.containerMenu instanceof appeng.menu.me.crafting.CraftingStatusMenu menu
                 ? menu.getSelectedCpuSerial() : -1;
+        var stock = ((DriveBlockEntity) player.serverLevel().getBlockEntity(terminal.east(2)))
+                .getCellInventory(0).getAvailableStacks();
         return new com.google.gson.Gson().toJson(new CpuListTtcControl.ServerState(network.toString(),
                 player.containerMenu.containerId, selected,
                 ProfilerBridge.stats(ProfilerBridge.key(network, AEItemKey.of(Items.STONE))).isPresent(),
-                ProfilerBridge.stats(ProfilerBridge.key(network, AEItemKey.of(Items.SMOOTH_STONE))).isPresent(), rows));
+                ProfilerBridge.stats(ProfilerBridge.key(network, AEItemKey.of(Items.SMOOTH_STONE))).isPresent(), rows,
+                stock.get(AEItemKey.of(Items.COBBLESTONE)), stock.get(AEItemKey.of(Items.SAND)),
+                ProfilerBridge.stats(ProfilerBridge.key(network, AEItemKey.of(Items.STONE)))
+                        .map(stats -> stats.sampleCount()).orElse(0),
+                ProfilerBridge.stats(ProfilerBridge.key(network, AEItemKey.of(Items.SMOOTH_STONE)))
+                        .map(stats -> stats.sampleCount()).orElse(0)));
     }
 
     private java.util.List<CraftingBlockEntity> cpuListCpus(ServerPlayer player) {

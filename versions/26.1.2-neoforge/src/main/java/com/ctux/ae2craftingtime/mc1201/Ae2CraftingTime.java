@@ -9,6 +9,8 @@ import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
+import net.neoforged.neoforge.event.server.ServerStoppedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
@@ -30,6 +32,11 @@ public final class Ae2CraftingTime {
         });
         modBus.addListener(StatsNetwork::register);
         NeoForge.EVENT_BUS.addListener(this::onServerStarted);
+        NeoForge.EVENT_BUS.addListener((ServerAboutToStartEvent event) -> ProfilerBridge.beginServer(event.getServer()));
+        NeoForge.EVENT_BUS.addListener((ServerStoppedEvent event) -> {
+            ProfilerBridge.endServer(event.getServer());
+            ServerOptionsRuntime.clear();
+        });
         NeoForge.EVENT_BUS.addListener(this::onServerTick);
         NeoForge.EVENT_BUS.addListener(this::onServerStopping);
         NeoForge.EVENT_BUS.addListener(this::onRegisterCommands);
@@ -65,7 +72,6 @@ public final class Ae2CraftingTime {
         StatsRequestHandler.clear();
         WarningPreferenceServer.clearAll();
         ProviderStartTracker.clearAll();
-        ServerOptionsRuntime.clear();
     }
 
     private void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {

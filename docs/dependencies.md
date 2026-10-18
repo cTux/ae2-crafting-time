@@ -106,7 +106,7 @@ is available through `IntegrationMixinPlugin.snapshot()`.
 | --- | --- |
 | Crafting Tree | `tree-layout`, then `tree-helper`; client only, pre-26 targets. Fabric retains its declaration but has no verified published Tree artifact. |
 | NeoEco | Forge: `batched-long`, then `pending-accounting`. NeoForge 1.21.1: `batched-int`. One dispatch adapter shares lifecycle hooks; neither family is enabled on Fabric or 26.1.2. |
-| AdvancedAE | `advanced-cpu`; Forge and both NeoForge targets, both physical sides. |
+| AdvancedAE | `advanced-cpu-1201`, `advanced-cpu-1211`, or `advanced-cpu-26` by target; each bundles execution and saved-job hooks on both physical sides. |
 | Lightning Tech | `time-wheel`; Forge and NeoForge 1.21.1, both physical sides. Its 26.1.2 native coverage does not imply a custom adapter. |
 | ME Requester | `requester-screen`; pre-26 clients only. |
 
@@ -428,6 +428,21 @@ The native AE2 and supported AdvancedAE dispatch hooks now share the NO PROVIDER
 NO POWER status transport. NO POWER observes only the real simulated AE network
 energy extraction. All four prepared compatible suites include both native
 status scenarios; their results apply only to the actual tested artifacts.
+
+## Running-job TTC after restart
+
+Native AE2 CPUs on all four release rows and the supported AdvancedAE CPU on
+Forge 1.20.1 and NeoForge 1.21.1/26.1.2 carry a bounded, optional remaining-job
+graph in their saved job. NeoEco and AE2 Lightning Tech time-wheel CPUs use
+their custom saved-job paths on Forge 1.20.1 and NeoForge 1.21.1. The 26.1.2
+Lightning Tech pattern-provider smoke still runs on a native AE2 CPU; it does
+not test a time-wheel adapter. Jobs saved by older versions, jobs whose graph
+exceeds the storage limits, and malformed optional data continue crafting
+without a restored total. Current learned samples remain independent of the
+saved graph. The [restart plan](cpu-list-total-ttc/restart/implementation-plan.md)
+sets out the native two-process verification and the narrower addon boundary
+and live-scenario checks; a passing addon scenario alone does not establish
+addon process-restart behavior.
 
 Standard AE2 coverage now expands into six independent leaves before full-suite
 execution. Use the declared catalogue counts above and the generated selection

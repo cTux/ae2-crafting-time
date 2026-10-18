@@ -53,6 +53,16 @@ instead of AE2's elapsed estimate. Without a known total, it shows the normal
 CPU name. The red storage warning still appears when needed. Turn off
 **Crafting Status total** to use AE2's original title.
 
+After a normal server restart, a running craft can regain its own total when
+the same saved job and network resume. This works for native AE2 CPUs and the
+supported AdvancedAE, NeoEco and AE2 Lightning Tech time-wheel CPUs. The CPU
+card and selected title update after fresh server data arrives; an old client
+value is not reused. A job saved before this feature, or one whose optional
+estimate could not be saved or restored, can continue crafting without a
+total. Its row timing samples may still be available. Progress after restart
+reduces the restored estimate as usual. Offline time is not counted as craft
+progress.
+
 At GUI scale 1, Crafting Plan and Crafting Status use one wider column so row
 text stays readable. Fewer rows fit at once; scroll to reach the rest. A line
 that is too long for its cell shows an ellipsis, with the full line on hover.

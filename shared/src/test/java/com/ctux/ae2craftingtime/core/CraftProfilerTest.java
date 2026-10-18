@@ -160,6 +160,24 @@ class CraftProfilerTest {
     }
 
     @Test
+    void disablingAnAttachedScopePrunesItImmediatelyWithoutTouchingOtherJobs() {
+        var profiler = new CraftProfiler(10);
+        var disabled = new Object();
+        var unaffected = new Object();
+        var root = new ProfileKey("network", "minecraft:stone");
+        profiler.setJobEstimate(disabled, new CraftingJobEstimate(root, Map.of(root, 5L), Map.of()));
+        profiler.setJobEstimate(unaffected, new CraftingJobEstimate(root, Map.of(root, 7L), Map.of()));
+        profiler.removeJobEstimates(scope -> scope == disabled);
+        assertTrue(profiler.jobEstimate(disabled).isEmpty());
+        assertEquals(7L, profiler.jobEstimate(unaffected).orElseThrow().snapshot().orElseThrow()
+                .remainingAmounts().get(root));
+        profiler.removeJobEstimate(unaffected);
+        assertTrue(profiler.jobEstimate(unaffected).isEmpty());
+        profiler.removeJobEstimates(scope -> false);
+        assertTrue(profiler.jobEstimate(disabled).isEmpty());
+    }
+
+    @Test
     void rejectsInvalidConfiguration() {
         assertThrows(IllegalArgumentException.class, () -> new CraftProfiler(0));
         assertThrows(IllegalArgumentException.class, () -> new CraftProfiler(1, 0.5));

@@ -394,6 +394,18 @@ public final class CraftProfiler {
         jobEstimates.put(scope, estimate);
     }
 
+    public Optional<CraftingJobEstimate> jobEstimate(Object scope) {
+        return Optional.ofNullable(jobEstimates.get(scope));
+    }
+
+    public void removeJobEstimate(Object scope) {
+        jobEstimates.remove(scope);
+    }
+
+    public void removeJobEstimates(java.util.function.Predicate<Object> disabledScope) {
+        jobEstimates.keySet().removeIf(disabledScope);
+    }
+
     public void rebindJobEstimate(Object previousScope, Object currentScope) {
         if (previousScope == null || currentScope == null || previousScope == currentScope) {
             return;

@@ -62,6 +62,37 @@ public final class CraftingJobEstimate {
         remainingAmounts.computeIfPresent(key, (ignored, remaining) -> Math.max(0, remaining - amount));
     }
 
+    public Optional<Snapshot> snapshot() {
+        if (remainingAmounts.size() > CraftingJobEstimateCodec.MAX_NODES
+                || dependencies.size() > CraftingJobEstimateCodec.MAX_NODES
+                || root == null || remainingAmounts.containsKey(null)
+                || remainingAmounts.values().stream().anyMatch(value -> value == null || value < 0))
+            return Optional.empty();
+        var nodes = new HashSet<ProfileKey>();
+        nodes.add(root);
+        nodes.addAll(remainingAmounts.keySet());
+        var edgeCount = 0;
+        for (var entry : dependencies.entrySet()) {
+            nodes.add(entry.getKey());
+            if (entry.getValue().size() > CraftingJobEstimateCodec.MAX_EDGES - edgeCount) return Optional.empty();
+            edgeCount += entry.getValue().size();
+            nodes.addAll(entry.getValue());
+            if (nodes.size() > CraftingJobEstimateCodec.MAX_NODES) return Optional.empty();
+        }
+        if (nodes.size() > CraftingJobEstimateCodec.MAX_NODES) return Optional.empty();
+        var edges = new HashMap<ProfileKey, Set<ProfileKey>>();
+        dependencies.forEach((key, values) -> edges.put(key, Set.copyOf(values)));
+        return Optional.of(new Snapshot(root, Map.copyOf(remainingAmounts), Map.copyOf(edges), complete));
+    }
+
+    public static CraftingJobEstimate restore(Snapshot snapshot) {
+        return new CraftingJobEstimate(snapshot.root(), snapshot.remainingAmounts(),
+                new DependencyGraph(snapshot.dependencies(), snapshot.complete()));
+    }
+
+    public record Snapshot(ProfileKey root, Map<ProfileKey, Long> remainingAmounts,
+            Map<ProfileKey, Set<ProfileKey>> dependencies, boolean complete) { }
+
     public Optional<TtcEstimate> remainingEstimate(BiFunction<ProfileKey, Long, Optional<TtcEstimate>> estimate) {
         var rows = new HashMap<ProfileKey, Optional<TtcEstimate>>();
         boolean reliable = complete;

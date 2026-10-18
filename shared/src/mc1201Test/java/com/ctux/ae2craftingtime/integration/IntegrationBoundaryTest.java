@@ -24,6 +24,40 @@ import org.objectweb.asm.tree.VarInsnNode;
 
 class IntegrationBoundaryTest {
     @Test
+    void startupAndAcceptedConfigWireRecoveryLifecycleSynchronously() throws Exception {
+        var bridge = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/mc1201/ProfilerBridge.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(bridge, 0);
+        }
+        for (var required : List.of("beginServer:begin", "load:ready", "endServer:stop")) {
+            var parts = required.split(":");
+            var method = bridge.methods.stream().filter(value -> value.name.equals(parts[0])).findFirst().orElseThrow();
+            assertTrue(java.util.stream.StreamSupport.stream(method.instructions.spliterator(), false)
+                    .filter(MethodInsnNode.class::isInstance).map(MethodInsnNode.class::cast)
+                    .anyMatch(call -> call.owner.endsWith("CraftingJobRecovery$Lifecycle")
+                            && call.name.equals(parts[1])), required);
+        }
+        var options = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/mc1201/ServerOptionsRuntime.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(options, 0);
+        }
+        var accept = options.methods.stream().filter(method -> method.name.equals("accept")).findFirst().orElseThrow();
+        var calls = java.util.stream.StreamSupport.stream(accept.instructions.spliterator(), false)
+                .filter(MethodInsnNode.class::isInstance).map(MethodInsnNode.class::cast).toList();
+        var disabled = java.util.stream.IntStream.range(0, calls.size()).filter(index ->
+                calls.get(index).owner.endsWith("ProfilerBridge") && calls.get(index).name.equals("disabled"))
+                .findFirst().orElseThrow();
+        var configured = java.util.stream.IntStream.range(0, calls.size()).filter(index ->
+                calls.get(index).owner.endsWith("ProfilerBridge") && calls.get(index).name.equals("configure"))
+                .findFirst().orElseThrow();
+        assertTrue(disabled < configured, "disable must invalidate pending recovery before config becomes active");
+    }
+
+    @Test
     void cpuSelectionListRetainsTheSharedRenderAndInputSeams() throws Exception {
         var node = new ClassNode();
         try (var input = getClass().getResourceAsStream("/appeng/client/gui/widgets/CPUSelectionList.class")) {
@@ -62,6 +96,7 @@ class IntegrationBoundaryTest {
         var writer = new ClassWriter(0);
         writer.visit(Opcodes.V17, Opcodes.ACC_PUBLIC, owner, null, "java/lang/Object", null);
         writer.visitField(Opcodes.ACC_PRIVATE, "unused", "I", null, null).visitEnd();
+        writer.visitMethod(Opcodes.ACC_PUBLIC, "getCraftingJobId", "()Ljava/util/UUID;", null, null).visitEnd();
         writer.visitMethod(Opcodes.ACC_PRIVATE, "recordPushedPattern",
                 "(L" + owner + "$PendingPatternAccounting;)V", null, null).visitEnd();
         writer.visitMethod(Opcodes.ACC_PRIVATE, "recordPushedPattern",

@@ -6,11 +6,13 @@
   "compatibilityLevel": "JAVA_21",
   "mixins": [
     "AdvancedCraftingCpuLogicMixin",
+    "AdvancedCpuEstimate1211Mixin",
     "CraftingCPUMenuAccessor",
     "RowStatsJobMenuMixin",
     "RowStatsJobMenuSyncMixin",
     "CraftingStatusMenuAccessor",
     "CraftingCpuLogicMixin",
+    "CraftingCpuEstimate1211Mixin",
     "CraftingCalculationMixin",
     "CraftConfirmMenuMixin",
     "StorageServiceAccessor",
@@ -21,7 +23,9 @@
     "PatternProviderLogicMixin",
     "PatternProviderExternalPushMixin",
     "Ae2LtTimeWheelCraftingCpuLogicMixin",
+    "Ae2LtEstimateMixin",
     "ECOCraftingCpuLogicMixin",
+    "NeoEcoEstimateMixin",
     "NeoEcoPendingDispatchMixin",
     "NeoEcoLongBatchDispatchMixin",
     "NeoEcoIntBatchDispatchMixin"

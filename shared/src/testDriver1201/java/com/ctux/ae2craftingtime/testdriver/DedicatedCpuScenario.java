@@ -530,8 +530,9 @@ public final class DedicatedCpuScenario {
                 }
                 case "rejoin-prepare", "relaunch-prepare" -> {
                     active.refreshCpuIdentities(player);
-                    yield active.prepare(player, origin);
+                    yield active.attachSavedCpuList(player);
                 }
+                case "relaunch-progress" -> active.acceptRestoredCpuOutput(player);
                 case "reconnect" -> true;
                 case "complete" -> {
                     connectedAck = command.sequence();
