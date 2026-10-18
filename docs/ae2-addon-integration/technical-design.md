@@ -621,6 +621,11 @@ therefore cannot qualify this addon. Inspect every installed optional constraint
 in the packaged metadata during resolution, including Crafting Tree's minimum;
 resolve actual conflicts before running the combined graph. JEI's required
 MezzConfig library is pinned to `0.6.8` (`idpM3DKC`).
+ExtendedAE-Plus `1.6.2` crashes with that JEI version because its bookmark mixin
+references the removed `mezz.jei.gui.input` classes. Pin `1.6.3` (`AtuOmKkV`),
+whose [upstream fix](https://github.com/GaLicn/ExtendedAE_Plus/commit/389c8e44dc9de0a7d1a31b9d3ad7640f60cde5ff)
+uses `mezz.jei.common.input`; both classes and the invoked constructor exist in
+the exact JEI `19.56.0.438` artifact. Its other required metadata is unchanged.
 
 AE2 Lightning Tech and Thunderbolt Core declare Data Energistics incompatible
 with every version. Keep Data's artifact in the compatible inventory but outside

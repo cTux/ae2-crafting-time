@@ -405,7 +405,8 @@ Follow [DE-01 through DE-06](spec.md#data-energistics-qualification), the
 
 1. Resolve and retain the exact 3.3.5 CurseForge artifact/hash and dependency
    closure. Update only the NeoForge 1.21.1 client pins needed by this addon:
-   AE2 19.2.18, LDLib2 2.2.40, JEI 19.56.0.438 and its MezzConfig 0.6.8 library. Inspect installed optional
+   AE2 19.2.18, LDLib2 2.2.40, JEI 19.56.0.438, its MezzConfig 0.6.8 library,
+   and ExtendedAE-Plus 1.6.3 for the new JEI input API. Inspect installed optional
    constraints before committing; preserve unrelated pins unless a concrete
    conflict blocks this graph. Record any required compatible-profile exclusion
    with evidence and an issue; do not silently exclude the requested addon.
@@ -445,6 +446,9 @@ Follow [DE-01 through DE-06](spec.md#data-energistics-qualification), the
    combined-graph evidence. Keep Data
    outside the Lightning Tech primary profile and select its compatible focused
    graph through the existing coverage policy.
+   Also run `lightningtech-cpu` in its focused graph and `extendedae-plus-cpu`
+   with the Data-containing graph to verify the preserved profile and required
+   ExtendedAE-Plus update.
    Review `-Changed` selection and run any additional mandatory selected cases;
    explain why other loaders and a full UI suite are unnecessary.
 7. Archive every run's logs, sidecars, images, server observations, versions and
