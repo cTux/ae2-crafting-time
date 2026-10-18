@@ -2,13 +2,18 @@
 
 ## Short connected server paths (#632)
 
-Status: ready-to-implement
+Status: finished
 
 Scope: Restore connected server staging under generated long report paths.
 
 Issue: [#632](https://github.com/cTux/ae2-crafting-time/issues/632).
 Planning: [design](technical-design.md#short-connected-server-paths-632)
 and [plan](implementation-plan.md#short-connected-server-paths-632).
+
+Implementation: [PR #729](https://github.com/cTux/ae2-crafting-time/pull/729),
+merged as [commit `387cfb88`](https://github.com/cTux/ae2-crafting-time/commit/387cfb8810d62967037695d3d287a880b9a1261f).
+
+Verification: Tested head [`a1b7c031`](https://github.com/cTux/ae2-crafting-time/commit/a1b7c03114da13e87b340e767a72721ae7225e52) passed [Gradle tests](https://github.com/cTux/ae2-crafting-time/actions/runs/39130345700) and [Build all mod JARs](https://github.com/cTux/ae2-crafting-time/actions/runs/39130345806). The Windows PowerShell 5.1 connected-runner self-test and four-target PlanOnly selection passed on that head. Minecraft scenarios were not launched for this filesystem-only repair.
 
 Deep loader libraries can exceed Windows PowerShell 5.1's path limit when
 copied below the generated report directory. Keep the live disposable server
