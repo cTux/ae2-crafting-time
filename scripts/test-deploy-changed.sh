@@ -89,14 +89,18 @@ assert_contains "$releaseDryRun" 'The total TTC now sits in the crafting status 
   "Release dry run did not create a categorized human-readable changelog"
 assert_contains "$releaseDryRun" 'dry-run next development version: 1.0.5' \
   "Release dry run did not advance the development version"
-assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: XxWD5pD3:required, Ck4E7v7R:optional, a1RwDz90:optional, IiATswDj:optional, E6BFl96N:optional, udZtKfzP:optional, anaGQD2Q:optional, 4inoel9g:optional, xr109llC:optional' \
-  "Release dry run did not include Forge Modrinth dependencies"
-assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: P7dR8mSH:required, XxWD5pD3:required, a1RwDz90:optional, E6BFl96N:optional' \
-  "Release dry run did not include Fabric Modrinth dependencies"
-assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: XxWD5pD3:required, Ck4E7v7R:optional, a1RwDz90:optional, IiATswDj:optional, rxYaglEe:optional, E6BFl96N:optional, 4inoel9g:optional, xr109llC:optional' \
-  "Release dry run did not include NeoForge Modrinth dependencies"
-assert_contains "$releaseDryRun" 'dry-run Modrinth dependencies: XxWD5pD3:required, Ck4E7v7R:optional, rxYaglEe:optional' \
-  "Release dry run did not include 26.1.2 NeoForge Modrinth dependencies"
+while IFS=$'\t' read -r row_id dependencies; do
+  dependencies="${dependencies%$'\r'}"
+  actual="$(printf '%s\n' "$releaseDryRun" | awk -v row="$row_id" '
+    index($0, "dry-run deploy " row ":") == 1 { active=1; next }
+    /^dry-run deploy / { active=0 }
+    active && /^dry-run Modrinth dependencies:/ { sub(/\r$/, ""); print; exit }
+  ')"
+  [[ "$actual" == "dry-run Modrinth dependencies: $dependencies" ]] || {
+    echo "Release dry run did not preserve $row_id Modrinth dependencies: $actual" >&2
+    exit 1
+  }
+done < <(jq -r '.[] | [.id, (.modrinthDependencies | map(.project_id + ":" + .dependency_type) | join(", "))] | @tsv' "$script_dir/release-matrix.json")
 if [ "$(printf '%s\n' "$releaseDryRun" | grep -cF 'dry-run CurseForge relations: applied-energistics-2:requiredDependency, guideme:optionalDependency')" -ne 3 ] || [ "$(printf '%s\n' "$releaseDryRun" | grep -cF 'data-energistics:optionalDependency')" -ne 1 ]; then
   echo "Release dry run did not scope GuideME CurseForge relations to supported targets" >&2
   exit 1

@@ -95,7 +95,8 @@ for ($index = 0; $index -lt $release.Count; $index++) {
         $modId
     })
     $curseMods = @($client.curseforge | Where-Object mod_id | ForEach-Object { [string]$_.mod_id })
-    $expectedRelease = @($metadata.Keys | Where-Object { $_ -notin $curseMods -or $projectByMod.ContainsKey($_) })
+    $modrinthMods = @($client.projects | Where-Object mod_id | ForEach-Object { [string]$_.mod_id })
+    $expectedRelease = @($metadata.Keys | Where-Object { $_ -notin $curseMods -or $_ -in $modrinthMods })
     Assert-SameSet $expectedRelease $released "$($row.id) loader metadata and release dependencies"
 
     foreach ($modId in $metadata.Keys) {
@@ -109,9 +110,9 @@ for ($index = 0; $index -lt $release.Count; $index++) {
             throw "docs/dependencies.md omits $($row.id) minimum $minimum for $modId"
         }
         $coverage = $coverageRows[$modId][1 + (2 * $index)].Trim('`')
-        $project = $client.projects | Where-Object { $_.mod_id -eq $modId -and $_.compatible -ne $false } | Select-Object -First 1
+        $project = $client.projects | Where-Object mod_id -eq $modId | Select-Object -First 1
         $curse = $client.curseforge | Where-Object mod_id -eq $modId | Select-Object -First 1
-        if ($project) {
+        if ($project -and (-not $curse -or $project.compatible -ne $false)) {
             $version = $client.compatible.versions | Where-Object project_id -eq $project.project_id | Select-Object -First 1
             if (-not $version -or $coverage -ne $version.version) { throw "$($row.id) coverage/version pin mismatch for $modId" }
         } elseif ($curse) {

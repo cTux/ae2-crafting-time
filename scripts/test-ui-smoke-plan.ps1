@@ -250,7 +250,8 @@ try {
     Assert ($advancedGraphs.Count -eq 3 -and @($advancedGraphs | Where-Object { $_.cases.Count -ne 5 }).Count -eq 0) 'AdvancedAE must repeat all provider status leaves on three targets'
     Assert ($full.targets[0].cases.Count -eq 43) 'Expanded Forge suite must contain 43 leaves'
     Assert ($full.targets[1].cases.Count -eq 25) 'Expanded Fabric suite must contain 25 leaves'
-    Assert ($full.targets[2].cases.Count -eq 38 -and 'neoeco-cpu' -cnotin $full.targets[2].cases -and
+    Assert ($full.targets[2].cases.Count -eq 39 -and 'data-energistics-cpu' -cin $full.targets[2].cases -and
+            'neoeco-cpu' -cnotin $full.targets[2].cases -and
             @($full.targets[2].graphs | Where-Object { $_.profile -eq 'latest' -or $_.id -eq 'udZtKfzP' }).Count -eq 0) `
         'Full compatible NeoForge suite must exclude NeoEco and latest graphs'
     Assert ($full.targets[3].cases.Count -eq 28) 'Expanded 26.1.2 suite must contain 28 leaves'
