@@ -12,6 +12,7 @@ if (-not $client) { throw "Unknown coverage target $Target" }
 $coverage = (Get-Content -LiteralPath (Join-Path $MatrixDirectory 'ui-smoke-coverage.json') -Raw | ConvertFrom-Json).$Target
 $suiteName = if ($Target -eq '26.1.2-neoforge') { 'neoforge-26.1.2' } else { $Target.Split('-')[1] }
 $scenarios = Get-Content -LiteralPath (Join-Path $MatrixDirectory "ui-smoke-$suiteName-suite.json") -Raw | ConvertFrom-Json
+$focused = (Get-Content -LiteralPath (Join-Path $MatrixDirectory 'ui-smoke-groups.json') -Raw | ConvertFrom-Json).focusedCases.$Target
 if ('standard-ae2' -notin $scenarios) { throw 'Missing required standard-ae2 scenario' }
 $projects = @($client.projects) + @($client.curseforge | Where-Object { $_ })
 if (Compare-Object @($projects | ForEach-Object { [string]$_.project_id }) @($coverage.psobject.Properties.Name)) {
@@ -32,7 +33,8 @@ foreach ($project in $projects) {
         $disposition = 'EXCLUDED'; $reason = $project.reason
         if (-not $reason) { throw "Excluded project lacks a reason: $id" }
     }
-    if ($disposition -notin @('EXCLUDED', 'FOCUSED_BEHAVIOR') -and $entry.scenario -notin $scenarios) {
+    if ($disposition -notin @('EXCLUDED', 'FOCUSED_BEHAVIOR') -and
+            $entry.scenario -cnotin $scenarios -and $entry.scenario -cnotin $focused) {
         throw "MISSING_FIXTURE: $id requires $($entry.scenario)"
     }
     [pscustomobject]@{ projectId = $id; name = $project.name; disposition = $disposition

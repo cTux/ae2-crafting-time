@@ -154,6 +154,9 @@ try {
         foreach ($project in $extraProjects) { Assert-Line $output "mod $project.jar" }
         $mods = Join-Path $temp "versions\$($entry.id)\run-dev\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
         $manifest = Get-Content -LiteralPath (Join-Path $mods ".ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
+        if ($entry.id -eq '1.21.1-neoforge' -and 'udZtKfzP.jar' -in $manifest) {
+            throw 'Known-crashing NeoEco leaked into the compatible NeoForge graph'
+        }
         $curseCount = @($entry.curseforge | Where-Object { $_ }).Count
         $driverCount = if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) { 1 } else { 0 }
         if ($manifest.Count -ne $compatibleProjects.Count + $extraProjects.Count + $curseCount + $driverCount) { throw "Unexpected compatible managed-mod count for $($entry.id)" }
@@ -175,6 +178,10 @@ try {
         }
         $latestMods = Join-Path $temp "versions\$($entry.id)\run-latest\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
         if (-not (Test-Path -LiteralPath (Join-Path $latestMods ".ae2-crafting-time-run-mods.json"))) { throw "Missing latest manifest for $($entry.id)" }
+        if ($entry.id -eq '1.21.1-neoforge' -and
+                'udZtKfzP.jar' -notin @(Get-Content -LiteralPath (Join-Path $latestMods '.ae2-crafting-time-run-mods.json') -Raw | ConvertFrom-Json)) {
+            throw 'NeoEco disappeared from the latest NeoForge diagnostic graph'
+        }
     }
 
     & $script -Target "1.20.1-fabric" -Root $temp -VersionMatrix $testMatrix -DriverScenario craft-plan `
@@ -247,6 +254,12 @@ try {
         throw "Expected an excluded focused project failure"
     } catch {
         if ($_.Exception.Message -ne "Focused project ayN3DZKb is excluded from the compatible profile") { throw }
+    }
+    try {
+        & $script -Target '1.21.1-neoforge' -Root $temp -VersionMatrix $testMatrix -ProjectId udZtKfzP -ResolveOnly 6>&1 | Out-Null
+        throw 'Expected NeoEco compatible-project rejection'
+    } catch {
+        if ($_.Exception.Message -ne 'Focused project udZtKfzP is excluded from the compatible profile') { throw }
     }
 
     $extraMatrix = Join-Path $temp "extra-dependencies.json"

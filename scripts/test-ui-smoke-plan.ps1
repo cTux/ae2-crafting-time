@@ -250,8 +250,15 @@ try {
     Assert ($advancedGraphs.Count -eq 3 -and @($advancedGraphs | Where-Object { $_.cases.Count -ne 5 }).Count -eq 0) 'AdvancedAE must repeat all provider status leaves on three targets'
     Assert ($full.targets[0].cases.Count -eq 43) 'Expanded Forge suite must contain 43 leaves'
     Assert ($full.targets[1].cases.Count -eq 25) 'Expanded Fabric suite must contain 25 leaves'
-    Assert ($full.targets[2].cases.Count -eq 39) 'Expanded NeoForge suite must contain 39 leaves'
+    Assert ($full.targets[2].cases.Count -eq 38 -and 'neoeco-cpu' -cnotin $full.targets[2].cases -and
+            @($full.targets[2].graphs | Where-Object { $_.profile -eq 'latest' -or $_.id -eq 'udZtKfzP' }).Count -eq 0) `
+        'Full compatible NeoForge suite must exclude NeoEco and latest graphs'
     Assert ($full.targets[3].cases.Count -eq 28) 'Expanded 26.1.2 suite must contain 28 leaves'
+    $neoecoLatest = & $planner -Repository $temp -Target '1.21.1-neoforge' -Scenario neoeco-cpu -Latest -ProjectId udZtKfzP
+    Assert ($neoecoLatest.targets[0].cases.Count -eq 1 -and $neoecoLatest.targets[0].graphs.Count -eq 1 -and
+            $neoecoLatest.targets[0].graphs[0].profile -eq 'latest' -and
+            $neoecoLatest.targets[0].graphs[0].projectId[0] -eq 'udZtKfzP') `
+        'Explicit latest NeoEco diagnostic must remain addressable'
     $channel = & $planner -Repository $temp -Scenario no-channel-status
     Assert (@($channel.targets.graphs | Where-Object id -eq 'rxYaglEe').Count -eq 3) 'Native base graph must not suppress later AdvancedAE targets'
     $nativeChannel = & $planner -Repository $temp -Scenario no-channel-status -BaseOnly

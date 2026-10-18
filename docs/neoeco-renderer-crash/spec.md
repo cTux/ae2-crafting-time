@@ -1,6 +1,6 @@
 # NeoEco renderer crash in the compatible smoke client
 
-Status: ready-to-implement
+Status: in-progress
 
 Scope: Quarantine the crashing NeoEco 21.1.1 development-client dependency on
 Minecraft 1.21.1 NeoForge and verify the remaining compatible catalogue.
@@ -8,6 +8,10 @@ Minecraft 1.21.1 NeoForge and verify the remaining compatible catalogue.
 Issue: [#627](https://github.com/cTux/ae2-crafting-time/issues/627)
 
 Planning: [Reviewed plan](implementation-plan.md) and [design](technical-design.md).
+
+Implementation: The compatible-client quarantine is being prepared on
+`codex/issue-627-neoeco`; its PR, full remaining catalogue, CI and visual review
+are pending.
 
 ## Problem and intended behavior
 

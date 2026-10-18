@@ -17,12 +17,21 @@ try {
                     throw 'Newest NeoEco requires separate runtime proof, never a passed or excluded legacy campaign'
                 }
             }
+            if ($target -eq '1.21.1-neoforge') {
+                $neoeco = $rows | Where-Object projectId -eq 'udZtKfzP'
+                if ($neoeco.disposition -cne $(if ($latest) { 'DIRECT_BEHAVIOR' } else { 'EXCLUDED' }) -or
+                        $neoeco.result -cne $(if ($latest) { 'NOT_RUN' } else { 'NOT_APPLICABLE' }) -or
+                        $neoeco.scenario -cne 'neoeco-cpu' -or ($latest -and $neoeco.reason) -or
+                        (!$latest -and !$neoeco.reason)) {
+                    throw 'NeoForge NeoEco coverage must be excluded in compatible and unqualified in latest'
+                }
+            }
             if ($expanded -and (($expanded.disposition -eq 'EXCLUDED') -eq $latest)) { throw 'Latest exclusion leaked from compatible' }
         }
     }
-    function Assert-Rejected([string]$expected) {
+    function Assert-Rejected([string]$expected, [string]$target = '1.20.1-forge', [bool]$latest = $false) {
         try {
-            & (Join-Path $PSScriptRoot 'get-ui-smoke-coverage.ps1') -Target '1.20.1-forge' -MatrixDirectory $temp | Out-Null
+            & (Join-Path $PSScriptRoot 'get-ui-smoke-coverage.ps1') -Target $target -Latest:$latest -MatrixDirectory $temp | Out-Null
         } catch {
             if ($_.Exception.Message -like "*$expected*") { return }
             throw
@@ -48,6 +57,26 @@ try {
     $coverage | ConvertTo-Json -Depth 10 | Set-Content $coveragePath
     Assert-Rejected 'MISSING_FIXTURE'
     Set-Content $coveragePath $original
+    $coverage = $original | ConvertFrom-Json
+    $coverage.'1.20.1-forge'.a1RwDz90.scenario = $coverage.'1.20.1-forge'.a1RwDz90.scenario.ToUpperInvariant()
+    $coverage | ConvertTo-Json -Depth 10 | Set-Content $coveragePath
+    Assert-Rejected 'MISSING_FIXTURE'
+    $coverage = $original | ConvertFrom-Json
+    $coverage.'1.21.1-neoforge'.udZtKfzP.scenario = 'NEOECO-CPU'
+    $coverage | ConvertTo-Json -Depth 10 | Set-Content $coveragePath
+    Assert-Rejected 'MISSING_FIXTURE' '1.21.1-neoforge' $true
+    Set-Content $coveragePath $original
+    $groupsPath = Join-Path $temp 'ui-smoke-groups.json'
+    $originalGroups = Get-Content -LiteralPath $groupsPath -Raw
+    $groups = $originalGroups | ConvertFrom-Json
+    $groups.focusedCases.'1.21.1-neoforge' = @($groups.focusedCases.'1.21.1-neoforge' | Where-Object { $_ -ne 'neoeco-cpu' })
+    $groups | ConvertTo-Json -Depth 20 | Set-Content $groupsPath
+    Assert-Rejected 'MISSING_FIXTURE' '1.21.1-neoforge' $true
+    $groups = $originalGroups | ConvertFrom-Json
+    $groups.focusedCases.'1.21.1-neoforge' = @('stale-neoeco-cpu')
+    $groups | ConvertTo-Json -Depth 20 | Set-Content $groupsPath
+    Assert-Rejected 'Unknown focused case' '1.21.1-neoforge' $true
+    Set-Content $groupsPath $originalGroups
     @($targets | Select-Object -Skip 1) | ConvertTo-Json -Depth 10 | Set-Content (Join-Path $temp 'release-matrix.json')
     Assert-Rejected 'target matrices differ'
     Write-Host 'UI smoke coverage checks passed'
