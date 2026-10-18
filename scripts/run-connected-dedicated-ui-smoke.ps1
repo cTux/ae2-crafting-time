@@ -178,17 +178,50 @@ if (!(Test-Path -LiteralPath $java -PathType Leaf)) { throw "Java executable is 
 $campaignId = [guid]::NewGuid().ToString('N')
 $connectionEpoch = [guid]::NewGuid().ToString('N')
 $connectionFixture = [guid]::NewGuid().ToString('N')
+function Assert-ConnectedCopyLengths([string]$Source, [string]$Destination) {
+    foreach ($entry in @(Get-Item -LiteralPath $Source) + @(Get-ChildItem -LiteralPath $Source -Recurse -Force)) {
+        $relative = $entry.FullName.Substring($Source.TrimEnd('\').Length).TrimStart('\')
+        $path = if ($relative) { Join-Path $Destination $relative } else { $Destination }
+        $limit = if ($entry.PSIsContainer) { 248 } else { 260 }
+        if ($path.Length -ge $limit) { throw "Temporary server path exceeds the Windows PowerShell 5.1 limit: $path" }
+    }
+}
 
 # All inputs are validated before the disposable copy is created or mutated.
 New-Item -ItemType Directory -Path $report -Force | Out-Null
 $runtimeRoot = Join-Path $report 'runtime'
-$server = Join-Path $runtimeRoot "server-$Target"
+$archiveServer = Join-Path $runtimeRoot "server-$Target"
+$workspace = Join-Path ([IO.Path]::GetTempPath()) "ae2ct-$campaignId"
+$ownerPath = Join-Path $workspace 'ownership.json'
+$server = Join-Path $workspace "server-$Target"
 $resolvedRuntime = [IO.Path]::GetFullPath($runtimeRoot)
 $resolvedServer = [IO.Path]::GetFullPath($server)
-if (!$resolvedServer.StartsWith($resolvedRuntime.TrimEnd('\') + '\', [StringComparison]::OrdinalIgnoreCase)) {
-    throw 'Disposable server path escapes the report runtime directory'
+$serverProcess = $null
+$workspaceAllocated = $false
+$runFailure = $null
+$shutdownFailure = $null
+$archiveFailure = $null
+try {
+Assert-DedicatedRoots @($workspace) @($sourceServer,$bundle,$report) | Out-Null
+if (Test-Path -LiteralPath $workspace) { throw "Temporary server workspace already exists: $workspace" }
+Assert-ConnectedCopyLengths $sourceServer $resolvedServer
+foreach ($relative in @('ownership.json',"server-$Target/eula.txt","server-$Target/server.properties",
+        "server-$Target/logs/latest.log","server-$Target/ae2ct-cpu-list-connected/level.dat") +
+        @($artifacts | ForEach-Object { "server-$Target/mods/$($_.name)" })) {
+    if ((Join-Path $workspace $relative).Length -ge 260) {
+        throw "Temporary server path exceeds the Windows PowerShell 5.1 limit: $relative"
+    }
 }
-New-Item -ItemType Directory -Path $runtimeRoot -Force | Out-Null
+foreach ($relative in @("server-$Target/mods","server-$Target/logs","server-$Target/ae2ct-cpu-list-connected")) {
+    if ((Join-Path $workspace $relative).Length -ge 248) {
+        throw "Temporary server directory exceeds the Windows PowerShell 5.1 limit: $relative"
+    }
+}
+New-Item -ItemType Directory -Path $workspace | Out-Null
+$workspaceAllocated = $true
+[ordered]@{schema=1;campaignId=$campaignId;report=$report;server=$resolvedServer} |
+    ConvertTo-Json | Set-Content -LiteralPath $ownerPath -Encoding UTF8
+Assert-DedicatedPath $workspace -Tree | Out-Null
 Copy-Item -LiteralPath $sourceServer -Destination $resolvedServer -Recurse
 if ($provisionedSource) {
     Assert-DedicatedSeal $resolvedServer | Out-Null
@@ -228,6 +261,7 @@ if ($ObservationMode) {
         $nativeMarker.levelDatSha256 -ine (Get-FileHash -LiteralPath (Join-Path $nativeWorld 'level.dat') -Algorithm SHA256).Hash) {
         throw 'Native world identity or reviewed registry-clean attestation failed'
     }
+    Assert-ConnectedCopyLengths $nativeWorld $copiedWorld
     Copy-Item -LiteralPath $nativeWorld -Destination $copiedWorld -Recurse
 }
 
@@ -243,6 +277,7 @@ if (!$ObservationMode -or $serverInstalled) {
     foreach ($artifact in $artifacts) { Copy-Item -LiteralPath $artifact.path -Destination (Join-Path $mods $artifact.name) }
 }
 [ordered]@{ target=$Target; sourceServer=$sourceServer; disposableServer=$resolvedServer
+    archiveServer=$archiveServer
     artifacts=@($artifacts | ForEach-Object { [ordered]@{name=$_.name;sha256=$_.sha256} })
     dependencies=@(Get-ChildItem -LiteralPath $mods -File -Filter '*.jar' | Sort-Object Name | ForEach-Object {
         [ordered]@{name=$_.Name;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
@@ -302,7 +337,7 @@ $sourceIdentity = [ordered]@{ markerSha256=(Get-FileHash -LiteralPath $markerPat
     dependencies=$sourceDependencies;provisioned=$provisionedSource
     provisioning=$(if($provisionedSource){$marker.provisioning}else{$null}) }
 $runnerPlan = [ordered]@{ target=$Target; headSha=$HeadSha; campaignId=$campaignId; connectionEpoch=$connectionEpoch; resourceFixture=$connectionFixture
-    sourceServer=$sourceServer; disposableServer=$resolvedServer; java=$java
+    sourceServer=$sourceServer; disposableServer=$resolvedServer; archiveServer=$archiveServer; java=$java
     sourceIdentity=$sourceIdentity; relaunch=[ordered]@{required=($Scenario -eq 'cpu-list-total-ttc');minimumProcesses=$(if ($Scenario -eq 'cpu-list-total-ttc') { 2 } else { 1 })}
     scheduledJava=$ScheduledJava.IsPresent; interactiveUser=$InteractiveUser
     argumentFile=$argsFile; arguments=$serverArgs; launchArguments=$launchArguments
@@ -473,6 +508,7 @@ try {
             '"' + ($_ -replace '(\\*)"', '$1$1\"' -replace '(\\+)$', '$1$1') + '"'
         }) -join ' '
         $serverProcess.Dispose()
+        $serverProcess = $null
         $serverProcess = Start-Process -FilePath $java -ArgumentList $phase2Line -WorkingDirectory $resolvedServer `
             -PassThru -WindowStyle Hidden -RedirectStandardOutput (Join-Path $report 'server-phase-2.stdout.log') `
             -RedirectStandardError (Join-Path $report 'server-phase-2.stderr.log')
@@ -752,11 +788,12 @@ try {
         Copy-Item -LiteralPath (Join-Path $control 'state.properties') -Destination (Join-Path $report 'server-estimates.properties')
     }
 } catch {
-    Stop-RetainedObservationClient
-    throw
+    $runFailure = $_
+    try { Stop-RetainedObservationClient } catch { $shutdownFailure = $_ }
 } finally {
+    try {
     if ($Scenario -eq 'crafting-suspension') { Stop-OwnedSuspensionClients }
-    if ($ObservationMode -and !$serverProcess.HasExited) {
+    if ($serverProcess -and $ObservationMode -and !$serverProcess.HasExited) {
         try {
             & (Join-Path $PSScriptRoot 'stop-observation-server.ps1') -Port ($serverPort + 1) -Password $rconPassword
             if (!$serverProcess.WaitForExit(60000)) { throw 'Dedicated server did not stop within 60 seconds' }
@@ -767,8 +804,9 @@ try {
             if (!$serverProcess.HasExited) { $serverProcess.Kill(); $serverProcess.WaitForExit() }
             throw
         }
-    } elseif (!$serverProcess.HasExited) { $serverProcess.Kill(); $serverProcess.WaitForExit() }
-    $serverProcess.Dispose()
+    } elseif ($serverProcess -and !$serverProcess.HasExited) { $serverProcess.Kill(); $serverProcess.WaitForExit() }
+    if ($serverProcess) { $serverProcess.Dispose() }
+    $serverProcess = $null
     if ($Prewarm) {
         $prewarmDirectory = Join-Path $control 'prewarm'
         $receipts = @(Get-ChildItem -LiteralPath $prewarmDirectory -File -ErrorAction SilentlyContinue | ForEach-Object {
@@ -786,4 +824,63 @@ try {
             ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $report 'prewarm-evidence.json') -Encoding UTF8
     }
     if ($provisionedSource) { Assert-DedicatedSeal $sourceServer | Out-Null }
+    } catch { $shutdownFailure = $_ }
 }
+} catch {
+    if ($runFailure) { $shutdownFailure = $_ } else { $runFailure = $_ }
+} finally {
+    $archiveStatus = 'not-created'
+    try {
+        if ($serverProcess) {
+            if (!$serverProcess.HasExited) { $serverProcess.Kill(); $serverProcess.WaitForExit() }
+            $serverProcess.Dispose()
+            $serverProcess = $null
+        }
+        if ($shutdownFailure) { throw "Owned-process cleanup failed: $($shutdownFailure.Exception.Message)" }
+        if ($workspaceAllocated -and (Test-Path -LiteralPath $workspace)) {
+            Assert-DedicatedPath $workspace -Tree | Out-Null
+            $owner = Get-Content -LiteralPath $ownerPath -Raw | ConvertFrom-Json
+            if ($owner.schema -ne 1 -or $owner.campaignId -cne $campaignId -or
+                    $owner.report -ine $report -or $owner.server -ine $resolvedServer -or
+                    $resolvedServer -ine (Join-Path $workspace "server-$Target")) {
+                throw 'Temporary server workspace ownership changed'
+            }
+            if (Test-Path -LiteralPath $resolvedServer -PathType Container) {
+                Assert-DedicatedPath $archiveServer | Out-Null
+                New-Item -ItemType Directory -Path $runtimeRoot -Force | Out-Null
+                & robocopy.exe $resolvedServer $archiveServer /E /COPY:DAT /DCOPY:DAT /R:0 /W:0 /XJ | Out-Null
+                if ($LASTEXITCODE -lt 0 -or $LASTEXITCODE -gt 7 -or
+                        !(Test-Path -LiteralPath $archiveServer -PathType Container)) {
+                    throw "Temporary server archive failed (robocopy exit $LASTEXITCODE)"
+                }
+                $archiveStatus = 'archived'
+                Assert-DedicatedPath $workspace -Tree | Out-Null
+                $owner = Get-Content -LiteralPath $ownerPath -Raw | ConvertFrom-Json
+                if ($owner.campaignId -cne $campaignId -or $owner.report -ine $report -or
+                        $owner.server -ine $resolvedServer) { throw 'Temporary server workspace ownership changed before cleanup' }
+                Remove-Item -LiteralPath $workspace -Recurse -Force
+            } else { $archiveStatus = 'no-server-tree' }
+        }
+    } catch {
+        $archiveFailure = $_
+        $archiveStatus = 'failed'
+    }
+    $receiptFailure = $null
+    try {
+        [ordered]@{schema=1;campaignId=$campaignId;workspace=$workspace;archiveServer=$archiveServer
+            status=$archiveStatus;workspaceRetained=(Test-Path -LiteralPath $workspace)
+            error=$(if($archiveFailure){$archiveFailure.Exception.Message}else{$null})} |
+            ConvertTo-Json | Set-Content -LiteralPath (Join-Path $report 'connected-server-archive.json') -Encoding UTF8
+    } catch { $receiptFailure = $_ }
+    if ($archiveFailure -or $receiptFailure) {
+        $reason = if ($runFailure) { "$($runFailure.Exception.Message); " } else { '' }
+        $shutdown = if ($shutdownFailure) { "shutdown: $($shutdownFailure.Exception.Message); " } else { '' }
+        $archiveError = if ($archiveFailure) { $archiveFailure.Exception.Message } else { '' }
+        $receiptError = if ($receiptFailure) { "receipt: $($receiptFailure.Exception.Message)" } else { '' }
+        throw "${reason}${shutdown}Temporary server archive/cleanup failed; workspace: $workspace (retained=$(Test-Path -LiteralPath $workspace)); $archiveError $receiptError"
+    }
+}
+if ($runFailure -and $shutdownFailure) {
+    throw "$($runFailure.Exception.Message); shutdown: $($shutdownFailure.Exception.Message)"
+}
+if ($runFailure) { throw $runFailure }
