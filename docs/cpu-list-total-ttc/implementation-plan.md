@@ -2,6 +2,9 @@
 
 Lifecycle: see the [scope status and evidence](spec.md).
 
+The [restart recovery plan](restart/implementation-plan.md) owns #636's focused
+checks separately from this original acceptance scope.
+
 Historical planning status: implementation in progress in [PR #381](https://github.com/cTux/ae2-crafting-time/pull/381).
 [Issue #324](https://github.com/cTux/ae2-crafting-time/issues/324) remains the
 implementation tracker until the change and its evidence are accepted.

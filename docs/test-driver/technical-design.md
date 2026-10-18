@@ -1,5 +1,19 @@
 # AE2 Crafting Time Test Driver Technical Design
 
+## Unchanged-job restart recovery (#636)
+
+Scope/status: [restart recovery](../cpu-list-total-ttc/restart/spec.md).
+
+Extend existing CPU server observations/continuations with crafting-link UUIDs.
+Remove `requiresJobRefresh`/`restartSecondCpu` from rejoin/relaunch recovery;
+retain intentional replacement as a separate test. Preserve first-response
+holding and fresh card/title checks, and require all expected known jobs to
+recover. Enable/verify persistent fixture wiring and remove positional graph
+rebinding from the proof path. Reuse the current launcher and continuation
+contract. Add tests for unchanged identity, missing recovery and accepted-output
+progress. Follow the [plan](../cpu-list-total-ttc/restart/implementation-plan.md)
+for exact runtime scope; the existing addon fixture is not a restart runner.
+
 ## Short connected server paths (#632)
 
 Lifecycle and criteria: [spec](spec.md#short-connected-server-paths-632).
