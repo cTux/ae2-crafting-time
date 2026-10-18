@@ -219,8 +219,9 @@ try {
             & $script @params 6>&1 | Out-Null
             $leaf = if ($focusedTarget -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' }
             $focusedMods = @(Get-Content (Join-Path $focusedRuntime "$leaf/.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json)
-            if ($focusedMods.Count -ne 2 -or @($focusedMods | Where-Object { $_ -eq 'JiOqfoFM.jar' }).Count -ne 1 -or
-                    'xr109llC.jar' -notin $focusedMods) {
+            $driver = "ae2-crafting-time-$modVersion-$(if ($focusedTarget -eq '1.20.1-forge') { 'forge-1.20.1' } else { 'neoforge-1.21.1' })-test-driver.jar"
+            if ($focusedMods.Count -ne 3 -or @($focusedMods | Where-Object { $_ -eq 'JiOqfoFM.jar' }).Count -ne 1 -or
+                    'xr109llC.jar' -notin $focusedMods -or $driver -notin $focusedMods) {
                 throw "Focused ExtendedAE-Plus graph included missing, duplicate, or unrelated projects for $focusedTarget (latest=$latestProfile): $($focusedMods -join ', ')"
             }
             foreach ($project in @('xr109llC', 'JiOqfoFM')) {
