@@ -85,6 +85,10 @@ $availableProjects = @($matrixEntry.projects.project_id | ForEach-Object { [stri
 foreach ($requestedProject in $requestedProjects) {
     if ($requestedProject -notin $availableProjects) { throw "Unknown project $requestedProject for $Target" }
 }
+if (-not $Latest) {
+    $excludedCurse = @($matrixEntry.curseforge | Where-Object { $_.compatible -eq $false -and [string]$_.project_id -in $requestedProjects })
+    if ($excludedCurse) { throw "Focused project $($excludedCurse[0].project_id) is excluded from the compatible profile" }
+}
 foreach ($replacement in @($matrixEntry.curseforge | Where-Object {
     -not $BaseOnly -and $_.replaces_project_id -and
         ($requestedProjects.Count -eq 0 -or [string]$_.project_id -in $requestedProjects)
@@ -202,7 +206,7 @@ if ($BaseOnly) {
         }
     }
 } else {
-    foreach ($dependency in @($matrixEntry.curseforge | Where-Object { $_ -and ($Latest -or $_.compatible_full_profile -ne $false) })) {
+    foreach ($dependency in @($matrixEntry.curseforge | Where-Object { $_ -and ($Latest -or ($_.compatible -ne $false -and $_.compatible_full_profile -ne $false)) })) {
         $null = $curseforgeProjects.Add([string]$dependency.project_id)
     }
 }

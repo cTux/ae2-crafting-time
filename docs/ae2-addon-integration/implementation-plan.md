@@ -435,7 +435,9 @@ Follow [DE-01 through DE-06](spec.md#data-energistics-qualification), the
    (c) `-ProjectId 1565514 -Scenario data-energistics-cpu` for adaptive dispatch;
    (d) largest compatible Data-containing graph with `-Scenario craft-lifecycle`
    and explicit compatible project IDs except Lightning Tech/Thunderbolt Core
-   (their metadata rejects Data; #742), for coexistence and prerequisite pin
+   (their metadata rejects Data; #742) and OmniSequence 1.3.9-hotfix
+   (its removed AE2 UI injection fails; replacement qualification is held in
+   #459), for coexistence and prerequisite pin
    qualification; (e) focused Data
    `standard-status-controls` for the known Status injection boundary; and
    (f) `-ProjectId 1086241 -Scenario crafting-tree-screen` for the required
@@ -458,7 +460,7 @@ Follow [DE-01 through DE-06](spec.md#data-energistics-qualification), the
    with merged implementation and DE-01 through DE-06 evidence; otherwise name
    the remaining gate. Positive targeted runs are not full-suite qualification.
 
-Plan six clean scenario runs plus bounded diagnostic retries. Measure cold startup
+Plan eight clean scenario runs plus bounded diagnostic retries. Measure cold startup
 and progress before setting the runtime budget; never rerun a full matrix as a
 debugging loop. Missing artifacts or an unsatisfied optional version constraint
 are setup failures, not passing absent/present evidence.

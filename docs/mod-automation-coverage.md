@@ -25,6 +25,12 @@ what their evidence does and does not prove.
   ([#742](https://github.com/cTux/ae2-crafting-time/issues/742)). These checks do
   not qualify the complete UI suite or Trinity CPUs.
 
+NeoForge OmniSequence 1.3.9-hotfix is excluded from compatible runs: its
+`CPUSelectionList.formatStorage` injection fails with AE2 19.2.18. The latest
+diagnostic entry remains available; the replacement prerequisite stack stays
+deferred in [#459](https://github.com/cTux/ae2-crafting-time/issues/459). Forge
+coverage is unchanged.
+
 ## Versioned adapter verification
 
 Issue [#210](https://github.com/cTux/ae2-crafting-time/issues/210) adds the selector,

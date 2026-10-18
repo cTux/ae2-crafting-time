@@ -41,7 +41,7 @@ exit /b 0
 $testMatrix = Join-Path $temp "run-client-versions.json"
 foreach ($entry in $matrix) {
     foreach ($dependency in @($entry.curseforge | Where-Object { $_ })) {
-        $dependency.compatible.sha512 = $hash
+        if ($dependency.compatible -isnot [bool]) { $dependency.compatible.sha512 = $hash }
         $dependency.latest.sha512 = $hash
     }
 }
@@ -156,7 +156,7 @@ try {
             $_.compatible -ne $false -and $_.project_id -notin $replacedProjects
         })
         foreach ($project in $compatibleProjects.project_id) { Assert-Line $output "mod $project.jar" }
-        $compatibleCurse = @($entry.curseforge | Where-Object { $_ -and $_.compatible_full_profile -ne $false })
+        $compatibleCurse = @($entry.curseforge | Where-Object { $_ -and $_.compatible -ne $false -and $_.compatible_full_profile -ne $false })
         $extraProjects = @(@($compatibleCurse.modrinth_dependencies) + @($entry.projects.modrinth_dependencies) | Where-Object {
             $_ -and $_ -notin $compatibleProjects.project_id
         } | Sort-Object -Unique)
@@ -168,6 +168,9 @@ try {
         }
         if ($entry.id -eq '1.21.1-neoforge' -and 'data_energistics-1.21.1-3.3.5.jar' -in $manifest) {
             throw 'Data Energistics leaked into the incompatible full NeoForge graph'
+        }
+        if ($entry.id -eq '1.21.1-neoforge' -and 'omnisequence-transfinite-1.3.9-hotfix.jar' -in $manifest) {
+            throw 'Excluded OmniSequence leaked into the compatible NeoForge graph'
         }
         $curseCount = $compatibleCurse.Count
         $driverCount = if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) { 1 } else { 0 }
@@ -197,6 +200,9 @@ try {
         }
         if ($entry.id -eq '1.21.1-neoforge' -and 'data_energistics-1.21.1-3.3.5.jar' -notin $latestManifest) {
             throw 'Data Energistics disappeared from the latest NeoForge diagnostic graph'
+        }
+        if ($entry.id -eq '1.21.1-neoforge' -and 'omnisequence-transfinite-1.3.9-hotfix.jar' -notin $latestManifest) {
+            throw 'OmniSequence disappeared from the latest NeoForge diagnostic graph'
         }
     }
 
@@ -324,6 +330,12 @@ try {
         throw 'Expected NeoEco compatible-project rejection'
     } catch {
         if ($_.Exception.Message -ne 'Focused project udZtKfzP is excluded from the compatible profile') { throw }
+    }
+    try {
+        & $script -Target '1.21.1-neoforge' -Root $temp -VersionMatrix $testMatrix -ProjectId 1624558 -ResolveOnly 6>&1 | Out-Null
+        throw 'Expected compatible OmniSequence project rejection'
+    } catch {
+        if ($_.Exception.Message -ne 'Focused project 1624558 is excluded from the compatible profile') { throw }
     }
 
     $extraMatrix = Join-Path $temp "extra-dependencies.json"

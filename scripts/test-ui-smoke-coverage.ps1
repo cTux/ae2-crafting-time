@@ -18,6 +18,13 @@ try {
                 }
             }
             if ($target -eq '1.21.1-neoforge') {
+                $omni = $rows | Where-Object projectId -eq '1624558'
+                if ($omni.disposition -cne $(if ($latest) { 'DIRECT_BEHAVIOR' } else { 'EXCLUDED' }) -or
+                        $omni.result -cne $(if ($latest) { 'NOT_RUN' } else { 'NOT_APPLICABLE' }) -or
+                        $omni.scenario -cne 'omnisequence-cpu' -or ($latest -and $omni.reason) -or
+                        (!$latest -and !$omni.reason)) {
+                    throw 'NeoForge OmniSequence coverage must be excluded in compatible and available in latest'
+                }
                 $neoeco = $rows | Where-Object projectId -eq 'udZtKfzP'
                 if ($neoeco.disposition -cne $(if ($latest) { 'DIRECT_BEHAVIOR' } else { 'EXCLUDED' }) -or
                         $neoeco.result -cne $(if ($latest) { 'NOT_RUN' } else { 'NOT_APPLICABLE' }) -or

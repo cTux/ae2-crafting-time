@@ -632,8 +632,12 @@ with every version. Keep Data's artifact in the compatible inventory but outside
 the default primary profile. Reuse `FOCUSED_BEHAVIOR` for its compatible graph,
 including native lifecycle and Status checks. The planner considers CurseForge
 entries as well as Modrinth entries. An explicit Data-containing combined graph
-omits only the two declared conflicts; the existing Lightning Tech primary graph
-and latest diagnostic inventory remain available. See
+omits the two declared conflicts and OmniSequence 1.3.9-hotfix, whose
+`CPUSelectionList.formatStorage` injection fails under AE2 19.2.18. Keep that
+OmniSequence pin outside NeoForge's compatible graph and preserve its latest
+diagnostic entry; the replacement dependency stack remains deferred in
+[#459](https://github.com/cTux/ae2-crafting-time/issues/459). Forge is unchanged.
+The existing Lightning Tech primary graph remains available. See
 [#742](https://github.com/cTux/ae2-crafting-time/issues/742).
 
 At that source revision, `AdaptivePatternProviderBlockEntity` extends AE2's

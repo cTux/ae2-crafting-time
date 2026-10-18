@@ -103,11 +103,15 @@ while IFS= read -r target; do
     if printf '%s\n' "$output" | grep -qxF 'mod data_energistics-1.21.1-3.3.5.jar'; then
       echo 'Data Energistics leaked into the incompatible full NeoForge graph' >&2; exit 1
     fi
+    if printf '%s\n' "$output" | grep -qxF 'mod omnisequence-transfinite-1.3.9-hotfix.jar'; then
+      echo 'OmniSequence leaked into the incompatible full NeoForge graph' >&2; exit 1
+    fi
   fi
   output="$("$script" -Target "$target" -Root "$temp" -VersionMatrix "$test_matrix" -Latest -ResolveOnly 2>&1)"
   assert_line "$output" "profile latest"
   if [ "$target" = "1.21.1-neoforge" ]; then
     assert_line "$output" 'mod data_energistics-1.21.1-3.3.5.jar'
+    assert_line "$output" 'mod omnisequence-transfinite-1.3.9-hotfix.jar'
   fi
   if [ "$target" = "1.20.1-forge" ]; then
     assert_line "$output" 'mod applied-botanics-forge-1.5.2.jar'

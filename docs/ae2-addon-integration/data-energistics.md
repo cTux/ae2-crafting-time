@@ -27,6 +27,11 @@ that loader rejection. Preserve their existing primary profile and qualify Data
 Energistics separately; never strip the declarations. Coexistence is tracked in
 [#742](https://github.com/cTux/ae2-crafting-time/issues/742).
 
+OmniSequence 1.3.9-hotfix also fails its removed `CPUSelectionList.formatStorage`
+injection with AE2 19.2.18. It is excluded from the NeoForge compatible graph;
+its replacement prerequisite stack remains deferred in
+[#459](https://github.com/cTux/ae2-crafting-time/issues/459). Forge is unchanged.
+
 ## Requested support
 
 List Data Energistics as optional for the 1.21.1 NeoForge release, and document
