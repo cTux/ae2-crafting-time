@@ -595,3 +595,72 @@ The release matrix remains authoritative for published targets and platform
 dependency metadata. A regression check requires the run-client matrix to have
 exactly the same target IDs, but development candidates do not become published
 optional dependencies merely by appearing in a run profile.
+
+## Data Energistics qualification
+
+See [DE-01 through DE-06](spec.md#data-energistics-qualification) and the
+[scope status](data-energistics.md).
+
+The missing integration is metadata, client inventory and qualification, not a
+proven profiler defect. Before this change, `AddonCpuFixture.FIXTURES` had no Data Energistics entry.
+`NativeCpuFixture` already creates/selects native CPUs, and `CraftPlanScenario`
+already proves dispatch, completion, profile samples and reopened Plan estimates.
+`StandardAe2Scenario`'s `craft-lifecycle` leaf adds native Status and output checks;
+use it for ordinary absent/present comparisons rather than treating the generic
+addon scenario as Status proof.
+
+Official [3.3.5 release](https://github.com/ModularMCLib/DataEnergistics/releases/tag/v3.3.5-1.21)
+source is commit `9eefdd72b8fde5c88d26642ae152b420ecd24135`.
+CurseForge project `1565514`, [file 9095664](https://www.curseforge.com/minecraft/mc-mods/data-energistics/files/9095664),
+`data_energistics-1.21.1-3.3.5.jar`, matches GitHub asset `620601240`:
+SHA-256 `f17f15068a638c59c1d3600c83a259ab24757e4a271d82112e1f421618bd58d0`.
+Its packaged metadata requires AE2 `19.2.18+`, LDLib2 `2.2.40+` and embedded
+Configuration `3.1.1-neoforge` below 4. JEI is optional, but installed JEI must be
+`19.56.0.438+`. The current compatible AE2 `19.2.17` and JEI `19.51.0.417`
+therefore cannot qualify this addon. Inspect every installed optional constraint
+in the packaged metadata during resolution, including Crafting Tree's minimum;
+resolve actual conflicts before running the combined graph. JEI's required
+MezzConfig library is pinned to `0.6.8` (`idpM3DKC`).
+ExtendedAE-Plus `1.6.2` crashes with that JEI version because its bookmark mixin
+references the removed `mezz.jei.gui.input` classes. Pin `1.6.3` (`AtuOmKkV`),
+whose [upstream fix](https://github.com/GaLicn/ExtendedAE_Plus/commit/389c8e44dc9de0a7d1a31b9d3ad7640f60cde5ff)
+uses `mezz.jei.common.input`; both classes and the invoked constructor exist in
+the exact JEI `19.56.0.438` artifact. Its other required metadata is unchanged.
+
+AE2 Lightning Tech and Thunderbolt Core declare Data Energistics incompatible
+with every version. Keep Data's artifact in the compatible inventory but outside
+the default primary profile. Reuse `FOCUSED_BEHAVIOR` for its compatible graph,
+including native lifecycle and Status checks. The planner considers CurseForge
+entries as well as Modrinth entries. An explicit Data-containing combined graph
+omits the two declared conflicts and OmniSequence 1.3.9-hotfix, whose
+`CPUSelectionList.formatStorage` injection fails under AE2 19.2.18. Keep that
+OmniSequence pin outside NeoForge's compatible graph and preserve its latest
+diagnostic entry; the replacement dependency stack remains deferred in
+[#459](https://github.com/cTux/ae2-crafting-time/issues/459). Forge is unchanged.
+The existing Lightning Tech primary graph remains available. See
+[#742](https://github.com/cTux/ae2-crafting-time/issues/742).
+
+At that source revision, `AdaptivePatternProviderBlockEntity` extends AE2's
+`PatternProviderBlockEntity`, exposes `getProviderInventory()`, and owns
+`AdaptivePatternProviderLogic`, a `PatternProviderLogic` subclass. Install an
+AE2 provider stack through that inventory, load a processing pattern into the
+provider's actual pattern inventory, and preserve the real furnace/output-return
+path. Lazy fixture loading and a test-driver-only compile dependency keep these
+classes out of absent-addon startup and production artifacts. Reuse the current
+CPU fixture/state machine; do not add a second runner or fake output completion.
+Trace dispatch through the existing `CraftingCpuLogicMixin` and profiler bridge;
+counted/reusable dispatch and Trinity execution are separate source-audit paths,
+not evidence that native CPU profiling is broken.
+
+Publishing currently constructs CurseForge relations in both
+`scripts/deploy-changed.ps1` and `scripts/deploy-changed.sh`. Add the target-scoped
+`data-energistics:optionalDependency` relation to both construction and dry-run
+output, preserving AE2/GuideME relations. No verified Modrinth identity is assumed.
+Use existing release self-checks to assert presence on 1.21.1 and absence elsewhere;
+no upload is needed to prove this metadata.
+
+The prepared target, host Java 21, existing VM dispatcher, fixture markers and
+NeoForge 21.1.251 installation exist. Use the matching version-child launch
+manifest, not the older root manifest. The only new runtime fixture is the small
+provider substitution authorized by #518; no new VM or launcher infrastructure
+is planned. Follow the canonical scope status for measured runtime results.

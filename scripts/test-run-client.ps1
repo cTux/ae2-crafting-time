@@ -41,7 +41,7 @@ exit /b 0
 $testMatrix = Join-Path $temp "run-client-versions.json"
 foreach ($entry in $matrix) {
     foreach ($dependency in @($entry.curseforge | Where-Object { $_ })) {
-        $dependency.compatible.sha512 = $hash
+        if ($dependency.compatible -isnot [bool]) { $dependency.compatible.sha512 = $hash }
         $dependency.latest.sha512 = $hash
     }
 }
@@ -156,7 +156,8 @@ try {
             $_.compatible -ne $false -and $_.project_id -notin $replacedProjects
         })
         foreach ($project in $compatibleProjects.project_id) { Assert-Line $output "mod $project.jar" }
-        $extraProjects = @(@($entry.curseforge.modrinth_dependencies) + @($entry.projects.modrinth_dependencies) | Where-Object {
+        $compatibleCurse = @($entry.curseforge | Where-Object { $_ -and $_.compatible -ne $false -and $_.compatible_full_profile -ne $false })
+        $extraProjects = @(@($compatibleCurse.modrinth_dependencies) + @($entry.projects.modrinth_dependencies) | Where-Object {
             $_ -and $_ -notin $compatibleProjects.project_id
         } | Sort-Object -Unique)
         foreach ($project in $extraProjects) { Assert-Line $output "mod $project.jar" }
@@ -165,7 +166,13 @@ try {
         if ($entry.id -eq '1.21.1-neoforge' -and 'udZtKfzP.jar' -in $manifest) {
             throw 'Known-crashing NeoEco leaked into the compatible NeoForge graph'
         }
-        $curseCount = @($entry.curseforge | Where-Object { $_ }).Count
+        if ($entry.id -eq '1.21.1-neoforge' -and 'data_energistics-1.21.1-3.3.5.jar' -in $manifest) {
+            throw 'Data Energistics leaked into the incompatible full NeoForge graph'
+        }
+        if ($entry.id -eq '1.21.1-neoforge' -and 'omnisequence-transfinite-1.3.9-hotfix.jar' -in $manifest) {
+            throw 'Excluded OmniSequence leaked into the compatible NeoForge graph'
+        }
+        $curseCount = $compatibleCurse.Count
         $driverCount = if ($entry.id -in @("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) { 1 } else { 0 }
         if ($manifest.Count -ne $compatibleProjects.Count + $extraProjects.Count + $curseCount + $driverCount) { throw "Unexpected compatible managed-mod count for $($entry.id)" }
         foreach ($project in $replacedProjects) {
@@ -186,9 +193,16 @@ try {
         }
         $latestMods = Join-Path $temp "versions\$($entry.id)\run-latest\$(if ($entry.id -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' })"
         if (-not (Test-Path -LiteralPath (Join-Path $latestMods ".ae2-crafting-time-run-mods.json"))) { throw "Missing latest manifest for $($entry.id)" }
-        if ($entry.id -eq '1.21.1-neoforge' -and
-                'udZtKfzP.jar' -notin @(Get-Content -LiteralPath (Join-Path $latestMods '.ae2-crafting-time-run-mods.json') -Raw | ConvertFrom-Json)) {
+        $latestManifest = @((Get-Content -LiteralPath (Join-Path $latestMods '.ae2-crafting-time-run-mods.json') -Raw |
+            ConvertFrom-Json).ForEach({ [string]$_ }))
+        if ($entry.id -eq '1.21.1-neoforge' -and 'udZtKfzP.jar' -notin $latestManifest) {
             throw 'NeoEco disappeared from the latest NeoForge diagnostic graph'
+        }
+        if ($entry.id -eq '1.21.1-neoforge' -and 'data_energistics-1.21.1-3.3.5.jar' -notin $latestManifest) {
+            throw 'Data Energistics disappeared from the latest NeoForge diagnostic graph'
+        }
+        if ($entry.id -eq '1.21.1-neoforge' -and 'omnisequence-transfinite-1.3.9-hotfix.jar' -notin $latestManifest) {
+            throw 'OmniSequence disappeared from the latest NeoForge diagnostic graph'
         }
     }
 
@@ -199,7 +213,7 @@ try {
         & $script -Target $focusedTarget -Root $temp -VersionMatrix $testMatrix -DriverScenario no-space-status `
             -DriverOutputDirectory $temp -DriverWorld ae2ct-00000000000000000000000000000000 `
             -RuntimeDirectory $focusedRuntime -ProjectId u6dRKJwZ -ResolveOnly 6>&1 | Out-Null
-        $focusedMods = Get-Content (Join-Path $focusedRuntime "mods/.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
+        $focusedMods = @((Get-Content (Join-Path $focusedRuntime "mods/.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json).ForEach({ [string]$_ }))
         if (@($focusedMods).Count -ne 2 -or "u6dRKJwZ.jar" -notin $focusedMods) {
             throw "Focused $focusedTarget must allow an absent driver dependency list"
         }
@@ -218,7 +232,7 @@ try {
             if ($latestProfile) { $params.Latest = $true }
             & $script @params 6>&1 | Out-Null
             $leaf = if ($focusedTarget -eq '1.20.1-forge') { 'resolved-mods' } else { 'mods' }
-            $focusedMods = @(Get-Content (Join-Path $focusedRuntime "$leaf/.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json)
+            $focusedMods = @((Get-Content (Join-Path $focusedRuntime "$leaf/.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json).ForEach({ [string]$_ }))
             $driver = "ae2-crafting-time-$modVersion-$(if ($focusedTarget -eq '1.20.1-forge') { 'forge-1.20.1' } else { 'neoforge-1.21.1' })-test-driver.jar"
             if ($focusedMods.Count -ne 3 -or @($focusedMods | Where-Object { $_ -eq 'JiOqfoFM.jar' }).Count -ne 1 -or
                     'xr109llC.jar' -notin $focusedMods -or $driver -notin $focusedMods) {
@@ -244,7 +258,7 @@ try {
     if (-not (Test-Path -LiteralPath (Join-Path $customRuntime "resolved-mods\ae2-crafting-time-$modVersion-forge-1.20.1-test-driver.jar"))) {
         throw "Custom runtime directory did not receive the driver"
     }
-    $focusedManifest = Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
+    $focusedManifest = @((Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json).ForEach({ [string]$_ }))
     if (@($focusedManifest).Count -ne 4 -or "pNabrMMw.jar" -notin $focusedManifest -or
             "Ck4E7v7R.jar" -notin $focusedManifest -or "PbNc6qBY.jar" -notin $focusedManifest) {
         throw "Focused profile omitted an AE2 dependency or loaded unrelated projects"
@@ -252,11 +266,20 @@ try {
 
     & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -RuntimeDirectory $customRuntime `
         -ProjectId 1624558 -ResolveOnly 6>&1 | Out-Null
-    $curseManifest = Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
+    $curseManifest = @((Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json).ForEach({ [string]$_ }))
     if (@($curseManifest).Count -ne 3 -or
             "omnisequence-transfinite-1.3.9-forge.jar" -notin $curseManifest -or
             "ProjectE-1.20.1-PE1.0.1.jar" -notin $curseManifest) {
         throw "Focused CurseForge profile omitted an explicit dependency"
+    }
+    $dataRuntime = Join-Path $temp 'focused-data-energistics'
+    & $script -Target '1.21.1-neoforge' -Root $temp -VersionMatrix $testMatrix -RuntimeDirectory $dataRuntime `
+        -ProjectId 1565514 -ResolveOnly 6>&1 | Out-Null
+    $dataManifest = @((Get-Content -LiteralPath (Join-Path $dataRuntime 'mods/.ae2-crafting-time-run-mods.json') -Raw |
+        ConvertFrom-Json).ForEach({ [string]$_ }))
+    if ('data_energistics-1.21.1-3.3.5.jar' -notin $dataManifest -or 'B1CBVXHX.jar' -notin $dataManifest -or
+            'ae2lt-2.1.0-beta.5.jar' -in $dataManifest -or 'thunderbolt-2.0.0-beta.4.jar' -in $dataManifest) {
+        throw 'Focused Data Energistics graph lost its prerequisite or included incompatible Lightning Tech/Thunderbolt'
     }
 
     try {
@@ -268,14 +291,14 @@ try {
 
     & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -RuntimeDirectory $customRuntime `
         -ProjectId 1605404 -ResolveOnly 6>&1 | Out-Null
-    $forkManifest = Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
+    $forkManifest = @((Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json).ForEach({ [string]$_ }))
     if (@($forkManifest).Count -ne 3 -or "pfjLUfGv.jar" -notin $forkManifest -or
             "applied-botanics-forge-1.5.2.jar" -notin $forkManifest -or "545hUrw9.jar" -in $forkManifest) {
         throw "Focused fork profile did not replace the original with its Botania dependency"
     }
     & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -RuntimeDirectory $customRuntime `
         -ProjectId 545hUrw9 -ResolveOnly 6>&1 | Out-Null
-    $originalManifest = Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json
+    $originalManifest = @((Get-Content -LiteralPath (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json).ForEach({ [string]$_ }))
     if (@($originalManifest).Count -ne 2 -or "545hUrw9.jar" -notin $originalManifest -or
             "applied-botanics-forge-1.5.2.jar" -in $originalManifest) {
         throw "Focused original profile retained the fork"
@@ -285,6 +308,16 @@ try {
         throw "Expected mutually exclusive project rejection"
     } catch {
         if ($_.Exception.Message -ne "Cannot load projects 1605404 and 545hUrw9 together") { throw }
+    }
+    $previousErrorAction = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $fileOutput = (& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script -Target '1.20.1-forge' `
+            -Root $temp -VersionMatrix $testMatrix -ProjectId '1605404,545hUrw9' -ResolveOnly 2>&1 | Out-String)
+    } finally { $ErrorActionPreference = $previousErrorAction }
+    if ($LASTEXITCODE -eq 0 -or $fileOutput -notmatch 'Cannot load projects 1605404 and 545hUrw9 together' -or
+            $fileOutput -match 'positional parameter') {
+        throw "PowerShell -File did not preserve both selected projects: $fileOutput"
     }
     try {
         & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -ProjectId ayN3DZKb -ResolveOnly 6>&1 | Out-Null
@@ -298,6 +331,12 @@ try {
     } catch {
         if ($_.Exception.Message -ne 'Focused project udZtKfzP is excluded from the compatible profile') { throw }
     }
+    try {
+        & $script -Target '1.21.1-neoforge' -Root $temp -VersionMatrix $testMatrix -ProjectId 1624558 -ResolveOnly 6>&1 | Out-Null
+        throw 'Expected compatible OmniSequence project rejection'
+    } catch {
+        if ($_.Exception.Message -ne 'Focused project 1624558 is excluded from the compatible profile') { throw }
+    }
 
     $extraMatrix = Join-Path $temp "extra-dependencies.json"
     $extraData = Get-Content $testMatrix -Raw | ConvertFrom-Json
@@ -308,7 +347,7 @@ try {
     [IO.File]::WriteAllText($extraMatrix, ($extraData | ConvertTo-Json -Depth 20), [Text.UTF8Encoding]::new($false))
     & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $extraMatrix -RuntimeDirectory $customRuntime `
         -Latest -ProjectId ayN3DZKb -ResolveOnly 6>&1 | Out-Null
-    $extraManifest = (Get-Content (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json)
+    $extraManifest = @((Get-Content (Join-Path $customRuntime "resolved-mods\.ae2-crafting-time-run-mods.json") -Raw | ConvertFrom-Json).ForEach({ [string]$_ }))
     if ($extraManifest.Count -ne 3 -or @($extraManifest | Where-Object { $_ -eq "rxYaglEe.jar" }).Count -ne 1 -or
             "ayN3DZKb.jar" -notin $extraManifest -or "XxWD5pD3.jar" -in $extraManifest) {
         throw "Explicit Modrinth dependencies were omitted, duplicated, or failed to terminate a cycle: $($extraManifest -join ', ')"

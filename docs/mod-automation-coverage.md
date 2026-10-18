@@ -14,6 +14,23 @@ what their evidence does and does not prove.
 - All prepared smoke scenarios use English (`en_us`). Results record language
   and startup adapter decisions. The driver rejects a direct adapter scenario
   if the selected variant is not the newest one implemented for its target.
+- NeoForge 1.21.1 inventories Data Energistics 3.3.5 and its required client graph.
+  `data-energistics-cpu` exercises its Adaptive Pattern Provider through a native
+  AE2 CPU. Ordinary `craft-lifecycle` runs with the addon absent, present, and in
+  the compatible Data-containing graph qualify this boundary. Focused absence,
+  presence, adaptive provider, Status restart and Tree checks passed in
+  [PR #741](https://github.com/cTux/ae2-crafting-time/pull/741). The 21-project
+  combined graph and separate Lightning Tech and Plus/JEI controls also passed:
+  eight required scenario runs, 78 assertions and 98 individually reviewed PNGs. Data runs separately from the Lightning Tech primary profile
+  because Lightning Tech/Thunderbolt Core declare it incompatible
+  ([#742](https://github.com/cTux/ae2-crafting-time/issues/742)). These checks do
+  not qualify the complete UI suite or Trinity CPUs.
+
+NeoForge OmniSequence 1.3.9-hotfix is excluded from compatible runs: its
+`CPUSelectionList.formatStorage` injection fails with AE2 19.2.18. The latest
+diagnostic entry remains available; the replacement prerequisite stack stays
+deferred in [#459](https://github.com/cTux/ae2-crafting-time/issues/459). Forge
+coverage is unchanged.
 
 ## Versioned adapter verification
 

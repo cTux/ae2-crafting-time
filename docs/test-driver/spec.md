@@ -920,6 +920,12 @@ an Accelerator, and a Data Entangler. CPU selection verifies the added threads
 and multiplied storage. Submission must create a job in that exact cluster
 before a fresh profile sample and the resulting plan TTC can pass.
 
+`data-energistics-cpu` uses a native AE2 CPU and a real Adaptive Pattern
+Provider with an installed AE2 provider stack. A processing pattern sends sand
+to a fueled vanilla furnace; a hopper and ME Interface return glass.
+The shared scenario checks dispatch, accepted output, a fresh sample, and
+reopened Plan TTC. This fixture exists only in the NeoForge 1.21.1 driver.
+
 ## Crafting Tree scenario
 
 `crafting-tree-screen` opens the real tree toolbar button from a populated

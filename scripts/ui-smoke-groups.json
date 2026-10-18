@@ -7,7 +7,7 @@
   "focusedCases": {
     "1.20.1-forge": ["delayed-resource-icons", "appmek-resource-icons", "chance-output-status", "crafting-suspension"],
     "1.20.1-fabric": ["delayed-resource-icons"],
-    "1.21.1-neoforge": ["delayed-resource-icons", "appmek-resource-icons", "neoeco-cpu"],
+    "1.21.1-neoforge": ["delayed-resource-icons", "appmek-resource-icons", "neoeco-cpu", "omnisequence-cpu"],
     "26.1.2-neoforge": ["delayed-resource-icons"]
   },
   "cases": {
@@ -114,10 +114,13 @@
     "neoecoae": ["neoeco-cpu", "neoeco-fastpath-cpu"],
     "advanced_ae": ["advancedae-cpu"],
     "ae2lt": ["lightningtech-cpu"],
-    "merequester": ["merequester-screen"]
+    "merequester": ["merequester-screen"],
+    "data_energistics": ["data-energistics-cpu"],
+    "molecularmanipulator": ["omnisequence-cpu"]
   },
   "adapterBehaviorCases": {
-    "advanced_ae": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"]
+    "advanced_ae": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"],
+    "data_energistics": ["craft-lifecycle", "standard-status-controls"]
   },
   "readRecoveryCases": {
     "ae2ct": ["crafting-tree-read-recovery"],

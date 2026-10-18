@@ -365,7 +365,7 @@ publish_curseforge() {
       relations: {projects: [
         {slug: "applied-energistics-2", type: "requiredDependency"},
         {slug: "guideme", type: "optionalDependency"}
-      ]}
+      ] + (if .id == "1.21.1-neoforge" then [{slug: "data-energistics", type: "optionalDependency"}] else [] end)}
     } else {} end)')"
   local metaPath; metaPath="$(mktemp)"
   printf '%s' "$metadata" > "$metaPath"
@@ -557,7 +557,9 @@ if [[ "$Deploy" = "1" && "$rc" -gt 0 ]]; then
       echo "dry-run Modrinth dependencies: $deps"
       echo "dry-run CurseForge versions: $(echo "$rentry" | jq -r .minecraftVersion), $(echo "$rentry" | jq -r .loaderName), Client, Server"
       if echo "$rentry" | jq -e 'any(.modrinthDependencies[]; .project_id == "Ck4E7v7R")' >/dev/null; then
-        echo "dry-run CurseForge relations: applied-energistics-2:requiredDependency, guideme:optionalDependency"
+        relations='applied-energistics-2:requiredDependency, guideme:optionalDependency'
+        if [[ "$rid" = '1.21.1-neoforge' ]]; then relations="$relations, data-energistics:optionalDependency"; fi
+        echo "dry-run CurseForge relations: $relations"
       fi
     else
       publish_modrinth "$rentry" "$rver" "$rjar" "$rcl"

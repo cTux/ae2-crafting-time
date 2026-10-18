@@ -171,6 +171,16 @@
       "disposition": "DIRECT_UI",
       "scenario": "crafting-tree-screen"
     },
+    "1086241": {
+      "disposition": "DIRECT_UI",
+      "scenario": "crafting-tree-screen"
+    },
+    "1565514": {
+      "disposition": "FOCUSED_BEHAVIOR",
+      "scenario": "data-energistics-cpu",
+      "profile": "compatible",
+      "reason": "Lightning Tech and Thunderbolt declare Data Energistics incompatible; run the Data CPU and native lifecycle/status behavior in its focused compatible graph."
+    },
     "IiATswDj": {
       "disposition": "DIRECT_BEHAVIOR",
       "scenario": "appmek-cpu"

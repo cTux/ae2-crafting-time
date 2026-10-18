@@ -19,6 +19,12 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+if ($ProjectId) {
+    $ProjectId = @($ProjectId | ForEach-Object { $_ -split ',' } | ForEach-Object {
+        if ($_ -cnotmatch '^[A-Za-z0-9]+$') { throw 'Invalid ProjectId' }
+        $_
+    })
+}
 if ($Packaged -and -not $ResolveOnly) { throw 'Packaged preparation requires -ResolveOnly; launch copied artifacts in CodexVM' }
 if ($BaseOnly -and $ProjectId) { throw 'Base-only preparation cannot select optional projects' }
 $javaHomes = @{}
@@ -78,6 +84,10 @@ $availableProjects = @($matrixEntry.projects.project_id | ForEach-Object { [stri
     @($matrixEntry.curseforge.project_id | ForEach-Object { [string]$_ })
 foreach ($requestedProject in $requestedProjects) {
     if ($requestedProject -notin $availableProjects) { throw "Unknown project $requestedProject for $Target" }
+}
+if (-not $Latest) {
+    $excludedCurse = @($matrixEntry.curseforge | Where-Object { $_.compatible -eq $false -and [string]$_.project_id -in $requestedProjects })
+    if ($excludedCurse) { throw "Focused project $($excludedCurse[0].project_id) is excluded from the compatible profile" }
 }
 foreach ($replacement in @($matrixEntry.curseforge | Where-Object {
     -not $BaseOnly -and $_.replaces_project_id -and
@@ -196,7 +206,7 @@ if ($BaseOnly) {
         }
     }
 } else {
-    foreach ($dependency in @($matrixEntry.curseforge | Where-Object { $_ })) {
+    foreach ($dependency in @($matrixEntry.curseforge | Where-Object { $_ -and ($Latest -or ($_.compatible -ne $false -and $_.compatible_full_profile -ne $false)) })) {
         $null = $curseforgeProjects.Add([string]$dependency.project_id)
     }
 }

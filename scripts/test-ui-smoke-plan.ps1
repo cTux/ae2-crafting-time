@@ -237,7 +237,9 @@ try {
     Assert ($forgeGraphs.Count -eq 5 -and $forgeGraphs[2].cases.Count -eq 2) 'Full Forge must schedule relaunch and newest-adapter graphs separately'
     foreach ($entry in $full.targets) {
         $statusGraphs = @($entry.graphs | Where-Object { 'standard-status-controls' -cin $_.cases })
-        Assert ($statusGraphs.Count -eq 1 -and $statusGraphs[0].cases.Count -eq 1) 'Status relaunch must run outside suites'
+        $expectedStatusGraphs = if ($entry.target -eq '1.21.1-neoforge') { 2 } else { 1 }
+        Assert ($statusGraphs.Count -eq $expectedStatusGraphs -and @($statusGraphs | Where-Object { $_.cases.Count -ne 1 }).Count -eq 0) `
+            'Status relaunch must run outside suites'
     }
     $statusOnly = & $planner -Repository $temp -Target '1.20.1-forge' -Scenario standard-status-controls
     Assert ($statusOnly.targets[0].graphs.Count -eq 1) 'Focused status relaunch must not duplicate its graph'
@@ -250,15 +252,32 @@ try {
     Assert ($advancedGraphs.Count -eq 3 -and @($advancedGraphs | Where-Object { $_.cases.Count -ne 5 }).Count -eq 0) 'AdvancedAE must repeat all provider status leaves on three targets'
     Assert ($full.targets[0].cases.Count -eq 43) 'Expanded Forge suite must contain 43 leaves'
     Assert ($full.targets[1].cases.Count -eq 25) 'Expanded Fabric suite must contain 25 leaves'
-    Assert ($full.targets[2].cases.Count -eq 38 -and 'neoeco-cpu' -cnotin $full.targets[2].cases -and
+    Assert ($full.targets[2].cases.Count -eq 38 -and 'data-energistics-cpu' -cin $full.targets[2].cases -and
+            'omnisequence-cpu' -cnotin $full.targets[2].cases -and
+            'neoeco-cpu' -cnotin $full.targets[2].cases -and
             @($full.targets[2].graphs | Where-Object { $_.profile -eq 'latest' -or $_.id -eq 'udZtKfzP' }).Count -eq 0) `
         'Full compatible NeoForge suite must exclude NeoEco and latest graphs'
+    $dataGraphs = @($full.targets[2].graphs | Where-Object { $_.id -eq '1565514' -or $_.id -eq '1565514-status-amounts' })
+    Assert ($dataGraphs.Count -eq 2 -and @($dataGraphs | Where-Object {
+        $_.profile -eq 'compatible' -and @($_.projectId).Count -eq 1 -and [string]$_.projectId[0] -eq '1565514'
+    }).Count -eq 2) 'Data Energistics must use focused compatible graphs'
+    Assert (@($dataGraphs | Where-Object { 'data-energistics-cpu' -cin $_.cases -and 'craft-lifecycle' -cin $_.cases }).Count -eq 1 -and
+            @($dataGraphs | Where-Object { @($_.cases).Count -eq 1 -and $_.cases[0] -eq 'standard-status-controls' }).Count -eq 1) `
+        'Data Energistics focused graphs must cover CPU, native lifecycle, and status relaunch'
+    Assert (@($full.targets[2].graphs | Where-Object id -eq 'primary' | Where-Object {
+        'data-energistics-cpu' -cin $_.cases -or 'craft-lifecycle' -cnotin $_.cases
+    }).Count -eq 0) 'NeoForge primary graph must retain native lifecycle without the Data CPU fixture'
     Assert ($full.targets[3].cases.Count -eq 28) 'Expanded 26.1.2 suite must contain 28 leaves'
     $neoecoLatest = & $planner -Repository $temp -Target '1.21.1-neoforge' -Scenario neoeco-cpu -Latest -ProjectId udZtKfzP
     Assert ($neoecoLatest.targets[0].cases.Count -eq 1 -and $neoecoLatest.targets[0].graphs.Count -eq 1 -and
             $neoecoLatest.targets[0].graphs[0].profile -eq 'latest' -and
             $neoecoLatest.targets[0].graphs[0].projectId[0] -eq 'udZtKfzP') `
         'Explicit latest NeoEco diagnostic must remain addressable'
+    $omniLatest = & $planner -Repository $temp -Target '1.21.1-neoforge' -Scenario omnisequence-cpu -Latest -ProjectId 1624558
+    Assert ($omniLatest.targets[0].cases.Count -eq 1 -and $omniLatest.targets[0].graphs.Count -eq 1 -and
+            $omniLatest.targets[0].graphs[0].profile -eq 'latest' -and
+            [string]$omniLatest.targets[0].graphs[0].projectId[0] -eq '1624558') `
+        'Explicit latest OmniSequence diagnostic must remain addressable'
     $channel = & $planner -Repository $temp -Scenario no-channel-status
     Assert (@($channel.targets.graphs | Where-Object id -eq 'rxYaglEe').Count -eq 3) 'Native base graph must not suppress later AdvancedAE targets'
     $nativeChannel = & $planner -Repository $temp -Scenario no-channel-status -BaseOnly

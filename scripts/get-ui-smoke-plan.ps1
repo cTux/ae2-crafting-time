@@ -191,7 +191,7 @@ foreach ($id in $ids) {
     $coverage = (Get-Content -LiteralPath (Join-Path $MatrixDirectory 'ui-smoke-coverage.json') -Raw | ConvertFrom-Json).$id
     $client = $clients | Where-Object id -CEQ $id
     if (!$Latest -and !$ProjectId -and !$BaseOnly) {
-        foreach ($project in $client.projects) {
+        foreach ($project in @($client.projects) + @($client.curseforge)) {
             $declaration = $coverage.($project.project_id)
             if ($declaration.disposition -cne 'FOCUSED_BEHAVIOR') { continue }
             $adapterCases = @($catalogue.adapterCases.($project.mod_id))

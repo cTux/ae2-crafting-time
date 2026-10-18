@@ -90,7 +90,9 @@ foreach ($entry in $releaseMatrix) {
         throw "Release dry run did not preserve matrix dependencies for $($entry.id)"
     }
     $hasGuide = @($entry.modrinthDependencies | Where-Object project_id -eq "Ck4E7v7R").Count -eq 1
-    $hasCurseRelations = $section -match '(?m)^dry-run CurseForge relations: applied-energistics-2:requiredDependency, guideme:optionalDependency$'
+    $relation = 'dry-run CurseForge relations: applied-energistics-2:requiredDependency, guideme:optionalDependency'
+    if ($entry.id -eq '1.21.1-neoforge') { $relation += ', data-energistics:optionalDependency' }
+    $hasCurseRelations = $section -match "(?m)^$([regex]::Escape($relation))$"
     if ($hasCurseRelations -ne $hasGuide) {
         throw "Wrong CurseForge GuideME relations for $($entry.id)"
     }

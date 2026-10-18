@@ -10,6 +10,7 @@ Copy-Item -LiteralPath (Join-Path $PSScriptRoot "run-ui-smoke-codexvm.ps1") -Des
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'get-java-home.ps1') -Destination $scripts
 [IO.File]::WriteAllText((Join-Path $scripts "run-ui-smoke.ps1"), @'
 param([string]$CasesBase64,[string]$BundleDirectory, [string]$PreparedLaunch, [string]$Target, [string]$ReportDirectory, [string]$Scenario, [string[]]$ProjectId, [switch]$Latest, [switch]$Interactive, [switch]$ScheduledJava, [string]$InteractiveUser, [int]$StartupTimeoutSeconds, [int]$CallbackTimeoutSeconds, [int]$CheckpointTimeoutSeconds, [string]$HeadSha)
+if ($ProjectId) { $ProjectId = @($ProjectId | ForEach-Object { $_ -split ',' }) }
 New-Item -ItemType Directory -Path $ReportDirectory -Force | Out-Null
 [ordered]@{ casesBase64=$CasesBase64; preparedLaunch=$PreparedLaunch; target=$Target; scenario=$Scenario; projectId=@($ProjectId); latest=$Latest.IsPresent; interactive=$Interactive.IsPresent; javaHome=$env:JAVA_HOME; scheduledJava=$ScheduledJava.IsPresent; interactiveUser=$InteractiveUser; localReport=$ReportDirectory; startupTimeoutSeconds=$StartupTimeoutSeconds; callbackTimeoutSeconds=$CallbackTimeoutSeconds; checkpointTimeoutSeconds=$CheckpointTimeoutSeconds; headSha=$HeadSha } |
     ConvertTo-Json | Set-Content -LiteralPath (Join-Path $ReportDirectory "wrapper-result.json") -Encoding UTF8
@@ -29,6 +30,15 @@ try {
     if (-not $result.latest -or -not $result.interactive -or $result.scenario -ne "aeinfinitybooster-terminal" -or
             @($result.projectId).Count -ne 1 -or $result.projectId[0] -ne "VQhDBNs8") {
         throw "CodexVM wrapper dropped smoke arguments"
+    }
+    $projects = @('1086241', 'qPydPwtX') + @(1..22 | ForEach-Object { 'Graph' + $_ })
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $scripts 'run-ui-smoke-codexvm.ps1') `
+        -HeadSha $head -BundleDirectory (Join-Path $source 'bundle') -LocalRoot $stage `
+        -Scenario craft-lifecycle -ProjectId ($projects -join ',')
+    if ($LASTEXITCODE -ne 0) { throw 'CodexVM wrapper rejected a multi-project -File argument' }
+    $multi = Get-Content (Join-Path $source 'build/ui-smoke/1.20.1-forge/compatible/craft-lifecycle/wrapper-result.json') -Raw | ConvertFrom-Json
+    if ((@($multi.projectId) -join ',') -cne ($projects -join ',')) {
+        throw 'CodexVM wrapper changed the ordered multi-project graph at a -File boundary'
     }
 
     $prepared = Join-Path $temp 'prepared'

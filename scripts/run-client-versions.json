@@ -203,7 +203,7 @@
   {
     "id": "1.21.1-neoforge",
     "projects": [
-      { "name": "AE2 Crafting Tree", "project_id": "a1RwDz90", "mod_id": "ae2ct" },
+      { "name": "AE2 Crafting Tree (legacy Modrinth identity)", "project_id": "a1RwDz90", "mod_id": "ae2ct", "compatible": false, "reason": "Only version 1.0.1 is published for this target, below Data Energistics' installed-addon minimum of 1.21.1-1.1.1; use CurseForge project 1086241." },
       { "name": "Applied Mekanistics", "project_id": "IiATswDj", "mod_id": "appmek" },
       { "name": "AdvancedAE", "project_id": "rxYaglEe", "mod_id": "advanced_ae" },
       { "name": "ME Requester", "project_id": "E6BFl96N", "mod_id": "merequester" },
@@ -228,16 +228,15 @@
     ],
     "compatible": {
       "loader_version": "21.1.251",
-      "ae2_version_id": "kfyIqgJ6",
-      "ae2_version": "19.2.17",
+      "ae2_version_id": "KDnFUmMm",
+      "ae2_version": "19.2.18",
       "ae2_group": "org.appliedenergistics",
       "versions": [
         { "project_id": "4inoel9g", "version_id": "Zg3OnxBb", "version": "1.3.8" },
         { "project_id": "692GClaE", "version_id": "jH6bsw4F", "version": "1.21.1-1.120.4" },
         { "project_id": "8BmcQJ2H", "version_id": "tPkJmim6", "version": "4.9.2" },
-        { "project_id": "a1RwDz90", "version_id": "35O4yt0D", "version": "1.0.1" },
         { "project_id": "ayN3DZKb", "version_id": "Iw2gl7Lb", "version": "2.1.1" },
-        { "project_id": "B1CBVXHX", "version_id": "bpcbGDy4", "version": "mc1.21.1-2.2.37-neoforge" },
+        { "project_id": "B1CBVXHX", "version_id": "A8dTTrXo", "version": "mc1.21.1-2.2.40-neoforge" },
         { "project_id": "Ce6I4WUE", "version_id": "5KzzycBT", "version": "10.7.19.85" },
         { "project_id": "Ck4E7v7R", "version_id": "hFpGwC6q", "version": "21.1.19" },
         { "project_id": "E6BFl96N", "version_id": "hLs5MFnR", "version": "1.21.1-1.5.0+neoforge" },
@@ -255,14 +254,36 @@
         { "project_id": "RYE1pYyr", "version_id": "k444ySGT", "version": "1.1.6-1.21.1-neoforge" },
         { "project_id": "SOw6jD6x", "version_id": "1rbqTjbS", "version": "1.21.1-0.8.1a" },
         { "project_id": "SyKS54UY", "version_id": "me5XWMw9", "version": "1.0.1-beta" },
-        { "project_id": "u6dRKJwZ", "version_id": "w1zqfWJi", "version": "19.51.0.417" },
+        { "project_id": "u6dRKJwZ", "version_id": "rjeJmaUS", "version": "19.56.0.438" },
+        { "project_id": "7tEfOcA7", "version_id": "idpM3DKC", "version": "0.6.8" },
         { "project_id": "udZtKfzP", "version_id": "gWMhHBje", "version": "21.1.1" },
         { "project_id": "UhW5uCKw", "version_id": "pfbmdJ3b", "version": "1.21-2.2-neoforge" },
         { "project_id": "VQhDBNs8", "version_id": "qpbQk2Iq", "version": "1.21.1-1.0.0.58" },
-        { "project_id": "xr109llC", "version_id": "o8U8Ekro", "version": "1.6.2" }
+        { "project_id": "xr109llC", "version_id": "AtuOmKkV", "version": "1.6.3" }
       ]
     },
     "curseforge": [
+      {
+        "name": "AE2 Crafting Tree",
+        "project_id": 1086241,
+        "replaces_project_id": "a1RwDz90",
+        "mod_id": "ae2ct",
+        "version": "1.21.1-1.1.1",
+        "compatible": { "file_id": 7182163, "filename": "ae2ct-1.21.1-1.1.1.jar", "sha512": "e3972c2eadbb643c2be9ad0d4bf409f32c8aa60774084ac7c27593af41be555fc4fceaa7004a6198a14caa8dd878cd7a94a7374408520e3aeaa26231b3470bf6" },
+        "latest": { "file_id": 7182163, "filename": "ae2ct-1.21.1-1.1.1.jar", "sha512": "e3972c2eadbb643c2be9ad0d4bf409f32c8aa60774084ac7c27593af41be555fc4fceaa7004a6198a14caa8dd878cd7a94a7374408520e3aeaa26231b3470bf6" }
+      },
+      {
+        "name": "Data Energistics",
+        "project_id": 1565514,
+        "mod_id": "data_energistics",
+        "version": "3.3.5",
+        "compatible_full_profile": false,
+        "reason": "Lightning Tech and Thunderbolt declare Data Energistics incompatible; test Data Energistics in a focused compatible graph (cTux/ae2-crafting-time#742).",
+        "issue_url": "https://github.com/cTux/ae2-crafting-time/issues/742",
+        "modrinth_dependencies": ["B1CBVXHX"],
+        "compatible": { "file_id": 9095664, "filename": "data_energistics-1.21.1-3.3.5.jar", "sha512": "08828754faf99dafb16d448d7fa1d37428bf6b6f5a6492e9a21850b43d7536386f834ccad685f60e365bd03edf27cd85e45bf0eb4951237dedff1a1981d6017f" },
+        "latest": { "file_id": 9095664, "filename": "data_energistics-1.21.1-3.3.5.jar", "sha512": "08828754faf99dafb16d448d7fa1d37428bf6b6f5a6492e9a21850b43d7536386f834ccad685f60e365bd03edf27cd85e45bf0eb4951237dedff1a1981d6017f" }
+      },
       {
         "name": "AE2 Lightning Tech",
         "project_id": 1527395,
@@ -288,7 +309,9 @@
         "version": "1.3.9-hotfix",
         "dependencies": [226410],
         "modrinth_dependencies": ["B1CBVXHX"],
-        "compatible": { "file_id": 8622739, "filename": "omnisequence-transfinite-1.3.9-hotfix.jar", "sha512": "39bb7084f853b9b4dfd0abf176d3d931a936749dc1c72acd37b793bcc18b87a4fb8806afcb9305782e11e90336a0332f9263de9d2bbb81587b3bb558cc018ebf" },
+        "compatible": false,
+        "reason": "OmniSequence 1.3.9-hotfix fails at the CPUSelectionList.formatStorage injection with AE2 19.2.18; a newer OmniSequence requires AppliedEnhancements and is held for separate integration (cTux/ae2-crafting-time#459).",
+        "issue_url": "https://github.com/cTux/ae2-crafting-time/issues/459",
         "latest": { "file_id": 8622739, "filename": "omnisequence-transfinite-1.3.9-hotfix.jar", "sha512": "39bb7084f853b9b4dfd0abf176d3d931a936749dc1c72acd37b793bcc18b87a4fb8806afcb9305782e11e90336a0332f9263de9d2bbb81587b3bb558cc018ebf" }
       },
       {

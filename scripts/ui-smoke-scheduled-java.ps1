@@ -32,17 +32,28 @@ function Assert-UiSmokeStatusRelaunchCaptures {
 }
 
 function Assert-UiSmokeStatusAddonKeys {
-    param([string]$Evidence, [string]$Target, [string]$DependencyMode)
+    param([string]$Evidence, [string]$Target, [string]$DependencyMode, [string[]]$ArtifactNames)
     $value = Get-Content -LiteralPath (Join-Path $Evidence 'status-addon-keys.json') -Raw | ConvertFrom-Json
-    $expected = @()
+    if (!$ArtifactNames) { throw 'Status addon-key inventory has no selected artifact graph' }
+    $available = @()
     switch ($Target) {
-        '1.20.1-forge' { $expected = @('mana', 'chemical') }
-        '1.20.1-fabric' { $expected = @('mana') }
-        '1.21.1-neoforge' { $expected = @('chemical') }
-        '26.1.2-neoforge' { $expected = @() }
+        '1.20.1-forge' { $available = @('mana', 'chemical') }
+        '1.20.1-fabric' { $available = @('mana') }
+        '1.21.1-neoforge' { $available = @('chemical') }
+        '26.1.2-neoforge' { $available = @() }
         default { throw "Unknown status addon target: $Target" }
     }
-    if ($DependencyMode -eq 'base') { $expected = @() }
+    $present = @{
+        mana = @($ArtifactNames | Where-Object { $_ -eq '545hUrw9.jar' -or $_ -like 'applied-botanics-*.jar' }).Count
+        chemical = @($ArtifactNames | Where-Object { $_ -eq 'IiATswDj.jar' -or $_ -like 'applied-mekanistics-*.jar' }).Count
+    }
+    if ($present.mana -gt 1 -or $present.chemical -gt 1 -or
+            ($DependencyMode -eq 'base' -and ($present.mana -or $present.chemical)) -or
+            ($present.mana -and 'mana' -notin $available) -or
+            ($present.chemical -and 'chemical' -notin $available)) {
+        throw "Status addon-key artifact graph does not match $Target"
+    }
+    $expected = @($available | Where-Object { $present[$_] -eq 1 })
     if ($value.schema -ne 1 -or $value.appbotLoaded -ne ('mana' -in $expected) -or
             $value.appmekLoaded -ne ('chemical' -in $expected) -or
             (Compare-Object @($value.captured) @($expected) -SyncWindow 0)) {

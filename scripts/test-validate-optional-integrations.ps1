@@ -39,6 +39,8 @@ try {
     $addonRow = (Get-Content -LiteralPath $coveragePath | Where-Object { $_ -like '| Applied Mekanistics*' }) -join ""
     foreach ($case in @(
         @{ Before = '`15.3.3-forge`'; After = '`wrong`'; Expected = '1.20.1-forge coverage/version pin mismatch for ae2wtlib' },
+        @{ Before = '`1.21.1-1.1.1`'; After = '`wrong`'; Expected = '1.21.1-neoforge CurseForge coverage/version mismatch for ae2ct' },
+        @{ Before = '`3.3.5`'; After = '`wrong`'; Expected = '1.21.1-neoforge CurseForge coverage/version mismatch for data_energistics' },
         @{ Before = '`>=1.4.3`'; After = '`>=0.0.0`'; Expected = 'docs/dependencies.md omits 1.20.1-forge minimum 1.4.3 for appmek' },
         @{ Before = $addonRow; After = "$addonRow`n$addonRow"; Expected = 'Duplicate docs/dependencies.md row for appmek' }
     )) {
@@ -50,6 +52,18 @@ try {
         } catch {
             if ($_.Exception.Message -ne $case.Expected) { throw }
         }
+    }
+    $original | Set-Content -LiteralPath $coveragePath -Encoding UTF8
+    $releasePath = Join-Path $temp 'scripts\release-matrix.json'
+    $release = Get-Content -LiteralPath $releasePath -Raw | ConvertFrom-Json
+    $neoForge = $release | Where-Object id -eq '1.21.1-neoforge'
+    $neoForge.modrinthDependencies = @($neoForge.modrinthDependencies | Where-Object project_id -ne 'a1RwDz90')
+    $release | ConvertTo-Json -Depth 20 | Set-Content -LiteralPath $releasePath -Encoding UTF8
+    try {
+        & $validator -Root $temp
+        throw 'Expected a rejected missing Crafting Tree release relation'
+    } catch {
+        if ($_.Exception.Message -ne '1.21.1-neoforge loader metadata and release dependencies differs: ae2ct') { throw }
     }
     Write-Host "optional-integration consistency validator checks passed"
 } finally {

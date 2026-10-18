@@ -12,6 +12,7 @@ import java.util.concurrent.CompletableFuture;
 abstract class AddonCpuFixture<P> {
     private static final Map<String, String> FIXTURES = Map.ofEntries(
             Map.entry("advancedae-cpu", "com.ctux.ae2craftingtime.testdriver.AdvancedAeFixture"),
+            Map.entry("data-energistics-cpu", "com.ctux.ae2craftingtime.testdriver.DataEnergisticsFixture"),
             Map.entry("extendedae-cpu", "com.ctux.ae2craftingtime.testdriver.ExtendedAeFixture"),
             Map.entry("extendedae-plus-cpu", "com.ctux.ae2craftingtime.testdriver.ExtendedAePlusFixture"),
             Map.entry("bmaddon-cpu", "com.ctux.ae2craftingtime.testdriver.BmAddonFixture"),

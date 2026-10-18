@@ -56,6 +56,12 @@ function Test-UiSnapshotBounds($snapshot) {
 }
 
 $ErrorActionPreference = "Stop"
+if ($ProjectId) {
+    $ProjectId = @($ProjectId | ForEach-Object { $_ -split ',' } | ForEach-Object {
+        if ($_ -cnotmatch '^[A-Za-z0-9]+$') { throw 'Invalid ProjectId' }
+        $_
+    })
+}
 . (Join-Path $PSScriptRoot 'resource-fixture-contract.ps1')
 if ($Prewarm) { . (Join-Path $PSScriptRoot 'resource-prewarm-contract.ps1') }
 $resourceScenario = $Scenario -in @('delayed-resource-icons','appmek-resource-icons')
@@ -331,7 +337,7 @@ $arguments = @(
 )
 if ($Latest) { $arguments += "-Latest" }
 if ($Interactive) { $arguments += "-Interactive" }
-if ($ProjectId) { $arguments += @("-ProjectId") + $ProjectId }
+if ($ProjectId) { $arguments += @('-ProjectId', ($ProjectId -join ',')) }
 
 $previousToken = $env:AE2CT_TEST_DRIVER_TOKEN
 if ($Interactive) {
@@ -598,8 +604,10 @@ try {
                 -ControlStatePath $controlStatePath -ResumeOnly:([bool]$resumeState) -FinalApproval:(-not [bool]$resumeState)
             if ($Scenario -eq 'standard-status-controls') {
                 Assert-UiSmokeStatusRelaunchCaptures -Evidence $evidence
+                $managedMods = @((Get-Content -LiteralPath (Join-Path $runtime "$modsDirectory\.ae2-crafting-time-run-mods.json") -Raw |
+                    ConvertFrom-Json).ForEach({ [string]$_ }))
                 Assert-UiSmokeStatusAddonKeys -Evidence $evidence -Target $Target `
-                    -DependencyMode $(if($dependencyIdentity){$dependencyIdentity.mode}else{$null})
+                    -DependencyMode $(if($dependencyIdentity){$dependencyIdentity.mode}else{$null}) -ArtifactNames $managedMods
             }
             if ($Scenario -eq 'badge-background') {
                 Assert-UiSmokeBadgeRelaunchCaptures -Evidence $evidence
