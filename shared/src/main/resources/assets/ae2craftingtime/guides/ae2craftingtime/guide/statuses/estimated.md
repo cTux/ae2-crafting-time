@@ -21,6 +21,10 @@ read.
 
 ## What to check
 
+At GUI scale 1, full-size text uses a wider single-column layout. An overlong
+line ends with an ellipsis; hover to read the complete time. Other scales retain
+the horizontal fitting described above.
+
 1. Hover the time to see sample count, spread, and recent activity.
 2. Treat a low-confidence first sample as an early approximation.
 3. Compare completed-job accuracy before relying on repeated estimates.

@@ -14,20 +14,20 @@ Small positive rates below the display precision show `<0.01` instead of zero.
 This changes only throughput text; sample durations and native AE2 quantities
 keep their existing format.
 
-The mod learns from outputs that your AE2 network actually accepts. It measures
-a production window for an output and keeps recent completed windows for that
-network. Parallel batches are combined, so running two machines at once teaches
-their real combined speed instead of adding both durations.
+The mod learns from output your AE2 network actually accepts. Each accepted
+completion interval becomes a sample; returns for the same output in one tick
+are combined across CPUs. Samples arrive while a large job is still running,
+so you do not need to wait for the whole order to finish.
 
-For example, if a network accepts 64 processors over eight seconds, that window
-teaches roughly eight processors per second. A different ME network learns its
-own history. Items use item counts; fluids and supported chemicals use
-millibuckets. A new output can show **No data yet** until a usable window has
-completed, and changing machines affects only later samples.
+Parallel batches teach the network's combined speed. For example, accepting 64
+processors over eight seconds measures roughly eight processors per second.
+Other ME networks keep separate history. Items use item counts; fluids and
+supported chemicals use millibuckets. New output shows No data yet until usable
+timing exists. Machine changes affect later samples.
 
 ![Running crafting job producing learned output](images/crafting-status-running.png)
 
-*A live job produces the outputs that become timing history after a completed window.*
+*A live job produces the outputs that become timing history as completion intervals are accepted.*
 
 [Previous: Time estimates](time-estimates.md) | [Features](index.md) |
 [Next: Confidence](confidence.md) | [Saved history](saved-history.md)

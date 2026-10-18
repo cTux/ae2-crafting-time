@@ -19,6 +19,7 @@ body:
         - Minecraft 1.20.1 - Forge
         - Minecraft 1.20.1 - Fabric
         - Minecraft 1.21.1 - NeoForge
+        - Minecraft 26.1.2 - NeoForge
     validations:
       required: true
 

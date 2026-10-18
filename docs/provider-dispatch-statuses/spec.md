@@ -9,7 +9,7 @@ Verification: [prepared-client results](../automated-ui-testing/prepared-clients
 [NO CHANNEL](no-channel/spec.md), tooltip controls below, and
 [red-warning highlights](../provider-locate/spec.md#planned-red-sky-beam) have separate scopes.
 
-Planned change: [#488](../provider-locate/spec.md#planned-red-sky-beam) adds
+Implemented extension: [#488](../provider-locate/spec.md#planned-red-sky-beam) adds
 automatic red plates with output icons to every red warning, including these
 dispatch reasons. Sky beams appear only after a successful chat-link locate,
 alongside rainbow borders for the same 15 seconds. This supersedes the existing

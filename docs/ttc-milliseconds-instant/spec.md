@@ -12,13 +12,14 @@ Implementation: [PR #694](https://github.com/cTux/ae2-crafting-time/pull/694).
 
 Verification: [Implementation checks, native evidence and timings](verification.md).
 
-Merge is authorized. Remaining qualification: full NeoForge 1.21.1 addon evidence
-is blocked by the known NeoEco renderer crash (#627); GUI scale 1 readability
-is tracked in #695. The delivery status stays in-progress until the broader
+Remaining qualification: full NeoForge 1.21.1 addon evidence is blocked by the
+known NeoEco renderer crash (#627). The later #695 scale-1 correction has its own
+[verification scope](../gui-scale-one-readability/spec.md). The delivery status stays in-progress until the broader
 MS-8 gate is satisfied. These limits remain explicit in the verification report.
 
 The user confirmed that low confidence takes precedence over Instant and
-approved the defaults below. Implementation and review are complete; the PR is open.
+approved the defaults below. Implementation and review are complete; [PR #694](https://github.com/cTux/ae2-crafting-time/pull/694)
+merged on 2026-10-12.
 
 ## Display rules
 
@@ -106,4 +107,8 @@ The implementation supersedes tick-unit presentation examples in
 [profiling and diagnostics](../profiling-and-diagnostics/spec.md), the tick-text
 preservation boundary in [compact hover numbers](../player-controls-and-integrations/compact-hover-numbers/spec.md),
 and extends the [symbol palette](../ttc-symbols/spec.md). Those documents and both
-player guides have been updated; the feature remains unreleased until publication.
+player guides have been updated; release [1.2.17](https://github.com/cTux/ae2-crafting-time/releases/tag/release-1.2.17)
+followed in [PR #707](https://github.com/cTux/ae2-crafting-time/pull/707).
+The later [scale-1 correction](../gui-scale-one-readability/spec.md) and
+[CPU fixture correction](../test-driver/spec.md#optional-badge-backgrounds-696)
+have their own evidence; they do not close the broader MS-8 addon gate.

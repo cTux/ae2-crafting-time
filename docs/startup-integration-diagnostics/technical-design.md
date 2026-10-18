@@ -5,7 +5,7 @@ Lifecycle: see the [scope status and evidence](spec.md).
 Implements the [specification](spec.md). Execution order and proof requirements
 are in the [implementation plan](implementation-plan.md).
 
-The separately planned [versioned adapter selector](../ae2-addon-integration/technical-design.md#versioned-adapter-selection)
+The implemented [versioned adapter selector](../ae2-addon-integration/technical-design.md#versioned-adapter-selection)
 owns early compatibility choice. Consume its immutable per-dependency snapshot;
 do not choose variants again in diagnostics. A selected variant has pending
 capabilities until actual hook evidence arrives. Include its variant ID/reason,
@@ -19,7 +19,9 @@ Inspected on 2026-09-02 at `b17f7dd` (the fetched `origin/master`), against the
 open [issue #193](https://github.com/cTux/ae2-crafting-time/issues/193), which had
 no comments. This is source research, not a new runtime compatibility result.
 
-The following repository paths are authoritative for the current implementation:
+The following table records the preimplementation research baseline, not current
+registration or mixin-plugin state. The merged implementation and verification
+limits are linked from the specification:
 
 | Evidence | Finding |
 | --- | --- |

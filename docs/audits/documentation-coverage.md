@@ -29,6 +29,61 @@ and links to PRs, checks, CI, and evidence. For no-change runs, explain the
 evidence supporting that outcome. Use `Refs #375`, never a closing keyword;
 remove only the current run's claim and leave this recurring issue open.
 
+## Shipped-state review, 2026-10-18
+
+This first shipped-state review uses source
+[`72797df5`](https://github.com/cTux/ae2-crafting-time/commit/72797df504d86de7ad1688acad807c98cdd51249)
+and wiki revision `c93cb0c92b75997bd3076512028796f9d0037d7c`. The earlier inventory
+was setup, not a completed audit. The answer to #375 is **Yes**: the following
+maintained surfaces retained descriptions from before merged changes.
+
+This is a documentation correction, not a new feature or runtime campaign.
+The table defines the correction scope, its source evidence, and the checks
+needed before this run is complete. Original incomplete feature acceptance gates
+remain incomplete; a merged PR does not supply missing visual evidence.
+
+| ID | Finding and affected surfaces | Source evidence and verification boundary |
+| --- | --- | --- |
+| D1 | README issue link filtered a retired label; bug form lacked the fourth target. | `AGENTS.md` label policy and `scripts/release-matrix.json`; inspect link and all four environment choices. |
+| D2 | Feature map omitted later shipped surfaces and called ms/Instant planned. | Guide resources, feature specs, #694 and published [1.2.17](https://github.com/cTux/ae2-crafting-time/releases/tag/release-1.2.17); verify navigation without duplicating feature statuses. |
+| D3 | Player spec/design described obsolete Status title, fixed initial sort and absent config UI. | Both screen mixin families, `OptionsScreen`, `ClientOptionsRuntime`, `ServerOptionsRuntime`, `FeatureOptions`; compare current title, draft/save and default behavior. |
+| D4 | TTC reference described whole-window learning and second-only formatting. | `CraftProfiler.flushCompletedSamples`, `TimeEstimate`, `TtcEstimate`, `TtcText`; preserve precise calculation versus display rounding. |
+| D5 | Color reference named removed seconds API and denied the color option. | `TtcColor`, `ClientConfig`, `RowTextColor`, both table-renderer adapters; distinguish configurable colors, backgrounds and shadows. |
+| D6 | Sorting references ignored configured initial modes and ms precision. | Both `CraftConfirmScreenMixin` and `CraftingCPUScreenMixin` families plus `TtcSort`; retain Plan missing-first groups and original #318 evidence. |
+| D7 | Profiling design called idle-only windows current and used a 30-second delay. | `CraftProfiler`, `ServerConfig`, `StatsRequestHandler`, #287 and #661; record live intervals, configurable 10-second/2.0 defaults and requester-only inventory scans. |
+| D8 | EN/UK GuideME and wiki learning, confidence, reset, saved history, delay, sorting and estimated-status pages retained old semantics. Wiki time pages omitted or called ms/Instant upcoming. | Same source boundaries as D3-D7, remembered statuses in [persistence](../world-save-persistence.md#remembered-statuses), and scale-1 renderer layout; review bilingual parity and run `checkGuideResources`. Publish and read back matching wiki pages separately. |
+| D9 | Dependency reference repeated incompatible suite counts; coverage ledger called an old campaign the latest. | Declared catalogue and coverage selection versus dated #211 and [#694 evidence](../ttc-milliseconds-instant/verification.md); preserve historical failures and incomplete NeoForge addon qualification. |
+| D10 | Configuration scopes still said unimplemented/in review; reset and default prose was stale. | Merged #510, #539, #541, #543, #571, #595 and #620 plus current model/writers; record implementation without claiming missing original runtime or wiki gates passed. |
+| D11 | Provider-locate and linked status specs called plates/beams planned. | Merged #626/#630, current provider lifecycle and bilingual guides; mark older delayed-only rules historical and preserve resource-icon qualification separately. |
+| D12 | Symbol baseline still said ready-to-implement and presented original palette/color rules as current. | #573/#576, `TtcSymbols`, `RowTextColor`, and completed #658 evidence; preserve historical glyph research and current native color exceptions. |
+| D13 | Millisecond scope said PR open/unreleased; hover draft, finite-value references and startup research retained old API/config/adapter claims. | #694 and release 1.2.17, #679, #477, #211 and current source; distinguish historical regression reports from current guidance. |
+
+Other inspected surfaces included architecture, repository layout, contributor
+instructions, server-owned stats, persistence, build/release matrices and loader
+metadata, release and Discord guidance, development/release/writing/test-driver/
+smoke/PR skills, tracker/triage instructions, hooks, Build/Tests/OpenCode/Discord
+workflows, and the automated UI testing Java-receipt/cache updates. No further
+behavioral correction was established in those comparisons. Historical reports,
+screenshots and research keep their dated evidence; planned Vortex, CPU-bound
+stats and Ponder scopes are not declared shipped by this audit.
+
+### Delivery and completion checks
+
+1. Review the complete prose/resource/form diff, relative links and anchors,
+   EN/UK meaning, current source claims, and unchanged original acceptance gates.
+2. Let the conventional documentation commit create the PR through the hook.
+   Use `Refs #375`; the issue remains recurrent and open.
+3. After PR creation, run `checkGuideResources` for bilingual guide navigation,
+   linked images/pages and target boundaries. Check whitespace, documentation
+   links and the issue-form environment choices. No runtime, image refresh,
+   production code, new test infrastructure or dependency change is needed.
+4. Complete current-head CI and the review-comment gate. Publish the reviewed
+   matching wiki corrections and read their exact revision back. Local wiki
+   drafts alone do not complete the maintained-surface correction.
+5. Record the actual merged PR, wiki revision and check results in a new #375
+   audit comment. Only that verified handoff completes this run; this page does
+   not claim those pending delivery actions or a new Minecraft pass.
+
 ## Open-issue documentation inventory, 2026-09-26
 
 Baseline: `cc453f7e`, with 36 open GitHub issues. Thirteen had no issue reference

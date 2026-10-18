@@ -1,11 +1,11 @@
 # In-game Configuration Screen Specification
 
-Status: implementation in review
+Status: in-progress
 
 Scope: In-game configuration screen.
 
 Planning: [original plan, PR #280](https://github.com/cTux/ae2-crafting-time/pull/280); [revised plan, PR #509](https://github.com/cTux/ae2-crafting-time/pull/509).
-Implementation: [draft PR #510](https://github.com/cTux/ae2-crafting-time/pull/510). The screen, storage, protocol, and runtime switches are implemented; full cross-loader UI verification and dedicated-server permission testing remain open.
+Implementation: [merged PR #510](https://github.com/cTux/ae2-crafting-time/pull/510). The screen, storage, protocol, and runtime switches are implemented; full cross-loader UI verification and dedicated-server permission testing remain open.
 
 Issue: [#117](https://github.com/cTux/ae2-crafting-time/issues/117)
 
@@ -100,7 +100,11 @@ belongs to [#608](#client-section-reset-defaults-608). Reset All restores model 
 
 ### Client section reset defaults (#608)
 
-Status: ready-to-implement
+Implementation: [PR #620](https://github.com/cTux/ae2-crafting-time/pull/620)
+merged the shared reset correction. The complete focused UI gate below is not
+established by its merge alone; retain that verification requirement.
+
+Status: in-progress
 
 Scope: Restore model defaults when resetting one client section.
 

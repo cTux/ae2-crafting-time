@@ -1,6 +1,6 @@
 # Generate the World Server Config on Startup
 
-Status: ready-to-implement
+Status: in-progress
 
 Scope: Create the missing world-owned server config during logical-server startup.
 
@@ -9,6 +9,10 @@ Issue: [#535](https://github.com/cTux/ae2-crafting-time/issues/535)
 Planning: [Technical design](technical-design.md) and [reviewed plan](implementation-plan.md).
 
 Runtime prerequisite: verify prepared clients, Java runtimes and disposable dedicated-server fixtures before the required campaign. Their guest state has not yet been verified for this task.
+
+Implementation: [PR #539](https://github.com/cTux/ae2-crafting-time/pull/539) is merged.
+The implementation is present; A5 integrated/dedicated/client-only runtime matrix remains an explicit
+qualification boundary unless supported by separate retained evidence.
 
 ## Behavior
 

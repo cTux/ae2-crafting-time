@@ -7,22 +7,20 @@ navigation:
 
 # Saved history
 
-Completed throughput samples are saved with the Minecraft world and restored
-when it loads. History is scoped by AE2 network and output, so two networks in
-one world do not borrow each other's machine speed. Each output keeps only the
-newest configured number of samples.
+Completed throughput samples are saved with the world, scoped by AE2 network
+and output. Each output retains only the configured number of newest samples.
+Restarting therefore does not require learning every recipe from zero.
 
-For example, after learning a furnace recipe and restarting the server, its TTC
-can still appear without retraining from zero. In-progress batches, delay state,
-recent parallel capacity, and job-accuracy history are runtime-only because a
-restart cannot preserve their timing safely. Removing an item-providing mod can
-leave harmless saved entries, but those entries are not shown when the output
-no longer exists. Use the reset control when you intentionally want to remove
-one output's retained history.
+Pending batches, live no-progress timers, recent parallel capacity and job
+accuracy are runtime-only. A separate remembered-status fallback can preserve
+Delayed, Waiting, No provider and No power labels until live observations
+replace them; it does not restore live warning plates by itself. Missing mod
+outputs can leave harmless saved entries that are not displayed. Reset removes
+one output's retained history when you choose to relearn it.
 
 ![Retained production samples in the TTC tooltip](images/ttc-production-sample-details.png)
 
-*Seeded retained windows show the bounded history that survives a world save.*
+*Seeded retained samples show the bounded history that survives a world save.*
 
 [Previous: Details and reset](details-and-reset.md) | [Features](index.md) |
 [Next: Configuration](configuration.md) | [Learning throughput](learning-throughput.md)

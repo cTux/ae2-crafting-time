@@ -6,7 +6,7 @@ Scope: Shipped controls, common configuration and optional UI baseline.
 
 Verification: [prepared-client coverage](../automated-ui-testing/prepared-clients-2026-09-08.md)
 and [feature inventory](../feature-coverage.md).
-The proposed configuration screen and later addon updates have separate scopes.
+The implemented configuration screen and later addon updates have separate verification scopes.
 
 ## Goal
 
@@ -16,16 +16,17 @@ absent.
 
 ## Presentation
 
-- Show eligible craft-plan and crafting-status rows as TTC text on a
-  translucent black rounded badge with two pixels of padding and text shadow.
-- Color known row estimates from green through yellow to red relative to the
-  current list. Show delayed rows as normal-weight red `DELAYED`.
-- Show the craft-plan total below the CPU details. Show the running-job total in
-  the status title only when it fits without overlapping the title.
-- Start both standard AE2 screens in `TTC: longest first` order. The toolbar
-  button cycles through AE2 order, shortest first, and longest first. Sort state
-  lasts only for that open screen.
-- Keep unknown rows after known rows and keep their original order.
+- Show eligible plan and status row estimates using the current millisecond,
+  confidence and Instant rules. Badge backgrounds, shadows and fast-to-slow
+  colors are independent options and default Off.
+- Keep red warnings distinct from optional relative-duration colors.
+- Show the plan total below CPU details. A known Status total replaces the
+  native elapsed-time title; without a known total, show the CPU name. Disabling
+  the Status-total option restores AE2's original title and storage warnings remain.
+- Initialize each screen from its configured sort mode (longest first by default).
+  Toolbar changes last for that open screen. Plan missing rows stay first in
+  every mode; known estimates precede unknown estimates within each group.
+  Status applies its mode to item rows and the complete CPU list.
 - Tooltips may explain throughput, retained completion intervals, confidence,
   accuracy, delay evidence, and controls. They must not expose server internals
   beyond aggregate statistics.
@@ -33,7 +34,8 @@ absent.
 ## Details And Reset
 
 - Ctrl-click an eligible row or Crafting Tree node to publish a compact TTC
-  summary, sample details and both full stored throughput rates to server chat.
+  summary and sample details to server chat. Timed details show the full per-second
+  rate; rate-only fallback shows full per-millisecond and per-second rates.
 - Ctrl-Alt-click the same target to clear retained stats for that output on the
   player's current AE2 network.
 - The configurable mouse binding defaults to the left button. Ctrl and Alt are
@@ -107,7 +109,7 @@ max(0, requested amount - stored network amount)
 
 ## Acceptance Checks
 
-- Both standard screens open in longest-first mode and cycle all three modes.
+- Both screens use their configured initial mode (longest-first by default) and cycle all three modes.
 - Badges, totals, tooltips, colors, and delayed text stay inside their owned
   screen areas.
 - Details and reset select the same row the player sees after sorting and

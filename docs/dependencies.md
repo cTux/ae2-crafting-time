@@ -197,9 +197,9 @@ AdvancedAE's Forge fixture verifies an enclosed Quantum Computer with an
 Accelerator and Data Entangler, exact CPU submission, a fresh sample, and plan TTC.
 It is development coverage, not a declared Forge dependency. Crafting Tree now has
 a Forge `crafting-tree-screen` scenario for node badges, spacing, one copy of each
-tooltip hint, and real details/reset input; Fabric has a sixteen-case compatible
-suite. NeoForge 1.21.1 has a 30-case compatible suite, and NeoForge 26.1.2 has a
-nineteen-case compatible suite.
+tooltip hint, and real details/reset input. The declared catalogue counts above
+include the later native leaves; actual selected graphs and results are recorded
+by each campaign.
 
 Focused read-recovery scenarios cover Crafting Tree on Forge 1.20.1 and NeoForge
 1.21.1, and ME Requester on all three pre-26 targets. They require isolated addon
@@ -421,8 +421,8 @@ energy extraction. All four prepared compatible suites include both native
 status scenarios; their results apply only to the actual tested artifacts.
 
 Standard AE2 coverage now expands into six independent leaves before full-suite
-execution (34/16/30/19 cases for Forge 1.20.1, Fabric 1.20.1, NeoForge 1.21.1,
-and NeoForge 26.1.2). A focused leaf pass does not certify a dependency's full
+execution. Use the declared catalogue counts above and the generated selection
+for the exact requested profile. A focused leaf pass does not certify a dependency's full
 standard group. Optional integrations keep their existing scenario names and
 newest-adapter obligations; change selection does not alter dependency pins.
 

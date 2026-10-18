@@ -7,10 +7,10 @@ navigation:
 
 # Delay diagnostics
 
-Crafting Status replaces TTC with red **DELAYED** only when pending work has
-learned history and no accepted output has arrived for both the fixed idle
-threshold and at least twice its normal production-window duration. Any partial
-output restarts the timer.
+Crafting Status shows red **DELAYED** when active work has learned history
+and no accepted output has arrived for both configured thresholds: at least
+10 seconds and twice the learned average completion interval by default.
+Server Options can change both thresholds. Partial output restarts the timer.
 
 Hover the row to see its estimate, idle time, active and scheduled amounts, and
 recent parallel-slot use. Advice follows the evidence: free recent slots can

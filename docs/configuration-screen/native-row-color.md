@@ -8,7 +8,8 @@ now live in the [specification](native-row-color/spec.md), with the resolved
 When **Badge background** and **Fast-to-slow colors** are both off, ordinary
 Crafting Plan and Crafting Status row text inherits AE2's foreground. Special
 status colors retain their meaning. The specification owns the scope status
-and verification requirements; this page does not claim the fix is shipped.
+and verification requirements; [PR #571](https://github.com/cTux/ae2-crafting-time/pull/571) merged the implementation;
+its original visual acceptance remains separate.
 
 The original draft was merged in
 [#547](https://github.com/cTux/ae2-crafting-time/pull/547). The background switch

@@ -1,5 +1,11 @@
 # TTC Colors
 
+Fast-to-slow TTC colors are an independent client option, Off by default.
+Current colors come from Client Options; the RGB stops below are their defaults.
+Text shadow and badge background are separate options, also Off by default.
+Without decoration, ordinary native rows inherit AE2 foreground; warning and
+Instant colors retain their meaning.
+
 Date: 2026-06-21
 
 ## Goal
@@ -50,8 +56,8 @@ Use a render-scope color context.
    `CraftingStatusTableRenderer`, scan the passed `entries`.
 3. For each eligible plan or status entry, look up server-synced stats in
    `ClientStats.CACHE`. Status uses `activeAmount + pendingAmount`.
-4. Convert stats and the plan or status amount into estimated seconds.
-5. Compute `minSeconds` and `maxSeconds` for the current render list.
+4. Convert stats and the plan or status amount into precise estimated milliseconds.
+5. Compute `minDuration` and `maxDuration` for the current render list.
 6. Store `ProfileKey -> color` in a short-lived client-side context.
 7. The plan or status renderer mixin reads the color for its entry and appends a
    styled TTC component.
@@ -66,7 +72,7 @@ No server changes are needed. The server already sends the aggregate stats requi
 
 ## Color Scale
 
-Use three fixed RGB stops:
+The configurable RGB stops default to:
 
 ```text
 fastest: #55FF55 green
@@ -77,7 +83,7 @@ slowest: #FF5555 red
 For an entry:
 
 ```text
-ratio = (seconds - minSeconds) / (maxSeconds - minSeconds)
+ratio = (durationMs - minDuration) / (maxDuration - minDuration)
 ```
 
 Then linearly interpolate RGB from green to yellow for the first half and from
@@ -87,25 +93,25 @@ yellow to red for the second half.
 channel = from.channel + ratio * (to.channel - from.channel)
 ```
 
-If `minSeconds == maxSeconds`, use green for every `TTC` line. There is no useful relative spread when every known entry has the same estimate.
+If `minDuration == maxDuration`, use green for every `TTC` line. There is no useful relative spread when every known entry has the same estimate.
 
 ## Missing Stats
 
 If an entry has no cached server stats yet:
 
 - keep requesting stats as today
-- render no `TTC` line until stats exist
+- show the applicable no-data/collecting state rather than a numeric TTC
 - exclude it from min/max color calculation
 
 That way an unknown estimate never gets a made-up color.
 
 ## Shared Helper
 
-Coloring uses raw estimated seconds from the same helper as visible TTC text:
+Coloring uses precise estimated milliseconds from the same helper as visible TTC text:
 
 ```text
-TimeEstimate.seconds(amount, stats) -> OptionalLong
-TimeEstimate.format(amount, stats) -> uses seconds(...)
+TimeEstimate.milliseconds(amount, stats) -> Optional<TtcEstimate>
+TimeEstimate.format(amount, stats) -> formats the estimate
 ```
 
 This avoids parsing strings like `~1:07` back into seconds or duplicating TTC
@@ -118,13 +124,13 @@ math in a renderer.
 - The color range is based on the full current list passed by AE2. The renderer
   applies `scrollOffset` after receiving that list, so scrolling does not change
   the range.
-- Bright TTC colors use Minecraft's native dark text shadow for contrast without a heavy outline.
+- Text shadow follows its independent client option; colors do not force it on.
 
 ## Tests
 
 Add small shared tests for:
 
-- `TimeEstimate.seconds(...)` returns one second for nonzero sub-second work.
+- precise millisecond estimates preserve distinct subsecond work before display rounding.
 - color interpolation returns bright green at min, bright red at max, and a
   middle color between them.
 - equal min/max returns bright green.
@@ -136,5 +142,5 @@ Version-side tests can stay cheap:
 
 ## Chosen Approach
 
-Use one small shared color helper and one client-only render-scope mixin. There
-is no need for another packet, config option, or UI setting.
+Use one small shared color helper and one client-only render-scope mixin.
+No new packet is needed; the existing client color option controls this presentation.

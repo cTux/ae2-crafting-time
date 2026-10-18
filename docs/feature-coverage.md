@@ -29,13 +29,17 @@ Shipped behavior can still have unfinished verification or separately planned ad
 | AE2: Crafting Tree and ME Requester UI | [Player controls and integrations spec](player-controls-and-integrations/spec.md#optional-integrations) and [technical design](player-controls-and-integrations/technical-design.md#optional-ui-adapters) |
 | Applied Mekanistics key support and AdvancedAE, NeoEco, and AE2 Lightning Tech CPU profiling | [AE2 addon integration](ae2-addon-integration/spec.md), [technical design](ae2-addon-integration/technical-design.md), and [player controls and integrations](player-controls-and-integrations/technical-design.md#other-addon-boundaries) |
 | English and Ukrainian player text | [Player controls and integrations spec](player-controls-and-integrations/spec.md#compatibility-and-failure-rules) and [technical design](player-controls-and-integrations/technical-design.md#localization) |
-| Craftable bilingual guide with an introduction and first-estimate chapter on every supported target | [Guide book spec](guideme-guide/spec.md), [1.20.1 extension](guideme-guide/1.20.1/spec.md), and [technical design](guideme-guide/1.20.1/technical-design.md) |
+| Craftable bilingual guide with introduction, first-estimate, feature and status chapters | [Guide book spec](guideme-guide/spec.md), [1.20.1 extension](guideme-guide/1.20.1/spec.md), and [technical design](guideme-guide/1.20.1/technical-design.md), [features](guideme-guide/feature-chapter/spec.md), and [statuses](guideme-guide/status-chapter/spec.md) |
+| Millisecond time display, confident Instant, and time/status symbols | [Millisecond display](ttc-milliseconds-instant/spec.md) and [symbols](ttc-symbols/spec.md) |
+| Client and world-owned Server Options | [Configuration](configuration-screen/spec.md) |
+| Compact plan/status amounts and hover rates | [Plan amounts](crafting-plan-amounts/spec.md), [status amounts](crafting-status-amounts/spec.md), and [hover numbers](player-controls-and-integrations/compact-hover-numbers/spec.md) |
+| Warning provider plates and chat-locate sky beams | [Provider locate](provider-locate/spec.md#planned-red-sky-beam) |
+| Opt-in Forge crafting suspension | [Suspension](crafting-suspension/spec.md) |
+| Waiting, blocked, recurrent and stored-variant diagnostics; experimental Mekanism Precision Sawmill chance-output diagnostics on Forge 1.20.1 | [Waiting](waiting-to-start/spec.md), [dispatch](provider-dispatch-statuses/spec.md), [recurrent](recurrent-crafting-status/spec.md), [stored variants](exact-ingredient-mismatch/spec.md), and [chance output](chance-output/spec.md) |
 | Four supported Minecraft/loader targets | [Architecture](architecture.md#supported-targets) |
 | Builds, development clients, release automation, automatic PR setup, CI, and review | [Building](building.md), [development client](dev-client.md), [release](release.md), [working with this project](working-with-project.md), and [repository workflow](../AGENTS.md) |
 
 ## Other feature and verification scopes
-
-- [Planned millisecond display and confident Instant status](ttc-milliseconds-instant/spec.md)
 
 These links include proposals, implementation in progress, and completed verification
 work. Their specifications own the current status; this index does not duplicate it.

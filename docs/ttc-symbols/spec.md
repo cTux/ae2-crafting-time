@@ -1,6 +1,6 @@
 # TTC symbols and tooltip headings
 
-Status: ready-to-implement
+Status: in-progress
 
 Scope: Presentation and a default-On client visibility option for [#450](https://github.com/cTux/ae2-crafting-time/issues/450).
 
@@ -12,6 +12,14 @@ supersede the original proposal's open palette and required runtime campaign.
 Actual Minecraft glyph appearance remains unverified.
 
 ## Time decoration
+
+The baseline below records the original palette. [PR #573](https://github.com/cTux/ae2-crafting-time/pull/573)
+implemented it and [#576](https://github.com/cTux/ae2-crafting-time/pull/576) repaired
+chat startup. Current numeric times use ⌚ under the completed #658 scope below.
+Native Plan/Status row symbols follow their text color; Plan totals follow native
+CPU-details foreground without a badge and the configured Total color with one.
+These current rules supersede the original always-aqua rule below. The original
+baseline has no complete all-surface glyph campaign recorded here.
 
 When Show emoji is On, every displayed time value gets exactly one leading ⏱
 (U+23F1): rows, CPU cards, totals, tooltips, chat, addon surfaces, durations,

@@ -1,5 +1,12 @@
 # Finite Outlier Configuration and TTC
 
+The #477 evidence below describes its original validation-only change.
+Current estimates use `TimeEstimate.milliseconds` and the
+[millisecond display contract](../ttc-milliseconds-instant/spec.md); its finite-rate
+guard is preserved. Current options use the shared world/client configuration
+model and apply valid Done changes live. Older seconds/common-config references
+below are historical, not current API or configuration guidance.
+
 Status: finished
 
 Scope: Finite configuration and estimate validation.
