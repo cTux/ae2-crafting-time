@@ -10,7 +10,7 @@ Unattended visual qualification is tracked separately below.
 
 ## Java runtime metadata
 
-Status: in-progress
+Status: finished
 
 Scope: Correct the Java runtime identity in schema-2 smoke receipts.
 
@@ -19,10 +19,11 @@ Issue: [#638](https://github.com/cTux/ae2-crafting-time/issues/638).
 Planning: [Design](technical-design.md#java-runtime-metadata) and
 [reviewed plan](implementation-plan.md#java-runtime-metadata).
 
-Implementation: [`run-ui-smoke.ps1`](../../scripts/run-ui-smoke.ps1) and its
-[`test-run-ui-smoke.ps1`](../../scripts/test-run-ui-smoke.ps1) regression checks.
+Implementation: [PR #718](https://github.com/cTux/ae2-crafting-time/pull/718),
+merged as [73b756a8](https://github.com/cTux/ae2-crafting-time/commit/73b756a8bda9853f7e445b8b00a056feaeb3fd5e).
 
-Verification: runner and prepared-launch self-tests, current-head CI, and merge pending.
+Verification: On the tested [implementation head
+`abda74493e3030f2ccad36bca72e6091158f1a7f`](https://github.com/cTux/ae2-crafting-time/commit/abda74493e3030f2ccad36bca72e6091158f1a7f), [PR #718's verification record](https://github.com/cTux/ae2-crafting-time/pull/718#user-content-verification) reports `test-run-ui-smoke.ps1` passed in 90.52s and `test-prepare-ui-smoke-launch.ps1` passed in 1.06s; the original-writer regression reproduced the incorrect wrapper Java home. GitHub [Build all mod JARs](https://github.com/cTux/ae2-crafting-time/actions/runs/39117108220) and [Gradle tests](https://github.com/cTux/ae2-crafting-time/actions/runs/39117108218) passed on the same head.
 
 The receipt must identify the Java selected by the validated native launcher.
 The wrapper's environment can name a different JDK. This metadata correction
