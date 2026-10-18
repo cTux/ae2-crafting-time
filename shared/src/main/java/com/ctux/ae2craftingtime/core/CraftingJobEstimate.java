@@ -58,8 +58,10 @@ public final class CraftingJobEstimate {
         return new DependencyGraph(dependencies, complete);
     }
 
-    public void complete(ProfileKey key, long amount) {
+    public boolean complete(ProfileKey key, long amount) {
+        if (!remainingAmounts.containsKey(key)) return false;
         remainingAmounts.computeIfPresent(key, (ignored, remaining) -> Math.max(0, remaining - amount));
+        return true;
     }
 
     public Optional<Snapshot> snapshot() {

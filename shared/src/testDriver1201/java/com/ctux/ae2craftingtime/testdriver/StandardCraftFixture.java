@@ -763,14 +763,13 @@ final class StandardCraftFixture {
     boolean acceptRestoredCpuOutput(ServerPlayer player) {
         var cluster = cpuListCpus(player).get(1).getCluster();
         if (cluster == null || !cluster.isBusy()) throw new IllegalStateException("Restored CPU is no longer busy");
-        var output = AEItemKey.of(Items.SMOOTH_STONE);
+        var output = AEItemKey.of(Items.STONE);
         var waiting = cluster.craftingLogic.getWaitingFor(output);
         if (waiting == 0) return false;
         var before = ProfilerBridge.remainingJobEstimate(cluster).orElseThrow();
         var link = cluster.craftingLogic.getLastLink();
         if (link == null) throw new IllegalStateException("Restored CPU lost its crafting link");
-        var accepted = cluster.getGrid().getStorageService().getInventory().insert(output, 1,
-                Actionable.MODULATE, IActionSource.ofMachine(cpuListCpus(player).get(1)));
+        var accepted = cluster.craftingLogic.insert(output, 1, Actionable.MODULATE);
         if (accepted != 1 || cluster.craftingLogic.getWaitingFor(output) != waiting - 1)
             throw new IllegalStateException("Restored CPU did not accept one real output");
         if (!link.getCraftingID().equals(cluster.craftingLogic.getLastLink().getCraftingID()))

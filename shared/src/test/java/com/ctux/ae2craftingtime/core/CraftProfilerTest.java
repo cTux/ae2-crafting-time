@@ -1031,6 +1031,28 @@ class CraftProfilerTest {
     }
 
     @Test
+    void restoredGraphOutputDoesNotConsumeAnotherCpuPendingSample() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:overworld|60,80,1026", "minecraft:stone");
+        var restoredCpu = new Object();
+        var freshCpu = new Object();
+        var restoredGraph = new CraftingJobEstimate(key, Map.of(key, 4L), Map.of());
+        profiler.setJobEstimate(restoredCpu, restoredGraph);
+        profiler.start(key, freshCpu, 1, ProfileUnit.ITEM, 0);
+        assertFalse(profiler.complete(new ProfileKey("minecraft:overworld|60,80,1026", "minecraft:glass"),
+                restoredCpu, 1, 19));
+
+        // Mirror the bridges' fallback: a restored graph has no live pending timing start.
+        if (!profiler.complete(key, restoredCpu, 1, 20)) profiler.completeUniquePending(key, 1, 20);
+
+        assertEquals(3L, restoredGraph.snapshot().orElseThrow().remainingAmounts().get(key));
+        assertTrue(profiler.hasPending(key));
+        assertTrue(profiler.complete(key, freshCpu, 1, 21));
+        assertFalse(profiler.hasPending(key));
+        assertEquals(3L, restoredGraph.snapshot().orElseThrow().remainingAmounts().get(key));
+    }
+
+    @Test
     void waitingKeysSnapshotAndRestoreForDisplay() {
         var profiler = new CraftProfiler(10);
         var cpu = new Object();

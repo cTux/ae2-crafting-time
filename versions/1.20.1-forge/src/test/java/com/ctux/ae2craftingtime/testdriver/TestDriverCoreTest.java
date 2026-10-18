@@ -890,6 +890,35 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void restartCaptureWaitsForSelectedJobNativeRowsAndNewStatus() {
+        var cpu = new CpuListTtcControl.CpuState("1,2,3", 4, "minecraft:smooth_stone", 8,
+                true, true, new com.ctux.ae2craftingtime.core.TtcEstimate(7000, true), 9, 10, "job-a");
+        var state = new CpuListTtcControl.ServerState("network", 1, 4, true, true, List.of(cpu));
+        var base = selectedCpuSnapshot(new Rect(60, 20, 20, 8), null, "~7s");
+        var row = new UiSnapshot.Row("minecraft:smooth_stone", 8, 0, new Rect(1, 1, 16, 16), List.of());
+        var oldRow = new UiSnapshot.Row("minecraft:glass", 4, 0, new Rect(1, 1, 16, 16), List.of());
+        var current = new UiSnapshot.StatusObservation(2, "native", 1, 1, 1, 0, 0, 4,
+                "job-a", "minecraft:smooth_stone", 1L);
+        var missingJob = new UiSnapshot.StatusObservation(2, "native", 1, 1, 1, 0, 0, 4,
+                null, "minecraft:smooth_stone", 1L);
+        var ready = new UiSnapshot(base.screen(), base.menu(), base.gui(), base.screenWidth(),
+                base.screenHeight(), base.guiScale(), 2, base.scroll(), List.of(row), base.text(),
+                base.badges(), base.widgets(), base.itemCells(), base.tooltip(), base.cpuCards(),
+                base.rawCpuSerials(), current);
+        assertTrue(CpuListTtcScenario.freshSelectedCpuStatus(ready, state, 1, 1));
+        assertFalse(CpuListTtcScenario.freshSelectedCpuStatus(ready, state, 2, 1));
+        assertFalse(CpuListTtcScenario.freshSelectedCpuStatus(ready, state, 1, 2));
+        assertFalse(CpuListTtcScenario.freshSelectedCpuStatus(new UiSnapshot(ready.screen(), ready.menu(),
+                ready.gui(), ready.screenWidth(), ready.screenHeight(), ready.guiScale(), ready.frame(),
+                ready.scroll(), List.of(oldRow), ready.text(), ready.badges(), ready.widgets(),
+                ready.itemCells(), ready.tooltip(), ready.cpuCards(), ready.rawCpuSerials(), current), state, 1, 1));
+        assertFalse(CpuListTtcScenario.freshSelectedCpuStatus(new UiSnapshot(ready.screen(), ready.menu(),
+                ready.gui(), ready.screenWidth(), ready.screenHeight(), ready.guiScale(), ready.frame(),
+                ready.scroll(), ready.rows(), ready.text(), ready.badges(), ready.widgets(),
+                ready.itemCells(), ready.tooltip(), ready.cpuCards(), ready.rawCpuSerials(), missingJob), state, 1, 1));
+    }
+
+    @Test
     void connectedRelaunchUsesTheTwoProcessScenarioBudget() {
         assertEquals(40, DedicatedCpuScenario.timeoutMinutes("cpu-list-total-ttc-connected"));
         assertEquals(5, DedicatedCpuScenario.timeoutMinutes("startup-only"));

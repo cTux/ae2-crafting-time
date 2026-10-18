@@ -197,14 +197,12 @@ public final class CraftProfiler {
         }
 
         var jobEstimate = jobEstimates.get(scope);
-        if (jobEstimate != null) {
-            jobEstimate.complete(key, amount);
-        }
+        var graphMatched = jobEstimate != null && jobEstimate.complete(key, amount);
 
         var scopedPending = pending.get(scope);
         var queue = scopedPending == null ? null : scopedPending.get(key);
         if (queue == null) {
-            return false;
+            return graphMatched;
         }
 
         advanceTick(key, tick);

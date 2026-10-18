@@ -69,6 +69,8 @@ final class CpuListTtcScenario {
     private boolean actionComplete;
     private long lastFrame = -1;
     private long releasedFrame = -1;
+    private int previousStatusIdentity;
+    private long previousStatusFrame = -1;
     private long replacedElapsed;
     private boolean opening;
     private long openAttemptedAt;
@@ -175,6 +177,7 @@ final class CpuListTtcScenario {
                 screenshot.accept("cpu-list-total-ttc-unselected-large.png");
                 var badge = selectionBounds(snapshot.cpuCards(), selectedSerial, "minecraft:smooth_stone", 8);
                 releasedFrame = snapshot.frame();
+                rememberStatusBeforeSelection(snapshot);
                 DriverPlatform.clickAndRelease(minecraft, badge.centerX(), badge.centerY());
                 next(Stage.SELECTED);
             }
@@ -182,6 +185,7 @@ final class CpuListTtcScenario {
                 if (snapshot.frame() <= releasedFrame) return false;
                 var selected = card(snapshot, selectedSerial);
                 if (!selected.selected() || selected.ttc() == null || serverState().selectedSerial() != selectedSerial) return false;
+                if (!freshSelectedCpuStatus(snapshot, serverState(), previousStatusIdentity, previousStatusFrame)) return false;
                 var title = title(snapshot);
                 if (title == null || !title.rendered().equals("TTC: " + selected.ttc().rendered())) return false;
                 if (snapshot.text().stream().noneMatch(text -> text.bounds() != null
@@ -715,11 +719,13 @@ final class CpuListTtcScenario {
                         "minecraft:smooth_stone".equals(card.jobId()) && card.amount() == 8).findFirst().orElse(null);
                 if (target == null) return false;
                 var badge = selectionBounds(snapshot.cpuCards(), target.serial(), target.jobId(), target.amount());
+                rememberStatusBeforeSelection(snapshot);
                 DriverPlatform.clickAndRelease(minecraft, badge.centerX(), badge.centerY());
                 next(stage == Stage.REJOIN_REFRESH ? Stage.REJOIN_FRESH : Stage.RELAUNCH_FRESH);
             }
             case REJOIN_FRESH -> {
-                if (!allKnownRecovered(serverState()) || !totalsMatch(snapshot) || !selectedTitleMatches(snapshot)) return false;
+                if (!allKnownRecovered(serverState()) || !totalsMatch(snapshot) || !selectedTitleMatches(snapshot)
+                        || !freshSelectedCpuStatus(snapshot, serverState(), previousStatusIdentity, previousStatusFrame)) return false;
                 screenshot.accept("cpu-list-total-ttc-rejoin-fresh.png");
                 next(Stage.RELAUNCH_READY);
             }
@@ -744,10 +750,12 @@ final class CpuListTtcScenario {
             }
             case RELAUNCH_FRESH -> {
                 var nextStage = afterRelaunchFreshObservation(snapshot, serverState(), badgeBackground());
-                if (nextStage != Stage.DONE) return false;
+                if (nextStage != Stage.DONE || !freshSelectedCpuStatus(snapshot, serverState(),
+                        previousStatusIdentity, previousStatusFrame)) return false;
                 mark(checks, "reconnect");
                 screenshot.accept("cpu-list-total-ttc-reconnect.png");
                 beforeRelaunchProgress = serverState();
+                rememberStatusBeforeSelection(snapshot);
                 next(Stage.RELAUNCH_PROGRESS);
             }
             case RELAUNCH_PROGRESS -> {
@@ -756,7 +764,8 @@ final class CpuListTtcScenario {
                 next(Stage.RELAUNCH_PROGRESS_FRESH);
             }
             case RELAUNCH_PROGRESS_FRESH -> {
-                if (!totalsMatch(snapshot, serverState()) || !selectedTitleMatches(snapshot)) return false;
+                if (!totalsMatch(snapshot, serverState()) || !selectedTitleMatches(snapshot)
+                        || !freshSelectedCpuStatus(snapshot, serverState(), previousStatusIdentity, previousStatusFrame)) return false;
                 var before = beforeRelaunchProgress.cpus().get(1);
                 var after = serverState().cpus().stream().filter(cpu ->
                         java.util.Objects.equals(cpu.craftId(), before.craftId())).findFirst().orElseThrow();
@@ -1114,6 +1123,27 @@ final class CpuListTtcScenario {
         if (selected == null) return false;
         var value = title(snapshot);
         return value != null && value.rendered().equals("TTC: " + selected.ttc().rendered());
+    }
+
+    private void rememberStatusBeforeSelection(UiSnapshot snapshot) {
+        previousStatusIdentity = snapshot.status() == null ? 0 : snapshot.status().identity();
+        previousStatusFrame = snapshot.frame();
+    }
+
+    static boolean freshSelectedCpuStatus(UiSnapshot snapshot, CpuListTtcControl.ServerState state,
+            int beforeIdentity, long beforeFrame) {
+        if (snapshot == null || state == null || snapshot.frame() <= beforeFrame) return false;
+        var status = snapshot.status();
+        if (status == null || !"native".equals(status.provenance()) || status.identity() == beforeIdentity)
+            return false;
+        var selected = snapshot.cpuCards().stream().filter(UiSnapshot.CpuCard::selected).findFirst().orElse(null);
+        if (selected == null || state.selectedSerial() != selected.serial()) return false;
+        var cpu = state.cpus().stream().filter(value -> value.serial() == selected.serial()).findFirst().orElse(null);
+        return cpu != null && cpu.craftId() != null && cpu.craftId().equals(status.selectedJobUuid())
+                && java.util.Objects.equals(status.selectedCpuSerial(), selected.serial())
+                && java.util.Objects.equals(status.selectedOutputId(), cpu.jobId())
+                && java.util.Objects.equals(selected.jobId(), cpu.jobId())
+                && snapshot.rows().stream().anyMatch(row -> java.util.Objects.equals(row.outputId(), cpu.jobId()));
     }
 
     static boolean samePhysicalJobs(CpuListTtcControl.ServerState before, CpuListTtcControl.ServerState after) {
