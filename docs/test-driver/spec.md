@@ -1,5 +1,38 @@
 # AE2 Crafting Time Test Driver Spec
 
+## ExtendedAE-Plus focused graph (#461)
+
+Status: ready-to-implement
+
+Scope: Restore focused prerequisites on both supported targets and investigate
+the reported Forge 1.6.2 CPU failure with a controlled candidate graph.
+
+Issue: [#461](https://github.com/cTux/ae2-crafting-time/issues/461).
+Planning: [design](technical-design.md#extendedae-plus-focused-graph-461)
+and [plan](implementation-plan.md#extendedae-plus-focused-graph-461).
+
+- **EP461-1:** Selecting only `xr109llC` includes ExtendedAE (`JiOqfoFM`)
+  and its required dependencies on Forge 1.20.1 and NeoForge 1.21.1, even when
+  upstream metadata omits that relationship. Compatible resolution keeps the
+  existing pins and excludes unrelated catalogue projects.
+- **EP461-2:** Deterministic focused resolver checks cover both target rows,
+  absent upstream dependency metadata, compatible pin selection and latest
+  traversal. Verify the relationship against the official addon JAR metadata.
+- **EP461-3:** Clean `extendedae-plus-cpu` runs pass on both current compatible
+  targets. Retain native CPU selection, dispatch, completion, profiling and UI
+  evidence; visible TTC labels alone do not establish success.
+- **EP461-4:** Run Forge 1.6.2 (`A3uRgnwT`) in a separate focused graph with
+  every other compatible pin fixed. Compare its CPU result with the Forge 1.5.5
+  control, retain exact artifact identities and diagnose any reproduced failure
+  before claiming qualification. A candidate failure is unresolved until its
+  fixture-versus-addon cause and remaining follow-up are supported by evidence.
+
+Keep all tracked version pins unchanged, including Forge 1.5.5. This scope
+does not promote Forge 1.6.2 or qualify the full addon graph. Fix fixture code
+only for a reproduced, attributable defect; do not infer one from the historical
+timeout. Completion requires the dependency repair and recorded candidate
+investigation, not just a passing current-version control.
+
 ## Unchanged-job restart recovery (#636)
 
 Scope/status: [restart recovery](../cpu-list-total-ttc/restart/spec.md).

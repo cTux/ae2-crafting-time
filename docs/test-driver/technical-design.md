@@ -1,5 +1,37 @@
 # AE2 Crafting Time Test Driver Technical Design
 
+## ExtendedAE-Plus focused graph (#461)
+
+Scope, status and criteria: [spec](spec.md#extendedae-plus-focused-graph-461).
+
+`scripts/run-client.ps1` filters the selected projects, then `Install-Project`
+walks required upstream dependencies and each project's `modrinth_dependencies`.
+It already uses compatible pins, deduplicates traversal and verifies downloads.
+Both `xr109llC` entries in `scripts/run-client-versions.json` lack the local
+`JiOqfoFM` edge. A full catalogue masks this omission by selecting ExtendedAE
+independently. Add that edge to both rows; the resolver needs no new mechanism.
+
+Official Forge 1.5.5 (`pN9pMjiW`) and 1.6.2 (`A3uRgnwT`) JARs require
+`expatternprovider >=1.20-1.4.6-forge`; NeoForge 1.6.2 (`o8U8Ekro`) requires
+`extendedae`. Their Modrinth records omit ExtendedAE. Existing prerequisite
+pins satisfy the embedded requirements; keep their transitive resolution.
+
+`AddonCpuFixture` selects `ExtendedAePlusFixture`, which checks mod presence
+and inherits `ExtendedAeFixture`: replace native assemblers, wait for active
+grid nodes, select an existing idle CPU. `CraftPlanScenario` then starts the
+native job and verifies dispatch and profiling. The historical unavailable-CPU
+screen proves neither a current fixture defect nor an addon API break. Compare
+the same current fixture under pinned Forge 1.5.5 and isolated 1.6.2 before
+changing this shared path. Any necessary fixture correction also reaches the
+ExtendedAE scenario and requires corresponding boundary verification.
+
+The existing `run-client.ps1 -VersionMatrix` and packaged-bundle dispatch support
+the controlled candidate without new infrastructure. Keep its matrix under
+`build/issue-461`, change only the Forge Plus pin, bind its hash and source SHA
+to the sealed bundle, and retain loaded artifact hashes. Never alter tracked
+matrix inputs during a campaign or present this candidate as the normal pin.
+Production code, optional loader requirements, saves and packets are unchanged.
+
 ## Unchanged-job restart recovery (#636)
 
 Scope/status: [restart recovery](../cpu-list-total-ttc/restart/spec.md).
