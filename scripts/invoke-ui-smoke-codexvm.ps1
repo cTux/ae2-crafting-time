@@ -111,7 +111,7 @@ if ($ResourceFixtureOnly) { $smokeArguments += "-ResourceFixtureOnly" }
 if ($Prewarm) { $smokeArguments += '-Prewarm' }
 if ($AcceptMinecraftEula) { $smokeArguments += '-AcceptMinecraftEula' }
 if ($ServerDirectory) { $smokeArguments += @('-ServerDirectory',$ServerDirectory) }
-if ($ProjectId) { $smokeArguments += @("-ProjectId") + $ProjectId }
+if ($ProjectId) { $smokeArguments += @('-ProjectId', ($ProjectId -join ',')) }
 if ($Stop) { $smokeArguments += "-Stop" } else { $smokeArguments += @("-Scheduled", "-InteractiveUser", "Codex") }
 
 if ($Transport -eq "OpenSSH") {

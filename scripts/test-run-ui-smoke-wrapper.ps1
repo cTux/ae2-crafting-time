@@ -11,7 +11,7 @@ param([switch]$Changed,[string]$BaseRef,[switch]$PlanOnly,[string]$Target,[switc
 if ($Scenario -cne 'delayed-resource-icons' -or !$PlanOnly) {
     throw 'Wrapper did not forward the resource campaign contract'
 }
-[pscustomobject]@{forwarded=$true;scenario=$Scenario;resourceFixtureOnly=[bool]$ResourceFixtureOnly} |
+[pscustomobject]@{forwarded=$true;scenario=$Scenario;resourceFixtureOnly=[bool]$ResourceFixtureOnly;projectId=@($ProjectId)} |
     ConvertTo-Json | Set-Content -LiteralPath $env:AE2CT_WRAPPER_CAPTURE
 '@ | Set-Content -LiteralPath (Join-Path $scripts 'run-ui-smoke-matrix.ps1')
     $env:AE2CT_WRAPPER_CAPTURE = Join-Path $temporary 'capture.json'
@@ -26,6 +26,13 @@ if ($Scenario -cne 'delayed-resource-icons' -or !$PlanOnly) {
     if ($LASTEXITCODE -ne 0) { throw 'Production resource wrapper process failed' }
     $result = Get-Content -LiteralPath $env:AE2CT_WRAPPER_CAPTURE -Raw | ConvertFrom-Json
     if (!$result.forwarded -or $result.resourceFixtureOnly) { throw 'Production resource wrapper forwarding failed' }
+    & $shell -NoProfile -File (Join-Path $scripts 'run-ui-smoke.ps1') -PlanOnly -Target 1.20.1-forge `
+        -Scenario delayed-resource-icons -ProjectId '1086241,qPydPwtX' | Out-Null
+    if ($LASTEXITCODE -ne 0) { throw 'Multi-project resource wrapper process failed' }
+    $result = Get-Content -LiteralPath $env:AE2CT_WRAPPER_CAPTURE -Raw | ConvertFrom-Json
+    if ((@($result.projectId) -join ',') -cne '1086241,qPydPwtX') {
+        throw 'Native smoke wrapper changed the ordered multi-project graph at a -File boundary'
+    }
     Write-Host 'Resource fixture wrapper forwarding test passed'
 } finally {
     Remove-Item Env:\AE2CT_WRAPPER_CAPTURE -ErrorAction SilentlyContinue

@@ -56,6 +56,12 @@ function Test-UiSnapshotBounds($snapshot) {
 }
 
 $ErrorActionPreference = "Stop"
+if ($ProjectId) {
+    $ProjectId = @($ProjectId | ForEach-Object { $_ -split ',' } | ForEach-Object {
+        if ($_ -cnotmatch '^[A-Za-z0-9]+$') { throw 'Invalid ProjectId' }
+        $_
+    })
+}
 . (Join-Path $PSScriptRoot 'resource-fixture-contract.ps1')
 if ($Prewarm) { . (Join-Path $PSScriptRoot 'resource-prewarm-contract.ps1') }
 $resourceScenario = $Scenario -in @('delayed-resource-icons','appmek-resource-icons')
@@ -331,7 +337,7 @@ $arguments = @(
 )
 if ($Latest) { $arguments += "-Latest" }
 if ($Interactive) { $arguments += "-Interactive" }
-if ($ProjectId) { $arguments += @("-ProjectId") + $ProjectId }
+if ($ProjectId) { $arguments += @('-ProjectId', ($ProjectId -join ',')) }
 
 $previousToken = $env:AE2CT_TEST_DRIVER_TOKEN
 if ($Interactive) {

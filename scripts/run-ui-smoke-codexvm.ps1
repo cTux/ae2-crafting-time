@@ -25,6 +25,12 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+if ($ProjectId) {
+    $ProjectId = @($ProjectId | ForEach-Object { $_ -split ',' } | ForEach-Object {
+        if ($_ -cnotmatch '^[A-Za-z0-9]+$') { throw 'Invalid ProjectId' }
+        $_
+    })
+}
 if ($Prewarm -and (!$ServerDirectory -or ($Scenario -notin @('delayed-resource-icons','appmek-resource-icons')) -or $Latest -or $Interactive)) {
     throw 'Prewarm requires a compatible connected resource fixture'
 }
@@ -134,7 +140,7 @@ $arguments = @('-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', (Join-Path $
     '-CheckpointTimeoutSeconds', [string]$CheckpointTimeoutSeconds,
     '-StartupTimeoutSeconds', [string]$StartupTimeoutSeconds)
 if ($CasesBase64) { $arguments += @('-CasesBase64', $CasesBase64) }
-if ($ProjectId) { $arguments += @('-ProjectId') + @($ProjectId) }
+if ($ProjectId) { $arguments += @('-ProjectId', ($ProjectId -join ',')) }
 if ($Latest) { $arguments += '-Latest' }
 if ($Interactive) { $arguments += '-Interactive' }
 if ($ResourceFixtureOnly) { $arguments += '-ResourceFixtureOnly' }

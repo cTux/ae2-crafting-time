@@ -19,6 +19,12 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+if ($ProjectId) {
+    $ProjectId = @($ProjectId | ForEach-Object { $_ -split ',' } | ForEach-Object {
+        if ($_ -cnotmatch '^[A-Za-z0-9]+$') { throw 'Invalid ProjectId' }
+        $_
+    })
+}
 if ($Packaged -and -not $ResolveOnly) { throw 'Packaged preparation requires -ResolveOnly; launch copied artifacts in CodexVM' }
 if ($BaseOnly -and $ProjectId) { throw 'Base-only preparation cannot select optional projects' }
 $javaHomes = @{}

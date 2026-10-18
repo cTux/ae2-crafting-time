@@ -287,6 +287,16 @@ try {
     } catch {
         if ($_.Exception.Message -ne "Cannot load projects 1605404 and 545hUrw9 together") { throw }
     }
+    $previousErrorAction = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = 'Continue'
+        $fileOutput = (& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script -Target '1.20.1-forge' `
+            -Root $temp -VersionMatrix $testMatrix -ProjectId '1605404,545hUrw9' -ResolveOnly 2>&1 | Out-String)
+    } finally { $ErrorActionPreference = $previousErrorAction }
+    if ($LASTEXITCODE -eq 0 -or $fileOutput -notmatch 'Cannot load projects 1605404 and 545hUrw9 together' -or
+            $fileOutput -match 'positional parameter') {
+        throw "PowerShell -File did not preserve both selected projects: $fileOutput"
+    }
     try {
         & $script -Target "1.20.1-forge" -Root $temp -VersionMatrix $testMatrix -ProjectId ayN3DZKb -ResolveOnly 6>&1 | Out-Null
         throw "Expected an excluded focused project failure"
