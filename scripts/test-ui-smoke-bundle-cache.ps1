@@ -14,7 +14,7 @@ try {
     $second = & (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') @arguments -Mode Reuse
     if (!$first.reused -or $first.bundleSha256 -ne $second.bundleSha256) { throw 'Exact immutable bundle was not reused' }
     $identity=Get-Content (Join-Path $cache 'bundle-identity.json') -Raw|ConvertFrom-Json
-    if ($identity.schema -ne 3 -or (@($identity.projectId) -cjoin ',') -cne 'A,z') { throw 'Canonical selection was not sealed' }
+    if ($identity.schema -ne 3 -or (@($identity.projectId) -join ',') -cne 'A,z') { throw 'Canonical selection was not sealed' }
     $sameSelection = @{} + $arguments; $sameSelection.ProjectId = @('A','z')
     if (!(& (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') @sameSelection -Mode Reuse).reused) { throw 'Order or duplicates caused another resolution' }
     $canonical = & (Join-Path $PSScriptRoot 'get-ui-smoke-project-selection.ps1') -ProjectId @('z','A','z')

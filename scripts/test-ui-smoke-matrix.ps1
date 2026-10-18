@@ -16,7 +16,7 @@ function Assert-ProcessRejected([string[]]$Arguments, [string]$Reason) {
 }
 New-Item -ItemType Directory -Path $scripts -Force | Out-Null
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'run-ui-smoke-matrix.ps1'), (Join-Path $PSScriptRoot 'release-matrix.json') -Destination $scripts
-foreach ($file in @('get-ui-smoke-plan.ps1','get-ui-smoke-results.ps1','expand-ui-smoke-groups.ps1','run-client-versions.json',
+foreach ($file in @('get-ui-smoke-plan.ps1','get-ui-smoke-results.ps1','resource-fixture-contract.ps1','expand-ui-smoke-groups.ps1','run-client-versions.json',
         'use-ui-smoke-bundle-cache.ps1','get-ui-smoke-project-selection.ps1',
         'ui-smoke-impact.json','ui-smoke-groups.json','ui-smoke-coverage.json','ui-smoke-forge-suite.json',
         'ui-smoke-fabric-suite.json','ui-smoke-neoforge-suite.json','ui-smoke-neoforge-26.1.2-suite.json')) {
@@ -189,11 +189,11 @@ try {
     $focused = @('-NoProfile','-File',(Join-Path $scripts 'run-ui-smoke-matrix.ps1'),'-Target','1.20.1-forge','-Scenario','aeinfinitybooster-terminal')
     & $shell @focused -ProjectId VQhDBNs8
     if ($LASTEXITCODE -ne 0 -or @(Get-Content $resolverCalls).Count -ne 1) { throw 'Focused selection did not resolve its own bundle' }
-    $focusedIdentity = Get-ChildItem (Join-Path $temp 'build/ui-smoke/bundle-cache') -Filter bundle-identity.json -File -Recurse |
-        Where-Object { $_.FullName -like '*1.20.1-forge*compatible*catalogue*primary*' -and
-            @((Get-Content $_.FullName -Raw | ConvertFrom-Json).projectId).Count -eq 1 }
-    if (@($focusedIdentity).Count -ne 1 -or @((Get-Content -LiteralPath $focusedIdentity[0].FullName -Raw | ConvertFrom-Json).projectId)[0] -cne 'VQhDBNs8') {
-        throw 'Focused graph selection was not sealed separately from full'
+    $campaign = Get-ChildItem (Join-Path $temp 'build/ui-smoke/campaigns') -Directory | Sort-Object Name | Select-Object -Last 1
+    $focusedIdentity = Get-Content -LiteralPath (Join-Path $campaign.FullName 'compatible/1.20.1-forge/primary/bundle/bundle-identity.json') -Raw | ConvertFrom-Json
+    if ($focusedIdentity.schema -ne 3 -or $focusedIdentity.graphId -cne 'primary' -or
+            @($focusedIdentity.projectId).Count -ne 1 -or $focusedIdentity.projectId[0] -cne 'VQhDBNs8') {
+        throw "Focused graph selection was not sealed separately from full: schema=$($focusedIdentity.schema) graph=$($focusedIdentity.graphId) ids=$(@($focusedIdentity.projectId) -join ',')"
     }
     & $shell @focused -ProjectId VQhDBNs8
     if ($LASTEXITCODE -ne 0 -or @(Get-Content $resolverCalls).Count -ne 1) { throw 'Exact focused selection caused another resolution' }
