@@ -1,5 +1,40 @@
 # AE2 Crafting Time Test Driver Implementation Plan
 
+## ExtendedAE-Plus focused graph (#461)
+
+Scope, status and criteria: [spec](spec.md#extendedae-plus-focused-graph-461).
+
+1. Add `modrinth_dependencies: ["JiOqfoFM"]` to both `xr109llC` rows in
+   `scripts/run-client-versions.json`; preserve every pin (EP461-1).
+2. Extend `scripts/test-run-client.ps1`: isolated focused resolution on both
+   targets, no upstream ExtendedAE relationship, exactly one prerequisite,
+   no unrelated projects, compatible pin requests and latest traversal.
+   Record JAR metadata and update `docs/dependencies.md` (EP461-1/2).
+3. After PR creation, run that self-test and changed-mode `-PlanOnly`. Run
+   `scripts/run-ui-smoke-matrix.ps1 -ProjectId xr109llC -Scenario extendedae-plus-cpu`
+   once each with `-Target 1.20.1-forge` and `-Target 1.21.1-neoforge` (EP461-3).
+4. For EP461-4, copy the matrix under untracked `build/issue-461`, changing
+   only Forge Plus to `A3uRgnwT` / `1.6.2`. Record its hash and pin diff.
+   Resolve a fresh bundle with `run-client.ps1 -Target 1.20.1-forge
+   -VersionMatrix <copy> -ResolveOnly -Packaged -RuntimeDirectory <bundle>
+   -ProjectId xr109llC`. Prepare adapters, then seal with
+   `use-ui-smoke-bundle-cache.ps1` bound to HEAD and the candidate matrix hash.
+   Dispatch `invoke-ui-smoke-codexvm.ps1 -Target 1.20.1-forge
+   -BundleDirectory <bundle> -ProjectId xr109llC -Scenario extendedae-plus-cpu`.
+   Use existing result/evidence helpers and retain loaded artifact hashes.
+   Never use `-Latest`, alter tracked campaign inputs or mutate a sealed bundle.
+5. Budget three sequential clean launches, initially 30 minutes; measure actual
+   times. Preflight confirmed host JDKs, source-world markers, SSH and exact
+   guest Forge `1.20.1-47.4.23` / NeoForge `21.1.251` manifests with intact
+   classpaths. Recheck guest Java 17/21 and 8 GiB heap. Follow the existing
+   [smoke and archive contract](../ui-smoke-evidence.md), including visual
+   review, fresh disposable worlds and confirmed client exit between runs.
+6. Diagnose any candidate CPU failure against the pinned control before fixture
+   edits or addon attribution; return expanded fixes to review. Finish only
+   after EP461-1/2/3 pass, EP461-4 has a supported investigation outcome and
+   current-head CI/review passes. Link evidence in the spec without promoting
+   the candidate. Cleanly stop CodexVM and verify its VMX is absent from `vmrun -T ws list`.
+
 Lifecycle: see the [scope status and evidence](spec.md).
 
 Implement this as one feature commit. Let the commit hook create the PR before
