@@ -125,20 +125,46 @@ try {
                 }
             }
         }
-        foreach ($mode in @('catalogue','base')) {
-            $names = if ($mode -eq 'base') { @() } else { @($catalogueNames) }
+        $graphs = @(
+            @{ mode='base'; names=@(); artifacts=@('appliedenergistics2.jar') },
+            @{ mode='catalogue'; names=@($catalogueNames); artifacts=@('appliedenergistics2.jar') + @(
+                foreach ($name in $catalogueNames) { if ($name -eq 'mana') { '545hUrw9.jar' } else { 'IiATswDj.jar' } }) }
+        )
+        if ($target -eq '1.21.1-neoforge') {
+            $graphs += @{ mode='catalogue'; names=@(); artifacts=@('appliedenergistics2.jar', 'data_energistics-1.21.1-3.3.5.jar') }
+            $graphs += @{ mode='catalogue'; names=@('chemical'); artifacts=@('appliedenergistics2.jar', 'applied-mekanistics-1.21.1.jar') }
+        }
+        if ($target -eq '1.20.1-forge') {
+            $graphs += @{ mode='catalogue'; names=@('mana', 'chemical'); artifacts=@('appliedenergistics2.jar',
+                'applied-botanics-forge-1.5.2.jar', 'applied-mekanistics-1.20.1.jar') }
+        }
+        foreach ($graph in $graphs) {
+            $mode = $graph.mode
+            $names = @($graph.names)
             @{schema=1;appbotLoaded=('mana' -in $names);appmekLoaded=('chemical' -in $names);
                 captured=@($names)} | ConvertTo-Json -Depth 3 |
                 Set-Content -LiteralPath (Join-Path $temp 'status-addon-keys.json')
-            Assert-UiSmokeStatusAddonKeys -Evidence $temp -Target $target -DependencyMode $mode
+            Assert-UiSmokeStatusAddonKeys -Evidence $temp -Target $target -DependencyMode $mode -ArtifactNames $graph.artifacts
             @{schema=1;appbotLoaded=('mana' -in $names);appmekLoaded=('chemical' -in $names);
                 captured=@('unexpected')} |
                 ConvertTo-Json -Depth 3 | Set-Content -LiteralPath (Join-Path $temp 'status-addon-keys.json')
             $rejected = $false
-            try { Assert-UiSmokeStatusAddonKeys -Evidence $temp -Target $target -DependencyMode $mode }
+            try { Assert-UiSmokeStatusAddonKeys -Evidence $temp -Target $target -DependencyMode $mode -ArtifactNames $graph.artifacts }
             catch { $rejected = $_.Exception.Message -like '*inventory does not match*' }
             if (!$rejected) { throw "Unexpected status addon keys accepted: $target $mode" }
         }
+    }
+    @{schema=1;appbotLoaded=$false;appmekLoaded=$false;captured=@()} | ConvertTo-Json -Depth 3 |
+        Set-Content -LiteralPath (Join-Path $temp 'status-addon-keys.json')
+    foreach ($invalid in @(
+        @{ target='1.21.1-neoforge'; mode='catalogue'; artifacts=@('IiATswDj.jar', 'applied-mekanistics-1.21.1.jar') },
+        @{ target='1.21.1-neoforge'; mode='base'; artifacts=@('IiATswDj.jar') },
+        @{ target='26.1.2-neoforge'; mode='catalogue'; artifacts=@('IiATswDj.jar') }
+    )) {
+        $rejected = $false
+        try { Assert-UiSmokeStatusAddonKeys -Evidence $temp -Target $invalid.target -DependencyMode $invalid.mode -ArtifactNames $invalid.artifacts }
+        catch { $rejected = $_.Exception.Message -like '*artifact graph does not match*' }
+        if (!$rejected) { throw "Invalid status addon artifact graph accepted: $($invalid.target) $($invalid.mode)" }
     }
     foreach ($capturePath in $capturePaths) {
         Remove-Item -LiteralPath $capturePath

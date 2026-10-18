@@ -598,8 +598,10 @@ try {
                 -ControlStatePath $controlStatePath -ResumeOnly:([bool]$resumeState) -FinalApproval:(-not [bool]$resumeState)
             if ($Scenario -eq 'standard-status-controls') {
                 Assert-UiSmokeStatusRelaunchCaptures -Evidence $evidence
+                $managedMods = @((Get-Content -LiteralPath (Join-Path $runtime "$modsDirectory\.ae2-crafting-time-run-mods.json") -Raw |
+                    ConvertFrom-Json).ForEach({ [string]$_ }))
                 Assert-UiSmokeStatusAddonKeys -Evidence $evidence -Target $Target `
-                    -DependencyMode $(if($dependencyIdentity){$dependencyIdentity.mode}else{$null})
+                    -DependencyMode $(if($dependencyIdentity){$dependencyIdentity.mode}else{$null}) -ArtifactNames $managedMods
             }
             if ($Scenario -eq 'badge-background') {
                 Assert-UiSmokeBadgeRelaunchCaptures -Evidence $evidence
