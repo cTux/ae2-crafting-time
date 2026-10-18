@@ -19,8 +19,9 @@ what their evidence does and does not prove.
   AE2 CPU. Ordinary `craft-lifecycle` runs with the addon absent, present, and in
   the compatible Data-containing graph qualify this boundary. Focused absence,
   presence, adaptive provider, Status restart and Tree checks passed in
-  [PR #741](https://github.com/cTux/ae2-crafting-time/pull/741); the combined graph
-  remains pending. Data runs separately from the Lightning Tech primary profile
+  [PR #741](https://github.com/cTux/ae2-crafting-time/pull/741). The 21-project
+  combined graph and separate Lightning Tech and Plus/JEI controls also passed:
+  eight required scenario runs, 78 assertions and 98 individually reviewed PNGs. Data runs separately from the Lightning Tech primary profile
   because Lightning Tech/Thunderbolt Core declare it incompatible
   ([#742](https://github.com/cTux/ae2-crafting-time/issues/742)). These checks do
   not qualify the complete UI suite or Trinity CPUs.
