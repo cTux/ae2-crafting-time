@@ -91,6 +91,16 @@ abstract class AddonCpuFixture<P> {
         return true;
     }
 
+    String setupCheckpoint() {
+        return setupCheckpoint(placementFuture, setupDetail());
+    }
+
+    static String setupCheckpoint(CompletableFuture<?> placement, String detail) {
+        return placement == null ? "not-started" : !placement.isDone() ? "placing" : detail;
+    }
+
+    protected String setupDetail() { return "finishing"; }
+
     final ICraftingCPU cpu(ServerPlayer player, IGrid grid) {
         return cpu(player, placementFuture.join(), grid);
     }

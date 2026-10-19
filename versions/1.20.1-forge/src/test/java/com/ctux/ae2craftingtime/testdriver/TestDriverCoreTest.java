@@ -48,6 +48,31 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
     @Test
+    void addonSetupCheckpointShowsPlacementAndNativeStage() {
+        var placement = new CompletableFuture<Object>();
+        assertEquals("not-started", AddonCpuFixture.setupCheckpoint(null, "ready"));
+        assertEquals("placing", AddonCpuFixture.setupCheckpoint(placement, "ready"));
+        placement.complete(new Object());
+        assertEquals("main-formation", AddonCpuFixture.setupCheckpoint(placement, "main-formation"));
+    }
+
+    @Test
+    void trinitySetupStageDeadlineResetsOnProgressAndExpiresAfterFortyFiveSeconds() {
+        var progress = new SetupStageProgress();
+        assertEquals("placing", progress.stage());
+        assertFalse(progress.observe("main-formation", 100));
+        assertEquals("main-formation", progress.stage());
+        long deadline = 100 + Duration.ofSeconds(45).toNanos();
+        assertFalse(progress.observe("main-formation", deadline));
+        assertFalse(progress.observe("cpu-formation", deadline + 1));
+        assertEquals("cpu-formation", progress.stage());
+        assertFalse(progress.observe("cpu-formation", deadline + Duration.ofSeconds(45).toNanos() + 1));
+        assertEquals("Trinity fixture setup stalled at cpu-formation", assertThrows(
+                IllegalStateException.class, () -> progress.observe("cpu-formation",
+                        deadline + Duration.ofSeconds(45).toNanos() + 2)).getMessage());
+    }
+
+    @Test
     void trinityNativeCompletionRequiresSuccessfulExactJobAndInventory() {
         var job = UUID.randomUUID();
         var other = UUID.randomUUID();

@@ -1092,7 +1092,9 @@ public final class CraftPlanScenario {
 
     String checkpoint() {
         if (resourceFixture != null) return resourceFixture.checkpoint();
-        return "state=" + state + " " + currentScreen();
+        return "state=" + state + " " + currentScreen()
+                + (baseFixture == null ? "" : " base=" + baseFixture.setupCheckpoint())
+                + (addonFixture == null ? "" : " addon=" + addonFixture.setupCheckpoint());
     }
 
     static final class BlockTerminalReadiness {

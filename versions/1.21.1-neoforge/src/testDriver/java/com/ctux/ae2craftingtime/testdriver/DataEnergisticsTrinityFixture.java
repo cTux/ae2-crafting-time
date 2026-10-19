@@ -18,11 +18,13 @@ import appeng.crafting.CraftingLink;
 import appeng.menu.me.crafting.CraftConfirmMenu;
 import com.ctux.ae2craftingtime.testdriver.mixin.CraftConfirmMenuAccessor;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityDataCoreBlockEntity;
+import com.fish_dan_.data_energistics.blockentity.trinity.TrinityInformationExchangeDepotBlockEntity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu;
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildOptions;
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildRequest;
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildBlockMap;
 import com.fish_dan_.data_energistics.registry.DEBlocks;
+import com.fish_dan_.data_energistics.registry.DEVerticalMultiBlocks;
 import com.google.gson.Gson;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.core.BlockPos;
@@ -64,6 +66,7 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
     private boolean sawAcceptedOutput;
     private boolean sawTerminal;
     private volatile boolean nativeDone;
+    private final SetupStageProgress setup = new SetupStageProgress();
 
     @Override
     protected Placement place(ServerPlayer player, FixtureMarker marker) {
@@ -99,6 +102,7 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
                             List.of(new GenericStack(INPUT, 1)), List.of(new GenericStack(OUTPUT, 1))));
             ((PatternProviderBlockEntity) level.getBlockEntity(provider)).getLogic().updatePatterns();
             placement = new Placement(origin, terminal, provider, volume);
+            setup.observe("placed", System.nanoTime());
             return placement;
         }
         throw new IllegalStateException("no empty loaded volume for Trinity main and child structures");
@@ -120,42 +124,50 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
     protected boolean finish(ServerPlayer player, Placement placement) {
         var level = player.serverLevel();
         var host = (TrinityDataCoreBlockEntity) level.getBlockEntity(placement.origin());
-        if (host == null || !host.getMainNode().isReady()) return false;
+        if (host == null || !host.getMainNode().isReady()) return await("host-node");
         if (!host.isStructureFormed()) {
             if (!placement.mainRequested) {
                 host.autoBuildTrinityStructure(player, request(TrinityAutoBuildRequest.MAIN_STRUCTURE_INDEX));
                 placement.mainRequested = true;
             }
-            return false;
+            return await("main-formation");
         }
+        var terminalHost = (IInWorldGridNodeHost) level.getBlockEntity(placement.terminal());
+        var terminalNode = Arrays.stream(Direction.values()).map(terminalHost::getGridNode)
+                .filter(Objects::nonNull).findFirst().orElse(null);
+        if (terminalNode == null) return await("terminal-node");
+        var depot = host.compartmentHost$getCompartments(DEVerticalMultiBlocks.trinityDataCoreMainKey().structureName()).stream()
+                .filter(TrinityInformationExchangeDepotBlockEntity.class::isInstance)
+                .map(TrinityInformationExchangeDepotBlockEntity.class::cast)
+                .findFirst().orElse(null);
+        if (depot == null || depot.getGridNode() == null) return await("information-exchange-depot");
+        if (depot.getGridNode().getGrid() != terminalNode.getGrid())
+            GridHelper.createConnection(terminalNode, depot.getGridNode());
         if (!host.isCpuStructureFormed()) {
             if (!placement.cpuRequested) {
                 host.autoBuildTrinityStructure(player, request(TrinityAutoBuildRequest.CPU_STRUCTURE_INDEX));
                 placement.cpuRequested = true;
             }
-            return false;
+            return await("cpu-formation");
         }
         if (!host.isCraftingStructureFormed()) {
             if (!placement.craftingRequested) {
                 host.autoBuildTrinityStructure(player, request(TrinityAutoBuildRequest.CRAFTING_STRUCTURE_INDEX));
                 placement.craftingRequested = true;
             }
-            return false;
+            return await("crafting-formation");
         }
         if (host.getCraftingPatternCoreCount() < 1)
             throw new IllegalStateException("Trinity crafting child has no mounted pattern core");
-        var terminalHost = (IInWorldGridNodeHost) level.getBlockEntity(placement.terminal());
-        var terminalNode = Arrays.stream(Direction.values()).map(terminalHost::getGridNode)
-                .filter(Objects::nonNull).findFirst().orElse(null);
-        if (terminalNode == null) return false;
-        for (var pos : List.of(placement.origin(), placement.provider(), placement.provider().below(3))) {
+        for (var pos : List.of(placement.provider(), placement.provider().below(3))) {
             var machine = (AENetworkedBlockEntity) level.getBlockEntity(pos);
-            if (machine == null || !machine.getMainNode().isReady()) return false;
+            if (machine == null || !machine.getMainNode().isReady()) return await("provider-node");
             var node = machine.getMainNode().getNode();
-            if (node == null) return false;
+            if (node == null) return await("provider-grid-node");
             if (node.getGrid() != terminalNode.getGrid()) GridHelper.createConnection(terminalNode, node);
         }
-        if (!host.getMainNode().isActive()) return false;
+        if (host.craftingExecutionRoute() == null || host.craftingExecutionRoute().serviceGrid() != terminalNode.getGrid())
+            return await("crafting-route");
         var grid = terminalNode.getGrid();
         var storage = grid.getStorageService().getInventory();
         long present = storage.getAvailableStacks().get(INPUT);
@@ -165,11 +177,20 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
         var provider = (PatternProviderBlockEntity) level.getBlockEntity(placement.provider());
         var patterns = provider.getLogic().getAvailablePatterns();
         var registered = grid.getCraftingService().getCraftingFor(OUTPUT);
-        if (registered.isEmpty()) return false;
+        if (registered.isEmpty()) return await("glass-pattern");
         if (patterns.size() != 1 || registered.size() != 1 || registered.iterator().next() != patterns.getFirst())
             throw new IllegalStateException("Trinity fixture provider is not the unique glass pattern source");
-        return host.getCpuPartitions().stream().anyMatch(cpu -> cpu.number() == 0 && cpu.isActive()
-                        && grid.getCraftingService().getCpus().contains(cpu));
+        if (!host.getCpuPartitions().stream().anyMatch(cpu -> cpu.number() == 0 && cpu.isActive()
+                && grid.getCraftingService().getCpus().contains(cpu))) return await("coordinator-published");
+        setup.observe("ready", System.nanoTime());
+        return true;
+    }
+
+    @Override
+    protected String setupDetail() { return setup.stage(); }
+
+    private boolean await(String stage) {
+        return setup.observe(stage, System.nanoTime());
     }
 
     private static TrinityAutoBuildRequest request(int index) {
@@ -181,7 +202,8 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
     @Override
     protected ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {
         var host = (TrinityDataCoreBlockEntity) player.serverLevel().getBlockEntity(placement.origin());
-        if (host == null || host.getMainNode().getGrid() != grid) return null;
+        if (host == null || host.craftingExecutionRoute() == null
+                || host.craftingExecutionRoute().serviceGrid() != grid) return null;
         return host.getCpuPartitions().stream()
                 .filter(cpu -> cpu.number() == 0 && cpu.isActive() && !cpu.isBusy()
                         && grid.getCraftingService().getCpus().contains(cpu))
@@ -191,7 +213,8 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
     @Override
     protected void startCraft(ServerPlayer player, Placement placement, CraftConfirmMenu menu) {
         submittedHost = (TrinityDataCoreBlockEntity) player.serverLevel().getBlockEntity(placement.origin());
-        var grid = submittedHost.getMainNode().getGrid();
+        var grid = Objects.requireNonNull(submittedHost.craftingExecutionRoute(),
+                "Trinity worker has no crafting route").serviceGrid();
         if (submittedHost.getCpuPartitions().stream().anyMatch(TrinityDataCoreVirtualCpu::isBusy))
             throw new IllegalStateException("Trinity fixture host already has a busy worker");
         var output = ((CraftConfirmMenuAccessor) menu).ae2craftingtime_test_driver$result().finalOutput();
@@ -234,7 +257,8 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
         long input = grid.getStorageService().getInventory().getAvailableStacks().get(INPUT);
         long output = grid.getStorageService().getInventory().getAvailableStacks().get(OUTPUT);
         var completion = new TrinityNativeCompletion(jobId, activeJobId,
-                host == submittedHost, grid == submittedGrid && host.getMainNode().getGrid() == grid,
+                host == submittedHost, grid == submittedGrid && host.craftingExecutionRoute() != null
+                        && host.craftingExecutionRoute().serviceGrid() == grid,
                 sawTerminal, link.isDone(), link.isCanceled(), requested,
                 beforeInput - input, output - beforeOutput, maxWaiting, waitingDecrement);
         nativeDone = completion.complete();
