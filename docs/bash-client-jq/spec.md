@@ -1,12 +1,20 @@
 # Bash client jq output
 
-Status: ready-to-implement
+Status: in-progress
 
 Scope: Restore Bash client resolution and its self-test with native Windows jq.
 
 Issue: [#743](https://github.com/cTux/ae2-crafting-time/issues/743)
 
 Planning: [Reviewed plan](implementation-plan.md)
+
+Implementation: [PR #745](https://github.com/cTux/ae2-crafting-time/pull/745)
+
+Verification: The complete resolver self-test passed with Git Bash 5.3.15 and
+native jq 1.8.2, and with Ubuntu WSL Bash 5.3.9 and jq 1.8.1. A disposable
+copy without the launcher's jq boundary failed on a CR-contaminated project ID.
+The remaining gate is review of the final PR diff and required GitHub checks
+for the current head.
 
 ## Behavior to restore
 
