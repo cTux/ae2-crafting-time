@@ -3,6 +3,9 @@ set -euo pipefail
 
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 script="$script_dir/run-client.sh"
+jq() {
+  if [[ "$OSTYPE" == msys* ]]; then command jq -b "$@"; else command jq "$@"; fi
+}
 jq -e --slurpfile release "$script_dir/release-matrix.json" '
   ([.[].id] == [$release[0][].id]) and
   all(.[]; ([.projects[].project_id] | length) == ([.projects[].project_id] | unique | length)) and
@@ -38,6 +41,10 @@ cat > "$bin_dir/curl" <<'CURL_EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 if [ "${2:-}" = "-o" ]; then
+  case "$4" in
+    https://example.invalid/*.jar|https://mediafilez.forgecdn.net/files/*/*.jar) ;;
+    *) echo "Unexpected download URL: $4" >&2; exit 8;;
+  esac
   if [ -n "${AE2CT_BAD_DOWNLOAD:-}" ]; then printf '\x00' > "$3"; else printf 'test mod' > "$3"; fi
   exit 0
 fi
@@ -68,6 +75,22 @@ json="{\"id\":\"$id\",\"version_number\":\"$version\",\"dependencies\":[{\"proje
 if [[ "$url" == */project/* ]]; then printf '[%s]' "$json"; else printf '%s' "$json"; fi
 CURL_EOF
 chmod +x "$bin_dir/curl"
+export AE2CT_REAL_JQ="$(type -P jq)"
+cat > "$bin_dir/jq" <<'JQ_EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+if [ -n "${AE2CT_JQ_FAIL_VERSION:-}" ] && [[ " $* " == *' .version_number '* ]]; then exit 27; fi
+if [ "${1:-}" = -b ]; then
+  [[ "$OSTYPE" == msys* ]] || { echo 'Linux jq fixture rejects -b' >&2; exit 2; }
+  exec "$AE2CT_REAL_JQ" "$@"
+fi
+if [[ "$OSTYPE" == msys* ]]; then
+  "$AE2CT_REAL_JQ" -b "$@" | sed 's/$/\r/'
+else
+  exec "$AE2CT_REAL_JQ" "$@"
+fi
+JQ_EOF
+chmod +x "$bin_dir/jq"
 export AE2CT_TEST_SHA512="$sha" PATH="$bin_dir:$PATH"
 test_matrix="$temp/run-client-versions.json"
 jq --arg hash "$sha" 'walk(if type == "object" and has("sha512") then .sha512 = $hash else . end) |
@@ -86,6 +109,13 @@ while IFS= read -r target; do
   fi
   output="$("$script" -Target "$target" -Root "$temp" -VersionMatrix "$test_matrix" -ResolveOnly 2>&1)"
   assert_line "$output" "profile compatible"
+  case "$target" in
+    1.20.1-forge) ae2_version=15.4.10;;
+    1.20.1-fabric) ae2_version=15.1.0;;
+    1.21.1-neoforge) ae2_version=19.2.17;;
+    26.1.2-neoforge) ae2_version=26.1.10-beta;;
+  esac
+  assert_line "$output" "runtime ae2 $ae2_version"
   case "$target" in 1.20.1-*) major=17; bootstrap="$JAVA_HOME_17";; 1.21.1-neoforge) major=21; bootstrap="$JAVA_HOME_21";; *) major=25; bootstrap="$JAVA_HOME_21";; esac
   assert_line "$output" "runtime java $major"
   assert_line "$(cat "$temp/java-selection.txt")" "$bootstrap"
@@ -109,6 +139,8 @@ while IFS= read -r target; do
   fi
   output="$("$script" -Target "$target" -Root "$temp" -VersionMatrix "$test_matrix" -Latest -ResolveOnly 2>&1)"
   assert_line "$output" "profile latest"
+  case "$target" in 1.20.1-*) ae2_version=15.99.0;; 1.21.1-neoforge) ae2_version=19.99.0;; *) ae2_version=26.99.0-beta;; esac
+  assert_line "$output" "runtime ae2 $ae2_version"
   if [ "$target" = "1.21.1-neoforge" ]; then
     assert_line "$output" 'mod data_energistics-1.21.1-3.3.5.jar'
     assert_line "$output" 'mod omnisequence-transfinite-1.3.9-hotfix.jar'
@@ -151,6 +183,12 @@ if out="$("$script" -Target 1.20.1-forge -Root "$temp" -VersionMatrix "$test_mat
   exit 1
 fi
 unset AE2CT_DRIVER_BUILD_FAIL
+
+export AE2CT_JQ_FAIL_VERSION=1
+status=0
+out="$("$script" -Target 1.20.1-forge -Root "$temp" -VersionMatrix "$test_matrix" -ResolveOnly 2>&1)" || status=$?
+[ "$status" -eq 27 ] || { echo "Expected jq failure status 27, got $status: $out" >&2; exit 1; }
+unset AE2CT_JQ_FAIL_VERSION
 
 bad="$temp/versions/1.20.1-forge/run/resolved-mods/flhDmaU7.jar"
 rm -f "$bad"
