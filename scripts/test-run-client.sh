@@ -4,7 +4,7 @@ set -euo pipefail
 script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 script="$script_dir/run-client.sh"
 jq() {
-  if [[ "$OSTYPE" == msys* ]]; then command jq -b "$@"; else command jq "$@"; fi
+  if [[ "$OSTYPE" == msys* || "$OSTYPE" == cygwin* ]]; then command jq -b "$@"; else command jq "$@"; fi
 }
 jq -e --slurpfile release "$script_dir/release-matrix.json" '
   ([.[].id] == [$release[0][].id]) and
@@ -62,7 +62,7 @@ if [[ "$url" == */version/* ]]; then
   case "$id" in
     7KVs6HMQ) project="XxWD5pD3"; version="15.4.10";;
     kywcQ25B) project="XxWD5pD3"; version="15.1.0";;
-    kfyIqgJ6) project="XxWD5pD3"; version="19.2.17";;
+    KDnFUmMm) project="XxWD5pD3"; version="19.2.18";;
     pK0VDmDU) project="XxWD5pD3"; version="26.1.10-beta";;
     xhLT3C5f) project="P7dR8mSH"; version="0.92.11+1.20.1";;
     *) version="$id";;
@@ -81,10 +81,10 @@ cat > "$bin_dir/jq" <<'JQ_EOF'
 set -euo pipefail
 if [ -n "${AE2CT_JQ_FAIL_VERSION:-}" ] && [[ " $* " == *' .version_number '* ]]; then exit 27; fi
 if [ "${1:-}" = -b ]; then
-  [[ "$OSTYPE" == msys* ]] || { echo 'Linux jq fixture rejects -b' >&2; exit 2; }
+  [[ "$OSTYPE" == msys* || "$OSTYPE" == cygwin* ]] || { echo 'Linux jq fixture rejects -b' >&2; exit 2; }
   exec "$AE2CT_REAL_JQ" "$@"
 fi
-if [[ "$OSTYPE" == msys* ]]; then
+if [[ "$OSTYPE" == msys* || "$OSTYPE" == cygwin* ]]; then
   "$AE2CT_REAL_JQ" -b "$@" | sed 's/$/\r/'
 else
   exec "$AE2CT_REAL_JQ" "$@"
@@ -112,7 +112,7 @@ while IFS= read -r target; do
   case "$target" in
     1.20.1-forge) ae2_version=15.4.10;;
     1.20.1-fabric) ae2_version=15.1.0;;
-    1.21.1-neoforge) ae2_version=19.2.17;;
+    1.21.1-neoforge) ae2_version=19.2.18;;
     26.1.2-neoforge) ae2_version=26.1.10-beta;;
   esac
   assert_line "$output" "runtime ae2 $ae2_version"

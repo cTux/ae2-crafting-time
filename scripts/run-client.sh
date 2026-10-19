@@ -9,7 +9,7 @@ for c in jq curl; do
 done
 
 jq() {
-  if [[ "$OSTYPE" == msys* ]]; then command jq -b "$@"; else command jq "$@"; fi
+  if [[ "$OSTYPE" == msys* || "$OSTYPE" == cygwin* ]]; then command jq -b "$@"; else command jq "$@"; fi
 }
 
 api="https://api.modrinth.com/v2"
