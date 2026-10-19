@@ -48,6 +48,32 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
     @Test
+    void nativePlanRequiresExactRenderedScreenAndExecutableServerResult() throws Exception {
+        var trinity = AddonCpuFixture.TRINITY_CONFIRM_SCREEN;
+        var ae2 = "appeng.client.gui.me.crafting.CraftConfirmScreen";
+        assertTrue(UiObservationStore.isNativeTrinityConfirm(trinity));
+        assertFalse(UiObservationStore.isNativeTrinityConfirm(ae2));
+        assertFalse(UiObservationStore.isNativeTrinityConfirm(trinity + "Other"));
+        assertTrue(CraftPlanScenario.nativePlanReady(trinity, trinity, trinity, true, true));
+        assertFalse(CraftPlanScenario.nativePlanReady(trinity, ae2, trinity, true, true));
+        assertFalse(CraftPlanScenario.nativePlanReady(trinity, trinity, ae2, true, true));
+        assertFalse(CraftPlanScenario.nativePlanReady(trinity, trinity, trinity, false, true));
+        assertFalse(CraftPlanScenario.nativePlanReady(trinity, trinity, trinity, true, false));
+        var node = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/UiObservationStore.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, 0);
+        }
+        var begin = node.methods.stream().filter(method -> method.name.equals("begin")).findFirst().orElseThrow();
+        assertTrue(java.util.Arrays.stream(begin.instructions.toArray())
+                .filter(MethodInsnNode.class::isInstance).map(MethodInsnNode.class::cast)
+                .anyMatch(call -> call.owner.equals("com/ctux/ae2craftingtime/testdriver/UiObservationStore")
+                        && call.name.equals("isNativeTrinityConfirm")),
+                "the render observation producer must admit the native screen before the frame gate");
+    }
+
+    @Test
     void addonSetupCheckpointShowsPlacementAndNativeStage() {
         var placement = new CompletableFuture<Object>();
         assertEquals("not-started", AddonCpuFixture.setupCheckpoint(null, "ready"));

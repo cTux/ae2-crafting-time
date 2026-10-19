@@ -12,6 +12,7 @@ import com.ctux.ae2craftingtime.core.OptionFeature;
 import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import appeng.api.stacks.AEKey;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
@@ -52,12 +53,14 @@ public final class UiObservationStore {
 
     public static void begin(Minecraft minecraft) {
         TreeAmountObservation.reset();
-        if (!(minecraft.screen instanceof AEBaseScreen<?> screen)
+        if (!(minecraft.screen instanceof AbstractContainerScreen<?> screen)
+                || !isNativeTrinityConfirm(screen.getClass().getName())
+                && (!(screen instanceof AEBaseScreen<?>)
                 || (!(screen instanceof CraftConfirmScreen)
                 && !(screen instanceof appeng.client.gui.me.crafting.CraftingCPUScreen<?>)
                 && !screen.getClass().getName().equals(Ae2NetworkAnalyserFixture.SCREEN)
                 && !screen.getClass().getName().equals(RequesterFixture.SCREEN)
-                && !CraftingTreeScenario.isScreen(screen.getClass().getName()))) {
+                && !CraftingTreeScenario.isScreen(screen.getClass().getName())))) {
             active = null;
             return;
         }
@@ -66,6 +69,10 @@ public final class UiObservationStore {
                         ((ContainerScreenAccessor) screen).ae2craftingtime_test_driver$height()),
                 minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight(),
                 minecraft.getWindow().getGuiScale());
+    }
+
+    static boolean isNativeTrinityConfirm(String screen) {
+        return AddonCpuFixture.TRINITY_CONFIRM_SCREEN.equals(screen);
     }
 
     public static void rows(List<?> entries, int scroll) {

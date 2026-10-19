@@ -68,6 +68,7 @@ public final class CraftPlanScenario {
     private String networkId;
     private String outputId;
     private CompletableFuture<String> cpuCheck;
+    private CompletableFuture<Boolean> nativePlanCheck;
     private CompletableFuture<Boolean> submitCheck;
     private CompletableFuture<Integer> sampleCheck;
     private final WirelessTerminalFixture wirelessFixture;
@@ -505,7 +506,8 @@ public final class CraftPlanScenario {
             ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next().onPress();
             return;
         }
-        if (minecraft.screen instanceof CraftConfirmScreen) {
+        if (addonFixture == null ? minecraft.screen instanceof CraftConfirmScreen
+                : addonFixture.isConfirmScreen(minecraft.screen)) {
             advance(ScenarioState.PLAN_STABLE);
         }
     }
@@ -516,6 +518,10 @@ public final class CraftPlanScenario {
             return;
         }
         var snapshot = UiObservationStore.latest();
+        if (addonFixture != null && !addonFixture.requiresPlanRows()) {
+            stabilizeNativeAddonPlan(snapshot);
+            return;
+        }
         if (snapshot == null || snapshot.rows().stream().noneMatch(row -> row.outputId().equals(outputId))) {
             stableRows.reset();
             return;
@@ -549,6 +555,44 @@ public final class CraftPlanScenario {
         screenshot("craft-plan.png");
         clickSort(snapshot);
         advance(ScenarioState.BASE_CHECKED);
+    }
+
+    private void stabilizeNativeAddonPlan(UiSnapshot snapshot) throws IOException {
+        var expected = addonFixture.confirmScreenName();
+        var current = minecraft.screen == null ? "" : minecraft.screen.getClass().getName();
+        if (!expected.equals(current) || snapshot == null || !expected.equals(snapshot.screen())
+                || snapshot.frame() == lastFrame) return;
+        if (nativePlanCheck == null) {
+            var server = minecraft.getSingleplayerServer();
+            var playerId = minecraft.player.getUUID();
+            nativePlanCheck = server.submit(() -> {
+                var player = server.getPlayerList().getPlayer(playerId);
+                if (player == null || !(player.containerMenu instanceof appeng.menu.me.crafting.CraftConfirmMenu menu))
+                    return false;
+                var plan = ((CraftConfirmMenuAccessor) menu).ae2craftingtime_test_driver$result();
+                if (plan == null) return false;
+                var output = plan.finalOutput();
+                if (plan.simulation() || output == null || !output.what().getId().toString().equals(outputId)
+                        || output.amount() <= 0)
+                    throw new IllegalStateException("native Trinity confirm has no executable " + outputId + " plan");
+                return true;
+            });
+            return;
+        }
+        if (!nativePlanCheck.isDone()) return;
+        var ready = nativePlanCheck.join();
+        if (!nativePlanReady(expected, current, snapshot.screen(), snapshot.frame() != lastFrame, ready)) {
+            nativePlanCheck = null;
+            return;
+        }
+        lastFrame = snapshot.frame();
+        screenshot("trinity-native-plan.png");
+        selectAddonCpu();
+    }
+
+    static boolean nativePlanReady(String expected, String current, String observed,
+            boolean freshFrame, boolean executablePlan) {
+        return expected.equals(current) && expected.equals(observed) && freshFrame && executablePlan;
     }
 
     private void verifyCraftingTree() throws IOException {
@@ -673,7 +717,7 @@ public final class CraftPlanScenario {
     }
 
     private void selectAddonCpu() {
-        if (!(minecraft.screen instanceof CraftConfirmScreen)) {
+        if (!addonFixture.isConfirmScreen(minecraft.screen)) {
             return;
         }
         if (cpuCheck == null) {

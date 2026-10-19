@@ -3,13 +3,17 @@ package com.ctux.ae2craftingtime.testdriver;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.menu.me.crafting.CraftConfirmMenu;
+import appeng.client.gui.me.crafting.CraftConfirmScreen;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 abstract class AddonCpuFixture<P> {
+    static final String TRINITY_CONFIRM_SCREEN =
+            "com.fish_dan_.data_energistics.client.screen.crafting.confirm.TrinityCraftConfirmScreen";
     private static final Map<String, String> FIXTURES = Map.ofEntries(
             Map.entry("advancedae-cpu", "com.ctux.ae2craftingtime.testdriver.AdvancedAeFixture"),
             Map.entry("data-energistics-cpu", "com.ctux.ae2craftingtime.testdriver.DataEnergisticsFixture"),
@@ -151,6 +155,12 @@ abstract class AddonCpuFixture<P> {
     boolean nativeCompleted() {
         return false;
     }
+
+    String confirmScreenName() { return CraftConfirmScreen.class.getName(); }
+
+    boolean isConfirmScreen(Screen screen) { return screen instanceof CraftConfirmScreen; }
+
+    boolean requiresPlanRows() { return true; }
 
     protected abstract P place(ServerPlayer player, FixtureMarker marker);
 

@@ -280,6 +280,19 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
         return nativeDone;
     }
 
+    @Override
+    String confirmScreenName() {
+        return TRINITY_CONFIRM_SCREEN;
+    }
+
+    @Override
+    boolean isConfirmScreen(net.minecraft.client.gui.screens.Screen screen) {
+        return screen != null && screen.getClass().getName().equals(confirmScreenName());
+    }
+
+    @Override
+    boolean requiresPlanRows() { return false; }
+
     private static CraftingLink jobLink(TrinityDataCoreVirtualCpu worker) {
         try {
             var logicField = worker.getClass().getDeclaredField("logic");
