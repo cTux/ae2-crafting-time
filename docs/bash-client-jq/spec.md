@@ -1,6 +1,6 @@
 # Bash client jq output
 
-Status: in-progress
+Status: finished
 
 Scope: Restore Bash client resolution and its self-test with native Windows jq.
 
@@ -10,11 +10,16 @@ Planning: [Reviewed plan](implementation-plan.md)
 
 Implementation: [PR #745](https://github.com/cTux/ae2-crafting-time/pull/745)
 
-Verification: The complete resolver self-test passed with Git Bash 5.3.15 and
-native jq 1.8.2, and with Ubuntu WSL Bash 5.3.9 and jq 1.8.1. A disposable
-copy without the launcher's jq boundary failed on a CR-contaminated project ID.
-The remaining gate is review of the final PR diff and required GitHub checks
-for the current head.
+Verification: [PR #745](https://github.com/cTux/ae2-crafting-time/pull/745)
+merged to `master` as commit
+[`60598687b622448ade3159bd2f622f6db877ae47`](https://github.com/cTux/ae2-crafting-time/commit/60598687b622448ade3159bd2f622f6db877ae47).
+The complete resolver self-test passed on tested head
+[`9617beea63772a017ec834ef3c3e18971d39dc85`](https://github.com/cTux/ae2-crafting-time/commit/9617beea63772a017ec834ef3c3e18971d39dc85)
+with Git Bash 5.3.15 and native jq 1.8.2 in 2m37.290s, and with Ubuntu WSL
+Bash 5.3.9 and jq 1.8.1 in 15.814s. A disposable copy without the launcher's
+jq boundary failed on a CR-contaminated project ID. Current-head GitHub checks
+passed: [Build all mod JARs](https://github.com/cTux/ae2-crafting-time/actions/runs/39261072297)
+and [Gradle tests](https://github.com/cTux/ae2-crafting-time/actions/runs/39261072656).
 
 ## Behavior to restore
 
