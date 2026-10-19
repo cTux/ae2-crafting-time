@@ -252,7 +252,8 @@ try {
     Assert ($advancedGraphs.Count -eq 3 -and @($advancedGraphs | Where-Object { $_.cases.Count -ne 5 }).Count -eq 0) 'AdvancedAE must repeat all provider status leaves on three targets'
     Assert ($full.targets[0].cases.Count -eq 43) 'Expanded Forge suite must contain 43 leaves'
     Assert ($full.targets[1].cases.Count -eq 25) 'Expanded Fabric suite must contain 25 leaves'
-    Assert ($full.targets[2].cases.Count -eq 38 -and 'data-energistics-cpu' -cin $full.targets[2].cases -and
+    Assert ($full.targets[2].cases.Count -eq 39 -and 'data-energistics-cpu' -cin $full.targets[2].cases -and
+            'data-energistics-trinity-cpu' -cin $full.targets[2].cases -and
             'omnisequence-cpu' -cnotin $full.targets[2].cases -and
             'neoeco-cpu' -cnotin $full.targets[2].cases -and
             @($full.targets[2].graphs | Where-Object { $_.profile -eq 'latest' -or $_.id -eq 'udZtKfzP' }).Count -eq 0) `
@@ -261,7 +262,8 @@ try {
     Assert ($dataGraphs.Count -eq 2 -and @($dataGraphs | Where-Object {
         $_.profile -eq 'compatible' -and @($_.projectId).Count -eq 1 -and [string]$_.projectId[0] -eq '1565514'
     }).Count -eq 2) 'Data Energistics must use focused compatible graphs'
-    Assert (@($dataGraphs | Where-Object { 'data-energistics-cpu' -cin $_.cases -and 'craft-lifecycle' -cin $_.cases }).Count -eq 1 -and
+    Assert (@($dataGraphs | Where-Object { 'data-energistics-cpu' -cin $_.cases -and
+            'data-energistics-trinity-cpu' -cin $_.cases -and 'craft-lifecycle' -cin $_.cases }).Count -eq 1 -and
             @($dataGraphs | Where-Object { @($_.cases).Count -eq 1 -and $_.cases[0] -eq 'standard-status-controls' }).Count -eq 1) `
         'Data Energistics focused graphs must cover CPU, native lifecycle, and status relaunch'
     Assert (@($full.targets[2].graphs | Where-Object id -eq 'primary' | Where-Object {

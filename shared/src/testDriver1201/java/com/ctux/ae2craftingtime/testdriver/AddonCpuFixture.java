@@ -13,6 +13,7 @@ abstract class AddonCpuFixture<P> {
     private static final Map<String, String> FIXTURES = Map.ofEntries(
             Map.entry("advancedae-cpu", "com.ctux.ae2craftingtime.testdriver.AdvancedAeFixture"),
             Map.entry("data-energistics-cpu", "com.ctux.ae2craftingtime.testdriver.DataEnergisticsFixture"),
+            Map.entry("data-energistics-trinity-cpu", "com.ctux.ae2craftingtime.testdriver.DataEnergisticsTrinityFixture"),
             Map.entry("extendedae-cpu", "com.ctux.ae2craftingtime.testdriver.ExtendedAeFixture"),
             Map.entry("extendedae-plus-cpu", "com.ctux.ae2craftingtime.testdriver.ExtendedAePlusFixture"),
             Map.entry("bmaddon-cpu", "com.ctux.ae2craftingtime.testdriver.BmAddonFixture"),
@@ -131,6 +132,14 @@ abstract class AddonCpuFixture<P> {
 
     void verifyDispatch(DispatchObservation.Snapshot snapshot) {
         if (!snapshot.completedExactlyOnce()) throw new IllegalStateException("fixture dispatch/output mismatch: " + snapshot);
+    }
+
+    String nativeEvidence(ServerPlayer player, IGrid grid) {
+        return null;
+    }
+
+    boolean nativeCompleted() {
+        return false;
     }
 
     protected abstract P place(ServerPlayer player, FixtureMarker marker);

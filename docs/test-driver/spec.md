@@ -926,6 +926,13 @@ to a fueled vanilla furnace; a hopper and ME Interface return glass.
 The shared scenario checks dispatch, accepted output, a fresh sample, and
 reopened Plan TTC. This fixture exists only in the NeoForge 1.21.1 driver.
 
+`data-energistics-trinity-cpu` builds the real Trinity main, CPU and crafting
+structures, submits through CPU zero, and records the busy worker, native
+waiting/output changes, terminal state and network inventory in
+`native-cpu-observation.json`. Its first run is a diagnostic baseline: the
+positive profile check should report the missing sample before the adapter is
+added. The mounted crafting core is available for the later reusable recipe case.
+
 ## Crafting Tree scenario
 
 `crafting-tree-screen` opens the real tree toolbar button from a populated

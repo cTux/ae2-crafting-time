@@ -115,7 +115,7 @@
     "advanced_ae": ["advancedae-cpu"],
     "ae2lt": ["lightningtech-cpu"],
     "merequester": ["merequester-screen"],
-    "data_energistics": ["data-energistics-cpu"],
+    "data_energistics": ["data-energistics-cpu", "data-energistics-trinity-cpu"],
     "molecularmanipulator": ["omnisequence-cpu"]
   },
   "adapterBehaviorCases": {

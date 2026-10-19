@@ -742,13 +742,29 @@ public final class CraftPlanScenario {
     private void awaitAddonSample() {
         if (sampleCheck == null) {
             var server = minecraft.getSingleplayerServer();
-            sampleCheck = server.submit(() -> ProfilerBridge.stats(new ProfileKey(networkId, outputId))
-                    .map(stats -> stats.sampleCount()).orElse(0));
+            var playerId = minecraft.player.getUUID();
+            sampleCheck = server.submit(() -> {
+                var player = server.getPlayerList().getPlayer(playerId);
+                if (player == null) throw new IllegalStateException("fixture player is unavailable");
+                var nativeEvidence = addonFixture.nativeEvidence(player, StatsRequestContext.current(player).grid());
+                if (nativeEvidence != null) {
+                    try {
+                        Files.createDirectories(options.output());
+                        Files.writeString(options.output().resolve("native-cpu-observation.json"), nativeEvidence);
+                    } catch (IOException error) {
+                        throw new IllegalStateException("cannot retain native CPU observation", error);
+                    }
+                }
+                return ProfilerBridge.stats(new ProfileKey(networkId, outputId))
+                        .map(stats -> stats.sampleCount()).orElse(0);
+            });
         }
         if (!sampleCheck.isDone()) {
             return;
         }
         if (sampleCheck.join() == 0) {
+            if (addonFixture.nativeCompleted())
+                throw new IllegalStateException("native Trinity craft completed with accepted output but no profiling sample; see native-cpu-observation.json");
             sampleCheck = null;
             return;
         }

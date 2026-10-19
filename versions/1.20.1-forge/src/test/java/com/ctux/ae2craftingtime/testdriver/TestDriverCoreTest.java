@@ -15,6 +15,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 
 import java.net.URLClassLoader;
+import java.math.BigInteger;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
@@ -45,6 +47,42 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
+    @Test
+    void trinityNativeCompletionRequiresSuccessfulExactJobAndInventory() {
+        var job = UUID.randomUUID();
+        var other = UUID.randomUUID();
+        var one = BigInteger.ONE;
+        var zero = BigInteger.ZERO;
+        assertTrue(new TrinityNativeCompletion(job, job, true, true, true, true, false,
+                1, 1, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, false, true,
+                2, 2, 1, BigInteger.TWO, BigInteger.TWO).complete()); // partial output followed by cancellation
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, true,
+                1, 1, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false,
+                1, 0, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, other, true, true, true, true, false,
+                1, 1, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, false, true, true, false,
+                1, 1, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, false, true, true, true, false,
+                1, 1, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false,
+                1, 1, 0, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false,
+                1, 1, 1, zero, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false,
+                1, 1, 1, one, zero).complete());
+        assertFalse(new TrinityNativeCompletion(null, job, true, true, true, true, false,
+                1, 1, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, false, true, false,
+                1, 1, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false,
+                1, 1, 1, BigInteger.TWO, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false,
+                0, 0, 0, zero, zero).complete());
+    }
+
     @Test
     void nativeStatusFreshnessRequiresReplacementSameSelectedJobAndLaterFrame() {
         String job = "00000000-0000-0000-0000-000000000001";
@@ -1299,6 +1337,9 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("modern-ae2-additions-cpu"));
         assertTrue(AddonCpuFixture.supports("omnisequence-cpu"));
         assertTrue(AddonCpuFixture.supports("lightningtech-cpu"));
+        assertTrue(AddonCpuFixture.supports("data-energistics-trinity-cpu"));
+        assertEquals(DriverResult.requiredChecks("data-energistics-cpu"),
+                DriverResult.requiredChecks("data-energistics-trinity-cpu"));
         assertFalse(AddonCpuFixture.supports("missing-cpu"));
         assertNull(AddonCpuFixture.create("craft-plan"));
         assertNull(AddonCpuFixture.create("ae2wcwt-terminal"));
