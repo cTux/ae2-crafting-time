@@ -83,3 +83,7 @@ the culprit or prove this optional dependency supported. The qualified scope is
 ordinary AE2 CPUs and the Adaptive Pattern Provider's native-provider mode with
 vanilla processing. Trinity CPUs and other provider modes remain unqualified
 ([#740](https://github.com/cTux/ae2-crafting-time/issues/740)).
+
+The separate [Trinity profiling plan](../data-energistics-trinity/spec.md) defines
+its fixture-first investigation and integration work; it does not extend the
+qualified boundary above until that work is verified.
