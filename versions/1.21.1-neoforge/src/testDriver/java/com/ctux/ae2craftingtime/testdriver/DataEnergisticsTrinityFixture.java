@@ -8,6 +8,7 @@ import appeng.api.networking.IInWorldGridNodeHost;
 import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.blockentity.crafting.PatternProviderBlockEntity;
 import appeng.blockentity.grid.AENetworkedBlockEntity;
@@ -19,12 +20,14 @@ import appeng.client.gui.me.common.MEStorageScreen;
 import appeng.client.gui.me.crafting.CraftingCPUScreen;
 import com.ctux.ae2craftingtime.testdriver.mixin.MEStorageScreenAccessor;
 import appeng.menu.me.crafting.CraftConfirmMenu;
+import appeng.menu.me.crafting.CraftAmountMenu;
 import com.ctux.ae2craftingtime.testdriver.mixin.CraftConfirmMenuAccessor;
 import com.ctux.ae2craftingtime.core.OptionFeature;
 import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityDataCoreBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityInformationExchangeDepotBlockEntity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu;
+import com.fish_dan_.data_energistics.menu.crafting.TrinityCraftAmountMenuState;
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildOptions;
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildRequest;
 import com.fish_dan_.data_energistics.common.trinity.autobuild.TrinityAutoBuildBlockMap;
@@ -46,6 +49,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import java.lang.reflect.Field;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -95,6 +99,25 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
     private String bufferedPrefixJobId;
     private int bufferedPrefixGlass;
     private Long bufferedPrefixHoldNanos;
+    private final List<NativePlanRequest> planRequests = new ArrayList<>();
+
+    @Override
+    AEKey exactOutputKey() { return Objects.requireNonNull(outputKey(), "Trinity exact output key is unavailable"); }
+
+    @Override
+    String planRequestEvidence(ServerPlayer player) {
+        if (!(player.containerMenu instanceof CraftAmountMenu menu)) return null;
+        var request = menu.getWhatToCraft();
+        if (request == null) return null;
+        var target = request.what();
+        var encoded = target.toTagGeneric(player.level().registryAccess()).toString();
+        if (!exactOutputKey().equals(target))
+            throw new IllegalStateException("Trinity Craft Amount target differs from the exact fixture output: " + encoded);
+        var mode = ((TrinityCraftAmountMenuState) menu).data_energistics$quantityMode();
+        planRequests.add(new NativePlanRequest(planRequests.size() + 1, target.getId().toString(), encoded,
+                mode.name()));
+        return JSON.toJson(planRequests);
+    }
 
     @Override
     protected Placement place(ServerPlayer player, FixtureMarker marker) {
@@ -772,6 +795,8 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
             String bufferedPrefixJobId, int bufferedPrefixGlass, Long bufferedPrefixHoldNanos,
             Map<String, Long> variantAmounts,
             TrinityActiveStatusFreshness.Evidence activeStatusFreshness) {}
+
+    private record NativePlanRequest(int ordinal, String targetId, String encodedTarget, String quantityMode) {}
 
     static final class Placement {
         private final BlockPos origin;

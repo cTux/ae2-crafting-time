@@ -71,6 +71,7 @@ public final class CraftPlanScenario {
     private boolean clientCpuSelectionSent;
     private CompletableFuture<Boolean> nativePlanCheck;
     private CompletableFuture<Boolean> submitCheck;
+    private CompletableFuture<String> planRequestCheck;
     private CompletableFuture<Integer> sampleCheck;
     private CompletableFuture<Boolean> restartCheck;
     private CompletableFuture<String> resumeCheck;
@@ -461,10 +462,10 @@ public final class CraftPlanScenario {
             return;
         }
         var repo = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$repo();
-        var entry = repo.getAllEntries().stream()
-                .filter(candidate -> candidate.getWhat().getId().toString().equals(outputId))
-                .filter(candidate -> candidate.isCraftable())
-                .findFirst().orElse(null);
+        var entry = TargetEntrySelection.firstCraftable(repo.getAllEntries(),
+                candidate -> candidate.getWhat(), candidate -> candidate.isCraftable(),
+                addonFixture == null ? null : addonFixture.exactOutputKey(), outputId,
+                key -> key.getId().toString());
         if (entry == null) {
             return;
         }
@@ -541,8 +542,9 @@ public final class CraftPlanScenario {
     private void openPlan() {
         if (minecraft.screen instanceof CraftAmountScreen amount) {
             if (amountSubmitted) return;
-            amountSubmitted = true;
             if (addonFixture != null) addonFixture.configureAmount(amount);
+            if (addonFixture != null && !retainAddonPlanRequest()) return;
+            amountSubmitted = true;
             ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next().onPress();
             return;
         }
@@ -1029,8 +1031,9 @@ public final class CraftPlanScenario {
     private void verifyAddonTtc() throws IOException {
         if (minecraft.screen instanceof CraftAmountScreen amount) {
             if (amountSubmitted) return;
-            amountSubmitted = true;
             if (addonFixture != null) addonFixture.configureAmount(amount);
+            if (addonFixture != null && !retainAddonPlanRequest()) return;
+            amountSubmitted = true;
             ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next().onPress();
             return;
         }
@@ -1052,6 +1055,32 @@ public final class CraftPlanScenario {
         checks.put("ttc-after-sample", true);
         screenshot(options.scenario().replace("-cpu", "") + "-profiled-plan.png");
         writePass();
+    }
+
+    private boolean retainAddonPlanRequest() {
+        if (planRequestCheck == null) {
+            var server = minecraft.getSingleplayerServer();
+            var playerId = minecraft.player.getUUID();
+            planRequestCheck = server.submit(() -> {
+                var player = server.getPlayerList().getPlayer(playerId);
+                if (player == null) throw new IllegalStateException("fixture player is unavailable");
+                return addonFixture.planRequestEvidence(player);
+            });
+            return false;
+        }
+        if (!planRequestCheck.isDone()) return false;
+        var evidence = planRequestCheck.join();
+        planRequestCheck = null;
+        if (evidence == null && addonFixture.exactOutputKey() != null) return false;
+        if (evidence != null) {
+            try {
+                Files.createDirectories(options.output());
+                Files.writeString(options.output().resolve("native-plan-requests.json"), evidence);
+            } catch (IOException error) {
+                throw new IllegalStateException("cannot retain native Plan request", error);
+            }
+        }
+        return true;
     }
 
     private void cycleSorts() {
@@ -1307,6 +1336,7 @@ public final class CraftPlanScenario {
         clientCpuSelectionSent = false;
         nativePlanCheck = null;
         submitCheck = null;
+        planRequestCheck = null;
         sampleCheck = null;
         restartCheck = null;
         resumeCheck = null;

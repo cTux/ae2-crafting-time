@@ -48,6 +48,27 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
     @Test
+    void exactTargetSelectionRejectsSameItemWithOtherComponentsWithoutIdFallback() {
+        record Key(String id, String components) {}
+        record Entry(Key key, boolean craftable) {}
+        var original = new Entry(new Key("minecraft:written_book", "original"), true);
+        var copy = new Entry(new Key("minecraft:written_book", "copy"), true);
+        var unavailableCopy = new Entry(copy.key(), false);
+        var entries = List.of(original, copy);
+
+        assertSame(copy, TargetEntrySelection.firstCraftable(entries, Entry::key, Entry::craftable,
+                copy.key(), "minecraft:written_book", Key::id));
+        assertNull(TargetEntrySelection.firstCraftable(List.of(original), Entry::key, Entry::craftable,
+                copy.key(), "minecraft:written_book", Key::id));
+        assertNull(TargetEntrySelection.firstCraftable(List.of(original, unavailableCopy), Entry::key,
+                Entry::craftable, copy.key(), "minecraft:written_book", Key::id));
+        assertSame(original, TargetEntrySelection.firstCraftable(entries, Entry::key, Entry::craftable,
+                null, "minecraft:written_book", Key::id));
+        assertNull(TargetEntrySelection.firstCraftable(entries, Entry::key, Entry::craftable,
+                null, "minecraft:glass", Key::id));
+    }
+
+    @Test
     void trinityPhysicalSuffixRequiresTwoRealProductsAndKeepsOneUnitIsolated() {
         assertFalse(TrinityPhysicalSuffix.twoGlassReady(1, 0));
         assertTrue(TrinityPhysicalSuffix.twoGlassReady(2, 0));

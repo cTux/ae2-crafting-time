@@ -1,5 +1,6 @@
 package com.ctux.ae2craftingtime.testdriver;
 
+import appeng.api.stacks.AEKey;
 import appeng.api.networking.IGrid;
 import appeng.api.networking.crafting.ICraftingCPU;
 import appeng.menu.me.crafting.CraftConfirmMenu;
@@ -124,6 +125,12 @@ abstract class AddonCpuFixture<P> {
     protected String outputId(P placement, FixtureMarker marker) {
         return marker.outputId();
     }
+
+    /** Exact terminal key for component-sensitive fixtures; ordinary addons retain ID selection. */
+    AEKey exactOutputKey() { return null; }
+
+    /** Server-side native Craft Amount request evidence, retained before each confirmation. */
+    String planRequestEvidence(ServerPlayer player) { return null; }
 
     final void startCraft(ServerPlayer player, CraftConfirmMenu menu) {
         startCraft(player, placementFuture.join(), menu);
