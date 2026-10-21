@@ -934,6 +934,20 @@ native glass craft and reported the missing profile sample as expected. The
 driver now records selected CPU, fresh native active/completed Status, learned
 material-row TTC, and badge-background Off/On screenshots. Post-adapter runtime
 qualification remains pending.
+The focused `f7328f1f` run completed one genuine native glass craft before the
+active Status round trip finished. Furnace leaves therefore power an owned
+hopper with a real redstone block before each submission, capture the strict
+active Status while glass remains in the furnace, then remove the block on the
+server thread. The native sidecar records this fixture hold duration separately;
+the learned sample includes the hold and is not an unmodified furnace benchmark.
+The two-output cancel and reload leaves wait until the real furnace holds two
+glass units before the active Status screenshot. One actual unit moves to the
+fixture's owned barrel before the hopper is enabled, so the first returned
+output cannot accidentally bring the second with it. Cancellation removes the
+owned suffix before the next job. Reload preserves that same physical stack and
+verifies it after restart before returning it to the furnace. The sidecar records
+the two-glass observation and buffer state; these leaves have a 90-second
+submitted-craft deadline for the deliberate two-smelt wait.
 
 `data-energistics-trinity-counted-cpu` mounts vanilla `book_cloning` on the real
 crafting child, captures the submitted worker/job immediately, and requires

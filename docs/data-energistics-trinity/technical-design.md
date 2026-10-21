@@ -156,6 +156,29 @@ than an unexplained timeout. `DispatchObservation` observes `ProfilerBridge`
 calls and cannot supply that independent proof. Add test-driver-only, non-mutating
 Trinity observers and compare the final network inventory count. Never synthesize
 a sample or call `ProfilerBridge` from the fixture to make the baseline pass.
+For furnace cases, the disposable fixture may power its owned output hopper
+before native submission. The real furnace and worker continue processing, but
+glass stays in the furnace until the driver captures a fresh active native Status
+object for the same CPU, job and output on a later rendered frame. A server-thread
+observation then removes the redstone block and verifies the hopper is enabled.
+Re-arm this physical hold for each new furnace job and before the reload checkpoint;
+do not apply it to instantaneous book cloning. Record the hold duration separately
+as fixture evidence: the resulting profiler interval includes this intentional
+observation delay and must not be reported as an unmodified machine benchmark.
+For the two-output cancel and reload cases, keep the hopper powered until the
+real furnace output slot contains both glass units. Capture the fresh active
+Status, move one physical unit into the owned barrel, then release the hopper.
+The first returned glass can produce one native sample while the second remains
+outside the return path. Cancellation clears that owned suffix before a fresh
+job. A reload checkpoint records the real barrel stack and powers the hopper
+again; the resumed process verifies the same stack, job and worker before moving
+it back into the furnace after a fresh Status observation. The fixture never
+recreates a product from a saved count. These two-output cases use a 90-second
+submitted-craft deadline to cover the deliberate two-smelt observation delay;
+other addon jobs retain the 30-second deadline.
+Status cards use AE2 menu serials, which differ from Trinity worker numbers.
+Match the coordinator's real server name to its unique native card before
+clicking or checking the retired-worker fallback; never assume serial zero.
 Add only the issue-specific observation/state needed
 to the shared driver; reuse its deadline, screenshot and result infrastructure.
 For counted/reusable proof, also form the native crafting child and mount an

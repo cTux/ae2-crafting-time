@@ -20,6 +20,7 @@ import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.time.Duration;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -29,6 +30,12 @@ final class DataEnergisticsTrinityReloadFixture extends DataEnergisticsTrinityFi
     private RestartState resumed;
 
     @Override boolean supportsRestart() { return true; }
+
+    @Override protected boolean usesPhysicalSuffix() { return resumed == null; }
+
+    @Override Duration submittedCraftTimeout() {
+        return resumed == null ? Duration.ofSeconds(90) : super.submittedCraftTimeout();
+    }
 
     @Override protected boolean requiresLearnedActiveStatus() { return resumed != null; }
 
@@ -53,9 +60,12 @@ final class DataEnergisticsTrinityReloadFixture extends DataEnergisticsTrinityFi
         var provider = new BlockPos(resumed.providerX, resumed.providerY, resumed.providerZ);
         var owned = rotatedUnion(origin);
         for (int depth = 0; depth < 4; depth++) owned.add(provider.below(depth));
+        owned.add(outputHoldPower(provider));
+        owned.add(outputSuffixBuffer(provider));
         placement = new Placement(origin,
                 new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z()), provider, owned);
         expectedResumeJobId = UUID.fromString(resumed.jobId);
+        retainBufferedPrefix(resumed.jobId, 2, resumed.initialHoldNanos);
         requested = resumed.requested;
         beforeInput = resumed.inputBefore;
         beforeOutput = resumed.outputBefore;
@@ -108,16 +118,23 @@ final class DataEnergisticsTrinityReloadFixture extends DataEnergisticsTrinityFi
         if (graphRemaining(estimate.orElseThrow(), jobId, networkId) != 1)
             throw new IllegalStateException("active Trinity graph did not retain exactly one output");
         var furnace = (FurnaceBlockEntity) submittedHost.getLevel().getBlockEntity(placement.provider().below());
-        var held = furnace.getItem(0).copy();
-        furnace.setItem(0, ItemStack.EMPTY);
-        furnace.setItem(1, ItemStack.EMPTY);
-        furnace.setChanged();
-        var state = new RestartState(1, "relaunch-ready", options.world(), options.campaign(), networkId,
+        var level = (net.minecraft.server.level.ServerLevel) submittedHost.getLevel();
+        int bufferedSand = bufferedSand(level);
+        int bufferedGlass = bufferedGlass(level);
+        if (!twoGlassBeforeStatus() || !physicalSuffixBuffered()
+                || !TrinityPhysicalSuffix.isolated(
+                        furnace.getItem(0).getCount(), furnace.getItem(2).getCount(),
+                        bufferedSand + bufferedGlass)
+                || bufferedGlass != 1)
+            throw new IllegalStateException("Trinity restart lacks its real isolated glass suffix");
+        armOutputHold(level, placement);
+        var state = new RestartState(2, "relaunch-ready", options.world(), options.campaign(), networkId,
                 "minecraft:glass", jobId.toString(), worker.number(), worker.getStableDispatchIdentity(),
                 placement.origin().getX(), placement.origin().getY(), placement.origin().getZ(),
                 placement.provider().getX(), placement.provider().getY(), placement.provider().getZ(),
                 requested, beforeInput, beforeOutput, maxWaiting.toString(),
-                worker.getWaitingFor(AEItemKey.of(Items.GLASS)).toString(), held.getCount(), sampleCount);
+                worker.getWaitingFor(AEItemKey.of(Items.GLASS)).toString(),
+                bufferedSand, bufferedGlass, sampleCount, twoGlassBeforeStatus(), bufferedPrefixHoldNanos());
         try {
             Files.createDirectories(path.getParent());
             var temporary = path.resolveSibling(path.getFileName() + ".tmp");
@@ -148,11 +165,11 @@ final class DataEnergisticsTrinityReloadFixture extends DataEnergisticsTrinityFi
         if (graphRemaining(estimate.orElseThrow(), jobId, resumed.networkId) != 1)
             throw new IllegalStateException("restored Trinity graph did not retain exactly one output");
         var furnace = (FurnaceBlockEntity) player.serverLevel().getBlockEntity(placement.provider().below());
-        if (!furnace.getItem(0).isEmpty())
-            throw new IllegalStateException("Trinity furnace received unexpected input during restart");
-        if (resumed.heldInput > 0) furnace.setItem(0, new ItemStack(Items.SAND, resumed.heldInput));
-        furnace.setItem(1, new ItemStack(Items.COAL, 64));
-        furnace.setChanged();
+        if (!TrinityPhysicalSuffix.isolated(furnace.getItem(0).getCount(),
+                furnace.getItem(2).getCount(), bufferedSand(player) + bufferedGlass(player)))
+            throw new IllegalStateException("Trinity physical suffix changed across restart");
+        adoptPhysicalSuffix(player, resumed.bufferedGlass == 1 ? "minecraft:glass" : "minecraft:sand");
+        adoptOutputHold(player);
         return resumed.networkId;
     }
 
@@ -177,10 +194,12 @@ final class DataEnergisticsTrinityReloadFixture extends DataEnergisticsTrinityFi
     private static RestartState read(Path path, DriverOptions options) {
         try {
             var state = JSON.fromJson(Files.readString(path), RestartState.class);
-            if (state == null || state.schema != 1 || !"relaunch-ready".equals(state.phase)
+            if (state == null || state.schema != 2 || !"relaunch-ready".equals(state.phase)
                     || !options.world().equals(state.world) || !options.campaign().equals(state.campaign)
                     || !"minecraft:glass".equals(state.outputId) || state.requested != 2
-                    || state.sampleCount != 1 || state.heldInput < 0
+                    || state.sampleCount != 1 || state.bufferedSand < 0 || state.bufferedGlass < 0
+                    || state.bufferedSand != 0 || state.bufferedGlass != 1 || !state.twoGlassBeforeStatus
+                    || state.initialHoldNanos <= 0
                     || state.workerNumber <= 0 || new BigInteger(state.currentWaiting).signum() <= 0)
                 throw new IllegalArgumentException("invalid Trinity restart checkpoint");
             UUID.fromString(state.jobId);
@@ -194,5 +213,6 @@ final class DataEnergisticsTrinityReloadFixture extends DataEnergisticsTrinityFi
             String networkId, String outputId, String jobId, int workerNumber, String workerIdentity,
             int x, int y, int z, int providerX, int providerY, int providerZ,
             long requested, long inputBefore, long outputBefore, String waiting,
-            String currentWaiting, int heldInput, int sampleCount) { }
+            String currentWaiting, int bufferedSand, int bufferedGlass,
+            int sampleCount, boolean twoGlassBeforeStatus, long initialHoldNanos) { }
 }

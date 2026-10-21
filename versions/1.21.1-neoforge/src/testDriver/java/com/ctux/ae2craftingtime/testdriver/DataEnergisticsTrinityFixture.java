@@ -38,6 +38,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.HopperBlock;
+import net.minecraft.world.level.block.entity.BarrelBlockEntity;
 import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 import net.minecraft.world.level.levelgen.Heightmap;
 
@@ -75,12 +77,25 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
     private volatile boolean nativeDone;
     private volatile boolean nativeActive;
     private Integer statusWorkerSerial;
+    private volatile String coordinatorName;
     private Integer statusBeforeIdentity;
     private long statusBeforeFrame = -1;
     private final SetupStageProgress setup = new SetupStageProgress();
     private int planBadgeStage;
     private long planBadgeFrame = -1;
     private boolean planBadgeOriginal;
+    private volatile boolean activeStatusCaptured;
+    private boolean outputHoldArmed;
+    private boolean outputHoldReleased;
+    private long outputHoldStartedNanos;
+    private Long outputHoldDurationNanos;
+    private volatile boolean twoGlassBeforeStatus;
+    private volatile int furnaceGlassBeforeStatus;
+    private boolean suffixBuffered;
+    private String bufferedSuffixItem;
+    private String bufferedPrefixJobId;
+    private int bufferedPrefixGlass;
+    private Long bufferedPrefixHoldNanos;
 
     @Override
     protected Placement place(ServerPlayer player, FixtureMarker marker) {
@@ -97,6 +112,8 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
             var provider = origin.above(35);
             var volume = rotatedUnion(origin);
             for (int depth = 0; depth < 4; depth++) volume.add(provider.below(depth));
+            if (requiresFurnaceOutputHold()) volume.add(outputHoldPower(provider));
+            if (usesPhysicalSuffix()) volume.add(outputSuffixBuffer(provider));
             if (volume.stream().anyMatch(pos -> pos.getY() < level.getMinBuildHeight()
                     || pos.getY() >= level.getMaxBuildHeight())) continue;
             for (int cx = (x - 24) >> 4; cx <= (x + 24) >> 4; cx++)
@@ -109,6 +126,7 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
             level.setBlockAndUpdate(provider.below(), Blocks.FURNACE.defaultBlockState());
             level.setBlockAndUpdate(provider.below(2), Blocks.HOPPER.defaultBlockState());
             level.setBlockAndUpdate(provider.below(3), AEBlocks.INTERFACE.block().defaultBlockState());
+            if (usesPhysicalSuffix()) level.setBlockAndUpdate(outputSuffixBuffer(provider), Blocks.BARREL.defaultBlockState());
             ((FurnaceBlockEntity) level.getBlockEntity(provider.below()))
                     .setItem(1, new ItemStack(Items.COAL, 64));
             ((PatternProviderBlockEntity) level.getBlockEntity(provider)).getLogic().getPatternInv()
@@ -216,6 +234,204 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
 
     protected boolean requiresImmediateWorkerCapture() { return false; }
 
+    protected boolean requiresFurnaceOutputHold() { return true; }
+
+    protected boolean usesPhysicalSuffix() { return false; }
+
+    protected static BlockPos outputHoldPower(BlockPos provider) {
+        return provider.below(2).east();
+    }
+
+    protected static BlockPos outputSuffixBuffer(BlockPos provider) {
+        return provider.below(2).east(2);
+    }
+
+    protected final BarrelBlockEntity suffixBuffer(ServerPlayer player) {
+        return suffixBuffer(player.serverLevel());
+    }
+
+    protected final BarrelBlockEntity suffixBuffer(net.minecraft.server.level.ServerLevel level) {
+        if (placement == null || !placement.owned().contains(outputSuffixBuffer(placement.provider())))
+            throw new IllegalStateException("Trinity physical suffix buffer is outside the owned fixture");
+        var barrel = level.getBlockEntity(outputSuffixBuffer(placement.provider()));
+        if (!(barrel instanceof BarrelBlockEntity result))
+            throw new IllegalStateException("Trinity physical suffix buffer is missing");
+        return result;
+    }
+
+    private static int amount(ItemStack stack, net.minecraft.world.item.Item expected) {
+        if (stack.isEmpty()) return 0;
+        if (!stack.is(expected)) throw new IllegalStateException("unexpected item in Trinity furnace suffix");
+        return stack.getCount();
+    }
+
+    private static void requireUnusedBufferSlotsEmpty(BarrelBlockEntity barrel) {
+        for (int slot = 1; slot < barrel.getContainerSize(); slot++)
+            if (!barrel.getItem(slot).isEmpty())
+                throw new IllegalStateException("Trinity physical suffix buffer contains unrelated items");
+    }
+
+    private void bufferOnePhysicalSuffix(ServerPlayer player) {
+        var furnace = (FurnaceBlockEntity) player.serverLevel().getBlockEntity(placement.provider().below());
+        var barrel = suffixBuffer(player);
+        requireUnusedBufferSlotsEmpty(barrel);
+        int sand = amount(furnace.getItem(0), Items.SAND);
+        int glass = amount(furnace.getItem(2), Items.GLASS);
+        if (!barrel.getItem(0).isEmpty())
+            throw new IllegalStateException("Trinity suffix buffer was occupied before release");
+        var source = TrinityPhysicalSuffix.source(sand, glass, 0);
+        int slot = source == TrinityPhysicalSuffix.Source.OUTPUT ? 2 : 0;
+        var realStack = furnace.removeItem(slot, 1);
+        if (realStack.getCount() != 1)
+            throw new IllegalStateException("Trinity furnace could not transfer its physical suffix");
+        barrel.setItem(0, realStack);
+        furnace.setChanged();
+        barrel.setChanged();
+        suffixBuffered = true;
+        bufferedSuffixItem = source == TrinityPhysicalSuffix.Source.OUTPUT ? "minecraft:glass" : "minecraft:sand";
+    }
+
+    protected final void restorePhysicalSuffix(ServerPlayer player) {
+        if (!suffixBuffered) throw new IllegalStateException("Trinity has no physical suffix to restore");
+        var furnace = (FurnaceBlockEntity) player.serverLevel().getBlockEntity(placement.provider().below());
+        var barrel = suffixBuffer(player);
+        requireUnusedBufferSlotsEmpty(barrel);
+        var realStack = barrel.getItem(0).copy();
+        if (realStack.getCount() != 1 || !furnace.getItem(0).isEmpty() || !furnace.getItem(2).isEmpty())
+            throw new IllegalStateException("Trinity physical suffix changed before restoration");
+        int slot = "minecraft:glass".equals(bufferedSuffixItem) ? 2 : 0;
+        if (!realStack.is(slot == 2 ? Items.GLASS : Items.SAND))
+            throw new IllegalStateException("Trinity physical suffix item changed before restoration");
+        barrel.setItem(0, ItemStack.EMPTY);
+        furnace.setItem(slot, realStack);
+        barrel.setChanged();
+        furnace.setChanged();
+        suffixBuffered = false;
+        bufferedSuffixItem = null;
+    }
+
+    protected final void discardCancelledPhysicalSuffix(ServerPlayer player) {
+        if (!suffixBuffered) throw new IllegalStateException("cancelled Trinity job has no held suffix");
+        var barrel = suffixBuffer(player);
+        requireUnusedBufferSlotsEmpty(barrel);
+        if (barrel.getItem(0).getCount() != 1)
+            throw new IllegalStateException("cancelled Trinity suffix changed before isolation");
+        barrel.setItem(0, ItemStack.EMPTY);
+        barrel.setChanged();
+        suffixBuffered = false;
+        bufferedSuffixItem = null;
+    }
+
+    protected final int bufferedSand(ServerPlayer player) {
+        return bufferedSand(player.serverLevel());
+    }
+
+    protected final int bufferedSand(net.minecraft.server.level.ServerLevel level) {
+        var stack = suffixBuffer(level).getItem(0);
+        if (stack.isEmpty()) return 0;
+        if (stack.is(Items.SAND)) return stack.getCount();
+        if (stack.is(Items.GLASS)) return 0;
+        throw new IllegalStateException("unexpected item in Trinity physical suffix buffer");
+    }
+
+    protected final int bufferedGlass(ServerPlayer player) {
+        return bufferedGlass(player.serverLevel());
+    }
+
+    protected final int bufferedGlass(net.minecraft.server.level.ServerLevel level) {
+        var stack = suffixBuffer(level).getItem(0);
+        if (stack.isEmpty()) return 0;
+        if (stack.is(Items.GLASS)) return stack.getCount();
+        if (stack.is(Items.SAND)) return 0;
+        throw new IllegalStateException("unexpected item in Trinity physical suffix buffer");
+    }
+
+    protected final boolean twoGlassBeforeStatus() { return twoGlassBeforeStatus; }
+
+    protected final boolean physicalSuffixBuffered() { return suffixBuffered; }
+
+    protected final long bufferedPrefixHoldNanos() {
+        if (bufferedPrefixHoldNanos == null || bufferedPrefixHoldNanos <= 0)
+            throw new IllegalStateException("Trinity physical prefix hold has no measured duration");
+        return bufferedPrefixHoldNanos;
+    }
+
+    protected final void retainBufferedPrefix(String job, int furnaceGlass, long holdNanos) {
+        if (job == null || furnaceGlass != 2 || holdNanos <= 0)
+            throw new IllegalStateException("restored Trinity physical prefix proof is invalid");
+        bufferedPrefixJobId = job;
+        bufferedPrefixGlass = furnaceGlass;
+        bufferedPrefixHoldNanos = holdNanos;
+    }
+
+    protected final void adoptPhysicalSuffix(ServerPlayer player, String itemId) {
+        if (!"minecraft:sand".equals(itemId) && !"minecraft:glass".equals(itemId))
+            throw new IllegalStateException("invalid restored Trinity suffix item");
+        requireUnusedBufferSlotsEmpty(suffixBuffer(player));
+        if (bufferedSand(player) + bufferedGlass(player) != 1
+                || !(itemId.equals("minecraft:sand") ? bufferedSand(player) == 1 : bufferedGlass(player) == 1))
+            throw new IllegalStateException("restored Trinity suffix differs from the physical barrel");
+        suffixBuffered = true;
+        bufferedSuffixItem = itemId;
+    }
+
+    protected final void adoptOutputHold(ServerPlayer player) {
+        var power = outputHoldPower(placement.provider());
+        var hopper = placement.provider().below(2);
+        if (!placement.owned().contains(power) || !player.serverLevel().getBlockState(power).is(Blocks.REDSTONE_BLOCK)
+                || !player.serverLevel().getBlockState(hopper).is(Blocks.HOPPER)
+                || player.serverLevel().getBlockState(hopper).getValue(HopperBlock.ENABLED))
+            throw new IllegalStateException("restored Trinity output hopper is not physically held");
+        outputHoldArmed = true;
+        outputHoldReleased = false;
+        activeStatusCaptured = false;
+        outputHoldStartedNanos = System.nanoTime();
+        outputHoldDurationNanos = null;
+    }
+
+    protected final void armOutputHold(ServerPlayer player, Placement placement) {
+        armOutputHold(player.serverLevel(), placement);
+    }
+
+    protected final void armOutputHold(net.minecraft.server.level.ServerLevel level, Placement placement) {
+        if (!requiresFurnaceOutputHold()) return;
+        if (outputHoldArmed && !outputHoldReleased)
+            throw new IllegalStateException("previous Trinity furnace output hold was not released");
+        var power = outputHoldPower(placement.provider());
+        var hopper = placement.provider().below(2);
+        if (!placement.owned().contains(power) || power.getY() < level.getMinBuildHeight()
+                || power.getY() >= level.getMaxBuildHeight() || !level.getBlockState(power).isAir()
+                || !level.getBlockState(hopper).is(Blocks.HOPPER)
+                || !level.getBlockState(hopper).getValue(HopperBlock.ENABLED))
+            throw new IllegalStateException("Trinity furnace output hold has no empty enabled hopper");
+        level.setBlockAndUpdate(power, Blocks.REDSTONE_BLOCK.defaultBlockState());
+        if (!level.getBlockState(power).is(Blocks.REDSTONE_BLOCK)
+                || level.getBlockState(hopper).getValue(HopperBlock.ENABLED))
+            throw new IllegalStateException("redstone did not disable the owned Trinity output hopper");
+        outputHoldArmed = true;
+        outputHoldReleased = false;
+        outputHoldStartedNanos = System.nanoTime();
+        outputHoldDurationNanos = null;
+    }
+
+    private void releaseOutputHold(ServerPlayer player) {
+        if (!outputHoldArmed || outputHoldReleased)
+            throw new IllegalStateException("Trinity furnace output hold released more than once");
+        var level = player.serverLevel();
+        var power = outputHoldPower(placement.provider());
+        var hopper = placement.provider().below(2);
+        if (!level.getBlockState(power).is(Blocks.REDSTONE_BLOCK)
+                || !level.getBlockState(hopper).is(Blocks.HOPPER)
+                || level.getBlockState(hopper).getValue(HopperBlock.ENABLED))
+            throw new IllegalStateException("Trinity furnace output hold changed before native Status capture");
+        level.setBlockAndUpdate(power, Blocks.AIR.defaultBlockState());
+        if (!level.getBlockState(power).isAir()
+                || !level.getBlockState(hopper).getValue(HopperBlock.ENABLED))
+            throw new IllegalStateException("Trinity output hopper stayed disabled after release");
+        outputHoldReleased = true;
+        outputHoldDurationNanos = System.nanoTime() - outputHoldStartedNanos;
+    }
+
     @Override
     protected String setupDetail() { return setup.stage(); }
 
@@ -255,8 +471,14 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
         lastWaiting = BigInteger.ZERO;
         waitingDecrement = BigInteger.ZERO;
         statusWorkerSerial = null;
+        coordinatorName = null;
         statusBeforeIdentity = null;
         statusBeforeFrame = -1;
+        activeStatusCaptured = false;
+        twoGlassBeforeStatus = false;
+        furnaceGlassBeforeStatus = 0;
+        if (suffixBuffered || usesPhysicalSuffix() && !suffixBuffer(player).getItem(0).isEmpty())
+            throw new IllegalStateException("previous Trinity physical suffix was not cleared before the new job");
         submittedHost = (TrinityDataCoreBlockEntity) player.serverLevel().getBlockEntity(placement.origin());
         var grid = Objects.requireNonNull(submittedHost.craftingExecutionRoute(),
                 "Trinity worker has no crafting route").serviceGrid();
@@ -269,6 +491,7 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
         submittedGrid = grid;
         beforeInput = grid.getStorageService().getInventory().getAvailableStacks().get(inputKey());
         beforeOutput = grid.getStorageService().getInventory().getAvailableStacks().get(outputKey());
+        armOutputHold(player, placement);
         super.startCraft(player, placement, menu);
         captureSubmittedWorker(submittedHost, grid);
         if (requiresImmediateWorkerCapture() && worker == null)
@@ -299,8 +522,36 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
         if (grid == null || grid != submittedGrid
                 || observedMenuGrid != null && observedMenuGrid != grid)
             throw new IllegalStateException("retained Trinity job changed its native service grid");
+        var coordinator = host.getCpuPartitions().stream().filter(cpu -> cpu.number() == 0
+                && grid.getCraftingService().getCpus().contains(cpu)).toList();
+        if (coordinator.size() != 1 || coordinator.getFirst().getName() == null)
+            throw new IllegalStateException("retained Trinity coordinator is not uniquely published");
+        coordinatorName = coordinator.getFirst().getName().getString();
         captureSubmittedWorker(host, grid);
         if (worker == null) return null;
+        if (usesPhysicalSuffix() && !suffixBuffered && !twoGlassBeforeStatus) {
+            var furnace = (FurnaceBlockEntity) player.serverLevel().getBlockEntity(placement.provider().below());
+            furnaceGlassBeforeStatus = amount(furnace.getItem(2), Items.GLASS);
+            twoGlassBeforeStatus = TrinityPhysicalSuffix.twoGlassReady(
+                    furnaceGlassBeforeStatus, suffixBuffer(player).getItem(0).getCount());
+        }
+        if (activeStatusCaptured && outputHoldArmed && !outputHoldReleased) {
+            if (!worker.isBusy() || !jobId.equals(jobLink(worker).getCraftingID()))
+                throw new IllegalStateException("Trinity job changed before held output was released");
+            if (usesPhysicalSuffix() && !suffixBuffered) {
+                if (!twoGlassBeforeStatus)
+                    throw new IllegalStateException("two physical glass outputs were not observed before Status capture");
+                bufferOnePhysicalSuffix(player);
+            } else if (suffixBuffered) {
+                restorePhysicalSuffix(player);
+            }
+            releaseOutputHold(player);
+            if (suffixBuffered && twoGlassBeforeStatus) {
+                bufferedPrefixJobId = jobId.toString();
+                bufferedPrefixGlass = furnaceGlassBeforeStatus;
+                bufferedPrefixHoldNanos = outputHoldDurationNanos;
+            }
+        }
         if (worker.isBusy()) activeJobId = jobLink(worker).getCraftingID();
         nativeActive = worker.isBusy();
         var waiting = worker.getWaitingFor(outputKey());
@@ -319,6 +570,8 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
                 sawTerminal, link.isDone(), link.isStandalone(), link.isCanceled(), requested,
                 beforeInput - input, output - beforeOutput, maxWaiting, waitingDecrement);
         nativeDone = nativeCompletion(completion, grid, beforeInput - input, output - beforeOutput);
+        if (nativeDone && requiresFurnaceOutputHold() && (!outputHoldArmed || !outputHoldReleased))
+            throw new IllegalStateException("Trinity furnace job completed without a released output hold");
         verifyVariant(grid, nativeDone);
         return JSON.toJson(new NativeObservation(jobId.toString(), activeJobId.toString(),
                 worker.number(), worker.getStableDispatchIdentity(), requested,
@@ -330,7 +583,10 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
                 completion.sameHost(), completion.sameGrid(), sawTerminal,
                 link.isDone(), link.isStandalone(), link.isCanceled(), nativeDone,
                 beforeInput, input, beforeInput - input, beforeOutput, output,
-                output - beforeOutput, nativeVariantAmounts(grid)));
+                output - beforeOutput, outputHoldArmed, outputHoldReleased,
+                outputHoldDurationNanos, twoGlassBeforeStatus, furnaceGlassBeforeStatus, suffixBuffered,
+                bufferedSuffixItem, bufferedPrefixJobId, bufferedPrefixGlass,
+                bufferedPrefixHoldNanos, nativeVariantAmounts(grid)));
     }
 
     @Override
@@ -400,6 +656,7 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
     @Override
     boolean observeNativeStatus(net.minecraft.client.Minecraft minecraft, String outputId,
             boolean completed, long priorFrame, Consumer<String> screenshot) {
+        if (!completed && usesPhysicalSuffix() && !suffixBuffered && !twoGlassBeforeStatus) return false;
         if (minecraft.screen instanceof MEStorageScreen<?> storage) {
             var button = ((MEStorageScreenAccessor) storage).ae2craftingtime_test_driver$statusButton();
             DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
@@ -411,8 +668,7 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
         if (completed) {
             if (statusWorkerSerial == null || snapshot.cpuCards().stream()
                     .anyMatch(value -> value.serial() == statusWorkerSerial)) return false;
-            var coordinator = snapshot.cpuCards().stream().filter(value -> value.serial() == 0)
-                    .findFirst().orElse(null);
+            var coordinator = TrinityStatusCoordinator.card(snapshot.cpuCards(), coordinatorName);
             if (coordinator == null || coordinator.jobId() != null) return false;
             if (!coordinator.selected()) {
                 DriverPlatform.click(minecraft, coordinator.bounds().centerX(), coordinator.bounds().centerY());
@@ -421,7 +677,8 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
             var status = snapshot.status();
             if (status != null && (!"native".equals(status.provenance())
                     || status.selectedJobUuid() != null || status.selectedCpuSerial() == null
-                    || status.selectedCpuSerial() != 0 || status.identity() == statusBeforeIdentity)) return false;
+                    || status.selectedCpuSerial() != coordinator.serial()
+                    || status.identity() == statusBeforeIdentity)) return false;
             screenshot.accept("trinity-completed-status.png");
         } else {
             var card = snapshot.cpuCards().stream()
@@ -429,8 +686,7 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
                     .findFirst().orElse(null);
             if (card == null) return false;
             if (statusBeforeIdentity == null && card.selected()) {
-                var coordinator = snapshot.cpuCards().stream().filter(value -> value.serial() == 0)
-                        .findFirst().orElse(null);
+                var coordinator = TrinityStatusCoordinator.card(snapshot.cpuCards(), coordinatorName);
                 if (coordinator == null) return false;
                 DriverPlatform.click(minecraft, coordinator.bounds().centerX(), coordinator.bounds().centerY());
                 return false;
@@ -457,6 +713,7 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
                                     && !text.arguments().contains("text.ae2craftingtime.collecting_data")))) return false;
             statusWorkerSerial = card.serial();
             screenshot.accept("trinity-active-status.png");
+            activeStatusCaptured = true;
         }
         minecraft.setScreen(null);
         return true;
@@ -503,6 +760,11 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
     @Override
     protected void cleanup(ServerPlayer player, Placement placement) {
         var level = player.serverLevel();
+        if (placement.owned().contains(outputSuffixBuffer(placement.provider()))
+                && level.getBlockEntity(outputSuffixBuffer(placement.provider())) instanceof BarrelBlockEntity barrel) {
+            for (int slot = 0; slot < barrel.getContainerSize(); slot++) barrel.setItem(slot, ItemStack.EMPTY);
+            barrel.setChanged();
+        }
         for (var pos : placement.owned()) {
             if (!level.getBlockState(pos).isAir())
                 level.setBlockAndUpdate(pos, Blocks.AIR.defaultBlockState());
@@ -518,6 +780,10 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
             boolean linkDone, boolean linkStandalone, boolean linkCanceled, boolean complete,
             long inputBefore, long inputNow, long dispatchedInput,
             long outputBefore, long outputNow, long networkOutputDelta,
+            boolean outputHoldArmed, boolean outputHoldReleased, Long outputHoldDurationNanos,
+            boolean twoGlassBeforeStatus, int furnaceGlassBeforeStatus,
+            boolean physicalSuffixBuffered, String bufferedSuffixItem,
+            String bufferedPrefixJobId, int bufferedPrefixGlass, Long bufferedPrefixHoldNanos,
             Map<String, Long> variantAmounts) {}
 
     static final class Placement {

@@ -9,8 +9,10 @@ import com.ctux.ae2craftingtime.testdriver.mixin.CraftAmountScreenAccessor;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.entity.FurnaceBlockEntity;
 
 import java.math.BigInteger;
+import java.time.Duration;
 import java.util.UUID;
 
 /** Real worker cancellation after one accepted output, then a fresh job on that worker. */
@@ -25,6 +27,12 @@ class DataEnergisticsTrinityCancelFixture extends DataEnergisticsTrinityFixture 
     protected OptionFeature optionFeature() { return OptionFeature.DATA_ENERGISTICS_TRINITY; }
 
     @Override boolean supportsCancelFollowUp() { return true; }
+
+    @Override protected boolean usesPhysicalSuffix() { return cancelledJob == null; }
+
+    @Override java.time.Duration submittedCraftTimeout() {
+        return cancelledJob == null ? Duration.ofSeconds(90) : super.submittedCraftTimeout();
+    }
 
     @Override protected boolean requiresLearnedActiveStatus() { return cancelledJob != null; }
 
@@ -79,6 +87,11 @@ class DataEnergisticsTrinityCancelFixture extends DataEnergisticsTrinityFixture 
         if (worker.isBusy() || !link.isCanceled()
                 || ProfilerBridge.stats(key).map(stats -> stats.sampleCount()).orElse(0) != 1)
             throw new IllegalStateException("native cancellation fabricated a sample or left its job active");
+        var furnace = (FurnaceBlockEntity) player.serverLevel().getBlockEntity(placement.provider().below());
+        if (!TrinityPhysicalSuffix.isolated(furnace.getItem(0).getCount(),
+                furnace.getItem(2).getCount(), suffixBuffer(player).getItem(0).getCount()))
+            throw new IllegalStateException("cancelled Trinity suffix was not physically isolated");
+        discardCancelledPhysicalSuffix(player);
         return true;
     }
 

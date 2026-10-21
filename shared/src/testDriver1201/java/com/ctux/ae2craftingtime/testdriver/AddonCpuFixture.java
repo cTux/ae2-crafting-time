@@ -157,6 +157,8 @@ abstract class AddonCpuFixture<P> {
 
     boolean requiresNativeCompletion() { return false; }
 
+    java.time.Duration submittedCraftTimeout() { return java.time.Duration.ofSeconds(30); }
+
     final boolean readyForPass(DispatchObservation.Snapshot snapshot) {
         return dispatchReady(snapshot) && (!requiresNativeCompletion() || nativeCompleted());
     }

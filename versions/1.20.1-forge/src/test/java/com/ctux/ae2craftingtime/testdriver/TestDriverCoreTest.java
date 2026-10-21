@@ -48,6 +48,43 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
     @Test
+    void trinityPhysicalSuffixRequiresTwoRealProductsAndKeepsOneUnitIsolated() {
+        assertFalse(TrinityPhysicalSuffix.twoGlassReady(1, 0));
+        assertTrue(TrinityPhysicalSuffix.twoGlassReady(2, 0));
+        assertFalse(TrinityPhysicalSuffix.twoGlassReady(2, 1));
+        assertEquals(TrinityPhysicalSuffix.Source.OUTPUT, TrinityPhysicalSuffix.source(0, 2, 0));
+        assertEquals(TrinityPhysicalSuffix.Source.INPUT, TrinityPhysicalSuffix.source(1, 1, 0));
+        assertThrows(IllegalStateException.class, () -> TrinityPhysicalSuffix.source(0, 2, 1));
+        assertThrows(IllegalStateException.class, () -> TrinityPhysicalSuffix.source(-1, 3, 0));
+        assertThrows(IllegalStateException.class, () -> TrinityPhysicalSuffix.source(2, 0, 0));
+        assertThrows(IllegalStateException.class, () -> TrinityPhysicalSuffix.source(0, 1, 0));
+        assertFalse(TrinityPhysicalSuffix.isolated(1, 0, 1));
+        assertFalse(TrinityPhysicalSuffix.isolated(0, 1, 1));
+        assertFalse(TrinityPhysicalSuffix.isolated(0, 0, 0));
+        assertTrue(TrinityPhysicalSuffix.isolated(0, 0, 1));
+    }
+
+    @Test
+    void trinityCoordinatorUsesNativeNameRatherThanWorkerOrMenuSerialZero() {
+        var cards = List.of(
+                new UiSnapshot.CpuCard(3, "Trinity Data Core #0", null, 0, 0, false,
+                        null, null, null, null, null, null),
+                new UiSnapshot.CpuCard(1, "CPU #1", null, 0, 0, false,
+                        null, null, null, null, null, null),
+                new UiSnapshot.CpuCard(2, "CPU #2", null, 0, 0, false,
+                        null, null, null, null, null, null),
+                new UiSnapshot.CpuCard(4, "Trinity Data Core #1", "minecraft:glass", 1, 0, true,
+                        null, null, null, null, null, null));
+        assertEquals(3, TrinityStatusCoordinator.card(cards, "Trinity Data Core #0").serial());
+        assertNull(TrinityStatusCoordinator.card(cards, "other coordinator"));
+        assertNull(TrinityStatusCoordinator.card(cards, ""));
+        assertNull(TrinityStatusCoordinator.card(cards, null));
+        assertNull(TrinityStatusCoordinator.card(List.of(cards.get(3)), "Trinity Data Core #1"));
+        assertThrows(IllegalStateException.class, () -> TrinityStatusCoordinator.card(
+                List.of(cards.get(0), cards.get(0)), "Trinity Data Core #0"));
+    }
+
+    @Test
     void everyTrinityScenarioHasAnExplicitFixtureAndRequiredNativeChecks() {
         for (var scenario : List.of("data-energistics-trinity-cpu", "data-energistics-trinity-counted-cpu",
                 "data-energistics-trinity-cancel-cpu", "data-energistics-trinity-global-option-cpu",

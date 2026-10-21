@@ -33,6 +33,7 @@ final class DataEnergisticsTrinityCountedFixture extends DataEnergisticsTrinityF
     private boolean patternInstalled;
 
     @Override protected boolean requiresImmediateWorkerCapture() { return true; }
+    @Override protected boolean requiresFurnaceOutputHold() { return false; }
 
     @Override
     protected boolean finishVariant(ServerPlayer player, IGrid grid, Placement placement) {

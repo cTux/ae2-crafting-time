@@ -131,6 +131,8 @@ public final class CraftPlanScenario {
             return;
         }
         var timeout = options.scenario().equals("standard-status-controls") ? Duration.ofMinutes(30)
+                : state == ScenarioState.ADDON_CRAFT_SUBMITTED && addonFixture != null
+                ? addonFixture.submittedCraftTimeout()
                 : state == ScenarioState.STARTING || standard != null || noSpace != null || noProvider != null
                 || noPower != null || providerDispatchStatus != null || chanceOutput != null ? START_TIMEOUT : STEP_TIMEOUT;
         if (elapsed().compareTo(timeout) > 0) {
