@@ -25,7 +25,7 @@ public record StatsRequestContext(IGrid grid, Object craftingCpu) {
             var accessor = (CraftingCPUMenuAccessor) menu;
             var cpu = accessor.ae2craftingtime$getCpu();
             return new StatsRequestContext(accessor.ae2craftingtime$getGrid(),
-                    cpu != null ? cpu : optionalAdvancedCpu(menu));
+                    cpu != null ? cpu : optionalSelectedCpu(menu));
         }
         if (player.containerMenu instanceof AEBaseMenu menu && menu.getTarget() instanceof IActionHost host) {
             var node = host.getActionableNode();
@@ -43,6 +43,30 @@ public record StatsRequestContext(IGrid grid, Object craftingCpu) {
             return cpu;
         } catch (IntegrationRead.Failure failure) {
             IntegrationLog.fail("advanced_ae", "selected-cpu", failure.getMessage()
+                    + ";retained=network_aggregates,cpu_profiling", false, failure.getCause());
+            return null;
+        }
+    }
+
+    private static Object optionalSelectedCpu(CraftingCPUMenu menu) {
+        var advanced = optionalAdvancedCpu(menu);
+        return advanced != null ? advanced : optionalTrinityCpu(menu);
+    }
+
+    private static Object optionalTrinityCpu(CraftingCPUMenu menu) {
+        if (!ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.DATA_ENERGISTICS_TRINITY)
+                || !IntegrationLog.available("data_energistics")
+                || IntegrationLog.disabled("data_energistics", "selected-cpu")) return null;
+        try {
+            var cpu = IntegrationRead.field(menu, CraftingCPUMenu.class, "dataEnergistics$cpu", Object.class);
+            if (cpu != null && cpu.getClass().getName().equals(
+                    "com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu")) {
+                IntegrationLog.observe("data_energistics", "selected-cpu");
+                return cpu;
+            }
+            return null;
+        } catch (IntegrationRead.Failure failure) {
+            IntegrationLog.fail("data_energistics", "selected-cpu", failure.getMessage()
                     + ";retained=network_aggregates,cpu_profiling", false, failure.getCause());
             return null;
         }

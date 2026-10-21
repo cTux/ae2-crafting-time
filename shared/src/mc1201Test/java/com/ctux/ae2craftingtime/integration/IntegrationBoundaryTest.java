@@ -24,6 +24,60 @@ import org.objectweb.asm.tree.VarInsnNode;
 
 class IntegrationBoundaryTest {
     @Test
+    void trinityCandidateMatchesPinnedShippedBytecodeIncludingCalls() {
+        if (!IntegrationPlatform.TARGET.equals("1.21.1-neoforge")) return;
+        var candidate = IntegrationCatalog.CANDIDATES.stream()
+                .filter(value -> value.dependency().equals("data_energistics")).findFirst().orElseThrow();
+        var cache = new HashMap<String, IntegrationContract.ClassInfo>();
+        var loader = getClass().getClassLoader();
+        var contract = IntegrationContract.check(candidate.contract(), owner -> cache.computeIfAbsent(owner,
+                name -> IntegrationMixinPlugin.read(name, resource -> loader.getResourceAsStream(resource))));
+        assertNull(contract, contract);
+        var logic = "com/fish_dan_/data_energistics/common/crafting/trinity/execution/cpu/TrinityDataCoreCpuLogic";
+        var node = cache.get(logic);
+        assertNotNull(node);
+        var call = node.members().entrySet().stream().filter(entry -> entry.getKey().startsWith("call:insert"))
+                .filter(entry -> entry.getKey().contains("TrinityExactKeyInventory#extract"))
+                .map(Map.Entry::getValue).toList();
+        assertTrue(call.contains(List.of("3")));
+        assertEquals(List.of("()V"), node.members().get("method:abortFailedSubmission"));
+        var withoutAbort = new HashMap<>(cache);
+        var withoutAbortMembers = new HashMap<>(node.members());
+        withoutAbortMembers.remove("method:abortFailedSubmission");
+        withoutAbort.put(logic, new IntegrationContract.ClassInfo(node.superName(), withoutAbortMembers));
+        assertEquals("missing:" + logic + "#method:abortFailedSubmission",
+                IntegrationContract.check(candidate.contract(), withoutAbort::get));
+        var altered = new HashMap<>(cache);
+        var members = new HashMap<>(node.members());
+        members.entrySet().removeIf(entry -> entry.getKey().startsWith("call:insert"));
+        altered.put(logic, new IntegrationContract.ClassInfo(node.superName(), members));
+        assertNotNull(IntegrationContract.check(candidate.contract(), altered::get));
+    }
+
+    @Test
+    void trinitySyntheticCallbackMustRemainStatic() throws Exception {
+        if (!IntegrationPlatform.TARGET.equals("1.21.1-neoforge")) return;
+        var candidate = IntegrationCatalog.CANDIDATES.stream()
+                .filter(value -> value.dependency().equals("data_energistics")).findFirst().orElseThrow();
+        var logic = "com/fish_dan_/data_energistics/common/crafting/trinity/execution/cpu/TrinityDataCoreCpuLogic";
+        var node = new ClassNode();
+        try (var input = getClass().getClassLoader().getResourceAsStream(logic + ".class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+        }
+        var callback = node.methods.stream().filter(method -> method.name.equals("lambda$dispatchExactBatch$29"))
+                .findFirst().orElseThrow();
+        assertTrue((callback.access & Opcodes.ACC_STATIC) != 0);
+        callback.access &= ~Opcodes.ACC_STATIC;
+        var changed = IntegrationMixinPlugin.describe(node);
+        assertFalse(changed.members().containsKey("static:method:lambda$dispatchExactBatch$29"));
+        var cache = new HashMap<String, IntegrationContract.ClassInfo>();
+        var loader = getClass().getClassLoader();
+        assertNotNull(IntegrationContract.check(candidate.contract(), owner -> owner.equals(logic) ? changed
+                : cache.computeIfAbsent(owner, name -> IntegrationMixinPlugin.read(name,
+                        resource -> loader.getResourceAsStream(resource)))));
+    }
+    @Test
     void startupAndAcceptedConfigWireRecoveryLifecycleSynchronously() throws Exception {
         var bridge = new ClassNode();
         try (var input = getClass().getResourceAsStream(

@@ -109,6 +109,7 @@ dependencies {
     compileOnly 'maven.modrinth:ayN3DZKb:Iw2gl7Lb'
 
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'curse.maven:data-energistics-1565514:9095664'
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
 }

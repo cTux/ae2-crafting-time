@@ -98,6 +98,15 @@ public final class UiObservationStore {
         }
     }
 
+    /** The native Trinity material table is independent of AE2's table renderer. */
+    public static void trinityRow(GuiGraphics graphics, CraftingPlanSummaryEntry entry, int x, int y) {
+        if (active == null || !isNativeTrinityConfirm(active.screen)) return;
+        var cell = transformed(graphics, x, y, x + 67, y + 22);
+        active.rows.add(new PendingRow(entry.getWhat().getId().toString(), entry.getCraftAmount(),
+                entry.getMissingAmount(), cell, entry));
+        active.itemCells.add(transformed(graphics, x + 48, y + 3, x + 64, y + 19));
+    }
+
     public static void description(CraftingPlanSummaryEntry entry, List<Component> components) {
         if (active != null) {
             // The outer renderer wrapper passes the final decorated list here.
@@ -152,6 +161,11 @@ public final class UiObservationStore {
             Integer color, boolean bold) {
         if (active != null) {
             var bounds = transformed(graphics, x, y, x + width, y + height);
+            if (isNativeTrinityConfirm(active.screen) && text.contains("Crafting CPU:")) {
+                active.text.add(new UiSnapshot.ObservedText("native-trinity-cpu-selection", text,
+                        List.of(), bounds, color, bold));
+                return;
+            }
             if (recordStatusText(text, bounds)) return;
             if (recordNativePlanAmount(text, bounds, color, bold)) return;
             // Newer AE2 flattens styled row labels into formatted characters.
@@ -337,7 +351,8 @@ public final class UiObservationStore {
         }
         var rows = active.rows.stream().map(row -> new UiSnapshot.Row(row.outputId, row.craftAmount,
                 row.missingAmount, row.cell,
-                row.identity == null ? rowDescription(active.descriptions, active.text, row.outputId, row.cell)
+                row.identity == null || isNativeTrinityConfirm(active.screen)
+                        ? rowDescription(active.descriptions, active.text, row.outputId, row.cell)
                         : planDescription(active.planDescriptions, row.identity),
                 row.storedAmount, row.activeAmount, row.pendingAmount)).toList();
         var mergedBadges = merge(active.badges);

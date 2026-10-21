@@ -6,10 +6,17 @@ import java.util.Map;
 
 /** The driver enforces the catalogue's order instead of maintaining another version list. */
 final class AdapterSmokePolicy {
-    private static final Map<String, String> DEPENDENCIES = Map.of(
-            "merequester-read-recovery", "merequester", "neoeco-cpu", "neoecoae",
-            "advancedae-cpu", "advanced_ae", "lightningtech-cpu", "ae2lt",
-            "merequester-screen", "merequester", "neoeco-fastpath-cpu", "neoecoae");
+    private static final Map<String, String> DEPENDENCIES = Map.ofEntries(
+            Map.entry("merequester-read-recovery", "merequester"), Map.entry("neoeco-cpu", "neoecoae"),
+            Map.entry("advancedae-cpu", "advanced_ae"), Map.entry("lightningtech-cpu", "ae2lt"),
+            Map.entry("merequester-screen", "merequester"), Map.entry("neoeco-fastpath-cpu", "neoecoae"),
+            Map.entry("data-energistics-trinity-cpu", "data_energistics"),
+            Map.entry("data-energistics-trinity-counted-cpu", "data_energistics"),
+            Map.entry("data-energistics-trinity-reload-cpu", "data_energistics"),
+            Map.entry("data-energistics-trinity-cancel-cpu", "data_energistics"),
+            Map.entry("data-energistics-trinity-global-option-cpu", "data_energistics"),
+            Map.entry("data-energistics-trinity-provider-cpu", "data_energistics"),
+            Map.entry("data-energistics-trinity-admission-cpu", "data_energistics"));
 
     static void verifyCpu(String target, String scenario, DispatchObservation.Snapshot observed) {
         var dependency = DEPENDENCIES.getOrDefault(scenario, "");
@@ -17,6 +24,7 @@ final class AdapterSmokePolicy {
             case "neoecoae" -> "cn.dancingsnow.neoecoae.api.me.ECOCraftingCPULogic";
             case "advanced_ae" -> "net.pedroksl.advanced_ae.common.cluster.AdvCraftingCPU";
             case "ae2lt" -> "com.moakiee.ae2lt.crafting.timewheel.Ae2LtTimeWheelCraftingCpuLogic";
+            case "data_energistics" -> "com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu";
             default -> "";
         };
         if (expected.isEmpty() || IntegrationCatalog.CANDIDATES.stream()

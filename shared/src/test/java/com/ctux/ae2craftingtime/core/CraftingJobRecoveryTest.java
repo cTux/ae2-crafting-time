@@ -7,6 +7,21 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 
 class CraftingJobRecoveryTest {
+    @Test void quickOffOnChangesTrinityJobStampWithoutBackendTick() {
+        var lifecycle = new CraftingJobRecovery.Lifecycle();
+        var server = new Object();
+        lifecycle.begin(server);
+        lifecycle.ready(server);
+        var oldJob = lifecycle.stamp(OptionFeature.DATA_ENERGISTICS_TRINITY);
+        var unaffected = lifecycle.stamp(OptionFeature.ADVANCED_AE);
+        lifecycle.disable(OptionFeature.DATA_ENERGISTICS_TRINITY);
+        assertNotEquals(oldJob, lifecycle.stamp(OptionFeature.DATA_ENERGISTICS_TRINITY));
+        assertEquals(unaffected, lifecycle.stamp(OptionFeature.ADVANCED_AE));
+        var freshJob = lifecycle.stamp(OptionFeature.DATA_ENERGISTICS_TRINITY);
+        assertEquals(freshJob, lifecycle.stamp(OptionFeature.DATA_ENERGISTICS_TRINITY));
+        lifecycle.disable(OptionFeature.PROFILING);
+        assertNotEquals(freshJob, lifecycle.stamp(OptionFeature.DATA_ENERGISTICS_TRINITY));
+    }
     private static final UUID JOB = UUID.fromString("a49302d3-6630-493a-932e-41cf90a594cf");
     private static final ProfileKey ROOT = new ProfileKey("network", "minecraft:stone");
 
@@ -157,6 +172,23 @@ class CraftingJobRecoveryTest {
         assertTrue(advanced.attach(server, JOB, ROOT.outputId(), ROOT.networkId(), true).isEmpty());
         assertTrue(neoEco.attach(server, JOB, ROOT.outputId(), ROOT.networkId(), true).isPresent());
         assertTrue(advanced.attach(server, JOB, ROOT.outputId(), ROOT.networkId(), true).isEmpty());
+    }
+
+    @Test
+    void trinityLateAcceptedOutputAdvancesOnlyTheMatchingRestoredGraph() {
+        var server = new Object();
+        var lifecycle = new CraftingJobRecovery.Lifecycle();
+        lifecycle.begin(server);
+        var recovery = new CraftingJobRecovery(lifecycle);
+        recovery.read(saved(), OptionFeature.DATA_ENERGISTICS_TRINITY);
+        lifecycle.ready(server);
+        var estimate = recovery.attach(server, JOB, ROOT.outputId(), ROOT.networkId(), true).orElseThrow();
+        estimate.complete(ROOT, 2);
+        assertEquals(3L, estimate.snapshot().orElseThrow().remainingAmounts().get(ROOT));
+        assertTrue(recovery.attach(server, JOB, ROOT.outputId(), ROOT.networkId(), true).isEmpty());
+        recovery.read(saved(), OptionFeature.DATA_ENERGISTICS_TRINITY);
+        lifecycle.disable(OptionFeature.DATA_ENERGISTICS_TRINITY);
+        assertTrue(recovery.attach(server, JOB, ROOT.outputId(), ROOT.networkId(), true).isEmpty());
     }
 
     @Test

@@ -15,8 +15,13 @@ import appeng.block.crafting.PatternProviderBlock;
 import appeng.block.crafting.PushDirection;
 import appeng.core.definitions.AEBlocks;
 import appeng.crafting.CraftingLink;
+import appeng.client.gui.me.common.MEStorageScreen;
+import appeng.client.gui.me.crafting.CraftingCPUScreen;
+import com.ctux.ae2craftingtime.testdriver.mixin.MEStorageScreenAccessor;
 import appeng.menu.me.crafting.CraftConfirmMenu;
 import com.ctux.ae2craftingtime.testdriver.mixin.CraftConfirmMenuAccessor;
+import com.ctux.ae2craftingtime.core.OptionFeature;
+import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityDataCoreBlockEntity;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityInformationExchangeDepotBlockEntity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu;
@@ -41,32 +46,41 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 /** Disposable real Trinity main, CPU, crafting child and furnace job. */
-final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrinityFixture.Placement> {
+class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrinityFixture.Placement> {
     private static final AEItemKey INPUT = AEItemKey.of(Items.SAND);
     private static final AEItemKey OUTPUT = AEItemKey.of(Items.GLASS);
     private static final Gson JSON = new Gson();
-    private Placement placement;
-    private TrinityDataCoreVirtualCpu worker;
-    private TrinityDataCoreBlockEntity submittedHost;
-    private IGrid submittedGrid;
-    private CraftingLink link;
-    private UUID jobId;
+    protected Placement placement;
+    protected TrinityDataCoreVirtualCpu worker;
+    protected TrinityDataCoreBlockEntity submittedHost;
+    protected IGrid submittedGrid;
+    protected CraftingLink link;
+    protected UUID jobId;
     private UUID activeJobId;
-    private long requested;
-    private long beforeInput;
-    private long beforeOutput;
-    private BigInteger lastWaiting = BigInteger.ZERO;
-    private BigInteger maxWaiting = BigInteger.ZERO;
-    private BigInteger waitingDecrement = BigInteger.ZERO;
-    private boolean sawAcceptedOutput;
+    protected long requested;
+    protected long beforeInput;
+    protected long beforeOutput;
+    protected BigInteger lastWaiting = BigInteger.ZERO;
+    protected BigInteger maxWaiting = BigInteger.ZERO;
+    protected BigInteger waitingDecrement = BigInteger.ZERO;
+    protected boolean sawAcceptedOutput;
     private boolean sawTerminal;
     private volatile boolean nativeDone;
+    private volatile boolean nativeActive;
+    private Integer statusWorkerSerial;
+    private Integer statusBeforeIdentity;
+    private long statusBeforeFrame = -1;
     private final SetupStageProgress setup = new SetupStageProgress();
+    private int planBadgeStage;
+    private long planBadgeFrame = -1;
+    private boolean planBadgeOriginal;
 
     @Override
     protected Placement place(ServerPlayer player, FixtureMarker marker) {
@@ -110,7 +124,7 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
 
     // Shipped main offsets are left [-13,13], up [-2,25], front [-24,7]; both
     // child layouts stay inside the checked bounds for every horizontal facing.
-    private static Set<BlockPos> rotatedUnion(BlockPos origin) {
+    protected static Set<BlockPos> rotatedUnion(BlockPos origin) {
         var positions = new HashSet<BlockPos>();
         for (var front : Direction.Plane.HORIZONTAL)
             for (int x = -13; x <= 13; x++)
@@ -182,9 +196,25 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
             throw new IllegalStateException("Trinity fixture provider is not the unique glass pattern source");
         if (!host.getCpuPartitions().stream().anyMatch(cpu -> cpu.number() == 0 && cpu.isActive()
                 && grid.getCraftingService().getCpus().contains(cpu))) return await("coordinator-published");
+        if (!finishVariant(player, grid, placement)) return await("variant-pattern");
         setup.observe("ready", System.nanoTime());
         return true;
     }
+
+    protected boolean finishVariant(ServerPlayer player, IGrid grid, Placement placement) { return true; }
+
+    protected AEItemKey inputKey() { return INPUT; }
+
+    protected AEItemKey outputKey() { return OUTPUT; }
+
+    protected void verifyVariant(IGrid grid, boolean complete) {}
+
+    protected boolean nativeCompletion(TrinityNativeCompletion completion, IGrid grid,
+            long inputDelta, long outputDelta) { return completion.complete(); }
+
+    protected Map<String, Long> nativeVariantAmounts(IGrid grid) { return Map.of(); }
+
+    protected boolean requiresImmediateWorkerCapture() { return false; }
 
     @Override
     protected String setupDetail() { return setup.stage(); }
@@ -212,41 +242,68 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
 
     @Override
     protected void startCraft(ServerPlayer player, Placement placement, CraftConfirmMenu menu) {
+        worker = null;
+        link = null;
+        jobId = null;
+        activeJobId = null;
+        expectedResumeJobId = null;
+        nativeActive = false;
+        nativeDone = false;
+        sawTerminal = false;
+        sawAcceptedOutput = false;
+        maxWaiting = BigInteger.ZERO;
+        lastWaiting = BigInteger.ZERO;
+        waitingDecrement = BigInteger.ZERO;
+        statusWorkerSerial = null;
+        statusBeforeIdentity = null;
+        statusBeforeFrame = -1;
         submittedHost = (TrinityDataCoreBlockEntity) player.serverLevel().getBlockEntity(placement.origin());
         var grid = Objects.requireNonNull(submittedHost.craftingExecutionRoute(),
                 "Trinity worker has no crafting route").serviceGrid();
         if (submittedHost.getCpuPartitions().stream().anyMatch(TrinityDataCoreVirtualCpu::isBusy))
             throw new IllegalStateException("Trinity fixture host already has a busy worker");
         var output = ((CraftConfirmMenuAccessor) menu).ae2craftingtime_test_driver$result().finalOutput();
-        if (!OUTPUT.equals(output.what()) || output.amount() <= 0)
+        if (!outputKey().equals(output.what()) || output.amount() <= 0)
             throw new IllegalStateException("Trinity fixture plan has unexpected final output: " + output);
         requested = output.amount();
         submittedGrid = grid;
-        beforeInput = grid.getStorageService().getInventory().getAvailableStacks().get(INPUT);
-        beforeOutput = grid.getStorageService().getInventory().getAvailableStacks().get(OUTPUT);
+        beforeInput = grid.getStorageService().getInventory().getAvailableStacks().get(inputKey());
+        beforeOutput = grid.getStorageService().getInventory().getAvailableStacks().get(outputKey());
         super.startCraft(player, placement, menu);
+        captureSubmittedWorker(submittedHost, grid);
+        if (requiresImmediateWorkerCapture() && worker == null)
+            throw new IllegalStateException("synchronous native Trinity submission has no capturable worker/job");
+    }
+
+    private void captureSubmittedWorker(TrinityDataCoreBlockEntity host, IGrid grid) {
+        if (worker != null) return;
+        worker = host.getCpuPartitions().stream()
+                .filter(cpu -> cpu.number() > 0 && cpu.isBusy()
+                        && grid.getCraftingService().getCpus().contains(cpu))
+                .findFirst().orElse(null);
+        if (worker == null) return;
+        link = jobLink(worker);
+        jobId = link.getCraftingID();
+        if (expectedResumeJobId != null && !expectedResumeJobId.equals(jobId))
+            throw new IllegalStateException("restored Trinity worker has a different native job UUID");
+        activeJobId = jobId;
     }
 
     @Override
-    String nativeEvidence(ServerPlayer player, IGrid grid) {
+    String nativeEvidence(ServerPlayer player, IGrid observedMenuGrid) {
         var host = (TrinityDataCoreBlockEntity) player.serverLevel().getBlockEntity(
                 placement.origin());
-        if (worker == null) {
-            worker = host.getCpuPartitions().stream()
-                    .filter(cpu -> cpu.number() > 0 && cpu.isBusy() && cpu.getJobStatus() != null
-                            && OUTPUT.equals(cpu.getJobStatus().crafting().what())
-                            && cpu.getJobStatus().crafting().amount() == requested
-                            && grid.getCraftingService().getCpus().contains(cpu))
-                    .findFirst().orElse(null);
-            if (worker != null) {
-                link = jobLink(worker);
-                jobId = link.getCraftingID();
-                activeJobId = jobId;
-            }
-        }
+        if (host == null || host.craftingExecutionRoute() == null)
+            throw new IllegalStateException("retained Trinity host lost its native crafting route");
+        var grid = host.craftingExecutionRoute().serviceGrid();
+        if (grid == null || grid != submittedGrid
+                || observedMenuGrid != null && observedMenuGrid != grid)
+            throw new IllegalStateException("retained Trinity job changed its native service grid");
+        captureSubmittedWorker(host, grid);
         if (worker == null) return null;
         if (worker.isBusy()) activeJobId = jobLink(worker).getCraftingID();
-        var waiting = worker.getWaitingFor(OUTPUT);
+        nativeActive = worker.isBusy();
+        var waiting = worker.getWaitingFor(outputKey());
         if (waiting.compareTo(maxWaiting) > 0) maxWaiting = waiting;
         if (lastWaiting.compareTo(waiting) > 0) {
             waitingDecrement = waitingDecrement.add(lastWaiting.subtract(waiting));
@@ -254,14 +311,15 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
         }
         lastWaiting = waiting;
         if (!worker.isBusy() && worker.getJobStatus() == null) sawTerminal = true;
-        long input = grid.getStorageService().getInventory().getAvailableStacks().get(INPUT);
-        long output = grid.getStorageService().getInventory().getAvailableStacks().get(OUTPUT);
+        long input = grid.getStorageService().getInventory().getAvailableStacks().get(inputKey());
+        long output = grid.getStorageService().getInventory().getAvailableStacks().get(outputKey());
         var completion = new TrinityNativeCompletion(jobId, activeJobId,
                 host == submittedHost, grid == submittedGrid && host.craftingExecutionRoute() != null
                         && host.craftingExecutionRoute().serviceGrid() == grid,
                 sawTerminal, link.isDone(), link.isStandalone(), link.isCanceled(), requested,
                 beforeInput - input, output - beforeOutput, maxWaiting, waitingDecrement);
-        nativeDone = completion.complete();
+        nativeDone = nativeCompletion(completion, grid, beforeInput - input, output - beforeOutput);
+        verifyVariant(grid, nativeDone);
         return JSON.toJson(new NativeObservation(jobId.toString(), activeJobId.toString(),
                 worker.number(), worker.getStableDispatchIdentity(), requested,
                 placement.origin().offset(-24, -25, -24).toShortString(),
@@ -272,13 +330,131 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
                 completion.sameHost(), completion.sameGrid(), sawTerminal,
                 link.isDone(), link.isStandalone(), link.isCanceled(), nativeDone,
                 beforeInput, input, beforeInput - input, beforeOutput, output,
-                output - beforeOutput));
+                output - beforeOutput, nativeVariantAmounts(grid)));
     }
 
     @Override
     boolean nativeCompleted() {
         return nativeDone;
     }
+
+    @Override boolean nativeActive() { return nativeActive; }
+
+    @Override boolean requiresNativeCompletion() { return true; }
+
+    @Override int expectedSampleCount(boolean freshJob) { return freshJob ? 2 : 1; }
+
+    @Override String nativeJobId() { return jobId == null ? null : jobId.toString(); }
+
+    @Override
+    boolean visibleCpuSelection(net.minecraft.client.Minecraft minecraft, String outputId,
+            long priorFrame, Consumer<String> screenshot) {
+        var snapshot = UiObservationStore.latest();
+        if (snapshot == null || snapshot.frame() == priorFrame || snapshot.text().stream().noneMatch(text ->
+                text.key().equals("native-trinity-cpu-selection") && text.rendered().contains("Trinity"))) return false;
+        screenshot.accept("trinity-selected-cpu-plan.png");
+        return true;
+    }
+
+    @Override
+    boolean observePlanPresentation(net.minecraft.client.Minecraft minecraft, long frame,
+            Consumer<String> screenshot) {
+        var features = ClientOptionsRuntime.current().features();
+        if (planBadgeStage == 0) {
+            planBadgeOriginal = features.enabled(OptionFeature.BADGE_BACKGROUND);
+            features.setEnabled(OptionFeature.BADGE_BACKGROUND, false);
+            planBadgeFrame = frame;
+            planBadgeStage = 1;
+            return false;
+        }
+        if (frame <= planBadgeFrame) return false;
+        if (planBadgeStage == 1) {
+            screenshot.accept("trinity-plan-badge-off.png");
+            features.setEnabled(OptionFeature.BADGE_BACKGROUND, true);
+            planBadgeFrame = frame;
+            planBadgeStage = 2;
+            return false;
+        }
+        if (planBadgeStage == 2) {
+            screenshot.accept("trinity-plan-badge-on.png");
+            cleanupClient();
+            planBadgeStage = 3;
+        }
+        return true;
+    }
+
+    @Override void cleanupClient() {
+        if (planBadgeStage > 0)
+            ClientOptionsRuntime.current().features().setEnabled(
+                    OptionFeature.BADGE_BACKGROUND, planBadgeOriginal);
+    }
+
+    @Override
+    boolean observeNativeStatus(net.minecraft.client.Minecraft minecraft, String outputId,
+            boolean completed, long priorFrame, Consumer<String> screenshot) {
+        if (minecraft.screen instanceof MEStorageScreen<?> storage) {
+            var button = ((MEStorageScreenAccessor) storage).ae2craftingtime_test_driver$statusButton();
+            DriverPlatform.click(minecraft, button.getX() + 4, button.getY() + 4);
+            return false;
+        }
+        if (!(minecraft.screen instanceof CraftingCPUScreen<?>)) return false;
+        var snapshot = UiObservationStore.latest();
+        if (snapshot == null || snapshot.frame() <= priorFrame) return false;
+        if (completed) {
+            if (statusWorkerSerial == null || snapshot.cpuCards().stream()
+                    .anyMatch(value -> value.serial() == statusWorkerSerial)) return false;
+            var coordinator = snapshot.cpuCards().stream().filter(value -> value.serial() == 0)
+                    .findFirst().orElse(null);
+            if (coordinator == null || coordinator.jobId() != null) return false;
+            if (!coordinator.selected()) {
+                DriverPlatform.click(minecraft, coordinator.bounds().centerX(), coordinator.bounds().centerY());
+                return false;
+            }
+            var status = snapshot.status();
+            if (status != null && (!"native".equals(status.provenance())
+                    || status.selectedJobUuid() != null || status.selectedCpuSerial() == null
+                    || status.selectedCpuSerial() != 0 || status.identity() == statusBeforeIdentity)) return false;
+            screenshot.accept("trinity-completed-status.png");
+        } else {
+            var card = snapshot.cpuCards().stream()
+                    .filter(value -> outputId.equals(value.jobId()) && value.amount() > 0)
+                    .findFirst().orElse(null);
+            if (card == null) return false;
+            if (statusBeforeIdentity == null && card.selected()) {
+                var coordinator = snapshot.cpuCards().stream().filter(value -> value.serial() == 0)
+                        .findFirst().orElse(null);
+                if (coordinator == null) return false;
+                DriverPlatform.click(minecraft, coordinator.bounds().centerX(), coordinator.bounds().centerY());
+                return false;
+            }
+            if (!card.selected()) {
+                var prior = snapshot.status();
+                statusBeforeIdentity = prior == null ? null : prior.identity();
+                statusBeforeFrame = snapshot.frame();
+                DriverPlatform.click(minecraft, card.bounds().centerX(), card.bounds().centerY());
+                return false;
+            }
+            var status = snapshot.status();
+            if (status == null || !"native".equals(status.provenance())
+                    || statusBeforeIdentity == null || status.identity() == statusBeforeIdentity
+                    || snapshot.frame() <= statusBeforeFrame
+                    || !Objects.equals(status.selectedCpuSerial(), card.serial())
+                    || !outputId.equals(status.selectedOutputId())
+                    || !Objects.equals(nativeJobId(), status.selectedJobUuid())) return false;
+            if (requiresLearnedActiveStatus() && (status.startCount() <= 0 || status.remainingCount() <= 0
+                    || snapshot.rows().stream().filter(row -> outputId.equals(row.outputId()))
+                            .filter(row -> row.activeAmount() > 0 || row.pendingAmount() > 0)
+                            .flatMap(row -> row.description().stream())
+                            .noneMatch(text -> text.key().equals("text.ae2craftingtime.ttc")
+                                    && !text.arguments().contains("text.ae2craftingtime.collecting_data")))) return false;
+            statusWorkerSerial = card.serial();
+            screenshot.accept("trinity-active-status.png");
+        }
+        minecraft.setScreen(null);
+        return true;
+    }
+
+    protected boolean requiresLearnedActiveStatus() { return false; }
 
     @Override
     String confirmScreenName() {
@@ -293,7 +469,9 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
     @Override
     boolean requiresPlanRows() { return false; }
 
-    private static CraftingLink jobLink(TrinityDataCoreVirtualCpu worker) {
+    protected UUID expectedResumeJobId;
+
+    protected static CraftingLink jobLink(TrinityDataCoreVirtualCpu worker) {
         try {
             var logicField = worker.getClass().getDeclaredField("logic");
             logicField.setAccessible(true);
@@ -311,7 +489,7 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
 
     @Override
     protected String outputId(Placement placement, FixtureMarker marker) {
-        return "minecraft:glass";
+        return outputKey().getId().toString();
     }
 
     @Override
@@ -331,7 +509,8 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
             boolean sameHost, boolean sameGrid, boolean terminal,
             boolean linkDone, boolean linkStandalone, boolean linkCanceled, boolean complete,
             long inputBefore, long inputNow, long dispatchedInput,
-            long outputBefore, long outputNow, long networkOutputDelta) {}
+            long outputBefore, long outputNow, long networkOutputDelta,
+            Map<String, Long> variantAmounts) {}
 
     static final class Placement {
         private final BlockPos origin;

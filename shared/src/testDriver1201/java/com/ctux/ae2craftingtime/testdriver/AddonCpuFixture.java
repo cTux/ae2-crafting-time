@@ -9,6 +9,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.server.level.ServerPlayer;
 
 import java.util.Map;
+import java.nio.file.Path;
+import java.util.function.Consumer;
 import java.util.concurrent.CompletableFuture;
 
 abstract class AddonCpuFixture<P> {
@@ -18,6 +20,12 @@ abstract class AddonCpuFixture<P> {
             Map.entry("advancedae-cpu", "com.ctux.ae2craftingtime.testdriver.AdvancedAeFixture"),
             Map.entry("data-energistics-cpu", "com.ctux.ae2craftingtime.testdriver.DataEnergisticsFixture"),
             Map.entry("data-energistics-trinity-cpu", "com.ctux.ae2craftingtime.testdriver.DataEnergisticsTrinityFixture"),
+            Map.entry("data-energistics-trinity-counted-cpu", "com.ctux.ae2craftingtime.testdriver.DataEnergisticsTrinityCountedFixture"),
+            Map.entry("data-energistics-trinity-cancel-cpu", "com.ctux.ae2craftingtime.testdriver.DataEnergisticsTrinityCancelFixture"),
+            Map.entry("data-energistics-trinity-global-option-cpu", "com.ctux.ae2craftingtime.testdriver.DataEnergisticsTrinityGlobalOptionFixture"),
+            Map.entry("data-energistics-trinity-provider-cpu", "com.ctux.ae2craftingtime.testdriver.DataEnergisticsTrinityProviderFixture"),
+            Map.entry("data-energistics-trinity-admission-cpu", "com.ctux.ae2craftingtime.testdriver.DataEnergisticsTrinityAdmissionFixture"),
+            Map.entry("data-energistics-trinity-reload-cpu", "com.ctux.ae2craftingtime.testdriver.DataEnergisticsTrinityReloadFixture"),
             Map.entry("extendedae-cpu", "com.ctux.ae2craftingtime.testdriver.ExtendedAeFixture"),
             Map.entry("extendedae-plus-cpu", "com.ctux.ae2craftingtime.testdriver.ExtendedAePlusFixture"),
             Map.entry("bmaddon-cpu", "com.ctux.ae2craftingtime.testdriver.BmAddonFixture"),
@@ -129,6 +137,9 @@ abstract class AddonCpuFixture<P> {
 
     protected void cleanup(ServerPlayer player, P placement) {}
 
+    /** Restore client-only presentation state on the render thread. */
+    void cleanupClient() {}
+
     protected void startCraft(ServerPlayer player, P placement, CraftConfirmMenu menu) {
         var selected = cpu(player, placement, com.ctux.ae2craftingtime.mc1201.StatsRequestContext.current(player).grid());
         if (selected == null) throw new IllegalStateException("Selected fixture CPU is no longer available");
@@ -144,6 +155,14 @@ abstract class AddonCpuFixture<P> {
         return snapshot.finishes() > 0;
     }
 
+    boolean requiresNativeCompletion() { return false; }
+
+    final boolean readyForPass(DispatchObservation.Snapshot snapshot) {
+        return dispatchReady(snapshot) && (!requiresNativeCompletion() || nativeCompleted());
+    }
+
+    int expectedSampleCount(boolean freshJob) { return -1; }
+
     void verifyDispatch(DispatchObservation.Snapshot snapshot) {
         if (!snapshot.completedExactlyOnce()) throw new IllegalStateException("fixture dispatch/output mismatch: " + snapshot);
     }
@@ -155,6 +174,42 @@ abstract class AddonCpuFixture<P> {
     boolean nativeCompleted() {
         return false;
     }
+
+    boolean nativeActive() { return false; }
+
+    boolean visibleCpuSelection(Minecraft minecraft, String outputId, long priorFrame,
+            Consumer<String> screenshot) { return true; }
+
+    boolean observeNativeStatus(Minecraft minecraft, String outputId, boolean completed,
+            long priorFrame, Consumer<String> screenshot) { return true; }
+
+    boolean supportsRestart() { return false; }
+
+    int restartSampleBaseline() { return 0; }
+
+    boolean restoredGraphAdvanced() { return false; }
+
+    boolean supportsCancelFollowUp() { return false; }
+
+    boolean cancelForFreshJob(ServerPlayer player, String networkId, String outputId) { return false; }
+
+    boolean sameWorkerNewJob() { return false; }
+
+    boolean optionChecked() { return false; }
+
+    boolean observePlanPresentation(Minecraft minecraft, long frame, Consumer<String> screenshot) { return true; }
+
+    boolean supportsProviderBlock() { return false; }
+
+    boolean releaseBlockedProvider(ServerPlayer player, String networkId, String outputId) { return false; }
+
+    boolean admissionRejected() { return false; }
+
+    boolean writeRestartCheckpoint(Path path, DriverOptions options, String networkId) { return false; }
+
+    String resumeRestartCheckpoint(ServerPlayer player, DriverOptions options) { return null; }
+
+    String nativeJobId() { return null; }
 
     String confirmScreenName() { return CraftConfirmScreen.class.getName(); }
 

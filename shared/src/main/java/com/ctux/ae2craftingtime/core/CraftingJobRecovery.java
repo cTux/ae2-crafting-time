@@ -86,6 +86,12 @@ public final class CraftingJobRecovery {
         private int generation;
         private final EnumMap<OptionFeature, Integer> integrationGenerations = new EnumMap<>(OptionFeature.class);
 
+        public record Stamp(int generation, int integrationGeneration) {}
+
+        public Stamp stamp(OptionFeature integration) {
+            return new Stamp(generation, integrationGeneration(integration));
+        }
+
         public Object server() { return server; }
 
         public void begin(Object server) {

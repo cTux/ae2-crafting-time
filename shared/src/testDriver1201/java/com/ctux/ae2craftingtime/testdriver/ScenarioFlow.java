@@ -6,14 +6,17 @@ public final class ScenarioFlow {
             return current != ScenarioState.FAILED && current != ScenarioState.QUIT_REQUESTED;
         }
         return switch (current) {
-            case STARTING -> next == ScenarioState.WORLD_READY;
+            case STARTING -> next == ScenarioState.WORLD_READY
+                    || next == ScenarioState.ADDON_CRAFT_SUBMITTED; // matching saved addon job
             case WORLD_READY -> next == ScenarioState.TERMINAL_OPEN;
             case TERMINAL_OPEN -> next == ScenarioState.PLAN_OPEN || next == ScenarioState.RESULT_WRITTEN;
             case PLAN_OPEN -> next == ScenarioState.PLAN_STABLE;
             case PLAN_STABLE -> next == ScenarioState.BASE_CHECKED || next == ScenarioState.ADDON_CPU_SELECTED
                     || next == ScenarioState.RESULT_WRITTEN;
             case ADDON_CPU_SELECTED -> next == ScenarioState.ADDON_CRAFT_SUBMITTED;
-            case ADDON_CRAFT_SUBMITTED -> next == ScenarioState.ADDON_SAMPLE_RECORDED;
+            case ADDON_CRAFT_SUBMITTED -> next == ScenarioState.ADDON_SAMPLE_RECORDED
+                    || next == ScenarioState.WORLD_READY // cancelled/completed job before a fresh attempt
+                    || next == ScenarioState.QUIT_REQUESTED; // saved live-job checkpoint
             case ADDON_SAMPLE_RECORDED -> next == ScenarioState.ADDON_PLAN_OPEN;
             case ADDON_PLAN_OPEN -> next == ScenarioState.RESULT_WRITTEN;
             case BASE_CHECKED -> next == ScenarioState.SORTS_CHECKED;

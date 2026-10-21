@@ -9,8 +9,11 @@ public final class ProfileAmounts {
     }
 
     public static long normalize(String outputId, int amountPerUnit, long amount) {
-        return unit(outputId, amountPerUnit) == ProfileUnit.MILLIBUCKET
-                ? amount * 1000L / amountPerUnit : amount;
+        if (unit(outputId, amountPerUnit) != ProfileUnit.MILLIBUCKET) return amount;
+        // Split before multiplying: a large fluid can have a representable normalized amount.
+        long whole = Math.multiplyExact(amount / amountPerUnit, 1000L);
+        long fraction = (amount % amountPerUnit) * 1000L / amountPerUnit;
+        return Math.addExact(whole, fraction);
     }
 
     public static PersistedOutputSamples migrate(PersistedOutputSamples output) {

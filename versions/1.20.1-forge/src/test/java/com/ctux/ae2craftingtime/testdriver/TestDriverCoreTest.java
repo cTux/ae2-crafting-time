@@ -48,6 +48,174 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
     @Test
+    void everyTrinityScenarioHasAnExplicitFixtureAndRequiredNativeChecks() {
+        for (var scenario : List.of("data-energistics-trinity-cpu", "data-energistics-trinity-counted-cpu",
+                "data-energistics-trinity-cancel-cpu", "data-energistics-trinity-global-option-cpu",
+                "data-energistics-trinity-provider-cpu", "data-energistics-trinity-admission-cpu",
+                "data-energistics-trinity-reload-cpu")) {
+            assertTrue(AddonCpuFixture.supports(scenario), scenario);
+            var checks = DriverResult.requiredChecks(scenario, false);
+            assertTrue(checks.contains("job-accepted"), scenario);
+            assertTrue(checks.contains("profile-sample"), scenario);
+            assertTrue(checks.contains("ttc-after-sample"), scenario);
+        }
+        assertTrue(DriverResult.requiredChecks("data-energistics-trinity-counted-cpu", false)
+                .contains("returned-amount"));
+        assertTrue(DriverResult.requiredChecks("data-energistics-trinity-reload-cpu", false)
+                .contains("restored-graph-advanced"));
+        assertFalse(AddonCpuFixture.supports("data-energistics-trinity-unknown-cpu"));
+    }
+
+    @Test
+    void addonFlowAllowsResumeCheckpointAndFreshJobButRejectsShortcuts() {
+        for (var path : List.of(
+                List.of(ScenarioState.STARTING, ScenarioState.ADDON_CRAFT_SUBMITTED,
+                        ScenarioState.QUIT_REQUESTED),
+                List.of(ScenarioState.STARTING, ScenarioState.WORLD_READY, ScenarioState.TERMINAL_OPEN,
+                        ScenarioState.PLAN_OPEN, ScenarioState.PLAN_STABLE, ScenarioState.ADDON_CPU_SELECTED,
+                        ScenarioState.ADDON_CRAFT_SUBMITTED, ScenarioState.WORLD_READY,
+                        ScenarioState.TERMINAL_OPEN, ScenarioState.PLAN_OPEN, ScenarioState.PLAN_STABLE,
+                        ScenarioState.ADDON_CPU_SELECTED, ScenarioState.ADDON_CRAFT_SUBMITTED,
+                        ScenarioState.ADDON_SAMPLE_RECORDED, ScenarioState.ADDON_PLAN_OPEN,
+                        ScenarioState.RESULT_WRITTEN, ScenarioState.QUIT_REQUESTED))) {
+            for (int i = 1; i < path.size(); i++)
+                assertTrue(ScenarioFlow.allows(path.get(i - 1), path.get(i)),
+                        path.get(i - 1) + " -> " + path.get(i));
+        }
+        assertFalse(ScenarioFlow.allows(ScenarioState.STARTING, ScenarioState.ADDON_PLAN_OPEN));
+        assertFalse(ScenarioFlow.allows(ScenarioState.ADDON_CRAFT_SUBMITTED, ScenarioState.RESULT_WRITTEN));
+        assertFalse(ScenarioFlow.allows(ScenarioState.QUIT_REQUESTED, ScenarioState.WORLD_READY));
+    }
+
+    @Test
+    void freshAddonTransitionClearsEveryFutureAndRearmsSelection() throws Exception {
+        var scenario = new CraftPlanScenario(null,
+                new DriverOptions("craft-plan", "compatible", "test", Path.of("."), false), "driver");
+        var state = CraftPlanScenario.class.getDeclaredField("state");
+        state.setAccessible(true);
+        state.set(scenario, ScenarioState.ADDON_CRAFT_SUBMITTED);
+        for (var name : List.of("cpuCheck", "nativePlanCheck", "submitCheck", "sampleCheck",
+                "restartCheck", "resumeCheck", "cancelCheck", "providerCheck")) {
+            var field = CraftPlanScenario.class.getDeclaredField(name);
+            field.setAccessible(true);
+            field.set(scenario, CompletableFuture.completedFuture(null));
+        }
+        var advance = CraftPlanScenario.class.getDeclaredMethod("advance", ScenarioState.class);
+        advance.setAccessible(true);
+        advance.invoke(scenario, ScenarioState.WORLD_READY);
+        assertEquals(ScenarioState.WORLD_READY, state.get(scenario));
+        for (var name : List.of("cpuCheck", "nativePlanCheck", "submitCheck", "sampleCheck",
+                "restartCheck", "resumeCheck", "cancelCheck", "providerCheck")) {
+            var field = CraftPlanScenario.class.getDeclaredField(name);
+            field.setAccessible(true);
+            assertNull(field.get(scenario), name + " would reuse the previous job's server result");
+        }
+        var checks = new LinkedHashMap<String, Boolean>();
+        checks.put("cpu-selected", true);
+        checks.put("cpu-selected-visible", true);
+        checks.put("profile-sample", true);
+        CraftPlanScenario.resetAddonSelectionChecks(checks);
+        assertFalse(checks.get("cpu-selected"));
+        assertFalse(checks.get("cpu-selected-visible"));
+        assertTrue(checks.get("profile-sample"));
+
+        var node = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/CraftPlanScenario.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, 0);
+        }
+        assertTrue(node.methods.stream().anyMatch(method -> {
+            var calls = java.util.Arrays.stream(method.instructions.toArray())
+                    .filter(MethodInsnNode.class::isInstance).map(MethodInsnNode.class::cast).toList();
+            int watch = java.util.stream.IntStream.range(0, calls.size())
+                    .filter(i -> calls.get(i).owner.equals("com/ctux/ae2craftingtime/testdriver/DispatchObservation")
+                            && calls.get(i).name.equals("watch")).findFirst().orElse(-1);
+            int start = java.util.stream.IntStream.range(0, calls.size())
+                    .filter(i -> calls.get(i).owner.equals("com/ctux/ae2craftingtime/testdriver/AddonCpuFixture")
+                            && calls.get(i).name.equals("startCraft")).findFirst().orElse(-1);
+            return watch >= 0 && start > watch;
+        }), "each submission must rearm the dispatch watcher before native startJob");
+    }
+
+    @Test
+    void addonPassRequiresNativeTerminalWhenFixtureOptsInAndRunnerUsesTheGate() throws Exception {
+        var terminal = new AtomicInteger();
+        class Fixture extends AddonCpuFixture<Object> {
+            private final boolean nativeRequired;
+            Fixture(boolean nativeRequired) { this.nativeRequired = nativeRequired; }
+            @Override protected Object place(net.minecraft.server.level.ServerPlayer player, FixtureMarker marker) { return null; }
+            @Override protected boolean finish(net.minecraft.server.level.ServerPlayer player, Object placement) { return true; }
+            @Override protected appeng.api.networking.crafting.ICraftingCPU cpu(
+                    net.minecraft.server.level.ServerPlayer player, Object placement,
+                    appeng.api.networking.IGrid grid) { return null; }
+            @Override boolean dispatchReady(DispatchObservation.Snapshot snapshot) {
+                return snapshot.completedExactlyOnce();
+            }
+            @Override boolean requiresNativeCompletion() { return nativeRequired; }
+            @Override boolean nativeCompleted() { return terminal.get() == 1; }
+        }
+        var successfulProfiler = new DispatchObservation.Snapshot(3, 3, 3, 1, 1,
+                true, 0, "native-worker", 1);
+        var incompleteProfiler = new DispatchObservation.Snapshot(3, 3, 2, 1, 1,
+                true, 0, "native-worker", 1);
+        var trinity = new Fixture(true);
+        assertFalse(trinity.readyForPass(successfulProfiler),
+                "a completed profiler callback cannot stand in for native job terminal evidence");
+        assertTrue(new Fixture(false).readyForPass(successfulProfiler),
+                "existing addon fixtures keep their dispatch-based gate");
+        terminal.set(1);
+        assertTrue(trinity.readyForPass(successfulProfiler));
+        assertFalse(trinity.readyForPass(incompleteProfiler));
+
+        var node = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/CraftPlanScenario.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, 0);
+        }
+        var await = node.methods.stream().filter(method -> method.name.equals("awaitAddonSample"))
+                .findFirst().orElseThrow();
+        assertTrue(java.util.Arrays.stream(await.instructions.toArray())
+                .filter(MethodInsnNode.class::isInstance).map(MethodInsnNode.class::cast)
+                .anyMatch(call -> call.owner.equals("com/ctux/ae2craftingtime/testdriver/AddonCpuFixture")
+                        && call.name.equals("readyForPass")),
+                "the real profiler-to-PASS path must consume the native terminal gate");
+    }
+
+    @Test
+    void instantaneousCountedCraftNeedsCapturedNativeTerminalAndExactBookConservation() {
+        var job = UUID.randomUUID();
+        var other = UUID.randomUUID();
+        assertTrue(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                false, true, false, 3, 3, 3, 1, 1).complete());
+        assertTrue(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                true, false, false, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, other, 1, true, true, true,
+                false, true, false, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 0, true, true, true,
+                false, true, false, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, false, true, true,
+                false, true, false, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, false, true,
+                false, true, false, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, true, false,
+                false, true, false, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                false, false, false, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                false, true, true, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                false, true, false, 2, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                false, true, false, 3, 2, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                false, true, false, 3, 3, 2, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                false, true, false, 3, 3, 3, 1, 0).complete());
+    }
+
+    @Test
     void nativePlanRequiresExactRenderedScreenAndExecutableServerResult() throws Exception {
         var trinity = AddonCpuFixture.TRINITY_CONFIRM_SCREEN;
         var ae2 = "appeng.client.gui.me.crafting.CraftConfirmScreen";
@@ -1393,7 +1561,7 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("omnisequence-cpu"));
         assertTrue(AddonCpuFixture.supports("lightningtech-cpu"));
         assertTrue(AddonCpuFixture.supports("data-energistics-trinity-cpu"));
-        assertEquals(DriverResult.requiredChecks("data-energistics-cpu"),
+        assertEquals(DriverResult.TRINITY_CPU_CHECKS,
                 DriverResult.requiredChecks("data-energistics-trinity-cpu"));
         assertFalse(AddonCpuFixture.supports("missing-cpu"));
         assertNull(AddonCpuFixture.create("craft-plan"));

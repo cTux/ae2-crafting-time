@@ -2,7 +2,8 @@
   "schema": 1,
   "groups": {
     "standard-ae2": ["standard-plan-controls", "badge-background", "recurrent-plan", "stored-variant-plan", "standard-status-controls", "waiting-status", "running-status", "delayed-status", "craft-lifecycle", "cpu-list-total-ttc", "compact-hover-numbers"],
-    "provider-dispatch-statuses": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"]
+    "provider-dispatch-statuses": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"],
+    "data-energistics-trinity": ["data-energistics-cpu", "data-energistics-trinity-cpu", "data-energistics-trinity-counted-cpu", "data-energistics-trinity-cancel-cpu", "data-energistics-trinity-global-option-cpu", "data-energistics-trinity-provider-cpu", "data-energistics-trinity-admission-cpu"]
   },
   "focusedCases": {
     "1.20.1-forge": ["delayed-resource-icons", "appmek-resource-icons", "chance-output-status", "crafting-suspension"],
@@ -115,7 +116,7 @@
     "advanced_ae": ["advancedae-cpu"],
     "ae2lt": ["lightningtech-cpu"],
     "merequester": ["merequester-screen"],
-    "data_energistics": ["data-energistics-cpu", "data-energistics-trinity-cpu"],
+      "data_energistics": ["data-energistics-cpu", "data-energistics-trinity-cpu", "data-energistics-trinity-counted-cpu", "data-energistics-trinity-cancel-cpu", "data-energistics-trinity-global-option-cpu", "data-energistics-trinity-provider-cpu", "data-energistics-trinity-admission-cpu"],
     "molecularmanipulator": ["omnisequence-cpu"]
   },
   "adapterBehaviorCases": {

@@ -1,6 +1,6 @@
 # Data Energistics Trinity CPU profiling
 
-Status: ready-to-implement
+Status: implementation in progress; native missing-profile baseline confirmed, final qualification pending
 
 Scope: Trinity CPU profiling with Data Energistics 3.3.5 on NeoForge 1.21.1.
 
@@ -11,10 +11,14 @@ Planning: [Technical design](technical-design.md) and [implementation plan](impl
 ## What needs to change
 
 Trinity runs crafting jobs through its own CPU logic. Crafting Time's native AE2
-CPU hooks cannot observe that execution. This is a verified source-level gap;
-there is no retained runtime reproduction yet. First build a disposable, real
-Trinity fixture and demonstrate the missing profile sample. Add production hooks
-only after that checkpoint confirms the gap.
+CPU hooks cannot observe that execution. The disposable real Trinity fixture
+confirmed the gap on implementation PR #748 at commit
+`bc8a8d4884c86a0e36712d23f67ba9f7851ed759`: a nonzero native worker
+completed a sand-to-glass craft with accepted waiting decrement and network
+inventory change, while the server recorded no new profiling sample. The
+retained evidence is under `build/issue-740/baseline-20261021-bc8a8d48/`.
+Production adaptation is in progress; the required post-adapter runtime cases
+and visual review have not passed yet.
 
 [#518](https://github.com/cTux/ae2-crafting-time/issues/518) qualified a native AE2
 CPU with an Adaptive Pattern Provider. Its [qualified boundary](../ae2-addon-integration/data-energistics.md)
@@ -28,7 +32,7 @@ machine, provider mode, custom key type, or addon combination.
 | TR-01 | A disposable fixture forms the real Trinity main and CPU structures, publishes their CPUs on the fixture network, selects Trinity, and completes a real craft. Before adapter implementation, retain independent dispatch, accepted-output and completion evidence alongside the missing new server sample. A fake host, direct profiler call, or ordinary CPU is not this baseline. |
 | TR-02 | Use the actual executing worker `ICraftingCPU` as the profiler scope. Preserve `networkId + outputId`, normalized item/fluid amounts, job identity and worker isolation. Coordinator submission must not create a second sample or job estimate. A completed supported craft creates exactly the samples justified by its accepted outputs and learns TTC for a reopened Plan and active worker Status. |
 | TR-03 | Account committed logical quantities, including counted batches and partial returns. Preparation, rejected dispatch, simulated insertion, duplicate callbacks and returned reusable tools must not create output samples. Include reusable registration, rollback, completed outputs and cancelled suffixes in the accounting contract. |
-| TR-04 | Finish or cancel only when the upstream job actually terminates. Clear unfinished accounting on cancellation, failed submission, worker replacement and invalid recovery. A fresh job on the same worker must not inherit pending quantities or timings. Reload must preserve valid learned history and recover only a matching job/network/output estimate through the existing recovery lifecycle; it must not manufacture a sample from unknown pre-reload timing. |
+| TR-04 | Finish or cancel only when the upstream job actually terminates. Clear unfinished accounting on cancellation, failed submission, worker replacement and invalid recovery. A fresh job in the same logical worker slot (with Trinity's new native worker object and job UUID) must not inherit pending quantities or timings. Reload must preserve valid learned history and recover only a matching job/network/output estimate through the existing recovery lifecycle; it must not manufacture a sample from unknown pre-reload timing. |
 | TR-05 | Quantity and capacity conversions must be checked. Representable counted and reusable quantities work normally. If a quantity cannot fit the existing profiler representation, suppress that job's live profiling/estimate, clear its pending accounting and emit one diagnostic; continue the native craft unchanged. Never truncate, saturate into a misleading sample, or loop once per enormous logical count. CPU storage and provider admission capacity are not measured parallel slots. |
 | TR-06 | Select the optional adapter by a checked API contract only on NeoForge 1.21.1. Addon-absent and incompatible-contract cases skip it safely with existing diagnostics. Keep Data Energistics optional, its minimum at 3.3.5 without a new upper cap, and other targets unchanged. Production JARs contain no fixture code or bundled addon classes. |
 | TR-07 | Add a server integration switch for Trinity profiling, default On like the existing CPU integrations. Global Profiling and this switch both apply to worker samples, live estimates and recovery. Turning it off clears live tracking; turning it on must not resume stale pending work. Preserve already learned history. Update English/Ukrainian option text, GuideME and wiki documentation together. |

@@ -16,6 +16,8 @@ public record RowStatsJob(long cpuContext, UUID jobId) {
     public static UUID readJobId(Object cpu) {
         if (cpu == null) return NO_JOB;
         try {
+            if (cpu.getClass().getName().equals("com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu"))
+                return readTrinityJobId(cpu);
             var logic = Objects.requireNonNull(IntegrationRead.field(cpu, "craftingLogic", Object.class));
             if (!Boolean.TRUE.equals(IntegrationRead.invoke(logic, "hasJob", Boolean.class))) return NO_JOB;
             var link = IntegrationRead.invoke(logic, "getLastLink", Object.class);
@@ -24,6 +26,14 @@ public record RowStatsJob(long cpuContext, UUID jobId) {
             // Fail closed if an addon no longer exposes its crafting link.
             return UNAVAILABLE_JOB;
         }
+    }
+
+    static UUID readTrinityJobId(Object cpu) {
+        var logic = Objects.requireNonNull(IntegrationRead.field(cpu, "logic", Object.class));
+        var job = IntegrationRead.field(logic, "job", Object.class);
+        if (job == null) return NO_JOB;
+        var link = Objects.requireNonNull(IntegrationRead.field(job, "link", Object.class));
+        return Objects.requireNonNull(IntegrationRead.invoke(link, "getCraftingID", UUID.class));
     }
 
     public UUID forContext(long activeCpuContext) {

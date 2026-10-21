@@ -89,10 +89,16 @@ public final class ProfilerBridge {
         if (type.startsWith("net.pedroksl.advanced_ae.")) return OptionFeature.ADVANCED_AE;
         if (type.startsWith("cn.dancingsnow.neoecoae.")) return OptionFeature.NEO_ECO;
         if (type.startsWith("com.moakiee.ae2lt.")) return OptionFeature.AE2_LIGHTNING_TECH;
+        if (type.startsWith("com.fish_dan_.data_energistics.common.crafting.trinity."))
+            return OptionFeature.DATA_ENERGISTICS_TRINITY;
         return null;
     }
 
     public static void disabled(OptionFeature feature) { RECOVERY.disable(feature); }
+
+    public static CraftingJobRecovery.Lifecycle.Stamp recoveryStamp(Object scope) {
+        return RECOVERY.stamp(integration(scope));
+    }
 
     public static void observeProviders(String networkId, Object scope, IPatternDetails pattern,
             boolean hasProvider) {
@@ -233,6 +239,24 @@ public final class ProfilerBridge {
 
     public static void complete(String networkId, AEKey what, long amount, long tick) {
         complete(networkId, ProfilerBridge.class, what, amount, tick);
+    }
+
+    public static void withdraw(String networkId, Object scope, AEKey what, long amount) {
+        if (what != null && amount > 0 && isEnabled() && ServerOptionsRuntime.scopeEnabled(scope))
+            PROFILER.withdraw(key(networkId, what), scope, normalizeAmount(what, amount));
+    }
+
+    /** Advances a restored graph without fabricating a dispatch timestamp or timing sample. */
+    public static void completeRestoredEstimate(String networkId, Object scope, AEKey what, long amount) {
+        if (what != null && amount > 0 && isEnabled() && ServerOptionsRuntime.scopeEnabled(scope))
+            PROFILER.jobEstimate(scope).ifPresent(estimate ->
+                    estimate.complete(key(networkId, what), normalizeAmount(what, amount)));
+    }
+
+    public static void discardUnsupportedJob(Object scope) {
+        PROFILER.clearPending(scope);
+        ProviderStartTracker.clear(scope);
+        CHANCE.clear(scope);
     }
 
     public static void complete(String networkId, Object scope, AEKey what, long amount, long tick) {
@@ -724,7 +748,10 @@ public final class ProfilerBridge {
         PROFILER.configure(config);
         ACCURACY.configure(config.maxSamples());
         isEnabled();
-        PROFILER.removeJobEstimates(scope -> !ServerOptionsRuntime.scopeEnabled(scope));
+        for (var scope : PROFILER.clearDisabledScopes(scope -> !ServerOptionsRuntime.scopeEnabled(scope))) {
+            ProviderStartTracker.clear(scope);
+            CHANCE.clear(scope);
+        }
     }
 
     private static String displayNameOf(AEKey key) {

@@ -12,8 +12,10 @@ final class IntegrationPlatform {
     }
 
     static String version(String modId) {
+        if (modId.equals("data_energistics_trinity_ui")) modId = "data_energistics";
+        var lookup = modId;
         return FMLLoader.getLoadingModList().getMods().stream()
-                .filter(mod -> mod.getModId().equals(modId))
+                .filter(mod -> mod.getModId().equals(lookup))
                 .map(mod -> mod.getVersion().toString()).findFirst().orElse(null);
     }
 }

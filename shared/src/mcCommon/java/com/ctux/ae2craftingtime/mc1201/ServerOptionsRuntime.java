@@ -42,6 +42,8 @@ public final class ServerOptionsRuntime {
         if (type.startsWith("net.pedroksl.advanced_ae.")) return enabled(OptionFeature.ADVANCED_AE);
         if (type.startsWith("cn.dancingsnow.neoecoae.")) return enabled(OptionFeature.NEO_ECO);
         if (type.startsWith("com.moakiee.ae2lt.")) return enabled(OptionFeature.AE2_LIGHTNING_TECH);
+        if (type.startsWith("com.fish_dan_.data_energistics.common.crafting.trinity."))
+            return enabled(OptionFeature.DATA_ENERGISTICS_TRINITY);
         return true;
     }
 
@@ -69,7 +71,8 @@ public final class ServerOptionsRuntime {
             }
             ServerConfigFile.save(file, update.config());
             for (var feature : new OptionFeature[] { OptionFeature.PROFILING, OptionFeature.ADVANCED_AE,
-                    OptionFeature.NEO_ECO, OptionFeature.AE2_LIGHTNING_TECH }) {
+                    OptionFeature.NEO_ECO, OptionFeature.AE2_LIGHTNING_TECH,
+                    OptionFeature.DATA_ENERGISTICS_TRINITY }) {
                 if (current.features().enabled(feature) && !update.config().features().enabled(feature))
                     ProfilerBridge.disabled(feature);
             }

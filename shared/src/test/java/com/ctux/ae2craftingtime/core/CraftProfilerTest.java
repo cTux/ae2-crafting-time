@@ -16,6 +16,74 @@ import org.junit.jupiter.api.Test;
 
 class CraftProfilerTest {
     @Test
+    void withdrawalRetractsOnlyUnfinishedNewestWork() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("test:trinity-glass");
+        var first = new Object();
+        var other = new Object();
+        profiler.start(key, first, 3, ProfileUnit.ITEM, 0);
+        profiler.start(key, first, 4, ProfileUnit.ITEM, 1);
+        profiler.start(key, other, 2, ProfileUnit.ITEM, 1);
+        assertEquals(1, profiler.withdraw(key, first, 1));
+        assertEquals(3, profiler.complete(key, first, 3, 20) ? 3 : 0);
+        assertEquals(3, profiler.withdraw(key, first, 100));
+        assertEquals(0, profiler.withdraw(key, first, 1));
+        assertTrue(profiler.hasPending(key));
+        profiler.complete(key, other, 2, 21);
+        profiler.flushCompletedSamples();
+        assertTrue(profiler.stats(key).isPresent());
+    }
+
+    @Test
+    void withdrawalRejectsInvalidRequestsAndKeepsOnlyAcceptedProgress() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("test:trinity-withdrawal");
+        var cpu = new Object();
+        assertEquals(0, profiler.withdraw(null, cpu, 1));
+        assertEquals(0, profiler.withdraw(key, null, 1));
+        assertEquals(0, profiler.withdraw(key, cpu, 0));
+        assertEquals(0, profiler.withdraw(key, cpu, -1));
+        assertEquals(0, profiler.withdraw(key, cpu, 1));
+        profiler.start(key, cpu, 3, ProfileUnit.ITEM, 0);
+        assertEquals(1, profiler.withdraw(key, cpu, 1));
+        assertTrue(profiler.complete(key, cpu, 1, 20));
+        assertEquals(1, profiler.withdraw(key, cpu, 1));
+        assertFalse(profiler.hasPending(key));
+        profiler.flushCompletedSamples();
+        assertEquals(List.of(1L), profiler.stats(key).orElseThrow().sampleAmounts());
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 30);
+        assertEquals(1, profiler.withdraw(key, cpu, 1));
+        var sibling = new ProfileKey("test:trinity-sibling");
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, 40);
+        profiler.start(sibling, cpu, 1, ProfileUnit.ITEM, 40);
+        assertEquals(1, profiler.withdraw(key, cpu, 1));
+        assertTrue(profiler.hasPending(sibling));
+        assertEquals(1, profiler.withdraw(sibling, cpu, 1));
+        profiler.setEnabled(false);
+        assertEquals(0, profiler.withdraw(key, cpu, 1));
+    }
+
+    @Test
+    void disablingAddonClearsItsUnloadedPendingWorkWithoutErasingHistoryOrOtherCpu() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("test:trinity-option");
+        var addon = new Object();
+        var other = new Object();
+        profiler.start(key, addon, 2, ProfileUnit.ITEM, 0);
+        profiler.start(key, other, 1, ProfileUnit.ITEM, 0);
+        assertEquals(1, profiler.clearDisabledScopes(scope -> scope == addon).size());
+        assertEquals(0, profiler.withdraw(key, addon, 2));
+        assertTrue(profiler.hasPending(key));
+        assertTrue(profiler.complete(key, other, 1, 20));
+        profiler.flushCompletedSamples();
+        assertEquals(List.of(1L), profiler.stats(key).orElseThrow().sampleAmounts());
+        profiler.start(key, addon, 1, ProfileUnit.ITEM, 30);
+        assertTrue(profiler.complete(key, addon, 1, 50));
+        profiler.flushCompletedSamples();
+        assertEquals(List.of(1L, 1L), profiler.stats(key).orElseThrow().sampleAmounts());
+        assertTrue(profiler.clearDisabledScopes(scope -> scope == addon).isEmpty());
+    }
+    @Test
     void suspensionKeepsPendingAndOtherCpuWhileRebasingDelay() {
         var profiler = new CraftProfiler(10);
         var paused = new Object();

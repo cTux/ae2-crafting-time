@@ -14,6 +14,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -55,7 +56,7 @@ public final class IntegrationMixinPlugin implements IMixinConfigPlugin {
         try (var input = resources.apply(internalName + ".class")) {
             if (input == null) return null;
             var node = new ClassNode();
-            new ClassReader(input).accept(node, ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
+            new ClassReader(input).accept(node, ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES);
             return describe(node);
         } catch (IOException failure) {
             throw new UncheckedIOException("Cannot inspect adapter target " + internalName, failure);
@@ -66,8 +67,21 @@ public final class IntegrationMixinPlugin implements IMixinConfigPlugin {
         var members = new HashMap<String, List<String>>();
         node.fields.forEach(field -> members.computeIfAbsent("field:" + field.name, key -> new ArrayList<>())
                 .add(field.desc));
-        node.methods.forEach(method -> members.computeIfAbsent("method:" + method.name, key -> new ArrayList<>())
-                .add(method.desc));
+        node.methods.forEach(method -> {
+            members.computeIfAbsent("method:" + method.name, key -> new ArrayList<>()).add(method.desc);
+            if ((method.access & Opcodes.ACC_STATIC) != 0)
+                members.computeIfAbsent("static:method:" + method.name, key -> new ArrayList<>()).add(method.desc);
+        });
+        node.methods.forEach(method -> {
+            var counts = new HashMap<String, Integer>();
+            for (var instruction : method.instructions) {
+                if (instruction instanceof MethodInsnNode call) {
+                    var key = "call:" + method.name + method.desc + "->" + call.owner + "#" + call.name + call.desc;
+                    counts.merge(key, 1, Integer::sum);
+                }
+            }
+            counts.forEach((key, count) -> members.put(key, List.of(Integer.toString(count))));
+        });
         return new IntegrationContract.ClassInfo(node.superName, members);
     }
 
