@@ -6,8 +6,10 @@ import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
 import appeng.core.definitions.AEItems;
 import appeng.crafting.pattern.AECraftingPattern;
+import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.testdriver.mixin.CraftAmountScreenAccessor;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityPatternCoreBlockEntity;
+import com.google.gson.JsonParser;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -31,6 +33,7 @@ final class DataEnergisticsTrinityCountedFixture extends DataEnergisticsTrinityF
     private AEItemKey copy;
     private long originalBefore;
     private boolean patternInstalled;
+    private CollectionEvidence collection;
 
     @Override protected boolean requiresImmediateWorkerCapture() { return true; }
     @Override protected boolean requiresFurnaceOutputHold() { return false; }
@@ -82,9 +85,79 @@ final class DataEnergisticsTrinityCountedFixture extends DataEnergisticsTrinityF
 
     @Override
     void configureAmount(appeng.client.gui.me.crafting.CraftAmountScreen screen) {
-        // shortcut: Data Energistics 3.3.5 rejects a repeat three-copy Plan; restore it when native planning supports that case.
-        ((CraftAmountScreenAccessor) screen).ae2craftingtime_test_driver$amount().setLongValue(nativeCompleted() ? 1 : 3);
+        ((CraftAmountScreenAccessor) screen).ae2craftingtime_test_driver$amount().setLongValue(3);
     }
+
+    @Override
+    String planRequestEvidence(ServerPlayer player) {
+        var evidence = super.planRequestEvidence(player);
+        if (evidence == null || !nativeCompleted()) return evidence;
+        var requests = JsonParser.parseString(evidence).getAsJsonArray();
+        if (requests.size() != 2 || !requests.get(0).getAsJsonObject().get("encodedTarget")
+                .equals(requests.get(1).getAsJsonObject().get("encodedTarget"))
+                || !"NET_NEW".equals(requests.get(0).getAsJsonObject().get("quantityMode").getAsString())
+                || !"NET_NEW".equals(requests.get(1).getAsJsonObject().get("quantityMode").getAsString()))
+            throw new IllegalStateException("counted collection requires two identical exact NET_NEW requests");
+        if (collection == null) collection = collectCompletedCopies(player);
+        requests.get(requests.size() - 1).getAsJsonObject()
+                .add("completedCopyCollection", new com.google.gson.Gson().toJsonTree(collection));
+        return requests.toString();
+    }
+
+    private CollectionEvidence collectCompletedCopies(ServerPlayer player) {
+        // shortcut: Isolate Data 3.3.5's repeat-Plan balance; restore the in-ME probe when native planning supports it.
+        if (jobId == null || link == null || !jobId.equals(link.getCraftingID())
+                || !link.isStandalone() || link.isCanceled() || !nativeCompleted())
+            throw new IllegalStateException("counted collection has no completed native job identity");
+        var grid = submittedGrid;
+        if (grid == null) throw new IllegalStateException("counted collection lost its native grid");
+        var storage = grid.getStorageService().getInventory();
+        var available = storage.getAvailableStacks();
+        long copiesBefore = available.get(copy);
+        long originalNow = available.get(original);
+        long blanksNow = available.get(CONSUMABLE);
+        int samplesBefore = ProfilerBridge.stats(ProfilerBridge.key(ProfilerBridge.networkId(grid), copy))
+                .map(stats -> stats.sampleCount()).orElse(0);
+        if (beforeOutput != 0 || beforeInput != 64 || copiesBefore != 3 || originalNow != 1
+                || blanksNow != 61 || samplesBefore != 1 || !nativeCompleted())
+            throw new IllegalStateException("counted collection requires frozen three-copy completion and one sample");
+        var inventory = player.getInventory();
+        int slot = -1;
+        for (int candidate = 0; candidate < Math.min(36, inventory.getContainerSize()); candidate++) {
+            if (inventory.getItem(candidate).isEmpty()) { slot = candidate; break; }
+        }
+        if (slot < 0 || copy.toStack(3).getMaxStackSize() < 3)
+            throw new IllegalStateException("counted collection has no empty owned slot for three exact copies");
+        var source = IActionSource.ofPlayer(player);
+        if (storage.extract(copy, 3, Actionable.SIMULATE, source) != 3)
+            throw new IllegalStateException("counted collection cannot simulate three exact copies");
+        if (!inventory.getItem(slot).isEmpty())
+            throw new IllegalStateException("counted collection destination changed before transfer");
+        long extracted = storage.extract(copy, 3, Actionable.MODULATE, source);
+        if (extracted > 0) inventory.setItem(slot, copy.toStack(Math.toIntExact(extracted)));
+        // A partial extraction is retained in the owned slot; the scenario fails rather than inventing the remainder.
+        long copiesAfter = storage.getAvailableStacks().get(copy);
+        long originalAfter = storage.getAvailableStacks().get(original);
+        long blanksAfter = storage.getAvailableStacks().get(CONSUMABLE);
+        int destinationAfter = inventory.getItem(slot).getCount();
+        if (extracted != 3 || !copy.equals(AEItemKey.of(inventory.getItem(slot)))
+                || destinationAfter != 3 || copiesAfter != 0 || originalAfter != originalNow
+                || blanksAfter != blanksNow)
+            throw new IllegalStateException("counted collection did not conserve the three native products");
+        int samplesAfter = ProfilerBridge.stats(ProfilerBridge.key(ProfilerBridge.networkId(grid), copy))
+                .map(stats -> stats.sampleCount()).orElse(0);
+        if (samplesAfter != samplesBefore)
+            throw new IllegalStateException("counted collection changed the learned sample count");
+        return new CollectionEvidence(jobId.toString(), copy.toTagGeneric(player.level().registryAccess()).toString(),
+                "ME storage", copiesBefore, copiesAfter, "player inventory", slot, 0, destinationAfter,
+                extracted, originalNow, originalAfter, blanksNow, blanksAfter, samplesBefore, samplesAfter);
+    }
+
+    private record CollectionEvidence(String nativeJobId, String encodedKey, String source,
+            long sourceBefore, long sourceAfter, String destination, int destinationSlot,
+            long destinationBefore, long destinationAfter, long transferred,
+            long originalBefore, long originalAfter, long blankBooksBefore, long blankBooksAfter,
+            int samplesBefore, int samplesAfter) {}
 
     @Override
     protected void startCraft(ServerPlayer player, Placement placement, appeng.menu.me.crafting.CraftConfirmMenu menu) {
