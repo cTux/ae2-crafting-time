@@ -8,7 +8,7 @@
   "focusedCases": {
     "1.20.1-forge": ["delayed-resource-icons", "appmek-resource-icons", "chance-output-status", "crafting-suspension"],
     "1.20.1-fabric": ["delayed-resource-icons"],
-    "1.21.1-neoforge": ["delayed-resource-icons", "appmek-resource-icons", "neoeco-cpu", "omnisequence-cpu"],
+    "1.21.1-neoforge": ["delayed-resource-icons", "appmek-resource-icons", "neoeco-cpu", "omnisequence-cpu", "data-energistics-trinity-reload-cpu"],
     "26.1.2-neoforge": ["delayed-resource-icons"]
   },
   "cases": {
