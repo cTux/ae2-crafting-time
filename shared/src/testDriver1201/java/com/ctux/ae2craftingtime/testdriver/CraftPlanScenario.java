@@ -68,6 +68,7 @@ public final class CraftPlanScenario {
     private String networkId;
     private String outputId;
     private CompletableFuture<String> cpuCheck;
+    private boolean clientCpuSelectionSent;
     private CompletableFuture<Boolean> nativePlanCheck;
     private CompletableFuture<Boolean> submitCheck;
     private CompletableFuture<Integer> sampleCheck;
@@ -757,9 +758,14 @@ public final class CraftPlanScenario {
         if (!addonFixture.isConfirmScreen(minecraft.screen)) {
             return;
         }
+        if (!clientCpuSelectionSent && addonFixture.selectCpuOnClient(minecraft)) {
+            clientCpuSelectionSent = true;
+            return;
+        }
         if (cpuCheck == null) {
             var server = minecraft.getSingleplayerServer();
             var playerId = minecraft.player.getUUID();
+            boolean nativeClientSelection = clientCpuSelectionSent;
             cpuCheck = server.submit(() -> {
                 var player = server.getPlayerList().getPlayer(playerId);
                 if (player == null || !(player.containerMenu instanceof appeng.menu.me.crafting.CraftConfirmMenu menu)) {
@@ -769,7 +775,11 @@ public final class CraftPlanScenario {
                 var accessor = (CraftConfirmMenuAccessor) menu;
                 var cpu = addonFixture.cpu(player, context.grid());
                 if (cpu != null) {
-                    accessor.ae2craftingtime_test_driver$selectedCpu(cpu);
+                    if (nativeClientSelection) {
+                        if (accessor.ae2craftingtime_test_driver$selectedCpu() != cpu) return null;
+                    } else {
+                        accessor.ae2craftingtime_test_driver$selectedCpu(cpu);
+                    }
                     var id = ProfilerBridge.networkId(context.grid());
                     if (!freshAfterRestart && !freshAfterCancellation)
                         ProfilerBridge.clearStats(new ProfileKey(id, outputId));
@@ -791,7 +801,7 @@ public final class CraftPlanScenario {
     }
 
     private void submitAddonCraft() throws IOException {
-        if (checks.containsKey("cpu-selected-visible") && !checks.get("cpu-selected-visible")) {
+        if (needsVisibleCpuSelection(clientCpuSelectionSent, checks)) {
             if (!addonFixture.visibleCpuSelection(minecraft, outputId, lastFrame, this::screenshotUnchecked)) return;
             lastFrame = UiObservationStore.latest().frame();
             checks.put("cpu-selected-visible", true);
@@ -1292,6 +1302,7 @@ public final class CraftPlanScenario {
 
     private void resetAddonAttempt() {
         cpuCheck = null;
+        clientCpuSelectionSent = false;
         nativePlanCheck = null;
         submitCheck = null;
         sampleCheck = null;
@@ -1306,6 +1317,10 @@ public final class CraftPlanScenario {
     static void resetAddonSelectionChecks(java.util.Map<String, Boolean> checks) {
         if (checks.containsKey("cpu-selected")) checks.put("cpu-selected", false);
         if (checks.containsKey("cpu-selected-visible")) checks.put("cpu-selected-visible", false);
+    }
+
+    static boolean needsVisibleCpuSelection(boolean clientActionSent, java.util.Map<String, Boolean> checks) {
+        return clientActionSent && !checks.getOrDefault("cpu-selected-visible", false);
     }
 
     private Duration elapsed() {

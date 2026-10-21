@@ -56,6 +56,7 @@ class TestDriverCoreTest {
             assertTrue(AddonCpuFixture.supports(scenario), scenario);
             var checks = DriverResult.requiredChecks(scenario, false);
             assertTrue(checks.contains("job-accepted"), scenario);
+            assertTrue(checks.contains("cpu-selected-visible"), scenario);
             assertTrue(checks.contains("profile-sample"), scenario);
             assertTrue(checks.contains("ttc-after-sample"), scenario);
         }
@@ -64,6 +65,17 @@ class TestDriverCoreTest {
         assertTrue(DriverResult.requiredChecks("data-energistics-trinity-reload-cpu", false)
                 .contains("restored-graph-advanced"));
         assertFalse(AddonCpuFixture.supports("data-energistics-trinity-unknown-cpu"));
+    }
+
+    @Test
+    void nativeCpuSelectionRequiresVisibleProofEvenBeforeTheCheckKeyExists() {
+        var checks = new LinkedHashMap<String, Boolean>();
+        assertTrue(CraftPlanScenario.needsVisibleCpuSelection(true, checks));
+        assertFalse(CraftPlanScenario.needsVisibleCpuSelection(false, checks));
+        checks.put("cpu-selected-visible", false);
+        assertTrue(CraftPlanScenario.needsVisibleCpuSelection(true, checks));
+        checks.put("cpu-selected-visible", true);
+        assertFalse(CraftPlanScenario.needsVisibleCpuSelection(true, checks));
     }
 
     @Test
@@ -100,6 +112,9 @@ class TestDriverCoreTest {
             field.setAccessible(true);
             field.set(scenario, CompletableFuture.completedFuture(null));
         }
+        var nativeSelection = CraftPlanScenario.class.getDeclaredField("clientCpuSelectionSent");
+        nativeSelection.setAccessible(true);
+        nativeSelection.setBoolean(scenario, true);
         var advance = CraftPlanScenario.class.getDeclaredMethod("advance", ScenarioState.class);
         advance.setAccessible(true);
         advance.invoke(scenario, ScenarioState.WORLD_READY);
@@ -110,6 +125,7 @@ class TestDriverCoreTest {
             field.setAccessible(true);
             assertNull(field.get(scenario), name + " would reuse the previous job's server result");
         }
+        assertFalse(nativeSelection.getBoolean(scenario), "a fresh job must send its native CPU action again");
         var checks = new LinkedHashMap<String, Boolean>();
         checks.put("cpu-selected", true);
         checks.put("cpu-selected-visible", true);

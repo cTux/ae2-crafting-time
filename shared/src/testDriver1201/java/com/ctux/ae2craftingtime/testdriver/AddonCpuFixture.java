@@ -177,6 +177,9 @@ abstract class AddonCpuFixture<P> {
 
     boolean nativeActive() { return false; }
 
+    /** Send the addon's native client CPU action when its confirmation UI owns the selector. */
+    boolean selectCpuOnClient(Minecraft minecraft) { return false; }
+
     boolean visibleCpuSelection(Minecraft minecraft, String outputId, long priorFrame,
             Consumer<String> screenshot) { return true; }
 

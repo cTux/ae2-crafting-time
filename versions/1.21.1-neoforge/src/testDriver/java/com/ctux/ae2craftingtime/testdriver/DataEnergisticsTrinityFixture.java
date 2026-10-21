@@ -340,6 +340,14 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
 
     @Override boolean nativeActive() { return nativeActive; }
 
+    @Override
+    boolean selectCpuOnClient(net.minecraft.client.Minecraft minecraft) {
+        if (!(minecraft.player.containerMenu instanceof CraftConfirmMenu menu))
+            throw new IllegalStateException("native Trinity confirmation menu is unavailable");
+        menu.cycleSelectedCPU(true);
+        return true;
+    }
+
     @Override boolean requiresNativeCompletion() { return true; }
 
     @Override int expectedSampleCount(boolean freshJob) { return freshJob ? 2 : 1; }

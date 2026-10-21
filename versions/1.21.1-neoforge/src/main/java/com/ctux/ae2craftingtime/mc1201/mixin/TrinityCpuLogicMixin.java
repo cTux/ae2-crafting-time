@@ -71,6 +71,7 @@ public abstract class TrinityCpuLogicMixin implements TrinityNativeJobAccess.Obs
             // A job accepted while disabled must stay excluded even if options change before its first tick.
             if (!ProfilerBridge.trackingEnabled(cpu)) {
                 ae2craftingtime$accounting.reject(TrinityNativeJobAccess.id(job));
+                ae2craftingtime$warned = true;
                 return;
             }
             if (!ae2craftingtime$planFits(plan)) {
