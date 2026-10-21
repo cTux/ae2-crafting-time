@@ -871,6 +871,22 @@ class CraftProfilerTest {
     }
 
     @Test
+    void freshJobInOldWorldDelaysOnlyAfterSameClockIdleThreshold() {
+        var profiler = new CraftProfiler(10);
+        var key = new ProfileKey("minecraft:glass");
+        var cpu = new Object();
+        long worldTime = 2_000_000;
+
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, worldTime - 100);
+        profiler.complete(key, cpu, 1, worldTime - 80);
+        profiler.flushCompletedSamples();
+        profiler.start(key, cpu, 1, ProfileUnit.ITEM, worldTime);
+        assertFalse(profiler.stall(key, cpu, worldTime).isPresent());
+        assertFalse(profiler.stall(key, cpu, worldTime + 199).isPresent());
+        assertEquals(200, profiler.stall(key, cpu, worldTime + 200).orElseThrow().idleTicks());
+    }
+
+    @Test
     void partialOutputResetsTheDelayClock() {
         var profiler = new CraftProfiler(10);
         var key = new ProfileKey("minecraft:iron_plate");

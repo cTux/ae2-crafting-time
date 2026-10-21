@@ -9,7 +9,6 @@ import appeng.api.networking.energy.IEnergyService;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
-import appeng.hooks.ticking.TickHandler;
 import appeng.me.service.CraftingService;
 import com.ctux.ae2craftingtime.core.CraftingJobRecovery;
 import com.ctux.ae2craftingtime.core.TrinityJobAccounting;
@@ -88,9 +87,9 @@ public abstract class TrinityCpuLogicMixin implements TrinityNativeJobAccess.Obs
                         .map(Map.Entry::getKey).collect(java.util.stream.Collectors.toSet());
                 ProfilerBridge.startTrinityJob(network, cpu, plan, exactOutputs, projection.get(),
                         TrinityNativeJobAccess.scheduledGraph(plan, network, plannedIds),
-                        tick(), System.nanoTime(), ProfilerBridge.jobOwner(source));
+                        tick(cpu), System.nanoTime(), ProfilerBridge.jobOwner(source));
             } else {
-                ProfilerBridge.startJob(network, cpu, plan, tick(), System.nanoTime(),
+                ProfilerBridge.startJob(network, cpu, plan, tick(cpu), System.nanoTime(),
                         ProfilerBridge.jobOwner(source));
             }
             IntegrationLog.cpu("data_energistics", "cpu-submit");
@@ -218,7 +217,7 @@ public abstract class TrinityCpuLogicMixin implements TrinityNativeJobAccess.Obs
                     TrinityNativeJobAccess.id(job), ae2craftingtime$outputKey(job), grid, true);
             long amount = ae2craftingtime$accounting.complete(TrinityNativeJobAccess.id(job), key, accepted);
             if (amount > 0) {
-                ProfilerBridge.complete(ProfilerBridge.networkId(grid), cpu, key, amount, tick(),
+                ProfilerBridge.complete(ProfilerBridge.networkId(grid), cpu, key, amount, tick(cpu),
                         TrinityNativeJobAccess.server(grid));
                 IntegrationLog.positive("data_energistics", "cpu-output", amount);
             } else if (ae2craftingtime$restored) {
@@ -269,7 +268,7 @@ public abstract class TrinityCpuLogicMixin implements TrinityNativeJobAccess.Obs
             TrinityNativeJobAccess.forgetJob(old);
             ae2craftingtime$restored = false;
             ae2craftingtime$generation = null;
-            ProfilerBridge.finishJob(cpu, success && profiled, tick(), System.nanoTime(),
+            ProfilerBridge.finishJob(cpu, success && profiled, tick(cpu), System.nanoTime(),
                     TrinityNativeJobAccess.server(TrinityNativeJobAccess.grid(cpu)));
             IntegrationLog.cpu("data_energistics", "cpu-finish");
         });
@@ -329,7 +328,7 @@ public abstract class TrinityCpuLogicMixin implements TrinityNativeJobAccess.Obs
                     ae2craftingtime$warned = true;
                     ae2craftingtime$restored = false;
                     ProfilerBridge.discardUnsupportedJob(cpu);
-                    ProfilerBridge.discardDisabledScope(cpu, tick(),
+                    ProfilerBridge.discardDisabledScope(cpu, tick(cpu),
                             TrinityNativeJobAccess.server(TrinityNativeJobAccess.grid(cpu)));
                 }
                 return;
@@ -394,7 +393,7 @@ public abstract class TrinityCpuLogicMixin implements TrinityNativeJobAccess.Obs
                 pending -> ae2craftingtime$fits(pending.entrySet().stream().collect(
                         java.util.stream.Collectors.toMap(Map.Entry::getKey,
                                 entry -> BigInteger.valueOf(entry.getValue()))))).entrySet()) {
-            ProfilerBridge.start(network, cpu, entry.getKey(), entry.getValue(), tick());
+            ProfilerBridge.start(network, cpu, entry.getKey(), entry.getValue(), tick(cpu));
             IntegrationLog.cpu("data_energistics", "cpu-dispatch");
         }
         ae2craftingtime$checkUnsupported(cpu);
@@ -454,5 +453,11 @@ public abstract class TrinityCpuLogicMixin implements TrinityNativeJobAccess.Obs
         }
     }
 
-    @Unique private static long tick() { return TickHandler.instance().getCurrentTick(); }
+    @Unique private static long tick(Object cpu) {
+        var grid = TrinityNativeJobAccess.grid(cpu);
+        if (grid == null || grid.getPivot() == null || grid.getPivot().getLevel() == null) {
+            throw new IllegalStateException("Trinity CPU has no owning level for profiler time");
+        }
+        return grid.getPivot().getLevel().getGameTime();
+    }
 }
