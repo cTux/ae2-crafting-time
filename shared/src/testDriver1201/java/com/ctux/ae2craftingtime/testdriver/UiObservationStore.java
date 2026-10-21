@@ -64,9 +64,10 @@ public final class UiObservationStore {
             active = null;
             return;
         }
+        var geometry = (ContainerScreenAccessor) screen;
         active = new Frame(screen.getClass().getName(), screen.getMenu().getClass().getName(),
-                new Rect(screen.getGuiLeft(), screen.getGuiTop(), ((ContainerScreenAccessor) screen).ae2craftingtime_test_driver$width(),
-                        ((ContainerScreenAccessor) screen).ae2craftingtime_test_driver$height()),
+                new Rect(geometry.ae2craftingtime_test_driver$left(), geometry.ae2craftingtime_test_driver$top(),
+                        geometry.ae2craftingtime_test_driver$width(), geometry.ae2craftingtime_test_driver$height()),
                 minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight(),
                 minecraft.getWindow().getGuiScale());
     }

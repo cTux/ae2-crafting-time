@@ -259,7 +259,7 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
         var completion = new TrinityNativeCompletion(jobId, activeJobId,
                 host == submittedHost, grid == submittedGrid && host.craftingExecutionRoute() != null
                         && host.craftingExecutionRoute().serviceGrid() == grid,
-                sawTerminal, link.isDone(), link.isCanceled(), requested,
+                sawTerminal, link.isDone(), link.isStandalone(), link.isCanceled(), requested,
                 beforeInput - input, output - beforeOutput, maxWaiting, waitingDecrement);
         nativeDone = completion.complete();
         return JSON.toJson(new NativeObservation(jobId.toString(), activeJobId.toString(),
@@ -270,7 +270,7 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
                 host.isStructureFormed(), host.isCpuStructureFormed(), host.isCraftingStructureFormed(),
                 maxWaiting.toString(), waiting.toString(), waitingDecrement.toString(), sawAcceptedOutput,
                 completion.sameHost(), completion.sameGrid(), sawTerminal,
-                link.isDone(), link.isCanceled(), nativeDone,
+                link.isDone(), link.isStandalone(), link.isCanceled(), nativeDone,
                 beforeInput, input, beforeInput - input, beforeOutput, output,
                 output - beforeOutput));
     }
@@ -329,7 +329,7 @@ final class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergistic
             boolean mainFormed, boolean cpuFormed, boolean craftingFormed, String peakWaiting,
             String currentWaiting, String waitingDecrement, boolean acceptedOutput,
             boolean sameHost, boolean sameGrid, boolean terminal,
-            boolean linkDone, boolean linkCanceled, boolean complete,
+            boolean linkDone, boolean linkStandalone, boolean linkCanceled, boolean complete,
             long inputBefore, long inputNow, long dispatchedInput,
             long outputBefore, long outputNow, long networkOutputDelta) {}
 

@@ -104,33 +104,37 @@ class TestDriverCoreTest {
         var other = UUID.randomUUID();
         var one = BigInteger.ONE;
         var zero = BigInteger.ZERO;
-        assertTrue(new TrinityNativeCompletion(job, job, true, true, true, true, false,
+        assertTrue(new TrinityNativeCompletion(job, job, true, true, true, true, false, false,
                 1, 1, 1, one, one).complete());
-        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, false, true,
+        assertTrue(new TrinityNativeCompletion(job, job, true, true, true, false, true, false,
+                1, 1, 1, one, one).complete()); // standalone link has no nexus to mark done
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, false, true, true,
                 2, 2, 1, BigInteger.TWO, BigInteger.TWO).complete()); // partial output followed by cancellation
-        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, true,
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false, true,
                 1, 1, 1, one, one).complete());
-        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false,
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, false, false, false,
+                1, 1, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false, false,
                 1, 0, 1, one, one).complete());
-        assertFalse(new TrinityNativeCompletion(job, other, true, true, true, true, false,
+        assertFalse(new TrinityNativeCompletion(job, other, true, true, true, true, false, false,
                 1, 1, 1, one, one).complete());
-        assertFalse(new TrinityNativeCompletion(job, job, true, false, true, true, false,
+        assertFalse(new TrinityNativeCompletion(job, job, true, false, true, true, false, false,
                 1, 1, 1, one, one).complete());
-        assertFalse(new TrinityNativeCompletion(job, job, false, true, true, true, false,
+        assertFalse(new TrinityNativeCompletion(job, job, false, true, true, true, false, false,
                 1, 1, 1, one, one).complete());
-        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false,
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false, false,
                 1, 1, 0, one, one).complete());
-        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false,
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false, false,
                 1, 1, 1, zero, one).complete());
-        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false,
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false, false,
                 1, 1, 1, one, zero).complete());
-        assertFalse(new TrinityNativeCompletion(null, job, true, true, true, true, false,
+        assertFalse(new TrinityNativeCompletion(null, job, true, true, true, true, false, false,
                 1, 1, 1, one, one).complete());
-        assertFalse(new TrinityNativeCompletion(job, job, true, true, false, true, false,
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, false, true, false, false,
                 1, 1, 1, one, one).complete());
-        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false,
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false, false,
                 1, 1, 1, BigInteger.TWO, one).complete());
-        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false,
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false, false,
                 0, 0, 0, zero, zero).complete());
     }
 
