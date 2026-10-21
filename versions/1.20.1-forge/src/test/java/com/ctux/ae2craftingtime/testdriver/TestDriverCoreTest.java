@@ -244,6 +244,18 @@ class TestDriverCoreTest {
         var nativeSelection = CraftPlanScenario.class.getDeclaredField("clientCpuSelectionSent");
         nativeSelection.setAccessible(true);
         nativeSelection.setBoolean(scenario, true);
+        var terminalField = CraftPlanScenario.class.getDeclaredField("blockTerminalReadiness");
+        terminalField.setAccessible(true);
+        var terminal = (CraftPlanScenario.BlockTerminalReadiness) terminalField.get(scenario);
+        var preparations = new AtomicInteger();
+        var interactions = new AtomicInteger();
+        terminal.tick(() -> {
+            preparations.incrementAndGet();
+            return CompletableFuture.completedFuture(null);
+        }, () -> true, interactions::incrementAndGet);
+        terminal.tick(() -> { throw new AssertionError("first preparation repeated"); },
+                () -> true, interactions::incrementAndGet);
+        assertEquals(1, interactions.get());
         var advance = CraftPlanScenario.class.getDeclaredMethod("advance", ScenarioState.class);
         advance.setAccessible(true);
         advance.invoke(scenario, ScenarioState.WORLD_READY);
@@ -255,6 +267,16 @@ class TestDriverCoreTest {
             assertNull(field.get(scenario), name + " would reuse the previous job's server result");
         }
         assertFalse(nativeSelection.getBoolean(scenario), "a fresh job must send its native CPU action again");
+        terminal.tick(() -> {
+            preparations.incrementAndGet();
+            return CompletableFuture.completedFuture(null);
+        }, () -> true, interactions::incrementAndGet);
+        terminal.tick(() -> { throw new AssertionError("second preparation repeated"); },
+                () -> true, interactions::incrementAndGet);
+        terminal.tick(() -> { throw new AssertionError("second interaction repeated"); },
+                () -> true, interactions::incrementAndGet);
+        assertEquals(2, preparations.get());
+        assertEquals(2, interactions.get());
         var checks = new LinkedHashMap<String, Boolean>();
         checks.put("cpu-selected", true);
         checks.put("cpu-selected-visible", true);
@@ -1821,6 +1843,35 @@ class TestDriverCoreTest {
         assertEquals(0, interactions.get());
         readiness.tick(() -> server, () -> true, interactions::incrementAndGet);
         readiness.tick(() -> server, () -> true, interactions::incrementAndGet);
+        assertEquals(1, interactions.get());
+    }
+
+    @Test
+    void blockTerminalResetDiscardsPendingPreparationBeforeFreshInteraction() {
+        var readiness = new CraftPlanScenario.BlockTerminalReadiness();
+        var oldServer = new CompletableFuture<Void>();
+        var newServer = new CompletableFuture<Void>();
+        var preparations = new AtomicInteger();
+        var interactions = new AtomicInteger();
+        readiness.tick(() -> {
+            preparations.incrementAndGet();
+            return oldServer;
+        }, () -> true, interactions::incrementAndGet);
+        readiness.reset();
+        oldServer.complete(null);
+        readiness.tick(() -> {
+            preparations.incrementAndGet();
+            return newServer;
+        }, () -> true, interactions::incrementAndGet);
+        readiness.tick(() -> { throw new AssertionError("new preparation repeated"); },
+                () -> true, interactions::incrementAndGet);
+        assertEquals(2, preparations.get());
+        assertEquals(0, interactions.get(), "completed old preparation must not drive the new attempt");
+        newServer.complete(null);
+        readiness.tick(() -> { throw new AssertionError("new preparation repeated"); },
+                () -> true, interactions::incrementAndGet);
+        readiness.tick(() -> { throw new AssertionError("new interaction repeated"); },
+                () -> true, interactions::incrementAndGet);
         assertEquals(1, interactions.get());
     }
 

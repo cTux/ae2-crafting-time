@@ -1332,6 +1332,7 @@ public final class CraftPlanScenario {
     }
 
     private void resetAddonAttempt() {
+        blockTerminalReadiness.reset();
         cpuCheck = null;
         clientCpuSelectionSent = false;
         nativePlanCheck = null;
@@ -1404,6 +1405,11 @@ public final class CraftPlanScenario {
     static final class BlockTerminalReadiness {
         private CompletableFuture<Void> serverReadiness;
         private boolean interactionRequested;
+
+        void reset() {
+            serverReadiness = null;
+            interactionRequested = false;
+        }
 
         static <T> T requirePresent(T value, String message) {
             if (value == null) throw new IllegalStateException(message);
