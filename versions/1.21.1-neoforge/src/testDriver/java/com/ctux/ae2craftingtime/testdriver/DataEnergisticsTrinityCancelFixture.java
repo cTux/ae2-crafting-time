@@ -48,7 +48,9 @@ class DataEnergisticsTrinityCancelFixture extends DataEnergisticsTrinityFixture 
                 || !"minecraft:glass".equals(outputId) || !sawAcceptedOutput
                 || worker.getWaitingFor(outputKey()).signum() <= 0) return false;
         var key = new ProfileKey(networkId, outputId);
-        if (ProfilerBridge.stats(key).map(stats -> stats.sampleCount()).orElse(0) != 1)
+        var history = ProfilerBridge.stats(key).orElseThrow(
+                () -> new IllegalStateException("cancellation checkpoint lacks a genuine accepted sample"));
+        if (history.sampleCount() != 1)
             throw new IllegalStateException("cancellation checkpoint lacks one genuine accepted sample");
         if (!optionChecked) {
             var config = ServerOptionsRuntime.current();
@@ -61,14 +63,15 @@ class DataEnergisticsTrinityCancelFixture extends DataEnergisticsTrinityFixture 
             try {
                 ProfilerBridge.configure(config);
                 ServerOptionsRuntime.sendTo(player);
-                if (ProfilerBridge.hasPending(key) || ProfilerBridge.stats(key)
-                        .map(stats -> stats.sampleCount()).orElse(0) != 1)
-                    throw new IllegalStateException("turning profiling off retained pending work or changed history");
+                if (ProfilerBridge.hasPending(key))
+                    throw new IllegalStateException("turning profiling off retained pending work");
             } finally {
                 config.features().setEnabled(feature, true);
                 ProfilerBridge.configure(config);
                 ServerOptionsRuntime.sendTo(player);
             }
+            if (ProfilerBridge.hasPending(key) || !history.equals(ProfilerBridge.stats(key).orElse(null)))
+                throw new IllegalStateException("turning profiling back on resumed pending work or changed history");
             if (prior.equals(ProfilerBridge.recoveryStamp(worker)))
                 throw new IllegalStateException("option cycle did not invalidate the native job generation");
             optionChecked = true;

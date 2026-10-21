@@ -10,6 +10,7 @@ import appeng.api.networking.IGrid;
 import appeng.api.networking.IGridNode;
 import com.ctux.ae2craftingtime.core.CraftProfiler;
 import com.ctux.ae2craftingtime.core.CraftingJobEstimate;
+import com.ctux.ae2craftingtime.core.OptionFeature;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.core.ProfileUnit;
 import com.ctux.ae2craftingtime.mc1201.mixin.TrinityCpuLogicMixin;
@@ -125,6 +126,39 @@ class TrinityCpuClockBoundaryTest {
             assertFalse(profiler.hasPending(key));
             assertTrue(profiler.jobEstimate(cpu).isEmpty());
             assertEquals(1, profiler.stats(key).orElseThrow().sampleCount());
+        }
+    }
+
+    @Test
+    void globalProfilingSwitchHidesHistoryOnlyWhileOffAndClearsLivePending() throws Exception {
+        var config = ServerOptionsRuntime.current();
+        var previouslyEnabled = config.features().enabled(OptionFeature.PROFILING);
+        try {
+            config.features().setEnabled(OptionFeature.PROFILING, true);
+            ProfilerBridge.configure(config);
+            var profiler = profiler();
+            var key = new ProfileKey("trinity-global-option-boundary", "minecraft:glass");
+            var scope = new Object();
+            profiler.start(key, scope, 1, ProfileUnit.ITEM, 100);
+            profiler.complete(key, scope, 1, 120);
+            profiler.flushCompletedSamples();
+            profiler.start(key, scope, 1, ProfileUnit.ITEM, 130);
+            var history = ProfilerBridge.stats(key).orElseThrow();
+            assertEquals(1, history.sampleCount());
+            assertTrue(ProfilerBridge.hasPending(key));
+
+            config.features().setEnabled(OptionFeature.PROFILING, false);
+            ProfilerBridge.configure(config);
+            assertFalse(ProfilerBridge.hasPending(key));
+            assertTrue(ProfilerBridge.stats(key).isEmpty());
+
+            config.features().setEnabled(OptionFeature.PROFILING, true);
+            ProfilerBridge.configure(config);
+            assertFalse(ProfilerBridge.hasPending(key));
+            assertEquals(history, ProfilerBridge.stats(key).orElseThrow());
+        } finally {
+            config.features().setEnabled(OptionFeature.PROFILING, previouslyEnabled);
+            ProfilerBridge.configure(config);
         }
     }
 
