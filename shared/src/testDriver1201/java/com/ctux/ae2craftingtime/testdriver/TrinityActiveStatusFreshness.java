@@ -5,6 +5,7 @@ import java.util.Objects;
 /** Waits for a new native Status object while the same Trinity worker remains selected. */
 final class TrinityActiveStatusFreshness {
     private Baseline baseline;
+    private volatile Evidence accepted;
 
     boolean observe(UiSnapshot.StatusObservation status, boolean selected, int serial,
             String jobUuid, String outputId, long frame) {
@@ -18,14 +19,22 @@ final class TrinityActiveStatusFreshness {
             baseline = new Baseline(status.identity(), frame, serial, jobUuid, outputId);
             return false;
         }
-        return baseline.serial == serial && baseline.jobUuid.equals(jobUuid)
+        boolean fresh = baseline.serial == serial && baseline.jobUuid.equals(jobUuid)
                 && baseline.outputId.equals(outputId) && status.identity() != baseline.identity
                 && frame > baseline.frame;
+        if (fresh) accepted = new Evidence(baseline.identity, baseline.frame,
+                status.identity(), frame, serial, jobUuid, outputId);
+        return fresh;
     }
 
     Integer baselineIdentity() { return baseline == null ? null : baseline.identity; }
 
-    void reset() { baseline = null; }
+    Evidence accepted() { return accepted; }
+
+    void reset() { baseline = null; accepted = null; }
 
     private record Baseline(int identity, long frame, int serial, String jobUuid, String outputId) {}
+
+    record Evidence(int baselineIdentity, long baselineFrame, int currentIdentity, long currentFrame,
+            int serial, String jobUuid, String outputId) {}
 }

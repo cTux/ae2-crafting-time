@@ -103,6 +103,7 @@ class TestDriverCoreTest {
 
         assertFalse(freshness.observe(first, true, 4, job, "minecraft:glass", 10));
         assertEquals(101, freshness.baselineIdentity());
+        assertNull(freshness.accepted());
         assertFalse(freshness.observe(first, true, 4, job, "minecraft:glass", 11));
         assertFalse(freshness.observe(next, true, 4, job, "minecraft:glass", 10));
         assertFalse(freshness.observe(new UiSnapshot.StatusObservation(103, "native", 2, 1, 1,
@@ -110,9 +111,48 @@ class TestDriverCoreTest {
                 "new-job", "minecraft:glass", 11));
         assertEquals(101, freshness.baselineIdentity());
         assertTrue(freshness.observe(next, true, 4, job, "minecraft:glass", 11));
+        assertEquals(new TrinityActiveStatusFreshness.Evidence(101, 10, 102, 11,
+                4, job, "minecraft:glass"), freshness.accepted());
         freshness.reset();
         assertNull(freshness.baselineIdentity());
+        assertNull(freshness.accepted());
         assertFalse(freshness.observe(next, true, 4, job, "minecraft:glass", 12));
+    }
+
+    @Test
+    void trinitySmokeCatalogueMatchesDriverChecksAndNativeScreenshots() throws Exception {
+        var root = Path.of("").toAbsolutePath();
+        while (root != null && !Files.isRegularFile(root.resolve("settings.gradle"))) root = root.getParent();
+        assertNotNull(root, "repository root");
+        var catalogue = com.google.gson.JsonParser.parseString(Files.readString(
+                root.resolve("scripts/ui-smoke-groups.json"))).getAsJsonObject();
+        var cases = catalogue.getAsJsonObject("cases");
+        var normal = "data-energistics-trinity-cpu";
+        var counted = "data-energistics-trinity-counted-cpu";
+        var cancel = "data-energistics-trinity-cancel-cpu";
+        var global = "data-energistics-trinity-global-option-cpu";
+        var provider = "data-energistics-trinity-provider-cpu";
+        var admission = "data-energistics-trinity-admission-cpu";
+        var reload = "data-energistics-trinity-reload-cpu";
+        var group = new ArrayList<String>();
+        for (var entry : catalogue.getAsJsonObject("groups").getAsJsonArray("data-energistics-trinity"))
+            group.add(entry.getAsString());
+        assertEquals(List.of("data-energistics-cpu", normal, counted, cancel, global, provider, admission), group);
+        for (var scenario : List.of(normal, counted, cancel, global, provider, admission, reload)) {
+            var contract = cases.getAsJsonObject(scenario);
+            assertNotNull(contract, scenario);
+            var checks = new ArrayList<String>();
+            for (var entry : contract.getAsJsonArray("checks")) checks.add(entry.getAsString());
+            assertEquals(DriverResult.requiredChecks(scenario, false), checks, scenario);
+            var screenshots = new ArrayList<String>();
+            for (var entry : contract.getAsJsonArray("screenshots")) screenshots.add(entry.getAsString());
+            var expected = new ArrayList<>(List.of("addon-native-plan.png", "trinity-selected-cpu-plan.png"));
+            if (!scenario.equals(counted)) expected.addAll(List.of(
+                    "trinity-active-status.png", "trinity-completed-status.png"));
+            expected.addAll(List.of("trinity-plan-badge-off.png", "trinity-plan-badge-on.png",
+                    scenario.replace("-cpu", "") + "-profiled-plan.png"));
+            assertEquals(expected, screenshots, scenario);
+        }
     }
 
     @Test

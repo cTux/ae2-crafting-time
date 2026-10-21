@@ -585,7 +585,7 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
                 output - beforeOutput, outputHoldArmed, outputHoldReleased,
                 outputHoldDurationNanos, twoGlassBeforeStatus, furnaceGlassBeforeStatus, suffixBuffered,
                 bufferedSuffixItem, bufferedPrefixJobId, bufferedPrefixGlass,
-                bufferedPrefixHoldNanos, nativeVariantAmounts(grid)));
+                bufferedPrefixHoldNanos, nativeVariantAmounts(grid), activeStatusFreshness.accepted()));
     }
 
     @Override
@@ -770,7 +770,8 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
             boolean twoGlassBeforeStatus, int furnaceGlassBeforeStatus,
             boolean physicalSuffixBuffered, String bufferedSuffixItem,
             String bufferedPrefixJobId, int bufferedPrefixGlass, Long bufferedPrefixHoldNanos,
-            Map<String, Long> variantAmounts) {}
+            Map<String, Long> variantAmounts,
+            TrinityActiveStatusFreshness.Evidence activeStatusFreshness) {}
 
     static final class Placement {
         private final BlockPos origin;
