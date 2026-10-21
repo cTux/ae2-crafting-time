@@ -11,6 +11,9 @@ public interface CraftConfirmMenuAccessor {
     @Accessor(value = "selectedCpu", remap = false)
     void ae2craftingtime_test_driver$selectedCpu(ICraftingCPU cpu);
 
+    @Accessor(value = "selectedCpu", remap = false)
+    ICraftingCPU ae2craftingtime_test_driver$selectedCpu();
+
     @Accessor(value = "result", remap = false)
     ICraftingPlan ae2craftingtime_test_driver$result();
 }

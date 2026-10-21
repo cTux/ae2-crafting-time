@@ -2,12 +2,13 @@
   "schema": 1,
   "groups": {
     "standard-ae2": ["standard-plan-controls", "badge-background", "recurrent-plan", "stored-variant-plan", "standard-status-controls", "waiting-status", "running-status", "delayed-status", "craft-lifecycle", "cpu-list-total-ttc", "compact-hover-numbers"],
-    "provider-dispatch-statuses": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"]
+    "provider-dispatch-statuses": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"],
+    "data-energistics-trinity": ["data-energistics-cpu", "data-energistics-trinity-cpu", "data-energistics-trinity-counted-cpu", "data-energistics-trinity-cancel-cpu", "data-energistics-trinity-global-option-cpu", "data-energistics-trinity-provider-cpu", "data-energistics-trinity-admission-cpu"]
   },
   "focusedCases": {
     "1.20.1-forge": ["delayed-resource-icons", "appmek-resource-icons", "chance-output-status", "crafting-suspension"],
     "1.20.1-fabric": ["delayed-resource-icons"],
-    "1.21.1-neoforge": ["delayed-resource-icons", "appmek-resource-icons", "neoeco-cpu", "omnisequence-cpu"],
+    "1.21.1-neoforge": ["delayed-resource-icons", "appmek-resource-icons", "neoeco-cpu", "omnisequence-cpu", "data-energistics-trinity-reload-cpu"],
     "26.1.2-neoforge": ["delayed-resource-icons"]
   },
   "cases": {
@@ -107,6 +108,34 @@
       "advancedChecks": ["screen", "real-job", "tooltip", "layout", "advanced-cpu", "lock-while-low", "low-recovered"],
       "screenshots": ["locked-en-us.png", "locked-result-wait.png", "locked-recovered.png"],
       "advancedScreenshots": ["locked-en-us.png"]
+    },
+    "data-energistics-trinity-cpu": {
+      "checks": ["cpu-selected", "cpu-selected-visible", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "status-active", "status-completed", "ttc-after-sample"],
+      "screenshots": ["addon-native-plan.png", "trinity-selected-cpu-plan.png", "trinity-active-status.png", "trinity-completed-status.png", "trinity-plan-badge-off.png", "trinity-plan-badge-on.png", "data-energistics-trinity-profiled-plan.png"]
+    },
+    "data-energistics-trinity-counted-cpu": {
+      "checks": ["cpu-selected", "cpu-selected-visible", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"],
+      "screenshots": ["addon-native-plan.png", "trinity-selected-cpu-plan.png", "trinity-plan-badge-off.png", "trinity-plan-badge-on.png", "data-energistics-trinity-counted-profiled-plan.png"]
+    },
+    "data-energistics-trinity-cancel-cpu": {
+      "checks": ["cpu-selected", "cpu-selected-visible", "status-active", "options-off-on", "cancelled-job", "same-worker-new-job", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "fresh-sample", "status-completed", "ttc-after-sample"],
+      "screenshots": ["addon-native-plan.png", "trinity-selected-cpu-plan.png", "trinity-active-status.png", "trinity-completed-status.png", "trinity-plan-badge-off.png", "trinity-plan-badge-on.png", "data-energistics-trinity-cancel-profiled-plan.png"]
+    },
+    "data-energistics-trinity-global-option-cpu": {
+      "checks": ["cpu-selected", "cpu-selected-visible", "status-active", "options-off-on", "cancelled-job", "same-worker-new-job", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "fresh-sample", "status-completed", "ttc-after-sample"],
+      "screenshots": ["addon-native-plan.png", "trinity-selected-cpu-plan.png", "trinity-active-status.png", "trinity-completed-status.png", "trinity-plan-badge-off.png", "trinity-plan-badge-on.png", "data-energistics-trinity-global-option-profiled-plan.png"]
+    },
+    "data-energistics-trinity-provider-cpu": {
+      "checks": ["cpu-selected", "cpu-selected-visible", "status-active", "provider-blocked", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "status-completed", "ttc-after-sample"],
+      "screenshots": ["addon-native-plan.png", "trinity-selected-cpu-plan.png", "trinity-active-status.png", "trinity-completed-status.png", "trinity-plan-badge-off.png", "trinity-plan-badge-on.png", "data-energistics-trinity-provider-profiled-plan.png"]
+    },
+    "data-energistics-trinity-admission-cpu": {
+      "checks": ["capacity-rejected", "cpu-selected", "cpu-selected-visible", "status-active", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "status-completed", "ttc-after-sample"],
+      "screenshots": ["addon-native-plan.png", "trinity-selected-cpu-plan.png", "trinity-active-status.png", "trinity-completed-status.png", "trinity-plan-badge-off.png", "trinity-plan-badge-on.png", "data-energistics-trinity-admission-profiled-plan.png"]
+    },
+    "data-energistics-trinity-reload-cpu": {
+      "checks": ["same-job", "estimate-restored", "no-fabricated-sample", "status-active", "native-complete", "status-completed", "restored-graph-advanced", "cpu-selected", "cpu-selected-visible", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "fresh-job", "fresh-sample", "ttc-after-sample"],
+      "screenshots": ["addon-native-plan.png", "trinity-selected-cpu-plan.png", "trinity-active-status.png", "trinity-completed-status.png", "trinity-plan-badge-off.png", "trinity-plan-badge-on.png", "data-energistics-trinity-reload-profiled-plan.png"]
     }
   },
   "adapterCases": {
@@ -115,7 +144,7 @@
     "advanced_ae": ["advancedae-cpu"],
     "ae2lt": ["lightningtech-cpu"],
     "merequester": ["merequester-screen"],
-    "data_energistics": ["data-energistics-cpu"],
+      "data_energistics": ["data-energistics-cpu", "data-energistics-trinity-cpu", "data-energistics-trinity-counted-cpu", "data-energistics-trinity-cancel-cpu", "data-energistics-trinity-global-option-cpu", "data-energistics-trinity-provider-cpu", "data-energistics-trinity-admission-cpu"],
     "molecularmanipulator": ["omnisequence-cpu"]
   },
   "adapterBehaviorCases": {

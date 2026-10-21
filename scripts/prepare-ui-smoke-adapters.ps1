@@ -32,8 +32,9 @@ if (!$BaseOnly) {
     if (!$expected.Count) { throw 'No adapter catalogue entries for target' }
     if ($ProjectId) {
         $profiles = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'run-client-versions.json') -Raw | ConvertFrom-Json
-        $selected = @($profiles | Where-Object id -eq $Target | ForEach-Object projects |
+        $selected = @($profiles | Where-Object id -eq $Target | ForEach-Object { $_.projects; $_.curseforge } |
             Where-Object project_id -in $ProjectId | ForEach-Object mod_id)
+        if ($selected -ccontains 'data_energistics') { $selected += 'data_energistics_trinity_ui' }
         foreach ($dependency in @($expected.Keys)) {
             if ($dependency -notin $selected) { $expected.Remove($dependency) }
         }

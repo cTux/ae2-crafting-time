@@ -3,7 +3,13 @@ package com.ctux.ae2craftingtime.testdriver.mixin;
 import appeng.api.networking.crafting.ICraftingPlan;
 import appeng.api.stacks.AEKey;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
+import com.ctux.ae2craftingtime.core.CraftingJobEstimate;
+import com.ctux.ae2craftingtime.core.IntegrationRead;
+import com.ctux.ae2craftingtime.core.TrinityQuantityBounds;
 import com.ctux.ae2craftingtime.testdriver.DispatchObservation;
+import com.ctux.ae2craftingtime.testdriver.NativePlanExpectation;
+import java.math.BigInteger;
+import java.util.Map;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -32,6 +38,19 @@ public abstract class ProfilerBridgeObservationMixin {
             }
         }
         DispatchObservation.accepted(network, finalOutput.getId().toString(), scope, amount);
+    }
+
+    @Inject(method = "startTrinityJob", at = @At("HEAD"))
+    private static void acceptedTrinity(String network, Object scope, ICraftingPlan plan,
+            Map<AEKey, BigInteger> exactOutputs, TrinityQuantityBounds.Projection projection,
+            CraftingJobEstimate.DependencyGraph graph, long tick, long nanos, java.util.UUID owner,
+            CallbackInfo ci) {
+        // Read the native plan again; do not derive the test expectation from the bridge's projected rows.
+        @SuppressWarnings("unchecked")
+        var planned = (Map<AEKey, BigInteger>) IntegrationRead.invoke(plan, "plannedOutputs", Map.class);
+        var finalId = plan.finalOutput().what().getId().toString();
+        NativePlanExpectation.forOutput(planned, finalId, key -> key.getId().toString())
+                .ifPresent(amount -> DispatchObservation.accepted(network, finalId, scope, amount));
     }
 
     @Inject(method = "start(Ljava/lang/String;Ljava/lang/Object;Lappeng/api/stacks/AEKey;JJ)V", at = @At("HEAD"))

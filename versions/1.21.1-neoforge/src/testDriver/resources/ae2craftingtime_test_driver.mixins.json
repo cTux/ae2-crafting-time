@@ -8,6 +8,7 @@
     "StatsNetworkObservationMixin",
     "StoredVariantServerObservationMixin",
     "ProfilerBridgeObservationMixin",
+    "TrinityRestoredGraphObservationMixin",
     "DedicatedScenarioMixin",
     "CraftConfirmMenuAccessor",
     "CraftingCPUMenuAccessor"
@@ -34,7 +35,9 @@
     "RenderSystemMixin",
     "ChatComponentAccessor",
     "CraftingStatusAccessor",
-    "CPUSelectionListObservationMixin"
+    "CPUSelectionListObservationMixin",
+    "TrinityMaterialTableObservationMixin",
+    "TrinityLdlibTextObservationMixin"
   ],
   "injectors": {
     "defaultRequire": 1

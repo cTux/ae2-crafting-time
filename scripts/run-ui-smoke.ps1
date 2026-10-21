@@ -360,6 +360,8 @@ try {
             Join-Path $evidence 'status-amounts-continuation.json'
         } elseif ($Scenario -eq 'badge-background') {
             Join-Path $evidence 'badge-background-continuation.json'
+        } elseif ($Scenario -eq 'data-energistics-trinity-reload-cpu') {
+            Join-Path $evidence 'addon-cpu-restart-continuation.json'
         } elseif ($Scenario -eq 'suite') {
             Join-Path $evidence 'cpu-list-total-ttc/cpu-list-continuation.json'
         } else { Join-Path $evidence 'cpu-list-continuation.json' }
@@ -583,7 +585,8 @@ try {
             return
         }
         Assert-UiSmokeJavaPhaseIdentities -Processes @($processes) -ExpectedPhases $plannedPhases `
-            -FinalApproval:($Scenario -in @('cpu-list-total-ttc', 'standard-status-controls', 'badge-background') -and !$resumeState)
+            -FinalApproval:($Scenario -in @('cpu-list-total-ttc', 'standard-status-controls', 'badge-background',
+                'data-energistics-trinity-reload-cpu') -and !$resumeState)
         if ($phase -eq 2) {
             if (!$resumeState -and ($processes.Count -ne 2 -or $processes[0].pid -eq $processes[1].pid -or
                     $processes[0].startedAt -eq $processes[1].startedAt)) {

@@ -10,12 +10,13 @@ $catalogue = Get-Content -LiteralPath (Join-Path $MatrixDirectory 'ui-smoke-grou
 if ($catalogue.schema -ne 1) { throw 'Invalid smoke group schema' }
 $groups = @($catalogue.groups.psobject.Properties.Name)
 $leaves = @($catalogue.cases.psobject.Properties.Name)
+$adapterLeaves = @($catalogue.adapterCases.psobject.Properties | ForEach-Object { $_.Value })
 foreach ($group in $groups) {
     $members = @($catalogue.groups.$group)
     $seen = [Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
     if (!$members.Count) { throw "Empty group: $group" }
     foreach ($member in $members) {
-        if ($member -cin $groups -or $member -cnotin $leaves -or !$seen.Add($member)) {
+        if ($member -cin $groups -or ($member -cnotin $leaves -and $member -cnotin $adapterLeaves) -or !$seen.Add($member)) {
             throw "Unknown, nested or duplicate group member: $member"
         }
     }

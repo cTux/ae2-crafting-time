@@ -926,6 +926,51 @@ to a fueled vanilla furnace; a hopper and ME Interface return glass.
 The shared scenario checks dispatch, accepted output, a fresh sample, and
 reopened Plan TTC. This fixture exists only in the NeoForge 1.21.1 driver.
 
+`data-energistics-trinity-cpu` builds the real Trinity main, CPU and crafting
+structures, submits through CPU zero, and records the busy worker, native
+waiting/output changes, terminal state and network inventory in
+`native-cpu-observation.json`. The retained `bc8a8d48` baseline completed the
+native glass craft and reported the missing profile sample as expected. The
+driver now records selected CPU, fresh native active/completed Status, learned
+material-row TTC, and badge-background Off/On screenshots. Post-adapter runtime
+qualification remains pending.
+The focused `f7328f1f` run completed one genuine native glass craft before the
+active Status round trip finished. Furnace leaves therefore power an owned
+hopper with a real redstone block before each submission, capture the strict
+active Status while glass remains in the furnace, then remove the block on the
+server thread. The native sidecar records this fixture hold duration separately;
+the learned sample includes the hold and is not an unmodified furnace benchmark.
+The two-output cancel and reload leaves wait until the real furnace holds two
+glass units before the active Status screenshot. One actual unit moves to the
+fixture's owned barrel before the hopper is enabled, so the first returned
+output cannot accidentally bring the second with it. Cancellation removes the
+owned suffix before the next job. Reload preserves that same physical stack and
+verifies it after restart before returning it to the furnace. The sidecar records
+the two-glass observation and buffer state; these leaves have a 90-second
+submitted-craft deadline for the deliberate two-smelt wait.
+
+`data-energistics-trinity-counted-cpu` mounts vanilla `book_cloning` on the real
+crafting child, captures the submitted worker/job immediately, and requires
+native terminal state, three blank books consumed, three copies produced, and
+the original retained. Its fast completion does not require an active Status
+frame or a sampled waiting peak. The
+`-cancel-cpu` and `-global-option-cpu` leaves cycle the integration and global
+Profiling switches, then cancel a partially completed native job and require a
+fresh job in the same logical worker slot with a new native object/UUID and
+sample. The `-provider-cpu` leaf
+physically blocks a blocking Pattern Provider with a full incompatible furnace
+input, checks no committed output or sample, releases it, then finishes. The
+`-admission-cpu` leaf calculates an oversized real AE2 plan, requires native
+CPU_TOO_SMALL without profiler work, then runs a normal craft. The `-reload-cpu`
+leaf saves the same world/job after a real output and sample, verifies
+graph/history recovery and a late output without a fabricated sample, then
+requires a fresh post-restart craft. These leaves still await a clean
+prepared-client run and visual review.
+The focused `data-energistics-trinity` group selects exactly the ordinary Data
+CPU plus six Trinity leaves in one compatible `1565514` graph. Run reload as
+its separate focused two-process continuation and addon-absent `craft-lifecycle`
+as a base-only graph.
+
 ## Crafting Tree scenario
 
 `crafting-tree-screen` opens the real tree toolbar button from a populated
@@ -939,8 +984,9 @@ and the original Crafting Tree artifact in Project Infinity 0.1.
 ## Optional fixture contract
 
 An add-on CPU scenario uses the same disposable world, UI flow, profiler checks,
-result schema, and runner. Its fixture owns only the add-on-specific placement,
-formation, and CPU selection. Scenario names end in `-cpu`; the runner derives
+result schema, and runner. Its fixture owns add-on-specific placement,
+formation, CPU selection, and native lifecycle observations. Scenario names end
+in `-cpu`; the runner derives
 the standard add-on checks and screenshot name from that convention.
 
 Adding an optional mod requires one fixture implementation, one registry entry,

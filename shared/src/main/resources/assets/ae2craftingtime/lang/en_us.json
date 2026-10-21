@@ -203,6 +203,7 @@
   "config.ae2craftingtime.advancedAe": "AdvancedAE CPU profiling",
   "config.ae2craftingtime.neoEco": "NeoEco CPU profiling",
   "config.ae2craftingtime.ae2LightningTech": "AE2 Lightning Tech CPU profiling",
+  "config.ae2craftingtime.dataEnergisticsTrinity": "Data Energistics Trinity CPU profiling",
   "config.ae2craftingtime.appliedMekanistics": "Applied Mekanistics chemicals",
   "config.ae2craftingtime.maxSamples": "Retained samples (1-100)",
   "config.ae2craftingtime.outlierMultiplier": "Outlier multiplier (1-1000)",

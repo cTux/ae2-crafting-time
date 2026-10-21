@@ -79,7 +79,8 @@ function Get-UiSmokeJavaLaunchPhases {
     )
     if ($PrepareOnly) { return @() }
     if ($ResumeOnly) { return @(2) }
-    if ($Scenario -in @('cpu-list-total-ttc', 'standard-status-controls', 'badge-background') -or $ContainsCpuList) { return @(1, 2) }
+    if ($Scenario -in @('cpu-list-total-ttc', 'standard-status-controls', 'badge-background',
+            'data-energistics-trinity-reload-cpu') -or $ContainsCpuList) { return @(1, 2) }
     return @(1)
 }
 

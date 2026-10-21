@@ -68,8 +68,17 @@ public final class CraftPlanScenario {
     private String networkId;
     private String outputId;
     private CompletableFuture<String> cpuCheck;
+    private boolean clientCpuSelectionSent;
+    private CompletableFuture<Boolean> nativePlanCheck;
     private CompletableFuture<Boolean> submitCheck;
+    private CompletableFuture<String> planRequestCheck;
     private CompletableFuture<Integer> sampleCheck;
+    private CompletableFuture<Boolean> restartCheck;
+    private CompletableFuture<String> resumeCheck;
+    private boolean freshAfterRestart;
+    private boolean freshAfterCancellation;
+    private CompletableFuture<Boolean> cancelCheck;
+    private CompletableFuture<Boolean> providerCheck;
     private final WirelessTerminalFixture wirelessFixture;
     private final RequesterFixture requesterFixture;
     private final Ae2NetworkAnalyserFixture networkAnalyserFixture;
@@ -123,6 +132,8 @@ public final class CraftPlanScenario {
             return;
         }
         var timeout = options.scenario().equals("standard-status-controls") ? Duration.ofMinutes(30)
+                : state == ScenarioState.ADDON_CRAFT_SUBMITTED && addonFixture != null
+                ? addonFixture.submittedCraftTimeout()
                 : state == ScenarioState.STARTING || standard != null || noSpace != null || noProvider != null
                 || noPower != null || providerDispatchStatus != null || chanceOutput != null ? START_TIMEOUT : STEP_TIMEOUT;
         if (elapsed().compareTo(timeout) > 0) {
@@ -139,8 +150,15 @@ public final class CraftPlanScenario {
                 case PLAN_OPEN -> openPlan();
                 case PLAN_STABLE -> stabilizePlan();
                 case ADDON_CPU_SELECTED -> submitAddonCraft();
-                case ADDON_CRAFT_SUBMITTED -> awaitAddonSample();
-                case ADDON_SAMPLE_RECORDED -> selectTarget(ScenarioState.ADDON_PLAN_OPEN);
+                case ADDON_CRAFT_SUBMITTED -> {
+                    if (resumingAddon()) awaitAddonRestart();
+                    else awaitAddonSample();
+                }
+                case ADDON_SAMPLE_RECORDED -> {
+                    if (checks.containsKey("status-active") && minecraft.screen == null)
+                        reopenAddonTerminal();
+                    else selectTarget(ScenarioState.ADDON_PLAN_OPEN);
+                }
                 case ADDON_PLAN_OPEN -> verifyAddonTtc();
                 case BASE_CHECKED -> cycleSorts();
                 case SORTS_CHECKED -> checkTooltip();
@@ -157,6 +175,11 @@ public final class CraftPlanScenario {
 
     public ScenarioState state() {
         return state;
+    }
+
+    private boolean resumingAddon() {
+        return addonFixture != null && addonFixture.supportsRestart() && options.continuation() != null
+                && !freshAfterRestart;
     }
 
     public DriverResult.Failure failure() {
@@ -239,12 +262,15 @@ public final class CraftPlanScenario {
             advance(ScenarioState.WORLD_READY);
             return;
         }
-        if (baseFixture != null && !baseFixture.setup(minecraft, marker)) {
+        // A restarting addon keeps the original grid and job in this same world.
+        if (baseFixture != null && !resumingAddon() && !baseFixture.setup(minecraft, marker)) {
             return;
         }
         if (addonFixture != null && !addonFixture.setup(minecraft, marker)) {
             return;
         }
+        if (addonFixture != null && checks.containsKey("capacity-rejected"))
+            checks.put("capacity-rejected", addonFixture.admissionRejected());
         if (wirelessFixture != null && !setupWirelessTerminal()) {
             return;
         }
@@ -256,6 +282,23 @@ public final class CraftPlanScenario {
             return;
         }
         outputId = addonFixture == null ? marker.outputId() : addonFixture.outputId(marker);
+        if (resumingAddon()) {
+            if (resumeCheck == null) {
+                var server = minecraft.getSingleplayerServer();
+                var playerId = minecraft.player.getUUID();
+                resumeCheck = server.submit(() -> {
+                    var player = server.getPlayerList().getPlayer(playerId);
+                    return addonFixture.resumeRestartCheckpoint(player, options);
+                });
+            }
+            if (!resumeCheck.isDone()) return;
+            networkId = Objects.requireNonNull(resumeCheck.join(), "addon CPU reload did not restore matching job");
+            checks.put("same-job", true);
+            checks.put("estimate-restored", true);
+            checks.put("no-fabricated-sample", true);
+            advance(ScenarioState.ADDON_CRAFT_SUBMITTED);
+            return;
+        }
         advance(ScenarioState.WORLD_READY);
     }
 
@@ -420,10 +463,10 @@ public final class CraftPlanScenario {
             return;
         }
         var repo = ((MEStorageScreenAccessor) screen).ae2craftingtime_test_driver$repo();
-        var entry = repo.getAllEntries().stream()
-                .filter(candidate -> candidate.getWhat().getId().toString().equals(outputId))
-                .filter(candidate -> candidate.isCraftable())
-                .findFirst().orElse(null);
+        var entry = TargetEntrySelection.firstCraftable(repo.getAllEntries(),
+                candidate -> candidate.getWhat(), candidate -> candidate.isCraftable(),
+                addonFixture == null ? null : addonFixture.exactOutputKey(), outputId,
+                key -> key.getId().toString());
         if (entry == null) {
             return;
         }
@@ -500,12 +543,14 @@ public final class CraftPlanScenario {
     private void openPlan() {
         if (minecraft.screen instanceof CraftAmountScreen amount) {
             if (amountSubmitted) return;
-            amountSubmitted = true;
             if (addonFixture != null) addonFixture.configureAmount(amount);
+            if (addonFixture != null && !retainAddonPlanRequest()) return;
+            amountSubmitted = true;
             ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next().onPress();
             return;
         }
-        if (minecraft.screen instanceof CraftConfirmScreen) {
+        if (addonFixture == null ? minecraft.screen instanceof CraftConfirmScreen
+                : addonFixture.isConfirmScreen(minecraft.screen)) {
             advance(ScenarioState.PLAN_STABLE);
         }
     }
@@ -516,6 +561,10 @@ public final class CraftPlanScenario {
             return;
         }
         var snapshot = UiObservationStore.latest();
+        if (addonFixture != null && !addonFixture.requiresPlanRows()) {
+            stabilizeNativeAddonPlan(snapshot);
+            return;
+        }
         if (snapshot == null || snapshot.rows().stream().noneMatch(row -> row.outputId().equals(outputId))) {
             stableRows.reset();
             return;
@@ -549,6 +598,44 @@ public final class CraftPlanScenario {
         screenshot("craft-plan.png");
         clickSort(snapshot);
         advance(ScenarioState.BASE_CHECKED);
+    }
+
+    private void stabilizeNativeAddonPlan(UiSnapshot snapshot) throws IOException {
+        var expected = addonFixture.confirmScreenName();
+        var current = minecraft.screen == null ? "" : minecraft.screen.getClass().getName();
+        if (!expected.equals(current) || snapshot == null || !expected.equals(snapshot.screen())
+                || snapshot.frame() == lastFrame) return;
+        if (nativePlanCheck == null) {
+            var server = minecraft.getSingleplayerServer();
+            var playerId = minecraft.player.getUUID();
+            nativePlanCheck = server.submit(() -> {
+                var player = server.getPlayerList().getPlayer(playerId);
+                if (player == null || !(player.containerMenu instanceof appeng.menu.me.crafting.CraftConfirmMenu menu))
+                    return false;
+                var plan = ((CraftConfirmMenuAccessor) menu).ae2craftingtime_test_driver$result();
+                if (plan == null) return false;
+                var output = plan.finalOutput();
+                if (plan.simulation() || output == null || !output.what().getId().toString().equals(outputId)
+                        || output.amount() <= 0)
+                    throw new IllegalStateException("native addon confirm has no executable " + outputId + " plan");
+                return true;
+            });
+            return;
+        }
+        if (!nativePlanCheck.isDone()) return;
+        var ready = nativePlanCheck.join();
+        if (!nativePlanReady(expected, current, snapshot.screen(), snapshot.frame() != lastFrame, ready)) {
+            nativePlanCheck = null;
+            return;
+        }
+        lastFrame = snapshot.frame();
+        screenshot("addon-native-plan.png");
+        selectAddonCpu();
+    }
+
+    static boolean nativePlanReady(String expected, String current, String observed,
+            boolean freshFrame, boolean executablePlan) {
+        return expected.equals(current) && expected.equals(observed) && freshFrame && executablePlan;
     }
 
     private void verifyCraftingTree() throws IOException {
@@ -673,12 +760,17 @@ public final class CraftPlanScenario {
     }
 
     private void selectAddonCpu() {
-        if (!(minecraft.screen instanceof CraftConfirmScreen)) {
+        if (!addonFixture.isConfirmScreen(minecraft.screen)) {
+            return;
+        }
+        if (!clientCpuSelectionSent && addonFixture.selectCpuOnClient(minecraft)) {
+            clientCpuSelectionSent = true;
             return;
         }
         if (cpuCheck == null) {
             var server = minecraft.getSingleplayerServer();
             var playerId = minecraft.player.getUUID();
+            boolean nativeClientSelection = clientCpuSelectionSent;
             cpuCheck = server.submit(() -> {
                 var player = server.getPlayerList().getPlayer(playerId);
                 if (player == null || !(player.containerMenu instanceof appeng.menu.me.crafting.CraftConfirmMenu menu)) {
@@ -688,9 +780,14 @@ public final class CraftPlanScenario {
                 var accessor = (CraftConfirmMenuAccessor) menu;
                 var cpu = addonFixture.cpu(player, context.grid());
                 if (cpu != null) {
-                    accessor.ae2craftingtime_test_driver$selectedCpu(cpu);
+                    if (nativeClientSelection) {
+                        if (accessor.ae2craftingtime_test_driver$selectedCpu() != cpu) return null;
+                    } else {
+                        accessor.ae2craftingtime_test_driver$selectedCpu(cpu);
+                    }
                     var id = ProfilerBridge.networkId(context.grid());
-                    ProfilerBridge.clearStats(new ProfileKey(id, outputId));
+                    if (!freshAfterRestart && !freshAfterCancellation)
+                        ProfilerBridge.clearStats(new ProfileKey(id, outputId));
                     return id;
                 }
                 return null;
@@ -708,7 +805,12 @@ public final class CraftPlanScenario {
         advance(ScenarioState.ADDON_CPU_SELECTED);
     }
 
-    private void submitAddonCraft() {
+    private void submitAddonCraft() throws IOException {
+        if (needsVisibleCpuSelection(clientCpuSelectionSent, checks)) {
+            if (!addonFixture.visibleCpuSelection(minecraft, outputId, lastFrame, this::screenshotUnchecked)) return;
+            lastFrame = UiObservationStore.latest().frame();
+            checks.put("cpu-selected-visible", true);
+        }
         if (submitCheck == null) {
             var server = minecraft.getSingleplayerServer();
             var playerId = minecraft.player.getUUID();
@@ -742,42 +844,204 @@ public final class CraftPlanScenario {
     private void awaitAddonSample() {
         if (sampleCheck == null) {
             var server = minecraft.getSingleplayerServer();
-            sampleCheck = server.submit(() -> ProfilerBridge.stats(new ProfileKey(networkId, outputId))
-                    .map(stats -> stats.sampleCount()).orElse(0));
+            var playerId = minecraft.player.getUUID();
+            sampleCheck = server.submit(() -> {
+                var player = server.getPlayerList().getPlayer(playerId);
+                if (player == null) throw new IllegalStateException("fixture player is unavailable");
+                var nativeEvidence = addonFixture.nativeEvidence(player, StatsRequestContext.current(player).grid());
+                if (nativeEvidence != null) {
+                    try {
+                        Files.createDirectories(options.output());
+                        Files.writeString(options.output().resolve("native-cpu-observation.json"), nativeEvidence);
+                    } catch (IOException error) {
+                        throw new IllegalStateException("cannot retain native CPU observation", error);
+                    }
+                }
+                return ProfilerBridge.stats(new ProfileKey(networkId, outputId))
+                        .map(stats -> stats.sampleCount()).orElse(0);
+            });
         }
         if (!sampleCheck.isDone()) {
             return;
         }
-        if (sampleCheck.join() == 0) {
+        int count = sampleCheck.join();
+        if (addonFixture.supportsProviderBlock() && !checks.get("provider-blocked")
+                && checks.get("status-active") && addonFixture.nativeActive()) {
+            if (count != 0 || DispatchObservation.snapshot().dispatched() != 0)
+                throw new IllegalStateException("blocked native provider dispatched before release");
+            if (providerCheck == null) {
+                var server = minecraft.getSingleplayerServer();
+                var playerId = minecraft.player.getUUID();
+                providerCheck = server.submit(() -> addonFixture.releaseBlockedProvider(
+                        server.getPlayerList().getPlayer(playerId), networkId, outputId));
+            }
+            if (!providerCheck.isDone()) return;
+            if (!providerCheck.join()) { providerCheck = null; sampleCheck = null; return; }
+            checks.put("provider-blocked", true);
+            sampleCheck = null;
+            return;
+        }
+        if (addonFixture.supportsCancelFollowUp() && !freshAfterCancellation
+                && count == 1 && checks.get("status-active") && addonFixture.nativeActive()) {
+            if (cancelCheck == null) {
+                var server = minecraft.getSingleplayerServer();
+                var playerId = minecraft.player.getUUID();
+                cancelCheck = server.submit(() -> addonFixture.cancelForFreshJob(
+                        server.getPlayerList().getPlayer(playerId), networkId, outputId));
+            }
+            if (!cancelCheck.isDone()) return;
+            if (!cancelCheck.join()) { cancelCheck = null; sampleCheck = null; return; }
+            if (!addonFixture.optionChecked())
+                throw new IllegalStateException("addon option cycle was not verified before cancellation");
+            checks.put("options-off-on", true);
+            checks.put("cancelled-job", true);
+            checks.put("status-active", false);
+            freshAfterCancellation = true;
+            sampleCheck = null;
+            minecraft.setScreen(null);
+            advance(ScenarioState.WORLD_READY);
+            return;
+        }
+        if (addonFixture.supportsRestart() && !freshAfterRestart && options.continuation() == null
+                && count == addonFixture.restartSampleBaseline() && checks.get("status-active")
+                && addonFixture.nativeActive()) {
+                if (restartCheck == null) {
+                    var server = minecraft.getSingleplayerServer();
+                    restartCheck = server.submit(() -> addonFixture.writeRestartCheckpoint(
+                            options.output().resolve("addon-cpu-restart-continuation.json"), options, networkId));
+                }
+                if (!restartCheck.isDone()) return;
+                if (restartCheck.join()) {
+                    cleanup();
+                    minecraft.stop();
+                    advance(ScenarioState.QUIT_REQUESTED);
+                    return;
+                }
+                restartCheck = null;
+        }
+        if (count <= (freshAfterRestart || freshAfterCancellation ? 1 : 0)) {
+            if (checks.containsKey("status-active")
+                    && !checks.get("status-active") && addonFixture.nativeActive()) {
+                observeAddonStatus(false);
+                sampleCheck = null;
+                return;
+            }
+            if (addonFixture.nativeCompleted())
+                throw new IllegalStateException("native addon craft completed with accepted output but no profiling sample; see native-cpu-observation.json");
             sampleCheck = null;
             return;
         }
         var observed = DispatchObservation.snapshot();
-        if (!addonFixture.dispatchReady(observed)) {
+        if (!addonFixture.readyForPass(observed)) {
             sampleCheck = null;
             return;
         }
+        int expectedSamples = addonFixture.expectedSampleCount(freshAfterRestart || freshAfterCancellation);
+        if (expectedSamples > 0 && count != expectedSamples)
+            throw new IllegalStateException("native addon craft recorded " + count
+                    + " samples; expected " + expectedSamples + " for accepted output");
         addonFixture.verifyDispatch(observed);
         AdapterSmokePolicy.verifyCpu(DriverPlatform.TARGET, options.scenario(), observed);
+        if (checks.containsKey("status-active") && !checks.get("status-completed")) {
+            if (!checks.get("status-active"))
+                throw new IllegalStateException("native addon worker completed before active Status was observed");
+            if (!addonFixture.nativeCompleted() || !observeAddonStatus(true)) {
+                sampleCheck = null;
+                return;
+            }
+        }
         checks.put("job-accepted", true);
         checks.put("dispatch-amount", true);
         checks.put("returned-amount", true);
         checks.put("job-finished", true);
         checks.put("profile-sample", true);
+        if (freshAfterCancellation) {
+            if (!addonFixture.sameWorkerNewJob())
+                throw new IllegalStateException("fresh addon job did not use the same native worker");
+            checks.put("same-worker-new-job", true);
+            checks.put("fresh-sample", true);
+        }
+        if (freshAfterRestart) {
+            checks.put("fresh-job", true);
+            checks.put("fresh-sample", true);
+        }
         stableRows.reset();
         advance(ScenarioState.ADDON_SAMPLE_RECORDED);
+    }
+
+    private void awaitAddonRestart() throws IOException {
+        if (sampleCheck == null) {
+            var server = minecraft.getSingleplayerServer();
+            var playerId = minecraft.player.getUUID();
+            sampleCheck = server.submit(() -> {
+                var player = server.getPlayerList().getPlayer(playerId);
+                var evidence = addonFixture.nativeEvidence(player, StatsRequestContext.current(player).grid());
+                if (evidence != null) {
+                    try {
+                        Files.createDirectories(options.output());
+                        Files.writeString(options.output().resolve("native-cpu-observation.json"), evidence);
+                    } catch (IOException error) { throw new IllegalStateException(error); }
+                }
+                return ProfilerBridge.stats(new ProfileKey(networkId, outputId))
+                        .map(stats -> stats.sampleCount()).orElse(0);
+            });
+        }
+        if (!sampleCheck.isDone()) return;
+        if (sampleCheck.join() != addonFixture.restartSampleBaseline())
+            throw new IllegalStateException("restored addon job fabricated a timing sample from pre-reload work");
+        if (!checks.get("status-active") && addonFixture.nativeActive()) observeAddonStatus(false);
+        if (addonFixture.nativeCompleted()) {
+            if (!checks.get("status-active"))
+                throw new IllegalStateException("restored addon job completed before active native Status was visible");
+            if (!observeAddonStatus(true)) { sampleCheck = null; return; }
+            if (!addonFixture.restoredGraphAdvanced())
+                throw new IllegalStateException("restored addon graph did not advance on accepted output");
+            checks.put("native-complete", true);
+            checks.put("restored-graph-advanced", true);
+            checks.put("status-active", false);
+            checks.put("status-completed", false);
+            freshAfterRestart = true;
+            sampleCheck = null;
+            minecraft.setScreen(null);
+            advance(ScenarioState.WORLD_READY);
+            return;
+        }
+        sampleCheck = null;
+    }
+
+    private boolean observeAddonStatus(boolean completed) {
+        if (minecraft.screen == null) {
+            reopenAddonTerminal();
+            return false;
+        }
+        if (!addonFixture.observeNativeStatus(minecraft, outputId, completed, lastFrame, this::screenshotUnchecked))
+            return false;
+        checks.put(completed ? "status-completed" : "status-active", true);
+        lastFrame = UiObservationStore.latest().frame();
+        return true;
+    }
+
+    private void reopenAddonTerminal() {
+        var pos = new BlockPos(marker.terminal().x(), marker.terminal().y(), marker.terminal().z());
+        var face = Direction.valueOf(marker.terminal().face());
+        minecraft.gameMode.useItemOn(minecraft.player, InteractionHand.MAIN_HAND,
+                new BlockHitResult(Vec3.atCenterOf(pos).add(Vec3.atLowerCornerOf(face.getNormal()).scale(0.5)),
+                        face, pos, false));
     }
 
     private void verifyAddonTtc() throws IOException {
         if (minecraft.screen instanceof CraftAmountScreen amount) {
             if (amountSubmitted) return;
-            amountSubmitted = true;
             if (addonFixture != null) addonFixture.configureAmount(amount);
+            if (addonFixture != null && !retainAddonPlanRequest()) return;
+            amountSubmitted = true;
             ((CraftAmountScreenAccessor) amount).ae2craftingtime_test_driver$next().onPress();
             return;
         }
         var snapshot = UiObservationStore.latest();
-        if (!(minecraft.screen instanceof CraftConfirmScreen) || snapshot == null || snapshot.frame() == lastFrame) {
+        if (!(minecraft.screen instanceof CraftConfirmScreen) && (addonFixture == null
+                || !addonFixture.isConfirmScreen(minecraft.screen))
+                || snapshot == null || snapshot.frame() == lastFrame) {
             return;
         }
         lastFrame = snapshot.frame();
@@ -788,9 +1052,36 @@ public final class CraftPlanScenario {
         if (!resolved) {
             return;
         }
+        if (!addonFixture.observePlanPresentation(minecraft, snapshot.frame(), this::screenshotUnchecked)) return;
         checks.put("ttc-after-sample", true);
         screenshot(options.scenario().replace("-cpu", "") + "-profiled-plan.png");
         writePass();
+    }
+
+    private boolean retainAddonPlanRequest() {
+        if (planRequestCheck == null) {
+            var server = minecraft.getSingleplayerServer();
+            var playerId = minecraft.player.getUUID();
+            planRequestCheck = server.submit(() -> {
+                var player = server.getPlayerList().getPlayer(playerId);
+                if (player == null) throw new IllegalStateException("fixture player is unavailable");
+                return addonFixture.planRequestEvidence(player);
+            });
+            return false;
+        }
+        if (!planRequestCheck.isDone()) return false;
+        var evidence = planRequestCheck.join();
+        planRequestCheck = null;
+        if (evidence == null && addonFixture.exactOutputKey() != null) return false;
+        if (evidence != null) {
+            try {
+                Files.createDirectories(options.output());
+                Files.writeString(options.output().resolve("native-plan-requests.json"), evidence);
+            } catch (IOException error) {
+                throw new IllegalStateException("cannot retain native Plan request", error);
+            }
+        }
+        return true;
     }
 
     private void cycleSorts() {
@@ -860,13 +1151,17 @@ public final class CraftPlanScenario {
         advance(ScenarioState.QUIT_REQUESTED);
     }
 
-    void cleanup() { if (standard != null) standard.cleanup(); }
+    void cleanup() {
+        if (standard != null) standard.cleanup();
+        if (addonFixture != null) addonFixture.cleanupClient();
+    }
     void cleanup(ServerPlayer player) {
-        cleanup();
         if (addonFixture != null) addonFixture.cleanup(player);
     }
 
     private void fail(String code, String expected, String observed) {
+        try { cleanup(); }
+        catch (RuntimeException error) { observed += "; client cleanup: " + ReportText.failure(error); }
         if (standard != null) standard.releaseKeys();
         if (providerDispatchStatus != null) {
             var cleanupFailure = providerDispatchStatus.cleanup(minecraft);
@@ -1028,11 +1323,38 @@ public final class CraftPlanScenario {
         if (!ScenarioFlow.allows(state, next)) {
             throw new IllegalStateException("invalid scenario transition " + state + " -> " + next);
         }
+        if (state == ScenarioState.ADDON_CRAFT_SUBMITTED && next == ScenarioState.WORLD_READY)
+            resetAddonAttempt();
         System.out.println("AE2CT phase " + java.time.Instant.now() + " case=" + options.scenario()
                 + " from=" + state + " to=" + next + " durationNanos=" + elapsed().toNanos());
         amountSubmitted = false;
         state = next;
         stateStarted = System.nanoTime();
+    }
+
+    private void resetAddonAttempt() {
+        blockTerminalReadiness.reset();
+        cpuCheck = null;
+        clientCpuSelectionSent = false;
+        nativePlanCheck = null;
+        submitCheck = null;
+        planRequestCheck = null;
+        sampleCheck = null;
+        restartCheck = null;
+        resumeCheck = null;
+        cancelCheck = null;
+        providerCheck = null;
+        resetAddonSelectionChecks(checks);
+        stableRows.reset();
+    }
+
+    static void resetAddonSelectionChecks(java.util.Map<String, Boolean> checks) {
+        if (checks.containsKey("cpu-selected")) checks.put("cpu-selected", false);
+        if (checks.containsKey("cpu-selected-visible")) checks.put("cpu-selected-visible", false);
+    }
+
+    static boolean needsVisibleCpuSelection(boolean clientActionSent, java.util.Map<String, Boolean> checks) {
+        return clientActionSent && !checks.getOrDefault("cpu-selected-visible", false);
     }
 
     private Duration elapsed() {
@@ -1076,12 +1398,19 @@ public final class CraftPlanScenario {
 
     String checkpoint() {
         if (resourceFixture != null) return resourceFixture.checkpoint();
-        return "state=" + state + " " + currentScreen();
+        return "state=" + state + " " + currentScreen()
+                + (baseFixture == null ? "" : " base=" + baseFixture.setupCheckpoint())
+                + (addonFixture == null ? "" : " addon=" + addonFixture.setupCheckpoint());
     }
 
     static final class BlockTerminalReadiness {
         private CompletableFuture<Void> serverReadiness;
         private boolean interactionRequested;
+
+        void reset() {
+            serverReadiness = null;
+            interactionRequested = false;
+        }
 
         static <T> T requirePresent(T value, String message) {
             if (value == null) throw new IllegalStateException(message);

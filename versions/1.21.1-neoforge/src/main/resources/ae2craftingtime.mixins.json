@@ -28,7 +28,8 @@
     "NeoEcoEstimateMixin",
     "NeoEcoPendingDispatchMixin",
     "NeoEcoLongBatchDispatchMixin",
-    "NeoEcoIntBatchDispatchMixin"
+    "NeoEcoIntBatchDispatchMixin",
+    "TrinityCpuLogicMixin"
   ],
   "client": [
     "AbstractContainerScreenCpuTtcMixin",
@@ -45,7 +46,8 @@
     "CraftingTreeWidgetMixin",
     "CraftingTreeNewWidgetMixin",
     "MERequesterScreenMixin",
-    "WirelessTerminalScreenMixin"
+    "WirelessTerminalScreenMixin",
+    "TrinityMaterialTableMixin"
   ],
   "injectors": {
     "defaultRequire": 1

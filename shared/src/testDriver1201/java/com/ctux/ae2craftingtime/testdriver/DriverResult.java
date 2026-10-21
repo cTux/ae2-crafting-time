@@ -24,6 +24,30 @@ public record DriverResult(
             "screen", "ttc-row", "total-ttc", "sort-cycle", "tooltip", "layout");
     public static final List<String> ADDON_CPU_CHECKS = List.of(
             "cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample");
+    public static final List<String> TRINITY_CPU_CHECKS = List.of(
+            "cpu-selected", "cpu-selected-visible", "job-accepted", "dispatch-amount", "returned-amount",
+            "job-finished", "profile-sample", "status-active", "status-completed", "ttc-after-sample");
+    public static final List<String> TRINITY_COUNTED_CHECKS = List.of(
+            "cpu-selected", "cpu-selected-visible", "job-accepted", "dispatch-amount",
+            "returned-amount", "job-finished", "profile-sample", "ttc-after-sample");
+    public static final List<String> TRINITY_RELOAD_CHECKS = List.of(
+            "same-job", "estimate-restored", "no-fabricated-sample", "status-active",
+            "native-complete", "status-completed", "restored-graph-advanced",
+            "cpu-selected", "cpu-selected-visible", "job-accepted", "dispatch-amount",
+            "returned-amount", "job-finished", "profile-sample", "fresh-job",
+            "fresh-sample", "ttc-after-sample");
+    public static final List<String> TRINITY_CANCEL_CHECKS = List.of(
+            "cpu-selected", "cpu-selected-visible", "status-active", "options-off-on", "cancelled-job",
+            "same-worker-new-job", "job-accepted", "dispatch-amount", "returned-amount",
+            "job-finished", "profile-sample", "fresh-sample", "status-completed", "ttc-after-sample");
+    public static final List<String> TRINITY_PROVIDER_CHECKS = List.of(
+            "cpu-selected", "cpu-selected-visible", "status-active", "provider-blocked",
+            "job-accepted", "dispatch-amount", "returned-amount", "job-finished",
+            "profile-sample", "status-completed", "ttc-after-sample");
+    public static final List<String> TRINITY_ADMISSION_CHECKS = List.of(
+            "capacity-rejected", "cpu-selected", "cpu-selected-visible", "status-active",
+            "job-accepted", "dispatch-amount", "returned-amount", "job-finished",
+            "profile-sample", "status-completed", "ttc-after-sample");
     public static final List<String> WIRELESS_TERMINAL_CHECKS = List.of("screen", "ttc-tooltip", "plan-ttc");
     public static final List<String> ME_REQUESTER_CHECKS = List.of("screen", "ttc-row", "total-ttc", "layout");
     public static final List<String> VISUAL_TOOL_CHECKS = List.of("screen", "layout");
@@ -76,7 +100,14 @@ public record DriverResult(
                 : scenario.equals(RequesterFixture.SCENARIO) ? ME_REQUESTER_CHECKS
                 : scenario.equals(Ae2NetworkAnalyserFixture.SCENARIO) ? VISUAL_TOOL_CHECKS
                 : scenario.equals("aeinfinitybooster-terminal") ? WIRELESS_RANGE_CHECKS
-                : WirelessTerminalFixture.supports(scenario) ? WIRELESS_TERMINAL_CHECKS : ADDON_CPU_CHECKS;
+                : WirelessTerminalFixture.supports(scenario) ? WIRELESS_TERMINAL_CHECKS
+                : scenario.equals("data-energistics-trinity-reload-cpu") ? TRINITY_RELOAD_CHECKS
+                : scenario.equals("data-energistics-trinity-cancel-cpu")
+                    || scenario.equals("data-energistics-trinity-global-option-cpu") ? TRINITY_CANCEL_CHECKS
+                : scenario.equals("data-energistics-trinity-provider-cpu") ? TRINITY_PROVIDER_CHECKS
+                : scenario.equals("data-energistics-trinity-admission-cpu") ? TRINITY_ADMISSION_CHECKS
+                : scenario.equals("data-energistics-trinity-counted-cpu") ? TRINITY_COUNTED_CHECKS
+                : scenario.startsWith("data-energistics-trinity-") ? TRINITY_CPU_CHECKS : ADDON_CPU_CHECKS;
     }
 
     public record Failure(String step, String code, String expected, String observed) {

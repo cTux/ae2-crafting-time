@@ -84,6 +84,7 @@ ordinary AE2 CPUs and the Adaptive Pattern Provider's native-provider mode with
 vanilla processing. Trinity CPUs and other provider modes remain unqualified
 ([#740](https://github.com/cTux/ae2-crafting-time/issues/740)).
 
-The separate [Trinity profiling plan](../data-energistics-trinity/spec.md) defines
-its fixture-first investigation and integration work; it does not extend the
-qualified boundary above until that work is verified.
+The separate [Trinity profiling work](../data-energistics-trinity/spec.md)
+completed its required native missing-profile baseline on PR #748 at
+`bc8a8d48`. Its adapter, counted/reusable behavior, recovery and visual checks
+still need qualification; the boundary above has not expanded yet.

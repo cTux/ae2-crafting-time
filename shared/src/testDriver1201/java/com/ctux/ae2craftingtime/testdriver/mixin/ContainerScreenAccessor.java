@@ -6,6 +6,8 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(AbstractContainerScreen.class)
 public interface ContainerScreenAccessor {
+    @Accessor("leftPos") int ae2craftingtime_test_driver$left();
+    @Accessor("topPos") int ae2craftingtime_test_driver$top();
     @Accessor("imageWidth") int ae2craftingtime_test_driver$width();
     @Accessor("imageHeight") int ae2craftingtime_test_driver$height();
 }

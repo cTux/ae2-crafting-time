@@ -47,6 +47,20 @@ class RowStatsJobTest {
         assertThrows(NullPointerException.class, () -> new RowStatsRequestId(1, 1, 7, null));
     }
 
+    @Test
+    void trinityNestedNativeJobKeepsTheSameIdUntilActualTerminalClear() {
+        var cpu = new com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu();
+        assertEquals(RowStatsJob.NO_JOB, RowStatsJob.readJobId(cpu));
+        cpu.logic.job = new com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu.Job(
+                new com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu.Link(A));
+        assertEquals(A, RowStatsJob.readJobId(cpu));
+        cpu.logic.job = new com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu.Job(
+                new com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu.Link(B));
+        assertEquals(B, RowStatsJob.readJobId(cpu));
+        cpu.logic.job = null;
+        assertEquals(RowStatsJob.NO_JOB, RowStatsJob.readJobId(cpu));
+    }
+
     public static class Cpu { public Logic craftingLogic = new Logic(); }
     public static class Logic {
         Link link;

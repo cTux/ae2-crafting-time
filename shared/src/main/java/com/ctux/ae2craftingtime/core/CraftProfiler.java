@@ -236,6 +236,33 @@ public final class CraftProfiler {
         return true;
     }
 
+    /** Retracts cancelled, unfinished output from the newest starts; it never records a sample. */
+    public long withdraw(ProfileKey key, Object scope, long amount) {
+        if (!enabled || key == null || scope == null || amount <= 0) return 0;
+        var scoped = pending.get(scope);
+        var queue = scoped == null ? null : scoped.get(key);
+        if (queue == null) return 0;
+        long left = amount;
+        while (left > 0 && !queue.isEmpty()) {
+            var craft = queue.peekLast();
+            long removed = Math.min(left, craft.remainingAmount);
+            craft.remainingAmount -= removed;
+            left -= removed;
+            if (craft.remainingAmount == 0) queue.removeLast();
+        }
+        if (queue.isEmpty()) {
+            scoped.remove(key);
+            unindex(pendingScopes, key, scope);
+            removeLastProgress(scope, key);
+            if (scoped.isEmpty()) pending.remove(scope);
+            if (!hasPending(key)) {
+                var interval = completionIntervals.get(key);
+                if (interval.returnedAmount == 0) completionIntervals.remove(key);
+            }
+        }
+        return amount - left;
+    }
+
     /** Completes an output whose CPU scope changed during a chunk reload. */
     public boolean completeUniquePending(ProfileKey key, long amount, long tick) {
         if (key == null || amount <= 0) return false;
@@ -340,6 +367,17 @@ public final class CraftProfiler {
                 }
             }
         }
+    }
+
+    /** Drop disabled scopes at configuration time, even while their CPU is unloaded. */
+    public Set<Object> clearDisabledScopes(java.util.function.Predicate<Object> disabled) {
+        var scopes = Collections.newSetFromMap(new IdentityHashMap<Object, Boolean>());
+        scopes.addAll(pending.keySet());
+        scopes.addAll(waiting.keySet());
+        scopes.addAll(jobEstimates.keySet());
+        scopes.removeIf(scope -> !disabled.test(scope));
+        for (var scope : scopes) clearPending(scope);
+        return Collections.unmodifiableSet(scopes);
     }
 
     public void updateCapacity(Object scope, int usedParallelSlots, int totalParallelSlots, long tick) {

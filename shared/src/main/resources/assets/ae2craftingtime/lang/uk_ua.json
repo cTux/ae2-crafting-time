@@ -203,6 +203,7 @@
   "config.ae2craftingtime.advancedAe": "Профілювання ЦП AdvancedAE",
   "config.ae2craftingtime.neoEco": "Профілювання ЦП NeoEco",
   "config.ae2craftingtime.ae2LightningTech": "Профілювання ЦП AE2 Lightning Tech",
+  "config.ae2craftingtime.dataEnergisticsTrinity": "Профілювання ЦП Trinity Data Energistics",
   "config.ae2craftingtime.appliedMekanistics": "Хімічні ресурси Applied Mekanistics",
   "config.ae2craftingtime.maxSamples": "Збережені зразки (1-100)",
   "config.ae2craftingtime.outlierMultiplier": "Множник викидів (1-1000)",

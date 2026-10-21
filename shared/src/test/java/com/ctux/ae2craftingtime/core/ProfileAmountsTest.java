@@ -6,6 +6,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ProfileAmountsTest {
     @Test
@@ -21,6 +22,10 @@ class ProfileAmountsTest {
         assertEquals(3, ProfileAmounts.normalize("other:unscaled", 0, 3));
         assertEquals(81, ProfileAmounts.normalize("minecraft:water", 1000, 81));
         assertEquals(1000, ProfileAmounts.normalize("minecraft:water", 81_000, 81_000));
+        assertEquals(Long.MAX_VALUE, ProfileAmounts.normalize("minecraft:water", 1000, Long.MAX_VALUE));
+        assertEquals(Long.MAX_VALUE / 81, ProfileAmounts.normalize("minecraft:water", 81_000, Long.MAX_VALUE));
+        assertThrows(ArithmeticException.class,
+                () -> ProfileAmounts.normalize("minecraft:water", 2, Long.MAX_VALUE));
     }
 
     @Test

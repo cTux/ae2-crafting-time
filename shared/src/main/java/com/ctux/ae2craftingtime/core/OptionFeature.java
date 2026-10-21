@@ -56,7 +56,8 @@ public enum OptionFeature {
     AE2_LIGHTNING_TECH(Owner.SERVER, Group.INTEGRATIONS, "ae2LightningTech"),
     APPLIED_MEKANISTICS(Owner.SERVER, Group.INTEGRATIONS, "appliedMekanistics"),
     CHANCE_OUTPUT_DETECTION(Owner.SERVER, Group.DIAGNOSTICS, "chanceOutputDetection"),
-    CRAFTING_SUSPENSION(Owner.SERVER, Group.GENERAL, "craftingSuspension");
+    CRAFTING_SUSPENSION(Owner.SERVER, Group.GENERAL, "craftingSuspension"),
+    DATA_ENERGISTICS_TRINITY(Owner.SERVER, Group.INTEGRATIONS, "dataEnergisticsTrinity");
 
     public enum Owner { CLIENT, SERVER }
     public enum Group { DISPLAYS, WARNINGS, APPEARANCE, CONTROLS, GENERAL, DIAGNOSTICS, NOTIFICATIONS, INTEGRATIONS, ADVANCED }

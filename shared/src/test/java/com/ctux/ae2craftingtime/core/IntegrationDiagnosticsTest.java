@@ -9,6 +9,21 @@ import java.util.concurrent.Executors;
 import org.junit.jupiter.api.Test;
 
 class IntegrationDiagnosticsTest {
+    @Test void trinitySelectedCpuLookupFailureDisablesOnlyThatCapability() {
+        var events = new ArrayList<IntegrationDiagnostics.Event>();
+        var report = new IntegrationDiagnostics("1.21.1-neoforge", true,
+                id -> id.equals("data_energistics") ? "3.3.5" : null, Map.of(), events::add);
+        assertFalse(report.disabled("data_energistics", "selected-cpu"));
+        report.fail("data_energistics", "selected-cpu", "missing addon menu field", false,
+                new NoSuchFieldException("dataEnergistics$cpu"));
+        assertTrue(report.disabled("data_energistics", "selected-cpu"));
+        assertEquals(IntegrationDiagnostics.Outcome.PARTIAL, report.outcome("data_energistics"));
+        for (var capability : List.of("cpu-submit", "cpu-dispatch", "cpu-output", "cpu-finish"))
+            assertFalse(report.disabled("data_energistics", capability));
+        int count = events.size();
+        report.observe("data_energistics", "selected-cpu");
+        assertEquals(count, events.size());
+    }
     @Test void loadedConfigSkipsCaptureHooksUntilReenabled() {
         var events = new ArrayList<IntegrationDiagnostics.Event>();
         var report = new IntegrationDiagnostics("1.20.1-forge", true,
@@ -31,20 +46,21 @@ class IntegrationDiagnosticsTest {
     @Test void inventoryAndIndependentHookEvidence() {
         var events = new ArrayList<IntegrationDiagnostics.Event>();
         var report = new IntegrationDiagnostics("1.20.1-forge", true, id -> "1", Map.of(), events::add);
-        assertEquals(26, IntegrationDiagnostics.CATALOG.size());
+        assertEquals(27, IntegrationDiagnostics.CATALOG.size());
         assertFalse(report.disabled("ae2ct", "node"));
-        assertEquals(26, IntegrationDiagnostics.CATALOG.stream().map(IntegrationDiagnostics.Entry::id).distinct().count());
+        assertEquals(27, IntegrationDiagnostics.CATALOG.stream().map(IntegrationDiagnostics.Entry::id).distinct().count());
         assertEquals(IntegrationDiagnostics.Outcome.PENDING, report.outcome("ae2ct"));
         report.observe("ae2ct", "node");
         assertEquals(IntegrationDiagnostics.Outcome.PENDING, report.outcome("ae2ct"));
         assertTrue(events.get(events.size() - 1).message().contains("pending=[layout, tooltip, details, reset]"));
         for (var entry : IntegrationDiagnostics.CATALOG) {
             for (var capability : entry.capabilities()) report.observe(entry.id(), capability);
-            assertEquals(entry.mode().equals("compatibility-only") ? IntegrationDiagnostics.Outcome.SKIPPED
+            assertEquals(entry.mode().equals("compatibility-only") || !entry.targets().contains("1.20.1-forge")
+                    ? IntegrationDiagnostics.Outcome.SKIPPED
                     : IntegrationDiagnostics.Outcome.INITIALIZED, report.outcome(entry.id()));
         }
         report.summary();
-        assertTrue(events.get(events.size() - 1).message().contains("initialized=24 skipped=2 pending=0 partial=0 failed=0"));
+        assertTrue(events.get(events.size() - 1).message().contains("initialized=24 skipped=3 pending=0 partial=0 failed=0"));
         int count = events.size();
         report.summary();
         report.observe("ae2ct", "node");
@@ -65,7 +81,7 @@ class IntegrationDiagnosticsTest {
                 report.disable("ae2ct", "irrelevant", null);
                 report.summary();
                 assertTrue(events.stream().allMatch(event -> event.level().equals("INFO")));
-                assertTrue(events.get(events.size() - 1).message().contains("skipped=26"));
+                assertTrue(events.get(events.size() - 1).message().contains("skipped=27"));
             }
         }
         var events = new ArrayList<IntegrationDiagnostics.Event>();
@@ -165,7 +181,7 @@ class IntegrationDiagnosticsTest {
         var events = new ArrayList<IntegrationDiagnostics.Event>();
         var report = new IntegrationDiagnostics("1.20.1-forge", true, id -> "1", Map.of(), events::add);
         report.growth("plan-row", 1, 1);
-        assertEquals(27, events.size());
+        assertEquals(28, events.size());
         report.growth("plan-row", 1, 2);
         report.wireless("unrelated", false);
         assertEquals(IntegrationDiagnostics.Outcome.PENDING, report.outcome("wcwt"));

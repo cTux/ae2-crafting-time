@@ -12,6 +12,7 @@ import com.ctux.ae2craftingtime.core.OptionFeature;
 import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import appeng.api.stacks.AEKey;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
@@ -52,20 +53,32 @@ public final class UiObservationStore {
 
     public static void begin(Minecraft minecraft) {
         TreeAmountObservation.reset();
-        if (!(minecraft.screen instanceof AEBaseScreen<?> screen)
+        if (!(minecraft.screen instanceof AbstractContainerScreen<?> screen)
+                || !isNativeTrinityConfirm(screen.getClass().getName())
+                && (!(screen instanceof AEBaseScreen<?>)
                 || (!(screen instanceof CraftConfirmScreen)
                 && !(screen instanceof appeng.client.gui.me.crafting.CraftingCPUScreen<?>)
                 && !screen.getClass().getName().equals(Ae2NetworkAnalyserFixture.SCREEN)
                 && !screen.getClass().getName().equals(RequesterFixture.SCREEN)
-                && !CraftingTreeScenario.isScreen(screen.getClass().getName()))) {
+                && !CraftingTreeScenario.isScreen(screen.getClass().getName())))) {
             active = null;
             return;
         }
+        var geometry = (ContainerScreenAccessor) screen;
         active = new Frame(screen.getClass().getName(), screen.getMenu().getClass().getName(),
-                new Rect(screen.getGuiLeft(), screen.getGuiTop(), ((ContainerScreenAccessor) screen).ae2craftingtime_test_driver$width(),
-                        ((ContainerScreenAccessor) screen).ae2craftingtime_test_driver$height()),
+                new Rect(geometry.ae2craftingtime_test_driver$left(), geometry.ae2craftingtime_test_driver$top(),
+                        geometry.ae2craftingtime_test_driver$width(), geometry.ae2craftingtime_test_driver$height()),
                 minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight(),
                 minecraft.getWindow().getGuiScale());
+    }
+
+    static boolean isNativeTrinityConfirm(String screen) {
+        return AddonCpuFixture.TRINITY_CONFIRM_SCREEN.equals(screen);
+    }
+
+    static boolean isNativeTrinityCpuSelection(String screen, String text) {
+        return isNativeTrinityConfirm(screen) && text.startsWith("Crafting CPU:")
+                && text.contains("Trinity");
     }
 
     public static void rows(List<?> entries, int scroll) {
@@ -88,6 +101,15 @@ public final class UiObservationStore {
                     entry.getMissingAmount(), cell, entry));
             active.itemCells.add(new Rect(cell.x() + layout.cellWidth() - 19, cell.y() + 3, 16, 16));
         }
+    }
+
+    /** The native Trinity material table is independent of AE2's table renderer. */
+    public static void trinityRow(GuiGraphics graphics, CraftingPlanSummaryEntry entry, int x, int y) {
+        if (active == null || !isNativeTrinityConfirm(active.screen)) return;
+        var cell = transformed(graphics, x, y, x + 67, y + 22);
+        active.rows.add(new PendingRow(entry.getWhat().getId().toString(), entry.getCraftAmount(),
+                entry.getMissingAmount(), cell, entry));
+        active.itemCells.add(transformed(graphics, x + 48, y + 3, x + 64, y + 19));
     }
 
     public static void description(CraftingPlanSummaryEntry entry, List<Component> components) {
@@ -144,6 +166,11 @@ public final class UiObservationStore {
             Integer color, boolean bold) {
         if (active != null) {
             var bounds = transformed(graphics, x, y, x + width, y + height);
+            if (isNativeTrinityCpuSelection(active.screen, text)) {
+                active.text.add(new UiSnapshot.ObservedText("native-trinity-cpu-selection", text,
+                        List.of(), bounds, color, bold));
+                return;
+            }
             if (recordStatusText(text, bounds)) return;
             if (recordNativePlanAmount(text, bounds, color, bold)) return;
             // Newer AE2 flattens styled row labels into formatted characters.
@@ -167,6 +194,23 @@ public final class UiObservationStore {
             active.text.add(new UiSnapshot.ObservedText("gui.ae2craftingtime.suspended", text, List.of(),
                     transformed(graphics, x, y, x + width, y + height)));
         }
+    }
+
+    public static void nativeTitle(GuiGraphics graphics, net.minecraft.client.gui.Font font,
+            net.minecraft.util.FormattedCharSequence sequence, float x, float y, int color) {
+        var rendered = new StringBuilder();
+        final Integer[] textColor = {null};
+        final boolean[] bold = {false};
+        sequence.accept((index, style, codePoint) -> {
+            rendered.appendCodePoint(codePoint);
+            if (Character.isLetterOrDigit(codePoint)) {
+                textColor[0] = style.getColor() == null ? color : style.getColor().getValue();
+                bold[0] = style.isBold();
+            }
+            return true;
+        });
+        nativeTitle(graphics, rendered.toString(), (int) Math.floor(x), (int) Math.floor(y),
+                font.width(sequence), font.lineHeight, textColor[0], bold[0]);
     }
 
     private static boolean recordNativePlanAmount(String text, Rect bounds, Integer color, boolean bold) {
@@ -329,7 +373,8 @@ public final class UiObservationStore {
         }
         var rows = active.rows.stream().map(row -> new UiSnapshot.Row(row.outputId, row.craftAmount,
                 row.missingAmount, row.cell,
-                row.identity == null ? rowDescription(active.descriptions, active.text, row.outputId, row.cell)
+                row.identity == null || isNativeTrinityConfirm(active.screen)
+                        ? rowDescription(active.descriptions, active.text, row.outputId, row.cell)
                         : planDescription(active.planDescriptions, row.identity),
                 row.storedAmount, row.activeAmount, row.pendingAmount)).toList();
         var mergedBadges = merge(active.badges);

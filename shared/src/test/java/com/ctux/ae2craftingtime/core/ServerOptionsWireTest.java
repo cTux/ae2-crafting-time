@@ -21,7 +21,7 @@ class ServerOptionsWireTest {
         config.setTypicalDurationMultiplier(1);
         var encoded = ServerOptionsWire.encode(new ServerOptionsWire.Snapshot(7, true, config));
         assertEquals(ServerOptionsWire.LENGTH, encoded.length);
-        assertEquals(3, Byte.toUnsignedInt(encoded[0]));
+        assertEquals(4, Byte.toUnsignedInt(encoded[0]));
         var decoded = ServerOptionsWire.decode(encoded);
         assertEquals(7, decoded.revision());
         assertTrue(decoded.editable());
@@ -29,6 +29,7 @@ class ServerOptionsWireTest {
         assertFalse(decoded.config().features().enabled(OptionFeature.NO_POWER_DETECTION));
         assertTrue(decoded.config().features().enabled(OptionFeature.NO_SPACE_DETECTION));
         assertFalse(decoded.config().features().enabled(OptionFeature.CRAFTING_SUSPENSION));
+        assertTrue(decoded.config().features().enabled(OptionFeature.DATA_ENERGISTICS_TRINITY));
         assertEquals(100, decoded.config().maxSamples());
         assertEquals(1000, decoded.config().outlierMultiplier());
         assertEquals(3600, decoded.config().minimumNoProgressSeconds());
@@ -49,6 +50,17 @@ class ServerOptionsWireTest {
     }
 
     @Test
+    void appendedTrinityBitHasVersionedPosition() {
+        var config = new ServerConfig();
+        config.features().setEnabled(OptionFeature.DATA_ENERGISTICS_TRINITY, false);
+        var before = ServerOptionsWire.encode(new ServerOptionsWire.Snapshot(0, false, config));
+        config.features().setEnabled(OptionFeature.DATA_ENERGISTICS_TRINITY, true);
+        var after = ServerOptionsWire.encode(new ServerOptionsWire.Snapshot(0, false, config));
+        assertEquals(1L << 20, ByteBuffer.wrap(before).getLong(6) ^ ByteBuffer.wrap(after).getLong(6));
+        assertTrue(ServerOptionsWire.decode(after).config().features().enabled(OptionFeature.DATA_ENERGISTICS_TRINITY));
+    }
+
+    @Test
     void rejectsMalformedOrOutOfRangePayloads() {
         var good = ServerOptionsWire.encode(new ServerOptionsWire.Snapshot(0, false, new ServerConfig()));
         assertThrows(NullPointerException.class, () -> ServerOptionsWire.encode(null));
@@ -59,7 +71,7 @@ class ServerOptionsWireTest {
         assertThrows(IllegalArgumentException.class, () -> ServerOptionsWire.decode(null));
         assertThrows(IllegalArgumentException.class, () -> ServerOptionsWire.decode(new byte[3]));
         var badVersion = Arrays.copyOf(good, good.length);
-        badVersion[0] = 2;
+        badVersion[0] = 3;
         assertThrows(IllegalArgumentException.class, () -> ServerOptionsWire.decode(badVersion));
         var badRevision = Arrays.copyOf(good, good.length);
         ByteBuffer.wrap(badRevision).putInt(1, -1);

@@ -252,6 +252,7 @@ public final class ServerOptionsScreen extends OptionsBaseScreen {
             case ADVANCED_AE -> "advanced_ae";
             case NEO_ECO -> "neoecoae";
             case AE2_LIGHTNING_TECH -> "ae2lt";
+            case DATA_ENERGISTICS_TRINITY -> "data_energistics";
             case APPLIED_MEKANISTICS -> "appmek";
             default -> null;
         };

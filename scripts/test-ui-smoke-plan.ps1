@@ -252,7 +252,13 @@ try {
     Assert ($advancedGraphs.Count -eq 3 -and @($advancedGraphs | Where-Object { $_.cases.Count -ne 5 }).Count -eq 0) 'AdvancedAE must repeat all provider status leaves on three targets'
     Assert ($full.targets[0].cases.Count -eq 43) 'Expanded Forge suite must contain 43 leaves'
     Assert ($full.targets[1].cases.Count -eq 25) 'Expanded Fabric suite must contain 25 leaves'
-    Assert ($full.targets[2].cases.Count -eq 38 -and 'data-energistics-cpu' -cin $full.targets[2].cases -and
+    Assert ($full.targets[2].cases.Count -eq 44 -and 'data-energistics-cpu' -cin $full.targets[2].cases -and
+            'data-energistics-trinity-cpu' -cin $full.targets[2].cases -and
+            'data-energistics-trinity-counted-cpu' -cin $full.targets[2].cases -and
+            'data-energistics-trinity-cancel-cpu' -cin $full.targets[2].cases -and
+            'data-energistics-trinity-global-option-cpu' -cin $full.targets[2].cases -and
+            'data-energistics-trinity-provider-cpu' -cin $full.targets[2].cases -and
+            'data-energistics-trinity-admission-cpu' -cin $full.targets[2].cases -and
             'omnisequence-cpu' -cnotin $full.targets[2].cases -and
             'neoeco-cpu' -cnotin $full.targets[2].cases -and
             @($full.targets[2].graphs | Where-Object { $_.profile -eq 'latest' -or $_.id -eq 'udZtKfzP' }).Count -eq 0) `
@@ -261,12 +267,33 @@ try {
     Assert ($dataGraphs.Count -eq 2 -and @($dataGraphs | Where-Object {
         $_.profile -eq 'compatible' -and @($_.projectId).Count -eq 1 -and [string]$_.projectId[0] -eq '1565514'
     }).Count -eq 2) 'Data Energistics must use focused compatible graphs'
-    Assert (@($dataGraphs | Where-Object { 'data-energistics-cpu' -cin $_.cases -and 'craft-lifecycle' -cin $_.cases }).Count -eq 1 -and
+    Assert (@($dataGraphs | Where-Object { 'data-energistics-cpu' -cin $_.cases -and
+            'data-energistics-trinity-cpu' -cin $_.cases -and
+            'data-energistics-trinity-counted-cpu' -cin $_.cases -and
+            'data-energistics-trinity-cancel-cpu' -cin $_.cases -and
+            'data-energistics-trinity-global-option-cpu' -cin $_.cases -and
+            'data-energistics-trinity-provider-cpu' -cin $_.cases -and
+            'data-energistics-trinity-admission-cpu' -cin $_.cases -and
+            'craft-lifecycle' -cin $_.cases }).Count -eq 1 -and
             @($dataGraphs | Where-Object { @($_.cases).Count -eq 1 -and $_.cases[0] -eq 'standard-status-controls' }).Count -eq 1) `
         'Data Energistics focused graphs must cover CPU, native lifecycle, and status relaunch'
     Assert (@($full.targets[2].graphs | Where-Object id -eq 'primary' | Where-Object {
         'data-energistics-cpu' -cin $_.cases -or 'craft-lifecycle' -cnotin $_.cases
     }).Count -eq 0) 'NeoForge primary graph must retain native lifecycle without the Data CPU fixture'
+    $trinity = & $planner -Repository $temp -Target '1.21.1-neoforge' -Scenario data-energistics-trinity -ProjectId 1565514
+    $trinityCases = @($trinity.targets[0].graphs[0].cases)
+    Assert ($trinity.targets.Count -eq 1 -and $trinity.targets[0].graphs.Count -eq 1 -and
+            $trinity.targets[0].graphs[0].id -eq 'primary' -and
+            @($trinity.targets[0].graphs[0].projectId).Count -eq 1 -and
+            [string]$trinity.targets[0].graphs[0].projectId[0] -eq '1565514' -and
+            $trinityCases.Count -eq 7 -and
+            @($trinityCases | Where-Object { $_ -notin @(
+                'data-energistics-cpu', 'data-energistics-trinity-cpu',
+                'data-energistics-trinity-counted-cpu', 'data-energistics-trinity-cancel-cpu',
+                'data-energistics-trinity-global-option-cpu', 'data-energistics-trinity-provider-cpu',
+                'data-energistics-trinity-admission-cpu') }).Count -eq 0 -and
+            'data-energistics-trinity-reload-cpu' -cnotin $trinityCases) `
+        'Focused Trinity qualification must be exactly seven cases in one compatible Data graph'
     Assert ($full.targets[3].cases.Count -eq 28) 'Expanded 26.1.2 suite must contain 28 leaves'
     $neoecoLatest = & $planner -Repository $temp -Target '1.21.1-neoforge' -Scenario neoeco-cpu -Latest -ProjectId udZtKfzP
     Assert ($neoecoLatest.targets[0].cases.Count -eq 1 -and $neoecoLatest.targets[0].graphs.Count -eq 1 -and

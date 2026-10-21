@@ -31,6 +31,8 @@ public final class IntegrationDiagnostics {
             entry("advanced_ae", FNX, false, "adapter", plus(CPU, List.of("selected-cpu"))),
             entry("neoecoae", FN, false, "adapter", plus(CPU, List.of("cpu-dispatch-fastpath"))),
             entry("ae2lt", FN, false, "adapter", CPU),
+            entry("data_energistics", Set.of("1.21.1-neoforge"), false, "adapter",
+                    List.of("cpu-submit", "cpu-dispatch", "cpu-output", "cpu-finish", "selected-cpu")),
             entry("wcwt", FN, true, "adapter", List.of("tooltip")),
             entry("ae2wtlib", ALL, true, "adapter", List.of("tooltip")),
             new Entry("ae2importexportcard", FNX, true, "adapter", List.of("tooltip"),

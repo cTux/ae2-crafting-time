@@ -15,6 +15,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 
 import java.net.URLClassLoader;
+import java.math.BigInteger;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -25,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
@@ -45,6 +47,432 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class TestDriverCoreTest {
+    @Test
+    void exactTargetSelectionRejectsSameItemWithOtherComponentsWithoutIdFallback() {
+        record Key(String id, String components) {}
+        record Entry(Key key, boolean craftable) {}
+        var original = new Entry(new Key("minecraft:written_book", "original"), true);
+        var copy = new Entry(new Key("minecraft:written_book", "copy"), true);
+        var unavailableCopy = new Entry(copy.key(), false);
+        var entries = List.of(original, copy);
+
+        assertSame(copy, TargetEntrySelection.firstCraftable(entries, Entry::key, Entry::craftable,
+                copy.key(), "minecraft:written_book", Key::id));
+        assertNull(TargetEntrySelection.firstCraftable(List.of(original), Entry::key, Entry::craftable,
+                copy.key(), "minecraft:written_book", Key::id));
+        assertNull(TargetEntrySelection.firstCraftable(List.of(original, unavailableCopy), Entry::key,
+                Entry::craftable, copy.key(), "minecraft:written_book", Key::id));
+        assertSame(original, TargetEntrySelection.firstCraftable(entries, Entry::key, Entry::craftable,
+                null, "minecraft:written_book", Key::id));
+        assertNull(TargetEntrySelection.firstCraftable(entries, Entry::key, Entry::craftable,
+                null, "minecraft:glass", Key::id));
+    }
+
+    @Test
+    void trinityPhysicalSuffixRequiresTwoRealProductsAndKeepsOneUnitIsolated() {
+        assertFalse(TrinityPhysicalSuffix.twoGlassReady(1, 0));
+        assertTrue(TrinityPhysicalSuffix.twoGlassReady(2, 0));
+        assertFalse(TrinityPhysicalSuffix.twoGlassReady(2, 1));
+        assertEquals(TrinityPhysicalSuffix.Source.OUTPUT, TrinityPhysicalSuffix.source(0, 2, 0));
+        assertEquals(TrinityPhysicalSuffix.Source.INPUT, TrinityPhysicalSuffix.source(1, 1, 0));
+        assertThrows(IllegalStateException.class, () -> TrinityPhysicalSuffix.source(0, 2, 1));
+        assertThrows(IllegalStateException.class, () -> TrinityPhysicalSuffix.source(-1, 3, 0));
+        assertThrows(IllegalStateException.class, () -> TrinityPhysicalSuffix.source(2, 0, 0));
+        assertThrows(IllegalStateException.class, () -> TrinityPhysicalSuffix.source(0, 1, 0));
+        assertFalse(TrinityPhysicalSuffix.isolated(1, 0, 1));
+        assertFalse(TrinityPhysicalSuffix.isolated(0, 1, 1));
+        assertFalse(TrinityPhysicalSuffix.isolated(0, 0, 0));
+        assertTrue(TrinityPhysicalSuffix.isolated(0, 0, 1));
+    }
+
+    @Test
+    void trinityCoordinatorUsesNativeNameRatherThanWorkerOrMenuSerialZero() {
+        var cards = List.of(
+                new UiSnapshot.CpuCard(3, "Trinity Data Core #0", null, 0, 0, false,
+                        null, null, null, null, null, null),
+                new UiSnapshot.CpuCard(1, "CPU #1", null, 0, 0, false,
+                        null, null, null, null, null, null),
+                new UiSnapshot.CpuCard(2, "CPU #2", null, 0, 0, false,
+                        null, null, null, null, null, null),
+                new UiSnapshot.CpuCard(4, "Trinity Data Core #1", "minecraft:glass", 1, 0, true,
+                        null, null, null, null, null, null));
+        assertEquals(3, TrinityStatusCoordinator.card(cards, "Trinity Data Core #0").serial());
+        assertNull(TrinityStatusCoordinator.card(cards, "other coordinator"));
+        assertNull(TrinityStatusCoordinator.card(cards, ""));
+        assertNull(TrinityStatusCoordinator.card(cards, null));
+        assertNull(TrinityStatusCoordinator.card(List.of(cards.get(3)), "Trinity Data Core #1"));
+        assertThrows(IllegalStateException.class, () -> TrinityStatusCoordinator.card(
+                List.of(cards.get(0), cards.get(0)), "Trinity Data Core #0"));
+    }
+
+    @Test
+    void trinityAlreadySelectedWorkerWaitsForFreshNativeStatusWithSameIdentityContext() {
+        var freshness = new TrinityActiveStatusFreshness();
+        var job = "e407354d-de75-4336-9a02-df12ef448fa0";
+        var first = new UiSnapshot.StatusObservation(101, "native", 1, 1, 1, 0, 0,
+                4, job, "minecraft:glass", 1L);
+        var next = new UiSnapshot.StatusObservation(102, "native", 2, 1, 1, 0, 0,
+                4, job, "minecraft:glass", 2L);
+        assertFalse(freshness.observe(null, true, 4, job, "minecraft:glass", 10));
+        assertFalse(freshness.observe(first, false, 4, job, "minecraft:glass", 10));
+        assertFalse(freshness.observe(first, true, 3, job, "minecraft:glass", 10));
+        assertFalse(freshness.observe(first, true, 4, "other-job", "minecraft:glass", 10));
+        assertFalse(freshness.observe(first, true, 4, job, "minecraft:stone", 10));
+        assertFalse(freshness.observe(new UiSnapshot.StatusObservation(101, "synthetic", 1, 1, 1,
+                0, 0, 4, job, "minecraft:glass", 1L), true, 4, job, "minecraft:glass", 10));
+        assertNull(freshness.baselineIdentity());
+
+        assertFalse(freshness.observe(first, true, 4, job, "minecraft:glass", 10));
+        assertEquals(101, freshness.baselineIdentity());
+        assertNull(freshness.accepted());
+        assertFalse(freshness.observe(first, true, 4, job, "minecraft:glass", 11));
+        assertFalse(freshness.observe(next, true, 4, job, "minecraft:glass", 10));
+        assertFalse(freshness.observe(new UiSnapshot.StatusObservation(103, "native", 2, 1, 1,
+                0, 0, 4, "new-job", "minecraft:glass", 2L), true, 4,
+                "new-job", "minecraft:glass", 11));
+        assertEquals(101, freshness.baselineIdentity());
+        assertTrue(freshness.observe(next, true, 4, job, "minecraft:glass", 11));
+        assertEquals(new TrinityActiveStatusFreshness.Evidence(101, 10, 102, 11,
+                4, job, "minecraft:glass"), freshness.accepted());
+        freshness.reset();
+        assertNull(freshness.baselineIdentity());
+        assertNull(freshness.accepted());
+        assertFalse(freshness.observe(next, true, 4, job, "minecraft:glass", 12));
+    }
+
+    @Test
+    void trinitySmokeCatalogueMatchesDriverChecksAndNativeScreenshots() throws Exception {
+        var root = Path.of("").toAbsolutePath();
+        while (root != null && !Files.isRegularFile(root.resolve("settings.gradle"))) root = root.getParent();
+        assertNotNull(root, "repository root");
+        var catalogue = com.google.gson.JsonParser.parseString(Files.readString(
+                root.resolve("scripts/ui-smoke-groups.json"))).getAsJsonObject();
+        var cases = catalogue.getAsJsonObject("cases");
+        var normal = "data-energistics-trinity-cpu";
+        var counted = "data-energistics-trinity-counted-cpu";
+        var cancel = "data-energistics-trinity-cancel-cpu";
+        var global = "data-energistics-trinity-global-option-cpu";
+        var provider = "data-energistics-trinity-provider-cpu";
+        var admission = "data-energistics-trinity-admission-cpu";
+        var reload = "data-energistics-trinity-reload-cpu";
+        var group = new ArrayList<String>();
+        for (var entry : catalogue.getAsJsonObject("groups").getAsJsonArray("data-energistics-trinity"))
+            group.add(entry.getAsString());
+        assertEquals(List.of("data-energistics-cpu", normal, counted, cancel, global, provider, admission), group);
+        for (var scenario : List.of(normal, counted, cancel, global, provider, admission, reload)) {
+            var contract = cases.getAsJsonObject(scenario);
+            assertNotNull(contract, scenario);
+            var checks = new ArrayList<String>();
+            for (var entry : contract.getAsJsonArray("checks")) checks.add(entry.getAsString());
+            assertEquals(DriverResult.requiredChecks(scenario, false), checks, scenario);
+            var screenshots = new ArrayList<String>();
+            for (var entry : contract.getAsJsonArray("screenshots")) screenshots.add(entry.getAsString());
+            var expected = new ArrayList<>(List.of("addon-native-plan.png", "trinity-selected-cpu-plan.png"));
+            if (!scenario.equals(counted)) expected.addAll(List.of(
+                    "trinity-active-status.png", "trinity-completed-status.png"));
+            expected.addAll(List.of("trinity-plan-badge-off.png", "trinity-plan-badge-on.png",
+                    scenario.replace("-cpu", "") + "-profiled-plan.png"));
+            assertEquals(expected, screenshots, scenario);
+        }
+    }
+
+    @Test
+    void everyTrinityScenarioHasAnExplicitFixtureAndRequiredNativeChecks() {
+        for (var scenario : List.of("data-energistics-trinity-cpu", "data-energistics-trinity-counted-cpu",
+                "data-energistics-trinity-cancel-cpu", "data-energistics-trinity-global-option-cpu",
+                "data-energistics-trinity-provider-cpu", "data-energistics-trinity-admission-cpu",
+                "data-energistics-trinity-reload-cpu")) {
+            assertTrue(AddonCpuFixture.supports(scenario), scenario);
+            var checks = DriverResult.requiredChecks(scenario, false);
+            assertTrue(checks.contains("job-accepted"), scenario);
+            assertTrue(checks.contains("cpu-selected-visible"), scenario);
+            assertTrue(checks.contains("profile-sample"), scenario);
+            assertTrue(checks.contains("ttc-after-sample"), scenario);
+        }
+        assertTrue(DriverResult.requiredChecks("data-energistics-trinity-counted-cpu", false)
+                .contains("returned-amount"));
+        assertTrue(DriverResult.requiredChecks("data-energistics-trinity-reload-cpu", false)
+                .contains("restored-graph-advanced"));
+        assertFalse(AddonCpuFixture.supports("data-energistics-trinity-unknown-cpu"));
+    }
+
+    @Test
+    void nativeCpuSelectionRequiresVisibleProofEvenBeforeTheCheckKeyExists() {
+        var checks = new LinkedHashMap<String, Boolean>();
+        assertTrue(CraftPlanScenario.needsVisibleCpuSelection(true, checks));
+        assertFalse(CraftPlanScenario.needsVisibleCpuSelection(false, checks));
+        checks.put("cpu-selected-visible", false);
+        assertTrue(CraftPlanScenario.needsVisibleCpuSelection(true, checks));
+        checks.put("cpu-selected-visible", true);
+        assertFalse(CraftPlanScenario.needsVisibleCpuSelection(true, checks));
+    }
+
+    @Test
+    void addonFlowAllowsResumeCheckpointAndFreshJobButRejectsShortcuts() {
+        for (var path : List.of(
+                List.of(ScenarioState.STARTING, ScenarioState.ADDON_CRAFT_SUBMITTED,
+                        ScenarioState.QUIT_REQUESTED),
+                List.of(ScenarioState.STARTING, ScenarioState.WORLD_READY, ScenarioState.TERMINAL_OPEN,
+                        ScenarioState.PLAN_OPEN, ScenarioState.PLAN_STABLE, ScenarioState.ADDON_CPU_SELECTED,
+                        ScenarioState.ADDON_CRAFT_SUBMITTED, ScenarioState.WORLD_READY,
+                        ScenarioState.TERMINAL_OPEN, ScenarioState.PLAN_OPEN, ScenarioState.PLAN_STABLE,
+                        ScenarioState.ADDON_CPU_SELECTED, ScenarioState.ADDON_CRAFT_SUBMITTED,
+                        ScenarioState.ADDON_SAMPLE_RECORDED, ScenarioState.ADDON_PLAN_OPEN,
+                        ScenarioState.RESULT_WRITTEN, ScenarioState.QUIT_REQUESTED))) {
+            for (int i = 1; i < path.size(); i++)
+                assertTrue(ScenarioFlow.allows(path.get(i - 1), path.get(i)),
+                        path.get(i - 1) + " -> " + path.get(i));
+        }
+        assertFalse(ScenarioFlow.allows(ScenarioState.STARTING, ScenarioState.ADDON_PLAN_OPEN));
+        assertFalse(ScenarioFlow.allows(ScenarioState.ADDON_CRAFT_SUBMITTED, ScenarioState.RESULT_WRITTEN));
+        assertFalse(ScenarioFlow.allows(ScenarioState.QUIT_REQUESTED, ScenarioState.WORLD_READY));
+    }
+
+    @Test
+    void freshAddonTransitionClearsEveryFutureAndRearmsSelection() throws Exception {
+        var scenario = new CraftPlanScenario(null,
+                new DriverOptions("craft-plan", "compatible", "test", Path.of("."), false), "driver");
+        var state = CraftPlanScenario.class.getDeclaredField("state");
+        state.setAccessible(true);
+        state.set(scenario, ScenarioState.ADDON_CRAFT_SUBMITTED);
+        for (var name : List.of("cpuCheck", "nativePlanCheck", "submitCheck", "sampleCheck",
+                "restartCheck", "resumeCheck", "cancelCheck", "providerCheck")) {
+            var field = CraftPlanScenario.class.getDeclaredField(name);
+            field.setAccessible(true);
+            field.set(scenario, CompletableFuture.completedFuture(null));
+        }
+        var nativeSelection = CraftPlanScenario.class.getDeclaredField("clientCpuSelectionSent");
+        nativeSelection.setAccessible(true);
+        nativeSelection.setBoolean(scenario, true);
+        var terminalField = CraftPlanScenario.class.getDeclaredField("blockTerminalReadiness");
+        terminalField.setAccessible(true);
+        var terminal = (CraftPlanScenario.BlockTerminalReadiness) terminalField.get(scenario);
+        var preparations = new AtomicInteger();
+        var interactions = new AtomicInteger();
+        terminal.tick(() -> {
+            preparations.incrementAndGet();
+            return CompletableFuture.completedFuture(null);
+        }, () -> true, interactions::incrementAndGet);
+        terminal.tick(() -> { throw new AssertionError("first preparation repeated"); },
+                () -> true, interactions::incrementAndGet);
+        assertEquals(1, interactions.get());
+        var advance = CraftPlanScenario.class.getDeclaredMethod("advance", ScenarioState.class);
+        advance.setAccessible(true);
+        advance.invoke(scenario, ScenarioState.WORLD_READY);
+        assertEquals(ScenarioState.WORLD_READY, state.get(scenario));
+        for (var name : List.of("cpuCheck", "nativePlanCheck", "submitCheck", "sampleCheck",
+                "restartCheck", "resumeCheck", "cancelCheck", "providerCheck")) {
+            var field = CraftPlanScenario.class.getDeclaredField(name);
+            field.setAccessible(true);
+            assertNull(field.get(scenario), name + " would reuse the previous job's server result");
+        }
+        assertFalse(nativeSelection.getBoolean(scenario), "a fresh job must send its native CPU action again");
+        terminal.tick(() -> {
+            preparations.incrementAndGet();
+            return CompletableFuture.completedFuture(null);
+        }, () -> true, interactions::incrementAndGet);
+        terminal.tick(() -> { throw new AssertionError("second preparation repeated"); },
+                () -> true, interactions::incrementAndGet);
+        terminal.tick(() -> { throw new AssertionError("second interaction repeated"); },
+                () -> true, interactions::incrementAndGet);
+        assertEquals(2, preparations.get());
+        assertEquals(2, interactions.get());
+        var checks = new LinkedHashMap<String, Boolean>();
+        checks.put("cpu-selected", true);
+        checks.put("cpu-selected-visible", true);
+        checks.put("profile-sample", true);
+        CraftPlanScenario.resetAddonSelectionChecks(checks);
+        assertFalse(checks.get("cpu-selected"));
+        assertFalse(checks.get("cpu-selected-visible"));
+        assertTrue(checks.get("profile-sample"));
+
+        var node = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/CraftPlanScenario.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, 0);
+        }
+        assertTrue(node.methods.stream().anyMatch(method -> {
+            var calls = java.util.Arrays.stream(method.instructions.toArray())
+                    .filter(MethodInsnNode.class::isInstance).map(MethodInsnNode.class::cast).toList();
+            int watch = java.util.stream.IntStream.range(0, calls.size())
+                    .filter(i -> calls.get(i).owner.equals("com/ctux/ae2craftingtime/testdriver/DispatchObservation")
+                            && calls.get(i).name.equals("watch")).findFirst().orElse(-1);
+            int start = java.util.stream.IntStream.range(0, calls.size())
+                    .filter(i -> calls.get(i).owner.equals("com/ctux/ae2craftingtime/testdriver/AddonCpuFixture")
+                            && calls.get(i).name.equals("startCraft")).findFirst().orElse(-1);
+            return watch >= 0 && start > watch;
+        }), "each submission must rearm the dispatch watcher before native startJob");
+    }
+
+    @Test
+    void addonPassRequiresNativeTerminalWhenFixtureOptsInAndRunnerUsesTheGate() throws Exception {
+        var terminal = new AtomicInteger();
+        class Fixture extends AddonCpuFixture<Object> {
+            private final boolean nativeRequired;
+            Fixture(boolean nativeRequired) { this.nativeRequired = nativeRequired; }
+            @Override protected Object place(net.minecraft.server.level.ServerPlayer player, FixtureMarker marker) { return null; }
+            @Override protected boolean finish(net.minecraft.server.level.ServerPlayer player, Object placement) { return true; }
+            @Override protected appeng.api.networking.crafting.ICraftingCPU cpu(
+                    net.minecraft.server.level.ServerPlayer player, Object placement,
+                    appeng.api.networking.IGrid grid) { return null; }
+            @Override boolean dispatchReady(DispatchObservation.Snapshot snapshot) {
+                return snapshot.completedExactlyOnce();
+            }
+            @Override boolean requiresNativeCompletion() { return nativeRequired; }
+            @Override boolean nativeCompleted() { return terminal.get() == 1; }
+        }
+        var successfulProfiler = new DispatchObservation.Snapshot(3, 3, 3, 1, 1,
+                true, 0, "native-worker", 1);
+        var incompleteProfiler = new DispatchObservation.Snapshot(3, 3, 2, 1, 1,
+                true, 0, "native-worker", 1);
+        var trinity = new Fixture(true);
+        assertFalse(trinity.readyForPass(successfulProfiler),
+                "a completed profiler callback cannot stand in for native job terminal evidence");
+        assertTrue(new Fixture(false).readyForPass(successfulProfiler),
+                "existing addon fixtures keep their dispatch-based gate");
+        terminal.set(1);
+        assertTrue(trinity.readyForPass(successfulProfiler));
+        assertFalse(trinity.readyForPass(incompleteProfiler));
+
+        var node = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/CraftPlanScenario.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, 0);
+        }
+        var await = node.methods.stream().filter(method -> method.name.equals("awaitAddonSample"))
+                .findFirst().orElseThrow();
+        assertTrue(java.util.Arrays.stream(await.instructions.toArray())
+                .filter(MethodInsnNode.class::isInstance).map(MethodInsnNode.class::cast)
+                .anyMatch(call -> call.owner.equals("com/ctux/ae2craftingtime/testdriver/AddonCpuFixture")
+                        && call.name.equals("readyForPass")),
+                "the real profiler-to-PASS path must consume the native terminal gate");
+    }
+
+    @Test
+    void instantaneousCountedCraftNeedsCapturedNativeTerminalAndExactBookConservation() {
+        var job = UUID.randomUUID();
+        var other = UUID.randomUUID();
+        assertTrue(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                false, true, false, 3, 3, 3, 1, 1).complete());
+        assertTrue(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                true, false, false, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, other, 1, true, true, true,
+                false, true, false, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 0, true, true, true,
+                false, true, false, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, false, true, true,
+                false, true, false, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, false, true,
+                false, true, false, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, true, false,
+                false, true, false, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                false, false, false, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                false, true, true, 3, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                false, true, false, 2, 3, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                false, true, false, 3, 2, 3, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                false, true, false, 3, 3, 2, 1, 1).complete());
+        assertFalse(new TrinityCountedCompletion(job, job, 1, true, true, true,
+                false, true, false, 3, 3, 3, 1, 0).complete());
+    }
+
+    @Test
+    void nativePlanRequiresExactRenderedScreenAndExecutableServerResult() throws Exception {
+        var trinity = AddonCpuFixture.TRINITY_CONFIRM_SCREEN;
+        var ae2 = "appeng.client.gui.me.crafting.CraftConfirmScreen";
+        assertTrue(UiObservationStore.isNativeTrinityConfirm(trinity));
+        assertFalse(UiObservationStore.isNativeTrinityConfirm(ae2));
+        assertFalse(UiObservationStore.isNativeTrinityConfirm(trinity + "Other"));
+        assertTrue(CraftPlanScenario.nativePlanReady(trinity, trinity, trinity, true, true));
+        assertFalse(CraftPlanScenario.nativePlanReady(trinity, ae2, trinity, true, true));
+        assertFalse(CraftPlanScenario.nativePlanReady(trinity, trinity, ae2, true, true));
+        assertFalse(CraftPlanScenario.nativePlanReady(trinity, trinity, trinity, false, true));
+        assertFalse(CraftPlanScenario.nativePlanReady(trinity, trinity, trinity, true, false));
+        var node = new ClassNode();
+        try (var input = getClass().getResourceAsStream(
+                "/com/ctux/ae2craftingtime/testdriver/UiObservationStore.class")) {
+            assertNotNull(input);
+            new ClassReader(input).accept(node, 0);
+        }
+        var begin = node.methods.stream().filter(method -> method.name.equals("begin")).findFirst().orElseThrow();
+        assertTrue(java.util.Arrays.stream(begin.instructions.toArray())
+                .filter(MethodInsnNode.class::isInstance).map(MethodInsnNode.class::cast)
+                .anyMatch(call -> call.owner.equals("com/ctux/ae2craftingtime/testdriver/UiObservationStore")
+                        && call.name.equals("isNativeTrinityConfirm")),
+                "the render observation producer must admit the native screen before the frame gate");
+    }
+
+    @Test
+    void addonSetupCheckpointShowsPlacementAndNativeStage() {
+        var placement = new CompletableFuture<Object>();
+        assertEquals("not-started", AddonCpuFixture.setupCheckpoint(null, "ready"));
+        assertEquals("placing", AddonCpuFixture.setupCheckpoint(placement, "ready"));
+        placement.complete(new Object());
+        assertEquals("main-formation", AddonCpuFixture.setupCheckpoint(placement, "main-formation"));
+    }
+
+    @Test
+    void trinitySetupStageDeadlineResetsOnProgressAndExpiresAfterFortyFiveSeconds() {
+        var progress = new SetupStageProgress();
+        assertEquals("placing", progress.stage());
+        assertFalse(progress.observe("main-formation", 100));
+        assertEquals("main-formation", progress.stage());
+        long deadline = 100 + Duration.ofSeconds(45).toNanos();
+        assertFalse(progress.observe("main-formation", deadline));
+        assertFalse(progress.observe("cpu-formation", deadline + 1));
+        assertEquals("cpu-formation", progress.stage());
+        assertFalse(progress.observe("cpu-formation", deadline + Duration.ofSeconds(45).toNanos() + 1));
+        assertEquals("Trinity fixture setup stalled at cpu-formation", assertThrows(
+                IllegalStateException.class, () -> progress.observe("cpu-formation",
+                        deadline + Duration.ofSeconds(45).toNanos() + 2)).getMessage());
+    }
+
+    @Test
+    void trinityNativeCompletionRequiresSuccessfulExactJobAndInventory() {
+        var job = UUID.randomUUID();
+        var other = UUID.randomUUID();
+        var one = BigInteger.ONE;
+        var zero = BigInteger.ZERO;
+        assertTrue(new TrinityNativeCompletion(job, job, true, true, true, true, false, false,
+                1, 1, 1, one, one).complete());
+        assertTrue(new TrinityNativeCompletion(job, job, true, true, true, false, true, false,
+                1, 1, 1, one, one).complete()); // standalone link has no nexus to mark done
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, false, true, true,
+                2, 2, 1, BigInteger.TWO, BigInteger.TWO).complete()); // partial output followed by cancellation
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false, true,
+                1, 1, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, false, false, false,
+                1, 1, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false, false,
+                1, 0, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, other, true, true, true, true, false, false,
+                1, 1, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, false, true, true, false, false,
+                1, 1, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, false, true, true, true, false, false,
+                1, 1, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false, false,
+                1, 1, 0, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false, false,
+                1, 1, 1, zero, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false, false,
+                1, 1, 1, one, zero).complete());
+        assertFalse(new TrinityNativeCompletion(null, job, true, true, true, true, false, false,
+                1, 1, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, false, true, false, false,
+                1, 1, 1, one, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false, false,
+                1, 1, 1, BigInteger.TWO, one).complete());
+        assertFalse(new TrinityNativeCompletion(job, job, true, true, true, true, false, false,
+                0, 0, 0, zero, zero).complete());
+    }
+
     @Test
     void nativeStatusFreshnessRequiresReplacementSameSelectedJobAndLaterFrame() {
         String job = "00000000-0000-0000-0000-000000000001";
@@ -926,6 +1354,12 @@ class TestDriverCoreTest {
 
     @Test
     void smokeUsesThePackagedCataloguesOrderForEveryTarget() {
+        for (var target : List.of("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) {
+            SmokeAdapterCatalog.newest(target).forEach((dependency, variant) -> {
+                assertTrue(dependency.matches("[a-z0-9_]+"), dependency);
+                assertTrue(variant.matches("[a-z0-9-]+"), variant);
+            });
+        }
         assertEquals("batched-long", SmokeAdapterCatalog.newest("1.20.1-forge").get("neoecoae"));
         assertEquals("batched-int", SmokeAdapterCatalog.newest("1.21.1-neoforge").get("neoecoae"));
         assertEquals("tree-layout", SmokeAdapterCatalog.newest("1.20.1-fabric").get("ae2ct"));
@@ -1299,6 +1733,9 @@ class TestDriverCoreTest {
         assertTrue(AddonCpuFixture.supports("modern-ae2-additions-cpu"));
         assertTrue(AddonCpuFixture.supports("omnisequence-cpu"));
         assertTrue(AddonCpuFixture.supports("lightningtech-cpu"));
+        assertTrue(AddonCpuFixture.supports("data-energistics-trinity-cpu"));
+        assertEquals(DriverResult.TRINITY_CPU_CHECKS,
+                DriverResult.requiredChecks("data-energistics-trinity-cpu"));
         assertFalse(AddonCpuFixture.supports("missing-cpu"));
         assertNull(AddonCpuFixture.create("craft-plan"));
         assertNull(AddonCpuFixture.create("ae2wcwt-terminal"));
@@ -1406,6 +1843,35 @@ class TestDriverCoreTest {
         assertEquals(0, interactions.get());
         readiness.tick(() -> server, () -> true, interactions::incrementAndGet);
         readiness.tick(() -> server, () -> true, interactions::incrementAndGet);
+        assertEquals(1, interactions.get());
+    }
+
+    @Test
+    void blockTerminalResetDiscardsPendingPreparationBeforeFreshInteraction() {
+        var readiness = new CraftPlanScenario.BlockTerminalReadiness();
+        var oldServer = new CompletableFuture<Void>();
+        var newServer = new CompletableFuture<Void>();
+        var preparations = new AtomicInteger();
+        var interactions = new AtomicInteger();
+        readiness.tick(() -> {
+            preparations.incrementAndGet();
+            return oldServer;
+        }, () -> true, interactions::incrementAndGet);
+        readiness.reset();
+        oldServer.complete(null);
+        readiness.tick(() -> {
+            preparations.incrementAndGet();
+            return newServer;
+        }, () -> true, interactions::incrementAndGet);
+        readiness.tick(() -> { throw new AssertionError("new preparation repeated"); },
+                () -> true, interactions::incrementAndGet);
+        assertEquals(2, preparations.get());
+        assertEquals(0, interactions.get(), "completed old preparation must not drive the new attempt");
+        newServer.complete(null);
+        readiness.tick(() -> { throw new AssertionError("new preparation repeated"); },
+                () -> true, interactions::incrementAndGet);
+        readiness.tick(() -> { throw new AssertionError("new interaction repeated"); },
+                () -> true, interactions::incrementAndGet);
         assertEquals(1, interactions.get());
     }
 

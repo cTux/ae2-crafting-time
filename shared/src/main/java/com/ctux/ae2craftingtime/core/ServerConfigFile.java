@@ -30,6 +30,7 @@ public final class ServerConfigFile {
             Map.entry(OptionFeature.ADVANCED_AE, "Include AdvancedAE crafting CPUs in server profiling when that addon is installed. False skips its CPUs."),
             Map.entry(OptionFeature.NEO_ECO, "Include NeoEco crafting CPUs in server profiling when that addon is installed. False skips its CPUs."),
             Map.entry(OptionFeature.AE2_LIGHTNING_TECH, "Include AE2 Lightning Tech crafting CPUs in server profiling when that addon is installed. False skips its CPUs."),
+            Map.entry(OptionFeature.DATA_ENERGISTICS_TRINITY, "Include Data Energistics Trinity crafting CPUs in server profiling when that addon is installed. False skips its CPUs."),
             Map.entry(OptionFeature.APPLIED_MEKANISTICS, "Include Applied Mekanistics chemical statistics when that addon is installed. False skips chemical statistics."));
     public static ServerConfig load(Path path, Path legacyPath) throws IOException {
         var config = new ServerConfig();

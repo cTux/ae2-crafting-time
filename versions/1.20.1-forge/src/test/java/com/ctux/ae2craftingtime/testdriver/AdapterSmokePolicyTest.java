@@ -45,4 +45,24 @@ class AdapterSmokePolicyTest {
         assertDoesNotThrow(() -> AdapterSmokePolicy.verify("1.20.1-forge", "craft-plan", "en_us", Map.of()));
         assertDoesNotThrow(() -> AdapterSmokePolicy.verify("26.1.2-neoforge", "lightningtech-cpu", "en_us", Map.of()));
     }
+
+    @Test
+    void everyTrinityLeafRequiresItsNativeWorkerAndSelectedAdapter() {
+        var nativeCpu = snapshot("appeng.me.cluster.implementations.CraftingCPUCluster");
+        var trinityCpu = snapshot("com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu");
+        var selected = new IntegrationSelection.Decision("data_energistics", "3.3.5", "trinity-3-3-5", "selected",
+                Set.of("TrinityCpuLogicMixin"), List.of());
+        for (var scenario : List.of("data-energistics-trinity-cpu", "data-energistics-trinity-counted-cpu",
+                "data-energistics-trinity-cancel-cpu", "data-energistics-trinity-global-option-cpu",
+                "data-energistics-trinity-provider-cpu", "data-energistics-trinity-admission-cpu",
+                "data-energistics-trinity-reload-cpu")) {
+            assertThrows(IllegalStateException.class,
+                    () -> AdapterSmokePolicy.verifyCpu("1.21.1-neoforge", scenario, nativeCpu), scenario);
+            assertDoesNotThrow(() -> AdapterSmokePolicy.verifyCpu("1.21.1-neoforge", scenario, trinityCpu), scenario);
+            assertThrows(IllegalStateException.class,
+                    () -> AdapterSmokePolicy.verify("1.21.1-neoforge", scenario, "en_us", Map.of()), scenario);
+            assertDoesNotThrow(() -> AdapterSmokePolicy.verify("1.21.1-neoforge", scenario, "en_us",
+                    Map.of("data_energistics", selected)), scenario);
+        }
+    }
 }

@@ -179,7 +179,7 @@
       "disposition": "FOCUSED_BEHAVIOR",
       "scenario": "data-energistics-cpu",
       "profile": "compatible",
-      "reason": "Lightning Tech and Thunderbolt declare Data Energistics incompatible; run the Data CPU and native lifecycle/status behavior in its focused compatible graph."
+      "reason": "Lightning Tech and Thunderbolt declare Data Energistics incompatible; run the adaptive-provider CPU, diagnostic Trinity CPU and native lifecycle/status behavior in its focused compatible graph."
     },
     "IiATswDj": {
       "disposition": "DIRECT_BEHAVIOR",

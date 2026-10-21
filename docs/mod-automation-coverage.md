@@ -16,7 +16,11 @@ what their evidence does and does not prove.
   if the selected variant is not the newest one implemented for its target.
 - NeoForge 1.21.1 inventories Data Energistics 3.3.5 and its required client graph.
   `data-energistics-cpu` exercises its Adaptive Pattern Provider through a native
-  AE2 CPU. Ordinary `craft-lifecycle` runs with the addon absent, present, and in
+  AE2 CPU. The separate `data-energistics-trinity-cpu` fixture reproduced a
+  completed native worker craft with no new sample on PR #748 at `bc8a8d48`.
+  Its production adapter and counted/reusable, restart, and UI qualification
+  remain pending; this baseline does not qualify Trinity support.
+  Ordinary `craft-lifecycle` runs with the addon absent, present, and in
   the compatible Data-containing graph qualify this boundary. Focused absence,
   presence, adaptive provider, Status restart and Tree checks passed in
   [PR #741](https://github.com/cTux/ae2-crafting-time/pull/741). The 21-project
