@@ -31,6 +31,19 @@ No new CPU resolver, network message, or estimator is needed for these entries.
 Verify the actual Trinity Status/menu path at runtime before assuming an
 existing renderer covers it.
 
+The pinned Trinity plan has a separate scheduled-output projection:
+`patternTimes()` is empty, and `emittedItems()` does not contain the normal
+sand-to-glass final glass. Initial waiting and estimate rows therefore come
+from `plannedOutputs()`, with checked raw amounts per native AE key and normalized
+totals grouped by the final profiler output ID. This includes distinct AE keys with the same
+registry ID; the bridge must add their remaining amounts rather than overwrite
+one row. Scheduled stage firings provide input-to-output estimate edges without
+expanding repeat counts. Cycle stages, repeat blocks, stage ordering dependencies,
+competing producers, absent firings, or ambiguous projected inputs keep a usable
+estimate row but mark the graph
+incomplete, so its TTC is conservative rather than falsely reliable. This
+projection uses the existing job owner, waiting, estimate and recovery lifecycle.
+
 ## Adapter placement and contract
 
 Keep target-specific mixins/accessors under

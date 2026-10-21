@@ -6,16 +6,24 @@ import appeng.api.stacks.AEKey;
 import appeng.api.stacks.GenericStack;
 import appeng.crafting.CraftingLink;
 import com.ctux.ae2craftingtime.core.IntegrationRead;
+import com.ctux.ae2craftingtime.core.CraftingJobEstimate;
+import com.ctux.ae2craftingtime.core.ProfileKey;
+import com.ctux.ae2craftingtime.core.TrinityPlanGraph;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Set;
 import java.util.WeakHashMap;
 import java.lang.ref.WeakReference;
 import net.minecraft.server.MinecraftServer;
 
 /** Narrow reflective access to the checked, package-private Trinity 3.3.5 job API. */
 public final class TrinityNativeJobAccess {
+    private static final String PLAN_CLASS =
+            "com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan";
     private static final String CPU = "cpu";
     private static final String JOB = "job";
     private static final Map<Object, WeakReference<Observer>> OBSERVERS = new WeakHashMap<>();
@@ -75,8 +83,36 @@ public final class TrinityNativeJobAccess {
     }
     @SuppressWarnings("unchecked")
     public static Map<AEKey, BigInteger> exactPlannedOutputs(ICraftingPlan plan) {
-        return plan.getClass().getName().equals("com.fish_dan_.data_energistics.common.crafting.trinity.planning.plan.TrinityCraftingPlan")
+        return isTrinityPlan(plan)
                 ? (Map<AEKey, BigInteger>) call(plan, "plannedOutputs") : Map.of();
+    }
+
+    public static boolean isTrinityPlan(ICraftingPlan plan) {
+        return plan != null && isTrinityPlanClassName(plan.getClass().getName());
+    }
+
+    static boolean isTrinityPlanClassName(String name) { return PLAN_CLASS.equals(name); }
+
+    /** Native firing inputs/outputs retain dependencies absent from ICraftingPlan.patternTimes(). */
+    @SuppressWarnings("unchecked")
+    public static CraftingJobEstimate.DependencyGraph scheduledGraph(ICraftingPlan plan, String networkId,
+            Set<String> plannedOutputIds) {
+        var crafted = new HashSet<ProfileKey>();
+        plannedOutputIds.forEach(id -> crafted.add(new ProfileKey(networkId, id)));
+        var patterns = new ArrayList<CraftingJobEstimate.Pattern>();
+        boolean incomplete = !((List<?>) call(plan, "cycleRepeatBlocks")).isEmpty();
+        for (var stage : (List<?>) call(plan, "stages")) {
+            incomplete |= (Boolean) call(stage, "cycleStage");
+            incomplete |= !((it.unimi.dsi.fastutil.ints.IntSet) call(stage, "dependencies")).isEmpty();
+            for (var firing : (List<?>) call(stage, "firings")) {
+                var outputs = ((Map<AEKey, BigInteger>) call(firing, "outputs")).keySet().stream()
+                        .map(key -> ProfilerBridge.key(networkId, key)).toList();
+                var inputs = ((Map<AEKey, BigInteger>) call(firing, "inputs")).keySet().stream()
+                        .map(key -> Set.of(ProfilerBridge.key(networkId, key))).toList();
+                patterns.add(new CraftingJobEstimate.Pattern(1, outputs, inputs));
+            }
+        }
+        return TrinityPlanGraph.project(crafted, patterns, incomplete);
     }
 
     private static Object field(Object owner, String name) {

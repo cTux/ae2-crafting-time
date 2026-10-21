@@ -24,6 +24,7 @@ import com.ctux.ae2craftingtime.core.StatsEntry;
 import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.core.TtcAccuracyStats;
 import com.ctux.ae2craftingtime.core.TtcAccuracyTracker;
+import com.ctux.ae2craftingtime.core.TrinityQuantityBounds;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -324,48 +325,71 @@ public final class ProfilerBridge {
 
         int knownRows = 0;
         int totalRows = 0;
-        var waitingKeys = new HashSet<ProfileKey>();
         var remainingAmounts = new HashMap<ProfileKey, Long>();
+        var sourceKeys = new ArrayList<AEKey>();
         for (var crafted : craftedAmounts) {
             if (crafted.getLongValue() <= 0) {
                 continue;
             }
             totalRows++;
             var key = key(networkId, crafted.getKey());
-            waitingKeys.add(key);
+            sourceKeys.add(crafted.getKey());
             remainingAmounts.put(key, normalizeAmount(crafted.getKey(), crafted.getLongValue()));
             var stats = PROFILER.stats(key);
-            var estimate = stats.isEmpty() ? java.util.Optional.<TtcEstimate>empty()
-                    : TimeEstimate.milliseconds(normalizeAmount(crafted.getKey(), crafted.getLongValue()), stats.get());
-            if (estimate.isPresent()) {
-                knownRows++;
-            }
+            if (!stats.isEmpty() && TimeEstimate.milliseconds(
+                    normalizeAmount(crafted.getKey(), crafted.getLongValue()), stats.get()).isPresent()) knownRows++;
         }
+        publishJob(networkId, scope, plan.finalOutput().what(), remainingAmounts, sourceKeys,
+                dependencies(networkId, plan, craftedAmounts),
+                plan.patternTimes().keySet().stream().map(pattern -> {
+                    Set<ProfileKey> keys = new HashSet<>();
+                    for (var output : pattern.getOutputs()) keys.add(key(networkId, output.what()));
+                    return keys;
+                }).toList(), knownRows, totalRows, tick, nanoTime, owner);
+    }
 
-        var jobEstimate = new CraftingJobEstimate(key(networkId, plan.finalOutput().what()), remainingAmounts,
-                dependencies(networkId, plan, craftedAmounts));
+    /** Trinity's legacy patternTimes/emittedItems projection can be empty for a real scheduled craft. */
+    public static void startTrinityJob(String networkId, Object scope, ICraftingPlan plan,
+            Map<AEKey, java.math.BigInteger> exactOutputs, TrinityQuantityBounds.Projection projection,
+            CraftingJobEstimate.DependencyGraph graph,
+            long tick, long nanoTime, UUID owner) {
+        if (plan == null || plan.finalOutput() == null || !isEnabled() || !ServerOptionsRuntime.scopeEnabled(scope))
+            return;
+        var rows = new HashMap<ProfileKey, Long>();
+        projection.normalizedByOutput().forEach((id, amount) -> {
+            if (amount > 0) rows.put(new ProfileKey(networkId, id), amount);
+        });
+        var sourceKeys = new ArrayList<AEKey>();
+        exactOutputs.forEach((key, amount) -> {
+            if (amount.signum() > 0) sourceKeys.add(key);
+        });
+        int knownRows = 0;
+        for (var row : rows.entrySet()) {
+            var stats = PROFILER.stats(row.getKey());
+            if (!stats.isEmpty() && TimeEstimate.milliseconds(row.getValue(), stats.get()).isPresent()) knownRows++;
+        }
+        publishJob(networkId, scope, plan.finalOutput().what(), rows, sourceKeys, graph,
+                List.of(), knownRows, rows.size(), tick, nanoTime, owner);
+    }
+
+    private static void publishJob(String networkId, Object scope, AEKey finalOutput,
+            Map<ProfileKey, Long> remainingAmounts, List<AEKey> sourceKeys,
+            CraftingJobEstimate.DependencyGraph graph, Iterable<Set<ProfileKey>> chancePatterns,
+            int knownRows, int totalRows, long tick, long nanoTime, UUID owner) {
+        var jobEstimate = new CraftingJobEstimate(key(networkId, finalOutput), remainingAmounts, graph);
         PROFILER.startWaiting(scope,
                 ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.WAITING_TRACKING)
-                        ? waitingKeys : Set.of(), tick);
+                        ? remainingAmounts.keySet() : Set.of(), tick);
         PROFILER.setJobOwner(scope, owner);
         PROFILER.setJobEstimate(scope, jobEstimate);
         ProviderStartTracker.clear(scope);
-        CHANCE.plan(scope, plan.patternTimes().keySet().stream().map(pattern -> {
-            Set<ProfileKey> keys = new HashSet<>();
-            for (var output : pattern.getOutputs()) keys.add(key(networkId, output.what()));
-            return keys;
-        }).toList());
-        for (var crafted : craftedAmounts) {
-            if (crafted.getLongValue() <= 0) {
-                continue;
-            }
-            ProviderLocateRecords.noteStart(key(networkId, crafted.getKey()), owner, "", null,
-                    displayNameOf(crafted.getKey()), crafted.getKey());
-        }
+        CHANCE.plan(scope, chancePatterns);
+        for (var original : sourceKeys) ProviderLocateRecords.noteStart(key(networkId, original), owner, "", null,
+                displayNameOf(original), original);
         var predictedSeconds = jobEstimate.remainingEstimate(ProfilerBridge::estimateMilliseconds)
                 .map(value -> value.durationMs() / 1000.0).orElse(0.0);
         if (ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.ACCURACY_RECORDING))
-            ACCURACY.start(key(networkId, plan.finalOutput().what()), scope, predictedSeconds, knownRows, totalRows, tick,
+            ACCURACY.start(key(networkId, finalOutput), scope, predictedSeconds, knownRows, totalRows, tick,
                     nanoTime);
     }
 

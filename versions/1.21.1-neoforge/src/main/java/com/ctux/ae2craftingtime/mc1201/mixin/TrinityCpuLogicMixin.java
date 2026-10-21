@@ -74,13 +74,25 @@ public abstract class TrinityCpuLogicMixin implements TrinityNativeJobAccess.Obs
                 ae2craftingtime$warned = true;
                 return;
             }
-            if (!ae2craftingtime$planFits(plan)) {
+            var exactOutputs = TrinityNativeJobAccess.exactPlannedOutputs(plan);
+            var projection = ae2craftingtime$planProjection(plan, exactOutputs);
+            if (projection.isEmpty()) {
                 ae2craftingtime$accounting.reject(TrinityNativeJobAccess.id(job));
                 ae2craftingtime$checkUnsupported(cpu);
                 return;
             }
-            ProfilerBridge.startJob(ProfilerBridge.networkId(grid), cpu, plan, tick(), System.nanoTime(),
-                    ProfilerBridge.jobOwner(source));
+            String network = ProfilerBridge.networkId(grid);
+            if (TrinityNativeJobAccess.isTrinityPlan(plan)) {
+                var plannedIds = projection.get().normalizedByOutput().entrySet().stream()
+                        .filter(entry -> entry.getValue() > 0)
+                        .map(Map.Entry::getKey).collect(java.util.stream.Collectors.toSet());
+                ProfilerBridge.startTrinityJob(network, cpu, plan, exactOutputs, projection.get(),
+                        TrinityNativeJobAccess.scheduledGraph(plan, network, plannedIds),
+                        tick(), System.nanoTime(), ProfilerBridge.jobOwner(source));
+            } else {
+                ProfilerBridge.startJob(network, cpu, plan, tick(), System.nanoTime(),
+                        ProfilerBridge.jobOwner(source));
+            }
             IntegrationLog.cpu("data_energistics", "cpu-submit");
         });
     }
@@ -340,21 +352,29 @@ public abstract class TrinityCpuLogicMixin implements TrinityNativeJobAccess.Obs
         ae2craftingtime$startAmounts(job, amounts);
     }
 
-    @Unique private boolean ae2craftingtime$planFits(ICraftingPlan plan) {
+    @Unique private java.util.Optional<TrinityQuantityBounds.Projection> ae2craftingtime$planProjection(
+            ICraftingPlan plan, Map<AEKey, BigInteger> exactOutputs) {
         try {
             var totals = new HashMap<AEKey, BigInteger>();
             for (var entry : plan.emittedItems())
                 totals.merge(entry.getKey(), BigInteger.valueOf(entry.getLongValue()), BigInteger::add);
             for (var entry : plan.patternTimes().entrySet()) {
-                if (entry.getValue() < 0) return false;
+                if (entry.getValue() < 0) return java.util.Optional.empty();
                 for (var output : entry.getKey().getOutputs())
                     totals.merge(output.what(), BigInteger.valueOf(output.amount())
                             .multiply(BigInteger.valueOf(entry.getValue())), BigInteger::add);
             }
-            return ae2craftingtime$fits(totals)
-                    && ae2craftingtime$fits(TrinityNativeJobAccess.exactPlannedOutputs(plan));
+            if (!ae2craftingtime$fits(totals)) return java.util.Optional.empty();
+            var projection = TrinityQuantityBounds.project(exactOutputs, key -> key.getId().toString(),
+                    AEKey::getAmountPerUnit);
+            if (TrinityNativeJobAccess.isTrinityPlan(plan)
+                    && (plan.finalOutput() == null || projection.isEmpty()
+                            || projection.get().normalizedByOutput().getOrDefault(
+                                    plan.finalOutput().what().getId().toString(), 0L) <= 0))
+                return java.util.Optional.empty();
+            return projection;
         } catch (ArithmeticException error) {
-            return false;
+            return java.util.Optional.empty();
         }
     }
 

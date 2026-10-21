@@ -148,8 +148,15 @@ public final class IntegrationCatalog {
         contract.add(method(TRINITY + "TrinityDataCoreVirtualCpu", "grid", "()Lappeng/api/networking/IGrid;"));
         contract.add(method(TRINITY + "TrinityDataCoreVirtualCpu", "number", "()I"));
         contract.add(field(TRINITY + "TrinityDataCoreVirtualCpu", "logic", "L" + TRINITY_LOGIC + ";"));
-        contract.add(method("com/fish_dan_/data_energistics/common/crafting/trinity/planning/plan/TrinityCraftingPlan",
-                "plannedOutputs", "()Ljava/util/Map;"));
+        var plan = "com/fish_dan_/data_energistics/common/crafting/trinity/planning/plan/";
+        contract.add(method(plan + "TrinityCraftingPlan", "plannedOutputs", "()Ljava/util/Map;"));
+        contract.add(method(plan + "TrinityCraftingPlan", "stages", "()Ljava/util/List;"));
+        contract.add(method(plan + "TrinityCraftingPlan", "cycleRepeatBlocks", "()Ljava/util/List;"));
+        contract.add(method(plan + "TrinityPlanStage", "cycleStage", "()Z"));
+        contract.add(method(plan + "TrinityPlanStage", "dependencies", "()Lit/unimi/dsi/fastutil/ints/IntSet;"));
+        contract.add(method(plan + "TrinityPlanStage", "firings", "()Ljava/util/List;"));
+        contract.add(method(plan + "TrinityPlanPatternFiring", "inputs", "()Ljava/util/Map;"));
+        contract.add(method(plan + "TrinityPlanPatternFiring", "outputs", "()Ljava/util/Map;"));
         contract.add(method(TRINITY_LOGIC, "trySubmitJob", "(Lappeng/api/networking/IGrid;"
                 + "Lappeng/api/networking/crafting/ICraftingPlan;Lappeng/api/networking/security/IActionSource;"
                 + "Lappeng/api/networking/crafting/ICraftingRequester;)Lappeng/api/networking/crafting/ICraftingSubmitResult;"));
