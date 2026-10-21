@@ -6,17 +6,22 @@ import appeng.api.networking.crafting.CalculationStrategy;
 import appeng.api.networking.crafting.ICraftingPlan;
 import appeng.api.networking.security.IActionSource;
 import appeng.api.stacks.AEItemKey;
+import appeng.api.stacks.GenericStack;
 import appeng.blockentity.storage.DriveBlockEntity;
 import appeng.core.definitions.AEItems;
+import appeng.crafting.CraftingCalculation;
+import appeng.crafting.CraftingPlan;
 import appeng.crafting.execution.CraftingSubmitResult;
 import com.ctux.ae2craftingtime.core.ProfileKey;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.fish_dan_.data_energistics.blockentity.trinity.TrinityDataCoreBlockEntity;
 import com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu;
+import net.minecraft.Util;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.Items;
 
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 /** A real oversized AE2 calculation must be rejected by native CPU storage admission. */
@@ -81,20 +86,27 @@ final class DataEnergisticsTrinityAdmissionFixture extends DataEnergisticsTrinit
         long actualSand = storage.getAvailableStacks().get(input);
         if (actualSand < seededSand) return false;
         if (oversized == null) {
-            oversized = grid.getCraftingService().beginCraftingCalculation(player.serverLevel(),
-                    () -> IActionSource.ofPlayer(player), outputKey(), requiredSand,
+            long extractableSand = storage.extract(input, requiredSand, Actionable.SIMULATE, source);
+            if (extractableSand != requiredSand)
+                throw new IllegalStateException("admission input is listed but not extractable: "
+                        + extractableSand + " of " + requiredSand);
+            // The service's Trinity planning capacity gate rejects this plan before native CPU admission.
+            var calculation = new CraftingCalculation(player.serverLevel(), grid,
+                    () -> IActionSource.ofPlayer(player), new GenericStack(outputKey(), requiredSand),
                     CalculationStrategy.REPORT_MISSING_ITEMS);
+            oversized = CompletableFuture.supplyAsync(calculation::run, Util.backgroundExecutor());
             return false;
         }
         if (!oversized.isDone()) return false;
         ICraftingPlan plan;
         try { plan = oversized.get(); }
         catch (Exception error) { throw new IllegalStateException("native oversized AE2 plan failed", error); }
-        if (plan.simulation() || !plan.missingItems().isEmpty()
+        if (!(plan instanceof CraftingPlan) || plan.simulation() || !plan.missingItems().isEmpty()
                 || plan.finalOutput().amount() != requiredSand)
             throw new IllegalStateException("oversized native plan is not a complete real craft: simulation="
-                    + plan.simulation() + ", missing=" + plan.missingItems() + ", output="
-                    + plan.finalOutput().amount() + ", sand=" + actualSand);
+                    + plan.simulation() + ", class=" + plan.getClass().getName() + ", bytes=" + plan.bytes()
+                    + ", missing=" + missingItems(plan) + ", output=" + plan.finalOutput().amount()
+                    + ", sand=" + actualSand);
         if (plan.bytes() <= capacity)
             throw new IllegalStateException("oversized native plan did not exceed CPU storage: "
                     + plan.bytes() + " <= " + capacity);
@@ -109,12 +121,20 @@ final class DataEnergisticsTrinityAdmissionFixture extends DataEnergisticsTrinit
         if (sandAfterRejection != actualSand)
             throw new IllegalStateException("oversized native rejection changed stored input: "
                     + actualSand + " -> " + sandAfterRejection);
-        admissionAmounts = Map.of("admissionCapacity", capacity, "requestedOutput", requiredSand,
-                "sandBefore", sandBefore, "sandInserted", sandInserted, "sandAtPlan", actualSand,
-                "planBytes", plan.bytes(), "planSimulation", plan.simulation() ? 1L : 0L,
-                "planMissing", plan.missingItems().isEmpty() ? 0L : 1L,
-                "nativeCpuTooSmall", 1L, "sandAfterRejection", sandAfterRejection);
+        admissionAmounts = Map.ofEntries(Map.entry("admissionCapacity", capacity),
+                Map.entry("requestedOutput", requiredSand), Map.entry("sandBefore", sandBefore),
+                Map.entry("sandInserted", sandInserted), Map.entry("sandAtPlan", actualSand),
+                Map.entry("planBytes", plan.bytes()), Map.entry("nativeAe2Plan", 1L),
+                Map.entry("planSimulation", plan.simulation() ? 1L : 0L),
+                Map.entry("planMissing", plan.missingItems().isEmpty() ? 0L : 1L),
+                Map.entry("nativeCpuTooSmall", 1L), Map.entry("sandAfterRejection", sandAfterRejection));
         rejected = true;
         return true;
+    }
+
+    private static String missingItems(ICraftingPlan plan) {
+        var entries = new java.util.StringJoiner(", ", "[", "]");
+        for (var entry : plan.missingItems()) entries.add(entry.getKey() + "=" + entry.getLongValue());
+        return entries.toString();
     }
 }
