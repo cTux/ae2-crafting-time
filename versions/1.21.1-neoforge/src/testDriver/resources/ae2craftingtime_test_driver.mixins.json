@@ -36,7 +36,8 @@
     "ChatComponentAccessor",
     "CraftingStatusAccessor",
     "CPUSelectionListObservationMixin",
-    "TrinityMaterialTableObservationMixin"
+    "TrinityMaterialTableObservationMixin",
+    "TrinityLdlibTextObservationMixin"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -1,12 +1,28 @@
 package com.ctux.ae2craftingtime.testdriver;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class UiObservationStoreTest {
+    @Test
+    void nativeTrinitySelectionRequiresActualConfirmScreenAndRenderedButtonLabel() {
+        var screen = AddonCpuFixture.TRINITY_CONFIRM_SCREEN;
+        assertTrue(UiObservationStore.isNativeTrinityCpuSelection(screen,
+                "Crafting CPU: Trinity Data Core #0"));
+        assertFalse(UiObservationStore.isNativeTrinityCpuSelection(screen,
+                "Crafting CPU: Automatic"));
+        assertFalse(UiObservationStore.isNativeTrinityCpuSelection(screen,
+                "Trinity Data Core #0"));
+        assertFalse(UiObservationStore.isNativeTrinityCpuSelection(
+                "appeng.client.gui.me.crafting.CraftConfirmScreen",
+                "Crafting CPU: Trinity Data Core #0"));
+    }
+
     @Test
     void cpuTtcUsesActuallyDrawnTranslatedOrTruncatedTextWithinCard() {
         var card = new Rect(10, 20, 67, 22);

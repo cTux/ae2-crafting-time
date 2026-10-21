@@ -76,6 +76,11 @@ public final class UiObservationStore {
         return AddonCpuFixture.TRINITY_CONFIRM_SCREEN.equals(screen);
     }
 
+    static boolean isNativeTrinityCpuSelection(String screen, String text) {
+        return isNativeTrinityConfirm(screen) && text.startsWith("Crafting CPU:")
+                && text.contains("Trinity");
+    }
+
     public static void rows(List<?> entries, int scroll) {
         if (active == null) {
             return;
@@ -161,7 +166,7 @@ public final class UiObservationStore {
             Integer color, boolean bold) {
         if (active != null) {
             var bounds = transformed(graphics, x, y, x + width, y + height);
-            if (isNativeTrinityConfirm(active.screen) && text.contains("Crafting CPU:")) {
+            if (isNativeTrinityCpuSelection(active.screen, text)) {
                 active.text.add(new UiSnapshot.ObservedText("native-trinity-cpu-selection", text,
                         List.of(), bounds, color, bold));
                 return;
@@ -189,6 +194,23 @@ public final class UiObservationStore {
             active.text.add(new UiSnapshot.ObservedText("gui.ae2craftingtime.suspended", text, List.of(),
                     transformed(graphics, x, y, x + width, y + height)));
         }
+    }
+
+    public static void nativeTitle(GuiGraphics graphics, net.minecraft.client.gui.Font font,
+            net.minecraft.util.FormattedCharSequence sequence, float x, float y, int color) {
+        var rendered = new StringBuilder();
+        final Integer[] textColor = {null};
+        final boolean[] bold = {false};
+        sequence.accept((index, style, codePoint) -> {
+            rendered.appendCodePoint(codePoint);
+            if (Character.isLetterOrDigit(codePoint)) {
+                textColor[0] = style.getColor() == null ? color : style.getColor().getValue();
+                bold[0] = style.isBold();
+            }
+            return true;
+        });
+        nativeTitle(graphics, rendered.toString(), (int) Math.floor(x), (int) Math.floor(y),
+                font.width(sequence), font.lineHeight, textColor[0], bold[0]);
     }
 
     private static boolean recordNativePlanAmount(String text, Rect bounds, Integer color, boolean bold) {
