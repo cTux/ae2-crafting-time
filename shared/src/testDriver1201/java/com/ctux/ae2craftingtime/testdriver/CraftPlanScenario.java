@@ -262,7 +262,8 @@ public final class CraftPlanScenario {
             advance(ScenarioState.WORLD_READY);
             return;
         }
-        if (baseFixture != null && !baseFixture.setup(minecraft, marker)) {
+        // A restarting addon keeps the original grid and job in this same world.
+        if (baseFixture != null && !resumingAddon() && !baseFixture.setup(minecraft, marker)) {
             return;
         }
         if (addonFixture != null && !addonFixture.setup(minecraft, marker)) {
