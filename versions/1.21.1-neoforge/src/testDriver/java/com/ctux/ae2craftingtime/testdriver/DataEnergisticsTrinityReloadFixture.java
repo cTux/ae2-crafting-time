@@ -73,6 +73,7 @@ final class DataEnergisticsTrinityReloadFixture extends DataEnergisticsTrinityFi
         lastWaiting = new BigInteger(resumed.currentWaiting);
         waitingDecrement = maxWaiting.subtract(lastWaiting);
         sawAcceptedOutput = waitingDecrement.signum() > 0;
+        await("restart-checkpoint-bound");
         return placement;
     }
 
@@ -82,16 +83,25 @@ final class DataEnergisticsTrinityReloadFixture extends DataEnergisticsTrinityFi
             return super.finish(player, placement);
         }
         submittedHost = (TrinityDataCoreBlockEntity) player.serverLevel().getBlockEntity(placement.origin());
-        if (submittedHost == null || !submittedHost.isStructureFormed() || !submittedHost.isCpuStructureFormed()
-                || !submittedHost.isCraftingStructureFormed() || submittedHost.craftingExecutionRoute() == null)
-            return false;
+        if (submittedHost == null) return await("restart-host-missing");
+        if (!submittedHost.isStructureFormed()) return await("restart-main-unformed");
+        if (!submittedHost.isCpuStructureFormed()) return await("restart-cpu-unformed");
+        if (!submittedHost.isCraftingStructureFormed()) return await("restart-crafting-unformed");
+        if (submittedHost.craftingExecutionRoute() == null) return await("restart-route-missing");
         submittedGrid = submittedHost.craftingExecutionRoute().serviceGrid();
-        if (submittedGrid == null) return false;
-        worker = submittedHost.getCpuPartitions().stream()
-                .filter(cpu -> cpu.number() == resumed.workerNumber && cpu.isBusy()
-                        && submittedGrid.getCraftingService().getCpus().contains(cpu))
+        if (submittedGrid == null) return await("restart-grid-missing");
+        var partitions = submittedHost.getCpuPartitions().stream().toList();
+        var matching = partitions.stream()
+                .filter(cpu -> cpu.number() == resumed.workerNumber).toList();
+        var published = submittedGrid.getCraftingService().getCpus();
+        worker = matching.stream()
+                .filter(cpu -> cpu.isBusy() && published.contains(cpu))
                 .findFirst().orElse(null);
-        if (worker == null) return false;
+        if (worker == null) return await("restart-worker-missing:matching=" + matching.size()
+                + ":busy=" + matching.stream().filter(TrinityDataCoreVirtualCpu::isBusy).count()
+                + ":published=" + matching.stream().filter(published::contains).count()
+                + ":partitions=" + partitions.stream().map(cpu -> cpu.number() + "/"
+                        + cpu.isBusy() + "/" + published.contains(cpu)).toList());
         if (!Objects.equals(resumed.workerIdentity, worker.getStableDispatchIdentity()))
             throw new IllegalStateException("Trinity worker identity changed across restart");
         link = jobLink(worker);

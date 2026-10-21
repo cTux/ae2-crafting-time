@@ -458,7 +458,7 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
     @Override
     protected String setupDetail() { return setup.stage(); }
 
-    private boolean await(String stage) {
+    protected boolean await(String stage) {
         return setup.observe(stage, System.nanoTime());
     }
 
