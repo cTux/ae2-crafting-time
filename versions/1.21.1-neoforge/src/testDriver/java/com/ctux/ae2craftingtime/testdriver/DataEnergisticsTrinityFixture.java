@@ -37,6 +37,7 @@ import com.google.gson.Gson;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -138,9 +139,7 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
             if (usesPhysicalSuffix()) volume.add(outputSuffixBuffer(provider));
             if (volume.stream().anyMatch(pos -> pos.getY() < level.getMinBuildHeight()
                     || pos.getY() >= level.getMaxBuildHeight())) continue;
-            for (int cx = (x - 24) >> 4; cx <= (x + 24) >> 4; cx++)
-                for (int cz = (z - 24) >> 4; cz <= (z + 24) >> 4; cz++)
-                    level.getChunk(cx, cz);
+            preloadStructureChunks(level, origin);
             if (volume.stream().anyMatch(pos -> !level.getBlockState(pos).isAir())) continue;
             level.setBlockAndUpdate(origin, DEBlocks.TRINITY_DATA_CORE.get().defaultBlockState());
             level.setBlockAndUpdate(provider, AEBlocks.PATTERN_PROVIDER.block().defaultBlockState()
@@ -174,6 +173,54 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
         return positions;
     }
 
+    protected static void preloadStructureChunks(ServerLevel level, BlockPos origin) {
+        for (int cx = (origin.getX() - 24) >> 4; cx <= (origin.getX() + 24) >> 4; cx++)
+            for (int cz = (origin.getZ() - 24) >> 4; cz <= (origin.getZ() + 24) >> 4; cz++)
+                level.getChunk(cx, cz);
+    }
+
+    protected IGrid connectFixtureGrid(ServerPlayer player, TrinityDataCoreBlockEntity host,
+            Placement placement, boolean includeProviders) {
+        var level = player.serverLevel();
+        var terminalEntity = level.getBlockEntity(placement.terminal());
+        if (!(terminalEntity instanceof IInWorldGridNodeHost terminalHost)) {
+            await("terminal-node");
+            return null;
+        }
+        var terminalNode = Arrays.stream(Direction.values()).map(terminalHost::getGridNode)
+                .filter(Objects::nonNull).findFirst().orElse(null);
+        if (terminalNode == null || terminalNode.getGrid() == null) {
+            await("terminal-node");
+            return null;
+        }
+        var depot = host.compartmentHost$getCompartments(DEVerticalMultiBlocks.trinityDataCoreMainKey().structureName()).stream()
+                .filter(TrinityInformationExchangeDepotBlockEntity.class::isInstance)
+                .map(TrinityInformationExchangeDepotBlockEntity.class::cast)
+                .findFirst().orElse(null);
+        if (depot == null || depot.getGridNode() == null || depot.getGridNode().getGrid() == null) {
+            await("information-exchange-depot");
+            return null;
+        }
+        if (depot.getGridNode().getGrid() != terminalNode.getGrid())
+            GridHelper.createConnection(terminalNode, depot.getGridNode());
+        if (includeProviders) {
+            for (var pos : List.of(placement.provider(), placement.provider().below(3))) {
+                var machine = (AENetworkedBlockEntity) level.getBlockEntity(pos);
+                if (machine == null || !machine.getMainNode().isReady()) {
+                    await("provider-node");
+                    return null;
+                }
+                var node = machine.getMainNode().getNode();
+                if (node == null || node.getGrid() == null) {
+                    await("provider-grid-node");
+                    return null;
+                }
+                if (node.getGrid() != terminalNode.getGrid()) GridHelper.createConnection(terminalNode, node);
+            }
+        }
+        return terminalNode.getGrid();
+    }
+
     @Override
     protected boolean finish(ServerPlayer player, Placement placement) {
         var level = player.serverLevel();
@@ -186,17 +233,7 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
             }
             return await("main-formation");
         }
-        var terminalHost = (IInWorldGridNodeHost) level.getBlockEntity(placement.terminal());
-        var terminalNode = Arrays.stream(Direction.values()).map(terminalHost::getGridNode)
-                .filter(Objects::nonNull).findFirst().orElse(null);
-        if (terminalNode == null) return await("terminal-node");
-        var depot = host.compartmentHost$getCompartments(DEVerticalMultiBlocks.trinityDataCoreMainKey().structureName()).stream()
-                .filter(TrinityInformationExchangeDepotBlockEntity.class::isInstance)
-                .map(TrinityInformationExchangeDepotBlockEntity.class::cast)
-                .findFirst().orElse(null);
-        if (depot == null || depot.getGridNode() == null) return await("information-exchange-depot");
-        if (depot.getGridNode().getGrid() != terminalNode.getGrid())
-            GridHelper.createConnection(terminalNode, depot.getGridNode());
+        if (connectFixtureGrid(player, host, placement, false) == null) return false;
         if (!host.isCpuStructureFormed()) {
             if (!placement.cpuRequested) {
                 host.autoBuildTrinityStructure(player, request(TrinityAutoBuildRequest.CPU_STRUCTURE_INDEX));
@@ -213,16 +250,10 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
         }
         if (host.getCraftingPatternCoreCount() < 1)
             throw new IllegalStateException("Trinity crafting child has no mounted pattern core");
-        for (var pos : List.of(placement.provider(), placement.provider().below(3))) {
-            var machine = (AENetworkedBlockEntity) level.getBlockEntity(pos);
-            if (machine == null || !machine.getMainNode().isReady()) return await("provider-node");
-            var node = machine.getMainNode().getNode();
-            if (node == null) return await("provider-grid-node");
-            if (node.getGrid() != terminalNode.getGrid()) GridHelper.createConnection(terminalNode, node);
-        }
-        if (host.craftingExecutionRoute() == null || host.craftingExecutionRoute().serviceGrid() != terminalNode.getGrid())
+        var grid = connectFixtureGrid(player, host, placement, true);
+        if (grid == null) return false;
+        if (host.craftingExecutionRoute() == null || host.craftingExecutionRoute().serviceGrid() != grid)
             return await("crafting-route");
-        var grid = terminalNode.getGrid();
         var storage = grid.getStorageService().getInventory();
         long present = storage.getAvailableStacks().get(INPUT);
         if (present < 64 && storage.insert(INPUT, 64 - present, Actionable.MODULATE,

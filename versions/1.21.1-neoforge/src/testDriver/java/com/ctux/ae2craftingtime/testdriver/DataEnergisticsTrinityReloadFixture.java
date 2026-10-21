@@ -58,6 +58,7 @@ final class DataEnergisticsTrinityReloadFixture extends DataEnergisticsTrinityFi
         resumed = read(options.continuation(), options);
         var origin = new BlockPos(resumed.x, resumed.y, resumed.z);
         var provider = new BlockPos(resumed.providerX, resumed.providerY, resumed.providerZ);
+        preloadStructureChunks(player.serverLevel(), origin);
         var owned = rotatedUnion(origin);
         for (int depth = 0; depth < 4; depth++) owned.add(provider.below(depth));
         owned.add(outputHoldPower(provider));
@@ -87,9 +88,12 @@ final class DataEnergisticsTrinityReloadFixture extends DataEnergisticsTrinityFi
         if (!submittedHost.isStructureFormed()) return await("restart-main-unformed");
         if (!submittedHost.isCpuStructureFormed()) return await("restart-cpu-unformed");
         if (!submittedHost.isCraftingStructureFormed()) return await("restart-crafting-unformed");
-        if (submittedHost.craftingExecutionRoute() == null) return await("restart-route-missing");
-        submittedGrid = submittedHost.craftingExecutionRoute().serviceGrid();
-        if (submittedGrid == null) return await("restart-grid-missing");
+        var terminalGrid = connectFixtureGrid(player, submittedHost, placement, true);
+        if (terminalGrid == null) return false;
+        var route = submittedHost.craftingExecutionRoute();
+        if (route == null) return await("restart-route-missing");
+        submittedGrid = route.serviceGrid();
+        if (submittedGrid == null || submittedGrid != terminalGrid) return await("restart-grid-missing");
         var partitions = submittedHost.getCpuPartitions().stream().toList();
         var matching = partitions.stream()
                 .filter(cpu -> cpu.number() == resumed.workerNumber).toList();
