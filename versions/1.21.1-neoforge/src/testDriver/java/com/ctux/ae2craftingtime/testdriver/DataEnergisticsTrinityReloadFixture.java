@@ -104,11 +104,14 @@ final class DataEnergisticsTrinityReloadFixture extends DataEnergisticsTrinityFi
     @Override
     boolean writeRestartCheckpoint(Path path, DriverOptions options, String networkId) {
         if (worker == null || !worker.isBusy() || jobId == null || requested != 2
-                || maxWaiting.signum() <= 0 || worker.getWaitingFor(AEItemKey.of(Items.GLASS)).signum() <= 0)
+                || !maxWaiting.equals(BigInteger.TWO)
+                || !worker.getWaitingFor(AEItemKey.of(Items.GLASS)).equals(BigInteger.ONE)
+                || !waitingDecrement.equals(BigInteger.ONE) || !sawAcceptedOutput)
             return false;
         var inventory = submittedGrid.getStorageService().getInventory();
-        if (inventory.getAvailableStacks().get(AEItemKey.of(Items.GLASS)) - beforeOutput != 1
-                || waitingDecrement.signum() <= 0) return false;
+        // Trinity holds the accepted prefix in its busy CPU until the whole job completes.
+        if (inventory.getAvailableStacks().get(AEItemKey.of(Items.GLASS)) - beforeOutput != 0)
+            return false;
         var sampleCount = ProfilerBridge.stats(new ProfileKey(networkId, "minecraft:glass"))
                 .map(stats -> stats.sampleCount()).orElse(0);
         if (sampleCount != 1) return false;
