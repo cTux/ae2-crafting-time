@@ -557,7 +557,7 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
             twoGlassBeforeStatus = TrinityPhysicalSuffix.twoGlassReady(
                     furnaceGlassBeforeStatus, suffixBuffer(player).getItem(0).getCount());
         }
-        if (activeStatusCaptured && outputHoldArmed && !outputHoldReleased) {
+        if (activeStatusFreshness.accepted() != null && outputHoldArmed && !outputHoldReleased) {
             if (!worker.isBusy() || !jobId.equals(jobLink(worker).getCraftingID()))
                 throw new IllegalStateException("Trinity job changed before held output was released");
             if (usesPhysicalSuffix() && !suffixBuffered) {
