@@ -85,6 +85,37 @@ class TestDriverCoreTest {
     }
 
     @Test
+    void trinityAlreadySelectedWorkerWaitsForFreshNativeStatusWithSameIdentityContext() {
+        var freshness = new TrinityActiveStatusFreshness();
+        var job = "e407354d-de75-4336-9a02-df12ef448fa0";
+        var first = new UiSnapshot.StatusObservation(101, "native", 1, 1, 1, 0, 0,
+                4, job, "minecraft:glass", 1L);
+        var next = new UiSnapshot.StatusObservation(102, "native", 2, 1, 1, 0, 0,
+                4, job, "minecraft:glass", 2L);
+        assertFalse(freshness.observe(null, true, 4, job, "minecraft:glass", 10));
+        assertFalse(freshness.observe(first, false, 4, job, "minecraft:glass", 10));
+        assertFalse(freshness.observe(first, true, 3, job, "minecraft:glass", 10));
+        assertFalse(freshness.observe(first, true, 4, "other-job", "minecraft:glass", 10));
+        assertFalse(freshness.observe(first, true, 4, job, "minecraft:stone", 10));
+        assertFalse(freshness.observe(new UiSnapshot.StatusObservation(101, "synthetic", 1, 1, 1,
+                0, 0, 4, job, "minecraft:glass", 1L), true, 4, job, "minecraft:glass", 10));
+        assertNull(freshness.baselineIdentity());
+
+        assertFalse(freshness.observe(first, true, 4, job, "minecraft:glass", 10));
+        assertEquals(101, freshness.baselineIdentity());
+        assertFalse(freshness.observe(first, true, 4, job, "minecraft:glass", 11));
+        assertFalse(freshness.observe(next, true, 4, job, "minecraft:glass", 10));
+        assertFalse(freshness.observe(new UiSnapshot.StatusObservation(103, "native", 2, 1, 1,
+                0, 0, 4, "new-job", "minecraft:glass", 2L), true, 4,
+                "new-job", "minecraft:glass", 11));
+        assertEquals(101, freshness.baselineIdentity());
+        assertTrue(freshness.observe(next, true, 4, job, "minecraft:glass", 11));
+        freshness.reset();
+        assertNull(freshness.baselineIdentity());
+        assertFalse(freshness.observe(next, true, 4, job, "minecraft:glass", 12));
+    }
+
+    @Test
     void everyTrinityScenarioHasAnExplicitFixtureAndRequiredNativeChecks() {
         for (var scenario : List.of("data-energistics-trinity-cpu", "data-energistics-trinity-counted-cpu",
                 "data-energistics-trinity-cancel-cpu", "data-energistics-trinity-global-option-cpu",

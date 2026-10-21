@@ -78,8 +78,7 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
     private volatile boolean nativeActive;
     private Integer statusWorkerSerial;
     private volatile String coordinatorName;
-    private Integer statusBeforeIdentity;
-    private long statusBeforeFrame = -1;
+    private final TrinityActiveStatusFreshness activeStatusFreshness = new TrinityActiveStatusFreshness();
     private final SetupStageProgress setup = new SetupStageProgress();
     private int planBadgeStage;
     private long planBadgeFrame = -1;
@@ -385,6 +384,7 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
         outputHoldArmed = true;
         outputHoldReleased = false;
         activeStatusCaptured = false;
+        activeStatusFreshness.reset();
         outputHoldStartedNanos = System.nanoTime();
         outputHoldDurationNanos = null;
     }
@@ -472,8 +472,7 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
         waitingDecrement = BigInteger.ZERO;
         statusWorkerSerial = null;
         coordinatorName = null;
-        statusBeforeIdentity = null;
-        statusBeforeFrame = -1;
+        activeStatusFreshness.reset();
         activeStatusCaptured = false;
         twoGlassBeforeStatus = false;
         furnaceGlassBeforeStatus = 0;
@@ -678,33 +677,20 @@ class DataEnergisticsTrinityFixture extends AddonCpuFixture<DataEnergisticsTrini
             if (status != null && (!"native".equals(status.provenance())
                     || status.selectedJobUuid() != null || status.selectedCpuSerial() == null
                     || status.selectedCpuSerial() != coordinator.serial()
-                    || status.identity() == statusBeforeIdentity)) return false;
+                    || Objects.equals(status.identity(), activeStatusFreshness.baselineIdentity()))) return false;
             screenshot.accept("trinity-completed-status.png");
         } else {
             var card = snapshot.cpuCards().stream()
                     .filter(value -> outputId.equals(value.jobId()) && value.amount() > 0)
                     .findFirst().orElse(null);
             if (card == null) return false;
-            if (statusBeforeIdentity == null && card.selected()) {
-                var coordinator = TrinityStatusCoordinator.card(snapshot.cpuCards(), coordinatorName);
-                if (coordinator == null) return false;
-                DriverPlatform.click(minecraft, coordinator.bounds().centerX(), coordinator.bounds().centerY());
-                return false;
-            }
             if (!card.selected()) {
-                var prior = snapshot.status();
-                statusBeforeIdentity = prior == null ? null : prior.identity();
-                statusBeforeFrame = snapshot.frame();
                 DriverPlatform.click(minecraft, card.bounds().centerX(), card.bounds().centerY());
                 return false;
             }
             var status = snapshot.status();
-            if (status == null || !"native".equals(status.provenance())
-                    || statusBeforeIdentity == null || status.identity() == statusBeforeIdentity
-                    || snapshot.frame() <= statusBeforeFrame
-                    || !Objects.equals(status.selectedCpuSerial(), card.serial())
-                    || !outputId.equals(status.selectedOutputId())
-                    || !Objects.equals(nativeJobId(), status.selectedJobUuid())) return false;
+            if (!activeStatusFreshness.observe(status, card.selected(), card.serial(),
+                    nativeJobId(), outputId, snapshot.frame())) return false;
             if (requiresLearnedActiveStatus() && (status.startCount() <= 0 || status.remainingCount() <= 0
                     || snapshot.rows().stream().filter(row -> outputId.equals(row.outputId()))
                             .filter(row -> row.activeAmount() > 0 || row.pendingAmount() > 0)
