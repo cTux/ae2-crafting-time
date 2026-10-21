@@ -38,7 +38,7 @@ Keep target-specific mixins/accessors under
 them only in that target's `ae2craftingtime.mixins.json`. Reuse the existing
 `@Pseudo`, string-target and `IntegrationMixinPlugin` pattern. Add a
 `data_energistics` candidate to `IntegrationCatalog`, restricted to
-`1.21.1-neoforge`, with a descriptive variant such as `trinity-3.3.5`.
+`1.21.1-neoforge`, with a descriptive variant such as `trinity-3-3-5`.
 Check every consumed field/method descriptor, including nested record accessors,
 before selection. A version string alone is insufficient. Compare bytecode in
 the pinned JAR with source before freezing the candidate contract.

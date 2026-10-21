@@ -13,10 +13,16 @@ try {
     if (@($base.psobject.Properties).Count -ne 0) { throw 'BaseOnly expected adapters' }
     & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target 1.20.1-forge -BundleDirectory $temp -ProjectId rxYaglEe
     $advanced = Get-Content (Join-Path $temp 'expected-adapters.json') -Raw | ConvertFrom-Json
-    if (@($advanced.psobject.Properties).Count -ne 1 -or $advanced.advanced_ae -ne 'advanced-cpu') { throw 'AdvancedAE graph expectation' }
+    if (@($advanced.psobject.Properties).Count -ne 1 -or $advanced.advanced_ae -ne 'advanced-cpu-1201') { throw 'AdvancedAE graph expectation' }
+    & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target 1.21.1-neoforge -BundleDirectory $temp -ProjectId 1565514
+    $trinity = Get-Content (Join-Path $temp 'expected-adapters.json') -Raw | ConvertFrom-Json
+    if (@($trinity.psobject.Properties).Count -ne 2 -or $trinity.data_energistics -cne 'trinity-3-3-5' -or
+            $trinity.data_energistics_trinity_ui -cne 'trinity-material-3-3-5') {
+        throw 'CurseForge Trinity graph must require both checked adapters'
+    }
     & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target 1.20.1-forge -BundleDirectory $temp
     $full = Get-Content (Join-Path $temp 'expected-adapters.json') -Raw | ConvertFrom-Json
-    if (@($full.psobject.Properties).Count -lt 5 -or $full.advanced_ae -ne 'advanced-cpu') { throw 'Full catalogue expectation' }
+    if (@($full.psobject.Properties).Count -lt 5 -or $full.advanced_ae -ne 'advanced-cpu-1201') { throw 'Full catalogue expectation' }
     foreach($target in @('1.20.1-forge','1.20.1-fabric','1.21.1-neoforge','26.1.2-neoforge')) {
     foreach($native in @($true)+$(if($target -in @('1.20.1-forge','1.21.1-neoforge')){@($false)}else{@()})) {
         $parameters=@{Target=$target;BundleDirectory=$temp;BaseOnly=$native}
@@ -27,7 +33,8 @@ try {
         $before=(Get-FileHash $path).Hash
         & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') @parameters
         if((Get-FileHash $path).Hash -cne $before){throw 'Adapter generation is nondeterministic'}
-        $cache=@{CacheDirectory=$temp;HeadSha=('a'*40);Fingerprint='adapter-test';Target=$target;Profile='compatible';GraphId='focused';BaseOnly=$native;ProjectId=@($parameters.ProjectId)}
+        $cache=@{CacheDirectory=$temp;HeadSha=('a'*40);Fingerprint='adapter-test';Target=$target;Profile='compatible';GraphId='focused';BaseOnly=$native}
+        if($parameters.ContainsKey('ProjectId')){$cache.ProjectId=$parameters.ProjectId}
         $sealed=& (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') @cache -Mode Seal
         $timestamp=(Get-Item $path).LastWriteTimeUtc
         & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') @parameters

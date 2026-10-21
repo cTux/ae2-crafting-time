@@ -50,7 +50,7 @@ class AdapterSmokePolicyTest {
     void everyTrinityLeafRequiresItsNativeWorkerAndSelectedAdapter() {
         var nativeCpu = snapshot("appeng.me.cluster.implementations.CraftingCPUCluster");
         var trinityCpu = snapshot("com.fish_dan_.data_energistics.common.crafting.trinity.execution.cpu.TrinityDataCoreVirtualCpu");
-        var selected = new IntegrationSelection.Decision("data_energistics", "3.3.5", "trinity-3.3.5", "selected",
+        var selected = new IntegrationSelection.Decision("data_energistics", "3.3.5", "trinity-3-3-5", "selected",
                 Set.of("TrinityCpuLogicMixin"), List.of());
         for (var scenario : List.of("data-energistics-trinity-cpu", "data-energistics-trinity-counted-cpu",
                 "data-energistics-trinity-cancel-cpu", "data-energistics-trinity-global-option-cpu",

@@ -36,9 +36,9 @@ public final class IntegrationCatalog {
                     false, Set.of("Ae2LtTimeWheelCraftingCpuLogicMixin", "Ae2LtEstimateMixin"),
                     List.of(new IntegrationContract.Member("com/moakiee/ae2lt/crafting/timewheel/"
                             + "Ae2LtTimeWheelCraftingCpuLogic", "", ""))),
-            new IntegrationSelection.Candidate("data_energistics", "trinity-3.3.5",
+            new IntegrationSelection.Candidate("data_energistics", "trinity-3-3-5",
                     Set.of("1.21.1-neoforge"), false, Set.of("TrinityCpuLogicMixin"), trinity()),
-            new IntegrationSelection.Candidate("data_energistics_trinity_ui", "trinity-material-3.3.5",
+            new IntegrationSelection.Candidate("data_energistics_trinity_ui", "trinity-material-3-3-5",
                     Set.of("1.21.1-neoforge"), true, Set.of("TrinityMaterialTableMixin"), List.of(method(
                     "com/fish_dan_/data_energistics/client/screen/crafting/confirm/TrinityCraftConfirmMaterialTable",
                     "drawEntry", "(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/Minecraft;"

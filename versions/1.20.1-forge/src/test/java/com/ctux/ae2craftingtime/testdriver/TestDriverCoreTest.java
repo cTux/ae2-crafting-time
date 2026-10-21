@@ -1187,6 +1187,12 @@ class TestDriverCoreTest {
 
     @Test
     void smokeUsesThePackagedCataloguesOrderForEveryTarget() {
+        for (var target : List.of("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) {
+            SmokeAdapterCatalog.newest(target).forEach((dependency, variant) -> {
+                assertTrue(dependency.matches("[a-z0-9_]+"), dependency);
+                assertTrue(variant.matches("[a-z0-9-]+"), variant);
+            });
+        }
         assertEquals("batched-long", SmokeAdapterCatalog.newest("1.20.1-forge").get("neoecoae"));
         assertEquals("batched-int", SmokeAdapterCatalog.newest("1.21.1-neoforge").get("neoecoae"));
         assertEquals("tree-layout", SmokeAdapterCatalog.newest("1.20.1-fabric").get("ae2ct"));
