@@ -128,7 +128,7 @@ The automatic visual gate is REVIEW_REQUIRED; semantic, archive and cleanup pass
 
 ## Timing
 
-The implementation smoke interval starts at 13:51:18.102 UTC and ends with the
+The implementation smoke interval starts at 13:51:18.098 UTC and ends with the
 final archive at 14:26:32.478 UTC. The earlier beta coexistence campaign has its
 own separate timing report. Campaign costs below already include host preparation,
 guest staging, Minecraft loading, world generation, assertions, capture and cleanup.
