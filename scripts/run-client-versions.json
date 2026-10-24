@@ -72,6 +72,14 @@
     "test_driver_projects": ["PbNc6qBY"],
     "curseforge": [
       {
+        "name": "Applied Enhancements",
+        "project_id": 1665696,
+        "mod_id": "appliedenhancements",
+        "version": "1.1.4-forge",
+        "compatible": { "file_id": 9301183, "filename": "appliedenhancements-1.1.4-forge.jar", "sha512": "06e1979668e72e187ea6df6fab712beed689cc486a75cc9b939ec0fed0fe1c7190079604ac60aedb1d8b0afcc46bc754aa1ef2f6d2962077853162bc60a1208d" },
+        "latest": { "file_id": 9301183, "filename": "appliedenhancements-1.1.4-forge.jar", "sha512": "06e1979668e72e187ea6df6fab712beed689cc486a75cc9b939ec0fed0fe1c7190079604ac60aedb1d8b0afcc46bc754aa1ef2f6d2962077853162bc60a1208d" }
+      },
+      {
         "name": "AE2 Lightning Tech",
         "project_id": 1527395,
         "replaces_project_id": "ArHeh5Fz",
