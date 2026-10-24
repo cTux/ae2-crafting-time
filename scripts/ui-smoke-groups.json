@@ -5,12 +5,16 @@
     "provider-dispatch-statuses": ["no-channel-status", "no-target-status", "input-blocked-status", "locked-status"]
   },
   "focusedCases": {
-    "1.20.1-forge": ["delayed-resource-icons", "appmek-resource-icons", "chance-output-status", "crafting-suspension"],
+    "1.20.1-forge": ["aelis-plan", "delayed-resource-icons", "appmek-resource-icons", "chance-output-status", "crafting-suspension"],
     "1.20.1-fabric": ["delayed-resource-icons"],
     "1.21.1-neoforge": ["delayed-resource-icons", "appmek-resource-icons", "neoeco-cpu", "omnisequence-cpu"],
     "26.1.2-neoforge": ["delayed-resource-icons"]
   },
   "cases": {
+    "aelis-plan": {
+      "checks": ["aelis-plan", "row-ttc", "total-ttc", "tooltip", "exact-rows", "filters", "scroll", "tree", "option-off", "narrow", "native-view", "fixture-restored"],
+      "screenshots": ["aelis-plan.png", "aelis-tooltip.png", "aelis-exact-rows.png", "aelis-filter.png", "aelis-scroll.png", "aelis-tree.png", "aelis-off.png", "aelis-narrow.png", "aelis-native-view.png"]
+    },
     "compact-hover-numbers": {
       "checks": ["seeded-server-rate", "plan-throughput", "status-throughput", "full-chat-rates", "legacy-hover", "fixture-restored"],
       "screenshots": ["compact-hover-ordinary-plan.png", "compact-hover-ordinary-status.png", "compact-hover-ordinary-chat.png", "compact-hover-ordinary-legacy.png", "compact-hover-fractional-plan.png", "compact-hover-fractional-status.png", "compact-hover-fractional-chat.png", "compact-hover-fractional-legacy.png", "compact-hover-thousand-plan.png", "compact-hover-thousand-status.png", "compact-hover-thousand-chat.png", "compact-hover-thousand-legacy.png", "compact-hover-petascale-plan.png", "compact-hover-petascale-status.png", "compact-hover-petascale-chat.png", "compact-hover-petascale-legacy.png", "compact-hover-exascale-plan.png", "compact-hover-exascale-status.png", "compact-hover-exascale-chat.png", "compact-hover-exascale-legacy.png"]
@@ -110,6 +114,7 @@
     }
   },
   "adapterCases": {
+    "appliedenhancements": ["aelis-plan"],
     "ae2ct": ["crafting-tree-screen"],
     "neoecoae": ["neoeco-cpu", "neoeco-fastpath-cpu"],
     "advanced_ae": ["advancedae-cpu"],

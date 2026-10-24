@@ -1,4 +1,6 @@
 {
+  "text.ae2craftingtime.aelis.ttc_column": "TTC",
+  "text.ae2craftingtime.aelis.partial_total": "Частковий TTC: %s",
   "text.ae2craftingtime.no_power": "Немає енергії",
   "text.ae2craftingtime.no_power.explanation": "Мережі ME бракує енергії для наступного запуску шаблону.",
   "text.ae2craftingtime.no_power.suggestion": "Збільште виробництво або запас енергії в мережі.",

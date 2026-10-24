@@ -15,6 +15,8 @@ public final class IntegrationCatalog {
             + "Lcn/dancingsnow/neoecoae/impl/crafting/fastpath/ECOExtractedPatternExecution;";
 
     public static final List<IntegrationSelection.Candidate> CANDIDATES = List.of(
+            new IntegrationSelection.Candidate("appliedenhancements", "aelis-plan-114", Set.of("1.20.1-forge"), true,
+                    Set.of("AelisPlanScreenMixin", "AelisPlanLayoutMixin"), aelis()),
             new IntegrationSelection.Candidate("ae2ct", "tree-layout", PRE_26, true,
                     Set.of("CraftingTreeNewWidgetMixin"), treeLayout()),
             new IntegrationSelection.Candidate("ae2ct", "tree-helper", PRE_26, true,
@@ -37,6 +39,31 @@ public final class IntegrationCatalog {
             boolean client, String mixin, String owner) {
         return new IntegrationSelection.Candidate(dependency, variant, targets, client, Set.of(mixin),
                 List.of(new IntegrationContract.Member(owner, "", "")));
+    }
+
+    private static List<IntegrationContract.Member> aelis() {
+        var screen = "com/appliedenhancements/client/plan/AelisCraftConfirmScreen";
+        var layout = "com/appliedenhancements/client/plan/AelisPlanLayout";
+        var row = "com/appliedenhancements/client/plan/AelisPlanRows$Row";
+        var members = new ArrayList<IntegrationContract.Member>();
+        members.add(method(screen, "drawFG", "(Lnet/minecraft/client/gui/GuiGraphics;IIII)V"));
+        members.add(method(screen, "drawBG", "(Lnet/minecraft/client/gui/GuiGraphics;IIIIF)V"));
+        members.add(method(screen, "m_88315_", "(Lnet/minecraft/client/gui/GuiGraphics;IIF)V"));
+        members.add(method(screen, "rowUnderMouse", "(DD)L" + row + ";"));
+        for (var name : List.of("rows", "visible"))
+            members.add(new IntegrationContract.Member(screen, "field:" + name, "Ljava/util/List;"));
+        members.add(new IntegrationContract.Member(screen, "field:scroll", "I"));
+        members.add(new IntegrationContract.Member(screen, "field:view", "L" + screen + "\\$View;"));
+        members.add(new IntegrationContract.Member(screen, "field:layout", "L" + layout + ";"));
+        members.add(method(layout, "fit", "(II)L" + layout + ";"));
+        members.add(method(layout, "width", "()I"));
+        members.add(method(layout, "visibleRows", "()I"));
+        members.add(method(layout, "columns", "(Z)L" + layout + "$Columns;"));
+        members.add(method(layout + "$Columns", "<init>", "(IZ)V"));
+        members.add(method(row, "key", "()Ljava/lang/Object;"));
+        for (var name : List.of("craft", "missing", "cyclic"))
+            members.add(method(row, name, "()Ljava/math/BigInteger;"));
+        return members;
     }
 
     private static IntegrationSelection.Candidate advanced(String variant, String target, String estimateMixin) {

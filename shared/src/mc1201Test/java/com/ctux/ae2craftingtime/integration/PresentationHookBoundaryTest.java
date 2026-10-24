@@ -11,6 +11,27 @@ import org.objectweb.asm.tree.MethodNode;
 
 class PresentationHookBoundaryTest {
     @Test
+    void aelisRequiresTheScreenTooltipAndBothLayoutChanges() {
+        var screen = new ClassNode();
+        assertFalse(IntegrationMixinPlugin.aelisScreenReady(screen));
+        var draw = add(screen, "drawFG", "()V");
+        for (int i = 0; i < 3; i++) call(draw, "ae2craftingtime$drawTtc");
+        assertFalse(IntegrationMixinPlugin.aelisScreenReady(screen));
+        call(add(screen, "drawBG", "()V"), "ae2craftingtime$summaryHeight");
+        var render = add(screen, "m_88315_", "()V");
+        call(render, "ae2craftingtime$tooltipMouse");
+        for (int i = 0; i < 3; i++) call(render, "ae2craftingtime$ttcTooltip");
+        assertTrue(IntegrationMixinPlugin.aelisScreenReady(screen));
+        call(render, "ae2craftingtime$ttcTooltip");
+        assertFalse(IntegrationMixinPlugin.aelisScreenReady(screen));
+        var layout = new ClassNode();
+        assertFalse(IntegrationMixinPlugin.aelisLayoutReady(layout));
+        call(add(layout, "fit", "()V"), "ae2craftingtime$panelCap");
+        assertFalse(IntegrationMixinPlugin.aelisLayoutReady(layout));
+        call(add(layout, "columns", "()V"), "ae2craftingtime$columnEnd");
+        assertTrue(IntegrationMixinPlugin.aelisLayoutReady(layout));
+    }
+    @Test
     void rendererNeedsEveryTransformedCallSiteInBothAdapters() {
         var older = renderer(false);
         assertTrue(IntegrationMixinPlugin.tableReady(older));

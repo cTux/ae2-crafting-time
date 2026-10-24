@@ -31,9 +31,9 @@ class IntegrationDiagnosticsTest {
     @Test void inventoryAndIndependentHookEvidence() {
         var events = new ArrayList<IntegrationDiagnostics.Event>();
         var report = new IntegrationDiagnostics("1.20.1-forge", true, id -> "1", Map.of(), events::add);
-        assertEquals(26, IntegrationDiagnostics.CATALOG.size());
+        assertEquals(27, IntegrationDiagnostics.CATALOG.size());
         assertFalse(report.disabled("ae2ct", "node"));
-        assertEquals(26, IntegrationDiagnostics.CATALOG.stream().map(IntegrationDiagnostics.Entry::id).distinct().count());
+        assertEquals(27, IntegrationDiagnostics.CATALOG.stream().map(IntegrationDiagnostics.Entry::id).distinct().count());
         assertEquals(IntegrationDiagnostics.Outcome.PENDING, report.outcome("ae2ct"));
         report.observe("ae2ct", "node");
         assertEquals(IntegrationDiagnostics.Outcome.PENDING, report.outcome("ae2ct"));
@@ -44,7 +44,7 @@ class IntegrationDiagnosticsTest {
                     : IntegrationDiagnostics.Outcome.INITIALIZED, report.outcome(entry.id()));
         }
         report.summary();
-        assertTrue(events.get(events.size() - 1).message().contains("initialized=24 skipped=2 pending=0 partial=0 failed=0"));
+        assertTrue(events.get(events.size() - 1).message().contains("initialized=25 skipped=2 pending=0 partial=0 failed=0"));
         int count = events.size();
         report.summary();
         report.observe("ae2ct", "node");
@@ -65,7 +65,7 @@ class IntegrationDiagnosticsTest {
                 report.disable("ae2ct", "irrelevant", null);
                 report.summary();
                 assertTrue(events.stream().allMatch(event -> event.level().equals("INFO")));
-                assertTrue(events.get(events.size() - 1).message().contains("skipped=26"));
+                assertTrue(events.get(events.size() - 1).message().contains("skipped=27"));
             }
         }
         var events = new ArrayList<IntegrationDiagnostics.Event>();
@@ -165,7 +165,7 @@ class IntegrationDiagnosticsTest {
         var events = new ArrayList<IntegrationDiagnostics.Event>();
         var report = new IntegrationDiagnostics("1.20.1-forge", true, id -> "1", Map.of(), events::add);
         report.growth("plan-row", 1, 1);
-        assertEquals(27, events.size());
+        assertEquals(28, events.size());
         report.growth("plan-row", 1, 2);
         report.wireless("unrelated", false);
         assertEquals(IntegrationDiagnostics.Outcome.PENDING, report.outcome("wcwt"));

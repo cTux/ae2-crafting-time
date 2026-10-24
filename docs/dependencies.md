@@ -51,6 +51,26 @@ absent plan on all targets. AELIS may bypass native recurrence observation, so
 its missing rows are not yet qualified for recurrence labels. Project Infinity
 0.0.52 testing with OmniSequence 1.3.9 and 2.0.3-fix tracks these separately.
 
+## Applied Enhancements beta
+
+The Forge 1.20.1 client pins Applied Enhancements 1.1.4-forge beta from
+[CurseForge file 9301183](https://www.curseforge.com/minecraft/mc-mods/applied-enhancements/files/9301183),
+published October 23, 2026 and retrieved October 24. The downloaded JAR declares
+Forge 47.4.10+ and AE2 15.4.10 through 15.x, so the existing Forge 47.4.23 and
+AE2 15.4.10 client pins stay unchanged. No production dependency is added.
+
+Focused `standard-plan-controls` and `running-status` passed on October 24 with
+the exact beta installed; all nine screenshots were manually reviewed. The
+[verification record](applied-enhancements-ttc/verification.md) retains the source,
+artifacts, timing and limits for [#754](https://github.com/cTux/ae2-crafting-time/issues/754).
+Automatic AELIS planning was disabled for that initial baseline. The later
+[enabled-AELIS verification](applied-enhancements-ttc/implementation-verification.md)
+qualifies the custom table on 1.1.4 and addon-absent native controls. It does not
+qualify real cyclic execution, every planner mode, the older AppliedE issue #420,
+or coexistence with the complete addon graph. See the
+[TTC column research](applied-enhancements-ttc/research.md) and
+[#756](https://github.com/cTux/ae2-crafting-time/issues/756).
+
 ## Delayed resource icon qualification (planned)
 
 [Connected resource fixtures #482](test-driver/connected-resource-fixtures/spec.md)
@@ -104,6 +124,7 @@ is available through `IntegrationMixinPlugin.snapshot()`.
 
 | Dependency | Adapter priority and target boundary |
 | --- | --- |
+| Applied Enhancements | `aelis-plan-114`; Forge 1.20.1 client only. The custom material table has one TTC column and a plan total; existing plan switches control both. Exact quantities are normalized before long-range checks. Unknown APIs skip the adapter. Focused enabled-table and addon-absent native controls passed; see the [verification](applied-enhancements-ttc/implementation-verification.md). |
 | Crafting Tree | `tree-layout`, then `tree-helper`; client only, pre-26 targets. Fabric retains its declaration but has no verified published Tree artifact. |
 | NeoEco | Forge: `batched-long`, then `pending-accounting`. NeoForge 1.21.1: `batched-int`. One dispatch adapter shares lifecycle hooks; neither family is enabled on Fabric or 26.1.2. |
 | AdvancedAE | `advanced-cpu-1201`, `advanced-cpu-1211`, or `advanced-cpu-26` by target; each bundles execution and saved-job hooks on both physical sides. |
@@ -248,6 +269,7 @@ optional-mod graph run.
 | NeoForge (required) | — | — | — | — | `21.1.251` | Yes (base suite) | `26.1.2.109` | Yes (base suite) | — | See required dependencies | Required runtime / base AE2 crafting. | — |
 | Applied Energistics 2 (required) | `15.4.10` | Yes (`craft-plan`, `no-space-status`, `no-provider-status`) | `15.1.0` | Yes (`craft-plan`, `no-space-status`, `no-provider-status`) | `19.2.18` | Yes (`craft-plan`, `no-space-status`, `no-provider-status`) | `26.1.10-beta` | Yes (`craft-plan`, `no-space-status`, `no-provider-status`) | — | See required dependencies | Required runtime / base AE2 crafting. | — |
 | GuideME (`guideme`; optional) | `20.1.15` | Yes (guide book) | AE2 bundled guide | Yes (guide book) | `21.1.19` | Yes (guide book) | `26.1.12-beta` | Yes (guide book) | `1.20.1 Forge`, `1.21.1 NeoForge`, `26.1.2 NeoForge` | Forge: `>=20.1.15`; 1.21.1: `>=21.1.0`; 26.1.2: `>=26.1.10-alpha` | Every target has the same craftable bilingual guide. Forge and modern NeoForge use optional GuideME; Fabric uses AE2 15.x's bundled guide renderer and declares no GuideME dependency. Without GuideME, Forge and NeoForge load without the guide recipe. | [MR](https://modrinth.com/mod/guideme) / [#144](https://github.com/cTux/ae2-crafting-time/issues/144) / [#265](https://github.com/cTux/ae2-crafting-time/issues/265) / [#266](https://github.com/cTux/ae2-crafting-time/issues/266) |
+| Applied Enhancements (`appliedenhancements`; optional UI adapter) | `1.1.4-forge` | Yes (`aelis-plan`) | — | — | — | — | — | — | — | — | Contract-selected client table TTC, partial totals, and native-view fallback. No loader requirement is added; old and unknown APIs keep upstream behavior. | [#756](https://github.com/cTux/ae2-crafting-time/issues/756) |
 | ae2ct (Crafting Tree) (`ae2ct`; optional) | `1.0.1` | Yes (scenario) | Not pinned | No | `1.21.1-1.1.1` | Yes (`crafting-tree-screen`) | — | — | `1.20.1 Forge`, `1.20.1 Fabric`, `1.21.1 NeoForge` | `>=1.0.1` | TTC lines and details in AE2: Crafting Tree UI. NeoForge's compatible client uses CurseForge 1.1.1 to satisfy Data Energistics when both are installed; Crafting Time still supports Tree 1.0.1 without Data. | [CF][ae2ct-cf] / [#69](https://github.com/cTux/ae2-crafting-time/issues/69) |
 | Data Energistics (`data_energistics`; optional) | — | — | — | — | `3.3.5` | Yes (`data-energistics-cpu`) | — | — | `1.21.1 NeoForge` | `>=3.3.5` | Native AE2 CPU profiling and Plan TTC through an installed Adaptive Pattern Provider and vanilla furnace. Requires AE2 19.2.18+, LDLib2 2.2.40+ and embedded Configuration 3.1.1-neoforge below 4; if installed, JEI needs 19.56.0.438+ and Crafting Tree needs 1.21.1-1.1.1+. Trinity CPUs and other provider modes remain unqualified ([#740](https://github.com/cTux/ae2-crafting-time/issues/740)). Focused and 21-project combined Data lifecycle checks passed, with separate Lightning Tech and Plus/JEI controls. Lightning Tech and Thunderbolt Core require a separate graph because their metadata rejects Data ([#742](https://github.com/cTux/ae2-crafting-time/issues/742)). Installed JEI also requires MezzConfig 0.6.8. | [CF](https://www.curseforge.com/minecraft/mc-mods/data-energistics/files/9095664) / [#518](https://github.com/cTux/ae2-crafting-time/issues/518) |
 | Applied Mekanistics (`appmek`; optional) | `1.4.3` | Yes (`appmek-cpu`) | — | — | `1.6.3` | Yes (`appmek-cpu`) | — | — | `1.20.1 Forge`, `1.21.1 NeoForge` | Forge: `>=1.4.3`; NeoForge: `>=1.6.2` | TTC profiling and Crafting Plan display for chemicals stored in the ME network through Applied Mekanistics' native AE2 key. | [CF][appmek-cf] / [MR][appmek-mr] / [#68](https://github.com/cTux/ae2-crafting-time/issues/68) |

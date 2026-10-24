@@ -1,5 +1,16 @@
 # AE2 Crafting Time Test Driver Technical Design
 
+## AELIS plan TTC (#756)
+
+StandardAe2Scenario delegates only the focused aelis-plan leaf to AelisPlanScenario.
+It reuses StandardCraftFixture, bounded server futures, stable rendered frames,
+UiObservationStore and existing capture receipts. The optional mod config is
+read only after the leaf is selected. A real AELIS menu establishes integration;
+record-row fixtures then isolate display boundaries without submitting fake jobs.
+Shared pure tests cover exact normalization and widths; selection and ASM tests
+cover absence, API drift and paired presentation hooks. See the
+[feature design](../applied-enhancements-ttc/technical-design.md).
+
 ## ExtendedAE-Plus focused graph (#461)
 
 Scope, status and criteria: [spec](spec.md#extendedae-plus-focused-graph-461).

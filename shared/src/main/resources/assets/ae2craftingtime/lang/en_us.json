@@ -1,4 +1,6 @@
 {
+  "text.ae2craftingtime.aelis.ttc_column": "TTC",
+  "text.ae2craftingtime.aelis.partial_total": "Partial TTC: %s",
   "text.ae2craftingtime.no_power": "No power",
   "text.ae2craftingtime.no_power.explanation": "The ME network can't power the next pattern dispatch.",
   "text.ae2craftingtime.no_power.suggestion": "Increase network power generation or stored energy.",

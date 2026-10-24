@@ -1,5 +1,11 @@
 {
   "1.20.1-forge": {
+    "1665696": {
+      "profile": "compatible",
+      "disposition": "FOCUSED_BEHAVIOR",
+      "reason": "The custom AELIS plan has a separate optional TTC adapter; qualify it in a focused Forge graph.",
+      "scenario": "aelis-plan"
+    },
     "545hUrw9": {
       "disposition": "DIRECT_BEHAVIOR",
       "scenario": "appbot-cpu"

@@ -14,7 +14,7 @@ class IntegrationCatalogTest {
     @Test
     void retainedReleasedContractsSelectExactlyOneBundle() throws Exception {
         for (var fixture : List.of("tree-helper-forge", "tree-helper-neo", "tree-layout-forge", "tree-layout-neo",
-                "neoeco-20.3.0", "neoeco-20.4.0", "neoeco-20.4.2", "neoeco-21.1.1")) {
+                "neoeco-20.3.0", "neoeco-20.4.0", "neoeco-20.4.2", "neoeco-21.1.1", "aelis-1.1.4-forge")) {
             try (var input = getClass().getResourceAsStream("/integration-contracts/" + fixture + ".tsv")) {
                 var lines = new String(input.readAllBytes(), StandardCharsets.UTF_8).lines().toList();
                 var identity = lines.get(0).substring(2).split("\t");
@@ -34,6 +34,19 @@ class IntegrationCatalogTest {
                         .distinct().filter(selection::shouldApply).collect(java.util.stream.Collectors.toSet());
                 assertEquals(identity[2], selection.snapshot().get(identity[1]).variant(), fixture);
                 assertEquals(expectedBundle(identity[2]), accepted, fixture);
+                if (identity[1].equals("appliedenhancements")) {
+                    var candidate = IntegrationCatalog.CANDIDATES.get(0);
+                    for (var member : candidate.contract()) {
+                        var broken = new HashMap<>(classes);
+                        var data = new HashMap<>(classes.get(member.owner()).members());
+                        data.remove(member.member());
+                        broken.put(member.owner(), new IntegrationContract.ClassInfo(null, data));
+                        assertFalse(selector(identity[0], true, broken).shouldApply("AelisPlanScreenMixin"), member.toString());
+                    }
+                    assertFalse(selector(identity[0], false, classes).shouldApply("AelisPlanScreenMixin"));
+                    assertFalse(selector("1.21.1-neoforge", true, classes).shouldApply("AelisPlanLayoutMixin"));
+                    assertFalse(selector(identity[0], true, Map.of()).shouldApply("AelisPlanLayoutMixin"));
+                }
             }
         }
     }
@@ -75,6 +88,7 @@ class IntegrationCatalogTest {
 
     private static Set<String> expectedBundle(String variant) {
         return switch (variant) {
+            case "aelis-plan-114" -> Set.of("AelisPlanScreenMixin", "AelisPlanLayoutMixin");
             case "tree-helper" -> Set.of("CraftingTreeWidgetMixin");
             case "tree-layout" -> Set.of("CraftingTreeNewWidgetMixin");
             case "pending-accounting" -> Set.of("ECOCraftingCpuLogicMixin", "NeoEcoEstimateMixin", "NeoEcoPendingDispatchMixin");

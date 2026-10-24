@@ -26,6 +26,7 @@ public final class IntegrationDiagnostics {
     public static final List<String> UI = List.of("plan-row", "plan-tooltip", "plan-total", "plan-sort", "plan-details", "plan-reset",
             "status-row", "status-tooltip", "status-total", "status-sort", "status-details", "status-reset");
     public static final List<Entry> CATALOG = List.of(
+            entry("appliedenhancements", F, true, "adapter", List.of("row", "total", "tooltip")),
             entry("ae2ct", FBN, true, "adapter", List.of("layout", "node", "tooltip", "details", "reset")),
             entry("merequester", FBN, true, "adapter", List.of("request-read", "row", "total")),
             entry("advanced_ae", FNX, false, "adapter", plus(CPU, List.of("selected-cpu"))),
