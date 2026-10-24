@@ -7,11 +7,11 @@ October 24, 2026. [Issue #754](https://github.com/cTux/ae2-crafting-time/issues/
 
 Focused native AE2 coexistence passed. No production compatibility correction
 was needed. This is not a full addon-graph or enabled-AELIS planner qualification.
-The new AELIS material table still needs its own TTC presentation integration;
-see [research](research.md) and deferred [#756](https://github.com/cTux/ae2-crafting-time/issues/756).
+The later custom-table implementation is covered separately by the
+[implementation verification](implementation-verification.md) for #756.
 
-Tested source: dd8615375deae602dc5d3946e86752e33eaae1de. Later changes in this PR
-only record these results and research. No executable code changed.
+Baseline source: dd8615375deae602dc5d3946e86752e33eaae1de. This dated report
+predates the AELIS implementation; it does not qualify later executable changes.
 
 ## Exact runtime
 

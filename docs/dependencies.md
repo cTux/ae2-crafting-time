@@ -63,11 +63,13 @@ Focused `standard-plan-controls` and `running-status` passed on October 24 with
 the exact beta installed; all nine screenshots were manually reviewed. The
 [verification record](applied-enhancements-ttc/verification.md) retains the source,
 artifacts, timing and limits for [#754](https://github.com/cTux/ae2-crafting-time/issues/754).
-Automatic AELIS planning was disabled. These focused results do not qualify the
-separate AELIS material table, enabled planner modes, the older AppliedE issue
-#420, or coexistence with the complete addon graph. See the
-[TTC column research](applied-enhancements-ttc/research.md) for the custom screen
-and deferred [#756](https://github.com/cTux/ae2-crafting-time/issues/756).
+Automatic AELIS planning was disabled for that initial baseline. The later
+[enabled-AELIS verification](applied-enhancements-ttc/implementation-verification.md)
+qualifies the custom table on 1.1.4 and addon-absent native controls. It does not
+qualify real cyclic execution, every planner mode, the older AppliedE issue #420,
+or coexistence with the complete addon graph. See the
+[TTC column research](applied-enhancements-ttc/research.md) and
+[#756](https://github.com/cTux/ae2-crafting-time/issues/756).
 
 ## Delayed resource icon qualification (planned)
 
@@ -122,7 +124,7 @@ is available through `IntegrationMixinPlugin.snapshot()`.
 
 | Dependency | Adapter priority and target boundary |
 | --- | --- |
-| Applied Enhancements | `aelis-plan-114`; Forge 1.20.1 client only. The custom material table has one TTC column and a plan total; existing plan switches control both. Exact quantities are normalized before long-range checks. Unknown APIs skip the adapter. Runtime qualification for #756 is pending. |
+| Applied Enhancements | `aelis-plan-114`; Forge 1.20.1 client only. The custom material table has one TTC column and a plan total; existing plan switches control both. Exact quantities are normalized before long-range checks. Unknown APIs skip the adapter. Focused enabled-table and addon-absent native controls passed; see the [verification](applied-enhancements-ttc/implementation-verification.md). |
 | Crafting Tree | `tree-layout`, then `tree-helper`; client only, pre-26 targets. Fabric retains its declaration but has no verified published Tree artifact. |
 | NeoEco | Forge: `batched-long`, then `pending-accounting`. NeoForge 1.21.1: `batched-int`. One dispatch adapter shares lifecycle hooks; neither family is enabled on Fabric or 26.1.2. |
 | AdvancedAE | `advanced-cpu-1201`, `advanced-cpu-1211`, or `advanced-cpu-26` by target; each bundles execution and saved-job hooks on both physical sides. |

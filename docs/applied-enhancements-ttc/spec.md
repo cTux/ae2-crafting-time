@@ -1,6 +1,10 @@
 # AELIS plan TTC
 
 Status: in-progress. Issue: [#756](https://github.com/cTux/ae2-crafting-time/issues/756).
+Implementation: [PR #755](https://github.com/cTux/ae2-crafting-time/pull/755).
+Verification: [focused final-source results](implementation-verification.md).
+Remaining gate: PR review and merge; broader runtime limits are recorded in the report.
+
 The user authorized implementation of the research recommendation on October 24, 2026.
 
 On Forge 1.20.1 with Applied Enhancements 1.1.4, add one TTC column for the
