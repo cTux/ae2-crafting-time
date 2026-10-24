@@ -30,7 +30,7 @@ try {
         $before=(Get-FileHash $path).Hash
         & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') @parameters
         if((Get-FileHash $path).Hash -cne $before){throw 'Adapter generation is nondeterministic'}
-        $cache=@{CacheDirectory=$temp;HeadSha=('a'*40);Fingerprint='adapter-test';Target=$target;Profile='compatible';GraphId='focused';BaseOnly=$native;ProjectId=@($parameters.ProjectId)}
+        $cache=@{CacheDirectory=$temp;HeadSha=('a'*40);Fingerprint='adapter-test';Target=$target;Profile='compatible';GraphId='focused';BaseOnly=$native;ProjectId=@($parameters.ProjectId | Where-Object { $_ })}
         $sealed=& (Join-Path $PSScriptRoot 'use-ui-smoke-bundle-cache.ps1') @cache -Mode Seal
         $timestamp=(Get-Item $path).LastWriteTimeUtc
         & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') @parameters

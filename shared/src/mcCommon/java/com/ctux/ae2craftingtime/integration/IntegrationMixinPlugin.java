@@ -95,8 +95,15 @@ public final class IntegrationMixinPlugin implements IMixinConfigPlugin {
     public void postApply(String target, ClassNode node, String mixin, IMixinInfo info) {
         if (mixin.endsWith(".AelisPlanScreenMixin")) {
             AelisPlanTtc.screenReady(aelisScreenReady(node));
+            LoggerFactory.getLogger("ae2craftingtime/integrations").info(
+                    "dependency=appliedenhancements phase=presentation row_returns={} summary={} tooltips={}",
+                    calls(method(node, "drawFG"), "drawTtc"), calls(method(node, "drawBG"), "summaryHeight"),
+                    node.methods.stream().mapToInt(m -> calls(m, "ttcTooltip")).max().orElse(0));
         } else if (mixin.endsWith(".AelisPlanLayoutMixin")) {
             AelisPlanTtc.layoutReady(aelisLayoutReady(node));
+            LoggerFactory.getLogger("ae2craftingtime/integrations").info(
+                    "dependency=appliedenhancements phase=presentation fit={} columns={}",
+                    calls(method(node, "fit"), "panelCap"), calls(method(node, "columns"), "columnEnd"));
         } else if (mixin.endsWith(".AbstractTableRendererMixin")) {
             PresentationHooks.tableRenderer(tableReady(node));
         } else if (mixin.endsWith(".CraftConfirmScreenMixin")) {
@@ -109,7 +116,7 @@ public final class IntegrationMixinPlugin implements IMixinConfigPlugin {
     }
 
     static boolean aelisScreenReady(ClassNode node) {
-        return calls(method(node, "drawFG"), "drawTtc") == 1
+        return calls(method(node, "drawFG"), "drawTtc") == 3
                 && calls(method(node, "drawBG"), "summaryHeight") == 1
                 && node.methods.stream().anyMatch(m -> calls(m, "ttcTooltip") == 3);
     }

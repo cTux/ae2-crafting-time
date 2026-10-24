@@ -132,7 +132,9 @@ final class AelisPlanScenario implements AutoCloseable {
             checks.put("filters", true); capture.accept("aelis-filter.png"); click(minecraft, "All"); next(); return false;
         }
         if (stage == 7) {
-            if (!sent) { screen.mouseScrolled(screen.getGuiLeft() + 60, screen.getGuiTop() + 150, -3); sent = true; frames.reset(); return false; }
+            if (!sent) { var layout = IntegrationRead.field(screen, "layout", Object.class);
+                DriverPlatform.click(minecraft, screen.getGuiLeft() + IntegrationRead.invoke(layout, "width", Integer.class) - 19,
+                        screen.getGuiTop() + IntegrationRead.invoke(layout, "rowsBottom", Integer.class) - 3); sent = true; frames.reset(); return false; }
             if (IntegrationRead.field(screen, "scroll", Integer.class) <= 0) return false;
             checks.put("scroll", true); capture.accept("aelis-scroll.png"); click(minecraft, "Craft Tree"); next(); return false;
         }

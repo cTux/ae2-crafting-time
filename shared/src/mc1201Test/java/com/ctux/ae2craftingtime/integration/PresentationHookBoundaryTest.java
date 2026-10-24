@@ -14,7 +14,8 @@ class PresentationHookBoundaryTest {
     void aelisRequiresTheScreenTooltipAndBothLayoutChanges() {
         var screen = new ClassNode();
         assertFalse(IntegrationMixinPlugin.aelisScreenReady(screen));
-        call(add(screen, "drawFG", "()V"), "ae2craftingtime$drawTtc");
+        var draw = add(screen, "drawFG", "()V");
+        for (int i = 0; i < 3; i++) call(draw, "ae2craftingtime$drawTtc");
         assertFalse(IntegrationMixinPlugin.aelisScreenReady(screen));
         call(add(screen, "drawBG", "()V"), "ae2craftingtime$summaryHeight");
         var render = add(screen, "m_88315_", "()V");
