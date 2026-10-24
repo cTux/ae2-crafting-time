@@ -1,5 +1,9 @@
 {
   "1.20.1-forge": {
+    "1665696": {
+      "disposition": "COEXISTENCE",
+      "scenario": "standard-ae2"
+    },
     "545hUrw9": {
       "disposition": "DIRECT_BEHAVIOR",
       "scenario": "appbot-cpu"
