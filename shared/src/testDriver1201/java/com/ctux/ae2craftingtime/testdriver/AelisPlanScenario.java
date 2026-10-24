@@ -45,7 +45,7 @@ final class AelisPlanScenario implements AutoCloseable {
     private CraftConfirmScreen screen;
     private long frame = -1;
 
-    String checkpoint() { return "aelis-plan=" + stage; }
+    String checkpoint() { return "phase=" + (stage == 0 ? "PREPARE" : "AELIS") + " aelis-plan=" + stage; }
 
     boolean tick(Minecraft minecraft, FixtureMarker marker, Map<String, Boolean> checks,
             Consumer<String> capture, BiConsumer<Integer, Integer> mouse) throws Exception {
