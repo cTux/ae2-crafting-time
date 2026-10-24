@@ -13,10 +13,13 @@ try {
     if (@($base.psobject.Properties).Count -ne 0) { throw 'BaseOnly expected adapters' }
     & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target 1.20.1-forge -BundleDirectory $temp -ProjectId rxYaglEe
     $advanced = Get-Content (Join-Path $temp 'expected-adapters.json') -Raw | ConvertFrom-Json
-    if (@($advanced.psobject.Properties).Count -ne 1 -or $advanced.advanced_ae -ne 'advanced-cpu') { throw 'AdvancedAE graph expectation' }
+    if (@($advanced.psobject.Properties).Count -ne 1 -or $advanced.advanced_ae -ne 'advanced-cpu-1201') { throw 'AdvancedAE graph expectation' }
+    & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target 1.20.1-forge -BundleDirectory $temp -ProjectId 1665696
+    $aelis = Get-Content (Join-Path $temp 'expected-adapters.json') -Raw | ConvertFrom-Json
+    if (@($aelis.psobject.Properties).Count -ne 1 -or $aelis.appliedenhancements -ne 'aelis-plan-114') { throw 'CurseForge AELIS graph expectation' }
     & (Join-Path $PSScriptRoot 'prepare-ui-smoke-adapters.ps1') -Target 1.20.1-forge -BundleDirectory $temp
     $full = Get-Content (Join-Path $temp 'expected-adapters.json') -Raw | ConvertFrom-Json
-    if (@($full.psobject.Properties).Count -lt 5 -or $full.advanced_ae -ne 'advanced-cpu') { throw 'Full catalogue expectation' }
+    if (@($full.psobject.Properties).Count -lt 5 -or $full.advanced_ae -ne 'advanced-cpu-1201') { throw 'Full catalogue expectation' }
     foreach($target in @('1.20.1-forge','1.20.1-fabric','1.21.1-neoforge','26.1.2-neoforge')) {
     foreach($native in @($true)+$(if($target -in @('1.20.1-forge','1.21.1-neoforge')){@($false)}else{@()})) {
         $parameters=@{Target=$target;BundleDirectory=$temp;BaseOnly=$native}

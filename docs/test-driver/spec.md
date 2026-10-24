@@ -1,5 +1,15 @@
 # AE2 Crafting Time Test Driver Spec
 
+## AELIS plan TTC (#756)
+
+The focused Forge-only `aelis-plan` case opens a real enabled-AELIS plan with
+server-owned history, then checks the custom TTC column, total and tooltip.
+Explicit client display fixtures cover exact oversized amounts, missing history,
+cyclic rows, filters and scrolling; they are not planner execution proof.
+Option-off, tree, a 381-pixel Screen.resize layout and AE2 view are separate
+captures. Restore feature/config values and pristine samples before success.
+See [scope and acceptance](../applied-enhancements-ttc/spec.md).
+
 ## ExtendedAE-Plus focused graph (#461)
 
 Status: finished

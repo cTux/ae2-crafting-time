@@ -1,7 +1,7 @@
 # TTC in Applied Enhancements AELIS plan review
 
 Research for [#756](https://github.com/cTux/ae2-crafting-time/issues/756), October 24, 2026.
-Implementation is deferred. Native coexistence verification is tracked in
+Implementation was authorized after this research; see [current scope](spec.md). Native coexistence verification is tracked in
 [#754](https://github.com/cTux/ae2-crafting-time/issues/754).
 
 ## Result

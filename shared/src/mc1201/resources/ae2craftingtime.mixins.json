@@ -30,6 +30,8 @@
     "NeoEcoIntBatchDispatchMixin"
   ],
   "client": [
+    "AelisPlanScreenMixin",
+    "AelisPlanLayoutMixin",
     "AbstractContainerScreenCpuTtcMixinSrg",
     "CPUSelectionListOrderMixin",
     "CPUSelectionListMixin",

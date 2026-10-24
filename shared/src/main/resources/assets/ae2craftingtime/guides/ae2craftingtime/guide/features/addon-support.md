@@ -7,6 +7,16 @@ navigation:
 
 # Addon support
 
+On Forge 1.20.1, compatible Applied Enhancements 1.1.4 AELIS material tables
+have a TTC column and plan total. Plan row TTC and Plan total control them.
+Stored-only rows have no remaining work; missing history collects data. Quantities
+outside the supported normalized range show unknown. Missing/cyclic or partly
+known plans show a partial total. Filters don't change the whole-plan estimate.
+The column stays hidden when the window cannot fit it. Craft Tree stays unchanged;
+use AE2 view for native plan controls. This display doesn't promise exact timing
+for cyclic planner execution.
+
+
 Applied Mekanistics chemical keys use the same normalized millibucket units as
 AE2 fluids, so learned rates and TTC stay meaningful. Compatible crafting CPUs
 from AdvancedAE, NeoEco, and AE2 Lightning Tech can also contribute normal

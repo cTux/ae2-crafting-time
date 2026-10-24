@@ -32,6 +32,7 @@ final class StandardAe2Scenario {
     private static final org.apache.logging.log4j.Logger LOG =
             org.apache.logging.log4j.LogManager.getLogger("ae2ct-test-driver");
     static final Map<String, List<String>> CHECKS = Map.ofEntries(
+            Map.entry("aelis-plan", AelisPlanScenario.CHECKS),
             Map.entry("standard-plan-controls", List.of("plan", "plan-sort", "missing-first", "plan-tooltip",
                     "plan-details", "plan-reset", "total-ttc", "layout", "item-resolution")),
             Map.entry("compact-hover-numbers", CompactHoverNumbersScenario.CHECKS),
@@ -87,6 +88,7 @@ final class StandardAe2Scenario {
     private boolean suspensionResumedCaptured;
     private final CpuListTtcScenario cpuList;
     private final CompactHoverNumbersScenario compactHover;
+    private final AelisPlanScenario aelis;
     private final boolean connectedDedicated;
     private final String world;
     private final java.nio.file.Path output;
@@ -100,6 +102,7 @@ final class StandardAe2Scenario {
             List<String> resultScreenshots) {
         if (!CHECKS.containsKey(leaf)) throw new IllegalArgumentException("Unknown standard leaf: " + leaf);
         this.leaf = leaf;
+        aelis = leaf.equals("aelis-plan") ? new AelisPlanScenario() : null;
         compactHover = leaf.equals("compact-hover-numbers") ? new CompactHoverNumbersScenario() : null;
         if (leaf.equals("standard-status-controls")) StatusWrapperProbe.arm();
         this.world = world;
@@ -280,7 +283,7 @@ final class StandardAe2Scenario {
     private long variantSecondRevision;
     private int variantSecondMenu;
 
-    String checkpoint() { if (compactHover != null) return compactHover.checkpoint(); return "phase=" + phase + " fixture=" + fixture.checkpoint
+    String checkpoint() { if (aelis != null) return aelis.checkpoint(); if (compactHover != null) return compactHover.checkpoint(); return "phase=" + phase + " fixture=" + fixture.checkpoint
             + (phase == Stage.STATUS_SCALES ? " font-mode=" + amountFontMode + " scale-case=" + quantityScaleCase
                     + " scale-set=" + quantityScaleSet + " unicode-prepared=" + unicodeFontPrepared
                     + " font-reload=" + (amountFontReload == null ? "none" : amountFontReload.isDone() ? "done" : "pending") : "")
@@ -311,6 +314,7 @@ final class StandardAe2Scenario {
 
     boolean tick(Minecraft minecraft, FixtureMarker marker, Map<String, Boolean> checks,
             Consumer<String> screenshot, BiConsumer<Integer, Integer> moveMouse) throws Exception {
+        if (aelis != null) return aelis.tick(minecraft, marker, checks, screenshot, moveMouse);
         if (compactHover != null) return compactHover.tick(minecraft, marker, checks, screenshot, moveMouse);
         if (leaf.equals("crafting-suspension")) return connectedDedicated
                 ? tickConnectedSuspension(minecraft, checks, screenshot)
@@ -3526,6 +3530,7 @@ final class StandardAe2Scenario {
 
     void releaseKeys() { stats.releaseKeys(); cleanup(); }
     void cleanup() {
+        if (aelis != null) aelis.close();
         if (compactHover != null) compactHover.close();
         restoreDelayedStatus();
         try {

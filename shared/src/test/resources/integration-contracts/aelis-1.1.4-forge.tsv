@@ -1,0 +1,35 @@
+# 1.20.1-forge	appliedenhancements	aelis-plan-114
+# source=https://www.curseforge.com/minecraft/mc-mods/applied-enhancements/files/9301183
+# sha512=06e1979668e72e187ea6df6fab712beed689cc486a75cc9b939ec0fed0fe1c7190079604ac60aedb1d8b0afcc46bc754aa1ef2f6d2962077853162bc60a1208d
+com/appliedenhancements/client/plan/AelisCraftConfirmScreen	class	java/lang/Object
+com/appliedenhancements/client/plan/AelisCraftConfirmScreen	field:layout	Lcom/appliedenhancements/client/plan/AelisPlanLayout;
+com/appliedenhancements/client/plan/AelisCraftConfirmScreen	field:rows	Ljava/util/List;
+com/appliedenhancements/client/plan/AelisCraftConfirmScreen	field:visible	Ljava/util/List;
+com/appliedenhancements/client/plan/AelisCraftConfirmScreen	field:scroll	I
+com/appliedenhancements/client/plan/AelisCraftConfirmScreen	field:view	Lcom/appliedenhancements/client/plan/AelisCraftConfirmScreen$View;
+com/appliedenhancements/client/plan/AelisCraftConfirmScreen	method:<init>	(Lappeng/client/gui/me/crafting/CraftConfirmScreen;Lnet/minecraft/world/entity/player/Inventory;)V
+com/appliedenhancements/client/plan/AelisCraftConfirmScreen	method:drawBG	(Lnet/minecraft/client/gui/GuiGraphics;IIIIF)V
+com/appliedenhancements/client/plan/AelisCraftConfirmScreen	method:drawFG	(Lnet/minecraft/client/gui/GuiGraphics;IIII)V
+com/appliedenhancements/client/plan/AelisCraftConfirmScreen	method:m_88315_	(Lnet/minecraft/client/gui/GuiGraphics;IIF)V
+com/appliedenhancements/client/plan/AelisCraftConfirmScreen	method:rowUnderMouse	(DD)Lcom/appliedenhancements/client/plan/AelisPlanRows$Row;
+com/appliedenhancements/client/plan/AelisPlanLayout	class	java/lang/Object
+com/appliedenhancements/client/plan/AelisPlanLayout	field:width	I
+com/appliedenhancements/client/plan/AelisPlanLayout	method:<init>	(II)V
+com/appliedenhancements/client/plan/AelisPlanLayout	method:fit	(II)Lcom/appliedenhancements/client/plan/AelisPlanLayout;
+com/appliedenhancements/client/plan/AelisPlanLayout	method:visibleRows	()I
+com/appliedenhancements/client/plan/AelisPlanLayout	method:columns	(Z)Lcom/appliedenhancements/client/plan/AelisPlanLayout$Columns;
+com/appliedenhancements/client/plan/AelisPlanLayout	method:width	()I
+com/appliedenhancements/client/plan/AelisPlanLayout$Columns	class	java/lang/Object
+com/appliedenhancements/client/plan/AelisPlanLayout$Columns	field:cyclic	Z
+com/appliedenhancements/client/plan/AelisPlanLayout$Columns	method:<init>	(IZ)V
+com/appliedenhancements/client/plan/AelisPlanLayout$Columns	method:cyclic	()Z
+com/appliedenhancements/client/plan/AelisPlanRows$Row	class	java/lang/Object
+com/appliedenhancements/client/plan/AelisPlanRows$Row	field:key	Ljava/lang/Object;
+com/appliedenhancements/client/plan/AelisPlanRows$Row	field:craft	Ljava/math/BigInteger;
+com/appliedenhancements/client/plan/AelisPlanRows$Row	field:missing	Ljava/math/BigInteger;
+com/appliedenhancements/client/plan/AelisPlanRows$Row	field:cyclic	Ljava/math/BigInteger;
+com/appliedenhancements/client/plan/AelisPlanRows$Row	method:<init>	(Ljava/lang/Object;Ljava/lang/String;Ljava/lang/String;Ljava/math/BigInteger;Ljava/math/BigInteger;Ljava/math/BigInteger;Ljava/math/BigInteger;)V
+com/appliedenhancements/client/plan/AelisPlanRows$Row	method:key	()Ljava/lang/Object;
+com/appliedenhancements/client/plan/AelisPlanRows$Row	method:craft	()Ljava/math/BigInteger;
+com/appliedenhancements/client/plan/AelisPlanRows$Row	method:missing	()Ljava/math/BigInteger;
+com/appliedenhancements/client/plan/AelisPlanRows$Row	method:cyclic	()Ljava/math/BigInteger;
