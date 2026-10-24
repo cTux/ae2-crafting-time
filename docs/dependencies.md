@@ -51,7 +51,7 @@ absent plan on all targets. AELIS may bypass native recurrence observation, so
 its missing rows are not yet qualified for recurrence labels. Project Infinity
 0.0.52 testing with OmniSequence 1.3.9 and 2.0.3-fix tracks these separately.
 
-## Applied Enhancements beta candidate
+## Applied Enhancements beta
 
 The Forge 1.20.1 client pins Applied Enhancements 1.1.4-forge beta from
 [CurseForge file 9301183](https://www.curseforge.com/minecraft/mc-mods/applied-enhancements/files/9301183),
@@ -59,10 +59,15 @@ published October 23, 2026 and retrieved October 24. The downloaded JAR declares
 Forge 47.4.10+ and AE2 15.4.10 through 15.x, so the existing Forge 47.4.23 and
 AE2 15.4.10 client pins stay unchanged. No production dependency is added.
 
-Focused native plan/status verification is pending under
-[issue #754](https://github.com/cTux/ae2-crafting-time/issues/754). This candidate
-does not qualify the separate AELIS plan screen, enabled planner modes, the
-older AppliedE issue #420, or coexistence with the complete addon graph.
+Focused `standard-plan-controls` and `running-status` passed on October 24 with
+the exact beta installed; all nine screenshots were manually reviewed. The
+[verification record](applied-enhancements-ttc/verification.md) retains the source,
+artifacts, timing and limits for [#754](https://github.com/cTux/ae2-crafting-time/issues/754).
+Automatic AELIS planning was disabled. These focused results do not qualify the
+separate AELIS material table, enabled planner modes, the older AppliedE issue
+#420, or coexistence with the complete addon graph. See the
+[TTC column research](applied-enhancements-ttc/research.md) for the custom screen
+and deferred [#756](https://github.com/cTux/ae2-crafting-time/issues/756).
 
 ## Delayed resource icon qualification (planned)
 
