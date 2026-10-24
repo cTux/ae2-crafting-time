@@ -104,7 +104,10 @@ final class AelisPlanScenario implements AutoCloseable {
             if (snapshot.text().stream().noneMatch(text -> text.key().equals("text.ae2craftingtime.total_ttc"))) return false;
             checks.put("aelis-plan", true); checks.put("row-ttc", true); checks.put("total-ttc", true);
             capture.accept("aelis-plan.png");
-            mouse.accept(screen.getGuiLeft() + 60, screen.getGuiTop() + 118); next(); return false;
+            var visible = IntegrationRead.field(screen, "visible", List.class);
+            int index = java.util.stream.IntStream.range(0, visible.size()).filter(i ->
+                    IntegrationRead.invoke(visible.get(i), "craft", BigInteger.class).signum() > 0).findFirst().orElseThrow();
+            mouse.accept(screen.getGuiLeft() + 60, screen.getGuiTop() + 119 + index * 22); next(); return false;
         }
         if (stage == 4) {
             if (snapshot.tooltip().stream().noneMatch(text -> text.key().equals("text.ae2craftingtime.ttc"))) return false;

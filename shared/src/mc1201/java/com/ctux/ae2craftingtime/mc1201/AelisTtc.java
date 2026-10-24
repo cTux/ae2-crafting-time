@@ -59,7 +59,7 @@ public final class AelisTtc {
         return IntegrationRead.field(screen, "view", Object.class).toString().equals("LIST");
     }
 
-    public static void draw(Object screen, GuiGraphics graphics) {
+    public static void draw(Object screen, GuiGraphics graphics, int mouseX, int mouseY) {
         if (!enabled()) return;
         try {
             var nativeScreen = (CraftConfirmScreen) screen;
@@ -89,14 +89,17 @@ public final class AelisTtc {
             colors.forEach((key, value) -> palette.put(key, ClientOptionsRuntime.ttcColor(value.durationMs(), min, max)));
             TtcColorContext.set(palette);
             if (ClientOptionsRuntime.enabled(OptionFeature.PLAN_ROWS) && AelisPlanTtc.reservation(width) > 0) {
-                drawText(graphics, Component.translatable("text.ae2craftingtime.aelis.ttc_column"), left, 98, 64);
+                drawCell(graphics, Component.translatable("text.ae2craftingtime.aelis.ttc_column"), left, 98);
                 for (int i = 0; i < count && scroll + i < visible.size(); i++) {
                     int y = 108 + i * 22;
                     var row = visible.get(scroll + i);
                     boolean missing = amount(row, "missing").signum() > 0;
+                    boolean hover = mouseX >= 14 && mouseX < right - AelisPlanTtc.COLUMN_WIDTH + 3
+                            && mouseY >= y && mouseY < y + 22;
                     graphics.fill(left - 2, y, right + 3, y + 22,
-                            missing ? 0xFFE7C4CB : i % 2 == 0 ? 0xFFC6C5D4 : 0xFFBDBCCD);
-                    drawText(graphics, label(row), left, y + (22 - font.lineHeight) / 2, 64);
+                            missing ? (hover ? 0xFFF1D4D9 : 0xFFE7C4CB)
+                                    : hover ? 0xFFDCD5E6 : i % 2 == 0 ? 0xFFC6C5D4 : 0xFFBDBCCD);
+                    drawCell(graphics, label(row), left, y + (22 - font.lineHeight) / 2);
                 }
                 IntegrationLog.observe("appliedenhancements", "row");
             }
@@ -113,6 +116,10 @@ public final class AelisTtc {
         } catch (IntegrationRead.Failure failure) {
             IntegrationLog.disable("appliedenhancements", failure);
         }
+    }
+
+    private static void drawCell(GuiGraphics graphics, Component text, int left, int y) {
+        drawText(graphics, text, left + (64 - Math.min(64, Minecraft.getInstance().font.width(text))) / 2, y, 64);
     }
 
     private static void drawText(GuiGraphics graphics, Component text, int x, int y, int width) {
@@ -132,7 +139,7 @@ public final class AelisTtc {
         try {
             if (!list(screen)) return original;
             var row = IntegrationRead.invoke(screen, "rowUnderMouse", Object.class, (double) x, (double) y);
-            if (row == null) return original;
+            if (row == null || amount(row, "craft").signum() <= 0) return original;
             var lines = new ArrayList<>(original);
             lines.add(label(row));
             IntegrationLog.observe("appliedenhancements", "tooltip");

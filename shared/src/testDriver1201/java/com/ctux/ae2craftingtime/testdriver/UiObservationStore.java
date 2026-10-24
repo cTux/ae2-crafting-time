@@ -375,6 +375,7 @@ public final class UiObservationStore {
 
     public static void wirelessTooltip(List<Component> components) {
         if (active != null && (CraftingTreeScenario.isScreen(active.screen)
+                || active.screen.equals("com.appliedenhancements.client.plan.AelisCraftConfirmScreen")
                 || Minecraft.getInstance().screen instanceof appeng.client.gui.me.crafting.CraftingCPUScreen<?>)) {
             active.tooltip.clear();
             active.tooltip.addAll(observed(components, null));

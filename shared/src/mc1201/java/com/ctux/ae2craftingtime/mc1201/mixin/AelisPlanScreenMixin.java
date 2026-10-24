@@ -27,7 +27,7 @@ public abstract class AelisPlanScreenMixin {
     }
     @Inject(method = "drawFG", at = @At("RETURN"), require = 0)
     private void ae2craftingtime$drawTtc(GuiGraphics graphics, int ox, int oy, int mx, int my, CallbackInfo ci) {
-        AelisTtc.draw(this, graphics);
+        AelisTtc.draw(this, graphics, mx - ox, my - oy);
     }
 
     @Inject(method = {"render", "m_88315_"}, at = @At("HEAD"), require = 0)
