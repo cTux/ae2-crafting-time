@@ -8,8 +8,8 @@ import java.util.OptionalLong;
 public final class AelisPlanTtc {
     public static final int COLUMN_WIDTH = 70;
     private static final BigInteger MAX = BigInteger.valueOf(Long.MAX_VALUE);
-    private static boolean screenReady;
-    private static boolean layoutReady;
+    private static volatile boolean screenReady;
+    private static volatile boolean layoutReady;
 
     public static void screenReady(boolean ready) { screenReady = ready; }
     public static void layoutReady(boolean ready) { layoutReady = ready; }

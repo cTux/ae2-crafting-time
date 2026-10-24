@@ -118,7 +118,7 @@ public final class IntegrationMixinPlugin implements IMixinConfigPlugin {
     static boolean aelisScreenReady(ClassNode node) {
         return calls(method(node, "drawFG"), "drawTtc") == 3
                 && calls(method(node, "drawBG"), "summaryHeight") == 1
-                && node.methods.stream().anyMatch(m -> calls(m, "ttcTooltip") == 3);
+                && node.methods.stream().anyMatch(m -> calls(m, "ttcTooltip") == 3 && calls(m, "tooltipMouse") == 1);
     }
 
     static boolean aelisLayoutReady(ClassNode node) {

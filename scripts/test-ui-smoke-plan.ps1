@@ -236,7 +236,7 @@ try {
     $advancedGraphs = @($full.targets.graphs | Where-Object id -eq 'rxYaglEe')
     Assert ($forgeGraphs.Count -eq 6 -and $forgeGraphs[2].cases.Count -eq 2) 'Full Forge must schedule relaunch and newest-adapter graphs separately'
     $aelisGraph = @($forgeGraphs | Where-Object id -eq '1665696')
-    Assert ($aelisGraph.Count -eq 1 -and $aelisGraph[0].profile -eq 'compatible' -and $aelisGraph[0].cases[0] -eq 'aelis-plan') 'AELIS must use its pinned focused fixture'
+    Assert ($aelisGraph.Count -eq 1 -and $aelisGraph[0].profile -eq 'compatible' -and @($aelisGraph[0].cases)[0] -eq 'aelis-plan') 'AELIS must use its pinned focused fixture'
     foreach ($entry in $full.targets) {
         $statusGraphs = @($entry.graphs | Where-Object { 'standard-status-controls' -cin $_.cases })
         $expectedStatusGraphs = if ($entry.target -eq '1.21.1-neoforge') { 2 } else { 1 }

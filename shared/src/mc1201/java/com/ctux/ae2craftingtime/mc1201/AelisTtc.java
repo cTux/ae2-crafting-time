@@ -116,6 +116,7 @@ public final class AelisTtc {
     }
 
     private static void drawText(GuiGraphics graphics, Component text, int x, int y, int width) {
+        if (text.getString().isEmpty()) return;
         var font = Minecraft.getInstance().font;
         TtcBadge.fillRoundedRect(graphics, x - 1, y - 1, x + Math.min(width, font.width(text)) + 1,
                 y + font.lineHeight + 1, TtcBadge.BACKGROUND);
