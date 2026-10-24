@@ -52,7 +52,7 @@ public final class AelisTtc {
         return estimate(row, true).<Component>map(eta -> RowTextColor.estimate(eta,
                 TtcColorContext.get(ProfilerBridge.key(key)), ClientOptionsRuntime.current()))
                 .orElseGet(() -> ClientOptionsRuntime.enabled(OptionFeature.COLLECTING_STATUS)
-                        ? TtcText.ttcCollectingData() : Component.empty());
+                        ? RowTextColor.neutral(TtcText.ttcCollectingData(), ClientOptionsRuntime.current()) : Component.empty());
     }
 
     private static boolean list(Object screen) {
@@ -94,11 +94,9 @@ public final class AelisTtc {
                     int y = 108 + i * 22;
                     var row = visible.get(scroll + i);
                     boolean missing = amount(row, "missing").signum() > 0;
-                    boolean hover = mouseX >= 14 && mouseX < right - AelisPlanTtc.COLUMN_WIDTH + 3
-                            && mouseY >= y && mouseY < y + 22;
+                    boolean hover = AelisPlanTtc.hover(mouseX, mouseY, right, y);
                     graphics.fill(left - 2, y, right + 3, y + 22,
-                            missing ? (hover ? 0xFFF1D4D9 : 0xFFE7C4CB)
-                                    : hover ? 0xFFDCD5E6 : i % 2 == 0 ? 0xFFC6C5D4 : 0xFFBDBCCD);
+                            AelisPlanTtc.rowBackground(missing, hover, i));
                     drawCell(graphics, label(row), left, y + (22 - font.lineHeight) / 2);
                 }
                 IntegrationLog.observe("appliedenhancements", "row");
@@ -110,6 +108,8 @@ public final class AelisTtc {
                         .orElseGet(TtcText::ttcCollectingData);
                 if (incomplete && total.isPresent()) text = Component.translatable(
                         "text.ae2craftingtime.aelis.partial_total", TtcComponents.estimate(total.get()));
+                int color = RowTextColor.planTotalColor(ClientOptionsRuntime.current());
+                text = TtcComponents.rowSymbolsInTextColor(text.copy().withStyle(style -> style.withColor(color)), color);
                 if (!estimates.isEmpty()) drawText(graphics, text, 18, 63, width - 36);
                 IntegrationLog.observe("appliedenhancements", "total");
             }
@@ -119,7 +119,7 @@ public final class AelisTtc {
     }
 
     private static void drawCell(GuiGraphics graphics, Component text, int left, int y) {
-        drawText(graphics, text, left + (64 - Math.min(64, Minecraft.getInstance().font.width(text))) / 2, y, 64);
+        drawText(graphics, text, AelisPlanTtc.textLeft(left, 64, Minecraft.getInstance().font.width(text)), y, 64);
     }
 
     private static void drawText(GuiGraphics graphics, Component text, int x, int y, int width) {

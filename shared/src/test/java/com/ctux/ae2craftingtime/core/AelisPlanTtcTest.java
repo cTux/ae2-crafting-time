@@ -7,6 +7,21 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class AelisPlanTtcTest {
+    @Test void cellsMatchUpstreamCenteringAndRowStates() {
+        assertEquals(32, AelisPlanTtc.textLeft(10, 64, 20));
+        assertEquals(10, AelisPlanTtc.textLeft(10, 64, 100));
+        assertTrue(AelisPlanTtc.hover(14, 108, 406, 108));
+        assertTrue(AelisPlanTtc.hover(338, 129, 406, 108));
+        assertFalse(AelisPlanTtc.hover(13, 108, 406, 108));
+        assertFalse(AelisPlanTtc.hover(339, 108, 406, 108));
+        assertFalse(AelisPlanTtc.hover(14, 107, 406, 108));
+        assertFalse(AelisPlanTtc.hover(14, 130, 406, 108));
+        assertEquals(0xFFF1D4D9, AelisPlanTtc.rowBackground(true, true, 0));
+        assertEquals(0xFFE7C4CB, AelisPlanTtc.rowBackground(true, false, 0));
+        assertEquals(0xFFDCD5E6, AelisPlanTtc.rowBackground(false, true, 0));
+        assertEquals(0xFFC6C5D4, AelisPlanTtc.rowBackground(false, false, 0));
+        assertEquals(0xFFBDBCCD, AelisPlanTtc.rowBackground(false, false, 1));
+    }
     @Test void reservesSpaceOnlyWithBothHooksAndEnoughRoom() {
         AelisPlanTtc.screenReady(false); AelisPlanTtc.layoutReady(false);
         assertFalse(AelisPlanTtc.ready());

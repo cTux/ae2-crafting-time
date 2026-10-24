@@ -89,7 +89,7 @@ final class AelisPlanScenario implements AutoCloseable {
                     && ((CraftConfirmScreen) minecraft.screen).getMenu().getPlan() != null) {
                 screen = (CraftConfirmScreen) minecraft.screen;
                 original = IntegrationRead.field(screen, "rows", List.class);
-                if (!original.isEmpty()) next();
+                if (!original.isEmpty()) { mouse.accept(0, 0); next(); }
             }
             return false;
         }
@@ -101,7 +101,11 @@ final class AelisPlanScenario implements AutoCloseable {
         if (stage == 3) {
             if (!AelisPlanTtc.ready() || !IntegrationMixinPlugin.snapshot().get("appliedenhancements").variant().equals("aelis-plan-114"))
                 throw new IllegalStateException("AELIS presentation hooks are not ready");
-            if (snapshot.text().stream().noneMatch(text -> text.key().equals("text.ae2craftingtime.total_ttc"))) return false;
+            var totalText = snapshot.text().stream().filter(text -> text.key().equals("text.ae2craftingtime.total_ttc"))
+                    .findFirst().orElse(null);
+            if (totalText == null) return false;
+            if (!ClientOptionsRuntime.current().badgeBackground() && !Integer.valueOf(0x404040).equals(totalText.color()))
+                throw new IllegalStateException("AELIS total does not inherit the native readable foreground: " + totalText);
             checks.put("aelis-plan", true); checks.put("row-ttc", true); checks.put("total-ttc", true);
             capture.accept("aelis-plan.png");
             var visible = IntegrationRead.field(screen, "visible", List.class);

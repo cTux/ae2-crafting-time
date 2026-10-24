@@ -21,6 +21,19 @@ public final class AelisPlanTtc {
 
     public static int reservation(int panelWidth) { return panelWidth > 360 ? COLUMN_WIDTH : 0; }
 
+    public static int textLeft(int left, int width, int textWidth) {
+        return left + (width - Math.min(width, textWidth)) / 2;
+    }
+
+    public static boolean hover(int x, int y, int right, int top) {
+        return x >= 14 && x < right - COLUMN_WIDTH + 3 && y >= top && y < top + 22;
+    }
+
+    public static int rowBackground(boolean missing, boolean hover, int index) {
+        return missing ? (hover ? 0xFFF1D4D9 : 0xFFE7C4CB)
+                : hover ? 0xFFDCD5E6 : index % 2 == 0 ? 0xFFC6C5D4 : 0xFFBDBCCD;
+    }
+
     public static OptionalLong normalized(String outputId, int amountPerUnit, BigInteger amount) {
         if (amount.signum() <= 0) return OptionalLong.empty();
         var normalized = ProfileAmounts.unit(outputId, amountPerUnit) == ProfileUnit.MILLIBUCKET
