@@ -61,7 +61,7 @@ final class AelisPlanScenario implements AutoCloseable {
                 var id = minecraft.player.getUUID();
                 operation = minecraft.getSingleplayerServer().submit(() -> {
                     var player = minecraft.getSingleplayerServer().getPlayerList().getPlayer(id);
-                    if (pristine == null) pristine = new SuiteFixture(player.serverLevel(), player, marker);
+                    if (pristine == null) pristine = new SuiteFixture((net.minecraft.server.level.ServerLevel) player.level(), player, marker);
                     return fixture.prepare(player, marker);
                 });
             }
@@ -150,7 +150,7 @@ final class AelisPlanScenario implements AutoCloseable {
             checks.put("tree", true); capture.accept("aelis-tree.png"); click(minecraft, "Materials");
             ClientOptionsRuntime.current().features().setEnabled(OptionFeature.PLAN_ROWS, false);
             ClientOptionsRuntime.current().features().setEnabled(OptionFeature.PLAN_TOTAL, false);
-            screen.resize(minecraft, minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight());
+            DriverPlatform.resizeScreen(minecraft, screen, minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight());
             next(); return false;
         }
         if (stage == 9) {
@@ -159,13 +159,13 @@ final class AelisPlanScenario implements AutoCloseable {
             checks.put("option-off", true); capture.accept("aelis-off.png");
             ClientOptionsRuntime.current().features().setEnabled(OptionFeature.PLAN_ROWS, true);
             ClientOptionsRuntime.current().features().setEnabled(OptionFeature.PLAN_TOTAL, true);
-            screen.resize(minecraft, 381, minecraft.getWindow().getGuiScaledHeight()); next(); return false;
+            DriverPlatform.resizeScreen(minecraft, screen, 381, minecraft.getWindow().getGuiScaledHeight()); next(); return false;
         }
         if (stage == 10) {
             if (IntegrationRead.invoke(IntegrationRead.field(screen, "layout", Object.class), "width", Integer.class) != 360)
                 throw new IllegalStateException("Narrow column did not fall back");
             checks.put("narrow", true); capture.accept("aelis-narrow.png");
-            screen.resize(minecraft, minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight());
+            DriverPlatform.resizeScreen(minecraft, screen, minecraft.getWindow().getGuiScaledWidth(), minecraft.getWindow().getGuiScaledHeight());
             click(minecraft, "AE2 view"); next(); return false;
         }
         if (stage == 11) {

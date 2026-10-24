@@ -92,6 +92,10 @@ final class DriverPlatform {
                 + " afterTransport=" + afterTransport + " afterClear=" + connection.isConnected());
     }
 
+    static void resizeScreen(net.minecraft.client.Minecraft minecraft, net.minecraft.client.gui.screens.Screen screen, int width, int height) {
+        screen.resize(minecraft, width, height);
+    }
+
     static void resizeDisplay(net.minecraft.client.Minecraft minecraft) { minecraft.resizeDisplay(); }
 
     static void openWorld(net.minecraft.client.Minecraft minecraft, String world) {

@@ -109,7 +109,7 @@ public final class AelisTtc {
                 if (incomplete && total.isPresent()) text = Component.translatable(
                         "text.ae2craftingtime.aelis.partial_total", TtcComponents.estimate(total.get()));
                 int color = RowTextColor.planTotalColor(ClientOptionsRuntime.current());
-                text = TtcComponents.rowSymbolsInTextColor(text.copy().withStyle(style -> style.withColor(color)), color);
+                text = text.copy().withStyle(style -> style.withColor(color));
                 if (!estimates.isEmpty()) drawText(graphics, text, 18, 63, width - 36);
                 IntegrationLog.observe("appliedenhancements", "total");
             }
