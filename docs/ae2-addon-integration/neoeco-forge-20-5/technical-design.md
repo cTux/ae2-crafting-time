@@ -50,8 +50,11 @@ Use the existing `NEO_ECO` option routing for the upstream CPU object and
 the existing global and key-level gates. A return without a matched live
 job must not revive tracking after cancellation, a server restart or
 disable/enable. Support starts with new jobs observed by the API. The six
-methods carry neither saved job identity nor restore state. NeoEco suppresses
-these calls for exact orders, so no exact quantity needs conversion here.
+methods carry neither saved job identity nor restore state. NeoEco skips these
+calls for plans marked as exact. The 20.5.10 smoke found that a forced big order
+can still reach the start hook through a standard plan with no patterns or
+emitted items. The Forge API skips that empty plan so the native order can
+deliver its output without recording a Crafting Time sample.
 
 Keep old adapter selection separate from bridge activation. The latter requires
 both a compatible caller and a successful API bind. A missing legacy adapter
