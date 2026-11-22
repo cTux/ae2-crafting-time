@@ -638,6 +638,7 @@ try {
         }
         $modVersion = ((Get-Content -LiteralPath (Join-Path $root "gradle.properties")) |
             Where-Object { $_ -match '^modVersion=' } | Select-Object -First 1) -replace '^modVersion=', ''
+        if ($caseScenario -eq "neoeco-baseline-cpu") { $modVersion = "1.3.1" }
         $driverName = "ae2-crafting-time-$modVersion-$loader-$game-test-driver.jar"
         $standardContracts = (Get-Content -LiteralPath (Join-Path $PSScriptRoot 'ui-smoke-groups.json') -Raw | ConvertFrom-Json).cases
         $requiredChecks = if ($caseScenario -in @('delayed-resource-icons','appmek-resource-icons')) {
