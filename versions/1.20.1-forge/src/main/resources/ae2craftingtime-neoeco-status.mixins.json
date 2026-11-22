@@ -1,0 +1,11 @@
+{
+  "required": false,
+  "plugin": "com.ctux.ae2craftingtime.integration.NeoEcoStatusMixinPlugin",
+  "minVersion": "0.8",
+  "package": "com.ctux.ae2craftingtime.neoeco.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "ae2craftingtime.refmap.json",
+  "mixins": ["NeoEcoStatusCpuMixin", "NeoEcoStatusEntryMixin", "NeoEcoStatusPageMixin"],
+  "client": ["NeoEcoStatusGridMixin", "NeoEcoStatusCardMixin"],
+  "injectors": { "defaultRequire": 1 }
+}

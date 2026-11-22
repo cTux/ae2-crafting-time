@@ -13,7 +13,7 @@
   "cases": {
     "neoeco-status-cpu": {
       "checks": ["cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample"],
-      "screenshots": ["neoeco-status-profiled-plan.png", "neoeco-native-status-running.png", "neoeco-native-status-paused.png", "neoeco-native-status-after-restart.png"]
+      "screenshots": ["neoeco-status-profiled-plan.png", "neoeco-native-status-running.png", "neoeco-native-status-hover.png", "neoeco-native-status-crowded.png", "neoeco-native-status-rows-off.png", "neoeco-native-status-no-row-payload.png", "neoeco-native-status-paused.png", "neoeco-native-status-after-restart.png"]
     },
     "neoeco-baseline-cpu": {
       "checks": ["cpu-selected", "unprofiled-native-craft"],
