@@ -99,7 +99,8 @@ public final class CraftPlanScenario {
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         DispatchObservation.watch(null, null);
         keepNativeNeoEcoConfirmation = options.scenario().equals("neoeco-cpu")
-                || options.scenario().equals("neoeco-fastpath-cpu") || options.scenario().equals("neoeco-status-cpu");
+                || options.scenario().equals("neoeco-fastpath-cpu") || options.scenario().equals("neoeco-status-cpu")
+                || options.scenario().equals("neoeco-baseline-cpu");
         this.minecraft = minecraft;
         standard = StandardAe2Scenario.supports(options.scenario())
                 ? new StandardAe2Scenario(options.scenario(), options.world(), options.output(),
@@ -760,7 +761,14 @@ public final class CraftPlanScenario {
         }
     }
 
-    private void awaitAddonSample() {
+    private void awaitAddonSample() throws IOException {
+        if (options.scenario().equals("neoeco-baseline-cpu")) {
+            if (addonFixture.verifyAfterSample(minecraft, this::screenshotUnchecked)) {
+                checks.put("unprofiled-native-craft", true);
+                writePass();
+            }
+            return;
+        }
         if (sampleCheck == null) {
             var server = minecraft.getSingleplayerServer();
             sampleCheck = server.submit(() -> ProfilerBridge.stats(new ProfileKey(networkId, outputId))

@@ -27,6 +27,7 @@ final class NeoEcoPendingFixture extends NeoEcoFixture {
         if (!result.successful()) {
             throw new IllegalStateException("Legacy NeoEco requester craft was declined: " + result);
         }
+        menu.getHost().returnToMainMenu(player, menu);
     }
 
     private record PlayerRequester(ServerPlayer player, IGridNode node, AEItemKey output) implements ICraftingRequester {

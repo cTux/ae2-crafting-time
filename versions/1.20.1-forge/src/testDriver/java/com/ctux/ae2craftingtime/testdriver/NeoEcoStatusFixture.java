@@ -26,9 +26,10 @@ import java.util.function.Function;
 import net.minecraft.client.Minecraft;
 import net.minecraft.server.level.ServerPlayer;
 
-public final class NeoEcoStatusFixture extends NeoEcoFixture {
+public class NeoEcoStatusFixture extends NeoEcoFixture {
     private static volatile Object heldLogic;
     private static long renderedMillis = Long.MIN_VALUE;
+    private static int renderedSerial = -1;
     private CompletableFuture<Void> action;
     private CompletableFuture<Boolean> poll;
     private ECOCraftingCPU selected;
@@ -38,21 +39,53 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
     private UUID savedJob;
     private int learnedSamples;
     private long exactStock;
+    private long baselineStock;
     private int phase;
     private boolean reconnect;
 
-    public static boolean holdsReturns(Object logic) {
+    public static boolean holdsDispatch(Object logic) {
         return heldLogic == logic;
     }
 
-    public static void rendered(long millis) {
-        if (heldLogic != null) renderedMillis = millis;
+    public static void rendered(long millis, int serial) {
+        if (heldLogic != null) {
+            renderedMillis = millis;
+            renderedSerial = serial;
+        }
+    }
+
+    void startBaseline(ServerPlayer player) {
+        try {
+            Class.forName("com.ctux.ae2craftingtime.api.ExternalCpuProfiling");
+            throw new IllegalStateException("The baseline unexpectedly contains the Forge API");
+        } catch (ClassNotFoundException expected) {
+            openRunningStatus(player, false);
+            baselineStock = stock(plan.finalOutput().what());
+        }
+    }
+
+    boolean verifyBaseline(Minecraft client, Consumer<String> capture) {
+        if (phase == 0) {
+            if (renderedSerial < 0 || renderedMillis != -1) return false;
+            capture.accept("neoeco-native-status-baseline.png");
+            heldLogic = null;
+            phase++;
+        }
+        return poll(client, player -> {
+            if (selected.isBusy()) return false;
+            var output = plan.finalOutput().what();
+            if (stock(output) != baselineStock + 1
+                    || ProfilerBridge.stats(ProfilerBridge.key(ProfilerBridge.networkId(grid), output)).isPresent()) {
+                throw new IllegalStateException("Baseline expected one real output with no Crafting Time sample");
+            }
+            return true;
+        });
     }
 
     @Override
     boolean verifyAfterSample(Minecraft client, Consumer<String> capture) {
         if (action == null) {
-            schedule(client, this::openRunningStatus);
+            schedule(client, player -> openRunningStatus(player, true));
             return false;
         }
         if (!action.isDone()) return false;
@@ -64,7 +97,7 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
                 setSuspended(selected, true);
                 expectEstimate(false);
             });
-        } else if (phase == 1 && renderedMillis == -1) {
+        } else if (phase == 1 && renderedSerial >= 0 && renderedMillis == -1) {
             capture.accept("neoeco-native-status-paused.png");
             phase++;
             schedule(client, player -> {
@@ -78,7 +111,7 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
             reconnect = true;
         } else if (phase == 4 && poll(client, this::restoreRunningStatus)) {
             phase++;
-        } else if (phase == 5 && renderedMillis == -1) {
+        } else if (phase == 5 && renderedSerial >= 0 && renderedMillis == -1) {
             capture.accept("neoeco-native-status-after-restart.png");
             phase++;
             schedule(client, this::submitExact);
@@ -96,6 +129,7 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
         reconnect = false;
         phase = 4;
         renderedMillis = Long.MIN_VALUE;
+        renderedSerial = -1;
     }
 
     private void schedule(Minecraft client, Consumer<ServerPlayer> operation) {
@@ -116,7 +150,7 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
         return ready;
     }
 
-    private void openRunningStatus(ServerPlayer player) {
+    private void openRunningStatus(ServerPlayer player, boolean profiled) {
         if (!(player.containerMenu instanceof CraftConfirmMenu menu)) {
             throw new IllegalStateException("NeoEco follow-up needs the learned AE2 plan");
         }
@@ -128,7 +162,7 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
         }
         locator = menu.getLocator();
         submit(player);
-        expectEstimate(true);
+        if (profiled) expectEstimate(true);
         openStatus(player);
     }
 
@@ -145,25 +179,34 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
     }
 
     private void submit(ServerPlayer player) {
+        var previousJobs = activeJobs();
         var result = grid.getCraftingService().submitJob(plan, null, selected, true, IActionSource.ofPlayer(player));
-        selected = acceptedCpu(result);
+        selected = acceptedCpu(result, previousJobs);
         heldLogic = selected.getLogic();
     }
 
-    private ECOCraftingCPU acceptedCpu(ICraftingSubmitResult result) {
-        if (!result.successful() || result.link() == null) {
+    private ECOCraftingCPU acceptedCpu(ICraftingSubmitResult result, Set<UUID> previousJobs) {
+        if (!result.successful()) {
             throw new IllegalStateException("NeoEco follow-up job was not accepted: " + result);
         }
-        // The advertised idle slot is a placeholder; NeoEco spawns a CPU per job.
-        var cpu = activeCpu(result.link().getCraftingID());
-        if (cpu == null) throw new IllegalStateException("NeoEco accepted the job without exposing its CPU");
-        return cpu;
+        // Standalone AE2 submissions return no requester link. NeoEco still
+        // creates a separately registered CPU with a real crafting ID.
+        var newCpus = activeCpus().filter(cpu -> !previousJobs.contains(getJobId(cpu))).toList();
+        if (newCpus.size() != 1) throw new IllegalStateException("Expected one new active NeoEco CPU: " + newCpus);
+        return newCpus.get(0);
+    }
+
+    private Set<UUID> activeJobs() {
+        return activeCpus().map(NeoEcoStatusFixture::getJobId).collect(java.util.stream.Collectors.toSet());
+    }
+
+    private java.util.stream.Stream<ECOCraftingCPU> activeCpus() {
+        return grid.getCraftingService().getCpus().stream().filter(ECOCraftingCPU.class::isInstance)
+                .map(ECOCraftingCPU.class::cast).filter(ECOCraftingCPU::isBusy);
     }
 
     private ECOCraftingCPU activeCpu(UUID jobId) {
-        return grid.getCraftingService().getCpus().stream().filter(ECOCraftingCPU.class::isInstance)
-                .map(ECOCraftingCPU.class::cast).filter(ECOCraftingCPU::isBusy)
-                .filter(cpu -> jobId.equals(getJobId(cpu))).findFirst().orElse(null);
+        return activeCpus().filter(cpu -> jobId.equals(getJobId(cpu))).findFirst().orElse(null);
     }
 
     private void verifyCancellationAndDisable(ServerPlayer player) {
@@ -253,8 +296,9 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
                     .newInstance(output, BigInteger.ONE, true, defaults);
             Function<ICraftingPlan, ICraftingSubmitResult> submit = exactPlan ->
                     grid.getCraftingService().submitJob(exactPlan, null, selected, false, IActionSource.ofPlayer(player));
+            var previousJobs = activeJobs();
             var result = (ICraftingSubmitResult) request.getMethod("submit", Function.class).invoke(exact, submit);
-            selected = acceptedCpu(result);
+            selected = acceptedCpu(result, previousJobs);
             expectEstimate(false);
         } catch (ReflectiveOperationException exception) {
             throw new IllegalStateException("Cannot submit the native exact order", exception);
@@ -292,5 +336,6 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
         if (selected != null && selected.isBusy()) selected.cancelJob();
         heldLogic = null;
         renderedMillis = Long.MIN_VALUE;
+        renderedSerial = -1;
     }
 }

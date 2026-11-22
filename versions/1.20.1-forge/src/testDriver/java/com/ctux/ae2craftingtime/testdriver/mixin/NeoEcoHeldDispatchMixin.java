@@ -9,11 +9,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Pseudo
 @Mixin(targets = "cn.dancingsnow.neoecoae.crafting.execution.ECOCraftingCPULogic", remap = false)
-public abstract class NeoEcoHeldReturnMixin {
-    @Inject(method = "insert(Lappeng/api/stacks/AEKey;JLappeng/api/config/Actionable;)J",
+public abstract class NeoEcoHeldDispatchMixin {
+    @Inject(method = "executeCrafting",
             at = @At("HEAD"), cancellable = true, require = 0)
-    private void holdFixtureOutput(CallbackInfoReturnable<Long> callback) {
-        // Give the real status menu time to show the running job before its last output returns.
-        if (NeoEcoStatusFixture.holdsReturns(this)) callback.setReturnValue(0L);
+    private void holdFixtureDispatch(CallbackInfoReturnable<Integer> callback) {
+        // Leave the real job active until the status menu has rendered it.
+        if (NeoEcoStatusFixture.holdsDispatch(this)) callback.setReturnValue(0);
     }
 }

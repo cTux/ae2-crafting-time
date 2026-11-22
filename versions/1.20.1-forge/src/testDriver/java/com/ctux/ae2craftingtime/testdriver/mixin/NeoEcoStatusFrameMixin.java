@@ -12,9 +12,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "cn.dancingsnow.neoecoae.gui.computation.ComputationCpuStatusPanel", remap = false)
 public abstract class NeoEcoStatusFrameMixin {
     @Shadow private long estimatedRemainingMillis;
+    @Shadow private int selectedSerial;
 
     @Inject(method = "drawBackgroundAdditional", at = @At("TAIL"), require = 0)
     private void observeRenderedEstimate(CallbackInfo callback) {
-        NeoEcoStatusFixture.rendered(estimatedRemainingMillis);
+        NeoEcoStatusFixture.rendered(estimatedRemainingMillis, selectedSerial);
     }
 }

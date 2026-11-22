@@ -674,6 +674,8 @@ try {
             @("screen", "plan-ttc")
         } elseif ($caseScenario -like "*-terminal") {
             @("screen", "ttc-tooltip", "plan-ttc")
+        } elseif ($caseScenario -eq "neoeco-baseline-cpu") {
+            @("cpu-selected", "unprofiled-native-craft")
         } elseif ($caseScenario -ne "craft-plan") {
             @("cpu-selected", "job-accepted", "dispatch-amount", "returned-amount", "job-finished", "profile-sample", "ttc-after-sample")
         } else {
@@ -738,6 +740,11 @@ try {
         } elseif ($caseScenario -like "*-terminal") {
             $prefix = $caseScenario -replace '-terminal$', ''
             @("$prefix-terminal.png", "$prefix-plan.png")
+        } elseif ($caseScenario -eq "neoeco-baseline-cpu") {
+            @("neoeco-native-status-baseline.png")
+        } elseif ($caseScenario -eq "neoeco-status-cpu") {
+            @("neoeco-status-profiled-plan.png", "neoeco-native-status-running.png",
+                "neoeco-native-status-paused.png", "neoeco-native-status-after-restart.png")
         } elseif ($caseScenario -ne "craft-plan") {
             @("$($caseScenario -replace '-cpu$', '')-profiled-plan.png")
         } else {
