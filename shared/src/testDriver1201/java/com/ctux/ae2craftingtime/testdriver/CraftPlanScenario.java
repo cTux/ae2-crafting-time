@@ -89,8 +89,16 @@ public final class CraftPlanScenario {
     private final StatsInteraction treeStats = new StatsInteraction();
     private final ResourceFixtureClient resourceFixture;
 
+    private static boolean keepNativeNeoEcoConfirmation;
+
+    public static boolean keepNativeNeoEcoConfirmation() {
+        return keepNativeNeoEcoConfirmation;
+    }
+
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         DispatchObservation.watch(null, null);
+        keepNativeNeoEcoConfirmation = options.scenario().equals("neoeco-cpu")
+                || options.scenario().equals("neoeco-fastpath-cpu");
         this.minecraft = minecraft;
         standard = StandardAe2Scenario.supports(options.scenario())
                 ? new StandardAe2Scenario(options.scenario(), options.world(), options.output(),
@@ -860,7 +868,10 @@ public final class CraftPlanScenario {
         advance(ScenarioState.QUIT_REQUESTED);
     }
 
-    void cleanup() { if (standard != null) standard.cleanup(); }
+    void cleanup() {
+        keepNativeNeoEcoConfirmation = false;
+        if (standard != null) standard.cleanup();
+    }
     void cleanup(ServerPlayer player) {
         cleanup();
         if (addonFixture != null) addonFixture.cleanup(player);
