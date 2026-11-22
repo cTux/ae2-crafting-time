@@ -25,7 +25,7 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import org.spongepowered.asm.service.MixinService;
 
 /** Lives outside Mixin's reserved package; shared by every config in this process. */
-public final class IntegrationMixinPlugin implements IMixinConfigPlugin {
+public class IntegrationMixinPlugin implements IMixinConfigPlugin {
     private static final class Startup {
         private static final IntegrationSelection SELECTION = new IntegrationSelection(IntegrationCatalog.CANDIDATES,
                 IntegrationPlatform.TARGET, IntegrationPlatform.isClient(), IntegrationPlatform::version,

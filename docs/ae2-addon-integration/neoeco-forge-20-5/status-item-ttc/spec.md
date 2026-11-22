@@ -1,6 +1,6 @@
 # Per-item TTC in NeoEco Status
 
-Status: ready-to-implement
+Status: in-progress
 
 Scope: The native Status item grid on NeoEco 20.5.9 and 20.5.10 with Forge
 1.20.1. The [selected CPU header ETA](../spec.md) already shipped separately.

@@ -22,7 +22,9 @@ public final class IntegrationCatalog {
             new IntegrationSelection.Candidate("ae2ct", "tree-helper", PRE_26, true,
                     Set.of("CraftingTreeWidgetMixin"), treeHelper()),
             new IntegrationSelection.Candidate("neoecoae", "external-cpu", Set.of("1.20.1-forge"), false,
-                    Set.of(), List.of(method("cn/dancingsnow/neoecoae/integration/ae2craftingtime/ECOCraftingTimeCompat",
+                    Set.of("NeoEcoStatusCpuMixin", "NeoEcoStatusEntryMixin", "NeoEcoStatusPageMixin",
+                            "NeoEcoStatusGridMixin", "NeoEcoStatusCardMixin"),
+                    List.of(method("cn/dancingsnow/neoecoae/integration/ae2craftingtime/ECOCraftingTimeCompat",
                             "remainingMillis", "(Lcn/dancingsnow/neoecoae/crafting/execution/ECOCraftingCPU;)"
                                     + "Ljava/util/OptionalDouble;"))),
             eco("batched-long", "1.20.1-forge", "NeoEcoLongBatchDispatchMixin", BATCH + "JZ)V"),
