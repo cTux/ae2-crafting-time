@@ -927,7 +927,7 @@ class TestDriverCoreTest {
 
     @Test
     void smokeUsesThePackagedCataloguesOrderForEveryTarget() {
-        assertEquals("batched-long", SmokeAdapterCatalog.newest("1.20.1-forge").get("neoecoae"));
+        assertEquals("external-cpu", SmokeAdapterCatalog.newest("1.20.1-forge").get("neoecoae"));
         assertEquals("batched-int", SmokeAdapterCatalog.newest("1.21.1-neoforge").get("neoecoae"));
         assertEquals("tree-layout", SmokeAdapterCatalog.newest("1.20.1-fabric").get("ae2ct"));
         assertEquals(java.util.Map.of("advanced_ae", "advanced-cpu-26"), SmokeAdapterCatalog.newest("26.1.2-neoforge"));
