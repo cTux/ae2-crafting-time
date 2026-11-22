@@ -51,7 +51,8 @@ final class SuiteFixture {
 
     void restore(ServerPlayer player) {
         // A reconnect can replace both the integrated server and its level.
-        var level = java.util.Objects.requireNonNull(player.server.getLevel(dimension), "Suite fixture dimension is unavailable");
+        var level = java.util.Objects.requireNonNull(player.level().getServer().getLevel(dimension),
+                "Suite fixture dimension is unavailable");
         data = DriverPlatform.suiteSavedData(level);
         player.closeContainer();
         // Removing every node destroys old CPU jobs before their replacement grid is placed.
