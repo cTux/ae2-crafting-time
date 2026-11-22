@@ -25,7 +25,7 @@ abstract class AddonCpuFixture<P> {
             Map.entry("megacells-cpu", "com.ctux.ae2craftingtime.testdriver.MegaCellsFixture"),
             Map.entry("neoeco-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture"),
             Map.entry("neoeco-fastpath-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFastPathFixture"),
-            Map.entry("neoeco-pending-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture"),
+            Map.entry("neoeco-pending-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoPendingFixture"),
             Map.entry("neoeco-long-batch-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture"),
             Map.entry("neoeco-status-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoStatusFixture"),
             Map.entry("lightningtech-cpu", "com.ctux.ae2craftingtime.testdriver.LightningTechFixture"),

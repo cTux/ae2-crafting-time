@@ -61,14 +61,14 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
             capture.accept("neoeco-native-status-running.png");
             phase++;
             schedule(client, player -> {
-                selected.getLogic().setJobSuspended(true);
+                setSuspended(selected, true);
                 expectEstimate(false);
             });
         } else if (phase == 1 && renderedMillis == -1) {
             capture.accept("neoeco-native-status-paused.png");
             phase++;
             schedule(client, player -> {
-                selected.getLogic().setJobSuspended(false);
+                setSuspended(selected, false);
                 expectEstimate(true);
             });
         } else if (phase == 2 && renderedMillis > 0) {
@@ -126,7 +126,6 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
         if (selected == null || plan == null || plan.simulation()) {
             throw new IllegalStateException("NeoEco status fixture needs a real CPU and follow-up plan");
         }
-        heldLogic = selected.getLogic();
         locator = menu.getLocator();
         submit(player);
         expectEstimate(true);
@@ -146,10 +145,25 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
     }
 
     private void submit(ServerPlayer player) {
-        if (!grid.getCraftingService().submitJob(plan, null, selected, false, IActionSource.ofPlayer(player))
-                .successful() || !selected.isBusy()) {
-            throw new IllegalStateException("NeoEco follow-up job was not accepted");
+        var result = grid.getCraftingService().submitJob(plan, null, selected, true, IActionSource.ofPlayer(player));
+        selected = acceptedCpu(result);
+        heldLogic = selected.getLogic();
+    }
+
+    private ECOCraftingCPU acceptedCpu(ICraftingSubmitResult result) {
+        if (!result.successful() || result.link() == null) {
+            throw new IllegalStateException("NeoEco follow-up job was not accepted: " + result);
         }
+        // The advertised idle slot is a placeholder; NeoEco spawns a CPU per job.
+        var cpu = activeCpu(result.link().getCraftingID());
+        if (cpu == null) throw new IllegalStateException("NeoEco accepted the job without exposing its CPU");
+        return cpu;
+    }
+
+    private ECOCraftingCPU activeCpu(UUID jobId) {
+        return grid.getCraftingService().getCpus().stream().filter(ECOCraftingCPU.class::isInstance)
+                .map(ECOCraftingCPU.class::cast).filter(ECOCraftingCPU::isBusy)
+                .filter(cpu -> jobId.equals(getJobId(cpu))).findFirst().orElse(null);
     }
 
     private void verifyCancellationAndDisable(ServerPlayer player) {
@@ -179,7 +193,7 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
         selected.cancelJob();
         submit(player);
         expectEstimate(true);
-        selected.getLogic().setJobSuspended(true);
+        setSuspended(selected, true);
         savedJob = getJobId(selected);
         if (savedJob == null) throw new IllegalStateException("NeoEco job has no persisted identity");
     }
@@ -189,14 +203,15 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
         if (!(host instanceof IActionHost actionHost) || actionHost.getActionableNode() == null) return false;
         grid = actionHost.getActionableNode().getGrid();
         if (grid == null) return false;
-        var restored = (ECOCraftingCPU) cpu(player, grid);
-        if (restored == null || !restored.isBusy()) return false;
-        if (selected == restored || !savedJob.equals(getJobId(restored)) || !restored.getLogic().isJobSuspended()) {
+        var restored = activeCpu(savedJob);
+        if (restored == null) return false;
+        if (selected == restored
+                || !Boolean.TRUE.equals(callLogic(restored, "isJobSuspended", new Class<?>[0]))) {
             throw new IllegalStateException("Restart did not restore the same suspended NeoEco job on a new CPU object");
         }
         selected = restored;
         heldLogic = restored.getLogic();
-        restored.getLogic().setJobSuspended(false);
+        setSuspended(restored, false);
         expectEstimate(false);
         if (ProfilerBridge.stats(ProfilerBridge.key(ProfilerBridge.networkId(grid), plan.finalOutput().what()))
                 .orElseThrow().sampleCount() != learnedSamples) {
@@ -207,17 +222,26 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
     }
 
     private static UUID getJobId(ECOCraftingCPU cpu) {
+        return (UUID) callLogic(cpu, "getProcessingJobId", new Class<?>[0]);
+    }
+
+    private static void setSuspended(ECOCraftingCPU cpu, boolean suspended) {
+        callLogic(cpu, "setJobSuspended", new Class<?>[] { boolean.class }, suspended);
+    }
+
+    private static Object callLogic(ECOCraftingCPU cpu, String method, Class<?>[] parameters, Object... arguments) {
+        // The driver compiles against the retained 20.3 API. In 20.5 these methods
+        // are declared on the concrete execution class instead of the API base class.
         try {
             var logic = cpu.getLogic();
-            return (UUID) logic.getClass().getMethod("getProcessingJobId").invoke(logic);
+            return logic.getClass().getMethod(method, parameters).invoke(logic, arguments);
         } catch (ReflectiveOperationException exception) {
-            throw new IllegalStateException("Cannot read the real NeoEco crafting ID", exception);
+            throw new IllegalStateException("Cannot call the NeoEco crafting logic: " + method, exception);
         }
     }
 
     private void submitExact(ServerPlayer player) {
         selected.cancelJob();
-        heldLogic = selected.getLogic();
         var output = plan.finalOutput().what();
         exactStock = stock(output);
         try {
@@ -230,9 +254,7 @@ public final class NeoEcoStatusFixture extends NeoEcoFixture {
             Function<ICraftingPlan, ICraftingSubmitResult> submit = exactPlan ->
                     grid.getCraftingService().submitJob(exactPlan, null, selected, false, IActionSource.ofPlayer(player));
             var result = (ICraftingSubmitResult) request.getMethod("submit", Function.class).invoke(exact, submit);
-            if (!result.successful() || !selected.isBusy()) {
-                throw new IllegalStateException("NeoEco did not accept the native exact order: " + result);
-            }
+            selected = acceptedCpu(result);
             expectEstimate(false);
         } catch (ReflectiveOperationException exception) {
             throw new IllegalStateException("Cannot submit the native exact order", exception);
