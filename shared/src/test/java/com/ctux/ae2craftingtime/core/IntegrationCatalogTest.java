@@ -60,8 +60,10 @@ class IntegrationCatalogTest {
         var forge = selector("1.20.1-forge", false, classes);
         assertFalse(forge.shouldApply("ECOCraftingCpuLogicMixin"));
         assertEquals("external-cpu", forge.snapshot().get("neoecoae").variant());
-        assertTrue(forge.snapshot().get("neoecoae").mixins().isEmpty());
+        assertTrue(forge.shouldApply("NeoEcoStatusPageMixin"));
+        assertFalse(forge.shouldApply("NeoEcoLongBatchDispatchMixin"));
         var neoforge = selector("1.21.1-neoforge", true, classes);
+        assertFalse(neoforge.shouldApply("NeoEcoStatusPageMixin"));
         assertFalse(neoforge.shouldApply("ECOCraftingCpuLogicMixin"));
         assertEquals("no_compatible_variant", neoforge.snapshot().get("neoecoae").reason());
     }
