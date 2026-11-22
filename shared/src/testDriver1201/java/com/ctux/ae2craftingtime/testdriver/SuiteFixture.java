@@ -4,9 +4,11 @@ import com.ctux.ae2craftingtime.mc1201.Ae2CraftingTimeSavedData;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Vec3i;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
@@ -16,19 +18,19 @@ import java.util.List;
 
 /** Pristine bounded fixture state, accessed only on the integrated server thread. */
 final class SuiteFixture {
-    private final ServerLevel level;
+    private final ResourceKey<Level> dimension;
     private final BlockPos min;
     private final BlockPos max;
     private final StructureTemplate blocks = new StructureTemplate();
     private final boolean emptyBlocks;
-    private final Ae2CraftingTimeSavedData data;
+    private Ae2CraftingTimeSavedData data;
     private final List<com.ctux.ae2craftingtime.core.PersistedOutputSamples> samples;
     private final List<ItemStack> inventory = new ArrayList<>();
     private final double x, y, z;
     private final float yaw, pitch;
 
     SuiteFixture(ServerLevel level, ServerPlayer player, FixtureMarker marker) {
-        this.level = level;
+        dimension = level.dimension();
         var terminal = marker.terminal();
         // Covers the base/addon grid, dispatch grid (+40), and standard grid (+60).
         min = new BlockPos(terminal.x() - 32, Math.max(-64, terminal.y() - 12), terminal.z() - 32);
@@ -48,6 +50,9 @@ final class SuiteFixture {
     }
 
     void restore(ServerPlayer player) {
+        // A reconnect can replace both the integrated server and its level.
+        var level = java.util.Objects.requireNonNull(player.server.getLevel(dimension), "Suite fixture dimension is unavailable");
+        data = DriverPlatform.suiteSavedData(level);
         player.closeContainer();
         // Removing every node destroys old CPU jobs before their replacement grid is placed.
         for (var position : BlockPos.betweenClosed(min, max)) {
