@@ -134,25 +134,40 @@ class IntegrationBoundaryTest {
     }
 
     @Test
-    void everyConfigUsesTheSamePluginAndOwnsAllOptionalHooks() throws Exception {
+    void everyConfigUsesTheSharedSelectorAndOwnsAllOptionalHooks() throws Exception {
+        var neoEcoConfig = "ae2craftingtime-neoeco-status.mixins.json";
         var files = IntegrationPlatform.TARGET.equals("1.20.1-forge")
-                ? List.of("ae2craftingtime.mixins.json", "ae2craftingtime-advancedae.mixins.json")
+                ? List.of("ae2craftingtime.mixins.json", "ae2craftingtime-advancedae.mixins.json", neoEcoConfig)
                 : List.of("ae2craftingtime.mixins.json");
-        var all = new HashSet<String>();
+        var neoEcoClientMixins = Set.of("NeoEcoStatusGridMixin", "NeoEcoStatusCardMixin");
+        var packages = new HashMap<String, String>();
         var clients = new HashSet<String>();
         for (var file : files) {
             try (var input = getClass().getResourceAsStream("/" + file)) {
+                assertNotNull(input, file);
                 var json = JsonParser.parseReader(new InputStreamReader(input, StandardCharsets.UTF_8)).getAsJsonObject();
-                assertEquals(IntegrationMixinPlugin.class.getName(), json.get("plugin").getAsString());
+                var pluginName = json.get("plugin").getAsString();
+                assertEquals(file.equals(neoEcoConfig)
+                        ? "com.ctux.ae2craftingtime.integration.NeoEcoStatusMixinPlugin"
+                        : IntegrationMixinPlugin.class.getName(), pluginName);
+                var mixinPackage = json.get("package").getAsString();
+                var plugin = Class.forName(pluginName).asSubclass(IntegrationMixinPlugin.class)
+                        .getConstructor().newInstance();
+                // Config loading must be safe before loader metadata exists.
+                plugin.onLoad(mixinPackage);
+                assertNull(plugin.getRefMapperConfig());
+                assertNull(plugin.getMixins());
+                plugin.acceptTargets(Set.of(), Set.of());
                 assertFalse(json.get("required").getAsBoolean());
                 assertEquals(1, json.getAsJsonObject("injectors").get("defaultRequire").getAsInt());
-                json.getAsJsonArray("mixins").forEach(m -> assertTrue(all.add(m.getAsString())));
+                json.getAsJsonArray("mixins").forEach(m -> assertNull(packages.put(m.getAsString(), mixinPackage)));
                 if (json.has("client")) json.getAsJsonArray("client").forEach(m -> {
-                    assertTrue(all.add(m.getAsString()));
+                    assertNull(packages.put(m.getAsString(), mixinPackage));
                     clients.add(m.getAsString());
                 });
             }
         }
+        var all = packages.keySet();
         assertTrue(all.contains("CraftingStatusMenuAccessor"), "production status accessor must be packaged");
         assertTrue(clients.contains("CPUSelectionListMixin"), "CPU list renderer must be packaged");
         assertFalse(clients.contains("CrazyAe2CpuListRenderMixin"),
@@ -162,12 +177,16 @@ class IntegrationBoundaryTest {
         for (var candidate : IntegrationCatalog.CANDIDATES) {
             if (candidate.targets().contains(IntegrationPlatform.TARGET)) {
                 assertTrue(all.containsAll(candidate.mixins()), candidate.variant());
-                for (var mixin : candidate.mixins()) assertEquals(candidate.clientOnly(), clients.contains(mixin));
+                for (var mixin : candidate.mixins()) {
+                    assertEquals(candidate.clientOnly() || neoEcoClientMixins.contains(mixin),
+                            clients.contains(mixin), mixin);
+                }
             }
         }
         for (var mixin : all) {
             var node = new ClassNode();
-            try (var input = getClass().getResourceAsStream("/com/ctux/ae2craftingtime/mc1201/mixin/" + mixin + ".class")) {
+            var path = "/" + packages.get(mixin).replace('.', '/') + "/" + mixin + ".class";
+            try (var input = getClass().getResourceAsStream(path)) {
                 assertNotNull(input, mixin);
                 new ClassReader(input).accept(node, ClassReader.SKIP_CODE);
             }
@@ -201,14 +220,6 @@ class IntegrationBoundaryTest {
                         + "Lappeng/menu/me/crafting/CraftingStatusMenu$CraftingCpuListEntry;",
                         annotationValue(head, "target"));
             }
-        }
-        // Config construction must be safe before loader metadata exists, including both Forge configs.
-        for (int i = 0; i < files.size(); i++) {
-            var plugin = new IntegrationMixinPlugin();
-            plugin.onLoad("com.ctux.ae2craftingtime.mc1201.mixin");
-            assertNull(plugin.getRefMapperConfig());
-            assertNull(plugin.getMixins());
-            plugin.acceptTargets(Set.of(), Set.of());
         }
     }
 

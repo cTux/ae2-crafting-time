@@ -16,6 +16,7 @@ import appeng.menu.me.crafting.CraftConfirmMenu;
 import cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU;
 import com.ctux.ae2craftingtime.api.ExternalCpuProfiling;
 import com.ctux.ae2craftingtime.core.OptionFeature;
+import com.ctux.ae2craftingtime.core.TimeEstimate;
 import com.ctux.ae2craftingtime.mc1201.ClientOptionsRuntime;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import com.ctux.ae2craftingtime.mc1201.ServerOptionsRuntime;
@@ -50,6 +51,8 @@ public class NeoEcoStatusFixture extends NeoEcoFixture {
     private static String hoveredEstimate;
     private static volatile boolean observeRows;
     private static volatile boolean omitRowPayload;
+    private static volatile boolean widenGoldEstimate;
+    public static final double WIDE_MILLIS = 1e22;
     private CompletableFuture<Void> action;
     private CompletableFuture<Boolean> poll;
     private ECOCraftingCPU selected;
@@ -90,6 +93,10 @@ public class NeoEcoStatusFixture extends NeoEcoFixture {
 
     public static boolean omitRowPayload() {
         return omitRowPayload;
+    }
+
+    public static boolean widenGoldEstimate() {
+        return widenGoldEstimate;
     }
 
     public static void drawKey(AEKey key, int x, int y) {
@@ -223,17 +230,28 @@ public class NeoEcoStatusFixture extends NeoEcoFixture {
                     throw new IllegalStateException("NeoEco hover TTC did not match the selected item");
                 }
                 capture.accept("neoeco-native-status-hover.png");
-                features.setEnabled(OptionFeature.STATUS_ROWS, false);
+                widenGoldEstimate = true;
             }
             case 2 -> {
+                var cell = renderedRows.get(gold);
+                if (cell.estimate() != null || !gold.equals(hoveredKey) || hoveredEstimate == null
+                        || !hoveredEstimate.contains(TimeEstimate.formatDuration(WIDE_MILLIS))) return false;
+                if (cell.quantities().isEmpty() || !hasRowEstimate()) {
+                    throw new IllegalStateException("An oversized NeoEco estimate hid native quantities or another estimate");
+                }
+                capture.accept("neoeco-native-status-crowded.png");
+                features.setEnabled(OptionFeature.STATUS_ROWS, false);
+            }
+            case 3 -> {
                 if (hasRowEstimate() || hoveredEstimate != null) return false;
                 verifyMixedRows(false);
                 capture.accept("neoeco-native-status-rows-off.png");
                 moveMouse(client, 0, 0);
                 omitRowPayload = true;
+                widenGoldEstimate = false;
                 features.setEnabled(OptionFeature.STATUS_ROWS, true);
             }
-            case 3 -> {
+            case 4 -> {
                 if (hasRowEstimate()) return false;
                 verifyMixedRows(false);
                 capture.accept("neoeco-native-status-no-row-payload.png");
@@ -330,8 +348,12 @@ public class NeoEcoStatusFixture extends NeoEcoFixture {
         var gold = AEItemKey.of(Items.GOLD_INGOT);
         var tick = player.serverLevel().getGameTime();
         var network = ProfilerBridge.networkId(grid);
-        ProfilerBridge.start(network, this, gold, 1, tick);
-        ProfilerBridge.complete(network, this, gold, 1, tick + 120);
+        ProfilerBridge.start(network, this, gold, 1, tick - 120);
+        ProfilerBridge.complete(network, this, gold, 1, tick);
+        ProfilerBridge.flushCompletedSamples();
+        if (ProfilerBridge.stats(ProfilerBridge.key(network, gold)).isEmpty()) {
+            throw new IllegalStateException("NeoEco mixed job needs a learned gold timing");
+        }
         // Add two externally supplied outputs to the real furnace plan.
         // The held native job schedules both while leaving its input stored.
         var emitted = new KeyCounter();
@@ -502,6 +524,7 @@ public class NeoEcoStatusFixture extends NeoEcoFixture {
         heldLogic = null;
         observeRows = false;
         omitRowPayload = false;
+        widenGoldEstimate = false;
         renderedMillis = Long.MIN_VALUE;
         renderedSerial = -1;
     }
