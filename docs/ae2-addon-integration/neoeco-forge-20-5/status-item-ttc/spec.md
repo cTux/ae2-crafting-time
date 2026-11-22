@@ -3,7 +3,7 @@
 Status: finished
 
 Scope: The native Status item grid on NeoEco 20.5.9 and 20.5.10 with Forge
-1.20.1. The [selected CPU header ETA](../spec.md) already shipped separately.
+1.20.1. The [selected CPU header ETA](../spec.md) was implemented separately.
 
 Issue: [#766](https://github.com/cTux/ae2-crafting-time/issues/766)
 
