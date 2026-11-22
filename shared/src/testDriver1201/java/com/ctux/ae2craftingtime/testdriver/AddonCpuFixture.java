@@ -27,6 +27,7 @@ abstract class AddonCpuFixture<P> {
             Map.entry("neoeco-fastpath-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFastPathFixture"),
             Map.entry("neoeco-pending-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture"),
             Map.entry("neoeco-long-batch-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoFixture"),
+            Map.entry("neoeco-status-cpu", "com.ctux.ae2craftingtime.testdriver.NeoEcoStatusFixture"),
             Map.entry("lightningtech-cpu", "com.ctux.ae2craftingtime.testdriver.LightningTechFixture"),
             Map.entry("omnicells-cpu", "com.ctux.ae2craftingtime.testdriver.OmniCellsFixture"),
             Map.entry("projectcell-cpu", "com.ctux.ae2craftingtime.testdriver.ProjectCellFixture"),
@@ -126,6 +127,14 @@ abstract class AddonCpuFixture<P> {
     }
 
     void configureAmount(appeng.client.gui.me.crafting.CraftAmountScreen screen) {}
+
+    boolean verifyAfterSample(Minecraft minecraft, java.util.function.Consumer<String> capture) {
+        return true;
+    }
+
+    boolean reconnectRequested() { return false; }
+
+    void reconnected() {}
 
     boolean dispatchReady(DispatchObservation.Snapshot snapshot) {
         return snapshot.finishes() > 0;

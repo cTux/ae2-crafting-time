@@ -10,7 +10,7 @@ final class AdapterSmokePolicy {
             "merequester-read-recovery", "merequester", "neoeco-cpu", "neoecoae",
             "advancedae-cpu", "advanced_ae", "lightningtech-cpu", "ae2lt",
             "merequester-screen", "merequester", "neoeco-fastpath-cpu", "neoecoae",
-            "neoeco-pending-cpu", "neoecoae", "neoeco-long-batch-cpu", "neoecoae");
+            "neoeco-pending-cpu", "neoecoae", "neoeco-long-batch-cpu", "neoecoae", "neoeco-status-cpu", "neoecoae");
     private static final Map<String, String> LEGACY_FORGE_NEOECO = Map.of(
             "neoeco-pending-cpu", "pending-accounting", "neoeco-long-batch-cpu", "batched-long");
 

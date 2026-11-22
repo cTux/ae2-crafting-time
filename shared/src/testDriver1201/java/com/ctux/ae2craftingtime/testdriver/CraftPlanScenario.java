@@ -79,6 +79,7 @@ public final class CraftPlanScenario {
     private boolean wirelessOpenRequested;
     private final BlockTerminalReadiness blockTerminalReadiness = new BlockTerminalReadiness();
     private boolean amountSubmitted;
+    private DispatchObservation.Snapshot addonDispatch;
     private boolean treeHoverStarted;
     private int treeNode;
     private boolean treeDetails;
@@ -98,7 +99,7 @@ public final class CraftPlanScenario {
     public CraftPlanScenario(Minecraft minecraft, DriverOptions options, String driverFile) {
         DispatchObservation.watch(null, null);
         keepNativeNeoEcoConfirmation = options.scenario().equals("neoeco-cpu")
-                || options.scenario().equals("neoeco-fastpath-cpu");
+                || options.scenario().equals("neoeco-fastpath-cpu") || options.scenario().equals("neoeco-status-cpu");
         this.minecraft = minecraft;
         standard = StandardAe2Scenario.supports(options.scenario())
                 ? new StandardAe2Scenario(options.scenario(), options.world(), options.output(),
@@ -171,8 +172,20 @@ public final class CraftPlanScenario {
         return failure;
     }
 
-    boolean reconnectRequested() { return resourceFixture != null ? resourceFixture.reconnectRequested() : standard != null && standard.reconnectRequested(); }
-    void reconnected() { if (resourceFixture != null) resourceFixture.reconnected(); else standard.reconnected(); }
+    boolean reconnectRequested() {
+        if (resourceFixture != null) return resourceFixture.reconnectRequested();
+        if (standard != null) return standard.reconnectRequested();
+        return addonFixture != null && addonFixture.reconnectRequested();
+    }
+
+    void reconnected() {
+        if (resourceFixture != null) resourceFixture.reconnected();
+        else if (standard != null) standard.reconnected();
+        else {
+            addonFixture.reconnected();
+            stateStarted = System.nanoTime();
+        }
+    }
 
     public long elapsedMillis() {
         return Duration.ofNanos(System.nanoTime() - stateStarted).toMillis();
@@ -767,6 +780,7 @@ public final class CraftPlanScenario {
         }
         addonFixture.verifyDispatch(observed);
         AdapterSmokePolicy.verifyCpu(DriverPlatform.TARGET, options.scenario(), observed);
+        addonDispatch = observed;
         checks.put("job-accepted", true);
         checks.put("dispatch-amount", true);
         checks.put("returned-amount", true);
@@ -777,6 +791,10 @@ public final class CraftPlanScenario {
     }
 
     private void verifyAddonTtc() throws IOException {
+        if (checks.getOrDefault("ttc-after-sample", false)) {
+            if (addonFixture.verifyAfterSample(minecraft, this::screenshotUnchecked)) writePass();
+            return;
+        }
         if (minecraft.screen instanceof CraftAmountScreen amount) {
             if (amountSubmitted) return;
             amountSubmitted = true;
@@ -798,7 +816,7 @@ public final class CraftPlanScenario {
         }
         checks.put("ttc-after-sample", true);
         screenshot(options.scenario().replace("-cpu", "") + "-profiled-plan.png");
-        writePass();
+        if (addonFixture.verifyAfterSample(minecraft, this::screenshotUnchecked)) writePass();
     }
 
     private void cycleSorts() {
@@ -903,7 +921,8 @@ public final class CraftPlanScenario {
         return new DriverResult(1, complete, driverFile, DriverPlatform.TARGET, options.profile(), options.scenario(), value,
                 minecraft.getLanguageManager().getSelected(),
                 com.ctux.ae2craftingtime.integration.IntegrationMixinPlugin.snapshot(),
-                addonFixture == null ? null : DispatchObservation.snapshot(), checks, screenshots, resultFailure);
+                addonFixture == null ? null : addonDispatch == null ? DispatchObservation.snapshot() : addonDispatch,
+                checks, screenshots, resultFailure);
     }
 
     static boolean wirelessTooltipReady(List<UiSnapshot.ObservedText> tooltip, boolean requireTtc) {
