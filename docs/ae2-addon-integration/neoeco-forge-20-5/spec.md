@@ -41,3 +41,6 @@ and ask for time remaining. Crafting Time 1.3.1 lacks the API they call.
 Earlier 20.5 builds without the optional caller are research context. Restoring
 active estimates across restart, exact big-order profiling, provider-location
 data, and parallel-capacity reporting are outside this first API contract.
+
+The [per-item Status TTC follow-up](status-item-ttc/spec.md) covers the native
+NeoEco item grid.
