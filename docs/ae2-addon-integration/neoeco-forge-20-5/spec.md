@@ -1,6 +1,6 @@
 # NeoEco 20.5 crafting time on Forge 1.20.1
 
-Status: in-progress
+Status: finished
 
 Scope: Live profiling and remaining-time estimates for standard-quantity ECO CPU
 jobs on NeoEco 20.5.9 and 20.5.10.
@@ -10,9 +10,21 @@ Issue: [#760](https://github.com/cTux/ae2-crafting-time/issues/760)
 Planning: [Technical design and research](technical-design.md) and
 [implementation plan](implementation-plan.md).
 
-Implementation: [Forge 1.20.1 external CPU API](../../../versions/1.20.1-forge/src/main/java/com/ctux/ae2craftingtime/api/ExternalCpuProfiling.java).
-Gameplay qualification on both stable builds and the legacy regression runs
-are tracked by the implementation plan.
+Implementation: [PR #762](https://github.com/cTux/ae2-crafting-time/pull/762) and
+the [Forge 1.20.1 external CPU API](../../../versions/1.20.1-forge/src/main/java/com/ctux/ae2craftingtime/api/ExternalCpuProfiling.java).
+
+Verification: The [PR verification results](https://github.com/cTux/ae2-crafting-time/pull/762)
+record focused Forge 47.4.26 and AE2 15.4.10 runs against the production API
+verified by [CI on the implementation PR head](https://github.com/cTux/ae2-crafting-time/actions/runs/45007371356).
+NeoEco 20.5.10 passed normal
+and FastPath crafting, and 20.5.9 passed normal crafting. Both showed the
+learned estimate in NeoEco's status screen and its fallback after a restart.
+The 20.5.10 run also verified that a native exact order delivered its output
+without adding a Crafting Time sample. The published Crafting Time 1.3.1
+baseline delivered an output on 20.5.10 with NeoEco's native elapsed-time
+display. Forge 20.3.0 and 20.4.2 passed their focused legacy craft cases. The
+base-only Forge craft passed, and NeoForge 1.21.1 passed the catalog and
+packaging checks.
 
 NeoEco moved its active CPU logic in the 20.5 line. The 20.5.9 beta in the
 report no longer matches Crafting Time's older Forge dispatch adapters. The
