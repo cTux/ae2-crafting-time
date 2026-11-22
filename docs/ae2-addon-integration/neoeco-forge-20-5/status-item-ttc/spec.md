@@ -1,6 +1,6 @@
 # Per-item TTC in NeoEco Status
 
-Status: in-progress
+Status: finished
 
 Scope: The native Status item grid on NeoEco 20.5.9 and 20.5.10 with Forge
 1.20.1. The [selected CPU header ETA](../spec.md) already shipped separately.
@@ -8,6 +8,16 @@ Scope: The native Status item grid on NeoEco 20.5.9 and 20.5.10 with Forge
 Issue: [#766](https://github.com/cTux/ae2-crafting-time/issues/766)
 
 Implementation: [#768](https://github.com/cTux/ae2-crafting-time/pull/768)
+
+Verification: [Gradle tests](https://github.com/cTux/ae2-crafting-time/actions/runs/45014029719)
+and [production JAR builds](https://github.com/cTux/ae2-crafting-time/actions/runs/45014029843)
+passed on the implementation head `f7430ca0`. The [PR verification record](https://github.com/cTux/ae2-crafting-time/pull/768)
+includes native Forge 47.4.26 and AE2 15.4.10 runs with NeoEco 20.5.9 and
+20.5.10. They show separate timings, the native hover card, a wide estimate
+that fits only in the card, the display option and the fallback after pause
+and restart or when the server omits the row data. NeoEco 20.3.0, NeoEco
+20.4.2 and Forge without NeoEco passed focused crafting cases. NeoForge
+1.21.1 retained its existing adapter in the production JAR.
 
 Planning: [Technical design](technical-design.md) and
 [implementation plan](implementation-plan.md).

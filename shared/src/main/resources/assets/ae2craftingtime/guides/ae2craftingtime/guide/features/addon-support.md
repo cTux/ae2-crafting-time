@@ -28,9 +28,9 @@ Profiling and NeoEco CPU profiling. NeoEco falls back to its own status when
 there is no learned estimate or the job was already running when the server
 started. Exact big orders use NeoEco's own timing.
 
-In NeoEco's Status item grid, **Status rows** shows per-item TTC for learned
-outputs with active or scheduled work. The item card shows the full estimate
-when it cannot fit in the grid. The header ETA is the estimate for the whole
+In NeoEco's Status item grid, **Crafting Status row times** shows per-item TTC
+for learned outputs with active or scheduled work. The item card shows the
+full estimate when it cannot fit in the grid. The header ETA covers the whole
 CPU job.
 
 For example, a supported addon CPU processing a chemical recipe teaches its
