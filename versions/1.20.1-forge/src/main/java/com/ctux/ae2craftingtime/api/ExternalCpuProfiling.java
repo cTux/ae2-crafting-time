@@ -8,6 +8,7 @@ import appeng.api.stacks.AEKey;
 import com.ctux.ae2craftingtime.mc1201.ProfilerBridge;
 import java.util.OptionalDouble;
 import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.server.ServerLifecycleHooks;
 
 /** Optional server API for CPUs that report their own crafting lifecycle. */
 public final class ExternalCpuProfiling {
@@ -50,7 +51,7 @@ public final class ExternalCpuProfiling {
     }
 
     private static MinecraftServer server() {
-        var server = ProfilerBridge.recoveryServer();
+        var server = ServerLifecycleHooks.getCurrentServer();
         return server != null && server.isSameThread() ? server : null;
     }
 }
