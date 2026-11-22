@@ -7,6 +7,8 @@ Scope: The native Status item grid on NeoEco 20.5.9 and 20.5.10 with Forge
 
 Issue: [#766](https://github.com/cTux/ae2-crafting-time/issues/766)
 
+Implementation: [#768](https://github.com/cTux/ae2-crafting-time/pull/768)
+
 Planning: [Technical design](technical-design.md) and
 [implementation plan](implementation-plan.md).
 
