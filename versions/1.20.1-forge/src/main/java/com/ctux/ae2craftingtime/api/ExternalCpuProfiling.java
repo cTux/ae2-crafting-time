@@ -17,6 +17,8 @@ public final class ExternalCpuProfiling {
 
     public static void startJob(ICraftingCPU cpu, IGrid grid, ICraftingPlan plan, IActionSource source, long tick) {
         if (server() == null || cpu == null || grid == null || !ProfilerBridge.trackingEnabled(cpu)) return;
+        // NeoEco's exact-order carrier declares no work. Its own planner supplies segments later.
+        if (plan == null || plan.simulation() || (plan.patternTimes().isEmpty() && plan.emittedItems().isEmpty())) return;
         ProfilerBridge.startExternalJob(ProfilerBridge.networkId(grid), cpu, plan, tick,
                 ProfilerBridge.jobOwner(source));
     }
