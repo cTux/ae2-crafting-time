@@ -126,7 +126,7 @@ is available through `IntegrationMixinPlugin.snapshot()`.
 | --- | --- |
 | Applied Enhancements | `aelis-plan-114`; Forge 1.20.1 client only. The custom material table has one TTC column and a plan total; existing plan switches control both. Exact quantities are normalized before long-range checks. Unknown APIs skip the adapter. Focused enabled-table and addon-absent native controls passed; see the [verification](applied-enhancements-ttc/implementation-verification.md). |
 | Crafting Tree | `tree-layout`, then `tree-helper`; client only, pre-26 targets. Fabric retains its declaration but has no verified published Tree artifact. |
-| NeoEco | Forge: `batched-long`, then `pending-accounting`. NeoForge 1.21.1: `batched-int`. One dispatch adapter shares lifecycle hooks; neither family is enabled on Fabric or 26.1.2. |
+| NeoEco | Forge recognizes `external-cpu` for the 20.5 stable caller and retains `batched-long` and `pending-accounting` for older contracts. The external API is optional and the addon binds it independently of mixin selection. NeoForge 1.21.1 retains `batched-int`. [Forge 20.5 scope and verification](ae2-addon-integration/neoeco-forge-20-5/spec.md). |
 | AdvancedAE | `advanced-cpu-1201`, `advanced-cpu-1211`, or `advanced-cpu-26` by target; each bundles execution and saved-job hooks on both physical sides. |
 | Lightning Tech | `time-wheel`; Forge and NeoForge 1.21.1, both physical sides. Its 26.1.2 native coverage does not imply a custom adapter. |
 | ME Requester | `requester-screen`; pre-26 clients only. |

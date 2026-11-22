@@ -4,7 +4,7 @@
   "package": "com.ctux.ae2craftingtime.testdriver.mixin",
   "compatibilityLevel": "JAVA_17",
   "refmap": "ae2craftingtime_test_driver.refmap.json",
-  "mixins": ["NeoEcoFastPathObservationMixin"],
-  "client": ["NeoEcoAmountAccessor"],
+  "mixins": ["NeoEcoFastPathObservationMixin", "NeoEcoExternalFastPathObservationMixin", "NeoEcoDispatchResultAccessor", "NeoEcoHeldDispatchMixin"],
+  "client": ["NeoEcoAmountAccessor", "NeoEcoConfirmationFixtureMixin", "NeoEcoStatusFrameMixin"],
   "injectors": {"defaultRequire": 1}
 }

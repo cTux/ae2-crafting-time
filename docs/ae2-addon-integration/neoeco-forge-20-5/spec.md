@@ -1,6 +1,6 @@
 # NeoEco 20.5 crafting time on Forge 1.20.1
 
-Status: ready-to-implement
+Status: in-progress
 
 Scope: Live profiling and remaining-time estimates for standard-quantity ECO CPU
 jobs on NeoEco 20.5.9 and 20.5.10.
@@ -9,6 +9,10 @@ Issue: [#760](https://github.com/cTux/ae2-crafting-time/issues/760)
 
 Planning: [Technical design and research](technical-design.md) and
 [implementation plan](implementation-plan.md).
+
+Implementation: [Forge 1.20.1 external CPU API](../../../versions/1.20.1-forge/src/main/java/com/ctux/ae2craftingtime/api/ExternalCpuProfiling.java).
+Gameplay qualification on both stable builds and the legacy regression runs
+are tracked by the implementation plan.
 
 NeoEco moved its active CPU logic in the 20.5 line. The 20.5.9 beta in the
 report no longer matches Crafting Time's older Forge dispatch adapters. The

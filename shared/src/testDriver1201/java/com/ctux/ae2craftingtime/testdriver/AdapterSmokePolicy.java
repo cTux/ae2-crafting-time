@@ -4,12 +4,15 @@ import com.ctux.ae2craftingtime.core.IntegrationCatalog;
 import com.ctux.ae2craftingtime.core.IntegrationSelection;
 import java.util.Map;
 
-/** The driver enforces the catalogue's order instead of maintaining another version list. */
+/** The driver enforces the newest contract, with explicit cases for retained contracts. */
 final class AdapterSmokePolicy {
     private static final Map<String, String> DEPENDENCIES = Map.of(
             "merequester-read-recovery", "merequester", "neoeco-cpu", "neoecoae",
             "advancedae-cpu", "advanced_ae", "lightningtech-cpu", "ae2lt",
-            "merequester-screen", "merequester", "neoeco-fastpath-cpu", "neoecoae");
+            "merequester-screen", "merequester", "neoeco-fastpath-cpu", "neoecoae",
+            "neoeco-pending-cpu", "neoecoae", "neoeco-long-batch-cpu", "neoecoae", "neoeco-status-cpu", "neoecoae");
+    private static final Map<String, String> LEGACY_FORGE_NEOECO = Map.of(
+            "neoeco-pending-cpu", "pending-accounting", "neoeco-long-batch-cpu", "batched-long");
 
     static void verifyCpu(String target, String scenario, DispatchObservation.Snapshot observed) {
         var dependency = DEPENDENCIES.getOrDefault(scenario, "");
@@ -21,6 +24,9 @@ final class AdapterSmokePolicy {
         };
         if (expected.isEmpty() || IntegrationCatalog.CANDIDATES.stream()
                 .noneMatch(c -> c.dependency().equals(dependency) && c.targets().contains(target))) return;
+        if (target.equals("1.20.1-forge") && dependency.equals("neoecoae")
+                && !LEGACY_FORGE_NEOECO.containsKey(scenario)
+                && observed.scopeType().equals("cn.dancingsnow.neoecoae.crafting.execution.ECOCraftingCPU")) return;
         if (!expected.equals(observed.scopeType())) {
             throw new IllegalStateException("Smoke craft ran on " + observed.scopeType() + "; expected " + expected);
         }
@@ -33,11 +39,15 @@ final class AdapterSmokePolicy {
         if (dependency == null) return;
         var catalogue = new IntegrationSelection(IntegrationCatalog.CANDIDATES, target, true,
                 id -> null, candidate -> null, decision -> {});
-        var newest = catalogue.newestVariant(dependency);
-        if (newest.isEmpty()) return; // Native coverage can exist without a custom adapter on this target.
+        var legacy = LEGACY_FORGE_NEOECO.get(scenario);
+        if (legacy != null && !target.equals("1.20.1-forge")) {
+            throw new IllegalStateException("Retained NeoEco case requires Forge 1.20.1");
+        }
+        var expected = legacy == null ? catalogue.newestVariant(dependency) : legacy;
+        if (expected.isEmpty()) return; // Native coverage can exist without a custom adapter on this target.
         var actual = decisions.get(dependency);
-        if (actual == null || !actual.variant().equals(newest)) {
-            throw new IllegalStateException("Smoke requires newest adapter " + dependency + "/" + newest
+        if (actual == null || !actual.variant().equals(expected)) {
+            throw new IllegalStateException("Smoke requires adapter " + dependency + "/" + expected
                     + "; selected=" + actual);
         }
     }

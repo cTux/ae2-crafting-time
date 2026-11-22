@@ -25,7 +25,7 @@
     "udZtKfzP": {
       "disposition": "FOCUSED_BEHAVIOR",
       "scenario": "neoeco-cpu",
-      "reason": "The compatible Forge pin selects the older pending-accounting adapter. Smoke batched-long in a focused newest-adapter graph."
+      "reason": "The compatible Forge pin uses the legacy contract. Smoke the external CPU API in a focused newest-adapter graph."
     },
     "1527395": {
       "disposition": "DIRECT_BEHAVIOR",

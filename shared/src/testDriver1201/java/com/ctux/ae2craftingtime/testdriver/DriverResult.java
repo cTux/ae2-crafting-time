@@ -76,6 +76,7 @@ public record DriverResult(
                 : scenario.equals(RequesterFixture.SCENARIO) ? ME_REQUESTER_CHECKS
                 : scenario.equals(Ae2NetworkAnalyserFixture.SCENARIO) ? VISUAL_TOOL_CHECKS
                 : scenario.equals("aeinfinitybooster-terminal") ? WIRELESS_RANGE_CHECKS
+                : scenario.equals("neoeco-baseline-cpu") ? List.of("cpu-selected", "unprofiled-native-craft")
                 : WirelessTerminalFixture.supports(scenario) ? WIRELESS_TERMINAL_CHECKS : ADDON_CPU_CHECKS;
     }
 

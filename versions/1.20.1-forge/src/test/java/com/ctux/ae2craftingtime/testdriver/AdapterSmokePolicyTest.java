@@ -21,6 +21,10 @@ class AdapterSmokePolicyTest {
             assertDoesNotThrow(() -> AdapterSmokePolicy.verifyCpu("1.20.1-forge", entry.getKey(), snapshot(entry.getValue())));
         }
         assertDoesNotThrow(() -> AdapterSmokePolicy.verifyCpu("26.1.2-neoforge", "lightningtech-cpu", nativeCpu));
+        var externalEco = snapshot("cn.dancingsnow.neoecoae.crafting.execution.ECOCraftingCPU");
+        assertDoesNotThrow(() -> AdapterSmokePolicy.verifyCpu("1.20.1-forge", "neoeco-cpu", externalEco));
+        assertThrows(IllegalStateException.class,
+                () -> AdapterSmokePolicy.verifyCpu("1.21.1-neoforge", "neoeco-cpu", externalEco));
         assertDoesNotThrow(() -> AdapterSmokePolicy.verifyCpu("1.20.1-forge", "craft-plan", nativeCpu));
     }
 
@@ -34,14 +38,28 @@ class AdapterSmokePolicyTest {
                 Set.of("ECOCraftingCpuLogicMixin", "NeoEcoPendingDispatchMixin"), List.of());
         var current = new IntegrationSelection.Decision("neoecoae", "20.4.2", "batched-long", "selected",
                 Set.of("ECOCraftingCpuLogicMixin", "NeoEcoLongBatchDispatchMixin"), List.of());
+        var external = new IntegrationSelection.Decision("neoecoae", "20.5.10", "external-cpu", "selected",
+                Set.of(), List.of());
         assertThrows(IllegalStateException.class,
                 () -> AdapterSmokePolicy.verify("1.20.1-forge", "craft-plan", "uk_ua", Map.of()));
         assertThrows(IllegalStateException.class,
                 () -> AdapterSmokePolicy.verify("1.20.1-forge", "neoeco-cpu", "en_us", Map.of()));
         assertThrows(IllegalStateException.class,
                 () -> AdapterSmokePolicy.verify("1.20.1-forge", "neoeco-cpu", "en_us", Map.of("neoecoae", old)));
+        assertThrows(IllegalStateException.class,
+                () -> AdapterSmokePolicy.verify("1.20.1-forge", "neoeco-cpu", "en_us", Map.of("neoecoae", current)));
         assertDoesNotThrow(() -> AdapterSmokePolicy.verify("1.20.1-forge", "neoeco-cpu", "en_us",
+                Map.of("neoecoae", external)));
+        assertDoesNotThrow(() -> AdapterSmokePolicy.verify("1.20.1-forge", "neoeco-pending-cpu", "en_us",
+                Map.of("neoecoae", old)));
+        assertDoesNotThrow(() -> AdapterSmokePolicy.verify("1.20.1-forge", "neoeco-long-batch-cpu", "en_us",
                 Map.of("neoecoae", current)));
+        assertThrows(IllegalStateException.class,
+                () -> AdapterSmokePolicy.verify("1.20.1-forge", "neoeco-pending-cpu", "en_us",
+                        Map.of("neoecoae", current)));
+        assertThrows(IllegalStateException.class,
+                () -> AdapterSmokePolicy.verify("1.21.1-neoforge", "neoeco-pending-cpu", "en_us",
+                        Map.of("neoecoae", old)));
         assertDoesNotThrow(() -> AdapterSmokePolicy.verify("1.20.1-forge", "craft-plan", "en_us", Map.of()));
         assertDoesNotThrow(() -> AdapterSmokePolicy.verify("26.1.2-neoforge", "lightningtech-cpu", "en_us", Map.of()));
     }

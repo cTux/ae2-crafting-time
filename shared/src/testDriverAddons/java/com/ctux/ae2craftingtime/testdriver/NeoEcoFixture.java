@@ -9,6 +9,7 @@ import appeng.api.stacks.AEItemKey;
 import appeng.blockentity.storage.DriveBlockEntity;
 import appeng.core.definitions.AEItems;
 import cn.dancingsnow.neoecoae.all.NEMultiBlocks;
+import cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU;
 import cn.dancingsnow.neoecoae.blocks.entity.NEBlockEntity;
 import cn.dancingsnow.neoecoae.blocks.entity.computation.ECOComputationDriveBlockEntity;
 import cn.dancingsnow.neoecoae.multiblock.definition.MultiBlockContext;
@@ -114,8 +115,7 @@ class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
     @Override
     protected ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {
         return grid.getCraftingService().getCpus().stream()
-                .filter(candidate -> candidate.getClass().getName()
-                        .equals("cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU"))
+                .filter(ECOCraftingCPU.class::isInstance)
                 .findFirst().orElse(null);
     }
 
@@ -152,7 +152,7 @@ class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
                 }
                 for (Direction facing : List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)) {
                     var interfaceOffset = MultiBlockRotation.localToWorld(
-                            INTERFACE_OFFSET, BlockPos.ZERO, facing);
+                            INTERFACE_OFFSET, BlockPos.ZERO, facing, false);
                     var candidate = blueprint(
                             level, anchor.relative(direction).subtract(interfaceOffset), facing, definition);
                     if (candidate.blocks.keySet().stream().allMatch(pos -> level.getBlockState(pos).isAir())) {
@@ -186,8 +186,8 @@ class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
 
         @Override
         public void setBlock(BlockPos pos, BlockState blockState) {
-            var target = MultiBlockRotation.localToWorld(pos, controllerPos, facing);
-            blocks.put(target, MultiBlockRotation.rotateState(blockState, facing));
+            var target = MultiBlockRotation.localToWorld(pos, controllerPos, facing, false);
+            blocks.put(target, MultiBlockRotation.rotateState(blockState, facing, false));
         }
 
         @Override
