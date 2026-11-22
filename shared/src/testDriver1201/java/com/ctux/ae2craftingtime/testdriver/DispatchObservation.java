@@ -57,6 +57,10 @@ public final class DispatchObservation {
                 scope == null ? "" : scope.getClass().getName(), ticks);
     }
 
+    public static synchronized Object scope() {
+        return scope;
+    }
+
     public static synchronized void fastPath(Object jobScope, long crafts) {
         if (scope != null && scope == jobScope) fastPathCrafts += crafts;
     }

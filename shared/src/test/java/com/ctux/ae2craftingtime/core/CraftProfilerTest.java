@@ -16,6 +16,67 @@ import org.junit.jupiter.api.Test;
 
 class CraftProfilerTest {
     @Test
+    void externalReceiptRequiresItsOwnDispatchAndCapsProgressAtTheDispatchedAmount() {
+        var profiler = new CraftProfiler(10);
+        var cpu = new Object();
+        var other = new Object();
+        var output = new ProfileKey("network", "test:output");
+        var job = new CraftingJobEstimate(output, Map.of(output, 8L), Map.of());
+        profiler.setExternalJobEstimate(cpu, job);
+        profiler.start(output, other, 4, ProfileUnit.ITEM, 0);
+
+        assertFalse(profiler.completeDispatched(output, cpu, 4, 10));
+        assertEquals(8L, job.snapshot().orElseThrow().remainingAmounts().get(output));
+        assertTrue(profiler.stats(output).isEmpty());
+        profiler.start(output, cpu, 4, ProfileUnit.ITEM, 10);
+        assertTrue(profiler.completeDispatched(output, cpu, 1, 15));
+        assertEquals(7L, job.snapshot().orElseThrow().remainingAmounts().get(output));
+        assertTrue(profiler.completeDispatched(output, cpu, 10, 20));
+        assertFalse(profiler.completeDispatched(output, cpu, 1, 25));
+        assertEquals(4L, job.snapshot().orElseThrow().remainingAmounts().get(output));
+        assertTrue(profiler.completeDispatched(output, other, 4, 30));
+        profiler.flushCompletedSamples();
+        assertEquals(8L, profiler.takeChangedSamples().get(0).samples().stream()
+                .mapToLong(PersistedCraftSample::amount).sum());
+    }
+
+    @Test
+    void externalJobsCannotBeRecoveredByAnotherCpuAndClearOnFinishDisableOrReload() {
+        var profiler = new CraftProfiler(10);
+        var cpu = new Object();
+        var output = new ProfileKey("network", "test:output");
+        var job = new CraftingJobEstimate(output, Map.of(output, 8L), Map.of());
+        profiler.setExternalJobEstimate(cpu, job);
+        profiler.start(output, cpu, 2, ProfileUnit.ITEM, 0);
+        assertEquals(List.of(cpu), profiler.externalJobScopes());
+        assertTrue(profiler.tracksExternalJob(cpu));
+        assertFalse(profiler.completeUniquePending(output, 2, 15));
+        assertTrue(profiler.completeDispatched(output, cpu, 1, 20));
+        profiler.flushCompletedSamples();
+        profiler.clearPending(cpu);
+        assertFalse(profiler.tracksExternalJob(cpu));
+        assertFalse(profiler.completeDispatched(output, cpu, 1, 25));
+        assertTrue(profiler.jobEstimate(cpu).isEmpty());
+        assertEquals(1, profiler.stats(output).orElseThrow().sampleCount());
+
+        profiler.setExternalJobEstimate(cpu, job);
+        profiler.start(output, cpu, 4, ProfileUnit.ITEM, 30);
+        profiler.setEnabled(false);
+        assertFalse(profiler.completeDispatched(output, cpu, 4, 35));
+        profiler.setEnabled(true);
+        assertTrue(profiler.externalJobScopes().isEmpty());
+        assertFalse(profiler.completeDispatched(output, cpu, 4, 40));
+        assertEquals(1, profiler.stats(output).orElseThrow().sampleCount());
+
+        profiler.setExternalJobEstimate(cpu, new CraftingJobEstimate(output, Map.of(output, 1L), Map.of()));
+        profiler.start(output, cpu, 1, ProfileUnit.ITEM, 45);
+        assertTrue(profiler.completeDispatched(output, cpu, 1, 50));
+        profiler.loadSamples(List.of());
+        assertFalse(profiler.tracksExternalJob(cpu));
+        assertTrue(profiler.jobEstimate(cpu).isEmpty());
+    }
+
+    @Test
     void suspensionKeepsPendingAndOtherCpuWhileRebasingDelay() {
         var profiler = new CraftProfiler(10);
         var paused = new Object();

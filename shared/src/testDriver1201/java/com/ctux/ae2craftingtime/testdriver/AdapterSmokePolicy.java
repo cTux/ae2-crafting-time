@@ -21,6 +21,8 @@ final class AdapterSmokePolicy {
         };
         if (expected.isEmpty() || IntegrationCatalog.CANDIDATES.stream()
                 .noneMatch(c -> c.dependency().equals(dependency) && c.targets().contains(target))) return;
+        if (target.equals("1.20.1-forge") && dependency.equals("neoecoae")
+                && observed.scopeType().equals("cn.dancingsnow.neoecoae.crafting.execution.ECOCraftingCPU")) return;
         if (!expected.equals(observed.scopeType())) {
             throw new IllegalStateException("Smoke craft ran on " + observed.scopeType() + "; expected " + expected);
         }

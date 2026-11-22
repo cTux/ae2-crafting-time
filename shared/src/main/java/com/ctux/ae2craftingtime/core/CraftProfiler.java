@@ -30,6 +30,7 @@ public final class CraftProfiler {
     private final Map<Object, WaitingState> waiting = new IdentityHashMap<>();
     private final Map<Object, UUID> jobOwners = new IdentityHashMap<>();
     private final Map<Object, CraftingJobEstimate> jobEstimates = new IdentityHashMap<>();
+    private final Set<Object> externalJobs = Collections.newSetFromMap(new IdentityHashMap<>());
     private final Map<Object, Set<ProfileKey>> delayedNotified = new IdentityHashMap<>();
     private final Map<Object, Set<ProfileKey>> delayedResolved = new IdentityHashMap<>();
     private final Set<Object> suspended = Collections.newSetFromMap(new IdentityHashMap<>());
@@ -82,6 +83,7 @@ public final class CraftProfiler {
             newestEventTick = Long.MIN_VALUE;
             jobOwners.clear();
             jobEstimates.clear();
+            externalJobs.clear();
             delayedNotified.clear();
             delayedResolved.clear();
             statusesDirty |= !rememberedStatuses.isEmpty();
@@ -192,12 +194,20 @@ public final class CraftProfiler {
     }
 
     public boolean complete(ProfileKey key, Object scope, long amount, long tick) {
+        return complete(key, scope, amount, tick, false);
+    }
+
+    public boolean completeDispatched(ProfileKey key, Object scope, long amount, long tick) {
+        return complete(key, scope, amount, tick, true);
+    }
+
+    private boolean complete(ProfileKey key, Object scope, long amount, long tick, boolean requireDispatch) {
         if (!enabled || amount <= 0) {
             return false;
         }
 
         var jobEstimate = jobEstimates.get(scope);
-        var graphMatched = jobEstimate != null && jobEstimate.complete(key, amount);
+        var graphMatched = !requireDispatch && jobEstimate != null && jobEstimate.complete(key, amount);
 
         var scopedPending = pending.get(scope);
         var queue = scopedPending == null ? null : scopedPending.get(key);
@@ -231,6 +241,9 @@ public final class CraftProfiler {
             lastProgressTicks.get(scope).put(key, tick);
         }
 
+        if (requireDispatch && jobEstimate != null) {
+            jobEstimate.complete(key, consumedTotal);
+        }
         recordCompleted(key, consumedTotal, tick);
         forgetStatus(key);
         return true;
@@ -242,7 +255,7 @@ public final class CraftProfiler {
         var scopes = pendingScopes.getOrDefault(key, Set.of());
         if (scopes.size() != 1) return false;
         var onlyScope = scopes.iterator().next();
-        if (onlyScope == null) return false;
+        if (onlyScope == null || externalJobs.contains(onlyScope)) return false;
         return complete(key, onlyScope, amount, tick);
     }
 
@@ -326,6 +339,7 @@ public final class CraftProfiler {
         removeWaiting(scope);
         jobOwners.remove(scope);
         jobEstimates.remove(scope);
+        externalJobs.remove(scope);
         delayedNotified.remove(scope);
         if (removed == null) {
             return;
@@ -394,6 +408,19 @@ public final class CraftProfiler {
 
     public Optional<CraftingJobEstimate> jobEstimate(Object scope) {
         return Optional.ofNullable(jobEstimates.get(scope));
+    }
+
+    public void setExternalJobEstimate(Object scope, CraftingJobEstimate estimate) {
+        setJobEstimate(scope, estimate);
+        externalJobs.add(scope);
+    }
+
+    public boolean tracksExternalJob(Object scope) {
+        return externalJobs.contains(scope);
+    }
+
+    public List<Object> externalJobScopes() {
+        return List.copyOf(externalJobs);
     }
 
     public void removeJobEstimate(Object scope) {
@@ -803,6 +830,7 @@ public final class CraftProfiler {
         newestEventTick = Long.MIN_VALUE;
         jobOwners.clear();
         jobEstimates.clear();
+        externalJobs.clear();
         delayedNotified.clear();
         delayedResolved.clear();
         for (var output : persisted) {

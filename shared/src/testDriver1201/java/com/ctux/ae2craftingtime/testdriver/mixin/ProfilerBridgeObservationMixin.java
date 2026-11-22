@@ -22,6 +22,12 @@ public abstract class ProfilerBridgeObservationMixin {
         acceptedJob(network, scope, plan);
     }
 
+    @Inject(method = "startExternalJob", at = @At("HEAD"), require = 0)
+    private static void acceptedExternal(String network, Object scope, ICraftingPlan plan, long tick,
+            java.util.UUID owner, CallbackInfo ci) {
+        acceptedJob(network, scope, plan);
+    }
+
     private static void acceptedJob(String network, Object scope, ICraftingPlan plan) {
         if (plan == null || plan.finalOutput() == null) return;
         var finalOutput = plan.finalOutput().what();
@@ -40,7 +46,10 @@ public abstract class ProfilerBridgeObservationMixin {
         DispatchObservation.amount(scope, key.getId().toString(), amount, true);
     }
 
-    @Inject(method = "complete(Ljava/lang/String;Ljava/lang/Object;Lappeng/api/stacks/AEKey;JJLnet/minecraft/server/MinecraftServer;)V", at = @At("HEAD"))
+    @Inject(method = {
+            "complete(Ljava/lang/String;Ljava/lang/Object;Lappeng/api/stacks/AEKey;JJLnet/minecraft/server/MinecraftServer;)V",
+            "completeDispatched(Ljava/lang/String;Ljava/lang/Object;Lappeng/api/stacks/AEKey;JJLnet/minecraft/server/MinecraftServer;)V"
+    }, at = @At("HEAD"))
     private static void returned(String network, Object scope, AEKey key, long amount, long tick,
             net.minecraft.server.MinecraftServer server, CallbackInfo ci) {
         if (key == null) return;

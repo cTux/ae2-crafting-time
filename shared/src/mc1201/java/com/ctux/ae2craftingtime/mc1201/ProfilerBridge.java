@@ -241,6 +241,16 @@ public final class ProfilerBridge {
 
     public static void complete(String networkId, Object scope, AEKey what, long amount, long tick,
             net.minecraft.server.MinecraftServer server) {
+        complete(networkId, scope, what, amount, tick, server, false);
+    }
+
+    public static void completeDispatched(String networkId, Object scope, AEKey what, long amount, long tick,
+            net.minecraft.server.MinecraftServer server) {
+        complete(networkId, scope, what, amount, tick, server, true);
+    }
+
+    private static void complete(String networkId, Object scope, AEKey what, long amount, long tick,
+            net.minecraft.server.MinecraftServer server, boolean requireDispatch) {
         if (what == null || !isEnabled()) {
             return;
         }
@@ -253,7 +263,9 @@ public final class ProfilerBridge {
         }
         var profileKey = key(networkId, what);
         var normalizedAmount = normalizeAmount(what, amount);
-        if (!PROFILER.complete(profileKey, scope, normalizedAmount, tick)) {
+        if (requireDispatch) {
+            if (!PROFILER.completeDispatched(profileKey, scope, normalizedAmount, tick)) return;
+        } else if (!PROFILER.complete(profileKey, scope, normalizedAmount, tick)) {
             PROFILER.completeUniquePending(profileKey, normalizedAmount, tick);
         }
         // A reloaded CPU can accept its final output without invoking finishJob.
@@ -286,6 +298,17 @@ public final class ProfilerBridge {
 
     public static void startJob(String networkId, Object scope, ICraftingPlan plan, long tick, long nanoTime,
             UUID owner) {
+        startJob(networkId, scope, plan, tick, nanoTime, owner, false);
+    }
+
+    public static void startExternalJob(String networkId, Object scope, ICraftingPlan plan, long tick, UUID owner) {
+        long now = System.nanoTime();
+        if (PROFILER.tracksExternalJob(scope)) finishJob(scope, false, tick, now, recoveryServer());
+        startJob(networkId, scope, plan, tick, now, owner, true);
+    }
+
+    private static void startJob(String networkId, Object scope, ICraftingPlan plan, long tick, long nanoTime,
+            UUID owner, boolean external) {
         if (plan == null || plan.finalOutput() == null || !isEnabled() || !ServerOptionsRuntime.scopeEnabled(scope)) {
             return;
         }
@@ -324,7 +347,11 @@ public final class ProfilerBridge {
                 ServerOptionsRuntime.enabled(com.ctux.ae2craftingtime.core.OptionFeature.WAITING_TRACKING)
                         ? waitingKeys : Set.of(), tick);
         PROFILER.setJobOwner(scope, owner);
-        PROFILER.setJobEstimate(scope, jobEstimate);
+        if (external) {
+            PROFILER.setExternalJobEstimate(scope, jobEstimate);
+        } else {
+            PROFILER.setJobEstimate(scope, jobEstimate);
+        }
         ProviderStartTracker.clear(scope);
         CHANCE.plan(scope, plan.patternTimes().keySet().stream().map(pattern -> {
             Set<ProfileKey> keys = new HashSet<>();
@@ -395,6 +422,10 @@ public final class ProfilerBridge {
     }
 
     public static boolean isSuspended(Object scope) { return PROFILER.isSuspended(scope); }
+
+    public static boolean tracksExternalJob(Object scope) {
+        return trackingEnabled(scope) && PROFILER.tracksExternalJob(scope);
+    }
 
     public static void setSuspended(Object scope, boolean suspended, long tick,
             net.minecraft.server.MinecraftServer server) {
@@ -723,6 +754,12 @@ public final class ProfilerBridge {
     public static void configure(com.ctux.ae2craftingtime.core.ServerConfig config) {
         PROFILER.configure(config);
         ACCURACY.configure(config.maxSamples());
+        var server = recoveryServer();
+        for (var scope : PROFILER.externalJobScopes()) {
+            if (!trackingEnabled(scope)) {
+                finishJob(scope, false, server == null ? 0 : server.overworld().getGameTime(), 0, server);
+            }
+        }
         isEnabled();
         PROFILER.removeJobEstimates(scope -> !ServerOptionsRuntime.scopeEnabled(scope));
     }

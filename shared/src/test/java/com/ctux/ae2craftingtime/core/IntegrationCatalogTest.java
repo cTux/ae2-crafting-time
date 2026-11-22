@@ -52,6 +52,21 @@ class IntegrationCatalogTest {
     }
 
     @Test
+    void externalNeoEcoContractIsRecordedOnForgeWithoutActivatingLegacyMixins() {
+        var shim = "cn/dancingsnow/neoecoae/integration/ae2craftingtime/ECOCraftingTimeCompat";
+        var classes = Map.of(shim, new IntegrationContract.ClassInfo("java/lang/Object", Map.of(
+                "method:remainingMillis", List.of("(Lcn/dancingsnow/neoecoae/crafting/execution/ECOCraftingCPU;)"
+                        + "Ljava/util/OptionalDouble;"))));
+        var forge = selector("1.20.1-forge", false, classes);
+        assertFalse(forge.shouldApply("ECOCraftingCpuLogicMixin"));
+        assertEquals("external-cpu", forge.snapshot().get("neoecoae").variant());
+        assertTrue(forge.snapshot().get("neoecoae").mixins().isEmpty());
+        var neoforge = selector("1.21.1-neoforge", true, classes);
+        assertFalse(neoforge.shouldApply("ECOCraftingCpuLogicMixin"));
+        assertEquals("no_compatible_variant", neoforge.snapshot().get("neoecoae").reason());
+    }
+
+    @Test
     void singletonBoundariesAndMissingFamiliesDoNotDisableCoreHooks() {
         for (var target : List.of("1.20.1-forge", "1.20.1-fabric", "1.21.1-neoforge", "26.1.2-neoforge")) {
             for (boolean client : List.of(true, false)) {

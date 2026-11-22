@@ -22,6 +22,12 @@ AE2 fluids, so learned rates and TTC stay meaningful. Compatible crafting CPUs
 from AdvancedAE, NeoEco, and AE2 Lightning Tech can also contribute normal
 profiling events on their supported targets.
 
+On Forge 1.20.1, NeoEco 20.5.9 and 20.5.10 can also show Crafting Time's
+remaining estimate on their own ECO CPU status page. On the server, enable
+Profiling and NeoEco CPU profiling. NeoEco falls back to its own status when
+there is no learned estimate or the job was already running when the server
+started. Exact big orders use NeoEco's own timing.
+
 For example, a supported addon CPU processing a chemical recipe teaches its
 network/output history and later shows TTC through the usual AE2 screens. The
 integration does not make an addon required: when one is absent or unsupported,

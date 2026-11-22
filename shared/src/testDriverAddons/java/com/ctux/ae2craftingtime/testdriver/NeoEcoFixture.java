@@ -9,6 +9,7 @@ import appeng.api.stacks.AEItemKey;
 import appeng.blockentity.storage.DriveBlockEntity;
 import appeng.core.definitions.AEItems;
 import cn.dancingsnow.neoecoae.all.NEMultiBlocks;
+import cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU;
 import cn.dancingsnow.neoecoae.blocks.entity.NEBlockEntity;
 import cn.dancingsnow.neoecoae.blocks.entity.computation.ECOComputationDriveBlockEntity;
 import cn.dancingsnow.neoecoae.multiblock.definition.MultiBlockContext;
@@ -114,8 +115,7 @@ class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
     @Override
     protected ICraftingCPU cpu(ServerPlayer player, Placement placement, IGrid grid) {
         return grid.getCraftingService().getCpus().stream()
-                .filter(candidate -> candidate.getClass().getName()
-                        .equals("cn.dancingsnow.neoecoae.api.me.ECOCraftingCPU"))
+                .filter(ECOCraftingCPU.class::isInstance)
                 .findFirst().orElse(null);
     }
 
