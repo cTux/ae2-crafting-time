@@ -152,7 +152,7 @@ class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
                 }
                 for (Direction facing : List.of(Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST)) {
                     var interfaceOffset = MultiBlockRotation.localToWorld(
-                            INTERFACE_OFFSET, BlockPos.ZERO, facing);
+                            INTERFACE_OFFSET, BlockPos.ZERO, facing, false);
                     var candidate = blueprint(
                             level, anchor.relative(direction).subtract(interfaceOffset), facing, definition);
                     if (candidate.blocks.keySet().stream().allMatch(pos -> level.getBlockState(pos).isAir())) {
@@ -186,8 +186,8 @@ class NeoEcoFixture extends AddonCpuFixture<NeoEcoFixture.Placement> {
 
         @Override
         public void setBlock(BlockPos pos, BlockState blockState) {
-            var target = MultiBlockRotation.localToWorld(pos, controllerPos, facing);
-            blocks.put(target, MultiBlockRotation.rotateState(blockState, facing));
+            var target = MultiBlockRotation.localToWorld(pos, controllerPos, facing, false);
+            blocks.put(target, MultiBlockRotation.rotateState(blockState, facing, false));
         }
 
         @Override
