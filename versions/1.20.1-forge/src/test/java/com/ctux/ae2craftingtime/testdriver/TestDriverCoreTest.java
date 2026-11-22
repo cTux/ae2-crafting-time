@@ -1502,6 +1502,7 @@ class TestDriverCoreTest {
         }
         assertTrue(ScenarioFlow.allows(ScenarioState.PLAN_STABLE, ScenarioState.FAILED));
         assertTrue(ScenarioFlow.allows(ScenarioState.PLAN_STABLE, ScenarioState.RESULT_WRITTEN));
+        assertTrue(ScenarioFlow.allows(ScenarioState.ADDON_CRAFT_SUBMITTED, ScenarioState.RESULT_WRITTEN));
         assertFalse(ScenarioFlow.allows(ScenarioState.PLAN_STABLE, ScenarioState.TOOLTIP_CHECKED));
         assertFalse(ScenarioFlow.allows(ScenarioState.FAILED, ScenarioState.FAILED));
         assertFalse(ScenarioFlow.allows(ScenarioState.QUIT_REQUESTED, ScenarioState.FAILED));
